@@ -10,23 +10,81 @@ Runs on your home network (Unraid, Synology, a spare box, whatever) next to
 the Plex/Sonarr/Radarr you already have. Not a hosted service — your data,
 your server.
 
-## What it does
+## Features
 
-- **Browse & search** — full TMDb catalog, with genre/theme search (e.g.
-  "action" or "natural disaster") on top of the usual title/person/studio
-  search.
-- **Full filmographies & studio catalogs** — click an actor or a studio and
-  see everything they've ever made, cross-referenced against your library.
-- **Know what you own** — connect Plex once; every title shows Owned,
-  Downloading, Monitored, or Not Owned automatically.
-- **One-click add** — missing something? Send it straight to Sonarr or
-  Radarr without leaving the page.
-- **Franchises & crossovers** — movie collections (Harry Potter, Bond, etc.)
-  pulled straight from TMDb, plus a curated list for TV crossovers
-  (Arrowverse, 9-1-1, One Chicago, NCIS).
-- **Favorites** — star actors and studios to build a personal watchlist.
-- **Household accounts** — one admin setup, then add accounts for other
-  household members from Settings. No public signup.
+### Home & Discover
+- Trending-this-week and coming-soon rails on the homepage (public, no
+  account needed to browse).
+- Discover page: filter by **Movies / TV / Both**, sort by **Popular / Top
+  rated / Newest**, filter by **year** and by any of the 16+ TMDb genres.
+- **Hide titles you already track** toggle, so Discover only shows what you
+  don't have yet.
+- Quick-add button right on the poster — add to Sonarr/Radarr without
+  opening the title page.
+
+### Search
+- Title, person, and studio search with live autocomplete suggestions.
+- **Genre search** — type "action", "horror", "comedy" (or a TV genre like
+  "Sci-Fi & Fantasy") and get every matching movie/TV show.
+- **Theme/keyword search** — for queries that aren't a genre (e.g. "natural
+  disaster"), falls back to TMDb's keyword tagging to find matches.
+
+### Title pages
+- Full details: overview, year, trailer, and links to IMDb/Instagram/X
+  (Twitter)/Facebook.
+- Live ownership status: **Owned / Downloading / Monitored / Not owned**,
+  checked directly against Plex/Sonarr/Radarr.
+- One-click **Add to Radarr/Sonarr** using your saved quality
+  profile/root folder — re-enables monitoring automatically if the title
+  was already added and then unmonitored.
+- Full cast list with character names, linking to each person's page.
+- **Studio/production company** section, with conglomerates (Disney,
+  Marvel, Lucasfilm, etc.) merged into one entry instead of listed
+  separately.
+- **Franchise & crossover** section: movie collections (Harry Potter,
+  James Bond, etc.) pulled directly from TMDb; a curated list for TV
+  crossovers (Arrowverse, 9-1-1 Universe, One Chicago, NCIS Franchise).
+- "More like this" recommendations.
+- TV shows: season selector with per-season completeness, full episode
+  list with per-episode have-it/missing status.
+
+### People & studios
+- Full filmography for any actor/person — every movie and TV credit with
+  character name, cross-referenced against your library.
+- Full catalog for any studio, with the same conglomerate-merging as title
+  pages.
+- **Favorite** button on people and studios to build a personal watchlist.
+
+### My Library
+- One aggregated view of everything already in Plex, Sonarr, and Radarr.
+- Header stats: movie count, TV show count, total size on disk, plus a
+  count of anything monitored/downloading but not yet owned.
+- Filter by type (Movie/TV) and status (Owned/Downloading/Monitored/Not
+  owned), sort by Newest/Oldest/A–Z/Recently added, search within your
+  library, and switch between grid and table views.
+- **Stop monitoring** a title directly from the library.
+
+### Favorites
+- One page listing every person and studio you've starred.
+
+### Accounts & settings
+- One-time first-run setup creates the admin account — no public signup
+  page after that.
+- Add accounts for other household members from **Settings → Account**.
+- **Settings → Integrations**:
+  - **TMDb** — one shared API key/access token for the whole instance,
+    editable in-app (test-and-save) or via environment variable.
+  - **Plex** — OAuth connect, shows your library's movie/TV counts, syncs
+    automatically in the background.
+  - **Sonarr / Radarr** — server URL + API key (test-and-save), with
+    default quality profile and root folder for new adds.
+- "Keep me signed in for 30 days" login option, rate-limited sign-in
+  attempts, and all saved integration credentials encrypted at rest.
+
+### Self-hosting
+- Docker Compose packaging (Postgres + app), with database migrations
+  applied automatically on every start.
+- Works out of the box on Unraid via the Compose Manager plugin.
 
 ## Quick start (Docker)
 
