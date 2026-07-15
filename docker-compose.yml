@@ -17,6 +17,7 @@ services:
       retries: 10
 
   app:
+    image: timmyamant/marquee:latest
     build: .
     restart: unless-stopped
     depends_on:

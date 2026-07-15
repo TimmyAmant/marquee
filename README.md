@@ -117,8 +117,14 @@ Edit `.env` and fill in:
 Then:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
+
+This pulls the prebuilt image from
+[Docker Hub](https://hub.docker.com/r/timmyamant/marquee) (amd64 and arm64)
+instead of building locally, so it's up in seconds. If you've changed the
+source and want to run your own build instead, use
+`docker compose up -d --build`.
 
 Visit `http://<your-server-ip>:3000`. First visit creates the admin account
 (one-time setup, no public signup after); connect Plex/Sonarr/Radarr from
