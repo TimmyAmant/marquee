@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { tmdbImageUrl } from "@/lib/tmdb/client";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { LibraryStatus } from "@/components/status-badge";
 import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";

@@ -1,3 +1,6 @@
+import "server-only";
+import { getTmdbAccessToken } from "@/lib/integrations/app-settings";
+
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
 export class TmdbError extends Error {
@@ -14,10 +17,12 @@ async function tmdbFetch<T>(
   path: string,
   params: Record<string, string | number | undefined> = {},
 ): Promise<T> {
-  const bearerToken = process.env.TMDB_ACCESS_TOKEN;
+  const bearerToken = await getTmdbAccessToken();
   const apiKey = process.env.TMDB_API_KEY;
   if (!bearerToken && !apiKey) {
-    throw new Error("Set TMDB_ACCESS_TOKEN (v4) or TMDB_API_KEY (v3) in the environment");
+    throw new Error(
+      "Set a TMDb access token in Settings, or TMDB_ACCESS_TOKEN/TMDB_API_KEY in the environment",
+    );
   }
 
   const url = new URL(`${TMDB_API_BASE}${path}`);
@@ -43,14 +48,13 @@ async function tmdbFetch<T>(
   return res.json() as Promise<T>;
 }
 
-export type TmdbImageSize = "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "original";
-
-export function tmdbImageUrl(
-  path: string | null | undefined,
-  size: TmdbImageSize = "w500",
-): string | null {
-  if (!path) return null;
-  return `https://image.tmdb.org/t/p/${size}${path}`;
+/** Tests an access token directly (not the currently-configured one) against
+ * TMDb's own auth-check endpoint, for the "test & save" flow in Settings. */
+export async function verifyTmdbAccessToken(token: string): Promise<boolean> {
+  const res = await fetch(`${TMDB_API_BASE}/authentication`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+  });
+  return res.ok;
 }
 
 export interface TmdbSearchResult {
@@ -89,6 +93,20 @@ export function searchCompany(query: string, page = 1) {
     "/search/company",
     { query, page },
   );
+}
+
+export interface TmdbKeyword {
+  id: number;
+  name: string;
+}
+
+/** For search queries that describe a topic/theme rather than a title —
+ * e.g. "natural disaster" — rather than a genre like "action". */
+export function searchKeyword(query: string, page = 1) {
+  return tmdbFetch<{ results: TmdbKeyword[]; total_pages: number }>("/search/keyword", {
+    query,
+    page,
+  });
 }
 
 export interface TmdbPersonDetails {
@@ -192,6 +210,22 @@ export function getMovieGenres() {
 
 export function getTvGenres() {
   return tmdbFetch<{ genres: TmdbGenre[] }>("/genre/tv/list");
+}
+
+export function discoverMoviesByKeyword(keywordId: number, page = 1) {
+  return tmdbFetch<TmdbDiscoverResponse>("/discover/movie", {
+    with_keywords: keywordId,
+    page,
+    sort_by: "popularity.desc",
+  });
+}
+
+export function discoverTvByKeyword(keywordId: number, page = 1) {
+  return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
+    with_keywords: keywordId,
+    page,
+    sort_by: "popularity.desc",
+  });
 }
 
 export type DiscoverSort = "popularity" | "top_rated" | "newest";
@@ -305,12 +339,40 @@ export interface TmdbMovieDetails {
   credits?: { cast: TmdbCastMember[] };
   recommendations?: { results: TmdbRecommendationItem[] };
   production_companies?: TmdbCompanyRef[];
+  belongs_to_collection?: TmdbCollectionRef | null;
 }
 
 export function getMovieDetails(id: number) {
   return tmdbFetch<TmdbMovieDetails>(`/movie/${id}`, {
     append_to_response: "videos,external_ids,credits,recommendations",
   });
+}
+
+export interface TmdbCollectionRef {
+  id: number;
+  name: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+}
+
+export interface TmdbCollectionPart {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date: string | null;
+}
+
+export interface TmdbCollectionDetails {
+  id: number;
+  name: string;
+  parts: TmdbCollectionPart[];
+}
+
+/** A movie franchise (Harry Potter, James Bond, etc.) — TMDb tracks these
+ * natively via `belongs_to_collection` on a movie plus this endpoint, so no
+ * manual curation is needed the way TV crossovers require. */
+export function getCollection(id: number) {
+  return tmdbFetch<TmdbCollectionDetails>(`/collection/${id}`);
 }
 
 export interface TmdbTvDetails {

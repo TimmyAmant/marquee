@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { tmdbImageUrl } from "@/lib/tmdb/client";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 
 export function PersonHeader({
   name,

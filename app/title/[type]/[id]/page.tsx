@@ -4,11 +4,13 @@ import { TitleHero } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
 import { SimilarTitlesRow, type SimilarTitle } from "@/components/similar-titles-row";
+import { FranchiseRow, type FranchiseItem } from "@/components/franchise-row";
 import { SeasonSelector, EpisodeList } from "@/components/season-episode-list";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getTitleLibraryStatus, getSonarrSeasonBreakdown } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
-import { findTrailer, getTvSeasonDetails } from "@/lib/tmdb/client";
+import { findTrailer, getTvSeasonDetails, getCollection } from "@/lib/tmdb/client";
+import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 
@@ -63,6 +65,56 @@ export default async function TitlePage({
         similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
       )
     : new Map();
+
+  // Movie franchises (Harry Potter, James Bond, etc.) come straight from
+  // TMDb's own "collection" data. TV crossovers (Arrowverse, 9-1-1 universe)
+  // have no TMDb equivalent, so those come from a hand-curated list instead.
+  let franchiseTitle: string | null = null;
+  let franchiseItems: FranchiseItem[] = [];
+
+  if (type === "movie") {
+    const collectionRef = (raw as TmdbMovieDetails | null)?.belongs_to_collection;
+    if (collectionRef) {
+      const collection = await getCollection(collectionRef.id).catch(() => null);
+      if (collection) {
+        franchiseTitle = collection.name;
+        franchiseItems = [...collection.parts]
+          .sort((a, b) => (a.release_date || "").localeCompare(b.release_date || ""))
+          .map((part) => ({
+            tmdbId: part.id,
+            mediaType: "movie" as MediaType,
+            name: part.title,
+            posterPath: part.poster_path,
+            year: (part.release_date || "").slice(0, 4) || null,
+          }));
+      }
+    }
+  } else {
+    const group = findTvFranchiseGroup(tmdbId);
+    if (group) {
+      const members = await Promise.all(
+        group.memberTmdbIds.map((memberId) => getOrFetchTitle("tv", memberId).catch(() => null)),
+      );
+      franchiseTitle = group.displayName;
+      franchiseItems = members
+        .filter((m): m is NonNullable<typeof m> => m !== null)
+        .map((m) => ({
+          tmdbId: m.tmdbId,
+          mediaType: "tv" as MediaType,
+          name: m.name,
+          posterPath: m.posterPath,
+          year: (m.releaseDate || m.firstAirDate || "").slice(0, 4) || null,
+        }));
+    }
+  }
+
+  const franchiseStatusMap =
+    session?.user && franchiseItems.length > 0
+      ? await getLibraryStatusMap(
+          session.user.id,
+          franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+        )
+      : new Map();
 
   const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
   const defaultSeason = seasons.find((s) => s.season_number > 0)?.season_number ?? seasons[0]?.season_number ?? 1;
@@ -119,6 +171,9 @@ export default async function TitlePage({
         )}
 
         <CastRow cast={cast} />
+        {franchiseTitle && (
+          <FranchiseRow title={franchiseTitle} items={franchiseItems} statusMap={franchiseStatusMap} />
+        )}
         <StudioRow companies={companies} />
         <SimilarTitlesRow items={similarItems} statusMap={similarStatusMap} />
       </div>

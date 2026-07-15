@@ -3,8 +3,10 @@ import { auth } from "@/auth";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
+import { isTmdbAccessTokenSavedInSettings } from "@/lib/integrations/app-settings";
 import { ArrCredentialForm } from "@/components/arr-credential-form";
 import { PlexConnectCard } from "@/components/plex-connect-card";
+import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
 
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
@@ -15,10 +17,11 @@ export default async function IntegrationsSettingsPage() {
     syncArrLibraryIfStale(session.user.id),
   ]);
 
-  const [sonarrCred, radarrCred, plexSummary] = await Promise.all([
+  const [sonarrCred, radarrCred, plexSummary, tmdbSavedInSettings] = await Promise.all([
     getArrCredential(session.user.id, "sonarr"),
     getArrCredential(session.user.id, "radarr"),
     getPlexSummary(session.user.id),
+    isTmdbAccessTokenSavedInSettings(),
   ]);
 
   return (
@@ -31,6 +34,10 @@ export default async function IntegrationsSettingsPage() {
       </p>
 
       <div className="mt-6 flex flex-col gap-6">
+        <TmdbSettingsForm
+          savedInSettings={tmdbSavedInSettings}
+          configuredFromEnv={Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY)}
+        />
         <PlexConnectCard
           initialConnected={plexSummary.connected}
           initialServers={plexSummary.servers.map((s) => ({

@@ -4,10 +4,53 @@ import { PosterGrid } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { StudioChip } from "@/components/studio-chip";
-import { searchMulti, searchCompany } from "@/lib/tmdb/client";
+import {
+  searchMulti,
+  searchCompany,
+  searchKeyword,
+  getMovieGenres,
+  getTvGenres,
+  discoverMovies,
+  discoverTv,
+  discoverMoviesByKeyword,
+  discoverTvByKeyword,
+  type TmdbGenre,
+  type TmdbDiscoverResult,
+} from "@/lib/tmdb/client";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { MediaType } from "@/lib/db/schema";
+
+// Words that describe "what kind of thing to search for" rather than the
+// theme itself — stripped before matching against genres/keywords, since
+// people naturally type "action movies" or "national disaster movies and tv
+// shows" and mean the theme, not those literal words.
+const MEDIA_WORDS = /\b(movies?|films?|shows?|series|tv)\b/gi;
+
+function normalizeForThemeMatch(query: string): string {
+  return query.replace(MEDIA_WORDS, "").replace(/\s+/g, " ").trim();
+}
+
+function findGenreMatch(genres: TmdbGenre[], normalized: string): TmdbGenre | null {
+  if (!normalized) return null;
+  const lower = normalized.toLowerCase();
+  const exact = genres.find((g) => g.name.toLowerCase() === lower);
+  if (exact) return exact;
+  const partial = genres.find(
+    (g) => g.name.toLowerCase().includes(lower) || lower.includes(g.name.toLowerCase()),
+  );
+  return partial ?? null;
+}
+
+function toThemeItem(item: TmdbDiscoverResult, mediaType: MediaType) {
+  return {
+    tmdbId: item.id,
+    mediaType,
+    name: item.title || item.name || "",
+    posterPath: item.poster_path,
+    year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
+  };
+}
 
 export default async function SearchPage({
   searchParams,
@@ -28,23 +71,66 @@ export default async function SearchPage({
     );
   }
 
-  const [multi, companies] = await Promise.all([
+  const normalized = normalizeForThemeMatch(query);
+
+  const [multi, companies, movieGenres, tvGenres] = await Promise.all([
     searchMulti(query).catch(() => null),
     searchCompany(query).catch(() => null),
+    getMovieGenres().catch(() => ({ genres: [] })),
+    getTvGenres().catch(() => ({ genres: [] })),
   ]);
 
   const people = multi?.results.filter((r) => r.media_type === "person") ?? [];
   const titleResults = multi?.results.filter((r) => r.media_type === "movie" || r.media_type === "tv") ?? [];
   const companyResults = dedupeCompanies(companies?.results ?? []);
 
-  const hasResults = people.length + titleResults.length + companyResults.length > 0;
+  const movieGenreMatch = findGenreMatch(movieGenres.genres, normalized);
+  const tvGenreMatch = findGenreMatch(tvGenres.genres, normalized);
+
+  let themeLabel: string | null = null;
+  let themeItems: ReturnType<typeof toThemeItem>[] = [];
+
+  if (movieGenreMatch || tvGenreMatch) {
+    const [movieRes, tvRes] = await Promise.all([
+      movieGenreMatch
+        ? discoverMovies({ genreId: movieGenreMatch.id, sort: "popularity" }).catch(() => null)
+        : null,
+      tvGenreMatch
+        ? discoverTv({ genreId: tvGenreMatch.id, sort: "popularity" }).catch(() => null)
+        : null,
+    ]);
+    themeItems = [
+      ...(movieRes?.results.map((i) => toThemeItem(i, "movie")) ?? []),
+      ...(tvRes?.results.map((i) => toThemeItem(i, "tv")) ?? []),
+    ];
+    themeLabel = (movieGenreMatch ?? tvGenreMatch)!.name;
+  } else if (normalized) {
+    // No genre matched this query (e.g. "national disaster") — try it as a
+    // TMDb keyword/theme tag instead of a literal title search.
+    const keywordResults = await searchKeyword(normalized).catch(() => null);
+    const keyword = keywordResults?.results[0] ?? null;
+    if (keyword) {
+      const [movieRes, tvRes] = await Promise.all([
+        discoverMoviesByKeyword(keyword.id).catch(() => null),
+        discoverTvByKeyword(keyword.id).catch(() => null),
+      ]);
+      themeItems = [
+        ...(movieRes?.results.map((i) => toThemeItem(i, "movie")) ?? []),
+        ...(tvRes?.results.map((i) => toThemeItem(i, "tv")) ?? []),
+      ];
+      themeLabel = keyword.name;
+    }
+  }
+
+  const hasResults =
+    people.length + titleResults.length + companyResults.length + themeItems.length > 0;
 
   const session = await auth();
   const statusMap = session?.user
-    ? await getLibraryStatusMap(
-        session.user.id,
-        titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
-      )
+    ? await getLibraryStatusMap(session.user.id, [
+        ...titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
+        ...themeItems.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })),
+      ])
     : new Map();
 
   return (
@@ -88,7 +174,7 @@ export default async function SearchPage({
       )}
 
       {titleResults.length > 0 && (
-        <section>
+        <section className="mb-12">
           <h2 className="mb-4 font-display text-xl text-text-primary">Titles</h2>
           <PosterGrid>
             {titleResults.map((title) => {
@@ -100,6 +186,29 @@ export default async function SearchPage({
                   posterPath={title.poster_path ?? null}
                   name={title.title || title.name || ""}
                   year={(title.release_date || title.first_air_date || "").slice(0, 4)}
+                  badge={status && <StatusBadge status={status} compact />}
+                />
+              );
+            })}
+          </PosterGrid>
+        </section>
+      )}
+
+      {themeItems.length > 0 && (
+        <section>
+          <h2 className="mb-4 font-display text-xl text-text-primary">
+            {`${themeLabel} movies & TV`}
+          </h2>
+          <PosterGrid>
+            {themeItems.map((item) => {
+              const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
+              return (
+                <PosterCard
+                  key={`${item.mediaType}-${item.tmdbId}`}
+                  href={`/title/${item.mediaType}/${item.tmdbId}`}
+                  posterPath={item.posterPath}
+                  name={item.name}
+                  year={item.year}
                   badge={status && <StatusBadge status={status} compact />}
                 />
               );

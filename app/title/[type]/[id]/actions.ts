@@ -27,12 +27,23 @@ export async function addMovieToRadarr(
   let added: { id: number };
   try {
     const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-    const lookupResult = await radarr.lookupByTmdbId(config, tmdbId);
-    added = await radarr.addMovie(config, {
-      lookupResult,
-      qualityProfileId: credential.qualityProfileId,
-      rootFolderPath: credential.rootFolderPath,
-    });
+
+    // A movie can already exist in Radarr but unmonitored — e.g. it was
+    // added before, then "Stop monitoring" was used. Radarr's add endpoint
+    // rejects a duplicate add in that case, so re-enable monitoring on the
+    // existing entry instead of trying to add it again from scratch.
+    const existing = await radarr.getMovieByTmdbId(config, tmdbId).catch(() => null);
+    if (existing) {
+      await radarr.setMovieMonitored(config, existing.id, true);
+      added = existing;
+    } else {
+      const lookupResult = await radarr.lookupByTmdbId(config, tmdbId);
+      added = await radarr.addMovie(config, {
+        lookupResult,
+        qualityProfileId: credential.qualityProfileId,
+        rootFolderPath: credential.rootFolderPath,
+      });
+    }
   } catch {
     return { error: "Couldn't add this movie to Radarr." };
   }
@@ -92,13 +103,24 @@ export async function addSeriesToSonarr(
   let added: { id: number };
   try {
     const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-    const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);
-    if (!lookupResult) throw new Error("No lookup result");
-    added = await sonarr.addSeries(config, {
-      lookupResult,
-      qualityProfileId: credential.qualityProfileId,
-      rootFolderPath: credential.rootFolderPath,
-    });
+
+    // A series can already exist in Sonarr but unmonitored — e.g. it was
+    // added before, then "Stop monitoring" was used. Sonarr's add endpoint
+    // rejects a duplicate add in that case, so re-enable monitoring on the
+    // existing entry instead of trying to add it again from scratch.
+    const existing = await sonarr.getSeriesByTvdbId(config, title.tvdbId).catch(() => null);
+    if (existing) {
+      await sonarr.setSeriesMonitored(config, existing.id, true);
+      added = existing;
+    } else {
+      const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);
+      if (!lookupResult) throw new Error("No lookup result");
+      added = await sonarr.addSeries(config, {
+        lookupResult,
+        qualityProfileId: credential.qualityProfileId,
+        rootFolderPath: credential.rootFolderPath,
+      });
+    }
   } catch {
     return { error: "Couldn't add this series to Sonarr." };
   }

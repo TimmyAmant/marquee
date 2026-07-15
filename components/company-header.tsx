@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { tmdbImageUrl } from "@/lib/tmdb/client";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 
 export function CompanyHeader({
   name,
@@ -18,17 +18,17 @@ export function CompanyHeader({
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-      <div className="flex h-24 w-40 shrink-0 items-center justify-center rounded-xl border border-border bg-bg-1 p-4">
+      <div className="flex h-24 w-40 shrink-0 items-center justify-center rounded-xl border border-border bg-white p-4">
         {src ? (
           <Image
             src={src}
             alt={name}
             width={140}
             height={80}
-            className="max-h-full w-auto object-contain brightness-0 invert"
+            className="max-h-full w-auto object-contain"
           />
         ) : (
-          <span className="font-display text-lg text-text-primary">{name}</span>
+          <span className="font-display text-lg text-bg-0">{name}</span>
         )}
       </div>
       <div>

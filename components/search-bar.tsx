@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { tmdbImageUrl } from "@/lib/tmdb/client";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { SearchSuggestion } from "@/app/api/search/suggest/route";
 
 const TYPE_LABELS: Record<SearchSuggestion["mediaType"], string> = {

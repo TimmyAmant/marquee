@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { tmdbImageUrl } from "@/lib/tmdb/client";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb/client";
 import type { SeasonCompleteness } from "@/lib/integrations/status";
 

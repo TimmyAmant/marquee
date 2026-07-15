@@ -233,3 +233,15 @@ export const arrStatusCache = pgTable(
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],
 );
+
+// Instance-wide settings (not per-user) — TMDb metadata is shared across
+// everyone on this Marquee instance via the titles/people/companies cache,
+// so unlike Sonarr/Radarr/Plex there's exactly one TMDb credential, not one
+// per account. Always exactly zero or one row.
+export const appSettings = pgTable("app_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tmdbAccessTokenEnc: bytea("tmdb_access_token_enc"),
+  tmdbAccessTokenIv: bytea("tmdb_access_token_iv"),
+  tmdbAccessTokenTag: bytea("tmdb_access_token_tag"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

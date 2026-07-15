@@ -1,0 +1,82 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { appSettings } from "@/lib/db/schema";
+import { encryptSecret, decryptSecret } from "@/lib/crypto/encryption";
+
+// Short-lived cache so every TMDb request doesn't hit the database just to
+// resolve the access token — the setting changes rarely (only when someone
+// edits it in Settings), so a brief staleness window is an easy tradeoff.
+const CACHE_TTL_MS = 30_000;
+let cached: { value: string | null; expiresAt: number } | null = null;
+
+async function getRow() {
+  const [row] = await db.select().from(appSettings).limit(1);
+  return row ?? null;
+}
+
+/** The TMDb v4 access token to use — whatever was saved in Settings, or the
+ * TMDB_ACCESS_TOKEN environment variable if nothing's been saved there. */
+export async function getTmdbAccessToken(): Promise<string | null> {
+  if (cached && Date.now() < cached.expiresAt) return cached.value;
+
+  const row = await getRow();
+  const value =
+    row?.tmdbAccessTokenEnc && row.tmdbAccessTokenIv && row.tmdbAccessTokenTag
+      ? decryptSecret({
+          ciphertext: row.tmdbAccessTokenEnc,
+          iv: row.tmdbAccessTokenIv,
+          tag: row.tmdbAccessTokenTag,
+        })
+      : (process.env.TMDB_ACCESS_TOKEN ?? null);
+
+  cached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function isTmdbAccessTokenSavedInSettings(): Promise<boolean> {
+  const row = await getRow();
+  return Boolean(row?.tmdbAccessTokenEnc);
+}
+
+export async function setTmdbAccessToken(token: string): Promise<void> {
+  const encrypted = encryptSecret(token);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        tmdbAccessTokenEnc: encrypted.ciphertext,
+        tmdbAccessTokenIv: encrypted.iv,
+        tmdbAccessTokenTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      tmdbAccessTokenEnc: encrypted.ciphertext,
+      tmdbAccessTokenIv: encrypted.iv,
+      tmdbAccessTokenTag: encrypted.tag,
+    });
+  }
+
+  cached = null;
+}
+
+/** Removes the saved token, falling back to TMDB_ACCESS_TOKEN from the
+ * environment (if any) rather than leaving TMDb totally unconfigured. */
+export async function clearTmdbAccessToken(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        tmdbAccessTokenEnc: null,
+        tmdbAccessTokenIv: null,
+        tmdbAccessTokenTag: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  }
+  cached = null;
+}
