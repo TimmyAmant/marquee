@@ -1,11 +1,31 @@
 "use server";
 
 import { hash } from "argon2";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+
+export type HouseholdMember = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  createdAt: Date;
+};
+
+export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
+  return db
+    .select({
+      id: users.id,
+      email: users.email,
+      displayName: users.displayName,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(asc(users.createdAt));
+}
 
 const createUserSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -44,5 +64,6 @@ export async function createUserAction(
   const passwordHash = await hash(password);
   await db.insert(users).values({ email, passwordHash, displayName });
 
+  revalidatePath("/settings");
   return { success: true };
 }

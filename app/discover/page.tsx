@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { PosterGrid } from "@/components/poster-grid";
+import { PosterGrid, trimToFullRow } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { YearSelect } from "@/components/year-select";
@@ -137,9 +137,14 @@ export default async function DiscoverPage({
       )
     : new Map();
 
-  const items = hideOwned
-    ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`))
-    : rawItems;
+  // "Hide titles you already track" shrinks a fixed-size batch by a
+  // different, unpredictable amount every time, so the surviving count is
+  // rarely a clean multiple of the grid's column count — trim the trailing
+  // partial row rather than showing it ragged. Nothing is actually lost:
+  // the same titles still turn up on the next page.
+  const items = trimToFullRow(
+    hideOwned ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`)) : rawItems,
+  );
 
   const [radarrCredential, sonarrCredential] = session?.user
     ? await Promise.all([

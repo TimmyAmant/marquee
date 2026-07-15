@@ -1,5 +1,17 @@
 import { Children } from "react";
 
+/** Trims a list down to the nearest full row at the widest breakpoint (xl,
+ * 6 columns), so a PosterGrid of paginated/filtered results (e.g. Discover)
+ * never ends on a short row partway down the page — only ever at the very
+ * end of the grid. Only use this where trimming a few trailing items is
+ * harmless (more are reachable via "Next"); never on an exhaustive list like
+ * My Library, where a short last row is the true, complete count and hiding
+ * real items would be actively misleading. */
+export function trimToFullRow<T>(items: T[], columns = 6): T[] {
+  if (items.length < columns) return items;
+  return items.slice(0, Math.floor(items.length / columns) * columns);
+}
+
 export function PosterGrid({ children }: { children: React.ReactNode }) {
   // Pads with one invisible filler when the count is odd, so a poster never
   // ends up alone on its own row on the 2-column (mobile) layout — never
