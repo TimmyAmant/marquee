@@ -87,9 +87,11 @@ your server.
   attempts, and all saved integration credentials encrypted at rest.
 
 ### Self-hosting
-- Docker Compose packaging (Postgres + app), with database migrations
-  applied automatically on every start.
-- Works out of the box on Unraid via the Compose Manager plugin.
+- Single self-contained Docker image — Postgres runs inside the same
+  container as the app, so there's nothing else to install or wire up.
+  Database migrations apply automatically on every start.
+- Works out of the box on Unraid, either via Docker Compose or a native
+  Community Applications template.
 
 ## Quick start (Docker)
 
@@ -108,7 +110,7 @@ Edit `.env` and fill in:
 
 | Variable | Where to get it |
 |---|---|
-| `POSTGRES_PASSWORD` | pick anything — Compose won't start without it |
+| `POSTGRES_PASSWORD` | pick anything — this is only for the database bundled inside the container, it's never exposed outside it |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32` — **back this up**, losing it makes saved Sonarr/Radarr/Plex credentials undecryptable |
 | `TMDB_API_KEY` (or `TMDB_ACCESS_TOKEN`) | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) — can also be set later from Settings → Integrations instead |
@@ -134,30 +136,33 @@ Visit `http://<your-server-ip>:3000`. First visit creates the admin account
 
 Two ways to run it on Unraid, pick one:
 
-**Option A — Compose Manager (simplest, runs Postgres for you)**
+**Option A — Compose Manager**
 Install the **Compose Manager** plugin from Community Applications, point it
-at this repo's `docker-compose.yml`. Change `APP_PORT`/`POSTGRES_PORT` in
-`.env` first if they collide with something else you're running.
+at this repo's `docker-compose.yml`. Change `APP_PORT` in `.env` first if it
+collides with something else you're running.
 
-**Option B — native Community Applications template**
+**Option B — native Community Applications template (recommended)**
 1. In the **Apps** tab, go to **Settings → Template Repositories** and add:
    `https://github.com/TimmyAmant/marquee`
-2. Install a Postgres container first if you don't already have one (the
-   official `postgres` CA template works fine) — Marquee needs its own
-   database and this template doesn't include one.
-3. Search **Apps** for "marquee" and install it, filling in `DATABASE_URL`
-   (pointing at the Postgres container from step 2) and the other fields
-   the template asks for — same variables as the `.env` table above.
+2. Search **Apps** for "marquee" and install it. It's a single container —
+   just fill in `POSTGRES_PASSWORD` and the other fields the template asks
+   for (same variables as the `.env` table above); everything else,
+   including where the database is stored, is pre-filled with sane
+   defaults.
 
 The template lives at
 [`unraid-templates/marquee.xml`](unraid-templates/marquee.xml) in this repo.
 
 ## Local development
 
+The app container bundles Postgres for production/self-hosting, but for
+local development it's easiest to run a plain throwaway Postgres alongside
+`npm run dev`:
+
 ```bash
 npm install
-docker compose up -d postgres   # just the database
-cp .env.local.example .env.local
+docker run -d --name marquee-dev-db -p 5432:5432 -e POSTGRES_PASSWORD=devpass -e POSTGRES_DB=marquee postgres:16-alpine
+cp .env.local.example .env.local   # set DATABASE_URL=postgres://postgres:devpass@localhost:5432/marquee
 npm run dev
 ```
 
