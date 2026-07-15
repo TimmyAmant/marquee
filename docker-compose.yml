@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-marquee}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env, see .env.local.example}"
+      POSTGRES_DB: ${POSTGRES_DB:-marquee}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - marquee_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-marquee}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-marquee}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-marquee}"
+      AUTH_SECRET: "${AUTH_SECRET:?Set AUTH_SECRET in .env, generate with openssl rand -base64 32}"
+      # Self-hosted apps are usually reached via a LAN IP or local hostname
+      # that isn't known ahead of time, so trust whatever host the request
+      # arrives on rather than requiring a fixed AUTH_URL.
+      AUTH_TRUST_HOST: "true"
+      MASTER_ENCRYPTION_KEY: "${MASTER_ENCRYPTION_KEY:?Set MASTER_ENCRYPTION_KEY in .env, generate with openssl rand -base64 32}"
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN}
+      TMDB_API_KEY: ${TMDB_API_KEY}
+      TVDB_API_KEY: ${TVDB_API_KEY}
+      TVDB_PIN: ${TVDB_PIN}
+
+volumes:
+  marquee_postgres_data:

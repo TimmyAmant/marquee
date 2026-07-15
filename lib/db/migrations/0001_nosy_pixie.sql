@@ -1,0 +1,1 @@
+ALTER TABLE "integration_credentials" ADD CONSTRAINT "integration_credentials_provider_check" CHECK ("integration_credentials"."provider" in ('sonarr','radarr','plex'));

@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Marquee
 
-## Getting Started
+Self-hosted media metadata and library dashboard. Browse TMDb, see what you
+already own via Plex, and add/monitor titles in Sonarr and Radarr — all in
+one place. Designed to run on your home network (Unraid, Synology, a spare
+box, whatever) alongside the Plex/Sonarr/Radarr you already have, not as a
+public-facing hosted service.
 
-First, run the development server:
+## Running it (Docker / Unraid)
+
+1. Copy `.env.local.example` to `.env` (Docker Compose reads `.env` by
+   default) and fill in:
+   - `AUTH_SECRET` — any long random string (`openssl rand -base64 32`).
+   - `MASTER_ENCRYPTION_KEY` — a base64-encoded 32-byte key (`openssl rand
+     -base64 32`), used to encrypt your saved Sonarr/Radarr/Plex credentials
+     at rest. **Back this up** — if it's lost or changed, previously saved
+     integration credentials become undecryptable and will need to be
+     re-entered.
+   - `TMDB_ACCESS_TOKEN` (or `TMDB_API_KEY`) — from
+     [themoviedb.org](https://www.themoviedb.org/settings/api).
+   - `TVDB_API_KEY` / `TVDB_PIN` — from [thetvdb.com](https://thetvdb.com/api-information)
+     (used to cross-reference Sonarr's TVDB ids to TMDb).
+   - `POSTGRES_PASSWORD` — pick your own; there's no default, so Compose will
+     refuse to start until it's set. `POSTGRES_USER`/`POSTGRES_DB`/`POSTGRES_PORT`
+     are optional.
+
+2. Build and start everything:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   This starts Postgres, runs pending database migrations automatically on
+   every start, and starts the app on port 3000 (override with `APP_PORT`).
+
+3. Visit `http://<your-server-ip>:3000` — since no account exists yet,
+   you'll land on a one-time setup page to create the first (admin) account.
+   There's no public signup after that; add accounts for other household
+   members from **Settings → Add a household member** once you're signed in.
+
+4. In **Settings → Integrations**, connect Plex (OAuth) and/or Sonarr/Radarr
+   (base URL + API key, both reachable from wherever the `app` container
+   runs — same LAN or same Docker network). A background sync keeps your
+   library status current automatically.
+
+On Unraid specifically: install the **Compose Manager** plugin (Community
+Applications), point it at this repo's `docker-compose.yml`, and set
+`POSTGRES_PORT`/`APP_PORT` if they'd collide with something else you're
+already running.
+
+## Local development
 
 ```bash
+npm install
+docker compose up -d postgres   # just the database
+cp .env.local.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Drizzle migrations: `npx drizzle-kit generate` after schema changes, `npx
+drizzle-kit migrate` to apply them.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Support
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Found a bug or have a question? Open an issue:
+https://github.com/TimmyAmant/marquee/issues
