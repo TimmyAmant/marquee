@@ -17,20 +17,26 @@ async function tmdbFetch<T>(
   path: string,
   params: Record<string, string | number | undefined> = {},
 ): Promise<T> {
-  const bearerToken = await getTmdbAccessToken();
+  const savedToken = await getTmdbAccessToken();
   const apiKey = process.env.TMDB_API_KEY;
-  if (!bearerToken && !apiKey) {
+  if (!savedToken && !apiKey) {
     throw new Error(
       "Set a TMDb access token in Settings, or TMDB_ACCESS_TOKEN/TMDB_API_KEY in the environment",
     );
   }
 
+  // The saved-in-Settings slot accepts either TMDb credential shape (see
+  // verifyTmdbAccessToken) — a v4 token (JWT, contains dots) goes as a Bearer
+  // header, a v3 key (32-char hex) only works as an `?api_key=` param.
+  const bearerToken = savedToken?.includes(".") ? savedToken : undefined;
+  const queryApiKey = savedToken && !bearerToken ? savedToken : apiKey;
+
   const url = new URL(`${TMDB_API_BASE}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
   }
-  if (!bearerToken && apiKey) {
-    url.searchParams.set("api_key", apiKey);
+  if (!bearerToken && queryApiKey) {
+    url.searchParams.set("api_key", queryApiKey);
   }
 
   const res = await fetch(url, {
@@ -48,11 +54,23 @@ async function tmdbFetch<T>(
   return res.json() as Promise<T>;
 }
 
-/** Tests an access token directly (not the currently-configured one) against
- * TMDb's own auth-check endpoint, for the "test & save" flow in Settings. */
+/** Tests a credential directly (not the currently-configured one) against
+ * TMDb's own auth-check endpoint, for the "test & save" flow in Settings.
+ *
+ * TMDb issues two different credential shapes and this field accepts either:
+ * a v4 read access token (a JWT, contains dots) goes as an `Authorization:
+ * Bearer` header, while a v3 API key (32-char hex, no dots) only works as an
+ * `?api_key=` query param — sending a v3 key as a Bearer token always 401s. */
 export async function verifyTmdbAccessToken(token: string): Promise<boolean> {
-  const res = await fetch(`${TMDB_API_BASE}/authentication`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+  const isV4Token = token.includes(".");
+  const url = new URL(`${TMDB_API_BASE}/authentication`);
+  if (!isV4Token) url.searchParams.set("api_key", token);
+
+  const res = await fetch(url, {
+    headers: {
+      ...(isV4Token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: "application/json",
+    },
   });
   return res.ok;
 }

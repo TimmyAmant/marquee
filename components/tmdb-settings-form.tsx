@@ -40,7 +40,7 @@ export function TmdbSettingsForm({
 
       <form action={formAction} className="mt-4 flex flex-col gap-3">
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Access token
+          API key or access token
           <input
             type="password"
             name="accessToken"
@@ -48,7 +48,7 @@ export function TmdbSettingsForm({
             placeholder={
               connected
                 ? "•••••••••••••••• (enter to replace)"
-                : "From themoviedb.org/settings/api"
+                : "v3 API key or v4 access token, from themoviedb.org/settings/api"
             }
             className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
           />
