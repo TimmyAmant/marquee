@@ -1,5 +1,10 @@
 # Marquee
 
+> **🚧 Beta.** Actively developed and tested daily against a real Plex/Sonarr/Radarr
+> setup, but still early — expect rough edges, schema changes between updates,
+> and the occasional bug. Back up your database before updating. Found something
+> broken? [Open an issue](https://github.com/TimmyAmant/marquee/issues).
+
 A self-hosted dashboard that ties your media metadata together with what you
 actually own. Look up any actor, studio, or franchise, see instantly whether
 it's already in your Plex library or being downloaded, and send anything
