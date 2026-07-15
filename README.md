@@ -130,10 +130,27 @@ Visit `http://<your-server-ip>:3000`. First visit creates the admin account
 (one-time setup, no public signup after); connect Plex/Sonarr/Radarr from
 **Settings → Integrations** once you're in.
 
-**On Unraid:** install the **Compose Manager** plugin from Community
-Applications, point it at this repo's `docker-compose.yml`. Change
-`APP_PORT`/`POSTGRES_PORT` in `.env` first if they collide with something
-else you're running.
+## Unraid
+
+Two ways to run it on Unraid, pick one:
+
+**Option A — Compose Manager (simplest, runs Postgres for you)**
+Install the **Compose Manager** plugin from Community Applications, point it
+at this repo's `docker-compose.yml`. Change `APP_PORT`/`POSTGRES_PORT` in
+`.env` first if they collide with something else you're running.
+
+**Option B — native Community Applications template**
+1. In the **Apps** tab, go to **Settings → Template Repositories** and add:
+   `https://github.com/TimmyAmant/marquee`
+2. Install a Postgres container first if you don't already have one (the
+   official `postgres` CA template works fine) — Marquee needs its own
+   database and this template doesn't include one.
+3. Search **Apps** for "marquee" and install it, filling in `DATABASE_URL`
+   (pointing at the Postgres container from step 2) and the other fields
+   the template asks for — same variables as the `.env` table above.
+
+The template lives at
+[`unraid-templates/marquee.xml`](unraid-templates/marquee.xml) in this repo.
 
 ## Local development
 

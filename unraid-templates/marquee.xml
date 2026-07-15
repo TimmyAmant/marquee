@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>marquee</Name>
+  <Repository>timmyamant/marquee:latest</Repository>
+  <Registry>https://hub.docker.com/r/timmyamant/marquee</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/TimmyAmant/marquee/issues</Support>
+  <Project>https://github.com/TimmyAmant/marquee</Project>
+  <Overview>Self-hosted media metadata dashboard - TMDb + Plex + Sonarr/Radarr. Look up any actor, studio, or franchise, see instantly whether it's already in your Plex library or being downloaded, and send anything missing straight to Sonarr or Radarr.
+
+REQUIRES A POSTGRES DATABASE. This template runs only the Marquee app itself - install a Postgres container first (the official "postgres" Community Applications template works fine), then set DATABASE_URL below to point at it, e.g. postgres://marquee:YOURPASSWORD@POSTGRES_CONTAINER_IP:5432/marquee
+
+First visit after install creates the one-time admin account. Full setup instructions: https://github.com/TimmyAmant/marquee#readme</Overview>
+  <Category>MediaApp:Video Tools:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/TimmyAmant/marquee/main/unraid-templates/marquee.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/TimmyAmant/marquee/main/public/marquee-icon.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Beta>true</Beta>
+  <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="Port Marquee listens on" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="DATABASE_URL" Target="DATABASE_URL" Default="" Mode="" Description="Postgres connection string. Install a Postgres container first (e.g. the official 'postgres' CA template), then point this at it: postgres://USER:PASSWORD@CONTAINER_IP:5432/DBNAME" Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="AUTH_SECRET" Target="AUTH_SECRET" Default="" Mode="" Description="Any long random string. Generate with: openssl rand -base64 32" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="MASTER_ENCRYPTION_KEY" Target="MASTER_ENCRYPTION_KEY" Default="" Mode="" Description="Base64 32-byte key used to encrypt saved Sonarr/Radarr/Plex credentials. Generate with: openssl rand -base64 32 -- BACK THIS UP, losing it makes saved credentials undecryptable." Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="AUTH_TRUST_HOST" Target="AUTH_TRUST_HOST" Default="true" Mode="" Description="Leave as true for LAN access without a fixed domain" Type="Variable" Display="advanced" Required="true" Mask="false">true</Config>
+  <Config Name="TMDB_API_KEY" Target="TMDB_API_KEY" Default="" Mode="" Description="From themoviedb.org/settings/api. Can also be set later from within the app: Settings -> Integrations." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="TMDB_ACCESS_TOKEN" Target="TMDB_ACCESS_TOKEN" Default="" Mode="" Description="Alternative to TMDB_API_KEY (TMDb v4 access token) - only need one of the two" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="TVDB_API_KEY" Target="TVDB_API_KEY" Default="" Mode="" Description="From thetvdb.com/api-information - used to cross-reference Sonarr's shows to TMDb" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="TVDB_PIN" Target="TVDB_PIN" Default="" Mode="" Description="From thetvdb.com/api-information" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+</Container>

@@ -13,6 +13,10 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon).*)",
+    // Auth/page-flow routes, Next.js internals, the code-generated
+    // icon/apple-icon routes, and anything under public/ (matched generically
+    // by file extension, rather than one exemption per filename, so a new
+    // static asset dropped in public/ doesn't silently get auth-gated too).
+    "/((?!api/auth|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
   ],
 };
