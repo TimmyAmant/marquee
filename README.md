@@ -1,52 +1,70 @@
 # Marquee
 
-Self-hosted media metadata and library dashboard. Browse TMDb, see what you
-already own via Plex, and add/monitor titles in Sonarr and Radarr — all in
-one place. Designed to run on your home network (Unraid, Synology, a spare
-box, whatever) alongside the Plex/Sonarr/Radarr you already have, not as a
-public-facing hosted service.
+A self-hosted dashboard that ties your media metadata together with what you
+actually own. Look up any actor, studio, or franchise, see instantly whether
+it's already in your Plex library or being downloaded, and send anything
+missing straight to Sonarr or Radarr — all from one page, without digging
+through three different apps.
 
-## Running it (Docker / Unraid)
+Runs on your home network (Unraid, Synology, a spare box, whatever) next to
+the Plex/Sonarr/Radarr you already have. Not a hosted service — your data,
+your server.
 
-1. Copy `.env.local.example` to `.env` (Docker Compose reads `.env` by
-   default) and fill in:
-   - `AUTH_SECRET` — any long random string (`openssl rand -base64 32`).
-   - `MASTER_ENCRYPTION_KEY` — a base64-encoded 32-byte key (`openssl rand
-     -base64 32`), used to encrypt your saved Sonarr/Radarr/Plex credentials
-     at rest. **Back this up** — if it's lost or changed, previously saved
-     integration credentials become undecryptable and will need to be
-     re-entered.
-   - `TMDB_ACCESS_TOKEN` (or `TMDB_API_KEY`) — from
-     [themoviedb.org](https://www.themoviedb.org/settings/api).
-   - `TVDB_API_KEY` / `TVDB_PIN` — from [thetvdb.com](https://thetvdb.com/api-information)
-     (used to cross-reference Sonarr's TVDB ids to TMDb).
-   - `POSTGRES_PASSWORD` — pick your own; there's no default, so Compose will
-     refuse to start until it's set. `POSTGRES_USER`/`POSTGRES_DB`/`POSTGRES_PORT`
-     are optional.
+## What it does
 
-2. Build and start everything:
+- **Browse & search** — full TMDb catalog, with genre/theme search (e.g.
+  "action" or "natural disaster") on top of the usual title/person/studio
+  search.
+- **Full filmographies & studio catalogs** — click an actor or a studio and
+  see everything they've ever made, cross-referenced against your library.
+- **Know what you own** — connect Plex once; every title shows Owned,
+  Downloading, Monitored, or Not Owned automatically.
+- **One-click add** — missing something? Send it straight to Sonarr or
+  Radarr without leaving the page.
+- **Franchises & crossovers** — movie collections (Harry Potter, Bond, etc.)
+  pulled straight from TMDb, plus a curated list for TV crossovers
+  (Arrowverse, 9-1-1, One Chicago, NCIS).
+- **Favorites** — star actors and studios to build a personal watchlist.
+- **Household accounts** — one admin setup, then add accounts for other
+  household members from Settings. No public signup.
 
-   ```bash
-   docker compose up -d --build
-   ```
+## Quick start (Docker)
 
-   This starts Postgres, runs pending database migrations automatically on
-   every start, and starts the app on port 3000 (override with `APP_PORT`).
+**Requirements:** Docker + Docker Compose, and free API keys from
+[TMDb](https://www.themoviedb.org/settings/api) and
+[TheTVDB](https://thetvdb.com/api-information) (both free, a couple minutes
+to sign up).
 
-3. Visit `http://<your-server-ip>:3000` — since no account exists yet,
-   you'll land on a one-time setup page to create the first (admin) account.
-   There's no public signup after that; add accounts for other household
-   members from **Settings → Add a household member** once you're signed in.
+```bash
+git clone https://github.com/TimmyAmant/marquee.git
+cd marquee
+cp .env.local.example .env
+```
 
-4. In **Settings → Integrations**, connect Plex (OAuth) and/or Sonarr/Radarr
-   (base URL + API key, both reachable from wherever the `app` container
-   runs — same LAN or same Docker network). A background sync keeps your
-   library status current automatically.
+Edit `.env` and fill in:
 
-On Unraid specifically: install the **Compose Manager** plugin (Community
-Applications), point it at this repo's `docker-compose.yml`, and set
-`POSTGRES_PORT`/`APP_PORT` if they'd collide with something else you're
-already running.
+| Variable | Where to get it |
+|---|---|
+| `POSTGRES_PASSWORD` | pick anything — Compose won't start without it |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32` — **back this up**, losing it makes saved Sonarr/Radarr/Plex credentials undecryptable |
+| `TMDB_API_KEY` (or `TMDB_ACCESS_TOKEN`) | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) — can also be set later from Settings → Integrations instead |
+| `TVDB_API_KEY` / `TVDB_PIN` | [thetvdb.com/api-information](https://thetvdb.com/api-information) |
+
+Then:
+
+```bash
+docker compose up -d --build
+```
+
+Visit `http://<your-server-ip>:3000`. First visit creates the admin account
+(one-time setup, no public signup after); connect Plex/Sonarr/Radarr from
+**Settings → Integrations** once you're in.
+
+**On Unraid:** install the **Compose Manager** plugin from Community
+Applications, point it at this repo's `docker-compose.yml`. Change
+`APP_PORT`/`POSTGRES_PORT` in `.env` first if they collide with something
+else you're running.
 
 ## Local development
 
@@ -57,10 +75,8 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-Drizzle migrations: `npx drizzle-kit generate` after schema changes, `npx
-drizzle-kit migrate` to apply them.
+Schema changes: `npx drizzle-kit generate` then `npx drizzle-kit migrate`.
 
 ## Support
 
-Found a bug or have a question? Open an issue:
-https://github.com/TimmyAmant/marquee/issues
+Found a bug or have a question? [Open an issue](https://github.com/TimmyAmant/marquee/issues).
