@@ -27,6 +27,10 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
   displayName: text("display_name"),
+  // Shared secret embedded in this user's Sonarr/Radarr webhook URLs
+  // (Settings > Integrations) — lazily generated the same way
+  // integrationCredentials.plexClientId is, on first need.
+  notificationWebhookSecret: text("notification_webhook_secret"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -235,6 +239,30 @@ export const arrStatusCache = pgTable(
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],
+);
+
+export const notificationEventTypeValues = ["grabbed", "downloaded"] as const;
+export type NotificationEventType = (typeof notificationEventTypeValues)[number];
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    title: text("title").notNull(),
+    eventType: text("event_type").notNull().$type<NotificationEventType>(),
+    message: text("message").notNull(),
+    read: boolean("read").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
+    check("notifications_event_type_check", sql`${table.eventType} in ('grabbed','downloaded')`),
+  ],
 );
 
 // Instance-wide settings (not per-user) — TMDb metadata is shared across

@@ -1,7 +1,7 @@
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { integrationCredentials } from "@/lib/db/schema";
+import { integrationCredentials, users } from "@/lib/db/schema";
 import type { ArrProvider } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
 
@@ -133,6 +133,39 @@ export async function getPlexCredential(userId: string): Promise<PlexCredential 
   });
 
   return { authToken, clientId: row.plexClientId };
+}
+
+/** The shared secret embedded in this user's Sonarr/Radarr webhook URLs
+ * (Settings > Integrations) — lazily created on first need, same pattern as
+ * getOrCreatePlexClientId above. One secret covers both providers since the
+ * URL path already identifies which provider a request is for. */
+export async function getOrCreateWebhookSecret(userId: string): Promise<string> {
+  const [row] = await db
+    .select({ notificationWebhookSecret: users.notificationWebhookSecret })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (row?.notificationWebhookSecret) return row.notificationWebhookSecret;
+
+  const secret = randomBytes(24).toString("hex");
+  await db.update(users).set({ notificationWebhookSecret: secret }).where(eq(users.id, userId));
+  return secret;
+}
+
+export async function regenerateWebhookSecret(userId: string): Promise<string> {
+  const secret = randomBytes(24).toString("hex");
+  await db.update(users).set({ notificationWebhookSecret: secret }).where(eq(users.id, userId));
+  return secret;
+}
+
+export async function getWebhookSecret(userId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ notificationWebhookSecret: users.notificationWebhookSecret })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return row?.notificationWebhookSecret ?? null;
 }
 
 export async function getOrCreatePlexClientId(userId: string): Promise<string> {

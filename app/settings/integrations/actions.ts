@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { updateArrDefaults, upsertArrCredential } from "@/lib/integrations/credentials";
+import { updateArrDefaults, upsertArrCredential, regenerateWebhookSecret } from "@/lib/integrations/credentials";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { arrProviderValues, type ArrProvider } from "@/lib/db/schema";
@@ -86,5 +86,16 @@ export async function saveArrDefaults(provider: ArrProvider, formData: FormData)
 
   await updateArrDefaults(session.user.id, provider, { rootFolderPath, qualityProfileId });
   revalidatePath("/settings/integrations");
+}
+
+export type RegenerateWebhookSecretState = { secret?: string; error?: string };
+
+export async function regenerateWebhookSecretAction(): Promise<RegenerateWebhookSecretState> {
+  const session = await auth();
+  if (!session?.user) return { error: "You must be signed in." };
+
+  const secret = await regenerateWebhookSecret(session.user.id);
+  revalidatePath("/settings/integrations");
+  return { secret };
 }
 

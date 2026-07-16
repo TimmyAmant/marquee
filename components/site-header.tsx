@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 export async function SiteHeader() {
   const session = await auth();
@@ -38,6 +39,8 @@ export async function SiteHeader() {
               Favorites
             </Link>
           )}
+
+          {session?.user && <NotificationsBell />}
 
           {session?.user ? (
             <Link
