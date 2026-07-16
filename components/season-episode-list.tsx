@@ -1,5 +1,7 @@
-import Link from "next/link";
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb/client";
 import type { SeasonCompleteness } from "@/lib/integrations/status";
@@ -15,35 +17,28 @@ export function SeasonSelector({
   basePath: string;
   completeness?: SeasonCompleteness[];
 }) {
+  const router = useRouter();
   const real = seasons.filter((s) => s.episode_count > 0);
   if (real.length === 0) return null;
 
   const completenessBySeason = new Map(completeness?.map((c) => [c.seasonNumber, c]));
 
   return (
-    <div className="flex flex-wrap gap-1 rounded-full border border-border p-1 text-xs">
+    <select
+      value={selectedSeason}
+      onChange={(e) => router.push(`${basePath}?season=${e.target.value}`)}
+      className="rounded-full border border-border bg-bg-0 px-3.5 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent"
+    >
       {real.map((season) => {
         const stats = completenessBySeason.get(season.season_number);
         return (
-          <Link
-            key={season.season_number}
-            href={`${basePath}?season=${season.season_number}`}
-            className={`rounded-full px-3 py-1.5 transition-colors ${
-              season.season_number === selectedSeason
-                ? "bg-accent text-bg-0"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
+          <option key={season.season_number} value={season.season_number}>
             {season.name}
-            {stats && (
-              <span className="ml-1.5 opacity-80">
-                {stats.have}/{stats.total}
-              </span>
-            )}
-          </Link>
+            {stats ? ` (${stats.have}/${stats.total})` : ""}
+          </option>
         );
       })}
-    </div>
+    </select>
   );
 }
 
