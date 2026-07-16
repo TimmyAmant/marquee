@@ -3,6 +3,7 @@ import { PosterGrid } from "@/components/poster-grid";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
+import { AddAllButton } from "@/components/add-all-button";
 import type { MediaType } from "@/lib/db/schema";
 
 export type FranchiseItem = {
@@ -37,9 +38,13 @@ export function FranchiseRow({
 }) {
   if (items.length === 0) return null;
 
+  const missingItems = items
+    .filter((item) => !statusMap.has(`${item.mediaType}:${item.tmdbId}`) && arrConfigured?.[item.mediaType])
+    .map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId }));
+
   return (
     <section>
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <h2 className="font-display text-xl text-text-primary">{title}</h2>
         {showFavorite && collectionId !== undefined && (
           <FavoriteButton
@@ -48,6 +53,7 @@ export function FranchiseRow({
             initialFavorited={collectionFavorited ?? false}
           />
         )}
+        <AddAllButton items={missingItems} />
       </div>
       <PosterGrid>
         {items.map((item) => {
