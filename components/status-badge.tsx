@@ -12,8 +12,8 @@ const STATUS_CONFIG: Record<LibraryStatus, { label: string; compactLabel: string
     className: "bg-tracked-bg text-tracked border-tracked/30",
   },
   tracked_monitored: {
-    label: "Monitored",
-    compactLabel: "Monitored",
+    label: "Missing",
+    compactLabel: "Missing",
     className: "bg-tracked-bg text-tracked border-tracked/30",
   },
   untracked: {

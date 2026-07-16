@@ -52,13 +52,18 @@ const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   all: "All",
   owned: "Owned",
   tracked_downloading: "Downloading",
-  tracked_monitored: "Monitored",
+  tracked_monitored: "Missing",
   untracked: "Not owned",
 };
 
+// Only these are offered as filter chips — "untracked" rows never actually
+// appear in the library (getUserLibrary drops them; see isDroppedArrRow), so
+// showing it as a tab was always an empty dead end.
+const VISIBLE_STATUS_FILTERS: StatusFilter[] = ["all", "owned", "tracked_downloading", "tracked_monitored"];
+
 const VALID_SORT: SortOrder[] = ["newest", "oldest", "az", "recent"];
 const VALID_TYPE: TypeFilter[] = ["all", "movie", "tv"];
-const VALID_STATUS: StatusFilter[] = ["all", "owned", "tracked_downloading", "tracked_monitored", "untracked"];
+const VALID_STATUS: StatusFilter[] = VISIBLE_STATUS_FILTERS;
 
 function sortEntries(entries: MediaEntry[], order: SortOrder): MediaEntry[] {
   const sorted = [...entries];
@@ -225,7 +230,7 @@ export function MediaList({
 
           {showStatusFilter && (
             <div className="flex gap-1 rounded-full border border-border p-1 text-xs">
-              {(Object.keys(STATUS_FILTER_LABELS) as StatusFilter[]).map((status) => (
+              {VISIBLE_STATUS_FILTERS.map((status) => (
                 <button
                   key={status}
                   onClick={() => {

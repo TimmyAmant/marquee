@@ -39,14 +39,13 @@ export function TitleHero({
   return (
     <div className="relative">
       {backdrop && (
-        <div className="grain-overlay absolute inset-0 -z-10 h-[420px] overflow-hidden">
-          <Image src={backdrop} alt="" fill priority className="object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg-0 via-bg-0/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-bg-0/40 via-transparent to-transparent" />
+        <div className="grain-overlay absolute inset-0 -z-10 h-[380px] overflow-hidden">
+          <Image src={backdrop} alt="" fill priority className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-0 via-bg-0/10 to-transparent" />
         </div>
       )}
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-20 pb-4 sm:flex-row">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-4 pt-[220px] sm:flex-row">
         <div className="relative aspect-[2/3] w-56 shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-2xl ring-1 ring-border-strong">
           {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
         </div>
