@@ -104,7 +104,6 @@ export async function getQueuedMovieIds(config: ArrConfig): Promise<Set<number>>
     config,
     "/queue?pageSize=250",
   );
-  console.log("[radarr-queue-debug] raw records:", JSON.stringify(res.records));
   return new Set(res.records.map((r) => r.movieId as number));
 }
 

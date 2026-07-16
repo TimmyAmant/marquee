@@ -17,7 +17,6 @@ export function SyncNowButton() {
       </button>
       {state?.success && <span className="text-xs text-owned">Synced.</span>}
       {state?.error && <span className="text-xs text-red-400">{state.error}</span>}
-      {state?.debug && <span className="text-xs text-text-muted">{state.debug}</span>}
     </form>
   );
 }

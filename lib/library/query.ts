@@ -122,9 +122,17 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       )
       .where(inArray(plexLibraryItems.plexServerId, plexServerIds));
 
-    // Plex takes precedence: overwrite any arr-sourced entry for the same title.
+    // Plex takes precedence over "owned"/"monitored" arr entries — but not
+    // over an active download: Radarr can be re-grabbing a title Plex
+    // already has an (older) file for, and "Downloading" is the more useful
+    // status to surface until the new file lands.
     for (const { title, sizeBytes, addedAt } of plexRows) {
       const key = `${title.mediaType}:${title.tmdbId}`;
+      const existing = byKey.get(key);
+      if (existing?.status === "tracked_downloading") {
+        byKey.set(key, { ...existing, sizeBytes, addedAt });
+        continue;
+      }
       byKey.set(key, {
         titleId: title.id,
         mediaType: title.mediaType,
@@ -219,7 +227,10 @@ export async function getLibraryStatusMap(
         ),
       );
     for (const row of rows) {
-      if (row.tmdbId != null) map.set(`${row.mediaType}:${row.tmdbId}`, "owned");
+      if (row.tmdbId == null) continue;
+      const key = `${row.mediaType}:${row.tmdbId}`;
+      if (map.get(key) === "tracked_downloading") continue;
+      map.set(key, "owned");
     }
   }
 

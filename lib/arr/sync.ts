@@ -24,10 +24,7 @@ export async function syncArrLibrary(
   if (provider === "radarr") {
     const [movies, queuedIds] = await Promise.all([
       radarr.getAllMovies(config),
-      radarr.getQueuedMovieIds(config).catch((err) => {
-        console.error("[radarr-queue-debug] failed:", err);
-        return new Set<number>();
-      }),
+      radarr.getQueuedMovieIds(config).catch(() => new Set<number>()),
     ]);
     for (const movie of movies) {
       await getOrFetchTitle("movie", movie.tmdbId).catch(() => null);
