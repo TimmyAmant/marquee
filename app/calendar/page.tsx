@@ -52,9 +52,15 @@ export default async function CalendarPage({
   today.setHours(0, 0, 0, 0);
 
   const { month: monthQuery } = await searchParams;
-  const [queryYear, queryMonth] = (monthQuery ?? "").split("-").map(Number);
-  const year = Number.isFinite(queryYear) ? queryYear : today.getFullYear();
-  const monthIndex = Number.isFinite(queryMonth) ? queryMonth - 1 : today.getMonth();
+  let year = today.getFullYear();
+  let monthIndex = today.getMonth();
+  if (monthQuery) {
+    const [queryYear, queryMonth] = monthQuery.split("-").map(Number);
+    if (Number.isFinite(queryYear) && Number.isFinite(queryMonth)) {
+      year = queryYear;
+      monthIndex = queryMonth - 1;
+    }
+  }
 
   const firstOfMonth = new Date(year, monthIndex, 1);
   const lastOfMonth = new Date(year, monthIndex + 1, 0);
