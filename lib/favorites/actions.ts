@@ -46,6 +46,11 @@ export async function toggleFavorite(
     revalidatePath(`/${entityType}/${tmdbId}`);
   } else if (entityType === "movie" || entityType === "tv") {
     revalidatePath(`/title/${entityType}/${tmdbId}`);
+  } else if (entityType === "collection") {
+    // A collection's favorite button can appear on any movie in that
+    // franchise's title page — there's no single dynamic segment to target,
+    // so revalidate every page matching the route pattern instead.
+    revalidatePath("/title/[type]/[id]", "page");
   }
   revalidatePath("/favorites");
   return { favorited };

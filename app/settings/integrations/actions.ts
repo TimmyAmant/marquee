@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { getArrCredential, updateArrDefaults, upsertArrCredential } from "@/lib/integrations/credentials";
+import { updateArrDefaults, upsertArrCredential } from "@/lib/integrations/credentials";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { arrProviderValues, type ArrProvider } from "@/lib/db/schema";
@@ -88,9 +88,3 @@ export async function saveArrDefaults(provider: ArrProvider, formData: FormData)
   revalidatePath("/settings/integrations");
 }
 
-export async function getExistingArrCredential(provider: ArrProvider) {
-  const session = await auth();
-  if (!session?.user) return null;
-  if (!isArrProvider(provider)) return null;
-  return getArrCredential(session.user.id, provider);
-}

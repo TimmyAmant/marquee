@@ -52,7 +52,7 @@ export async function unmonitorTitle(
 
   await db
     .update(arrStatusCache)
-    .set({ monitored: false, checkedAt: new Date() })
+    .set({ monitored: false, status: "untracked", checkedAt: new Date() })
     .where(
       and(
         eq(arrStatusCache.userId, session.user.id),
