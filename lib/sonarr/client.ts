@@ -30,6 +30,7 @@ export function testConnection(config: ArrConfig) {
 export interface SonarrRootFolder {
   id: number;
   path: string;
+  freeSpace?: number;
 }
 
 export function getRootFolders(config: ArrConfig) {

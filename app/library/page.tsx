@@ -10,6 +10,7 @@ import { MediaList, type MediaEntry } from "@/components/media-list";
 import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
+import { getDiskSpaceSummary } from "@/lib/integrations/disk-space";
 
 export default async function LibraryPage() {
   const session = await auth();
@@ -42,7 +43,12 @@ export default async function LibraryPage() {
     );
   }
 
-  await Promise.all([syncPlexLibraryIfStale(userId), syncArrLibraryIfStale(userId)]);
+  const [, , diskSpace] = await Promise.all([
+    syncPlexLibraryIfStale(userId),
+    syncArrLibraryIfStale(userId),
+    getDiskSpaceSummary(userId).catch(() => []),
+  ]);
+  const totalFreeBytes = diskSpace.reduce((sum, d) => sum + d.freeSpace, 0);
 
   const library = await getUserLibrary(userId);
   const owned = library.filter((i) => i.status === "owned");
@@ -115,6 +121,14 @@ export default async function LibraryPage() {
                 {formatBytes(summary.totalBytes)}
               </span>
               <span className="ml-1.5 text-text-muted">on disk</span>
+            </div>
+          )}
+          {totalFreeBytes > 0 && (
+            <div>
+              <span className="font-display text-2xl text-text-primary">
+                {formatBytes(totalFreeBytes)}
+              </span>
+              <span className="ml-1.5 text-text-muted">free</span>
             </div>
           )}
         </div>
