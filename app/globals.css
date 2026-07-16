@@ -78,11 +78,12 @@ h3,
   color: var(--marquee-bg-0);
 }
 
-/* subtle film-grain texture for hero/backdrop surfaces */
-.grain-overlay {
-  position: relative;
-}
-
+/* subtle film-grain texture for hero/backdrop surfaces — the containing
+   element already establishes its own positioning context (e.g. Tailwind's
+   `absolute` in title-hero.tsx); setting `position: relative` here too used
+   to silently override that, since this plain global rule sits outside
+   Tailwind's cascade layer and beats layered utilities regardless of source
+   order or specificity. */
 .grain-overlay::after {
   content: "";
   position: absolute;
