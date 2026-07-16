@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { CreateUserForm } from "./create-user-form";
+import { HouseholdMembersList } from "./household-members-list";
 import { listHouseholdMembers } from "./users-actions";
 
 export default async function AccountSettingsPage() {
@@ -49,23 +50,7 @@ export default async function AccountSettingsPage() {
         Everyone with an account on this Marquee instance.
       </p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-        <ul className="divide-y divide-border">
-          {members.map((member) => (
-            <li key={member.id} className="flex items-center justify-between px-6 py-4 text-sm">
-              <div>
-                <p className="text-text-primary">{member.displayName || member.email}</p>
-                {member.displayName && (
-                  <p className="mt-0.5 text-text-muted">{member.email}</p>
-                )}
-              </div>
-              {member.id === session.user.id && (
-                <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
-                  You
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <HouseholdMembersList members={members} currentUserId={session.user.id} />
       </div>
 
       <h2 className="mt-10 font-display text-xl text-text-primary">Add a household member</h2>
