@@ -23,6 +23,7 @@ export type MediaEntry = {
   sizeBytes?: number | null;
   addedAt?: string | null;
   monitored?: boolean | null;
+  filePath?: string | null;
 };
 
 type SortOrder = "newest" | "oldest" | "az" | "recent";
@@ -346,6 +347,7 @@ export function MediaList({
                 <th className="px-4 py-3 font-medium">Year</th>
                 <th className="px-4 py-3 font-medium">Source</th>
                 <th className="px-4 py-3 font-medium">Size</th>
+                <th className="px-4 py-3 font-medium">Location</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -368,6 +370,12 @@ export function MediaList({
                   </td>
                   <td className="px-4 py-3 text-text-secondary">
                     {entry.sizeBytes ? formatBytes(entry.sizeBytes) : "—"}
+                  </td>
+                  <td
+                    className="max-w-xs truncate px-4 py-3 font-mono text-xs text-text-secondary"
+                    title={entry.filePath ?? undefined}
+                  >
+                    {entry.filePath || "—"}
                   </td>
                 </tr>
               ))}

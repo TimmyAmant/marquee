@@ -97,11 +97,15 @@ export interface PlexMetadataItem {
   addedAt: number;
   Guid?: { id: string }[];
   guid?: string;
-  Media?: { Part?: { size?: number }[] }[];
+  Media?: { Part?: { size?: number; file?: string }[] }[];
 }
 
 export function getFileSize(item: PlexMetadataItem): number | null {
   return item.Media?.[0]?.Part?.[0]?.size ?? null;
+}
+
+export function getFilePath(item: PlexMetadataItem): string | null {
+  return item.Media?.[0]?.Part?.[0]?.file ?? null;
 }
 
 export async function getSectionItems(

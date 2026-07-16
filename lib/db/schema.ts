@@ -189,6 +189,7 @@ export const plexLibraryItems = pgTable(
     title: text("title"),
     addedAt: timestamp("added_at", { withTimezone: true }),
     sizeBytes: bigint("size_bytes", { mode: "number" }),
+    filePath: text("file_path"),
   },
   (table) => [
     unique().on(table.plexServerId, table.ratingKey),
@@ -236,6 +237,7 @@ export const arrStatusCache = pgTable(
     status: text("status"),
     monitored: boolean("monitored"),
     sizeBytes: bigint("size_bytes", { mode: "number" }),
+    filePath: text("file_path"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],

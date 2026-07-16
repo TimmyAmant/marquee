@@ -16,6 +16,7 @@ export type LibraryItem = {
   sizeBytes: number | null;
   addedAt: Date | null;
   monitored: boolean | null;
+  filePath: string | null;
 };
 
 function toYear(row: { releaseDate: string | null; firstAirDate: string | null }): string | null {
@@ -48,6 +49,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         status: arrStatusCache.status,
         sizeBytes: arrStatusCache.sizeBytes,
         monitored: arrStatusCache.monitored,
+        filePath: arrStatusCache.filePath,
       })
       .from(arrStatusCache)
       .innerJoin(titles, and(eq(titles.mediaType, "movie"), eq(titles.tmdbId, arrStatusCache.externalId)))
@@ -58,13 +60,14 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         status: arrStatusCache.status,
         sizeBytes: arrStatusCache.sizeBytes,
         monitored: arrStatusCache.monitored,
+        filePath: arrStatusCache.filePath,
       })
       .from(arrStatusCache)
       .innerJoin(titles, and(eq(titles.mediaType, "tv"), eq(titles.tmdbId, arrStatusCache.externalId)))
       .where(and(eq(arrStatusCache.userId, userId), eq(arrStatusCache.provider, "sonarr"))),
   ]);
 
-  for (const { title, status, sizeBytes, monitored } of radarrRows) {
+  for (const { title, status, sizeBytes, monitored, filePath } of radarrRows) {
     if (isDroppedArrRow(status, monitored)) continue;
 
     const key = `${title.mediaType}:${title.tmdbId}`;
@@ -80,10 +83,11 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       sizeBytes,
       addedAt: null,
       monitored,
+      filePath,
     });
   }
 
-  for (const { title, status, sizeBytes, monitored } of sonarrRows) {
+  for (const { title, status, sizeBytes, monitored, filePath } of sonarrRows) {
     if (isDroppedArrRow(status, monitored)) continue;
 
     const key = `${title.mediaType}:${title.tmdbId}`;
@@ -99,6 +103,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       sizeBytes,
       addedAt: null,
       monitored,
+      filePath,
     });
   }
 
@@ -114,6 +119,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         title: titles,
         sizeBytes: plexLibraryItems.sizeBytes,
         addedAt: plexLibraryItems.addedAt,
+        filePath: plexLibraryItems.filePath,
       })
       .from(plexLibraryItems)
       .innerJoin(
@@ -126,7 +132,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
     // over an active download: Radarr can be re-grabbing a title Plex
     // already has an (older) file for, and "Downloading" is the more useful
     // status to surface until the new file lands.
-    for (const { title, sizeBytes, addedAt } of plexRows) {
+    for (const { title, sizeBytes, addedAt, filePath } of plexRows) {
       const key = `${title.mediaType}:${title.tmdbId}`;
       const existing = byKey.get(key);
       if (existing?.status === "tracked_downloading") {
@@ -145,6 +151,10 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         sizeBytes,
         addedAt,
         monitored: null,
+        // Plex only carries a single file path for movies (a show has one
+        // per episode, not one for the whole series) — fall back to
+        // whatever Sonarr already had cached for this title, if any.
+        filePath: filePath ?? existing?.filePath ?? null,
       });
     }
   }

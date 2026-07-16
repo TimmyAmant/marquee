@@ -50,6 +50,13 @@
       "when": 1784232412409,
       "tag": "0006_flashy_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784241227583,
+      "tag": "0007_spotty_abomination",
+      "breakpoints": true
     }
   ]
 }

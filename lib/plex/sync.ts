@@ -80,6 +80,11 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
         }
 
         const sizeBytes = sizeByRatingKey.get(item.ratingKey) ?? null;
+        // A movie's own entry carries its one Media/Part directly. A show
+        // has no single file (it's one per episode) — that's covered by
+        // Sonarr's series folder path instead, preserved through the
+        // library merge rather than overwritten with null here.
+        const filePath = mediaType === "movie" ? plex.getFilePath(item) : null;
 
         await db
           .insert(plexLibraryItems)
@@ -94,6 +99,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
             title: item.title,
             addedAt: item.addedAt ? new Date(item.addedAt * 1000) : null,
             sizeBytes,
+            filePath,
           })
           .onConflictDoUpdate({
             target: [plexLibraryItems.plexServerId, plexLibraryItems.ratingKey],
@@ -106,6 +112,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
               title: item.title,
               addedAt: item.addedAt ? new Date(item.addedAt * 1000) : null,
               sizeBytes,
+              filePath,
             },
           });
         itemCount++;

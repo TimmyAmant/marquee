@@ -33,6 +33,7 @@ export async function syncArrLibrary(
       // show as merely "monitored" until the download completes.
       const status = queuedIds.has(movie.id) ? "tracked_downloading" : deriveRadarrStatus(movie);
       const sizeBytes = movie.movieFile?.size ?? null;
+      const filePath = movie.movieFile?.path ?? movie.path ?? null;
       seenTmdbIds.push(movie.tmdbId);
 
       await db
@@ -45,11 +46,19 @@ export async function syncArrLibrary(
           status,
           monitored: movie.monitored,
           sizeBytes,
+          filePath,
           checkedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: [arrStatusCache.userId, arrStatusCache.provider, arrStatusCache.externalId],
-          set: { arrId: movie.id, status, monitored: movie.monitored, sizeBytes, checkedAt: new Date() },
+          set: {
+            arrId: movie.id,
+            status,
+            monitored: movie.monitored,
+            sizeBytes,
+            filePath,
+            checkedAt: new Date(),
+          },
         });
       count++;
     }
@@ -76,6 +85,7 @@ export async function syncArrLibrary(
       // "monitored" for the entire 15-minute window between syncs.
       const status = queuedIds.has(series.id) ? "tracked_downloading" : deriveSonarrStatus(series);
       const sizeBytes = series.statistics?.sizeOnDisk ?? null;
+      const filePath = series.path ?? null;
 
       await db
         .insert(arrStatusCache)
@@ -87,11 +97,19 @@ export async function syncArrLibrary(
           status,
           monitored: series.monitored,
           sizeBytes,
+          filePath,
           checkedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: [arrStatusCache.userId, arrStatusCache.provider, arrStatusCache.externalId],
-          set: { arrId: series.id, status, monitored: series.monitored, sizeBytes, checkedAt: new Date() },
+          set: {
+            arrId: series.id,
+            status,
+            monitored: series.monitored,
+            sizeBytes,
+            filePath,
+            checkedAt: new Date(),
+          },
         });
       count++;
     }
