@@ -1,25 +1,27 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getArrCredential } from "@/lib/integrations/credentials";
-import { getUpcomingReleases } from "@/lib/calendar/query";
-import { PosterCard } from "@/components/poster-card";
-import { PosterGrid } from "@/components/poster-grid";
+import { getUpcomingReleases, type CalendarEntry } from "@/lib/calendar/query";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 
-const DAYS_AHEAD = 60;
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MAX_VISIBLE_PER_DAY = 4;
 
-function formatDateHeader(dateOnly: string): string {
-  const date = new Date(`${dateOnly}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((date.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Tomorrow";
-  return date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-export default async function CalendarPage() {
+function monthParam(year: number, monthIndex: number): string {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -46,50 +48,133 @@ export default async function CalendarPage() {
     );
   }
 
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + DAYS_AHEAD);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const entries = await getUpcomingReleases(userId, start, end);
+  const { month: monthQuery } = await searchParams;
+  const [queryYear, queryMonth] = (monthQuery ?? "").split("-").map(Number);
+  const year = Number.isFinite(queryYear) ? queryYear : today.getFullYear();
+  const monthIndex = Number.isFinite(queryMonth) ? queryMonth - 1 : today.getMonth();
 
-  const byDate = new Map<string, typeof entries>();
+  const firstOfMonth = new Date(year, monthIndex, 1);
+  const lastOfMonth = new Date(year, monthIndex + 1, 0);
+
+  const gridStart = new Date(firstOfMonth);
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+  const gridEnd = new Date(lastOfMonth);
+  gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()));
+  gridEnd.setHours(23, 59, 59, 999);
+
+  const days: Date[] = [];
+  for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d));
+  }
+
+  const entries = await getUpcomingReleases(userId, gridStart, gridEnd);
+  const byDate = new Map<string, CalendarEntry[]>();
   for (const entry of entries) {
     const existing = byDate.get(entry.date);
     if (existing) existing.push(entry);
     else byDate.set(entry.date, [entry]);
   }
-  const dates = [...byDate.keys()].sort();
+
+  const prevMonthDate = new Date(year, monthIndex - 1, 1);
+  const nextMonthDate = new Date(year, monthIndex + 1, 1);
+  const todayKey = toDateKey(today);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="font-display text-3xl text-text-primary">Calendar</h1>
-      <p className="mt-2 text-text-secondary">
-        Upcoming releases and air dates for what you&apos;re monitoring, over the next {DAYS_AHEAD} days.
-      </p>
-
-      {dates.length === 0 ? (
-        <p className="mt-10 text-text-secondary">Nothing on the calendar in this window.</p>
-      ) : (
-        <div className="mt-10 flex flex-col gap-10">
-          {dates.map((date) => (
-            <section key={date}>
-              <h2 className="mb-4 font-display text-xl text-text-primary">{formatDateHeader(date)}</h2>
-              <PosterGrid>
-                {byDate.get(date)!.map((entry, i) => (
-                  <PosterCard
-                    key={`${entry.mediaType}-${entry.tmdbId}-${i}`}
-                    href={`/title/${entry.mediaType}/${entry.tmdbId}`}
-                    posterPath={entry.posterPath}
-                    name={entry.name}
-                    subtitle={entry.subtitle}
-                  />
-                ))}
-              </PosterGrid>
-            </section>
-          ))}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-text-primary">Calendar</h1>
+          <p className="mt-2 text-text-secondary">
+            {firstOfMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+          </p>
         </div>
-      )}
+        <div className="flex items-center gap-2 text-sm">
+          <Link
+            href="/calendar"
+            className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
+          >
+            Today
+          </Link>
+          <Link
+            href={`/calendar?month=${monthParam(prevMonthDate.getFullYear(), prevMonthDate.getMonth())}`}
+            className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
+          >
+            ← Prev
+          </Link>
+          <Link
+            href={`/calendar?month=${monthParam(nextMonthDate.getFullYear(), nextMonthDate.getMonth())}`}
+            className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
+          >
+            Next →
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-8 grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-border bg-border">
+        {WEEKDAY_LABELS.map((label) => (
+          <div key={label} className="bg-bg-1 px-2 py-2 text-center text-xs font-medium text-text-secondary">
+            {label}
+          </div>
+        ))}
+
+        {days.map((day) => {
+          const key = toDateKey(day);
+          const dayEntries = byDate.get(key) ?? [];
+          const inCurrentMonth = day.getMonth() === monthIndex;
+          const isToday = key === todayKey;
+          const visible = dayEntries.slice(0, MAX_VISIBLE_PER_DAY);
+          const overflowCount = dayEntries.length - visible.length;
+
+          return (
+            <div
+              key={key}
+              className={`flex min-h-28 flex-col gap-1 bg-bg-0 p-1.5 sm:min-h-36 ${
+                inCurrentMonth ? "" : "opacity-40"
+              }`}
+            >
+              <span
+                className={`self-start rounded-full px-1.5 text-xs ${
+                  isToday ? "bg-accent font-medium text-bg-0" : "text-text-secondary"
+                }`}
+              >
+                {day.getDate()}
+              </span>
+              <div className="flex flex-1 flex-col gap-1 overflow-hidden">
+                {visible.map((entry, i) => {
+                  const src = tmdbImageUrl(entry.posterPath, "w92");
+                  return (
+                    <Link
+                      key={`${entry.mediaType}-${entry.tmdbId}-${i}`}
+                      href={`/title/${entry.mediaType}/${entry.tmdbId}`}
+                      title={`${entry.name} — ${entry.subtitle}`}
+                      className="flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:bg-bg-1"
+                    >
+                      {src && (
+                        <Image
+                          src={src}
+                          alt=""
+                          width={16}
+                          height={24}
+                          className="h-6 w-4 shrink-0 rounded-sm object-cover"
+                        />
+                      )}
+                      <span className="truncate text-[11px] leading-tight text-text-primary">
+                        {entry.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+                {overflowCount > 0 && (
+                  <span className="px-1 text-[10px] text-text-secondary">+{overflowCount} more</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
