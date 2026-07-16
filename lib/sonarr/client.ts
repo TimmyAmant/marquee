@@ -134,6 +134,38 @@ export async function getQueuedSeriesIds(config: ArrConfig): Promise<Set<number>
   return new Set(res.records.map((r) => r.seriesId));
 }
 
+export interface SonarrCalendarEpisode {
+  id: number;
+  seriesId: number;
+  seasonNumber: number;
+  episodeNumber: number;
+  title: string;
+  airDateUtc?: string;
+  hasFile: boolean;
+  monitored: boolean;
+  series?: {
+    title: string;
+    tvdbId: number;
+    images?: { coverType: string; remoteUrl?: string; url?: string }[];
+  };
+}
+
+/** Episodes airing in the given window — the source of truth Sonarr itself
+ * tracks, rather than re-deriving air dates from TMDb. */
+export function getCalendar(
+  config: ArrConfig,
+  start: Date,
+  end: Date,
+): Promise<SonarrCalendarEpisode[]> {
+  const params = new URLSearchParams({
+    start: start.toISOString(),
+    end: end.toISOString(),
+    unmonitored: "true",
+    includeSeries: "true",
+  });
+  return sonarrFetch<SonarrCalendarEpisode[]>(config, `/calendar?${params.toString()}`);
+}
+
 export function addSeries(
   config: ArrConfig,
   input: {

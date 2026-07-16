@@ -40,6 +40,12 @@ export async function SiteHeader() {
             </Link>
           )}
 
+          {session?.user && (
+            <Link href="/calendar" className="transition-colors hover:text-text-primary">
+              Calendar
+            </Link>
+          )}
+
           {session?.user && <NotificationsBell />}
 
           {session?.user ? (

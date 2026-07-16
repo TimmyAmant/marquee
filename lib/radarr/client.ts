@@ -107,6 +107,24 @@ export async function getQueuedMovieIds(config: ArrConfig): Promise<Set<number>>
   return new Set(res.records.map((r) => r.movieId));
 }
 
+export interface RadarrCalendarMovie extends RadarrMovie {
+  inCinemas?: string;
+  physicalRelease?: string;
+  digitalRelease?: string;
+}
+
+/** Movies with a release date (cinema/physical/digital) falling in the given
+ * window — the source of truth Radarr itself tracks, rather than
+ * re-deriving release timing from TMDb. */
+export function getCalendar(config: ArrConfig, start: Date, end: Date): Promise<RadarrCalendarMovie[]> {
+  const params = new URLSearchParams({
+    start: start.toISOString(),
+    end: end.toISOString(),
+    unmonitored: "true",
+  });
+  return radarrFetch<RadarrCalendarMovie[]>(config, `/calendar?${params.toString()}`);
+}
+
 export function addMovie(
   config: ArrConfig,
   input: {
