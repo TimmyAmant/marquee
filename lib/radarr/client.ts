@@ -100,11 +100,11 @@ export async function setMovieMonitored(
  * last completed sync. Paged, but a single page comfortably covers any
  * realistic queue size for a self-hosted instance. */
 export async function getQueuedMovieIds(config: ArrConfig): Promise<Set<number>> {
-  const res = await radarrFetch<{ records: Record<string, unknown>[] }>(
+  const res = await radarrFetch<{ records: { movieId: number }[] }>(
     config,
     "/queue?pageSize=250",
   );
-  return new Set(res.records.map((r) => r.movieId as number));
+  return new Set(res.records.map((r) => r.movieId));
 }
 
 export function addMovie(
