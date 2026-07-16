@@ -14,9 +14,11 @@ export default auth((req) => {
 export const config = {
   matcher: [
     // Auth/page-flow routes, Next.js internals, the code-generated
-    // icon/apple-icon routes, and anything under public/ (matched generically
-    // by file extension, rather than one exemption per filename, so a new
-    // static asset dropped in public/ doesn't silently get auth-gated too).
-    "/((?!api/auth|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
+    // icon/apple-icon routes, anything under public/ (matched generically by
+    // file extension so a new static asset doesn't silently get auth-gated
+    // too), and the webhook ingestion endpoint — that one is called by
+    // Radarr/Sonarr directly (no session cookie) and authenticates itself
+    // via a per-user secret in the URL instead.
+    "/((?!api/auth|api/webhooks|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
   ],
 };
