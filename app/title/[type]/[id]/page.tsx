@@ -5,11 +5,11 @@ import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
 import { SimilarTitlesRow, type SimilarTitle } from "@/components/similar-titles-row";
 import { FranchiseRow, type FranchiseItem } from "@/components/franchise-row";
-import { SeasonSelector, EpisodeList } from "@/components/season-episode-list";
+import { SeasonAccordion } from "@/components/season-episode-list";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
-import { getTitleLibraryStatus, getSonarrSeasonBreakdown } from "@/lib/integrations/status";
+import { getTitleLibraryStatus, getSonarrSeasonCompleteness } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
-import { findTrailer, getTvSeasonDetails, getCollection } from "@/lib/tmdb/client";
+import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
@@ -18,13 +18,10 @@ import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 
 export default async function TitlePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ type: string; id: string }>;
-  searchParams: Promise<{ season?: string }>;
 }) {
   const { type, id } = await params;
-  const { season } = await searchParams;
   const tmdbId = Number(id);
   if ((type !== "movie" && type !== "tv") || !Number.isFinite(tmdbId)) notFound();
 
@@ -161,16 +158,10 @@ export default async function TitlePage({
       : [new Map(), new Set<number>(), false];
 
   const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
-  const defaultSeason = seasons.find((s) => s.season_number > 0)?.season_number ?? seasons[0]?.season_number ?? 1;
-  const selectedSeason = season !== undefined && Number.isFinite(Number(season)) ? Number(season) : defaultSeason;
-  const episodes =
-    type === "tv" && seasons.length > 0
-      ? await getTvSeasonDetails(tmdbId, selectedSeason).catch(() => null)
-      : null;
 
-  const sonarrBreakdown =
+  const seasonCompleteness =
     type === "tv" && seasons.length > 0 && session?.user
-      ? await getSonarrSeasonBreakdown(session.user.id, title.tvdbId, selectedSeason).catch(() => null)
+      ? await getSonarrSeasonCompleteness(session.user.id, title.tvdbId).catch(() => null)
       : null;
 
   return (
@@ -199,18 +190,12 @@ export default async function TitlePage({
       <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">
         {seasons.length > 0 && (
           <section>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-display text-xl text-text-primary">Episodes</h2>
-              <SeasonSelector
-                seasons={seasons}
-                selectedSeason={selectedSeason}
-                basePath={`/title/tv/${tmdbId}`}
-                completeness={sonarrBreakdown?.seasonCompleteness}
-              />
-            </div>
-            <EpisodeList
-              episodes={episodes?.episodes ?? []}
-              hasFileMap={sonarrBreakdown?.episodeHasFile}
+            <h2 className="mb-4 font-display text-xl text-text-primary">Episodes</h2>
+            <SeasonAccordion
+              seasons={seasons}
+              tmdbId={tmdbId}
+              tvdbId={title.tvdbId}
+              completeness={seasonCompleteness ?? undefined}
             />
           </section>
         )}
