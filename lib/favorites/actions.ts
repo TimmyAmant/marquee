@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { favorites } from "@/lib/db/schema";
 import type { FavoriteEntityType } from "@/lib/db/schema";
+import { getOrFetchTitle } from "@/lib/tmdb/cache";
 
 export type ToggleFavoriteState = { error?: string; favorited?: boolean };
 
@@ -31,9 +32,21 @@ export async function toggleFavorite(
   const favorited = deleted.length === 0;
   if (favorited) {
     await db.insert(favorites).values({ userId, entityType, tmdbId }).onConflictDoNothing();
+
+    // Movie/TV cards can be favorited from list pages (Discover, Search)
+    // that never call getOrFetchTitle themselves — make sure a local
+    // `titles` row exists so the Favorites page has something to join
+    // against, same as visiting the title page directly would.
+    if (entityType === "movie" || entityType === "tv") {
+      await getOrFetchTitle(entityType, tmdbId).catch(() => undefined);
+    }
   }
 
-  revalidatePath(`/${entityType}/${tmdbId}`);
+  if (entityType === "person" || entityType === "company") {
+    revalidatePath(`/${entityType}/${tmdbId}`);
+  } else if (entityType === "movie" || entityType === "tv") {
+    revalidatePath(`/title/${entityType}/${tmdbId}`);
+  }
   revalidatePath("/favorites");
   return { favorited };
 }

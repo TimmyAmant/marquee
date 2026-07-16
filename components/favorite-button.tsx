@@ -8,15 +8,37 @@ export function FavoriteButton({
   entityType,
   tmdbId,
   initialFavorited,
+  compact = false,
 }: {
   entityType: FavoriteEntityType;
   tmdbId: number;
   initialFavorited: boolean;
+  /** Icon-only, no label — for placement inline next to a poster card's
+   * year/subtitle line rather than as a standalone page-header action. */
+  compact?: boolean;
 }) {
   const action = toggleFavorite.bind(null, entityType, tmdbId);
   const [state, formAction, isPending] = useActionState(action, undefined);
 
   const favorited = state?.favorited ?? initialFavorited;
+
+  if (compact) {
+    return (
+      <form action={formAction}>
+        <button
+          type="submit"
+          disabled={isPending}
+          aria-pressed={favorited}
+          aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+          className={`flex h-5 w-5 items-center justify-center rounded-full text-sm leading-none transition-colors disabled:opacity-60 ${
+            favorited ? "text-accent" : "text-text-muted hover:text-text-primary"
+          }`}
+        >
+          {favorited ? "★" : "☆"}
+        </button>
+      </form>
+    );
+  }
 
   return (
     <form action={formAction}>

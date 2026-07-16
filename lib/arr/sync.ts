@@ -22,10 +22,16 @@ export async function syncArrLibrary(
   let unresolvedCount = 0;
 
   if (provider === "radarr") {
-    const movies = await radarr.getAllMovies(config);
+    const [movies, queuedIds] = await Promise.all([
+      radarr.getAllMovies(config),
+      radarr.getQueuedMovieIds(config).catch(() => new Set<number>()),
+    ]);
     for (const movie of movies) {
       await getOrFetchTitle("movie", movie.tmdbId).catch(() => null);
-      const status = deriveRadarrStatus(movie);
+      // The queue is real-time; file count/monitored flags only reflect the
+      // last sync, so a movie mid-download (no file yet) would otherwise
+      // show as merely "monitored" until the download completes.
+      const status = queuedIds.has(movie.id) ? "tracked_downloading" : deriveRadarrStatus(movie);
       const sizeBytes = movie.movieFile?.size ?? null;
       seenTmdbIds.push(movie.tmdbId);
 
@@ -48,7 +54,10 @@ export async function syncArrLibrary(
       count++;
     }
   } else {
-    const allSeries = await sonarr.getAllSeries(config);
+    const [allSeries, queuedIds] = await Promise.all([
+      sonarr.getAllSeries(config),
+      sonarr.getQueuedSeriesIds(config).catch(() => new Set<number>()),
+    ]);
     for (const series of allSeries) {
       const tmdbId = await resolveTmdbIdFromTvdbId(series.tvdbId);
       if (!tmdbId) {
@@ -61,7 +70,11 @@ export async function syncArrLibrary(
       seenTmdbIds.push(tmdbId);
 
       await getOrFetchTitle("tv", tmdbId).catch(() => null);
-      const status = deriveSonarrStatus(series);
+      // The queue is real-time; episode-file-count statistics only reflect
+      // the last sync and don't move until an episode finishes importing,
+      // so an in-progress download could otherwise show as merely
+      // "monitored" for the entire 15-minute window between syncs.
+      const status = queuedIds.has(series.id) ? "tracked_downloading" : deriveSonarrStatus(series);
       const sizeBytes = series.statistics?.sizeOnDisk ?? null;
 
       await db

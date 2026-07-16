@@ -123,6 +123,17 @@ export function getEpisodesBySeriesId(
   );
 }
 
+/** IDs of series with an active entry in Sonarr's download queue right now
+ * — a real-time signal, unlike file-count statistics which only reflect the
+ * last completed sync and only update once an episode finishes importing. */
+export async function getQueuedSeriesIds(config: ArrConfig): Promise<Set<number>> {
+  const res = await sonarrFetch<{ records: { seriesId: number }[] }>(
+    config,
+    "/queue?pageSize=250",
+  );
+  return new Set(res.records.map((r) => r.seriesId));
+}
+
 export function addSeries(
   config: ArrConfig,
   input: {

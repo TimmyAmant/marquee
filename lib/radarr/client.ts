@@ -95,6 +95,18 @@ export async function setMovieMonitored(
   });
 }
 
+/** IDs of movies with an active entry in Radarr's download queue right now
+ * — a real-time signal, unlike `hasFile`/`monitored` which only reflect the
+ * last completed sync. Paged, but a single page comfortably covers any
+ * realistic queue size for a self-hosted instance. */
+export async function getQueuedMovieIds(config: ArrConfig): Promise<Set<number>> {
+  const res = await radarrFetch<{ records: { movieId: number }[] }>(
+    config,
+    "/queue?pageSize=250",
+  );
+  return new Set(res.records.map((r) => r.movieId));
+}
+
 export function addMovie(
   config: ArrConfig,
   input: {

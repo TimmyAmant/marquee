@@ -3,6 +3,7 @@ import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { LibraryStatus } from "@/components/status-badge";
 import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";
+import { FavoriteButton } from "@/components/favorite-button";
 
 export function TitleHero({
   mediaType,
@@ -16,6 +17,7 @@ export function TitleHero({
   configured,
   file,
   links,
+  favorited,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -28,6 +30,8 @@ export function TitleHero({
   configured: boolean;
   file: { path: string; sizeBytes: number; quality?: string } | null;
   links: ExternalLinksData;
+  /** Omitted entirely (no button shown) when signed out. */
+  favorited?: boolean;
 }) {
   const backdrop = tmdbImageUrl(backdropPath, "original");
   const poster = tmdbImageUrl(posterPath, "w500");
@@ -49,7 +53,12 @@ export function TitleHero({
 
         <div className="flex flex-col justify-end">
           <h1 className="font-display text-4xl text-text-primary sm:text-5xl">{name}</h1>
-          {year && <p className="mt-2 text-text-secondary">{year}</p>}
+          <div className="mt-2 flex items-center gap-3">
+            {year && <p className="text-text-secondary">{year}</p>}
+            {favorited !== undefined && (
+              <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
+            )}
+          </div>
 
           <div className="mt-4">
             <AddToLibraryButton

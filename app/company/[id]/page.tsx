@@ -8,7 +8,7 @@ import { getOrFetchCompanyWithCatalog } from "@/lib/tmdb/cache";
 import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
-import { isFavorited } from "@/lib/favorites/query";
+import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
 import type { titles } from "@/lib/db/schema";
 
 type TitleRow = typeof titles.$inferSelect;
@@ -88,6 +88,25 @@ export default async function CompanyPage({
     status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
   }));
 
+  const [favoritedMovieIds, favoritedTvIds] = session?.user
+    ? await Promise.all([
+        getFavoritedTmdbIds(
+          session.user.id,
+          "movie",
+          entries.filter((e) => e.mediaType === "movie").map((e) => e.tmdbId),
+        ),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "tv",
+          entries.filter((e) => e.mediaType === "tv").map((e) => e.tmdbId),
+        ),
+      ])
+    : [new Set<number>(), new Set<number>()];
+  const favoritedKeys = new Set([
+    ...[...favoritedMovieIds].map((id) => `movie:${id}`),
+    ...[...favoritedTvIds].map((id) => `tv:${id}`),
+  ]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <CompanyHeader
@@ -114,6 +133,8 @@ export default async function CompanyPage({
               tv: isArrFullyConfigured(sonarrCredential),
             }}
             emptyMessage="No titles found for this studio yet."
+            favoritedKeys={favoritedKeys}
+            showFavorite={Boolean(session?.user)}
           />
         </Suspense>
       </div>

@@ -24,17 +24,21 @@ export function PosterRow({ children }: { children: React.ReactNode }) {
         type="button"
         aria-label="Scroll left"
         onClick={() => scrollByAmount(-1)}
-        className="absolute left-0 top-0 bottom-2 flex w-12 items-center justify-center bg-gradient-to-r from-bg-0 via-bg-0/80 to-transparent text-2xl text-text-primary opacity-0 transition-opacity group-hover/row:opacity-100 hover:text-accent"
+        className="absolute left-0 top-0 bottom-2 flex w-16 items-center justify-center bg-gradient-to-r from-bg-0 via-bg-0/80 to-transparent opacity-0 transition-opacity group-hover/row:opacity-100"
       >
-        ‹
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-1 text-4xl leading-none text-text-primary shadow-lg transition-colors hover:text-accent">
+          ‹
+        </span>
       </button>
       <button
         type="button"
         aria-label="Scroll right"
         onClick={() => scrollByAmount(1)}
-        className="absolute right-0 top-0 bottom-2 flex w-12 items-center justify-center bg-gradient-to-l from-bg-0 via-bg-0/80 to-transparent text-2xl text-text-primary opacity-0 transition-opacity group-hover/row:opacity-100 hover:text-accent"
+        className="absolute right-0 top-0 bottom-2 flex w-16 items-center justify-center bg-gradient-to-l from-bg-0 via-bg-0/80 to-transparent opacity-0 transition-opacity group-hover/row:opacity-100"
       >
-        ›
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-1 text-4xl leading-none text-text-primary shadow-lg transition-colors hover:text-accent">
+          ›
+        </span>
       </button>
     </div>
   );

@@ -19,6 +19,10 @@ import {
 } from "@/lib/tmdb/client";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
+import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
+import { getFavoritedTmdbIds } from "@/lib/favorites/query";
+import { FavoriteButton } from "@/components/favorite-button";
+import { QuickAddButton } from "@/components/quick-add-button";
 import type { MediaType } from "@/lib/db/schema";
 
 // Words that describe "what kind of thing to search for" rather than the
@@ -136,12 +140,54 @@ export default async function SearchPage({
     people.length + titleResults.length + companyResults.length + themeItems.length > 0;
 
   const session = await auth();
-  const statusMap = session?.user
-    ? await getLibraryStatusMap(session.user.id, [
-        ...titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
-        ...themeItems.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })),
+
+  const allMovieIds = [
+    ...titleResults.filter((t) => t.media_type === "movie").map((t) => t.id),
+    ...themeItems.filter((t) => t.mediaType === "movie").map((t) => t.tmdbId),
+  ];
+  const allTvIds = [
+    ...titleResults.filter((t) => t.media_type === "tv").map((t) => t.id),
+    ...themeItems.filter((t) => t.mediaType === "tv").map((t) => t.tmdbId),
+  ];
+
+  const [
+    statusMap,
+    radarrCredential,
+    sonarrCredential,
+    favoritedPersonIds,
+    favoritedCompanyIds,
+    favoritedMovieIds,
+    favoritedTvIds,
+  ] = session?.user
+    ? await Promise.all([
+        getLibraryStatusMap(session.user.id, [
+          ...titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
+          ...themeItems.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })),
+        ]),
+        getArrCredential(session.user.id, "radarr"),
+        getArrCredential(session.user.id, "sonarr"),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "person",
+          people.map((p) => p.id),
+        ),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "company",
+          companyResults.map((c) => c.tmdbId),
+        ),
+        getFavoritedTmdbIds(session.user.id, "movie", allMovieIds),
+        getFavoritedTmdbIds(session.user.id, "tv", allTvIds),
       ])
-    : new Map();
+    : [new Map(), null, null, new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>()];
+
+  const arrConfigured = {
+    movie: isArrFullyConfigured(radarrCredential),
+    tv: isArrFullyConfigured(sonarrCredential),
+  };
+  function favoritedTitle(mediaType: MediaType, tmdbId: number) {
+    return mediaType === "movie" ? favoritedMovieIds.has(tmdbId) : favoritedTvIds.has(tmdbId);
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -166,6 +212,16 @@ export default async function SearchPage({
                 posterPath={person.profile_path ?? null}
                 name={person.name ?? ""}
                 subtitle={person.known_for_department}
+                favoriteAction={
+                  session?.user && (
+                    <FavoriteButton
+                      entityType="person"
+                      tmdbId={person.id}
+                      initialFavorited={favoritedPersonIds.has(person.id)}
+                      compact
+                    />
+                  )
+                }
               />
             ))}
           </PosterGrid>
@@ -177,7 +233,22 @@ export default async function SearchPage({
           <h2 className="mb-4 font-display text-xl text-text-primary">Studios</h2>
           <div className="flex flex-wrap gap-3">
             {companyResults.map((company) => (
-              <StudioChip key={company.tmdbId} tmdbId={company.tmdbId} name={company.name} logoPath={company.logoPath} />
+              <StudioChip
+                key={company.tmdbId}
+                tmdbId={company.tmdbId}
+                name={company.name}
+                logoPath={company.logoPath}
+                favoriteAction={
+                  session?.user && (
+                    <FavoriteButton
+                      entityType="company"
+                      tmdbId={company.tmdbId}
+                      initialFavorited={favoritedCompanyIds.has(company.tmdbId)}
+                      compact
+                    />
+                  )
+                }
+              />
             ))}
           </div>
         </section>
@@ -188,15 +259,30 @@ export default async function SearchPage({
           <h2 className="mb-4 font-display text-xl text-text-primary">Titles</h2>
           <PosterGrid>
             {titleResults.map((title) => {
-              const status = statusMap.get(`${title.media_type}:${title.id}`);
+              const mediaType = title.media_type as MediaType;
+              const status = statusMap.get(`${mediaType}:${title.id}`);
+              const canQuickAdd = Boolean(session?.user) && arrConfigured[mediaType] && !status;
               return (
                 <PosterCard
-                  key={`${title.media_type}-${title.id}`}
-                  href={`/title/${title.media_type}/${title.id}`}
+                  key={`${mediaType}-${title.id}`}
+                  href={`/title/${mediaType}/${title.id}`}
                   posterPath={title.poster_path ?? null}
                   name={title.title || title.name || ""}
                   year={(title.release_date || title.first_air_date || "").slice(0, 4)}
                   badge={status && <StatusBadge status={status} compact />}
+                  favoriteAction={
+                    session?.user && (
+                      <FavoriteButton
+                        entityType={mediaType}
+                        tmdbId={title.id}
+                        initialFavorited={favoritedTitle(mediaType, title.id)}
+                        compact
+                      />
+                    )
+                  }
+                  quickAction={
+                    canQuickAdd ? <QuickAddButton mediaType={mediaType} tmdbId={title.id} /> : undefined
+                  }
                 />
               );
             })}
@@ -212,6 +298,7 @@ export default async function SearchPage({
           <PosterGrid>
             {themeItems.map((item) => {
               const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
+              const canQuickAdd = Boolean(session?.user) && arrConfigured[item.mediaType] && !status;
               return (
                 <PosterCard
                   key={`${item.mediaType}-${item.tmdbId}`}
@@ -220,6 +307,21 @@ export default async function SearchPage({
                   name={item.name}
                   year={item.year}
                   badge={status && <StatusBadge status={status} compact />}
+                  favoriteAction={
+                    session?.user && (
+                      <FavoriteButton
+                        entityType={item.mediaType}
+                        tmdbId={item.tmdbId}
+                        initialFavorited={favoritedTitle(item.mediaType, item.tmdbId)}
+                        compact
+                      />
+                    )
+                  }
+                  quickAction={
+                    canQuickAdd ? (
+                      <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                    ) : undefined
+                  }
                 />
               );
             })}

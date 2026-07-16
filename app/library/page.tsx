@@ -9,6 +9,7 @@ import { getUserLibrary } from "@/lib/library/query";
 import { MediaList, type MediaEntry } from "@/components/media-list";
 import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
+import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 
 export default async function LibraryPage() {
   const session = await auth();
@@ -65,6 +66,23 @@ export default async function LibraryPage() {
     addedAt: item.addedAt ? item.addedAt.toISOString() : null,
     monitored: item.monitored,
   }));
+
+  const [favoritedMovieIds, favoritedTvIds] = await Promise.all([
+    getFavoritedTmdbIds(
+      userId,
+      "movie",
+      entries.filter((e) => e.mediaType === "movie").map((e) => e.tmdbId),
+    ),
+    getFavoritedTmdbIds(
+      userId,
+      "tv",
+      entries.filter((e) => e.mediaType === "tv").map((e) => e.tmdbId),
+    ),
+  ]);
+  const favoritedKeys = new Set([
+    ...[...favoritedMovieIds].map((id) => `movie:${id}`),
+    ...[...favoritedTvIds].map((id) => `tv:${id}`),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -124,6 +142,8 @@ export default async function LibraryPage() {
               showStatusFilter
               showSearch
               showUnmonitorAction
+              favoritedKeys={favoritedKeys}
+              showFavorite
             />
           </Suspense>
         )}

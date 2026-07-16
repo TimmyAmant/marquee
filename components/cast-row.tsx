@@ -1,8 +1,17 @@
 import { PosterCard } from "@/components/poster-card";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
+import { FavoriteButton } from "@/components/favorite-button";
 import type { TmdbCastMember } from "@/lib/tmdb/client";
 
-export function CastRow({ cast }: { cast: TmdbCastMember[] }) {
+export function CastRow({
+  cast,
+  favoritedIds,
+  showFavorite,
+}: {
+  cast: TmdbCastMember[];
+  favoritedIds?: Set<number>;
+  showFavorite?: boolean;
+}) {
   if (cast.length === 0) return null;
 
   const topBilled = [...cast].sort((a, b) => a.order - b.order).slice(0, 20);
@@ -18,6 +27,16 @@ export function CastRow({ cast }: { cast: TmdbCastMember[] }) {
               posterPath={member.profile_path}
               name={member.name}
               subtitle={member.character}
+              favoriteAction={
+                showFavorite && (
+                  <FavoriteButton
+                    entityType="person"
+                    tmdbId={member.id}
+                    initialFavorited={favoritedIds?.has(member.id) ?? false}
+                    compact
+                  />
+                )
+              }
             />
           </PosterRowItem>
         ))}

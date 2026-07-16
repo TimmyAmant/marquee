@@ -1,8 +1,17 @@
 import { type TmdbCompanyRef } from "@/lib/tmdb/client";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import { StudioChip } from "@/components/studio-chip";
+import { FavoriteButton } from "@/components/favorite-button";
 
-export function StudioRow({ companies }: { companies: TmdbCompanyRef[] }) {
+export function StudioRow({
+  companies,
+  favoritedIds,
+  showFavorite,
+}: {
+  companies: TmdbCompanyRef[];
+  favoritedIds?: Set<number>;
+  showFavorite?: boolean;
+}) {
   if (companies.length === 0) return null;
 
   const items = dedupeCompanies(companies);
@@ -12,7 +21,22 @@ export function StudioRow({ companies }: { companies: TmdbCompanyRef[] }) {
       <h2 className="mb-4 font-display text-xl text-text-primary">Studio</h2>
       <div className="flex flex-wrap gap-3">
         {items.map((item) => (
-          <StudioChip key={item.tmdbId} tmdbId={item.tmdbId} name={item.name} logoPath={item.logoPath} />
+          <StudioChip
+            key={item.tmdbId}
+            tmdbId={item.tmdbId}
+            name={item.name}
+            logoPath={item.logoPath}
+            favoriteAction={
+              showFavorite && (
+                <FavoriteButton
+                  entityType="company"
+                  tmdbId={item.tmdbId}
+                  initialFavorited={favoritedIds?.has(item.tmdbId) ?? false}
+                  compact
+                />
+              )
+            }
+          />
         ))}
       </div>
     </section>

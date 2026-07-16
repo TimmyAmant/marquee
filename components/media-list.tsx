@@ -7,6 +7,7 @@ import { PosterGrid } from "@/components/poster-grid";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { UnmonitorButton } from "@/components/unmonitor-button";
 import { QuickAddButton } from "@/components/quick-add-button";
+import { FavoriteButton } from "@/components/favorite-button";
 import { formatBytes } from "@/lib/format";
 
 export type MediaEntry = {
@@ -106,6 +107,8 @@ export function MediaList({
   showUnmonitorAction = false,
   arrConfigured,
   emptyMessage = "Nothing found.",
+  favoritedKeys,
+  showFavorite = false,
 }: {
   entries: MediaEntry[];
   subtitleLabel?: string;
@@ -119,6 +122,10 @@ export function MediaList({
   /** Shown when `entries` is empty — customize per page for a more specific,
    * actionable message than the generic default. */
   emptyMessage?: string;
+  /** Keyed by `${mediaType}:${tmdbId}`, since a bare tmdbId can collide
+   * between a movie and a TV show. */
+  favoritedKeys?: Set<string>;
+  showFavorite?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -303,6 +310,16 @@ export function MediaList({
                 subtitle={entry.subtitle}
                 meta={buildMeta(entry)}
                 badge={entry.status && <StatusBadge status={entry.status} compact />}
+                favoriteAction={
+                  showFavorite && (
+                    <FavoriteButton
+                      entityType={entry.mediaType}
+                      tmdbId={entry.tmdbId}
+                      initialFavorited={favoritedKeys?.has(`${entry.mediaType}:${entry.tmdbId}`) ?? false}
+                      compact
+                    />
+                  )
+                }
                 quickAction={
                   canUnmonitor ? (
                     <UnmonitorButton mediaType={entry.mediaType} tmdbId={entry.tmdbId} />

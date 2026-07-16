@@ -193,7 +193,7 @@ export const plexLibraryItems = pgTable(
   ],
 );
 
-export const favoriteEntityTypeValues = ["person", "company"] as const;
+export const favoriteEntityTypeValues = ["person", "company", "movie", "tv", "collection"] as const;
 export type FavoriteEntityType = (typeof favoriteEntityTypeValues)[number];
 
 export const favorites = pgTable(
@@ -209,7 +209,10 @@ export const favorites = pgTable(
   },
   (table) => [
     unique().on(table.userId, table.entityType, table.tmdbId),
-    check("favorites_entity_type_check", sql`${table.entityType} in ('person','company')`),
+    check(
+      "favorites_entity_type_check",
+      sql`${table.entityType} in ('person','company','movie','tv','collection')`,
+    ),
   ],
 );
 

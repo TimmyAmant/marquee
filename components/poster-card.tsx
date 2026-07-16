@@ -13,6 +13,7 @@ export function PosterCard({
   overview,
   badge,
   quickAction,
+  favoriteAction,
 }: {
   href: string;
   posterPath: string | null;
@@ -24,6 +25,9 @@ export function PosterCard({
   overview?: string | null;
   badge?: React.ReactNode;
   quickAction?: React.ReactNode;
+  /** Rendered next to the year/subtitle line — a sibling of that line's own
+   * link, not nested inside it, so a <button> never ends up inside an <a>. */
+  favoriteAction?: React.ReactNode;
 }) {
   const src = tmdbImageUrl(posterPath, "w342");
 
@@ -67,13 +71,18 @@ export function PosterCard({
         )}
       </div>
 
-      <Link href={href} className="block">
-        <p className="mt-2 truncate text-sm font-medium text-text-primary">{name}</p>
-        <p className="truncate text-xs text-text-muted">
-          {[subtitle, year].filter(Boolean).join(" · ")}
-        </p>
-        {meta && <p className="truncate text-xs text-text-muted">{meta}</p>}
+      <Link href={href} className="mt-2 block">
+        <p className="truncate text-sm font-medium text-text-primary">{name}</p>
       </Link>
+      <div className="flex items-center justify-between gap-1.5">
+        <Link href={href} className="min-w-0 flex-1">
+          <p className="truncate text-xs text-text-muted">
+            {[subtitle, year].filter(Boolean).join(" · ")}
+          </p>
+        </Link>
+        {favoriteAction && <div className="shrink-0">{favoriteAction}</div>}
+      </div>
+      {meta && <p className="truncate text-xs text-text-muted">{meta}</p>}
     </div>
   );
 }

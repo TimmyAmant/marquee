@@ -1,0 +1,2 @@
+ALTER TABLE "favorites" DROP CONSTRAINT "favorites_entity_type_check";--> statement-breakpoint
+ALTER TABLE "favorites" ADD CONSTRAINT "favorites_entity_type_check" CHECK ("favorites"."entity_type" in ('person','company','movie','tv','collection'));

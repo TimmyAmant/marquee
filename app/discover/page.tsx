@@ -15,6 +15,8 @@ import {
 } from "@/lib/tmdb/client";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
+import { getFavoritedTmdbIds } from "@/lib/favorites/query";
+import { FavoriteButton } from "@/components/favorite-button";
 import type { MediaType } from "@/lib/db/schema";
 
 type DiscoverSearchParams = {
@@ -160,12 +162,22 @@ export default async function DiscoverPage({
     hideOwned ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`)) : rawItems,
   );
 
-  const [radarrCredential, sonarrCredential] = session?.user
+  const [radarrCredential, sonarrCredential, favoritedMovieIds, favoritedTvIds] = session?.user
     ? await Promise.all([
         getArrCredential(session.user.id, "radarr"),
         getArrCredential(session.user.id, "sonarr"),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "movie",
+          items.filter((i) => i.mediaType === "movie").map((i) => i.tmdbId),
+        ),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "tv",
+          items.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId),
+        ),
       ])
-    : [null, null];
+    : [null, null, new Set<number>(), new Set<number>()];
 
   return (
     <div className="relative overflow-hidden">
@@ -287,6 +299,20 @@ export default async function DiscoverPage({
                     rating={item.rating}
                     overview={item.overview}
                     badge={status && <StatusBadge status={status} compact />}
+                    favoriteAction={
+                      session?.user && (
+                        <FavoriteButton
+                          entityType={item.mediaType}
+                          tmdbId={item.tmdbId}
+                          initialFavorited={
+                            item.mediaType === "movie"
+                              ? favoritedMovieIds.has(item.tmdbId)
+                              : favoritedTvIds.has(item.tmdbId)
+                          }
+                          compact
+                        />
+                      )
+                    }
                     quickAction={
                       canQuickAdd ? (
                         <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />

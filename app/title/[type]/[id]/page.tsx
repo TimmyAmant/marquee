@@ -11,6 +11,8 @@ import { getTitleLibraryStatus, getSonarrSeasonBreakdown } from "@/lib/integrati
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { findTrailer, getTvSeasonDetails, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
+import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
+import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 
@@ -37,6 +39,18 @@ export default async function TitlePage({
     ? await getTitleLibraryStatus(session.user.id, type, tmdbId, title.tvdbId)
     : { status: "untracked" as const, configured: false, file: null };
 
+  const [titleFavorited, radarrCredential, sonarrCredential] = session?.user
+    ? await Promise.all([
+        isFavorited(session.user.id, type, tmdbId),
+        getArrCredential(session.user.id, "radarr"),
+        getArrCredential(session.user.id, "sonarr"),
+      ])
+    : [undefined, null, null];
+  const arrConfigured = {
+    movie: isArrFullyConfigured(radarrCredential),
+    tv: isArrFullyConfigured(sonarrCredential),
+  };
+
   const raw = title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
   const trailer = raw ? findTrailer(raw.videos) : null;
   const externalIds = raw?.external_ids;
@@ -59,22 +73,42 @@ export default async function TitlePage({
     year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
   }));
 
-  const similarStatusMap = session?.user
-    ? await getLibraryStatusMap(
-        session.user.id,
-        similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-      )
-    : new Map();
+  const [similarStatusMap, similarFavoritedIds, castFavoritedIds, companyFavoritedIds] =
+    session?.user
+      ? await Promise.all([
+          getLibraryStatusMap(
+            session.user.id,
+            similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+          ),
+          getFavoritedTmdbIds(
+            session.user.id,
+            type,
+            similarItems.map((i) => i.tmdbId),
+          ),
+          getFavoritedTmdbIds(
+            session.user.id,
+            "person",
+            cast.map((c) => c.id),
+          ),
+          getFavoritedTmdbIds(
+            session.user.id,
+            "company",
+            companies.map((c) => c.id),
+          ),
+        ])
+      : [new Map(), new Set<number>(), new Set<number>(), new Set<number>()];
 
   // Movie franchises (Harry Potter, James Bond, etc.) come straight from
   // TMDb's own "collection" data. TV crossovers (Arrowverse, 9-1-1 universe)
   // have no TMDb equivalent, so those come from a hand-curated list instead.
   let franchiseTitle: string | null = null;
   let franchiseItems: FranchiseItem[] = [];
+  let collectionId: number | undefined;
 
   if (type === "movie") {
     const collectionRef = (raw as TmdbMovieDetails | null)?.belongs_to_collection;
     if (collectionRef) {
+      collectionId = collectionRef.id;
       const collection = await getCollection(collectionRef.id).catch(() => null);
       if (collection) {
         franchiseTitle = collection.name;
@@ -108,13 +142,23 @@ export default async function TitlePage({
     }
   }
 
-  const franchiseStatusMap =
+  const [franchiseStatusMap, franchiseFavoritedIds, collectionFavorited] =
     session?.user && franchiseItems.length > 0
-      ? await getLibraryStatusMap(
-          session.user.id,
-          franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-        )
-      : new Map();
+      ? await Promise.all([
+          getLibraryStatusMap(
+            session.user.id,
+            franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+          ),
+          getFavoritedTmdbIds(
+            session.user.id,
+            type,
+            franchiseItems.map((i) => i.tmdbId),
+          ),
+          collectionId !== undefined
+            ? isFavorited(session.user.id, "collection", collectionId)
+            : Promise.resolve(false),
+        ])
+      : [new Map(), new Set<number>(), false];
 
   const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
   const defaultSeason = seasons.find((s) => s.season_number > 0)?.season_number ?? seasons[0]?.season_number ?? 1;
@@ -149,6 +193,7 @@ export default async function TitlePage({
           instagramId: externalIds?.instagram_id ?? null,
           twitterId: externalIds?.twitter_id ?? null,
         }}
+        favorited={titleFavorited}
       />
 
       <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">
@@ -170,12 +215,27 @@ export default async function TitlePage({
           </section>
         )}
 
-        <CastRow cast={cast} />
+        <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(session?.user)} />
         {franchiseTitle && (
-          <FranchiseRow title={franchiseTitle} items={franchiseItems} statusMap={franchiseStatusMap} />
+          <FranchiseRow
+            title={franchiseTitle}
+            items={franchiseItems}
+            statusMap={franchiseStatusMap}
+            favoritedIds={franchiseFavoritedIds}
+            showFavorite={Boolean(session?.user)}
+            arrConfigured={session?.user ? arrConfigured : undefined}
+            collectionId={collectionId}
+            collectionFavorited={collectionFavorited}
+          />
         )}
-        <StudioRow companies={companies} />
-        <SimilarTitlesRow items={similarItems} statusMap={similarStatusMap} />
+        <StudioRow companies={companies} favoritedIds={companyFavoritedIds} showFavorite={Boolean(session?.user)} />
+        <SimilarTitlesRow
+          items={similarItems}
+          statusMap={similarStatusMap}
+          favoritedIds={similarFavoritedIds}
+          showFavorite={Boolean(session?.user)}
+          arrConfigured={session?.user ? arrConfigured : undefined}
+        />
       </div>
     </div>
   );

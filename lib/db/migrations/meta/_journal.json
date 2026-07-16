@@ -36,6 +36,13 @@
       "when": 1784122007950,
       "tag": "0004_square_network",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784175229567,
+      "tag": "0005_little_black_bird",
+      "breakpoints": true
     }
   ]
 }

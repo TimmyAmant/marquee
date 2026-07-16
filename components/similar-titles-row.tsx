@@ -1,6 +1,8 @@
 import { PosterCard } from "@/components/poster-card";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
+import { FavoriteButton } from "@/components/favorite-button";
+import { QuickAddButton } from "@/components/quick-add-button";
 import type { MediaType } from "@/lib/db/schema";
 
 export type SimilarTitle = {
@@ -14,9 +16,15 @@ export type SimilarTitle = {
 export function SimilarTitlesRow({
   items,
   statusMap,
+  favoritedIds,
+  showFavorite,
+  arrConfigured,
 }: {
   items: SimilarTitle[];
   statusMap: Map<string, LibraryStatus>;
+  favoritedIds?: Set<number>;
+  showFavorite?: boolean;
+  arrConfigured?: { movie: boolean; tv: boolean };
 }) {
   if (items.length === 0) return null;
 
@@ -26,6 +34,7 @@ export function SimilarTitlesRow({
       <PosterRow>
         {items.map((item) => {
           const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
+          const canQuickAdd = !status && arrConfigured?.[item.mediaType];
           return (
             <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
               <PosterCard
@@ -34,6 +43,21 @@ export function SimilarTitlesRow({
                 name={item.name}
                 year={item.year}
                 badge={status && <StatusBadge status={status} compact />}
+                favoriteAction={
+                  showFavorite && (
+                    <FavoriteButton
+                      entityType={item.mediaType}
+                      tmdbId={item.tmdbId}
+                      initialFavorited={favoritedIds?.has(item.tmdbId) ?? false}
+                      compact
+                    />
+                  )
+                }
+                quickAction={
+                  canQuickAdd ? (
+                    <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                  ) : undefined
+                }
               />
             </PosterRowItem>
           );
