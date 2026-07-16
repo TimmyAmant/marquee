@@ -7,6 +7,7 @@ import { isTmdbAccessTokenSavedInSettings } from "@/lib/integrations/app-setting
 import { ArrCredentialForm } from "@/components/arr-credential-form";
 import { PlexConnectCard } from "@/components/plex-connect-card";
 import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
+import { SyncNowButton } from "@/components/sync-now-button";
 
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
@@ -26,12 +27,17 @@ export default async function IntegrationsSettingsPage() {
 
   return (
     <div>
-      <h2 className="font-display text-xl text-text-primary">Integrations</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        Connect your own Plex, Sonarr, and Radarr so Marquee knows what you already own and can
-        send the rest straight to your download queue. Credentials are encrypted and only ever
-        used on your behalf.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-xl text-text-primary">Integrations</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            Connect your own Plex, Sonarr, and Radarr so Marquee knows what you already own and can
+            send the rest straight to your download queue. Credentials are encrypted and only ever
+            used on your behalf.
+          </p>
+        </div>
+        <SyncNowButton />
+      </div>
 
       <div className="mt-6 flex flex-col gap-6">
         <TmdbSettingsForm
