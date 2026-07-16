@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { CreateUserForm } from "./create-user-form";
 import { HouseholdMembersList } from "./household-members-list";
+import { SignOutButton } from "./sign-out-button";
 import { listHouseholdMembers } from "./users-actions";
 
 export default async function AccountSettingsPage() {
@@ -36,12 +37,7 @@ export default async function AccountSettingsPage() {
           }}
           className="mt-6"
         >
-          <button
-            type="submit"
-            className="rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary transition-colors hover:border-accent hover:text-accent"
-          >
-            Sign out
-          </button>
+          <SignOutButton />
         </form>
       </div>
 

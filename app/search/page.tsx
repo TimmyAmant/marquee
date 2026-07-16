@@ -36,6 +36,12 @@ function findGenreMatch(genres: TmdbGenre[], normalized: string): TmdbGenre | nu
   const lower = normalized.toLowerCase();
   const exact = genres.find((g) => g.name.toLowerCase() === lower);
   if (exact) return exact;
+
+  // Only consider a substring match for short queries — TMDb genre names are
+  // at most two words, so anything longer is a real title/phrase that just
+  // happens to contain a genre word (e.g. "Crime and Punishment" contains
+  // "Crime"), not a genre-browse request.
+  if (lower.split(" ").length > 2) return null;
   const partial = genres.find(
     (g) => g.name.toLowerCase().includes(lower) || lower.includes(g.name.toLowerCase()),
   );
@@ -108,7 +114,11 @@ export default async function SearchPage({
     // No genre matched this query (e.g. "national disaster") — try it as a
     // TMDb keyword/theme tag instead of a literal title search.
     const keywordResults = await searchKeyword(normalized).catch(() => null);
-    const keyword = keywordResults?.results[0] ?? null;
+    const lowerNormalized = normalized.toLowerCase();
+    const keyword =
+      keywordResults?.results.find((k) => k.name.toLowerCase() === lowerNormalized) ??
+      keywordResults?.results[0] ??
+      null;
     if (keyword) {
       const [movieRes, tvRes] = await Promise.all([
         discoverMoviesByKeyword(keyword.id).catch(() => null),

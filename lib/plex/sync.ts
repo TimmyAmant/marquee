@@ -49,6 +49,23 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
         continue;
       }
 
+      // TV shows need one extra request per item (Plex only reports
+      // Media/Part on individual episodes, not the show itself) — fetch
+      // those concurrently rather than one at a time in the loop below, or
+      // sync time would scale with the number of shows in the library.
+      const sizeByRatingKey = new Map<string, number | null>();
+      await Promise.all(
+        items.map(async (item) => {
+          const size =
+            mediaType === "movie"
+              ? plex.getFileSize(item)
+              : await plex
+                  .getShowFileSize(serverUri, credential.authToken, item.ratingKey)
+                  .catch(() => null);
+          sizeByRatingKey.set(item.ratingKey, size);
+        }),
+      );
+
       for (const item of items) {
         const parsed = plex.parseExternalIds(item);
         let { tmdbId } = parsed;
@@ -62,7 +79,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
           await getOrFetchTitle(mediaType, tmdbId).catch(() => undefined);
         }
 
-        const sizeBytes = mediaType === "movie" ? plex.getFileSize(item) : null;
+        const sizeBytes = sizeByRatingKey.get(item.ratingKey) ?? null;
 
         await db
           .insert(plexLibraryItems)

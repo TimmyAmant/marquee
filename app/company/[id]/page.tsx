@@ -107,10 +107,13 @@ export default async function CompanyPage({
           <MediaList
             entries={entries}
             itemLabel="titles"
+            showSearch
+            showTypeFilter
             arrConfigured={{
               movie: isArrFullyConfigured(radarrCredential),
               tv: isArrFullyConfigured(sonarrCredential),
             }}
+            emptyMessage="No titles found for this studio yet."
           />
         </Suspense>
       </div>

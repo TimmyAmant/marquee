@@ -105,6 +105,7 @@ export function MediaList({
   showSearch = false,
   showUnmonitorAction = false,
   arrConfigured,
+  emptyMessage = "Nothing found.",
 }: {
   entries: MediaEntry[];
   subtitleLabel?: string;
@@ -115,6 +116,9 @@ export function MediaList({
   showUnmonitorAction?: boolean;
   /** When provided, untracked titles get a quick "Add to Sonarr/Radarr" action. */
   arrConfigured?: { movie: boolean; tv: boolean };
+  /** Shown when `entries` is empty — customize per page for a more specific,
+   * actionable message than the generic default. */
+  emptyMessage?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -167,7 +171,7 @@ export function MediaList({
   );
 
   if (entries.length === 0) {
-    return <p className="text-sm text-text-muted">Nothing found.</p>;
+    return <p className="text-sm text-text-muted">{emptyMessage}</p>;
   }
 
   return (

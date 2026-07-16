@@ -71,10 +71,13 @@ export default async function PersonPage({
             entries={entries}
             subtitleLabel="Role"
             itemLabel="credits"
+            showSearch
+            showTypeFilter
             arrConfigured={{
               movie: isArrFullyConfigured(radarrCredential),
               tv: isArrFullyConfigured(sonarrCredential),
             }}
+            emptyMessage="No processed filmography found for this person yet."
           />
         </Suspense>
       </div>

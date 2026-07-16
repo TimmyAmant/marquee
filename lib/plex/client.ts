@@ -118,6 +118,24 @@ export async function getSectionItems(
   return body.MediaContainer?.Metadata ?? [];
 }
 
+/** A show's own library-section entry has no Media/Part — only individual
+ * episodes carry a file, so total size has to be summed across all of a
+ * show's episodes via Plex's "all leaves" endpoint. */
+export async function getShowFileSize(
+  serverUri: string,
+  token: string,
+  ratingKey: string,
+): Promise<number | null> {
+  const res = await fetch(`${serverUri}/library/metadata/${ratingKey}/allLeaves`, {
+    headers: { Accept: "application/json", "X-Plex-Token": token },
+  });
+  if (!res.ok) return null;
+  const body = await res.json();
+  const episodes: PlexMetadataItem[] = body.MediaContainer?.Metadata ?? [];
+  const total = episodes.reduce((sum, ep) => sum + (getFileSize(ep) ?? 0), 0);
+  return total > 0 ? total : null;
+}
+
 export function parseExternalIds(item: PlexMetadataItem): {
   tmdbId: number | null;
   tvdbId: number | null;

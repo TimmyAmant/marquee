@@ -54,11 +54,25 @@ function toDisplayItem(item: TmdbDiscoverResult, mediaType: MediaType) {
     name: item.title || item.name || "",
     posterPath: item.poster_path,
     year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
+    releaseDate: item.release_date || item.first_air_date || "",
     overview: item.overview || null,
     rating: item.vote_average ?? null,
+    popularity: item.popularity ?? 0,
     genreId: item.genre_ids?.[0] ?? null,
-    sortValue: item.vote_average ?? item.popularity ?? 0,
   };
+}
+
+/** "Both" mode merges separate movie and TV result lists, which need to be
+ * re-interleaved by whichever sort the user actually picked — matching the
+ * `sort_by` already sent to TMDb for each individual list. */
+function compareBySort(
+  a: ReturnType<typeof toDisplayItem>,
+  b: ReturnType<typeof toDisplayItem>,
+  sort: DiscoverSort,
+): number {
+  if (sort === "top_rated") return (b.rating ?? 0) - (a.rating ?? 0);
+  if (sort === "newest") return b.releaseDate.localeCompare(a.releaseDate);
+  return b.popularity - a.popularity;
 }
 
 export default async function DiscoverPage({
@@ -111,7 +125,7 @@ export default async function DiscoverPage({
     rawItems = [
       ...movieResponses.flatMap((r) => r.results).map((i) => toDisplayItem(i, "movie")),
       ...tvResponses.flatMap((r) => r.results).map((i) => toDisplayItem(i, "tv")),
-    ].sort((a, b) => b.sortValue - a.sortValue);
+    ].sort((a, b) => compareBySort(a, b, sort));
 
     const maxTotalPages = Math.max(...movieResponses.map((r) => r.total_pages), ...tvResponses.map((r) => r.total_pages));
     hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, 500);
