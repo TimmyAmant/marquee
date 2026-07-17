@@ -19,6 +19,7 @@ export async function unmonitorTitle(
 ): Promise<UnmonitorState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in required." };
+  if (session.user.role !== "admin") return { error: "Only the admin can change monitoring." };
 
   const provider = mediaType === "movie" ? "radarr" : "sonarr";
   const credential = await getArrCredential(session.user.id, provider);

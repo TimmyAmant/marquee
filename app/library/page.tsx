@@ -18,6 +18,7 @@ export default async function LibraryPage() {
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+  const isAdmin = session.user.role === "admin";
   // Members share the admin's connected Plex/Sonarr/Radarr rather than
   // having their own — resolve to whichever account actually owns the
   // synced data before reading it.
@@ -152,11 +153,17 @@ export default async function LibraryPage() {
       <div className="mt-8">
         {entries.length === 0 ? (
           <p className="text-sm text-text-muted">
-            Still syncing your library — check back in a moment, or{" "}
-            <Link href="/settings/integrations" className="text-accent hover:text-accent-hover">
-              review your integrations
-            </Link>
-            .
+            {isAdmin ? (
+              <>
+                Still syncing your library — check back in a moment, or{" "}
+                <Link href="/settings/integrations" className="text-accent hover:text-accent-hover">
+                  review your integrations
+                </Link>
+                .
+              </>
+            ) : (
+              "Still syncing — check back in a moment."
+            )}
           </p>
         ) : (
           <Suspense>
@@ -166,7 +173,7 @@ export default async function LibraryPage() {
               showTypeFilter
               showStatusFilter
               showSearch
-              showUnmonitorAction
+              showUnmonitorAction={isAdmin}
               favoritedKeys={favoritedKeys}
               showFavorite
             />

@@ -55,13 +55,20 @@ const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   owned: "Owned",
   tracked_downloading: "Downloading",
   tracked_monitored: "Missing",
+  coming_soon: "Coming soon",
   untracked: "Not owned",
 };
 
 // Only these are offered as filter chips — "untracked" rows never actually
 // appear in the library (getUserLibrary drops them; see isDroppedArrRow), so
 // showing it as a tab was always an empty dead end.
-const VISIBLE_STATUS_FILTERS: StatusFilter[] = ["all", "owned", "tracked_downloading", "tracked_monitored"];
+const VISIBLE_STATUS_FILTERS: StatusFilter[] = [
+  "all",
+  "owned",
+  "tracked_downloading",
+  "tracked_monitored",
+  "coming_soon",
+];
 
 const VALID_SORT: SortOrder[] = ["newest", "oldest", "az", "recent"];
 const VALID_TYPE: TypeFilter[] = ["all", "movie", "tv"];
@@ -322,7 +329,9 @@ export function MediaList({
             const canUnmonitor =
               showUnmonitorAction &&
               entry.source !== "plex" &&
-              (entry.status === "tracked_monitored" || entry.status === "tracked_downloading") &&
+              (entry.status === "tracked_monitored" ||
+                entry.status === "tracked_downloading" ||
+                entry.status === "coming_soon") &&
               entry.monitored !== false;
 
             const canQuickAdd =

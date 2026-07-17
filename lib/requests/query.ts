@@ -73,6 +73,29 @@ export async function getPendingRequests(viewerUserId: string) {
   return rows.filter((_, i) => statuses[i].status === "untracked");
 }
 
+/** Already-reviewed requests (approved or rejected), most recent first — for
+ * the admin's Requests page history section below the pending queue. */
+export async function getReviewedRequests(limit = 50) {
+  return db
+    .select({
+      id: requests.id,
+      mediaType: requests.mediaType,
+      tmdbId: requests.tmdbId,
+      title: requests.title,
+      posterPath: requests.posterPath,
+      status: requests.status,
+      createdAt: requests.createdAt,
+      reviewedAt: requests.reviewedAt,
+      requestedByName: users.displayName,
+      requestedByEmail: users.email,
+    })
+    .from(requests)
+    .innerJoin(users, eq(users.id, requests.requestedByUserId))
+    .where(ne(requests.status, "pending"))
+    .orderBy(desc(requests.reviewedAt))
+    .limit(limit);
+}
+
 export async function getPendingRequestCount(): Promise<number> {
   const rows = await db
     .select({ id: requests.id })

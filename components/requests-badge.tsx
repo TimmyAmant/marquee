@@ -9,6 +9,17 @@ const POLL_INTERVAL_MS = 20_000;
  * shows up in the nav without a manual page refresh. */
 export function RequestsBadge({ initialCount }: { initialCount: number }) {
   const [count, setCount] = useState(initialCount);
+  const [syncedInitialCount, setSyncedInitialCount] = useState(initialCount);
+
+  // The server-rendered count changes whenever this component's parent
+  // layout re-renders (e.g. router.refresh() after approving/rejecting a
+  // request) — but useState only reads its initializer on mount. Adjusting
+  // state during render (rather than in an effect) is the documented React
+  // pattern for this: https://react.dev/learn/you-might-not-need-an-effect
+  if (initialCount !== syncedInitialCount) {
+    setSyncedInitialCount(initialCount);
+    setCount(initialCount);
+  }
 
   const refresh = useCallback(() => {
     getPendingRequestCountAction().then(setCount).catch(() => undefined);

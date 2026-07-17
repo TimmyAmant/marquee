@@ -39,7 +39,10 @@ function toYear(row: { releaseDate: string | null; firstAirDate: string | null }
  * treat both as dropped so already-cached rows self-heal without a re-sync.
  */
 function isDroppedArrRow(status: string | null, monitored: boolean | null): boolean {
-  return status === "untracked" || (status === "tracked_monitored" && monitored === false);
+  return (
+    status === "untracked" ||
+    ((status === "tracked_monitored" || status === "coming_soon") && monitored === false)
+  );
 }
 
 export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {

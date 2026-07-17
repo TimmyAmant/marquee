@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import { getUpcomingReleases, type CalendarEntry } from "@/lib/calendar/query";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE_PER_DAY = 4;
@@ -26,9 +27,13 @@ export default async function CalendarPage({
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+  const isAdmin = session.user.role === "admin";
+  // Members share the admin's connected Sonarr/Radarr rather than having
+  // their own — resolve to whichever account actually owns the synced data.
+  const libraryOwnerId = await getLibraryOwnerUserId(userId);
   const [radarrCred, sonarrCred] = await Promise.all([
-    getArrCredential(userId, "radarr"),
-    getArrCredential(userId, "sonarr"),
+    getArrCredential(libraryOwnerId, "radarr"),
+    getArrCredential(libraryOwnerId, "sonarr"),
   ]);
 
   if (!radarrCred && !sonarrCred) {
@@ -36,14 +41,18 @@ export default async function CalendarPage({
       <div className="mx-auto max-w-2xl px-6 py-20 text-center">
         <h1 className="font-display text-3xl text-text-primary">Calendar</h1>
         <p className="mt-3 text-text-secondary">
-          Connect Sonarr or Radarr to see upcoming releases and air dates here.
+          {isAdmin
+            ? "Connect Sonarr or Radarr to see upcoming releases and air dates here."
+            : "The household admin hasn't connected Sonarr or Radarr yet."}
         </p>
-        <Link
-          href="/settings/integrations"
-          className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
-        >
-          Connect an integration
-        </Link>
+        {isAdmin && (
+          <Link
+            href="/settings/integrations"
+            className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
+          >
+            Connect an integration
+          </Link>
+        )}
       </div>
     );
   }
@@ -76,7 +85,7 @@ export default async function CalendarPage({
     days.push(new Date(d));
   }
 
-  const entries = await getUpcomingReleases(userId, gridStart, gridEnd);
+  const entries = await getUpcomingReleases(libraryOwnerId, gridStart, gridEnd);
   const byDate = new Map<string, CalendarEntry[]>();
   for (const entry of entries) {
     const existing = byDate.get(entry.date);

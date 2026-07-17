@@ -1,4 +1,9 @@
-export type LibraryStatus = "owned" | "tracked_downloading" | "tracked_monitored" | "untracked";
+export type LibraryStatus =
+  | "owned"
+  | "tracked_downloading"
+  | "tracked_monitored"
+  | "coming_soon"
+  | "untracked";
 
 const STATUS_CONFIG: Record<LibraryStatus, { label: string; compactLabel: string; className: string }> = {
   owned: {
@@ -15,6 +20,11 @@ const STATUS_CONFIG: Record<LibraryStatus, { label: string; compactLabel: string
     label: "Missing",
     compactLabel: "Missing",
     className: "bg-tracked-bg text-tracked border-tracked/30",
+  },
+  coming_soon: {
+    label: "Coming soon",
+    compactLabel: "Coming soon",
+    className: "bg-untracked-bg text-text-secondary border-border",
   },
   untracked: {
     label: "Not in your library",

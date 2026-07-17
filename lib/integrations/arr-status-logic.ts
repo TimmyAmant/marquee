@@ -8,6 +8,11 @@ export function deriveRadarrStatus(movie: RadarrMovie): LibraryStatus {
   // meaningfully different from not being in the library at all (matches
   // isDroppedArrRow's treatment of the cached equivalent of this state).
   if (!movie.monitored) return "untracked";
+  // Radarr's own `status` field ("tba" | "announced" | "inCinemas" |
+  // "released") already tracks release lifecycle — anything short of
+  // "released" hasn't had a chance to be grabbed yet, so it's not
+  // meaningfully "missing" the way an actually-overdue title is.
+  if (movie.status !== "released") return "coming_soon";
   return "tracked_monitored";
 }
 
@@ -20,5 +25,8 @@ export function deriveSonarrStatus(series: SonarrSeries): LibraryStatus {
     return "tracked_downloading";
   }
   if (!series.monitored) return "untracked";
+  // Sonarr sets a series' own status to "upcoming" when it hasn't started
+  // airing yet — nothing to have downloaded, so "Missing" would be wrong.
+  if (series.status === "upcoming") return "coming_soon";
   return "tracked_monitored";
 }
