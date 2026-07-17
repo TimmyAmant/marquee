@@ -37,11 +37,15 @@ your server.
 ### Title pages
 - Full details: overview, year, trailer, and links to IMDb/Instagram/X
   (Twitter)/Facebook.
-- Live ownership status: **Owned / Downloading / Monitored / Not owned**,
-  checked directly against Plex/Sonarr/Radarr.
-- One-click **Add to Radarr/Sonarr** using your saved quality
+- Live ownership status: **Owned / Downloading / Monitored / Coming soon /
+  Not owned**, checked directly against Plex/Sonarr/Radarr — an unreleased
+  title that's already being tracked shows as "Coming soon" instead of
+  looking like something's actually missing.
+- One-click **Add to Radarr/Sonarr** (admin) using your saved quality
   profile/root folder — re-enables monitoring automatically if the title
-  was already added and then unmonitored.
+  was already added and then unmonitored. Household members see a
+  **Request** button instead — see [Household accounts &
+  requests](#household-accounts--requests) below.
 - Full cast list with character names, linking to each person's page.
 - **Studio/production company** section, with conglomerates (Disney,
   Marvel, Lucasfilm, etc.) merged into one entry instead of listed
@@ -61,22 +65,49 @@ your server.
 - **Favorite** button on people and studios to build a personal watchlist.
 
 ### My Library
-- One aggregated view of everything already in Plex, Sonarr, and Radarr.
+- One aggregated view of everything already in Plex, Sonarr, and Radarr —
+  shared with every household member, not just the admin who connected
+  the integrations.
 - Header stats: movie count, TV show count, total size on disk, plus a
   count of anything monitored/downloading but not yet owned.
-- Filter by type (Movie/TV) and status (Owned/Downloading/Monitored/Not
-  owned), sort by Newest/Oldest/A–Z/Recently added, search within your
+- Filter by type (Movie/TV) and status (Owned/Downloading/Monitored/Coming
+  soon), sort by Newest/Oldest/A–Z/Recently added, search within your
   library, and switch between grid and table views.
-- **Stop monitoring** a title directly from the library.
+- **Stop monitoring** a title directly from the library (admin-only).
+
+### Calendar
+- Month grid of upcoming releases and air dates, pulled straight from
+  Radarr's/Sonarr's own calendar data — accurate release/digital/physical
+  dates for movies, per-episode air dates for TV.
+- Shared with every household member, same as My Library.
+
+### Notifications
+- Bell icon in the nav polls for new activity: a title started downloading,
+  finished downloading, or (for household members) one of your requests
+  was approved or declined.
+- Powered by Radarr/Sonarr webhooks — the URL and a per-account secret are
+  generated for you under **Settings → Integrations**.
 
 ### Favorites
 - One page listing every person and studio you've starred.
 
-### Accounts & settings
-- One-time first-run setup creates the admin account — no public signup
-  page after that.
-- Add accounts for other household members from **Settings → Account**.
-- **Settings → Integrations**:
+### Household accounts & requests
+- One-time first-run setup creates the **admin** account — no public
+  signup page after that.
+- The admin adds accounts for other household members from **Settings →
+  Account**, and can remove them later. Members only ever see their own
+  account there, not the rest of the household.
+- Members get the full app — Discover, Search, My Library, Favorites,
+  Calendar — but instead of adding titles directly to Sonarr/Radarr, they
+  hit **Request**. The admin reviews everything waiting for approval on
+  the **Requests** page and approves or declines with one click; the
+  requester gets notified either way. Members have their own **Requests**
+  tab too, showing the status of everything they've asked for — pending,
+  declined, or (once approved) downloading/already in the library.
+- Only the admin can connect or reconfigure Plex/Sonarr/Radarr
+  (**Settings → Integrations**) — members can browse and request, not
+  wire up new download sources.
+- **Settings → Integrations** (admin-only):
   - **TMDb** — one shared API key/access token for the whole instance,
     editable in-app (test-and-save) or via environment variable.
   - **Plex** — OAuth connect, shows your library's movie/TV counts, syncs
@@ -92,6 +123,12 @@ your server.
   Database migrations apply automatically on every start.
 - Works out of the box on Unraid, either via Docker Compose or a native
   Community Applications template.
+- Mobile-friendly — a hamburger nav and touch-scrollable rows/tables mean
+  it's fully usable from a phone, not just desktop.
+- Want to reach it from outside your home network? A free [Cloudflare
+  Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+  works well and needs no port forwarding — point it at
+  `http://<your-server-ip>:3000`.
 
 ## Quick start (Docker)
 
@@ -142,13 +179,11 @@ at this repo's `docker-compose.yml`. Change `APP_PORT` in `.env` first if it
 collides with something else you're running.
 
 **Option B — native Community Applications template (recommended)**
-1. In the **Apps** tab, go to **Settings → Template Repositories** and add:
-   `https://github.com/TimmyAmant/marquee`
-2. Search **Apps** for "marquee" and install it. It's a single container —
-   just fill in `POSTGRES_PASSWORD` and the other fields the template asks
-   for (same variables as the `.env` table above); everything else,
-   including where the database is stored, is pre-filled with sane
-   defaults.
+Marquee is listed directly in Community Applications — open the **Apps**
+tab, search "marquee", and install it. It's a single container — just fill
+in `POSTGRES_PASSWORD` and the other fields the template asks for (same
+variables as the `.env` table above); everything else, including where the
+database is stored, is pre-filled with sane defaults.
 
 The template lives at
 [`unraid-templates/marquee.xml`](unraid-templates/marquee.xml) in this repo.

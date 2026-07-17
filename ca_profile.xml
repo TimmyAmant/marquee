@@ -2,7 +2,7 @@
 <Maintainer>
   <Icon>https://raw.githubusercontent.com/TimmyAmant/marquee/main/public/marquee-icon.png</Icon>
   <Profile>
-    Marquee is a self-hosted media metadata dashboard that ties your TMDb browsing together with what you actually own in Plex, Sonarr, and Radarr.
+    Marquee is a self-hosted media metadata dashboard that ties your TMDb browsing together with what you actually own in Plex, Sonarr, and Radarr. Built for households - an admin account manages the integrations and household members, while everyone else browses, favorites, and requests titles for the admin to approve.
   </Profile>
   <WebPage>https://github.com/TimmyAmant/marquee</WebPage>
 </Maintainer>

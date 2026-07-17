@@ -9,7 +9,9 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/TimmyAmant/marquee/issues</Support>
   <Project>https://github.com/TimmyAmant/marquee</Project>
-  <Overview>Self-hosted media metadata dashboard - TMDb + Plex + Sonarr/Radarr. Look up any actor, studio, or franchise, see instantly whether it's already in your Plex library or being downloaded, and send anything missing straight to Sonarr or Radarr.
+  <Overview>Self-hosted media metadata dashboard - TMDb + Plex + Sonarr/Radarr. Look up any actor, studio, or franchise, see instantly whether it's already in your Plex library, being downloaded, or coming soon, and send anything missing straight to Sonarr or Radarr.
+
+Built for households: the admin account (created on first visit) connects Plex/Sonarr/Radarr and can add accounts for everyone else. Other household members get the full app - Discover, Search, My Library, Favorites, Calendar - but request titles instead of adding them directly, so nothing downloads without the admin's approval. Includes a release calendar, download notifications, and a mobile-friendly UI.
 
 This is a single, self-contained container - Postgres runs inside it, there is nothing else to install. Just set a POSTGRES_PASSWORD below and go.
 
