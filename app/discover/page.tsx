@@ -22,6 +22,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { getRecentlyWatched } from "@/lib/plex/sync";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { SurpriseMeButton } from "@/components/surprise-me-button";
 import type { MediaType } from "@/lib/db/schema";
 
 type DiscoverSearchParams = {
@@ -351,6 +352,13 @@ export default async function DiscoverPage({
               {hideOwned ? "✓ Hiding titles you already track" : "Hide titles you already track"}
             </Link>
           )}
+
+          <SurpriseMeButton
+            displayType={displayType}
+            genreId={genreId}
+            year={year}
+            hideOwned={hideOwned}
+          />
         </div>
 
         {displayType !== "all" && genresForFilter.length > 0 && (
