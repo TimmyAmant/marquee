@@ -17,7 +17,17 @@ export default async function Home() {
   const trendingItems = trending.results
     .filter((item) => item.media_type === "movie" || item.media_type === "tv")
     .slice(0, 16);
-  const upcomingItems = upcoming.results.slice(0, 16);
+
+  // TMDb's /movie/upcoming endpoint is really "currently in theaters or
+  // about to be" for the given region, not strictly "release date is in the
+  // future" — it can include already-released classics that got a limited
+  // anniversary re-release (e.g. Willy Wonka & the Chocolate Factory, 1971).
+  // Filter to titles whose actual release date hasn't happened yet so
+  // "Coming soon" doesn't show something that's been out for decades.
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const upcomingItems = upcoming.results
+    .filter((item) => item.release_date && item.release_date >= todayStr)
+    .slice(0, 16);
 
   const statusMap = viewer.libraryOwnerId
     ? await getLibraryStatusMap(viewer.libraryOwnerId, [
