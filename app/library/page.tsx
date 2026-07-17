@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { getArrCredential, getPlexCredential } from "@/lib/integrations/credentials";
 import { syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
@@ -11,18 +10,15 @@ import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { getDiskSpaceSummary } from "@/lib/integrations/disk-space";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 
 export default async function LibraryPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const viewer = await getViewerContext();
+  if (!viewer.session) redirect("/login");
 
-  const userId = session.user.id;
-  const isAdmin = session.user.role === "admin";
-  // Members share the admin's connected Plex/Sonarr/Radarr rather than
-  // having their own — resolve to whichever account actually owns the
-  // synced data before reading it.
-  const libraryOwnerId = await getLibraryOwnerUserId(userId);
+  const userId = viewer.userId;
+  const isAdmin = viewer.isAdmin;
+  const libraryOwnerId = viewer.libraryOwnerId;
 
   const [plexCred, sonarrCred, radarrCred] = await Promise.all([
     getPlexCredential(libraryOwnerId),

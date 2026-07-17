@@ -1,14 +1,13 @@
-import { auth } from "@/auth";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { getTrendingAll, getUpcomingMovies } from "@/lib/tmdb/client";
 import { getLibraryStatusMap } from "@/lib/library/query";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
 export default async function Home() {
-  const session = await auth();
+  const viewer = await getViewerContext();
 
   const [trending, upcoming] = await Promise.all([
     getTrendingAll().catch(() => ({ results: [] })),
@@ -20,10 +19,8 @@ export default async function Home() {
     .slice(0, 16);
   const upcomingItems = upcoming.results.slice(0, 16);
 
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
-
-  const statusMap = libraryOwnerId
-    ? await getLibraryStatusMap(libraryOwnerId, [
+  const statusMap = viewer.libraryOwnerId
+    ? await getLibraryStatusMap(viewer.libraryOwnerId, [
         ...trendingItems.map((i) => ({ mediaType: i.media_type as MediaType, tmdbId: i.id })),
         ...upcomingItems.map((i) => ({ mediaType: "movie" as MediaType, tmdbId: i.id })),
       ])

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import { CompanyHeader } from "@/components/company-header";
 import { FavoriteButton } from "@/components/favorite-button";
 import { MediaList, type MediaEntry } from "@/components/media-list";
@@ -9,7 +8,7 @@ import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { titles } from "@/lib/db/schema";
 
 type TitleRow = typeof titles.$inferSelect;
@@ -65,18 +64,17 @@ export default async function CompanyPage({
     catalog = solo.catalog;
   }
 
-  const session = await auth();
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
+  const viewer = await getViewerContext();
 
-  const [statusMap, radarrCredential, sonarrCredential, favorited] = session?.user && libraryOwnerId
+  const [statusMap, radarrCredential, sonarrCredential, favorited] = viewer.libraryOwnerId
     ? await Promise.all([
         getLibraryStatusMap(
-          libraryOwnerId,
+          viewer.libraryOwnerId,
           catalog.map((title) => ({ mediaType: title.mediaType, tmdbId: title.tmdbId })),
         ),
-        getArrCredential(session.user.id, "radarr"),
-        getArrCredential(session.user.id, "sonarr"),
-        isFavorited(session.user.id, "company", tmdbId),
+        getArrCredential(viewer.userId, "radarr"),
+        getArrCredential(viewer.userId, "sonarr"),
+        isFavorited(viewer.userId, "company", tmdbId),
       ])
     : [new Map(), null, null, false];
 
@@ -90,15 +88,15 @@ export default async function CompanyPage({
     status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
   }));
 
-  const [favoritedMovieIds, favoritedTvIds] = session?.user
+  const [favoritedMovieIds, favoritedTvIds] = viewer.session
     ? await Promise.all([
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "movie",
           entries.filter((e) => e.mediaType === "movie").map((e) => e.tmdbId),
         ),
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "tv",
           entries.filter((e) => e.mediaType === "tv").map((e) => e.tmdbId),
         ),
@@ -117,7 +115,7 @@ export default async function CompanyPage({
         logoPath={logoPath}
         count={catalog.length}
         favoriteAction={
-          session?.user && (
+          viewer.session && (
             <FavoriteButton entityType="company" tmdbId={tmdbId} initialFavorited={favorited as boolean} />
           )
         }
@@ -136,7 +134,7 @@ export default async function CompanyPage({
             }}
             emptyMessage="No titles found for this studio yet."
             favoritedKeys={favoritedKeys}
-            showFavorite={Boolean(session?.user)}
+            showFavorite={Boolean(viewer.session)}
           />
         </Suspense>
       </div>

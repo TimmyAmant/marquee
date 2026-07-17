@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import { PersonHeader } from "@/components/person-header";
 import { FavoriteButton } from "@/components/favorite-button";
 import { MediaList, type MediaEntry } from "@/components/media-list";
@@ -8,7 +7,7 @@ import { getOrFetchPersonWithCredits } from "@/lib/tmdb/cache";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 
 export default async function PersonPage({
   params,
@@ -26,18 +25,17 @@ export default async function PersonPage({
 
   if (!person) notFound();
 
-  const session = await auth();
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
+  const viewer = await getViewerContext();
 
-  const [statusMap, radarrCredential, sonarrCredential, favorited] = session?.user && libraryOwnerId
+  const [statusMap, radarrCredential, sonarrCredential, favorited] = viewer.libraryOwnerId
     ? await Promise.all([
         getLibraryStatusMap(
-          libraryOwnerId,
+          viewer.libraryOwnerId,
           filmography.map(({ title }) => ({ mediaType: title.mediaType, tmdbId: title.tmdbId })),
         ),
-        getArrCredential(session.user.id, "radarr"),
-        getArrCredential(session.user.id, "sonarr"),
-        isFavorited(session.user.id, "person", tmdbId),
+        getArrCredential(viewer.userId, "radarr"),
+        getArrCredential(viewer.userId, "sonarr"),
+        isFavorited(viewer.userId, "person", tmdbId),
       ])
     : [new Map(), null, null, false];
 
@@ -52,15 +50,15 @@ export default async function PersonPage({
     status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
   }));
 
-  const [favoritedMovieIds, favoritedTvIds] = session?.user
+  const [favoritedMovieIds, favoritedTvIds] = viewer.session
     ? await Promise.all([
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "movie",
           entries.filter((e) => e.mediaType === "movie").map((e) => e.tmdbId),
         ),
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "tv",
           entries.filter((e) => e.mediaType === "tv").map((e) => e.tmdbId),
         ),
@@ -80,7 +78,7 @@ export default async function PersonPage({
         placeOfBirth={person.placeOfBirth}
         profilePath={person.profilePath}
         favoriteAction={
-          session?.user && (
+          viewer.session && (
             <FavoriteButton entityType="person" tmdbId={tmdbId} initialFavorited={favorited as boolean} />
           )
         }
@@ -100,7 +98,7 @@ export default async function PersonPage({
             }}
             emptyMessage="No processed filmography found for this person yet."
             favoritedKeys={favoritedKeys}
-            showFavorite={Boolean(session?.user)}
+            showFavorite={Boolean(viewer.session)}
           />
         </Suspense>
       </div>

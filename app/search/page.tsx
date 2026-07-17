@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { PosterGrid } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
@@ -23,7 +22,7 @@ import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/crede
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
 // Words that describe "what kind of thing to search for" rather than the
@@ -84,11 +83,12 @@ export default async function SearchPage({
 
   const normalized = normalizeForThemeMatch(query);
 
-  const [multi, companies, movieGenres, tvGenres] = await Promise.all([
+  const [multi, companies, movieGenres, tvGenres, viewer] = await Promise.all([
     searchMulti(query).catch(() => null),
     searchCompany(query).catch(() => null),
     getMovieGenres().catch(() => ({ genres: [] })),
     getTvGenres().catch(() => ({ genres: [] })),
+    getViewerContext(),
   ]);
 
   const people = multi?.results.filter((r) => r.media_type === "person") ?? [];
@@ -140,9 +140,6 @@ export default async function SearchPage({
   const hasResults =
     people.length + titleResults.length + companyResults.length + themeItems.length > 0;
 
-  const session = await auth();
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
-
   const allMovieIds = [
     ...titleResults.filter((t) => t.media_type === "movie").map((t) => t.id),
     ...themeItems.filter((t) => t.mediaType === "movie").map((t) => t.tmdbId),
@@ -160,26 +157,26 @@ export default async function SearchPage({
     favoritedCompanyIds,
     favoritedMovieIds,
     favoritedTvIds,
-  ] = session?.user && libraryOwnerId
+  ] = viewer.libraryOwnerId
     ? await Promise.all([
-        getLibraryStatusMap(libraryOwnerId, [
+        getLibraryStatusMap(viewer.libraryOwnerId, [
           ...titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
           ...themeItems.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })),
         ]),
-        getArrCredential(session.user.id, "radarr"),
-        getArrCredential(session.user.id, "sonarr"),
+        getArrCredential(viewer.userId, "radarr"),
+        getArrCredential(viewer.userId, "sonarr"),
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "person",
           people.map((p) => p.id),
         ),
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "company",
           companyResults.map((c) => c.tmdbId),
         ),
-        getFavoritedTmdbIds(session.user.id, "movie", allMovieIds),
-        getFavoritedTmdbIds(session.user.id, "tv", allTvIds),
+        getFavoritedTmdbIds(viewer.userId, "movie", allMovieIds),
+        getFavoritedTmdbIds(viewer.userId, "tv", allTvIds),
       ])
     : [new Map(), null, null, new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>()];
 
@@ -215,7 +212,7 @@ export default async function SearchPage({
                 name={person.name ?? ""}
                 subtitle={person.known_for_department}
                 favoriteAction={
-                  session?.user && (
+                  viewer.session && (
                     <FavoriteButton
                       entityType="person"
                       tmdbId={person.id}
@@ -241,7 +238,7 @@ export default async function SearchPage({
                 name={company.name}
                 logoPath={company.logoPath}
                 favoriteAction={
-                  session?.user && (
+                  viewer.session && (
                     <FavoriteButton
                       entityType="company"
                       tmdbId={company.tmdbId}
@@ -263,7 +260,7 @@ export default async function SearchPage({
             {titleResults.map((title) => {
               const mediaType = title.media_type as MediaType;
               const status = statusMap.get(`${mediaType}:${title.id}`);
-              const canQuickAdd = Boolean(session?.user) && arrConfigured[mediaType] && !status;
+              const canQuickAdd = Boolean(viewer.session) && arrConfigured[mediaType] && !status;
               return (
                 <PosterCard
                   key={`${mediaType}-${title.id}`}
@@ -273,7 +270,7 @@ export default async function SearchPage({
                   year={(title.release_date || title.first_air_date || "").slice(0, 4)}
                   badge={status && <StatusBadge status={status} compact />}
                   favoriteAction={
-                    session?.user && (
+                    viewer.session && (
                       <FavoriteButton
                         entityType={mediaType}
                         tmdbId={title.id}
@@ -300,7 +297,7 @@ export default async function SearchPage({
           <PosterGrid>
             {themeItems.map((item) => {
               const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-              const canQuickAdd = Boolean(session?.user) && arrConfigured[item.mediaType] && !status;
+              const canQuickAdd = Boolean(viewer.session) && arrConfigured[item.mediaType] && !status;
               return (
                 <PosterCard
                   key={`${item.mediaType}-${item.tmdbId}`}
@@ -310,7 +307,7 @@ export default async function SearchPage({
                   year={item.year}
                   badge={status && <StatusBadge status={status} compact />}
                   favoriteAction={
-                    session?.user && (
+                    viewer.session && (
                       <FavoriteButton
                         entityType={item.mediaType}
                         tmdbId={item.tmdbId}

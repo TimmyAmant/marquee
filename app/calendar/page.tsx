@@ -1,11 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import { getUpcomingReleases, type CalendarEntry } from "@/lib/calendar/query";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE_PER_DAY = 4;
@@ -23,14 +22,11 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const viewer = await getViewerContext();
+  if (!viewer.session) redirect("/login");
 
-  const userId = session.user.id;
-  const isAdmin = session.user.role === "admin";
-  // Members share the admin's connected Sonarr/Radarr rather than having
-  // their own — resolve to whichever account actually owns the synced data.
-  const libraryOwnerId = await getLibraryOwnerUserId(userId);
+  const isAdmin = viewer.isAdmin;
+  const libraryOwnerId = viewer.libraryOwnerId;
   const [radarrCred, sonarrCred] = await Promise.all([
     getArrCredential(libraryOwnerId, "radarr"),
     getArrCredential(libraryOwnerId, "sonarr"),

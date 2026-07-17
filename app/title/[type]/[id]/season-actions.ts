@@ -1,9 +1,8 @@
 "use server";
 
-import { auth } from "@/auth";
 import { getTvSeasonDetails } from "@/lib/tmdb/client";
 import { getSonarrEpisodeHasFileMap } from "@/lib/integrations/status";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { TmdbEpisode } from "@/lib/tmdb/client";
 
 export type SeasonEpisodesResult = {
@@ -19,12 +18,13 @@ export async function getSeasonEpisodesAction(
   tvdbId: number | null,
   seasonNumber: number,
 ): Promise<SeasonEpisodesResult> {
-  const session = await auth();
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
+  const viewer = await getViewerContext();
 
   const [details, hasFileMap] = await Promise.all([
     getTvSeasonDetails(tmdbId, seasonNumber).catch(() => null),
-    libraryOwnerId ? getSonarrEpisodeHasFileMap(libraryOwnerId, tvdbId, seasonNumber) : Promise.resolve(new Map<number, boolean>()),
+    viewer.libraryOwnerId
+      ? getSonarrEpisodeHasFileMap(viewer.libraryOwnerId, tvdbId, seasonNumber)
+      : Promise.resolve(new Map<number, boolean>()),
   ]);
 
   return {

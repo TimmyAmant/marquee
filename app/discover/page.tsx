@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { auth } from "@/auth";
 import { PosterGrid, trimToFullRow } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
@@ -22,7 +21,7 @@ import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { FavoriteButton } from "@/components/favorite-button";
 import { getRecentlyWatched } from "@/lib/plex/sync";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
 type DiscoverSearchParams = {
@@ -98,7 +97,7 @@ export default async function DiscoverPage({
   searchParams: Promise<DiscoverSearchParams>;
 }) {
   const sp = await searchParams;
-  const session = await auth();
+  const viewer = await getViewerContext();
 
   const displayType: DisplayType =
     sp.type === "tv" ? "tv" : sp.type === "all" ? "all" : "movie";
@@ -107,7 +106,7 @@ export default async function DiscoverPage({
   const genreId = sp.genre ? Number(sp.genre) : undefined;
   const page = Math.max(1, Number(sp.page) || 1);
   const year = sp.year ? Number(sp.year) : undefined;
-  const hideOwned = Boolean(session?.user) && sp.hideOwned !== "0";
+  const hideOwned = Boolean(viewer.session) && sp.hideOwned !== "0";
 
   const [movieGenres, tvGenres] = await Promise.all([
     getMovieGenres().catch(() => ({ genres: [] })),
@@ -161,13 +160,6 @@ export default async function DiscoverPage({
     hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, 500);
   }
 
-  // Members share the admin's connected Plex/Sonarr/Radarr rather than
-  // having their own — resolve to whichever account actually owns the
-  // synced data before reading it. Computed once here so both the watch
-  // history below and the status/credential lookups further down use the
-  // same resolution.
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
-
   // "Because you watched" — rotates daily through your last several
   // watched titles (rather than always the single most recent one) so the
   // row doesn't look identical on every visit, using TMDb's own
@@ -175,8 +167,8 @@ export default async function DiscoverPage({
   // `titles.rawTmdb` from whenever that title's page/sync last fetched it,
   // so this is usually a free read rather than a fresh TMDb call).
   let becauseYouWatched: { title: string; items: ReturnType<typeof toDisplayItem>[] } | null = null;
-  if (libraryOwnerId && page === 1 && !genreId && !year) {
-    const recentList = await getRecentlyWatched(libraryOwnerId, 10).catch(() => []);
+  if (viewer.libraryOwnerId && page === 1 && !genreId && !year) {
+    const recentList = await getRecentlyWatched(viewer.libraryOwnerId, 10).catch(() => []);
     const recent =
       recentList.length > 0 ? recentList[getDayIndex() % recentList.length] : undefined;
     if (recent) {
@@ -216,9 +208,9 @@ export default async function DiscoverPage({
   // status badge, favorite star, or quick-add button at all.
   const allDisplayedItems = becauseYouWatched ? [...rawItems, ...becauseYouWatched.items] : rawItems;
 
-  const statusMap = libraryOwnerId
+  const statusMap = viewer.libraryOwnerId
     ? await getLibraryStatusMap(
-        libraryOwnerId,
+        viewer.libraryOwnerId,
         allDisplayedItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
       )
     : new Map();
@@ -232,17 +224,17 @@ export default async function DiscoverPage({
     hideOwned ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`)) : rawItems,
   );
 
-  const [radarrCredential, sonarrCredential, favoritedMovieIds, favoritedTvIds] = session?.user
+  const [radarrCredential, sonarrCredential, favoritedMovieIds, favoritedTvIds] = viewer.session
     ? await Promise.all([
-        getArrCredential(session.user.id, "radarr"),
-        getArrCredential(session.user.id, "sonarr"),
+        getArrCredential(viewer.userId, "radarr"),
+        getArrCredential(viewer.userId, "sonarr"),
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "movie",
           allDisplayedItems.filter((i) => i.mediaType === "movie").map((i) => i.tmdbId),
         ),
         getFavoritedTmdbIds(
-          session.user.id,
+          viewer.userId,
           "tv",
           allDisplayedItems.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId),
         ),
@@ -278,7 +270,7 @@ export default async function DiscoverPage({
             <PosterRow>
               {becauseYouWatched.items.map((item) => {
                 const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-                const canQuickAdd = Boolean(session?.user) && arrConfigured[item.mediaType] && !status;
+                const canQuickAdd = Boolean(viewer.session) && arrConfigured[item.mediaType] && !status;
                 return (
                   <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
                     <PosterCard
@@ -288,7 +280,7 @@ export default async function DiscoverPage({
                       year={item.year}
                       badge={status && <StatusBadge status={status} compact />}
                       favoriteAction={
-                        session?.user && (
+                        viewer.session && (
                           <FavoriteButton
                             entityType={item.mediaType}
                             tmdbId={item.tmdbId}
@@ -347,7 +339,7 @@ export default async function DiscoverPage({
 
           <YearSelect currentYear={sp.year} currentParams={sp} />
 
-          {session?.user && (
+          {viewer.session && (
             <Link
               href={buildHref(sp, { hideOwned: hideOwned ? "0" : "1", page: undefined })}
               className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
@@ -401,7 +393,7 @@ export default async function DiscoverPage({
                 const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
                 const genreMap = item.mediaType === "movie" ? movieGenreMap : tvGenreMap;
                 const genreName = item.genreId ? genreMap.get(item.genreId) : undefined;
-                const canQuickAdd = Boolean(session?.user) && arrConfigured[item.mediaType] && !status;
+                const canQuickAdd = Boolean(viewer.session) && arrConfigured[item.mediaType] && !status;
 
                 return (
                   <PosterCard
@@ -415,7 +407,7 @@ export default async function DiscoverPage({
                     overview={item.overview}
                     badge={status && <StatusBadge status={status} compact />}
                     favoriteAction={
-                      session?.user && (
+                      viewer.session && (
                         <FavoriteButton
                           entityType={item.mediaType}
                           tmdbId={item.tmdbId}

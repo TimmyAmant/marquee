@@ -1,11 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { getPendingRequests, getReviewedRequests, getMyRequests } from "@/lib/requests/query";
 import { RequestReviewRow } from "@/components/request-review-row";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 
@@ -33,12 +32,11 @@ function myRequestBadge(status: RequestStatus, libraryStatus: LibraryStatus | nu
 }
 
 export default async function RequestsPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const viewer = await getViewerContext();
+  if (!viewer.session) redirect("/login");
 
-  if (session.user.role !== "admin") {
-    const libraryOwnerId = await getLibraryOwnerUserId(session.user.id);
-    const myRequests = await getMyRequests(session.user.id, libraryOwnerId);
+  if (!viewer.isAdmin) {
+    const myRequests = await getMyRequests(viewer.userId, viewer.libraryOwnerId);
 
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
@@ -93,10 +91,8 @@ export default async function RequestsPage() {
   // holds the Sonarr/Radarr credentials — today that's always this admin,
   // but resolve properly rather than assuming session.user.id === owner, in
   // case a second admin account without its own integrations ever exists.
-  const libraryOwnerId = await getLibraryOwnerUserId(session.user.id);
-
   const [pending, reviewed] = await Promise.all([
-    getPendingRequests(libraryOwnerId),
+    getPendingRequests(viewer.libraryOwnerId),
     getReviewedRequests(),
   ]);
 

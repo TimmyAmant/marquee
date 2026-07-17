@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
-import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { arrStatusCache } from "@/lib/db/schema";
 import { getArrCredential } from "@/lib/integrations/credentials";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 
@@ -17,12 +17,12 @@ export async function unmonitorTitle(
   _prevState: UnmonitorState | undefined,
   _formData: FormData,
 ): Promise<UnmonitorState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
-  if (session.user.role !== "admin") return { error: "Only the admin can change monitoring." };
+  const admin = await requireAdmin("Only the admin can change monitoring.");
+  if (!admin.ok) return { error: admin.error };
+  const userId = admin.userId;
 
   const provider = mediaType === "movie" ? "radarr" : "sonarr";
-  const credential = await getArrCredential(session.user.id, provider);
+  const credential = await getArrCredential(userId, provider);
   if (!credential) return { error: `Connect ${provider} first.` };
 
   const [row] = await db
@@ -30,7 +30,7 @@ export async function unmonitorTitle(
     .from(arrStatusCache)
     .where(
       and(
-        eq(arrStatusCache.userId, session.user.id),
+        eq(arrStatusCache.userId, userId),
         eq(arrStatusCache.provider, provider),
         eq(arrStatusCache.externalId, tmdbId),
       ),
@@ -56,7 +56,7 @@ export async function unmonitorTitle(
     .set({ monitored: false, status: "untracked", checkedAt: new Date() })
     .where(
       and(
-        eq(arrStatusCache.userId, session.user.id),
+        eq(arrStatusCache.userId, userId),
         eq(arrStatusCache.provider, provider),
         eq(arrStatusCache.externalId, tmdbId),
       ),

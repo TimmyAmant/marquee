@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import { TitleHero } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
@@ -14,7 +13,7 @@ import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { getActiveRequestStatus, getOtherPendingRequesters } from "@/lib/requests/query";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 
@@ -27,27 +26,25 @@ export default async function TitlePage({
   const tmdbId = Number(id);
   if ((type !== "movie" && type !== "tv") || !Number.isFinite(tmdbId)) notFound();
 
-  const session = await auth();
+  const viewer = await getViewerContext();
 
   const title = await getOrFetchTitle(type as MediaType, tmdbId).catch(() => undefined);
   if (!title) notFound();
 
   const year = (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null;
 
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
-
-  const libraryStatus = libraryOwnerId
-    ? await getTitleLibraryStatus(libraryOwnerId, type, tmdbId, title.tvdbId)
+  const libraryStatus = viewer.libraryOwnerId
+    ? await getTitleLibraryStatus(viewer.libraryOwnerId, type, tmdbId, title.tvdbId)
     : { status: "untracked" as const, configured: false, file: null };
 
   const [titleFavorited, radarrCredential, sonarrCredential, activeRequestStatus, otherRequesters] =
-    session?.user
+    viewer.session
       ? await Promise.all([
-          isFavorited(session.user.id, type, tmdbId),
-          getArrCredential(session.user.id, "radarr"),
-          getArrCredential(session.user.id, "sonarr"),
-          getActiveRequestStatus(session.user.id, type, tmdbId),
-          getOtherPendingRequesters(type, tmdbId, session.user.id),
+          isFavorited(viewer.userId, type, tmdbId),
+          getArrCredential(viewer.userId, "radarr"),
+          getArrCredential(viewer.userId, "sonarr"),
+          getActiveRequestStatus(viewer.userId, type, tmdbId),
+          getOtherPendingRequesters(type, tmdbId, viewer.userId),
         ])
       : [undefined, null, null, null, []];
   const arrConfigured = {
@@ -78,24 +75,24 @@ export default async function TitlePage({
   }));
 
   const [similarStatusMap, similarFavoritedIds, castFavoritedIds, companyFavoritedIds] =
-    session?.user && libraryOwnerId
+    viewer.libraryOwnerId
       ? await Promise.all([
           getLibraryStatusMap(
-            libraryOwnerId,
+            viewer.libraryOwnerId,
             similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
           ),
           getFavoritedTmdbIds(
-            session.user.id,
+            viewer.userId,
             type,
             similarItems.map((i) => i.tmdbId),
           ),
           getFavoritedTmdbIds(
-            session.user.id,
+            viewer.userId,
             "person",
             cast.map((c) => c.id),
           ),
           getFavoritedTmdbIds(
-            session.user.id,
+            viewer.userId,
             "company",
             companies.map((c) => c.id),
           ),
@@ -147,19 +144,19 @@ export default async function TitlePage({
   }
 
   const [franchiseStatusMap, franchiseFavoritedIds, collectionFavorited] =
-    session?.user && libraryOwnerId && franchiseItems.length > 0
+    viewer.libraryOwnerId && franchiseItems.length > 0
       ? await Promise.all([
           getLibraryStatusMap(
-            libraryOwnerId,
+            viewer.libraryOwnerId,
             franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
           ),
           getFavoritedTmdbIds(
-            session.user.id,
+            viewer.userId,
             type,
             franchiseItems.map((i) => i.tmdbId),
           ),
           collectionId !== undefined
-            ? isFavorited(session.user.id, "collection", collectionId)
+            ? isFavorited(viewer.userId, "collection", collectionId)
             : Promise.resolve(false),
         ])
       : [new Map(), new Set<number>(), false];
@@ -167,8 +164,8 @@ export default async function TitlePage({
   const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
 
   const seasonCompleteness =
-    type === "tv" && seasons.length > 0 && libraryOwnerId
-      ? await getSonarrSeasonCompleteness(libraryOwnerId, title.tvdbId).catch(() => null)
+    type === "tv" && seasons.length > 0 && viewer.libraryOwnerId
+      ? await getSonarrSeasonCompleteness(viewer.libraryOwnerId, title.tvdbId).catch(() => null)
       : null;
 
   return (
@@ -192,7 +189,7 @@ export default async function TitlePage({
           twitterId: externalIds?.twitter_id ?? null,
         }}
         favorited={titleFavorited}
-        isAdmin={session?.user ? session.user.role === "admin" : undefined}
+        isAdmin={viewer.session ? viewer.isAdmin : undefined}
         alreadyRequested={activeRequestStatus === "pending"}
         otherRequesters={otherRequesters}
       />
@@ -210,26 +207,26 @@ export default async function TitlePage({
           </section>
         )}
 
-        <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(session?.user)} />
+        <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
         {franchiseTitle && (
           <FranchiseRow
             title={franchiseTitle}
             items={franchiseItems}
             statusMap={franchiseStatusMap}
             favoritedIds={franchiseFavoritedIds}
-            showFavorite={Boolean(session?.user)}
-            arrConfigured={session?.user ? arrConfigured : undefined}
+            showFavorite={Boolean(viewer.session)}
+            arrConfigured={viewer.session ? arrConfigured : undefined}
             collectionId={collectionId}
             collectionFavorited={collectionFavorited}
           />
         )}
-        <StudioRow companies={companies} favoritedIds={companyFavoritedIds} showFavorite={Boolean(session?.user)} />
+        <StudioRow companies={companies} favoritedIds={companyFavoritedIds} showFavorite={Boolean(viewer.session)} />
         <SimilarTitlesRow
           items={similarItems}
           statusMap={similarStatusMap}
           favoritedIds={similarFavoritedIds}
-          showFavorite={Boolean(session?.user)}
-          arrConfigured={session?.user ? arrConfigured : undefined}
+          showFavorite={Boolean(viewer.session)}
+          arrConfigured={viewer.session ? arrConfigured : undefined}
         />
       </div>
     </div>

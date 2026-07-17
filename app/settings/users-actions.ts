@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type HouseholdMember = {
   id: string;
@@ -53,9 +54,8 @@ export async function createUserAction(
   _prevState: CreateUserState | undefined,
   formData: FormData,
 ): Promise<CreateUserState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
-  if (session.user.role !== "admin") return { error: "Only the admin can add household members." };
+  const admin = await requireAdmin("Only the admin can add household members.");
+  if (!admin.ok) return { error: admin.error };
 
   const parsed = createUserSchema.safeParse({
     email: formData.get("email"),
@@ -147,13 +147,12 @@ export async function deleteUserAction(
   _prevState: DeleteUserState | undefined,
   formData: FormData,
 ): Promise<DeleteUserState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
-  if (session.user.role !== "admin") return { error: "Only the admin can remove household members." };
+  const admin = await requireAdmin("Only the admin can remove household members.");
+  if (!admin.ok) return { error: admin.error };
 
   const userId = String(formData.get("userId") || "");
   if (!userId) return { error: "Invalid request." };
-  if (userId === session.user.id) return { error: "You can't remove your own account." };
+  if (userId === admin.userId) return { error: "You can't remove your own account." };
 
   const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
   if (!target) return { error: "Account not found." };

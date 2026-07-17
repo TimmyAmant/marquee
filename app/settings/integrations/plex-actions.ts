@@ -1,19 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { getOrCreatePlexClientId, upsertPlexCredential } from "@/lib/integrations/credentials";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import * as plex from "@/lib/plex/client";
 import { syncPlexLibrary, getPlexSummary } from "@/lib/plex/sync";
 
 export type StartPlexAuthResult = { error?: string; authUrl?: string; pinId?: number };
 
 export async function startPlexAuth(): Promise<StartPlexAuthResult> {
-  const session = await auth();
-  if (!session?.user) return { error: "You must be signed in." };
-  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
+  const admin = await requireAdmin("Only the admin can manage integrations.");
+  if (!admin.ok) return { error: admin.error };
 
-  const clientId = await getOrCreatePlexClientId(session.user.id);
+  const clientId = await getOrCreatePlexClientId(admin.userId);
 
   try {
     const pin = await plex.createPin(clientId);
@@ -31,19 +30,18 @@ export type PlexAuthStatus = {
 };
 
 export async function checkPlexAuthStatus(pinId: number): Promise<PlexAuthStatus> {
-  const session = await auth();
-  if (!session?.user) return { connected: false, error: "You must be signed in." };
-  if (session.user.role !== "admin") return { connected: false, error: "Only the admin can manage integrations." };
+  const admin = await requireAdmin("Only the admin can manage integrations.");
+  if (!admin.ok) return { connected: false, error: admin.error };
 
-  const clientId = await getOrCreatePlexClientId(session.user.id);
+  const clientId = await getOrCreatePlexClientId(admin.userId);
 
   const pin = await plex.checkPin(clientId, pinId).catch(() => null);
   if (!pin?.authToken) return { connected: false };
 
-  await upsertPlexCredential(session.user.id, { authToken: pin.authToken, clientId });
-  await syncPlexLibrary(session.user.id).catch(() => undefined);
+  await upsertPlexCredential(admin.userId, { authToken: pin.authToken, clientId });
+  await syncPlexLibrary(admin.userId).catch(() => undefined);
 
-  const summary = await getPlexSummary(session.user.id);
+  const summary = await getPlexSummary(admin.userId);
 
   revalidatePath("/settings/integrations");
 

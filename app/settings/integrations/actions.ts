@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { updateArrDefaults, upsertArrCredential, regenerateWebhookSecret } from "@/lib/integrations/credentials";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { arrProviderValues, type ArrProvider } from "@/lib/db/schema";
@@ -30,9 +30,8 @@ export async function testAndSaveArrConnection(
   _prevState: ArrConnectionState | undefined,
   formData: FormData,
 ): Promise<ArrConnectionState> {
-  const session = await auth();
-  if (!session?.user) return { error: "You must be signed in." };
-  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
+  const admin = await requireAdmin("Only the admin can manage integrations.");
+  if (!admin.ok) return { error: admin.error };
   if (!isArrProvider(provider)) return { error: "Invalid provider." };
 
   const baseUrl = String(formData.get("baseUrl") || "").trim().replace(/\/+$/, "");
@@ -57,7 +56,7 @@ export async function testAndSaveArrConnection(
   const selectedRootFolder = rootFolders[0]?.path ?? null;
   const selectedQualityProfileId = qualityProfiles[0]?.id ?? null;
 
-  await upsertArrCredential(session.user.id, provider, {
+  await upsertArrCredential(admin.userId, provider, {
     baseUrl,
     apiKey,
     qualityProfileId: selectedQualityProfileId,
@@ -77,26 +76,25 @@ export async function testAndSaveArrConnection(
 }
 
 export async function saveArrDefaults(provider: ArrProvider, formData: FormData) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "admin") return;
+  const admin = await requireAdmin();
+  if (!admin.ok) return;
   if (!isArrProvider(provider)) return;
 
   const rootFolderPath = String(formData.get("rootFolderPath") || "");
   const qualityProfileId = Number(formData.get("qualityProfileId"));
   if (!rootFolderPath || !Number.isFinite(qualityProfileId)) return;
 
-  await updateArrDefaults(session.user.id, provider, { rootFolderPath, qualityProfileId });
+  await updateArrDefaults(admin.userId, provider, { rootFolderPath, qualityProfileId });
   revalidatePath("/settings/integrations");
 }
 
 export type RegenerateWebhookSecretState = { secret?: string; error?: string };
 
 export async function regenerateWebhookSecretAction(): Promise<RegenerateWebhookSecretState> {
-  const session = await auth();
-  if (!session?.user) return { error: "You must be signed in." };
-  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
+  const admin = await requireAdmin("Only the admin can manage integrations.");
+  if (!admin.ok) return { error: admin.error };
 
-  const secret = await regenerateWebhookSecret(session.user.id);
+  const secret = await regenerateWebhookSecret(admin.userId);
   revalidatePath("/settings/integrations");
   return { secret };
 }

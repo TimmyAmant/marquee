@@ -8,10 +8,11 @@ import { requests } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getActiveRequestStatus, getPendingRequestCount } from "@/lib/requests/query";
 import { addMovieToRadarrForUser, addSeriesToSonarrForUser } from "@/app/title/[type]/[id]/actions";
-import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { createNotification } from "@/lib/notifications/query";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type RequestState = { error?: string; success?: boolean };
 
@@ -31,19 +32,18 @@ export async function createRequestAction(
   _prevState: RequestState | undefined,
   _formData: FormData,
 ): Promise<RequestState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in to request titles." };
+  const viewer = await getViewerContext();
+  if (!viewer.session) return { error: "Sign in to request titles." };
 
-  const existing = await getActiveRequestStatus(session.user.id, mediaType, tmdbId);
+  const existing = await getActiveRequestStatus(viewer.userId, mediaType, tmdbId);
   if (existing) return { error: "You've already requested this." };
 
   // Defense in depth: the Request button is already hidden once a title
   // shows as owned, but re-check server-side since that status can change
   // between page load and submit (e.g. someone else just added it).
-  const libraryOwnerId = await getLibraryOwnerUserId(session.user.id);
   const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
   const currentStatus = await getTitleLibraryStatus(
-    libraryOwnerId,
+    viewer.libraryOwnerId,
     mediaType,
     tmdbId,
     cachedTitle?.tvdbId ?? null,
@@ -53,7 +53,7 @@ export async function createRequestAction(
   }
 
   await db.insert(requests).values({
-    requestedByUserId: session.user.id,
+    requestedByUserId: viewer.userId,
     mediaType,
     tmdbId,
     title,
@@ -72,9 +72,8 @@ export async function approveRequestAction(
   _prevState: ReviewState | undefined,
   _formData: FormData,
 ): Promise<ReviewState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
-  if (session.user.role !== "admin") return { error: "Only an admin can approve requests." };
+  const admin = await requireAdmin("Only an admin can approve requests.");
+  if (!admin.ok) return { error: admin.error };
 
   const [request] = await db
     .select()
@@ -86,8 +85,8 @@ export async function approveRequestAction(
   // there's no shared/instance-wide credential, only per-user ones.
   const result =
     request.mediaType === "movie"
-      ? await addMovieToRadarrForUser(session.user.id, request.tmdbId)
-      : await addSeriesToSonarrForUser(session.user.id, request.tmdbId);
+      ? await addMovieToRadarrForUser(admin.userId, request.tmdbId)
+      : await addSeriesToSonarrForUser(admin.userId, request.tmdbId);
 
   if (result.error) return { error: result.error };
 
@@ -97,7 +96,7 @@ export async function approveRequestAction(
   // single UPDATE...WHERE had before this was split into select-then-update.
   const [updated] = await db
     .update(requests)
-    .set({ status: "approved", reviewedByUserId: session.user.id, reviewedAt: new Date() })
+    .set({ status: "approved", reviewedByUserId: admin.userId, reviewedAt: new Date() })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return { error: "Request was already reviewed." };
@@ -123,9 +122,8 @@ export async function rejectRequestAction(
   _prevState: ReviewState | undefined,
   _formData: FormData,
 ): Promise<ReviewState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
-  if (session.user.role !== "admin") return { error: "Only an admin can reject requests." };
+  const admin = await requireAdmin("Only an admin can reject requests.");
+  if (!admin.ok) return { error: admin.error };
 
   const [request] = await db
     .select()
@@ -136,7 +134,7 @@ export async function rejectRequestAction(
   // Same atomic re-guard as approveRequestAction — see comment there.
   const [updated] = await db
     .update(requests)
-    .set({ status: "rejected", reviewedByUserId: session.user.id, reviewedAt: new Date() })
+    .set({ status: "rejected", reviewedByUserId: admin.userId, reviewedAt: new Date() })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return { error: "Request was already reviewed." };
