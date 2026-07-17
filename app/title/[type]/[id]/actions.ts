@@ -11,15 +11,15 @@ import * as radarr from "@/lib/radarr/client";
 
 export type AddToLibraryState = { error?: string; success?: boolean };
 
-export async function addMovieToRadarr(
+/** Core "add this movie to Radarr" logic, usable for the acting user's own
+ * add-to-library click or (with a different userId) an admin approving
+ * someone else's request — the add always executes using whichever
+ * userId's Radarr credential is passed in. */
+export async function addMovieToRadarrForUser(
+  userId: string,
   tmdbId: number,
-  _prevState: AddToLibraryState | undefined,
-  _formData: FormData,
 ): Promise<AddToLibraryState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in to add titles." };
-
-  const credential = await getArrCredential(session.user.id, "radarr");
+  const credential = await getArrCredential(userId, "radarr");
   if (!isArrFullyConfigured(credential)) {
     return { error: "Connect Radarr in Settings first." };
   }
@@ -60,7 +60,7 @@ export async function addMovieToRadarr(
     await db
       .insert(arrStatusCache)
       .values({
-        userId: session.user.id,
+        userId,
         provider: "radarr",
         externalId: tmdbId,
         arrId: added.id,
@@ -76,21 +76,15 @@ export async function addMovieToRadarr(
     console.error("[add-to-library] radarr cache write failed after successful add:", err);
   }
 
-  revalidatePath(`/title/movie/${tmdbId}`);
-  revalidatePath("/discover");
-  revalidatePath("/library");
   return { success: true };
 }
 
-export async function addSeriesToSonarr(
+/** Core "add this series to Sonarr" logic — see addMovieToRadarrForUser. */
+export async function addSeriesToSonarrForUser(
+  userId: string,
   tmdbId: number,
-  _prevState: AddToLibraryState | undefined,
-  _formData: FormData,
 ): Promise<AddToLibraryState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Sign in to add titles." };
-
-  const credential = await getArrCredential(session.user.id, "sonarr");
+  const credential = await getArrCredential(userId, "sonarr");
   if (!isArrFullyConfigured(credential)) {
     return { error: "Connect Sonarr in Settings first." };
   }
@@ -132,7 +126,7 @@ export async function addSeriesToSonarr(
     await db
       .insert(arrStatusCache)
       .values({
-        userId: session.user.id,
+        userId,
         provider: "sonarr",
         externalId: tmdbId,
         arrId: added.id,
@@ -148,8 +142,39 @@ export async function addSeriesToSonarr(
     console.error("[add-to-library] sonarr cache write failed after successful add:", err);
   }
 
-  revalidatePath(`/title/tv/${tmdbId}`);
-  revalidatePath("/discover");
-  revalidatePath("/library");
   return { success: true };
+}
+
+export async function addMovieToRadarr(
+  tmdbId: number,
+  _prevState: AddToLibraryState | undefined,
+  _formData: FormData,
+): Promise<AddToLibraryState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in to add titles." };
+
+  const result = await addMovieToRadarrForUser(session.user.id, tmdbId);
+  if (result.success) {
+    revalidatePath(`/title/movie/${tmdbId}`);
+    revalidatePath("/discover");
+    revalidatePath("/library");
+  }
+  return result;
+}
+
+export async function addSeriesToSonarr(
+  tmdbId: number,
+  _prevState: AddToLibraryState | undefined,
+  _formData: FormData,
+): Promise<AddToLibraryState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in to add titles." };
+
+  const result = await addSeriesToSonarrForUser(session.user.id, tmdbId);
+  if (result.success) {
+    revalidatePath(`/title/tv/${tmdbId}`);
+    revalidatePath("/discover");
+    revalidatePath("/library");
+  }
+  return result;
 }

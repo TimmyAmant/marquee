@@ -47,7 +47,11 @@ export async function setupAction(
 
   const { email, password, displayName } = parsed.data;
   const passwordHash = await hash(password);
-  await db.insert(users).values({ email, passwordHash, displayName });
+  // This action only ever runs for the very first account (guarded above),
+  // so it's always the one that becomes admin — matches the one-off data
+  // migration that promotes the earliest existing user on already-running
+  // installs.
+  await db.insert(users).values({ email, passwordHash, displayName, role: "admin" });
 
   try {
     await signIn("credentials", { email, password, remember: "on", redirectTo: "/" });

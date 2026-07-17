@@ -60,6 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.displayName ?? undefined,
           rememberMe: credentials?.remember === "on",
+          role: user.role,
         };
       },
     }),
@@ -69,12 +70,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.userId = user.id;
         token.rememberMe = user.rememberMe ?? false;
+        token.role = user.role;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user && token.userId) {
         session.user.id = token.userId as string;
+        session.user.role = token.role ?? "member";
       }
       return session;
     },

@@ -22,17 +22,28 @@ const bytea = customType<{ data: Buffer }>({
   },
 });
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  email: text("email").notNull().unique(),
-  passwordHash: text("password_hash"),
-  displayName: text("display_name"),
-  // Shared secret embedded in this user's Sonarr/Radarr webhook URLs
-  // (Settings > Integrations) — lazily generated the same way
-  // integrationCredentials.plexClientId is, on first need.
-  notificationWebhookSecret: text("notification_webhook_secret"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const userRoleValues = ["admin", "member"] as const;
+export type UserRole = (typeof userRoleValues)[number];
+
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    passwordHash: text("password_hash"),
+    displayName: text("display_name"),
+    // Shared secret embedded in this user's Sonarr/Radarr webhook URLs
+    // (Settings > Integrations) — lazily generated the same way
+    // integrationCredentials.plexClientId is, on first need.
+    notificationWebhookSecret: text("notification_webhook_secret"),
+    // Admins can approve/reject requests from other household members;
+    // members can only request. The very first account created via /setup
+    // is promoted to admin directly in the setup action.
+    role: text("role").notNull().default("member").$type<UserRole>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],
+);
 
 export const sessions = pgTable("sessions", {
   sessionToken: text("session_token").primaryKey(),
@@ -264,6 +275,36 @@ export const notifications = pgTable(
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check("notifications_event_type_check", sql`${table.eventType} in ('grabbed','downloaded')`),
+  ],
+);
+
+export const requestStatusValues = ["pending", "approved", "rejected"] as const;
+export type RequestStatus = (typeof requestStatusValues)[number];
+
+export const requests = pgTable(
+  "requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestedByUserId: uuid("requested_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    title: text("title").notNull(),
+    posterPath: text("poster_path"),
+    status: text("status").notNull().default("pending").$type<RequestStatus>(),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("requests_status_idx").on(table.status, table.createdAt),
+    check(
+      "requests_status_check",
+      sql`${table.status} in ('pending','approved','rejected')`,
+    ),
   ],
 );
 

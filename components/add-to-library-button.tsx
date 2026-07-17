@@ -4,20 +4,31 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
+import { RequestButton } from "@/components/request-button";
 import { formatBytes } from "@/lib/format";
+import type { MediaType } from "@/lib/db/schema";
 
 export function AddToLibraryButton({
   mediaType,
   tmdbId,
+  name,
+  posterPath,
   status,
   configured,
   file,
+  isAdmin,
+  alreadyRequested,
 }: {
-  mediaType: "movie" | "tv";
+  mediaType: MediaType;
   tmdbId: number;
+  name: string;
+  posterPath: string | null;
   status: LibraryStatus;
   configured: boolean;
   file: { path: string; sizeBytes: number; quality?: string } | null;
+  /** Omitted when signed out — no add/request action shown at all. */
+  isAdmin?: boolean;
+  alreadyRequested?: boolean;
 }) {
   const action =
     mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
@@ -29,7 +40,17 @@ export function AddToLibraryButton({
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge status={state?.success ? "tracked_monitored" : status} />
 
-        {status === "untracked" && configured && !state?.success && (
+        {status === "untracked" && !state?.success && isAdmin === false && !alreadyRequested && (
+          <RequestButton mediaType={mediaType} tmdbId={tmdbId} title={name} posterPath={posterPath} />
+        )}
+
+        {status === "untracked" && isAdmin === false && alreadyRequested && (
+          <span className="rounded-full bg-tracked-bg px-4 py-1.5 text-xs font-medium text-tracked">
+            Requested — waiting for approval
+          </span>
+        )}
+
+        {status === "untracked" && isAdmin !== false && configured && !state?.success && (
           <form action={formAction}>
             <button
               type="submit"
@@ -41,7 +62,7 @@ export function AddToLibraryButton({
           </form>
         )}
 
-        {status === "untracked" && !configured && (
+        {status === "untracked" && isAdmin !== false && !configured && (
           <Link
             href="/settings/integrations"
             className="text-xs text-text-muted underline decoration-dotted hover:text-accent"

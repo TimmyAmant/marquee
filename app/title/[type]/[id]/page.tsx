@@ -13,6 +13,7 @@ import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
+import { getActiveRequestStatus } from "@/lib/requests/query";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 
@@ -36,13 +37,14 @@ export default async function TitlePage({
     ? await getTitleLibraryStatus(session.user.id, type, tmdbId, title.tvdbId)
     : { status: "untracked" as const, configured: false, file: null };
 
-  const [titleFavorited, radarrCredential, sonarrCredential] = session?.user
+  const [titleFavorited, radarrCredential, sonarrCredential, activeRequestStatus] = session?.user
     ? await Promise.all([
         isFavorited(session.user.id, type, tmdbId),
         getArrCredential(session.user.id, "radarr"),
         getArrCredential(session.user.id, "sonarr"),
+        getActiveRequestStatus(session.user.id, type, tmdbId),
       ])
-    : [undefined, null, null];
+    : [undefined, null, null, null];
   const arrConfigured = {
     movie: isArrFullyConfigured(radarrCredential),
     tv: isArrFullyConfigured(sonarrCredential),
@@ -185,6 +187,8 @@ export default async function TitlePage({
           twitterId: externalIds?.twitter_id ?? null,
         }}
         favorited={titleFavorited}
+        isAdmin={session?.user ? session.user.role === "admin" : undefined}
+        alreadyRequested={activeRequestStatus === "pending"}
       />
 
       <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">

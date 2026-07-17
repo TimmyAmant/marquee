@@ -2,9 +2,12 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { getPendingRequestCount } from "@/lib/requests/query";
 
 export async function SiteHeader() {
   const session = await auth();
+  const isAdmin = session?.user?.role === "admin";
+  const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-bg-0/85 backdrop-blur-md">
@@ -43,6 +46,17 @@ export async function SiteHeader() {
           {session?.user && (
             <Link href="/calendar" className="transition-colors hover:text-text-primary">
               Calendar
+            </Link>
+          )}
+
+          {isAdmin && (
+            <Link href="/requests" className="relative transition-colors hover:text-text-primary">
+              Requests
+              {pendingRequestCount > 0 && (
+                <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-bg-0">
+                  {pendingRequestCount > 9 ? "9+" : pendingRequestCount}
+                </span>
+              )}
             </Link>
           )}
 

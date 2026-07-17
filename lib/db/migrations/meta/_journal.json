@@ -57,6 +57,13 @@
       "when": 1784241227583,
       "tag": "0007_spotty_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784246218093,
+      "tag": "0008_eager_apocalypse",
+      "breakpoints": true
     }
   ]
 }

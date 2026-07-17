@@ -18,6 +18,8 @@ export function TitleHero({
   file,
   links,
   favorited,
+  isAdmin,
+  alreadyRequested,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -32,6 +34,8 @@ export function TitleHero({
   links: ExternalLinksData;
   /** Omitted entirely (no button shown) when signed out. */
   favorited?: boolean;
+  isAdmin?: boolean;
+  alreadyRequested?: boolean;
 }) {
   const backdrop = tmdbImageUrl(backdropPath, "original");
   const poster = tmdbImageUrl(posterPath, "w500");
@@ -63,9 +67,13 @@ export function TitleHero({
             <AddToLibraryButton
               mediaType={mediaType}
               tmdbId={tmdbId}
+              name={name}
+              posterPath={posterPath}
               status={status}
               configured={configured}
               file={file}
+              isAdmin={isAdmin}
+              alreadyRequested={alreadyRequested}
             />
           </div>
 
