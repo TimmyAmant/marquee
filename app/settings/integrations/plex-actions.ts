@@ -11,6 +11,7 @@ export type StartPlexAuthResult = { error?: string; authUrl?: string; pinId?: nu
 export async function startPlexAuth(): Promise<StartPlexAuthResult> {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in." };
+  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
 
   const clientId = await getOrCreatePlexClientId(session.user.id);
 
@@ -32,6 +33,7 @@ export type PlexAuthStatus = {
 export async function checkPlexAuthStatus(pinId: number): Promise<PlexAuthStatus> {
   const session = await auth();
   if (!session?.user) return { connected: false, error: "You must be signed in." };
+  if (session.user.role !== "admin") return { connected: false, error: "Only the admin can manage integrations." };
 
   const clientId = await getOrCreatePlexClientId(session.user.id);
 

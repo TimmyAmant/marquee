@@ -22,6 +22,7 @@ import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { FavoriteButton } from "@/components/favorite-button";
 import { getRecentlyWatched } from "@/lib/plex/sync";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
 type DiscoverSearchParams = {
@@ -52,6 +53,15 @@ function buildHref(current: DiscoverSearchParams, overrides: Partial<DiscoverSea
   if (merged.hideOwned) params.set("hideOwned", merged.hideOwned);
   const qs = params.toString();
   return `/discover${qs ? `?${qs}` : ""}`;
+}
+
+// A plain, non-component helper — kept outside the page's render body since
+// the React compiler's purity check flags Date.now() called directly inside
+// a Server Component, even though this route is already fully dynamic
+// (auth() + searchParams), specifically to prevent the value depending on
+// unstable render timing.
+function getDayIndex(): number {
+  return Math.floor(Date.now() / 86_400_000);
 }
 
 function toDisplayItem(item: TmdbDiscoverResult, mediaType: MediaType) {
@@ -151,46 +161,17 @@ export default async function DiscoverPage({
     hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, 500);
   }
 
-  const statusMap = session?.user
-    ? await getLibraryStatusMap(
-        session.user.id,
-        rawItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-      )
-    : new Map();
-
-  // "Hide titles you already track" shrinks a fixed-size batch by a
-  // different, unpredictable amount every time, so the surviving count is
-  // rarely a clean multiple of the grid's column count — trim the trailing
-  // partial row rather than showing it ragged. Nothing is actually lost:
-  // the same titles still turn up on the next page.
-  const items = trimToFullRow(
-    hideOwned ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`)) : rawItems,
-  );
-
-  const [radarrCredential, sonarrCredential, favoritedMovieIds, favoritedTvIds] = session?.user
-    ? await Promise.all([
-        getArrCredential(session.user.id, "radarr"),
-        getArrCredential(session.user.id, "sonarr"),
-        getFavoritedTmdbIds(
-          session.user.id,
-          "movie",
-          items.filter((i) => i.mediaType === "movie").map((i) => i.tmdbId),
-        ),
-        getFavoritedTmdbIds(
-          session.user.id,
-          "tv",
-          items.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId),
-        ),
-      ])
-    : [null, null, new Set<number>(), new Set<number>()];
-
-  // "Because you watched" — seeded from the single most-recently-watched
-  // title in Plex, using TMDb's own recommendations for it (already cached
-  // in `titles.rawTmdb` from whenever that title's page/sync last fetched
-  // it, so this is usually a free read rather than a fresh TMDb call).
+  // "Because you watched" — rotates daily through your last several
+  // watched titles (rather than always the single most recent one) so the
+  // row doesn't look identical on every visit, using TMDb's own
+  // recommendations for whichever title comes up (already cached in
+  // `titles.rawTmdb` from whenever that title's page/sync last fetched it,
+  // so this is usually a free read rather than a fresh TMDb call).
   let becauseYouWatched: { title: string; items: ReturnType<typeof toDisplayItem>[] } | null = null;
   if (session?.user && page === 1 && !genreId && !year) {
-    const [recent] = await getRecentlyWatched(session.user.id, 1).catch(() => []);
+    const recentList = await getRecentlyWatched(session.user.id, 10).catch(() => []);
+    const recent =
+      recentList.length > 0 ? recentList[getDayIndex() % recentList.length] : undefined;
     if (recent) {
       const watchedTitle = await getOrFetchTitle(recent.mediaType, recent.tmdbId).catch(() => null);
       const raw = watchedTitle?.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -222,6 +203,52 @@ export default async function DiscoverPage({
     }
   }
 
+  // Combine the main grid and the "Because you watched" row for the shared
+  // status/favorite lookups below, so each only needs one query instead of
+  // two — otherwise the row's cards would silently render with no
+  // status badge, favorite star, or quick-add button at all.
+  const allDisplayedItems = becauseYouWatched ? [...rawItems, ...becauseYouWatched.items] : rawItems;
+
+  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
+
+  const statusMap = libraryOwnerId
+    ? await getLibraryStatusMap(
+        libraryOwnerId,
+        allDisplayedItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+      )
+    : new Map();
+
+  // "Hide titles you already track" shrinks a fixed-size batch by a
+  // different, unpredictable amount every time, so the surviving count is
+  // rarely a clean multiple of the grid's column count — trim the trailing
+  // partial row rather than showing it ragged. Nothing is actually lost:
+  // the same titles still turn up on the next page.
+  const items = trimToFullRow(
+    hideOwned ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`)) : rawItems,
+  );
+
+  const [radarrCredential, sonarrCredential, favoritedMovieIds, favoritedTvIds] = session?.user
+    ? await Promise.all([
+        getArrCredential(session.user.id, "radarr"),
+        getArrCredential(session.user.id, "sonarr"),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "movie",
+          allDisplayedItems.filter((i) => i.mediaType === "movie").map((i) => i.tmdbId),
+        ),
+        getFavoritedTmdbIds(
+          session.user.id,
+          "tv",
+          allDisplayedItems.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId),
+        ),
+      ])
+    : [null, null, new Set<number>(), new Set<number>()];
+
+  const arrConfigured = {
+    movie: isArrFullyConfigured(radarrCredential),
+    tv: isArrFullyConfigured(sonarrCredential),
+  };
+
   return (
     <div className="relative overflow-hidden">
       <div
@@ -244,16 +271,40 @@ export default async function DiscoverPage({
               Because you watched {becauseYouWatched.title}
             </h2>
             <PosterRow>
-              {becauseYouWatched.items.map((item) => (
-                <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
-                  <PosterCard
-                    href={`/title/${item.mediaType}/${item.tmdbId}`}
-                    posterPath={item.posterPath}
-                    name={item.name}
-                    year={item.year}
-                  />
-                </PosterRowItem>
-              ))}
+              {becauseYouWatched.items.map((item) => {
+                const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
+                const canQuickAdd = Boolean(session?.user) && arrConfigured[item.mediaType] && !status;
+                return (
+                  <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
+                    <PosterCard
+                      href={`/title/${item.mediaType}/${item.tmdbId}`}
+                      posterPath={item.posterPath}
+                      name={item.name}
+                      year={item.year}
+                      badge={status && <StatusBadge status={status} compact />}
+                      favoriteAction={
+                        session?.user && (
+                          <FavoriteButton
+                            entityType={item.mediaType}
+                            tmdbId={item.tmdbId}
+                            initialFavorited={
+                              item.mediaType === "movie"
+                                ? favoritedMovieIds.has(item.tmdbId)
+                                : favoritedTvIds.has(item.tmdbId)
+                            }
+                            compact
+                          />
+                        )
+                      }
+                      quickAction={
+                        canQuickAdd ? (
+                          <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                        ) : undefined
+                      }
+                    />
+                  </PosterRowItem>
+                );
+              })}
             </PosterRow>
           </section>
         )}
@@ -345,11 +396,7 @@ export default async function DiscoverPage({
                 const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
                 const genreMap = item.mediaType === "movie" ? movieGenreMap : tvGenreMap;
                 const genreName = item.genreId ? genreMap.get(item.genreId) : undefined;
-                const configured =
-                  item.mediaType === "movie"
-                    ? isArrFullyConfigured(radarrCredential)
-                    : isArrFullyConfigured(sonarrCredential);
-                const canQuickAdd = Boolean(session?.user) && configured && !status;
+                const canQuickAdd = Boolean(session?.user) && arrConfigured[item.mediaType] && !status;
 
                 return (
                   <PosterCard

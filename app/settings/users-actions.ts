@@ -43,6 +43,7 @@ export async function createUserAction(
 ): Promise<CreateUserState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in required." };
+  if (session.user.role !== "admin") return { error: "Only the admin can add household members." };
 
   const parsed = createUserSchema.safeParse({
     email: formData.get("email"),
@@ -77,17 +78,22 @@ const updateMemberSchema = z.object({
 
 export type UpdateMemberState = { error?: string; success?: boolean };
 
-/** Edits another (or your own) household member's email/name, and resets
- * their password if a new one is given — the only account-recovery path
- * here, since there's no email-based "forgot password" flow. Any signed-in
- * user can edit any account; there's no admin/role distinction in this app,
- * matching its single-household trust model. */
+/** Edits a household member's email/name, and resets their password if a
+ * new one is given — the only account-recovery path here, since there's no
+ * email-based "forgot password" flow. Members may only edit their own
+ * account; only the admin may edit anyone else's (including promoting
+ * password/email resets for a member who's locked out). */
 export async function updateHouseholdMemberAction(
   _prevState: UpdateMemberState | undefined,
   formData: FormData,
 ): Promise<UpdateMemberState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in required." };
+
+  const targetUserId = formData.get("userId");
+  if (session.user.role !== "admin" && targetUserId !== session.user.id) {
+    return { error: "You can only edit your own account." };
+  }
 
   const parsed = updateMemberSchema.safeParse({
     userId: formData.get("userId"),

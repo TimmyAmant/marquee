@@ -10,6 +10,7 @@ export default async function AccountSettingsPage() {
   if (!session?.user) redirect("/login");
 
   const members = await listHouseholdMembers();
+  const isAdmin = session.user.role === "admin";
 
   return (
     <div>
@@ -46,17 +47,21 @@ export default async function AccountSettingsPage() {
         Everyone with an account on this Marquee instance.
       </p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-        <HouseholdMembersList members={members} currentUserId={session.user.id} />
+        <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} />
       </div>
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">Add a household member</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        There&apos;s no public signup page — create accounts for other people in your
-        household here.
-      </p>
-      <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
-        <CreateUserForm />
-      </div>
+      {isAdmin && (
+        <>
+          <h2 className="mt-10 font-display text-xl text-text-primary">Add a household member</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            There&apos;s no public signup page — create accounts for other people in your
+            household here.
+          </p>
+          <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
+            <CreateUserForm />
+          </div>
+        </>
+      )}
     </div>
   );
 }

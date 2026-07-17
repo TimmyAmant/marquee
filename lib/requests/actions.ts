@@ -6,10 +6,21 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { requests } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
-import { getActiveRequestStatus } from "@/lib/requests/query";
+import { getActiveRequestStatus, getPendingRequestCount } from "@/lib/requests/query";
 import { addMovieToRadarrForUser, addSeriesToSonarrForUser } from "@/app/title/[type]/[id]/actions";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
+import { getTitleLibraryStatus } from "@/lib/integrations/status";
+import { getOrFetchTitle } from "@/lib/tmdb/cache";
 
 export type RequestState = { error?: string; success?: boolean };
+
+/** Polled by the nav badge so the admin sees a new request without a manual
+ * page refresh — mirrors the notification bell's polling pattern. */
+export async function getPendingRequestCountAction(): Promise<number> {
+  const session = await auth();
+  if (session?.user?.role !== "admin") return 0;
+  return getPendingRequestCount();
+}
 
 export async function createRequestAction(
   mediaType: MediaType,
@@ -24,6 +35,21 @@ export async function createRequestAction(
 
   const existing = await getActiveRequestStatus(session.user.id, mediaType, tmdbId);
   if (existing) return { error: "You've already requested this." };
+
+  // Defense in depth: the Request button is already hidden once a title
+  // shows as owned, but re-check server-side since that status can change
+  // between page load and submit (e.g. someone else just added it).
+  const libraryOwnerId = await getLibraryOwnerUserId(session.user.id);
+  const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+  const currentStatus = await getTitleLibraryStatus(
+    libraryOwnerId,
+    mediaType,
+    tmdbId,
+    cachedTitle?.tvdbId ?? null,
+  ).catch(() => null);
+  if (currentStatus && currentStatus.status !== "untracked") {
+    return { error: "You already have this in your library." };
+  }
 
   await db.insert(requests).values({
     requestedByUserId: session.user.id,

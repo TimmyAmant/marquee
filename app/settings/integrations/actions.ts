@@ -32,6 +32,7 @@ export async function testAndSaveArrConnection(
 ): Promise<ArrConnectionState> {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in." };
+  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
   if (!isArrProvider(provider)) return { error: "Invalid provider." };
 
   const baseUrl = String(formData.get("baseUrl") || "").trim().replace(/\/+$/, "");
@@ -77,7 +78,7 @@ export async function testAndSaveArrConnection(
 
 export async function saveArrDefaults(provider: ArrProvider, formData: FormData) {
   const session = await auth();
-  if (!session?.user) return;
+  if (!session?.user || session.user.role !== "admin") return;
   if (!isArrProvider(provider)) return;
 
   const rootFolderPath = String(formData.get("rootFolderPath") || "");
@@ -93,6 +94,7 @@ export type RegenerateWebhookSecretState = { secret?: string; error?: string };
 export async function regenerateWebhookSecretAction(): Promise<RegenerateWebhookSecretState> {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in." };
+  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
 
   const secret = await regenerateWebhookSecret(session.user.id);
   revalidatePath("/settings/integrations");

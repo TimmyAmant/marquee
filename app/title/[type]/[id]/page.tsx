@@ -14,6 +14,7 @@ import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { getActiveRequestStatus } from "@/lib/requests/query";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 
@@ -33,8 +34,10 @@ export default async function TitlePage({
 
   const year = (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null;
 
-  const libraryStatus = session?.user
-    ? await getTitleLibraryStatus(session.user.id, type, tmdbId, title.tvdbId)
+  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
+
+  const libraryStatus = libraryOwnerId
+    ? await getTitleLibraryStatus(libraryOwnerId, type, tmdbId, title.tvdbId)
     : { status: "untracked" as const, configured: false, file: null };
 
   const [titleFavorited, radarrCredential, sonarrCredential, activeRequestStatus] = session?.user
@@ -73,10 +76,10 @@ export default async function TitlePage({
   }));
 
   const [similarStatusMap, similarFavoritedIds, castFavoritedIds, companyFavoritedIds] =
-    session?.user
+    session?.user && libraryOwnerId
       ? await Promise.all([
           getLibraryStatusMap(
-            session.user.id,
+            libraryOwnerId,
             similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
           ),
           getFavoritedTmdbIds(
@@ -142,10 +145,10 @@ export default async function TitlePage({
   }
 
   const [franchiseStatusMap, franchiseFavoritedIds, collectionFavorited] =
-    session?.user && franchiseItems.length > 0
+    session?.user && libraryOwnerId && franchiseItems.length > 0
       ? await Promise.all([
           getLibraryStatusMap(
-            session.user.id,
+            libraryOwnerId,
             franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
           ),
           getFavoritedTmdbIds(
@@ -162,8 +165,8 @@ export default async function TitlePage({
   const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
 
   const seasonCompleteness =
-    type === "tv" && seasons.length > 0 && session?.user
-      ? await getSonarrSeasonCompleteness(session.user.id, title.tvdbId).catch(() => null)
+    type === "tv" && seasons.length > 0 && libraryOwnerId
+      ? await getSonarrSeasonCompleteness(libraryOwnerId, title.tvdbId).catch(() => null)
       : null;
 
   return (

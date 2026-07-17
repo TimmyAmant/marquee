@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { RequestsBadge } from "@/components/requests-badge";
 import { getPendingRequestCount } from "@/lib/requests/query";
 
 export async function SiteHeader() {
@@ -52,11 +53,7 @@ export async function SiteHeader() {
           {isAdmin && (
             <Link href="/requests" className="relative transition-colors hover:text-text-primary">
               Requests
-              {pendingRequestCount > 0 && (
-                <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-bg-0">
-                  {pendingRequestCount > 9 ? "9+" : pendingRequestCount}
-                </span>
-              )}
+              <RequestsBadge initialCount={pendingRequestCount} />
             </Link>
           )}
 

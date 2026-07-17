@@ -13,6 +13,7 @@ export async function testAndSaveTmdbToken(
 ): Promise<TmdbSettingsState> {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in." };
+  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
 
   const token = String(formData.get("accessToken") || "").trim();
   if (!token) return { error: "Enter an access token." };
@@ -30,6 +31,7 @@ export async function disconnectTmdb(
 ): Promise<TmdbSettingsState> {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in." };
+  if (session.user.role !== "admin") return { error: "Only the admin can manage integrations." };
 
   await clearTmdbAccessToken();
   revalidatePath("/settings/integrations");

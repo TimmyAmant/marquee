@@ -23,6 +23,7 @@ import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/crede
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
 // Words that describe "what kind of thing to search for" rather than the
@@ -140,6 +141,7 @@ export default async function SearchPage({
     people.length + titleResults.length + companyResults.length + themeItems.length > 0;
 
   const session = await auth();
+  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
 
   const allMovieIds = [
     ...titleResults.filter((t) => t.media_type === "movie").map((t) => t.id),
@@ -158,9 +160,9 @@ export default async function SearchPage({
     favoritedCompanyIds,
     favoritedMovieIds,
     favoritedTvIds,
-  ] = session?.user
+  ] = session?.user && libraryOwnerId
     ? await Promise.all([
-        getLibraryStatusMap(session.user.id, [
+        getLibraryStatusMap(libraryOwnerId, [
           ...titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
           ...themeItems.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })),
         ]),

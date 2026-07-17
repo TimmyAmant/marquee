@@ -14,6 +14,7 @@ import { WebhookSettingsCard } from "@/components/webhook-settings-card";
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if (session.user.role !== "admin") redirect("/settings");
 
   await Promise.all([
     syncPlexLibraryIfStale(session.user.id),

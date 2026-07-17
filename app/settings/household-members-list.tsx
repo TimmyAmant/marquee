@@ -77,9 +77,11 @@ function EditMemberForm({
 export function HouseholdMembersList({
   members,
   currentUserId,
+  isAdmin,
 }: {
   members: HouseholdMember[];
   currentUserId: string;
+  isAdmin: boolean;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -106,12 +108,14 @@ export function HouseholdMembersList({
                   You
                 </span>
               )}
-              <button
-                onClick={() => setEditingId(member.id)}
-                className="text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline"
-              >
-                Edit
-              </button>
+              {(isAdmin || member.id === currentUserId) && (
+                <button
+                  onClick={() => setEditingId(member.id)}
+                  className="text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline"
+                >
+                  Edit
+                </button>
+              )}
             </div>
           </li>
         ),

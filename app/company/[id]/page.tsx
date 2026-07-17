@@ -9,6 +9,7 @@ import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import type { titles } from "@/lib/db/schema";
 
 type TitleRow = typeof titles.$inferSelect;
@@ -65,11 +66,12 @@ export default async function CompanyPage({
   }
 
   const session = await auth();
+  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
 
-  const [statusMap, radarrCredential, sonarrCredential, favorited] = session?.user
+  const [statusMap, radarrCredential, sonarrCredential, favorited] = session?.user && libraryOwnerId
     ? await Promise.all([
         getLibraryStatusMap(
-          session.user.id,
+          libraryOwnerId,
           catalog.map((title) => ({ mediaType: title.mediaType, tmdbId: title.tmdbId })),
         ),
         getArrCredential(session.user.id, "radarr"),

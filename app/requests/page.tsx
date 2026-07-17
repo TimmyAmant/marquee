@@ -8,7 +8,7 @@ export default async function RequestsPage() {
   if (!session?.user) redirect("/login");
   if (session.user.role !== "admin") redirect("/library");
 
-  const pending = await getPendingRequests();
+  const pending = await getPendingRequests(session.user.id);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">

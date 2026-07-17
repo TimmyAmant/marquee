@@ -11,17 +11,22 @@ import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { getDiskSpaceSummary } from "@/lib/integrations/disk-space";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 
 export default async function LibraryPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+  // Members share the admin's connected Plex/Sonarr/Radarr rather than
+  // having their own — resolve to whichever account actually owns the
+  // synced data before reading it.
+  const libraryOwnerId = await getLibraryOwnerUserId(userId);
 
   const [plexCred, sonarrCred, radarrCred] = await Promise.all([
-    getPlexCredential(userId),
-    getArrCredential(userId, "sonarr"),
-    getArrCredential(userId, "radarr"),
+    getPlexCredential(libraryOwnerId),
+    getArrCredential(libraryOwnerId, "sonarr"),
+    getArrCredential(libraryOwnerId, "radarr"),
   ]);
 
   const anyConnected = Boolean(plexCred || sonarrCred || radarrCred);
@@ -31,26 +36,30 @@ export default async function LibraryPage() {
       <div className="mx-auto max-w-2xl px-6 py-20 text-center">
         <h1 className="font-display text-3xl text-text-primary">My Library</h1>
         <p className="mt-3 text-text-secondary">
-          Connect Plex, Sonarr, or Radarr to see everything you already own in one place.
+          {libraryOwnerId === userId
+            ? "Connect Plex, Sonarr, or Radarr to see everything you already own in one place."
+            : "The household admin hasn't connected Plex, Sonarr, or Radarr yet."}
         </p>
-        <Link
-          href="/settings/integrations"
-          className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
-        >
-          Connect an integration
-        </Link>
+        {libraryOwnerId === userId && (
+          <Link
+            href="/settings/integrations"
+            className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
+          >
+            Connect an integration
+          </Link>
+        )}
       </div>
     );
   }
 
   const [, , diskSpace] = await Promise.all([
-    syncPlexLibraryIfStale(userId),
-    syncArrLibraryIfStale(userId),
-    getDiskSpaceSummary(userId).catch(() => []),
+    syncPlexLibraryIfStale(libraryOwnerId),
+    syncArrLibraryIfStale(libraryOwnerId),
+    getDiskSpaceSummary(libraryOwnerId).catch(() => []),
   ]);
   const totalFreeBytes = diskSpace.reduce((sum, d) => sum + d.freeSpace, 0);
 
-  const library = await getUserLibrary(userId);
+  const library = await getUserLibrary(libraryOwnerId);
   const owned = library.filter((i) => i.status === "owned");
   const summary = {
     movieCount: owned.filter((i) => i.mediaType === "movie").length,
