@@ -51,10 +51,10 @@ export async function SiteHeader() {
             </Link>
           )}
 
-          {isAdmin && (
+          {session?.user && (
             <Link href="/requests" className="relative transition-colors hover:text-text-primary">
               Requests
-              <RequestsBadge initialCount={pendingRequestCount} />
+              {isAdmin && <RequestsBadge initialCount={pendingRequestCount} />}
             </Link>
           )}
 

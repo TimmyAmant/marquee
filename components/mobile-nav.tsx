@@ -88,14 +88,14 @@ export function MobileNav({
               </>
             )}
 
-            {isAdmin && (
+            {isSignedIn && (
               <Link
                 href="/requests"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors hover:bg-bg-2 hover:text-text-primary"
               >
                 Requests
-                {pendingRequestCount > 0 && (
+                {isAdmin && pendingRequestCount > 0 && (
                   <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-bg-0">
                     {pendingRequestCount > 9 ? "9+" : pendingRequestCount}
                   </span>

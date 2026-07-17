@@ -104,6 +104,43 @@ export async function getReviewedRequests(limit = 50) {
     .limit(limit);
 }
 
+/** A member's own requests, most recent first, with a live library-status
+ * enrichment on approved ones — so instead of just "Approved" they can see
+ * whether it's actually downloading yet or already sitting in the library. */
+export async function getMyRequests(userId: string, libraryOwnerId: string) {
+  const rows = await db
+    .select({
+      id: requests.id,
+      mediaType: requests.mediaType,
+      tmdbId: requests.tmdbId,
+      tvdbId: titles.tvdbId,
+      title: requests.title,
+      posterPath: requests.posterPath,
+      status: requests.status,
+      createdAt: requests.createdAt,
+      reviewedAt: requests.reviewedAt,
+    })
+    .from(requests)
+    .leftJoin(
+      titles,
+      and(eq(titles.mediaType, requests.mediaType), eq(titles.tmdbId, requests.tmdbId)),
+    )
+    .where(eq(requests.requestedByUserId, userId))
+    .orderBy(desc(requests.createdAt));
+
+  const libraryStatuses = await Promise.all(
+    rows.map((r) =>
+      r.status === "approved"
+        ? getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
+            .then((s) => s.status)
+            .catch(() => null)
+        : Promise.resolve(null),
+    ),
+  );
+
+  return rows.map((r, i) => ({ ...r, libraryStatus: libraryStatuses[i] }));
+}
+
 export async function getPendingRequestCount(): Promise<number> {
   const rows = await db
     .select({ id: requests.id })
