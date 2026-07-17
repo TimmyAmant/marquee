@@ -116,7 +116,7 @@ export default async function RequestsPage() {
               title={r.title}
               posterPath={r.posterPath}
               requestedByName={r.requestedByName}
-              requestedByEmail={r.requestedByEmail}
+              requestedByUsername={r.requestedByUsername}
               createdAt={r.createdAt.toISOString()}
             />
           ))
@@ -145,7 +145,7 @@ export default async function RequestsPage() {
                       {r.title}
                     </Link>
                     <p className="mt-0.5 text-xs text-text-secondary">
-                      Requested by {r.requestedByName || r.requestedByEmail} ·{" "}
+                      Requested by {r.requestedByName || r.requestedByUsername} ·{" "}
                       {new Date(r.createdAt).toLocaleDateString()}
                     </p>
                   </div>

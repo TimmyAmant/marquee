@@ -24,7 +24,7 @@ export async function getPendingRequests(viewerUserId: string) {
       createdAt: requests.createdAt,
       requestedByUserId: requests.requestedByUserId,
       requestedByName: users.displayName,
-      requestedByEmail: users.email,
+      requestedByUsername: users.username,
     })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))
@@ -95,7 +95,7 @@ export async function getReviewedRequests(limit = 50) {
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
       requestedByName: users.displayName,
-      requestedByEmail: users.email,
+      requestedByUsername: users.username,
     })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))
@@ -183,7 +183,7 @@ export async function getOtherPendingRequesters(
   excludeUserId: string,
 ): Promise<string[]> {
   const rows = await db
-    .select({ name: users.displayName, email: users.email })
+    .select({ name: users.displayName, username: users.username })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))
     .where(
@@ -195,5 +195,5 @@ export async function getOtherPendingRequesters(
       ),
     );
 
-  return rows.map((r) => r.name || r.email);
+  return rows.map((r) => r.name || r.username);
 }

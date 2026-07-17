@@ -15,12 +15,12 @@ export function LoginForm() {
 
       <form action={formAction} className="mt-6 flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Email
+          Username
           <input
-            type="email"
-            name="email"
+            type="text"
+            name="username"
             required
-            autoComplete="email"
+            autoComplete="username"
             className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
           />
         </label>

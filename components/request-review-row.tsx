@@ -15,7 +15,7 @@ export function RequestReviewRow({
   title,
   posterPath,
   requestedByName,
-  requestedByEmail,
+  requestedByUsername,
   createdAt,
 }: {
   id: string;
@@ -24,7 +24,7 @@ export function RequestReviewRow({
   title: string;
   posterPath: string | null;
   requestedByName: string | null;
-  requestedByEmail: string;
+  requestedByUsername: string;
   createdAt: string;
 }) {
   const router = useRouter();
@@ -55,7 +55,7 @@ export function RequestReviewRow({
           {title}
         </Link>
         <p className="mt-0.5 text-xs text-text-secondary">
-          Requested by {requestedByName || requestedByEmail} ·{" "}
+          Requested by {requestedByName || requestedByUsername} ·{" "}
           {new Date(createdAt).toLocaleDateString()}
         </p>
         {(approveState?.error || rejectState?.error) && (

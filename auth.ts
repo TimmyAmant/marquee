@@ -22,42 +22,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
+        username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
         remember: { label: "Remember me", type: "text" },
       },
       authorize: async (credentials, request) => {
-        const email = typeof credentials?.email === "string" ? credentials.email : undefined;
+        const username = typeof credentials?.username === "string" ? credentials.username : undefined;
         const password =
           typeof credentials?.password === "string" ? credentials.password : undefined;
-        if (!email || !password) return null;
+        if (!username || !password) return null;
 
         const ip = getClientIp(request);
-        const emailKey = `login:email:${email.toLowerCase()}`;
+        const usernameKey = `login:username:${username.toLowerCase()}`;
         const ipKey = `login:ip:${ip}`;
         const windowMs = 15 * 60 * 1000;
 
-        if (isRateLimited(emailKey, 5) || isRateLimited(ipKey, 20)) {
+        if (isRateLimited(usernameKey, 5) || isRateLimited(ipKey, 20)) {
           throw new RateLimitedSignin();
         }
 
-        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
         if (!user || !user.passwordHash) {
-          recordFailedAttempt(emailKey, windowMs);
+          recordFailedAttempt(usernameKey, windowMs);
           recordFailedAttempt(ipKey, windowMs);
           return null;
         }
 
         const valid = await verify(user.passwordHash, password);
         if (!valid) {
-          recordFailedAttempt(emailKey, windowMs);
+          recordFailedAttempt(usernameKey, windowMs);
           recordFailedAttempt(ipKey, windowMs);
           return null;
         }
 
         return {
           id: user.id,
-          email: user.email,
+          username: user.username,
           name: user.displayName ?? undefined,
           rememberMe: credentials?.remember === "on",
           role: user.role,
@@ -69,6 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
+        token.username = user.username;
         token.rememberMe = user.rememberMe ?? false;
         token.role = user.role;
       }
@@ -77,6 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.userId) {
         session.user.id = token.userId as string;
+        session.user.username = token.username as string;
         // Always read fresh from the DB rather than trusting whatever was
         // baked into the JWT — role can change after sign-in (promotion,
         // demotion, the admin-pinning migration), and with a 30-day JWT a

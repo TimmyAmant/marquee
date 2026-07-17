@@ -85,6 +85,13 @@
       "when": 1784250800379,
       "tag": "0011_notify_on_request_review",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1784287660234,
+      "tag": "0012_rename_email_to_username",
+      "breakpoints": true
     }
   ]
 }

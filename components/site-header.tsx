@@ -65,7 +65,7 @@ export async function SiteHeader() {
               href="/settings"
               className="rounded-full border border-border-strong px-4 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
             >
-              {session.user.name || session.user.email}
+              {session.user.name || session.user.username}
             </Link>
           ) : (
             <Link
@@ -83,7 +83,7 @@ export async function SiteHeader() {
             isSignedIn={Boolean(session?.user)}
             isAdmin={isAdmin}
             pendingRequestCount={pendingRequestCount}
-            userLabel={session?.user ? session.user.name || session.user.email || null : null}
+            userLabel={session?.user ? session.user.name || session.user.username || null : null}
           />
         </div>
       </div>

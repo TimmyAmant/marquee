@@ -11,7 +11,11 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { hasAnyUser } from "@/lib/auth/setup";
 
 const setupSchema = z.object({
-  email: z.string().email("Enter a valid email"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(32, "Username must be at most 32 characters")
+    .regex(/^[a-zA-Z0-9_.-]+$/, "Username can only contain letters, numbers, _ . -"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   displayName: z.string().min(1).max(80).optional(),
 });
@@ -36,7 +40,7 @@ export async function setupAction(
   }
 
   const parsed = setupSchema.safeParse({
-    email: formData.get("email"),
+    username: formData.get("username"),
     password: formData.get("password"),
     displayName: formData.get("displayName") || undefined,
   });
@@ -45,16 +49,16 @@ export async function setupAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { email, password, displayName } = parsed.data;
+  const { username, password, displayName } = parsed.data;
   const passwordHash = await hash(password);
   // This action only ever runs for the very first account (guarded above),
   // so it's always the one that becomes admin — matches the one-off data
   // migration that promotes the earliest existing user on already-running
   // installs.
-  await db.insert(users).values({ email, passwordHash, displayName, role: "admin" });
+  await db.insert(users).values({ username, passwordHash, displayName, role: "admin" });
 
   try {
-    await signIn("credentials", { email, password, remember: "on", redirectTo: "/" });
+    await signIn("credentials", { username, password, remember: "on", redirectTo: "/" });
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Account created, but sign-in failed. Please log in." };

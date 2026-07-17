@@ -22,7 +22,7 @@ function RemoveMemberButton({ member }: { member: HouseholdMember }) {
     <form action={formAction} className="flex items-center gap-2">
       <input type="hidden" name="userId" value={member.id} />
       {state?.error && <span className="text-xs text-red-400">{state.error}</span>}
-      <span className="text-xs text-text-secondary">Remove {member.email}?</span>
+      <span className="text-xs text-text-secondary">Remove {member.username}?</span>
       <button
         type="submit"
         disabled={isPending}
@@ -69,12 +69,12 @@ function EditMemberForm({
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Email
+        Username
         <input
-          type="email"
-          name="email"
+          type="text"
+          name="username"
           required
-          defaultValue={member.email}
+          defaultValue={member.username}
           className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
         />
       </label>
@@ -137,8 +137,8 @@ export function HouseholdMembersList({
         ) : (
           <li key={member.id} className="flex items-center justify-between gap-3 px-6 py-4 text-sm">
             <div>
-              <p className="text-text-primary">{member.displayName || member.email}</p>
-              {member.displayName && <p className="mt-0.5 text-text-muted">{member.email}</p>}
+              <p className="text-text-primary">{member.displayName || member.username}</p>
+              {member.displayName && <p className="mt-0.5 text-text-muted">{member.username}</p>}
             </div>
             <div className="flex items-center gap-3">
               {member.role === "admin" && (

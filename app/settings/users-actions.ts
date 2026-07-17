@@ -12,7 +12,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type HouseholdMember = {
   id: string;
-  email: string;
+  username: string;
   displayName: string | null;
   role: UserRole;
   createdAt: Date;
@@ -28,7 +28,7 @@ export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
   const rows = await db
     .select({
       id: users.id,
-      email: users.email,
+      username: users.username,
       displayName: users.displayName,
       role: users.role,
       createdAt: users.createdAt,
@@ -40,8 +40,14 @@ export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
   return rows.filter((r) => r.id === session.user.id);
 }
 
+const usernameSchema = z
+  .string()
+  .min(3, "Username must be at least 3 characters")
+  .max(32, "Username must be at most 32 characters")
+  .regex(/^[a-zA-Z0-9_.-]+$/, "Username can only contain letters, numbers, _ . -");
+
 const createUserSchema = z.object({
-  email: z.string().email("Enter a valid email"),
+  username: usernameSchema,
   password: z.string().min(8, "Password must be at least 8 characters"),
   displayName: z.string().min(1).max(80).optional(),
 });
@@ -58,7 +64,7 @@ export async function createUserAction(
   if (!admin.ok) return { error: admin.error };
 
   const parsed = createUserSchema.safeParse({
-    email: formData.get("email"),
+    username: formData.get("username"),
     password: formData.get("password"),
     displayName: formData.get("displayName") || undefined,
   });
@@ -67,15 +73,15 @@ export async function createUserAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { email, password, displayName } = parsed.data;
+  const { username, password, displayName } = parsed.data;
 
-  const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const [existing] = await db.select().from(users).where(eq(users.username, username)).limit(1);
   if (existing) {
-    return { error: "An account with that email already exists" };
+    return { error: "An account with that username already exists" };
   }
 
   const passwordHash = await hash(password);
-  await db.insert(users).values({ email, passwordHash, displayName });
+  await db.insert(users).values({ username, passwordHash, displayName });
 
   revalidatePath("/settings");
   return { success: true };
@@ -83,18 +89,18 @@ export async function createUserAction(
 
 const updateMemberSchema = z.object({
   userId: z.string().min(1),
-  email: z.string().email("Enter a valid email"),
+  username: usernameSchema,
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
   displayName: z.string().max(80).optional(),
 });
 
 export type UpdateMemberState = { error?: string; success?: boolean };
 
-/** Edits a household member's email/name, and resets their password if a
+/** Edits a household member's username/name, and resets their password if a
  * new one is given — the only account-recovery path here, since there's no
  * email-based "forgot password" flow. Members may only edit their own
  * account; only the admin may edit anyone else's (including promoting
- * password/email resets for a member who's locked out). */
+ * password/username resets for a member who's locked out). */
 export async function updateHouseholdMemberAction(
   _prevState: UpdateMemberState | undefined,
   formData: FormData,
@@ -109,7 +115,7 @@ export async function updateHouseholdMemberAction(
 
   const parsed = updateMemberSchema.safeParse({
     userId: formData.get("userId"),
-    email: formData.get("email"),
+    username: formData.get("username"),
     password: formData.get("password") || undefined,
     displayName: formData.get("displayName") || undefined,
   });
@@ -118,17 +124,17 @@ export async function updateHouseholdMemberAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { userId, email, password, displayName } = parsed.data;
+  const { userId, username, password, displayName } = parsed.data;
 
-  const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const [existing] = await db.select().from(users).where(eq(users.username, username)).limit(1);
   if (existing && existing.id !== userId) {
-    return { error: "An account with that email already exists" };
+    return { error: "An account with that username already exists" };
   }
 
   await db
     .update(users)
     .set({
-      email,
+      username,
       displayName,
       ...(password ? { passwordHash: await hash(password) } : {}),
     })

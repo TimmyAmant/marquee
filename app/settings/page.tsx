@@ -26,8 +26,8 @@ export default async function AccountSettingsPage() {
             <p className="mt-1 text-text-primary">{session.user.name || "—"}</p>
           </div>
           <div>
-            <p className="text-text-muted">Email</p>
-            <p className="mt-1 text-text-primary">{session.user.email}</p>
+            <p className="text-text-muted">Username</p>
+            <p className="mt-1 text-text-primary">{session.user.username}</p>
           </div>
         </div>
 
@@ -48,7 +48,7 @@ export default async function AccountSettingsPage() {
       <p className="mt-2 text-sm text-text-secondary">
         {isAdmin
           ? "Everyone with an account on this Marquee instance."
-          : "Edit your name, email, or password below."}
+          : "Edit your name, username, or password below."}
       </p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} />

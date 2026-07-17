@@ -17,7 +17,7 @@ export async function loginAction(
 
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
+      username: formData.get("username"),
       password: formData.get("password"),
       remember: formData.get("remember"),
       redirect: false,
@@ -27,7 +27,7 @@ export async function loginAction(
       if ((error as { code?: string }).code === "rate_limited") {
         return { error: "Too many attempts. Try again in a few minutes." };
       }
-      return { error: "Incorrect email or password" };
+      return { error: "Incorrect username or password" };
     }
     throw error;
   }
