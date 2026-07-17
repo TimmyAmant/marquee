@@ -7,11 +7,13 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+import type { UserRole } from "@/lib/db/schema";
 
 export type HouseholdMember = {
   id: string;
   email: string;
   displayName: string | null;
+  role: UserRole;
   createdAt: Date;
 };
 
@@ -21,6 +23,7 @@ export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
       id: users.id,
       email: users.email,
       displayName: users.displayName,
+      role: users.role,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -121,6 +124,33 @@ export async function updateHouseholdMemberAction(
       ...(password ? { passwordHash: await hash(password) } : {}),
     })
     .where(eq(users.id, userId));
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+export type DeleteUserState = { error?: string; success?: boolean };
+
+/** Removes a household member's account entirely — admin-only. Their
+ * favorites, requests, integration credentials, etc. cascade-delete with
+ * them (see the users FK definitions in schema.ts). */
+export async function deleteUserAction(
+  _prevState: DeleteUserState | undefined,
+  formData: FormData,
+): Promise<DeleteUserState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  if (session.user.role !== "admin") return { error: "Only the admin can remove household members." };
+
+  const userId = String(formData.get("userId") || "");
+  if (!userId) return { error: "Invalid request." };
+  if (userId === session.user.id) return { error: "You can't remove your own account." };
+
+  const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!target) return { error: "Account not found." };
+  if (target.role === "admin") return { error: "Can't remove the admin account." };
+
+  await db.delete(users).where(eq(users.id, userId));
 
   revalidatePath("/settings");
   return { success: true };

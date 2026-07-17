@@ -71,6 +71,13 @@
       "when": 1784247126544,
       "tag": "0009_mature_marvex",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784249841882,
+      "tag": "0010_pin_admin_email",
+      "breakpoints": true
     }
   ]
 }

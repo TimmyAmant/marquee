@@ -1,7 +1,45 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { updateHouseholdMemberAction, type HouseholdMember } from "./users-actions";
+import { updateHouseholdMemberAction, deleteUserAction, type HouseholdMember } from "./users-actions";
+
+function RemoveMemberButton({ member }: { member: HouseholdMember }) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, formAction, isPending] = useActionState(deleteUserAction, undefined);
+
+  if (!confirming) {
+    return (
+      <button
+        onClick={() => setConfirming(true)}
+        className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline"
+      >
+        Remove
+      </button>
+    );
+  }
+
+  return (
+    <form action={formAction} className="flex items-center gap-2">
+      <input type="hidden" name="userId" value={member.id} />
+      {state?.error && <span className="text-xs text-red-400">{state.error}</span>}
+      <span className="text-xs text-text-secondary">Remove {member.email}?</span>
+      <button
+        type="submit"
+        disabled={isPending}
+        className="text-xs font-medium text-red-400 underline-offset-2 hover:underline disabled:opacity-60"
+      >
+        {isPending ? "Removing…" : "Confirm"}
+      </button>
+      <button
+        type="button"
+        onClick={() => setConfirming(false)}
+        className="text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline"
+      >
+        Cancel
+      </button>
+    </form>
+  );
+}
 
 function EditMemberForm({
   member,
@@ -103,6 +141,11 @@ export function HouseholdMembersList({
               {member.displayName && <p className="mt-0.5 text-text-muted">{member.email}</p>}
             </div>
             <div className="flex items-center gap-3">
+              {member.role === "admin" && (
+                <span className="rounded-full border border-accent/50 px-2.5 py-0.5 text-xs text-accent">
+                  Admin
+                </span>
+              )}
               {member.id === currentUserId && (
                 <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
                   You
@@ -116,6 +159,7 @@ export function HouseholdMembersList({
                   Edit
                 </button>
               )}
+              {isAdmin && member.role !== "admin" && <RemoveMemberButton member={member} />}
             </div>
           </li>
         ),
