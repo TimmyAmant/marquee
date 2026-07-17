@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/auth";
-import { getArrCredential, getOrCreateWebhookSecret } from "@/lib/integrations/credentials";
+import { getArrCredential, getOrCreateWebhookSecret, getJellyfinCredential } from "@/lib/integrations/credentials";
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
+import { syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
 import { isTmdbAccessTokenSavedInSettings } from "@/lib/integrations/app-settings";
 import { ArrCredentialForm } from "@/components/arr-credential-form";
 import { PlexConnectCard } from "@/components/plex-connect-card";
+import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
 import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
@@ -18,14 +20,16 @@ export default async function IntegrationsSettingsPage() {
 
   await Promise.all([
     syncPlexLibraryIfStale(session.user.id),
+    syncJellyfinLibraryIfStale(session.user.id),
     syncArrLibraryIfStale(session.user.id),
   ]);
 
-  const [sonarrCred, radarrCred, plexSummary, tmdbSavedInSettings, webhookSecret, headerList] =
+  const [sonarrCred, radarrCred, plexSummary, jellyfinCred, tmdbSavedInSettings, webhookSecret, headerList] =
     await Promise.all([
       getArrCredential(session.user.id, "sonarr"),
       getArrCredential(session.user.id, "radarr"),
       getPlexSummary(session.user.id),
+      getJellyfinCredential(session.user.id),
       isTmdbAccessTokenSavedInSettings(),
       getOrCreateWebhookSecret(session.user.id),
       headers(),
@@ -41,9 +45,9 @@ export default async function IntegrationsSettingsPage() {
         <div>
           <h2 className="font-display text-xl text-text-primary">Integrations</h2>
           <p className="mt-2 text-sm text-text-secondary">
-            Connect your own Plex, Sonarr, and Radarr so Marquee knows what you already own and can
-            send the rest straight to your download queue. Credentials are encrypted and only ever
-            used on your behalf.
+            Connect your own Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already
+            own and can send the rest straight to your download queue. Credentials are encrypted
+            and only ever used on your behalf.
           </p>
         </div>
         <SyncNowButton />
@@ -62,6 +66,9 @@ export default async function IntegrationsSettingsPage() {
           }))}
           initialMovieCount={plexSummary.movieCount}
           initialTvCount={plexSummary.tvCount}
+        />
+        <JellyfinConnectCard
+          existing={jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, hasApiKey: true } : null}
         />
         <ArrCredentialForm
           provider="sonarr"

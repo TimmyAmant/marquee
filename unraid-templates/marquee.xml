@@ -9,9 +9,9 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/TimmyAmant/marquee/issues</Support>
   <Project>https://github.com/TimmyAmant/marquee</Project>
-  <Overview>Self-hosted media metadata dashboard - TMDb + Plex + Sonarr/Radarr. Look up any actor, studio, or franchise, see instantly whether it's already in your Plex library, being downloaded, or coming soon, and send anything missing straight to Sonarr or Radarr.
+  <Overview>Self-hosted media metadata dashboard - TMDb + Plex/Jellyfin + Sonarr/Radarr. Look up any actor, studio, or franchise, see instantly whether it's already in your Plex or Jellyfin library, being downloaded, or coming soon, and send anything missing straight to Sonarr or Radarr.
 
-Built for households: the admin account (created on first visit) connects Plex/Sonarr/Radarr and can add accounts for everyone else. Other household members get the full app - Discover, Search, My Library, Favorites, Calendar - but request titles instead of adding them directly, so nothing downloads without the admin's approval. Includes a release calendar, download notifications, and a mobile-friendly UI.
+Built for households: the admin account (created on first visit) connects Plex and/or Jellyfin plus Sonarr/Radarr, and can add accounts for everyone else. Other household members get the full app - Discover, Search, My Library, Favorites, Calendar - but request titles instead of adding them directly, so nothing downloads without the admin's approval. Includes a release calendar, download notifications, and a mobile-friendly UI.
 
 This is a single, self-contained container - Postgres runs inside it, there is nothing else to install. Just set a POSTGRES_PASSWORD below and go.
 
@@ -31,7 +31,7 @@ First visit after install creates the one-time admin account. Full setup instruc
   <Config Name="Postgres Data" Target="/var/lib/postgresql/data" Default="/mnt/user/appdata/marquee/postgres-data" Mode="rw" Description="Where Marquee's built-in Postgres database is stored" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/marquee/postgres-data</Config>
   <Config Name="POSTGRES_PASSWORD" Target="POSTGRES_PASSWORD" Default="" Mode="" Description="Password for Marquee's built-in database. Pick any strong password - just remember it, it's not used anywhere outside this container." Type="Variable" Display="always" Required="true" Mask="true"></Config>
   <Config Name="AUTH_SECRET" Target="AUTH_SECRET" Default="" Mode="" Description="Any long random string. Generate with: openssl rand -base64 32" Type="Variable" Display="always" Required="true" Mask="true"></Config>
-  <Config Name="MASTER_ENCRYPTION_KEY" Target="MASTER_ENCRYPTION_KEY" Default="" Mode="" Description="Base64 32-byte key used to encrypt saved Sonarr/Radarr/Plex credentials. Generate with: openssl rand -base64 32 -- BACK THIS UP, losing it makes saved credentials undecryptable." Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="MASTER_ENCRYPTION_KEY" Target="MASTER_ENCRYPTION_KEY" Default="" Mode="" Description="Base64 32-byte key used to encrypt saved Sonarr/Radarr/Plex/Jellyfin credentials. Generate with: openssl rand -base64 32 -- BACK THIS UP, losing it makes saved credentials undecryptable." Type="Variable" Display="always" Required="true" Mask="true"></Config>
   <Config Name="AUTH_TRUST_HOST" Target="AUTH_TRUST_HOST" Default="true" Mode="" Description="Leave as true for LAN access without a fixed domain" Type="Variable" Display="advanced" Required="true" Mask="false">true</Config>
   <Config Name="POSTGRES_USER" Target="POSTGRES_USER" Default="marquee" Mode="" Description="Built-in database username - the default is fine for almost everyone" Type="Variable" Display="advanced" Required="false" Mask="false">marquee</Config>
   <Config Name="POSTGRES_DB" Target="POSTGRES_DB" Default="marquee" Mode="" Description="Built-in database name - the default is fine for almost everyone" Type="Variable" Display="advanced" Required="false" Mask="false">marquee</Config>

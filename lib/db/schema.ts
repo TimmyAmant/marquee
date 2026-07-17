@@ -53,7 +53,7 @@ export const sessions = pgTable("sessions", {
   expires: timestamp("expires", { withTimezone: true }).notNull(),
 });
 
-export const integrationProviderValues = ["sonarr", "radarr", "plex"] as const;
+export const integrationProviderValues = ["sonarr", "radarr", "plex", "jellyfin"] as const;
 export type IntegrationProvider = (typeof integrationProviderValues)[number];
 
 export const integrationCredentials = pgTable(
@@ -79,7 +79,10 @@ export const integrationCredentials = pgTable(
   },
   (table) => [
     unique().on(table.userId, table.provider),
-    check("integration_credentials_provider_check", sql`${table.provider} in ('sonarr','radarr','plex')`),
+    check(
+      "integration_credentials_provider_check",
+      sql`${table.provider} in ('sonarr','radarr','plex','jellyfin')`,
+    ),
   ],
 );
 
@@ -208,6 +211,50 @@ export const plexLibraryItems = pgTable(
     unique().on(table.plexServerId, table.ratingKey),
     index("plex_items_tmdb_idx").on(table.tmdbId),
     index("plex_items_tvdb_idx").on(table.tvdbId),
+  ],
+);
+
+// Jellyfin's equivalent of plexServers/plexLibraryItems — a second,
+// independent media-server integration a household can connect alongside
+// or instead of Plex. Unlike Plex (OAuth token, no admin-level API key
+// concept), Jellyfin auths via a plain server URL + API key, stored in the
+// generic integrationCredentials columns with provider: "jellyfin" — no
+// Jellyfin-specific credential columns needed.
+export const jellyfinServers = pgTable(
+  "jellyfin_servers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    serverId: text("server_id").notNull(),
+    name: text("name"),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  },
+  (table) => [unique().on(table.userId, table.serverId)],
+);
+
+export const jellyfinLibraryItems = pgTable(
+  "jellyfin_library_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    jellyfinServerId: uuid("jellyfin_server_id")
+      .notNull()
+      .references(() => jellyfinServers.id, { onDelete: "cascade" }),
+    itemId: text("item_id").notNull(),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id"),
+    tvdbId: integer("tvdb_id"),
+    imdbId: text("imdb_id"),
+    title: text("title"),
+    addedAt: timestamp("added_at", { withTimezone: true }),
+    sizeBytes: bigint("size_bytes", { mode: "number" }),
+    filePath: text("file_path"),
+  },
+  (table) => [
+    unique().on(table.jellyfinServerId, table.itemId),
+    index("jellyfin_items_tmdb_idx").on(table.tmdbId),
+    index("jellyfin_items_tvdb_idx").on(table.tvdbId),
   ],
 );
 

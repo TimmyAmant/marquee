@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { syncPlexLibrary } from "@/lib/plex/sync";
+import { syncJellyfinLibrary } from "@/lib/jellyfin/sync";
 import { syncArrLibrary } from "@/lib/arr/sync";
-import { getPlexCredential, getArrCredential } from "@/lib/integrations/credentials";
+import { getPlexCredential, getArrCredential, getJellyfinCredential } from "@/lib/integrations/credentials";
 
 export type SyncNowState = { error?: string; success?: boolean };
 
@@ -20,14 +21,16 @@ export async function syncNowAction(
   if (!session?.user) return { error: "Sign in required." };
 
   const userId = session.user.id;
-  const [plexCred, sonarrCred, radarrCred] = await Promise.all([
+  const [plexCred, jellyfinCred, sonarrCred, radarrCred] = await Promise.all([
     getPlexCredential(userId),
+    getJellyfinCredential(userId),
     getArrCredential(userId, "sonarr"),
     getArrCredential(userId, "radarr"),
   ]);
 
   const results = await Promise.allSettled([
     plexCred ? syncPlexLibrary(userId) : Promise.resolve(),
+    jellyfinCred ? syncJellyfinLibrary(userId) : Promise.resolve(),
     sonarrCred ? syncArrLibrary(userId, "sonarr") : Promise.resolve(),
     radarrCred ? syncArrLibrary(userId, "radarr") : Promise.resolve(),
   ]);

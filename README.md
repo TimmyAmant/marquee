@@ -7,13 +7,13 @@
 
 A self-hosted dashboard that ties your media metadata together with what you
 actually own. Look up any actor, studio, or franchise, see instantly whether
-it's already in your Plex library or being downloaded, and send anything
-missing straight to Sonarr or Radarr — all from one page, without digging
-through three different apps.
+it's already in your Plex or Jellyfin library or being downloaded, and send
+anything missing straight to Sonarr or Radarr — all from one page, without
+digging through three different apps.
 
 Runs on your home network (Unraid, Synology, a spare box, whatever) next to
-the Plex/Sonarr/Radarr you already have. Not a hosted service — your data,
-your server.
+the Plex/Jellyfin/Sonarr/Radarr you already have. Not a hosted service — your
+data, your server.
 
 ## Features
 
@@ -38,9 +38,9 @@ your server.
 - Full details: overview, year, trailer, and links to IMDb/Instagram/X
   (Twitter)/Facebook.
 - Live ownership status: **Owned / Downloading / Monitored / Coming soon /
-  Not owned**, checked directly against Plex/Sonarr/Radarr — an unreleased
-  title that's already being tracked shows as "Coming soon" instead of
-  looking like something's actually missing.
+  Not owned**, checked directly against Plex, Jellyfin, and Sonarr/Radarr —
+  an unreleased title that's already being tracked shows as "Coming soon"
+  instead of looking like something's actually missing.
 - One-click **Add to Radarr/Sonarr** (admin) using your saved quality
   profile/root folder — re-enables monitoring automatically if the title
   was already added and then unmonitored. Household members see a
@@ -65,9 +65,9 @@ your server.
 - **Favorite** button on people and studios to build a personal watchlist.
 
 ### My Library
-- One aggregated view of everything already in Plex, Sonarr, and Radarr —
-  shared with every household member, not just the admin who connected
-  the integrations.
+- One aggregated view of everything already in Plex, Jellyfin, Sonarr, and
+  Radarr — shared with every household member, not just the admin who
+  connected the integrations.
 - Header stats: movie count, TV show count, total size on disk, plus a
   count of anything monitored/downloading but not yet owned.
 - Filter by type (Movie/TV) and status (Owned/Downloading/Monitored/Coming
@@ -104,7 +104,7 @@ your server.
   requester gets notified either way. Members have their own **Requests**
   tab too, showing the status of everything they've asked for — pending,
   declined, or (once approved) downloading/already in the library.
-- Only the admin can connect or reconfigure Plex/Sonarr/Radarr
+- Only the admin can connect or reconfigure Plex/Jellyfin/Sonarr/Radarr
   (**Settings → Integrations**) — members can browse and request, not
   wire up new download sources.
 - **Settings → Integrations** (admin-only):
@@ -112,6 +112,9 @@ your server.
     editable in-app (test-and-save) or via environment variable.
   - **Plex** — OAuth connect, shows your library's movie/TV counts, syncs
     automatically in the background.
+  - **Jellyfin** — server URL + API key (test-and-save; generate the key
+    from Jellyfin's own dashboard under Administration → API Keys). Can be
+    connected alongside Plex, instead of it, or not at all.
   - **Sonarr / Radarr** — server URL + API key (test-and-save), with
     default quality profile and root folder for new adds.
 - "Keep me signed in for 30 days" login option, rate-limited sign-in
@@ -149,7 +152,7 @@ Edit `.env` and fill in:
 |---|---|
 | `POSTGRES_PASSWORD` | pick anything — this is only for the database bundled inside the container, it's never exposed outside it |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
-| `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32` — **back this up**, losing it makes saved Sonarr/Radarr/Plex credentials undecryptable |
+| `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32` — **back this up**, losing it makes saved Sonarr/Radarr/Plex/Jellyfin credentials undecryptable |
 | `TMDB_API_KEY` (or `TMDB_ACCESS_TOKEN`) | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) — can also be set later from Settings → Integrations instead |
 | `TVDB_API_KEY` / `TVDB_PIN` | [thetvdb.com/api-information](https://thetvdb.com/api-information) |
 
@@ -166,7 +169,7 @@ source and want to run your own build instead, use
 `docker compose up -d --build`.
 
 Visit `http://<your-server-ip>:3000`. First visit creates the admin account
-(one-time setup, no public signup after); connect Plex/Sonarr/Radarr from
+(one-time setup, no public signup after); connect Plex/Jellyfin/Sonarr/Radarr from
 **Settings → Integrations** once you're in.
 
 ## Unraid

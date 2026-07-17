@@ -1,6 +1,13 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { plexServers, plexLibraryItems, arrStatusCache, titles } from "@/lib/db/schema";
+import {
+  plexServers,
+  plexLibraryItems,
+  jellyfinServers,
+  jellyfinLibraryItems,
+  arrStatusCache,
+  titles,
+} from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import type { LibraryStatus } from "@/components/status-badge";
 
@@ -12,7 +19,7 @@ export type LibraryItem = {
   posterPath: string | null;
   year: string | null;
   status: LibraryStatus;
-  source: "plex" | "sonarr" | "radarr";
+  source: "plex" | "jellyfin" | "sonarr" | "radarr";
   sizeBytes: number | null;
   addedAt: Date | null;
   monitored: boolean | null;
@@ -171,6 +178,57 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
     }
   }
 
+  const jellyfinServerRows = await db
+    .select({ id: jellyfinServers.id })
+    .from(jellyfinServers)
+    .where(eq(jellyfinServers.userId, userId));
+  const jellyfinServerIds = jellyfinServerRows.map((r) => r.id);
+
+  if (jellyfinServerIds.length > 0) {
+    const jellyfinRows = await db
+      .select({
+        title: titles,
+        sizeBytes: jellyfinLibraryItems.sizeBytes,
+        addedAt: jellyfinLibraryItems.addedAt,
+        filePath: jellyfinLibraryItems.filePath,
+      })
+      .from(jellyfinLibraryItems)
+      .innerJoin(
+        titles,
+        and(
+          eq(titles.mediaType, jellyfinLibraryItems.mediaType),
+          eq(titles.tmdbId, jellyfinLibraryItems.tmdbId),
+        ),
+      )
+      .where(inArray(jellyfinLibraryItems.jellyfinServerId, jellyfinServerIds));
+
+    // Same precedence rule as the Plex merge above — an active download
+    // still wins over "owned" from a media-server sync.
+    for (const { title, sizeBytes, addedAt, filePath } of jellyfinRows) {
+      const key = `${title.mediaType}:${title.tmdbId}`;
+      const existing = byKey.get(key);
+      if (existing?.status === "tracked_downloading") {
+        byKey.set(key, { ...existing, sizeBytes, addedAt });
+        continue;
+      }
+      byKey.set(key, {
+        titleId: title.id,
+        mediaType: title.mediaType,
+        tmdbId: title.tmdbId,
+        name: title.name,
+        posterPath: title.posterPath,
+        year: toYear(title),
+        status: "owned",
+        source: "jellyfin",
+        sizeBytes,
+        addedAt,
+        monitored: null,
+        filePath: filePath ?? existing?.filePath ?? null,
+        qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
+      });
+    }
+  }
+
   return Array.from(byKey.values());
 }
 
@@ -246,6 +304,30 @@ export async function getLibraryStatusMap(
         and(
           inArray(plexLibraryItems.plexServerId, plexServerIds),
           inArray(plexLibraryItems.tmdbId, allIds),
+        ),
+      );
+    for (const row of rows) {
+      if (row.tmdbId == null) continue;
+      const key = `${row.mediaType}:${row.tmdbId}`;
+      if (map.get(key) === "tracked_downloading") continue;
+      map.set(key, "owned");
+    }
+  }
+
+  const jellyfinServerRows = await db
+    .select({ id: jellyfinServers.id })
+    .from(jellyfinServers)
+    .where(eq(jellyfinServers.userId, userId));
+  const jellyfinServerIds = jellyfinServerRows.map((r) => r.id);
+
+  if (jellyfinServerIds.length > 0 && allIds.length > 0) {
+    const rows = await db
+      .select({ mediaType: jellyfinLibraryItems.mediaType, tmdbId: jellyfinLibraryItems.tmdbId })
+      .from(jellyfinLibraryItems)
+      .where(
+        and(
+          inArray(jellyfinLibraryItems.jellyfinServerId, jellyfinServerIds),
+          inArray(jellyfinLibraryItems.tmdbId, allIds),
         ),
       );
     for (const row of rows) {

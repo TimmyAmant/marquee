@@ -2,6 +2,7 @@ import { getArrCredential } from "@/lib/integrations/credentials";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { isTitleInPlexLibrary } from "@/lib/plex/sync";
+import { isTitleInJellyfinLibrary } from "@/lib/jellyfin/sync";
 import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
 import type { LibraryStatus } from "@/components/status-badge";
 
@@ -13,7 +14,7 @@ export type FileInfo = {
 
 export type TitleLibraryStatus = {
   status: LibraryStatus;
-  provider: "plex" | "sonarr" | "radarr" | null;
+  provider: "plex" | "jellyfin" | "sonarr" | "radarr" | null;
   configured: boolean;
   file: FileInfo | null;
 };
@@ -76,6 +77,11 @@ export async function getTitleLibraryStatus(
   const ownedInPlex = await isTitleInPlexLibrary(userId, tmdbId, tvdbId).catch(() => false);
   if (ownedInPlex) {
     return { status: "owned", provider: "plex", configured: true, file: null };
+  }
+
+  const ownedInJellyfin = await isTitleInJellyfinLibrary(userId, tmdbId, tvdbId).catch(() => false);
+  if (ownedInJellyfin) {
+    return { status: "owned", provider: "jellyfin", configured: true, file: null };
   }
 
   return getArrStatus(userId, mediaType, tmdbId, tvdbId);

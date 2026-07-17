@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getArrCredential, getPlexCredential } from "@/lib/integrations/credentials";
+import { getArrCredential, getPlexCredential, getJellyfinCredential } from "@/lib/integrations/credentials";
 import { syncPlexLibraryIfStale } from "@/lib/plex/sync";
+import { syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
 import { getUserLibrary } from "@/lib/library/query";
 import { MediaList, type MediaEntry } from "@/components/media-list";
@@ -20,13 +21,14 @@ export default async function LibraryPage() {
   const isAdmin = viewer.isAdmin;
   const libraryOwnerId = viewer.libraryOwnerId;
 
-  const [plexCred, sonarrCred, radarrCred] = await Promise.all([
+  const [plexCred, jellyfinCred, sonarrCred, radarrCred] = await Promise.all([
     getPlexCredential(libraryOwnerId),
+    getJellyfinCredential(libraryOwnerId),
     getArrCredential(libraryOwnerId, "sonarr"),
     getArrCredential(libraryOwnerId, "radarr"),
   ]);
 
-  const anyConnected = Boolean(plexCred || sonarrCred || radarrCred);
+  const anyConnected = Boolean(plexCred || jellyfinCred || sonarrCred || radarrCred);
 
   if (!anyConnected) {
     return (
@@ -34,8 +36,8 @@ export default async function LibraryPage() {
         <h1 className="font-display text-3xl text-text-primary">My Library</h1>
         <p className="mt-3 text-text-secondary">
           {libraryOwnerId === userId
-            ? "Connect Plex, Sonarr, or Radarr to see everything you already own in one place."
-            : "The household admin hasn't connected Plex, Sonarr, or Radarr yet."}
+            ? "Connect Plex, Jellyfin, Sonarr, or Radarr to see everything you already own in one place."
+            : "The household admin hasn't connected Plex, Jellyfin, Sonarr, or Radarr yet."}
         </p>
         {libraryOwnerId === userId && (
           <Link
@@ -49,8 +51,9 @@ export default async function LibraryPage() {
     );
   }
 
-  const [, , diskSpace] = await Promise.all([
+  const [, , , diskSpace] = await Promise.all([
     syncPlexLibraryIfStale(libraryOwnerId),
+    syncJellyfinLibraryIfStale(libraryOwnerId),
     syncArrLibraryIfStale(libraryOwnerId),
     getDiskSpaceSummary(libraryOwnerId).catch(() => []),
   ]);
@@ -104,7 +107,7 @@ export default async function LibraryPage() {
         <div>
           <h1 className="font-display text-3xl text-text-primary">My Library</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Everything already in your connected Plex, Sonarr, and Radarr.
+            Everything already in your connected Plex, Jellyfin, Sonarr, and Radarr.
           </p>
         </div>
         <div className="w-full sm:w-80">

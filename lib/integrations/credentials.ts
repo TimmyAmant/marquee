@@ -135,6 +135,64 @@ export async function getPlexCredential(userId: string): Promise<PlexCredential 
   return { authToken, clientId: row.plexClientId };
 }
 
+export type JellyfinCredential = {
+  baseUrl: string;
+  apiKey: string;
+};
+
+/** Unlike Plex (OAuth token) and like Sonarr/Radarr, Jellyfin auths via a
+ * plain server URL + API key — reuses the same generic baseUrl/apiKeyEnc
+ * columns arr credentials use, just under provider: "jellyfin". No
+ * quality-profile/root-folder fields since Jellyfin is read-only ownership
+ * checking, not something Marquee adds content to. */
+export async function getJellyfinCredential(userId: string): Promise<JellyfinCredential | null> {
+  const [row] = await db
+    .select()
+    .from(integrationCredentials)
+    .where(
+      and(eq(integrationCredentials.userId, userId), eq(integrationCredentials.provider, "jellyfin")),
+    )
+    .limit(1);
+
+  if (!row || !row.baseUrl || !row.apiKeyEnc || !row.apiKeyIv || !row.apiKeyTag) return null;
+
+  const apiKey = decryptSecret({
+    ciphertext: row.apiKeyEnc,
+    iv: row.apiKeyIv,
+    tag: row.apiKeyTag,
+  });
+
+  return { baseUrl: row.baseUrl, apiKey };
+}
+
+export async function upsertJellyfinCredential(
+  userId: string,
+  fields: { baseUrl: string; apiKey: string },
+) {
+  const encrypted = encryptSecret(fields.apiKey);
+
+  await db
+    .insert(integrationCredentials)
+    .values({
+      userId,
+      provider: "jellyfin",
+      baseUrl: fields.baseUrl,
+      apiKeyEnc: encrypted.ciphertext,
+      apiKeyIv: encrypted.iv,
+      apiKeyTag: encrypted.tag,
+    })
+    .onConflictDoUpdate({
+      target: [integrationCredentials.userId, integrationCredentials.provider],
+      set: {
+        baseUrl: fields.baseUrl,
+        apiKeyEnc: encrypted.ciphertext,
+        apiKeyIv: encrypted.iv,
+        apiKeyTag: encrypted.tag,
+        updatedAt: new Date(),
+      },
+    });
+}
+
 /** The shared secret embedded in this user's Sonarr/Radarr webhook URLs
  * (Settings > Integrations) — lazily created on first need, same pattern as
  * getOrCreatePlexClientId above. One secret covers both providers since the

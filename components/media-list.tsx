@@ -19,7 +19,7 @@ export type MediaEntry = {
   year: string | null;
   subtitle?: string | null;
   status?: LibraryStatus;
-  source?: "plex" | "sonarr" | "radarr";
+  source?: "plex" | "jellyfin" | "sonarr" | "radarr";
   sizeBytes?: number | null;
   addedAt?: string | null;
   monitored?: boolean | null;
@@ -40,6 +40,7 @@ const SORT_LABELS: Record<SortOrder, string> = {
 
 const SOURCE_LABELS: Record<NonNullable<MediaEntry["source"]>, string> = {
   plex: "Plex",
+  jellyfin: "Jellyfin",
   sonarr: "Sonarr",
   radarr: "Radarr",
 };
@@ -329,6 +330,7 @@ export function MediaList({
             const canUnmonitor =
               showUnmonitorAction &&
               entry.source !== "plex" &&
+              entry.source !== "jellyfin" &&
               (entry.status === "tracked_monitored" ||
                 entry.status === "tracked_downloading" ||
                 entry.status === "coming_soon") &&
