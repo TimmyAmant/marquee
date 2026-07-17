@@ -74,10 +74,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
-    session({ session, token }) {
+    async session({ session, token }) {
       if (session.user && token.userId) {
         session.user.id = token.userId as string;
-        session.user.role = token.role ?? "member";
+        // Read fresh from the DB rather than trusting whatever was baked
+        // into the JWT at sign-in — a session already active from before
+        // roles existed would otherwise silently read as "member" (losing
+        // admin access) until the user happened to sign in again.
+        if (token.role === undefined) {
+          const [row] = await db
+            .select({ role: users.role })
+            .from(users)
+            .where(eq(users.id, token.userId as string))
+            .limit(1);
+          token.role = row?.role ?? "member";
+        }
+        session.user.role = token.role;
       }
       return session;
     },
