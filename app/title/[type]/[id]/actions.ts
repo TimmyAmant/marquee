@@ -1,15 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { arrStatusCache } from "@/lib/db/schema";
+import { arrStatusCache, users } from "@/lib/db/schema";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 
 export type AddToLibraryState = { error?: string; success?: boolean };
+
+/** Defense in depth: only an admin's Sonarr/Radarr credential should ever be
+ * used to add a title, whether via a direct add or an approved request —
+ * both addMovieToRadarrForUser/addSeriesToSonarrForUser accept a raw userId
+ * and are exported from a "use server" file, so this guard doesn't rely on
+ * the caller (or the UI) being the only path that can reach them. */
+async function isAdminUser(userId: string): Promise<boolean> {
+  const [row] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+  return row?.role === "admin";
+}
 
 /** Core "add this movie to Radarr" logic, usable for the acting user's own
  * add-to-library click or (with a different userId) an admin approving
@@ -19,6 +30,8 @@ export async function addMovieToRadarrForUser(
   userId: string,
   tmdbId: number,
 ): Promise<AddToLibraryState> {
+  if (!(await isAdminUser(userId))) return { error: "Only the admin can add titles." };
+
   const credential = await getArrCredential(userId, "radarr");
   if (!isArrFullyConfigured(credential)) {
     return { error: "Connect Radarr in Settings first." };
@@ -84,6 +97,8 @@ export async function addSeriesToSonarrForUser(
   userId: string,
   tmdbId: number,
 ): Promise<AddToLibraryState> {
+  if (!(await isAdminUser(userId))) return { error: "Only the admin can add titles." };
+
   const credential = await getArrCredential(userId, "sonarr");
   if (!isArrFullyConfigured(credential)) {
     return { error: "Connect Sonarr in Settings first." };

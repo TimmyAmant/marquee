@@ -77,19 +77,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.userId) {
         session.user.id = token.userId as string;
-        // Read fresh from the DB rather than trusting whatever was baked
-        // into the JWT at sign-in — a session already active from before
-        // roles existed would otherwise silently read as "member" (losing
-        // admin access) until the user happened to sign in again.
-        if (token.role === undefined) {
-          const [row] = await db
-            .select({ role: users.role })
-            .from(users)
-            .where(eq(users.id, token.userId as string))
-            .limit(1);
-          token.role = row?.role ?? "member";
-        }
-        session.user.role = token.role;
+        // Always read fresh from the DB rather than trusting whatever was
+        // baked into the JWT — role can change after sign-in (promotion,
+        // demotion, the admin-pinning migration), and with a 30-day JWT a
+        // one-time-only fetch would leave a demoted admin's stale token
+        // granting admin access until the token naturally expires.
+        const [row] = await db
+          .select({ role: users.role })
+          .from(users)
+          .where(eq(users.id, token.userId as string))
+          .limit(1);
+        session.user.role = row?.role ?? "member";
       }
       return session;
     },

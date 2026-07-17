@@ -55,18 +55,26 @@ export async function getPendingRequests(viewerUserId: string) {
       .set({ status: "approved", reviewedAt: new Date() })
       .where(inArray(requests.id, alreadyOwnedIds));
 
-    const reconciled = rows.filter((r) => alreadyOwnedIds.includes(r.id));
+    const reconciledIndexes = rows.reduce<number[]>((acc, r, i) => {
+      if (alreadyOwnedIds.includes(r.id)) acc.push(i);
+      return acc;
+    }, []);
     await Promise.all(
-      reconciled.map((r) =>
-        createNotification({
+      reconciledIndexes.map((i) => {
+        const r = rows[i];
+        const message =
+          statuses[i].status === "coming_soon"
+            ? `"${r.title}" is already being tracked — it's not released yet.`
+            : `"${r.title}" was already in your library.`;
+        return createNotification({
           userId: r.requestedByUserId,
           mediaType: r.mediaType,
           tmdbId: r.tmdbId,
           title: r.title,
           eventType: "request_approved",
-          message: `"${r.title}" was already in your library.`,
-        }).catch(() => undefined),
-      ),
+          message,
+        }).catch(() => undefined);
+      }),
     );
   }
 

@@ -5,14 +5,21 @@ import { auth } from "@/auth";
 import { getPendingRequests, getReviewedRequests } from "@/lib/requests/query";
 import { RequestReviewRow } from "@/components/request-review-row";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 
 export default async function RequestsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   if (session.user.role !== "admin") redirect("/library");
 
+  // Reconciliation checks library status against whichever account actually
+  // holds the Sonarr/Radarr credentials — today that's always this admin,
+  // but resolve properly rather than assuming session.user.id === owner, in
+  // case a second admin account without its own integrations ever exists.
+  const libraryOwnerId = await getLibraryOwnerUserId(session.user.id);
+
   const [pending, reviewed] = await Promise.all([
-    getPendingRequests(session.user.id),
+    getPendingRequests(libraryOwnerId),
     getReviewedRequests(),
   ]);
 

@@ -91,10 +91,16 @@ export async function approveRequestAction(
 
   if (result.error) return { error: result.error };
 
-  await db
+  // Re-guard on status='pending' here too — the initial select above can't
+  // stop a concurrent reject from landing between that read and this write,
+  // so keep the same atomic "only if still pending" condition the original
+  // single UPDATE...WHERE had before this was split into select-then-update.
+  const [updated] = await db
     .update(requests)
     .set({ status: "approved", reviewedByUserId: session.user.id, reviewedAt: new Date() })
-    .where(eq(requests.id, requestId));
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .returning({ id: requests.id });
+  if (!updated) return { error: "Request was already reviewed." };
 
   await createNotification({
     userId: request.requestedByUserId,
@@ -105,6 +111,8 @@ export async function approveRequestAction(
     message: `"${request.title}" was approved — it's on its way to your library.`,
   }).catch(() => undefined);
 
+  revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
+  revalidatePath("/discover");
   revalidatePath("/requests");
   revalidatePath("/library");
   return { success: true };
@@ -125,10 +133,13 @@ export async function rejectRequestAction(
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
   if (!request) return { error: "Request not found or already reviewed." };
 
-  await db
+  // Same atomic re-guard as approveRequestAction — see comment there.
+  const [updated] = await db
     .update(requests)
     .set({ status: "rejected", reviewedByUserId: session.user.id, reviewedAt: new Date() })
-    .where(eq(requests.id, requestId));
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .returning({ id: requests.id });
+  if (!updated) return { error: "Request was already reviewed." };
 
   await createNotification({
     userId: request.requestedByUserId,

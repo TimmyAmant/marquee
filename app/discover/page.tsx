@@ -161,6 +161,13 @@ export default async function DiscoverPage({
     hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, 500);
   }
 
+  // Members share the admin's connected Plex/Sonarr/Radarr rather than
+  // having their own — resolve to whichever account actually owns the
+  // synced data before reading it. Computed once here so both the watch
+  // history below and the status/credential lookups further down use the
+  // same resolution.
+  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
+
   // "Because you watched" — rotates daily through your last several
   // watched titles (rather than always the single most recent one) so the
   // row doesn't look identical on every visit, using TMDb's own
@@ -168,8 +175,8 @@ export default async function DiscoverPage({
   // `titles.rawTmdb` from whenever that title's page/sync last fetched it,
   // so this is usually a free read rather than a fresh TMDb call).
   let becauseYouWatched: { title: string; items: ReturnType<typeof toDisplayItem>[] } | null = null;
-  if (session?.user && page === 1 && !genreId && !year) {
-    const recentList = await getRecentlyWatched(session.user.id, 10).catch(() => []);
+  if (libraryOwnerId && page === 1 && !genreId && !year) {
+    const recentList = await getRecentlyWatched(libraryOwnerId, 10).catch(() => []);
     const recent =
       recentList.length > 0 ? recentList[getDayIndex() % recentList.length] : undefined;
     if (recent) {
@@ -208,8 +215,6 @@ export default async function DiscoverPage({
   // two — otherwise the row's cards would silently render with no
   // status badge, favorite star, or quick-add button at all.
   const allDisplayedItems = becauseYouWatched ? [...rawItems, ...becauseYouWatched.items] : rawItems;
-
-  const libraryOwnerId = session?.user ? await getLibraryOwnerUserId(session.user.id) : null;
 
   const statusMap = libraryOwnerId
     ? await getLibraryStatusMap(
