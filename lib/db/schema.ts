@@ -259,7 +259,12 @@ export const arrStatusCache = pgTable(
   (table) => [unique().on(table.userId, table.provider, table.externalId)],
 );
 
-export const notificationEventTypeValues = ["grabbed", "downloaded"] as const;
+export const notificationEventTypeValues = [
+  "grabbed",
+  "downloaded",
+  "request_approved",
+  "request_rejected",
+] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
 export const notifications = pgTable(
@@ -279,7 +284,10 @@ export const notifications = pgTable(
   },
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
-    check("notifications_event_type_check", sql`${table.eventType} in ('grabbed','downloaded')`),
+    check(
+      "notifications_event_type_check",
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected')`,
+    ),
   ],
 );
 

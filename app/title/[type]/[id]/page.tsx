@@ -13,7 +13,7 @@ import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getActiveRequestStatus } from "@/lib/requests/query";
+import { getActiveRequestStatus, getOtherPendingRequesters } from "@/lib/requests/query";
 import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
@@ -40,14 +40,16 @@ export default async function TitlePage({
     ? await getTitleLibraryStatus(libraryOwnerId, type, tmdbId, title.tvdbId)
     : { status: "untracked" as const, configured: false, file: null };
 
-  const [titleFavorited, radarrCredential, sonarrCredential, activeRequestStatus] = session?.user
-    ? await Promise.all([
-        isFavorited(session.user.id, type, tmdbId),
-        getArrCredential(session.user.id, "radarr"),
-        getArrCredential(session.user.id, "sonarr"),
-        getActiveRequestStatus(session.user.id, type, tmdbId),
-      ])
-    : [undefined, null, null, null];
+  const [titleFavorited, radarrCredential, sonarrCredential, activeRequestStatus, otherRequesters] =
+    session?.user
+      ? await Promise.all([
+          isFavorited(session.user.id, type, tmdbId),
+          getArrCredential(session.user.id, "radarr"),
+          getArrCredential(session.user.id, "sonarr"),
+          getActiveRequestStatus(session.user.id, type, tmdbId),
+          getOtherPendingRequesters(type, tmdbId, session.user.id),
+        ])
+      : [undefined, null, null, null, []];
   const arrConfigured = {
     movie: isArrFullyConfigured(radarrCredential),
     tv: isArrFullyConfigured(sonarrCredential),
@@ -192,6 +194,7 @@ export default async function TitlePage({
         favorited={titleFavorited}
         isAdmin={session?.user ? session.user.role === "admin" : undefined}
         alreadyRequested={activeRequestStatus === "pending"}
+        otherRequesters={otherRequesters}
       />
 
       <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">

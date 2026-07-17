@@ -18,6 +18,7 @@ export function AddToLibraryButton({
   file,
   isAdmin,
   alreadyRequested,
+  otherRequesters,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -29,6 +30,7 @@ export function AddToLibraryButton({
   /** Omitted when signed out — no add/request action shown at all. */
   isAdmin?: boolean;
   alreadyRequested?: boolean;
+  otherRequesters?: string[];
 }) {
   const action =
     mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
@@ -71,6 +73,10 @@ export function AddToLibraryButton({
           </Link>
         )}
       </div>
+
+      {status === "untracked" && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (
+        <p className="text-xs text-text-muted">Also requested by {otherRequesters.join(", ")}</p>
+      )}
 
       {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
 

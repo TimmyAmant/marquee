@@ -78,6 +78,13 @@
       "when": 1784249841882,
       "tag": "0010_pin_admin_email",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784250800379,
+      "tag": "0011_notify_on_request_review",
+      "breakpoints": true
     }
   ]
 }

@@ -20,6 +20,7 @@ export function TitleHero({
   favorited,
   isAdmin,
   alreadyRequested,
+  otherRequesters,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -36,6 +37,7 @@ export function TitleHero({
   favorited?: boolean;
   isAdmin?: boolean;
   alreadyRequested?: boolean;
+  otherRequesters?: string[];
 }) {
   const backdrop = tmdbImageUrl(backdropPath, "original");
   const poster = tmdbImageUrl(posterPath, "w500");
@@ -74,6 +76,7 @@ export function TitleHero({
               file={file}
               isAdmin={isAdmin}
               alreadyRequested={alreadyRequested}
+              otherRequesters={otherRequesters}
             />
           </div>
 

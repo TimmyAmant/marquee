@@ -1,8 +1,9 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
+import { createNotification } from "@/lib/notifications/query";
 
 /**
  * Pending requests for the admin to review, with a reconciliation pass first:
@@ -21,6 +22,7 @@ export async function getPendingRequests(viewerUserId: string) {
       title: requests.title,
       posterPath: requests.posterPath,
       createdAt: requests.createdAt,
+      requestedByUserId: requests.requestedByUserId,
       requestedByName: users.displayName,
       requestedByEmail: users.email,
     })
@@ -52,6 +54,20 @@ export async function getPendingRequests(viewerUserId: string) {
       .update(requests)
       .set({ status: "approved", reviewedAt: new Date() })
       .where(inArray(requests.id, alreadyOwnedIds));
+
+    const reconciled = rows.filter((r) => alreadyOwnedIds.includes(r.id));
+    await Promise.all(
+      reconciled.map((r) =>
+        createNotification({
+          userId: r.requestedByUserId,
+          mediaType: r.mediaType,
+          tmdbId: r.tmdbId,
+          title: r.title,
+          eventType: "request_approved",
+          message: `"${r.title}" was already in your library.`,
+        }).catch(() => undefined),
+      ),
+    );
   }
 
   return rows.filter((_, i) => statuses[i].status === "untracked");
@@ -88,4 +104,28 @@ export async function getActiveRequestStatus(
 
   if (!row || row.status === "rejected") return null;
   return row.status;
+}
+
+/** Other household members with a pending request for this same title —
+ * shown on the title page so a member doesn't duplicate a request a
+ * housemate already made. */
+export async function getOtherPendingRequesters(
+  mediaType: MediaType,
+  tmdbId: number,
+  excludeUserId: string,
+): Promise<string[]> {
+  const rows = await db
+    .select({ name: users.displayName, email: users.email })
+    .from(requests)
+    .innerJoin(users, eq(users.id, requests.requestedByUserId))
+    .where(
+      and(
+        eq(requests.status, "pending"),
+        eq(requests.mediaType, mediaType),
+        eq(requests.tmdbId, tmdbId),
+        ne(requests.requestedByUserId, excludeUserId),
+      ),
+    );
+
+  return rows.map((r) => r.name || r.email);
 }

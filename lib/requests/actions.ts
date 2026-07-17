@@ -11,6 +11,7 @@ import { addMovieToRadarrForUser, addSeriesToSonarrForUser } from "@/app/title/[
 import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { createNotification } from "@/lib/notifications/query";
 
 export type RequestState = { error?: string; success?: boolean };
 
@@ -95,6 +96,15 @@ export async function approveRequestAction(
     .set({ status: "approved", reviewedByUserId: session.user.id, reviewedAt: new Date() })
     .where(eq(requests.id, requestId));
 
+  await createNotification({
+    userId: request.requestedByUserId,
+    mediaType: request.mediaType,
+    tmdbId: request.tmdbId,
+    title: request.title,
+    eventType: "request_approved",
+    message: `"${request.title}" was approved — it's on its way to your library.`,
+  }).catch(() => undefined);
+
   revalidatePath("/requests");
   revalidatePath("/library");
   return { success: true };
@@ -109,10 +119,25 @@ export async function rejectRequestAction(
   if (!session?.user) return { error: "Sign in required." };
   if (session.user.role !== "admin") return { error: "Only an admin can reject requests." };
 
+  const [request] = await db
+    .select()
+    .from(requests)
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
+  if (!request) return { error: "Request not found or already reviewed." };
+
   await db
     .update(requests)
     .set({ status: "rejected", reviewedByUserId: session.user.id, reviewedAt: new Date() })
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
+    .where(eq(requests.id, requestId));
+
+  await createNotification({
+    userId: request.requestedByUserId,
+    mediaType: request.mediaType,
+    tmdbId: request.tmdbId,
+    title: request.title,
+    eventType: "request_rejected",
+    message: `"${request.title}" was declined.`,
+  }).catch(() => undefined);
 
   revalidatePath("/requests");
   return { success: true };
