@@ -42,9 +42,13 @@ export default async function AccountSettingsPage() {
         </form>
       </div>
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">Household members</h2>
+      <h2 className="mt-10 font-display text-xl text-text-primary">
+        {isAdmin ? "Household members" : "Your account"}
+      </h2>
       <p className="mt-2 text-sm text-text-secondary">
-        Everyone with an account on this Marquee instance.
+        {isAdmin
+          ? "Everyone with an account on this Marquee instance."
+          : "Edit your name, email, or password below."}
       </p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} />

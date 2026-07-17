@@ -17,8 +17,14 @@ export type HouseholdMember = {
   createdAt: Date;
 };
 
+/** Admins see every account (they're the ones who can edit/remove others);
+ * members only ever see their own row, so household members can't see who
+ * else lives in the house. */
 export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
-  return db
+  const session = await auth();
+  if (!session?.user) return [];
+
+  const rows = await db
     .select({
       id: users.id,
       email: users.email,
@@ -28,6 +34,9 @@ export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
     })
     .from(users)
     .orderBy(asc(users.createdAt));
+
+  if (session.user.role === "admin") return rows;
+  return rows.filter((r) => r.id === session.user.id);
 }
 
 const createUserSchema = z.object({
