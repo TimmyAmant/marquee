@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { PosterGrid, trimToFullRow } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
+import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { StatusBadge } from "@/components/status-badge";
 import { YearSelect } from "@/components/year-select";
 import { QuickAddButton } from "@/components/quick-add-button";
@@ -12,11 +13,15 @@ import {
   discoverTv,
   type DiscoverSort,
   type TmdbDiscoverResult,
+  type TmdbMovieDetails,
+  type TmdbTvDetails,
 } from "@/lib/tmdb/client";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { FavoriteButton } from "@/components/favorite-button";
+import { getRecentlyWatched } from "@/lib/plex/sync";
+import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import type { MediaType } from "@/lib/db/schema";
 
 type DiscoverSearchParams = {
@@ -179,6 +184,44 @@ export default async function DiscoverPage({
       ])
     : [null, null, new Set<number>(), new Set<number>()];
 
+  // "Because you watched" — seeded from the single most-recently-watched
+  // title in Plex, using TMDb's own recommendations for it (already cached
+  // in `titles.rawTmdb` from whenever that title's page/sync last fetched
+  // it, so this is usually a free read rather than a fresh TMDb call).
+  let becauseYouWatched: { title: string; items: ReturnType<typeof toDisplayItem>[] } | null = null;
+  if (session?.user && page === 1 && !genreId && !year) {
+    const [recent] = await getRecentlyWatched(session.user.id, 1).catch(() => []);
+    if (recent) {
+      const watchedTitle = await getOrFetchTitle(recent.mediaType, recent.tmdbId).catch(() => null);
+      const raw = watchedTitle?.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
+      const recs = raw?.recommendations?.results ?? [];
+      if (watchedTitle && recs.length > 0) {
+        becauseYouWatched = {
+          title: watchedTitle.name,
+          items: recs
+            .slice(0, 12)
+            .map((r) =>
+              toDisplayItem(
+                {
+                  id: r.id,
+                  title: r.title,
+                  name: r.name,
+                  poster_path: r.poster_path,
+                  backdrop_path: null,
+                  release_date: r.release_date,
+                  first_air_date: r.first_air_date,
+                  overview: "",
+                  vote_average: 0,
+                  popularity: 0,
+                },
+                recent.mediaType,
+              ),
+            ),
+        };
+      }
+    }
+  }
+
   return (
     <div className="relative overflow-hidden">
       <div
@@ -194,6 +237,26 @@ export default async function DiscoverPage({
         <p className="mt-2 text-sm text-text-secondary">
           Browse by genre, year, and popularity to find something new to add.
         </p>
+
+        {becauseYouWatched && (
+          <section className="mt-8">
+            <h2 className="mb-4 font-display text-xl text-text-primary">
+              Because you watched {becauseYouWatched.title}
+            </h2>
+            <PosterRow>
+              {becauseYouWatched.items.map((item) => (
+                <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
+                  <PosterCard
+                    href={`/title/${item.mediaType}/${item.tmdbId}`}
+                    posterPath={item.posterPath}
+                    name={item.name}
+                    year={item.year}
+                  />
+                </PosterRowItem>
+              ))}
+            </PosterRow>
+          </section>
+        )}
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="flex gap-1 rounded-full border border-border p-1 text-xs">

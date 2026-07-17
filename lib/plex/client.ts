@@ -98,6 +98,11 @@ export interface PlexMetadataItem {
   Guid?: { id: string }[];
   guid?: string;
   Media?: { Part?: { size?: number; file?: string }[] }[];
+  // Present directly on the section-listing entry for both movies and shows
+  // (a show's is aggregated across its episodes by Plex itself) — no extra
+  // per-item request needed, unlike file size for shows.
+  viewCount?: number;
+  lastViewedAt?: number;
 }
 
 export function getFileSize(item: PlexMetadataItem): number | null {

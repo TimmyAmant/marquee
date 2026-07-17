@@ -1,6 +1,7 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { plexServers, plexLibraryItems, integrationCredentials } from "@/lib/db/schema";
+import type { MediaType } from "@/lib/db/schema";
 import { getPlexCredential } from "@/lib/integrations/credentials";
 import * as plex from "@/lib/plex/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
@@ -85,6 +86,8 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
         // Sonarr's series folder path instead, preserved through the
         // library merge rather than overwritten with null here.
         const filePath = mediaType === "movie" ? plex.getFilePath(item) : null;
+        const viewCount = item.viewCount ?? null;
+        const lastViewedAt = item.lastViewedAt ? new Date(item.lastViewedAt * 1000) : null;
 
         await db
           .insert(plexLibraryItems)
@@ -100,6 +103,8 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
             addedAt: item.addedAt ? new Date(item.addedAt * 1000) : null,
             sizeBytes,
             filePath,
+            viewCount,
+            lastViewedAt,
           })
           .onConflictDoUpdate({
             target: [plexLibraryItems.plexServerId, plexLibraryItems.ratingKey],
@@ -113,6 +118,8 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
               addedAt: item.addedAt ? new Date(item.addedAt * 1000) : null,
               sizeBytes,
               filePath,
+              viewCount,
+              lastViewedAt,
             },
           });
         itemCount++;
@@ -191,6 +198,36 @@ export async function syncAllConnectedPlexUsers(): Promise<void> {
       console.error(`[plex-sync] failed for user ${row.userId}:`, err);
     });
   }
+}
+
+/** Most recently watched titles with at least one full view — seeds the
+ * "Because you watched" row on Discover. */
+export async function getRecentlyWatched(
+  userId: string,
+  limit = 5,
+): Promise<{ mediaType: MediaType; tmdbId: number }[]> {
+  const servers = await db
+    .select({ id: plexServers.id })
+    .from(plexServers)
+    .where(eq(plexServers.userId, userId));
+  if (servers.length === 0) return [];
+
+  const rows = await db
+    .select({ mediaType: plexLibraryItems.mediaType, tmdbId: plexLibraryItems.tmdbId })
+    .from(plexLibraryItems)
+    .where(
+      and(
+        inArray(plexLibraryItems.plexServerId, servers.map((s) => s.id)),
+        gt(plexLibraryItems.viewCount, 0),
+        isNotNull(plexLibraryItems.tmdbId),
+      ),
+    )
+    .orderBy(desc(plexLibraryItems.lastViewedAt))
+    .limit(limit);
+
+  return rows
+    .filter((r): r is { mediaType: MediaType; tmdbId: number } => r.tmdbId != null)
+    .map((r) => ({ mediaType: r.mediaType, tmdbId: r.tmdbId }));
 }
 
 export async function isTitleInPlexLibrary(

@@ -34,6 +34,7 @@ export async function syncArrLibrary(
       const status = queuedIds.has(movie.id) ? "tracked_downloading" : deriveRadarrStatus(movie);
       const sizeBytes = movie.movieFile?.size ?? null;
       const filePath = movie.movieFile?.path ?? movie.path ?? null;
+      const qualityCutoffNotMet = movie.movieFile?.qualityCutoffNotMet ?? null;
       seenTmdbIds.push(movie.tmdbId);
 
       await db
@@ -47,6 +48,7 @@ export async function syncArrLibrary(
           monitored: movie.monitored,
           sizeBytes,
           filePath,
+          qualityCutoffNotMet,
           checkedAt: new Date(),
         })
         .onConflictDoUpdate({
@@ -57,6 +59,7 @@ export async function syncArrLibrary(
             monitored: movie.monitored,
             sizeBytes,
             filePath,
+            qualityCutoffNotMet,
             checkedAt: new Date(),
           },
         });

@@ -201,6 +201,8 @@ export const plexLibraryItems = pgTable(
     addedAt: timestamp("added_at", { withTimezone: true }),
     sizeBytes: bigint("size_bytes", { mode: "number" }),
     filePath: text("file_path"),
+    viewCount: integer("view_count"),
+    lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
   },
   (table) => [
     unique().on(table.plexServerId, table.ratingKey),
@@ -249,6 +251,9 @@ export const arrStatusCache = pgTable(
     monitored: boolean("monitored"),
     sizeBytes: bigint("size_bytes", { mode: "number" }),
     filePath: text("file_path"),
+    // Radarr-only for now — Sonarr's per-episode cutoff needs episode-file
+    // expansion, a bigger lift scoped out of this pass.
+    qualityCutoffNotMet: boolean("quality_cutoff_not_met"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],

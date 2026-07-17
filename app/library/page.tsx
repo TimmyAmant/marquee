@@ -72,6 +72,7 @@ export default async function LibraryPage() {
     addedAt: item.addedAt ? item.addedAt.toISOString() : null,
     monitored: item.monitored,
     filePath: item.filePath,
+    qualityCutoffNotMet: item.qualityCutoffNotMet,
   }));
 
   const [favoritedMovieIds, favoritedTvIds] = await Promise.all([

@@ -24,6 +24,7 @@ export type MediaEntry = {
   addedAt?: string | null;
   monitored?: boolean | null;
   filePath?: string | null;
+  qualityCutoffNotMet?: boolean;
 };
 
 type SortOrder = "newest" | "oldest" | "az" | "recent";
@@ -100,6 +101,7 @@ function buildMeta(entry: MediaEntry): string | undefined {
   const parts: string[] = [];
   if (entry.source) parts.push(SOURCE_LABELS[entry.source]);
   if (entry.sizeBytes) parts.push(formatBytes(entry.sizeBytes));
+  if (entry.qualityCutoffNotMet) parts.push("Upgrade available");
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
@@ -153,6 +155,8 @@ export function MediaList({
     return VALID_STATUS.includes(v as StatusFilter) ? (v as StatusFilter) : "all";
   });
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
+  const [upgradeOnly, setUpgradeOnly] = useState(() => searchParams.get("upgrade") === "1");
+  const hasUpgradeData = useMemo(() => entries.some((e) => e.qualityCutoffNotMet), [entries]);
 
   function syncParam(key: string, value: string, defaultValue: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -167,10 +171,11 @@ export function MediaList({
     return entries.filter((entry) => {
       if (typeFilter !== "all" && entry.mediaType !== typeFilter) return false;
       if (statusFilter !== "all" && entry.status !== statusFilter) return false;
+      if (upgradeOnly && !entry.qualityCutoffNotMet) return false;
       if (q && !entry.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [entries, typeFilter, statusFilter, query]);
+  }, [entries, typeFilter, statusFilter, upgradeOnly, query]);
 
   // "Recently added" relies on `addedAt`, which is only ever populated for
   // Plex-sourced rows — for an arr-only library it would silently sort
@@ -248,6 +253,23 @@ export function MediaList({
                 </button>
               ))}
             </div>
+          )}
+
+          {hasUpgradeData && (
+            <button
+              onClick={() => {
+                const next = !upgradeOnly;
+                setUpgradeOnly(next);
+                syncParam("upgrade", next ? "1" : "0", "0");
+              }}
+              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                upgradeOnly
+                  ? "border-accent bg-accent text-bg-0"
+                  : "border-border text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              Needs upgrade
+            </button>
           )}
 
           <div className="flex gap-1 rounded-full border border-border p-1 text-xs">
@@ -348,6 +370,7 @@ export function MediaList({
                 <th className="px-4 py-3 font-medium">Source</th>
                 <th className="px-4 py-3 font-medium">Size</th>
                 <th className="px-4 py-3 font-medium">Location</th>
+                {hasUpgradeData && <th className="px-4 py-3 font-medium">Quality</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -377,6 +400,15 @@ export function MediaList({
                   >
                     {entry.filePath || "—"}
                   </td>
+                  {hasUpgradeData && (
+                    <td className="px-4 py-3 text-text-secondary">
+                      {entry.qualityCutoffNotMet ? (
+                        <span className="text-tracked">Upgrade available</span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -72,6 +72,7 @@ export interface RadarrMovie {
     path: string;
     size: number;
     quality: { quality: { name: string } };
+    qualityCutoffNotMet?: boolean;
   };
 }
 
