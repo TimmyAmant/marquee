@@ -121,15 +121,15 @@ export function EpisodeList({
         const still = tmdbImageUrl(episode.still_path, "w342");
         const hasFile = hasFileMap?.get(episode.episode_number);
         return (
-          <div key={episode.id} className="flex gap-4 p-4">
-            <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-bg-2">
+          <div key={episode.id} className="flex gap-3 p-4 sm:gap-4">
+            <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-bg-2 sm:w-32">
               {still && (
-                <Image src={still} alt={episode.name} fill sizes="128px" className="object-cover" />
+                <Image src={still} alt={episode.name} fill sizes="(min-width: 640px) 128px, 96px" className="object-cover" />
               )}
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-text-primary">
+                <p className="min-w-0 text-sm font-medium text-text-primary">
                   {episode.episode_number}. {episode.name}
                 </p>
                 {hasFile !== undefined && (

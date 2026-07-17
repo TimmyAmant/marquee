@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { RequestsBadge } from "@/components/requests-badge";
+import { MobileNav } from "@/components/mobile-nav";
 import { getPendingRequestCount } from "@/lib/requests/query";
 
 export async function SiteHeader() {
@@ -23,11 +24,11 @@ export async function SiteHeader() {
           </span>
         </Link>
 
-        <div className="hidden flex-1 sm:block">
+        <div className="hidden flex-1 md:block">
           <SearchBar variant="compact" />
         </div>
 
-        <nav className="ml-auto flex items-center gap-5 text-sm text-text-secondary">
+        <nav className="ml-auto hidden items-center gap-5 text-sm text-text-secondary md:flex">
           <Link href="/discover" className="transition-colors hover:text-text-primary">
             Discover
           </Link>
@@ -75,6 +76,16 @@ export async function SiteHeader() {
             </Link>
           )}
         </nav>
+
+        <div className="ml-auto flex items-center gap-3 md:hidden">
+          {session?.user && <NotificationsBell />}
+          <MobileNav
+            isSignedIn={Boolean(session?.user)}
+            isAdmin={isAdmin}
+            pendingRequestCount={pendingRequestCount}
+            userLabel={session?.user ? session.user.name || session.user.email || null : null}
+          />
+        </div>
       </div>
     </header>
   );

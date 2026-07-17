@@ -369,8 +369,8 @@ export function MediaList({
           })}
         </PosterGrid>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-bg-1 text-text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Title</th>

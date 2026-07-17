@@ -128,67 +128,72 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-border bg-border">
-        {WEEKDAY_LABELS.map((label) => (
-          <div key={label} className="bg-bg-1 px-2 py-2 text-center text-xs font-medium text-text-secondary">
-            {label}
-          </div>
-        ))}
+      {/* A 7-column grid can't shrink below a legible width — scroll it
+          horizontally on narrow phones instead of squeezing every cell down
+          to the point the day's entries become unreadable. */}
+      <div className="mt-8 overflow-x-auto rounded-2xl border border-border">
+        <div className="grid min-w-[560px] grid-cols-7 gap-px bg-border">
+          {WEEKDAY_LABELS.map((label) => (
+            <div key={label} className="bg-bg-1 px-2 py-2 text-center text-xs font-medium text-text-secondary">
+              {label}
+            </div>
+          ))}
 
-        {days.map((day) => {
-          const key = toDateKey(day);
-          const dayEntries = byDate.get(key) ?? [];
-          const inCurrentMonth = day.getMonth() === monthIndex;
-          const isToday = key === todayKey;
-          const visible = dayEntries.slice(0, MAX_VISIBLE_PER_DAY);
-          const overflowCount = dayEntries.length - visible.length;
+          {days.map((day) => {
+            const key = toDateKey(day);
+            const dayEntries = byDate.get(key) ?? [];
+            const inCurrentMonth = day.getMonth() === monthIndex;
+            const isToday = key === todayKey;
+            const visible = dayEntries.slice(0, MAX_VISIBLE_PER_DAY);
+            const overflowCount = dayEntries.length - visible.length;
 
-          return (
-            <div
-              key={key}
-              className={`flex min-h-28 flex-col gap-1 bg-bg-0 p-1.5 sm:min-h-36 ${
-                inCurrentMonth ? "" : "opacity-40"
-              }`}
-            >
-              <span
-                className={`self-start rounded-full px-1.5 text-xs ${
-                  isToday ? "bg-accent font-medium text-bg-0" : "text-text-secondary"
+            return (
+              <div
+                key={key}
+                className={`flex min-h-28 flex-col gap-1 bg-bg-0 p-1.5 sm:min-h-36 ${
+                  inCurrentMonth ? "" : "opacity-40"
                 }`}
               >
-                {day.getDate()}
-              </span>
-              <div className="flex flex-1 flex-col gap-1 overflow-hidden">
-                {visible.map((entry, i) => {
-                  const src = tmdbImageUrl(entry.posterPath, "w92");
-                  return (
-                    <Link
-                      key={`${entry.mediaType}-${entry.tmdbId}-${i}`}
-                      href={`/title/${entry.mediaType}/${entry.tmdbId}`}
-                      title={`${entry.name} — ${entry.subtitle}`}
-                      className="flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:bg-bg-1"
-                    >
-                      {src && (
-                        <Image
-                          src={src}
-                          alt=""
-                          width={16}
-                          height={24}
-                          className="h-6 w-4 shrink-0 rounded-sm object-cover"
-                        />
-                      )}
-                      <span className="truncate text-[11px] leading-tight text-text-primary">
-                        {entry.name}
-                      </span>
-                    </Link>
-                  );
-                })}
-                {overflowCount > 0 && (
-                  <span className="px-1 text-[10px] text-text-secondary">+{overflowCount} more</span>
-                )}
+                <span
+                  className={`self-start rounded-full px-1.5 text-xs ${
+                    isToday ? "bg-accent font-medium text-bg-0" : "text-text-secondary"
+                  }`}
+                >
+                  {day.getDate()}
+                </span>
+                <div className="flex flex-1 flex-col gap-1 overflow-hidden">
+                  {visible.map((entry, i) => {
+                    const src = tmdbImageUrl(entry.posterPath, "w92");
+                    return (
+                      <Link
+                        key={`${entry.mediaType}-${entry.tmdbId}-${i}`}
+                        href={`/title/${entry.mediaType}/${entry.tmdbId}`}
+                        title={`${entry.name} — ${entry.subtitle}`}
+                        className="flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:bg-bg-1"
+                      >
+                        {src && (
+                          <Image
+                            src={src}
+                            alt=""
+                            width={16}
+                            height={24}
+                            className="h-6 w-4 shrink-0 rounded-sm object-cover"
+                          />
+                        )}
+                        <span className="truncate text-[11px] leading-tight text-text-primary">
+                          {entry.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                  {overflowCount > 0 && (
+                    <span className="px-1 text-[10px] text-text-secondary">+{overflowCount} more</span>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
