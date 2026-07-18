@@ -12,6 +12,7 @@ import { getViewerContext } from "@/lib/integrations/library-owner";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { createNotification } from "@/lib/notifications/query";
+import { logActivityEvent } from "@/lib/activity/query";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type RequestState = { error?: string; success?: boolean };
@@ -60,6 +61,14 @@ export async function createRequestAction(
     posterPath,
   });
 
+  await logActivityEvent({
+    actorUserId: viewer.userId,
+    eventType: "request_created",
+    mediaType,
+    tmdbId,
+    title,
+  }).catch(() => undefined);
+
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
   revalidatePath("/requests");
   return { success: true };
@@ -97,14 +106,23 @@ async function approveRequestCore(requestId: string, adminUserId: string): Promi
     .returning({ id: requests.id });
   if (!updated) return { error: "Request was already reviewed." };
 
-  await createNotification({
-    userId: request.requestedByUserId,
-    mediaType: request.mediaType,
-    tmdbId: request.tmdbId,
-    title: request.title,
-    eventType: "request_approved",
-    message: `"${request.title}" was approved — it's on its way to your library.`,
-  }).catch(() => undefined);
+  await Promise.all([
+    createNotification({
+      userId: request.requestedByUserId,
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+      eventType: "request_approved",
+      message: `"${request.title}" was approved — it's on its way to your library.`,
+    }).catch(() => undefined),
+    logActivityEvent({
+      actorUserId: adminUserId,
+      eventType: "request_approved",
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+    }).catch(() => undefined),
+  ]);
 
   revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/discover");
@@ -198,14 +216,23 @@ export async function manuallyApproveRequestAction(
     .returning({ id: requests.id });
   if (!updated) return { error: "Request was already reviewed." };
 
-  await createNotification({
-    userId: request.requestedByUserId,
-    mediaType: request.mediaType,
-    tmdbId: request.tmdbId,
-    title: request.title,
-    eventType: "request_approved",
-    message: `"${request.title}" was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
-  }).catch(() => undefined);
+  await Promise.all([
+    createNotification({
+      userId: request.requestedByUserId,
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+      eventType: "request_approved",
+      message: `"${request.title}" was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
+    }).catch(() => undefined),
+    logActivityEvent({
+      actorUserId: admin.userId,
+      eventType: "request_manually_approved",
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+    }).catch(() => undefined),
+  ]);
 
   revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/requests");
@@ -234,14 +261,23 @@ export async function rejectRequestAction(
     .returning({ id: requests.id });
   if (!updated) return { error: "Request was already reviewed." };
 
-  await createNotification({
-    userId: request.requestedByUserId,
-    mediaType: request.mediaType,
-    tmdbId: request.tmdbId,
-    title: request.title,
-    eventType: "request_rejected",
-    message: `"${request.title}" was declined.`,
-  }).catch(() => undefined);
+  await Promise.all([
+    createNotification({
+      userId: request.requestedByUserId,
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+      eventType: "request_rejected",
+      message: `"${request.title}" was declined.`,
+    }).catch(() => undefined),
+    logActivityEvent({
+      actorUserId: admin.userId,
+      eventType: "request_rejected",
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+    }).catch(() => undefined),
+  ]);
 
   revalidatePath("/requests");
   return { success: true };

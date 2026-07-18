@@ -24,6 +24,14 @@ export default async function SettingsLayout({ children }: { children: React.Rea
               Integrations
             </Link>
           )}
+          {isAdmin && (
+            <Link
+              href="/settings/activity"
+              className="rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-1 hover:text-text-primary"
+            >
+              Activity
+            </Link>
+          )}
         </nav>
         <div className="flex-1">{children}</div>
       </div>

@@ -380,6 +380,42 @@ export const requests = pgTable(
   ],
 );
 
+export const activityEventTypeValues = [
+  "request_created",
+  "request_approved",
+  "request_rejected",
+  "request_manually_approved",
+] as const;
+export type ActivityEventType = (typeof activityEventTypeValues)[number];
+
+// A household-wide "who did what" feed, distinct from `notifications` (which
+// is per-recipient bell content, e.g. the requester being told their request
+// was approved). This instead records the *actor* — who requested, who
+// reviewed — so an admin can see the household's request activity at a
+// glance without reconstructing it from the requests table's reviewedAt/
+// reviewedByUserId columns.
+export const activityEvents = pgTable(
+  "activity_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorUserId: uuid("actor_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull().$type<ActivityEventType>(),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    title: text("title").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("activity_events_created_idx").on(table.createdAt),
+    check(
+      "activity_events_event_type_check",
+      sql`${table.eventType} in ('request_created','request_approved','request_rejected','request_manually_approved')`,
+    ),
+  ],
+);
+
 // Instance-wide settings (not per-user) — TMDb metadata is shared across
 // everyone on this Marquee instance via the titles/people/companies cache,
 // so unlike Sonarr/Radarr/Plex there's exactly one TMDb credential, not one

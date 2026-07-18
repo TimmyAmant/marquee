@@ -113,6 +113,13 @@
       "when": 1784365652343,
       "tag": "0015_add_quality_name",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1784365883192,
+      "tag": "0016_add_activity_events",
+      "breakpoints": true
     }
   ]
 }
