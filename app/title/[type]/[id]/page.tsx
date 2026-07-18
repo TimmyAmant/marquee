@@ -238,6 +238,7 @@ export default async function TitlePage({
             arrConfigured={viewer.session ? arrConfigured : undefined}
             collectionId={collectionId}
             collectionFavorited={collectionFavorited}
+            isAdmin={viewer.session ? viewer.isAdmin : undefined}
           />
         )}
         <StudioRow companies={companies} favoritedIds={companyFavoritedIds} showFavorite={Boolean(viewer.session)} />
@@ -247,6 +248,7 @@ export default async function TitlePage({
           favoritedIds={similarFavoritedIds}
           showFavorite={Boolean(viewer.session)}
           arrConfigured={viewer.session ? arrConfigured : undefined}
+          isAdmin={viewer.session ? viewer.isAdmin : undefined}
         />
       </div>
     </div>

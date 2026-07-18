@@ -4,6 +4,7 @@ import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { AddAllButton } from "@/components/add-all-button";
+import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
 
 export type FranchiseItem = {
@@ -23,6 +24,7 @@ export function FranchiseRow({
   arrConfigured,
   collectionId,
   collectionFavorited,
+  isAdmin,
 }: {
   title: string;
   items: FranchiseItem[];
@@ -35,12 +37,21 @@ export function FranchiseRow({
    * crossover groups have no TMDb collection id to favorite. */
   collectionId?: number;
   collectionFavorited?: boolean;
+  /** Undefined when signed out. Admins get the direct Add/"Add all" actions;
+   * household members get Request instead, same as everywhere else in the
+   * app — neither action ever shows to a signed-out visitor. */
+  isAdmin?: boolean;
 }) {
   if (items.length === 0) return null;
 
-  const missingItems = items
-    .filter((item) => !statusMap.has(`${item.mediaType}:${item.tmdbId}`) && arrConfigured?.[item.mediaType])
-    .map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId }));
+  const missingItems =
+    isAdmin === true
+      ? items
+          .filter(
+            (item) => !statusMap.has(`${item.mediaType}:${item.tmdbId}`) && arrConfigured?.[item.mediaType],
+          )
+          .map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId }))
+      : [];
 
   return (
     <section>
@@ -53,12 +64,13 @@ export function FranchiseRow({
             initialFavorited={collectionFavorited ?? false}
           />
         )}
-        <AddAllButton items={missingItems} />
+        {isAdmin === true && <AddAllButton items={missingItems} />}
       </div>
       <PosterGrid>
         {items.map((item) => {
           const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-          const canQuickAdd = !status && arrConfigured?.[item.mediaType];
+          const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
+          const canRequest = !status && isAdmin === false;
           return (
             <PosterCard
               key={`${item.mediaType}-${item.tmdbId}`}
@@ -80,6 +92,14 @@ export function FranchiseRow({
               quickAction={
                 canQuickAdd ? (
                   <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                ) : canRequest ? (
+                  <RequestButton
+                    mediaType={item.mediaType}
+                    tmdbId={item.tmdbId}
+                    title={item.name}
+                    posterPath={item.posterPath}
+                    compact
+                  />
                 ) : undefined
               }
             />

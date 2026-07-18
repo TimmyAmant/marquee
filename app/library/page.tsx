@@ -193,6 +193,7 @@ export default async function LibraryPage({
                 arrConfigured={arrConfigured}
                 collectionId={franchise.collectionId}
                 collectionFavorited={franchiseExtras[i].collectionFavorited}
+                isAdmin={isAdmin}
               />
             ))
           )}

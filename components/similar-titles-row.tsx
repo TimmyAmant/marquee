@@ -3,6 +3,7 @@ import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
+import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
 
 export type SimilarTitle = {
@@ -19,12 +20,16 @@ export function SimilarTitlesRow({
   favoritedIds,
   showFavorite,
   arrConfigured,
+  isAdmin,
 }: {
   items: SimilarTitle[];
   statusMap: Map<string, LibraryStatus>;
   favoritedIds?: Set<number>;
   showFavorite?: boolean;
   arrConfigured?: { movie: boolean; tv: boolean };
+  /** Undefined when signed out. Admins get the direct Add action; household
+   * members get Request instead, same as everywhere else in the app. */
+  isAdmin?: boolean;
 }) {
   if (items.length === 0) return null;
 
@@ -34,7 +39,8 @@ export function SimilarTitlesRow({
       <PosterRow>
         {items.map((item) => {
           const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-          const canQuickAdd = !status && arrConfigured?.[item.mediaType];
+          const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
+          const canRequest = !status && isAdmin === false;
           return (
             <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
               <PosterCard
@@ -56,6 +62,14 @@ export function SimilarTitlesRow({
                 quickAction={
                   canQuickAdd ? (
                     <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                  ) : canRequest ? (
+                    <RequestButton
+                      mediaType={item.mediaType}
+                      tmdbId={item.tmdbId}
+                      title={item.name}
+                      posterPath={item.posterPath}
+                      compact
+                    />
                   ) : undefined
                 }
               />

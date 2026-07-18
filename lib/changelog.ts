@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.2",
+    date: "2026-07-18",
+    changes: [
+      "Fixed: household members saw the admin's \"Add to Radarr/Sonarr\" quick-add button (and got an \"Only the admin can add titles\" error on click) in the Missing from collections tab and the franchise/\"More like this\" sections on title pages — they now get a Request button instead, same as everywhere else in the app.",
+    ],
+  },
+  {
     version: "0.7.1",
     date: "2026-07-18",
     changes: [

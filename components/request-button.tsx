@@ -9,33 +9,61 @@ export function RequestButton({
   tmdbId,
   title,
   posterPath,
+  compact = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  /** Small, full-width, hover-reveal styling for a poster card's quick-action
+   * slot — matches QuickAddButton so franchise/similar-titles rows read the
+   * same way for members as they do for the admin's Add button. */
+  compact?: boolean;
 }) {
   const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
   const [state, formAction, isPending] = useActionState(action, undefined);
 
   if (state?.success) {
     return (
-      <span className="rounded-full bg-tracked-bg px-4 py-1.5 text-xs font-medium text-tracked">
-        Requested — waiting for approval
+      <span
+        className={
+          compact
+            ? "block rounded-full bg-tracked-bg px-2 py-1 text-center text-[10px] font-medium text-tracked"
+            : "rounded-full bg-tracked-bg px-4 py-1.5 text-xs font-medium text-tracked"
+        }
+      >
+        {compact ? "Requested" : "Requested — waiting for approval"}
       </span>
     );
   }
 
   return (
-    <form action={formAction}>
+    <form
+      action={formAction}
+      className={compact ? "opacity-0 transition-opacity group-hover:opacity-100" : undefined}
+    >
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+        className={
+          compact
+            ? "w-full rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+            : "rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+        }
       >
         {isPending ? "Requesting…" : "Request"}
       </button>
-      {state?.error && <p className="mt-1.5 text-xs text-red-400">{state.error}</p>}
+      {state?.error && (
+        <p
+          className={
+            compact
+              ? "mt-1 rounded bg-bg-0/90 px-1.5 py-0.5 text-center text-[9px] text-red-400"
+              : "mt-1.5 text-xs text-red-400"
+          }
+        >
+          {state.error}
+        </p>
+      )}
     </form>
   );
 }
