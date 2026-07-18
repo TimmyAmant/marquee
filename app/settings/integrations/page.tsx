@@ -5,11 +5,12 @@ import { getArrCredential, getOrCreateWebhookSecret, getJellyfinCredential } fro
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { getJellyfinSummary, syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
-import { isTmdbAccessTokenSavedInSettings } from "@/lib/integrations/app-settings";
+import { isTmdbAccessTokenSavedInSettings, getTraktClientId } from "@/lib/integrations/app-settings";
 import { ArrCredentialForm } from "@/components/arr-credential-form";
 import { PlexConnectCard } from "@/components/plex-connect-card";
 import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
 import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
+import { TraktConnectCard } from "@/components/trakt-connect-card";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
 
@@ -24,17 +25,27 @@ export default async function IntegrationsSettingsPage() {
     syncArrLibraryIfStale(session.user.id),
   ]);
 
-  const [sonarrCred, radarrCred, plexSummary, jellyfinCred, jellyfinSummary, tmdbSavedInSettings, webhookSecret, headerList] =
-    await Promise.all([
-      getArrCredential(session.user.id, "sonarr"),
-      getArrCredential(session.user.id, "radarr"),
-      getPlexSummary(session.user.id),
-      getJellyfinCredential(session.user.id),
-      getJellyfinSummary(session.user.id),
-      isTmdbAccessTokenSavedInSettings(),
-      getOrCreateWebhookSecret(session.user.id),
-      headers(),
-    ]);
+  const [
+    sonarrCred,
+    radarrCred,
+    plexSummary,
+    jellyfinCred,
+    jellyfinSummary,
+    tmdbSavedInSettings,
+    traktClientId,
+    webhookSecret,
+    headerList,
+  ] = await Promise.all([
+    getArrCredential(session.user.id, "sonarr"),
+    getArrCredential(session.user.id, "radarr"),
+    getPlexSummary(session.user.id),
+    getJellyfinCredential(session.user.id),
+    getJellyfinSummary(session.user.id),
+    isTmdbAccessTokenSavedInSettings(),
+    getTraktClientId(),
+    getOrCreateWebhookSecret(session.user.id),
+    headers(),
+  ]);
 
   const proto = headerList.get("x-forwarded-proto") ?? "http";
   const host = headerList.get("host");
@@ -59,6 +70,7 @@ export default async function IntegrationsSettingsPage() {
           savedInSettings={tmdbSavedInSettings}
           configuredFromEnv={Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY)}
         />
+        <TraktConnectCard connected={Boolean(traktClientId)} />
         <PlexConnectCard
           initialConnected={plexSummary.connected}
           initialServers={plexSummary.servers.map((s) => ({

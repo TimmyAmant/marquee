@@ -120,6 +120,13 @@
       "when": 1784365883192,
       "tag": "0016_add_activity_events",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784366061265,
+      "tag": "0017_add_trakt_client_id",
+      "breakpoints": true
     }
   ]
 }

@@ -80,3 +80,63 @@ export async function clearTmdbAccessToken(): Promise<void> {
   }
   cached = null;
 }
+
+let traktCached: { value: string | null; expiresAt: number } | null = null;
+
+export async function getTraktClientId(): Promise<string | null> {
+  if (traktCached && Date.now() < traktCached.expiresAt) return traktCached.value;
+
+  const row = await getRow();
+  const value =
+    row?.traktClientIdEnc && row.traktClientIdIv && row.traktClientIdTag
+      ? decryptSecret({
+          ciphertext: row.traktClientIdEnc,
+          iv: row.traktClientIdIv,
+          tag: row.traktClientIdTag,
+        })
+      : null;
+
+  traktCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function setTraktClientId(clientId: string): Promise<void> {
+  const encrypted = encryptSecret(clientId);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        traktClientIdEnc: encrypted.ciphertext,
+        traktClientIdIv: encrypted.iv,
+        traktClientIdTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      traktClientIdEnc: encrypted.ciphertext,
+      traktClientIdIv: encrypted.iv,
+      traktClientIdTag: encrypted.tag,
+    });
+  }
+
+  traktCached = null;
+}
+
+export async function clearTraktClientId(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        traktClientIdEnc: null,
+        traktClientIdIv: null,
+        traktClientIdTag: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  }
+  traktCached = null;
+}

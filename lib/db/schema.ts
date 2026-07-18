@@ -425,5 +425,12 @@ export const appSettings = pgTable("app_settings", {
   tmdbAccessTokenEnc: bytea("tmdb_access_token_enc"),
   tmdbAccessTokenIv: bytea("tmdb_access_token_iv"),
   tmdbAccessTokenTag: bytea("tmdb_access_token_tag"),
+  // Trakt's API client id — not a secret in the way an OAuth token is (it's
+  // a public per-app identifier, safe to log/see in network requests), but
+  // stored encrypted anyway for consistency with the TMDb token above and
+  // because it still shouldn't leak to non-admins.
+  traktClientIdEnc: bytea("trakt_client_id_enc"),
+  traktClientIdIv: bytea("trakt_client_id_iv"),
+  traktClientIdTag: bytea("trakt_client_id_tag"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
