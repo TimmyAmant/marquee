@@ -67,14 +67,10 @@ export async function createRequestAction(
 
 export type ReviewState = { error?: string; success?: boolean };
 
-export async function approveRequestAction(
-  requestId: string,
-  _prevState: ReviewState | undefined,
-  _formData: FormData,
-): Promise<ReviewState> {
-  const admin = await requireAdmin("Only an admin can approve requests.");
-  if (!admin.ok) return { error: admin.error };
-
+/** Shared by the single-request Approve button and "Approve all" — takes an
+ * already-verified admin userId so the bulk path doesn't re-check admin on
+ * every iteration. */
+async function approveRequestCore(requestId: string, adminUserId: string): Promise<ReviewState> {
   const [request] = await db
     .select()
     .from(requests)
@@ -85,8 +81,8 @@ export async function approveRequestAction(
   // there's no shared/instance-wide credential, only per-user ones.
   const result =
     request.mediaType === "movie"
-      ? await addMovieToRadarrForUser(admin.userId, request.tmdbId)
-      : await addSeriesToSonarrForUser(admin.userId, request.tmdbId);
+      ? await addMovieToRadarrForUser(adminUserId, request.tmdbId)
+      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId);
 
   if (result.error) return { error: result.error };
 
@@ -96,7 +92,7 @@ export async function approveRequestAction(
   // single UPDATE...WHERE had before this was split into select-then-update.
   const [updated] = await db
     .update(requests)
-    .set({ status: "approved", reviewedByUserId: admin.userId, reviewedAt: new Date() })
+    .set({ status: "approved", reviewedByUserId: adminUserId, reviewedAt: new Date() })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return { error: "Request was already reviewed." };
@@ -112,9 +108,62 @@ export async function approveRequestAction(
 
   revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/discover");
-  revalidatePath("/requests");
   revalidatePath("/library");
   return { success: true };
+}
+
+export async function approveRequestAction(
+  requestId: string,
+  _prevState: ReviewState | undefined,
+  _formData: FormData,
+): Promise<ReviewState> {
+  const admin = await requireAdmin("Only an admin can approve requests.");
+  if (!admin.ok) return { error: admin.error };
+
+  const result = await approveRequestCore(requestId, admin.userId);
+  revalidatePath("/requests");
+  return result;
+}
+
+export type ApproveAllState = { error?: string; success?: boolean; approvedCount?: number };
+
+/** Approves every currently pending request in one pass, sequentially (not
+ * Promise.all) so a burst of requests doesn't hammer Radarr/Sonarr with
+ * simultaneous add calls. Requests that fail (e.g. Radarr unreachable
+ * partway through) are left pending rather than silently dropped — the
+ * admin can retry them individually or hit "Approve all" again. */
+export async function approveAllRequestsAction(
+  _prevState: ApproveAllState | undefined,
+  _formData: FormData,
+): Promise<ApproveAllState> {
+  const admin = await requireAdmin("Only an admin can approve requests.");
+  if (!admin.ok) return { error: admin.error };
+
+  const pending = await db
+    .select({ id: requests.id })
+    .from(requests)
+    .where(eq(requests.status, "pending"));
+
+  let approvedCount = 0;
+  const errors: string[] = [];
+  for (const { id } of pending) {
+    const result = await approveRequestCore(id, admin.userId);
+    if (result.success) {
+      approvedCount++;
+    } else if (result.error) {
+      errors.push(result.error);
+    }
+  }
+
+  revalidatePath("/requests");
+
+  if (approvedCount === 0 && errors.length > 0) {
+    return { error: errors[0] };
+  }
+  if (errors.length > 0) {
+    return { success: true, approvedCount, error: `${errors.length} request(s) couldn't be approved.` };
+  }
+  return { success: true, approvedCount };
 }
 
 export async function rejectRequestAction(

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getPendingRequests, getReviewedRequests, getMyRequests } from "@/lib/requests/query";
 import { RequestReviewRow } from "@/components/request-review-row";
+import { ApproveAllRequestsButton } from "@/components/approve-all-requests-button";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { LibraryStatus } from "@/components/status-badge";
@@ -98,10 +99,15 @@ export default async function RequestsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="font-display text-3xl text-text-primary">Requests</h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Titles household members have asked you to add.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-text-primary">Requests</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Titles household members have asked you to add.
+          </p>
+        </div>
+        {pending.length > 1 && <ApproveAllRequestsButton />}
+      </div>
 
       <div className="mt-8 flex flex-col gap-3">
         {pending.length === 0 ? (
