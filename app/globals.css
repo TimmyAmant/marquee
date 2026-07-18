@@ -78,6 +78,25 @@ h3,
   color: var(--marquee-bg-0);
 }
 
+/* iOS Safari auto-zooms the whole page when a focused input's computed
+   font-size is under 16px — several inputs use Tailwind's text-sm/text-xs
+   (14px/12px) for their compact desktop sizing, which triggers it. The zoom
+   then persists across client-side navigation since it's a browser-chrome
+   state, not page state, making the whole app feel "zoomed in" afterward.
+   Force 16px on every text input below the sm breakpoint, where this only
+   ever matters (desktop/tablet browsers don't have this behavior). */
+@media (max-width: 639px) {
+  input[type="text"],
+  input[type="search"],
+  input[type="url"],
+  input[type="password"],
+  input[type="email"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* subtle film-grain texture for hero/backdrop surfaces — the containing
    element already establishes its own positioning context (e.g. Tailwind's
    `absolute` in title-hero.tsx); setting `position: relative` here too used

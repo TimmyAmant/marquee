@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.3",
+    date: "2026-07-18",
+    changes: [
+      "Fixed: tapping into a search box or form field on mobile made the whole app appear zoomed in until manually pinching back out. iOS Safari auto-zooms the page when a focused input's text is under 16px, and several inputs used a smaller compact size — every text input is now at least 16px on phone-sized screens.",
+    ],
+  },
+  {
     version: "0.7.2",
     date: "2026-07-18",
     changes: [
