@@ -155,6 +155,10 @@ data, your server.
   app — what it means and what to do about it — so a stuck admin or
   household member isn't left guessing.
 
+### Version & changelog
+- A version number in the footer of every page links to `/changelog`, a
+  running list of what changed, was fixed, or was added in each release.
+
 ### Self-hosting
 - Single self-contained Docker image — Postgres runs inside the same
   container as the app, so there's nothing else to install or wire up.
