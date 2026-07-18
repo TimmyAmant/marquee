@@ -166,6 +166,52 @@ export async function approveAllRequestsAction(
   return { success: true, approvedCount };
 }
 
+/** For requests Sonarr/Radarr can't add automatically (e.g. no TVDB id to
+ * resolve) but the admin is downloading by hand anyway. Marks the request
+ * approved without touching Sonarr/Radarr, and flags it so the requester
+ * sees "Manually approved" instead of the normal approved status — which
+ * would otherwise stay stuck on "untracked" forever since nothing ever
+ * actually lands in Sonarr/Radarr's own database for it. */
+export async function manuallyApproveRequestAction(
+  requestId: string,
+  _prevState: ReviewState | undefined,
+  _formData: FormData,
+): Promise<ReviewState> {
+  const admin = await requireAdmin("Only an admin can approve requests.");
+  if (!admin.ok) return { error: admin.error };
+
+  const [request] = await db
+    .select()
+    .from(requests)
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
+  if (!request) return { error: "Request not found or already reviewed." };
+
+  const [updated] = await db
+    .update(requests)
+    .set({
+      status: "approved",
+      manuallyApproved: true,
+      reviewedByUserId: admin.userId,
+      reviewedAt: new Date(),
+    })
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .returning({ id: requests.id });
+  if (!updated) return { error: "Request was already reviewed." };
+
+  await createNotification({
+    userId: request.requestedByUserId,
+    mediaType: request.mediaType,
+    tmdbId: request.tmdbId,
+    title: request.title,
+    eventType: "request_approved",
+    message: `"${request.title}" was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
+  }).catch(() => undefined);
+
+  revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
+  revalidatePath("/requests");
+  return { success: true };
+}
+
 export async function rejectRequestAction(
   requestId: string,
   _prevState: ReviewState | undefined,

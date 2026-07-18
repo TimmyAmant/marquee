@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { approveRequestAction, rejectRequestAction } from "@/lib/requests/actions";
+import { approveRequestAction, rejectRequestAction, manuallyApproveRequestAction } from "@/lib/requests/actions";
 import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { MediaType } from "@/lib/db/schema";
@@ -36,11 +36,18 @@ export function RequestReviewRow({
   const router = useRouter();
   const approveAction = approveRequestAction.bind(null, id);
   const rejectAction = rejectRequestAction.bind(null, id);
+  const manualApproveAction = manuallyApproveRequestAction.bind(null, id);
   const [approveState, approveFormAction, isApproving] = useActionState(approveAction, undefined);
   const [rejectState, rejectFormAction, isRejecting] = useActionState(rejectAction, undefined);
+  const [manualApproveState, manualApproveFormAction, isManuallyApproving] = useActionState(
+    manualApproveAction,
+    undefined,
+  );
 
   const src = tmdbImageUrl(posterPath, "w92");
-  const done = Boolean(approveState?.success || rejectState?.success);
+  const done = Boolean(approveState?.success || rejectState?.success || manualApproveState?.success);
+  const anyPending = isApproving || isRejecting || isManuallyApproving;
+  const showManualApprove = approveState?.error === SONARR_UNRESOLVED_ERROR;
 
   useEffect(() => {
     if (done) router.refresh();
@@ -64,9 +71,9 @@ export function RequestReviewRow({
           Requested by {requestedByName || requestedByUsername} ·{" "}
           {new Date(createdAt).toLocaleDateString()}
         </p>
-        {(approveState?.error || rejectState?.error) && (
+        {(approveState?.error || rejectState?.error || manualApproveState?.error) && (
           <p className="mt-1 text-xs text-red-400">
-            {approveState?.error || rejectState?.error}
+            {approveState?.error || rejectState?.error || manualApproveState?.error}
             {approveState?.error === SONARR_UNRESOLVED_ERROR && sonarrUrl && (
               <>
                 {" — "}
@@ -87,21 +94,34 @@ export function RequestReviewRow({
         <form action={rejectFormAction}>
           <button
             type="submit"
-            disabled={isApproving || isRejecting}
+            disabled={anyPending}
             className="rounded-full border border-border-strong px-3 py-1.5 text-xs text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
           >
             {isRejecting ? "Rejecting…" : "Reject"}
           </button>
         </form>
-        <form action={approveFormAction}>
-          <button
-            type="submit"
-            disabled={isApproving || isRejecting}
-            className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-          >
-            {isApproving ? "Approving…" : "Approve"}
-          </button>
-        </form>
+        {showManualApprove ? (
+          <form action={manualApproveFormAction}>
+            <button
+              type="submit"
+              disabled={anyPending}
+              title="Mark this approved without adding it via Sonarr — use once you've downloaded it yourself."
+              className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+            >
+              {isManuallyApproving ? "Approving…" : "Manually approve"}
+            </button>
+          </form>
+        ) : (
+          <form action={approveFormAction}>
+            <button
+              type="submit"
+              disabled={anyPending}
+              className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+            >
+              {isApproving ? "Approving…" : "Approve"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

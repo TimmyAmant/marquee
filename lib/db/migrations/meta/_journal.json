@@ -99,6 +99,13 @@
       "when": 1784331646090,
       "tag": "0013_add_jellyfin",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1784359793055,
+      "tag": "0014_add_manually_approved",
+      "breakpoints": true
     }
   ]
 }

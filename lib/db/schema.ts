@@ -358,6 +358,12 @@ export const requests = pgTable(
     }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    // True when the admin approved this without Sonarr/Radarr actually
+    // adding it (e.g. Sonarr couldn't resolve a TVDB id) — the admin is
+    // handling the download outside Marquee entirely. Still status=
+    // "approved" so it behaves like any other approved request everywhere
+    // else; this only changes the label shown to the requester and admin.
+    manuallyApproved: boolean("manually_approved").notNull().default(false),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),

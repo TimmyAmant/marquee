@@ -92,6 +92,7 @@ export async function getReviewedRequests(limit = 50) {
       title: requests.title,
       posterPath: requests.posterPath,
       status: requests.status,
+      manuallyApproved: requests.manuallyApproved,
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
       requestedByName: users.displayName,
@@ -117,6 +118,7 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       title: requests.title,
       posterPath: requests.posterPath,
       status: requests.status,
+      manuallyApproved: requests.manuallyApproved,
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
     })

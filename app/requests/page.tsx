@@ -10,7 +10,11 @@ import { getArrCredential } from "@/lib/integrations/credentials";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 
-function myRequestBadge(status: RequestStatus, libraryStatus: LibraryStatus | null): {
+function myRequestBadge(
+  status: RequestStatus,
+  libraryStatus: LibraryStatus | null,
+  manuallyApproved: boolean,
+): {
   label: string;
   className: string;
 } {
@@ -29,6 +33,11 @@ function myRequestBadge(status: RequestStatus, libraryStatus: LibraryStatus | nu
   }
   if (libraryStatus === "coming_soon") {
     return { label: "Coming soon", className: "bg-untracked-bg text-text-secondary" };
+  }
+  // Sonarr/Radarr never actually took this one — the admin is adding it by
+  // hand, so it'll never resolve to a real libraryStatus on its own.
+  if (manuallyApproved) {
+    return { label: "Manually approved", className: "bg-tracked-bg text-tracked" };
   }
   return { label: "Approved", className: "bg-tracked-bg text-tracked" };
 }
@@ -55,7 +64,7 @@ export default async function RequestsPage() {
           ) : (
             myRequests.map((r) => {
               const src = tmdbImageUrl(r.posterPath, "w92");
-              const badge = myRequestBadge(r.status, r.libraryStatus);
+              const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved);
               return (
                 <div
                   key={r.id}
@@ -166,7 +175,11 @@ export default async function RequestsPage() {
                         : "bg-untracked-bg text-text-secondary"
                     }`}
                   >
-                    {r.status === "approved" ? "Approved" : "Rejected"}
+                    {r.status === "approved"
+                      ? r.manuallyApproved
+                        ? "Manually approved"
+                        : "Approved"
+                      : "Rejected"}
                   </span>
                 </div>
               );

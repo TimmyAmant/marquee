@@ -1,0 +1,1 @@
+ALTER TABLE "requests" ADD COLUMN "manually_approved" boolean DEFAULT false NOT NULL;

@@ -34,7 +34,7 @@ export const ERROR_REFERENCE: ErrorReferenceCategory[] = [
         meaning:
           "Sonarr looks shows up by TVDB id, not TMDb id. TMDb's own record for this show has no linked TVDB id, so Marquee has nothing to hand Sonarr.",
         whatToDo:
-          "This is a data gap on TMDb, not a connection problem. Add the show directly in Sonarr's own UI (it can search by name) — on the Requests page, an \"Add manually in Sonarr\" link appears next to this error for exactly this reason.",
+          "This is a data gap on TMDb, not a connection problem. On the Requests page, an \"Add manually in Sonarr\" link appears next to this error to jump straight to Sonarr's own search. Once you've found and downloaded it yourself, hit \"Manually approve\" (which replaces the Approve button here) so the requester sees it as handled instead of stuck pending.",
       },
       {
         message: "Couldn't add this movie to Radarr.",
