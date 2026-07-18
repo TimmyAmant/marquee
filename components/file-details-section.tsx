@@ -74,16 +74,20 @@ export function FileDetailsSection({
           {file.dateAdded && (
             <DetailRow label="Added" value={new Date(file.dateAdded).toLocaleDateString()} />
           )}
+          {/* Resolution/quality profile can come from Sonarr for TV too (a
+              fallback when a media-server owns the title but Sonarr also
+              tracks it) — only the Radarr-only mediaInfo fields below stay
+              movie-gated, since Sonarr has no per-series equivalent. */}
+          {(tier || file.resolution) && (
+            <DetailRow label="Resolution" value={tier ?? file.resolution ?? ""} />
+          )}
+          {file.quality && <DetailRow label="Quality profile" value={file.quality} />}
 
           {mediaType === "movie" && (
             <>
-              {(tier || file.resolution) && (
-                <DetailRow label="Resolution" value={tier ?? file.resolution ?? ""} />
-              )}
               {file.videoCodec && <DetailRow label="Video" value={file.videoCodec} />}
               {file.dynamicRange && <DetailRow label="Dynamic range" value={file.dynamicRange} />}
               {audio && <DetailRow label="Audio" value={audio} />}
-              {file.quality && <DetailRow label="Quality profile" value={file.quality} />}
               {file.edition && <DetailRow label="Edition" value={file.edition} />}
               {file.releaseGroup && <DetailRow label="Release group" value={file.releaseGroup} />}
             </>

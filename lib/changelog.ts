@@ -6,19 +6,88 @@ export type ChangelogEntry = {
 
 /** Hand-maintained, newest first — bumped in package.json and appended to
  * here on every push to GitHub, so the version number in the footer always
- * has something concrete to link to. */
+ * has something concrete to link to. Entries from 0.1.0 through 0.6.0 were
+ * backfilled from git history when versioning was introduced; every entry
+ * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "0.2.0",
+    version: "0.7.0",
     date: "2026-07-18",
     changes: [
+      "File details for TV shows owned via Plex/Jellyfin now falls back to Sonarr's series folder path and quality profile name when Sonarr also tracks the same show, instead of showing only size and added date.",
+      "Backfilled the changelog with the project's full history from v0.1.0 onward.",
+    ],
+  },
+  {
+    version: "0.6.0",
+    date: "2026-07-18",
+    changes: [
+      "Added a File details section above Cast on title pages: location (with copy-to-clipboard), size, runtime, and — for Radarr-owned movies — resolution, video codec, HDR/dynamic range, audio, quality profile, edition, and release group.",
+      "Fixed: file details now also show for titles owned via Plex or Jellyfin, not just Radarr/Sonarr.",
       "Added a version number to the footer, linking to this changelog.",
-      "Fixed: the File details section (and the existing file-info line on title pages) now also shows for titles owned via Plex or Jellyfin, not just Radarr/Sonarr.",
+    ],
+  },
+  {
+    version: "0.5.0",
+    date: "2026-07-18",
+    changes: [
+      "Added an \"Approve all\" button to the Requests page.",
+      "Added a plain-language error reference page (/help/errors), linked from the footer.",
+      "Added \"Manually approve\" for TV requests Sonarr can't resolve automatically, with a direct link to add the show in Sonarr.",
+      "Added a \"Missing from collections\" tab to My Library — franchises you own part of but not all of.",
+      "Added 4K/1080p/720p resolution badges on owned Radarr movies.",
+      "Added a household Activity feed (Settings → Activity).",
+      "Added Trakt list/watchlist import as pending requests.",
+      "Added storage forecasting (\"free space runs out in ~N days\") to My Library.",
+    ],
+  },
+  {
+    version: "0.4.0",
+    date: "2026-07-17",
+    changes: [
+      "Centralized library-owner resolution and admin authorization checks across the app.",
+      "Replaced email-based login with username-based login.",
+      "Added full Jellyfin support as a second, independent media-server integration alongside Plex.",
+      "Added a Disconnect option for every integration (Plex, Jellyfin, Sonarr, Radarr), plus sync-count display on the Jellyfin card.",
+      "Added a \"Surprise me\" button to Discover.",
+      "Fixed the homepage \"Coming soon\" row showing titles that had already been released.",
+    ],
+  },
+  {
+    version: "0.3.0",
+    date: "2026-07-16",
+    changes: [
+      "Added the household request/approval flow: members request titles, the admin approves or declines from the Requests page.",
+      "Added Favorites for movies, TV shows, and collections, with favorite and quick-add buttons throughout the app.",
+      "Added a release Calendar — a full month-grid of upcoming releases and air dates.",
+      "Added a Sonarr-style expandable season/episode accordion with have/missing status per episode.",
+      "Added Sonarr/Radarr webhook-driven notifications.",
+      "Added real download-queue status (\"Downloading\") instead of just \"Monitored.\"",
+      "Added on-disk file location and remaining disk space to My Library.",
+      "Added an \"Add all missing\" bulk button to franchise/collection rows.",
+      "Added a manual \"Sync now\" button to Settings → Integrations.",
+      "Added mobile navigation and fixed various responsive/overflow issues.",
+      "Fixed several correctness/security issues found in review: an admin-role downgrade bug, an IDOR gap, a request-approval race condition, and stale library status after unmonitoring.",
+    ],
+  },
+  {
+    version: "0.2.0",
+    date: "2026-07-15",
+    changes: [
+      "Added Favorites for people and studios.",
+      "Switched to a single self-hosted Docker image with Postgres bundled inside (previously two containers).",
+      "Added a locked-down first-run setup flow — no public signup page.",
+      "Added movie/TV franchise and collection sections to title pages.",
+      "Added a TMDb settings UI (test-and-save API key/token) in Settings → Integrations.",
+      "Added a native Unraid Community Applications template.",
+      "Fixed TMDb token verification rejecting valid v3 API keys, Discover's row layout, and polished Person/Company pages.",
     ],
   },
   {
     version: "0.1.0",
     date: "2026-07-14",
-    changes: ["Baseline — first versioned release."],
+    changes: [
+      "Initial release: TMDb-powered discovery, search, and title pages with live Plex/Sonarr/Radarr ownership status.",
+    ],
   },
 ];

@@ -76,6 +76,7 @@ export interface SonarrSeries {
   status: string;
   monitored: boolean;
   path?: string;
+  qualityProfileId?: number;
   seasons?: SonarrSeasonStats[];
   statistics?: {
     episodeFileCount: number;

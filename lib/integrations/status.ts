@@ -90,6 +90,36 @@ async function getArrStatus(
   return { status, provider: "sonarr", configured, file: status === "untracked" ? null : file };
 }
 
+/**
+ * A media-server-owned TV show (Plex/Jellyfin) often has no folder path or
+ * quality info of its own — Plex only reports Media/Part per-episode, and
+ * Jellyfin doesn't carry a resolved quality profile at all. Most households
+ * running Sonarr have that same show tracked there too, so fall back to
+ * Sonarr's series path + quality profile name to fill the gap rather than
+ * leaving the File details section nearly empty for TV.
+ */
+async function getSonarrFileExtras(
+  userId: string,
+  tvdbId: number | null,
+): Promise<{ path: string | null; quality: string | null } | null> {
+  if (!tvdbId) return null;
+
+  const credential = await getArrCredential(userId, "sonarr");
+  if (!credential) return null;
+  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
+
+  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
+  if (!series) return null;
+
+  let quality: string | null = null;
+  if (series.qualityProfileId) {
+    const profiles = await sonarr.getQualityProfiles(config).catch(() => []);
+    quality = profiles.find((p) => p.id === series.qualityProfileId)?.name ?? null;
+  }
+
+  return { path: series.path ?? null, quality };
+}
+
 export async function getTitleLibraryStatus(
   userId: string,
   mediaType: "movie" | "tv",
@@ -98,13 +128,16 @@ export async function getTitleLibraryStatus(
 ): Promise<TitleLibraryStatus> {
   const plexFile = await getPlexFileInfo(userId, tmdbId, tvdbId).catch(() => null);
   if (plexFile) {
+    const sonarrExtra =
+      mediaType === "tv" ? await getSonarrFileExtras(userId, tvdbId).catch(() => null) : null;
     return {
       status: "owned",
       provider: "plex",
       configured: true,
       file: {
-        path: plexFile.path,
+        path: plexFile.path ?? sonarrExtra?.path ?? null,
         sizeBytes: plexFile.sizeBytes ?? 0,
+        quality: sonarrExtra?.quality ?? undefined,
         dateAdded: plexFile.addedAt?.toISOString(),
       },
     };
@@ -112,13 +145,16 @@ export async function getTitleLibraryStatus(
 
   const jellyfinFile = await getJellyfinFileInfo(userId, tmdbId, tvdbId).catch(() => null);
   if (jellyfinFile) {
+    const sonarrExtra =
+      mediaType === "tv" ? await getSonarrFileExtras(userId, tvdbId).catch(() => null) : null;
     return {
       status: "owned",
       provider: "jellyfin",
       configured: true,
       file: {
-        path: jellyfinFile.path,
+        path: jellyfinFile.path ?? sonarrExtra?.path ?? null,
         sizeBytes: jellyfinFile.sizeBytes ?? 0,
+        quality: sonarrExtra?.quality ?? undefined,
         dateAdded: jellyfinFile.addedAt?.toISOString(),
       },
     };
