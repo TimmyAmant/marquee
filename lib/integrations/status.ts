@@ -1,13 +1,15 @@
 import { getArrCredential } from "@/lib/integrations/credentials";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
-import { isTitleInPlexLibrary } from "@/lib/plex/sync";
-import { isTitleInJellyfinLibrary } from "@/lib/jellyfin/sync";
+import { getPlexFileInfo } from "@/lib/plex/sync";
+import { getJellyfinFileInfo } from "@/lib/jellyfin/sync";
 import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
 import type { LibraryStatus } from "@/components/status-badge";
 
 export type FileInfo = {
-  path: string;
+  /** Null for Plex-owned TV (Plex only reports Media/Part on individual
+   * episodes, not the show itself) — everything else always has a path. */
+  path: string | null;
   sizeBytes: number;
   quality?: string;
   /** Movie-only for now — Sonarr has no per-series file mediaInfo without a
@@ -82,7 +84,7 @@ async function getArrStatus(
 
   const status = deriveSonarrStatus(series);
   const file: FileInfo | null = series.statistics?.sizeOnDisk
-    ? { path: series.path ?? "", sizeBytes: series.statistics.sizeOnDisk }
+    ? { path: series.path ?? null, sizeBytes: series.statistics.sizeOnDisk }
     : null;
 
   return { status, provider: "sonarr", configured, file: status === "untracked" ? null : file };
@@ -94,14 +96,32 @@ export async function getTitleLibraryStatus(
   tmdbId: number,
   tvdbId: number | null,
 ): Promise<TitleLibraryStatus> {
-  const ownedInPlex = await isTitleInPlexLibrary(userId, tmdbId, tvdbId).catch(() => false);
-  if (ownedInPlex) {
-    return { status: "owned", provider: "plex", configured: true, file: null };
+  const plexFile = await getPlexFileInfo(userId, tmdbId, tvdbId).catch(() => null);
+  if (plexFile) {
+    return {
+      status: "owned",
+      provider: "plex",
+      configured: true,
+      file: {
+        path: plexFile.path,
+        sizeBytes: plexFile.sizeBytes ?? 0,
+        dateAdded: plexFile.addedAt?.toISOString(),
+      },
+    };
   }
 
-  const ownedInJellyfin = await isTitleInJellyfinLibrary(userId, tmdbId, tvdbId).catch(() => false);
-  if (ownedInJellyfin) {
-    return { status: "owned", provider: "jellyfin", configured: true, file: null };
+  const jellyfinFile = await getJellyfinFileInfo(userId, tmdbId, tvdbId).catch(() => null);
+  if (jellyfinFile) {
+    return {
+      status: "owned",
+      provider: "jellyfin",
+      configured: true,
+      file: {
+        path: jellyfinFile.path,
+        sizeBytes: jellyfinFile.sizeBytes ?? 0,
+        dateAdded: jellyfinFile.addedAt?.toISOString(),
+      },
+    };
   }
 
   return getArrStatus(userId, mediaType, tmdbId, tvdbId);

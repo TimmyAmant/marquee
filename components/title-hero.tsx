@@ -31,7 +31,7 @@ export function TitleHero({
   year: string | null;
   status: LibraryStatus;
   configured: boolean;
-  file: { path: string; sizeBytes: number; quality?: string } | null;
+  file: { path: string | null; sizeBytes: number; quality?: string } | null;
   links: ExternalLinksData;
   /** Omitted entirely (no button shown) when signed out. */
   favorited?: boolean;

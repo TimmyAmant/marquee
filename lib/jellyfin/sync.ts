@@ -157,17 +157,28 @@ export async function syncAllConnectedJellyfinUsers(): Promise<void> {
   }
 }
 
-export async function isTitleInJellyfinLibrary(
+export type JellyfinFileInfo = { path: string | null; sizeBytes: number | null; addedAt: Date | null };
+
+/**
+ * Returns file info when this title is in Jellyfin, null otherwise —
+ * replaces a plain boolean check since the title page wants to show
+ * location/size for Jellyfin-owned titles too, not just Radarr/Sonarr
+ * ones. `sizeBytes` is null for TV (Jellyfin only reports file size on a
+ * movie's own entry, per the comment in syncJellyfinLibrary above); `path`
+ * is still populated for TV since Jellyfin reports the series folder path
+ * directly on the series item.
+ */
+export async function getJellyfinFileInfo(
   userId: string,
   tmdbId: number,
   tvdbId: number | null,
-): Promise<boolean> {
+): Promise<JellyfinFileInfo | null> {
   const servers = await db
     .select({ id: jellyfinServers.id })
     .from(jellyfinServers)
     .where(eq(jellyfinServers.userId, userId));
 
-  if (servers.length === 0) return false;
+  if (servers.length === 0) return null;
   const serverIds = servers.map((s) => s.id);
 
   const idMatch = tvdbId
@@ -175,10 +186,15 @@ export async function isTitleInJellyfinLibrary(
     : eq(jellyfinLibraryItems.tmdbId, tmdbId);
 
   const [match] = await db
-    .select({ id: jellyfinLibraryItems.id })
+    .select({
+      filePath: jellyfinLibraryItems.filePath,
+      sizeBytes: jellyfinLibraryItems.sizeBytes,
+      addedAt: jellyfinLibraryItems.addedAt,
+    })
     .from(jellyfinLibraryItems)
     .where(and(inArray(jellyfinLibraryItems.jellyfinServerId, serverIds), idMatch))
     .limit(1);
 
-  return Boolean(match);
+  if (!match) return null;
+  return { path: match.filePath, sizeBytes: match.sizeBytes, addedAt: match.addedAt };
 }

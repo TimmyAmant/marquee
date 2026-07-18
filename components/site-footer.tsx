@@ -1,4 +1,5 @@
 import Link from "next/link";
+import packageJson from "@/package.json";
 
 const REPO_URL = "https://github.com/TimmyAmant/marquee";
 
@@ -8,6 +9,9 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-text-muted sm:px-6 lg:px-8">
         <span>Marquee — self-hosted media dashboard</span>
         <div className="flex items-center gap-5">
+          <Link href="/changelog" className="transition-colors hover:text-text-primary">
+            v{packageJson.version}
+          </Link>
           <Link href="/help/errors" className="transition-colors hover:text-text-primary">
             Error reference
           </Link>

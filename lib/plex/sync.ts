@@ -230,17 +230,27 @@ export async function getRecentlyWatched(
     .map((r) => ({ mediaType: r.mediaType, tmdbId: r.tmdbId }));
 }
 
-export async function isTitleInPlexLibrary(
+export type PlexFileInfo = { path: string | null; sizeBytes: number | null; addedAt: Date | null };
+
+/**
+ * Returns file info when this title is in Plex, null otherwise — replaces
+ * a plain boolean check since the title page wants to show location/size
+ * for Plex-owned titles too, not just Radarr/Sonarr ones. `path` is null
+ * for TV (Plex only reports Media/Part on individual episodes, not the
+ * show itself — see the comment in syncPlexLibrary above); `sizeBytes` is
+ * still populated for TV via the aggregated per-show fetch.
+ */
+export async function getPlexFileInfo(
   userId: string,
   tmdbId: number,
   tvdbId: number | null,
-): Promise<boolean> {
+): Promise<PlexFileInfo | null> {
   const servers = await db
     .select({ id: plexServers.id })
     .from(plexServers)
     .where(eq(plexServers.userId, userId));
 
-  if (servers.length === 0) return false;
+  if (servers.length === 0) return null;
   const serverIds = servers.map((s) => s.id);
 
   const idMatch = tvdbId
@@ -248,10 +258,15 @@ export async function isTitleInPlexLibrary(
     : eq(plexLibraryItems.tmdbId, tmdbId);
 
   const [match] = await db
-    .select({ id: plexLibraryItems.id })
+    .select({
+      filePath: plexLibraryItems.filePath,
+      sizeBytes: plexLibraryItems.sizeBytes,
+      addedAt: plexLibraryItems.addedAt,
+    })
     .from(plexLibraryItems)
     .where(and(inArray(plexLibraryItems.plexServerId, serverIds), idMatch))
     .limit(1);
 
-  return Boolean(match);
+  if (!match) return null;
+  return { path: match.filePath, sizeBytes: match.sizeBytes, addedAt: match.addedAt };
 }

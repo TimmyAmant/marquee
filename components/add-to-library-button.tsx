@@ -27,7 +27,7 @@ export function AddToLibraryButton({
   posterPath: string | null;
   status: LibraryStatus;
   configured: boolean;
-  file: { path: string; sizeBytes: number; quality?: string } | null;
+  file: { path: string | null; sizeBytes: number; quality?: string } | null;
   /** Omitted when signed out — no add/request action shown at all. */
   isAdmin?: boolean;
   alreadyRequested?: boolean;
@@ -83,10 +83,7 @@ export function AddToLibraryButton({
 
       {file && (
         <p className="flex items-center gap-1.5 text-xs text-text-muted">
-          <span>
-            {file.path} · {formatBytes(file.sizeBytes)}
-            {file.quality ? ` · ${file.quality}` : ""}
-          </span>
+          <span>{[file.path, formatBytes(file.sizeBytes), file.quality].filter(Boolean).join(" · ")}</span>
           <ResolutionBadge qualityName={file.quality} />
         </p>
       )}

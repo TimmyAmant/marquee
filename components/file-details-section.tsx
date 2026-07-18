@@ -31,7 +31,8 @@ export function FileDetailsSection({
   if (!file) return null;
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(file!.path).catch(() => undefined);
+    if (!file?.path) return;
+    await navigator.clipboard.writeText(file.path).catch(() => undefined);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
@@ -45,29 +46,34 @@ export function FileDetailsSection({
     <section>
       <h2 className="mb-4 font-display text-xl text-text-primary">File details</h2>
       <div className="rounded-2xl border border-border bg-bg-1 p-6">
-        <div className="flex flex-col gap-1.5">
-          <p className="text-xs text-text-muted">Location</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              readOnly
-              value={file.path}
-              onFocus={(e) => e.currentTarget.select()}
-              className="flex-1 truncate rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 font-mono text-xs text-text-primary outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="shrink-0 rounded-full border border-border-strong px-3 py-2 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent"
-            >
-              {copied ? "Copied" : "Copy"}
-            </button>
+        {file.path && (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs text-text-muted">Location</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={file.path}
+                onFocus={(e) => e.currentTarget.select()}
+                className="flex-1 truncate rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 font-mono text-xs text-text-primary outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="shrink-0 rounded-full border border-border-strong px-3 py-2 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 ${file.path ? "mt-5" : ""}`}>
           <DetailRow label="Size" value={formatBytes(file.sizeBytes)} />
           {runtimeLabel && <DetailRow label="Runtime" value={runtimeLabel} />}
+          {file.dateAdded && (
+            <DetailRow label="Added" value={new Date(file.dateAdded).toLocaleDateString()} />
+          )}
 
           {mediaType === "movie" && (
             <>
@@ -80,9 +86,6 @@ export function FileDetailsSection({
               {file.quality && <DetailRow label="Quality profile" value={file.quality} />}
               {file.edition && <DetailRow label="Edition" value={file.edition} />}
               {file.releaseGroup && <DetailRow label="Release group" value={file.releaseGroup} />}
-              {file.dateAdded && (
-                <DetailRow label="Added" value={new Date(file.dateAdded).toLocaleDateString()} />
-              )}
             </>
           )}
         </div>
