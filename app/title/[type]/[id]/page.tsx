@@ -5,7 +5,9 @@ import { StudioRow } from "@/components/studio-row";
 import { SimilarTitlesRow, type SimilarTitle } from "@/components/similar-titles-row";
 import { FranchiseRow, type FranchiseItem } from "@/components/franchise-row";
 import { SeasonAccordion } from "@/components/season-episode-list";
+import { FileDetailsSection } from "@/components/file-details-section";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { formatRuntime } from "@/lib/format";
 import { getTitleLibraryStatus, getSonarrSeasonCompleteness } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { findTrailer, getCollection } from "@/lib/tmdb/client";
@@ -168,6 +170,23 @@ export default async function TitlePage({
       ? await getSonarrSeasonCompleteness(viewer.libraryOwnerId, title.tvdbId).catch(() => null)
       : null;
 
+  // Movies: TMDb's own runtime. TV: averaged across TMDb's per-episode
+  // runtimes (Sonarr has no per-series runtime, and episode-to-episode
+  // length can vary), so it's clearly labeled as an average, not exact.
+  const runtimeLabel =
+    type === "movie"
+      ? (raw as TmdbMovieDetails | null)?.runtime
+        ? formatRuntime((raw as TmdbMovieDetails).runtime!)
+        : null
+      : (() => {
+          const episodeRuntimes = (raw as TmdbTvDetails | null)?.episode_run_time;
+          if (!episodeRuntimes?.length) return null;
+          const avg = Math.round(
+            episodeRuntimes.reduce((sum, m) => sum + m, 0) / episodeRuntimes.length,
+          );
+          return `~${formatRuntime(avg)}/episode`;
+        })();
+
   return (
     <div>
       <TitleHero
@@ -207,6 +226,7 @@ export default async function TitlePage({
           </section>
         )}
 
+        <FileDetailsSection mediaType={type} file={libraryStatus.file} runtimeLabel={runtimeLabel} />
         <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
         {franchiseTitle && (
           <FranchiseRow

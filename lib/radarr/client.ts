@@ -71,8 +71,21 @@ export interface RadarrMovie {
   movieFile?: {
     path: string;
     size: number;
-    quality: { quality: { name: string } };
+    dateAdded?: string;
+    releaseGroup?: string;
+    edition?: string;
+    quality: { quality: { name: string; resolution?: number; source?: string } };
     qualityCutoffNotMet?: boolean;
+    // All of this rides along on the same /movie response already fetched
+    // for status/quality — no extra Radarr call needed to show it.
+    mediaInfo?: {
+      resolution?: string;
+      videoCodec?: string;
+      videoDynamicRangeType?: string;
+      audioCodec?: string;
+      audioChannels?: number;
+      runTime?: string;
+    };
   };
 }
 

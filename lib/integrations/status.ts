@@ -10,6 +10,18 @@ export type FileInfo = {
   path: string;
   sizeBytes: number;
   quality?: string;
+  /** Movie-only for now — Sonarr has no per-series file mediaInfo without a
+   * per-episode expansion (episode-to-episode quality can vary anyway), so
+   * these stay undefined for TV. All come free off the same Radarr
+   * `/movie?tmdbId=X` call already made for `quality` above. */
+  resolution?: string;
+  videoCodec?: string;
+  dynamicRange?: string;
+  audioCodec?: string;
+  audioChannels?: number;
+  dateAdded?: string;
+  releaseGroup?: string;
+  edition?: string;
 };
 
 export type TitleLibraryStatus = {
@@ -43,6 +55,14 @@ async function getArrStatus(
             path: movie.movieFile.path,
             sizeBytes: movie.movieFile.size,
             quality: movie.movieFile.quality?.quality?.name,
+            resolution: movie.movieFile.mediaInfo?.resolution,
+            videoCodec: movie.movieFile.mediaInfo?.videoCodec,
+            dynamicRange: movie.movieFile.mediaInfo?.videoDynamicRangeType || undefined,
+            audioCodec: movie.movieFile.mediaInfo?.audioCodec,
+            audioChannels: movie.movieFile.mediaInfo?.audioChannels,
+            dateAdded: movie.movieFile.dateAdded,
+            releaseGroup: movie.movieFile.releaseGroup,
+            edition: movie.movieFile.edition || undefined,
           }
         : null;
 

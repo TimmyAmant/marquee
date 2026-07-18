@@ -358,6 +358,7 @@ export interface TmdbMovieDetails {
   recommendations?: { results: TmdbRecommendationItem[] };
   production_companies?: TmdbCompanyRef[];
   belongs_to_collection?: TmdbCollectionRef | null;
+  runtime?: number | null;
 }
 
 export function getMovieDetails(id: number) {
@@ -410,6 +411,7 @@ export interface TmdbTvDetails {
   recommendations?: { results: TmdbRecommendationItem[] };
   production_companies?: TmdbCompanyRef[];
   networks?: TmdbCompanyRef[];
+  episode_run_time?: number[];
 }
 
 export function getTvDetails(id: number) {
