@@ -26,6 +26,8 @@ data, your server.
   don't have yet.
 - Quick-add button right on the poster — add to Sonarr/Radarr without
   opening the title page.
+- **Surprise me** button — picks a random title matching your current
+  filters, for when you just want something to watch tonight.
 
 ### Search
 - Title, person, and studio search with live autocomplete suggestions.
@@ -74,6 +76,9 @@ data, your server.
   soon), sort by Newest/Oldest/A–Z/Recently added, search within your
   library, and switch between grid and table views.
 - **Stop monitoring** a title directly from the library (admin-only).
+- **Missing from collections** tab — franchises you own at least one part of
+  but not all of (e.g. Iron Man 1 without 2 or 3), so you can spot and fill
+  the gaps in a series without hunting for it one title at a time.
 
 ### Calendar
 - Month grid of upcoming releases and air dates, pulled straight from
@@ -100,10 +105,17 @@ data, your server.
 - Members get the full app — Discover, Search, My Library, Favorites,
   Calendar — but instead of adding titles directly to Sonarr/Radarr, they
   hit **Request**. The admin reviews everything waiting for approval on
-  the **Requests** page and approves or declines with one click; the
-  requester gets notified either way. Members have their own **Requests**
-  tab too, showing the status of everything they've asked for — pending,
-  declined, or (once approved) downloading/already in the library.
+  the **Requests** page and approves or declines with one click, or hits
+  **Approve all** to clear the whole queue at once when there's more than
+  one pending. The requester gets notified either way. Members have their
+  own **Requests** tab too, showing the status of everything they've asked
+  for — pending, declined, or (once approved) downloading/already in the
+  library.
+- **Manually approve** — for a TV request Sonarr can't resolve on its own
+  (no TVDB id on TMDb's record), the admin gets an "Add manually in Sonarr"
+  link straight to Sonarr's own search, and can mark the request approved
+  by hand once it's added outside the app. The requester sees "Manually
+  approved" so they know it was handled, not stuck.
 - Only the admin can connect or reconfigure Plex/Jellyfin/Sonarr/Radarr
   (**Settings → Integrations**) — members can browse and request, not
   wire up new download sources.
@@ -117,8 +129,17 @@ data, your server.
     connected alongside Plex, instead of it, or not at all.
   - **Sonarr / Radarr** — server URL + API key (test-and-save), with
     default quality profile and root folder for new adds.
+  - **Disconnect** any of the above with one click — removes the saved
+    credential and whatever that integration had synced, so nothing stale
+    lingers behind.
 - "Keep me signed in for 30 days" login option, rate-limited sign-in
   attempts, and all saved integration credentials encrypted at rest.
+
+### Error reference
+- A plain-language error reference page (`/help/errors`, linked from the
+  footer of every page) explaining every user-facing error message in the
+  app — what it means and what to do about it — so a stuck admin or
+  household member isn't left guessing.
 
 ### Self-hosting
 - Single self-contained Docker image — Postgres runs inside the same
