@@ -94,6 +94,7 @@ export default async function LibraryPage({
     monitored: item.monitored,
     filePath: item.filePath,
     qualityCutoffNotMet: item.qualityCutoffNotMet,
+    qualityName: item.qualityName,
   }));
 
   const [favoritedMovieIds, favoritedTvIds] = await Promise.all([

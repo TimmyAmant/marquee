@@ -1,0 +1,1 @@
+ALTER TABLE "arr_status_cache" ADD COLUMN "quality_name" text;

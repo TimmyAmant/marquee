@@ -8,7 +8,9 @@ import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { UnmonitorButton } from "@/components/unmonitor-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { FavoriteButton } from "@/components/favorite-button";
+import { ResolutionBadge } from "@/components/resolution-badge";
 import { formatBytes } from "@/lib/format";
+import { resolutionTier } from "@/lib/quality";
 
 export type MediaEntry = {
   titleId: string;
@@ -25,6 +27,8 @@ export type MediaEntry = {
   monitored?: boolean | null;
   filePath?: string | null;
   qualityCutoffNotMet?: boolean;
+  /** Radarr-only for now — see LibraryItem.qualityName. */
+  qualityName?: string | null;
 };
 
 type SortOrder = "newest" | "oldest" | "az" | "recent";
@@ -165,6 +169,10 @@ export function MediaList({
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [upgradeOnly, setUpgradeOnly] = useState(() => searchParams.get("upgrade") === "1");
   const hasUpgradeData = useMemo(() => entries.some((e) => e.qualityCutoffNotMet), [entries]);
+  const hasResolutionData = useMemo(
+    () => entries.some((e) => resolutionTier(e.qualityName) !== null),
+    [entries],
+  );
 
   function syncParam(key: string, value: string, defaultValue: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -348,7 +356,14 @@ export function MediaList({
                 year={entry.year}
                 subtitle={entry.subtitle}
                 meta={buildMeta(entry)}
-                badge={entry.status && <StatusBadge status={entry.status} compact />}
+                badge={
+                  (entry.status || entry.qualityName) && (
+                    <div className="flex items-center gap-1.5">
+                      {entry.status && <StatusBadge status={entry.status} compact />}
+                      <ResolutionBadge qualityName={entry.qualityName} />
+                    </div>
+                  )
+                }
                 favoriteAction={
                   showFavorite && (
                     <FavoriteButton
@@ -380,6 +395,7 @@ export function MediaList({
                 <th className="px-4 py-3 font-medium">Year</th>
                 <th className="px-4 py-3 font-medium">Source</th>
                 <th className="px-4 py-3 font-medium">Size</th>
+                {hasResolutionData && <th className="px-4 py-3 font-medium">Resolution</th>}
                 <th className="px-4 py-3 font-medium">Location</th>
                 {hasUpgradeData && <th className="px-4 py-3 font-medium">Quality</th>}
               </tr>
@@ -405,6 +421,11 @@ export function MediaList({
                   <td className="px-4 py-3 text-text-secondary">
                     {entry.sizeBytes ? formatBytes(entry.sizeBytes) : "—"}
                   </td>
+                  {hasResolutionData && (
+                    <td className="px-4 py-3">
+                      <ResolutionBadge qualityName={entry.qualityName} />
+                    </td>
+                  )}
                   <td
                     className="max-w-xs truncate px-4 py-3 font-mono text-xs text-text-secondary"
                     title={entry.filePath ?? undefined}

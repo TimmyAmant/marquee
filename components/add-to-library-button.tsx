@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
+import { ResolutionBadge } from "@/components/resolution-badge";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import { RequestButton } from "@/components/request-button";
 import { formatBytes } from "@/lib/format";
@@ -81,9 +82,12 @@ export function AddToLibraryButton({
       {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
 
       {file && (
-        <p className="text-xs text-text-muted">
-          {file.path} · {formatBytes(file.sizeBytes)}
-          {file.quality ? ` · ${file.quality}` : ""}
+        <p className="flex items-center gap-1.5 text-xs text-text-muted">
+          <span>
+            {file.path} · {formatBytes(file.sizeBytes)}
+            {file.quality ? ` · ${file.quality}` : ""}
+          </span>
+          <ResolutionBadge qualityName={file.quality} />
         </p>
       )}
     </div>

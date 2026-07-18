@@ -35,6 +35,7 @@ export async function syncArrLibrary(
       const sizeBytes = movie.movieFile?.size ?? null;
       const filePath = movie.movieFile?.path ?? movie.path ?? null;
       const qualityCutoffNotMet = movie.movieFile?.qualityCutoffNotMet ?? null;
+      const qualityName = movie.movieFile?.quality?.quality?.name ?? null;
       seenTmdbIds.push(movie.tmdbId);
 
       await db
@@ -49,6 +50,7 @@ export async function syncArrLibrary(
           sizeBytes,
           filePath,
           qualityCutoffNotMet,
+          qualityName,
           checkedAt: new Date(),
         })
         .onConflictDoUpdate({
@@ -60,6 +62,7 @@ export async function syncArrLibrary(
             sizeBytes,
             filePath,
             qualityCutoffNotMet,
+            qualityName,
             checkedAt: new Date(),
           },
         });

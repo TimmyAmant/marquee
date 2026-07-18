@@ -27,6 +27,10 @@ export type LibraryItem = {
   /** Radarr-only for now — true when the owned file is below the
    * configured quality cutoff (an upgrade is expected/possible). */
   qualityCutoffNotMet: boolean;
+  /** Radarr's quality profile name for the file on disk (e.g.
+   * "Bluray-1080p") — resolution badges are derived from this string.
+   * Radarr-only for now, same gap as qualityCutoffNotMet above. */
+  qualityName: string | null;
 };
 
 function toYear(row: { releaseDate: string | null; firstAirDate: string | null }): string | null {
@@ -64,6 +68,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         monitored: arrStatusCache.monitored,
         filePath: arrStatusCache.filePath,
         qualityCutoffNotMet: arrStatusCache.qualityCutoffNotMet,
+        qualityName: arrStatusCache.qualityName,
       })
       .from(arrStatusCache)
       .innerJoin(titles, and(eq(titles.mediaType, "movie"), eq(titles.tmdbId, arrStatusCache.externalId)))
@@ -81,7 +86,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       .where(and(eq(arrStatusCache.userId, userId), eq(arrStatusCache.provider, "sonarr"))),
   ]);
 
-  for (const { title, status, sizeBytes, monitored, filePath, qualityCutoffNotMet } of radarrRows) {
+  for (const { title, status, sizeBytes, monitored, filePath, qualityCutoffNotMet, qualityName } of radarrRows) {
     if (isDroppedArrRow(status, monitored)) continue;
 
     const key = `${title.mediaType}:${title.tmdbId}`;
@@ -99,6 +104,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       monitored,
       filePath,
       qualityCutoffNotMet: qualityCutoffNotMet ?? false,
+      qualityName,
     });
   }
 
@@ -120,6 +126,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       monitored,
       filePath,
       qualityCutoffNotMet: false,
+      qualityName: null,
     });
   }
 
@@ -174,6 +181,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         // Plex has no notion of quality cutoffs — carry over whatever
         // Radarr already determined for this title, if any.
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
+        qualityName: existing?.qualityName ?? null,
       });
     }
   }
@@ -225,6 +233,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         monitored: null,
         filePath: filePath ?? existing?.filePath ?? null,
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
+        qualityName: existing?.qualityName ?? null,
       });
     }
   }

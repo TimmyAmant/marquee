@@ -301,6 +301,12 @@ export const arrStatusCache = pgTable(
     // Radarr-only for now — Sonarr's per-episode cutoff needs episode-file
     // expansion, a bigger lift scoped out of this pass.
     qualityCutoffNotMet: boolean("quality_cutoff_not_met"),
+    // Radarr's quality profile name for the file on disk (e.g.
+    // "Bluray-1080p", "WEBDL-2160p") — resolution is derived from this
+    // string on read rather than stored separately. Radarr-only for now,
+    // same reasoning as qualityCutoffNotMet above: Sonarr has no per-series
+    // file quality without a per-episode expansion.
+    qualityName: text("quality_name"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],
