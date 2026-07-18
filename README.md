@@ -79,6 +79,11 @@ data, your server.
 - **Missing from collections** tab — franchises you own at least one part of
   but not all of (e.g. Iron Man 1 without 2 or 3), so you can spot and fill
   the gaps in a series without hunting for it one title at a time.
+- **Resolution badges** (4K/1080p/720p) on owned Radarr movies, in both the
+  grid and table views and on title pages.
+- **Storage forecast** — once there's a few days of history, a "free space
+  runs out in ~N days" estimate based on how fast your root folders are
+  actually filling up.
 
 ### Calendar
 - Month grid of upcoming releases and air dates, pulled straight from
@@ -95,6 +100,12 @@ data, your server.
 
 ### Favorites
 - One page listing every person and studio you've starred.
+
+### Trakt import
+- Paste a public Trakt list or watchlist URL and every matching title not
+  already owned or requested gets added to the Requests queue — Trakt
+  connects with a free API app's client id, no OAuth/sign-in required (the
+  list just needs to be public on Trakt's side).
 
 ### Household accounts & requests
 - One-time first-run setup creates the **admin** account — no public
@@ -132,6 +143,9 @@ data, your server.
   - **Disconnect** any of the above with one click — removes the saved
     credential and whatever that integration had synced, so nothing stale
     lingers behind.
+- **Settings → Activity** (admin-only): a reverse-chronological feed of who
+  requested what and who reviewed it — separate from the per-recipient
+  notification bell.
 - "Keep me signed in for 30 days" login option, rate-limited sign-in
   attempts, and all saved integration credentials encrypted at rest.
 
