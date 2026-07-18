@@ -416,6 +416,24 @@ export const activityEvents = pgTable(
   ],
 );
 
+// Daily free-space snapshots per Radarr/Sonarr root folder, so a storage
+// forecast ("full in ~40 days") has history to extrapolate from — the live
+// getDiskSpaceSummary() call only ever has the current instant, nothing to
+// trend against.
+export const diskSpaceSnapshots = pgTable(
+  "disk_space_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    path: text("path").notNull(),
+    freeBytes: bigint("free_bytes", { mode: "number" }).notNull(),
+    capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("disk_space_snapshots_user_captured_idx").on(table.userId, table.capturedAt)],
+);
+
 // Instance-wide settings (not per-user) — TMDb metadata is shared across
 // everyone on this Marquee instance via the titles/people/companies cache,
 // so unlike Sonarr/Radarr/Plex there's exactly one TMDb credential, not one

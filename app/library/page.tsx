@@ -17,7 +17,7 @@ import { FranchiseRow } from "@/components/franchise-row";
 import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
 import { getFavoritedTmdbIds, isFavorited } from "@/lib/favorites/query";
-import { getDiskSpaceSummary } from "@/lib/integrations/disk-space";
+import { getDiskSpaceSummary, getDiskSpaceForecast } from "@/lib/integrations/disk-space";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 
 export default async function LibraryPage({
@@ -63,11 +63,12 @@ export default async function LibraryPage({
     );
   }
 
-  const [, , , diskSpace] = await Promise.all([
+  const [, , , diskSpace, diskSpaceForecast] = await Promise.all([
     syncPlexLibraryIfStale(libraryOwnerId),
     syncJellyfinLibraryIfStale(libraryOwnerId),
     syncArrLibraryIfStale(libraryOwnerId),
     getDiskSpaceSummary(libraryOwnerId).catch(() => []),
+    getDiskSpaceForecast(libraryOwnerId).catch(() => null),
   ]);
   const totalFreeBytes = diskSpace.reduce((sum, d) => sum + d.freeSpace, 0);
 
@@ -228,6 +229,13 @@ export default async function LibraryPage({
             {summary.trackedCount > 0 && (
               <p className="mt-2 text-xs text-text-muted">
                 + {summary.trackedCount} more monitored or downloading, not counted above
+              </p>
+            )}
+            {diskSpaceForecast && (
+              <p className="mt-2 text-xs text-text-muted">
+                At the current rate ({formatBytes(diskSpaceForecast.bytesPerDay)}/day), free space
+                runs out in ~{diskSpaceForecast.daysRemaining} day
+                {diskSpaceForecast.daysRemaining === 1 ? "" : "s"}
               </p>
             )}
           </div>
