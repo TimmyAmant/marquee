@@ -1,0 +1,1 @@
+CREATE INDEX "requests_requested_by_idx" ON "requests" USING btree ("requested_by_user_id");

@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.8.0",
+    date: "2026-07-18",
+    changes: [
+      "Removed the redundant page title/description under Requests, Favorites, My Library, and Discover — the nav already shows which page you're on.",
+      "Sped up title-page loads: several Radarr/Sonarr/Plex/Jellyfin lookups that used to run one after another now run in parallel, cutting out a full extra network round-trip on TV shows owned via Plex or Jellyfin.",
+      "Added a database index on requests.requested_by_user_id, used by every member's Requests tab and duplicate-request check.",
+    ],
+  },
+  {
     version: "0.7.3",
     date: "2026-07-18",
     changes: [

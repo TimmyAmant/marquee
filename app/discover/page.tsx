@@ -258,11 +258,6 @@ export default async function DiscoverPage({
       />
 
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <h1 className="font-display text-3xl text-text-primary">Discover</h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Browse by genre, year, and popularity to find something new to add.
-        </p>
-
         {becauseYouWatched && (
           <section className="mt-8">
             <h2 className="mb-4 font-display text-xl text-text-primary">

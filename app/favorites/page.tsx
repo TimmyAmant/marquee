@@ -52,13 +52,8 @@ export default async function FavoritesPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="font-display text-3xl text-text-primary">Favorites</h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Movies, TV shows, collections, people, and studios you&rsquo;ve starred.
-      </p>
-
       {!hasFavorites && (
-        <p className="mt-10 text-sm text-text-muted">
+        <p className="text-sm text-text-muted">
           Nothing favorited yet — star anything from its page or card to see it here.
         </p>
       )}

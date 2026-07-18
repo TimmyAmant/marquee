@@ -51,12 +51,7 @@ export default async function RequestsPage() {
 
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="font-display text-3xl text-text-primary">Requests</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Everything you&apos;ve asked the admin to add, and where it stands.
-        </p>
-
-        <div className="mt-8 flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           {myRequests.length === 0 ? (
             <p className="text-sm text-text-muted">
               You haven&apos;t requested anything yet — find a title and hit Request.
@@ -111,17 +106,13 @@ export default async function RequestsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl text-text-primary">Requests</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Titles household members have asked you to add.
-          </p>
+      {pending.length > 1 && (
+        <div className="flex justify-end">
+          <ApproveAllRequestsButton />
         </div>
-        {pending.length > 1 && <ApproveAllRequestsButton />}
-      </div>
+      )}
 
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {pending.length === 0 ? (
           <p className="text-sm text-text-muted">No pending requests.</p>
         ) : (

@@ -373,6 +373,7 @@ export const requests = pgTable(
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),
+    index("requests_requested_by_idx").on(table.requestedByUserId),
     check(
       "requests_status_check",
       sql`${table.status} in ('pending','approved','rejected')`,

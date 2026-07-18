@@ -108,14 +108,19 @@ async function getSonarrFileExtras(
   if (!credential) return null;
   const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
 
-  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
+  // These two don't depend on each other's result — fetching the quality
+  // profile list only after confirming the series exists would add a
+  // second round-trip to Sonarr for no reason, since a small unused list
+  // fetch costs far less than another full network round-trip.
+  const [series, profiles] = await Promise.all([
+    sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null),
+    sonarr.getQualityProfiles(config).catch(() => []),
+  ]);
   if (!series) return null;
 
-  let quality: string | null = null;
-  if (series.qualityProfileId) {
-    const profiles = await sonarr.getQualityProfiles(config).catch(() => []);
-    quality = profiles.find((p) => p.id === series.qualityProfileId)?.name ?? null;
-  }
+  const quality = series.qualityProfileId
+    ? (profiles.find((p) => p.id === series.qualityProfileId)?.name ?? null)
+    : null;
 
   return { path: series.path ?? null, quality };
 }
@@ -126,10 +131,18 @@ export async function getTitleLibraryStatus(
   tmdbId: number,
   tvdbId: number | null,
 ): Promise<TitleLibraryStatus> {
-  const plexFile = await getPlexFileInfo(userId, tmdbId, tvdbId).catch(() => null);
+  // Plex/Jellyfin lookups are cheap local DB reads, not live API calls, so
+  // firing all three up front (Sonarr extras too, for TV) costs one extra
+  // DB query in the common case but saves a full sequential round-trip to
+  // Sonarr — previously only fetched after Plex/Jellyfin ownership was
+  // already confirmed, one after the other.
+  const [plexFile, jellyfinFile, sonarrExtra] = await Promise.all([
+    getPlexFileInfo(userId, tmdbId, tvdbId).catch(() => null),
+    getJellyfinFileInfo(userId, tmdbId, tvdbId).catch(() => null),
+    mediaType === "tv" ? getSonarrFileExtras(userId, tvdbId).catch(() => null) : Promise.resolve(null),
+  ]);
+
   if (plexFile) {
-    const sonarrExtra =
-      mediaType === "tv" ? await getSonarrFileExtras(userId, tvdbId).catch(() => null) : null;
     return {
       status: "owned",
       provider: "plex",
@@ -143,10 +156,7 @@ export async function getTitleLibraryStatus(
     };
   }
 
-  const jellyfinFile = await getJellyfinFileInfo(userId, tmdbId, tvdbId).catch(() => null);
   if (jellyfinFile) {
-    const sonarrExtra =
-      mediaType === "tv" ? await getSonarrFileExtras(userId, tvdbId).catch(() => null) : null;
     return {
       status: "owned",
       provider: "jellyfin",

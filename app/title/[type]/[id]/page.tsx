@@ -28,9 +28,12 @@ export default async function TitlePage({
   const tmdbId = Number(id);
   if ((type !== "movie" && type !== "tv") || !Number.isFinite(tmdbId)) notFound();
 
-  const viewer = await getViewerContext();
-
-  const title = await getOrFetchTitle(type as MediaType, tmdbId).catch(() => undefined);
+  // Independent of each other — the viewer lookup doesn't need the title,
+  // and vice versa — so there's no reason to serialize them.
+  const [viewer, title] = await Promise.all([
+    getViewerContext(),
+    getOrFetchTitle(type as MediaType, tmdbId).catch(() => undefined),
+  ]);
   if (!title) notFound();
 
   const year = (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null;
