@@ -1,25 +1,37 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getArrCredential, getPlexCredential, getJellyfinCredential } from "@/lib/integrations/credentials";
+import {
+  getArrCredential,
+  getPlexCredential,
+  getJellyfinCredential,
+  isArrFullyConfigured,
+} from "@/lib/integrations/credentials";
 import { syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
-import { getUserLibrary } from "@/lib/library/query";
+import { getUserLibrary, getLibraryStatusMap } from "@/lib/library/query";
+import { getIncompleteFranchises } from "@/lib/library/franchises";
 import { MediaList, type MediaEntry } from "@/components/media-list";
+import { FranchiseRow } from "@/components/franchise-row";
 import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
-import { getFavoritedTmdbIds } from "@/lib/favorites/query";
+import { getFavoritedTmdbIds, isFavorited } from "@/lib/favorites/query";
 import { getDiskSpaceSummary } from "@/lib/integrations/disk-space";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 
-export default async function LibraryPage() {
+export default async function LibraryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const viewer = await getViewerContext();
   if (!viewer.session) redirect("/login");
 
   const userId = viewer.userId;
   const isAdmin = viewer.isAdmin;
   const libraryOwnerId = viewer.libraryOwnerId;
+  const tab = (await searchParams).tab === "missing" ? "missing" : "all";
 
   const [plexCred, jellyfinCred, sonarrCred, radarrCred] = await Promise.all([
     getPlexCredential(libraryOwnerId),
@@ -101,6 +113,28 @@ export default async function LibraryPage() {
     ...[...favoritedTvIds].map((id) => `tv:${id}`),
   ]);
 
+  const arrConfigured = { movie: isArrFullyConfigured(radarrCred), tv: isArrFullyConfigured(sonarrCred) };
+
+  // Only walked for the "Missing from collections" tab — each franchise
+  // needs its own status map (live TMDb collection fetches aren't cheap
+  // enough to do unconditionally on every My Library page load).
+  const franchises = tab === "missing" ? await getIncompleteFranchises(libraryOwnerId) : [];
+  const franchiseExtras = await Promise.all(
+    franchises.map(async (franchise) => {
+      const [statusMap, favoritedIds, collectionFavorited] = await Promise.all([
+        getLibraryStatusMap(
+          libraryOwnerId,
+          franchise.items.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+        ),
+        getFavoritedTmdbIds(userId, franchise.items[0]?.mediaType ?? "movie", franchise.items.map((i) => i.tmdbId)),
+        franchise.collectionId !== undefined
+          ? isFavorited(userId, "collection", franchise.collectionId)
+          : Promise.resolve(false),
+      ]);
+      return { statusMap, favoritedIds, collectionFavorited };
+    }),
+  );
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -115,70 +149,120 @@ export default async function LibraryPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border bg-bg-1 px-6 py-4">
-        <div className="flex flex-wrap gap-6 text-sm">
-          <div>
-            <span className="font-display text-2xl text-text-primary">{summary.movieCount}</span>
-            <span className="ml-1.5 text-text-muted">movies</span>
-          </div>
-          <div>
-            <span className="font-display text-2xl text-text-primary">{summary.tvCount}</span>
-            <span className="ml-1.5 text-text-muted">TV shows</span>
-          </div>
-          {summary.totalBytes > 0 && (
-            <div>
-              <span className="font-display text-2xl text-text-primary">
-                {formatBytes(summary.totalBytes)}
-              </span>
-              <span className="ml-1.5 text-text-muted">on disk</span>
-            </div>
-          )}
-          {totalFreeBytes > 0 && (
-            <div>
-              <span className="font-display text-2xl text-text-primary">
-                {formatBytes(totalFreeBytes)}
-              </span>
-              <span className="ml-1.5 text-text-muted">free</span>
-            </div>
-          )}
-        </div>
-        {summary.trackedCount > 0 && (
-          <p className="mt-2 text-xs text-text-muted">
-            + {summary.trackedCount} more monitored or downloading, not counted above
-          </p>
-        )}
+      <div className="mt-6 flex gap-2">
+        <Link
+          href="/library"
+          className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+            tab === "all"
+              ? "bg-accent text-bg-0"
+              : "text-text-secondary hover:bg-bg-1 hover:text-text-primary"
+          }`}
+        >
+          My Library
+        </Link>
+        <Link
+          href="/library?tab=missing"
+          className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+            tab === "missing"
+              ? "bg-accent text-bg-0"
+              : "text-text-secondary hover:bg-bg-1 hover:text-text-primary"
+          }`}
+        >
+          Missing from collections
+        </Link>
       </div>
 
-      <div className="mt-8">
-        {entries.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            {isAdmin ? (
-              <>
-                Still syncing your library — check back in a moment, or{" "}
-                <Link href="/settings/integrations" className="text-accent hover:text-accent-hover">
-                  review your integrations
-                </Link>
-                .
-              </>
-            ) : (
-              "Still syncing — check back in a moment."
+      {tab === "missing" ? (
+        <div className="mt-8 flex flex-col gap-10">
+          {franchises.length === 0 ? (
+            <p className="text-sm text-text-muted">
+              Nothing incomplete — every franchise you own at least one part of is fully owned, or
+              you don&apos;t own any titles that belong to one yet.
+            </p>
+          ) : (
+            franchises.map((franchise, i) => (
+              <FranchiseRow
+                key={franchise.key}
+                title={franchise.title}
+                items={franchise.items}
+                statusMap={franchiseExtras[i].statusMap}
+                favoritedIds={franchiseExtras[i].favoritedIds}
+                showFavorite
+                arrConfigured={arrConfigured}
+                collectionId={franchise.collectionId}
+                collectionFavorited={franchiseExtras[i].collectionFavorited}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="mt-6 rounded-2xl border border-border bg-bg-1 px-6 py-4">
+            <div className="flex flex-wrap gap-6 text-sm">
+              <div>
+                <span className="font-display text-2xl text-text-primary">{summary.movieCount}</span>
+                <span className="ml-1.5 text-text-muted">movies</span>
+              </div>
+              <div>
+                <span className="font-display text-2xl text-text-primary">{summary.tvCount}</span>
+                <span className="ml-1.5 text-text-muted">TV shows</span>
+              </div>
+              {summary.totalBytes > 0 && (
+                <div>
+                  <span className="font-display text-2xl text-text-primary">
+                    {formatBytes(summary.totalBytes)}
+                  </span>
+                  <span className="ml-1.5 text-text-muted">on disk</span>
+                </div>
+              )}
+              {totalFreeBytes > 0 && (
+                <div>
+                  <span className="font-display text-2xl text-text-primary">
+                    {formatBytes(totalFreeBytes)}
+                  </span>
+                  <span className="ml-1.5 text-text-muted">free</span>
+                </div>
+              )}
+            </div>
+            {summary.trackedCount > 0 && (
+              <p className="mt-2 text-xs text-text-muted">
+                + {summary.trackedCount} more monitored or downloading, not counted above
+              </p>
             )}
-          </p>
-        ) : (
-          <Suspense>
-            <MediaList
-              entries={entries}
-              itemLabel="titles"
-              showTypeFilter
-              showStatusFilter
-              showSearch
-              showUnmonitorAction={isAdmin}
-              favoritedKeys={favoritedKeys}
-              showFavorite
-            />
-          </Suspense>
-        )}
-      </div>
+          </div>
+
+          <div className="mt-8">
+            {entries.length === 0 ? (
+              <p className="text-sm text-text-muted">
+                {isAdmin ? (
+                  <>
+                    Still syncing your library — check back in a moment, or{" "}
+                    <Link href="/settings/integrations" className="text-accent hover:text-accent-hover">
+                      review your integrations
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  "Still syncing — check back in a moment."
+                )}
+              </p>
+            ) : (
+              <Suspense>
+                <MediaList
+                  entries={entries}
+                  itemLabel="titles"
+                  showTypeFilter
+                  showStatusFilter
+                  showSearch
+                  showUnmonitorAction={isAdmin}
+                  favoritedKeys={favoritedKeys}
+                  showFavorite
+                />
+              </Suspense>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
