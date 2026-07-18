@@ -2,11 +2,18 @@
 
 import { useActionState } from "react";
 import { testAndSaveJellyfinConnection, type JellyfinConnectionState } from "@/app/settings/integrations/jellyfin-actions";
+import { DisconnectButton } from "@/components/disconnect-button";
 
 export function JellyfinConnectCard({
   existing,
+  summary,
 }: {
   existing: { baseUrl: string; hasApiKey: boolean } | null;
+  summary: {
+    servers: { name: string | null; lastSyncedAt: string | null }[];
+    movieCount: number;
+    tvCount: number;
+  };
 }) {
   const [state, formAction, isPending] = useActionState<JellyfinConnectionState | undefined, FormData>(
     testAndSaveJellyfinConnection,
@@ -17,12 +24,23 @@ export function JellyfinConnectCard({
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl text-text-primary">Jellyfin</h3>
-        {existing?.hasApiKey && (
-          <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-            Connected
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {existing?.hasApiKey && (
+            <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
+              Connected
+            </span>
+          )}
+          {existing?.hasApiKey && <DisconnectButton provider="jellyfin" label="Jellyfin" />}
+        </div>
       </div>
+
+      {existing?.hasApiKey && (
+        <p className="mt-2 text-sm text-text-secondary">
+          {summary.servers.length > 0 && `${summary.servers.map((s) => s.name).join(", ")} · `}
+          {summary.movieCount} movies · {summary.tvCount} TV shows
+        </p>
+      )}
+
       <p className="mt-2 text-sm text-text-secondary">
         Generate an API key from Jellyfin&apos;s dashboard: Administration → API Keys.
       </p>

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { startPlexAuth, checkPlexAuthStatus } from "@/app/settings/integrations/plex-actions";
+import { DisconnectButton } from "@/components/disconnect-button";
 
 type Phase = "idle" | "waiting" | "error";
 
@@ -67,11 +68,24 @@ export function PlexConnectCard({
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl text-text-primary">Plex</h3>
-        {connected && (
-          <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-            Connected
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {connected && (
+            <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
+              Connected
+            </span>
+          )}
+          {connected && (
+            <DisconnectButton
+              provider="plex"
+              label="Plex"
+              onSuccess={() => {
+                setConnected(false);
+                setMovieCount(0);
+                setTvCount(0);
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {connected ? (

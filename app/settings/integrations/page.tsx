@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { getArrCredential, getOrCreateWebhookSecret, getJellyfinCredential } from "@/lib/integrations/credentials";
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
-import { syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
+import { getJellyfinSummary, syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
 import { isTmdbAccessTokenSavedInSettings } from "@/lib/integrations/app-settings";
 import { ArrCredentialForm } from "@/components/arr-credential-form";
@@ -24,12 +24,13 @@ export default async function IntegrationsSettingsPage() {
     syncArrLibraryIfStale(session.user.id),
   ]);
 
-  const [sonarrCred, radarrCred, plexSummary, jellyfinCred, tmdbSavedInSettings, webhookSecret, headerList] =
+  const [sonarrCred, radarrCred, plexSummary, jellyfinCred, jellyfinSummary, tmdbSavedInSettings, webhookSecret, headerList] =
     await Promise.all([
       getArrCredential(session.user.id, "sonarr"),
       getArrCredential(session.user.id, "radarr"),
       getPlexSummary(session.user.id),
       getJellyfinCredential(session.user.id),
+      getJellyfinSummary(session.user.id),
       isTmdbAccessTokenSavedInSettings(),
       getOrCreateWebhookSecret(session.user.id),
       headers(),
@@ -69,6 +70,14 @@ export default async function IntegrationsSettingsPage() {
         />
         <JellyfinConnectCard
           existing={jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, hasApiKey: true } : null}
+          summary={{
+            servers: jellyfinSummary.servers.map((s) => ({
+              name: s.name,
+              lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
+            })),
+            movieCount: jellyfinSummary.movieCount,
+            tvCount: jellyfinSummary.tvCount,
+          }}
         />
         <ArrCredentialForm
           provider="sonarr"

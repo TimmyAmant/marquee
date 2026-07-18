@@ -6,6 +6,7 @@ import {
   saveArrDefaults,
   type ArrConnectionState,
 } from "@/app/settings/integrations/actions";
+import { DisconnectButton } from "@/components/disconnect-button";
 import type { ArrProvider } from "@/lib/db/schema";
 
 export function ArrCredentialForm({
@@ -38,11 +39,14 @@ export function ArrCredentialForm({
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl text-text-primary">{label}</h3>
-        {existing?.hasApiKey && (
-          <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-            Connected
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {existing?.hasApiKey && (
+            <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
+              Connected
+            </span>
+          )}
+          {existing?.hasApiKey && <DisconnectButton provider={provider} label={label} />}
+        </div>
       </div>
 
       <form action={formAction} className="mt-4 flex flex-col gap-3">
