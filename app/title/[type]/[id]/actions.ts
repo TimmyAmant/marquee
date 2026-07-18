@@ -9,6 +9,7 @@ import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/crede
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
+import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
 
 export type AddToLibraryState = { error?: string; success?: boolean };
 
@@ -106,7 +107,7 @@ export async function addSeriesToSonarrForUser(
 
   const title = await getOrFetchTitle("tv", tmdbId).catch(() => undefined);
   if (!title?.tvdbId) {
-    return { error: "Couldn't resolve this show for Sonarr." };
+    return { error: SONARR_UNRESOLVED_ERROR };
   }
 
   let added: { id: number };

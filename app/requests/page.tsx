@@ -6,6 +6,7 @@ import { RequestReviewRow } from "@/components/request-review-row";
 import { ApproveAllRequestsButton } from "@/components/approve-all-requests-button";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { getArrCredential } from "@/lib/integrations/credentials";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 
@@ -92,10 +93,12 @@ export default async function RequestsPage() {
   // holds the Sonarr/Radarr credentials — today that's always this admin,
   // but resolve properly rather than assuming session.user.id === owner, in
   // case a second admin account without its own integrations ever exists.
-  const [pending, reviewed] = await Promise.all([
+  const [pending, reviewed, sonarrCred] = await Promise.all([
     getPendingRequests(viewer.libraryOwnerId),
     getReviewedRequests(),
+    getArrCredential(viewer.libraryOwnerId, "sonarr"),
   ]);
+  const sonarrUrl = sonarrCred?.baseUrl ?? null;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -124,6 +127,7 @@ export default async function RequestsPage() {
               requestedByName={r.requestedByName}
               requestedByUsername={r.requestedByUsername}
               createdAt={r.createdAt.toISOString()}
+              sonarrUrl={sonarrUrl}
             />
           ))
         )}

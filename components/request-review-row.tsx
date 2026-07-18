@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { approveRequestAction, rejectRequestAction } from "@/lib/requests/actions";
+import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { MediaType } from "@/lib/db/schema";
 
@@ -17,6 +18,7 @@ export function RequestReviewRow({
   requestedByName,
   requestedByUsername,
   createdAt,
+  sonarrUrl,
 }: {
   id: string;
   mediaType: MediaType;
@@ -26,6 +28,10 @@ export function RequestReviewRow({
   requestedByName: string | null;
   requestedByUsername: string;
   createdAt: string;
+  /** Admin's connected Sonarr base URL (Settings > Integrations), if any —
+   * used to link straight to Sonarr's own "add series" search when Marquee
+   * can't resolve this show's TVDB id itself. */
+  sonarrUrl: string | null;
 }) {
   const router = useRouter();
   const approveAction = approveRequestAction.bind(null, id);
@@ -59,7 +65,22 @@ export function RequestReviewRow({
           {new Date(createdAt).toLocaleDateString()}
         </p>
         {(approveState?.error || rejectState?.error) && (
-          <p className="mt-1 text-xs text-red-400">{approveState?.error || rejectState?.error}</p>
+          <p className="mt-1 text-xs text-red-400">
+            {approveState?.error || rejectState?.error}
+            {approveState?.error === SONARR_UNRESOLVED_ERROR && sonarrUrl && (
+              <>
+                {" — "}
+                <a
+                  href={`${sonarrUrl}/add/new?term=${encodeURIComponent(title)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-text-secondary underline underline-offset-2 hover:text-accent"
+                >
+                  Add manually in Sonarr
+                </a>
+              </>
+            )}
+          </p>
         )}
       </div>
       <div className="flex shrink-0 gap-2">
