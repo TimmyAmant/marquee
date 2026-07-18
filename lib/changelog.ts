@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.8.1",
+    date: "2026-07-18",
+    changes: [
+      "Removed the duplicate search bar on My Library — the one in the nav header already covers it.",
+      "Tightened the extra vertical gap left behind on My Library after the last header cleanup.",
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-07-18",
     changes: [

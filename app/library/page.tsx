@@ -14,7 +14,6 @@ import { getUserLibrary, getLibraryStatusMap } from "@/lib/library/query";
 import { getIncompleteFranchises } from "@/lib/library/franchises";
 import { MediaList, type MediaEntry } from "@/components/media-list";
 import { FranchiseRow } from "@/components/franchise-row";
-import { SearchBar } from "@/components/search-bar";
 import { formatBytes } from "@/lib/format";
 import { getFavoritedTmdbIds, isFavorited } from "@/lib/favorites/query";
 import { getDiskSpaceSummary, getDiskSpaceForecast } from "@/lib/integrations/disk-space";
@@ -139,13 +138,7 @@ export default async function LibraryPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <div className="sm:flex sm:justify-end">
-        <div className="w-full sm:w-80">
-          <SearchBar variant="compact" />
-        </div>
-      </div>
-
-      <div className="mt-6 flex gap-2">
+      <div className="flex gap-2">
         <Link
           href="/library"
           className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
