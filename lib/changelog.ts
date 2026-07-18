@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.1",
+    date: "2026-07-18",
+    changes: [
+      "Fixed: pages could hang for up to a minute if Plex, Jellyfin, Sonarr, or Radarr was slow or unreachable — every request to those services now times out after 8 seconds instead of waiting indefinitely.",
+    ],
+  },
+  {
     version: "0.7.0",
     date: "2026-07-18",
     changes: [

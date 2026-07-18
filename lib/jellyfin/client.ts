@@ -1,5 +1,9 @@
 export type JellyfinConfig = { baseUrl: string; apiKey: string };
 
+// See the matching constant in lib/radarr/client.ts — a slow/unreachable
+// Jellyfin instance shouldn't be able to hang a page render indefinitely.
+const REQUEST_TIMEOUT_MS = 8000;
+
 async function jellyfinFetch<T>(config: JellyfinConfig, path: string): Promise<T> {
   const url = new URL(`${config.baseUrl.replace(/\/$/, "")}${path}`);
   const res = await fetch(url, {
@@ -7,6 +11,7 @@ async function jellyfinFetch<T>(config: JellyfinConfig, path: string): Promise<T
       Accept: "application/json",
       "X-Emby-Token": config.apiKey,
     },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

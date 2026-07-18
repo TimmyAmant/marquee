@@ -1,5 +1,9 @@
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
+// See the same constant in lib/radarr/client.ts — a slow/unreachable Sonarr
+// instance shouldn't be able to hang a page render indefinitely.
+const REQUEST_TIMEOUT_MS = 8000;
+
 async function sonarrFetch<T>(
   config: ArrConfig,
   path: string,
@@ -13,6 +17,7 @@ async function sonarrFetch<T>(
       "Content-Type": "application/json",
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

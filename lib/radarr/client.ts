@@ -1,5 +1,11 @@
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
+// Without this, a slow or unreachable Radarr instance can hang a page render
+// for far longer than a normal request should — the caller's existing
+// .catch(() => ...) fallbacks handle the resulting AbortError the same way
+// they already handle any other rejection, so no call site needs to change.
+const REQUEST_TIMEOUT_MS = 8000;
+
 async function radarrFetch<T>(
   config: ArrConfig,
   path: string,
@@ -13,6 +19,7 @@ async function radarrFetch<T>(
       "Content-Type": "application/json",
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

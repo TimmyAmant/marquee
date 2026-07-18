@@ -1,5 +1,9 @@
 const PLEX_TV_BASE = "https://plex.tv";
 const PRODUCT = "Marquee";
+// A slow/unreachable Plex server (or plex.tv itself) shouldn't be able to
+// hang a page render indefinitely — same reasoning as the arr/Jellyfin
+// clients' REQUEST_TIMEOUT_MS.
+const REQUEST_TIMEOUT_MS = 8000;
 
 function plexHeaders(clientId: string, token?: string) {
   return {
@@ -20,6 +24,7 @@ export async function createPin(clientId: string): Promise<PlexPin> {
   const res = await fetch(`${PLEX_TV_BASE}/api/v2/pins?strong=true`, {
     method: "POST",
     headers: plexHeaders(clientId),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Failed to create Plex pin (${res.status})`);
   return res.json();
@@ -28,6 +33,7 @@ export async function createPin(clientId: string): Promise<PlexPin> {
 export async function checkPin(clientId: string, pinId: number): Promise<PlexPin> {
   const res = await fetch(`${PLEX_TV_BASE}/api/v2/pins/${pinId}`, {
     headers: plexHeaders(clientId),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Failed to check Plex pin (${res.status})`);
   return res.json();
@@ -58,6 +64,7 @@ export interface PlexResource {
 export async function getResources(clientId: string, token: string): Promise<PlexResource[]> {
   const res = await fetch(`${PLEX_TV_BASE}/api/v2/resources?includeHttps=1`, {
     headers: plexHeaders(clientId, token),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Failed to list Plex resources (${res.status})`);
   const resources: PlexResource[] = await res.json();
@@ -84,6 +91,7 @@ export async function getLibrarySections(
 ): Promise<PlexLibrarySection[]> {
   const res = await fetch(`${serverUri}/library/sections`, {
     headers: { Accept: "application/json", "X-Plex-Token": token },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Failed to list library sections (${res.status})`);
   const body = await res.json();
@@ -120,7 +128,10 @@ export async function getSectionItems(
 ): Promise<PlexMetadataItem[]> {
   const res = await fetch(
     `${serverUri}/library/sections/${sectionKey}/all?includeGuids=1`,
-    { headers: { Accept: "application/json", "X-Plex-Token": token } },
+    {
+      headers: { Accept: "application/json", "X-Plex-Token": token },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    },
   );
   if (!res.ok) throw new Error(`Failed to list section items (${res.status})`);
   const body = await res.json();
@@ -137,6 +148,7 @@ export async function getShowFileSize(
 ): Promise<number | null> {
   const res = await fetch(`${serverUri}/library/metadata/${ratingKey}/allLeaves`, {
     headers: { Accept: "application/json", "X-Plex-Token": token },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) return null;
   const body = await res.json();
