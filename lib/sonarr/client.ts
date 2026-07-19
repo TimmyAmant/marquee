@@ -111,6 +111,17 @@ export async function setSeriesMonitored(
   });
 }
 
+/** Queues an immediate search for every monitored episode of this series,
+ * same as Sonarr's own "Search Monitored" button — fire-and-forget, Sonarr
+ * runs it asynchronously and there's nothing meaningful to poll for
+ * completion here. */
+export async function searchSeries(config: ArrConfig, seriesId: number): Promise<void> {
+  await sonarrFetch(config, "/command", {
+    method: "POST",
+    body: { name: "SeriesSearch", seriesId },
+  });
+}
+
 export interface SonarrEpisode {
   id: number;
   seasonNumber: number;

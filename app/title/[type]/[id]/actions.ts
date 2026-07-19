@@ -7,6 +7,7 @@ import { db } from "@/lib/db/client";
 import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, tmdbIdOverrides, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
+import { getArrTrackingInfo } from "@/lib/integrations/status";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { findByImdbId } from "@/lib/tmdb/client";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -298,4 +299,95 @@ export async function relinkTitleAction(
   revalidatePath("/library");
   revalidatePath("/discover");
   return { success: true, newTmdbId };
+}
+
+export type ArrCommandState = { error?: string; success?: boolean };
+
+/** Queues an immediate Radarr/Sonarr search, mirroring the *arr apps' own
+ * "Search Monitored" button — a one-off nudge for a title that's stuck, not
+ * a substitute for the regular search/indexer schedule those apps already
+ * run on their own. */
+export async function searchTitleAction(
+  mediaType: MediaType,
+  tmdbId: number,
+  tvdbId: number | null,
+  _prevState: ArrCommandState | undefined,
+  _formData: FormData,
+): Promise<ArrCommandState> {
+  const admin = await requireAdmin("Only the admin can trigger a search.");
+  if (!admin.ok) return { error: admin.error };
+
+  const tracking = await getArrTrackingInfo(admin.userId, mediaType, tmdbId, tvdbId).catch(() => null);
+  if (!tracking) return { error: "Not tracked in Radarr/Sonarr." };
+
+  try {
+    if (mediaType === "movie") {
+      const credential = await getArrCredential(admin.userId, "radarr");
+      if (!credential) return { error: "Connect Radarr in Settings first." };
+      await radarr.searchMovie({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tracking.arrId);
+    } else {
+      const credential = await getArrCredential(admin.userId, "sonarr");
+      if (!credential) return { error: "Connect Sonarr in Settings first." };
+      await sonarr.searchSeries({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tracking.arrId);
+    }
+  } catch {
+    return { error: "Couldn't queue a search — the *arr app didn't accept the request." };
+  }
+
+  return { success: true };
+}
+
+/** Toggles monitored on/off directly from the title page, same effect as
+ * the equivalent toggle inside Radarr/Sonarr itself. */
+export async function setTitleMonitoredAction(
+  mediaType: MediaType,
+  tmdbId: number,
+  tvdbId: number | null,
+  monitored: boolean,
+  _prevState: ArrCommandState | undefined,
+  _formData: FormData,
+): Promise<ArrCommandState> {
+  const admin = await requireAdmin("Only the admin can change monitoring.");
+  if (!admin.ok) return { error: admin.error };
+
+  const tracking = await getArrTrackingInfo(admin.userId, mediaType, tmdbId, tvdbId).catch(() => null);
+  if (!tracking) return { error: "Not tracked in Radarr/Sonarr." };
+
+  try {
+    if (mediaType === "movie") {
+      const credential = await getArrCredential(admin.userId, "radarr");
+      if (!credential) return { error: "Connect Radarr in Settings first." };
+      await radarr.setMovieMonitored(
+        { baseUrl: credential.baseUrl, apiKey: credential.apiKey },
+        tracking.arrId,
+        monitored,
+      );
+    } else {
+      const credential = await getArrCredential(admin.userId, "sonarr");
+      if (!credential) return { error: "Connect Sonarr in Settings first." };
+      await sonarr.setSeriesMonitored(
+        { baseUrl: credential.baseUrl, apiKey: credential.apiKey },
+        tracking.arrId,
+        monitored,
+      );
+    }
+  } catch {
+    return { error: "Couldn't update monitoring — the *arr app didn't accept the request." };
+  }
+
+  await db
+    .update(arrStatusCache)
+    .set({ monitored })
+    .where(
+      and(
+        eq(arrStatusCache.userId, admin.userId),
+        eq(arrStatusCache.provider, mediaType === "movie" ? "radarr" : "sonarr"),
+        eq(arrStatusCache.externalId, tmdbId),
+      ),
+    )
+    .catch(() => undefined);
+
+  revalidatePath(`/title/${mediaType}/${tmdbId}`);
+  revalidatePath("/library");
+  return { success: true };
 }

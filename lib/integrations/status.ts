@@ -233,3 +233,34 @@ export async function getSonarrEpisodeHasFileMap(
   }
   return episodeHasFile;
 }
+
+export type ArrTrackingInfo = { arrId: number; monitored: boolean };
+
+/**
+ * Whether this title has an entry in Radarr/Sonarr at all, independent of
+ * `getTitleLibraryStatus`'s provider — a title can be "owned" via Plex/
+ * Jellyfin while still being separately tracked (and searchable/
+ * monitorable) in Radarr/Sonarr, the common setup for most households, so
+ * this can't just reuse the provider already resolved there.
+ */
+export async function getArrTrackingInfo(
+  userId: string,
+  mediaType: "movie" | "tv",
+  tmdbId: number,
+  tvdbId: number | null,
+): Promise<ArrTrackingInfo | null> {
+  if (mediaType === "movie") {
+    const credential = await getArrCredential(userId, "radarr");
+    if (!credential) return null;
+    const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
+    const movie = await radarr.getMovieByTmdbId(config, tmdbId).catch(() => null);
+    return movie ? { arrId: movie.id, monitored: movie.monitored } : null;
+  }
+
+  if (!tvdbId) return null;
+  const credential = await getArrCredential(userId, "sonarr");
+  if (!credential) return null;
+  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
+  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
+  return series ? { arrId: series.id, monitored: series.monitored } : null;
+}

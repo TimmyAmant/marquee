@@ -5,6 +5,8 @@ import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";
 import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
+import { ArrTrackingControls } from "@/components/arr-tracking-controls";
+import type { ArrTrackingInfo } from "@/lib/integrations/status";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -34,6 +36,8 @@ export function TitleHero({
   isAdmin,
   alreadyRequested,
   otherRequesters,
+  tvdbId,
+  arrTracking,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -50,6 +54,8 @@ export function TitleHero({
   isAdmin?: boolean;
   alreadyRequested?: boolean;
   otherRequesters?: string[];
+  tvdbId?: number | null;
+  arrTracking?: ArrTrackingInfo | null;
 }) {
   const metaParts = [
     meta.runtimeLabel,
@@ -110,6 +116,17 @@ export function TitleHero({
           <div className="mt-5">
             <ExternalLinks links={links} />
           </div>
+
+          {isAdmin && arrTracking && (
+            <div className="mt-4">
+              <ArrTrackingControls
+                mediaType={mediaType}
+                tmdbId={tmdbId}
+                tvdbId={tvdbId ?? null}
+                monitored={arrTracking.monitored}
+              />
+            </div>
+          )}
 
           {isAdmin && status !== "untracked" && (
             <div className="mt-4">

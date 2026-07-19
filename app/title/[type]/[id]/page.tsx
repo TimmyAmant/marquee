@@ -9,7 +9,7 @@ import { FileDetailsSection } from "@/components/file-details-section";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { formatRuntime } from "@/lib/format";
 import { computeYearRange, relabelTvStatus } from "@/lib/title-meta";
-import { getTitleLibraryStatus, getSonarrSeasonCompleteness } from "@/lib/integrations/status";
+import { getTitleLibraryStatus, getSonarrSeasonCompleteness, getArrTrackingInfo } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
@@ -57,6 +57,14 @@ export default async function TitlePage({
     movie: isArrFullyConfigured(radarrCredential),
     tv: isArrFullyConfigured(sonarrCredential),
   };
+
+  // Only worth a live Radarr/Sonarr round-trip when there's actually an
+  // admin control that would use it — non-admin viewers never see the
+  // Search now/monitoring toggle.
+  const arrTracking =
+    viewer.session && viewer.isAdmin && viewer.libraryOwnerId
+      ? await getArrTrackingInfo(viewer.libraryOwnerId, type, tmdbId, title.tvdbId).catch(() => null)
+      : null;
 
   const raw = title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
   const trailer = raw ? findTrailer(raw.videos) : null;
@@ -227,6 +235,8 @@ export default async function TitlePage({
         isAdmin={viewer.session ? viewer.isAdmin : undefined}
         alreadyRequested={activeRequestStatus === "pending"}
         otherRequesters={otherRequesters}
+        tvdbId={title.tvdbId}
+        arrTracking={arrTracking}
       />
 
       <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">

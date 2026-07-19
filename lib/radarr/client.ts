@@ -117,6 +117,16 @@ export async function setMovieMonitored(
   });
 }
 
+/** Queues an immediate search for this movie, same as Radarr's own "Search
+ * Monitored" button — fire-and-forget, Radarr runs it asynchronously and
+ * there's nothing meaningful to poll for completion here. */
+export async function searchMovie(config: ArrConfig, movieId: number): Promise<void> {
+  await radarrFetch(config, "/command", {
+    method: "POST",
+    body: { name: "MoviesSearch", movieIds: [movieId] },
+  });
+}
+
 /** IDs of movies with an active entry in Radarr's download queue right now
  * — a real-time signal, unlike `hasFile`/`monitored` which only reflect the
  * last completed sync. Paged, but a single page comfortably covers any

@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.14.0",
+    date: "2026-07-19",
+    changes: [
+      "Added \"Search now\" and a monitoring on/off toggle (admin-only) to title pages tracked in Radarr/Sonarr — trigger an immediate search or pause/resume monitoring without leaving Marquee for the *arr app itself.",
+    ],
+  },
+  {
     version: "0.13.0",
     date: "2026-07-18",
     changes: [
