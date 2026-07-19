@@ -59,6 +59,14 @@ data, your server.
 - "More like this" recommendations.
 - TV shows: season selector with per-season completeness, full episode
   list with per-episode have-it/missing status.
+- **File details** section: location (with copy-to-clipboard), size,
+  runtime, and — for Radarr-owned movies — resolution, video codec, HDR,
+  audio, quality profile, edition, and release group.
+- **"Wrong match? Fix ID"** (admin-only) — a title occasionally gets synced
+  under the wrong TMDb/TVDB match (e.g. a mislabeled Plex library folder).
+  Enter the correct TMDb, IMDb, or TVDB id and Marquee repoints every
+  synced row currently linked to the wrong one over to the right title, no
+  need to fix the match in Plex/Jellyfin/Sonarr first.
 
 ### People & studios
 - Full filmography for any actor/person — every movie and TV credit with
