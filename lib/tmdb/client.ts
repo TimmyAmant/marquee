@@ -474,6 +474,13 @@ export function findByTvdbId(tvdbId: number) {
   });
 }
 
+export function findByImdbId(imdbId: string) {
+  return tmdbFetch<{ movie_results: TmdbFindResult[]; tv_results: TmdbFindResult[] }>(
+    `/find/${imdbId}`,
+    { external_source: "imdb_id" },
+  );
+}
+
 export interface TmdbEpisode {
   id: number;
   episode_number: number;

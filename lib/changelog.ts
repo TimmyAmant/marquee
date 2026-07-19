@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.10.1",
+    date: "2026-07-18",
+    changes: [
+      "Added a \"Wrong match? Fix ID\" option (admin-only) on owned titles' pages — enter the correct TMDb, IMDb, or TVDB id and Marquee repoints everything synced under the wrong id to the right title, without needing to fix the match in Plex/Jellyfin/Sonarr itself first.",
+    ],
+  },
+  {
     version: "0.10.0",
     date: "2026-07-18",
     changes: [

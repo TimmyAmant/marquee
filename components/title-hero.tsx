@@ -4,6 +4,7 @@ import type { LibraryStatus } from "@/components/status-badge";
 import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";
 import { FavoriteButton } from "@/components/favorite-button";
+import { RelinkTitleForm } from "@/components/relink-title-form";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -112,6 +113,12 @@ export function TitleHero({
           <div className="mt-5">
             <ExternalLinks links={links} />
           </div>
+
+          {isAdmin && status !== "untracked" && (
+            <div className="mt-4">
+              <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
+            </div>
+          )}
         </div>
       </div>
     </div>

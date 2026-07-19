@@ -1,15 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { arrStatusCache, users } from "@/lib/db/schema";
+import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, users } from "@/lib/db/schema";
+import type { MediaType } from "@/lib/db/schema";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { findByImdbId } from "@/lib/tmdb/client";
+import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type AddToLibraryState = { error?: string; success?: boolean };
 
@@ -193,4 +197,91 @@ export async function addSeriesToSonarr(
     revalidatePath("/library");
   }
   return result;
+}
+
+export type RelinkState = { error?: string; success?: boolean; newTmdbId?: number };
+
+/** Corrects a title that's owned via the wrong TMDb match — e.g. Plex's own
+ * agent matched a show to the wrong TMDb/TVDB record (a mislabeled library
+ * folder is a common cause), and re-matching in Plex alone doesn't help if
+ * the wrong id already got synced into Marquee's own tables. Repoints every
+ * synced row currently linked to the wrong tmdbId over to the corrected one,
+ * rather than trying to edit the (correct, immutable) TMDb record itself. */
+export async function relinkTitleAction(
+  mediaType: MediaType,
+  currentTmdbId: number,
+  _prevState: RelinkState | undefined,
+  formData: FormData,
+): Promise<RelinkState> {
+  const admin = await requireAdmin("Only the admin can correct a title's match.");
+  if (!admin.ok) return { error: admin.error };
+
+  const tmdbIdInput = String(formData.get("tmdbId") || "").trim();
+  const imdbIdInput = String(formData.get("imdbId") || "").trim();
+  const tvdbIdInput = String(formData.get("tvdbId") || "").trim();
+
+  let newTmdbId: number | null = null;
+
+  if (tmdbIdInput) {
+    const parsed = Number(tmdbIdInput);
+    if (!Number.isInteger(parsed) || parsed <= 0) return { error: "TMDb ID must be a positive number." };
+    newTmdbId = parsed;
+  } else if (imdbIdInput) {
+    const normalized = imdbIdInput.startsWith("tt") ? imdbIdInput : `tt${imdbIdInput}`;
+    const result = await findByImdbId(normalized).catch(() => null);
+    newTmdbId =
+      (mediaType === "movie" ? result?.movie_results?.[0]?.id : result?.tv_results?.[0]?.id) ?? null;
+    if (!newTmdbId) return { error: "Couldn't find that IMDb ID on TMDb." };
+  } else if (tvdbIdInput) {
+    if (mediaType !== "tv") return { error: "A TVDB ID only applies to TV shows." };
+    const parsed = Number(tvdbIdInput);
+    if (!Number.isInteger(parsed) || parsed <= 0) return { error: "TVDB ID must be a positive number." };
+    newTmdbId = await resolveTmdbIdFromTvdbId(parsed).catch(() => null);
+    if (!newTmdbId) return { error: "Couldn't find that TVDB ID on TMDb." };
+  } else {
+    return { error: "Enter a TMDb ID, IMDb ID, or TVDB ID." };
+  }
+
+  if (newTmdbId === currentTmdbId) {
+    return { error: "That's already the current match." };
+  }
+
+  const newTitle = await getOrFetchTitle(mediaType, newTmdbId).catch(() => null);
+  if (!newTitle) return { error: "Couldn't find that title on TMDb. Check the ID and try again." };
+
+  try {
+    await db
+      .update(plexLibraryItems)
+      .set({ tmdbId: newTmdbId })
+      .where(and(eq(plexLibraryItems.mediaType, mediaType), eq(plexLibraryItems.tmdbId, currentTmdbId)));
+
+    await db
+      .update(jellyfinLibraryItems)
+      .set({ tmdbId: newTmdbId })
+      .where(
+        and(eq(jellyfinLibraryItems.mediaType, mediaType), eq(jellyfinLibraryItems.tmdbId, currentTmdbId)),
+      );
+
+    await db
+      .update(arrStatusCache)
+      .set({ externalId: newTmdbId })
+      .where(
+        and(
+          eq(arrStatusCache.userId, admin.userId),
+          eq(arrStatusCache.provider, mediaType === "movie" ? "radarr" : "sonarr"),
+          eq(arrStatusCache.externalId, currentTmdbId),
+        ),
+      );
+  } catch (err) {
+    console.error("[relink-title] update failed:", err);
+    return {
+      error: "Couldn't update — the corrected title may already be linked to something else in your library.",
+    };
+  }
+
+  revalidatePath(`/title/${mediaType}/${currentTmdbId}`);
+  revalidatePath(`/title/${mediaType}/${newTmdbId}`);
+  revalidatePath("/library");
+  revalidatePath("/discover");
+  return { success: true, newTmdbId };
 }
