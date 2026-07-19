@@ -200,3 +200,65 @@ export async function clearTvdbApiKey(): Promise<void> {
   }
   tvdbCached = null;
 }
+
+let discordWebhookCached: { value: string | null; expiresAt: number } | null = null;
+
+export async function getDiscordWebhookUrl(): Promise<string | null> {
+  if (discordWebhookCached && Date.now() < discordWebhookCached.expiresAt) {
+    return discordWebhookCached.value;
+  }
+
+  const row = await getRow();
+  const value =
+    row?.discordWebhookUrlEnc && row.discordWebhookUrlIv && row.discordWebhookUrlTag
+      ? decryptSecret({
+          ciphertext: row.discordWebhookUrlEnc,
+          iv: row.discordWebhookUrlIv,
+          tag: row.discordWebhookUrlTag,
+        })
+      : null;
+
+  discordWebhookCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function setDiscordWebhookUrl(url: string): Promise<void> {
+  const encrypted = encryptSecret(url);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        discordWebhookUrlEnc: encrypted.ciphertext,
+        discordWebhookUrlIv: encrypted.iv,
+        discordWebhookUrlTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      discordWebhookUrlEnc: encrypted.ciphertext,
+      discordWebhookUrlIv: encrypted.iv,
+      discordWebhookUrlTag: encrypted.tag,
+    });
+  }
+
+  discordWebhookCached = null;
+}
+
+export async function clearDiscordWebhookUrl(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        discordWebhookUrlEnc: null,
+        discordWebhookUrlIv: null,
+        discordWebhookUrlTag: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  }
+  discordWebhookCached = null;
+}

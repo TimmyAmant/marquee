@@ -484,5 +484,11 @@ export const appSettings = pgTable("app_settings", {
   tvdbApiKeyEnc: bytea("tvdb_api_key_enc"),
   tvdbApiKeyIv: bytea("tvdb_api_key_iv"),
   tvdbApiKeyTag: bytea("tvdb_api_key_tag"),
+  // A Discord incoming-webhook URL is a bearer credential in itself (anyone
+  // with it can post to the channel) — encrypted at rest like everything
+  // else here, even though it's pushed to, not pulled from.
+  discordWebhookUrlEnc: bytea("discord_webhook_url_enc"),
+  discordWebhookUrlIv: bytea("discord_webhook_url_iv"),
+  discordWebhookUrlTag: bytea("discord_webhook_url_tag"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

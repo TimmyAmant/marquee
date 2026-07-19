@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.13.0",
+    date: "2026-07-18",
+    changes: [
+      "Added Discord webhook notifications (Settings → Integrations) — post a message to a channel whenever something is grabbed, downloaded, or a request is approved/rejected, mirroring the existing in-app notifications.",
+    ],
+  },
+  {
     version: "0.12.0",
     date: "2026-07-18",
     changes: [
