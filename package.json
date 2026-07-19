@@ -34,6 +34,9 @@
     "typescript": "^5",
     "vitest": "^4.1.10"
   },
+  "overrides": {
+    "esbuild": "0.25.12"
+  },
   "allowScripts": {
     "argon2@0.44.0": true,
     "sharp@0.34.5": true,
