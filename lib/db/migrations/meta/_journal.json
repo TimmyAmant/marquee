@@ -155,6 +155,13 @@
       "when": 1784426969370,
       "tag": "0021_add_tmdb_id_overrides",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784432473047,
+      "tag": "0022_add_dynamic_range_audio_codec",
+      "breakpoints": true
     }
   ]
 }

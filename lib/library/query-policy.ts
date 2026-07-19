@@ -23,3 +23,15 @@ export function isDroppedArrRow(status: string | null, monitored: boolean | null
     ((status === "tracked_monitored" || status === "coming_soon") && monitored === false)
   );
 }
+
+/**
+ * A title can be independently tracked by an arr app (Radarr/Sonarr) and a
+ * media server (Plex/Jellyfin) at the same time — if both report a file
+ * path for it and those paths don't match, that's a strong signal there
+ * are genuinely two separate files on disk for the same title (a stale
+ * lower-quality grab left behind after an upgrade, most commonly) rather
+ * than the same file just being described two different ways.
+ */
+export function isPossibleDuplicate(existingPath: string | null, newPath: string | null): boolean {
+  return Boolean(existingPath && newPath && existingPath !== newPath);
+}

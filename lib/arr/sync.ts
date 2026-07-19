@@ -40,6 +40,8 @@ export async function syncArrLibrary(
       const filePath = movie.movieFile?.path ?? movie.path ?? null;
       const qualityCutoffNotMet = movie.movieFile?.qualityCutoffNotMet ?? null;
       const qualityName = movie.movieFile?.quality?.quality?.name ?? null;
+      const dynamicRange = movie.movieFile?.mediaInfo?.videoDynamicRangeType || null;
+      const audioCodec = movie.movieFile?.mediaInfo?.audioCodec || null;
       seenTmdbIds.push(tmdbId);
 
       await db
@@ -55,6 +57,8 @@ export async function syncArrLibrary(
           filePath,
           qualityCutoffNotMet,
           qualityName,
+          dynamicRange,
+          audioCodec,
           checkedAt: new Date(),
         })
         .onConflictDoUpdate({
@@ -67,6 +71,8 @@ export async function syncArrLibrary(
             filePath,
             qualityCutoffNotMet,
             qualityName,
+            dynamicRange,
+            audioCodec,
             checkedAt: new Date(),
           },
         });

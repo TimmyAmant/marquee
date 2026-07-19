@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toYear, isDroppedArrRow } from "./query-policy";
+import { toYear, isDroppedArrRow, isPossibleDuplicate } from "./query-policy";
 
 describe("toYear", () => {
   it("prefers releaseDate over firstAirDate", () => {
@@ -46,5 +46,21 @@ describe("isDroppedArrRow", () => {
 
   it("is NOT dropped when monitored is null (unknown) rather than explicitly false", () => {
     expect(isDroppedArrRow("tracked_monitored", null)).toBe(false);
+  });
+});
+
+describe("isPossibleDuplicate", () => {
+  it("is true when both paths are present and differ", () => {
+    expect(isPossibleDuplicate("/movies/A/old.mkv", "/movies/A/new.mkv")).toBe(true);
+  });
+
+  it("is false when both paths are present and identical (same file, just reported twice)", () => {
+    expect(isPossibleDuplicate("/movies/A/file.mkv", "/movies/A/file.mkv")).toBe(false);
+  });
+
+  it("is false when either path is missing", () => {
+    expect(isPossibleDuplicate(null, "/movies/A/file.mkv")).toBe(false);
+    expect(isPossibleDuplicate("/movies/A/file.mkv", null)).toBe(false);
+    expect(isPossibleDuplicate(null, null)).toBe(false);
   });
 });

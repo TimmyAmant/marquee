@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.12.0",
+    date: "2026-07-18",
+    changes: [
+      "Added duplicate-file detection to My Library — when an arr app and a media server both report a different file path for the same title, it's flagged as a possible duplicate with a filter toggle to find them all.",
+      "Added HDR (HDR10/HDR10+/Dolby Vision) and audio codec (including Atmos) badges next to the existing resolution badge, for Radarr-owned movies.",
+    ],
+  },
+  {
     version: "0.11.0",
     date: "2026-07-18",
     changes: [

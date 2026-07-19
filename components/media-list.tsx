@@ -8,7 +8,7 @@ import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { UnmonitorButton } from "@/components/unmonitor-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { FavoriteButton } from "@/components/favorite-button";
-import { ResolutionBadge } from "@/components/resolution-badge";
+import { ResolutionBadge, DynamicRangeBadge, AudioBadge } from "@/components/resolution-badge";
 import { formatBytes } from "@/lib/format";
 import { resolutionTier } from "@/lib/quality";
 
@@ -29,6 +29,13 @@ export type MediaEntry = {
   qualityCutoffNotMet?: boolean;
   /** Radarr-only for now — see LibraryItem.qualityName. */
   qualityName?: string | null;
+  /** Radarr-only, same gap as qualityName above. */
+  dynamicRange?: string | null;
+  audioCodec?: string | null;
+  /** True when an arr app and a media server both report a different file
+   * path for this title — likely two separate files on disk. */
+  possibleDuplicate?: boolean;
+  otherFilePath?: string | null;
 };
 
 type SortOrder = "newest" | "oldest" | "az" | "recent";
@@ -114,6 +121,7 @@ function buildMeta(entry: MediaEntry): string | undefined {
   if (entry.source) parts.push(SOURCE_LABELS[entry.source]);
   if (entry.sizeBytes) parts.push(formatBytes(entry.sizeBytes));
   if (entry.qualityCutoffNotMet) parts.push("Upgrade available");
+  if (entry.possibleDuplicate) parts.push("Possible duplicate");
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
@@ -168,11 +176,13 @@ export function MediaList({
   });
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [upgradeOnly, setUpgradeOnly] = useState(() => searchParams.get("upgrade") === "1");
+  const [duplicatesOnly, setDuplicatesOnly] = useState(() => searchParams.get("duplicates") === "1");
   const hasUpgradeData = useMemo(() => entries.some((e) => e.qualityCutoffNotMet), [entries]);
   const hasResolutionData = useMemo(
-    () => entries.some((e) => resolutionTier(e.qualityName) !== null),
+    () => entries.some((e) => resolutionTier(e.qualityName) !== null || e.dynamicRange || e.audioCodec),
     [entries],
   );
+  const hasDuplicates = useMemo(() => entries.some((e) => e.possibleDuplicate), [entries]);
 
   function syncParam(key: string, value: string, defaultValue: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -188,10 +198,11 @@ export function MediaList({
       if (typeFilter !== "all" && entry.mediaType !== typeFilter) return false;
       if (statusFilter !== "all" && entry.status !== statusFilter) return false;
       if (upgradeOnly && !entry.qualityCutoffNotMet) return false;
+      if (duplicatesOnly && !entry.possibleDuplicate) return false;
       if (q && !entry.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [entries, typeFilter, statusFilter, upgradeOnly, query]);
+  }, [entries, typeFilter, statusFilter, upgradeOnly, duplicatesOnly, query]);
 
   // "Recently added" relies on `addedAt`, which is only ever populated for
   // Plex-sourced rows — for an arr-only library it would silently sort
@@ -288,6 +299,23 @@ export function MediaList({
             </button>
           )}
 
+          {hasDuplicates && (
+            <button
+              onClick={() => {
+                const next = !duplicatesOnly;
+                setDuplicatesOnly(next);
+                syncParam("duplicates", next ? "1" : "0", "0");
+              }}
+              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                duplicatesOnly
+                  ? "border-red-400 bg-red-400 text-bg-0"
+                  : "border-border text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              Possible duplicates
+            </button>
+          )}
+
           <div className="flex gap-1 rounded-full border border-border p-1 text-xs">
             {(Object.keys(SORT_LABELS) as SortOrder[])
               .filter((order) => order !== "recent" || hasRecentData)
@@ -357,10 +385,11 @@ export function MediaList({
                 subtitle={entry.subtitle}
                 meta={buildMeta(entry)}
                 badge={
-                  (entry.status || entry.qualityName) && (
+                  (entry.status || entry.qualityName || entry.dynamicRange) && (
                     <div className="flex items-center gap-1.5">
                       {entry.status && <StatusBadge status={entry.status} compact />}
                       <ResolutionBadge qualityName={entry.qualityName} />
+                      <DynamicRangeBadge dynamicRange={entry.dynamicRange} />
                     </div>
                   )
                 }
@@ -396,7 +425,7 @@ export function MediaList({
                 <th className="px-4 py-3 font-medium">Year</th>
                 <th className="px-4 py-3 font-medium">Source</th>
                 <th className="px-4 py-3 font-medium">Size</th>
-                {hasResolutionData && <th className="px-4 py-3 font-medium">Resolution</th>}
+                {hasResolutionData && <th className="px-4 py-3 font-medium">Video/Audio</th>}
                 <th className="px-4 py-3 font-medium">Location</th>
                 {hasUpgradeData && <th className="px-4 py-3 font-medium">Quality</th>}
               </tr>
@@ -424,14 +453,25 @@ export function MediaList({
                   </td>
                   {hasResolutionData && (
                     <td className="px-4 py-3">
-                      <ResolutionBadge qualityName={entry.qualityName} />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <ResolutionBadge qualityName={entry.qualityName} />
+                        <DynamicRangeBadge dynamicRange={entry.dynamicRange} />
+                        <AudioBadge audioCodec={entry.audioCodec} />
+                      </div>
                     </td>
                   )}
-                  <td
-                    className="max-w-xs truncate px-4 py-3 font-mono text-xs text-text-secondary"
-                    title={entry.filePath ?? undefined}
-                  >
-                    {entry.filePath || "—"}
+                  <td className="max-w-xs px-4 py-3 font-mono text-xs text-text-secondary">
+                    <div className="truncate" title={entry.filePath ?? undefined}>
+                      {entry.filePath || "—"}
+                    </div>
+                    {entry.possibleDuplicate && (
+                      <div
+                        className="mt-0.5 truncate text-red-400"
+                        title={entry.otherFilePath ?? undefined}
+                      >
+                        Possible duplicate: {entry.otherFilePath}
+                      </div>
+                    )}
                   </td>
                   {hasUpgradeData && (
                     <td className="px-4 py-3 text-text-secondary">

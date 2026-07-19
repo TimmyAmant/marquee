@@ -95,6 +95,10 @@ export default async function LibraryPage({
     filePath: item.filePath,
     qualityCutoffNotMet: item.qualityCutoffNotMet,
     qualityName: item.qualityName,
+    dynamicRange: item.dynamicRange,
+    audioCodec: item.audioCodec,
+    possibleDuplicate: item.possibleDuplicate,
+    otherFilePath: item.otherFilePath,
   }));
 
   const [favoritedMovieIds, favoritedTvIds] = await Promise.all([

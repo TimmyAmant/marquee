@@ -10,7 +10,7 @@ import {
 } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import type { LibraryStatus } from "@/components/status-badge";
-import { toYear, isDroppedArrRow } from "@/lib/library/query-policy";
+import { toYear, isDroppedArrRow, isPossibleDuplicate } from "@/lib/library/query-policy";
 
 export type LibraryItem = {
   titleId: string;
@@ -32,6 +32,15 @@ export type LibraryItem = {
    * "Bluray-1080p") — resolution badges are derived from this string.
    * Radarr-only for now, same gap as qualityCutoffNotMet above. */
   qualityName: string | null;
+  /** Radarr-only, same gap as qualityName above. */
+  dynamicRange: string | null;
+  audioCodec: string | null;
+  /** True when an arr app and a media server both report a file path for
+   * this title and the paths don't match — a strong signal there are two
+   * separate files on disk (e.g. a stale lower-quality grab left behind
+   * after an upgrade). Both paths are kept so the UI can show them. */
+  possibleDuplicate: boolean;
+  otherFilePath: string | null;
 };
 
 export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
@@ -47,6 +56,8 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         filePath: arrStatusCache.filePath,
         qualityCutoffNotMet: arrStatusCache.qualityCutoffNotMet,
         qualityName: arrStatusCache.qualityName,
+        dynamicRange: arrStatusCache.dynamicRange,
+        audioCodec: arrStatusCache.audioCodec,
       })
       .from(arrStatusCache)
       .innerJoin(titles, and(eq(titles.mediaType, "movie"), eq(titles.tmdbId, arrStatusCache.externalId)))
@@ -64,7 +75,17 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       .where(and(eq(arrStatusCache.userId, userId), eq(arrStatusCache.provider, "sonarr"))),
   ]);
 
-  for (const { title, status, sizeBytes, monitored, filePath, qualityCutoffNotMet, qualityName } of radarrRows) {
+  for (const {
+    title,
+    status,
+    sizeBytes,
+    monitored,
+    filePath,
+    qualityCutoffNotMet,
+    qualityName,
+    dynamicRange,
+    audioCodec,
+  } of radarrRows) {
     if (isDroppedArrRow(status, monitored)) continue;
 
     const key = `${title.mediaType}:${title.tmdbId}`;
@@ -83,6 +104,10 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       filePath,
       qualityCutoffNotMet: qualityCutoffNotMet ?? false,
       qualityName,
+      dynamicRange,
+      audioCodec,
+      possibleDuplicate: false,
+      otherFilePath: null,
     });
   }
 
@@ -105,6 +130,10 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       filePath,
       qualityCutoffNotMet: false,
       qualityName: null,
+      dynamicRange: null,
+      audioCodec: null,
+      possibleDuplicate: false,
+      otherFilePath: null,
     });
   }
 
@@ -160,6 +189,12 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         // Radarr already determined for this title, if any.
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
         qualityName: existing?.qualityName ?? null,
+        dynamicRange: existing?.dynamicRange ?? null,
+        audioCodec: existing?.audioCodec ?? null,
+        possibleDuplicate: isPossibleDuplicate(existing?.filePath ?? null, filePath),
+        otherFilePath: isPossibleDuplicate(existing?.filePath ?? null, filePath)
+          ? existing!.filePath
+          : null,
       });
     }
   }
@@ -212,6 +247,12 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         filePath: filePath ?? existing?.filePath ?? null,
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
         qualityName: existing?.qualityName ?? null,
+        dynamicRange: existing?.dynamicRange ?? null,
+        audioCodec: existing?.audioCodec ?? null,
+        possibleDuplicate: isPossibleDuplicate(existing?.filePath ?? null, filePath),
+        otherFilePath: isPossibleDuplicate(existing?.filePath ?? null, filePath)
+          ? existing!.filePath
+          : null,
       });
     }
   }

@@ -307,6 +307,10 @@ export const arrStatusCache = pgTable(
     // same reasoning as qualityCutoffNotMet above: Sonarr has no per-series
     // file quality without a per-episode expansion.
     qualityName: text("quality_name"),
+    // Radarr-only, same gap as qualityName above — both ride along on the
+    // same /movie response already fetched, no extra Radarr calls needed.
+    dynamicRange: text("dynamic_range"),
+    audioCodec: text("audio_codec"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],
