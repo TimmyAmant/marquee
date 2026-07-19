@@ -77,6 +77,7 @@ export default async function Home() {
                     name={item.title || item.name || ""}
                     year={(item.release_date || item.first_air_date || "").slice(0, 4)}
                     badge={status && <StatusBadge status={status} compact />}
+                    status={status}
                   />
                 </PosterRowItem>
               );
@@ -99,6 +100,7 @@ export default async function Home() {
                     name={item.title}
                     year={item.release_date?.slice(0, 4)}
                     badge={status && <StatusBadge status={status} compact />}
+                    status={status}
                   />
                 </PosterRowItem>
               );

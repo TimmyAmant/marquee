@@ -364,6 +364,7 @@ export function MediaList({
                     </div>
                   )
                 }
+                status={entry.status}
                 favoriteAction={
                   showFavorite && (
                     <FavoriteButton

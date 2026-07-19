@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.0",
+    date: "2026-07-18",
+    changes: [
+      "Added a thin Sonarr-style colored status bar across the bottom of every poster: green for owned, blue for downloading, red for missing/monitored, purple for coming soon, yellow for untracked — readable at a glance across a whole grid without reading each badge.",
+    ],
+  },
+  {
     version: "0.8.1",
     date: "2026-07-18",
     changes: [

@@ -1,6 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import type { LibraryStatus } from "@/components/status-badge";
+
+// A thin colored strip across the bottom of the poster art, Sonarr-style —
+// readable at a glance across a whole grid without having to read the badge
+// text on each card. Reuses the app's existing owned/tracked color tokens so
+// it stays consistent with the StatusBadge pill; red/purple/yellow have no
+// dedicated tokens of their own since only owned/downloading appear as
+// badges elsewhere, so Tailwind's default palette covers the rest.
+const STATUS_BAR_CLASS: Record<LibraryStatus, string> = {
+  owned: "bg-owned",
+  tracked_downloading: "bg-tracked",
+  tracked_monitored: "bg-red-500",
+  coming_soon: "bg-purple-500",
+  untracked: "bg-yellow-500",
+};
 
 export function PosterCard({
   href,
@@ -12,6 +27,7 @@ export function PosterCard({
   rating,
   overview,
   badge,
+  status,
   quickAction,
   favoriteAction,
 }: {
@@ -24,6 +40,10 @@ export function PosterCard({
   rating?: number | null;
   overview?: string | null;
   badge?: React.ReactNode;
+  /** Drives the colored status strip across the bottom of the poster art —
+   * independent of `badge`, since callers already build that from the same
+   * status and this shouldn't force them to restructure it. */
+  status?: LibraryStatus;
   quickAction?: React.ReactNode;
   /** Rendered next to the year/subtitle line — a sibling of that line's own
    * link, not nested inside it, so a <button> never ends up inside an <a>. */
@@ -57,6 +77,11 @@ export function PosterCard({
           </div>
         )}
         {badge && <div className="pointer-events-none absolute right-1.5 top-1.5 z-10">{badge}</div>}
+        {status && (
+          <div
+            className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-1 ${STATUS_BAR_CLASS[status]}`}
+          />
+        )}
 
         {overview && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-end bg-gradient-to-t from-bg-0 via-bg-0/70 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">

@@ -269,6 +269,7 @@ export default async function SearchPage({
                   name={title.title || title.name || ""}
                   year={(title.release_date || title.first_air_date || "").slice(0, 4)}
                   badge={status && <StatusBadge status={status} compact />}
+                  status={status}
                   favoriteAction={
                     viewer.session && (
                       <FavoriteButton
@@ -306,6 +307,7 @@ export default async function SearchPage({
                   name={item.name}
                   year={item.year}
                   badge={status && <StatusBadge status={status} compact />}
+                  status={status}
                   favoriteAction={
                     viewer.session && (
                       <FavoriteButton

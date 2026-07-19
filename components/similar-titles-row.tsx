@@ -49,6 +49,7 @@ export function SimilarTitlesRow({
                 name={item.name}
                 year={item.year}
                 badge={status && <StatusBadge status={status} compact />}
+                status={status}
                 favoriteAction={
                   showFavorite && (
                     <FavoriteButton

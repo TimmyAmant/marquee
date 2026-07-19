@@ -275,6 +275,7 @@ export default async function DiscoverPage({
                       name={item.name}
                       year={item.year}
                       badge={status && <StatusBadge status={status} compact />}
+                      status={status}
                       favoriteAction={
                         viewer.session && (
                           <FavoriteButton
@@ -409,6 +410,7 @@ export default async function DiscoverPage({
                     rating={item.rating}
                     overview={item.overview}
                     badge={status && <StatusBadge status={status} compact />}
+                    status={status}
                     favoriteAction={
                       viewer.session && (
                         <FavoriteButton
