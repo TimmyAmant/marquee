@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.11.0",
+    date: "2026-07-18",
+    changes: [
+      "Added an automated test suite (Vitest, 83 tests) covering ownership status derivation, the title cache's staleness/completeness policy, ID parsing (Plex/Jellyfin/Trakt guids), and the year-range/status-label logic — the exact areas that produced real bugs earlier this session. No user-facing change, but the sync-status and cache logic is now regression-tested going forward.",
+    ],
+  },
+  {
     version: "0.10.3",
     date: "2026-07-18",
     changes: [

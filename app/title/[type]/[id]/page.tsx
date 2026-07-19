@@ -8,6 +8,7 @@ import { SeasonAccordion } from "@/components/season-episode-list";
 import { FileDetailsSection } from "@/components/file-details-section";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { formatRuntime } from "@/lib/format";
+import { computeYearRange, relabelTvStatus } from "@/lib/title-meta";
 import { getTitleLibraryStatus, getSonarrSeasonCompleteness } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { findTrailer, getCollection } from "@/lib/tmdb/client";
@@ -192,15 +193,12 @@ export default async function TitlePage({
 
   const endYear =
     type === "tv" ? (raw as TmdbTvDetails | null)?.last_air_date?.slice(0, 4) || null : null;
-  const rawStatus = raw?.status ?? null;
   const titleMeta: TitleMeta = {
     runtimeLabel,
     ratingPercent: raw?.vote_average ? Math.round(raw.vote_average * 10) : null,
     genres: (raw?.genres ?? []).map((g) => g.name).slice(0, 3),
-    yearRange: year && endYear && endYear !== year ? `${year}–${endYear}` : (year ?? endYear),
-    // "Returning Series" is TMDb's own wording for an ongoing show — relabel
-    // to match the shorter "Continuing" wording Sonarr/other *arr apps use.
-    statusLabel: rawStatus === "Returning Series" ? "Continuing" : rawStatus,
+    yearRange: computeYearRange(year, endYear),
+    statusLabel: relabelTvStatus(raw?.status ?? null),
     network: type === "tv" ? ((raw as TmdbTvDetails | null)?.networks?.[0]?.name ?? null) : null,
   };
 
