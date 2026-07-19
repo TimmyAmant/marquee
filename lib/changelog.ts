@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.10.3",
+    date: "2026-07-18",
+    changes: [
+      "Fixed: \"Wrong match? Fix ID\" corrections were silently reverted by the next Plex/Jellyfin/Sonarr/Radarr sync (as soon as 15 minutes later), since sync always re-derives a title's match fresh from the source and had no way to know it had been manually corrected. Corrections now persist across every future sync.",
+      "Fixed: a title permanently missing its backdrop, poster, or overview on TMDb (common for older or niche titles) was re-fetched and re-written to the database on every single page view, forever, instead of settling back into the normal 14-day cache after a few days of retrying.",
+      "Fixed: a TV show with an end date but no start date on TMDb could render \"null–2020\" as its year range.",
+      "The relink action's database updates are now atomic (all-or-nothing) instead of able to partially apply on failure.",
+    ],
+  },
+  {
     version: "0.10.2",
     date: "2026-07-18",
     changes: [

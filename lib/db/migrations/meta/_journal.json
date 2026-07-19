@@ -148,6 +148,13 @@
       "when": 1784422753938,
       "tag": "0020_add_tvdb_api_key",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784426969370,
+      "tag": "0021_add_tmdb_id_overrides",
+      "breakpoints": true
     }
   ]
 }

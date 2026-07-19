@@ -6,6 +6,7 @@ import { getPlexCredential } from "@/lib/integrations/credentials";
 import * as plex from "@/lib/plex/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
+import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 
 export async function syncPlexLibrary(userId: string): Promise<{ serverCount: number; itemCount: number }> {
   const credential = await getPlexCredential(userId);
@@ -74,6 +75,9 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
 
         if (!tmdbId && mediaType === "tv" && tvdbId) {
           tmdbId = await resolveTmdbIdFromTvdbId(tvdbId).catch(() => null);
+        }
+        if (tmdbId) {
+          tmdbId = await applyTmdbIdOverride(userId, mediaType, tmdbId).catch(() => tmdbId);
         }
 
         if (tmdbId) {

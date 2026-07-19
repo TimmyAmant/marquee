@@ -417,6 +417,29 @@ export const activityEvents = pgTable(
   ],
 );
 
+// Every Plex/Jellyfin/Sonarr/Radarr sync re-derives a title's tmdbId fresh
+// from that source's own external-id data on every run and overwrites it
+// unconditionally — so a one-time "Fix ID" correction (see relinkTitleAction)
+// would otherwise get silently reverted by the very next sync, since the
+// source (e.g. Plex's own mismatched guid) never actually changes. Every
+// sync consults this table right after resolving a tmdbId from its own
+// source, substituting the corrected id when an override exists, so the fix
+// survives every future sync instead of just the current page load.
+export const tmdbIdOverrides = pgTable(
+  "tmdb_id_overrides",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    wrongTmdbId: integer("wrong_tmdb_id").notNull(),
+    correctTmdbId: integer("correct_tmdb_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique().on(table.userId, table.mediaType, table.wrongTmdbId)],
+);
+
 // Daily free-space snapshots per Radarr/Sonarr root folder, so a storage
 // forecast ("full in ~40 days") has history to extrapolate from — the live
 // getDiskSpaceSummary() call only ever has the current instant, nothing to

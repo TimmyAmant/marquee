@@ -29,30 +29,30 @@ async function login(apiKey: string): Promise<string> {
   return token;
 }
 
-async function tvdbFetch<T>(apiKey: string, path: string): Promise<T> {
-  const token = await login(apiKey);
+async function doFetch<T>(path: string, token: string): Promise<{ res: Response; data?: T }> {
   const res = await fetch(`${TVDB_API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
+  if (!res.ok) return { res };
+  const body = (await res.json()) as { data: T };
+  return { res, data: body.data };
+}
+
+async function tvdbFetch<T>(apiKey: string, path: string): Promise<T> {
+  const token = await login(apiKey);
+  let { res, data } = await doFetch<T>(path, token);
 
   if (res.status === 401) {
     // Token may have been revoked/expired server-side before our own TTL
     // caught it — retry once with a fresh login rather than failing outright.
     tokenCache = null;
     const freshToken = await login(apiKey);
-    const retryRes = await fetch(`${TVDB_API_BASE}${path}`, {
-      headers: { Authorization: `Bearer ${freshToken}`, Accept: "application/json" },
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-    if (!retryRes.ok) throw new Error(`TheTVDB request failed: ${path} (${retryRes.status})`);
-    const retryBody = (await retryRes.json()) as { data: T };
-    return retryBody.data;
+    ({ res, data } = await doFetch<T>(path, freshToken));
   }
 
   if (!res.ok) throw new Error(`TheTVDB request failed: ${path} (${res.status})`);
-  const body = (await res.json()) as { data: T };
-  return body.data;
+  return data as T;
 }
 
 export async function verifyTvdbApiKey(apiKey: string): Promise<boolean> {

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, users } from "@/lib/db/schema";
+import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, tmdbIdOverrides, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
@@ -250,28 +250,42 @@ export async function relinkTitleAction(
   if (!newTitle) return { error: "Couldn't find that title on TMDb. Check the ID and try again." };
 
   try {
-    await db
-      .update(plexLibraryItems)
-      .set({ tmdbId: newTmdbId })
-      .where(and(eq(plexLibraryItems.mediaType, mediaType), eq(plexLibraryItems.tmdbId, currentTmdbId)));
+    await db.transaction(async (tx) => {
+      // Persisted first: every Plex/Jellyfin/Sonarr/Radarr sync re-derives
+      // this title's tmdbId fresh from that source's own (still-wrong) data
+      // on every run, so without this override the very next sync would
+      // silently revert the table updates below within minutes.
+      await tx
+        .insert(tmdbIdOverrides)
+        .values({ userId: admin.userId, mediaType, wrongTmdbId: currentTmdbId, correctTmdbId: newTmdbId })
+        .onConflictDoUpdate({
+          target: [tmdbIdOverrides.userId, tmdbIdOverrides.mediaType, tmdbIdOverrides.wrongTmdbId],
+          set: { correctTmdbId: newTmdbId },
+        });
 
-    await db
-      .update(jellyfinLibraryItems)
-      .set({ tmdbId: newTmdbId })
-      .where(
-        and(eq(jellyfinLibraryItems.mediaType, mediaType), eq(jellyfinLibraryItems.tmdbId, currentTmdbId)),
-      );
+      await tx
+        .update(plexLibraryItems)
+        .set({ tmdbId: newTmdbId, tvdbId: newTitle.tvdbId ?? undefined })
+        .where(and(eq(plexLibraryItems.mediaType, mediaType), eq(plexLibraryItems.tmdbId, currentTmdbId)));
 
-    await db
-      .update(arrStatusCache)
-      .set({ externalId: newTmdbId })
-      .where(
-        and(
-          eq(arrStatusCache.userId, admin.userId),
-          eq(arrStatusCache.provider, mediaType === "movie" ? "radarr" : "sonarr"),
-          eq(arrStatusCache.externalId, currentTmdbId),
-        ),
-      );
+      await tx
+        .update(jellyfinLibraryItems)
+        .set({ tmdbId: newTmdbId, tvdbId: newTitle.tvdbId ?? undefined })
+        .where(
+          and(eq(jellyfinLibraryItems.mediaType, mediaType), eq(jellyfinLibraryItems.tmdbId, currentTmdbId)),
+        );
+
+      await tx
+        .update(arrStatusCache)
+        .set({ externalId: newTmdbId })
+        .where(
+          and(
+            eq(arrStatusCache.userId, admin.userId),
+            eq(arrStatusCache.provider, mediaType === "movie" ? "radarr" : "sonarr"),
+            eq(arrStatusCache.externalId, currentTmdbId),
+          ),
+        );
+    });
   } catch (err) {
     console.error("[relink-title] update failed:", err);
     return {

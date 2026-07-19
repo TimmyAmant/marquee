@@ -197,7 +197,7 @@ export default async function TitlePage({
     runtimeLabel,
     ratingPercent: raw?.vote_average ? Math.round(raw.vote_average * 10) : null,
     genres: (raw?.genres ?? []).map((g) => g.name).slice(0, 3),
-    yearRange: endYear && endYear !== year ? `${year}–${endYear}` : year,
+    yearRange: year && endYear && endYear !== year ? `${year}–${endYear}` : (year ?? endYear),
     // "Returning Series" is TMDb's own wording for an ongoing show — relabel
     // to match the shorter "Continuing" wording Sonarr/other *arr apps use.
     statusLabel: rawStatus === "Returning Series" ? "Continuing" : rawStatus,

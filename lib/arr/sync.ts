@@ -8,6 +8,7 @@ import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
+import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 
 export async function syncArrLibrary(
   userId: string,
@@ -27,7 +28,10 @@ export async function syncArrLibrary(
       radarr.getQueuedMovieIds(config).catch(() => new Set<number>()),
     ]);
     for (const movie of movies) {
-      await getOrFetchTitle("movie", movie.tmdbId).catch(() => null);
+      const tmdbId = await applyTmdbIdOverride(userId, "movie", movie.tmdbId).catch(
+        () => movie.tmdbId,
+      );
+      await getOrFetchTitle("movie", tmdbId).catch(() => null);
       // The queue is real-time; file count/monitored flags only reflect the
       // last sync, so a movie mid-download (no file yet) would otherwise
       // show as merely "monitored" until the download completes.
@@ -36,14 +40,14 @@ export async function syncArrLibrary(
       const filePath = movie.movieFile?.path ?? movie.path ?? null;
       const qualityCutoffNotMet = movie.movieFile?.qualityCutoffNotMet ?? null;
       const qualityName = movie.movieFile?.quality?.quality?.name ?? null;
-      seenTmdbIds.push(movie.tmdbId);
+      seenTmdbIds.push(tmdbId);
 
       await db
         .insert(arrStatusCache)
         .values({
           userId,
           provider: "radarr",
-          externalId: movie.tmdbId,
+          externalId: tmdbId,
           arrId: movie.id,
           status,
           monitored: movie.monitored,
@@ -74,14 +78,15 @@ export async function syncArrLibrary(
       sonarr.getQueuedSeriesIds(config).catch(() => new Set<number>()),
     ]);
     for (const series of allSeries) {
-      const tmdbId = await resolveTmdbIdFromTvdbId(series.tvdbId);
-      if (!tmdbId) {
+      const resolvedTmdbId = await resolveTmdbIdFromTvdbId(series.tvdbId);
+      if (!resolvedTmdbId) {
         // Couldn't resolve this run (e.g. transient TMDb lookup failure) — the
         // series may still genuinely exist in Sonarr, so don't let it fall out
         // of `seenTmdbIds` and get treated as deleted below.
         unresolvedCount++;
         continue;
       }
+      const tmdbId = await applyTmdbIdOverride(userId, "tv", resolvedTmdbId).catch(() => resolvedTmdbId);
       seenTmdbIds.push(tmdbId);
 
       await getOrFetchTitle("tv", tmdbId).catch(() => null);

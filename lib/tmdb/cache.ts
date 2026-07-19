@@ -7,6 +7,15 @@ import * as tvdb from "@/lib/tvdb/client";
 import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 
 const TTL_MS = 14 * 24 * 60 * 60 * 1000;
+// A title missing its poster/backdrop/overview gets retried far more
+// aggressively than the normal TTL (see isIncomplete below), but only
+// within this window — plenty of titles never get one of these fields at
+// all (an old movie TMDb only ever gave a poster to, say), and retrying
+// those forever on every single view would mean a live TMDb refetch plus a
+// full DB write on every page load, indefinitely, for no eventual payoff.
+// Past this window a still-incomplete title falls back to the normal TTL
+// like anything else.
+const INCOMPLETE_RETRY_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 const CATALOG_MAX_PAGES = 5;
 
 function isStale(refreshedAt: Date): boolean {
@@ -20,8 +29,9 @@ function isStale(refreshedAt: Date): boolean {
  * it in — so treat any of the three as stale regardless of age, forcing a
  * re-check on every view until TMDb actually has the data. Backdrops in
  * particular tend to lag behind posters for very new releases. The hourly
- * Next.js fetch cache on tmdbFetch caps the real cost of this at one live
- * request per title per hour, not one per page view. */
+ * Next.js fetch cache on tmdbFetch caps the real cost of the outbound
+ * request at one per title per hour; INCOMPLETE_RETRY_WINDOW_MS bounds how
+ * long this aggressive retry lasts before falling back to the normal TTL. */
 function isIncomplete(row: {
   posterPath: string | null;
   backdropPath: string | null;
@@ -119,7 +129,14 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
     .where(and(eq(titles.mediaType, mediaType), eq(titles.tmdbId, tmdbId)))
     .limit(1);
 
-  if (cached && cached.rawTmdb && !isStale(cached.refreshedAt) && !isIncomplete(cached)) {
+  const withinIncompleteRetryWindow =
+    cached && Date.now() - cached.refreshedAt.getTime() < INCOMPLETE_RETRY_WINDOW_MS;
+  if (
+    cached &&
+    cached.rawTmdb &&
+    !isStale(cached.refreshedAt) &&
+    (!isIncomplete(cached) || !withinIncompleteRetryWindow)
+  ) {
     return cached;
   }
 
