@@ -29,7 +29,6 @@ export function TitleHero({
   meta,
   status,
   configured,
-  file,
   links,
   favorited,
   isAdmin,
@@ -45,7 +44,6 @@ export function TitleHero({
   meta: TitleMeta;
   status: LibraryStatus;
   configured: boolean;
-  file: { path: string | null; sizeBytes: number; quality?: string } | null;
   links: ExternalLinksData;
   /** Omitted entirely (no button shown) when signed out. */
   favorited?: boolean;
@@ -97,7 +95,6 @@ export function TitleHero({
               posterPath={posterPath}
               status={status}
               configured={configured}
-              file={file}
               isAdmin={isAdmin}
               alreadyRequested={alreadyRequested}
               otherRequesters={otherRequesters}

@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.10.2",
+    date: "2026-07-18",
+    changes: [
+      "Fixed: a title with a poster and overview but no backdrop image yet (common for very new releases) never retried fetching it, leaving the hero background blank forever — backdrop is now included in the same \"keep re-checking until TMDb has it\" logic as poster/overview.",
+      "Removed the small file-info line below the Add/Owned badge on title pages — it duplicated the fuller File details section below.",
+    ],
+  },
+  {
     version: "0.10.1",
     date: "2026-07-18",
     changes: [

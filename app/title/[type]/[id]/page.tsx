@@ -216,7 +216,6 @@ export default async function TitlePage({
         meta={titleMeta}
         status={libraryStatus.status}
         configured={libraryStatus.configured}
-        file={libraryStatus.file}
         links={{
           trailerKey: trailer?.key ?? null,
           imdbId: title.imdbId,
