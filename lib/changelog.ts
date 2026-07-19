@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.2",
+    date: "2026-07-18",
+    changes: [
+      "Fixed a permanent-poisoning bug in TV show ID resolution: once a Plex/Jellyfin show's TVDB id had ever been resolved to the wrong TMDb id (e.g. because of a wrongly-named library folder), it kept returning that same wrong match forever, even after the source metadata was corrected. TVDB-to-TMDb resolution now always re-checks with TMDb directly instead of trusting a previously-cached mapping.",
+    ],
+  },
+  {
     version: "0.9.1",
     date: "2026-07-18",
     changes: [
