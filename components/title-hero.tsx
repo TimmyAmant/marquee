@@ -5,6 +5,19 @@ import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";
 import { FavoriteButton } from "@/components/favorite-button";
 
+export type TitleMeta = {
+  runtimeLabel: string | null;
+  /** TMDb's vote_average (0-10) converted to a percentage, matching how
+   * Sonarr/other *arr apps display their own rating. */
+  ratingPercent: number | null;
+  genres: string[];
+  /** "2001–2011" for an ended show, "2026" for a movie or an ongoing show
+   * with no end year yet. */
+  yearRange: string | null;
+  statusLabel: string | null;
+  network: string | null;
+};
+
 export function TitleHero({
   mediaType,
   tmdbId,
@@ -12,7 +25,7 @@ export function TitleHero({
   overview,
   posterPath,
   backdropPath,
-  year,
+  meta,
   status,
   configured,
   file,
@@ -28,7 +41,7 @@ export function TitleHero({
   overview: string | null;
   posterPath: string | null;
   backdropPath: string | null;
-  year: string | null;
+  meta: TitleMeta;
   status: LibraryStatus;
   configured: boolean;
   file: { path: string | null; sizeBytes: number; quality?: string } | null;
@@ -39,6 +52,14 @@ export function TitleHero({
   alreadyRequested?: boolean;
   otherRequesters?: string[];
 }) {
+  const metaParts = [
+    meta.runtimeLabel,
+    meta.ratingPercent !== null ? `★ ${meta.ratingPercent}%` : null,
+    meta.genres.length > 0 ? meta.genres.join(", ") : null,
+    meta.yearRange,
+    meta.statusLabel,
+    meta.network,
+  ].filter((v): v is string => Boolean(v));
   const backdrop = tmdbImageUrl(backdropPath, "original");
   const poster = tmdbImageUrl(posterPath, "w500");
 
@@ -58,8 +79,10 @@ export function TitleHero({
 
         <div className="flex flex-col justify-end">
           <h1 className="font-display text-4xl text-text-primary sm:text-5xl">{name}</h1>
-          <div className="mt-2 flex items-center gap-3">
-            {year && <p className="text-text-secondary">{year}</p>}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {metaParts.length > 0 && (
+              <p className="text-text-secondary">{metaParts.join(" · ")}</p>
+            )}
             {favorited !== undefined && (
               <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
             )}

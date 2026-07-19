@@ -140,3 +140,63 @@ export async function clearTraktClientId(): Promise<void> {
   }
   traktCached = null;
 }
+
+let tvdbCached: { value: string | null; expiresAt: number } | null = null;
+
+export async function getTvdbApiKey(): Promise<string | null> {
+  if (tvdbCached && Date.now() < tvdbCached.expiresAt) return tvdbCached.value;
+
+  const row = await getRow();
+  const value =
+    row?.tvdbApiKeyEnc && row.tvdbApiKeyIv && row.tvdbApiKeyTag
+      ? decryptSecret({
+          ciphertext: row.tvdbApiKeyEnc,
+          iv: row.tvdbApiKeyIv,
+          tag: row.tvdbApiKeyTag,
+        })
+      : null;
+
+  tvdbCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function setTvdbApiKey(apiKey: string): Promise<void> {
+  const encrypted = encryptSecret(apiKey);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        tvdbApiKeyEnc: encrypted.ciphertext,
+        tvdbApiKeyIv: encrypted.iv,
+        tvdbApiKeyTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      tvdbApiKeyEnc: encrypted.ciphertext,
+      tvdbApiKeyIv: encrypted.iv,
+      tvdbApiKeyTag: encrypted.tag,
+    });
+  }
+
+  tvdbCached = null;
+}
+
+export async function clearTvdbApiKey(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        tvdbApiKeyEnc: null,
+        tvdbApiKeyIv: null,
+        tvdbApiKeyTag: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  }
+  tvdbCached = null;
+}

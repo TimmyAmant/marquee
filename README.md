@@ -37,8 +37,9 @@ data, your server.
   disaster"), falls back to TMDb's keyword tagging to find matches.
 
 ### Title pages
-- Full details: overview, year, trailer, and links to IMDb/Instagram/X
-  (Twitter)/Facebook.
+- Full details: overview, runtime, rating, genres, year(s), status
+  (Continuing/Ended/etc.), network, trailer, and links to IMDb/TheTVDB/
+  Instagram/X (Twitter)/Facebook.
 - Live ownership status: **Owned / Downloading / Monitored / Coming soon /
   Not owned**, checked directly against Plex, Jellyfin, and Sonarr/Radarr —
   an unreleased title that's already being tracked shows as "Coming soon"
@@ -133,6 +134,10 @@ data, your server.
 - **Settings → Integrations** (admin-only):
   - **TMDb** — one shared API key/access token for the whole instance,
     editable in-app (test-and-save) or via environment variable.
+  - **TheTVDB** — optional; fills in a TV show's poster and overview when
+    TMDb doesn't have them yet (common for very new or niche releases), the
+    same way Sonarr's own metadata does. Free API key from
+    thetvdb.com/dashboard/account/apikey.
   - **Plex** — OAuth connect, shows your library's movie/TV counts, syncs
     automatically in the background.
   - **Jellyfin** — server URL + API key (test-and-save; generate the key

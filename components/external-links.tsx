@@ -6,6 +6,8 @@ export type ExternalLinksData = {
   facebookId: string | null;
   instagramId: string | null;
   twitterId: string | null;
+  tvdbId?: number | null;
+  tvdbMediaType?: "series" | "movies";
 };
 
 export function ExternalLinks({ links }: { links: ExternalLinksData }) {
@@ -13,6 +15,12 @@ export function ExternalLinks({ links }: { links: ExternalLinksData }) {
 
   if (links.imdbId) {
     items.push({ label: "IMDb", href: `https://www.imdb.com/title/${links.imdbId}` });
+  }
+  if (links.tvdbId) {
+    items.push({
+      label: "TheTVDB",
+      href: `https://www.thetvdb.com/dereferrer/${links.tvdbMediaType ?? "series"}/${links.tvdbId}`,
+    });
   }
   if (links.instagramId) {
     items.push({ label: "Instagram", href: `https://www.instagram.com/${links.instagramId}` });

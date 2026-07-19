@@ -359,6 +359,9 @@ export interface TmdbMovieDetails {
   production_companies?: TmdbCompanyRef[];
   belongs_to_collection?: TmdbCollectionRef | null;
   runtime?: number | null;
+  genres?: { id: number; name: string }[];
+  vote_average?: number;
+  original_language?: string;
 }
 
 export function getMovieDetails(id: number) {
@@ -412,6 +415,10 @@ export interface TmdbTvDetails {
   production_companies?: TmdbCompanyRef[];
   networks?: TmdbCompanyRef[];
   episode_run_time?: number[];
+  last_air_date?: string;
+  genres?: { id: number; name: string }[];
+  vote_average?: number;
+  original_language?: string;
 }
 
 export function getTvDetails(id: number) {

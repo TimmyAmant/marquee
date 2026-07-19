@@ -3,6 +3,8 @@ import { db } from "@/lib/db/client";
 import { companies, companyTitles, credits, people, titles } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import * as tmdb from "./client";
+import * as tvdb from "@/lib/tvdb/client";
+import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 
 const TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const CATALOG_MAX_PAGES = 5;
@@ -78,6 +80,7 @@ async function upsertTitleFull(input: {
   tvdbId: number | null;
   imdbId: string | null;
   rawTmdb: unknown;
+  rawTvdb?: unknown;
 }) {
   const values = { ...input, releaseDate: input.releaseDate || null, firstAirDate: input.firstAirDate || null, refreshedAt: new Date() };
   const [row] = await db
@@ -93,6 +96,7 @@ async function upsertTitleFull(input: {
         releaseDate: values.releaseDate,
         firstAirDate: values.firstAirDate,
         status: values.status,
+        rawTvdb: values.rawTvdb,
         tvdbId: values.tvdbId,
         imdbId: values.imdbId,
         rawTmdb: values.rawTmdb,
@@ -134,20 +138,42 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
     }
 
     const details = await tmdb.getTvDetails(tmdbId);
+    const tvdbId = details.external_ids?.tvdb_id ?? null;
+
+    // TMDb's own poster/overview win when present; TheTVDB (Sonarr's own
+    // metadata source) only fills the gap when TMDb genuinely doesn't have
+    // it yet — same "isIncomplete" trigger as the cache-freshness check
+    // above, not attempted for every show on every fetch.
+    let posterPath: string | null = details.poster_path;
+    let overview: string | null = details.overview;
+    let rawTvdb: unknown;
+
+    if (tvdbId && (!posterPath || !overview)) {
+      const apiKey = await getTvdbApiKey();
+      if (apiKey) {
+        const tvdbSeries = await tvdb.getSeriesExtended(apiKey, tvdbId).catch(() => null);
+        if (tvdbSeries) {
+          rawTvdb = tvdbSeries;
+          if (!posterPath) posterPath = tvdbSeries.image;
+          if (!overview) overview = tvdb.pickOverview(tvdbSeries.overviewTranslations);
+        }
+      }
+    }
 
     return await upsertTitleFull({
       mediaType,
       tmdbId,
       name: details.name,
-      overview: details.overview,
-      posterPath: details.poster_path,
+      overview,
+      posterPath,
       backdropPath: details.backdrop_path,
       releaseDate: null,
       firstAirDate: details.first_air_date,
       status: details.status,
-      tvdbId: details.external_ids?.tvdb_id ?? null,
+      tvdbId,
       imdbId: details.external_ids?.imdb_id ?? null,
       rawTmdb: details,
+      rawTvdb,
     });
   } catch (err) {
     // A 404 means TMDb itself no longer has this id (removed/merged) — that's

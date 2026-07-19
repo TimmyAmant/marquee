@@ -5,12 +5,13 @@ import { getArrCredential, getOrCreateWebhookSecret, getJellyfinCredential } fro
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { getJellyfinSummary, syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
-import { isTmdbAccessTokenSavedInSettings, getTraktClientId } from "@/lib/integrations/app-settings";
+import { isTmdbAccessTokenSavedInSettings, getTraktClientId, getTvdbApiKey } from "@/lib/integrations/app-settings";
 import { ArrCredentialForm } from "@/components/arr-credential-form";
 import { PlexConnectCard } from "@/components/plex-connect-card";
 import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
 import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
 import { TraktConnectCard } from "@/components/trakt-connect-card";
+import { TvdbConnectCard } from "@/components/tvdb-connect-card";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
 
@@ -33,6 +34,7 @@ export default async function IntegrationsSettingsPage() {
     jellyfinSummary,
     tmdbSavedInSettings,
     traktClientId,
+    tvdbApiKey,
     webhookSecret,
     headerList,
   ] = await Promise.all([
@@ -43,6 +45,7 @@ export default async function IntegrationsSettingsPage() {
     getJellyfinSummary(session.user.id),
     isTmdbAccessTokenSavedInSettings(),
     getTraktClientId(),
+    getTvdbApiKey(),
     getOrCreateWebhookSecret(session.user.id),
     headers(),
   ]);
@@ -71,6 +74,7 @@ export default async function IntegrationsSettingsPage() {
           configuredFromEnv={Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY)}
         />
         <TraktConnectCard connected={Boolean(traktClientId)} />
+        <TvdbConnectCard connected={Boolean(tvdbApiKey)} />
         <PlexConnectCard
           initialConnected={plexSummary.connected}
           initialServers={plexSummary.servers.map((s) => ({

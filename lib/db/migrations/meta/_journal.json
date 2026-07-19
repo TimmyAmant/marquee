@@ -141,6 +141,13 @@
       "when": 1784417293991,
       "tag": "0019_add_requests_requester_index",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1784422753938,
+      "tag": "0020_add_tvdb_api_key",
+      "breakpoints": true
     }
   ]
 }

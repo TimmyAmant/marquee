@@ -8,5 +8,10 @@ export function tmdbImageUrl(
   size: TmdbImageSize = "w500",
 ): string | null {
   if (!path) return null;
+  // A stored posterPath/backdropPath is sometimes a full URL rather than a
+  // TMDb-relative path — e.g. a TheTVDB artwork URL used as a fallback when
+  // TMDb itself doesn't have an image yet. Pass those through untouched
+  // instead of double-prefixing them with TMDb's own CDN base.
+  if (/^https?:\/\//.test(path)) return path;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { TitleHero } from "@/components/title-hero";
+import { TitleHero, type TitleMeta } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
 import { SimilarTitlesRow, type SimilarTitle } from "@/components/similar-titles-row";
@@ -190,6 +190,20 @@ export default async function TitlePage({
           return `~${formatRuntime(avg)}/episode`;
         })();
 
+  const endYear =
+    type === "tv" ? (raw as TmdbTvDetails | null)?.last_air_date?.slice(0, 4) || null : null;
+  const rawStatus = raw?.status ?? null;
+  const titleMeta: TitleMeta = {
+    runtimeLabel,
+    ratingPercent: raw?.vote_average ? Math.round(raw.vote_average * 10) : null,
+    genres: (raw?.genres ?? []).map((g) => g.name).slice(0, 3),
+    yearRange: endYear && endYear !== year ? `${year}–${endYear}` : year,
+    // "Returning Series" is TMDb's own wording for an ongoing show — relabel
+    // to match the shorter "Continuing" wording Sonarr/other *arr apps use.
+    statusLabel: rawStatus === "Returning Series" ? "Continuing" : rawStatus,
+    network: type === "tv" ? ((raw as TmdbTvDetails | null)?.networks?.[0]?.name ?? null) : null,
+  };
+
   return (
     <div>
       <TitleHero
@@ -199,7 +213,7 @@ export default async function TitlePage({
         overview={title.overview}
         posterPath={title.posterPath}
         backdropPath={title.backdropPath}
-        year={year}
+        meta={titleMeta}
         status={libraryStatus.status}
         configured={libraryStatus.configured}
         file={libraryStatus.file}
@@ -209,6 +223,8 @@ export default async function TitlePage({
           facebookId: externalIds?.facebook_id ?? null,
           instagramId: externalIds?.instagram_id ?? null,
           twitterId: externalIds?.twitter_id ?? null,
+          tvdbId: title.tvdbId,
+          tvdbMediaType: type === "tv" ? "series" : "movies",
         }}
         favorited={titleFavorited}
         isAdmin={viewer.session ? viewer.isAdmin : undefined}

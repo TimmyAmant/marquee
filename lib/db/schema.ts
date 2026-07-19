@@ -451,5 +451,11 @@ export const appSettings = pgTable("app_settings", {
   traktClientIdEnc: bytea("trakt_client_id_enc"),
   traktClientIdIv: bytea("trakt_client_id_iv"),
   traktClientIdTag: bytea("trakt_client_id_tag"),
+  // TheTVDB's v4 API key — used as a poster/overview/genre fallback for TV
+  // shows when TMDb's own data is thin, since Sonarr's own metadata is
+  // sourced from TVDB and users comparing the two notice the gap.
+  tvdbApiKeyEnc: bytea("tvdb_api_key_enc"),
+  tvdbApiKeyIv: bytea("tvdb_api_key_iv"),
+  tvdbApiKeyTag: bytea("tvdb_api_key_tag"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

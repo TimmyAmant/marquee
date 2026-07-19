@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.10.0",
+    date: "2026-07-18",
+    changes: [
+      "Added TheTVDB as a metadata source: new Settings → Integrations card (free API key) that fills in a TV show's poster and overview when TMDb doesn't have them yet, plus a \"TheTVDB\" link on title pages.",
+      "Title pages now show runtime, rating, genres, year range, status (Continuing/Ended/etc.), and network alongside the existing overview and trailer/social links.",
+    ],
+  },
+  {
     version: "0.9.2",
     date: "2026-07-18",
     changes: [
