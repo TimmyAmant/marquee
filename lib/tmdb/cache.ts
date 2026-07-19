@@ -11,6 +11,18 @@ function isStale(refreshedAt: Date): boolean {
   return Date.now() - refreshedAt.getTime() > TTL_MS;
 }
 
+/** A title first cached before TMDb had finished uploading its poster or
+ * writing an overview (common right after a title is announced, or for
+ * niche/non-English releases) would otherwise be locked into showing no
+ * artwork for the full 14-day TTL even once TMDb fills it in — so treat
+ * missing poster/overview as stale regardless of age, forcing a re-check
+ * on every view until TMDb actually has the data. The hourly Next.js fetch
+ * cache on tmdbFetch caps the real cost of this at one live request per
+ * title per hour, not one per page view. */
+function isIncomplete(row: { posterPath: string | null; overview: string | null }): boolean {
+  return !row.posterPath || !row.overview;
+}
+
 export type LightTitleInput = {
   mediaType: MediaType;
   tmdbId: number;
@@ -98,7 +110,7 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
     .where(and(eq(titles.mediaType, mediaType), eq(titles.tmdbId, tmdbId)))
     .limit(1);
 
-  if (cached && cached.rawTmdb && !isStale(cached.refreshedAt)) {
+  if (cached && cached.rawTmdb && !isStale(cached.refreshedAt) && !isIncomplete(cached)) {
     return cached;
   }
 

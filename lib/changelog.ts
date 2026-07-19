@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.1",
+    date: "2026-07-18",
+    changes: [
+      "Fixed: some titles kept showing no poster or overview for up to 14 days even after TMDb had filled them in. Titles are cached before TMDb finishes uploading artwork for very new or niche releases — the cache now treats a missing poster/overview as stale regardless of age, so it keeps re-checking until TMDb actually has the data instead of locking in the incomplete version.",
+    ],
+  },
+  {
     version: "0.9.0",
     date: "2026-07-18",
     changes: [
