@@ -10,6 +10,7 @@ export function RequestButton({
   title,
   posterPath,
   compact = false,
+  alreadyRequested = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -19,11 +20,17 @@ export function RequestButton({
    * slot — matches QuickAddButton so franchise/similar-titles rows read the
    * same way for members as they do for the admin's Add button. */
   compact?: boolean;
+  /** Server-known request state (e.g. from getActiveRequestStatusMap) for
+   * rows rendering many titles at once — without this the button only knows
+   * about a request made in the current client session, so a franchise/
+   * similar-titles row would show "Request" again for something already
+   * requested on an earlier visit. */
+  alreadyRequested?: boolean;
 }) {
   const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
   const [state, formAction, isPending] = useActionState(action, undefined);
 
-  if (state?.success) {
+  if (state?.success || alreadyRequested) {
     return (
       <span
         className={

@@ -17,6 +17,7 @@ export type SimilarTitle = {
 export function SimilarTitlesRow({
   items,
   statusMap,
+  requestStatusMap,
   favoritedIds,
   showFavorite,
   arrConfigured,
@@ -24,6 +25,10 @@ export function SimilarTitlesRow({
 }: {
   items: SimilarTitle[];
   statusMap: Map<string, LibraryStatus>;
+  /** This viewer's own non-rejected request per title, if any — so a title
+   * already requested shows "Requested" instead of the button again. Absent
+   * when signed out (members never see the request button then anyway). */
+  requestStatusMap?: Map<string, string>;
   favoritedIds?: Set<number>;
   showFavorite?: boolean;
   arrConfigured?: { movie: boolean; tv: boolean };
@@ -70,6 +75,7 @@ export function SimilarTitlesRow({
                       title={item.name}
                       posterPath={item.posterPath}
                       compact
+                      alreadyRequested={requestStatusMap?.has(`${item.mediaType}:${item.tmdbId}`) ?? false}
                     />
                   ) : undefined
                 }

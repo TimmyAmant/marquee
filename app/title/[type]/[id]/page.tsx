@@ -15,7 +15,7 @@ import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getActiveRequestStatus, getOtherPendingRequesters } from "@/lib/requests/query";
+import { getActiveRequestStatus, getActiveRequestStatusMap, getOtherPendingRequesters } from "@/lib/requests/query";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
@@ -88,11 +88,15 @@ export default async function TitlePage({
     year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
   }));
 
-  const [similarStatusMap, similarFavoritedIds, castFavoritedIds, companyFavoritedIds] =
+  const [similarStatusMap, similarRequestStatusMap, similarFavoritedIds, castFavoritedIds, companyFavoritedIds] =
     viewer.libraryOwnerId
       ? await Promise.all([
           getLibraryStatusMap(
             viewer.libraryOwnerId,
+            similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+          ),
+          getActiveRequestStatusMap(
+            viewer.userId,
             similarItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
           ),
           getFavoritedTmdbIds(
@@ -111,7 +115,7 @@ export default async function TitlePage({
             companies.map((c) => c.id),
           ),
         ])
-      : [new Map(), new Set<number>(), new Set<number>(), new Set<number>()];
+      : [new Map(), new Map(), new Set<number>(), new Set<number>(), new Set<number>()];
 
   // Movie franchises (Harry Potter, James Bond, etc.) come straight from
   // TMDb's own "collection" data. TV crossovers (Arrowverse, 9-1-1 universe)
@@ -157,11 +161,15 @@ export default async function TitlePage({
     }
   }
 
-  const [franchiseStatusMap, franchiseFavoritedIds, collectionFavorited] =
+  const [franchiseStatusMap, franchiseRequestStatusMap, franchiseFavoritedIds, collectionFavorited] =
     viewer.libraryOwnerId && franchiseItems.length > 0
       ? await Promise.all([
           getLibraryStatusMap(
             viewer.libraryOwnerId,
+            franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+          ),
+          getActiveRequestStatusMap(
+            viewer.userId,
             franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
           ),
           getFavoritedTmdbIds(
@@ -173,7 +181,7 @@ export default async function TitlePage({
             ? isFavorited(viewer.userId, "collection", collectionId)
             : Promise.resolve(false),
         ])
-      : [new Map(), new Set<number>(), false];
+      : [new Map(), new Map(), new Set<number>(), false];
 
   const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
 
@@ -259,6 +267,7 @@ export default async function TitlePage({
             title={franchiseTitle}
             items={franchiseItems}
             statusMap={franchiseStatusMap}
+            requestStatusMap={franchiseRequestStatusMap}
             favoritedIds={franchiseFavoritedIds}
             showFavorite={Boolean(viewer.session)}
             arrConfigured={viewer.session ? arrConfigured : undefined}
@@ -271,6 +280,7 @@ export default async function TitlePage({
         <SimilarTitlesRow
           items={similarItems}
           statusMap={similarStatusMap}
+          requestStatusMap={similarRequestStatusMap}
           favoritedIds={similarFavoritedIds}
           showFavorite={Boolean(viewer.session)}
           arrConfigured={viewer.session ? arrConfigured : undefined}

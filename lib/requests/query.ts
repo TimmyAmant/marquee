@@ -176,6 +176,35 @@ export async function getActiveRequestStatus(
   return row.status;
 }
 
+/**
+ * Batched version of getActiveRequestStatus for a page rendering many
+ * titles at once (franchise/similar-titles rows) — same "non-rejected wins"
+ * rule, just keyed per title instead of a single lookup.
+ */
+export async function getActiveRequestStatusMap(
+  userId: string,
+  items: { mediaType: MediaType; tmdbId: number }[],
+): Promise<Map<string, RequestStatus>> {
+  const map = new Map<string, RequestStatus>();
+  if (items.length === 0) return map;
+
+  const wanted = new Set(items.map((i) => `${i.mediaType}:${i.tmdbId}`));
+  const tmdbIds = [...new Set(items.map((i) => i.tmdbId))];
+
+  const rows = await db
+    .select({ mediaType: requests.mediaType, tmdbId: requests.tmdbId, status: requests.status, createdAt: requests.createdAt })
+    .from(requests)
+    .where(and(eq(requests.requestedByUserId, userId), inArray(requests.tmdbId, tmdbIds)))
+    .orderBy(desc(requests.createdAt));
+
+  for (const row of rows) {
+    const key = `${row.mediaType}:${row.tmdbId}`;
+    if (map.has(key) || row.status === "rejected" || !wanted.has(key)) continue;
+    map.set(key, row.status);
+  }
+  return map;
+}
+
 /** Other household members with a pending request for this same title —
  * shown on the title page so a member doesn't duplicate a request a
  * housemate already made. */
