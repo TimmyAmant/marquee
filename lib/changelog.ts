@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.15.0",
+    date: "2026-07-19",
+    changes: [
+      "Added per-member auto-approval for requests (Settings → household member edit) — the admin can now let a trusted member's movie and/or TV requests skip the manual approval queue and go straight to Radarr/Sonarr.",
+      "Added a recovery command for a locked-out admin account with no other way in: `docker exec -it <container> npm run reset-admin-password -- <new-password>` (documented in the README).",
+      "Fixed: a title already requested still showed a \"Request\" button again (instead of \"Requested\") in the Collection and \"More like this\" rows on its own title page.",
+      "Fixed: favoriting a person or company directly from a Cast/Studio row (without visiting their own page first) saved the favorite but silently left it missing from the Favorites page.",
+    ],
+  },
+  {
     version: "0.14.0",
     date: "2026-07-19",
     changes: [
