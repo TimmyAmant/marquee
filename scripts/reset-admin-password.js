@@ -5,6 +5,7 @@
 // Builds DATABASE_URL itself from the same POSTGRES_* env vars entrypoint.sh
 // uses, since a fresh `docker exec` shell doesn't inherit the runtime
 // DATABASE_URL that entrypoint.sh only exports into its own process tree.
+/* eslint-disable @typescript-eslint/no-require-imports -- plain CommonJS on purpose, run directly by `node` with no build step */
 const { hash } = require("argon2");
 const postgres = require("postgres");
 

@@ -43,10 +43,12 @@ function RemoveMemberButton({ member }: { member: HouseholdMember }) {
 
 function EditMemberForm({
   member,
+  isAdmin,
   onCancel,
   onSaved,
 }: {
   member: HouseholdMember;
+  isAdmin: boolean;
   onCancel: () => void;
   onSaved: () => void;
 }) {
@@ -90,6 +92,29 @@ function EditMemberForm({
         />
       </label>
 
+      {isAdmin && member.role !== "admin" && (
+        <>
+          <label className="flex items-center gap-2 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              name="autoApproveMovies"
+              defaultChecked={member.autoApproveMovies}
+              className="h-4 w-4 rounded border-border accent-accent"
+            />
+            Auto-approve movie requests
+          </label>
+          <label className="flex items-center gap-2 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              name="autoApproveTv"
+              defaultChecked={member.autoApproveTv}
+              className="h-4 w-4 rounded border-border accent-accent"
+            />
+            Auto-approve TV requests
+          </label>
+        </>
+      )}
+
       {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
 
       <div className="mt-1 flex gap-2">
@@ -130,6 +155,7 @@ export function HouseholdMembersList({
           <li key={member.id}>
             <EditMemberForm
               member={member}
+              isAdmin={isAdmin}
               onCancel={() => setEditingId(null)}
               onSaved={() => setEditingId(null)}
             />

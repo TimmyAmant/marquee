@@ -169,6 +169,13 @@
       "when": 1784432922261,
       "tag": "0023_add_discord_webhook",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1784515768060,
+      "tag": "0024_add_per_member_auto_approve",
+      "breakpoints": true
     }
   ]
 }

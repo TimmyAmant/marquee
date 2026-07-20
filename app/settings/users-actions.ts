@@ -15,6 +15,8 @@ export type HouseholdMember = {
   username: string;
   displayName: string | null;
   role: UserRole;
+  autoApproveMovies: boolean;
+  autoApproveTv: boolean;
   createdAt: Date;
 };
 
@@ -31,6 +33,8 @@ export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
       username: users.username,
       displayName: users.displayName,
       role: users.role,
+      autoApproveMovies: users.autoApproveMovies,
+      autoApproveTv: users.autoApproveTv,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -131,12 +135,23 @@ export async function updateHouseholdMemberAction(
     return { error: "An account with that username already exists" };
   }
 
+  // Auto-approval is an admin-only setting on other members' accounts —
+  // never let a member grant it to themselves via this same "edit my own
+  // account" form.
+  const isAdmin = session.user.role === "admin";
+
   await db
     .update(users)
     .set({
       username,
       displayName,
       ...(password ? { passwordHash: await hash(password) } : {}),
+      ...(isAdmin
+        ? {
+            autoApproveMovies: formData.get("autoApproveMovies") === "on",
+            autoApproveTv: formData.get("autoApproveTv") === "on",
+          }
+        : {}),
     })
     .where(eq(users.id, userId));
 

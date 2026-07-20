@@ -40,6 +40,11 @@ export const users = pgTable(
     // members can only request. The very first account created via /setup
     // is promoted to admin directly in the setup action.
     role: text("role").notNull().default("member").$type<UserRole>(),
+    // Admin-set per member: skip the manual review queue and add straight to
+    // Radarr/Sonarr on request, scoped separately per media type so e.g.
+    // movies can be trusted while TV still gets reviewed.
+    autoApproveMovies: boolean("auto_approve_movies").default(false).notNull(),
+    autoApproveTv: boolean("auto_approve_tv").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],

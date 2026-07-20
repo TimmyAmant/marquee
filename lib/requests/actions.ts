@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { requests } from "@/lib/db/schema";
+import { requests, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getActiveRequestStatus, getPendingRequestCount } from "@/lib/requests/query";
 import { addMovieToRadarrForUser, addSeriesToSonarrForUser } from "@/app/title/[type]/[id]/actions";
@@ -14,6 +14,7 @@ import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { getAdminUserId } from "@/lib/auth/get-admin";
 
 export type RequestState = { error?: string; success?: boolean };
 
@@ -53,13 +54,16 @@ export async function createRequestAction(
     return { error: "You already have this in your library." };
   }
 
-  await db.insert(requests).values({
-    requestedByUserId: viewer.userId,
-    mediaType,
-    tmdbId,
-    title,
-    posterPath,
-  });
+  const [inserted] = await db
+    .insert(requests)
+    .values({
+      requestedByUserId: viewer.userId,
+      mediaType,
+      tmdbId,
+      title,
+      posterPath,
+    })
+    .returning({ id: requests.id });
 
   await logActivityEvent({
     actorUserId: viewer.userId,
@@ -68,6 +72,23 @@ export async function createRequestAction(
     tmdbId,
     title,
   }).catch(() => undefined);
+
+  // Admin-set per member (Settings -> household member edit) — if this
+  // media type is auto-approved for them, skip straight to the same
+  // approval flow the admin's Approve button uses. Falls back to sitting
+  // pending (like any failed manual approval) if it errors, e.g. Radarr
+  // unreachable or the admin hasn't configured it yet.
+  const [requester] = await db
+    .select({ autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
+    .from(users)
+    .where(eq(users.id, viewer.userId));
+  const autoApprove = mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv;
+  if (autoApprove) {
+    const adminUserId = await getAdminUserId();
+    if (adminUserId) {
+      await approveRequestCore(inserted.id, adminUserId).catch(() => undefined);
+    }
+  }
 
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
   revalidatePath("/requests");
