@@ -8,7 +8,12 @@
 # one-process-per-container Docker convention.
 FROM node:22-bookworm-slim AS base
 
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql \
+# Pinned to a specific major version (rather than the bare "postgresql"
+# package, whose version tracks whatever Debian bookworm currently
+# defaults to) so a future rebuild never silently ends up with a server
+# version that can't read data directories from earlier installs — bump
+# this deliberately, alongside a documented migration path, not by accident.
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-15 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
