@@ -258,6 +258,22 @@ npm run dev
 
 Schema changes: `npx drizzle-kit generate` then `npx drizzle-kit migrate`.
 
+## Locked out? Reset the admin password
+
+Since there's no public signup page and no email server, the only way back
+in if the admin forgets their password is directly through the container —
+if the site is running, you already have everything you need.
+
+Find your container's name (`docker ps` if you're not sure — `marquee-app-1`
+for Docker Compose, `Marquee` on Unraid by default), then run:
+
+```bash
+docker exec -it <container-name> npm run reset-admin-password -- <new-password>
+```
+
+Password must be at least 8 characters. This updates the admin account's
+password directly in the database — no login required.
+
 ## Support
 
 Found a bug or have a question? [Open an issue](https://github.com/TimmyAmant/marquee/issues).
