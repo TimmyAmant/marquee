@@ -1,10 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { getTrendingAll, getUpcomingMovies } from "@/lib/tmdb/client";
 import { getLibraryStatusMap, getLibrarySummary } from "@/lib/library/query";
 import { getPendingRequestCount, getMyPendingRequestCount } from "@/lib/requests/query";
+import { getRecentDownloads } from "@/lib/notifications/query";
+import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { formatBytes } from "@/lib/format";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
@@ -12,7 +16,7 @@ import type { MediaType } from "@/lib/db/schema";
 export default async function Home() {
   const viewer = await getViewerContext();
 
-  const [trending, upcoming, librarySummary, pendingRequestCount] = await Promise.all([
+  const [trending, upcoming, librarySummary, pendingRequestCount, recentDownloads] = await Promise.all([
     getTrendingAll().catch(() => ({ results: [] })),
     getUpcomingMovies().catch(() => ({ results: [] })),
     viewer.libraryOwnerId ? getLibrarySummary(viewer.libraryOwnerId) : Promise.resolve(null),
@@ -21,7 +25,19 @@ export default async function Home() {
         ? getPendingRequestCount()
         : getMyPendingRequestCount(viewer.userId)
       : Promise.resolve(0),
+    viewer.libraryOwnerId ? getRecentDownloads(viewer.libraryOwnerId) : Promise.resolve([]),
   ]);
+
+  // The notifications table (where "downloaded" events come from) has no
+  // posterPath column, unlike requests — fetch each from the title cache
+  // (cheap: local DB hit unless this particular title was never viewed/
+  // synced before) so the feed looks like every other poster-led list.
+  const recentDownloadsWithPosters = await Promise.all(
+    recentDownloads.map(async (d) => ({
+      ...d,
+      posterPath: (await getOrFetchTitle(d.mediaType, d.tmdbId).catch(() => null))?.posterPath ?? null,
+    })),
+  );
 
   const trendingItems = trending.results
     .filter((item) => item.media_type === "movie" || item.media_type === "tv")
@@ -109,6 +125,34 @@ export default async function Home() {
                 </Link>
               )}
             </div>
+          </div>
+        </section>
+      )}
+
+      {recentDownloadsWithPosters.length > 0 && (
+        <section className="mx-auto max-w-6xl px-6 pb-14">
+          <h2 className="mb-4 font-display text-xl text-text-primary">Recent downloads</h2>
+          <div className="flex flex-col gap-2">
+            {recentDownloadsWithPosters.map((d) => {
+              const src = tmdbImageUrl(d.posterPath, "w92");
+              return (
+                <Link
+                  key={d.id}
+                  href={`/title/${d.mediaType}/${d.tmdbId}`}
+                  className="flex items-center gap-4 rounded-xl border border-border bg-bg-1 p-3 transition-colors hover:border-border-strong"
+                >
+                  <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
+                    {src && <Image src={src} alt="" fill sizes="40px" className="object-cover" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-text-primary">{d.title}</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">
+                      Downloaded {new Date(d.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
