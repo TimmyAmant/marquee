@@ -39,7 +39,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex bg-bg-0 text-text-primary">
         <Sidebar />
-        <div className="flex min-h-full flex-1 flex-col md:pl-60">
+        <div className="flex min-h-full min-w-0 flex-1 flex-col md:pl-60">
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />
