@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.16.0",
+    date: "2026-07-21",
+    changes: [
+      "Added a persistent left sidebar nav on desktop, replacing the horizontal top bar's nav links — mobile is unaffected, still using the existing hamburger drawer.",
+      "Added stat tiles to the homepage: library counts (movies/TV/disk space) and pending request counts, for signed-in users.",
+      "Added a Recent Downloads feed to the homepage, pulled from existing Radarr/Sonarr download notifications.",
+      "Reworked the Requests page from stacked cards into a proper table (title, requester, date, status/actions) for both the admin queue and members' own request history.",
+    ],
+  },
+  {
     version: "0.15.2",
     date: "2026-07-21",
     changes: [
