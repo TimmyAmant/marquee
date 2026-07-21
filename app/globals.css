@@ -24,6 +24,65 @@
 
   --background: var(--marquee-bg-0);
   --foreground: var(--marquee-text-primary);
+
+  color-scheme: dark;
+}
+
+/* Light theme: applied via [data-theme="light"] on <html>, set by the
+   no-flash inline script in app/layout.tsx (reads localStorage, falling
+   back to prefers-color-scheme) before first paint. The prefers-color-
+   scheme block below is a no-JS fallback for the same "system prefers
+   light and nothing saved yet" case the script otherwise handles. */
+:root[data-theme="light"] {
+  --marquee-bg-0: #faf8f4;
+  --marquee-bg-1: #ffffff;
+  --marquee-bg-2: #f1eee6;
+  --marquee-bg-3: #e7e2d5;
+  --marquee-border: #e1dccd;
+  --marquee-border-strong: #ccc4b0;
+
+  --marquee-text-primary: #211f1a;
+  --marquee-text-secondary: #5c574c;
+  --marquee-text-muted: #8b8575;
+
+  --marquee-accent: #b3791f;
+  --marquee-accent-hover: #9c6818;
+  --marquee-accent-muted: #f3dfb0;
+
+  --marquee-owned: #2f7a52;
+  --marquee-owned-bg: #e3f3ea;
+  --marquee-tracked: #2f6fb0;
+  --marquee-tracked-bg: #e5f0fa;
+  --marquee-untracked-bg: #efece3;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --marquee-bg-0: #faf8f4;
+    --marquee-bg-1: #ffffff;
+    --marquee-bg-2: #f1eee6;
+    --marquee-bg-3: #e7e2d5;
+    --marquee-border: #e1dccd;
+    --marquee-border-strong: #ccc4b0;
+
+    --marquee-text-primary: #211f1a;
+    --marquee-text-secondary: #5c574c;
+    --marquee-text-muted: #8b8575;
+
+    --marquee-accent: #b3791f;
+    --marquee-accent-hover: #9c6818;
+    --marquee-accent-muted: #f3dfb0;
+
+    --marquee-owned: #2f7a52;
+    --marquee-owned-bg: #e3f3ea;
+    --marquee-tracked: #2f6fb0;
+    --marquee-tracked-bg: #e5f0fa;
+    --marquee-untracked-bg: #efece3;
+
+    color-scheme: light;
+  }
 }
 
 @theme inline {
@@ -53,10 +112,6 @@
 
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-manrope);
-}
-
-html {
-  color-scheme: dark;
 }
 
 body {

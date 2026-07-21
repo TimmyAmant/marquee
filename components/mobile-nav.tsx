@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SearchBar } from "@/components/search-bar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function MobileNav({
   isSignedIn,
@@ -103,12 +104,12 @@ export function MobileNav({
               </Link>
             )}
 
-            <div className="mt-2 border-t border-border pt-2">
+            <div className="mt-2 flex items-center gap-2 border-t border-border pt-2">
               {isSignedIn ? (
                 <Link
                   href="/settings"
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-text-primary transition-colors hover:bg-bg-2"
+                  className="min-w-0 flex-1 truncate rounded-lg px-3 py-2.5 text-text-primary transition-colors hover:bg-bg-2"
                 >
                   {userLabel}
                 </Link>
@@ -116,11 +117,12 @@ export function MobileNav({
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-text-primary transition-colors hover:bg-bg-2"
+                  className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-text-primary transition-colors hover:bg-bg-2"
                 >
                   Sign in
                 </Link>
               )}
+              <ThemeToggle compact />
             </div>
           </nav>
         </div>

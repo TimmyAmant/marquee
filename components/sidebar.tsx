@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { RequestsBadge } from "@/components/requests-badge";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getPendingRequestCount } from "@/lib/requests/query";
 
 const NAV_ICONS = {
@@ -121,22 +122,23 @@ export async function Sidebar() {
         )}
       </nav>
 
-      <div className="shrink-0 border-t border-border p-3">
+      <div className="flex shrink-0 items-center gap-2 border-t border-border p-3">
         {session?.user ? (
           <Link
             href="/settings"
-            className="block truncate rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-2"
+            className="min-w-0 flex-1 truncate rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-2"
           >
             {session.user.name || session.user.username}
           </Link>
         ) : (
           <Link
             href="/login"
-            className="block rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-2"
+            className="min-w-0 flex-1 rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-2"
           >
             Sign in
           </Link>
         )}
+        <ThemeToggle />
       </div>
     </aside>
   );
