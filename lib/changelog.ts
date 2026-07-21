@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.15.1",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: the Add-to-Radarr/Sonarr, Request, and Stop-monitoring buttons on poster cards (filmography, franchise rows, Discover, My Library) only appeared on mouse hover, making them invisible and unusable on phones/tablets — now visible by default and hover-hidden only on devices that actually have a mouse.",
+    ],
+  },
+  {
     version: "0.15.0",
     date: "2026-07-19",
     changes: [
