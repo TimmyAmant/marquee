@@ -50,45 +50,59 @@ export default async function RequestsPage() {
     const myRequests = await getMyRequests(viewer.userId, viewer.libraryOwnerId);
 
     return (
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        <div className="flex flex-col gap-2">
-          {myRequests.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              You haven&apos;t requested anything yet — find a title and hit Request.
-            </p>
-          ) : (
-            myRequests.map((r) => {
-              const src = tmdbImageUrl(r.posterPath, "w92");
-              const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved);
-              return (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-4 rounded-xl border border-border bg-bg-1 p-3"
-                >
-                  <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-                    {src && <Image src={src} alt="" fill sizes="40px" className="object-cover" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/title/${r.mediaType}/${r.tmdbId}`}
-                      className="text-sm font-medium text-text-primary hover:text-accent"
-                    >
-                      {r.title}
-                    </Link>
-                    <p className="mt-0.5 text-xs text-text-secondary">
-                      Requested {new Date(r.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${badge.className}`}
-                  >
-                    {badge.label}
-                  </span>
-                </div>
-              );
-            })
-          )}
-        </div>
+      <div className="mx-auto max-w-4xl px-6 py-12">
+        {myRequests.length === 0 ? (
+          <p className="text-sm text-text-muted">
+            You haven&apos;t requested anything yet — find a title and hit Request.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full min-w-[480px] text-left text-sm">
+              <thead className="bg-bg-1 text-text-muted">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Title</th>
+                  <th className="px-4 py-3 font-medium">Requested</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {myRequests.map((r) => {
+                  const src = tmdbImageUrl(r.posterPath, "w92");
+                  const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved);
+                  return (
+                    <tr key={r.id} className="hover:bg-bg-1/60">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
+                            {src && (
+                              <Image src={src} alt="" fill sizes="40px" className="object-cover" />
+                            )}
+                          </div>
+                          <Link
+                            href={`/title/${r.mediaType}/${r.tmdbId}`}
+                            className="text-sm font-medium text-text-primary hover:text-accent"
+                          >
+                            {r.title}
+                          </Link>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${badge.className}`}
+                        >
+                          {badge.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   }
@@ -105,76 +119,105 @@ export default async function RequestsPage() {
   const sonarrUrl = sonarrCred?.baseUrl ?? null;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
+    <div className="mx-auto max-w-5xl px-6 py-12">
       {pending.length > 1 && (
         <div className="flex justify-end">
           <ApproveAllRequestsButton />
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        {pending.length === 0 ? (
-          <p className="text-sm text-text-muted">No pending requests.</p>
-        ) : (
-          pending.map((r) => (
-            <RequestReviewRow
-              key={r.id}
-              id={r.id}
-              mediaType={r.mediaType}
-              tmdbId={r.tmdbId}
-              title={r.title}
-              posterPath={r.posterPath}
-              requestedByName={r.requestedByName}
-              requestedByUsername={r.requestedByUsername}
-              createdAt={r.createdAt.toISOString()}
-              sonarrUrl={sonarrUrl}
-            />
-          ))
-        )}
-      </div>
+      {pending.length === 0 ? (
+        <p className="text-sm text-text-muted">No pending requests.</p>
+      ) : (
+        <div className="mt-3 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-bg-1 text-text-muted">
+              <tr>
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">Requested by</th>
+                <th className="px-4 py-3 font-medium">Requested</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {pending.map((r) => (
+                <RequestReviewRow
+                  key={r.id}
+                  id={r.id}
+                  mediaType={r.mediaType}
+                  tmdbId={r.tmdbId}
+                  title={r.title}
+                  posterPath={r.posterPath}
+                  requestedByName={r.requestedByName}
+                  requestedByUsername={r.requestedByUsername}
+                  createdAt={r.createdAt.toISOString()}
+                  sonarrUrl={sonarrUrl}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {reviewed.length > 0 && (
         <>
           <h2 className="mt-12 font-display text-xl text-text-primary">Past requests</h2>
-          <div className="mt-4 flex flex-col gap-2">
-            {reviewed.map((r) => {
-              const src = tmdbImageUrl(r.posterPath, "w92");
-              return (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-4 rounded-xl border border-border bg-bg-1 p-3"
-                >
-                  <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-                    {src && <Image src={src} alt="" fill sizes="40px" className="object-cover" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/title/${r.mediaType}/${r.tmdbId}`}
-                      className="text-sm font-medium text-text-primary hover:text-accent"
-                    >
-                      {r.title}
-                    </Link>
-                    <p className="mt-0.5 text-xs text-text-secondary">
-                      Requested by {r.requestedByName || r.requestedByUsername} ·{" "}
-                      {new Date(r.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                      r.status === "approved"
-                        ? "bg-owned-bg text-owned"
-                        : "bg-untracked-bg text-text-secondary"
-                    }`}
-                  >
-                    {r.status === "approved"
-                      ? r.manuallyApproved
-                        ? "Manually approved"
-                        : "Approved"
-                      : "Rejected"}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+            <table className="w-full min-w-[560px] text-left text-sm">
+              <thead className="bg-bg-1 text-text-muted">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Title</th>
+                  <th className="px-4 py-3 font-medium">Requested by</th>
+                  <th className="px-4 py-3 font-medium">Requested</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {reviewed.map((r) => {
+                  const src = tmdbImageUrl(r.posterPath, "w92");
+                  return (
+                    <tr key={r.id} className="hover:bg-bg-1/60">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
+                            {src && (
+                              <Image src={src} alt="" fill sizes="40px" className="object-cover" />
+                            )}
+                          </div>
+                          <Link
+                            href={`/title/${r.mediaType}/${r.tmdbId}`}
+                            className="text-sm font-medium text-text-primary hover:text-accent"
+                          >
+                            {r.title}
+                          </Link>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {r.requestedByName || r.requestedByUsername}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            r.status === "approved"
+                              ? "bg-owned-bg text-owned"
+                              : "bg-untracked-bg text-text-secondary"
+                          }`}
+                        >
+                          {r.status === "approved"
+                            ? r.manuallyApproved
+                              ? "Manually approved"
+                              : "Approved"
+                            : "Rejected"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </>
       )}

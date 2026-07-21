@@ -56,23 +56,58 @@ export function RequestReviewRow({
   if (done) return null;
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-1 p-3">
-      <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-        {src && <Image src={src} alt="" fill sizes="56px" className="object-cover" />}
-      </div>
-      <div className="min-w-0 flex-1">
-        <Link
-          href={`/title/${mediaType}/${tmdbId}`}
-          className="text-sm font-medium text-text-primary hover:text-accent"
-        >
-          {title}
-        </Link>
-        <p className="mt-0.5 text-xs text-text-secondary">
-          Requested by {requestedByName || requestedByUsername} ·{" "}
-          {new Date(createdAt).toLocaleDateString()}
-        </p>
+    <tr className="hover:bg-bg-1/60">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg bg-bg-2">
+            {src && <Image src={src} alt="" fill sizes="44px" className="object-cover" />}
+          </div>
+          <Link
+            href={`/title/${mediaType}/${tmdbId}`}
+            className="text-sm font-medium text-text-primary hover:text-accent"
+          >
+            {title}
+          </Link>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-text-secondary">{requestedByName || requestedByUsername}</td>
+      <td className="px-4 py-3 text-text-secondary">{new Date(createdAt).toLocaleDateString()}</td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <form action={rejectFormAction}>
+            <button
+              type="submit"
+              disabled={anyPending}
+              className="rounded-full border border-border-strong px-3 py-1.5 text-xs text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
+            >
+              {isRejecting ? "Rejecting…" : "Reject"}
+            </button>
+          </form>
+          {showManualApprove ? (
+            <form action={manualApproveFormAction}>
+              <button
+                type="submit"
+                disabled={anyPending}
+                title="Mark this approved without adding it via Sonarr — use once you've downloaded it yourself."
+                className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+              >
+                {isManuallyApproving ? "Approving…" : "Manually approve"}
+              </button>
+            </form>
+          ) : (
+            <form action={approveFormAction}>
+              <button
+                type="submit"
+                disabled={anyPending}
+                className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+              >
+                {isApproving ? "Approving…" : "Approve"}
+              </button>
+            </form>
+          )}
+        </div>
         {(approveState?.error || rejectState?.error || manualApproveState?.error) && (
-          <p className="mt-1 text-xs text-red-400">
+          <p className="mt-1.5 max-w-xs text-xs text-red-400">
             {approveState?.error || rejectState?.error || manualApproveState?.error}
             {approveState?.error === SONARR_UNRESOLVED_ERROR && sonarrUrl && (
               <>
@@ -89,40 +124,7 @@ export function RequestReviewRow({
             )}
           </p>
         )}
-      </div>
-      <div className="flex shrink-0 gap-2">
-        <form action={rejectFormAction}>
-          <button
-            type="submit"
-            disabled={anyPending}
-            className="rounded-full border border-border-strong px-3 py-1.5 text-xs text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
-          >
-            {isRejecting ? "Rejecting…" : "Reject"}
-          </button>
-        </form>
-        {showManualApprove ? (
-          <form action={manualApproveFormAction}>
-            <button
-              type="submit"
-              disabled={anyPending}
-              title="Mark this approved without adding it via Sonarr — use once you've downloaded it yourself."
-              className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {isManuallyApproving ? "Approving…" : "Manually approve"}
-            </button>
-          </form>
-        ) : (
-          <form action={approveFormAction}>
-            <button
-              type="submit"
-              disabled={anyPending}
-              className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {isApproving ? "Approving…" : "Approve"}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
