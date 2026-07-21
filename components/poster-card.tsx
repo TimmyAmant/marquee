@@ -90,7 +90,13 @@ export function PosterCard({
         )}
 
         {quickAction && (
-          <div className="pointer-events-none absolute inset-x-1.5 bottom-1.5 z-20 group-hover:pointer-events-auto">
+          // Hidden-until-hover only makes sense with a mouse — on touch
+          // devices there's no hover state to reveal it, so the button
+          // would be invisible and untappable forever. Gated behind
+          // `(hover: hover)` (a real pointer) rather than a screen-size
+          // breakpoint, since what matters is input capability, not
+          // viewport width — a touch laptop still needs it always visible.
+          <div className="pointer-events-auto absolute inset-x-1.5 bottom-1.5 z-20 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:group-hover:pointer-events-auto">
             {quickAction}
           </div>
         )}

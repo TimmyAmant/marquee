@@ -47,7 +47,11 @@ export function RequestButton({
   return (
     <form
       action={formAction}
-      className={compact ? "opacity-0 transition-opacity group-hover:opacity-100" : undefined}
+      className={
+        compact
+          ? "opacity-100 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+          : undefined
+      }
     >
       <button
         type="submit"
