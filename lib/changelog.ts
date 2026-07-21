@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.16.1",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: the site was missing a viewport meta tag, so mobile browsers rendered the whole page at desktop width and zoomed out instead of using the site's actual responsive layout — pages now render properly on phones.",
+      "Settings: the tab nav (Account/Integrations/Activity) now highlights the active section and the page title updates per tab, instead of always saying \"Account.\"",
+      "Settings → Integrations: the 9 connection cards are now grouped into labeled sections (Media Libraries, Download Clients, Metadata Sources, Notifications) instead of one long undifferentiated list.",
+    ],
+  },
+  {
     version: "0.16.0",
     date: "2026-07-21",
     changes: [
