@@ -2,21 +2,28 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { NotificationsBell } from "@/components/notifications-bell";
-import { RequestsBadge } from "@/components/requests-badge";
 import { MobileNav } from "@/components/mobile-nav";
 import { getPendingRequestCount } from "@/lib/requests/query";
 
+/**
+ * Slim top bar — primary nav lives in the persistent Sidebar (desktop only,
+ * see components/sidebar.tsx) so this only carries what doesn't fit there:
+ * search, notifications, and the account link. Mobile still gets the brand
+ * mark and hamburger here, since the sidebar is hidden below md and this is
+ * the only nav surface at that width (MobileNav's own drawer covers the
+ * same links the sidebar has, unchanged from before this split).
+ */
 export async function SiteHeader() {
   const session = await auth();
   const isAdmin = session?.user?.role === "admin";
   const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-bg-0/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 border-b border-border bg-bg-0/85 backdrop-blur-md">
+      <div className="flex h-16 items-center gap-6 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 font-display text-2xl tracking-tight text-text-primary"
+          className="flex shrink-0 items-center gap-2 font-display text-2xl tracking-tight text-text-primary md:hidden"
         >
           <span className="relative">
             Marquee
@@ -28,54 +35,9 @@ export async function SiteHeader() {
           <SearchBar variant="compact" />
         </div>
 
-        <nav className="ml-auto hidden items-center gap-5 text-sm text-text-secondary md:flex">
-          <Link href="/discover" className="transition-colors hover:text-text-primary">
-            Discover
-          </Link>
-
-          {session?.user && (
-            <Link href="/library" className="transition-colors hover:text-text-primary">
-              My Library
-            </Link>
-          )}
-
-          {session?.user && (
-            <Link href="/favorites" className="transition-colors hover:text-text-primary">
-              Favorites
-            </Link>
-          )}
-
-          {session?.user && (
-            <Link href="/calendar" className="transition-colors hover:text-text-primary">
-              Calendar
-            </Link>
-          )}
-
-          {session?.user && (
-            <Link href="/requests" className="relative transition-colors hover:text-text-primary">
-              Requests
-              {isAdmin && <RequestsBadge initialCount={pendingRequestCount} />}
-            </Link>
-          )}
-
+        <div className="ml-auto hidden items-center gap-4 md:flex">
           {session?.user && <NotificationsBell />}
-
-          {session?.user ? (
-            <Link
-              href="/settings"
-              className="rounded-full border border-border-strong px-4 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
-            >
-              {session.user.name || session.user.username}
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full border border-border-strong px-4 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
-            >
-              Sign in
-            </Link>
-          )}
-        </nav>
+        </div>
 
         <div className="ml-auto flex items-center gap-3 md:hidden">
           {session?.user && <NotificationsBell />}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { Sidebar } from "@/components/sidebar";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -31,10 +32,13 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-bg-0 text-text-primary">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+      <body className="min-h-full flex bg-bg-0 text-text-primary">
+        <Sidebar />
+        <div className="flex min-h-full flex-1 flex-col md:pl-60">
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </div>
       </body>
     </html>
   );
