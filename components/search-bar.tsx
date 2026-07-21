@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
@@ -26,6 +26,7 @@ export function SearchBar({
   initialValue?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [value, setValue] = useState(initialValue);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -42,6 +43,22 @@ export function SearchBar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // This search bar lives in the root layout's nav, so it never unmounts
+  // between pages — a suggestion fetch that was still in flight when the
+  // user pressed Enter/clicked a result can resolve after navigation and
+  // reopen the dropdown on top of the destination page. Closing on every
+  // route change (regardless of how navigation happened — click, Enter,
+  // back/forward) is the one place that reliably catches all of those.
+  // Adjusting state during render off a state comparison (rather than a
+  // useEffect, and rather than a ref — this project's lint rules disallow
+  // both for this "reset on prop change" pattern) per React's own guidance:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    if (isOpen) setIsOpen(false);
+  }
 
   function handleChange(next: string) {
     setValue(next);
@@ -69,6 +86,7 @@ export function SearchBar({
   }
 
   function goToSuggestion(suggestion: SearchSuggestion) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setIsOpen(false);
     router.push(hrefFor(suggestion));
   }
@@ -81,6 +99,7 @@ export function SearchBar({
     }
     const trimmed = value.trim();
     if (!trimmed) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setIsOpen(false);
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }

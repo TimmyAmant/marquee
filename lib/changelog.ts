@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.15.2",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: the nav search box's suggestions dropdown stayed open on top of the destination page after pressing Enter or clicking a result — a suggestion fetch still in flight at that moment could resolve after navigation and reopen it, since the search bar lives in the shared nav and never unmounts between pages.",
+    ],
+  },
+  {
     version: "0.15.1",
     date: "2026-07-21",
     changes: [
