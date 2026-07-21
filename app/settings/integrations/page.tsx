@@ -71,67 +71,98 @@ export default async function IntegrationsSettingsPage() {
         <SyncNowButton />
       </div>
 
-      <div className="mt-6 flex flex-col gap-6">
-        <TmdbSettingsForm
-          savedInSettings={tmdbSavedInSettings}
-          configuredFromEnv={Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY)}
-        />
-        <TraktConnectCard connected={Boolean(traktClientId)} />
-        <TvdbConnectCard connected={Boolean(tvdbApiKey)} />
-        <PlexConnectCard
-          initialConnected={plexSummary.connected}
-          initialServers={plexSummary.servers.map((s) => ({
-            name: s.name,
-            lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
-          }))}
-          initialMovieCount={plexSummary.movieCount}
-          initialTvCount={plexSummary.tvCount}
-        />
-        <JellyfinConnectCard
-          existing={jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, hasApiKey: true } : null}
-          summary={{
-            servers: jellyfinSummary.servers.map((s) => ({
-              name: s.name,
-              lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
-            })),
-            movieCount: jellyfinSummary.movieCount,
-            tvCount: jellyfinSummary.tvCount,
-          }}
-        />
-        <ArrCredentialForm
-          provider="sonarr"
-          label="Sonarr"
-          existing={
-            sonarrCred
-              ? {
-                  baseUrl: sonarrCred.baseUrl,
-                  hasApiKey: true,
-                  rootFolderPath: sonarrCred.rootFolderPath,
-                  qualityProfileId: sonarrCred.qualityProfileId,
-                }
-              : null
-          }
-        />
-        <ArrCredentialForm
-          provider="radarr"
-          label="Radarr"
-          existing={
-            radarrCred
-              ? {
-                  baseUrl: radarrCred.baseUrl,
-                  hasApiKey: true,
-                  rootFolderPath: radarrCred.rootFolderPath,
-                  qualityProfileId: radarrCred.qualityProfileId,
-                }
-              : null
-          }
-        />
-        <WebhookSettingsCard
-          userId={session.user.id}
-          initialSecret={webhookSecret}
-          baseUrl={baseUrl}
-        />
-        <DiscordConnectCard connected={Boolean(discordWebhookUrl)} />
+      <div className="mt-6 flex flex-col gap-10">
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
+            Media Libraries
+          </h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <PlexConnectCard
+              initialConnected={plexSummary.connected}
+              initialServers={plexSummary.servers.map((s) => ({
+                name: s.name,
+                lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
+              }))}
+              initialMovieCount={plexSummary.movieCount}
+              initialTvCount={plexSummary.tvCount}
+            />
+            <JellyfinConnectCard
+              existing={jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, hasApiKey: true } : null}
+              summary={{
+                servers: jellyfinSummary.servers.map((s) => ({
+                  name: s.name,
+                  lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
+                })),
+                movieCount: jellyfinSummary.movieCount,
+                tvCount: jellyfinSummary.tvCount,
+              }}
+            />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
+            Download Clients
+          </h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <ArrCredentialForm
+              provider="sonarr"
+              label="Sonarr"
+              existing={
+                sonarrCred
+                  ? {
+                      baseUrl: sonarrCred.baseUrl,
+                      hasApiKey: true,
+                      rootFolderPath: sonarrCred.rootFolderPath,
+                      qualityProfileId: sonarrCred.qualityProfileId,
+                    }
+                  : null
+              }
+            />
+            <ArrCredentialForm
+              provider="radarr"
+              label="Radarr"
+              existing={
+                radarrCred
+                  ? {
+                      baseUrl: radarrCred.baseUrl,
+                      hasApiKey: true,
+                      rootFolderPath: radarrCred.rootFolderPath,
+                      qualityProfileId: radarrCred.qualityProfileId,
+                    }
+                  : null
+              }
+            />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
+            Metadata Sources
+          </h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <TmdbSettingsForm
+              savedInSettings={tmdbSavedInSettings}
+              configuredFromEnv={Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY)}
+            />
+            <TraktConnectCard connected={Boolean(traktClientId)} />
+            <TvdbConnectCard connected={Boolean(tvdbApiKey)} />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
+            Notifications
+          </h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <WebhookSettingsCard
+              userId={session.user.id}
+              initialSecret={webhookSecret}
+              baseUrl={baseUrl}
+            />
+            <DiscordConnectCard connected={Boolean(discordWebhookUrl)} />
+          </div>
+        </section>
       </div>
     </div>
   );
