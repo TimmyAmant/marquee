@@ -260,6 +260,37 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
   return Array.from(byKey.values());
 }
 
+export type LibrarySummary = {
+  movieCount: number;
+  tvCount: number;
+  totalBytes: number;
+  trackedCount: number;
+};
+
+/** Pure summary derivation — split out so a caller that already has the
+ * library array (e.g. My Library, which needs both the full list and the
+ * summary) can reuse it without a second getUserLibrary query. */
+export function summarizeLibrary(library: LibraryItem[]): LibrarySummary {
+  const owned = library.filter((i) => i.status === "owned");
+  return {
+    movieCount: owned.filter((i) => i.mediaType === "movie").length,
+    tvCount: owned.filter((i) => i.mediaType === "tv").length,
+    totalBytes: owned.reduce((sum, i) => sum + (i.sizeBytes ?? 0), 0),
+    trackedCount: library.length - owned.length,
+  };
+}
+
+/**
+ * Owned/tracked counts for stat tiles — for callers (e.g. the homepage)
+ * that don't otherwise need the full library array. Built from
+ * getUserLibrary (a local cache read, not a live Plex/Sonarr/Radarr call),
+ * so it's cheap enough to call on every homepage load without triggering a
+ * sync itself.
+ */
+export async function getLibrarySummary(userId: string): Promise<LibrarySummary> {
+  return summarizeLibrary(await getUserLibrary(userId));
+}
+
 /**
  * Local-only bulk ownership lookup for listing pages (homepage rows, search
  * results, Discover). Never calls Sonarr/Radarr/Plex live — reads only what's

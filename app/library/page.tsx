@@ -10,7 +10,7 @@ import {
 import { syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
-import { getUserLibrary, getLibraryStatusMap } from "@/lib/library/query";
+import { getUserLibrary, getLibraryStatusMap, summarizeLibrary } from "@/lib/library/query";
 import { getIncompleteFranchises } from "@/lib/library/franchises";
 import { MediaList, type MediaEntry } from "@/components/media-list";
 import { FranchiseRow } from "@/components/franchise-row";
@@ -72,13 +72,7 @@ export default async function LibraryPage({
   const totalFreeBytes = diskSpace.reduce((sum, d) => sum + d.freeSpace, 0);
 
   const library = await getUserLibrary(libraryOwnerId);
-  const owned = library.filter((i) => i.status === "owned");
-  const summary = {
-    movieCount: owned.filter((i) => i.mediaType === "movie").length,
-    tvCount: owned.filter((i) => i.mediaType === "tv").length,
-    totalBytes: owned.reduce((sum, i) => sum + (i.sizeBytes ?? 0), 0),
-    trackedCount: library.length - owned.length,
-  };
+  const summary = summarizeLibrary(library);
 
   const entries: MediaEntry[] = library.map((item) => ({
     titleId: item.titleId,

@@ -1,17 +1,26 @@
+import Link from "next/link";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { getTrendingAll, getUpcomingMovies } from "@/lib/tmdb/client";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getLibraryStatusMap, getLibrarySummary } from "@/lib/library/query";
+import { getPendingRequestCount, getMyPendingRequestCount } from "@/lib/requests/query";
+import { formatBytes } from "@/lib/format";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
 export default async function Home() {
   const viewer = await getViewerContext();
 
-  const [trending, upcoming] = await Promise.all([
+  const [trending, upcoming, librarySummary, pendingRequestCount] = await Promise.all([
     getTrendingAll().catch(() => ({ results: [] })),
     getUpcomingMovies().catch(() => ({ results: [] })),
+    viewer.libraryOwnerId ? getLibrarySummary(viewer.libraryOwnerId) : Promise.resolve(null),
+    viewer.session
+      ? viewer.isAdmin
+        ? getPendingRequestCount()
+        : getMyPendingRequestCount(viewer.userId)
+      : Promise.resolve(0),
   ]);
 
   const trendingItems = trending.results
@@ -62,6 +71,47 @@ export default async function Home() {
           or Radarr.
         </p>
       </section>
+
+      {viewer.session && (librarySummary || pendingRequestCount > 0) && (
+        <section className="mx-auto max-w-6xl px-6 pb-14">
+          <div className="rounded-2xl border border-border bg-bg-1 px-6 py-4">
+            <div className="flex flex-wrap gap-6 text-sm">
+              {librarySummary && librarySummary.movieCount > 0 && (
+                <div>
+                  <span className="font-display text-2xl text-text-primary">
+                    {librarySummary.movieCount}
+                  </span>
+                  <span className="ml-1.5 text-text-muted">movies</span>
+                </div>
+              )}
+              {librarySummary && librarySummary.tvCount > 0 && (
+                <div>
+                  <span className="font-display text-2xl text-text-primary">
+                    {librarySummary.tvCount}
+                  </span>
+                  <span className="ml-1.5 text-text-muted">TV shows</span>
+                </div>
+              )}
+              {librarySummary && librarySummary.totalBytes > 0 && (
+                <div>
+                  <span className="font-display text-2xl text-text-primary">
+                    {formatBytes(librarySummary.totalBytes)}
+                  </span>
+                  <span className="ml-1.5 text-text-muted">on disk</span>
+                </div>
+              )}
+              {pendingRequestCount > 0 && (
+                <Link href="/requests" className="transition-opacity hover:opacity-80">
+                  <span className="font-display text-2xl text-accent">{pendingRequestCount}</span>
+                  <span className="ml-1.5 text-text-muted">
+                    {viewer.isAdmin ? "pending requests" : "of your requests pending"}
+                  </span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {trendingItems.length > 0 && (
         <section className="mx-auto max-w-6xl px-6 pb-14">
