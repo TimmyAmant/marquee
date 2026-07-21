@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.17.0",
+    date: "2026-07-21",
+    changes: [
+      "Added a light/dark theme toggle (sidebar footer on desktop, nav drawer on mobile) — the app was dark-only before, with a full light palette added alongside it.",
+      "Fixed: pages with wide content (e.g. Discover's filter/genre chip rows) could stretch the whole layout wider than the screen on mobile, pushing the header's menu button and notification bell off-screen.",
+    ],
+  },
+  {
     version: "0.16.1",
     date: "2026-07-21",
     changes: [
