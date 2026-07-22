@@ -190,10 +190,6 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <div className="mb-10">
-        <SearchBar initialValue={query} />
-      </div>
-
       {!hasResults && (
         <p className="text-center text-text-secondary">
           No results for &ldquo;{query}&rdquo;.
