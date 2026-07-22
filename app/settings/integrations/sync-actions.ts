@@ -37,7 +37,6 @@ export async function syncNowAction(
 
   const failed = results.some((r) => r.status === "rejected");
 
-  revalidatePath("/library");
   revalidatePath("/settings/integrations");
   return failed
     ? { error: "Some integrations failed to sync — check their connection." }

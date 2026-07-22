@@ -34,7 +34,6 @@ export async function disconnectIntegrationAction(
   }
 
   revalidatePath("/settings/integrations");
-  revalidatePath("/library");
   revalidatePath("/discover");
   return { success: true };
 }

@@ -178,7 +178,6 @@ export async function addMovieToRadarr(
   if (result.success) {
     revalidatePath(`/title/movie/${tmdbId}`);
     revalidatePath("/discover");
-    revalidatePath("/library");
   }
   return result;
 }
@@ -195,7 +194,6 @@ export async function addSeriesToSonarr(
   if (result.success) {
     revalidatePath(`/title/tv/${tmdbId}`);
     revalidatePath("/discover");
-    revalidatePath("/library");
   }
   return result;
 }
@@ -296,7 +294,6 @@ export async function relinkTitleAction(
 
   revalidatePath(`/title/${mediaType}/${currentTmdbId}`);
   revalidatePath(`/title/${mediaType}/${newTmdbId}`);
-  revalidatePath("/library");
   revalidatePath("/discover");
   return { success: true, newTmdbId };
 }
@@ -388,6 +385,5 @@ export async function setTitleMonitoredAction(
     .catch(() => undefined);
 
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
-  revalidatePath("/library");
   return { success: true };
 }

@@ -66,13 +66,6 @@ export function MobileNav({
             {isSignedIn && (
               <>
                 <Link
-                  href="/library"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-2.5 transition-colors hover:bg-bg-2 hover:text-text-primary"
-                >
-                  My Library
-                </Link>
-                <Link
                   href="/favorites"
                   onClick={() => setOpen(false)}
                   className="rounded-lg px-3 py-2.5 transition-colors hover:bg-bg-2 hover:text-text-primary"

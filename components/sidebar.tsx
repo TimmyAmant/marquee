@@ -13,13 +13,6 @@ const NAV_ICONS = {
     />
   ),
   discover: <circle cx="12" cy="12" r="8" />,
-  library: (
-    <path
-      d="M6 4h9a2 2 0 0 1 2 2v14l-6.5-3.5L4 20V6a2 2 0 0 1 2-2Z"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  ),
   favorites: (
     <path
       d="m12 19-7-6.1C2.5 10.5 3 6.5 6.5 5.5c2-.6 3.8.2 5.5 2.3 1.7-2.1 3.5-2.9 5.5-2.3 3.5 1 4 5 1.5 7.4L12 19Z"
@@ -105,9 +98,6 @@ export async function Sidebar() {
 
         {session?.user && (
           <>
-            <SidebarLink href="/library" icon="library">
-              My Library
-            </SidebarLink>
             <SidebarLink href="/favorites" icon="favorites">
               Favorites
             </SidebarLink>

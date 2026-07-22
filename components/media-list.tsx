@@ -5,7 +5,6 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { PosterCard } from "@/components/poster-card";
 import { PosterGrid } from "@/components/poster-grid";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
-import { UnmonitorButton } from "@/components/unmonitor-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ResolutionBadge, DynamicRangeBadge, AudioBadge } from "@/components/resolution-badge";
@@ -132,7 +131,6 @@ export function MediaList({
   showTypeFilter = false,
   showStatusFilter = false,
   showSearch = false,
-  showUnmonitorAction = false,
   arrConfigured,
   emptyMessage = "Nothing found.",
   favoritedKeys,
@@ -144,7 +142,6 @@ export function MediaList({
   showTypeFilter?: boolean;
   showStatusFilter?: boolean;
   showSearch?: boolean;
-  showUnmonitorAction?: boolean;
   /** When provided, untracked titles get a quick "Add to Sonarr/Radarr" action. */
   arrConfigured?: { movie: boolean; tv: boolean };
   /** Shown when `entries` is empty — customize per page for a more specific,
@@ -363,17 +360,7 @@ export function MediaList({
       ) : view === "grid" ? (
         <PosterGrid>
           {sortedEntries.map((entry) => {
-            const canUnmonitor =
-              showUnmonitorAction &&
-              entry.source !== "plex" &&
-              entry.source !== "jellyfin" &&
-              (entry.status === "tracked_monitored" ||
-                entry.status === "tracked_downloading" ||
-                entry.status === "coming_soon") &&
-              entry.monitored !== false;
-
-            const canQuickAdd =
-              !canUnmonitor && !entry.status && arrConfigured?.[entry.mediaType];
+            const canQuickAdd = !entry.status && arrConfigured?.[entry.mediaType];
 
             return (
               <PosterCard
@@ -406,9 +393,7 @@ export function MediaList({
                   )
                 }
                 quickAction={
-                  canUnmonitor ? (
-                    <UnmonitorButton mediaType={entry.mediaType} tmdbId={entry.tmdbId} />
-                  ) : canQuickAdd ? (
+                  canQuickAdd ? (
                     <QuickAddButton mediaType={entry.mediaType} tmdbId={entry.tmdbId} />
                   ) : undefined
                 }

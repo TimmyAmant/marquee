@@ -147,7 +147,6 @@ async function approveRequestCore(requestId: string, adminUserId: string): Promi
 
   revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/discover");
-  revalidatePath("/library");
   return { success: true };
 }
 
