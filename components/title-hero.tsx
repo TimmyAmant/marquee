@@ -7,6 +7,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
 import type { ArrTrackingInfo } from "@/lib/integrations/status";
+import type { CreditEntry } from "@/lib/title-meta";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -21,14 +22,36 @@ export type TitleMeta = {
   network: string | null;
 };
 
+export type TitleSidebarData = {
+  releaseDateLabel: string | null;
+  nextAirDateLabel: string | null;
+  originalLanguageLabel: string | null;
+  productionCountry: { name: string; flag: string } | null;
+  watchProviders: { name: string; logoPath: string | null }[];
+};
+
+function SidebarRow({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 first:pt-0">
+      <span className="text-text-muted">{label}</span>
+      <span className="text-right text-text-primary">{value}</span>
+    </div>
+  );
+}
+
 export function TitleHero({
   mediaType,
   tmdbId,
   name,
   overview,
+  tagline,
   posterPath,
   backdropPath,
   meta,
+  sidebar,
+  credits,
+  keywords,
   status,
   configured,
   links,
@@ -43,9 +66,13 @@ export function TitleHero({
   tmdbId: number;
   name: string;
   overview: string | null;
+  tagline?: string | null;
   posterPath: string | null;
   backdropPath: string | null;
   meta: TitleMeta;
+  sidebar: TitleSidebarData;
+  credits: CreditEntry[];
+  keywords: string[];
   status: LibraryStatus;
   configured: boolean;
   links: ExternalLinksData;
@@ -57,14 +84,12 @@ export function TitleHero({
   tvdbId?: number | null;
   arrTracking?: ArrTrackingInfo | null;
 }) {
-  const metaParts = [
-    meta.runtimeLabel,
-    meta.ratingPercent !== null ? `★ ${meta.ratingPercent}%` : null,
-    meta.genres.length > 0 ? meta.genres.join(", ") : null,
-    meta.yearRange,
-    meta.statusLabel,
-    meta.network,
-  ].filter((v): v is string => Boolean(v));
+  // Rating/status/network live in the sidebar instead — this line is just
+  // the quick facts, matching the reference layout's short line under the
+  // title (runtime | genres | year), not a catch-all for every field.
+  const metaParts = [meta.runtimeLabel, meta.genres.length > 0 ? meta.genres.join(", ") : null, meta.yearRange].filter(
+    (v): v is string => Boolean(v),
+  );
   const backdrop = tmdbImageUrl(backdropPath, "original");
   const poster = tmdbImageUrl(posterPath, "w500");
 
@@ -113,32 +138,116 @@ export function TitleHero({
           />
         </div>
 
-        {overview && (
-          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-text-secondary">
-            {overview}
-          </p>
-        )}
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row">
+          <div className="min-w-0 flex-1">
+            {tagline && <p className="italic text-text-secondary">{tagline}</p>}
 
-        <div className="mt-5">
-          <ExternalLinks links={links} />
+            {overview && (
+              <>
+                <h2 className="mt-5 font-display text-lg text-text-primary">Overview</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">{overview}</p>
+              </>
+            )}
+
+            {credits.length > 0 && (
+              <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
+                {credits.map((credit, i) => (
+                  <div key={i}>
+                    <p className="text-sm font-semibold text-text-primary">{credit.role}</p>
+                    <p className="text-sm text-text-secondary">{credit.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {keywords.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {keywords.map((keyword) => (
+                  <span
+                    key={keyword}
+                    className="rounded-full border border-border px-3 py-1 text-xs text-text-secondary"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6">
+              <ExternalLinks links={links} />
+            </div>
+
+            {isAdmin && arrTracking && (
+              <div className="mt-4">
+                <ArrTrackingControls
+                  mediaType={mediaType}
+                  tmdbId={tmdbId}
+                  tvdbId={tvdbId ?? null}
+                  monitored={arrTracking.monitored}
+                />
+              </div>
+            )}
+
+            {isAdmin && status !== "untracked" && (
+              <div className="mt-4">
+                <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
+              </div>
+            )}
+          </div>
+
+          <aside className="w-full shrink-0 lg:w-72">
+            <div className="rounded-2xl border border-border bg-bg-1 p-5 text-sm">
+              {meta.ratingPercent !== null && (
+                <div className="flex items-center gap-1.5 border-b border-border pb-2.5 text-accent">
+                  <span>★</span>
+                  <span className="font-medium">{meta.ratingPercent}%</span>
+                </div>
+              )}
+              <SidebarRow label="Status" value={meta.statusLabel} />
+              <SidebarRow
+                label={mediaType === "movie" ? "Release Date" : "First Air Date"}
+                value={sidebar.releaseDateLabel}
+              />
+              <SidebarRow label="Next Air Date" value={sidebar.nextAirDateLabel} />
+              <SidebarRow label="Original Language" value={sidebar.originalLanguageLabel} />
+              <SidebarRow
+                label="Production Country"
+                value={sidebar.productionCountry ? `${sidebar.productionCountry.flag} ${sidebar.productionCountry.name}` : null}
+              />
+              <SidebarRow label="Network" value={meta.network} />
+
+              {sidebar.watchProviders.length > 0 && (
+                <div className="border-t border-border pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    Currently Streaming On
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {sidebar.watchProviders.map((provider) => {
+                      const logo = tmdbImageUrl(provider.logoPath, "w92");
+                      return (
+                        <div
+                          key={provider.name}
+                          title={provider.name}
+                          className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-white"
+                        >
+                          {logo && (
+                            <Image
+                              src={logo}
+                              alt={provider.name}
+                              width={32}
+                              height={32}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
         </div>
-
-        {isAdmin && arrTracking && (
-          <div className="mt-4">
-            <ArrTrackingControls
-              mediaType={mediaType}
-              tmdbId={tmdbId}
-              tvdbId={tvdbId ?? null}
-              monitored={arrTracking.monitored}
-            />
-          </div>
-        )}
-
-        {isAdmin && status !== "untracked" && (
-          <div className="mt-4">
-            <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
-          </div>
-        )}
       </div>
     </div>
   );

@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.20.0",
+    date: "2026-07-22",
+    changes: [
+      "Redesigned the movie/show detail page into a two-column layout — tagline, overview, Director/Screenplay (or Creator/Executive Producer) credits, and keyword tags on the left, with a new sidebar showing rating, status, release/air dates, original language, production country, network, and (when available) which streaming services currently carry it.",
+      "Recommendations on a title page now show a MOVIE/SERIES badge on each poster, matching Discover.",
+      "Fixed: a TV show's season list opened its newest season automatically — every season now starts collapsed until you click it.",
+    ],
+  },
+  {
     version: "0.19.1",
     date: "2026-07-22",
     changes: [

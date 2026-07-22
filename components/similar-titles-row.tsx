@@ -53,6 +53,7 @@ export function SimilarTitlesRow({
                 posterPath={item.posterPath}
                 name={item.name}
                 year={item.year}
+                typeLabel={item.mediaType === "movie" ? "MOVIE" : "SERIES"}
                 badge={status && <StatusBadge status={status} compact />}
                 status={status}
                 favoriteAction={

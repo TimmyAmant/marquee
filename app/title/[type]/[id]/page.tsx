@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { TitleHero, type TitleMeta } from "@/components/title-hero";
+import { TitleHero, type TitleMeta, type TitleSidebarData } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
 import { SimilarTitlesRow, type SimilarTitle } from "@/components/similar-titles-row";
@@ -7,8 +7,8 @@ import { FranchiseRow, type FranchiseItem } from "@/components/franchise-row";
 import { SeasonAccordion } from "@/components/season-episode-list";
 import { FileDetailsSection } from "@/components/file-details-section";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
-import { formatRuntime } from "@/lib/format";
-import { computeYearRange, relabelTvStatus } from "@/lib/title-meta";
+import { formatRuntime, formatDateLabel, languageLabel, countryCodeToFlagEmoji } from "@/lib/format";
+import { computeYearRange, relabelTvStatus, extractMovieCredits, extractTvCredits } from "@/lib/title-meta";
 import { getTitleLibraryStatus, getSonarrSeasonCompleteness, getArrTrackingInfo } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { findTrailer, getCollection } from "@/lib/tmdb/client";
@@ -218,6 +218,36 @@ export default async function TitlePage({
     network: type === "tv" ? ((raw as TmdbTvDetails | null)?.networks?.[0]?.name ?? null) : null,
   };
 
+  const credits =
+    type === "movie"
+      ? extractMovieCredits((raw as TmdbMovieDetails | null)?.credits?.crew ?? [])
+      : extractTvCredits(
+          (raw as TmdbTvDetails | null)?.created_by ?? [],
+          (raw as TmdbTvDetails | null)?.credits?.crew ?? [],
+        );
+
+  const keywords =
+    type === "movie"
+      ? ((raw as TmdbMovieDetails | null)?.keywords?.keywords ?? []).map((k) => k.name)
+      : ((raw as TmdbTvDetails | null)?.keywords?.results ?? []).map((k) => k.name);
+
+  const watchProviders = (raw?.["watch/providers"]?.results?.US?.flatrate ?? []).map((p) => ({
+    name: p.provider_name,
+    logoPath: p.logo_path,
+  }));
+
+  const productionCountryRaw = raw?.production_countries?.[0];
+  const titleSidebar: TitleSidebarData = {
+    releaseDateLabel: formatDateLabel(title.releaseDate || title.firstAirDate),
+    nextAirDateLabel:
+      type === "tv" ? formatDateLabel((raw as TmdbTvDetails | null)?.next_episode_to_air?.air_date) : null,
+    originalLanguageLabel: languageLabel(raw?.original_language),
+    productionCountry: productionCountryRaw
+      ? { name: productionCountryRaw.name, flag: countryCodeToFlagEmoji(productionCountryRaw.iso_3166_1) }
+      : null,
+    watchProviders,
+  };
+
   return (
     <div>
       <TitleHero
@@ -225,9 +255,13 @@ export default async function TitlePage({
         tmdbId={tmdbId}
         name={title.name}
         overview={title.overview}
+        tagline={raw?.tagline}
         posterPath={title.posterPath}
         backdropPath={title.backdropPath}
         meta={titleMeta}
+        sidebar={titleSidebar}
+        credits={credits}
+        keywords={keywords}
         status={libraryStatus.status}
         configured={libraryStatus.configured}
         links={{

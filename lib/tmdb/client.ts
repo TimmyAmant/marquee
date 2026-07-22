@@ -322,6 +322,34 @@ export interface TmdbCastMember {
   order: number;
 }
 
+export interface TmdbCrewMember {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface TmdbKeywordRef {
+  id: number;
+  name: string;
+}
+
+export interface TmdbWatchProviderEntry {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+}
+
+export interface TmdbWatchProviders {
+  results?: Record<string, { link?: string; flatrate?: TmdbWatchProviderEntry[] }>;
+}
+
+export interface TmdbProductionCountry {
+  iso_3166_1: string;
+  name: string;
+}
+
 export interface TmdbRecommendationItem {
   id: number;
   title?: string;
@@ -349,6 +377,7 @@ export interface TmdbMovieDetails {
   id: number;
   title: string;
   overview: string;
+  tagline?: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
   release_date: string;
@@ -356,19 +385,22 @@ export interface TmdbMovieDetails {
   imdb_id: string | null;
   videos?: { results: TmdbVideo[] };
   external_ids?: TmdbMovieExternalIds;
-  credits?: { cast: TmdbCastMember[] };
+  credits?: { cast: TmdbCastMember[]; crew: TmdbCrewMember[] };
   recommendations?: { results: TmdbRecommendationItem[] };
   production_companies?: TmdbCompanyRef[];
+  production_countries?: TmdbProductionCountry[];
   belongs_to_collection?: TmdbCollectionRef | null;
   runtime?: number | null;
   genres?: { id: number; name: string }[];
   vote_average?: number;
   original_language?: string;
+  keywords?: { keywords: TmdbKeywordRef[] };
+  "watch/providers"?: TmdbWatchProviders;
 }
 
 export function getMovieDetails(id: number) {
   return tmdbFetch<TmdbMovieDetails>(`/movie/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations",
+    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers",
   });
 }
 
@@ -405,6 +437,7 @@ export interface TmdbTvDetails {
   id: number;
   name: string;
   overview: string;
+  tagline?: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
   first_air_date: string;
@@ -412,20 +445,25 @@ export interface TmdbTvDetails {
   seasons?: TmdbSeasonSummary[];
   videos?: { results: TmdbVideo[] };
   external_ids?: TmdbTvExternalIds;
-  credits?: { cast: TmdbCastMember[] };
+  credits?: { cast: TmdbCastMember[]; crew: TmdbCrewMember[] };
   recommendations?: { results: TmdbRecommendationItem[] };
   production_companies?: TmdbCompanyRef[];
+  production_countries?: TmdbProductionCountry[];
   networks?: TmdbCompanyRef[];
   episode_run_time?: number[];
   last_air_date?: string;
+  next_episode_to_air?: { air_date: string } | null;
+  created_by?: { id: number; name: string }[];
   genres?: { id: number; name: string }[];
   vote_average?: number;
   original_language?: string;
+  keywords?: { results: TmdbKeywordRef[] };
+  "watch/providers"?: TmdbWatchProviders;
 }
 
 export function getTvDetails(id: number) {
   return tmdbFetch<TmdbTvDetails>(`/tv/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations",
+    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers",
   });
 }
 

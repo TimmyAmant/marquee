@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getSeasonEpisodesAction, type SeasonEpisodesResult } from "@/app/title/[type]/[id]/season-actions";
@@ -23,7 +23,10 @@ export function SeasonAccordion({
     .filter((s) => s.episode_count > 0)
     .sort((a, b) => b.season_number - a.season_number);
 
-  const [openSeason, setOpenSeason] = useState<number | null>(real[0]?.season_number ?? null);
+  // Every season starts collapsed — nothing auto-opens, including the
+  // newest one, so landing on a show's page never dumps a full episode
+  // list on screen before you've asked for it.
+  const [openSeason, setOpenSeason] = useState<number | null>(null);
   const [cache, setCache] = useState<Map<number, SeasonEpisodesResult>>(new Map());
   const [isPending, startTransition] = useTransition();
 
@@ -34,11 +37,6 @@ export function SeasonAccordion({
       setCache((prev) => new Map(prev).set(seasonNumber, data));
     });
   }
-
-  useEffect(() => {
-    if (openSeason != null) loadSeason(openSeason);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (real.length === 0) return null;
 
