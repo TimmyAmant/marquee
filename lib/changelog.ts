@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.5",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: Movies/Series could fall short of the full 5 rows (e.g. only 3) when \"Hide titles you already track\" filtered out most of a page's results for an account with a large library — fetches a much bigger batch specifically when that filter is on.",
+    ],
+  },
+  {
     version: "0.18.4",
     date: "2026-07-21",
     changes: [

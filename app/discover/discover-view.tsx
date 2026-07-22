@@ -140,11 +140,11 @@ export async function DiscoverView({
   // Fetch several underlying TMDb pages per screen, not just one. When "hide
   // titles you already track" removes a lot of matches (as it will for an
   // account with a large synced library), filtering a single 20-item page
-  // can leave the grid nearly empty no matter which page you're on. Also
-  // gives PaginatedPosterGrid enough headroom to fill a full 5 rows even on
-  // a very wide screen (5 rows × up to ~12 columns = 60 cards) without
-  // running out of items to show.
-  const BATCH_SIZE = 4;
+  // can leave the grid nearly empty no matter which page you're on — fetch
+  // a much bigger batch in that case specifically, rather than inflating
+  // every request, so PaginatedPosterGrid still has enough survivors left
+  // to fill a full 5 rows even on a very wide screen.
+  const BATCH_SIZE = hideOwned ? 10 : 4;
   const startTmdbPage = (page - 1) * BATCH_SIZE + 1;
   const tmdbPages = Array.from({ length: BATCH_SIZE }, (_, i) => startTmdbPage + i);
   const emptyResponse = { results: [], total_pages: 1, total_results: 0 };
