@@ -433,34 +433,6 @@ export function findTrailer(videos: { results: TmdbVideo[] } | undefined): TmdbV
   return trailers.find((v) => v.official) ?? trailers[0] ?? null;
 }
 
-export interface TmdbTrendingResult {
-  id: number;
-  media_type: "movie" | "tv";
-  title?: string;
-  name?: string;
-  poster_path: string | null;
-  release_date?: string;
-  first_air_date?: string;
-}
-
-export function getTrendingAll(page = 1) {
-  return tmdbFetch<{ results: TmdbTrendingResult[] }>("/trending/all/week", { page });
-}
-
-export interface TmdbUpcomingResult {
-  id: number;
-  title: string;
-  poster_path: string | null;
-  release_date: string;
-}
-
-export function getUpcomingMovies(page = 1) {
-  return tmdbFetch<{ results: TmdbUpcomingResult[] }>("/movie/upcoming", {
-    page,
-    region: "US",
-  });
-}
-
 export interface TmdbFindResult {
   id: number;
   name: string;

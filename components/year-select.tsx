@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 export function YearSelect({
   currentYear,
   currentParams,
+  basePath = "/discover",
 }: {
   currentYear: string | undefined;
   currentParams: Record<string, string | undefined>;
+  basePath?: string;
 }) {
   const router = useRouter();
   const thisYear = new Date().getFullYear();
@@ -20,7 +22,7 @@ export function YearSelect({
     }
     if (year) params.set("year", year);
     const qs = params.toString();
-    router.push(`/discover${qs ? `?${qs}` : ""}`);
+    router.push(`${basePath}${qs ? `?${qs}` : ""}`);
   }
 
   return (

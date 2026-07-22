@@ -151,17 +151,6 @@ export async function getPendingRequestCount(): Promise<number> {
   return rows.length;
 }
 
-/** A member's own pending-review count, for a homepage stat tile — cheaper
- * than getMyRequests since it skips that function's per-request live
- * library-status enrichment, which this doesn't need just to count. */
-export async function getMyPendingRequestCount(userId: string): Promise<number> {
-  const rows = await db
-    .select({ id: requests.id })
-    .from(requests)
-    .where(and(eq(requests.requestedByUserId, userId), eq(requests.status, "pending")));
-  return rows.length;
-}
-
 /** Whether this user already has a non-rejected request for this title —
  * used to show "Requested" instead of the request button again, and to
  * block duplicate requests server-side. Rejected requests can be re-sent. */

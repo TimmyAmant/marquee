@@ -5,14 +5,21 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { getPendingRequestCount } from "@/lib/requests/query";
 
 const NAV_ICONS = {
-  home: (
+  discover: <circle cx="12" cy="12" r="8" />,
+  movies: (
     <path
-      d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-8.5Z"
+      d="M4 6h16v12H4V6ZM4 6l2.5 4M8 6l2.5 4M12 6l2.5 4M16 6l2.5 4"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
   ),
-  discover: <circle cx="12" cy="12" r="8" />,
+  series: (
+    <path
+      d="M4 5h16v11H4V5ZM9 20h6M4 16l3-3M20 16l-3-3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
   favorites: (
     <path
       d="m12 19-7-6.1C2.5 10.5 3 6.5 6.5 5.5c2-.6 3.8.2 5.5 2.3 1.7-2.1 3.5-2.9 5.5-2.3 3.5 1 4 5 1.5 7.4L12 19Z"
@@ -89,11 +96,14 @@ export async function Sidebar() {
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
-        <SidebarLink href="/" icon="home">
-          Home
-        </SidebarLink>
         <SidebarLink href="/discover" icon="discover">
           Discover
+        </SidebarLink>
+        <SidebarLink href="/movies" icon="movies">
+          Movies
+        </SidebarLink>
+        <SidebarLink href="/series" icon="series">
+          Series
         </SidebarLink>
 
         {session?.user && (

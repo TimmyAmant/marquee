@@ -29,28 +29,6 @@ export async function getRecentNotifications(userId: string, limit = 20) {
     .limit(limit);
 }
 
-/**
- * For a homepage "Recent Downloads" feed — "downloaded" notifications only
- * ever land on the account whose Sonarr/Radarr webhook URL fired (i.e. the
- * one holding those credentials, the library owner), not on whichever
- * household member happens to be viewing, so this is always queried against
- * libraryOwnerId rather than the viewer's own userId.
- */
-export async function getRecentDownloads(libraryOwnerId: string, limit = 5) {
-  return db
-    .select({
-      id: notifications.id,
-      mediaType: notifications.mediaType,
-      tmdbId: notifications.tmdbId,
-      title: notifications.title,
-      createdAt: notifications.createdAt,
-    })
-    .from(notifications)
-    .where(and(eq(notifications.userId, libraryOwnerId), eq(notifications.eventType, "downloaded")))
-    .orderBy(desc(notifications.createdAt))
-    .limit(limit);
-}
-
 export async function createNotification(input: {
   userId: string;
   mediaType: MediaType;

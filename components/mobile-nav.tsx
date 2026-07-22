@@ -62,6 +62,20 @@ export function MobileNav({
             >
               Discover
             </Link>
+            <Link
+              href="/movies"
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition-colors hover:bg-bg-2 hover:text-text-primary"
+            >
+              Movies
+            </Link>
+            <Link
+              href="/series"
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition-colors hover:bg-bg-2 hover:text-text-primary"
+            >
+              Series
+            </Link>
 
             {isSignedIn && (
               <>

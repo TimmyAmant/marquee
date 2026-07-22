@@ -1,9 +1,9 @@
 import { DiscoverView, type DiscoverSearchParams } from "@/app/discover/discover-view";
 
-export default function DiscoverPage({
+export default function SeriesPage({
   searchParams,
 }: {
   searchParams: Promise<DiscoverSearchParams>;
 }) {
-  return <DiscoverView searchParams={searchParams} basePath="/discover" />;
+  return <DiscoverView searchParams={searchParams} lockedType="tv" basePath="/series" />;
 }
