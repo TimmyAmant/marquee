@@ -30,6 +30,7 @@ export function PosterCard({
   status,
   quickAction,
   favoriteAction,
+  filePath,
 }: {
   href: string;
   posterPath: string | null;
@@ -48,13 +49,20 @@ export function PosterCard({
   /** Rendered next to the year/subtitle line — a sibling of that line's own
    * link, not nested inside it, so a <button> never ends up inside an <a>. */
   favoriteAction?: React.ReactNode;
+  /** On-disk file location, shown as a native hover tooltip over the poster
+   * art — lets you spot a wrong Plex/Jellyfin/Sonarr/Radarr match (wrong
+   * artwork/info for what's actually on disk) while scanning a grid,
+   * without adding a permanently-visible line to every card. Only
+   * meaningful for owned/tracked titles backed by a local file — omitted
+   * (or null) elsewhere, e.g. Discover's TMDb-only cards. */
+  filePath?: string | null;
 }) {
   const src = tmdbImageUrl(posterPath, "w342");
 
   return (
     <div className="group">
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-bg-2 ring-1 ring-border transition-all group-hover:-translate-y-1 group-hover:ring-border-strong">
-        <Link href={href} className="absolute inset-0 z-0">
+        <Link href={href} className="absolute inset-0 z-0" title={filePath ?? undefined}>
           {src ? (
             <Image
               src={src}

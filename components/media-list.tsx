@@ -394,6 +394,7 @@ export function MediaList({
                   )
                 }
                 status={entry.status}
+                filePath={entry.filePath}
                 favoriteAction={
                   showFavorite && (
                     <FavoriteButton
