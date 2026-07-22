@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.17.1",
+    date: "2026-07-21",
+    changes: [
+      "My Library's grid view now shows a title's on-disk file location as a hover tooltip on the poster — useful for spotting a wrong Plex/Jellyfin/Sonarr/Radarr match (wrong artwork/info for what's actually the file on disk) without switching to table view.",
+    ],
+  },
+  {
     version: "0.17.0",
     date: "2026-07-21",
     changes: [
