@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.17.2",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: TV shows owned via Plex never showed a file location in File details, since Plex only reports a path per-episode, not for the show itself — a location (the folder every episode shares) is now derived automatically at sync time.",
+      "Fixed: a Sonarr-tracked TV show that was only partway through downloading could show a file location/size as if it were already complete — location now only shows once a series is fully owned, matching how movies already worked.",
+    ],
+  },
+  {
     version: "0.17.1",
     date: "2026-07-21",
     changes: [
