@@ -45,7 +45,7 @@ const NAV_ICONS = {
 
 function NavIcon({ name }: { name: keyof typeof NAV_ICONS }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-[18px] w-[18px] shrink-0">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-5 w-5 shrink-0">
       {NAV_ICONS[name]}
     </svg>
   );
@@ -63,7 +63,7 @@ function SidebarLink({
   return (
     <Link
       href={href}
-      className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-2 hover:text-text-primary"
+      className="relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-base text-text-secondary transition-colors hover:bg-bg-2 hover:text-text-primary"
     >
       <NavIcon name={icon} />
       {children}
@@ -126,14 +126,14 @@ export async function Sidebar() {
         {session?.user ? (
           <Link
             href="/settings"
-            className="min-w-0 flex-1 truncate rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-2"
+            className="min-w-0 flex-1 truncate rounded-lg px-3 py-2.5 text-base text-text-primary transition-colors hover:bg-bg-2"
           >
             {session.user.name || session.user.username}
           </Link>
         ) : (
           <Link
             href="/login"
-            className="min-w-0 flex-1 rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-2"
+            className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-base text-text-primary transition-colors hover:bg-bg-2"
           >
             Sign in
           </Link>

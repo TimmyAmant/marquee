@@ -11,6 +11,19 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.0",
+    date: "2026-07-21",
+    changes: [
+      "Removed the My Library page and its \"stop monitoring\" action — the app no longer has a dedicated page for browsing what you already own.",
+      "Removed the homepage — the site now goes straight to Discover instead.",
+      "Added Movies and Series pages, each working like Discover's old browse grid but scoped to just movies or just TV.",
+      "Redesigned Discover into a page of browsable rows — Recently Added, Trending, Popular Movies, Movie Genres, Upcoming Movies, Studios, Popular Series, Series Genres, Upcoming Series, and Networks — instead of a single filterable grid (that grid now lives at Movies/Series).",
+      "Movies/Series: the type, sort, and genre filters are now dropdown menus instead of button rows.",
+      "Discover, Movies, and Series now use the full page width instead of a centered column with empty space on the sides.",
+      "The left sidebar's nav text is now larger and easier to click.",
+    ],
+  },
+  {
     version: "0.17.2",
     date: "2026-07-21",
     changes: [
