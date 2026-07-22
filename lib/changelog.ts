@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.6",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: Discover's Studios and Networks logos (e.g. Warner Bros. Pictures) could render as a near-blank shape — the flatten-to-white-silhouette effect crushed some logos' fine detail. Logos now show in their own original colors on a white backdrop instead.",
+    ],
+  },
+  {
     version: "0.18.5",
     date: "2026-07-21",
     changes: [
