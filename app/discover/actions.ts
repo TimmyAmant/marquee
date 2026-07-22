@@ -3,7 +3,18 @@
 import { discoverMovies, discoverTv } from "@/lib/tmdb/client";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { fetchDiscoverItems, type DiscoverFetchParams, type DiscoverCardData } from "@/app/discover/fetch-items";
 import type { MediaType } from "@/lib/db/schema";
+
+/** Infinite-scroll "load more" for /movies and /series — same per-page
+ * fetch+enrich logic the initial server render uses (see fetch-items.ts),
+ * just triggered by a client-side IntersectionObserver instead of a
+ * server-rendered "Next" link. */
+export async function loadMoreDiscoverItems(
+  params: DiscoverFetchParams,
+): Promise<{ items: DiscoverCardData[]; hasNextPage: boolean }> {
+  return fetchDiscoverItems(params);
+}
 
 export type SurpriseMeParams = {
   displayType: "movie" | "tv" | "all";

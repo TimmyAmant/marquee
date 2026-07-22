@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.19.0",
+    date: "2026-07-22",
+    changes: [
+      "Movies and Series now load endlessly as you scroll instead of paging through with a Next button.",
+      "Fixed: clicking \"Add to Sonarr/Radarr\" could leave a green \"Added\" label showing indefinitely on a poster even after it was no longer accurate, only clearing on a full page reload.",
+    ],
+  },
+  {
     version: "0.18.6",
     date: "2026-07-21",
     changes: [

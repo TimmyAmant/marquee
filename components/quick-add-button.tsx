@@ -25,12 +25,15 @@ export function QuickAddButton({
     }
   }, [state?.success, router]);
 
+  // No persistent "Added" pill here — this button has no way to update the
+  // poster's real status badge (a sibling prop the parent computes from
+  // server data), so claiming a confirmed state indefinitely was actively
+  // misleading whenever router.refresh() didn't immediately re-flow this
+  // specific card: it kept reading "Added" long after the click, correcting
+  // itself only on a full reload. Hiding on success instead defers entirely
+  // to the real badge, which the refresh above still updates as before.
   if (state?.success) {
-    return (
-      <span className="block rounded-full bg-owned-bg px-2 py-1 text-center text-[10px] font-medium text-owned">
-        Added
-      </span>
-    );
+    return null;
   }
 
   return (
