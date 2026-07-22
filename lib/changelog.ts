@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.2",
+    date: "2026-07-22",
+    changes: [
+      "Fixed: Movies/Series could show the same title twice back to back while scrolling — TMDb's popularity ranking can shift slightly between the initial load and each further page, letting one title land in both. Duplicates are now filtered out as they load.",
+    ],
+  },
+  {
     version: "0.21.1",
     date: "2026-07-22",
     changes: [

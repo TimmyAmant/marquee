@@ -73,16 +73,27 @@ export async function fetchDiscoverItems(
     ),
   );
 
-  const rawItems = responses.flatMap((r) => r.results).map((item) => ({
-    tmdbId: item.id,
-    mediaType: lockedType,
-    name: item.title || item.name || "",
-    posterPath: item.poster_path,
-    year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
-    overview: item.overview || null,
-    rating: item.vote_average ?? null,
-    genreId: item.genre_ids?.[0] ?? null,
-  }));
+  // TMDb's popularity ranking shifts between calls, so the same title can
+  // land on two of these pages at once even though they're fetched together
+  // — dedupe by id before anything downstream sees them.
+  const seenIds = new Set<number>();
+  const rawItems = responses
+    .flatMap((r) => r.results)
+    .filter((item) => {
+      if (seenIds.has(item.id)) return false;
+      seenIds.add(item.id);
+      return true;
+    })
+    .map((item) => ({
+      tmdbId: item.id,
+      mediaType: lockedType,
+      name: item.title || item.name || "",
+      posterPath: item.poster_path,
+      year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
+      overview: item.overview || null,
+      rating: item.vote_average ?? null,
+      genreId: item.genre_ids?.[0] ?? null,
+    }));
 
   const maxTotalPages = Math.max(1, ...responses.map((r) => r.total_pages));
   const hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, 500);

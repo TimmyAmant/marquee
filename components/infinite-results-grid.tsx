@@ -48,7 +48,15 @@ export function InfiniteResultsGrid({
         const page = nextPageRef.current;
         startTransition(async () => {
           const result = await loadMoreDiscoverItems({ ...fetchParams, page });
-          setItems((prev) => [...prev, ...result.items]);
+          setItems((prev) => {
+            // TMDb's popularity ranking shifts between separate requests, so
+            // a title already shown in an earlier batch can reappear at the
+            // start of this one — drop anything already on screen instead
+            // of showing it twice back to back.
+            const seen = new Set(prev.map((i) => `${i.mediaType}:${i.tmdbId}`));
+            const fresh = result.items.filter((i) => !seen.has(`${i.mediaType}:${i.tmdbId}`));
+            return [...prev, ...fresh];
+          });
           setHasNextPage(result.hasNextPage);
           nextPageRef.current = page + 1;
         });
