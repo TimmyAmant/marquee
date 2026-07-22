@@ -31,6 +31,7 @@ export function PosterCard({
   quickAction,
   favoriteAction,
   filePath,
+  typeLabel,
 }: {
   href: string;
   posterPath: string | null;
@@ -56,6 +57,11 @@ export function PosterCard({
    * meaningful for owned/tracked titles backed by a local file — omitted
    * (or null) elsewhere, e.g. Discover's TMDb-only cards. */
   filePath?: string | null;
+  /** Corner pill reading "MOVIE" or "SERIES" — Discover's mixed-media rows
+   * (Trending) use this so a title's type is clear without opening it;
+   * single-type rows/grids elsewhere have no need for it. Shares the
+   * top-left corner with `rating`, so pass at most one of the two. */
+  typeLabel?: "MOVIE" | "SERIES";
 }) {
   const src = tmdbImageUrl(posterPath, "w342");
 
@@ -78,11 +84,22 @@ export function PosterCard({
           )}
         </Link>
 
-        {typeof rating === "number" && rating > 0 && (
-          <div className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-full bg-bg-0/80 px-2 py-0.5 text-[10px] font-medium text-accent backdrop-blur-sm">
-            <span>★</span>
-            {rating.toFixed(1)}
+        {typeLabel ? (
+          <div
+            className={`pointer-events-none absolute left-1.5 top-1.5 z-10 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white ${
+              typeLabel === "MOVIE" ? "bg-blue-600/90" : "bg-fuchsia-600/90"
+            }`}
+          >
+            {typeLabel}
           </div>
+        ) : (
+          typeof rating === "number" &&
+          rating > 0 && (
+            <div className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-full bg-bg-0/80 px-2 py-0.5 text-[10px] font-medium text-accent backdrop-blur-sm">
+              <span>★</span>
+              {rating.toFixed(1)}
+            </div>
+          )
         )}
         {badge && <div className="pointer-events-none absolute right-1.5 top-1.5 z-10">{badge}</div>}
         {status && (

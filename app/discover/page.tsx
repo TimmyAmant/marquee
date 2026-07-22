@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
-import { PosterRow, PosterRowItem } from "@/components/poster-row";
-import { StudioChip } from "@/components/studio-chip";
-import { GenreRow } from "@/components/genre-row";
+import { PosterRowItem } from "@/components/poster-row";
+import { Shelf } from "@/components/shelf";
+import { GenreCard, genreColorClass } from "@/components/genre-card";
+import { LogoCard } from "@/components/logo-card";
 import {
   getTrendingAll,
   getUpcomingMovies,
@@ -14,25 +14,30 @@ import {
   getTvGenres,
   getCompanyDetails,
   getNetworkDetails,
+  type TmdbGenre,
 } from "@/lib/tmdb/client";
 import { CURATED_STUDIO_IDS, CURATED_NETWORK_IDS } from "@/lib/tmdb/curated-companies";
 import { getLibraryStatusMap, getRecentlyAdded } from "@/lib/library/query";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 
-/** A row title paired with a "See all" link to the fuller browse page —
- * Popular/Genres rows point at /movies or /series, Trending/Upcoming/Recently
- * Added rows have no equivalent full listing so they render without one. */
-function RowHeading({ title, href }: { title: string; href?: string }) {
-  return (
-    <div className="mb-4 flex items-center justify-between">
-      <h2 className="font-display text-xl text-text-primary">{title}</h2>
-      {href && (
-        <Link href={href} className="text-sm text-text-secondary transition-colors hover:text-accent">
-          See all
-        </Link>
-      )}
-    </div>
+async function fetchMovieGenreBackdrops(genres: TmdbGenre[]) {
+  return Promise.all(
+    genres.map((g) =>
+      discoverMovies({ genreId: g.id, sort: "popularity", page: 1 })
+        .then((r) => r.results[0]?.backdrop_path ?? null)
+        .catch(() => null),
+    ),
+  );
+}
+
+async function fetchTvGenreBackdrops(genres: TmdbGenre[]) {
+  return Promise.all(
+    genres.map((g) =>
+      discoverTv({ genreId: g.id, sort: "popularity", page: 1 })
+        .then((r) => r.results[0]?.backdrop_path ?? null)
+        .catch(() => null),
+    ),
   );
 }
 
@@ -80,6 +85,13 @@ export default async function DiscoverPage() {
     .slice(0, 20);
   const upcomingSeriesItems = upcomingSeries.results.slice(0, 20);
 
+  const movieGenreList = movieGenres.genres.slice(0, 12);
+  const tvGenreList = tvGenres.genres.slice(0, 12);
+  const [movieGenreBackdrops, tvGenreBackdropList] = await Promise.all([
+    fetchMovieGenreBackdrops(movieGenreList),
+    fetchTvGenreBackdrops(tvGenreList),
+  ]);
+
   const statusMap = viewer.libraryOwnerId
     ? await getLibraryStatusMap(viewer.libraryOwnerId, [
         ...trendingItems.map((i) => ({ mediaType: i.media_type as MediaType, tmdbId: i.id })),
@@ -105,170 +117,180 @@ export default async function DiscoverPage() {
 
       <div className="mx-auto flex max-w-6xl flex-col gap-14 px-6 py-12">
         {recentlyAdded.length > 0 && (
-          <section>
-            <RowHeading title="Recently Added" />
-            <PosterRow>
-              {recentlyAdded.map((item) => (
-                <PosterRowItem key={item.titleId}>
-                  <PosterCard
-                    href={`/title/${item.mediaType}/${item.tmdbId}`}
-                    posterPath={item.posterPath}
-                    name={item.name}
-                    year={item.year}
-                    badge={item.status && <StatusBadge status={item.status} compact />}
-                    status={item.status}
-                  />
-                </PosterRowItem>
-              ))}
-            </PosterRow>
-          </section>
+          <Shelf title="Recently Added">
+            {recentlyAdded.map((item) => (
+              <PosterRowItem key={item.titleId}>
+                <PosterCard
+                  href={`/title/${item.mediaType}/${item.tmdbId}`}
+                  posterPath={item.posterPath}
+                  name={item.name}
+                  year={item.year}
+                  typeLabel={item.mediaType === "movie" ? "MOVIE" : "SERIES"}
+                  badge={item.status && <StatusBadge status={item.status} compact />}
+                  status={item.status}
+                />
+              </PosterRowItem>
+            ))}
+          </Shelf>
         )}
 
         {trendingItems.length > 0 && (
-          <section>
-            <RowHeading title="Trending" />
-            <PosterRow>
-              {trendingItems.map((item) => {
-                const status = statusMap.get(`${item.media_type}:${item.id}`);
-                return (
-                  <PosterRowItem key={`${item.media_type}-${item.id}`}>
-                    <PosterCard
-                      href={`/title/${item.media_type}/${item.id}`}
-                      posterPath={item.poster_path}
-                      name={item.title || item.name || ""}
-                      year={(item.release_date || item.first_air_date || "").slice(0, 4)}
-                      badge={status && <StatusBadge status={status} compact />}
-                      status={status}
-                    />
-                  </PosterRowItem>
-                );
-              })}
-            </PosterRow>
-          </section>
+          <Shelf title="Trending">
+            {trendingItems.map((item) => {
+              const status = statusMap.get(`${item.media_type}:${item.id}`);
+              return (
+                <PosterRowItem key={`${item.media_type}-${item.id}`}>
+                  <PosterCard
+                    href={`/title/${item.media_type}/${item.id}`}
+                    posterPath={item.poster_path}
+                    name={item.title || item.name || ""}
+                    year={(item.release_date || item.first_air_date || "").slice(0, 4)}
+                    typeLabel={item.media_type === "movie" ? "MOVIE" : "SERIES"}
+                    badge={status && <StatusBadge status={status} compact />}
+                    status={status}
+                  />
+                </PosterRowItem>
+              );
+            })}
+          </Shelf>
         )}
 
         {popularMovieItems.length > 0 && (
-          <section>
-            <RowHeading title="Popular Movies" href="/movies" />
-            <PosterRow>
-              {popularMovieItems.map((item) => {
-                const status = statusMap.get(`movie:${item.id}`);
-                return (
-                  <PosterRowItem key={item.id}>
-                    <PosterCard
-                      href={`/title/movie/${item.id}`}
-                      posterPath={item.poster_path}
-                      name={item.title || ""}
-                      year={item.release_date?.slice(0, 4)}
-                      badge={status && <StatusBadge status={status} compact />}
-                      status={status}
-                    />
-                  </PosterRowItem>
-                );
-              })}
-            </PosterRow>
-          </section>
+          <Shelf title="Popular Movies" seeAllHref="/movies">
+            {popularMovieItems.map((item) => {
+              const status = statusMap.get(`movie:${item.id}`);
+              return (
+                <PosterRowItem key={item.id}>
+                  <PosterCard
+                    href={`/title/movie/${item.id}`}
+                    posterPath={item.poster_path}
+                    name={item.title || ""}
+                    year={item.release_date?.slice(0, 4)}
+                    typeLabel="MOVIE"
+                    badge={status && <StatusBadge status={status} compact />}
+                    status={status}
+                  />
+                </PosterRowItem>
+              );
+            })}
+          </Shelf>
         )}
 
-        <GenreRow title="Movie Genres" genres={movieGenres.genres} basePath="/movies" />
+        {movieGenreList.length > 0 && (
+          <Shelf title="Movie Genres" seeAllHref="/movies">
+            {movieGenreList.map((genre, i) => (
+              <GenreCard
+                key={genre.id}
+                name={genre.name}
+                href={`/movies?genre=${genre.id}`}
+                backdropPath={movieGenreBackdrops[i]}
+                colorClass={genreColorClass(genre.id, i)}
+              />
+            ))}
+          </Shelf>
+        )}
 
         {upcomingMovieItems.length > 0 && (
-          <section>
-            <RowHeading title="Upcoming Movies" />
-            <PosterRow>
-              {upcomingMovieItems.map((item) => {
-                const status = statusMap.get(`movie:${item.id}`);
-                return (
-                  <PosterRowItem key={item.id}>
-                    <PosterCard
-                      href={`/title/movie/${item.id}`}
-                      posterPath={item.poster_path}
-                      name={item.title}
-                      year={item.release_date?.slice(0, 4)}
-                      badge={status && <StatusBadge status={status} compact />}
-                      status={status}
-                    />
-                  </PosterRowItem>
-                );
-              })}
-            </PosterRow>
-          </section>
+          <Shelf title="Upcoming Movies">
+            {upcomingMovieItems.map((item) => {
+              const status = statusMap.get(`movie:${item.id}`);
+              return (
+                <PosterRowItem key={item.id}>
+                  <PosterCard
+                    href={`/title/movie/${item.id}`}
+                    posterPath={item.poster_path}
+                    name={item.title}
+                    year={item.release_date?.slice(0, 4)}
+                    typeLabel="MOVIE"
+                    badge={status && <StatusBadge status={status} compact />}
+                    status={status}
+                  />
+                </PosterRowItem>
+              );
+            })}
+          </Shelf>
         )}
 
         {studioItems.length > 0 && (
-          <section>
-            <RowHeading title="Studios" />
-            <div className="flex flex-wrap gap-3">
-              {studioItems.map((studio) => (
-                <StudioChip key={studio.id} tmdbId={studio.id} name={studio.name} logoPath={studio.logo_path} />
-              ))}
-            </div>
-          </section>
+          <Shelf title="Studios">
+            {studioItems.map((studio) => (
+              <LogoCard
+                key={studio.id}
+                href={`/company/${studio.id}`}
+                name={studio.name}
+                logoPath={studio.logo_path}
+              />
+            ))}
+          </Shelf>
         )}
 
         {popularSeriesItems.length > 0 && (
-          <section>
-            <RowHeading title="Popular Series" href="/series" />
-            <PosterRow>
-              {popularSeriesItems.map((item) => {
-                const status = statusMap.get(`tv:${item.id}`);
-                return (
-                  <PosterRowItem key={item.id}>
-                    <PosterCard
-                      href={`/title/tv/${item.id}`}
-                      posterPath={item.poster_path}
-                      name={item.name || ""}
-                      year={item.first_air_date?.slice(0, 4)}
-                      badge={status && <StatusBadge status={status} compact />}
-                      status={status}
-                    />
-                  </PosterRowItem>
-                );
-              })}
-            </PosterRow>
-          </section>
+          <Shelf title="Popular Series" seeAllHref="/series">
+            {popularSeriesItems.map((item) => {
+              const status = statusMap.get(`tv:${item.id}`);
+              return (
+                <PosterRowItem key={item.id}>
+                  <PosterCard
+                    href={`/title/tv/${item.id}`}
+                    posterPath={item.poster_path}
+                    name={item.name || ""}
+                    year={item.first_air_date?.slice(0, 4)}
+                    typeLabel="SERIES"
+                    badge={status && <StatusBadge status={status} compact />}
+                    status={status}
+                  />
+                </PosterRowItem>
+              );
+            })}
+          </Shelf>
         )}
 
-        <GenreRow title="Series Genres" genres={tvGenres.genres} basePath="/series" />
+        {tvGenreList.length > 0 && (
+          <Shelf title="Series Genres" seeAllHref="/series">
+            {tvGenreList.map((genre, i) => (
+              <GenreCard
+                key={genre.id}
+                name={genre.name}
+                href={`/series?genre=${genre.id}`}
+                backdropPath={tvGenreBackdropList[i]}
+                colorClass={genreColorClass(genre.id, i)}
+              />
+            ))}
+          </Shelf>
+        )}
 
         {upcomingSeriesItems.length > 0 && (
-          <section>
-            <RowHeading title="Upcoming Series" />
-            <PosterRow>
-              {upcomingSeriesItems.map((item) => {
-                const status = statusMap.get(`tv:${item.id}`);
-                return (
-                  <PosterRowItem key={item.id}>
-                    <PosterCard
-                      href={`/title/tv/${item.id}`}
-                      posterPath={item.poster_path}
-                      name={item.name || ""}
-                      year={item.first_air_date?.slice(0, 4)}
-                      badge={status && <StatusBadge status={status} compact />}
-                      status={status}
-                    />
-                  </PosterRowItem>
-                );
-              })}
-            </PosterRow>
-          </section>
+          <Shelf title="Upcoming Series">
+            {upcomingSeriesItems.map((item) => {
+              const status = statusMap.get(`tv:${item.id}`);
+              return (
+                <PosterRowItem key={item.id}>
+                  <PosterCard
+                    href={`/title/tv/${item.id}`}
+                    posterPath={item.poster_path}
+                    name={item.name || ""}
+                    year={item.first_air_date?.slice(0, 4)}
+                    typeLabel="SERIES"
+                    badge={status && <StatusBadge status={status} compact />}
+                    status={status}
+                  />
+                </PosterRowItem>
+              );
+            })}
+          </Shelf>
         )}
 
         {networkItems.length > 0 && (
-          <section>
-            <RowHeading title="Networks" />
-            <div className="flex flex-wrap gap-3">
-              {networkItems.map((network) => (
-                <StudioChip
-                  key={network.id}
-                  tmdbId={network.id}
-                  name={network.name}
-                  logoPath={network.logo_path}
-                  href={`/series?network=${network.id}`}
-                />
-              ))}
-            </div>
-          </section>
+          <Shelf title="Networks">
+            {networkItems.map((network) => (
+              <LogoCard
+                key={network.id}
+                href={`/series?network=${network.id}`}
+                name={network.name}
+                logoPath={network.logo_path}
+              />
+            ))}
+          </Shelf>
         )}
       </div>
     </div>

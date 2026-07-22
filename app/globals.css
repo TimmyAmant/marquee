@@ -133,6 +133,24 @@ h3,
   color: var(--marquee-bg-0);
 }
 
+/* Flattens a company/network logo of any original color into a single flat
+   silhouette, so Discover's Studios/Networks rows read as one consistent
+   set instead of a jumble of different logo treatments — white on the dark
+   theme (this app's default), black on light. */
+.logo-mono {
+  filter: brightness(0) invert(1);
+}
+
+:root[data-theme="light"] .logo-mono {
+  filter: brightness(0) invert(0);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .logo-mono {
+    filter: brightness(0) invert(0);
+  }
+}
+
 /* iOS Safari auto-zooms the whole page when a focused input's computed
    font-size is under 16px — several inputs use Tailwind's text-sm/text-xs
    (14px/12px) for their compact desktop sizing, which triggers it. The zoom
