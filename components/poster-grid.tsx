@@ -1,17 +1,16 @@
-import { Children } from "react";
-
-/** Same fixed poster width as Discover's shelves (PosterRowItem) — a plain
- * flex-wrap of constant-size cards rather than a CSS grid whose columns
- * stretch to fill the container, so a poster looks the same size here as it
- * does in a Discover row regardless of how wide the page is. Used both for
- * exhaustive lists (favorites, a filmography, a company catalog) and for
- * Movies/Series' infinite-scrolling results (InfiniteResultsGrid). */
+/** A grid of ~similarly-sized posters (roughly matching Discover's shelf
+ * cards) that fills each row edge to edge — auto-fill/minmax picks however
+ * many columns fit at the target width, then stretches all of them evenly
+ * to use up the rest of the row, rather than a fixed-width flex-wrap that
+ * left a dead gap at the end of a row whenever the container width wasn't
+ * an exact multiple of the card width (most visible on mobile, where 2
+ * fixed-144px cards plus a gap never quite reached the screen edge). Used
+ * both for exhaustive lists (favorites, a filmography, a company catalog)
+ * and for Movies/Series' infinite-scrolling results (InfiniteResultsGrid). */
 export function PosterGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-8">
-      {Children.map(children, (child) => (
-        <div className="w-36 shrink-0 sm:w-40">{child}</div>
-      ))}
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-8 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]">
+      {children}
     </div>
   );
 }

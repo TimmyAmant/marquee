@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.1",
+    date: "2026-07-22",
+    changes: [
+      "Fixed: poster grids (Favorites, Search, a person/company's filmography, Movies/Series) left dead space on the right on mobile, since fixed-size cards didn't divide evenly into narrower screens — posters now stretch to fill each row completely.",
+    ],
+  },
+  {
     version: "0.21.0",
     date: "2026-07-22",
     changes: [
