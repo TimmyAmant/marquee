@@ -277,7 +277,7 @@ export async function DiscoverView({
         }}
       />
 
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <div className="px-6 py-12">
         {becauseYouWatched && (
           <section className="mt-8">
             <h2 className="mb-4 font-display text-xl text-text-primary">

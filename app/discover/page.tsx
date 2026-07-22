@@ -115,7 +115,7 @@ export default async function DiscoverPage() {
         }}
       />
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-14 px-6 py-12">
+      <div className="flex flex-col gap-14 px-6 py-12">
         {recentlyAdded.length > 0 && (
           <Shelf title="Recently Added">
             {recentlyAdded.map((item) => (

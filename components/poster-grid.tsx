@@ -1,13 +1,13 @@
 import { Children } from "react";
 
-/** Trims a list down to the nearest full row at the widest breakpoint (xl,
- * 6 columns), so a PosterGrid of paginated/filtered results (e.g. Discover)
- * never ends on a short row partway down the page — only ever at the very
- * end of the grid. Only use this where trimming a few trailing items is
- * harmless (more are reachable via "Next"); never on an exhaustive list like
- * My Library, where a short last row is the true, complete count and hiding
- * real items would be actively misleading. */
-export function trimToFullRow<T>(items: T[], columns = 6): T[] {
+/** Trims a list down to the nearest full row at the grid's widest column
+ * count (8, on a container ≥104rem — see PosterGrid), so a paginated/
+ * filtered results grid (e.g. Discover) never ends on a short row partway
+ * down the page — only ever at the very end of the grid. Only use this
+ * where trimming a few trailing items is harmless (more are reachable via
+ * "Next"); never on an exhaustive list, where a short last row is the true,
+ * complete count and hiding real items would be actively misleading. */
+export function trimToFullRow<T>(items: T[], columns = 8): T[] {
   if (items.length < columns) return items;
   return items.slice(0, Math.floor(items.length / columns) * columns);
 }
@@ -25,10 +25,20 @@ export function PosterGrid({ children }: { children: React.ReactNode }) {
   // per-breakpoint column counts).
   const isOdd = Children.count(children) % 2 === 1;
 
+  // Container queries, not viewport breakpoints — several callers still wrap
+  // this in a max-w-6xl column (favorites/search/person/company/etc.), and a
+  // viewport-keyed sm:/md:/xl: class would fire based on the browser window
+  // even when this grid's actual rendered width is capped well below it.
+  // Discover/Movies/Series dropped that wrapper so this can stretch wider;
+  // the thresholds below are chosen so a 1152px-wide container (max-w-6xl,
+  // this grid's original design width) still lands on 6 columns exactly as
+  // before, with 7/8 columns only kicking in on a genuinely wider container.
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-      {children}
-      {isOdd && <div aria-hidden className="invisible" />}
+    <div className="@container">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-8 @[40rem]:grid-cols-3 @[48rem]:grid-cols-4 @[64rem]:grid-cols-5 @[72rem]:grid-cols-6 @[90rem]:grid-cols-7 @[104rem]:grid-cols-8">
+        {children}
+        {isOdd && <div aria-hidden className="invisible" />}
+      </div>
     </div>
   );
 }
