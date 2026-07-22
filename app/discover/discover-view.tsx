@@ -4,12 +4,16 @@ import { PosterCard } from "@/components/poster-card";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { StatusBadge } from "@/components/status-badge";
 import { YearSelect } from "@/components/year-select";
+import { SortSelect } from "@/components/sort-select";
+import { GenreSelect } from "@/components/genre-select";
+import { TypeSelect } from "@/components/type-select";
 import { QuickAddButton } from "@/components/quick-add-button";
 import {
   getMovieGenres,
   getTvGenres,
   discoverMovies,
   discoverTv,
+  getNetworkDetails,
   type DiscoverSort,
   type TmdbDiscoverResult,
   type TmdbMovieDetails,
@@ -32,15 +36,11 @@ export type DiscoverSearchParams = {
   page?: string;
   year?: string;
   hideOwned?: string;
+  /** TV-only — from Discover's Networks row (e.g. /series?network=213). */
+  network?: string;
 };
 
 type DisplayType = "movie" | "tv" | "all";
-
-const SORT_LABELS: Record<DiscoverSort, string> = {
-  popularity: "Popular",
-  top_rated: "Top rated",
-  newest: "Newest",
-};
 
 function buildHref(
   basePath: string,
@@ -55,6 +55,7 @@ function buildHref(
   if (merged.page && merged.page !== "1") params.set("page", merged.page);
   if (merged.year) params.set("year", merged.year);
   if (merged.hideOwned) params.set("hideOwned", merged.hideOwned);
+  if (merged.network) params.set("network", merged.network);
   const qs = params.toString();
   return `${basePath}${qs ? `?${qs}` : ""}`;
 }
@@ -97,9 +98,11 @@ function compareBySort(
 }
 
 /**
- * Shared render/data logic behind /discover, /movies, and /series — the
- * latter two are just this view with `lockedType` pinned so the type toggle
- * (and the underlying TMDb query) can never drift to the other media type.
+ * Shared render/data logic behind /movies and /series — each renders this
+ * view with `lockedType` pinned so the type toggle (and the underlying TMDb
+ * query) can never drift to the other media type. Discover's own landing
+ * page (app/discover/page.tsx) is a separate curated-rows page and doesn't
+ * use this component.
  */
 export async function DiscoverView({
   searchParams,
@@ -121,10 +124,14 @@ export async function DiscoverView({
   const page = Math.max(1, Number(sp.page) || 1);
   const year = sp.year ? Number(sp.year) : undefined;
   const hideOwned = Boolean(viewer.session) && sp.hideOwned !== "0";
+  // Only meaningful for TV — a movie or "both" request with a stray
+  // ?network= is treated the same as not having one.
+  const networkId = displayType === "tv" && sp.network ? Number(sp.network) : undefined;
 
-  const [movieGenres, tvGenres] = await Promise.all([
+  const [movieGenres, tvGenres, network] = await Promise.all([
     getMovieGenres().catch(() => ({ genres: [] })),
     getTvGenres().catch(() => ({ genres: [] })),
+    networkId ? getNetworkDetails(networkId).catch(() => null) : Promise.resolve(null),
   ]);
   const movieGenreMap = new Map(movieGenres.genres.map((g) => [g.id, g.name]));
   const tvGenreMap = new Map(tvGenres.genres.map((g) => [g.id, g.name]));
@@ -164,7 +171,7 @@ export async function DiscoverView({
       tmdbPages.map((p) =>
         (displayType === "movie"
           ? discoverMovies({ genreId, sort, page: p, year })
-          : discoverTv({ genreId, sort, page: p, year })
+          : discoverTv({ genreId, sort, page: p, year, networkId })
         ).catch(() => emptyResponse),
       ),
     );
@@ -318,38 +325,30 @@ export async function DiscoverView({
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {!lockedType && (
-            <div className="flex gap-1 rounded-full border border-border p-1 text-xs">
-              {(["movie", "tv", "all"] as const).map((t) => (
-                <Link
-                  key={t}
-                  href={buildHref(basePath, sp, { type: t, genre: undefined, page: undefined })}
-                  className={`rounded-full px-3 py-1 transition-colors ${
-                    displayType === t
-                      ? "bg-accent text-bg-0"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  {t === "movie" ? "Movies" : t === "tv" ? "TV" : "Both"}
-                </Link>
-              ))}
-            </div>
+            <TypeSelect currentType={displayType} currentParams={sp} basePath={basePath} />
           )}
 
-          <div className="flex gap-1 rounded-full border border-border p-1 text-xs">
-            {(Object.keys(SORT_LABELS) as DiscoverSort[]).map((s) => (
-              <Link
-                key={s}
-                href={buildHref(basePath, sp, { sort: s, page: undefined })}
-                className={`rounded-full px-3 py-1 transition-colors ${
-                  sort === s ? "bg-accent text-bg-0" : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {SORT_LABELS[s]}
-              </Link>
-            ))}
-          </div>
+          <SortSelect currentSort={sort} currentParams={sp} basePath={basePath} />
+
+          {displayType !== "all" && genresForFilter.length > 0 && (
+            <GenreSelect
+              currentGenre={genreId}
+              currentParams={sp}
+              basePath={basePath}
+              genres={genresForFilter}
+            />
+          )}
 
           <YearSelect currentYear={sp.year} currentParams={sp} basePath={basePath} />
+
+          {network && (
+            <Link
+              href={buildHref(basePath, sp, { network: undefined, page: undefined })}
+              className="rounded-full border border-accent px-3 py-1.5 text-xs text-accent transition-colors hover:opacity-80"
+            >
+              {network.name} ✕
+            </Link>
+          )}
 
           {viewer.session && (
             <Link
@@ -371,34 +370,6 @@ export async function DiscoverView({
             hideOwned={hideOwned}
           />
         </div>
-
-        {displayType !== "all" && genresForFilter.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href={buildHref(basePath, sp, { genre: undefined, page: undefined })}
-              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                !genreId
-                  ? "border-accent text-accent"
-                  : "border-border text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              All genres
-            </Link>
-            {genresForFilter.map((genre) => (
-              <Link
-                key={genre.id}
-                href={buildHref(basePath, sp, { genre: String(genre.id), page: undefined })}
-                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                  genreId === genre.id
-                    ? "border-accent text-accent"
-                    : "border-border text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {genre.name}
-              </Link>
-            ))}
-          </div>
-        )}
 
         <div className="mt-8">
           {items.length === 0 ? (

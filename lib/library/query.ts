@@ -268,8 +268,7 @@ export type LibrarySummary = {
 };
 
 /** Pure summary derivation — split out so a caller that already has the
- * library array (e.g. My Library, which needs both the full list and the
- * summary) can reuse it without a second getUserLibrary query. */
+ * library array can reuse it without a second getUserLibrary query. */
 export function summarizeLibrary(library: LibraryItem[]): LibrarySummary {
   const owned = library.filter((i) => i.status === "owned");
   return {
@@ -278,6 +277,20 @@ export function summarizeLibrary(library: LibraryItem[]): LibrarySummary {
     totalBytes: owned.reduce((sum, i) => sum + (i.sizeBytes ?? 0), 0),
     trackedCount: library.length - owned.length,
   };
+}
+
+/**
+ * Most-recently-added owned titles, for Discover's "Recently Added" row —
+ * only Plex/Jellyfin-sourced rows carry an addedAt timestamp (arr-only rows
+ * don't track one), so anything without it is dropped rather than sorted
+ * arbitrarily to one end.
+ */
+export async function getRecentlyAdded(userId: string, limit = 20): Promise<LibraryItem[]> {
+  const library = await getUserLibrary(userId);
+  return library
+    .filter((item): item is LibraryItem & { addedAt: Date } => item.addedAt !== null)
+    .sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime())
+    .slice(0, limit);
 }
 
 /**

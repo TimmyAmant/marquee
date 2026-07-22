@@ -7,6 +7,7 @@ export function StudioChip({
   name,
   logoPath,
   favoriteAction,
+  href,
 }: {
   tmdbId: number;
   name: string;
@@ -14,12 +15,16 @@ export function StudioChip({
   /** Rendered as a sibling of the link, not nested inside it, so a <button>
    * never ends up inside an <a>. */
   favoriteAction?: React.ReactNode;
+  /** Defaults to the company detail page — overridden by callers like
+   * Discover's Networks row, which has no per-network detail page and
+   * instead links straight to a filtered /series listing. */
+  href?: string;
 }) {
   const logo = tmdbImageUrl(logoPath, "w185");
 
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border bg-bg-1 pr-2 transition-colors hover:border-border-strong">
-      <Link href={`/company/${tmdbId}`} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3">
+      <Link href={href ?? `/company/${tmdbId}`} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3">
         {logo && (
           // A plain white backdrop (not a CSS invert filter) so this renders
           // correctly regardless of whether TMDb's asset is a transparent dark

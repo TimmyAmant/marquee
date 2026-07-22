@@ -276,6 +276,7 @@ export function discoverTv(options: {
   sort: DiscoverSort;
   page?: number;
   year?: number;
+  networkId?: number;
 }) {
   const sortBy =
     options.sort === "top_rated"
@@ -286,6 +287,7 @@ export function discoverTv(options: {
 
   return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
     with_genres: options.genreId,
+    with_networks: options.networkId,
     with_original_language: "en",
     sort_by: sortBy,
     page: options.page ?? 1,
@@ -431,6 +433,59 @@ export function findTrailer(videos: { results: TmdbVideo[] } | undefined): TmdbV
   if (!videos?.results?.length) return null;
   const trailers = videos.results.filter((v) => v.site === "YouTube" && v.type === "Trailer");
   return trailers.find((v) => v.official) ?? trailers[0] ?? null;
+}
+
+export interface TmdbTrendingResult {
+  id: number;
+  media_type: "movie" | "tv";
+  title?: string;
+  name?: string;
+  poster_path: string | null;
+  release_date?: string;
+  first_air_date?: string;
+}
+
+export function getTrendingAll(page = 1) {
+  return tmdbFetch<{ results: TmdbTrendingResult[] }>("/trending/all/week", { page });
+}
+
+export interface TmdbUpcomingResult {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date: string;
+}
+
+export function getUpcomingMovies(page = 1) {
+  return tmdbFetch<{ results: TmdbUpcomingResult[] }>("/movie/upcoming", {
+    page,
+    region: "US",
+  });
+}
+
+/** TMDb has no dedicated "upcoming" TV endpoint (only on_the_air/
+ * airing_today, which are about currently-airing episodes, not unreleased
+ * series) — so this filters /discover/tv to future first-air dates instead,
+ * for the same reason getUpcomingMovies' callers already re-filter
+ * /movie/upcoming rather than trust it as-is. */
+export function getUpcomingTv(page = 1) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
+    page,
+    sort_by: "first_air_date.asc",
+    "first_air_date.gte": todayStr,
+    with_original_language: "en",
+  });
+}
+
+export interface TmdbNetworkDetails {
+  id: number;
+  name: string;
+  logo_path: string | null;
+}
+
+export function getNetworkDetails(id: number) {
+  return tmdbFetch<TmdbNetworkDetails>(`/network/${id}`);
 }
 
 export interface TmdbFindResult {
