@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseExternalIds, pickBestConnection, getFileSize, getFilePath } from "./client";
+import { parseExternalIds, pickBestConnection, getFileSize, getFilePath, commonFolder } from "./client";
 
 describe("parseExternalIds", () => {
   it("parses tmdb/tvdb/imdb guids from the Guid array", () => {
@@ -89,5 +89,39 @@ describe("getFileSize / getFilePath", () => {
     const item = { ratingKey: "1", type: "show" as const, title: "Test", addedAt: 0 };
     expect(getFileSize(item)).toBeNull();
     expect(getFilePath(item)).toBeNull();
+  });
+});
+
+describe("commonFolder", () => {
+  it("collapses multiple seasons down to the show's shared root folder", () => {
+    const result = commonFolder([
+      "/tv/Lost Identity (2024)/Season 01/S01E01.mkv",
+      "/tv/Lost Identity (2024)/Season 01/S01E02.mkv",
+      "/tv/Lost Identity (2024)/Season 02/S02E01.mkv",
+    ]);
+    expect(result).toBe("/tv/Lost Identity (2024)");
+  });
+
+  it("returns the season folder itself when only one season is present", () => {
+    const result = commonFolder([
+      "/tv/Show/Season 01/S01E01.mkv",
+      "/tv/Show/Season 01/S01E02.mkv",
+    ]);
+    expect(result).toBe("/tv/Show/Season 01");
+  });
+
+  it("doesn't false-positive on shows whose names share a string prefix", () => {
+    // "/tv/Show 1" is NOT a valid common ancestor of these two — the
+    // comparison has to be per path segment, not a raw string prefix.
+    const result = commonFolder(["/tv/Show 1/ep.mkv", "/tv/Show 10/ep.mkv"]);
+    expect(result).toBe("/tv");
+  });
+
+  it("returns null for a single file with no folder above the root", () => {
+    expect(commonFolder(["/ep.mkv"])).toBeNull();
+  });
+
+  it("returns null for an empty list", () => {
+    expect(commonFolder([])).toBeNull();
   });
 });

@@ -56,15 +56,18 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
       // those concurrently rather than one at a time in the loop below, or
       // sync time would scale with the number of shows in the library.
       const sizeByRatingKey = new Map<string, number | null>();
+      const folderPathByRatingKey = new Map<string, string | null>();
       await Promise.all(
         items.map(async (item) => {
-          const size =
-            mediaType === "movie"
-              ? plex.getFileSize(item)
-              : await plex
-                  .getShowFileSize(serverUri, credential.authToken, item.ratingKey)
-                  .catch(() => null);
-          sizeByRatingKey.set(item.ratingKey, size);
+          if (mediaType === "movie") {
+            sizeByRatingKey.set(item.ratingKey, plex.getFileSize(item));
+            return;
+          }
+          const info = await plex
+            .getShowFileInfo(serverUri, credential.authToken, item.ratingKey)
+            .catch(() => ({ sizeBytes: null, folderPath: null }));
+          sizeByRatingKey.set(item.ratingKey, info.sizeBytes);
+          folderPathByRatingKey.set(item.ratingKey, info.folderPath);
         }),
       );
 
@@ -86,10 +89,12 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
 
         const sizeBytes = sizeByRatingKey.get(item.ratingKey) ?? null;
         // A movie's own entry carries its one Media/Part directly. A show
-        // has no single file (it's one per episode) — that's covered by
-        // Sonarr's series folder path instead, preserved through the
-        // library merge rather than overwritten with null here.
-        const filePath = mediaType === "movie" ? plex.getFilePath(item) : null;
+        // has no single file of its own — filePath here is the folder every
+        // episode's file has in common, derived from the same per-episode
+        // fetch used for size above (falls back to Sonarr's series path in
+        // the library merge on the rare sync where this comes back null).
+        const filePath =
+          mediaType === "movie" ? plex.getFilePath(item) : (folderPathByRatingKey.get(item.ratingKey) ?? null);
         const viewCount = item.viewCount ?? null;
         const lastViewedAt = item.lastViewedAt ? new Date(item.lastViewedAt * 1000) : null;
 
@@ -239,10 +244,9 @@ export type PlexFileInfo = { path: string | null; sizeBytes: number | null; adde
 /**
  * Returns file info when this title is in Plex, null otherwise — replaces
  * a plain boolean check since the title page wants to show location/size
- * for Plex-owned titles too, not just Radarr/Sonarr ones. `path` is null
- * for TV (Plex only reports Media/Part on individual episodes, not the
- * show itself — see the comment in syncPlexLibrary above); `sizeBytes` is
- * still populated for TV via the aggregated per-show fetch.
+ * for Plex-owned titles too, not just Radarr/Sonarr ones. For TV, `path` is
+ * the shared folder derived across all episode files at sync time (see the
+ * comment in syncPlexLibrary above), not any single episode's own file.
  */
 export async function getPlexFileInfo(
   userId: string,

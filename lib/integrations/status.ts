@@ -7,8 +7,12 @@ import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-s
 import type { LibraryStatus } from "@/components/status-badge";
 
 export type FileInfo = {
-  /** Null for Plex-owned TV (Plex only reports Media/Part on individual
-   * episodes, not the show itself) — everything else always has a path. */
+  /** For Plex-owned TV, this is the folder every episode's file has in
+   * common (derived at sync time from per-episode paths, since Plex only
+   * reports Media/Part on individual episodes, not the show itself) —
+   * falls back to Sonarr's series path if that derivation ever comes back
+   * null. Always present when `file` itself is non-null (only ever set for
+   * fully "owned" items, never for downloading/missing/monitored). */
   path: string | null;
   sizeBytes: number;
   quality?: string;
@@ -83,11 +87,16 @@ async function getArrStatus(
   if (!series) return { status: "untracked", provider: "sonarr", configured, file: null };
 
   const status = deriveSonarrStatus(series);
-  const file: FileInfo | null = series.statistics?.sizeOnDisk
-    ? { path: series.path ?? null, sizeBytes: series.statistics.sizeOnDisk }
-    : null;
+  // Only a fully-owned series gets a location shown — a partially-downloaded
+  // one (status "tracked_downloading") already has some episode files and
+  // thus a nonzero sizeOnDisk, but showing a path/size for something still
+  // incomplete would read as "this is done" when it isn't.
+  const file: FileInfo | null =
+    status === "owned" && series.statistics?.sizeOnDisk
+      ? { path: series.path ?? null, sizeBytes: series.statistics.sizeOnDisk }
+      : null;
 
-  return { status, provider: "sonarr", configured, file: status === "untracked" ? null : file };
+  return { status, provider: "sonarr", configured, file };
 }
 
 /**

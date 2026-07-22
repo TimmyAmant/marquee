@@ -138,23 +138,47 @@ export async function getSectionItems(
   return body.MediaContainer?.Metadata ?? [];
 }
 
+/** The directory segments every episode file path has in common — the
+ * show's own root folder (e.g. season subfolders collapse down to their
+ * shared parent), or a single season's folder if that's all that's synced.
+ * Path-segment-aware (not a raw string prefix), so "/tv/Show 1/.." and
+ * "/tv/Show 10/.." don't get incorrectly credited with a shared "/tv/Show
+ * 1" prefix. */
+export function commonFolder(filePaths: string[]): string | null {
+  if (filePaths.length === 0) return null;
+  const dirSegments = filePaths.map((p) => p.slice(0, p.lastIndexOf("/")).split("/"));
+  const minLen = Math.min(...dirSegments.map((s) => s.length));
+  const common: string[] = [];
+  for (let i = 0; i < minLen; i++) {
+    const segment = dirSegments[0][i];
+    if (!dirSegments.every((segs) => segs[i] === segment)) break;
+    common.push(segment);
+  }
+  const path = common.join("/");
+  return path || null;
+}
+
 /** A show's own library-section entry has no Media/Part — only individual
- * episodes carry a file, so total size has to be summed across all of a
- * show's episodes via Plex's "all leaves" endpoint. */
-export async function getShowFileSize(
+ * episodes carry a file — so both total size and a location have to be
+ * derived from all of a show's episodes via Plex's "all leaves" endpoint. */
+export async function getShowFileInfo(
   serverUri: string,
   token: string,
   ratingKey: string,
-): Promise<number | null> {
+): Promise<{ sizeBytes: number | null; folderPath: string | null }> {
   const res = await fetch(`${serverUri}/library/metadata/${ratingKey}/allLeaves`, {
     headers: { Accept: "application/json", "X-Plex-Token": token },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
-  if (!res.ok) return null;
+  if (!res.ok) return { sizeBytes: null, folderPath: null };
   const body = await res.json();
   const episodes: PlexMetadataItem[] = body.MediaContainer?.Metadata ?? [];
   const total = episodes.reduce((sum, ep) => sum + (getFileSize(ep) ?? 0), 0);
-  return total > 0 ? total : null;
+  const episodePaths = episodes.map((ep) => getFilePath(ep)).filter((p): p is string => p !== null);
+  return {
+    sizeBytes: total > 0 ? total : null,
+    folderPath: commonFolder(episodePaths),
+  };
 }
 
 export function parseExternalIds(item: PlexMetadataItem): {
