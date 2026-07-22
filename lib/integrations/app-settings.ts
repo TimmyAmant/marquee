@@ -262,3 +262,116 @@ export async function clearDiscordWebhookUrl(): Promise<void> {
   }
   discordWebhookCached = null;
 }
+
+let genericWebhookCached: { value: string | null; expiresAt: number } | null = null;
+
+export async function getGenericWebhookUrl(): Promise<string | null> {
+  if (genericWebhookCached && Date.now() < genericWebhookCached.expiresAt) {
+    return genericWebhookCached.value;
+  }
+
+  const row = await getRow();
+  const value =
+    row?.genericWebhookUrlEnc && row.genericWebhookUrlIv && row.genericWebhookUrlTag
+      ? decryptSecret({
+          ciphertext: row.genericWebhookUrlEnc,
+          iv: row.genericWebhookUrlIv,
+          tag: row.genericWebhookUrlTag,
+        })
+      : null;
+
+  genericWebhookCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function setGenericWebhookUrl(url: string): Promise<void> {
+  const encrypted = encryptSecret(url);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        genericWebhookUrlEnc: encrypted.ciphertext,
+        genericWebhookUrlIv: encrypted.iv,
+        genericWebhookUrlTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      genericWebhookUrlEnc: encrypted.ciphertext,
+      genericWebhookUrlIv: encrypted.iv,
+      genericWebhookUrlTag: encrypted.tag,
+    });
+  }
+
+  genericWebhookCached = null;
+}
+
+export async function clearGenericWebhookUrl(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        genericWebhookUrlEnc: null,
+        genericWebhookUrlIv: null,
+        genericWebhookUrlTag: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  }
+  genericWebhookCached = null;
+}
+
+let ntfyCached: { value: string | null; expiresAt: number } | null = null;
+
+export async function getNtfyUrl(): Promise<string | null> {
+  if (ntfyCached && Date.now() < ntfyCached.expiresAt) return ntfyCached.value;
+
+  const row = await getRow();
+  const value =
+    row?.ntfyUrlEnc && row.ntfyUrlIv && row.ntfyUrlTag
+      ? decryptSecret({ ciphertext: row.ntfyUrlEnc, iv: row.ntfyUrlIv, tag: row.ntfyUrlTag })
+      : null;
+
+  ntfyCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function setNtfyUrl(url: string): Promise<void> {
+  const encrypted = encryptSecret(url);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        ntfyUrlEnc: encrypted.ciphertext,
+        ntfyUrlIv: encrypted.iv,
+        ntfyUrlTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      ntfyUrlEnc: encrypted.ciphertext,
+      ntfyUrlIv: encrypted.iv,
+      ntfyUrlTag: encrypted.tag,
+    });
+  }
+
+  ntfyCached = null;
+}
+
+export async function clearNtfyUrl(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({ ntfyUrlEnc: null, ntfyUrlIv: null, ntfyUrlTag: null, updatedAt: new Date() })
+      .where(eq(appSettings.id, existing.id));
+  }
+  ntfyCached = null;
+}

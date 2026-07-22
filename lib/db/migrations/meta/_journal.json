@@ -176,6 +176,13 @@
       "when": 1784515768060,
       "tag": "0024_add_per_member_auto_approve",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1784716646940,
+      "tag": "0025_add_generic_webhook_and_ntfy",
+      "breakpoints": true
     }
   ]
 }

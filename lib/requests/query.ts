@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
@@ -149,6 +149,14 @@ export async function getPendingRequestCount(): Promise<number> {
     .from(requests)
     .where(eq(requests.status, "pending"));
   return rows.length;
+}
+
+/** Every request ever made, any status — for the Settings → About stats
+ * panel, not a queue view, so it doesn't reconcile/filter like
+ * getPendingRequests does. */
+export async function getTotalRequestCount(): Promise<number> {
+  const [row] = await db.select({ count: count() }).from(requests);
+  return row?.count ?? 0;
 }
 
 /** Whether this user already has a non-rejected request for this title —

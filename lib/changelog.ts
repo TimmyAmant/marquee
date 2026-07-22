@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.0",
+    date: "2026-07-22",
+    changes: [
+      "Added a Settings → About page — version, movies/TV shows tracked, total requests, time zone, and support links.",
+      "Added a Settings → Jobs page (admin) — lists the background sync jobs (Plex, Jellyfin, Sonarr/Radarr, disk space) with a manual \"Run Now\" for each.",
+      "Added two more notification channels alongside Discord: a generic outgoing webhook and ntfy.sh, both configurable in Settings → Integrations.",
+    ],
+  },
+  {
     version: "0.20.0",
     date: "2026-07-22",
     changes: [

@@ -495,5 +495,18 @@ export const appSettings = pgTable("app_settings", {
   discordWebhookUrlEnc: bytea("discord_webhook_url_enc"),
   discordWebhookUrlIv: bytea("discord_webhook_url_iv"),
   discordWebhookUrlTag: bytea("discord_webhook_url_tag"),
+  // A generic outgoing webhook — same event stream as Discord/ntfy, posted
+  // as plain JSON to whatever URL the admin points it at (their own
+  // automation, a self-hosted notification gateway, etc.).
+  genericWebhookUrlEnc: bytea("generic_webhook_url_enc"),
+  genericWebhookUrlIv: bytea("generic_webhook_url_iv"),
+  genericWebhookUrlTag: bytea("generic_webhook_url_tag"),
+  // A full ntfy topic URL (e.g. https://ntfy.sh/my-topic, or a self-hosted
+  // server's own URL) — treated as a bearer credential like the Discord
+  // webhook above, since ntfy topics are unauthenticated by default and
+  // whoever has the URL can publish to it.
+  ntfyUrlEnc: bytea("ntfy_url_enc"),
+  ntfyUrlIv: bytea("ntfy_url_iv"),
+  ntfyUrlTag: bytea("ntfy_url_tag"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

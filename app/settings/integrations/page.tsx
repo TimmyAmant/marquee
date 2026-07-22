@@ -5,7 +5,14 @@ import { getArrCredential, getOrCreateWebhookSecret, getJellyfinCredential } fro
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { getJellyfinSummary, syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
-import { isTmdbAccessTokenSavedInSettings, getTraktClientId, getTvdbApiKey, getDiscordWebhookUrl } from "@/lib/integrations/app-settings";
+import {
+  isTmdbAccessTokenSavedInSettings,
+  getTraktClientId,
+  getTvdbApiKey,
+  getDiscordWebhookUrl,
+  getGenericWebhookUrl,
+  getNtfyUrl,
+} from "@/lib/integrations/app-settings";
 import { ArrCredentialForm } from "@/components/arr-credential-form";
 import { PlexConnectCard } from "@/components/plex-connect-card";
 import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
@@ -13,6 +20,8 @@ import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
 import { TraktConnectCard } from "@/components/trakt-connect-card";
 import { TvdbConnectCard } from "@/components/tvdb-connect-card";
 import { DiscordConnectCard } from "@/components/discord-connect-card";
+import { NtfyConnectCard } from "@/components/ntfy-connect-card";
+import { WebhookConnectCard } from "@/components/webhook-connect-card";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
 
@@ -39,6 +48,8 @@ export default async function IntegrationsSettingsPage() {
     webhookSecret,
     headerList,
     discordWebhookUrl,
+    genericWebhookUrl,
+    ntfyUrl,
   ] = await Promise.all([
     getArrCredential(session.user.id, "sonarr"),
     getArrCredential(session.user.id, "radarr"),
@@ -51,6 +62,8 @@ export default async function IntegrationsSettingsPage() {
     getOrCreateWebhookSecret(session.user.id),
     headers(),
     getDiscordWebhookUrl(),
+    getGenericWebhookUrl(),
+    getNtfyUrl(),
   ]);
 
   const proto = headerList.get("x-forwarded-proto") ?? "http";
@@ -161,6 +174,8 @@ export default async function IntegrationsSettingsPage() {
               baseUrl={baseUrl}
             />
             <DiscordConnectCard connected={Boolean(discordWebhookUrl)} />
+            <NtfyConnectCard connected={Boolean(ntfyUrl)} />
+            <WebhookConnectCard connected={Boolean(genericWebhookUrl)} />
           </div>
         </section>
       </div>

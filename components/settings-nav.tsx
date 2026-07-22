@@ -21,6 +21,20 @@ const TAB_ICONS = {
   activity: (
     <path d="M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" strokeLinecap="round" strokeLinejoin="round" />
   ),
+  about: (
+    <path
+      d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 11v6M12 7.5v.01"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  jobs: (
+    <path
+      d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0 1 14.7-3.2M20 15a8 8 0 0 1-14.7 3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
 } as const;
 
 function TabIcon({ name }: { name: keyof typeof TAB_ICONS }) {
@@ -35,6 +49,8 @@ const ALL_TABS = [
   { href: "/settings", label: "Account", icon: "account" as const, adminOnly: false },
   { href: "/settings/integrations", label: "Integrations", icon: "integrations" as const, adminOnly: true },
   { href: "/settings/activity", label: "Activity", icon: "activity" as const, adminOnly: true },
+  { href: "/settings/jobs", label: "Jobs", icon: "jobs" as const, adminOnly: true },
+  { href: "/settings/about", label: "About", icon: "about" as const, adminOnly: false },
 ];
 
 /**
