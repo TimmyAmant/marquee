@@ -77,63 +77,68 @@ export function TitleHero({
         </div>
       )}
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-4 pt-[220px] sm:flex-row">
+      {/* Backdrop zone — poster + title only, per design: artwork should never
+          carry metadata text (runtime/genres/year/status), just the name. */}
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-[220px] sm:flex-row sm:items-end">
         <div className="relative aspect-[2/3] w-56 shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-2xl ring-1 ring-border-strong">
           {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
         </div>
 
-        <div className="flex flex-col justify-end">
-          <h1 className="font-display text-4xl text-text-primary sm:text-5xl">{name}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            {metaParts.length > 0 && (
-              <p className="text-text-secondary">{metaParts.join(" · ")}</p>
-            )}
-            {favorited !== undefined && (
-              <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
-            )}
-          </div>
+        <h1 className="font-display text-4xl text-text-primary sm:pb-2 sm:text-5xl">{name}</h1>
+      </div>
 
-          <div className="mt-4">
-            <AddToLibraryButton
-              mediaType={mediaType}
-              tmdbId={tmdbId}
-              name={name}
-              posterPath={posterPath}
-              status={status}
-              configured={configured}
-              isAdmin={isAdmin}
-              alreadyRequested={alreadyRequested}
-              otherRequesters={otherRequesters}
-            />
-          </div>
-
-          {overview && (
-            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-text-secondary">
-              {overview}
-            </p>
+      {/* Below the backdrop, on the page's plain background — left-padded on
+          sm+ to align under the title rather than the poster beside it. */}
+      <div className="mx-auto max-w-6xl px-6 pb-4 pt-5 sm:pl-64">
+        <div className="flex flex-wrap items-center gap-3">
+          {metaParts.length > 0 && (
+            <p className="text-text-secondary">{metaParts.join(" · ")}</p>
           )}
-
-          <div className="mt-5">
-            <ExternalLinks links={links} />
-          </div>
-
-          {isAdmin && arrTracking && (
-            <div className="mt-4">
-              <ArrTrackingControls
-                mediaType={mediaType}
-                tmdbId={tmdbId}
-                tvdbId={tvdbId ?? null}
-                monitored={arrTracking.monitored}
-              />
-            </div>
-          )}
-
-          {isAdmin && status !== "untracked" && (
-            <div className="mt-4">
-              <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
-            </div>
+          {favorited !== undefined && (
+            <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
           )}
         </div>
+
+        <div className="mt-4">
+          <AddToLibraryButton
+            mediaType={mediaType}
+            tmdbId={tmdbId}
+            name={name}
+            posterPath={posterPath}
+            status={status}
+            configured={configured}
+            isAdmin={isAdmin}
+            alreadyRequested={alreadyRequested}
+            otherRequesters={otherRequesters}
+          />
+        </div>
+
+        {overview && (
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-text-secondary">
+            {overview}
+          </p>
+        )}
+
+        <div className="mt-5">
+          <ExternalLinks links={links} />
+        </div>
+
+        {isAdmin && arrTracking && (
+          <div className="mt-4">
+            <ArrTrackingControls
+              mediaType={mediaType}
+              tmdbId={tmdbId}
+              tvdbId={tvdbId ?? null}
+              monitored={arrTracking.monitored}
+            />
+          </div>
+        )}
+
+        {isAdmin && status !== "untracked" && (
+          <div className="mt-4">
+            <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
+          </div>
+        )}
       </div>
     </div>
   );

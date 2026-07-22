@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-07-21",
+    changes: [
+      "Fixed: a title page's runtime/genres/year/status line, the Coming soon badge, and the Favorite button were laid over the backdrop artwork — they now sit below it, on the plain background, so the artwork only carries the title.",
+    ],
+  },
+  {
     version: "0.18.0",
     date: "2026-07-21",
     changes: [
