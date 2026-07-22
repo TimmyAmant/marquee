@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.3",
+    date: "2026-07-21",
+    changes: [
+      "Movies and Series: poster art is now the same size as Discover's rows, instead of stretching wider to fill each column.",
+      "Fixed: the \"Because you watched\" row could go missing from the Movies or Series page on days the rotation happened to land on a title of the other type — it now only rotates through recently-watched titles matching that page's own type.",
+    ],
+  },
+  {
     version: "0.18.2",
     date: "2026-07-21",
     changes: [

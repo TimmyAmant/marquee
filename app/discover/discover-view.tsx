@@ -190,9 +190,13 @@ export async function DiscoverView({
   let becauseYouWatched: { title: string; items: ReturnType<typeof toDisplayItem>[] } | null = null;
   if (viewer.libraryOwnerId && page === 1 && !genreId && !year) {
     const recentList = await getRecentlyWatched(viewer.libraryOwnerId, 10).catch(() => []);
-    const recent =
-      recentList.length > 0 ? recentList[getDayIndex() % recentList.length] : undefined;
-    if (recent && (!lockedType || lockedType === recent.mediaType)) {
+    // Filtered by lockedType *before* picking, not after — otherwise /movies
+    // and /series would only ever show this row on days the rotation happens
+    // to land on a title of their own type, even when the viewer has plenty
+    // of recently-watched movies (or shows) to draw on.
+    const eligible = lockedType ? recentList.filter((r) => r.mediaType === lockedType) : recentList;
+    const recent = eligible.length > 0 ? eligible[getDayIndex() % eligible.length] : undefined;
+    if (recent) {
       const watchedTitle = await getOrFetchTitle(recent.mediaType, recent.tmdbId).catch(() => null);
       const raw = watchedTitle?.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
       const recs = raw?.recommendations?.results ?? [];
