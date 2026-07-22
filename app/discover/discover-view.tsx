@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PosterGrid, trimToFullRow } from "@/components/poster-grid";
+import { PaginatedPosterGrid } from "@/components/paginated-poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { StatusBadge } from "@/components/status-badge";
@@ -140,8 +140,11 @@ export async function DiscoverView({
   // Fetch several underlying TMDb pages per screen, not just one. When "hide
   // titles you already track" removes a lot of matches (as it will for an
   // account with a large synced library), filtering a single 20-item page
-  // can leave the grid nearly empty no matter which page you're on.
-  const BATCH_SIZE = 3;
+  // can leave the grid nearly empty no matter which page you're on. Also
+  // gives PaginatedPosterGrid enough headroom to fill a full 5 rows even on
+  // a very wide screen (5 rows × up to ~12 columns = 60 cards) without
+  // running out of items to show.
+  const BATCH_SIZE = 4;
   const startTmdbPage = (page - 1) * BATCH_SIZE + 1;
   const tmdbPages = Array.from({ length: BATCH_SIZE }, (_, i) => startTmdbPage + i);
   const emptyResponse = { results: [], total_pages: 1, total_results: 0 };
@@ -240,14 +243,9 @@ export async function DiscoverView({
       )
     : new Map();
 
-  // "Hide titles you already track" shrinks a fixed-size batch by a
-  // different, unpredictable amount every time, so the surviving count is
-  // rarely a clean multiple of the grid's column count — trim the trailing
-  // partial row rather than showing it ragged. Nothing is actually lost:
-  // the same titles still turn up on the next page.
-  const items = trimToFullRow(
-    hideOwned ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`)) : rawItems,
-  );
+  const items = hideOwned
+    ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`))
+    : rawItems;
 
   const [radarrCredential, sonarrCredential, favoritedMovieIds, favoritedTvIds] = viewer.session
     ? await Promise.all([
@@ -382,7 +380,7 @@ export async function DiscoverView({
               already track&rdquo;.
             </p>
           ) : (
-            <PosterGrid>
+            <PaginatedPosterGrid>
               {items.map((item) => {
                 const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
                 const genreMap = item.mediaType === "movie" ? movieGenreMap : tvGenreMap;
@@ -423,7 +421,7 @@ export async function DiscoverView({
                   />
                 );
               })}
-            </PosterGrid>
+            </PaginatedPosterGrid>
           )}
         </div>
 

@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.4",
+    date: "2026-07-21",
+    changes: [
+      "Movies and Series now always show 5 full rows of posters, with no ragged partial row at the bottom — the grid measures how many posters actually fit per row at your screen's width and trims to whole rows automatically.",
+    ],
+  },
+  {
     version: "0.18.3",
     date: "2026-07-21",
     changes: [
