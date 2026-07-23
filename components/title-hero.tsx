@@ -6,7 +6,8 @@ import { ExternalLinks, type ExternalLinksData } from "@/components/external-lin
 import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
-import type { ArrTrackingInfo } from "@/lib/integrations/status";
+import { FileDetailsSection } from "@/components/file-details-section";
+import type { ArrTrackingInfo, FileInfo } from "@/lib/integrations/status";
 import type { CreditEntry } from "@/lib/title-meta";
 
 export type TitleMeta = {
@@ -61,6 +62,8 @@ export function TitleHero({
   otherRequesters,
   tvdbId,
   arrTracking,
+  file,
+  runtimeLabel,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -83,6 +86,11 @@ export function TitleHero({
   otherRequesters?: string[];
   tvdbId?: number | null;
   arrTracking?: ArrTrackingInfo | null;
+  /** Renders a "File details" card in the sidebar below the rating/status
+   * card — null when the title isn't in the library, same as the standalone
+   * section this replaced. */
+  file?: FileInfo | null;
+  runtimeLabel?: string | null;
 }) {
   // Rating/status/network live in the sidebar instead — this line is just
   // the quick facts, matching the reference layout's short line under the
@@ -104,12 +112,17 @@ export function TitleHero({
 
       {/* Backdrop zone — poster + title only, per design: artwork should never
           carry metadata text (runtime/genres/year/status), just the name. */}
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-[220px] sm:flex-row sm:items-end">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-[220px] sm:flex-row sm:items-start">
         <div className="relative aspect-[2/3] w-56 shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-2xl ring-1 ring-border-strong">
           {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
         </div>
 
-        <h1 className="font-display text-4xl text-text-primary sm:pb-2 sm:text-5xl">{name}</h1>
+        {/* Independent of the poster's height — top-aligned with a fixed
+            offset that lands the title right where the backdrop's gradient
+            has already faded to solid background, not bottom-aligned to
+            the (much taller) poster, which pushed it far down into the
+            plain background below. */}
+        <h1 className="font-display text-4xl text-text-primary sm:mt-40 sm:text-5xl">{name}</h1>
       </div>
 
       {/* Below the backdrop, on the page's plain background — left-padded on
@@ -246,6 +259,12 @@ export function TitleHero({
                 </div>
               )}
             </div>
+
+            {file && (
+              <div className="mt-6">
+                <FileDetailsSection mediaType={mediaType} file={file} runtimeLabel={runtimeLabel ?? null} />
+              </div>
+            )}
           </aside>
         </div>
       </div>

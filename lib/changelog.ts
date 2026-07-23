@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.5",
+    date: "2026-07-23",
+    changes: [
+      "Moved File details from a full-width section into the title page's sidebar, right below the rating/status card.",
+      "Tightened up the gap between the backdrop and the movie/show title on title pages — it now sits right where the backdrop fades out instead of floating further down the page.",
+    ],
+  },
+  {
     version: "0.21.4",
     date: "2026-07-22",
     changes: [

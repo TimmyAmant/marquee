@@ -5,7 +5,6 @@ import { StudioRow } from "@/components/studio-row";
 import { SimilarTitlesRow, type SimilarTitle } from "@/components/similar-titles-row";
 import { FranchiseRow, type FranchiseItem } from "@/components/franchise-row";
 import { SeasonAccordion } from "@/components/season-episode-list";
-import { FileDetailsSection } from "@/components/file-details-section";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { formatRuntime, formatDateLabel, languageLabel, countryCodeToFlagEmoji } from "@/lib/format";
 import { computeYearRange, relabelTvStatus, extractMovieCredits, extractTvCredits } from "@/lib/title-meta";
@@ -279,6 +278,8 @@ export default async function TitlePage({
         otherRequesters={otherRequesters}
         tvdbId={title.tvdbId}
         arrTracking={arrTracking}
+        file={libraryStatus.file}
+        runtimeLabel={runtimeLabel}
       />
 
       <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">
@@ -294,7 +295,6 @@ export default async function TitlePage({
           </section>
         )}
 
-        <FileDetailsSection mediaType={type} file={libraryStatus.file} runtimeLabel={runtimeLabel} />
         <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
         {franchiseTitle && (
           <FranchiseRow
