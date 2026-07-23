@@ -11,6 +11,7 @@ import {
   primaryKey,
   unique,
   index,
+  uniqueIndex,
   check,
   customType,
 } from "drizzle-orm/pg-core";
@@ -387,6 +388,12 @@ export const requests = pgTable(
       "requests_status_check",
       sql`${table.status} in ('pending','approved','rejected')`,
     ),
+    // Blocks a double-click/dual-tab submit from inserting two pending
+    // requests for the same title — createRequestAction's pre-insert check
+    // can't fully guard against this on its own since it's read-then-write.
+    uniqueIndex("requests_pending_unique_idx")
+      .on(table.requestedByUserId, table.mediaType, table.tmdbId)
+      .where(sql`${table.status} = 'pending'`),
   ],
 );
 

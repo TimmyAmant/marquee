@@ -5,23 +5,12 @@ export type CompanyGroup = {
   memberIds: number[];
 };
 
-export const COMPANY_GROUPS: CompanyGroup[] = [
-  {
-    key: "disney",
-    displayName: "The Walt Disney Company",
-    memberIds: [
-      2, // Walt Disney Pictures
-      3166, // Walt Disney Productions (legacy name, pre-1986)
-      3, // Pixar
-      420, // Marvel Studios
-      7505, // Marvel Entertainment
-      1, // Lucasfilm
-      127928, // 20th Century Studios
-      43, // Fox Searchlight / Searchlight Pictures
-      6125, // Walt Disney Animation Studios
-    ],
-  },
-];
+// Empty by request — Marvel/Lucasfilm/Pixar/20th Century previously merged
+// into a single "The Walt Disney Company" page here, which read as broken
+// (clicking Lucasfilm's own logo landed on a page branded Disney). Each
+// studio now gets its own page again; findGroupForCompanyId/dedupeCompanies
+// both fall back to per-company handling when no group matches.
+export const COMPANY_GROUPS: CompanyGroup[] = [];
 
 export function findGroupForCompanyId(tmdbId: number): CompanyGroup | undefined {
   return COMPANY_GROUPS.find((group) => group.memberIds.includes(tmdbId));

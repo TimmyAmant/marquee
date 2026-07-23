@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.4",
+    date: "2026-07-22",
+    changes: [
+      "Fixed: clicking Marvel Studios, Lucasfilm, Pixar, or 20th Century Studios on Discover's Studios row landed on a page branded \"The Walt Disney Company\" instead of that studio's own page — each now shows its own name, logo, and catalog.",
+    ],
+  },
+  {
     version: "0.21.3",
     date: "2026-07-22",
     changes: [
