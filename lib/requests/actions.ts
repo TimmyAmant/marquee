@@ -54,7 +54,10 @@ export async function createRequestAction(
     return { error: "You already have this in your library." };
   }
 
-  const [inserted] = await db
+  // The read-then-write check above can't stop a second concurrent submit
+  // (double-click, two tabs) from also passing it — requests_pending_unique_idx
+  // is the actual guard; a 23505 here means we lost that race, not a real error.
+  const inserted = await db
     .insert(requests)
     .values({
       requestedByUserId: viewer.userId,
@@ -63,7 +66,13 @@ export async function createRequestAction(
       title,
       posterPath,
     })
-    .returning({ id: requests.id });
+    .returning({ id: requests.id })
+    .then(([row]) => row)
+    .catch((err) => {
+      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+      throw err;
+    });
+  if (!inserted) return { error: "You've already requested this." };
 
   await logActivityEvent({
     actorUserId: viewer.userId,

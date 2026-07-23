@@ -1,9 +1,22 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getWebhookSecret } from "@/lib/integrations/credentials";
 import { syncArrLibrary } from "@/lib/arr/sync";
 import { createNotification } from "@/lib/notifications/query";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { ArrProvider } from "@/lib/db/schema";
+
+const WEBHOOK_RATE_LIMIT = 30;
+const WEBHOOK_RATE_WINDOW_MS = 60 * 1000;
+
+function secretsMatch(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  // timingSafeEqual throws on length mismatch, so guard that first — the
+  // length check itself leaks nothing usable since secrets are fixed-length.
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 function isArrProvider(value: string): value is ArrProvider {
   return value === "sonarr" || value === "radarr";
@@ -29,9 +42,14 @@ export async function POST(
   }
   const provider = providerParam;
 
+  const ip = getClientIp(request);
+  if (!checkRateLimit(`webhook:${ip}`, WEBHOOK_RATE_LIMIT, WEBHOOK_RATE_WINDOW_MS)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const secret = new URL(request.url).searchParams.get("secret");
   const expectedSecret = await getWebhookSecret(userId);
-  if (!secret || !expectedSecret || secret !== expectedSecret) {
+  if (!secret || !expectedSecret || !secretsMatch(secret, expectedSecret)) {
     return NextResponse.json({ error: "Invalid or missing secret" }, { status: 401 });
   }
 

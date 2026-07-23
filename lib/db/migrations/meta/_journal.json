@@ -183,6 +183,13 @@
       "when": 1784716646940,
       "tag": "0025_add_generic_webhook_and_ntfy",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1784717000000,
+      "tag": "0026_requests_pending_unique",
+      "breakpoints": true
     }
   ]
 }

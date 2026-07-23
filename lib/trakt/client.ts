@@ -1,5 +1,9 @@
 const TRAKT_API_BASE = "https://api.trakt.tv";
 
+// A slow/unreachable Trakt hangs the import sync far longer than a normal
+// request should — matches the timeout Radarr/Sonarr/Plex/etc. already set.
+const REQUEST_TIMEOUT_MS = 8000;
+
 export type TraktConfig = { clientId: string };
 
 async function traktFetch<T>(config: TraktConfig, path: string): Promise<T> {
@@ -9,6 +13,7 @@ async function traktFetch<T>(config: TraktConfig, path: string): Promise<T> {
       "trakt-api-version": "2",
       "trakt-api-key": config.clientId,
     },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

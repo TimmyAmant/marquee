@@ -30,7 +30,16 @@ export async function syncJellyfinLibrary(
     })
     .returning();
 
-  const items = await jellyfin.getLibraryItems(credential);
+  let items: Awaited<ReturnType<typeof jellyfin.getLibraryItems>>;
+  try {
+    items = await jellyfin.getLibraryItems(credential);
+  } catch (err) {
+    // Matches plex/sync.ts's per-section try/catch — a transient API error
+    // here shouldn't discard the server row we just recorded above, and the
+    // next stale-triggered sync will simply retry the item fetch.
+    console.error(`[jellyfin-sync] getLibraryItems failed for user ${userId}:`, err);
+    return { itemCount: 0 };
+  }
   let itemCount = 0;
 
   for (const item of items) {

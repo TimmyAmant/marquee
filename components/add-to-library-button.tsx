@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
@@ -29,10 +31,20 @@ export function AddToLibraryButton({
   alreadyRequested?: boolean;
   otherRequesters?: string[];
 }) {
+  const router = useRouter();
   const action =
     mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
 
   const [state, formAction, isPending] = useActionState(action, undefined);
+
+  useEffect(() => {
+    if (state?.success) {
+      // Refresh so sibling server-rendered UI on this page (file details,
+      // relink form's admin gating) picks up the new libraryStatus instead
+      // of staying on the pre-add "untracked" render until reload.
+      router.refresh();
+    }
+  }, [state?.success, router]);
 
   return (
     <div className="flex flex-col gap-3">

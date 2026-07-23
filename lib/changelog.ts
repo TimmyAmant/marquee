@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.3",
+    date: "2026-07-22",
+    changes: [
+      "Fixed: unfavoriting a title on the Favorites page, or adding a title to Radarr/Sonarr from its detail page, could leave the page showing stale state until a reload.",
+      "Fixed: a double-click or two open tabs could submit the same request twice; the second is now rejected instead of creating a duplicate.",
+      "Fixed: a slow/unreachable TMDb or Trakt response had no timeout and could hang a page load indefinitely.",
+      "Hardened the Sonarr/Radarr webhook receiver with a timing-safe secret check and rate limiting.",
+      "Fixed: a single failed Jellyfin library fetch could abort an entire sync instead of retrying on the next pass.",
+    ],
+  },
+  {
     version: "0.21.2",
     date: "2026-07-22",
     changes: [

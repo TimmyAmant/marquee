@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { toggleFavorite } from "@/lib/favorites/actions";
 import type { FavoriteEntityType } from "@/lib/db/schema";
@@ -17,8 +19,17 @@ export function FavoriteButton({
    * year/subtitle line rather than as a standalone page-header action. */
   compact?: boolean;
 }) {
+  const router = useRouter();
   const action = toggleFavorite.bind(null, entityType, tmdbId);
   const [state, formAction, isPending] = useActionState(action, undefined);
+
+  useEffect(() => {
+    if (state?.favorited !== undefined) {
+      // Refresh so a page listing favorites (e.g. /favorites) drops the item
+      // immediately instead of leaving a stale card until the next navigation.
+      router.refresh();
+    }
+  }, [state?.favorited, router]);
 
   const favorited = state?.favorited ?? initialFavorited;
 

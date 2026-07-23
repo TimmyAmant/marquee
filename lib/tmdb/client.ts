@@ -3,6 +3,10 @@ import { getTmdbAccessToken } from "@/lib/integrations/app-settings";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
+// A slow/unreachable TMDb hangs page renders far longer than a normal
+// request should — matches the timeout Radarr/Sonarr/Plex/etc. already set.
+const REQUEST_TIMEOUT_MS = 8000;
+
 export class TmdbError extends Error {
   constructor(
     message: string,
@@ -45,6 +49,7 @@ async function tmdbFetch<T>(
       Accept: "application/json",
     },
     next: { revalidate: 3600 },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
