@@ -112,7 +112,7 @@ export function TitleHero({
 
       {/* Backdrop zone — poster + title only, per design: artwork should never
           carry metadata text (runtime/genres/year/status), just the name. */}
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-8 pt-[220px] sm:flex-row sm:items-start">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-12 pt-[220px] sm:flex-row sm:items-start">
         <div className="relative aspect-[2/3] w-56 shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-2xl ring-1 ring-border-strong">
           {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
         </div>
@@ -126,13 +126,14 @@ export function TitleHero({
       </div>
 
       {/* Below the backdrop, on the page's plain background — left-padded on
-          sm+ to align under the title rather than the poster beside it. The
-          negative top margin (sm+ only) pulls this up out of the dead space
-          below the title: the row above is exactly as tall as the poster
-          (336px) regardless of the title's own shorter height, so without
-          this offset everything here would start well below the title
-          instead of right after it. */}
-      <div className="mx-auto max-w-6xl px-8 pb-4 pt-5 sm:-mt-28 sm:pl-64">
+          sm+ to align under the title rather than the poster beside it:
+          px-12 (48px) + poster width (224px) + the row's gap-8 (32px) above.
+          The negative top margin (sm+ only) pulls this up out of the dead
+          space below the title: the row above is exactly as tall as the
+          poster (336px) regardless of the title's own shorter height, so
+          without this offset everything here would start well below the
+          title instead of right after it. */}
+      <div className="mx-auto max-w-6xl px-12 pb-4 pt-5 sm:-mt-28 sm:pl-[304px]">
         <div className="flex flex-col gap-8 lg:flex-row">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">

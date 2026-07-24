@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.8",
+    date: "2026-07-23",
+    changes: [
+      "Increased the left margin on title pages further, and fixed the overview/metadata column overlapping the poster that the wider margin exposed.",
+    ],
+  },
+  {
     version: "0.21.7",
     date: "2026-07-23",
     changes: [
