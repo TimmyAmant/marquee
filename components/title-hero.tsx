@@ -128,39 +128,43 @@ export function TitleHero({
       {/* Below the backdrop, on the page's plain background — left-padded on
           sm+ to align under the title rather than the poster beside it. */}
       <div className="mx-auto max-w-6xl px-6 pb-4 pt-5 sm:pl-64">
-        <div className="flex flex-wrap items-center gap-3">
-          {metaParts.length > 0 && (
-            <p className="text-text-secondary">{metaParts.join(" · ")}</p>
-          )}
-          {favorited !== undefined && (
-            <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
-          )}
-        </div>
-
-        <div className="mt-4">
-          <AddToLibraryButton
-            mediaType={mediaType}
-            tmdbId={tmdbId}
-            name={name}
-            posterPath={posterPath}
-            status={status}
-            configured={configured}
-            isAdmin={isAdmin}
-            alreadyRequested={alreadyRequested}
-            otherRequesters={otherRequesters}
-          />
-        </div>
-
-        <div className="mt-8 flex flex-col gap-8 lg:flex-row">
+        <div className="flex flex-col gap-8 lg:flex-row">
           <div className="min-w-0 flex-1">
-            {tagline && <p className="italic text-text-secondary">{tagline}</p>}
+            <div className="flex flex-wrap items-center gap-3">
+              {metaParts.length > 0 && (
+                <p className="text-text-secondary">{metaParts.join(" · ")}</p>
+              )}
+              {favorited !== undefined && (
+                <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
+              )}
+            </div>
 
-            {overview && (
-              <>
-                <h2 className="mt-5 font-display text-lg text-text-primary">Overview</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">{overview}</p>
-              </>
-            )}
+            <div className="mt-4">
+              <AddToLibraryButton
+                mediaType={mediaType}
+                tmdbId={tmdbId}
+                name={name}
+                posterPath={posterPath}
+                status={status}
+                configured={configured}
+                isAdmin={isAdmin}
+                alreadyRequested={alreadyRequested}
+                otherRequesters={otherRequesters}
+              />
+            </div>
+
+            <div className="mt-8">
+              {tagline && <p className="italic text-text-secondary">{tagline}</p>}
+
+              {overview && (
+                <>
+                  <h2 className={`font-display text-lg text-text-primary ${tagline ? "mt-5" : ""}`}>
+                    Overview
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">{overview}</p>
+                </>
+              )}
+            </div>
 
             {credits.length > 0 && (
               <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">

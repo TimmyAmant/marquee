@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.6",
+    date: "2026-07-23",
+    changes: [
+      "Moved the rating/status and File details sidebar cards up to align with the title's metadata line instead of starting much lower, next to the overview text.",
+    ],
+  },
+  {
     version: "0.21.5",
     date: "2026-07-23",
     changes: [
