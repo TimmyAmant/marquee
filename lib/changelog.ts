@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.7",
+    date: "2026-07-23",
+    changes: [
+      "Closed the remaining gap between the movie/show title and everything below it (runtime line, library status, overview, sidebar cards) — the poster's height was pushing all of that further down than the title itself needed.",
+      "Added a bit more breathing room between the poster artwork and the left edge of the page on title pages.",
+    ],
+  },
+  {
     version: "0.21.6",
     date: "2026-07-23",
     changes: [
