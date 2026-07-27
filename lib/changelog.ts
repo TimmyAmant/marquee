@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.9",
+    date: "2026-07-27",
+    changes: [
+      "Fixed the header search dropdown staying open after clicking a result or pressing Enter — a suggestion request still in flight from an earlier keystroke could resolve after navigation and silently reopen it.",
+    ],
+  },
+  {
     version: "0.21.8",
     date: "2026-07-23",
     changes: [

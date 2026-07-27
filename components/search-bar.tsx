@@ -33,6 +33,7 @@ export function SearchBar({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const latestRequestId = useRef(0);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -73,20 +74,24 @@ export function SearchBar({
       return;
     }
 
+    const requestId = ++latestRequestId.current;
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(trimmed)}`);
         const data = await res.json();
+        // Ignore responses for requests superseded by a newer keystroke or a navigation.
+        if (requestId !== latestRequestId.current) return;
         setSuggestions(data.results ?? []);
         setIsOpen(true);
       } catch {
-        setSuggestions([]);
+        if (requestId === latestRequestId.current) setSuggestions([]);
       }
     }, 250);
   }
 
   function goToSuggestion(suggestion: SearchSuggestion) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    latestRequestId.current++;
     setIsOpen(false);
     router.push(hrefFor(suggestion));
   }
@@ -100,6 +105,7 @@ export function SearchBar({
     const trimmed = value.trim();
     if (!trimmed) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    latestRequestId.current++;
     setIsOpen(false);
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
