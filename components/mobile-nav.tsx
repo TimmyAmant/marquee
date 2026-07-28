@@ -52,7 +52,7 @@ export function MobileNav({
 
       {open && (
         <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-border bg-bg-1 p-4 shadow-2xl">
-          <SearchBar variant="compact" />
+          <SearchBar variant="compact" onNavigate={() => setOpen(false)} />
 
           <nav className="mt-4 flex flex-col text-sm text-text-secondary">
             <Link

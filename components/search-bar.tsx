@@ -21,9 +21,11 @@ function hrefFor(suggestion: SearchSuggestion): string {
 export function SearchBar({
   variant = "default",
   initialValue = "",
+  onNavigate,
 }: {
   variant?: "default" | "compact";
   initialValue?: string;
+  onNavigate?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -93,6 +95,7 @@ export function SearchBar({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     latestRequestId.current++;
     setIsOpen(false);
+    onNavigate?.();
     router.push(hrefFor(suggestion));
   }
 
@@ -107,6 +110,7 @@ export function SearchBar({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     latestRequestId.current++;
     setIsOpen(false);
+    onNavigate?.();
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
 

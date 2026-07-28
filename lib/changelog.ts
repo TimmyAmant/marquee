@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.21.10",
+    date: "2026-07-27",
+    changes: [
+      "Fixed the mobile menu staying open after tapping a search result — the search dropdown itself closed, but the slide-down hamburger panel around it didn't, since it had its own separate open/close state.",
+    ],
+  },
+  {
     version: "0.21.9",
     date: "2026-07-27",
     changes: [
