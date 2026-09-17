@@ -1,0 +1,15 @@
+{
+  "tmdbId": 1399,
+  "seasonNumber": 1,
+  "episodes": [
+    {
+      "id": 63056,
+      "episodeNumber": 1,
+      "name": "Winter Is Coming",
+      "overview": "Jon Arryn, the Hand of the King, is dead…",
+      "airDate": "2011-04-17",
+      "stillPath": "/o4IX9Mm0kpLITVANJMx7inyEUaY.jpg",
+      "hasFile": true
+    }
+  ]
+}

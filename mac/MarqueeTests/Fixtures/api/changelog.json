@@ -1,0 +1,11 @@
+{
+  "results": [
+    {
+      "version": "0.22.0",
+      "date": "2026-09-17",
+      "changes": [
+        "Added a versioned JSON API at /api/v1 …"
+      ]
+    }
+  ]
+}

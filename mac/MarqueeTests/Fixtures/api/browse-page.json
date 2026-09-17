@@ -1,0 +1,22 @@
+{
+  "page": 2,
+  "totalPages": 23,
+  "totalResults": 4584,
+  "results": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 502,
+      "name": "Fail Safe",
+      "posterPath": "/qrsj.jpg",
+      "year": "1964",
+      "subtitle": "Thriller",
+      "overview": "Because of a technical defect an American bomber team mistakenly orders the destruction of Moscow…",
+      "rating": 7.832,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ]
+}

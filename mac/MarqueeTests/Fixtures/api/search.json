@@ -1,0 +1,57 @@
+{
+  "query": "keanu",
+  "people": [
+    {
+      "tmdbId": 6384,
+      "name": "Keanu Reeves",
+      "profilePath": "/8RZL.jpg",
+      "knownForDepartment": "Acting",
+      "favorited": false
+    }
+  ],
+  "studios": [
+    {
+      "tmdbId": 420,
+      "name": "Marvel Studios",
+      "logoPath": "/hUze.png",
+      "favorited": false
+    }
+  ],
+  "titles": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "theme": {
+    "label": "Science Fiction",
+    "items": [
+      {
+        "mediaType": "movie",
+        "tmdbId": 603,
+        "name": "The Matrix",
+        "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+        "year": "1999",
+        "subtitle": null,
+        "overview": null,
+        "rating": null,
+        "status": null,
+        "favorited": false,
+        "requested": null,
+        "canQuickAdd": false,
+        "canRequest": false
+      }
+    ]
+  }
+}

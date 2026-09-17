@@ -1,0 +1,33 @@
+{
+  "genres": [
+    {
+      "id": 10759,
+      "name": "Action & Adventure"
+    }
+  ],
+  "network": {
+    "tmdbId": 213,
+    "name": "Netflix",
+    "logoPath": "/wwem.png"
+  },
+  "becauseYouWatched": {
+    "title": "Severance",
+    "items": [
+      {
+        "mediaType": "movie",
+        "tmdbId": 603,
+        "name": "The Matrix",
+        "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+        "year": "1999",
+        "subtitle": null,
+        "overview": null,
+        "rating": null,
+        "status": null,
+        "favorited": false,
+        "requested": null,
+        "canQuickAdd": false,
+        "canRequest": false
+      }
+    ]
+  }
+}

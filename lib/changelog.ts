@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.24.0",
+    date: "2026-09-17",
+    changes: [
+      "Marquee for Mac, the native macOS client, now lives in this repository under mac/ — see the README for what it does and how to build it.",
+      "Tidied the project: screenshots and the API reference moved under docs/, and the Docker image no longer carries documentation or the Mac app.",
+    ],
+  },
+  {
     version: "0.23.1",
     date: "2026-09-17",
     changes: [

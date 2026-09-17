@@ -1,0 +1,10 @@
+{
+  "version": "0.22.0",
+  "movieCount": 812,
+  "tvCount": 143,
+  "trackedCount": 37,
+  "totalRequests": 58,
+  "timeZone": "America/New_York",
+  "repoUrl": "https://github.com/TimmyAmant/marquee",
+  "issuesUrl": "https://github.com/TimmyAmant/marquee/issues"
+}

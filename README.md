@@ -15,6 +15,14 @@ Runs on your home network (Unraid, Synology, a spare box, whatever) next to
 the Plex/Jellyfin/Sonarr/Radarr you already have. Not a hosted service — your
 data, your server.
 
+![Marquee's Discover page](docs/screenshots/web-discover.jpg)
+
+<p align="center">
+  <img src="docs/screenshots/web-title.jpg" alt="A title page, showing library status and file details" width="100%">
+</p>
+
+**Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Development](#local-development) · [API](docs/api-v1.md)
+
 ## Features
 
 ### Home & Discover
@@ -243,6 +251,21 @@ database is stored, is pre-filled with sane defaults.
 The template lives at
 [`unraid-templates/marquee.xml`](unraid-templates/marquee.xml) in this repo.
 
+## Marquee for Mac
+
+A native macOS client lives in [`mac/`](mac/). It's a real Mac app — SwiftUI,
+no browser — that talks to your own server over the `/api/v1` API, so it shows
+exactly what the website shows. It finds your server on your home network by
+itself, or takes an address you type in.
+
+| | |
+|---|---|
+| ![Finding your server](docs/screenshots/mac-connect.jpg) | ![Discover in the Mac app](docs/screenshots/mac-discover.jpg) |
+| ![A title page in the Mac app](docs/screenshots/mac-title.jpg) | ![Requests in the Mac app](docs/screenshots/mac-requests.jpg) |
+
+It needs macOS 15 or later and a server running 0.22.0 or later. Build
+instructions are in [`mac/README.md`](mac/README.md).
+
 ## Local development
 
 The app container bundles Postgres for production/self-hosting, but for
@@ -273,6 +296,12 @@ docker exec -it <container-name> npm run reset-admin-password -- <new-password>
 
 Password must be at least 8 characters. This updates the admin account's
 password directly in the database — no login required.
+
+## API
+
+Everything the website does is available over a JSON API for native clients
+and scripts: [`docs/api-v1.md`](docs/api-v1.md). Sign in with your normal
+account to get a device token, then read and write the same data.
 
 ## Support
 

@@ -1,0 +1,19 @@
+{
+  "sonarrUrl": "http://192.168.1.10:8989",
+  "results": [
+    {
+      "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "title": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "requestedBy": {
+        "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "displayName": null,
+        "username": "member1",
+        "label": "member1"
+      },
+      "createdAt": "2026-09-17T17:12:41.415Z"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "plex": {
+    "connected": true,
+    "servers": [
+      {
+        "name": "Basement",
+        "lastSyncedAt": "2026-09-17T16:00:03.412Z"
+      }
+    ],
+    "movieCount": 812,
+    "tvCount": 143,
+    "totalBytes": 9123456789012
+  },
+  "jellyfin": {
+    "connected": false,
+    "baseUrl": null,
+    "hasApiKey": false,
+    "servers": [],
+    "movieCount": 0,
+    "tvCount": 0,
+    "totalBytes": 0
+  },
+  "sonarr": {
+    "connected": true,
+    "baseUrl": "http://192.168.1.10:8989",
+    "hasApiKey": true,
+    "rootFolderPath": "/tv",
+    "qualityProfileId": 4,
+    "fullyConfigured": true
+  },
+  "radarr": {
+    "connected": false,
+    "baseUrl": null,
+    "hasApiKey": false,
+    "rootFolderPath": null,
+    "qualityProfileId": null,
+    "fullyConfigured": false
+  },
+  "tmdb": {
+    "connected": true,
+    "savedInSettings": false,
+    "configuredFromEnv": true
+  },
+  "trakt": {
+    "connected": false
+  },
+  "tvdb": {
+    "connected": true
+  },
+  "discord": {
+    "connected": false
+  },
+  "ntfy": {
+    "connected": false
+  },
+  "genericWebhook": {
+    "connected": false
+  },
+  "arrWebhooks": {
+    "secret": "d8a989b4f0ad05fab2ab959bf0d5615adb0a25a9a3974674",
+    "radarrUrl": "http://marquee.local:3000/api/webhooks/radarr/54caac33-…?secret=d8a989…",
+    "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…"
+  }
+}

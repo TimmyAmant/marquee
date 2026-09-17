@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "baseUrl": "http://192.168.1.10:8989",
+  "rootFolders": [
+    {
+      "id": 1,
+      "path": "/tv"
+    }
+  ],
+  "qualityProfiles": [
+    {
+      "id": 4,
+      "name": "HD-1080p"
+    }
+  ],
+  "selectedRootFolder": "/tv",
+  "selectedQualityProfileId": 4
+}

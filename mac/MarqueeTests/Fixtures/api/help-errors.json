@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "title": "Adding titles to Sonarr / Radarr",
+      "entries": [
+        {
+          "message": "Connect Sonarr in Settings first.",
+          "meaning": "No Sonarr connection is saved, or it's missing a root folder / quality profile.",
+          "whatToDo": "Go to Settings → Integrations and finish the Sonarr setup (URL, API key, then pick defaults)."
+        }
+      ]
+    }
+  ]
+}

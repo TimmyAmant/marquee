@@ -1,0 +1,28 @@
+{
+  "configured": true,
+  "month": "2026-09",
+  "gridStart": "2026-08-30",
+  "gridEnd": "2026-10-03",
+  "today": "2026-09-17",
+  "prevMonth": "2026-08",
+  "nextMonth": "2026-10",
+  "timeZone": "America/New_York",
+  "entries": [
+    {
+      "date": "2026-09-18",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "name": "Severance",
+      "posterPath": "/pPHp.jpg",
+      "subtitle": "S03E02"
+    },
+    {
+      "date": "2026-09-22",
+      "mediaType": "movie",
+      "tmdbId": 1061474,
+      "name": "Superman",
+      "posterPath": "/wPLy.jpg",
+      "subtitle": "Digital release"
+    }
+  ]
+}

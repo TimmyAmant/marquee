@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "id": "44476b7f-d130-4873-8211-e11e17f6b211",
+      "eventType": "request_rejected",
+      "verb": "declined",
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "title": "The Matrix",
+      "actor": {
+        "userId": null,
+        "displayName": "Timmy",
+        "username": "timmy",
+        "label": "Timmy"
+      },
+      "createdAt": "2026-09-17T17:12:41.470Z"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "unreadCount": 1,
+  "results": [
+    {
+      "id": "bedcb20b-fa30-4683-b000-42affc320087",
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "title": "The Matrix",
+      "eventType": "request_rejected",
+      "message": "\"The Matrix\" was declined.",
+      "read": false,
+      "createdAt": "2026-09-17T17:12:41.470Z"
+    }
+  ]
+}

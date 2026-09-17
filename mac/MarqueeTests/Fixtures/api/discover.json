@@ -1,0 +1,133 @@
+{
+  "recentlyAdded": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "trending": [
+    {
+      "mediaType": "tv",
+      "tmdbId": 299939,
+      "name": "Monster: The Lizzie Borden Story",
+      "posterPath": "/57XS.jpg",
+      "year": "2026",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": null,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "popularMovies": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "movieGenres": [
+    {
+      "id": 28,
+      "name": "Action",
+      "backdropPath": "/qeQJ.jpg"
+    }
+  ],
+  "upcomingMovies": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "studios": [
+    {
+      "tmdbId": 2,
+      "name": "Walt Disney Pictures",
+      "logoPath": "/wdrC.png",
+      "favorited": null
+    }
+  ],
+  "popularSeries": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "seriesGenres": [
+    {
+      "id": 10759,
+      "name": "Action & Adventure",
+      "backdropPath": "/…jpg"
+    }
+  ],
+  "upcomingSeries": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "networks": [
+    {
+      "tmdbId": 213,
+      "name": "Netflix",
+      "logoPath": "/wwem.png"
+    }
+  ]
+}

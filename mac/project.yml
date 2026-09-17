@@ -1,0 +1,125 @@
+name: Marquee
+
+options:
+  bundleIdPrefix: com.timmyamant
+  deploymentTarget:
+    macOS: "15.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    # Swift 6 language mode: complete data-race safety checking, plus the
+    # Swift 6.2 "approachable concurrency" upcoming features (nonisolated
+    # async functions run on the caller's actor, inferred isolated conformances).
+    SWIFT_VERSION: "6.0"
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+    Release:
+      SWIFT_COMPILATION_MODE: wholemodule
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+
+targets:
+  Marquee:
+    type: application
+    platform: macOS
+    sources:
+      - path: Marquee
+    info:
+      path: Marquee/Resources/Info.plist
+      properties:
+        CFBundleName: Marquee
+        CFBundleDisplayName: Marquee
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundlePackageType: APPL
+        CFBundleDevelopmentRegion: en
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSApplicationCategoryType: public.app-category.entertainment
+        NSHumanReadableCopyright: "Marquee — self-hosted media dashboard. MIT License."
+        NSLocalNetworkUsageDescription: "Marquee looks for your Marquee server on your home network (such as the one on your Unraid box) and connects to it, so you can browse your library and send requests from this Mac."
+        # Arbitrary loads only: when NSAllowsLocalNetworking is also present
+        # macOS ignores this key, blocking plain http:// to named LAN hosts.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.timmyamant.Marquee
+            CFBundleURLSchemes:
+              - marquee
+    entitlements:
+      path: Marquee/Resources/Marquee.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+    settings:
+      base:
+        PRODUCT_NAME: Marquee
+        PRODUCT_BUNDLE_IDENTIFIER: com.timmyamant.Marquee
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+        DEVELOPMENT_ASSET_PATHS: "\"Marquee/Preview Content\""
+        ENABLE_PREVIEWS: YES
+        COMBINE_HIDPI_IMAGES: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+
+  MarqueeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: MarqueeTests
+        excludes:
+          - Fixtures
+      # Example responses from Docs/api-v1.md (Scripts/extract-api-fixtures.py),
+      # copied as a folder so tests find them under Fixtures/api/.
+      - path: MarqueeTests/Fixtures
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: Marquee
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.timmyamant.MarqueeTests
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Marquee.app/Contents/MacOS/Marquee"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  Marquee:
+    build:
+      targets:
+        Marquee: all
+        MarqueeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - MarqueeTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

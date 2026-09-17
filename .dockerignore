@@ -7,3 +7,7 @@ npm-debug.log*
 Dockerfile
 .dockerignore
 docker-compose.yml
+mac
+docs
+unraid-templates
+*.md

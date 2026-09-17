@@ -1,0 +1,173 @@
+{
+  "mediaType": "movie",
+  "tmdbId": 603,
+  "tvdbId": null,
+  "imdbId": "tt0133093",
+  "name": "The Matrix",
+  "overview": "Set in the 22nd century, The Matrix tells the story of a computer hacker…",
+  "tagline": "Believe the unbelievable.",
+  "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+  "backdropPath": "/lrtSb1skJayPydZk0OSMAKjBOVe.jpg",
+  "year": "1999",
+  "releaseDate": "1999-03-31",
+  "tmdbStatus": "Released",
+  "facts": {
+    "runtimeMinutes": 136,
+    "runtimeLabel": "2h 16m",
+    "ratingPercent": 83,
+    "genres": [
+      "Action",
+      "Science Fiction"
+    ],
+    "yearRange": "1999",
+    "statusLabel": "Released",
+    "network": null,
+    "releaseDateLabel": "March 30, 1999",
+    "nextAirDate": null,
+    "nextAirDateLabel": null,
+    "originalLanguage": "en",
+    "originalLanguageLabel": "English",
+    "productionCountry": {
+      "code": "US",
+      "name": "United States of America",
+      "flag": "🇺🇸"
+    },
+    "watchProviders": [
+      {
+        "name": "YouTube TV",
+        "logoPath": "/48bV.png"
+      }
+    ]
+  },
+  "credits": [
+    {
+      "role": "Director",
+      "name": "Lana Wachowski"
+    },
+    {
+      "role": "Director",
+      "name": "Lilly Wachowski"
+    }
+  ],
+  "keywords": [
+    "man vs machine",
+    "martial arts",
+    "cyberpunk"
+  ],
+  "links": {
+    "trailerYoutubeKey": "FVI84Dfx2-I",
+    "imdbId": "tt0133093",
+    "tvdbId": null,
+    "facebookId": "TheMatrixMovie",
+    "instagramId": null,
+    "twitterId": null,
+    "external": [
+      {
+        "label": "IMDb",
+        "url": "https://www.imdb.com/title/tt0133093"
+      },
+      {
+        "label": "Facebook",
+        "url": "https://www.facebook.com/TheMatrixMovie"
+      }
+    ]
+  },
+  "library": {
+    "status": "owned",
+    "provider": "plex",
+    "configured": true,
+    "file": {
+      "path": "/movies/The Matrix (1999)/The Matrix.mkv",
+      "sizeBytes": 31229390464,
+      "quality": "Bluray-2160p",
+      "resolutionTier": "4K",
+      "resolution": "3840x1600",
+      "videoCodec": "x265",
+      "dynamicRange": "HDR10",
+      "audioCodec": "TrueHD Atmos",
+      "audioChannels": 7.1,
+      "dateAdded": "2025-11-02T09:14:00.000Z",
+      "releaseGroup": "FraMeSToR",
+      "edition": null
+    }
+  },
+  "viewer": {
+    "isAdmin": true,
+    "favorited": false,
+    "requestStatus": null,
+    "alreadyRequested": false,
+    "otherRequesters": [],
+    "canAdd": false,
+    "needsArrSetup": false,
+    "canRequest": false,
+    "canRelink": true,
+    "arrTracking": {
+      "arrId": 412,
+      "monitored": true
+    }
+  },
+  "seasons": [],
+  "cast": [
+    {
+      "tmdbId": 6384,
+      "name": "Keanu Reeves",
+      "character": "Neo",
+      "profilePath": "/8RZL.jpg",
+      "order": 0,
+      "favorited": false
+    }
+  ],
+  "franchise": {
+    "title": "The Matrix Collection",
+    "collectionId": 2344,
+    "collectionFavorited": false,
+    "items": [
+      {
+        "mediaType": "movie",
+        "tmdbId": 603,
+        "name": "The Matrix",
+        "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+        "year": "1999",
+        "subtitle": null,
+        "overview": null,
+        "rating": null,
+        "status": null,
+        "favorited": false,
+        "requested": null,
+        "canQuickAdd": false,
+        "canRequest": false
+      }
+    ],
+    "addAllMissing": [
+      {
+        "mediaType": "movie",
+        "tmdbId": 604
+      }
+    ]
+  },
+  "studios": [
+    {
+      "tmdbId": 79,
+      "name": "Village Roadshow Pictures",
+      "logoPath": "/at4u.png",
+      "favorited": false
+    }
+  ],
+  "similar": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ]
+}

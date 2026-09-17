@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marquee for Mac: Mockup</title>
+<style>
+/* New York is a macOS system font; Chrome can't resolve it by family name, so point at the local system file (no network). Falls back to Georgia. */
+@font-face{font-family:"New York";src:local("New York"),url("file:///System/Library/Fonts/NewYork.ttf");font-weight:100 900;font-style:normal}
+@font-face{font-family:"New York";src:local("New York Italic"),url("file:///System/Library/Fonts/NewYorkItalic.ttf");font-weight:100 900;font-style:italic}
+
+:root{
+  --bg0:#0a0a0c;--bg1:#131217;--bg2:#1c1b22;--bg3:#26242e;
+  --border:#2c2a35;--borderStrong:#3a3745;
+  --t1:#f3f1ea;--t2:#a8a4b3;--t3:#6f6c7d;
+  --accent:#e0a63e;--accentHover:#f0b954;
+  --own:#4caf7d;--ownBg:#14251c;--trk:#4f8fd1;--trkBg:#10202f;--untr:#201f26;
+  --serif:"New York",ui-serif,Georgia,serif;
+  --sans:-apple-system,"SF Pro Text",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#3b3f55}
+body{font-family:var(--sans);color:var(--t1);-webkit-font-smoothing:antialiased}
+.ic{display:block;flex:none}
+
+/* ---------- desktop + window ---------- */
+.screen{width:1520px;height:980px;position:relative;overflow:hidden;
+  background:
+    radial-gradient(900px 620px at 10% 6%, rgba(150,168,222,.55), transparent 62%),
+    radial-gradient(760px 640px at 94% 96%, rgba(232,168,122,.45), transparent 62%),
+    radial-gradient(680px 480px at 72% 18%, rgba(176,136,196,.32), transparent 60%),
+    linear-gradient(158deg,#56648a 0%,#6a668d 46%,#8a6f7a 100%);}
+body:not(.single) .screen + .screen{margin-top:24px}
+.window{position:absolute;left:40px;top:40px;width:1440px;height:900px;border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,#2c2a3b,#221f2b);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.7),0 34px 80px rgba(10,8,20,.55),0 12px 28px rgba(10,8,20,.3);}
+.window::after{content:"";position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:60;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),inset 0 1px 0 rgba(255,255,255,.06)}
+
+/* ---------- sidebar ---------- */
+.sidebar{position:absolute;left:0;top:0;bottom:0;width:230px;background:rgba(19,18,23,.85);border-right:1px solid var(--border);z-index:30}
+.traffic{position:absolute;top:20px;left:20px;display:flex;gap:8px}
+.traffic i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.28)}
+.brand{position:absolute;top:62px;left:22px;font-family:var(--serif);font-size:22px;font-weight:650;letter-spacing:-.01em;line-height:1}
+.brand::after{content:"";position:absolute;right:-9px;top:1px;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(224,166,62,.55)}
+.nav{position:absolute;top:104px;left:10px;right:10px}
+.nav-item{height:32px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:8px;font-size:13px;color:var(--t2);margin-bottom:2px}
+.nav-item .ic{color:var(--t3)}
+.nav-item.sel{background:var(--bg3);color:var(--t1);font-weight:500}
+.nav-item.sel .ic{color:var(--accent)}
+.nav-label{font-size:10.5px;font-weight:600;letter-spacing:.09em;color:var(--t3);padding:20px 10px 7px}
+.count{margin-left:auto;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:#1b1407;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.side-foot{position:absolute;left:0;right:0;bottom:0;padding:13px 14px 14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.who .nm{font-size:12.5px;color:var(--t2);font-weight:500;line-height:15px}
+.who .rl{font-size:11px;color:var(--t3);line-height:14px}
+.roundbtn{margin-left:auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:grid;place-items:center;color:var(--t2);background:rgba(28,27,34,.6)}
+
+/* ---------- content + toolbar ---------- */
+.content{position:absolute;left:230px;top:0;right:0;bottom:0;overflow:hidden;background:var(--bg0)}
+.glow{position:absolute;left:0;right:0;top:0;height:560px;pointer-events:none;
+  background:radial-gradient(ellipse 72% 100% at 50% 0%, rgba(224,166,62,.14), rgba(224,166,62,.05) 45%, rgba(224,166,62,0) 72%)}
+.tb-blur{position:absolute;left:0;right:0;top:0;height:70px;z-index:9;
+  backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);
+  background:linear-gradient(rgba(10,10,12,.78),rgba(10,10,12,.5) 72%,rgba(10,10,12,0));
+  -webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
+.toolbar{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;padding:0 16px 0 22px;z-index:10}
+.navtitle{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.tb-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.search{width:300px;height:32px;border-radius:16px;background:rgba(28,27,34,.78);border:1px solid var(--border);display:flex;align-items:center;gap:7px;padding:0 12px;color:var(--t3);font-size:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:rgba(28,27,34,.78);display:grid;place-items:center;color:var(--t2);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.iconbtn .dot{position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #1c1b22}
+.glass .search,.glass .iconbtn,.glass .capsule{background:rgba(16,14,18,.5);border-color:rgba(255,255,255,.1);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.glass .search{color:#b3aebb}
+.capsule{height:32px;border-radius:16px;border:1px solid var(--border);display:flex;align-items:center;color:var(--t1)}
+.capsule span{width:36px;height:100%;display:grid;place-items:center}
+.capsule span + span{border-left:1px solid rgba(255,255,255,.08);color:#8d889a}
+
+/* ---------- shelves ---------- */
+.page{position:absolute;left:0;right:0;top:52px;padding:28px 0 28px 28px}
+.shelf{margin-bottom:48px}
+.shelf-head{height:28px;display:flex;align-items:center;gap:9px;padding-right:28px;margin-bottom:12px}
+.shelf-title{font-family:var(--serif);font-size:20px;font-weight:600;letter-spacing:-.005em;line-height:1}
+.seeall{width:20px;height:20px;border-radius:50%;border:1px solid var(--borderStrong);display:grid;place-items:center;color:var(--t2);margin-top:1px}
+.arrows{margin-left:auto;display:flex;gap:8px}
+.arrow{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:grid;place-items:center;color:var(--t2)}
+.arrow.dis{color:#4a4756;border-color:#232129}
+.row{display:flex;gap:20px}
+
+/* ---------- poster card ---------- */
+.card{width:156px;flex:none;position:relative}
+.art{width:156px;height:234px;border-radius:8px;border:1px solid var(--border);overflow:hidden;position:relative;background:#1c1b22}
+.bgart{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pt{position:absolute;left:8px;right:8px;text-align:center;font-family:var(--serif);line-height:1;color:#fff}
+.kind{position:absolute;top:7px;left:7px;font-size:9px;font-weight:700;letter-spacing:.05em;color:#fff;padding:3px 5px 2.5px;border-radius:4px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.35);z-index:3}
+.kind.movie{background:#2563eb}.kind.series{background:#c026d3}
+.status{position:absolute;top:6px;right:6px;height:17px;padding:0 6px 0 5px;border-radius:9px;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;line-height:1;z-index:3;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.status i{width:5px;height:5px;border-radius:50%;background:currentColor}
+.st-owned{color:var(--own);background:rgba(20,37,28,.94);outline:1px solid rgba(76,175,125,.32);outline-offset:-1px}
+.st-dl,.st-missing{color:var(--trk);background:rgba(16,32,47,.94);outline:1px solid rgba(79,143,209,.32);outline-offset:-1px}
+.st-soon{color:var(--t2);background:rgba(32,31,38,.94);outline:1px solid rgba(168,164,179,.2);outline-offset:-1px}
+.strip{position:absolute;left:0;right:0;bottom:0;height:3px;z-index:3}
+.meta{padding:8px 2px 0}
+.mtitle{font-size:13px;font-weight:500;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:17px}
+.myear{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t3);margin-top:1px;line-height:15px}
+.card.hover{transform:translateY(-4px)}
+.card.hover .art{border-color:#55516a;box-shadow:0 16px 34px rgba(0,0,0,.6),0 4px 10px rgba(0,0,0,.4)}
+.ov{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;padding:10px 9px 9px;
+  background:linear-gradient(to top,rgba(10,10,12,.97) 0%,rgba(10,10,12,.92) 46%,rgba(10,10,12,.55) 70%,rgba(10,10,12,.18) 100%)}
+.ov p{font-size:11px;line-height:15px;color:#d9d5df;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
+.addbtn{height:26px;border-radius:13px;background:var(--accent);color:#1b1407;font-size:11.5px;font-weight:650;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 8px rgba(224,166,62,.25)}
+
+/* ---------- genre tiles ---------- */
+.genre{width:288px;height:160px;border-radius:12px;flex:none;position:relative;overflow:hidden;display:grid;place-items:center;border:1px solid rgba(255,255,255,.07)}
+.genre svg{position:absolute;inset:0;width:100%;height:100%}
+.genre .tex{position:absolute;inset:0;
+  background:
+    radial-gradient(110% 90% at 88% 0%,rgba(255,255,255,.2),transparent 55%),
+    radial-gradient(90% 90% at 0% 100%,rgba(0,0,0,.5),transparent 62%),
+    repeating-linear-gradient(118deg,rgba(255,255,255,.035) 0 2px,transparent 2px 13px)}
+.genre .gr{position:absolute;inset:0;background-image:var(--grain);opacity:.1;mix-blend-mode:overlay}
+.genre span{position:relative;font-family:var(--serif);font-weight:800;font-size:34px;color:#fff;letter-spacing:-.01em;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+
+/* ---------- title page ---------- */
+.backdrop{position:absolute;left:0;right:0;top:0;height:380px;overflow:hidden}
+.backdrop svg{position:absolute;inset:0;width:100%;height:100%}
+.backdrop .grain{position:absolute;inset:0;background-image:var(--grain);opacity:.16;mix-blend-mode:overlay}
+.backdrop .fade{position:absolute;inset:0;background:
+  linear-gradient(to bottom,rgba(10,10,12,.6) 0%,rgba(10,10,12,0) 20%,rgba(10,10,12,0) 40%,rgba(10,10,12,.72) 74%,#0a0a0c 100%),
+  linear-gradient(to right,rgba(10,10,12,.5),rgba(10,10,12,0) 42%)}
+.tp-poster{position:absolute;left:48px;top:170px;width:224px;height:336px;border-radius:12px;overflow:hidden;z-index:4;
+  box-shadow:0 0 0 1px var(--borderStrong),0 28px 64px rgba(0,0,0,.65),0 8px 20px rgba(0,0,0,.45)}
+.tp-poster .scaler{width:156px;height:234px;transform:scale(1.4359);transform-origin:0 0;position:relative}
+.tp-main{position:absolute;left:304px;top:246px;width:546px;z-index:4}
+.tp-title{font-family:var(--serif);font-size:48px;font-weight:700;letter-spacing:-.015em;line-height:54px;text-shadow:0 2px 20px rgba(0,0,0,.4)}
+.tp-meta{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:14px;color:var(--t2)}
+.pill{height:26px;padding:0 11px 0 9px;border-radius:13px;border:1px solid var(--borderStrong);display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--t1);font-weight:500;white-space:nowrap}
+.pill.lg{height:32px;border-radius:16px;padding:0 14px 0 12px;font-size:13px;gap:6px}
+.pill .ic{color:var(--t2)}
+.tp-status{display:flex;gap:8px;margin-top:16px}
+.bigbadge{height:32px;border-radius:16px;padding:0 14px 0 12px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--own);background:var(--ownBg);box-shadow:inset 0 0 0 1px rgba(76,175,125,.34)}
+.bigbadge i{width:8px;height:8px;border-radius:50%;background:var(--own);box-shadow:0 0 0 3px rgba(76,175,125,.18)}
+.h-serif{font-family:var(--serif);font-size:18px;font-weight:600;margin-top:26px;line-height:24px}
+.body{font-size:14px;line-height:22px;color:var(--t2);margin-top:6px}
+.credits{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.credits .n{font-size:13.5px;font-weight:600;color:var(--t1);line-height:18px}
+.credits .r{font-size:12px;color:var(--t3);line-height:16px;margin-top:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.chip{height:22px;padding:0 9px;border-radius:11px;border:1px solid var(--border);font-size:11px;color:var(--t2);display:inline-flex;align-items:center}
+.links{display:flex;gap:8px;margin-top:14px}
+.links .pill{height:30px;border-radius:15px;font-size:12.5px;padding:0 13px 0 11px}
+.tp-side{position:absolute;left:882px;top:246px;width:288px;z-index:4}
+.facts{background:rgba(19,18,23,.94);border:1px solid var(--border);border-radius:16px;padding:4px 18px 16px;box-shadow:0 18px 40px rgba(0,0,0,.35);backdrop-filter:blur(20px)}
+.rating{display:flex;align-items:center;justify-content:space-between;height:50px}
+.rating b{font-family:var(--serif);font-size:22px;color:var(--accent);font-weight:700;letter-spacing:-.01em}
+.rating small{font-size:11px;color:var(--t3)}
+.frow{display:flex;justify-content:space-between;align-items:center;height:38px;border-top:1px solid var(--border);font-size:12.5px;gap:10px}
+.frow .l{color:var(--t2)}.frow .v{color:var(--t1);font-weight:500;white-space:nowrap}
+.caps{font-size:10.5px;font-weight:600;letter-spacing:.08em;color:var(--t3)}
+.streaming{border-top:1px solid var(--border);padding-top:14px}
+.logos{display:flex;gap:8px;margin-top:10px}
+.logo{width:36px;height:36px;border-radius:9px;background:#fff;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.fcard{margin-top:16px;background:var(--bg1);border:1px solid var(--border);border-radius:16px;padding:15px 18px 18px}
+.fcard h3{font-family:var(--serif);font-size:16px;font-weight:600;line-height:22px;margin-bottom:12px}
+.pathf{margin-top:6px;height:32px;border-radius:8px;background:var(--bg0);border:1px solid var(--border);display:flex;align-items:center;padding:0 4px 0 10px;gap:8px}
+.pathf code{font-family:var(--mono);font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.copy{height:24px;padding:0 8px;border-radius:6px;background:var(--bg3);border:1px solid var(--borderStrong);font-size:11px;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:4px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-top:14px}
+.fgrid .l{font-size:11px;color:var(--t3);line-height:14px}
+.fgrid .v{font-size:13px;color:var(--t1);font-weight:500;margin-top:2px;line-height:17px;white-space:nowrap}
+.tp-cast{position:absolute;left:48px;width:802px;top:706px;z-index:4;overflow:hidden}
+.tp-cast .shelf-head{padding-right:0}
+.person{width:112px;flex:none}
+.portrait{width:112px;height:124px;border-radius:12px;overflow:hidden;border:1px solid var(--border);position:relative}
+.portrait svg{position:absolute;inset:0;width:100%;height:100%}
+.pname{font-size:12.5px;font-weight:500;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px}
+.prole{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:14px}
+</style>
+</head>
+<body>
+<section class="screen" id="discover"></section>
+<section class="screen" id="title"></section>
+
+<script>
+/* ---------------- helpers ---------------- */
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const range = (n, f) => Array.from({length:n}, (_, i) => f(i)).join('');
+
+const I = {
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/>',
+  film:'<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 4.5v15M16.5 4.5v15M3.5 9.5h4M3.5 14.5h4M16.5 9.5h4M16.5 14.5h4"/>',
+  tv:'<rect x="3" y="4.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 20.5h7M12 17v3.5"/>',
+  heart:'<path d="M12 19.5s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 6.6a4.2 4.2 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/>',
+  calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  tray:'<path d="M3.5 13.5l2.3-6.4A2 2 0 0 1 7.7 5.8h8.6a2 2 0 0 1 1.9 1.3l2.3 6.4V18a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M3.5 13.5h4.8l1.4 2.2h4.6l1.4-2.2h4.8"/>',
+  search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/>',
+  bell:'<path d="M6 16.5v-5.5a6 6 0 0 1 12 0v5.5l1.6 1.8H4.4z"/><path d="M10 20.8a2.2 2.2 0 0 0 4 0"/>',
+  moon:'<path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1z"/>',
+  chevL:'<path d="M14.5 6l-6 6 6 6"/>',
+  chevR:'<path d="M9.5 6l6 6-6 6"/>',
+  star:'<path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/>',
+  play:'<path d="M8 5.5v13l10.5-6.5z"/>',
+  eyeSlash:'<path d="M3.5 3.5l17 17"/><path d="M10.4 5.2A9.8 9.8 0 0 1 12 5c5 0 8.6 4.3 9.5 7-.4 1.1-1.2 2.5-2.4 3.7M6.6 6.7C4.5 8 3.1 10.1 2.5 12c.9 2.7 4.5 7 9.5 7 1.9 0 3.5-.6 4.9-1.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  copy:'<rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  insta:'<rect x="4" y="4" width="16" height="16" rx="4.6"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.9" cy="7.1" r=".5"/>',
+  x:'<path d="M5 4.5l14 15M19 4.5l-14 15"/>',
+  person:'<circle cx="12" cy="12" r="9.6"/><circle cx="12" cy="9.8" r="3.3"/><path d="M5.9 18.4c1.4-2.3 3.5-3.5 6.1-3.5s4.7 1.2 6.1 3.5"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>'
+};
+const ic = (n, s=16, sw=1.7, fill=false, style='') =>
+  `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="${fill?'currentColor':'none'}" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="${style}">${I[n]}</svg>`;
+const lg = (id, stops, x2=0, y2=1) => `<linearGradient id="${id}" x1="0" y1="0" x2="${x2}" y2="${y2}">${stops.map(([o,c,a=1])=>`<stop offset="${o}" stop-color="${c}" stop-opacity="${a}"/>`).join('')}</linearGradient>`;
+const rg = (id, cx, cy, r, stops) => `<radialGradient id="${id}" cx="${cx}" cy="${cy}" r="${r}">${stops.map(([o,c,a=1])=>`<stop offset="${o}" stop-color="${c}" stop-opacity="${a}"/>`).join('')}</radialGradient>`;
+const dots = (n, x0, x1, y0, y1, rmin, rmax, fill, omin, omax) =>
+  range(n, () => `<circle cx="${(x0+rnd()*(x1-x0)).toFixed(1)}" cy="${(y0+rnd()*(y1-y0)).toFixed(1)}" r="${(rmin+rnd()*(rmax-rmin)).toFixed(2)}" fill="${fill}" opacity="${(omin+rnd()*(omax-omin)).toFixed(2)}"/>`);
+const billing = (y, c, o=.35) => `<g fill="${c}" opacity="${o}"><rect x="30" y="${y}" width="96" height="1.6" rx=".8"/><rect x="38" y="${y+4}" width="80" height="1.6" rx=".8"/><rect x="52" y="${y+8}" width="52" height="1.6" rx=".8"/></g>`;
+
+/* ---------------- poster art (stand-ins) ---------------- */
+const ART = {
+  dune: id => `<defs>${lg(id+'s',[[0,'#1b0d06'],[.42,'#62290e'],[.68,'#cf7430'],[1,'#2a1208']])}${rg(id+'g',.64,.46,.46,[[0,'#ffd9a0',.55],[1,'#ffd9a0',0]])}</defs>
+    <rect width="156" height="234" fill="url(#${id}s)"/><rect width="156" height="234" fill="url(#${id}g)"/>
+    <circle cx="100" cy="114" r="26" fill="#f6d3a0" opacity=".5"/><circle cx="124" cy="84" r="6" fill="#f6d3a0" opacity=".3"/>
+    ${dots(26,0,156,60,150,.3,.8,'#ffe2b8',.15,.5)}
+    <path d="M0 152 C30 134 60 142 88 152 C112 160 132 142 156 148 V234 H0Z" fill="#8a3f16" opacity=".85"/>
+    <path d="M0 174 C40 160 70 170 100 178 C124 184 140 172 156 174 V234 H0Z" fill="#4b200b"/>
+    <path d="M0 198 C50 188 90 198 156 190 V234 H0Z" fill="#170a04"/>
+    <g fill="#170a04"><path d="M60 172.5l1.6-9.5 1.6 9.5z"/><circle cx="61.6" cy="162" r="1.3"/><path d="M67 174l1.3-7.5 1.3 7.5z"/><circle cx="68.3" cy="165.7" r="1.1"/></g>
+    ${billing(214,'#f3d2a6',.3)}`,
+  severance: id => `<rect width="156" height="234" fill="#eef3f1"/>
+    <polygon points="0,0 156,0 96,84 60,84" fill="#f6faf9"/>
+    <polygon points="0,0 60,84 60,118 0,234" fill="#cbd9d5"/><polygon points="156,0 96,84 96,118 156,234" fill="#b9cbc6"/>
+    <polygon points="60,118 96,118 156,234 0,234" fill="#1c4d49"/>
+    <rect x="60" y="84" width="36" height="34" fill="#fbfdfc"/>
+    <g stroke="#a9cdc5" stroke-width="2.4" stroke-linecap="round"><line x1="40" y1="16" x2="116" y2="16"/><line x1="50" y1="40" x2="106" y2="40"/><line x1="56" y1="60" x2="100" y2="60"/><line x1="59" y1="74" x2="97" y2="74"/></g>
+    <g stroke="#3a7f78" stroke-width=".7" opacity=".6"><line x1="78" y1="118" x2="-30" y2="234"/><line x1="78" y1="118" x2="30" y2="234"/><line x1="78" y1="118" x2="78" y2="234"/><line x1="78" y1="118" x2="126" y2="234"/><line x1="78" y1="118" x2="186" y2="234"/><line x1="40" y1="160" x2="116" y2="160"/><line x1="18" y1="190" x2="138" y2="190"/></g>
+    <g fill="#0f2826"><rect x="76" y="104" width="4" height="12" rx="1.6"/><circle cx="78" cy="101" r="2.3"/></g>`,
+  holdovers: id => `<defs>${lg(id+'a',[[0,'#5a6853'],[1,'#1a211b']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <rect x="42" y="74" width="72" height="86" rx="2" fill="#e8b765"/>
+    <rect x="42" y="74" width="72" height="86" rx="2" fill="none" stroke="#2a2016" stroke-width="4"/>
+    <g fill="#2a2016"><circle cx="62" cy="130" r="4.2"/><rect x="56.5" y="135" width="11" height="25" rx="4"/><circle cx="95" cy="126" r="4.6"/><rect x="89" y="131" width="12" height="29" rx="4"/><circle cx="80" cy="138" r="3.4"/><rect x="75.5" y="142" width="9" height="18" rx="3.5"/></g>
+    <line x1="78" y1="74" x2="78" y2="118" stroke="#2a2016" stroke-width="3"/><line x1="42" y1="116" x2="114" y2="116" stroke="#2a2016" stroke-width="3"/>
+    <path d="M0 176 Q78 164 156 176 V234 H0Z" fill="#dfe4dc" opacity=".92"/>
+    ${dots(60,0,156,0,234,.4,1.3,'#ffffff',.25,.8)}
+    ${billing(214,'#5a6853',.5)}`,
+  shogun: id => `<defs>${lg(id+'a',[[0,'#240605'],[1,'#050303']])}${rg(id+'r',.4,.35,.6,[[0,'#e2453a'],[1,'#9b1812']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <circle cx="78" cy="96" r="46" fill="url(#${id}r)"/>
+    <path d="M-10 124 C30 104 80 134 170 98 L170 110 C90 144 40 120 -10 140Z" fill="#050303" opacity=".94"/>
+    <path d="M22 58 L134 154" stroke="#050303" stroke-width="4.5" stroke-linecap="round" opacity=".85"/>
+    <path d="M28 64 L40 54" stroke="#050303" stroke-width="3" stroke-linecap="round"/>
+    ${dots(14,0,156,150,230,.3,.9,'#e2453a',.2,.5)}`,
+  pastlives: id => `<defs>${lg(id+'a',[[0,'#f2b7a4'],[.42,'#b58db1'],[.72,'#5b6aa2'],[1,'#20274a']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <circle cx="112" cy="66" r="15" fill="#fde6d3" opacity=".6"/>
+    <path d="M0 172 V158 h12 v-14 h10 v8 h8 v-22 h12 v28 h10 v-10 h14 v14 h8 v-30 h10 v30 h12 v-6 h14 v-12 h10 v18 h16 v-8 h10 V172Z" fill="#3c4577" opacity=".7"/>
+    <rect y="172" width="156" height="62" fill="#141a33"/>
+    <g fill="#0a0d1c"><circle cx="46" cy="149" r="3.2"/><rect x="42.8" y="152.5" width="6.4" height="19.5" rx="2.6"/><circle cx="110" cy="149" r="3.2"/><rect x="106.8" y="152.5" width="6.4" height="19.5" rx="2.6"/></g>
+    <line x1="52" y1="171.5" x2="104" y2="171.5" stroke="#f2b7a4" stroke-width=".6" stroke-dasharray="1.5 2.5" opacity=".6"/>`,
+  poorthings: id => `<defs>${lg(id+'a',[[0,'#1f1033'],[.55,'#6d3b88'],[1,'#e39db5']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <g fill="none" stroke="#f7d9e6" opacity=".38"><ellipse cx="78" cy="128" rx="64" ry="24" transform="rotate(-18 78 128)"/><ellipse cx="78" cy="128" rx="46" ry="16" transform="rotate(-18 78 128)"/><ellipse cx="78" cy="128" rx="30" ry="10" transform="rotate(-18 78 128)"/></g>
+    <circle cx="78" cy="128" r="15" fill="#f8e2c6"/><circle cx="84" cy="123" r="15" fill="#6d3b88" opacity=".35"/>
+    <path d="M22 196 q8 -10 16 0 q8 10 16 0 q8 -10 16 0" stroke="#2a1233" stroke-width="1.4" fill="none" opacity=".55"/>
+    ${dots(20,0,156,70,200,.4,1,'#fff3f8',.2,.6)}`,
+  slowhorses: id => `<defs>${lg(id+'a',[[0,'#3b453e'],[1,'#0e120f']])}${rg(id+'r',.5,.5,.5,[[0,'#eedb91',.55],[1,'#eedb91',0]])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <circle cx="112" cy="84" r="46" fill="url(#${id}r)"/>
+    <rect x="110.5" y="84" width="3" height="150" fill="#0a0d0b"/><circle cx="112" cy="83" r="4" fill="#f7eab0"/>
+    <g stroke="#d2dbd5" stroke-width=".6" opacity=".22">${range(46, () => { const x=rnd()*170-10, y=rnd()*234; return `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x-3).toFixed(1)}" y2="${(y+9).toFixed(1)}"/>`; })}</g>
+    <path d="M40 234 v-48 q0-13 11-15 q-4-4-4-9 a6.5 6.5 0 0 1 13 0 q0 5-4 9 q11 2 11 15 v48z" fill="#070908"/>`,
+  bear: id => `<defs>${lg(id+'a',[[0,'#15294b'],[1,'#060b16']])}${lg(id+'c',[[0,'#f6d27a',.4],[1,'#f6d27a',0]])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <polygon points="64,0 92,0 152,234 4,234" fill="url(#${id}c)"/>
+    <rect x="0" y="176" width="156" height="58" fill="#0a111f"/><rect x="0" y="174" width="156" height="2.5" fill="#9fb2cc" opacity=".6"/>
+    <path d="M38 168 l46 -7 l2.5 3.2 l-46 7z" fill="#d4dce8" opacity=".85"/><rect x="84" y="158" width="18" height="6" rx="2" transform="rotate(-8 93 161)" fill="#1b2a44"/>
+    <g fill="#060b16"><circle cx="78" cy="118" r="8"/><path d="M62 174 q0-38 16-40 q16 2 16 40z"/></g>
+    ${billing(212,'#9fb2cc',.35)}`,
+  oppenheimer: id => `<defs>${rg(id+'f',.5,.42,.52,[[0,'#fff3cf'],[.16,'#ffb347'],[.44,'#d9480f',.85],[1,'#070504',0]])}</defs>
+    <rect width="156" height="234" fill="#070504"/><rect width="156" height="234" fill="url(#${id}f)"/>
+    <g fill="none" stroke="#ffcf7a" opacity=".32"><circle cx="78" cy="98" r="30"/><circle cx="78" cy="98" r="48"/><circle cx="78" cy="98" r="66" stroke-dasharray="2 4"/></g>
+    ${dots(40,0,156,20,190,.3,1.1,'#ffb347',.25,.8)}
+    <g fill="#070504"><rect x="69" y="178" width="18" height="2.6" rx="1.2"/><rect x="72.5" y="170" width="11" height="9" rx="2"/><circle cx="78" cy="186" r="5.4"/><path d="M58 234 q0-38 20-40 q20 2 20 40z"/></g>`,
+  andor: id => `<defs>${lg(id+'a',[[0,'#15181e'],[1,'#040506']])}<filter id="${id}b" x="-10%" y="-200%" width="120%" height="500%"><feGaussianBlur stdDeviation="5"/></filter></defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    ${dots(40,0,156,0,150,.3,.8,'#ffffff',.2,.7)}
+    <rect x="-10" y="112" width="176" height="10" fill="#ff3b30" opacity=".55" filter="url(#${id}b)"/>
+    <rect x="0" y="115.5" width="156" height="2.4" fill="#ff5a4d"/>
+    <path d="M0 196 L156 178 V234 H0Z" fill="#0b0c10"/>
+    <g fill="#020203"><circle cx="78" cy="152" r="6"/><path d="M64 190 q0-30 14-32 q14 2 14 32 l4 4 h-36z"/></g>
+    <path d="M72 152 a6 6 0 0 1 6-6" stroke="#ff5a4d" stroke-width=".8" fill="none" opacity=".7"/>`,
+  fallout: id => `<defs>${lg(id+'a',[[0,'#f3c64d'],[.58,'#d98c2d'],[1,'#6a3f1c']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <circle cx="78" cy="118" r="46" fill="#1f4f9e"/>
+    <circle cx="78" cy="118" r="46" fill="none" stroke="#f4d35e" stroke-width="6" stroke-dasharray="6 5"/>
+    <circle cx="78" cy="118" r="31" fill="#2d6bc4"/>
+    <text x="78" y="129" text-anchor="middle" font-family="New York, Georgia, serif" font-weight="800" font-size="30" fill="#f4d35e">33</text>
+    <path d="M0 184 L30 174 L60 182 L96 170 L130 180 L156 174 V234 H0Z" fill="#3e240f"/>
+    ${billing(214,'#f3c64d',.35)}`,
+  challengers: id => `<defs>${lg(id+'a',[[0,'#357a5f'],[1,'#173d30']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <g fill="none" stroke="#ffffff" opacity=".7" stroke-width="1.6"><rect x="20" y="30" width="116" height="180"/><line x1="20" y1="120" x2="136" y2="120" stroke-width="3"/><line x1="36" y1="66" x2="120" y2="66"/><line x1="36" y1="174" x2="120" y2="174"/><line x1="78" y1="66" x2="78" y2="174"/><line x1="36" y1="30" x2="36" y2="210"/><line x1="120" y1="30" x2="120" y2="210"/></g>
+    <circle cx="108" cy="80" r="5" fill="#dcf24c"/>`,
+  nosferatu: id => `<defs>${lg(id+'a',[[0,'#1c2539'],[1,'#05070c']])}</defs>
+    <rect width="156" height="234" fill="url(#${id}a)"/>
+    <circle cx="104" cy="60" r="22" fill="#dfe0d2" opacity=".78"/>
+    <rect x="18" y="96" width="30" height="138" fill="#0b0f18"/><rect x="26" y="112" width="6" height="10" fill="#c9a45a" opacity=".6"/>
+    <path d="M156 164 C132 160 120 152 104 140 L84 122 Q80 117 85 115 L104 128 L91 104 Q89 98 95 98 L110 122 L104 92 Q104 86 110 89 L119 120 L121 94 Q123 89 128 92 L129 124 L142 110 Q148 106 149 112 L138 138 C144 144 150 148 156 148Z" fill="#03050a" opacity=".92"/>`,
+  brutalist: id => `<rect width="156" height="234" fill="#dcd2bd"/>
+    <g fill="#141414"><rect x="26" y="62" width="104" height="13" transform="rotate(-9 78 68)"/><rect x="56" y="40" width="13" height="150"/><rect x="84" y="96" width="44" height="44"/></g>
+    <rect x="91" y="103" width="30" height="30" fill="#dcd2bd"/><circle cx="106" cy="118" r="7" fill="#b3342b"/>
+    <rect x="0" y="190" width="156" height="1.2" fill="#141414" opacity=".5"/>`,
+  peek: (a, b, c) => id => `<defs>${lg(id+'a',[[0,a],[1,b]])}</defs><rect width="156" height="234" fill="url(#${id}a)"/><circle cx="${40+rnd()*80}" cy="${40+rnd()*40}" r="${24+rnd()*20}" fill="${c}" opacity=".35"/>`
+};
+
+const T = (top, html, extra='') => `<div class="pt" style="top:${top}px;${extra}">${html}</div>`;
+const B = (bottom, html, extra='') => `<div class="pt" style="bottom:${bottom}px;${extra}">${html}</div>`;
+
+const P = {
+  dune:{n:'Dune: Part Two',y:2024,k:'M',s:'owned',fav:true,art:ART.dune,
+    t:T(36,'<div style="font-size:25px;letter-spacing:.34em;padding-left:.34em;font-weight:600">DUNE</div><div style="font-size:8.5px;letter-spacing:.44em;padding-left:.44em;margin-top:6px;opacity:.85">PART TWO</div>','color:#f8e3c4')},
+  severance:{n:'Severance',y:2022,k:'S',s:'owned',art:ART.severance,t:B(24,'<div style="font-size:12.5px;letter-spacing:.32em;padding-left:.32em;font-weight:600">SEVERANCE</div>','color:#eaf3f0')},
+  holdovers:{n:'The Holdovers',y:2023,k:'M',s:'dl',art:ART.holdovers,t:T(36,'<div style="font-size:18px;font-style:italic">The Holdovers</div>','color:#f5e8c9')},
+  shogun:{n:'Shōgun',y:2024,k:'S',s:'owned',art:ART.shogun,t:B(30,'<div style="font-size:17px;letter-spacing:.4em;padding-left:.4em;font-weight:600">SHŌGUN</div>','color:#f4ece4')},
+  pastlives:{n:'Past Lives',y:2023,k:'M',s:'missing',art:ART.pastlives,t:B(26,'<div style="font-size:21px;font-weight:400">Past Lives</div>','color:#f7e6e0')},
+  poorthings:{n:'Poor Things',y:2023,k:'M',s:'owned',art:ART.poorthings,t:T(36,'<div style="font-size:19px;font-style:italic">Poor Things</div>','color:#f7d9e6')},
+  slowhorses:{n:'Slow Horses',y:2022,k:'S',s:'soon',art:ART.slowhorses,t:T(36,'<div style="font-size:12.5px;letter-spacing:.28em;padding-left:.28em;font-weight:600">SLOW HORSES</div>','color:#ece6cf')},
+  bear:{n:'The Bear',y:2022,k:'S',s:'owned',art:ART.bear,t:B(34,'<div style="font-size:20px;letter-spacing:.14em;padding-left:.14em;font-weight:800">THE BEAR</div>','color:#f2f4f8')},
+  oppenheimer:{n:'Oppenheimer',y:2023,k:'M',s:'owned',fav:true,art:ART.oppenheimer,t:T(36,'<div style="font-size:11.5px;letter-spacing:.26em;padding-left:.26em;font-weight:600">OPPENHEIMER</div>','color:#fff6e6;text-shadow:0 1px 6px rgba(0,0,0,.6)')},
+  andor:{n:'Andor',y:2022,k:'S',s:'dl',art:ART.andor,t:T(44,'<div style="font-size:18px;letter-spacing:.5em;padding-left:.5em;font-weight:500">ANDOR</div>','color:#f2f2f2')},
+  fallout:{n:'Fallout',y:2024,k:'S',s:'missing',art:ART.fallout,t:T(36,'<div style="font-size:18px;letter-spacing:.2em;padding-left:.2em;font-weight:800">FALLOUT</div>','color:#1d3b74')},
+  challengers:{n:'Challengers',y:2024,k:'M',s:null,art:ART.challengers,t:T(36,'<div style="font-size:19px;font-style:italic">Challengers</div>','color:#fff'),
+    ov:'A former tennis prodigy turned coach sets up a match between her slumping husband and her ex, now scraping by on the challenger circuit. Thirteen years of rivalry, loyalty and old grudges all come due in one final set.'},
+  nosferatu:{n:'Nosferatu',y:2024,k:'M',s:'soon',art:ART.nosferatu,t:B(28,'<div style="font-size:20px;font-style:italic">Nosferatu</div>','color:#e7e2d0')},
+  brutalist:{n:'The Brutalist',y:2024,k:'M',s:'missing',art:ART.brutalist,t:B(22,'<div style="font-size:11px;letter-spacing:.26em;padding-left:.26em;font-weight:700">THE BRUTALIST</div>','color:#141414')},
+};
+const PEEK = [
+  ['Furiosa','#e0802a','#4a1a08','#ffd08a','owned'],['Conclave','#7a0f14','#1a0506','#ff8a7a','dl'],['Civil War','#3e4a5a','#c35a2a','#ffd2a0','owned'],
+  ['Anora','#e05c8a','#2a0c28','#ffc2d8','missing'],['Wicked','#2f8f4a','#f06aa8','#e8ffcf','soon'],['The Substance','#f2d23a','#1a1a1a','#ffffff','owned'],['Gladiator II','#b8872e','#2b1a0c','#ffe0a0','missing']
+].map(([n,a,b,c,s]) => ({n,y:2024,k:'M',s,art:ART.peek(a,b,c)}));
+
+let uid = 0;
+const STATUS = {owned:['st-owned','Owned','#4caf7d'],dl:['st-dl','Downloading','#4f8fd1'],missing:['st-missing','Missing','#ef4444'],soon:['st-soon','Coming soon','#a855f7']};
+function card(p, hover=false){
+  const id = 'a' + (uid++);
+  const st = STATUS[p.s];
+  return `<div class="card${hover?' hover':''}">
+    <div class="art">
+      <svg class="bgart" viewBox="0 0 156 234" preserveAspectRatio="none">${p.art(id)}</svg>${p.t||''}
+      ${hover ? `<div class="ov"><p>${p.ov}</p><div class="addbtn">${ic('plus',11,2.6)}Add to Radarr</div></div>` : ''}
+      <span class="kind ${p.k==='S'?'series':'movie'}">${p.k==='S'?'SERIES':'MOVIE'}</span>
+      ${st ? `<span class="status ${st[0]}"><i></i>${st[1]}</span><div class="strip" style="background:${st[2]}"></div>` : ''}
+    </div>
+    <div class="meta"><div class="mtitle">${p.n}</div>
+      <div class="myear"><span>${p.y}</span>${p.fav ? ic('star',12,1.6,true,'color:var(--accent)') : ic('star',12,1.6,false,'color:var(--t3)')}</div></div>
+  </div>`;
+}
+
+/* ---------------- chrome ---------------- */
+function sidebar(){
+  const item = (icon, label, sel=false, badge='') => `<div class="nav-item${sel?' sel':''}">${ic(icon,17,1.6)}<span>${label}</span>${badge}</div>`;
+  return `<aside class="sidebar">
+    <div class="traffic"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="brand">Marquee</div>
+    <nav class="nav">
+      ${item('compass','Discover',true)}${item('film','Movies')}${item('tv','Series')}
+      <div class="nav-label">LIBRARY</div>
+      ${item('heart','Favorites')}${item('calendar','Calendar')}${item('tray','Requests',false,'<span class="count">3</span>')}
+    </nav>
+    <div class="side-foot">
+      ${ic('person',28,1.4,false,'color:var(--accent)')}
+      <div class="who"><div class="nm">Timmy</div><div class="rl">Admin</div></div>
+      <div class="roundbtn">${ic('moon',14,1.7)}</div>
+    </div>
+  </aside>`;
+}
+const tbRight = () => `<div class="tb-right">
+  <div class="search">${ic('search',14,2)}<span>Search an actor, a studio, a title…</span></div>
+  <div class="iconbtn">${ic('bell',16,1.7)}<span class="dot"></span></div>
+</div>`;
+function shelfHead(title, seeAll=true, firstDisabled=true){
+  return `<div class="shelf-head"><div class="shelf-title">${title}</div>
+    ${seeAll ? `<div class="seeall">${ic('chevR',11,2.2)}</div>` : ''}
+    <div class="arrows"><div class="arrow${firstDisabled?' dis':''}">${ic('chevL',14,2)}</div><div class="arrow">${ic('chevR',14,2)}</div></div></div>`;
+}
+const wrap = (inner) => `<div class="window">${sidebar()}${inner}</div>`;
+
+/* ---------------- screen 1: discover ---------------- */
+function genre(name, base, i){
+  const shapes = [
+    `<circle cx="230" cy="30" r="90" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="18"/><polygon points="0,160 120,0 170,0 50,160" fill="#fff" opacity=".05"/>`,
+    `<circle cx="60" cy="140" r="70" fill="#000" opacity=".18"/><circle cx="250" cy="20" r="46" fill="#fff" opacity=".07"/><circle cx="250" cy="20" r="80" fill="none" stroke="#fff" stroke-opacity=".06"/>`,
+    `<path d="M0 110 C60 70 120 150 190 100 S260 60 288 80 V160 H0Z" fill="#fff" opacity=".07"/><path d="M0 130 C70 100 140 170 210 130 S270 100 288 110" fill="none" stroke="#fff" stroke-opacity=".1"/>`,
+    `<g fill="#fff" opacity=".08"><circle cx="40" cy="30" r="10"/><circle cx="90" cy="130" r="18"/><circle cx="230" cy="120" r="30"/><circle cx="200" cy="30" r="6"/></g>`,
+    `<g stroke="#fff" stroke-opacity=".07">${range(12, k => `<line x1="${k*26}" y1="0" x2="${k*26-60}" y2="160"/>`)}</g><rect x="180" y="0" width="108" height="160" fill="#000" opacity=".15"/>`
+  ][i];
+  return `<div class="genre" style="background:${base}"><svg viewBox="0 0 288 160" preserveAspectRatio="none">${shapes}</svg><div class="tex"></div><div class="gr"></div><span>${name}</span></div>`;
+}
+function discover(){
+  const ra = ['dune','severance','holdovers','shogun','pastlives','poorthings','slowhorses'];
+  const tr = ['bear','oppenheimer','andor','challengers','fallout','nosferatu','brutalist'];
+  const genres = [['Action','#991b1b'],['Adventure','#6b21a8'],['Animation','#0f766e'],['Comedy','#a16207'],['Crime','#1e3a8a']];
+  return wrap(`<main class="content">
+    <div class="glow"></div>
+    <div class="page" style="transform:translateY(-232px)">
+      <section class="shelf">${shelfHead('Recently Added')}<div class="row">${ra.map(k=>card(P[k])).join('')}</div></section>
+      <section class="shelf">${shelfHead('Trending')}<div class="row">${tr.map(k=>card(P[k], k==='challengers')).join('')}</div></section>
+      <section class="shelf">${shelfHead('Movie Genres',false)}<div class="row" style="gap:16px">${genres.map((g,i)=>genre(g[0],g[1],i)).join('')}</div></section>
+      <section class="shelf">${shelfHead('Popular Movies')}<div class="row">${PEEK.map(p=>card(p)).join('')}</div></section>
+    </div>
+    <div class="tb-blur"></div>
+    <div class="toolbar"><div class="navtitle">Discover</div>${tbRight()}</div>
+  </main>`);
+}
+
+/* ---------------- screen 2: title ---------------- */
+function backdropSVG(){
+  return `<svg viewBox="0 0 1210 380" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      ${lg('bsky',[[0,'#0e0704'],[.3,'#33170a'],[.58,'#8f4419'],[.74,'#d88c48'],[.86,'#b8642a'],[1,'#5a2810']])}
+      ${rg('bsun',.66,.44,.42,[[0,'#ffdba6',.6],[.35,'#f0a25a',.22],[1,'#f0a25a',0]])}
+      <filter id="bblur"><feGaussianBlur stdDeviation="7"/></filter>
+      <filter id="bblur2"><feGaussianBlur stdDeviation="2"/></filter>
+    </defs>
+    <rect width="1210" height="380" fill="url(#bsky)"/>
+    <rect width="1210" height="380" fill="url(#bsun)"/>
+    <circle cx="800" cy="164" r="74" fill="#f7d7a8" opacity=".4"/>
+    <circle cx="800" cy="164" r="74" fill="none" stroke="#ffe6c0" stroke-opacity=".22" stroke-width="2"/>
+    <circle cx="772" cy="146" r="16" fill="#e9b47c" opacity=".18"/>
+    <circle cx="908" cy="92" r="19" fill="#f2cfa0" opacity=".26"/>
+    ${dots(90,0,1210,40,260,.5,1.6,'#ffdcae',.08,.35)}
+    <g opacity=".7"><path d="M412 118 l22 -3 l3 2 l-22 3z" fill="#1a0c06"/><path d="M420 114 l-14 -8 M428 113 l12 -9" stroke="#1a0c06" stroke-width="1.2"/></g>
+    <rect x="0" y="214" width="1210" height="18" fill="#f4b878" opacity=".45" filter="url(#bblur)"/>
+    <path d="M0 236 C120 214 240 226 360 220 C480 212 560 232 700 226 C820 220 900 200 1010 214 C1100 224 1160 214 1210 218 V380 H0Z" fill="#a4561f" opacity=".72"/>
+    <path d="M0 262 C160 238 300 262 440 254 C600 244 700 270 860 258 C980 248 1100 262 1210 252 V380 H0Z" fill="#5e2a0f"/>
+    <path d="M300 256 C420 250 520 262 640 258" stroke="#c77a3a" stroke-opacity=".35" stroke-width="1.5" fill="none" filter="url(#bblur2)"/>
+    <path d="M0 302 C200 278 380 306 560 294 C740 282 900 308 1210 288 V380 H0Z" fill="#2a1207"/>
+    <g fill="#140803">
+      <path d="M990 215 l2 -9 h1.8 l2 9z"/><circle cx="992.9" cy="204.3" r="1.8"/>
+      <path d="M999 216 l1.8 -8 h1.6 l1.8 8z"/><circle cx="1001.6" cy="206.3" r="1.6"/>
+      <path d="M1007 216.5 l1.9 -8.5 h1.7 l1.9 8.5z"/><circle cx="1009.7" cy="206.4" r="1.7"/>
+    </g>
+    <path d="M0 342 C260 322 520 348 760 336 C960 326 1100 342 1210 332 V380 H0Z" fill="#100703"/>
+  </svg>`;
+}
+function portrait(i){
+  const pal = [['#6b4a3a','#1c1412','#d9a37f'],['#4a3a6b','#15121f','#c9a0d8'],['#3a5a6b','#10181c','#a8c8d8'],['#6b5a3a','#1c1810','#e0c08a'],['#3a3a44','#101014','#c0c0cc'],['#6b3a44','#1c1014','#e0a0b0'],['#4a5a3a','#141a10','#c0d0a0']][i];
+  const id = 'pp' + i;
+  return `<svg viewBox="0 0 112 124" preserveAspectRatio="none"><defs>${lg(id,[[0,pal[0]],[1,pal[1]]],.6,1)}${rg(id+'l',.3,.2,.7,[[0,pal[2],.35],[1,pal[2],0]])}</defs>
+    <rect width="112" height="124" fill="url(#${id})"/><rect width="112" height="124" fill="url(#${id}l)"/>
+    <ellipse cx="56" cy="52" rx="17" ry="20" fill="${pal[1]}" opacity=".55"/>
+    <path d="M18 124 C20 94 36 80 56 80 C76 80 92 94 94 124Z" fill="${pal[1]}" opacity=".55"/>
+    <path d="M42 42 a17 20 0 0 1 22 -9" stroke="${pal[2]}" stroke-opacity=".35" stroke-width="2" fill="none"/></svg>`;
+}
+function titlePage(){
+  const cast = [['Timothée Chalamet','Paul Atreides'],['Zendaya','Chani'],['Rebecca Ferguson','Lady Jessica'],['Javier Bardem','Stilgar'],['Josh Brolin','Gurney Halleck'],['Austin Butler','Feyd-Rautha'],['Florence Pugh','Princess Irulan']];
+  const kw = ['desert','prophecy','sandworm','messiah','based on novel','space opera','sequel'];
+  const logo1 = `<div class="logo"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1d4ed8"/><path d="M10 8v8l6-4z" fill="#fff"/></svg></div>`;
+  const logo2 = `<div class="logo"><svg width="24" height="24" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3" fill="#111"/><path d="M8 10h3M9.5 10v4.5M13 10l1.6 4.5L16.2 10" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg></div>`;
+  const logo3 = `<div class="logo"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 17c3-8 11-8 14-10" stroke="#7c3aed" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="7" cy="7" r="2.4" fill="#f59e0b"/></svg></div>`;
+  return wrap(`<main class="content">
+    <div class="backdrop">${backdropSVG()}<div class="grain"></div><div class="fade"></div></div>
+    <div class="tp-poster"><div class="scaler"><svg class="bgart" viewBox="0 0 156 234" preserveAspectRatio="none">${ART.dune('hero')}</svg>${P.dune.t}</div></div>
+
+    <div class="tp-main">
+      <div class="tp-title">Dune: Part Two</div>
+      <div class="tp-meta"><span>2h 47m · Science Fiction, Adventure · 2024</span><span class="pill">${ic('star',12,1.8)}Favorite</span></div>
+      <div class="tp-status">
+        <span class="bigbadge"><i></i>Already in your library</span>
+        <span class="pill lg">${ic('search',13,2)}Search now</span>
+        <span class="pill lg">${ic('eyeSlash',14,1.8)}Stop monitoring</span>
+      </div>
+      <div class="h-serif">Overview</div>
+      <p class="body">Now living among the Fremen of Arrakis, Paul Atreides joins Chani in a desert war against the House that destroyed his family, and must choose between the woman he loves and a holy war only he can foresee.</p>
+      <div class="credits">
+        <div><div class="n">Denis Villeneuve</div><div class="r">Director</div></div>
+        <div><div class="n">Jon Spaihts</div><div class="r">Screenplay</div></div>
+        <div><div class="n">Denis Villeneuve</div><div class="r">Screenplay</div></div>
+      </div>
+      <div class="chips">${kw.map(k=>`<span class="chip">${k}</span>`).join('')}</div>
+      <div class="links">
+        <span class="pill">${ic('play',12,1.6,true,'color:var(--accent)')}Trailer</span>
+        <span class="pill">${ic('globe',13,1.7)}IMDb</span>
+        <span class="pill">${ic('insta',13,1.7)}Instagram</span>
+        <span class="pill">${ic('x',12,2)}X / Twitter</span>
+      </div>
+    </div>
+
+    <div class="tp-cast">
+      ${shelfHead('Cast')}
+      <div class="row" style="gap:16px">${cast.map(([n,r],i)=>`<div class="person"><div class="portrait">${portrait(i)}</div><div class="pname">${n}</div><div class="prole">${r}</div></div>`).join('')}</div>
+    </div>
+
+    <aside class="tp-side">
+      <div class="facts">
+        <div class="rating"><b>★ 82%</b><small>TMDb user score</small></div>
+        <div class="frow"><span class="l">Status</span><span class="v">Released</span></div>
+        <div class="frow"><span class="l">Release Date</span><span class="v">March 1, 2024</span></div>
+        <div class="frow"><span class="l">Original Language</span><span class="v">English</span></div>
+        <div class="frow"><span class="l">Production Country</span><span class="v">🇺🇸 United States</span></div>
+        <div class="streaming"><div class="caps">CURRENTLY STREAMING ON</div><div class="logos">${logo1}${logo2}${logo3}</div></div>
+      </div>
+      <div class="fcard">
+        <h3>File details</h3>
+        <div class="caps">LOCATION</div>
+        <div class="pathf"><code>/mnt/user/media/movies/Dune Part Two (2024)/Dune.Part.Two.2024.2160p.mkv</code><span class="copy">${ic('copy',11,2)}Copy</span></div>
+        <div class="fgrid">
+          <div><div class="l">Size</div><div class="v">64.2 GB</div></div>
+          <div><div class="l">Runtime</div><div class="v">2h 47m</div></div>
+          <div><div class="l">Added</div><div class="v">Mar 12, 2024</div></div>
+          <div><div class="l">Resolution</div><div class="v">4K</div></div>
+          <div><div class="l">Quality profile</div><div class="v">Bluray-2160p</div></div>
+          <div><div class="l">Video</div><div class="v">x265</div></div>
+          <div><div class="l">Dynamic range</div><div class="v">DV HDR10</div></div>
+          <div><div class="l">Audio</div><div class="v">TrueHD Atmos 8ch</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="toolbar glass">
+      <div class="capsule"><span>${ic('chevL',15,2.1)}</span><span>${ic('chevR',15,2.1)}</span></div>
+      ${tbRight()}
+    </div>
+  </main>`);
+}
+
+document.getElementById('discover').innerHTML = discover();
+document.getElementById('title').innerHTML = titlePage();
+{ const m = document.querySelector('.tp-main'), c = document.querySelector('.tp-cast'); c.style.top = (m.offsetTop + m.offsetHeight + 40) + 'px'; }
+
+const which = new URLSearchParams(location.search).get('screen');
+if (which) document.body.classList.add('single');
+if (which) document.querySelectorAll('.screen').forEach(s => { if (s.id !== which) s.style.display = 'none'; });
+</script>
+</body>
+</html>

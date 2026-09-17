@@ -1,0 +1,45 @@
+{
+  "movies": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIu.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": true,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
+  "tv": [],
+  "collections": [
+    {
+      "collectionId": 2344,
+      "name": "The Matrix Collection",
+      "posterPath": "/bV9q.jpg",
+      "firstMovieTmdbId": 603
+    }
+  ],
+  "people": [
+    {
+      "tmdbId": 6384,
+      "name": "Keanu Reeves",
+      "profilePath": "/8RZL.jpg",
+      "knownForDepartment": null,
+      "favorited": true
+    }
+  ],
+  "studios": [
+    {
+      "tmdbId": 420,
+      "name": "Marvel Studios",
+      "logoPath": "/hUze.png",
+      "favorited": true
+    }
+  ]
+}

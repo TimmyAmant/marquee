@@ -1,0 +1,25 @@
+{
+  "tmdbId": 420,
+  "name": "Marvel Studios",
+  "description": null,
+  "logoPath": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png",
+  "titleCount": 137,
+  "favorited": false,
+  "titles": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ]
+}

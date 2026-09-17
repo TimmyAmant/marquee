@@ -1,0 +1,432 @@
+import SwiftUI
+
+/// app/layout.tsx: persistent sidebar + header (search, notifications) + content.
+struct MainWindowView: View {
+    @Environment(AppModel.self) private var model
+    @State private var columnVisibility = NavigationSplitViewVisibility.all
+
+    var body: some View {
+        @Bindable var model = model
+
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            SidebarView()
+                .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 280)
+        } detail: {
+            NavigationStack(path: $model.path) {
+                SectionRootView(item: model.selection)
+                    .navigationDestination(for: Route.self) { route in
+                        RouteDestinationView(route: route)
+                    }
+            }
+            .id(model.selection)
+            .background(Theme.bg0)
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                NotificationsToolbarButton()
+            }
+        }
+        .modifier(SearchSupport())
+        .overlay(alignment: .bottom) {
+            BannerView()
+        }
+        .onAppear {
+            // `LiveUpdates` keeps the counts current; this just catches up when
+            // the window is reopened.
+            model.refreshCounts()
+        }
+    }
+}
+
+private struct SectionRootView: View {
+    let item: SidebarItem
+
+    var body: some View {
+        switch item {
+        case .discover: DiscoverView()
+        case .movies: BrowseView(mediaType: .movie)
+        case .series: BrowseView(mediaType: .tv)
+        case .favorites: FavoritesView()
+        case .calendar: CalendarScreen()
+        case .requests: RequestsView()
+        }
+    }
+}
+
+struct RouteDestinationView: View {
+    let route: Route
+
+    var body: some View {
+        switch route {
+        case let .title(id): TitleDetailView(id: id)
+        case let .person(id): PersonDetailView(tmdbId: id)
+        case let .company(id): CompanyDetailView(tmdbId: id)
+        case let .search(query): SearchResultsView(query: query)
+        case .errorReference: ErrorReferenceView()
+        case .changelog: ChangelogView()
+        }
+    }
+}
+
+// MARK: - Sidebar (components/sidebar.tsx)
+
+private struct SidebarView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openSettings) private var openSettings
+
+    var body: some View {
+        VStack(spacing: 0) {
+            List(selection: Binding(
+                get: { Optional(model.selection) },
+                set: { if let item = $0 { model.select(item) } }
+            )) {
+                Section {
+                    ForEach([SidebarItem.discover, .movies, .series]) { item in
+                        sidebarRow(item)
+                    }
+                }
+                Section("Library") {
+                    ForEach([SidebarItem.favorites, .calendar, .requests]) { item in
+                        sidebarRow(item)
+                    }
+                }
+            }
+            .listStyle(.sidebar)
+            .safeAreaInset(edge: .top) {
+                HStack {
+                    MarqueeWordmark(size: 22)
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 4)
+                .padding(.bottom, 8)
+            }
+
+            Divider()
+            HStack(spacing: 8) {
+                Button {
+                    openSettings()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Theme.accent)
+                        // .who — 12.5/500 name over the 11px server this Mac
+                        // is signed in to (the role lives in Settings › Account).
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(model.viewer?.label ?? "")
+                                .font(.system(size: 12.5, weight: .medium))
+                                .foregroundStyle(Theme.textSecondary)
+                                .lineLimit(1)
+                            Text(model.session.server?.displayName ?? "")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.textMuted)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Account & Settings")
+                AppearanceToggle()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+    }
+
+    /// The Requests badge is the server's own pending count, polled by `LiveUpdates`.
+    @ViewBuilder
+    private func sidebarRow(_ item: SidebarItem) -> some View {
+        Label(item.title, systemImage: item.systemImage)
+            .badge(item == .requests ? model.pendingRequestCount : 0)
+            .tag(item)
+    }
+}
+
+/// components/theme-toggle.tsx — flips between light and dark.
+private struct AppearanceToggle: View {
+    @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button {
+            appearance = colorScheme == .dark ? AppearancePreference.light.rawValue : AppearancePreference.dark.rawValue
+        } label: {
+            Image(systemName: colorScheme == .dark ? "moon" : "sun.max")
+                .font(.system(size: 13))
+                .frame(width: 28, height: 28)
+                .overlay(Circle().strokeBorder(Theme.borderStrong))
+        }
+        .buttonStyle(QuietButtonStyle())
+        .help(colorScheme == .dark ? "Switch to light theme" : "Switch to dark theme")
+    }
+}
+
+// MARK: - Search (components/search-bar.tsx)
+
+private struct SearchSupport: ViewModifier {
+    @Environment(AppModel.self) private var model
+    @State private var suggestions: [API.SearchSuggestion] = []
+
+    private static let completionPrefix = "\u{2063}marquee:"
+
+    func body(content: Content) -> some View {
+        @Bindable var model = model
+
+        content
+            .searchable(text: $model.searchText, placement: .toolbar, prompt: "Search an actor, a studio, a title…")
+            .searchSuggestions {
+                ForEach(suggestions, id: \.stableId) { suggestion in
+                    SuggestionRow(suggestion: suggestion)
+                        .searchCompletion(Self.completionPrefix + suggestion.stableId)
+                }
+            }
+            .onSubmit(of: .search) {
+                model.search(model.searchText)
+            }
+            .onChange(of: model.searchText) { _, newValue in
+                handleSearchText(newValue)
+            }
+            .task(id: model.searchText) {
+                let query = model.searchText
+                guard !query.hasPrefix(Self.completionPrefix) else { return }
+                guard query.trimmingCharacters(in: .whitespaces).count >= 2 else {
+                    suggestions = []
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(250))
+                if Task.isCancelled { return }
+                // A failed suggest call just leaves the list as it was; the
+                // Search screen reports real errors.
+                let results = (try? await model.api.search.suggestions(query)) ?? []
+                if !Task.isCancelled { suggestions = results }
+            }
+    }
+
+    /// Picking a suggestion fills the field with a sentinel — route it instead.
+    private func handleSearchText(_ text: String) {
+        guard text.hasPrefix(Self.completionPrefix) else { return }
+        let stableId = String(text.dropFirst(Self.completionPrefix.count))
+        let picked = suggestions.first(where: { $0.stableId == stableId })
+        model.searchText = ""
+        suggestions = []
+        guard let suggestion = picked else { return }
+        if let titleID = suggestion.titleID {
+            model.openTitle(titleID)
+        } else if suggestion.mediaType == .person {
+            model.open(.person(suggestion.id))
+        }
+    }
+}
+
+private struct SuggestionRow: View {
+    let suggestion: API.SearchSuggestion
+
+    var body: some View {
+        HStack(spacing: 10) {
+            RemoteImage(suggestion.posterPath, size: .w92, showsShimmer: false)
+                .frame(width: 26, height: 36)
+                .background(Theme.bg2)
+                .clipShape(RoundedRectangle(cornerRadius: 3))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(suggestion.name).lineLimit(1)
+                if let subtitle = suggestion.subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            Text(suggestion.mediaType.label)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 1.5)
+                .overlay(Capsule().strokeBorder(.secondary.opacity(0.5)))
+        }
+    }
+}
+
+// MARK: - Notifications (components/notifications-bell.tsx)
+
+private struct NotificationsToolbarButton: View {
+    @Environment(AppModel.self) private var model
+    @State private var showing = false
+
+    var body: some View {
+        Button {
+            showing.toggle()
+        } label: {
+            Image(systemName: model.unreadCount > 0 ? "bell.badge" : "bell")
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(Theme.accent, Theme.textSecondary)
+        }
+        .help(model.live.badges.bellLabel.map { "Notifications (\($0) unread)" } ?? "Notifications")
+        .popover(isPresented: $showing, arrowEdge: .bottom) {
+            NotificationsPopover(dismiss: { showing = false })
+                .environment(model)
+        }
+    }
+}
+
+private struct NotificationsPopover: View {
+    @Environment(AppModel.self) private var model
+    let dismiss: () -> Void
+
+    @State private var items: [API.NotificationItem] = []
+    @State private var loaded = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Notifications")
+                    .font(.system(size: 13, weight: .semibold))
+                Spacer()
+                if items.contains(where: { !$0.read }) {
+                    Button("Mark all read") { markAllRead() }
+                        .buttonStyle(QuietButtonStyle())
+                        .font(.system(size: 11.5))
+                }
+            }
+            .padding(12)
+            Divider()
+            if let error {
+                InlineMessage(text: error)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if !loaded {
+                ProgressView()
+                    .controlSize(.small)
+                    .frame(maxWidth: .infinity)
+                    .padding(28)
+            } else if items.isEmpty {
+                Text("No notifications yet.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(28)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 2) {
+                        ForEach(items) { item in
+                            NotificationRow(item: item) { open(item) }
+                        }
+                    }
+                    .padding(6)
+                }
+                .frame(maxHeight: 420)
+            }
+        }
+        .frame(width: 340)
+        .task(id: model.events.remoteRevision(of: .notifications)) {
+            await load()
+        }
+    }
+
+    private func load() async {
+        do {
+            let list = try await model.api.notifications.list()
+            if Task.isCancelled { return }
+            items = list.results
+            error = nil
+        } catch let failure as APIError where failure.isCancellation {
+            return
+        } catch {
+            if items.isEmpty { self.error = error.localizedDescription }
+        }
+        loaded = true
+    }
+
+    private func markAllRead() {
+        let api = model.api
+        items = items.map {
+            API.NotificationItem(
+                id: $0.id, mediaType: $0.mediaType, tmdbId: $0.tmdbId, title: $0.title,
+                eventType: $0.eventType, message: $0.message, read: true, createdAt: $0.createdAt
+            )
+        }
+        Task {
+            do {
+                try await api.notifications.markAllRead()
+            } catch {
+                model.flash(error: error)
+            }
+        }
+    }
+
+    private func open(_ item: API.NotificationItem) {
+        let api = model.api
+        if !item.read {
+            Task { try? await api.notifications.markRead(item.id) }
+        }
+        dismiss()
+        model.openTitle(item.titleID)
+    }
+}
+
+private struct NotificationRow: View {
+    let item: API.NotificationItem
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 8) {
+                Circle()
+                    .fill(item.read ? Color.clear : Theme.accent)
+                    .frame(width: 6, height: 6)
+                    .padding(.top, 5)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.message)
+                        .font(.system(size: 12))
+                        .foregroundStyle(item.read ? Theme.textSecondary : Theme.textPrimary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(item.timeAgo())
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(8)
+            .background(RoundedRectangle(cornerRadius: 8).fill(hovering ? Theme.bg2 : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+    }
+}
+
+// MARK: - Transient banner
+
+private struct BannerView: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        ZStack {
+            if let banner = model.banner {
+                Label(banner.message, systemImage: banner.isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundStyle(banner.isError ? Theme.danger : Theme.textPrimary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.regularMaterial, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Theme.border))
+                    .shadow(radius: 8, y: 3)
+                    .padding(.bottom, 22)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .task(id: banner.id) {
+                        try? await Task.sleep(for: .seconds(3.5))
+                        if model.banner?.id == banner.id {
+                            withAnimation { model.banner = nil }
+                        }
+                    }
+            }
+        }
+        .animation(.spring(duration: 0.3), value: model.banner)
+    }
+}

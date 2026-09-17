@@ -1,0 +1,25 @@
+{
+  "mediaType": "movie",
+  "tmdbId": 603,
+  "library": {
+    "status": "tracked_monitored",
+    "provider": "radarr",
+    "configured": true,
+    "file": null
+  },
+  "viewer": {
+    "isAdmin": true,
+    "favorited": false,
+    "requestStatus": null,
+    "alreadyRequested": false,
+    "otherRequesters": [],
+    "canAdd": false,
+    "needsArrSetup": false,
+    "canRequest": false,
+    "canRelink": true,
+    "arrTracking": {
+      "arrId": 412,
+      "monitored": true
+    }
+  }
+}

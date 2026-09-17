@@ -1,0 +1,78 @@
+import Foundation
+
+// Requests (api-v1.md §7). Members see `mine()`; the admin reviews `pending()`
+// and `history()`.
+
+extension MarqueeAPI {
+    struct RequestsEndpoints: Sendable {
+        let transport: Transport
+
+        /// `POST /titles/{type}/{tmdbId}/request` — "Request". Auto-approved when
+        /// the admin enabled that for you. `.conflict("You've already requested this.")`.
+        @discardableResult
+        func create(_ type: API.MediaType, id tmdbId: Int) async throws -> UUID {
+            let result: API.RequestCreated = try await transport.mutate(
+                .post, TitlesEndpoints.path(type, tmdbId) + "/request", timeout: Timeout.integrations,
+                changes: [.requests, .library]
+            )
+            return result.requestId
+        }
+
+        /// `GET /requests/mine` — your own requests, newest first.
+        func mine() async throws -> [API.MyRequest] {
+            let list: API.ListResponse<API.MyRequest> = try await transport.get("/requests/mine", timeout: Timeout.integrations)
+            return list.results
+        }
+
+        /// `GET /requests/pending` (admin) — the review queue. Loading it first
+        /// auto-approves pending requests whose title is already in the library.
+        func pending() async throws -> API.PendingRequests {
+            try await transport.get("/requests/pending", timeout: Timeout.integrations)
+        }
+
+        /// `GET /requests/history` (admin) — "Past requests".
+        func history() async throws -> [API.ReviewedRequest] {
+            let list: API.ListResponse<API.ReviewedRequest> = try await transport.get("/requests/history")
+            return list.results
+        }
+
+        /// `GET /requests/pending-count` — always 0 for members (`badges()` has it too).
+        func pendingCount() async throws -> Int {
+            let count: API.Count = try await transport.get("/requests/pending-count")
+            return count.count
+        }
+
+        /// `POST /requests/{id}/approve` (admin) — adds with the admin's
+        /// Radarr/Sonarr and notifies the requester. On a TV request,
+        /// `error.isSonarrUnresolvable` means: offer `manuallyApprove`.
+        func approve(_ id: UUID) async throws {
+            let _: API.OK = try await transport.mutate(
+                .post, "/requests/\(MarqueeAPI.segment(id))/approve", timeout: Timeout.integrations,
+                changes: [.requests, .library, .notifications]
+            )
+        }
+
+        /// `POST /requests/{id}/manual-approve` (admin) — approved without touching Sonarr/Radarr.
+        func manuallyApprove(_ id: UUID) async throws {
+            let _: API.OK = try await transport.mutate(
+                .post, "/requests/\(MarqueeAPI.segment(id))/manual-approve", changes: [.requests, .notifications]
+            )
+        }
+
+        /// `POST /requests/{id}/reject` (admin) — declines and notifies the requester.
+        func reject(_ id: UUID) async throws {
+            let _: API.OK = try await transport.mutate(
+                .post, "/requests/\(MarqueeAPI.segment(id))/reject", changes: [.requests, .notifications]
+            )
+        }
+
+        /// `POST /requests/approve-all` (admin) — one at a time; failures stay
+        /// pending. Throws the first failure when none could be approved.
+        func approveAll() async throws -> API.ApproveAllResult {
+            try await transport.mutate(
+                .post, "/requests/approve-all", timeout: Timeout.longRunning,
+                changes: [.requests, .library, .notifications]
+            )
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "id": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+      "username": "member1",
+      "displayName": "Kid",
+      "role": "member",
+      "autoApproveMovies": false,
+      "autoApproveTv": true,
+      "createdAt": "2026-09-17T17:12:40.991Z",
+      "isCurrentUser": false
+    }
+  ]
+}

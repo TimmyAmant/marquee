@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "title": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "status": "approved",
+      "manuallyApproved": false,
+      "libraryStatus": "tracked_downloading",
+      "statusLabel": "Downloading",
+      "statusTone": "downloading",
+      "createdAt": "2026-09-17T17:12:41.415Z",
+      "reviewedAt": "2026-09-17T18:00:02.118Z"
+    }
+  ]
+}
