@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest something Marquee should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like it to do?
+      description: What you're trying to accomplish, and how it works today.
+    validations:
+      required: true
