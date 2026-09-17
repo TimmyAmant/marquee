@@ -57,10 +57,10 @@ export function FavoriteButton({
         type="submit"
         disabled={isPending}
         aria-pressed={favorited}
-        className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+        className={`flex h-[26px] items-center gap-[5px] rounded-[13px] border pl-[9px] pr-[11px] text-[12px] font-medium transition-colors disabled:opacity-60 ${
           favorited
             ? "border-accent bg-accent/10 text-accent"
-            : "border-border text-text-secondary hover:border-border-strong hover:text-text-primary"
+            : "border-border-strong text-text-primary hover:border-accent hover:text-accent"
         }`}
       >
         <span>{favorited ? "★" : "☆"}</span>

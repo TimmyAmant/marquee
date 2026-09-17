@@ -65,7 +65,7 @@ export function GenreCard({
   return (
     <Link
       href={href}
-      className={`group relative flex h-40 w-72 shrink-0 items-center justify-center overflow-hidden rounded-xl ${colorClass}`}
+      className={`group relative flex h-40 w-72 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-inset ring-white/[0.07] ${colorClass}`}
     >
       {src && (
         <Image
@@ -76,7 +76,7 @@ export function GenreCard({
           className="object-cover opacity-45 transition-opacity group-hover:opacity-60"
         />
       )}
-      <span className="relative px-4 text-center font-display text-2xl font-bold text-white drop-shadow-md">
+      <span className="relative px-4 text-center font-display text-[34px] font-extrabold leading-[1.05] tracking-[-0.01em] text-white [text-shadow:0_2px_14px_rgba(0,0,0,0.35)]">
         {name}
       </span>
     </Link>

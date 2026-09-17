@@ -23,12 +23,12 @@ export function ArrTrackingControls({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-3 text-xs">
+      <div className="flex flex-wrap items-center gap-2">
         <form action={searchFormAction}>
           <button
             type="submit"
             disabled={isSearching}
-            className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
+            className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
           >
             {isSearching ? "Searching…" : "Search now"}
           </button>
@@ -37,7 +37,7 @@ export function ArrTrackingControls({
           <button
             type="submit"
             disabled={isToggling}
-            className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
+            className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
           >
             {isToggling ? "Updating…" : monitored ? "Stop monitoring" : "Start monitoring"}
           </button>

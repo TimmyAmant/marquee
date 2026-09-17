@@ -1,5 +1,6 @@
 import { PosterCard } from "@/components/poster-card";
-import { PosterRow, PosterRowItem } from "@/components/poster-row";
+import { PosterRowItem } from "@/components/poster-row";
+import { Shelf } from "@/components/shelf";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
@@ -39,52 +40,49 @@ export function SimilarTitlesRow({
   if (items.length === 0) return null;
 
   return (
-    <section>
-      <h2 className="mb-4 font-display text-xl text-text-primary">More like this</h2>
-      <PosterRow>
-        {items.map((item) => {
-          const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-          const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
-          const canRequest = !status && isAdmin === false;
-          return (
-            <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
-              <PosterCard
-                href={`/title/${item.mediaType}/${item.tmdbId}`}
-                posterPath={item.posterPath}
-                name={item.name}
-                year={item.year}
-                typeLabel={item.mediaType === "movie" ? "MOVIE" : "SERIES"}
-                badge={status && <StatusBadge status={status} compact />}
-                status={status}
-                favoriteAction={
-                  showFavorite && (
-                    <FavoriteButton
-                      entityType={item.mediaType}
-                      tmdbId={item.tmdbId}
-                      initialFavorited={favoritedIds?.has(item.tmdbId) ?? false}
-                      compact
-                    />
-                  )
-                }
-                quickAction={
-                  canQuickAdd ? (
-                    <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
-                  ) : canRequest ? (
-                    <RequestButton
-                      mediaType={item.mediaType}
-                      tmdbId={item.tmdbId}
-                      title={item.name}
-                      posterPath={item.posterPath}
-                      compact
-                      alreadyRequested={requestStatusMap?.has(`${item.mediaType}:${item.tmdbId}`) ?? false}
-                    />
-                  ) : undefined
-                }
-              />
-            </PosterRowItem>
-          );
-        })}
-      </PosterRow>
-    </section>
+    <Shelf title="More like this">
+      {items.map((item) => {
+        const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
+        const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
+        const canRequest = !status && isAdmin === false;
+        return (
+          <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
+            <PosterCard
+              href={`/title/${item.mediaType}/${item.tmdbId}`}
+              posterPath={item.posterPath}
+              name={item.name}
+              year={item.year}
+              typeLabel={item.mediaType === "movie" ? "MOVIE" : "SERIES"}
+              badge={status && <StatusBadge status={status} compact />}
+              status={status}
+              favoriteAction={
+                showFavorite && (
+                  <FavoriteButton
+                    entityType={item.mediaType}
+                    tmdbId={item.tmdbId}
+                    initialFavorited={favoritedIds?.has(item.tmdbId) ?? false}
+                    compact
+                  />
+                )
+              }
+              quickAction={
+                canQuickAdd ? (
+                  <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                ) : canRequest ? (
+                  <RequestButton
+                    mediaType={item.mediaType}
+                    tmdbId={item.tmdbId}
+                    title={item.name}
+                    posterPath={item.posterPath}
+                    compact
+                    alreadyRequested={requestStatusMap?.has(`${item.mediaType}:${item.tmdbId}`) ?? false}
+                  />
+                ) : undefined
+              }
+            />
+          </PosterRowItem>
+        );
+      })}
+    </Shelf>
   );
 }

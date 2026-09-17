@@ -90,12 +90,17 @@ export default async function TitlePage({
         arrTracking={arrTracking}
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
+        cast={
+          <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
+        }
       />
 
-      <div className="mx-auto max-w-6xl flex-col gap-12 px-6 pb-20 pt-4 flex">
+      <div className="flex flex-col gap-12 px-6 pb-20 pt-10 xl:pl-12 xl:pr-10">
         {seasons.length > 0 && (
           <section>
-            <h2 className="mb-4 font-display text-xl text-text-primary">Episodes</h2>
+            <h2 className="mb-3 font-display text-[20px] font-semibold leading-none tracking-[-0.005em] text-text-primary">
+              Episodes
+            </h2>
             <SeasonAccordion
               seasons={seasons}
               tmdbId={tmdbId}
@@ -105,7 +110,6 @@ export default async function TitlePage({
           </section>
         )}
 
-        <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
         {franchiseTitle && (
           <FranchiseRow
             title={franchiseTitle}

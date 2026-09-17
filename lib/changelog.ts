@@ -11,6 +11,18 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.23.0",
+    date: "2026-09-17",
+    changes: [
+      "Rebuilt the title page and every shelf page to the shared design mockup Marquee for Mac is built from, so the website and the Mac app now lay out identically: a 230px sidebar and 52px top bar, left-aligned content with fixed gutters (48px on a title page, 28px on shelf pages) instead of a centered max-width column, and shelves that bleed off the right edge.",
+      "Title pages now use the mockup's three-column geometry — a 224x336 poster, a 546px main column starting level with the title, and a 288px right rail — with the cast carousel beside the rail instead of below it.",
+      "The facts card now shows a serif TMDb score with a \"TMDb user score\" label, even 38px fact rows and 36px streaming-service tiles; the file details card became a two-column grid (Size/Runtime, Added/Resolution, Quality profile/Video, Dynamic range/Audio) with a one-line location field and an inline Copy button.",
+      "The library badge, Search now, Stop monitoring and Fix ID now sit together on one row of 32px capsules under the title, keywords stay on a single row that fades out rather than wrapping, and credits lead with the person's name over their role.",
+      "Shelves got the mockup's head (20px serif title, 20px see-all circle, 28px arrows that dim at either end) and its cards: 156x234 art, 9px type badge, 17px status pill, 3px status strip, and a hover overview with an accent Add button.",
+      "The cast row is a real carousel of 112x124 portraits rather than a row of poster-shaped cards, and genre tiles carry the mockup's 34px serif label.",
+    ],
+  },
+  {
     version: "0.22.0",
     date: "2026-09-17",
     changes: [

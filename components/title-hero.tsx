@@ -7,6 +7,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
 import { FileDetailsSection } from "@/components/file-details-section";
+import { CapsLabel } from "@/components/caps-label";
 import type { ArrTrackingInfo, FileInfo } from "@/lib/integrations/status";
 import type { CreditEntry } from "@/lib/title-meta";
 
@@ -31,12 +32,14 @@ export type TitleSidebarData = {
   watchProviders: { name: string; logoPath: string | null }[];
 };
 
+/** A 38px fact row in the right rail's facts card — label left, value right,
+ * hairline rule above, all per Docs/DESIGN_TARGET.md. */
 function SidebarRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 first:pt-0">
-      <span className="text-text-muted">{label}</span>
-      <span className="text-right text-text-primary">{value}</span>
+    <div className="flex min-h-[38px] items-center justify-between gap-2.5 border-t border-border py-1.5 text-[12.5px]">
+      <span className="text-text-secondary">{label}</span>
+      <span className="text-right font-medium text-text-primary">{value}</span>
     </div>
   );
 }
@@ -64,6 +67,7 @@ export function TitleHero({
   arrTracking,
   file,
   runtimeLabel,
+  cast,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -91,6 +95,10 @@ export function TitleHero({
    * section this replaced. */
   file?: FileInfo | null;
   runtimeLabel?: string | null;
+  /** The cast carousel, rendered inside the main column so it sits beside
+   * the right rail's lower half exactly as the mockup has it, instead of
+   * being pushed below the (much taller) rail. */
+  cast?: React.ReactNode;
 }) {
   // Rating/status/network live in the sidebar instead — this line is just
   // the quick facts, matching the reference layout's short line under the
@@ -104,146 +112,154 @@ export function TitleHero({
   return (
     <div className="relative">
       {backdrop && (
-        <div className="grain-overlay absolute inset-0 -z-10 h-[380px] overflow-hidden">
+        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[280px] overflow-hidden sm:h-[380px]">
           <Image src={backdrop} alt="" fill priority className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg-0 via-bg-0/10 to-transparent" />
+          {/* Two gradients, same as the mockup's .backdrop .fade: down to the
+              page background at the bottom, plus a left-hand scrim so the
+              poster and title always have something dark behind them. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 60%, transparent) 0%, transparent 20%, transparent 40%, color-mix(in srgb, var(--marquee-bg-0) 72%, transparent) 74%, var(--marquee-bg-0) 100%), linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 50%, transparent), transparent 42%)",
+            }}
+          />
         </div>
       )}
 
-      {/* Backdrop zone — poster + title only, per design: artwork should never
-          carry metadata text (runtime/genres/year/status), just the name. */}
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-12 pt-[220px] sm:flex-row sm:items-start">
-        <div className="relative aspect-[2/3] w-56 shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-2xl ring-1 ring-border-strong">
-          {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
-        </div>
+      {/* Left-aligned with a fixed 48px gutter rather than centered in a
+          max-width container — that's what keeps this page and the Mac app
+          on the same coordinates (Docs/DESIGN_TARGET.md). */}
+      <div className="px-6 xl:pl-12 xl:pr-10">
+        <div className="flex flex-col gap-8 pt-[110px] sm:pt-[150px] xl:flex-row xl:items-start xl:pt-[170px]">
+          <div className="min-w-0 flex-1 xl:max-w-[802px]">
+            <div className="flex flex-wrap gap-6 sm:gap-8 min-[1440px]:flex-nowrap">
+              {/* Nothing but the poster and the title sits on the artwork. */}
+              <div className="relative h-[240px] w-[160px] shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px]">
+                {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
+              </div>
 
-        {/* Independent of the poster's height — top-aligned with a fixed
-            offset that lands the title right where the backdrop's gradient
-            has already faded to solid background, not bottom-aligned to
-            the (much taller) poster, which pushed it far down into the
-            plain background below. */}
-        <h1 className="font-display text-4xl text-text-primary sm:mt-40 sm:text-5xl">{name}</h1>
-      </div>
+              <div className="min-w-0 flex-1 basis-[280px] xl:pt-[76px] min-[1440px]:w-[546px] min-[1440px]:flex-none min-[1440px]:basis-auto">
+                <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px]">
+                  {name}
+                </h1>
 
-      {/* Below the backdrop, on the page's plain background — left-padded on
-          sm+ to align under the title rather than the poster beside it:
-          px-12 (48px) + poster width (224px) + the row's gap-8 (32px) above.
-          The negative top margin (sm+ only) pulls this up out of the dead
-          space below the title: the row above is exactly as tall as the
-          poster (336px) regardless of the title's own shorter height, so
-          without this offset everything here would start well below the
-          title instead of right after it. */}
-      <div className="mx-auto max-w-6xl px-12 pb-4 pt-5 sm:-mt-28 sm:pl-[304px]">
-        <div className="flex flex-col gap-8 lg:flex-row">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              {metaParts.length > 0 && (
-                <p className="text-text-secondary">{metaParts.join(" · ")}</p>
-              )}
-              {favorited !== undefined && (
-                <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
-              )}
-            </div>
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px] text-text-secondary">
+                  {metaParts.length > 0 && <p>{metaParts.join(" · ")}</p>}
+                  {favorited !== undefined && (
+                    <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
+                  )}
+                </div>
 
-            <div className="mt-4">
-              <AddToLibraryButton
-                mediaType={mediaType}
-                tmdbId={tmdbId}
-                name={name}
-                posterPath={posterPath}
-                status={status}
-                configured={configured}
-                isAdmin={isAdmin}
-                alreadyRequested={alreadyRequested}
-                otherRequesters={otherRequesters}
-              />
-            </div>
+                {/* One row of capsules: library badge, then the actions that
+                    apply to it (search/monitor/relink), all 32px tall. */}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <AddToLibraryButton
+                    mediaType={mediaType}
+                    tmdbId={tmdbId}
+                    name={name}
+                    posterPath={posterPath}
+                    status={status}
+                    configured={configured}
+                    isAdmin={isAdmin}
+                    alreadyRequested={alreadyRequested}
+                    otherRequesters={otherRequesters}
+                  />
 
-            <div className="mt-8">
-              {tagline && <p className="italic text-text-secondary">{tagline}</p>}
+                  {isAdmin && arrTracking && (
+                    <ArrTrackingControls
+                      mediaType={mediaType}
+                      tmdbId={tmdbId}
+                      tvdbId={tvdbId ?? null}
+                      monitored={arrTracking.monitored}
+                    />
+                  )}
 
-              {overview && (
-                <>
-                  <h2 className={`font-display text-lg text-text-primary ${tagline ? "mt-5" : ""}`}>
-                    Overview
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">{overview}</p>
-                </>
-              )}
-            </div>
+                  {isAdmin && status !== "untracked" && (
+                    <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
+                  )}
+                </div>
 
-            {credits.length > 0 && (
-              <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
-                {credits.map((credit, i) => (
-                  <div key={i}>
-                    <p className="text-sm font-semibold text-text-primary">{credit.role}</p>
-                    <p className="text-sm text-text-secondary">{credit.name}</p>
+                {tagline && <p className="mt-[26px] text-[14px] italic text-text-secondary">{tagline}</p>}
+
+                {overview && (
+                  <>
+                    <h2
+                      className={`font-display text-[18px] font-semibold leading-6 text-text-primary ${
+                        tagline ? "mt-4" : "mt-[26px]"
+                      }`}
+                    >
+                      Overview
+                    </h2>
+                    <p className="mt-1.5 text-[14px] leading-[22px] text-text-secondary">{overview}</p>
+                  </>
+                )}
+
+                {credits.length > 0 && (
+                  <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    {credits.map((credit, i) => (
+                      <div key={i}>
+                        <p className="truncate text-[13.5px] font-semibold leading-[18px] text-text-primary">
+                          {credit.name}
+                        </p>
+                        <p className="mt-px truncate text-[12px] leading-4 text-text-muted">{credit.role}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                )}
 
-            {keywords.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {keywords.map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="rounded-full border border-border px-3 py-1 text-xs text-text-secondary"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            )}
+                {/* A single row that never wraps — the overflow is clipped
+                    rather than stacked into more rows. */}
+                {keywords.length > 0 && (
+                  <div className="mt-[18px] flex gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)]">
+                    {keywords.map((keyword) => (
+                      <span
+                        key={keyword}
+                        className="inline-flex h-[22px] shrink-0 items-center whitespace-nowrap rounded-[11px] border border-border px-[9px] text-[11px] text-text-secondary"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-            <div className="mt-6">
-              <ExternalLinks links={links} />
+                <div className="mt-3.5">
+                  <ExternalLinks links={links} />
+                </div>
+              </div>
             </div>
 
-            {isAdmin && arrTracking && (
-              <div className="mt-4">
-                <ArrTrackingControls
-                  mediaType={mediaType}
-                  tmdbId={tmdbId}
-                  tvdbId={tvdbId ?? null}
-                  monitored={arrTracking.monitored}
-                />
-              </div>
-            )}
-
-            {isAdmin && status !== "untracked" && (
-              <div className="mt-4">
-                <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
-              </div>
-            )}
+            {cast && <div className="mt-10">{cast}</div>}
           </div>
 
-          <aside className="w-full shrink-0 lg:w-72">
-            <div className="rounded-2xl border border-border bg-bg-1 p-5 text-sm">
+          <aside className="w-full shrink-0 xl:w-[288px] xl:pt-[76px]">
+            <div className="rounded-2xl border border-border bg-bg-1/95 px-[18px] pb-4 pt-1 shadow-[0_18px_40px_rgba(0,0,0,0.35)] backdrop-blur-[20px]">
               {meta.ratingPercent !== null && (
-                <div className="flex items-center gap-1.5 border-b border-border pb-2.5 text-accent">
-                  <span>★</span>
-                  <span className="font-medium">{meta.ratingPercent}%</span>
+                <div className="flex h-[50px] items-center justify-between gap-2.5">
+                  <span className="font-display text-[22px] font-bold tracking-[-0.01em] text-accent">
+                    ★ {meta.ratingPercent}%
+                  </span>
+                  <span className="text-[11px] text-text-muted">TMDb user score</span>
                 </div>
               )}
-              <SidebarRow label="Status" value={meta.statusLabel} />
-              <SidebarRow
-                label={mediaType === "movie" ? "Release Date" : "First Air Date"}
-                value={sidebar.releaseDateLabel}
-              />
-              <SidebarRow label="Next Air Date" value={sidebar.nextAirDateLabel} />
-              <SidebarRow label="Original Language" value={sidebar.originalLanguageLabel} />
-              <SidebarRow
-                label="Production Country"
-                value={sidebar.productionCountry ? `${sidebar.productionCountry.flag} ${sidebar.productionCountry.name}` : null}
-              />
-              <SidebarRow label="Network" value={meta.network} />
+              <div className={meta.ratingPercent === null ? "[&>div:first-child]:border-t-0" : ""}>
+                <SidebarRow label="Status" value={meta.statusLabel} />
+                <SidebarRow
+                  label={mediaType === "movie" ? "Release Date" : "First Air Date"}
+                  value={sidebar.releaseDateLabel}
+                />
+                <SidebarRow label="Next Air Date" value={sidebar.nextAirDateLabel} />
+                <SidebarRow label="Original Language" value={sidebar.originalLanguageLabel} />
+                <SidebarRow
+                  label="Production Country"
+                  value={sidebar.productionCountry ? `${sidebar.productionCountry.flag} ${sidebar.productionCountry.name}` : null}
+                />
+                <SidebarRow label="Network" value={meta.network} />
+              </div>
 
               {sidebar.watchProviders.length > 0 && (
-                <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                    Currently Streaming On
-                  </p>
+                <div className="border-t border-border pt-[14px]">
+                  <CapsLabel>Currently Streaming On</CapsLabel>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {sidebar.watchProviders.map((provider) => {
                       const logo = tmdbImageUrl(provider.logoPath, "w92");
@@ -251,14 +267,14 @@ export function TitleHero({
                         <div
                           key={provider.name}
                           title={provider.name}
-                          className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-white"
+                          className="h-9 w-9 shrink-0 overflow-hidden rounded-[9px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
                         >
                           {logo && (
                             <Image
                               src={logo}
                               alt={provider.name}
-                              width={32}
-                              height={32}
+                              width={36}
+                              height={36}
                               className="h-full w-full object-cover"
                             />
                           )}
@@ -271,7 +287,7 @@ export function TitleHero({
             </div>
 
             {file && (
-              <div className="mt-6">
+              <div className="mt-4">
                 <FileDetailsSection mediaType={mediaType} file={file} runtimeLabel={runtimeLabel ?? null} />
               </div>
             )}

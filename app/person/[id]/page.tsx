@@ -23,7 +23,7 @@ export default async function PersonPage({
   const { person, entries, favorited, favoritedKeys, arrConfigured } = data;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
       <PersonHeader
         name={person.name}
         biography={person.biography}

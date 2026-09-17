@@ -19,7 +19,7 @@ export function ExternalLinks({ links }: { links: ExternalLinksData }) {
           href={item.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full border border-border px-3.5 py-1.5 text-xs text-text-secondary transition-colors hover:border-accent hover:text-accent"
+          className="flex h-[30px] items-center rounded-[15px] border border-border-strong pl-[11px] pr-[13px] text-[12.5px] text-text-primary transition-colors hover:border-accent hover:text-accent"
         >
           {item.label}
         </a>

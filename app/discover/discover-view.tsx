@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { InfiniteResultsGrid } from "@/components/infinite-results-grid";
 import { PosterCard } from "@/components/poster-card";
-import { PosterRow, PosterRowItem } from "@/components/poster-row";
+import { PosterRowItem } from "@/components/poster-row";
+import { Shelf } from "@/components/shelf";
 import { StatusBadge } from "@/components/status-badge";
 import { YearSelect } from "@/components/year-select";
 import { SortSelect } from "@/components/sort-select";
@@ -94,49 +95,44 @@ export async function DiscoverView({
         }}
       />
 
-      <div className="px-6 py-12">
+      <div className="flex flex-col gap-12 pl-4 pr-0 py-6 sm:pl-7 sm:py-7">
         {becauseYouWatched && (
-          <section className="mt-8">
-            <h2 className="mb-4 font-display text-xl text-text-primary">
-              Because you watched {becauseYouWatched.title}
-            </h2>
-            <PosterRow>
-              {becauseYouWatched.items.map((item) => {
-                const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-                const canQuickAdd = Boolean(viewer.session) && arrConfigured && !status;
-                return (
-                  <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
-                    <PosterCard
-                      href={`/title/${item.mediaType}/${item.tmdbId}`}
-                      posterPath={item.posterPath}
-                      name={item.name}
-                      year={item.year}
-                      badge={status && <StatusBadge status={status} compact />}
-                      status={status}
-                      favoriteAction={
-                        viewer.session && (
-                          <FavoriteButton
-                            entityType={item.mediaType}
-                            tmdbId={item.tmdbId}
-                            initialFavorited={favoritedIds.has(item.tmdbId)}
-                            compact
-                          />
-                        )
-                      }
-                      quickAction={
-                        canQuickAdd ? (
-                          <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
-                        ) : undefined
-                      }
-                    />
-                  </PosterRowItem>
-                );
-              })}
-            </PosterRow>
-          </section>
+          <Shelf title={`Because you watched ${becauseYouWatched.title}`}>
+            {becauseYouWatched.items.map((item) => {
+              const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
+              const canQuickAdd = Boolean(viewer.session) && arrConfigured && !status;
+              return (
+                <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
+                  <PosterCard
+                    href={`/title/${item.mediaType}/${item.tmdbId}`}
+                    posterPath={item.posterPath}
+                    name={item.name}
+                    year={item.year}
+                    badge={status && <StatusBadge status={status} compact />}
+                    status={status}
+                    favoriteAction={
+                      viewer.session && (
+                        <FavoriteButton
+                          entityType={item.mediaType}
+                          tmdbId={item.tmdbId}
+                          initialFavorited={favoritedIds.has(item.tmdbId)}
+                          compact
+                        />
+                      )
+                    }
+                    quickAction={
+                      canQuickAdd ? (
+                        <QuickAddButton mediaType={item.mediaType} tmdbId={item.tmdbId} />
+                      ) : undefined
+                    }
+                  />
+                </PosterRowItem>
+              );
+            })}
+          </Shelf>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 pr-4 sm:pr-7">
           <SortSelect currentSort={sort} currentParams={sp} basePath={basePath} />
 
           {genresForFilter.length > 0 && (
@@ -175,7 +171,7 @@ export async function DiscoverView({
           <SurpriseMeButton displayType={lockedType} genreId={genreId} year={year} hideOwned={hideOwned} />
         </div>
 
-        <div className="mt-8">
+        <div className="pr-4 sm:pr-7">
           <InfiniteResultsGrid
             key={`${lockedType}:${sort}:${genreId ?? ""}:${year ?? ""}:${networkId ?? ""}:${hideOwned}`}
             initialItems={firstPageItems}

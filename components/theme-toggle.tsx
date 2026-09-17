@@ -31,14 +31,14 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     localStorage.setItem(THEME_STORAGE_KEY, next);
   }
 
-  const size = compact ? "h-9 w-9" : "h-8 w-8";
+  const size = compact ? "h-8 w-8" : "h-7 w-7";
 
   return (
     <button
       type="button"
       onClick={toggle}
       aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-      className={`flex ${size} shrink-0 items-center justify-center rounded-full border border-border-strong text-text-secondary transition-colors hover:border-accent hover:text-accent`}
+      className={`flex ${size} shrink-0 items-center justify-center rounded-full border border-border bg-bg-2/60 text-text-secondary transition-colors hover:border-accent hover:text-accent`}
     >
       {theme === null ? null : theme === "light" ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">

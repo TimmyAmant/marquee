@@ -47,8 +47,8 @@ export function AddToLibraryButton({
   }, [state?.success, router]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={state?.success ? "tracked_monitored" : status} />
 
         {status === "untracked" && !state?.success && isAdmin === false && !alreadyRequested && (
@@ -56,7 +56,7 @@ export function AddToLibraryButton({
         )}
 
         {status === "untracked" && isAdmin === false && alreadyRequested && (
-          <span className="rounded-full bg-tracked-bg px-4 py-1.5 text-xs font-medium text-tracked">
+          <span className="flex h-8 items-center rounded-full bg-tracked-bg px-4 text-[13px] font-medium text-tracked">
             Requested — waiting for approval
           </span>
         )}
@@ -66,7 +66,7 @@ export function AddToLibraryButton({
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+              className="flex h-8 items-center rounded-full bg-accent px-4 text-[13px] font-semibold text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
             >
               {isPending ? "Adding…" : `Add to ${mediaType === "movie" ? "Radarr" : "Sonarr"}`}
             </button>

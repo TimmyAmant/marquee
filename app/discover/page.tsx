@@ -37,7 +37,7 @@ export default async function DiscoverPage() {
         }}
       />
 
-      <div className="flex flex-col gap-14 px-6 py-12">
+      <div className="flex flex-col gap-12 pl-4 pr-0 py-6 sm:pl-7 sm:py-7">
         {recentlyAdded.length > 0 && (
           <Shelf title="Recently Added">
             {recentlyAdded.map((item) => (

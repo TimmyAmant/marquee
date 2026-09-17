@@ -22,9 +22,9 @@ export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; t
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-text-muted underline decoration-dotted hover:text-accent"
+        className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-primary transition-colors hover:border-accent hover:text-accent"
       >
-        Wrong match? Fix ID
+        Fix ID
       </button>
     );
   }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { RequestsBadge } from "@/components/requests-badge";
+import { SidebarLinkShell } from "@/components/sidebar-link-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getPendingRequestCount } from "@/lib/requests/query";
 
@@ -45,7 +46,7 @@ const NAV_ICONS = {
 
 function NavIcon({ name }: { name: keyof typeof NAV_ICONS }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-5 w-5 shrink-0">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-[17px] w-[17px] shrink-0 text-text-muted group-aria-[current=page]:text-accent">
       {NAV_ICONS[name]}
     </svg>
   );
@@ -61,13 +62,10 @@ function SidebarLink({
   children: React.ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className="relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-base text-text-secondary transition-colors hover:bg-bg-2 hover:text-text-primary"
-    >
+    <SidebarLinkShell href={href}>
       <NavIcon name={icon} />
       {children}
-    </Link>
+    </SidebarLinkShell>
   );
 }
 
@@ -84,10 +82,10 @@ export async function Sidebar() {
   const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-bg-1/60 backdrop-blur-md md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[230px] flex-col border-r border-border bg-bg-1/85 backdrop-blur-md md:flex">
       <Link
         href="/"
-        className="flex h-16 shrink-0 items-center gap-2 px-6 font-display text-2xl tracking-tight text-text-primary"
+        className="flex h-[52px] shrink-0 items-center gap-2 px-[22px] font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-text-primary"
       >
         <span className="relative">
           Marquee
@@ -95,7 +93,7 @@ export async function Sidebar() {
         </span>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2 pt-3">
         <SidebarLink href="/discover" icon="discover">
           Discover
         </SidebarLink>
@@ -108,6 +106,9 @@ export async function Sidebar() {
 
         {session?.user && (
           <>
+            <p className="px-2.5 pb-[7px] pt-5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-text-muted">
+              Library
+            </p>
             <SidebarLink href="/favorites" icon="favorites">
               Favorites
             </SidebarLink>
@@ -122,18 +123,23 @@ export async function Sidebar() {
         )}
       </nav>
 
-      <div className="flex shrink-0 items-center gap-2 border-t border-border p-3">
+      <div className="flex shrink-0 items-center gap-2.5 border-t border-border pb-3.5 pl-4 pr-3.5 pt-3.5">
         {session?.user ? (
           <Link
             href="/settings"
-            className="min-w-0 flex-1 truncate rounded-lg px-3 py-2.5 text-base text-text-primary transition-colors hover:bg-bg-2"
+            className="min-w-0 flex-1 rounded-lg px-1 py-1 transition-colors hover:bg-bg-2"
           >
-            {session.user.name || session.user.username}
+            <span className="block truncate text-[12.5px] font-medium leading-[15px] text-text-secondary">
+              {session.user.name || session.user.username}
+            </span>
+            <span className="block text-[11px] leading-[14px] text-text-muted">
+              {isAdmin ? "Admin" : "Member"}
+            </span>
           </Link>
         ) : (
           <Link
             href="/login"
-            className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-base text-text-primary transition-colors hover:bg-bg-2"
+            className="min-w-0 flex-1 rounded-lg px-1 py-1 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-bg-2"
           >
             Sign in
           </Link>

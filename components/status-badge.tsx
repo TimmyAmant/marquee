@@ -42,12 +42,15 @@ export function StatusBadge({
 }) {
   const config = STATUS_CONFIG[status];
 
+  // Both sizes come from the design mockup: the poster-corner pill is 17px
+  // tall with a 5px dot, the standalone one on a title page is a 32px
+  // capsule with an 8px dot.
   if (compact) {
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium shadow backdrop-blur-sm ${config.className}`}
+        className={`inline-flex h-[17px] items-center gap-1 rounded-[9px] border pl-[5px] pr-[6px] text-[10px] font-semibold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.35)] backdrop-blur-sm ${config.className}`}
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+        <span className="h-[5px] w-[5px] rounded-full bg-current" />
         {config.compactLabel}
       </span>
     );
@@ -55,9 +58,9 @@ export function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${config.className}`}
+      className={`inline-flex h-8 items-center gap-2 rounded-full border pl-3 pr-3.5 text-[13px] font-semibold ${config.className}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="h-2 w-2 rounded-full bg-current" />
       {config.label}
     </span>
   );

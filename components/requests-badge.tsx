@@ -33,7 +33,7 @@ export function RequestsBadge({ initialCount }: { initialCount: number }) {
   if (count === 0) return null;
 
   return (
-    <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-bg-0">
+    <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] bg-accent px-[5px] text-[10.5px] font-bold text-bg-0">
       {count > 9 ? "9+" : count}
     </span>
   );

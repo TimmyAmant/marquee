@@ -45,7 +45,7 @@ export default async function SearchPage({
   } = await loadSearchResults(viewer, query);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
       {!hasResults && (
         <p className="text-center text-text-secondary">
           No results for &ldquo;{query}&rdquo;.

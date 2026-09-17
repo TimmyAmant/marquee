@@ -67,7 +67,7 @@ export function PosterCard({
 
   return (
     <div className="group">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-bg-2 ring-1 ring-border transition-all group-hover:-translate-y-1 group-hover:ring-border-strong">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-bg-2 ring-1 ring-border transition-all group-hover:-translate-y-1 group-hover:shadow-[0_16px_34px_rgba(0,0,0,0.6),0_4px_10px_rgba(0,0,0,0.4)] group-hover:ring-border-strong">
         <Link href={href} className="absolute inset-0 z-0" title={filePath ?? undefined}>
           {src ? (
             <Image
@@ -86,8 +86,8 @@ export function PosterCard({
 
         {typeLabel ? (
           <div
-            className={`pointer-events-none absolute left-1.5 top-1.5 z-10 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white ${
-              typeLabel === "MOVIE" ? "bg-blue-600/90" : "bg-fuchsia-600/90"
+            className={`pointer-events-none absolute left-[7px] top-[7px] z-10 rounded-[4px] px-[5px] py-[3px] text-[9px] font-bold uppercase leading-none tracking-[0.05em] text-white shadow-[0_1px_3px_rgba(0,0,0,0.35)] ${
+              typeLabel === "MOVIE" ? "bg-blue-600" : "bg-fuchsia-600"
             }`}
           >
             {typeLabel}
@@ -95,7 +95,7 @@ export function PosterCard({
         ) : (
           typeof rating === "number" &&
           rating > 0 && (
-            <div className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-full bg-bg-0/80 px-2 py-0.5 text-[10px] font-medium text-accent backdrop-blur-sm">
+            <div className="pointer-events-none absolute left-[7px] top-[7px] z-10 flex h-[17px] items-center gap-1 rounded-[9px] bg-bg-0/80 px-[6px] text-[10px] font-semibold text-accent backdrop-blur-sm">
               <span>★</span>
               {rating.toFixed(1)}
             </div>
@@ -104,13 +104,21 @@ export function PosterCard({
         {badge && <div className="pointer-events-none absolute right-1.5 top-1.5 z-10">{badge}</div>}
         {status && (
           <div
-            className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-1 ${STATUS_BAR_CLASS[status]}`}
+            className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[3px] ${STATUS_BAR_CLASS[status]}`}
           />
         )}
 
         {overview && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex items-end bg-gradient-to-t from-bg-0 via-bg-0/70 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
-            <p className="line-clamp-5 text-xs leading-relaxed text-text-secondary">{overview}</p>
+          <div
+            className={`pointer-events-none absolute inset-0 z-10 flex flex-col justify-end px-[9px] pb-[9px] pt-[10px] opacity-0 transition-opacity group-hover:opacity-100 ${
+              quickAction ? "pb-[43px]" : ""
+            }`}
+            style={{
+              background:
+                "linear-gradient(to top, color-mix(in srgb, var(--marquee-bg-0) 97%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 92%, transparent) 46%, color-mix(in srgb, var(--marquee-bg-0) 55%, transparent) 70%, color-mix(in srgb, var(--marquee-bg-0) 18%, transparent) 100%)",
+            }}
+          >
+            <p className="line-clamp-5 text-[11px] leading-[15px] text-text-secondary">{overview}</p>
           </div>
         )}
 
@@ -121,24 +129,26 @@ export function PosterCard({
           // `(hover: hover)` (a real pointer) rather than a screen-size
           // breakpoint, since what matters is input capability, not
           // viewport width — a touch laptop still needs it always visible.
-          <div className="pointer-events-auto absolute inset-x-1.5 bottom-1.5 z-20 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:group-hover:pointer-events-auto">
+          <div className="pointer-events-auto absolute inset-x-[9px] bottom-[9px] z-20 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:group-hover:pointer-events-auto">
             {quickAction}
           </div>
         )}
       </div>
 
-      <Link href={href} className="mt-2 block">
-        <p className="truncate text-sm font-medium text-text-primary">{name}</p>
-      </Link>
-      <div className="flex items-center justify-between gap-1.5">
-        <Link href={href} className="min-w-0 flex-1">
-          <p className="truncate text-xs text-text-muted">
-            {[subtitle, year].filter(Boolean).join(" · ")}
-          </p>
+      <div className="px-0.5 pt-2">
+        <Link href={href} className="block">
+          <p className="truncate text-[13px] font-medium leading-[17px] text-text-primary">{name}</p>
         </Link>
-        {favoriteAction && <div className="shrink-0">{favoriteAction}</div>}
+        <div className="mt-px flex items-center justify-between gap-1.5">
+          <Link href={href} className="min-w-0 flex-1">
+            <p className="truncate text-[11.5px] leading-[15px] text-text-muted">
+              {[subtitle, year].filter(Boolean).join(" · ")}
+            </p>
+          </Link>
+          {favoriteAction && <div className="shrink-0">{favoriteAction}</div>}
+        </div>
+        {meta && <p className="truncate text-[11.5px] leading-[15px] text-text-muted">{meta}</p>}
       </div>
-      {meta && <p className="truncate text-xs text-text-muted">{meta}</p>}
     </div>
   );
 }

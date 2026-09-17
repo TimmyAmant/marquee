@@ -44,7 +44,7 @@ export function QuickAddButton({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
+        className="flex h-[26px] w-full items-center justify-center gap-1 rounded-[13px] bg-accent px-2 text-[11.5px] font-semibold text-bg-0 shadow-[0_2px_8px_rgba(224,166,62,0.25)] transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
         {isPending ? "Adding…" : `+ Add to ${mediaType === "movie" ? "Radarr" : "Sonarr"}`}
       </button>

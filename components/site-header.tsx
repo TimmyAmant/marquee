@@ -18,12 +18,15 @@ export async function SiteHeader() {
   const isAdmin = session?.user?.role === "admin";
   const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
 
+  // No bottom rule: the mockup's top bar is exactly 52px of blurred
+  // background with nothing under it, and every content coordinate in
+  // Docs/DESIGN_TARGET.md is measured from 52px down.
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-bg-0/85 backdrop-blur-md">
-      <div className="flex h-16 items-center gap-6 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 bg-bg-0/85 backdrop-blur-md">
+      <div className="flex h-[52px] items-center gap-4 px-4 sm:pl-[22px] sm:pr-4">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 font-display text-2xl tracking-tight text-text-primary md:hidden"
+          className="flex shrink-0 items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-text-primary md:hidden"
         >
           <span className="relative">
             Marquee
@@ -31,11 +34,11 @@ export async function SiteHeader() {
           </span>
         </Link>
 
-        <div className="hidden flex-1 md:block">
+        <div className="ml-auto hidden w-[300px] shrink-0 md:block">
           <SearchBar variant="compact" />
         </div>
 
-        <div className="ml-auto hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-2.5 md:flex">
           {session?.user && <NotificationsBell />}
         </div>
 
