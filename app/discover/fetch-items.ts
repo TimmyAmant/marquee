@@ -8,9 +8,10 @@ import {
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getViewerContext } from "@/lib/integrations/library-owner";
+import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType } from "@/lib/db/schema";
+import { discoverBatchSize, discoverTotalPages, TMDB_MAX_PAGE } from "@/lib/discover/paging";
 
 export type DiscoverFetchParams = {
   lockedType: MediaType;
@@ -36,30 +37,26 @@ export type DiscoverCardData = {
   canQuickAdd: boolean;
 };
 
+
 /**
  * One "page" of Movies/Series results, fully enriched (status, favorited,
  * quick-add eligibility) — shared by the initial server-rendered load
- * (discover-view.tsx) and every subsequent infinite-scroll load (the
- * loadMoreDiscoverItems server action), so both take the exact same path
- * through TMDb, library-status, and favorites lookups.
+ * (discover-view.tsx), every subsequent infinite-scroll load (the
+ * loadMoreDiscoverItems server action), and GET /api/v1/movies|series, so all
+ * take the exact same path through TMDb, library-status, and favorites lookups.
  */
 export async function fetchDiscoverItems(
   params: DiscoverFetchParams,
-): Promise<{ items: DiscoverCardData[]; hasNextPage: boolean }> {
+  viewer: ViewerIdentity,
+): Promise<{ items: DiscoverCardData[]; hasNextPage: boolean; totalPages: number; totalResults: number }> {
   const { lockedType, sort, genreId, year, networkId, hideOwned, page } = params;
-  const viewer = await getViewerContext();
 
   const genres = await (lockedType === "movie" ? getMovieGenres() : getTvGenres()).catch(() => ({
     genres: [],
   }));
   const genreMap = new Map(genres.genres.map((g) => [g.id, g.name]));
 
-  // Same batching/oversampling strategy the page has always used: several
-  // TMDb pages per screen (not just one), and a much bigger batch
-  // specifically when "hide titles you already track" is on, since that
-  // filter can otherwise thin a batch down to almost nothing for an account
-  // with a large synced library.
-  const BATCH_SIZE = hideOwned ? 10 : 4;
+  const BATCH_SIZE = discoverBatchSize(hideOwned);
   const startTmdbPage = (page - 1) * BATCH_SIZE + 1;
   const tmdbPages = Array.from({ length: BATCH_SIZE }, (_, i) => startTmdbPage + i);
   const emptyResponse = { results: [], total_pages: 1, total_results: 0 };
@@ -96,7 +93,8 @@ export async function fetchDiscoverItems(
     }));
 
   const maxTotalPages = Math.max(1, ...responses.map((r) => r.total_pages));
-  const hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, 500);
+  const hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, TMDB_MAX_PAGE);
+  const totalResults = Math.max(0, ...responses.map((r) => r.total_results));
 
   const statusMap = viewer.libraryOwnerId
     ? await getLibraryStatusMap(
@@ -109,7 +107,7 @@ export async function fetchDiscoverItems(
     ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`))
     : rawItems;
 
-  const [radarrCredential, sonarrCredential, favoritedIds] = viewer.session
+  const [radarrCredential, sonarrCredential, favoritedIds] = viewer.userId
     ? await Promise.all([
         getArrCredential(viewer.userId, "radarr"),
         getArrCredential(viewer.userId, "sonarr"),
@@ -137,9 +135,14 @@ export async function fetchDiscoverItems(
       overview: item.overview,
       status,
       favorited: favoritedIds.has(item.tmdbId),
-      canQuickAdd: Boolean(viewer.session) && arrConfigured && !status,
+      canQuickAdd: Boolean(viewer.userId) && arrConfigured && !status,
     };
   });
 
-  return { items, hasNextPage };
+  return {
+    items,
+    hasNextPage,
+    totalPages: discoverTotalPages(maxTotalPages, hideOwned),
+    totalResults,
+  };
 }

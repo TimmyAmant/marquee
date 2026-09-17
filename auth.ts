@@ -1,11 +1,11 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { encode as defaultEncode } from "next-auth/jwt";
-import { verify } from "argon2";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
-import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { authenticateWithPassword } from "@/lib/auth/password-login";
 
 const REMEMBER_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const DEFAULT_MAX_AGE = 60 * 60 * 24; // 1 day when "keep me signed in" is unchecked
@@ -32,28 +32,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           typeof credentials?.password === "string" ? credentials.password : undefined;
         if (!username || !password) return null;
 
-        const ip = getClientIp(request);
-        const usernameKey = `login:username:${username.toLowerCase()}`;
-        const ipKey = `login:ip:${ip}`;
-        const windowMs = 15 * 60 * 1000;
-
-        if (isRateLimited(usernameKey, 5) || isRateLimited(ipKey, 20)) {
-          throw new RateLimitedSignin();
-        }
-
-        const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-        if (!user || !user.passwordHash) {
-          recordFailedAttempt(usernameKey, windowMs);
-          recordFailedAttempt(ipKey, windowMs);
+        // Shared with POST /api/v1/auth/login — same rate-limit buckets.
+        const result = await authenticateWithPassword(username, password, getClientIp(request));
+        if (!result.ok) {
+          if (result.reason === "rate_limited") throw new RateLimitedSignin();
           return null;
         }
-
-        const valid = await verify(user.passwordHash, password);
-        if (!valid) {
-          recordFailedAttempt(usernameKey, windowMs);
-          recordFailedAttempt(ipKey, windowMs);
-          return null;
-        }
+        const { user } = result;
 
         return {
           id: user.id,

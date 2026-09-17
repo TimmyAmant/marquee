@@ -3,64 +3,11 @@ import { PosterGrid } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { StudioChip } from "@/components/studio-chip";
-import {
-  searchMulti,
-  searchCompany,
-  searchKeyword,
-  getMovieGenres,
-  getTvGenres,
-  discoverMovies,
-  discoverTv,
-  discoverMoviesByKeyword,
-  discoverTvByKeyword,
-  type TmdbGenre,
-  type TmdbDiscoverResult,
-} from "@/lib/tmdb/client";
-import { getLibraryStatusMap } from "@/lib/library/query";
-import { dedupeCompanies } from "@/lib/tmdb/company-groups";
-import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
-import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { loadSearchResults } from "@/lib/pages/search";
 import type { MediaType } from "@/lib/db/schema";
-
-// Words that describe "what kind of thing to search for" rather than the
-// theme itself — stripped before matching against genres/keywords, since
-// people naturally type "action movies" or "national disaster movies and tv
-// shows" and mean the theme, not those literal words.
-const MEDIA_WORDS = /\b(movies?|films?|shows?|series|tv)\b/gi;
-
-function normalizeForThemeMatch(query: string): string {
-  return query.replace(MEDIA_WORDS, "").replace(/\s+/g, " ").trim();
-}
-
-function findGenreMatch(genres: TmdbGenre[], normalized: string): TmdbGenre | null {
-  if (!normalized) return null;
-  const lower = normalized.toLowerCase();
-  const exact = genres.find((g) => g.name.toLowerCase() === lower);
-  if (exact) return exact;
-
-  // Only consider a substring match for short queries — TMDb genre names are
-  // at most two words, so anything longer is a real title/phrase that just
-  // happens to contain a genre word (e.g. "Crime and Punishment" contains
-  // "Crime"), not a genre-browse request.
-  if (lower.split(" ").length > 2) return null;
-  const partial = genres.find(
-    (g) => g.name.toLowerCase().includes(lower) || lower.includes(g.name.toLowerCase()),
-  );
-  return partial ?? null;
-}
-
-function toThemeItem(item: TmdbDiscoverResult, mediaType: MediaType) {
-  return {
-    tmdbId: item.id,
-    mediaType,
-    name: item.title || item.name || "",
-    posterPath: item.poster_path,
-    year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
-  };
-}
 
 export default async function SearchPage({
   searchParams,
@@ -81,112 +28,21 @@ export default async function SearchPage({
     );
   }
 
-  const normalized = normalizeForThemeMatch(query);
-
-  const [multi, companies, movieGenres, tvGenres, viewer] = await Promise.all([
-    searchMulti(query).catch(() => null),
-    searchCompany(query).catch(() => null),
-    getMovieGenres().catch(() => ({ genres: [] })),
-    getTvGenres().catch(() => ({ genres: [] })),
-    getViewerContext(),
-  ]);
-
-  const people = multi?.results.filter((r) => r.media_type === "person") ?? [];
-  const titleResults = multi?.results.filter((r) => r.media_type === "movie" || r.media_type === "tv") ?? [];
-  const companyResults = dedupeCompanies(companies?.results ?? []);
-
-  const movieGenreMatch = findGenreMatch(movieGenres.genres, normalized);
-  const tvGenreMatch = findGenreMatch(tvGenres.genres, normalized);
-
-  let themeLabel: string | null = null;
-  let themeItems: ReturnType<typeof toThemeItem>[] = [];
-
-  if (movieGenreMatch || tvGenreMatch) {
-    const [movieRes, tvRes] = await Promise.all([
-      movieGenreMatch
-        ? discoverMovies({ genreId: movieGenreMatch.id, sort: "popularity" }).catch(() => null)
-        : null,
-      tvGenreMatch
-        ? discoverTv({ genreId: tvGenreMatch.id, sort: "popularity" }).catch(() => null)
-        : null,
-    ]);
-    themeItems = [
-      ...(movieRes?.results.map((i) => toThemeItem(i, "movie")) ?? []),
-      ...(tvRes?.results.map((i) => toThemeItem(i, "tv")) ?? []),
-    ];
-    themeLabel = (movieGenreMatch ?? tvGenreMatch)!.name;
-  } else if (normalized) {
-    // No genre matched this query (e.g. "national disaster") — try it as a
-    // TMDb keyword/theme tag instead of a literal title search.
-    const keywordResults = await searchKeyword(normalized).catch(() => null);
-    const lowerNormalized = normalized.toLowerCase();
-    const keyword =
-      keywordResults?.results.find((k) => k.name.toLowerCase() === lowerNormalized) ??
-      keywordResults?.results[0] ??
-      null;
-    if (keyword) {
-      const [movieRes, tvRes] = await Promise.all([
-        discoverMoviesByKeyword(keyword.id).catch(() => null),
-        discoverTvByKeyword(keyword.id).catch(() => null),
-      ]);
-      themeItems = [
-        ...(movieRes?.results.map((i) => toThemeItem(i, "movie")) ?? []),
-        ...(tvRes?.results.map((i) => toThemeItem(i, "tv")) ?? []),
-      ];
-      themeLabel = keyword.name;
-    }
-  }
-
-  const hasResults =
-    people.length + titleResults.length + companyResults.length + themeItems.length > 0;
-
-  const allMovieIds = [
-    ...titleResults.filter((t) => t.media_type === "movie").map((t) => t.id),
-    ...themeItems.filter((t) => t.mediaType === "movie").map((t) => t.tmdbId),
-  ];
-  const allTvIds = [
-    ...titleResults.filter((t) => t.media_type === "tv").map((t) => t.id),
-    ...themeItems.filter((t) => t.mediaType === "tv").map((t) => t.tmdbId),
-  ];
-
-  const [
+  // Shared with GET /api/v1/search.
+  const viewer = await getViewerContext();
+  const {
+    people,
+    companyResults,
+    titleResults,
+    themeLabel,
+    themeItems,
+    hasResults,
     statusMap,
-    radarrCredential,
-    sonarrCredential,
+    arrConfigured,
     favoritedPersonIds,
     favoritedCompanyIds,
-    favoritedMovieIds,
-    favoritedTvIds,
-  ] = viewer.libraryOwnerId
-    ? await Promise.all([
-        getLibraryStatusMap(viewer.libraryOwnerId, [
-          ...titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
-          ...themeItems.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })),
-        ]),
-        getArrCredential(viewer.userId, "radarr"),
-        getArrCredential(viewer.userId, "sonarr"),
-        getFavoritedTmdbIds(
-          viewer.userId,
-          "person",
-          people.map((p) => p.id),
-        ),
-        getFavoritedTmdbIds(
-          viewer.userId,
-          "company",
-          companyResults.map((c) => c.tmdbId),
-        ),
-        getFavoritedTmdbIds(viewer.userId, "movie", allMovieIds),
-        getFavoritedTmdbIds(viewer.userId, "tv", allTvIds),
-      ])
-    : [new Map(), null, null, new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>()];
-
-  const arrConfigured = {
-    movie: isArrFullyConfigured(radarrCredential),
-    tv: isArrFullyConfigured(sonarrCredential),
-  };
-  function favoritedTitle(mediaType: MediaType, tmdbId: number) {
-    return mediaType === "movie" ? favoritedMovieIds.has(tmdbId) : favoritedTvIds.has(tmdbId);
-  }
+    favoritedTitle,
+  } = await loadSearchResults(viewer, query);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">

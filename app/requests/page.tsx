@@ -9,6 +9,16 @@ import { getViewerContext } from "@/lib/integrations/library-owner";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
+import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
+
+const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
+  pending: "bg-tracked-bg text-tracked",
+  declined: "bg-untracked-bg text-text-secondary",
+  owned: "bg-owned-bg text-owned",
+  downloading: "bg-tracked-bg text-tracked",
+  coming_soon: "bg-untracked-bg text-text-secondary",
+  approved: "bg-tracked-bg text-tracked",
+};
 
 function myRequestBadge(
   status: RequestStatus,
@@ -18,28 +28,9 @@ function myRequestBadge(
   label: string;
   className: string;
 } {
-  if (status === "pending") {
-    return { label: "Pending review", className: "bg-tracked-bg text-tracked" };
-  }
-  if (status === "rejected") {
-    return { label: "Declined", className: "bg-untracked-bg text-text-secondary" };
-  }
-  // approved
-  if (libraryStatus === "owned") {
-    return { label: "In your library", className: "bg-owned-bg text-owned" };
-  }
-  if (libraryStatus === "tracked_downloading") {
-    return { label: "Downloading", className: "bg-tracked-bg text-tracked" };
-  }
-  if (libraryStatus === "coming_soon") {
-    return { label: "Coming soon", className: "bg-untracked-bg text-text-secondary" };
-  }
-  // Sonarr/Radarr never actually took this one — the admin is adding it by
-  // hand, so it'll never resolve to a real libraryStatus on its own.
-  if (manuallyApproved) {
-    return { label: "Manually approved", className: "bg-tracked-bg text-tracked" };
-  }
-  return { label: "Approved", className: "bg-tracked-bg text-tracked" };
+  // Label wording shared with GET /api/v1/requests/mine.
+  const { label, tone } = badgeFor(status, libraryStatus, manuallyApproved);
+  return { label, className: BADGE_CLASS[tone] };
 }
 
 export default async function RequestsPage() {
@@ -206,11 +197,7 @@ export default async function RequestsPage() {
                               : "bg-untracked-bg text-text-secondary"
                           }`}
                         >
-                          {r.status === "approved"
-                            ? r.manuallyApproved
-                              ? "Manually approved"
-                              : "Approved"
-                            : "Rejected"}
+                          {reviewedRequestLabel(r.status, r.manuallyApproved)}
                         </span>
                       </td>
                     </tr>

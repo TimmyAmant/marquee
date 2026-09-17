@@ -1,8 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { verifyWebhookUrl } from "@/lib/webhook/client";
-import { setGenericWebhookUrl, clearGenericWebhookUrl } from "@/lib/integrations/app-settings";
+import { clearGenericWebhookUrl } from "@/lib/integrations/app-settings";
+import { clearIntegrationSetting, testAndSaveGenericWebhookUrl } from "@/lib/integrations/manage";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type WebhookSettingsState = { error?: string; success?: boolean };
@@ -14,18 +13,8 @@ export async function testAndSaveGenericWebhook(
   const admin = await requireAdmin("Only the admin can manage integrations.");
   if (!admin.ok) return { error: admin.error };
 
-  const webhookUrl = String(formData.get("webhookUrl") || "").trim();
-  if (!webhookUrl) return { error: "Enter a webhook URL." };
-  if (!webhookUrl.startsWith("http://") && !webhookUrl.startsWith("https://")) {
-    return { error: "Enter a valid URL, starting with http:// or https://." };
-  }
-
-  const valid = await verifyWebhookUrl(webhookUrl);
-  if (!valid) return { error: "Couldn't post a test request to that URL. Check it and try again." };
-
-  await setGenericWebhookUrl(webhookUrl);
-  revalidatePath("/settings/integrations");
-  return { success: true };
+  const result = await testAndSaveGenericWebhookUrl(String(formData.get("webhookUrl") || ""));
+  return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function disconnectGenericWebhook(
@@ -34,7 +23,6 @@ export async function disconnectGenericWebhook(
   const admin = await requireAdmin("Only the admin can manage integrations.");
   if (!admin.ok) return { error: admin.error };
 
-  await clearGenericWebhookUrl();
-  revalidatePath("/settings/integrations");
+  await clearIntegrationSetting(clearGenericWebhookUrl);
   return { success: true };
 }

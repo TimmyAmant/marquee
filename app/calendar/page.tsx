@@ -3,19 +3,12 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import { getUpcomingReleases, type CalendarEntry } from "@/lib/calendar/query";
+import { computeCalendarGrid, toDateKey } from "@/lib/calendar/grid";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE_PER_DAY = 4;
-
-function toDateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function monthParam(year: number, monthIndex: number): string {
-  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
-}
 
 export default async function CalendarPage({
   searchParams,
@@ -53,33 +46,10 @@ export default async function CalendarPage({
     );
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const { month: monthQuery } = await searchParams;
-  let year = today.getFullYear();
-  let monthIndex = today.getMonth();
-  if (monthQuery) {
-    const [queryYear, queryMonth] = monthQuery.split("-").map(Number);
-    if (Number.isFinite(queryYear) && Number.isFinite(queryMonth)) {
-      year = queryYear;
-      monthIndex = queryMonth - 1;
-    }
-  }
-
-  const firstOfMonth = new Date(year, monthIndex, 1);
-  const lastOfMonth = new Date(year, monthIndex + 1, 0);
-
-  const gridStart = new Date(firstOfMonth);
-  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
-  const gridEnd = new Date(lastOfMonth);
-  gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()));
-  gridEnd.setHours(23, 59, 59, 999);
-
-  const days: Date[] = [];
-  for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
-    days.push(new Date(d));
-  }
+  // Grid math shared with GET /api/v1/calendar.
+  const { monthIndex, firstOfMonth, gridStart, gridEnd, days, todayKey, prevMonth, nextMonth } =
+    computeCalendarGrid(monthQuery, new Date());
 
   const entries = await getUpcomingReleases(libraryOwnerId, gridStart, gridEnd);
   const byDate = new Map<string, CalendarEntry[]>();
@@ -88,10 +58,6 @@ export default async function CalendarPage({
     if (existing) existing.push(entry);
     else byDate.set(entry.date, [entry]);
   }
-
-  const prevMonthDate = new Date(year, monthIndex - 1, 1);
-  const nextMonthDate = new Date(year, monthIndex + 1, 1);
-  const todayKey = toDateKey(today);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -110,13 +76,13 @@ export default async function CalendarPage({
             Today
           </Link>
           <Link
-            href={`/calendar?month=${monthParam(prevMonthDate.getFullYear(), prevMonthDate.getMonth())}`}
+            href={`/calendar?month=${prevMonth}`}
             className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
           >
             ← Prev
           </Link>
           <Link
-            href={`/calendar?month=${monthParam(nextMonthDate.getFullYear(), nextMonthDate.getMonth())}`}
+            href={`/calendar?month=${nextMonth}`}
             className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
           >
             Next →

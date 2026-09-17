@@ -1,0 +1,130 @@
+import { describe, it, expect } from "vitest";
+import { fileDetails, iso, myRequest, requestPerson, titleCard, titleViewerState } from "./mappers";
+
+describe("iso", () => {
+  it("formats dates as ISO-8601 UTC with milliseconds", () => {
+    expect(iso(new Date("2026-09-17T12:00:00Z"))).toBe("2026-09-17T12:00:00.000Z");
+    expect(iso("2026-09-17T12:00:00Z")).toBe("2026-09-17T12:00:00.000Z");
+  });
+
+  it("returns null for missing or invalid dates", () => {
+    expect(iso(null)).toBeNull();
+    expect(iso(undefined)).toBeNull();
+    expect(iso("not a date")).toBeNull();
+  });
+});
+
+describe("titleCard", () => {
+  it("always includes every field, defaulting to null/false", () => {
+    expect(titleCard({ mediaType: "movie", tmdbId: 603, name: "The Matrix", posterPath: null, year: "1999" })).toEqual({
+      mediaType: "movie",
+      tmdbId: 603,
+      name: "The Matrix",
+      posterPath: null,
+      year: "1999",
+      subtitle: null,
+      overview: null,
+      rating: null,
+      status: null,
+      favorited: null,
+      requested: null,
+      canQuickAdd: false,
+      canRequest: false,
+    });
+  });
+});
+
+describe("titleViewerState", () => {
+  const base = {
+    favorited: false,
+    requestStatus: null,
+    otherRequesters: [] as string[],
+    arrTracking: null,
+  };
+
+  it("offers Add to an admin for an untracked title when *arr is configured", () => {
+    const state = titleViewerState({ ...base, isAdmin: true, status: "untracked", configured: true });
+    expect(state).toMatchObject({ canAdd: true, needsArrSetup: false, canRequest: false, canRelink: false });
+  });
+
+  it("points an admin at setup when *arr isn't configured", () => {
+    const state = titleViewerState({ ...base, isAdmin: true, status: "untracked", configured: false });
+    expect(state).toMatchObject({ canAdd: false, needsArrSetup: true });
+  });
+
+  it("offers Request to a member until they have a pending request", () => {
+    expect(titleViewerState({ ...base, isAdmin: false, status: "untracked", configured: true }).canRequest).toBe(true);
+    const pending = titleViewerState({
+      ...base,
+      isAdmin: false,
+      status: "untracked",
+      configured: true,
+      requestStatus: "pending",
+    });
+    expect(pending).toMatchObject({ canRequest: false, alreadyRequested: true });
+  });
+
+  it("offers nothing to add or request for titles already in the library", () => {
+    const admin = titleViewerState({ ...base, isAdmin: true, status: "owned", configured: true });
+    expect(admin).toMatchObject({ canAdd: false, canRequest: false, canRelink: true });
+    const member = titleViewerState({ ...base, isAdmin: false, status: "tracked_monitored", configured: true });
+    expect(member).toMatchObject({ canAdd: false, canRequest: false, canRelink: false });
+  });
+
+  it("only exposes *arr tracking to the admin", () => {
+    const tracking = { arrId: 12, monitored: true };
+    expect(titleViewerState({ ...base, isAdmin: true, status: "owned", configured: true, arrTracking: tracking }).arrTracking).toEqual(tracking);
+    expect(titleViewerState({ ...base, isAdmin: false, status: "owned", configured: true, arrTracking: tracking }).arrTracking).toBeNull();
+  });
+});
+
+describe("fileDetails", () => {
+  it("fills every field and derives the resolution tier", () => {
+    expect(
+      fileDetails({ path: "/movies/Dune (2021)/Dune.mkv", sizeBytes: 1024, quality: "Bluray-2160p", dateAdded: "2026-01-02T03:04:05Z" }),
+    ).toEqual({
+      path: "/movies/Dune (2021)/Dune.mkv",
+      sizeBytes: 1024,
+      quality: "Bluray-2160p",
+      resolutionTier: "4K",
+      resolution: null,
+      videoCodec: null,
+      dynamicRange: null,
+      audioCodec: null,
+      audioChannels: null,
+      dateAdded: "2026-01-02T03:04:05.000Z",
+      releaseGroup: null,
+      edition: null,
+    });
+    expect(fileDetails(null)).toBeNull();
+  });
+});
+
+describe("request mapping", () => {
+  it("labels a person by display name, falling back to username", () => {
+    expect(requestPerson({ displayName: "Timmy", username: "timmy" }).label).toBe("Timmy");
+    expect(requestPerson({ displayName: null, username: "timmy" })).toEqual({
+      userId: null,
+      displayName: null,
+      username: "timmy",
+      label: "timmy",
+    });
+  });
+
+  it("maps a member's request with the page's status label", () => {
+    const dto = myRequest({
+      id: "11111111-1111-1111-1111-111111111111",
+      mediaType: "tv",
+      tmdbId: 1399,
+      title: "Game of Thrones",
+      posterPath: "/poster.jpg",
+      status: "approved",
+      manuallyApproved: false,
+      createdAt: new Date("2026-09-01T00:00:00Z"),
+      reviewedAt: null,
+      libraryStatus: "tracked_downloading",
+    });
+    expect(dto).toMatchObject({ statusLabel: "Downloading", statusTone: "downloading", reviewedAt: null });
+    expect(dto.createdAt).toBe("2026-09-01T00:00:00.000Z");
+  });
+});

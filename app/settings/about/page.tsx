@@ -1,9 +1,5 @@
-import packageJson from "@/package.json";
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { getUserLibrary, summarizeLibrary } from "@/lib/library/query";
-import { getTotalRequestCount } from "@/lib/requests/query";
-
-const REPO_URL = "https://github.com/TimmyAmant/marquee";
+import { loadAboutPage, REPO_URL } from "@/lib/pages/settings";
 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
@@ -31,12 +27,8 @@ function LinkRow({ label, href }: { label: string; href: string }) {
 
 export default async function AboutSettingsPage() {
   const viewer = await getViewerContext();
-  const [library, totalRequests] = await Promise.all([
-    viewer.libraryOwnerId ? getUserLibrary(viewer.libraryOwnerId) : Promise.resolve([]),
-    getTotalRequestCount(),
-  ]);
-  const summary = summarizeLibrary(library);
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Shared with GET /api/v1/settings/about.
+  const { version, summary, totalRequests, timeZone } = await loadAboutPage(viewer);
 
   return (
     <div>
@@ -45,7 +37,7 @@ export default async function AboutSettingsPage() {
 
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <div className="divide-y divide-border">
-          <StatRow label="Version" value={`v${packageJson.version}`} />
+          <StatRow label="Version" value={`v${version}`} />
           <StatRow label="Movies" value={String(summary.movieCount)} />
           <StatRow label="TV Shows" value={String(summary.tvCount)} />
           <StatRow label="Tracked (not yet owned)" value={String(summary.trackedCount)} />

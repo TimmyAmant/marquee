@@ -1,8 +1,7 @@
 "use server";
 
-import { getTvSeasonDetails } from "@/lib/tmdb/client";
-import { getSonarrEpisodeHasFileMap } from "@/lib/integrations/status";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { loadSeasonEpisodes } from "@/lib/titles/season-episodes";
 import type { TmdbEpisode } from "@/lib/tmdb/client";
 
 export type SeasonEpisodesResult = {
@@ -19,16 +18,6 @@ export async function getSeasonEpisodesAction(
   seasonNumber: number,
 ): Promise<SeasonEpisodesResult> {
   const viewer = await getViewerContext();
-
-  const [details, hasFileMap] = await Promise.all([
-    getTvSeasonDetails(tmdbId, seasonNumber).catch(() => null),
-    viewer.libraryOwnerId
-      ? getSonarrEpisodeHasFileMap(viewer.libraryOwnerId, tvdbId, seasonNumber)
-      : Promise.resolve(new Map<number, boolean>()),
-  ]);
-
-  return {
-    episodes: details?.episodes ?? [],
-    hasFileMap: Object.fromEntries(hasFileMap),
-  };
+  const { episodes, hasFileMap } = await loadSeasonEpisodes(viewer, tmdbId, tvdbId, seasonNumber);
+  return { episodes, hasFileMap: Object.fromEntries(hasFileMap) };
 }

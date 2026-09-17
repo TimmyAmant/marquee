@@ -7,22 +7,11 @@ import { YearSelect } from "@/components/year-select";
 import { SortSelect } from "@/components/sort-select";
 import { GenreSelect } from "@/components/genre-select";
 import { QuickAddButton } from "@/components/quick-add-button";
-import {
-  getMovieGenres,
-  getTvGenres,
-  getNetworkDetails,
-  type DiscoverSort,
-  type TmdbMovieDetails,
-  type TmdbTvDetails,
-} from "@/lib/tmdb/client";
+import type { DiscoverSort } from "@/lib/tmdb/client";
 import { fetchDiscoverItems } from "@/app/discover/fetch-items";
-import { getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getLibraryStatusMap } from "@/lib/library/query";
-import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { FavoriteButton } from "@/components/favorite-button";
-import { getRecentlyWatched } from "@/lib/plex/sync";
-import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { loadBecauseYouWatched, loadBrowseFilters, parseDiscoverSort } from "@/lib/pages/browse";
 import { SurpriseMeButton } from "@/components/surprise-me-button";
 import type { MediaType } from "@/lib/db/schema";
 
@@ -51,15 +40,6 @@ function buildHref(
   return `${basePath}${qs ? `?${qs}` : ""}`;
 }
 
-// A plain, non-component helper — kept outside the page's render body since
-// the React compiler's purity check flags Date.now() called directly inside
-// a Server Component, even though this route is already fully dynamic
-// (auth() + searchParams), specifically to prevent the value depending on
-// unstable render timing.
-function getDayIndex(): number {
-  return Math.floor(Date.now() / 86_400_000);
-}
-
 /**
  * Shared render/data logic behind /movies and /series — each renders this
  * view with `lockedType` pinned so the underlying TMDb query is always one
@@ -82,8 +62,7 @@ export async function DiscoverView({
   const sp = await searchParams;
   const viewer = await getViewerContext();
 
-  const sort: DiscoverSort =
-    sp.sort === "top_rated" ? "top_rated" : sp.sort === "newest" ? "newest" : "popularity";
+  const sort: DiscoverSort = parseDiscoverSort(sp.sort);
   const genreId = sp.genre ? Number(sp.genre) : undefined;
   const year = sp.year ? Number(sp.year) : undefined;
   const hideOwned = Boolean(viewer.session) && sp.hideOwned !== "0";
@@ -91,74 +70,19 @@ export async function DiscoverView({
   // treated the same as not having one.
   const networkId = lockedType === "tv" && sp.network ? Number(sp.network) : undefined;
 
-  const [genresForFilter, network, { items: firstPageItems, hasNextPage: firstPageHasNext }] =
+  // Filters + first results page + "Because you watched" are all shared with
+  // GET /api/v1/movies|series(/extras) — see lib/pages/browse.ts.
+  const [{ genresForFilter, network }, { items: firstPageItems, hasNextPage: firstPageHasNext }] =
     await Promise.all([
-      (lockedType === "movie" ? getMovieGenres() : getTvGenres())
-        .then((r) => r.genres)
-        .catch(() => []),
-      networkId ? getNetworkDetails(networkId).catch(() => null) : Promise.resolve(null),
-      fetchDiscoverItems({ lockedType, sort, genreId, year, networkId, hideOwned, page: 1 }),
+      loadBrowseFilters(lockedType, networkId),
+      fetchDiscoverItems({ lockedType, sort, genreId, year, networkId, hideOwned, page: 1 }, viewer),
     ]);
 
-  // "Because you watched" — rotates daily through your last several
-  // watched titles (rather than always the single most recent one) so the
-  // row doesn't look identical on every visit, using TMDb's own
-  // recommendations for whichever title comes up (already cached in
-  // `titles.rawTmdb` from whenever that title's page/sync last fetched it,
-  // so this is usually a free read rather than a fresh TMDb call).
-  let becauseYouWatched: {
-    title: string;
-    items: { mediaType: MediaType; tmdbId: number; name: string; posterPath: string | null; year: string | null }[];
-  } | null = null;
-  if (viewer.libraryOwnerId && !genreId && !year) {
-    const recentList = await getRecentlyWatched(viewer.libraryOwnerId, 10).catch(() => []);
-    // Filtered by lockedType *before* picking, not after — otherwise
-    // /movies and /series would only ever show this row on days the
-    // rotation happens to land on a title of their own type, even when the
-    // viewer has plenty of recently-watched movies (or shows) to draw on.
-    const eligible = recentList.filter((r) => r.mediaType === lockedType);
-    const recent = eligible.length > 0 ? eligible[getDayIndex() % eligible.length] : undefined;
-    if (recent) {
-      const watchedTitle = await getOrFetchTitle(recent.mediaType, recent.tmdbId).catch(() => null);
-      const raw = watchedTitle?.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
-      const recs = raw?.recommendations?.results ?? [];
-      if (watchedTitle && recs.length > 0) {
-        becauseYouWatched = {
-          title: watchedTitle.name,
-          items: recs.slice(0, 12).map((r) => ({
-            mediaType: recent.mediaType,
-            tmdbId: r.id,
-            name: r.title || r.name || "",
-            posterPath: r.poster_path,
-            year: (r.release_date || r.first_air_date || "").slice(0, 4) || null,
-          })),
-        };
-      }
-    }
-  }
-
-  const statusMap = becauseYouWatched && viewer.libraryOwnerId
-    ? await getLibraryStatusMap(
-        viewer.libraryOwnerId,
-        becauseYouWatched.items.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-      )
-    : new Map();
-
-  const [radarrCredential, sonarrCredential, favoritedIds] =
-    becauseYouWatched && viewer.session
-      ? await Promise.all([
-          getArrCredential(viewer.userId, "radarr"),
-          getArrCredential(viewer.userId, "sonarr"),
-          getFavoritedTmdbIds(
-            viewer.userId,
-            lockedType,
-            becauseYouWatched.items.map((i) => i.tmdbId),
-          ),
-        ])
-      : [null, null, new Set<number>()];
-
-  const arrConfigured =
-    lockedType === "movie" ? isArrFullyConfigured(radarrCredential) : isArrFullyConfigured(sonarrCredential);
+  const { becauseYouWatched, statusMap, favoritedIds, arrConfigured } = await loadBecauseYouWatched(
+    viewer,
+    lockedType,
+    { genreId, year },
+  );
 
   return (
     <div className="relative overflow-hidden">

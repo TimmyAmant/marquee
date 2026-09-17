@@ -517,3 +517,26 @@ export const appSettings = pgTable("app_settings", {
   ntfyUrlTag: bytea("ntfy_url_tag"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Bearer tokens for native clients (the macOS app) calling /api/v1 — the web
+// UI keeps using Auth.js JWT cookies. Only a SHA-256 hash of each token is
+// stored, never the token itself. `expires_at` slides forward on use (at most
+// once an hour, see lib/api/tokens.ts) so a device in regular use stays
+// signed in, while an abandoned one expires 90 days after it was last used.
+// Cascades with the user; changing or resetting a password deletes every
+// token that user holds (see revokeAllApiTokensForUser).
+export const apiTokens = pgTable(
+  "api_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [index("api_tokens_user_id_idx").on(table.userId)],
+);

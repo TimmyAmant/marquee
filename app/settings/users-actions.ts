@@ -1,60 +1,27 @@
 "use server";
 
-import { hash } from "argon2";
-import { asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { auth } from "@/auth";
-import { db } from "@/lib/db/client";
-import { users } from "@/lib/db/schema";
-import type { UserRole } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import {
+  createHouseholdMember,
+  deleteHouseholdMember,
+  listHouseholdMembersFor,
+  updateHouseholdMember,
+  type HouseholdMember as HouseholdMemberRow,
+} from "@/lib/users/household";
 
-export type HouseholdMember = {
-  id: string;
-  username: string;
-  displayName: string | null;
-  role: UserRole;
-  autoApproveMovies: boolean;
-  autoApproveTv: boolean;
-  createdAt: Date;
-};
+// A type alias, not `export type { … }` — a re-export from a "use server"
+// file is treated as a server action export and fails the build.
+export type HouseholdMember = HouseholdMemberRow;
 
-/** Admins see every account (they're the ones who can edit/remove others);
- * members only ever see their own row, so household members can't see who
- * else lives in the house. */
+/** Admins see every account; members only ever see their own row (see
+ * listHouseholdMembersFor, shared with GET /api/v1/users). */
 export async function listHouseholdMembers(): Promise<HouseholdMember[]> {
   const session = await auth();
   if (!session?.user) return [];
-
-  const rows = await db
-    .select({
-      id: users.id,
-      username: users.username,
-      displayName: users.displayName,
-      role: users.role,
-      autoApproveMovies: users.autoApproveMovies,
-      autoApproveTv: users.autoApproveTv,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(asc(users.createdAt));
-
-  if (session.user.role === "admin") return rows;
-  return rows.filter((r) => r.id === session.user.id);
+  return listHouseholdMembersFor({ userId: session.user.id, isAdmin: session.user.role === "admin" });
 }
-
-const usernameSchema = z
-  .string()
-  .min(3, "Username must be at least 3 characters")
-  .max(32, "Username must be at most 32 characters")
-  .regex(/^[a-zA-Z0-9_.-]+$/, "Username can only contain letters, numbers, _ . -");
-
-const createUserSchema = z.object({
-  username: usernameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  displayName: z.string().min(1).max(80).optional(),
-});
 
 export type CreateUserState = { error?: string; success?: boolean };
 
@@ -67,44 +34,22 @@ export async function createUserAction(
   const admin = await requireAdmin("Only the admin can add household members.");
   if (!admin.ok) return { error: admin.error };
 
-  const parsed = createUserSchema.safeParse({
+  const result = await createHouseholdMember({
     username: formData.get("username"),
     password: formData.get("password"),
     displayName: formData.get("displayName") || undefined,
   });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-
-  const { username, password, displayName } = parsed.data;
-
-  const [existing] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-  if (existing) {
-    return { error: "An account with that username already exists" };
-  }
-
-  const passwordHash = await hash(password);
-  await db.insert(users).values({ username, passwordHash, displayName });
+  if (!result.ok) return { error: result.error };
 
   revalidatePath("/settings");
   return { success: true };
 }
 
-const updateMemberSchema = z.object({
-  userId: z.string().min(1),
-  username: usernameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters").optional(),
-  displayName: z.string().max(80).optional(),
-});
-
 export type UpdateMemberState = { error?: string; success?: boolean };
 
 /** Edits a household member's username/name, and resets their password if a
- * new one is given — the only account-recovery path here, since there's no
- * email-based "forgot password" flow. Members may only edit their own
- * account; only the admin may edit anyone else's (including promoting
- * password/username resets for a member who's locked out). */
+ * new one is given. Members may only edit their own account; only the admin
+ * may edit anyone else's (see updateHouseholdMember). */
 export async function updateHouseholdMemberAction(
   _prevState: UpdateMemberState | undefined,
   formData: FormData,
@@ -112,48 +57,25 @@ export async function updateHouseholdMemberAction(
   const session = await auth();
   if (!session?.user) return { error: "Sign in required." };
 
-  const targetUserId = formData.get("userId");
-  if (session.user.role !== "admin" && targetUserId !== session.user.id) {
-    return { error: "You can only edit your own account." };
-  }
-
-  const parsed = updateMemberSchema.safeParse({
-    userId: formData.get("userId"),
-    username: formData.get("username"),
-    password: formData.get("password") || undefined,
-    displayName: formData.get("displayName") || undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-
-  const { userId, username, password, displayName } = parsed.data;
-
-  const [existing] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-  if (existing && existing.id !== userId) {
-    return { error: "An account with that username already exists" };
-  }
-
-  // Auto-approval is an admin-only setting on other members' accounts —
-  // never let a member grant it to themselves via this same "edit my own
-  // account" form.
   const isAdmin = session.user.role === "admin";
-
-  await db
-    .update(users)
-    .set({
-      username,
-      displayName,
-      ...(password ? { passwordHash: await hash(password) } : {}),
+  const result = await updateHouseholdMember(
+    { userId: session.user.id, isAdmin },
+    {
+      userId: formData.get("userId"),
+      username: formData.get("username"),
+      password: formData.get("password") || undefined,
+      displayName: formData.get("displayName") || undefined,
+      // The edit form always submits both checkboxes for the admin (an
+      // unchecked box is simply absent from the form data).
       ...(isAdmin
         ? {
             autoApproveMovies: formData.get("autoApproveMovies") === "on",
             autoApproveTv: formData.get("autoApproveTv") === "on",
           }
         : {}),
-    })
-    .where(eq(users.id, userId));
+    },
+  );
+  if (!result.ok) return { error: result.error };
 
   revalidatePath("/settings");
   return { success: true };
@@ -161,9 +83,7 @@ export async function updateHouseholdMemberAction(
 
 export type DeleteUserState = { error?: string; success?: boolean };
 
-/** Removes a household member's account entirely — admin-only. Their
- * favorites, requests, integration credentials, etc. cascade-delete with
- * them (see the users FK definitions in schema.ts). */
+/** Removes a household member's account entirely — admin-only. */
 export async function deleteUserAction(
   _prevState: DeleteUserState | undefined,
   formData: FormData,
@@ -171,15 +91,8 @@ export async function deleteUserAction(
   const admin = await requireAdmin("Only the admin can remove household members.");
   if (!admin.ok) return { error: admin.error };
 
-  const userId = String(formData.get("userId") || "");
-  if (!userId) return { error: "Invalid request." };
-  if (userId === admin.userId) return { error: "You can't remove your own account." };
-
-  const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
-  if (!target) return { error: "Account not found." };
-  if (target.role === "admin") return { error: "Can't remove the admin account." };
-
-  await db.delete(users).where(eq(users.id, userId));
+  const result = await deleteHouseholdMember(admin.userId, String(formData.get("userId") || ""));
+  if (!result.ok) return { error: result.error };
 
   revalidatePath("/settings");
   return { success: true };

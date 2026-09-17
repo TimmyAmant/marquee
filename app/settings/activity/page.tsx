@@ -2,14 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getRecentActivity } from "@/lib/activity/query";
-import type { ActivityEventType } from "@/lib/db/schema";
-
-const EVENT_VERBS: Record<ActivityEventType, string> = {
-  request_created: "requested",
-  request_approved: "approved",
-  request_rejected: "declined",
-  request_manually_approved: "manually approved",
-};
+import { ACTIVITY_EVENT_VERBS as EVENT_VERBS } from "@/lib/pages/settings";
 
 export default async function ActivitySettingsPage() {
   const session = await auth();

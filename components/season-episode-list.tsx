@@ -6,6 +6,7 @@ import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getSeasonEpisodesAction, type SeasonEpisodesResult } from "@/app/title/[type]/[id]/season-actions";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb/client";
 import type { SeasonCompleteness } from "@/lib/integrations/status";
+import { seasonsNewestFirst } from "@/lib/title-meta";
 
 export function SeasonAccordion({
   seasons,
@@ -19,9 +20,7 @@ export function SeasonAccordion({
   completeness?: SeasonCompleteness[];
 }) {
   // Newest season first, matching Sonarr's own series-detail page.
-  const real = [...seasons]
-    .filter((s) => s.episode_count > 0)
-    .sort((a, b) => b.season_number - a.season_number);
+  const real = seasonsNewestFirst(seasons);
 
   // Every season starts collapsed — nothing auto-opens, including the
   // newest one, so landing on a show's page never dumps a full episode

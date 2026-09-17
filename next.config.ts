@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Every /api/v1 route handler sets X-Marquee-API itself; this also covers
+  // the responses Next.js generates on its own for those paths (405 Method
+  // Not Allowed, automatic OPTIONS), so native clients can always tell a v1
+  // server's answer apart from something else on the same host.
+  async headers() {
+    return [
+      { source: "/api/v1", headers: [{ key: "X-Marquee-API", value: "1" }] },
+      { source: "/api/v1/:path*", headers: [{ key: "X-Marquee-API", value: "1" }] },
+    ];
+  },
 };
 
 export default nextConfig;

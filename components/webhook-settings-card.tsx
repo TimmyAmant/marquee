@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { regenerateWebhookSecretAction } from "@/app/settings/integrations/actions";
+import { arrWebhookUrls } from "@/lib/integrations/webhook-urls";
 
 function WebhookUrlRow({ label, url }: { label: string; url: string }) {
   const [copied, setCopied] = useState(false);
@@ -54,8 +55,7 @@ export function WebhookSettingsCard({
     });
   }
 
-  const radarrUrl = `${baseUrl}/api/webhooks/radarr/${userId}?secret=${secret}`;
-  const sonarrUrl = `${baseUrl}/api/webhooks/sonarr/${userId}?secret=${secret}`;
+  const { radarr: radarrUrl, sonarr: sonarrUrl } = arrWebhookUrls(baseUrl, userId, secret);
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">

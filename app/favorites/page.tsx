@@ -4,14 +4,7 @@ import { PosterGrid } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { StudioChip } from "@/components/studio-chip";
 import { FavoriteButton } from "@/components/favorite-button";
-import {
-  getFavoritePeople,
-  getFavoriteCompanies,
-  getFavoriteTitles,
-  getFavoriteCollectionIds,
-} from "@/lib/favorites/query";
-import { dedupeCompanies } from "@/lib/tmdb/company-groups";
-import { getCollection } from "@/lib/tmdb/client";
+import { firstCollectionPart, loadFavoritesPage } from "@/lib/pages/favorites";
 
 export default async function FavoritesPage() {
   const session = await auth();
@@ -19,36 +12,9 @@ export default async function FavoritesPage() {
 
   const userId = session.user.id;
 
-  const [favoritePeople, favoriteCompanies, favoriteMovies, favoriteShows, collectionIds] =
-    await Promise.all([
-      getFavoritePeople(userId),
-      getFavoriteCompanies(userId),
-      getFavoriteTitles(userId, "movie"),
-      getFavoriteTitles(userId, "tv"),
-      getFavoriteCollectionIds(userId),
-    ]);
-
-  // Collections have no local cache table (unlike titles/people/companies),
-  // so each favorited one is fetched live from TMDb by id — there are
-  // usually only a handful of these for any one person.
-  const collections = (
-    await Promise.all(collectionIds.map((id) => getCollection(id).catch(() => null)))
-  ).filter((c): c is NonNullable<typeof c> => c !== null);
-
-  // Two different, ungrouped members of the same conglomerate (e.g. Marvel
-  // Studios favorited from one movie, Pixar from another) should still show
-  // up as one merged "The Walt Disney Company" entry, matching how the
-  // Studio section on title pages already collapses these.
-  const dedupedCompanies = dedupeCompanies(
-    favoriteCompanies.map((c) => ({ id: c.tmdbId, name: c.name, logo_path: c.logoPath })),
-  );
-
-  const hasFavorites =
-    favoritePeople.length > 0 ||
-    dedupedCompanies.length > 0 ||
-    favoriteMovies.length > 0 ||
-    favoriteShows.length > 0 ||
-    collections.length > 0;
+  // Shared with GET /api/v1/favorites.
+  const { favoritePeople, dedupedCompanies, favoriteMovies, favoriteShows, collections, hasFavorites } =
+    await loadFavoritesPage(userId);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -103,9 +69,7 @@ export default async function FavoritesPage() {
           <h2 className="mb-4 font-display text-xl text-text-primary">Collections</h2>
           <PosterGrid>
             {collections.map((collection) => {
-              const firstPart = [...collection.parts].sort((a, b) =>
-                (a.release_date || "").localeCompare(b.release_date || ""),
-              )[0];
+              const firstPart = firstCollectionPart(collection.parts);
               return (
                 <PosterCard
                   key={collection.id}

@@ -18,7 +18,9 @@ export const config = {
     // file extension so a new static asset doesn't silently get auth-gated
     // too), and the webhook ingestion endpoint — that one is called by
     // Radarr/Sonarr directly (no session cookie) and authenticates itself
-    // via a per-user secret in the URL instead.
-    "/((?!api/auth|api/webhooks|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
+    // via a per-user secret in the URL instead. /api/v1 is the native-app
+    // JSON API: its routes authenticate bearer tokens themselves and must
+    // answer 401 JSON, never a redirect to the HTML login page.
+    "/((?!api/auth|api/webhooks|api/v1/|api/v1$|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
   ],
 };

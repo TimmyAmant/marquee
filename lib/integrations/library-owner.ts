@@ -37,6 +37,17 @@ export type ViewerContext =
   | { session: Session; userId: string; isAdmin: boolean; libraryOwnerId: string };
 
 /**
+ * The session-independent part of ViewerContext — what shared page loaders
+ * (lib/pages/*) actually need. A web page passes its ViewerContext straight
+ * through (it's structurally assignable); an /api/v1 route builds one from
+ * the bearer token's user instead. `userId` being non-null is the "signed in"
+ * check that pages express as `viewer.session`.
+ */
+export type ViewerIdentity =
+  | { userId: null; isAdmin: false; libraryOwnerId: null }
+  | { userId: string; isAdmin: boolean; libraryOwnerId: string };
+
+/**
  * Single entry point for the "who's asking, and whose library should they
  * see" question that nearly every page in this app needs to answer. Bundles
  * auth(), the isAdmin check, and getLibraryOwnerUserId() resolution into one

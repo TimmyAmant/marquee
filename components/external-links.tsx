@@ -1,36 +1,12 @@
 import { TrailerButton } from "@/components/trailer-button";
+import { buildExternalLinks, type ExternalLinkIds } from "@/lib/title-meta";
 
-export type ExternalLinksData = {
+export type ExternalLinksData = ExternalLinkIds & {
   trailerKey: string | null;
-  imdbId: string | null;
-  facebookId: string | null;
-  instagramId: string | null;
-  twitterId: string | null;
-  tvdbId?: number | null;
-  tvdbMediaType?: "series" | "movies";
 };
 
 export function ExternalLinks({ links }: { links: ExternalLinksData }) {
-  const items: { label: string; href: string }[] = [];
-
-  if (links.imdbId) {
-    items.push({ label: "IMDb", href: `https://www.imdb.com/title/${links.imdbId}` });
-  }
-  if (links.tvdbId) {
-    items.push({
-      label: "TheTVDB",
-      href: `https://www.thetvdb.com/dereferrer/${links.tvdbMediaType ?? "series"}/${links.tvdbId}`,
-    });
-  }
-  if (links.instagramId) {
-    items.push({ label: "Instagram", href: `https://www.instagram.com/${links.instagramId}` });
-  }
-  if (links.twitterId) {
-    items.push({ label: "X / Twitter", href: `https://x.com/${links.twitterId}` });
-  }
-  if (links.facebookId) {
-    items.push({ label: "Facebook", href: `https://www.facebook.com/${links.facebookId}` });
-  }
+  const items = buildExternalLinks(links);
 
   if (items.length === 0 && !links.trailerKey) return null;
 

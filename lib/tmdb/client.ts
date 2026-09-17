@@ -1,5 +1,8 @@
 import "server-only";
 import { getTmdbAccessToken } from "@/lib/integrations/app-settings";
+import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
+
+export { TmdbError, TmdbNotConfiguredError };
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
@@ -7,14 +10,13 @@ const TMDB_API_BASE = "https://api.themoviedb.org/3";
 // request should — matches the timeout Radarr/Sonarr/Plex/etc. already set.
 const REQUEST_TIMEOUT_MS = 8000;
 
-export class TmdbError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-  ) {
-    super(message);
-    this.name = "TmdbError";
-  }
+/** Whether any TMDb credential is available — the same check tmdbFetch makes
+ * before every request, exposed so callers that swallow per-request errors
+ * (the Discover shelves, search) can still tell "nothing configured" apart
+ * from "TMDb returned nothing". */
+export async function isTmdbConfigured(): Promise<boolean> {
+  const savedToken = await getTmdbAccessToken();
+  return Boolean(savedToken || process.env.TMDB_API_KEY);
 }
 
 async function tmdbFetch<T>(
@@ -24,9 +26,7 @@ async function tmdbFetch<T>(
   const savedToken = await getTmdbAccessToken();
   const apiKey = process.env.TMDB_API_KEY;
   if (!savedToken && !apiKey) {
-    throw new Error(
-      "Set a TMDb access token in Settings, or TMDB_ACCESS_TOKEN/TMDB_API_KEY in the environment",
-    );
+    throw new TmdbNotConfiguredError();
   }
 
   // The saved-in-Settings slot accepts either TMDb credential shape (see

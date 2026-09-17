@@ -1,18 +1,30 @@
 type Bucket = { count: number; resetAt: number };
 
-const buckets = new Map<string, Bucket>();
+declare global {
+  var __marqueeRateLimitBuckets: Map<string, Bucket> | undefined;
+  var __marqueeRateLimitSweeper: boolean | undefined;
+}
+
+// Stored on globalThis rather than as plain module state: Next.js can load a
+// module more than once in the same process (e.g. once for server actions,
+// once for route handlers), and the web sign-in and the /api/v1 login must
+// count failures against the very same buckets.
+const buckets: Map<string, Bucket> = (globalThis.__marqueeRateLimitBuckets ??= new Map());
 
 // Periodically drop expired buckets so this doesn't grow unbounded on a
 // long-running self-hosted process.
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, bucket] of buckets) {
-      if (now > bucket.resetAt) buckets.delete(key);
-    }
-  },
-  10 * 60 * 1000,
-).unref?.();
+if (!globalThis.__marqueeRateLimitSweeper) {
+  globalThis.__marqueeRateLimitSweeper = true;
+  setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, bucket] of buckets) {
+        if (now > bucket.resetAt) buckets.delete(key);
+      }
+    },
+    10 * 60 * 1000,
+  ).unref?.();
+}
 
 /**
  * Simple in-memory fixed-window rate limiter. Good enough for a self-hosted,

@@ -6,6 +6,7 @@ import { QuickAddButton } from "@/components/quick-add-button";
 import { AddAllButton } from "@/components/add-all-button";
 import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
+import { franchiseMissingItems } from "@/lib/title-meta";
 
 export type FranchiseItem = {
   tmdbId: number;
@@ -49,14 +50,7 @@ export function FranchiseRow({
 }) {
   if (items.length === 0) return null;
 
-  const missingItems =
-    isAdmin === true
-      ? items
-          .filter(
-            (item) => !statusMap.has(`${item.mediaType}:${item.tmdbId}`) && arrConfigured?.[item.mediaType],
-          )
-          .map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId }))
-      : [];
+  const missingItems = franchiseMissingItems(items, statusMap, arrConfigured, isAdmin);
 
   return (
     <section>

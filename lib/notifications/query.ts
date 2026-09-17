@@ -22,6 +22,23 @@ export async function getUnreadCount(userId: string): Promise<number> {
   return row?.count ?? 0;
 }
 
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  await db
+    .update(notifications)
+    .set({ read: true })
+    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+}
+
+/** Scoped to the owner, so one user can never mark another's notification. */
+export async function markNotificationRead(userId: string, notificationId: string): Promise<boolean> {
+  const updated = await db
+    .update(notifications)
+    .set({ read: true })
+    .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)))
+    .returning({ id: notifications.id });
+  return updated.length > 0;
+}
+
 export async function getRecentNotifications(userId: string, limit = 20) {
   return db
     .select()

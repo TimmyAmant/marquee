@@ -1,34 +1,7 @@
 import { redirect } from "next/navigation";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { RunJobButton } from "@/components/run-job-button";
-import type { JobId } from "./actions";
-
-const JOBS: { id: JobId; name: string; schedule: string; description: string }[] = [
-  {
-    id: "plex-sync",
-    name: "Plex Library Sync",
-    schedule: "Every hour",
-    description: "Pulls the latest library state from every connected Plex server.",
-  },
-  {
-    id: "jellyfin-sync",
-    name: "Jellyfin Library Sync",
-    schedule: "Every hour",
-    description: "Pulls the latest library state from every connected Jellyfin server.",
-  },
-  {
-    id: "arr-sync",
-    name: "Sonarr/Radarr Sync",
-    schedule: "Every hour",
-    description: "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance.",
-  },
-  {
-    id: "disk-space-snapshot",
-    name: "Disk Space Snapshot",
-    schedule: "Daily at 3:00 AM",
-    description: "Records free/used disk space for the storage forecast shown elsewhere in the app.",
-  },
-];
+import { JOBS } from "@/lib/jobs/registry";
 
 export default async function JobsSettingsPage() {
   const viewer = await getViewerContext();

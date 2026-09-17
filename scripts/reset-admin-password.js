@@ -24,9 +24,17 @@ async function main() {
 
   const client = postgres(databaseUrl, { max: 1 });
   const passwordHash = await hash(newPassword);
-  const result = await client`
-    update users set password_hash = ${passwordHash} where role = 'admin' returning username
-  `;
+  const result = await client.begin(async (sql) => {
+    const updated = await sql`
+      update users set password_hash = ${passwordHash} where role = 'admin' returning id, username
+    `;
+    // A reset password also signs every native app (API token) out of the
+    // account, same as changing it from Settings does.
+    if (updated.length > 0) {
+      await sql`delete from api_tokens where user_id in ${sql(updated.map((row) => row.id))}`;
+    }
+    return updated;
+  });
 
   if (result.length === 0) {
     console.error("No admin account found.");
@@ -34,6 +42,7 @@ async function main() {
   }
 
   console.log(`Password updated for admin account "${result[0].username}".`);
+  console.log("Any signed-in native apps for this account have been signed out.");
   await client.end();
 }
 

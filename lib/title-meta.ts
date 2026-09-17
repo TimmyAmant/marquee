@@ -43,6 +43,67 @@ export function extractMovieCredits(
   return entries.slice(0, 6);
 }
 
+export type ExternalLinkIds = {
+  imdbId: string | null;
+  facebookId: string | null;
+  instagramId: string | null;
+  twitterId: string | null;
+  tvdbId?: number | null;
+  tvdbMediaType?: "series" | "movies";
+};
+
+/** The title page's external link buttons (IMDb, TheTVDB, socials), in
+ * display order. The trailer button is separate. */
+export function buildExternalLinks(links: ExternalLinkIds): { label: string; href: string }[] {
+  const items: { label: string; href: string }[] = [];
+
+  if (links.imdbId) {
+    items.push({ label: "IMDb", href: `https://www.imdb.com/title/${links.imdbId}` });
+  }
+  if (links.tvdbId) {
+    items.push({
+      label: "TheTVDB",
+      href: `https://www.thetvdb.com/dereferrer/${links.tvdbMediaType ?? "series"}/${links.tvdbId}`,
+    });
+  }
+  if (links.instagramId) {
+    items.push({ label: "Instagram", href: `https://www.instagram.com/${links.instagramId}` });
+  }
+  if (links.twitterId) {
+    items.push({ label: "X / Twitter", href: `https://x.com/${links.twitterId}` });
+  }
+  if (links.facebookId) {
+    items.push({ label: "Facebook", href: `https://www.facebook.com/${links.facebookId}` });
+  }
+
+  return items;
+}
+
+/** The title page's Cast row: billing order, top 20. */
+export function topBilledCast<T extends { order: number }>(cast: T[]): T[] {
+  return [...cast].sort((a, b) => a.order - b.order).slice(0, 20);
+}
+
+/** The Episodes accordion's seasons: only ones with episodes, newest season
+ * first (matching Sonarr's own series-detail page). */
+export function seasonsNewestFirst<T extends { season_number: number; episode_count: number }>(seasons: T[]): T[] {
+  return [...seasons].filter((s) => s.episode_count > 0).sort((a, b) => b.season_number - a.season_number);
+}
+
+/** The franchise row's "Add all N missing" set: titles not in the library at
+ * all whose Sonarr/Radarr is fully configured — admin-only, empty otherwise. */
+export function franchiseMissingItems<T extends { mediaType: "movie" | "tv"; tmdbId: number }>(
+  items: T[],
+  statusKeys: { has(key: string): boolean },
+  arrConfigured: { movie: boolean; tv: boolean } | undefined,
+  isAdmin: boolean | undefined,
+): { mediaType: "movie" | "tv"; tmdbId: number }[] {
+  if (isAdmin !== true) return [];
+  return items
+    .filter((item) => !statusKeys.has(`${item.mediaType}:${item.tmdbId}`) && arrConfigured?.[item.mediaType])
+    .map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId }));
+}
+
 /** Creator + Executive Producer credits for a TV show — same dedup/cap
  * approach as extractMovieCredits, see there for why. */
 export function extractTvCredits(

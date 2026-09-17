@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.22.0",
+    date: "2026-09-17",
+    changes: [
+      "Added a versioned JSON API at /api/v1 so native apps (starting with Marquee for Mac) can use this server as their only backend — everything the website shows and does is reachable through it, including admin settings. See docs/api-v1.md.",
+      "Native apps sign in with a per-device token instead of a browser cookie. Tokens expire after 90 days without use, signing out revokes that device's token, and changing or resetting an account's password (in Settings or with the reset-admin-password script) signs every native app out of that account.",
+      "Sign-in attempts from native apps count against the same rate limits as the website's sign-in page.",
+    ],
+  },
+  {
     version: "0.21.10",
     date: "2026-07-27",
     changes: [

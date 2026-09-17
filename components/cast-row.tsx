@@ -2,6 +2,7 @@ import { PosterCard } from "@/components/poster-card";
 import { PosterRow, PosterRowItem } from "@/components/poster-row";
 import { FavoriteButton } from "@/components/favorite-button";
 import type { TmdbCastMember } from "@/lib/tmdb/client";
+import { topBilledCast } from "@/lib/title-meta";
 
 export function CastRow({
   cast,
@@ -14,7 +15,7 @@ export function CastRow({
 }) {
   if (cast.length === 0) return null;
 
-  const topBilled = [...cast].sort((a, b) => a.order - b.order).slice(0, 20);
+  const topBilled = topBilledCast(cast);
 
   return (
     <section>
