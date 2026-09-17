@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.24.2",
+    date: "2026-09-17",
+    changes: [
+      "The Docker image is now published to GitHub Packages as well as Docker Hub — pull whichever you prefer.",
+    ],
+  },
+  {
     version: "0.24.1",
     date: "2026-09-17",
     changes: [

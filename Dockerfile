@@ -8,6 +8,12 @@
 # one-process-per-container Docker convention.
 FROM node:22-bookworm-slim AS base
 
+# Ties the published image back to this repo, which is what makes it show up
+# under the repository's Packages on GitHub.
+LABEL org.opencontainers.image.source="https://github.com/TimmyAmant/marquee" \
+      org.opencontainers.image.description="Self-hosted media dashboard for Plex/Jellyfin/Sonarr/Radarr, with a native macOS client." \
+      org.opencontainers.image.licenses="MIT"
+
 # Pinned to a specific major version (rather than the bare "postgresql"
 # package, whose version tracks whatever Debian bookworm currently
 # defaults to) so a future rebuild never silently ends up with a server

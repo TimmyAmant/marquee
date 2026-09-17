@@ -223,7 +223,10 @@ docker compose up -d
 ```
 
 This pulls the prebuilt image from
-[Docker Hub](https://hub.docker.com/r/timmyamant/marquee) (amd64 and arm64)
+[Docker Hub](https://hub.docker.com/r/timmyamant/marquee) (amd64 and arm64;
+the same image is published to [GitHub
+Packages](https://github.com/TimmyAmant/marquee/pkgs/container/marquee) as
+`ghcr.io/timmyamant/marquee`)
 instead of building locally, so it's up in seconds. If you've changed the
 source and want to run your own build instead, use
 `docker compose up -d --build`.
