@@ -110,9 +110,13 @@ export function TitleHero({
   const poster = tmdbImageUrl(posterPath, "w500");
 
   return (
-    <div className="relative">
+    // -mt-[52px] lifts the page under the floating top bar: in the mockup
+    // .backdrop sits at top:0 of the content area with the toolbar over it,
+    // so the poster's 170 and the title/rail's 246 are all from the window
+    // top (Docs/DESIGN_TARGET.md).
+    <div className="relative -mt-[52px]">
       {backdrop && (
-        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[280px] overflow-hidden sm:h-[380px]">
+        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px]">
           <Image src={backdrop} alt="" fill priority className="object-cover" />
           {/* Two gradients, same as the mockup's .backdrop .fade: down to the
               page background at the bottom, plus a left-hand scrim so the
@@ -131,7 +135,7 @@ export function TitleHero({
           max-width container — that's what keeps this page and the Mac app
           on the same coordinates (Docs/DESIGN_TARGET.md). */}
       <div className="px-6 xl:pl-12 xl:pr-10">
-        <div className="flex flex-col gap-8 pt-[110px] sm:pt-[150px] xl:flex-row xl:items-start xl:pt-[170px]">
+        <div className="flex flex-col gap-8 pt-[150px] sm:pt-[170px] xl:flex-row xl:items-start">
           <div className="min-w-0 flex-1 xl:max-w-[802px]">
             <div className="flex flex-wrap gap-6 sm:gap-8 min-[1440px]:flex-nowrap">
               {/* Nothing but the poster and the title sits on the artwork. */}

@@ -14,7 +14,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "0.23.0",
     date: "2026-09-17",
     changes: [
-      "Rebuilt the title page and every shelf page to the shared design mockup Marquee for Mac is built from, so the website and the Mac app now lay out identically: a 230px sidebar and 52px top bar, left-aligned content with fixed gutters (48px on a title page, 28px on shelf pages) instead of a centered max-width column, and shelves that bleed off the right edge.",
+      "Rebuilt the title page and every shelf page to the shared design mockup Marquee for Mac is built from, so the website and the Mac app now lay out identically: a 230px sidebar, left-aligned content with fixed gutters (48px on a title page, 28px on shelf pages) instead of a centered max-width column, and shelves that bleed off the right edge.",
+      "The top bar no longer sits on a solid strip of its own — it floats over the page as a 52px blurred scrim that fades out, so a title page's backdrop now fills the window from the very top and runs up behind the search field.",
       "Title pages now use the mockup's three-column geometry — a 224x336 poster, a 546px main column starting level with the title, and a 288px right rail — with the cast carousel beside the rail instead of below it.",
       "The facts card now shows a serif TMDb score with a \"TMDb user score\" label, even 38px fact rows and 36px streaming-service tiles; the file details card became a two-column grid (Size/Runtime, Added/Resolution, Quality profile/Video, Dynamic range/Audio) with a one-line location field and an inline Copy button.",
       "The library badge, Search now, Stop monitoring and Fix ID now sit together on one row of 32px capsules under the title, keywords stay on a single row that fades out rather than wrapping, and credits lead with the person's name over their role.",

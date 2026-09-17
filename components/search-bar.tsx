@@ -143,7 +143,7 @@ export function SearchBar({
           autoComplete="off"
           className={
             isCompact
-              ? "h-8 w-full rounded-full border border-border bg-bg-2/80 px-3.5 text-[13px] text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] placeholder:text-text-muted outline-none transition-colors focus:border-accent"
+              ? "h-8 w-full rounded-full border border-border bg-bg-2/70 px-3.5 text-[13px] text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] backdrop-blur-[18px] placeholder:text-text-muted outline-none transition-colors focus:border-accent"
               : "w-full rounded-xl border border-border bg-bg-1 px-5 py-4 text-base text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-accent"
           }
         />

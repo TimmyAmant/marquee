@@ -18,12 +18,20 @@ export async function SiteHeader() {
   const isAdmin = session?.user?.role === "admin";
   const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
 
-  // No bottom rule: the mockup's top bar is exactly 52px of blurred
-  // background with nothing under it, and every content coordinate in
-  // Docs/DESIGN_TARGET.md is measured from 52px down.
   return (
-    <header className="sticky top-0 z-30 bg-bg-0/85 backdrop-blur-md">
-      <div className="flex h-[52px] items-center gap-4 px-4 sm:pl-[22px] sm:pr-4">
+    <header className="sticky top-0 z-30">
+      {/* The mockup's .tb-blur: taller than the 52px bar and masked away by
+          62% of its height, so there's no hard edge where it ends — a title
+          page's backdrop keeps running underneath it. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70px] backdrop-blur-[16px] backdrop-saturate-[1.15] [mask-image:linear-gradient(#000_62%,transparent)]"
+        style={{
+          background:
+            "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 78%, transparent), color-mix(in srgb, var(--marquee-bg-0) 50%, transparent) 72%, transparent)",
+        }}
+      />
+      <div className="relative flex h-[52px] items-center gap-4 px-4 sm:pl-[22px] sm:pr-4">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-text-primary md:hidden"
