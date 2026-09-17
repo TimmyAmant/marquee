@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.24.3",
+    date: "2026-09-17",
+    changes: [
+      "Documented how to reach Marquee from outside your home network: a Cloudflare Tunnel on your own domain, port forwarding, and putting Authelia or Cloudflare Access in front — including what to exempt so the Mac app and *arr webhooks keep working.",
+    ],
+  },
+  {
     version: "0.24.2",
     date: "2026-09-17",
     changes: [
