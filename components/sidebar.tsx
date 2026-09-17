@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { RequestsBadge } from "@/components/requests-badge";
 import { SidebarLinkShell } from "@/components/sidebar-link-shell";
@@ -80,6 +81,9 @@ export async function Sidebar() {
   const session = await auth();
   const isAdmin = session?.user?.role === "admin";
   const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
+  // Under the name: which Marquee server this is, matching the Mac app's
+  // sidebar. The role moved to Settings › Account, where it's editable.
+  const serverLabel = (await headers()).get("host");
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[230px] flex-col border-r border-border bg-bg-1/85 backdrop-blur-md md:flex">
@@ -132,9 +136,11 @@ export async function Sidebar() {
             <span className="block truncate text-[12.5px] font-medium leading-[15px] text-text-secondary">
               {session.user.name || session.user.username}
             </span>
-            <span className="block text-[11px] leading-[14px] text-text-muted">
-              {isAdmin ? "Admin" : "Member"}
-            </span>
+            {serverLabel && (
+              <span className="block truncate text-[11px] leading-[14px] text-text-muted">
+                {serverLabel}
+              </span>
+            )}
           </Link>
         ) : (
           <Link

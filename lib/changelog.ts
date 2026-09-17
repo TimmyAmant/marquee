@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.23.1",
+    date: "2026-09-17",
+    changes: [
+      "The sidebar now shows which Marquee server you're on under your name, matching the Mac app; your role moved to Settings › Account.",
+    ],
+  },
+  {
     version: "0.23.0",
     date: "2026-09-17",
     changes: [
