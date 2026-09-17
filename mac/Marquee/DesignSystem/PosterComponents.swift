@@ -63,8 +63,32 @@ struct PosterCard: View {
     var quickAction: PosterQuickAction = .none
     var imageSize: API.ImageRef.Size = .w342
     let action: () -> Void
+    /// Set when the card came from a `TitleCard`, so a status this Mac has
+    /// already changed can be folded in without refetching the list.
+    private var titleID: API.TitleID?
 
+    @Environment(AppModel.self) private var model
     @State private var hovering = false
+
+    /// The status to draw: the server's, unless this Mac has changed it since.
+    private var effectiveStatus: API.LibraryStatus? {
+        if let titleID, let changed = model.titleState[titleID]?.status { return changed }
+        return status
+    }
+
+    /// The hover action to offer, minus anything already done from this Mac.
+    private var effectiveQuickAction: PosterQuickAction {
+        guard let titleID, let change = model.titleState[titleID] else { return quickAction }
+        switch quickAction {
+        case let .add(id):
+            if change.canQuickAdd == false { return change.requested == true ? .request(id, alreadyRequested: true) : .none }
+            return quickAction
+        case let .request(id, already):
+            return .request(id, alreadyRequested: already || change.requested == true)
+        case .none:
+            return .none
+        }
+    }
 
     /// The common case: a `TitleCard` straight from the API.
     init(
@@ -87,6 +111,7 @@ struct PosterCard: View {
             quickAction: card.quickAction,
             action: action
         )
+        titleID = card.id
     }
 
     init(
@@ -165,7 +190,7 @@ struct PosterCard: View {
             // quick action. Only the button takes clicks; the rest falls
             // through to the card.
             .overlay(alignment: .bottom) {
-                if hovering, overview != nil || quickAction != .none {
+                if hovering, overview != nil || effectiveQuickAction != .none {
                     VStack(alignment: .leading, spacing: 10) {
                         if let overview {
                             Text(overview)
@@ -221,14 +246,14 @@ struct PosterCard: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                if let status {
+                if let status = effectiveStatus {
                     StatusBadge(status: status, compact: true)
                         .padding(6)
                         .allowsHitTesting(false)
                 }
             }
             .overlay(alignment: .bottom) {
-                if let status {
+                if let status = effectiveStatus {
                     Theme.statusBar(status).frame(height: 3)
                 }
             }
@@ -248,7 +273,7 @@ struct PosterCard: View {
 
     @ViewBuilder
     private var quickActionView: some View {
-        switch quickAction {
+        switch effectiveQuickAction {
         case .none:
             EmptyView()
         case let .add(id):
@@ -524,6 +549,10 @@ struct StudioChip: View {
     let company: API.CompanyCard
     let action: () -> Void
 
+    /// Every chip is the same height whether or not the studio has a logo —
+    /// the logo tile sets it, so a logo-less chip would otherwise be shorter.
+    private static let contentHeight: CGFloat = 32
+
     var body: some View {
         HStack(spacing: 10) {
             Button(action: action) {
@@ -540,6 +569,7 @@ struct StudioChip: View {
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                 }
+                .frame(height: Self.contentHeight)
             }
             .buttonStyle(.plain)
             if let favorited = company.favorited {
@@ -548,7 +578,7 @@ struct StudioChip: View {
         }
         .padding(.leading, 8)
         .padding(.trailing, 12)
-        .padding(.vertical, 7)
+        .padding(.vertical, 8)
         .background(Theme.bg1, in: Capsule())
         .overlay(Capsule().strokeBorder(Theme.border))
     }

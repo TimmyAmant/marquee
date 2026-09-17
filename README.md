@@ -21,6 +21,16 @@ data, your server.
   <img src="docs/screenshots/web-title.jpg" alt="A title page, showing library status and file details" width="100%">
 </p>
 
+<details>
+<summary><b>Light theme</b> — the same screens, for anyone who doesn't live in the dark</summary>
+
+| Website | Mac app |
+|---|---|
+| ![The website in its light theme](docs/screenshots/web-light-title.jpg) | ![The Mac app in its light theme](docs/screenshots/mac-light-title.jpg) |
+| ![Discover in the website's light theme](docs/screenshots/web-light-discover.jpg) | ![Discover in the Mac app's light theme](docs/screenshots/mac-light-discover.jpg) |
+
+</details>
+
 **Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
 
 ## Features

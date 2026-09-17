@@ -91,6 +91,9 @@ final class AppModel {
     let events: ServerEvents
     /// Badge polling, the Dock badge and notification banners while signed in.
     let live: LiveUpdates
+    /// What this Mac has changed about titles since the lists showing them
+    /// were fetched, so cards don't offer an add that already happened.
+    let titleState = TitleStateStore()
 
     /// The typed server API with the current token. Mutations made through it
     /// bump `events`.
@@ -306,6 +309,7 @@ final class AppModel {
 
     private func clearSignedInState() {
         live.stop()
+        titleState.clear()
         viewer = nil
         path = []
         searchText = ""
@@ -420,6 +424,8 @@ final class AppModel {
     func reload() {
         refreshViewer()
         refreshCounts()
+        // Everything is about to be refetched, so the server's own answer wins.
+        titleState.clear()
         reloadToken &+= 1
     }
 }

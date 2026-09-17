@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.25.0",
+    date: "2026-09-17",
+    changes: [
+      "Studio chips are all the same height now, whether or not the studio has a logo, and they're capsules like the rest of the app.",
+      "Marquee for Mac: adding a title from a grid or shelf no longer leaves the card offering \"Add to Radarr\" — the card updates in place, without reloading the page under you.",
+      "Added light-theme screenshots to the README.",
+    ],
+  },
+  {
     version: "0.24.3",
     date: "2026-09-17",
     changes: [

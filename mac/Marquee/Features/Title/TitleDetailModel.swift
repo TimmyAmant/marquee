@@ -32,6 +32,9 @@ final class TitleDetailModel {
 
     @ObservationIgnored private var api: MarqueeAPI?
 
+    /// Set by the view, so actions can record what changed for other screens.
+    @ObservationIgnored var titleState: TitleStateStore?
+
     init(id: API.TitleID) {
         self.id = id
     }
@@ -61,12 +64,22 @@ final class TitleDetailModel {
     /// The cheap refresh after an action, or after something else on the
     /// server moved the library/requests counters: `library` + `viewer` only.
     /// A no-op until the page has loaded.
-    func refreshStatus(_ api: MarqueeAPI? = nil) async {
+    func refreshStatus(_ api: MarqueeAPI? = nil, recordingIn titleState: TitleStateStore? = nil) async {
         if let api { self.api = api }
+        let titleState = titleState ?? self.titleState
         guard let api = self.api, let current = detail else { return }
         guard let status = try? await api.titles.status(id.mediaType, id: id.tmdbId) else { return }
         guard !Task.isCancelled, detail?.id == status.id else { return }
         detail = current.updating(status)
+        // Lists showing this title were fetched before the action; remember the
+        // new status so their cards draw it when you go back.
+        titleState?.statusChanged(id, to: status.library.status)
+        if !status.viewer.canAdd {
+            titleState?.added(id, status: status.library.status)
+        }
+        if status.viewer.alreadyRequested {
+            titleState?.requested(id)
+        }
     }
 
     // MARK: Seasons

@@ -23,8 +23,11 @@ export function StudioChip({
   const logo = tmdbImageUrl(logoPath, "w185");
 
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-bg-1 pr-2 transition-colors hover:border-border-strong">
-      <Link href={href ?? `/company/${tmdbId}`} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3">
+    // Fixed height (and a capsule, matching the Mac app): the logo tile would
+    // otherwise make chips with artwork taller than logo-less ones, so a row
+    // of studios came out ragged.
+    <div className="flex h-12 items-center gap-2 rounded-full border border-border bg-bg-1 pr-2 transition-colors hover:border-border-strong">
+      <Link href={href ?? `/company/${tmdbId}`} className="flex h-full min-w-0 flex-1 items-center gap-3 px-4">
         {logo && (
           // A plain white backdrop (not a CSS invert filter) so this renders
           // correctly regardless of whether TMDb's asset is a transparent dark

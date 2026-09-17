@@ -104,6 +104,11 @@ struct QuickAddButton: View {
             do {
                 try await api.titles.add(id.mediaType, id: id.tmdbId)
                 done = true
+                // Remember it, so this card (and the same title in any other
+                // list) stops offering an add the next time it's drawn — the
+                // lists themselves deliberately don't refetch on your own action.
+                let status = try? await api.titles.status(id.mediaType, id: id.tmdbId)
+                model.titleState.added(id, status: status?.library.status)
             } catch {
                 self.error = error.localizedDescription
             }
@@ -160,6 +165,7 @@ struct RequestButton: View {
             do {
                 try await api.requests.create(id.mediaType, id: id.tmdbId)
                 requested = true
+                model.titleState.requested(id)
             } catch {
                 self.error = error.localizedDescription
             }

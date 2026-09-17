@@ -20,14 +20,15 @@ extension API {
         let overview: String?
         /// TMDb vote average, 0–10. Movies/Series grid only.
         let rating: Double?
-        /// nil = not in the library at all (no badge).
-        let status: LibraryStatus?
+        /// nil = not in the library at all (no badge). `var` so a card can be
+        /// redrawn with what this Mac just changed (see `TitleStateStore`).
+        var status: LibraryStatus?
         /// nil where the website shows no favorite star on that list.
         let favorited: Bool?
         /// You already have a pending or approved request (franchise/similar rows); nil elsewhere.
-        let requested: Bool?
+        var requested: Bool?
         /// Show "+ Add" (`POST /titles/{type}/{id}/add`).
-        let canQuickAdd: Bool
+        var canQuickAdd: Bool
         /// Show "Request", or "Requested" when `requested` is true.
         let canRequest: Bool
 

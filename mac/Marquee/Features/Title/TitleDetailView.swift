@@ -36,13 +36,14 @@ struct TitleDetailView: View {
         // `library` + `viewer` in place through `titles.status`, so the
         // ScrollView is never rebuilt and the scroll offset never moves.
         .task(id: model.reloadToken) {
+            screen.titleState = model.titleState
             await screen.load(model.api)
         }
         // A change that came from the server (a download finished, someone
         // requested this from the website) still refreshes the status block —
         // `remoteRevision` deliberately ignores this app's own mutations.
         .task(id: model.events.remoteRevision(of: [.library, .requests])) {
-            await screen.refreshStatus(model.api)
+            await screen.refreshStatus(model.api, recordingIn: model.titleState)
         }
         .sheet(isPresented: $showingTrailer) {
             if let key = screen.detail?.links.trailerYoutubeKey {
