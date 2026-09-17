@@ -280,6 +280,13 @@ private struct NotificationsPopover: View {
     @State private var loaded = false
     @State private var error: String?
 
+    /// A ScrollView has no height of its own, so the list has to be told one:
+    /// tall enough for what's there, capped so the popover can't outgrow a
+    /// laptop screen. Roughly one row per 54pt, plus the list's own padding.
+    private var listHeight: CGFloat {
+        min(max(CGFloat(items.count) * 54 + 12, 160), 560)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
@@ -318,10 +325,10 @@ private struct NotificationsPopover: View {
                     }
                     .padding(6)
                 }
-                .frame(maxHeight: 420)
+                .frame(height: listHeight)
             }
         }
-        .frame(width: 340)
+        .frame(width: 420)
         .task(id: model.events.remoteRevision(of: .notifications)) {
             await load()
         }
