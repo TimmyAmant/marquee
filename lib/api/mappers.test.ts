@@ -92,11 +92,46 @@ describe("fileDetails", () => {
       dynamicRange: null,
       audioCodec: null,
       audioChannels: null,
+      container: null,
+      bitrateKbps: null,
       dateAdded: "2026-01-02T03:04:05.000Z",
       releaseGroup: null,
       edition: null,
     });
     expect(fileDetails(null)).toBeNull();
+  });
+
+  it("carries a media server's own detail through, tier included", () => {
+    expect(
+      fileDetails({
+        path: "/movies/Sinners (2025)/Sinners.mkv",
+        sizeBytes: 64 * 1024,
+        resolution: "4K",
+        videoCodec: "HEVC",
+        dynamicRange: "DV",
+        audioCodec: "TrueHD Atmos",
+        audioChannels: 8,
+        container: "MKV",
+        bitrateKbps: 58421,
+      }),
+    ).toMatchObject({
+      quality: null,
+      // No *arr quality profile to derive a tier from — the media server's
+      // resolution stands in for it.
+      resolutionTier: "4K",
+      resolution: "4K",
+      videoCodec: "HEVC",
+      dynamicRange: "DV",
+      audioCodec: "TrueHD Atmos",
+      audioChannels: 8,
+      container: "MKV",
+      bitrateKbps: 58421,
+    });
+  });
+
+  it("derives a tier from a raw WxH resolution, and leaves an off-tier one alone", () => {
+    expect(fileDetails({ path: null, sizeBytes: 1, resolution: "3840x1600" })?.resolutionTier).toBe("4K");
+    expect(fileDetails({ path: null, sizeBytes: 1, resolution: "720x306" })?.resolutionTier).toBeNull();
   });
 });
 

@@ -473,6 +473,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
       "dynamicRange": "HDR10",
       "audioCodec": "TrueHD Atmos",
       "audioChannels": 7.1,
+      "container": "MKV",
+      "bitrateKbps": 58421,
       "dateAdded": "2025-11-02T09:14:00.000Z",
       "releaseGroup": "FraMeSToR",
       "edition": null
@@ -526,12 +528,39 @@ Field notes:
   `sonarr`, `radarr`, or null). `configured`: the library owner's
   Radarr (movies) / Sonarr (TV) has a root folder and quality profile.
 - `library.file` ("File details" card) is non-null only for `owned` titles.
-  Movie-only fields (`videoCodec`, `dynamicRange`, `audioCodec`,
-  `audioChannels`, `edition`, `releaseGroup`) are null for TV. Website rows:
-  Location (with Copy), Size, Runtime (`facts.runtimeLabel`), Added,
-  Resolution (`resolutionTier ?? resolution`), Quality profile, and for
-  movies Video, Dynamic range, Audio (`"<codec> <channels>ch"`), Edition,
-  Release group.
+  Website rows, in order, each skipped when its value is null: Location (with
+  Copy), Size, Runtime (`facts.runtimeLabel`), Added, Resolution
+  (`resolutionTier ?? resolution`), Quality profile, Video (`videoCodec`),
+  Dynamic range, Audio (`"<codec> <channels>ch"`), Container, Bitrate
+  (rendered as `"58.4 Mbps"`, or `"<n> kbps"` under 1000), Edition, Release
+  group.
+- Which fields `library.file` has depends on what owns the title:
+
+  | Field | Radarr | Sonarr | Plex | Jellyfin |
+  | --- | --- | --- | --- | --- |
+  | `path`, `sizeBytes`, `dateAdded` | yes | yes (no `dateAdded`) | yes | movies only for `sizeBytes` |
+  | `quality`, `releaseGroup`, `edition` | yes | `quality` only | from the *arr, if it also tracks the title | same |
+  | `resolution`, `videoCodec`, `audioCodec`, `audioChannels` | yes | no | movies, and TV aggregated across the show's episodes | movies only |
+  | `dynamicRange` | yes | no | movies | movies only |
+  | `container`, `bitrateKbps` | no | no | movies + TV | movies only |
+
+  Where both an *arr and a media server know a field, the *arr's value wins —
+  it's authoritative about the release it fetched. `container` and
+  `bitrateKbps` are the two fields no *arr reports at all.
+- Spelling of the media-detail fields, so a client can match on them:
+  `resolutionTier` is `"4K" | "1080p" | "720p" | null`; `resolution` is that
+  same tier from a media server (`"4K"`, `"1080p"`, `"720p"`, `"576p"`,
+  `"480p"`, `"SD"`, `"8K"`), a raw `"1920x816"` when the dimensions don't land
+  on a tier, or Radarr's own raw `"3840x1600"`; `videoCodec` is Radarr's
+  (`"x265"`, `"h264"`) or a media server's normalized `"HEVC" | "H.264" |
+  "AV1" | "VC-1" | "MPEG-2" | "VP9"`; `dynamicRange` is `"DV" | "HDR10" |
+  "HDR10Plus" | "HLG" | "PQ" | "SDR"` (`"SDR"` only ever from a media server —
+  Radarr leaves it empty — and `null` means "not known", not "SDR");
+  `audioCodec` is `"TrueHD" | "EAC3" | "AC3" | "DTS" | "DTS-HD MA" | "AAC" |
+  "FLAC" | "Opus" | "PCM" | …`, with `" Atmos"` appended when the track
+  carries it (`"TrueHD Atmos"`); `container` is uppercase (`"MKV"`, `"MP4"`,
+  `"TS"`, `"AVI"`); `bitrateKbps` is an integer, the whole file's bitrate in
+  kbps.
 - `viewer` decides the action area under the title:
   - `canAdd` → "Add to Radarr/Sonarr" button (`POST …/add`).
   - `needsArrSetup` → "Connect Radarr/Sonarr to add this title" link (admin → Integrations).

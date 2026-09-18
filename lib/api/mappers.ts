@@ -6,7 +6,7 @@ import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integr
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
-import { resolutionTier } from "@/lib/quality";
+import { resolutionTierOf } from "@/lib/quality";
 import { myRequestBadge, reviewedRequestLabel } from "@/lib/requests/labels";
 
 export function iso(date: Date | string | null | undefined): string | null {
@@ -59,12 +59,14 @@ export function fileDetails(file: FileInfo | null): Dto.FileDetails | null {
     path: file.path ?? null,
     sizeBytes: file.sizeBytes,
     quality: file.quality ?? null,
-    resolutionTier: resolutionTier(file.quality),
+    resolutionTier: resolutionTierOf(file.quality, file.resolution),
     resolution: file.resolution ?? null,
     videoCodec: file.videoCodec ?? null,
     dynamicRange: file.dynamicRange ?? null,
     audioCodec: file.audioCodec ?? null,
     audioChannels: file.audioChannels ?? null,
+    container: file.container ?? null,
+    bitrateKbps: file.bitrateKbps ?? null,
     dateAdded: iso(file.dateAdded),
     releaseGroup: file.releaseGroup ?? null,
     edition: file.edition ?? null,

@@ -140,13 +140,22 @@ export type FileDetails = {
   path: string | null;
   sizeBytes: number;
   quality: string | null;
-  /** "4K" | "1080p" | "720p" derived from `quality`, as the website shows it. */
+  /** "4K" | "1080p" | "720p" derived from `quality`, falling back to
+   * `resolution` for a title owned via Plex/Jellyfin (no quality profile),
+   * as the website shows it. */
   resolutionTier: "4K" | "1080p" | "720p" | null;
+  /** Radarr's raw "3840x1600", or a media server's tier ("4K", "1080p") — a
+   * raw "WxH" only when the file's dimensions don't land on a tier. */
   resolution: string | null;
   videoCodec: string | null;
   dynamicRange: string | null;
   audioCodec: string | null;
   audioChannels: number | null;
+  /** Uppercase container name ("MKV", "MP4"). Plex/Jellyfin only — neither
+   * *arr reports it. */
+  container: string | null;
+  /** Overall bitrate of the file in kbps. Plex/Jellyfin only. */
+  bitrateKbps: number | null;
   dateAdded: string | null;
   releaseGroup: string | null;
   edition: string | null;

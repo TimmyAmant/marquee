@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { CapsLabel } from "@/components/caps-label";
 import { formatBytes } from "@/lib/format";
-import { resolutionTier } from "@/lib/quality";
+import { resolutionTierOf } from "@/lib/quality";
 import type { FileInfo } from "@/lib/integrations/status";
-import type { MediaType } from "@/lib/db/schema";
+
+/** Media servers report a whole-file bitrate in the tens of thousands of
+ * kbps — Mbps to one decimal is the readable form, with kbps kept for the
+ * rare low-bitrate file where "0.4 Mbps" would lose the detail. */
+function formatBitrate(kbps: number | null | undefined): string {
+  if (!kbps || kbps <= 0) return "";
+  if (kbps < 1000) return `${kbps} kbps`;
+  return `${(kbps / 1000).toFixed(1)} Mbps`;
+}
 
 /** One cell of the card's two-column grid: 11px label over a 13px value. */
 function DetailCell({ label, value }: { label: string; value: string }) {
@@ -22,14 +30,16 @@ function DetailCell({ label, value }: { label: string; value: string }) {
 /** Lives in TitleHero's right-hand rail, stacked 16px below the facts card.
  * Per Docs/DESIGN_TARGET.md: a LOCATION field with an inline Copy button,
  * then a 2-column grid of Size/Runtime, Added/Resolution, Quality
- * profile/Video, Dynamic range/Audio — every pair the server didn't give us
- * is simply left out and the rest close up. */
+ * profile/Video, Dynamic range/Audio, then Container/Bitrate and
+ * Edition/Release group — every pair the server didn't give us is simply
+ * left out and the rest close up. The later rows are mostly how a Plex- or
+ * Jellyfin-owned title fills the same grid a Radarr-tracked one does:
+ * neither media server has a quality profile, a release group or an edition,
+ * but both know the container and the bitrate, which neither *arr reports. */
 export function FileDetailsSection({
-  mediaType,
   file,
   runtimeLabel,
 }: {
-  mediaType: MediaType;
   file: FileInfo | null;
   /** Pre-formatted by the caller since movies ("1h 47m") and TV ("~42m/episode",
    * averaged from TMDb's per-episode runtimes) read differently. */
@@ -46,27 +56,29 @@ export function FileDetailsSection({
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const tier = resolutionTier(file.quality);
+  const tier = resolutionTierOf(file.quality, file.resolution);
   const audio = [file.audioCodec, file.audioChannels ? `${file.audioChannels}ch` : null]
     .filter(Boolean)
     .join(" ");
 
-  // Resolution/quality profile can come from Sonarr for TV too (a fallback
-  // when a media-server owns the title but Sonarr also tracks it) — only the
-  // Radarr-only mediaInfo fields stay movie-gated, since Sonarr has no
-  // per-series equivalent.
-  const isMovie = mediaType === "movie";
+  // Every cell is driven by whether the value is there, not by media type:
+  // for TV these used to be Radarr-shaped and therefore always empty, but a
+  // Plex-owned show now carries codec/container/bitrate aggregated across its
+  // episodes, and a Radarr-tracked movie still fills exactly the same cells
+  // it always did.
   const cells: { label: string; value: string }[] = [
-    { label: "Size", value: formatBytes(file.sizeBytes) },
+    { label: "Size", value: file.sizeBytes ? formatBytes(file.sizeBytes) : "" },
     { label: "Runtime", value: runtimeLabel ?? "" },
     { label: "Added", value: file.dateAdded ? new Date(file.dateAdded).toLocaleDateString() : "" },
     { label: "Resolution", value: tier ?? file.resolution ?? "" },
     { label: "Quality profile", value: file.quality ?? "" },
-    { label: "Video", value: isMovie ? (file.videoCodec ?? "") : "" },
-    { label: "Dynamic range", value: isMovie ? (file.dynamicRange ?? "") : "" },
-    { label: "Audio", value: isMovie ? audio : "" },
-    { label: "Edition", value: isMovie ? (file.edition ?? "") : "" },
-    { label: "Release group", value: isMovie ? (file.releaseGroup ?? "") : "" },
+    { label: "Video", value: file.videoCodec ?? "" },
+    { label: "Dynamic range", value: file.dynamicRange ?? "" },
+    { label: "Audio", value: audio },
+    { label: "Container", value: file.container ?? "" },
+    { label: "Bitrate", value: formatBitrate(file.bitrateKbps) },
+    { label: "Edition", value: file.edition ?? "" },
+    { label: "Release group", value: file.releaseGroup ?? "" },
   ].filter((cell) => cell.value !== "");
 
   return (

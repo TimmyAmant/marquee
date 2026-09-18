@@ -210,6 +210,21 @@ export const plexLibraryItems = pgTable(
     addedAt: timestamp("added_at", { withTimezone: true }),
     sizeBytes: bigint("size_bytes", { mode: "number" }),
     filePath: text("file_path"),
+    // What Plex reports about the file itself, captured at sync time so the
+    // File details card has something to show for a Plex-owned title that
+    // Radarr/Sonarr isn't also tracking. Normalized by lib/media-info.ts into
+    // Radarr's spelling (resolution "4K"/"1080p", videoCodec "HEVC",
+    // dynamicRange "DV"/"HDR10"/"SDR") so lib/quality.ts's badge helpers work
+    // on these the same way. All nullable: a listing entry can be missing any
+    // of it, and dynamicRange in particular is only known when the sync got
+    // the item's streams (see getMediaDetailsByRatingKeys).
+    resolution: text("resolution"),
+    videoCodec: text("video_codec"),
+    dynamicRange: text("dynamic_range"),
+    audioCodec: text("audio_codec"),
+    audioChannels: integer("audio_channels"),
+    container: text("container"),
+    bitrateKbps: integer("bitrate_kbps"),
     viewCount: integer("view_count"),
     lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
   },
@@ -256,6 +271,17 @@ export const jellyfinLibraryItems = pgTable(
     addedAt: timestamp("added_at", { withTimezone: true }),
     sizeBytes: bigint("size_bytes", { mode: "number" }),
     filePath: text("file_path"),
+    // Jellyfin's equivalent of the same columns on plexLibraryItems above —
+    // read off MediaSources[0] and its MediaStreams, which the library sync
+    // already asks for, so no extra request. Movie-only in practice: a Series
+    // item carries no MediaSources at all.
+    resolution: text("resolution"),
+    videoCodec: text("video_codec"),
+    dynamicRange: text("dynamic_range"),
+    audioCodec: text("audio_codec"),
+    audioChannels: integer("audio_channels"),
+    container: text("container"),
+    bitrateKbps: integer("bitrate_kbps"),
   },
   (table) => [
     unique().on(table.jellyfinServerId, table.itemId),

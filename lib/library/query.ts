@@ -32,7 +32,13 @@ export type LibraryItem = {
    * "Bluray-1080p") — resolution badges are derived from this string.
    * Radarr-only for now, same gap as qualityCutoffNotMet above. */
   qualityName: string | null;
-  /** Radarr-only, same gap as qualityName above. */
+  /** The resolution a media server recorded for the file ("4K", "1080p", or
+   * a raw "WxH") — how a Plex/Jellyfin-owned title gets a resolution badge
+   * without a Radarr quality profile to derive one from. Null for a title
+   * only an *arr knows about; `qualityName` covers those. */
+  resolution: string | null;
+  /** From Radarr where it tracks the title, otherwise from the media server
+   * that owns it. */
   dynamicRange: string | null;
   audioCodec: string | null;
   /** True when an arr app and a media server both report a file path for
@@ -104,6 +110,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       filePath,
       qualityCutoffNotMet: qualityCutoffNotMet ?? false,
       qualityName,
+      resolution: null,
       dynamicRange,
       audioCodec,
       possibleDuplicate: false,
@@ -130,6 +137,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       filePath,
       qualityCutoffNotMet: false,
       qualityName: null,
+      resolution: null,
       dynamicRange: null,
       audioCodec: null,
       possibleDuplicate: false,
@@ -150,6 +158,9 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         sizeBytes: plexLibraryItems.sizeBytes,
         addedAt: plexLibraryItems.addedAt,
         filePath: plexLibraryItems.filePath,
+        resolution: plexLibraryItems.resolution,
+        dynamicRange: plexLibraryItems.dynamicRange,
+        audioCodec: plexLibraryItems.audioCodec,
       })
       .from(plexLibraryItems)
       .innerJoin(
@@ -162,7 +173,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
     // over an active download: Radarr can be re-grabbing a title Plex
     // already has an (older) file for, and "Downloading" is the more useful
     // status to surface until the new file lands.
-    for (const { title, sizeBytes, addedAt, filePath } of plexRows) {
+    for (const { title, sizeBytes, addedAt, filePath, resolution, dynamicRange, audioCodec } of plexRows) {
       const key = `${title.mediaType}:${title.tmdbId}`;
       const existing = byKey.get(key);
       if (existing?.status === "tracked_downloading") {
@@ -189,8 +200,12 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         // Radarr already determined for this title, if any.
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
         qualityName: existing?.qualityName ?? null,
-        dynamicRange: existing?.dynamicRange ?? null,
-        audioCodec: existing?.audioCodec ?? null,
+        // Radarr's mediaInfo wins where it has the title (it's authoritative
+        // about the release it fetched); the media server's own record of the
+        // file fills the gap for everything it doesn't track.
+        resolution,
+        dynamicRange: existing?.dynamicRange ?? dynamicRange,
+        audioCodec: existing?.audioCodec ?? audioCodec,
         possibleDuplicate: isPossibleDuplicate(existing?.filePath ?? null, filePath),
         otherFilePath: isPossibleDuplicate(existing?.filePath ?? null, filePath)
           ? existing!.filePath
@@ -212,6 +227,9 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         sizeBytes: jellyfinLibraryItems.sizeBytes,
         addedAt: jellyfinLibraryItems.addedAt,
         filePath: jellyfinLibraryItems.filePath,
+        resolution: jellyfinLibraryItems.resolution,
+        dynamicRange: jellyfinLibraryItems.dynamicRange,
+        audioCodec: jellyfinLibraryItems.audioCodec,
       })
       .from(jellyfinLibraryItems)
       .innerJoin(
@@ -225,7 +243,15 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
 
     // Same precedence rule as the Plex merge above — an active download
     // still wins over "owned" from a media-server sync.
-    for (const { title, sizeBytes, addedAt, filePath } of jellyfinRows) {
+    for (const {
+      title,
+      sizeBytes,
+      addedAt,
+      filePath,
+      resolution,
+      dynamicRange,
+      audioCodec,
+    } of jellyfinRows) {
       const key = `${title.mediaType}:${title.tmdbId}`;
       const existing = byKey.get(key);
       if (existing?.status === "tracked_downloading") {
@@ -247,8 +273,10 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         filePath: filePath ?? existing?.filePath ?? null,
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
         qualityName: existing?.qualityName ?? null,
-        dynamicRange: existing?.dynamicRange ?? null,
-        audioCodec: existing?.audioCodec ?? null,
+        // Same precedence as the Plex merge above.
+        resolution,
+        dynamicRange: existing?.dynamicRange ?? dynamicRange,
+        audioCodec: existing?.audioCodec ?? audioCodec,
         possibleDuplicate: isPossibleDuplicate(existing?.filePath ?? null, filePath),
         otherFilePath: isPossibleDuplicate(existing?.filePath ?? null, filePath)
           ? existing!.filePath

@@ -1,3 +1,16 @@
+import {
+  EMPTY_MEDIA_DETAIL,
+  hasAtmos,
+  normalizeAudioCodec,
+  normalizeBitrateKbps,
+  normalizeChannels,
+  normalizeContainer,
+  normalizeDynamicRange,
+  normalizeResolution,
+  normalizeVideoCodec,
+} from "@/lib/media-info";
+import type { MediaDetail } from "@/lib/media-info";
+
 export type JellyfinConfig = { baseUrl: string; apiKey: string };
 
 // See the matching constant in lib/radarr/client.ts — a slow/unreachable
@@ -31,6 +44,34 @@ export function testConnection(config: JellyfinConfig): Promise<JellyfinSystemIn
   return jellyfinFetch<JellyfinSystemInfo>(config, "/System/Info");
 }
 
+/** One track of a MediaSource. Jellyfin nests these inside MediaSources, so
+ * the `MediaSources` field the sync already asks for brings them along at no
+ * extra cost — unlike Plex, where streams need a second request. */
+export interface JellyfinMediaStream {
+  Type?: "Video" | "Audio" | "Subtitle" | string;
+  Codec?: string;
+  Profile?: string;
+  Width?: number;
+  Height?: number;
+  Channels?: number;
+  ChannelLayout?: string;
+  BitRate?: number;
+  /** "SDR" | "HDR" — the coarse one. */
+  VideoRange?: string;
+  /** "SDR" | "HDR10" | "HDR10Plus" | "HLG" | "DOVI" | "DOVIWithHDR10" | … */
+  VideoRangeType?: string;
+  Title?: string;
+  DisplayTitle?: string;
+}
+
+export interface JellyfinMediaSource {
+  Size?: number;
+  Container?: string;
+  /** bps, unlike Plex's kbps. */
+  Bitrate?: number;
+  MediaStreams?: JellyfinMediaStream[];
+}
+
 export interface JellyfinItem {
   Id: string;
   Name: string;
@@ -42,7 +83,7 @@ export interface JellyfinItem {
     Tvdb?: string;
     Imdb?: string;
   };
-  MediaSources?: { Size?: number }[];
+  MediaSources?: JellyfinMediaSource[];
 }
 
 /** One call gets every movie and show in the server's library, each already
@@ -67,6 +108,37 @@ export async function getLibraryItems(config: JellyfinConfig): Promise<JellyfinI
 
 export function getFileSize(item: JellyfinItem): number | null {
   return item.MediaSources?.[0]?.Size ?? null;
+}
+
+/**
+ * Everything Jellyfin reports about this item's file, from the first
+ * MediaSource and its streams. Movies only in practice: a Series item has no
+ * MediaSources at all (Jellyfin keeps those on episodes), the same gap that
+ * already leaves TV without a size — see syncJellyfinLibrary.
+ */
+export function parseMediaDetail(item: JellyfinItem): MediaDetail {
+  const source = item.MediaSources?.[0];
+  if (!source) return { ...EMPTY_MEDIA_DETAIL };
+
+  const streams = source.MediaStreams ?? [];
+  const video = streams.find((s) => s.Type === "Video");
+  const audio = streams.find((s) => s.Type === "Audio");
+
+  return {
+    resolution: normalizeResolution(null, video?.Width, video?.Height),
+    videoCodec: normalizeVideoCodec(video?.Codec),
+    // VideoRangeType is the precise one ("HDR10Plus", "DOVIWithHDR10");
+    // VideoRange only distinguishes HDR from SDR, so it's the fallback for
+    // older servers that don't report the former.
+    dynamicRange: normalizeDynamicRange(video?.VideoRangeType ?? video?.VideoRange),
+    audioCodec: normalizeAudioCodec(audio?.Codec, {
+      profile: audio?.Profile,
+      atmos: hasAtmos(audio?.Profile, audio?.Title, audio?.DisplayTitle),
+    }),
+    audioChannels: normalizeChannels(audio?.Channels),
+    container: normalizeContainer(source.Container),
+    bitrateKbps: normalizeBitrateKbps(source.Bitrate ?? video?.BitRate, "bps"),
+  };
 }
 
 export function parseExternalIds(item: JellyfinItem): {

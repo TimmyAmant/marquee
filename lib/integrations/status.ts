@@ -5,6 +5,7 @@ import { getPlexFileInfo } from "@/lib/plex/sync";
 import { getJellyfinFileInfo } from "@/lib/jellyfin/sync";
 import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
 import type { LibraryStatus } from "@/components/status-badge";
+import type { MediaDetail } from "@/lib/media-info";
 
 export type FileInfo = {
   /** For Plex-owned TV, this is the folder every episode's file has in
@@ -16,15 +17,22 @@ export type FileInfo = {
   path: string | null;
   sizeBytes: number;
   quality?: string;
-  /** Movie-only for now — Sonarr has no per-series file mediaInfo without a
-   * per-episode expansion (episode-to-episode quality can vary anyway), so
-   * these stay undefined for TV. All come free off the same Radarr
-   * `/movie?tmdbId=X` call already made for `quality` above. */
+  /** From Radarr's `mediaInfo` when it has the movie (free off the same
+   * `/movie?tmdbId=X` call already made for `quality` above), otherwise from
+   * whatever Plex or Jellyfin recorded for the file at sync time. Sonarr has
+   * no per-series file mediaInfo without a per-episode expansion, so for TV
+   * these only ever come from a media server — Plex aggregated across the
+   * show's episodes, and nothing at all from Jellyfin, which keeps media
+   * info on episodes rather than the series. */
   resolution?: string;
   videoCodec?: string;
   dynamicRange?: string;
   audioCodec?: string;
   audioChannels?: number;
+  /** Media-server-only: neither *arr reports a container or an overall
+   * bitrate for the file it fetched. */
+  container?: string;
+  bitrateKbps?: number;
   dateAdded?: string;
   releaseGroup?: string;
   edition?: string;
@@ -37,38 +45,58 @@ export type TitleLibraryStatus = {
   file: FileInfo | null;
 };
 
+/** One Radarr `/movie?tmdbId=X` lookup, shared by the ownership check below
+ * and by the media-server branches of `getTitleLibraryStatus` — a movie Plex
+ * owns is usually tracked in Radarr too, and Radarr is the authority on the
+ * file it fetched, so both want this and neither should fetch it twice. */
+type RadarrLookup = {
+  configured: boolean;
+  connected: boolean;
+  movie: radarr.RadarrMovie | null;
+};
+
+async function lookUpRadarrMovie(userId: string, tmdbId: number): Promise<RadarrLookup> {
+  const credential = await getArrCredential(userId, "radarr");
+  const configured = Boolean(credential?.qualityProfileId && credential?.rootFolderPath);
+  if (!credential) return { configured: false, connected: false, movie: null };
+
+  const movie = await radarr
+    .getMovieByTmdbId({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tmdbId)
+    .catch(() => null);
+
+  return { configured, connected: true, movie };
+}
+
 async function getArrStatus(
   userId: string,
   mediaType: "movie" | "tv",
   tmdbId: number,
   tvdbId: number | null,
+  radarrLookup: RadarrLookup | null,
 ): Promise<TitleLibraryStatus> {
   if (mediaType === "movie") {
-    const credential = await getArrCredential(userId, "radarr");
-    const configured = Boolean(credential?.qualityProfileId && credential?.rootFolderPath);
-    if (!credential) return { status: "untracked", provider: "radarr", configured: false, file: null };
+    const lookup = radarrLookup ?? (await lookUpRadarrMovie(userId, tmdbId));
+    if (!lookup.connected) return { status: "untracked", provider: "radarr", configured: false, file: null };
 
-    const movie = await radarr
-      .getMovieByTmdbId({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tmdbId)
-      .catch(() => null);
-
+    const { movie, configured } = lookup;
     if (!movie) return { status: "untracked", provider: "radarr", configured, file: null };
 
     const status = deriveRadarrStatus(movie);
+    const extras = radarrFileExtras(movie);
     const file: FileInfo | null =
       status === "owned" && movie.movieFile
         ? {
             path: movie.movieFile.path,
             sizeBytes: movie.movieFile.size,
-            quality: movie.movieFile.quality?.quality?.name,
-            resolution: movie.movieFile.mediaInfo?.resolution,
-            videoCodec: movie.movieFile.mediaInfo?.videoCodec,
-            dynamicRange: movie.movieFile.mediaInfo?.videoDynamicRangeType || undefined,
-            audioCodec: movie.movieFile.mediaInfo?.audioCodec,
-            audioChannels: movie.movieFile.mediaInfo?.audioChannels,
+            quality: extras?.quality ?? undefined,
+            resolution: extras?.resolution,
+            videoCodec: extras?.videoCodec,
+            dynamicRange: extras?.dynamicRange,
+            audioCodec: extras?.audioCodec,
+            audioChannels: extras?.audioChannels,
             dateAdded: movie.movieFile.dateAdded,
-            releaseGroup: movie.movieFile.releaseGroup,
-            edition: movie.movieFile.edition || undefined,
+            releaseGroup: extras?.releaseGroup,
+            edition: extras?.edition,
           }
         : null;
 
@@ -99,6 +127,65 @@ async function getArrStatus(
   return { status, provider: "sonarr", configured, file };
 }
 
+/** The parts of a Radarr movie file that describe the file rather than
+ * locate it — reused for a Plex/Jellyfin-owned movie that Radarr also
+ * tracks, where Radarr is the better source for all of it. */
+type ArrFileExtras = {
+  path: string | null;
+  quality: string | null;
+  resolution?: string;
+  videoCodec?: string;
+  dynamicRange?: string;
+  audioCodec?: string;
+  audioChannels?: number;
+  releaseGroup?: string;
+  edition?: string;
+};
+
+function radarrFileExtras(movie: radarr.RadarrMovie | null): ArrFileExtras | null {
+  const movieFile = movie?.movieFile;
+  if (!movieFile) return null;
+  return {
+    path: movieFile.path ?? null,
+    quality: movieFile.quality?.quality?.name ?? null,
+    resolution: movieFile.mediaInfo?.resolution,
+    videoCodec: movieFile.mediaInfo?.videoCodec,
+    // Radarr leaves this empty (not absent) for plain SDR.
+    dynamicRange: movieFile.mediaInfo?.videoDynamicRangeType || undefined,
+    audioCodec: movieFile.mediaInfo?.audioCodec,
+    audioChannels: movieFile.mediaInfo?.audioChannels,
+    releaseGroup: movieFile.releaseGroup,
+    edition: movieFile.edition || undefined,
+  };
+}
+
+/** What a Plex/Jellyfin-owned title's File details card is built from: the
+ * media server's own record of the file, with anything the matching *arr
+ * knows taking precedence — it's authoritative about the release it fetched,
+ * and it's the only one of the two that has a quality profile, a release
+ * group or an edition at all. Container and bitrate only ever come from the
+ * media server, which is the only side that reports them. */
+function mediaServerFile(
+  mediaServer: { path: string | null; sizeBytes: number | null; addedAt: Date | null } & MediaDetail,
+  arr: ArrFileExtras | null,
+): FileInfo {
+  return {
+    path: mediaServer.path ?? arr?.path ?? null,
+    sizeBytes: mediaServer.sizeBytes ?? 0,
+    quality: arr?.quality ?? undefined,
+    resolution: arr?.resolution ?? mediaServer.resolution ?? undefined,
+    videoCodec: arr?.videoCodec ?? mediaServer.videoCodec ?? undefined,
+    dynamicRange: arr?.dynamicRange ?? mediaServer.dynamicRange ?? undefined,
+    audioCodec: arr?.audioCodec ?? mediaServer.audioCodec ?? undefined,
+    audioChannels: arr?.audioChannels ?? mediaServer.audioChannels ?? undefined,
+    container: mediaServer.container ?? undefined,
+    bitrateKbps: mediaServer.bitrateKbps ?? undefined,
+    dateAdded: mediaServer.addedAt?.toISOString(),
+    releaseGroup: arr?.releaseGroup,
+    edition: arr?.edition,
+  };
+}
+
 /**
  * A media-server-owned TV show (Plex/Jellyfin) often has no folder path or
  * quality info of its own — Plex only reports Media/Part per-episode, and
@@ -110,7 +197,7 @@ async function getArrStatus(
 async function getSonarrFileExtras(
   userId: string,
   tvdbId: number | null,
-): Promise<{ path: string | null; quality: string | null } | null> {
+): Promise<ArrFileExtras | null> {
   if (!tvdbId) return null;
 
   const credential = await getArrCredential(userId, "sonarr");
@@ -141,27 +228,28 @@ export async function getTitleLibraryStatus(
   tvdbId: number | null,
 ): Promise<TitleLibraryStatus> {
   // Plex/Jellyfin lookups are cheap local DB reads, not live API calls, so
-  // firing all three up front (Sonarr extras too, for TV) costs one extra
-  // DB query in the common case but saves a full sequential round-trip to
-  // Sonarr — previously only fetched after Plex/Jellyfin ownership was
-  // already confirmed, one after the other.
-  const [plexFile, jellyfinFile, sonarrExtra] = await Promise.all([
+  // firing all three up front (the *arr extras too) costs one extra DB query
+  // in the common case but saves a full sequential round-trip to Sonarr/
+  // Radarr — previously only fetched after Plex/Jellyfin ownership was
+  // already confirmed, one after the other. The Radarr lookup is the same
+  // one `getArrStatus` needs below, so it's handed down rather than repeated.
+  const [plexFile, jellyfinFile, sonarrExtra, radarrLookup] = await Promise.all([
     getPlexFileInfo(userId, tmdbId, tvdbId).catch(() => null),
     getJellyfinFileInfo(userId, tmdbId, tvdbId).catch(() => null),
     mediaType === "tv" ? getSonarrFileExtras(userId, tvdbId).catch(() => null) : Promise.resolve(null),
+    mediaType === "movie"
+      ? lookUpRadarrMovie(userId, tmdbId).catch(() => null)
+      : Promise.resolve(null),
   ]);
+
+  const arrExtra = mediaType === "tv" ? sonarrExtra : radarrFileExtras(radarrLookup?.movie ?? null);
 
   if (plexFile) {
     return {
       status: "owned",
       provider: "plex",
       configured: true,
-      file: {
-        path: plexFile.path ?? sonarrExtra?.path ?? null,
-        sizeBytes: plexFile.sizeBytes ?? 0,
-        quality: sonarrExtra?.quality ?? undefined,
-        dateAdded: plexFile.addedAt?.toISOString(),
-      },
+      file: mediaServerFile(plexFile, arrExtra),
     };
   }
 
@@ -170,16 +258,11 @@ export async function getTitleLibraryStatus(
       status: "owned",
       provider: "jellyfin",
       configured: true,
-      file: {
-        path: jellyfinFile.path ?? sonarrExtra?.path ?? null,
-        sizeBytes: jellyfinFile.sizeBytes ?? 0,
-        quality: sonarrExtra?.quality ?? undefined,
-        dateAdded: jellyfinFile.addedAt?.toISOString(),
-      },
+      file: mediaServerFile(jellyfinFile, arrExtra),
     };
   }
 
-  return getArrStatus(userId, mediaType, tmdbId, tvdbId);
+  return getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup);
 }
 
 export type SeasonCompleteness = { seasonNumber: number; have: number; total: number };

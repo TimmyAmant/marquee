@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolutionTier, hdrLabel, audioLabel } from "./quality";
+import { resolutionTier, resolutionTierOf, hdrLabel, audioLabel } from "./quality";
 
 describe("resolutionTier", () => {
   it("detects 4K from 2160p", () => {
@@ -53,6 +53,15 @@ describe("hdrLabel", () => {
   });
 });
 
+describe("hdrLabel on SDR", () => {
+  it("gives plain SDR no label, so no badge is drawn for it", () => {
+    // Radarr leaves the field empty for SDR; Plex and Jellyfin say it out
+    // loud, and a badge on every non-HDR title would be noise.
+    expect(hdrLabel("SDR")).toBeNull();
+    expect(hdrLabel("sdr")).toBeNull();
+  });
+});
+
 describe("audioLabel", () => {
   it("shortens any codec string containing 'Atmos' to just 'Atmos'", () => {
     expect(audioLabel("TrueHD Atmos")).toBe("Atmos");
@@ -67,5 +76,30 @@ describe("audioLabel", () => {
     expect(audioLabel(null)).toBeNull();
     expect(audioLabel(undefined)).toBeNull();
     expect(audioLabel("")).toBeNull();
+  });
+});
+
+describe("resolutionTierOf", () => {
+  it("prefers the *arr quality profile, which is authoritative about the release", () => {
+    expect(resolutionTierOf("Bluray-1080p", "4K")).toBe("1080p");
+  });
+
+  it("falls back to a media server's resolution when there's no quality profile", () => {
+    expect(resolutionTierOf(null, "4K")).toBe("4K");
+    expect(resolutionTierOf(undefined, "1080p")).toBe("1080p");
+    expect(resolutionTierOf(null, "720p")).toBe("720p");
+  });
+
+  it("reads a tier out of Radarr's raw WxH resolution too", () => {
+    expect(resolutionTierOf(null, "3840x2160")).toBe("4K");
+    // A scope-ratio 4K file: only its width says 4K.
+    expect(resolutionTierOf(null, "3840x1600")).toBe("4K");
+    expect(resolutionTierOf(null, "1920x1080")).toBe("1080p");
+  });
+
+  it("has no tier for an off-tier file or no resolution at all", () => {
+    expect(resolutionTierOf(null, "720x306")).toBeNull();
+    expect(resolutionTierOf(null, "SD")).toBeNull();
+    expect(resolutionTierOf(null, null)).toBeNull();
   });
 });

@@ -292,7 +292,7 @@ export function TitleHero({
 
             {file && (
               <div className="mt-4">
-                <FileDetailsSection mediaType={mediaType} file={file} runtimeLabel={runtimeLabel ?? null} />
+                <FileDetailsSection file={file} runtimeLabel={runtimeLabel ?? null} />
               </div>
             )}
           </aside>

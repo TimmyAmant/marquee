@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.26.0",
+    date: "2026-09-17",
+    changes: [
+      "File details now fills in for titles you own through Plex or Jellyfin, not just ones Radarr and Sonarr track: resolution, video codec, dynamic range, audio codec and channels, container and bitrate all come straight from your media server.",
+      "Where Radarr or Sonarr also tracks a title, its own quality profile, release group and edition still win — your media server fills in the rest.",
+      "Plex shows get the same detail, averaged across their episodes, since Plex only reports a file per episode rather than per series.",
+      "Resolution badges light up for media-server-owned titles too, and a plain SDR file no longer gets a badge of its own.",
+    ],
+  },
+  {
     version: "0.25.0",
     date: "2026-09-17",
     changes: [

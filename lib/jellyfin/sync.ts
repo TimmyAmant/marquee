@@ -7,6 +7,8 @@ import * as jellyfin from "@/lib/jellyfin/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
+import { EMPTY_MEDIA_DETAIL } from "@/lib/media-info";
+import type { MediaDetail } from "@/lib/media-info";
 
 export async function syncJellyfinLibrary(
   userId: string,
@@ -66,6 +68,11 @@ export async function syncJellyfinLibrary(
     // Plex's "all leaves" endpoint lets us sum it. Scoped out for v1 (same
     // known-gap tradeoff as this app already accepts for other cases).
     const sizeBytes = mediaType === "movie" ? jellyfin.getFileSize(item) : null;
+    // Same story for the media detail: it comes off MediaSources[0] and its
+    // MediaStreams, which the item listing already carries (no extra
+    // request), and a Series entry simply has neither.
+    const detail: MediaDetail =
+      mediaType === "movie" ? jellyfin.parseMediaDetail(item) : { ...EMPTY_MEDIA_DETAIL };
 
     await db
       .insert(jellyfinLibraryItems)
@@ -80,6 +87,7 @@ export async function syncJellyfinLibrary(
         addedAt: item.DateCreated ? new Date(item.DateCreated) : null,
         sizeBytes,
         filePath: item.Path ?? null,
+        ...detail,
       })
       .onConflictDoUpdate({
         target: [jellyfinLibraryItems.jellyfinServerId, jellyfinLibraryItems.itemId],
@@ -92,6 +100,7 @@ export async function syncJellyfinLibrary(
           addedAt: item.DateCreated ? new Date(item.DateCreated) : null,
           sizeBytes,
           filePath: item.Path ?? null,
+          ...detail,
         },
       });
     itemCount++;
@@ -170,7 +179,11 @@ export async function syncAllConnectedJellyfinUsers(): Promise<void> {
   }
 }
 
-export type JellyfinFileInfo = { path: string | null; sizeBytes: number | null; addedAt: Date | null };
+export type JellyfinFileInfo = {
+  path: string | null;
+  sizeBytes: number | null;
+  addedAt: Date | null;
+} & MediaDetail;
 
 /**
  * Returns file info when this title is in Jellyfin, null otherwise —
@@ -179,7 +192,9 @@ export type JellyfinFileInfo = { path: string | null; sizeBytes: number | null; 
  * ones. `sizeBytes` is null for TV (Jellyfin only reports file size on a
  * movie's own entry, per the comment in syncJellyfinLibrary above); `path`
  * is still populated for TV since Jellyfin reports the series folder path
- * directly on the series item.
+ * directly on the series item. The MediaDetail fields (resolution, codecs,
+ * dynamic range, container, bitrate) come from the same place as the size and
+ * are likewise movie-only.
  */
 export async function getJellyfinFileInfo(
   userId: string,
@@ -203,11 +218,19 @@ export async function getJellyfinFileInfo(
       filePath: jellyfinLibraryItems.filePath,
       sizeBytes: jellyfinLibraryItems.sizeBytes,
       addedAt: jellyfinLibraryItems.addedAt,
+      resolution: jellyfinLibraryItems.resolution,
+      videoCodec: jellyfinLibraryItems.videoCodec,
+      dynamicRange: jellyfinLibraryItems.dynamicRange,
+      audioCodec: jellyfinLibraryItems.audioCodec,
+      audioChannels: jellyfinLibraryItems.audioChannels,
+      container: jellyfinLibraryItems.container,
+      bitrateKbps: jellyfinLibraryItems.bitrateKbps,
     })
     .from(jellyfinLibraryItems)
     .where(and(inArray(jellyfinLibraryItems.jellyfinServerId, serverIds), idMatch))
     .limit(1);
 
   if (!match) return null;
-  return { path: match.filePath, sizeBytes: match.sizeBytes, addedAt: match.addedAt };
+  const { filePath, ...detail } = match;
+  return { ...detail, path: filePath };
 }

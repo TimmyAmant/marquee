@@ -9,7 +9,7 @@ import { QuickAddButton } from "@/components/quick-add-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ResolutionBadge, DynamicRangeBadge, AudioBadge } from "@/components/resolution-badge";
 import { formatBytes } from "@/lib/format";
-import { resolutionTier } from "@/lib/quality";
+import { resolutionTierOf } from "@/lib/quality";
 
 export type MediaEntry = {
   titleId: string;
@@ -28,7 +28,10 @@ export type MediaEntry = {
   qualityCutoffNotMet?: boolean;
   /** Radarr-only for now — see LibraryItem.qualityName. */
   qualityName?: string | null;
-  /** Radarr-only, same gap as qualityName above. */
+  /** A media server's own resolution for the file — see
+   * LibraryItem.resolution. */
+  resolution?: string | null;
+  /** From Radarr where it has the title, otherwise the media server's. */
   dynamicRange?: string | null;
   audioCodec?: string | null;
   /** True when an arr app and a media server both report a different file
@@ -176,7 +179,10 @@ export function MediaList({
   const [duplicatesOnly, setDuplicatesOnly] = useState(() => searchParams.get("duplicates") === "1");
   const hasUpgradeData = useMemo(() => entries.some((e) => e.qualityCutoffNotMet), [entries]);
   const hasResolutionData = useMemo(
-    () => entries.some((e) => resolutionTier(e.qualityName) !== null || e.dynamicRange || e.audioCodec),
+    () =>
+      entries.some(
+        (e) => resolutionTierOf(e.qualityName, e.resolution) !== null || e.dynamicRange || e.audioCodec,
+      ),
     [entries],
   );
   const hasDuplicates = useMemo(() => entries.some((e) => e.possibleDuplicate), [entries]);
@@ -372,10 +378,10 @@ export function MediaList({
                 subtitle={entry.subtitle}
                 meta={buildMeta(entry)}
                 badge={
-                  (entry.status || entry.qualityName || entry.dynamicRange) && (
+                  (entry.status || entry.qualityName || entry.resolution || entry.dynamicRange) && (
                     <div className="flex items-center gap-1.5">
                       {entry.status && <StatusBadge status={entry.status} compact />}
-                      <ResolutionBadge qualityName={entry.qualityName} />
+                      <ResolutionBadge qualityName={entry.qualityName} resolution={entry.resolution} />
                       <DynamicRangeBadge dynamicRange={entry.dynamicRange} />
                     </div>
                   )
@@ -440,7 +446,7 @@ export function MediaList({
                   {hasResolutionData && (
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <ResolutionBadge qualityName={entry.qualityName} />
+                        <ResolutionBadge qualityName={entry.qualityName} resolution={entry.resolution} />
                         <DynamicRangeBadge dynamicRange={entry.dynamicRange} />
                         <AudioBadge audioCodec={entry.audioCodec} />
                       </div>

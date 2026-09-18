@@ -1,7 +1,16 @@
-import { resolutionTier, hdrLabel, audioLabel } from "@/lib/quality";
+import { resolutionTierOf, hdrLabel, audioLabel } from "@/lib/quality";
 
-export function ResolutionBadge({ qualityName }: { qualityName: string | null | undefined }) {
-  const tier = resolutionTier(qualityName);
+/** `qualityName` is an *arr quality profile ("Bluray-2160p"); `resolution`
+ * is what a media server recorded for the file, so a Plex/Jellyfin-owned
+ * title that no *arr tracks still gets a badge. */
+export function ResolutionBadge({
+  qualityName,
+  resolution,
+}: {
+  qualityName: string | null | undefined;
+  resolution?: string | null;
+}) {
+  const tier = resolutionTierOf(qualityName, resolution);
   if (!tier) return null;
 
   const className =

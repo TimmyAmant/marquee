@@ -7,6 +7,8 @@ import * as plex from "@/lib/plex/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
+import { EMPTY_MEDIA_DETAIL, mergeMediaDetail } from "@/lib/media-info";
+import type { MediaDetail } from "@/lib/media-info";
 
 export async function syncPlexLibrary(userId: string): Promise<{ serverCount: number; itemCount: number }> {
   const credential = await getPlexCredential(userId);
@@ -57,19 +59,50 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
       // sync time would scale with the number of shows in the library.
       const sizeByRatingKey = new Map<string, number | null>();
       const folderPathByRatingKey = new Map<string, string | null>();
+      const detailByRatingKey = new Map<string, MediaDetail>();
       await Promise.all(
         items.map(async (item) => {
           if (mediaType === "movie") {
             sizeByRatingKey.set(item.ratingKey, plex.getFileSize(item));
+            // Resolution, codecs, container and bitrate all ride along on the
+            // section listing already fetched above — free.
+            detailByRatingKey.set(item.ratingKey, plex.parseMediaDetail(item));
             return;
           }
           const info = await plex
             .getShowFileInfo(serverUri, credential.authToken, item.ratingKey)
-            .catch(() => ({ sizeBytes: null, folderPath: null }));
+            .catch(() => ({ sizeBytes: null, folderPath: null, detail: { ...EMPTY_MEDIA_DETAIL } }));
           sizeByRatingKey.set(item.ratingKey, info.sizeBytes);
           folderPathByRatingKey.set(item.ratingKey, info.folderPath);
+          detailByRatingKey.set(item.ratingKey, info.detail);
         }),
       );
+
+      // Dynamic range is the one field a section listing can't answer: Plex
+      // only exposes it on the video stream, and a listing stops at Part. Fill
+      // it in with a batched fetch of the items' own metadata — one request
+      // per 50 movies, best-effort, so a slow or unhappy server just leaves
+      // this field null instead of failing the sync. Shows are skipped: their
+      // detail comes from episodes, and streams for those would be one batch
+      // per show rather than per library.
+      if (mediaType === "movie") {
+        const needStreams = items
+          .filter((item) => detailByRatingKey.get(item.ratingKey)?.dynamicRange == null)
+          .map((item) => item.ratingKey);
+        const streamDetails = await plex
+          .getMediaDetailsByRatingKeys(serverUri, credential.authToken, needStreams)
+          .catch(() => new Map<string, MediaDetail>());
+        for (const [ratingKey, streamDetail] of streamDetails) {
+          // The fetched metadata is a superset of the listing entry — same
+          // Media attributes, plus the streams — so it leads, and the listing
+          // only covers a batch that came back thinner than expected. It
+          // matters for more than dynamic range: "TrueHD Atmos" is only
+          // visible once the audio stream's profile/title is in hand, where
+          // the listing's bare `audioCodec` says just "truehd".
+          const listingDetail = detailByRatingKey.get(ratingKey) ?? { ...EMPTY_MEDIA_DETAIL };
+          detailByRatingKey.set(ratingKey, mergeMediaDetail(streamDetail, listingDetail));
+        }
+      }
 
       for (const item of items) {
         const parsed = plex.parseExternalIds(item);
@@ -95,6 +128,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
         // the library merge on the rare sync where this comes back null).
         const filePath =
           mediaType === "movie" ? plex.getFilePath(item) : (folderPathByRatingKey.get(item.ratingKey) ?? null);
+        const detail = detailByRatingKey.get(item.ratingKey) ?? { ...EMPTY_MEDIA_DETAIL };
         const viewCount = item.viewCount ?? null;
         const lastViewedAt = item.lastViewedAt ? new Date(item.lastViewedAt * 1000) : null;
 
@@ -112,6 +146,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
             addedAt: item.addedAt ? new Date(item.addedAt * 1000) : null,
             sizeBytes,
             filePath,
+            ...detail,
             viewCount,
             lastViewedAt,
           })
@@ -127,6 +162,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
               addedAt: item.addedAt ? new Date(item.addedAt * 1000) : null,
               sizeBytes,
               filePath,
+              ...detail,
               viewCount,
               lastViewedAt,
             },
@@ -239,7 +275,11 @@ export async function getRecentlyWatched(
     .map((r) => ({ mediaType: r.mediaType, tmdbId: r.tmdbId }));
 }
 
-export type PlexFileInfo = { path: string | null; sizeBytes: number | null; addedAt: Date | null };
+export type PlexFileInfo = {
+  path: string | null;
+  sizeBytes: number | null;
+  addedAt: Date | null;
+} & MediaDetail;
 
 /**
  * Returns file info when this title is in Plex, null otherwise — replaces
@@ -270,11 +310,19 @@ export async function getPlexFileInfo(
       filePath: plexLibraryItems.filePath,
       sizeBytes: plexLibraryItems.sizeBytes,
       addedAt: plexLibraryItems.addedAt,
+      resolution: plexLibraryItems.resolution,
+      videoCodec: plexLibraryItems.videoCodec,
+      dynamicRange: plexLibraryItems.dynamicRange,
+      audioCodec: plexLibraryItems.audioCodec,
+      audioChannels: plexLibraryItems.audioChannels,
+      container: plexLibraryItems.container,
+      bitrateKbps: plexLibraryItems.bitrateKbps,
     })
     .from(plexLibraryItems)
     .where(and(inArray(plexLibraryItems.plexServerId, serverIds), idMatch))
     .limit(1);
 
   if (!match) return null;
-  return { path: match.filePath, sizeBytes: match.sizeBytes, addedAt: match.addedAt };
+  const { filePath, ...detail } = match;
+  return { ...detail, path: filePath };
 }

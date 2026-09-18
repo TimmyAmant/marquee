@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { parseExternalIds, pickBestConnection, getFileSize, getFilePath, commonFolder } from "./client";
+import {
+  parseExternalIds,
+  pickBestConnection,
+  getFileSize,
+  getFilePath,
+  commonFolder,
+  parseMediaDetail,
+  parseDynamicRange,
+} from "./client";
+import type { PlexMetadataItem } from "./client";
 
 describe("parseExternalIds", () => {
   it("parses tmdb/tvdb/imdb guids from the Guid array", () => {
@@ -123,5 +132,137 @@ describe("commonFolder", () => {
 
   it("returns null for an empty list", () => {
     expect(commonFolder([])).toBeNull();
+  });
+});
+
+describe("parseMediaDetail", () => {
+  /** A section-listing entry: Media and Part, no Stream — which is all
+   * /library/sections/{key}/all ever returns. */
+  const listingItem = (media: Record<string, unknown>): PlexMetadataItem => ({
+    ratingKey: "1",
+    type: "movie",
+    title: "Test",
+    addedAt: 0,
+    Media: [media],
+  });
+
+  it("reads a 4K HEVC TrueHD Atmos movie off the section listing", () => {
+    const detail = parseMediaDetail(
+      listingItem({
+        videoResolution: "4k",
+        videoCodec: "hevc",
+        audioCodec: "truehd",
+        audioChannels: 8,
+        container: "mkv",
+        bitrate: 58421,
+        width: 3840,
+        height: 1600,
+        Part: [{ size: 61_000_000_000, file: "/movies/Test/Test.mkv", container: "mkv" }],
+      }),
+    );
+    expect(detail).toEqual({
+      resolution: "4K",
+      videoCodec: "HEVC",
+      // No streams in a listing, so no dynamic range yet — the batched
+      // metadata fetch fills this one in.
+      dynamicRange: null,
+      audioCodec: "TrueHD",
+      audioChannels: 8,
+      container: "MKV",
+      bitrateKbps: 58421,
+    });
+  });
+
+  it("reads a 1080p H.264 AAC movie", () => {
+    const detail = parseMediaDetail(
+      listingItem({
+        videoResolution: "1080",
+        videoCodec: "h264",
+        audioCodec: "aac",
+        audioChannels: 2,
+        container: "mp4",
+        bitrate: 4210,
+        Part: [{ size: 3_000_000_000, file: "/movies/Test/Test.mp4" }],
+      }),
+    );
+    expect(detail).toMatchObject({
+      resolution: "1080p",
+      videoCodec: "H.264",
+      audioCodec: "AAC",
+      audioChannels: 2,
+      container: "MP4",
+      bitrateKbps: 4210,
+    });
+  });
+
+  it("returns every field null when the item has no Media at all", () => {
+    const detail = parseMediaDetail({ ratingKey: "1", type: "show", title: "Test", addedAt: 0 });
+    expect(Object.values(detail).every((value) => value === null)).toBe(true);
+  });
+
+  it("fills in only what a sparse Media entry actually has", () => {
+    const detail = parseMediaDetail(listingItem({ videoResolution: "720", Part: [{ size: 900 }] }));
+    expect(detail).toEqual({
+      resolution: "720p",
+      videoCodec: null,
+      dynamicRange: null,
+      audioCodec: null,
+      audioChannels: null,
+      container: null,
+      bitrateKbps: null,
+    });
+  });
+
+  it("picks up Dolby Vision and Atmos from the streams full metadata carries", () => {
+    const detail = parseMediaDetail(
+      listingItem({
+        videoResolution: "4k",
+        videoCodec: "hevc",
+        audioCodec: "eac3",
+        audioChannels: 6,
+        container: "mkv",
+        Part: [
+          {
+            size: 61_000_000_000,
+            Stream: [
+              { streamType: 1, codec: "hevc", DOVIPresent: true, DOVIProfile: "7", colorTrc: "smpte2084" },
+              { streamType: 2, codec: "eac3", channels: 6, profile: "joc" },
+              { streamType: 3, codec: "subrip" },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(detail.dynamicRange).toBe("DV");
+    expect(detail.audioCodec).toBe("EAC3 Atmos");
+  });
+});
+
+describe("parseDynamicRange", () => {
+  const withVideoStream = (stream: Record<string, unknown>) => ({
+    Part: [{ Stream: [{ streamType: 1, codec: "hevc", ...stream }] }],
+  });
+
+  it("reads HDR10 off the transfer characteristics", () => {
+    expect(parseDynamicRange(withVideoStream({ colorTrc: "smpte2084" }))).toBe("HDR10");
+  });
+
+  it("reads HLG off its own transfer characteristics", () => {
+    expect(parseDynamicRange(withVideoStream({ colorTrc: "arib-std-b67" }))).toBe("HLG");
+  });
+
+  it("reads HDR10+ off the stream's display title", () => {
+    expect(
+      parseDynamicRange(withVideoStream({ extendedDisplayTitle: "4K HDR10+ (HEVC Main 10)" })),
+    ).toBe("HDR10Plus");
+  });
+
+  it("calls a video stream with no HDR signal at all SDR", () => {
+    expect(parseDynamicRange(withVideoStream({ colorTrc: "bt709" }))).toBe("SDR");
+  });
+
+  it("says nothing rather than SDR when there's no stream to look at", () => {
+    expect(parseDynamicRange({ Part: [{ size: 10 }] })).toBeNull();
+    expect(parseDynamicRange(undefined)).toBeNull();
   });
 });
