@@ -33,6 +33,10 @@ extension API {
         let dateAdded: Date?
         let releaseGroup: String?
         let edition: String?
+        /// "MKV"/"MP4" — from Plex or Jellyfin; the *arrs don't report it.
+        let container: String?
+        /// Whole-file bitrate in kbps, e.g. 58421. Media servers only.
+        let bitrateKbps: Int?
 
         /// "29.1 GB".
         var sizeLabel: String { Format.bytes(sizeBytes) }
@@ -42,6 +46,13 @@ extension API {
 
         /// "Dynamic range": "Dolby Vision", "HDR10+", or as sent.
         var dynamicRangeLabel: String? { Quality.hdrLabel(dynamicRange) }
+
+        /// "58.4 Mbps", or "820 kbps" below a megabit.
+        var bitrateLabel: String? {
+            guard let bitrateKbps, bitrateKbps > 0 else { return nil }
+            if bitrateKbps < 1000 { return "\(bitrateKbps) kbps" }
+            return String(format: "%.1f Mbps", Double(bitrateKbps) / 1000)
+        }
 
         /// The "Audio" row: "TrueHD Atmos 7.1ch".
         var audioLabel: String? {

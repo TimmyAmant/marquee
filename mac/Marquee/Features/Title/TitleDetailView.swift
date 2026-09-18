@@ -551,7 +551,7 @@ private struct TitleSidebarColumn: View {
         VStack(alignment: .leading, spacing: 16) {
             factsCard
             if let file = detail.library.file {
-                FileDetailsCard(mediaType: detail.mediaType, file: file, runtimeLabel: detail.facts.runtimeLabel)
+                FileDetailsCard(file: file, runtimeLabel: detail.facts.runtimeLabel)
             }
         }
     }
@@ -641,7 +641,6 @@ private struct TitleSidebarColumn: View {
 /// components/file-details-section.tsx — the location field, then whichever of
 /// the mockup's pairs the server described for this file.
 private struct FileDetailsCard: View {
-    let mediaType: API.MediaType
     let file: API.FileDetails
     let runtimeLabel: String?
 
@@ -654,15 +653,18 @@ private struct FileDetailsCard: View {
         if let added = file.dateAdded { cells.append(("Added", Format.shortDate(added))) }
         if let resolution = file.resolutionLabel { cells.append(("Resolution", resolution)) }
         if let quality = file.quality.nonBlank { cells.append(("Quality profile", quality)) }
-        if mediaType == .movie {
-            if let video = file.videoCodec.nonBlank { cells.append(("Video", video)) }
-            if let range = file.dynamicRangeLabel { cells.append(("Dynamic range", range)) }
-            if let audio = file.audioLabel { cells.append(("Audio", audio)) }
-            // Not in the mockup (its file has neither), but real files do —
-            // they carry on in the same grid.
-            if let edition = file.edition.nonBlank { cells.append(("Edition", edition)) }
-            if let group = file.releaseGroup.nonBlank { cells.append(("Release group", group)) }
-        }
+        // No media-type gate: Plex reports codecs and audio for shows too,
+        // aggregated across their episodes, and a cell with nothing in it is
+        // skipped anyway.
+        if let video = file.videoCodec.nonBlank { cells.append(("Video", video)) }
+        if let range = file.dynamicRangeLabel { cells.append(("Dynamic range", range)) }
+        if let audio = file.audioLabel { cells.append(("Audio", audio)) }
+        if let container = file.container.nonBlank { cells.append(("Container", container)) }
+        if let bitrate = file.bitrateLabel { cells.append(("Bitrate", bitrate)) }
+        // Not in the mockup (its file has neither), but real files do —
+        // they carry on in the same grid.
+        if let edition = file.edition.nonBlank { cells.append(("Edition", edition)) }
+        if let group = file.releaseGroup.nonBlank { cells.append(("Release group", group)) }
         return cells
     }
 

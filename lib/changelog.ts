@@ -18,7 +18,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Where Radarr or Sonarr also tracks a title, its own quality profile, release group and edition still win — your media server fills in the rest.",
       "Plex shows get the same detail, averaged across their episodes, since Plex only reports a file per episode rather than per series.",
       "Resolution badges light up for media-server-owned titles too, and a plain SDR file no longer gets a badge of its own.",
-    ],
+          "Marquee for Mac shows the same detail, including the new Container and Bitrate rows.",
+],
   },
   {
     version: "0.25.0",
