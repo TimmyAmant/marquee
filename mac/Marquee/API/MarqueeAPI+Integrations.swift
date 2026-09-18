@@ -16,7 +16,7 @@ extension MarqueeAPI {
         /// the caller has connected. `.upstream` if any failed.
         func syncNow() async throws {
             let _: API.OK = try await transport.mutate(
-                .post, "/settings/integrations/sync", timeout: Timeout.longRunning, changes: [.library, .settings]
+                .post, "/settings/integrations/sync", timeout: Timeout.longRunning, changes: [.library, .settings, .catalog]
             )
         }
 
@@ -35,10 +35,10 @@ extension MarqueeAPI {
 
         /// Body `{accessToken}`: a TMDb v4 read access token or v3 API key.
         /// Removing it falls back to the server's environment variables, if set.
-        var tmdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "tmdb", field: "accessToken", changes: [.settings, .library]) }
+        var tmdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "tmdb", field: "accessToken", changes: [.settings, .library, .catalog]) }
         var trakt: TraktEndpoints { TraktEndpoints(transport: transport) }
         /// Body `{apiKey}`: a TheTVDB v4 API key.
-        var tvdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "tvdb", field: "apiKey", changes: [.settings, .library]) }
+        var tvdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "tvdb", field: "apiKey", changes: [.settings, .library, .catalog]) }
         /// Body `{webhookUrl}`: posts a test message before saving.
         var discord: SettingEndpoints { SettingEndpoints(transport: transport, name: "discord", field: "webhookUrl", changes: .settings) }
         /// Body `{topicUrl}`, e.g. `https://ntfy.sh/my-topic`: posts a test message before saving.
@@ -59,7 +59,7 @@ extension MarqueeAPI {
         func connect(baseUrl: String, apiKey: String) async throws -> API.ArrConnectionResult {
             try await transport.mutate(
                 .put, path, body: API.ServiceConnectionRequest(baseUrl: baseUrl, apiKey: apiKey),
-                timeout: Timeout.integrations, changes: [.settings, .library]
+                timeout: Timeout.integrations, changes: [.settings, .library, .catalog]
             )
         }
 
@@ -79,7 +79,7 @@ extension MarqueeAPI {
 
         /// `DELETE` — removes the connection and its cached statuses. Confirm first.
         func disconnect() async throws {
-            let _: API.OK = try await transport.mutate(.delete, path, timeout: Timeout.integrations, changes: [.settings, .library])
+            let _: API.OK = try await transport.mutate(.delete, path, timeout: Timeout.integrations, changes: [.settings, .library, .catalog])
         }
     }
 
@@ -100,7 +100,7 @@ extension MarqueeAPI {
                 "/settings/integrations/plex/pin/\(pinId)", timeout: Timeout.longRunning
             )
             if status.connected, let events = transport.events {
-                await events.record([.settings, .library])
+                await events.record([.settings, .library, .catalog])
             }
             return status
         }
@@ -108,7 +108,7 @@ extension MarqueeAPI {
         /// `DELETE /settings/integrations/plex` — disconnect and delete the synced library.
         func disconnect() async throws {
             let _: API.OK = try await transport.mutate(
-                .delete, "/settings/integrations/plex", timeout: Timeout.integrations, changes: [.settings, .library]
+                .delete, "/settings/integrations/plex", timeout: Timeout.integrations, changes: [.settings, .library, .catalog]
             )
         }
     }
@@ -120,14 +120,14 @@ extension MarqueeAPI {
         func connect(baseUrl: String, apiKey: String) async throws {
             let _: API.OK = try await transport.mutate(
                 .put, "/settings/integrations/jellyfin", body: API.ServiceConnectionRequest(baseUrl: baseUrl, apiKey: apiKey),
-                timeout: Timeout.longRunning, changes: [.settings, .library]
+                timeout: Timeout.longRunning, changes: [.settings, .library, .catalog]
             )
         }
 
         /// `DELETE /settings/integrations/jellyfin` — disconnect and delete the synced library.
         func disconnect() async throws {
             let _: API.OK = try await transport.mutate(
-                .delete, "/settings/integrations/jellyfin", timeout: Timeout.integrations, changes: [.settings, .library]
+                .delete, "/settings/integrations/jellyfin", timeout: Timeout.integrations, changes: [.settings, .library, .catalog]
             )
         }
     }

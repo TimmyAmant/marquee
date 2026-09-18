@@ -35,7 +35,8 @@ struct SearchResultsView: View {
                                         posterPath: person.profilePath,
                                         name: person.name,
                                         subtitle: person.knownForDepartment,
-                                        favorite: person.favorited.map { FavoriteTarget(.person, person.tmdbId, favorited: $0) }
+                                        favorite: person.favorited.map { FavoriteTarget(.person, person.tmdbId, favorited: $0) },
+                                        link: .person(person.tmdbId)
                                     ) {
                                         model.open(.person(person.tmdbId))
                                     }

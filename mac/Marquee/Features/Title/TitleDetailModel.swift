@@ -13,7 +13,8 @@ final class TitleDetailModel {
     private(set) var loadError: String?
     /// Episodes for each expanded season row.
     private(set) var episodes: [Int: API.SeasonEpisodes] = [:]
-    private(set) var loadingSeason: Int?
+    /// Seasons whose episodes are in flight — several rows can be loading.
+    private(set) var loadingSeasons: Set<Int> = []
     private(set) var seasonErrors: [Int: String] = [:]
     /// Bumped by every full load, so an expanded season row re-requests its
     /// episodes instead of showing the "no episode data" message after ⌘R.
@@ -53,6 +54,9 @@ final class TitleDetailModel {
             // A reload may have changed which episodes have files.
             episodes = [:]
             seasonErrors = [:]
+            // Anything still in flight belongs to the old generation and is
+            // discarded when it lands; the open row asks again.
+            loadingSeasons = []
             reloadGeneration &+= 1
         } catch let failure as APIError where failure.isCancellation {
             return
@@ -85,17 +89,24 @@ final class TitleDetailModel {
     // MARK: Seasons
 
     func loadSeason(_ seasonNumber: Int) {
-        guard episodes[seasonNumber] == nil, loadingSeason != seasonNumber, let api else { return }
-        loadingSeason = seasonNumber
+        guard episodes[seasonNumber] == nil, !loadingSeasons.contains(seasonNumber), let api else { return }
+        loadingSeasons.insert(seasonNumber)
         seasonErrors[seasonNumber] = nil
+        let generation = reloadGeneration
         Task {
+            let result: Result<API.SeasonEpisodes, Error>
             do {
-                let season = try await api.titles.season(seasonNumber, ofShow: id.tmdbId)
-                episodes[seasonNumber] = season
+                result = .success(try await api.titles.season(seasonNumber, ofShow: id.tmdbId))
             } catch {
-                seasonErrors[seasonNumber] = error.localizedDescription
+                result = .failure(error)
             }
-            if loadingSeason == seasonNumber { loadingSeason = nil }
+            // A ⌘R landed meanwhile: this answer predates it.
+            guard generation == reloadGeneration else { return }
+            switch result {
+            case let .success(season): episodes[seasonNumber] = season
+            case let .failure(error): seasonErrors[seasonNumber] = error.localizedDescription
+            }
+            loadingSeasons.remove(seasonNumber)
         }
     }
 

@@ -68,7 +68,7 @@ struct SeasonAccordion: View {
                 } else if let loaded = screen.episodes[season.seasonNumber] {
                     EpisodeList(season: loaded)
                 } else {
-                    Text(screen.loadingSeason == season.seasonNumber ? "Loading…" : "No episode data for this season.")
+                    Text(screen.loadingSeasons.contains(season.seasonNumber) ? "Loading…" : "No episode data for this season.")
                         .font(.system(size: 12.5))
                         .foregroundStyle(Theme.textMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)

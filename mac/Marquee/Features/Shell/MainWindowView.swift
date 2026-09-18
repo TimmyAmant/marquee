@@ -20,6 +20,12 @@ struct MainWindowView: View {
             }
             .id(model.selection)
             .background(Theme.bg0)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if model.live.isOffline {
+                    OfflineStrip()
+                }
+            }
+            .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -170,6 +176,7 @@ private struct AppearanceToggle: View {
 private struct SearchSupport: ViewModifier {
     @Environment(AppModel.self) private var model
     @State private var suggestions: [API.SearchSuggestion] = []
+    @FocusState private var searchFocused: Bool
 
     private static let completionPrefix = "\u{2063}marquee:"
 
@@ -178,6 +185,11 @@ private struct SearchSupport: ViewModifier {
 
         content
             .searchable(text: $model.searchText, placement: .toolbar, prompt: "Search an actor, a studio, a title…")
+            .searchFocused($searchFocused)
+            // Edit › Find (⌘F).
+            .onChange(of: model.searchFocusRequest) { _, _ in
+                searchFocused = true
+            }
             .searchSuggestions {
                 ForEach(suggestions, id: \.stableId) { suggestion in
                     SuggestionRow(suggestion: suggestion)
@@ -405,6 +417,29 @@ private struct NotificationRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+    }
+}
+
+// MARK: - Offline strip
+
+/// Badge polling hasn't reached the server for a few minutes. Polling carries
+/// on, and the next answer clears it.
+private struct OfflineStrip: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            ProgressView().controlSize(.mini)
+            Text("Can't reach your Marquee server — retrying…")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .background(.bar)
+        .overlay(alignment: .bottom) {
+            Divider().overlay(Theme.border)
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .accessibilityElement(children: .combine)
     }
 }
 

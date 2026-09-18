@@ -24,8 +24,13 @@ final class ServerEvents {
         static let settings = Change(rawValue: 1 << 4)
         /// Household accounts.
         static let users = Change(rawValue: 1 << 5)
+        /// What browse lists are built from: the TMDb/TVDB keys, the library
+        /// connections (Plex, Jellyfin, Sonarr/Radarr) and syncs. Always
+        /// recorded alongside `.settings`, so a list can reload for these
+        /// without also reloading for a Discord webhook or an ntfy topic.
+        static let catalog = Change(rawValue: 1 << 6)
 
-        static let all: Change = [.library, .requests, .notifications, .favorites, .settings, .users]
+        static let all: Change = [.library, .requests, .notifications, .favorites, .settings, .users, .catalog]
     }
 
     enum Source: Sendable {
@@ -41,6 +46,7 @@ final class ServerEvents {
     private(set) var favorites = 0
     private(set) var settings = 0
     private(set) var users = 0
+    private(set) var catalog = 0
 
     /// The same counters, but only advanced by `.server` changes. A screen that
     /// already applies its own action in place keys its reload off these, so
@@ -51,6 +57,7 @@ final class ServerEvents {
     private(set) var remoteFavorites = 0
     private(set) var remoteSettings = 0
     private(set) var remoteUsers = 0
+    private(set) var remoteCatalog = 0
 
     /// Called after a `.mutation` is recorded, so the badge poller can
     /// refresh right away instead of waiting for its next tick.
@@ -63,6 +70,7 @@ final class ServerEvents {
         if change.contains(.favorites) { favorites &+= 1 }
         if change.contains(.settings) { settings &+= 1 }
         if change.contains(.users) { users &+= 1 }
+        if change.contains(.catalog) { catalog &+= 1 }
         if source == .server {
             if change.contains(.library) { remoteLibrary &+= 1 }
             if change.contains(.requests) { remoteRequests &+= 1 }
@@ -70,6 +78,7 @@ final class ServerEvents {
             if change.contains(.favorites) { remoteFavorites &+= 1 }
             if change.contains(.settings) { remoteSettings &+= 1 }
             if change.contains(.users) { remoteUsers &+= 1 }
+            if change.contains(.catalog) { remoteCatalog &+= 1 }
         }
         if source == .mutation, !change.isEmpty {
             onMutation?(change)
@@ -89,6 +98,7 @@ final class ServerEvents {
         if areas.contains(.favorites) { total &+= favorites }
         if areas.contains(.settings) { total &+= settings }
         if areas.contains(.users) { total &+= users }
+        if areas.contains(.catalog) { total &+= catalog }
         return total
     }
 
@@ -103,6 +113,7 @@ final class ServerEvents {
         if areas.contains(.favorites) { total &+= remoteFavorites }
         if areas.contains(.settings) { total &+= remoteSettings }
         if areas.contains(.users) { total &+= remoteUsers }
+        if areas.contains(.catalog) { total &+= remoteCatalog }
         return total
     }
 }

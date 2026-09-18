@@ -1,6 +1,7 @@
 import SwiftUI
 import Observation
 import AppKit
+import Network
 
 enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     case discover
@@ -55,6 +56,20 @@ enum Route: Hashable {
     case changelog
 }
 
+extension Route {
+    /// The same page on the server's website (app/title/[type]/[id],
+    /// app/person/[id], app/company/[id]), relative to its root. nil for the
+    /// screens the website has no standalone page for.
+    var webPath: String? {
+        switch self {
+        case let .title(id): return "title/\(id.mediaType.rawValue)/\(id.tmdbId)"
+        case let .person(id): return "person/\(id)"
+        case let .company(id): return "company/\(id)"
+        case .search, .errorReference, .changelog: return nil
+        }
+    }
+}
+
 struct Banner: Identifiable, Equatable {
     let id = UUID()
     let message: String
@@ -101,7 +116,11 @@ final class AppModel {
         MarqueeAPI(client: session.client, events: events)
     }
 
-    var phase: Phase = .launching
+    var phase: Phase = .launching {
+        didSet {
+            if phase == .ready, oldValue != .ready { replayPendingURL() }
+        }
+    }
     /// The signed-in account, exactly as the server reports it.
     var viewer: API.User?
     var authForm: AuthForm = .signIn
@@ -120,6 +139,8 @@ final class AppModel {
     var banner: Banner?
     /// Bumped by View → Reload (⌘R) to force the visible screen to refetch.
     var reloadToken = 0
+    /// Bumped by Edit › Find (⌘F); the toolbar search field takes focus.
+    var searchFocusRequest = 0
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
 
@@ -128,6 +149,18 @@ final class AppModel {
     @ObservationIgnored var openMainWindow: (() -> Void)?
 
     @ObservationIgnored private var bootstrapped = false
+    /// A marquee:// link (a notification click, `open marquee://…`) that
+    /// arrived before the session was ready — opened once it is.
+    @ObservationIgnored private(set) var pendingURL: URL?
+    /// Retries the can't-reach card when the network comes back or the Mac
+    /// wakes; see `startReconnectTriggers()`.
+    @ObservationIgnored private var pathMonitor: NWPathMonitor?
+    @ObservationIgnored private var wakeObserver: NSObjectProtocol?
+    @ObservationIgnored private var autoRetryTask: Task<Void, Never>?
+
+    /// How long a network change or wake settles before the automatic retry,
+    /// so a flapping Wi-Fi join doesn't fire a burst of probes.
+    static let autoRetryDelay: Duration = .seconds(2)
 
     init(session: ServerSession = ServerSession()) {
         self.session = session
@@ -163,6 +196,7 @@ final class AppModel {
     func bootstrap() {
         guard phase == .launching, !bootstrapped else { return }
         bootstrapped = true
+        startReconnectTriggers()
         Task {
             await connectToSavedServer()
         }
@@ -225,6 +259,39 @@ final class AppModel {
         Task {
             await connectToSavedServer()
             isRetryingConnection = false
+        }
+    }
+
+    /// The network coming back (NWPathMonitor) or the Mac waking up: retry the
+    /// can't-reach card by itself, and catch up on counts while signed in.
+    private func startReconnectTriggers() {
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard path.status == .satisfied else { return }
+            Task { @MainActor in self?.connectivityMayHaveReturned() }
+        }
+        monitor.start(queue: DispatchQueue(label: "com.timmyamant.Marquee.path-monitor"))
+        pathMonitor = monitor
+
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.connectivityMayHaveReturned() }
+        }
+    }
+
+    /// Debounced: several triggers in a row (wake, then Wi-Fi rejoining) make
+    /// one attempt after things settle.
+    func connectivityMayHaveReturned() {
+        autoRetryTask?.cancel()
+        autoRetryTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.autoRetryDelay)
+            guard !Task.isCancelled, let self else { return }
+            switch phase {
+            case .unreachable: retryConnection()
+            case .ready: refreshCounts()
+            default: break
+            }
         }
     }
 
@@ -308,6 +375,7 @@ final class AppModel {
     }
 
     private func clearSignedInState() {
+        pendingURL = nil
         live.stop()
         titleState.clear()
         viewer = nil
@@ -388,8 +456,16 @@ final class AppModel {
     }
 
     /// marquee://title/movie/603, marquee://person/287, marquee://company/420
+    ///
+    /// Before the session is ready (a cold launch from a notification click,
+    /// or while signing in) the newest link waits in `pendingURL` and opens
+    /// when `phase` becomes `.ready`. Signing out drops it.
     func handle(url: URL) {
-        guard url.scheme == "marquee", phase == .ready else { return }
+        guard url.scheme == "marquee" else { return }
+        guard phase == .ready else {
+            pendingURL = url
+            return
+        }
         let parts = ([url.host ?? ""] + url.pathComponents.filter { $0 != "/" }).filter { !$0.isEmpty }
         switch parts.first {
         case "title":
@@ -409,6 +485,29 @@ final class AppModel {
         default:
             break
         }
+    }
+
+    private func replayPendingURL() {
+        guard let url = pendingURL else { return }
+        pendingURL = nil
+        handle(url: url)
+    }
+
+    // MARK: Web links
+
+    /// The page for `route` on the server's own website, for Copy Link and
+    /// Open in Browser.
+    func webURL(for route: Route) -> URL? {
+        guard let path = route.webPath, let server = session.server else { return nil }
+        return server.baseURL.appending(path: path)
+    }
+
+    func copyLink(_ url: URL) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(url.absoluteString, forType: .URL)
+        pasteboard.setString(url.absoluteString, forType: .string)
+        flash("Link copied.")
     }
 
     // MARK: Feedback

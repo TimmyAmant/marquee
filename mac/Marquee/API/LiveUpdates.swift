@@ -48,9 +48,15 @@ final class LiveUpdates {
     static let notificationFetchLimit = 20
     /// More new notifications than this in one check post a single summary banner.
     static let maxBannersPerCheck = 3
+    /// Polls in a row that couldn't reach the server before `isOffline`.
+    static let offlineThreshold = 3
 
     private(set) var badges = API.Badges.zero
     private(set) var isRunning = false
+    /// The last `offlineThreshold` polls couldn't reach the server at all.
+    /// The main window shows a slim "retrying" strip; the next poll that gets
+    /// any answer clears it.
+    private(set) var isOffline = false
 
     var unreadCount: Int { badges.unreadNotifications }
     var pendingRequestCount: Int { badges.pendingRequests }
@@ -69,6 +75,7 @@ final class LiveUpdates {
     @ObservationIgnored private var timerTask: Task<Void, Never>?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
     @ObservationIgnored private var queuedReason: Reason?
+    @ObservationIgnored private var consecutiveFailures = 0
 
     private static let logger = Logger(subsystem: "com.timmyamant.Marquee", category: "live-updates")
 
@@ -125,6 +132,8 @@ final class LiveUpdates {
         apiProvider = nil
         identity = nil
         lastBadges = nil
+        consecutiveFailures = 0
+        if isOffline { isOffline = false }
         isRunning = false
         if badges != .zero { badges = .zero }
         setDockBadge(nil)
@@ -172,12 +181,16 @@ final class LiveUpdates {
         } catch {
             // A 401 already signed the session out (and stopped us); anything
             // else just waits for the next tick.
-            if let error = error as? APIError, !error.isCancellation {
-                Self.logger.info("Badge poll failed: \(error.localizedDescription, privacy: .public)")
-            }
+            let failure = APIError.wrapping(error)
+            guard !(error is CancellationError), !failure.isCancellation, generation == self.generation else { return }
+            Self.logger.info("Badge poll failed: \(failure.localizedDescription, privacy: .public)")
+            // Only "no answer at all" counts: a server that answers with an
+            // error is still reachable.
+            recordReachability(!failure.isConnectivityFailure)
             return
         }
         guard generation == self.generation else { return }
+        recordReachability(true)
 
         let previous = lastBadges
         lastBadges = fresh
@@ -198,6 +211,16 @@ final class LiveUpdates {
             || (fresh.unreadNotifications != previous?.unreadNotifications && fresh.unreadNotifications > 0)
         if shouldCheck {
             await checkForNewNotifications(api, generation: generation)
+        }
+    }
+
+    private func recordReachability(_ reached: Bool) {
+        if reached {
+            consecutiveFailures = 0
+            if isOffline { isOffline = false }
+        } else {
+            consecutiveFailures += 1
+            if consecutiveFailures >= Self.offlineThreshold, !isOffline { isOffline = true }
         }
     }
 
