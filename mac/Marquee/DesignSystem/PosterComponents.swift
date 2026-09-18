@@ -62,12 +62,15 @@ struct PosterCard: View {
     var favorite: FavoriteTarget?
     var quickAction: PosterQuickAction = .none
     var imageSize: API.ImageRef.Size = .w342
+    /// What the card opens, for the context menu's Copy Link / Open in Browser.
+    var link: Route?
     let action: () -> Void
     /// Set when the card came from a `TitleCard`, so a status this Mac has
     /// already changed can be folded in without refetching the list.
     private var titleID: API.TitleID?
 
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
     @State private var hovering = false
 
     /// The status to draw: the server's, unless this Mac has changed it since.
@@ -109,6 +112,7 @@ struct PosterCard: View {
             typeLabel: showsTypeLabel ? card.mediaType.typeLabel : nil,
             favorite: card.favoriteTarget,
             quickAction: card.quickAction,
+            link: .title(card.id),
             action: action
         )
         titleID = card.id
@@ -126,6 +130,7 @@ struct PosterCard: View {
         favorite: FavoriteTarget? = nil,
         quickAction: PosterQuickAction = .none,
         imageSize: API.ImageRef.Size = .w342,
+        link: Route? = nil,
         action: @escaping () -> Void
     ) {
         self.posterPath = posterPath
@@ -139,6 +144,7 @@ struct PosterCard: View {
         self.favorite = favorite
         self.quickAction = quickAction
         self.imageSize = imageSize
+        self.link = link
         self.action = action
     }
 
@@ -165,6 +171,73 @@ struct PosterCard: View {
                 if let favorite {
                     FavoriteButton(target: favorite, compact: true)
                 }
+            }
+        }
+        .contextMenu { contextMenuItems }
+        // VoiceOver reads the card as one button: "The Matrix, 1999, Already
+        // in your library", with the card's actions under Actions.
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { action() }
+        .accessibilityActions { cardActionItems }
+    }
+
+    // MARK: Context menu & accessibility
+
+    private var webURL: URL? {
+        link.flatMap { model.webURL(for: $0) }
+    }
+
+    @ViewBuilder
+    private var contextMenuItems: some View {
+        Button("Open", action: action)
+        cardActionItems
+        if let webURL {
+            Divider()
+            Button("Copy Link") { model.copyLink(webURL) }
+            Button("Open in Browser") { openURL(webURL) }
+        }
+    }
+
+    /// What the hover buttons offer — only the ones that apply right now.
+    /// Shared by the context menu and VoiceOver's Actions rotor.
+    @ViewBuilder
+    private var cardActionItems: some View {
+        switch effectiveQuickAction {
+        case let .add(id):
+            Button("Add to \(id.mediaType.arrName)") { run("Added to \(id.mediaType.arrName).") { try await model.quickAdd(id) } }
+        case let .request(id, alreadyRequested) where !alreadyRequested:
+            Button("Request") { run("Requested.") { try await model.requestTitle(id) } }
+        default:
+            EmptyView()
+        }
+        if let favorite {
+            let isOn = model.isFavorited(favorite)
+            Button(isOn ? "Remove from Favorites" : "Add to Favorites") {
+                run(nil) { try await model.setFavorite(!isOn, favorite) }
+            }
+        }
+    }
+
+    private var accessibilityDescription: String {
+        var parts = [name]
+        if let year = year.nonBlank { parts.append(year) }
+        if let subtitle = subtitle.nonBlank { parts.append(subtitle) }
+        if let status = effectiveStatus, status.isKnown { parts.append(status.label) }
+        if case .request(_, alreadyRequested: true) = effectiveQuickAction { parts.append("Requested") }
+        if let favorite, model.isFavorited(favorite) { parts.append("Favorite") }
+        return parts.joined(separator: ", ")
+    }
+
+    /// A context-menu action: a banner on success, the error on failure.
+    private func run(_ success: String?, _ work: @escaping @MainActor () async throws -> Void) {
+        Task {
+            do {
+                try await work()
+                if let success { model.flash(success) }
+            } catch {
+                model.flash(error: error)
             }
         }
     }
@@ -390,8 +463,12 @@ struct PersonCard: View {
     let name: String
     var character: String?
     var favorite: FavoriteTarget?
+    /// What the card opens, for the context menu's Copy Link / Open in Browser.
+    var link: Route?
     let action: () -> Void
 
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
     @State private var hovering = false
 
     var body: some View {
@@ -441,6 +518,36 @@ struct PersonCard: View {
         .frame(width: Metrics.castWidth, alignment: .leading)
         .onHover { inside in
             withAnimation(.easeOut(duration: 0.18)) { hovering = inside }
+        }
+        .contextMenu {
+            Button("Open", action: action)
+            favoriteItem
+            if let webURL = link.flatMap({ model.webURL(for: $0) }) {
+                Divider()
+                Button("Copy Link") { model.copyLink(webURL) }
+                Button("Open in Browser") { openURL(webURL) }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel([name, character.nonBlank.map { "as \($0)" }].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { action() }
+        .accessibilityActions { favoriteItem }
+    }
+
+    @ViewBuilder
+    private var favoriteItem: some View {
+        if let favorite {
+            let isOn = model.isFavorited(favorite)
+            Button(isOn ? "Remove from Favorites" : "Add to Favorites") {
+                Task {
+                    do {
+                        try await model.setFavorite(!isOn, favorite)
+                    } catch {
+                        model.flash(error: error)
+                    }
+                }
+            }
         }
     }
 }

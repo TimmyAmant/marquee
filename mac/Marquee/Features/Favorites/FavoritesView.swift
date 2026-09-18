@@ -53,7 +53,8 @@ struct FavoritesView: View {
                                             posterPath: person.profilePath,
                                             name: person.name,
                                             subtitle: person.knownForDepartment,
-                                            favorite: FavoriteTarget(.person, person.tmdbId, favorited: person.favorited ?? true)
+                                            favorite: FavoriteTarget(.person, person.tmdbId, favorited: person.favorited ?? true),
+                                            link: .person(person.tmdbId)
                                         ) {
                                             model.open(.person(person.tmdbId))
                                         }

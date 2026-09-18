@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Menu bar: Go (sidebar sections), View → Reload, Library → Sync Now,
+/// Menu bar: Edit → Find, Go (sidebar sections), View → Reload, Library → Sync Now,
 /// Marquee → Change Server… / Sign Out, and Help links that mirror the web footer.
 struct MarqueeCommands: Commands {
     let model: AppModel
@@ -9,6 +9,17 @@ struct MarqueeCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {}
+
+        // Replaces the text-view Find submenu, whose Find… would otherwise
+        // claim ⌘F first; the toolbar search is the app's only search.
+        CommandGroup(replacing: .textEditing) {
+            Button("Find…") {
+                model.showMainWindow()
+                model.searchFocusRequest &+= 1
+            }
+            .keyboardShortcut("f", modifiers: .command)
+            .disabled(model.phase != .ready)
+        }
 
         CommandGroup(after: .sidebar) {
             Button("Reload") {

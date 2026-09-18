@@ -14,6 +14,9 @@ struct BrowseView: View {
     @State private var loadingPage = false
     @State private var initialLoad = true
     @State private var error: APIError?
+    /// A later page failed. Paging pauses (so scrolling doesn't hammer the
+    /// server) until the Retry row at the bottom asks again.
+    @State private var pageError: APIError?
     @State private var surprising = false
     @State private var surpriseError: String?
     @State private var generation = 0
@@ -63,7 +66,10 @@ struct BrowseView: View {
         .marqueeGlow()
         .background(Theme.bg0)
         .navigationTitle(mediaType.pluralLabel)
-        .task(id: BrowseKey(filters: filters, revision: model.events.remoteRevision(of: .library) &+ model.events.revision(of: .settings), reload: model.reloadToken)) {
+        // `.catalog`, not all of `.settings`: saving a Discord webhook or an
+        // ntfy topic changes nothing here and mustn't throw the grid back to
+        // the top.
+        .task(id: BrowseKey(filters: filters, revision: model.events.remoteRevision(of: .library) &+ model.events.revision(of: .catalog), reload: model.reloadToken)) {
             await reset()
         }
     }
@@ -171,11 +177,18 @@ struct BrowseView: View {
                 }
             }
             if hasNextPage {
-                HStack {
+                HStack(spacing: 8) {
                     Spacer()
                     if loadingPage {
                         ProgressView().controlSize(.small)
                         Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
+                    } else if let pageError {
+                        InlineMessage(text: "Couldn't load more")
+                            .help(pageError.localizedDescription)
+                        Button("Retry") {
+                            Task { await loadNextPage(retrying: true) }
+                        }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
                     }
                     Spacer()
                 }
@@ -200,6 +213,7 @@ struct BrowseView: View {
         loadingPage = false
         extras = nil
         error = nil
+        pageError = nil
         surpriseError = nil
 
         let requested = filters
@@ -223,8 +237,10 @@ struct BrowseView: View {
         if current == generation { initialLoad = false }
     }
 
-    private func loadNextPage() async {
-        guard hasNextPage, !loadingPage else { return }
+    /// Appends the next page. After a failure only an explicit retry asks
+    /// again; the cards already loaded (and the scroll offset) stay put.
+    private func loadNextPage(retrying: Bool = false) async {
+        guard hasNextPage, !loadingPage, retrying || pageError == nil else { return }
         let current = generation
         let requested = filters
         loadingPage = true
@@ -246,19 +262,28 @@ struct BrowseView: View {
                 hasNextPage = page.hasMorePages
                 nextPage = page.page + 1
                 error = nil
+                pageError = nil
             } catch let failure as APIError {
                 guard current == generation, !failure.isCancellation else { return }
-                error = failure
-                hasNextPage = false
+                pageFailed(failure)
                 return
             } catch {
                 guard current == generation else { return }
-                self.error = APIError.wrapping(error)
-                hasNextPage = false
+                pageFailed(APIError.wrapping(error))
                 return
             }
             attempts += 1
         } while appended == 0 && hasNextPage && attempts < 5
+    }
+
+    /// The first page failing is the page's error (the empty state offers
+    /// "Try again"); a later one only pauses paging behind the Retry row.
+    private func pageFailed(_ failure: APIError) {
+        if cards.isEmpty {
+            error = failure
+        } else {
+            pageError = failure
+        }
     }
 
     private func surprise() {

@@ -134,6 +134,7 @@ private struct AdminRequestsList: View {
     @State private var queue: API.PendingRequests?
     @State private var reviewed: [API.ReviewedRequest] = []
     @State private var loadError: String?
+    @State private var historyError: String?
     @State private var approvingAll = false
     @State private var approveAllMessage: (String, Bool)?
     /// Rows hidden right after a successful action, like the web row.
@@ -180,6 +181,12 @@ private struct AdminRequestsList: View {
                 LoadingView(label: "Checking requests against your library…")
             }
 
+            if reviewed.isEmpty, let historyError {
+                SectionTitle(text: "Past requests")
+                    .padding(.top, 28)
+                InlineMessage(text: historyError)
+            }
+
             if !reviewed.isEmpty {
                 SectionTitle(text: "Past requests")
                     .padding(.top, 28)
@@ -223,9 +230,17 @@ private struct AdminRequestsList: View {
         } catch {
             if queue == nil { loadError = error.localizedDescription }
         }
-        // "Past requests" is a separate call; a failure there just hides it.
-        if let history = try? await api.requests.history(), !Task.isCancelled {
+        // "Past requests" is a separate call. A failure keeps what's already
+        // shown, and says so only when there's nothing to show.
+        do {
+            let history = try await api.requests.history()
+            if Task.isCancelled { return }
             reviewed = history
+            historyError = nil
+        } catch let failure as APIError where failure.isCancellation {
+            return
+        } catch {
+            if reviewed.isEmpty { historyError = error.localizedDescription }
         }
     }
 

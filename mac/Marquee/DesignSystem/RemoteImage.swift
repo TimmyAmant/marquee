@@ -10,8 +10,14 @@ actor ImagePipeline {
     private var inFlight: [URL: Task<NSImage?, Never>] = [:]
     private let session: URLSession
 
+    /// Decoded bytes kept in memory. A w342 poster is ~0.5 MB decoded and a
+    /// w1280 backdrop ~3.5 MB, so the count limit alone let a few backdrops
+    /// and a long browse session grow without bound.
+    static let memoryCostLimit = 200 * 1024 * 1024
+
     init() {
         memory.countLimit = 600
+        memory.totalCostLimit = Self.memoryCostLimit
         let configuration = URLSessionConfiguration.default
         configuration.urlCache = URLCache(memoryCapacity: 64 * 1024 * 1024, diskCapacity: 512 * 1024 * 1024)
         configuration.requestCachePolicy = .returnCacheDataElseLoad
@@ -36,8 +42,16 @@ actor ImagePipeline {
         inFlight[url] = task
         let image = await task.value
         inFlight[url] = nil
-        if let image { memory.setObject(image, forKey: url as NSURL) }
+        if let image { memory.setObject(image, forKey: url as NSURL, cost: Self.decodedByteCost(of: image)) }
         return image
+    }
+
+    /// Roughly what the image costs once drawn: its largest bitmap at 4 bytes
+    /// a pixel (the compressed JPEG is a small fraction of that).
+    nonisolated static func decodedByteCost(of image: NSImage) -> Int {
+        let pixels = image.representations.map { $0.pixelsWide * $0.pixelsHigh }.max() ?? 0
+        let fallback = Int(image.size.width * image.size.height)
+        return max(pixels, fallback) * 4
     }
 }
 

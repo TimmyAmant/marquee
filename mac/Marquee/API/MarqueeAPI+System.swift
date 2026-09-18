@@ -17,7 +17,7 @@ extension MarqueeAPI {
         func run(_ id: String) async throws {
             let _: API.OK = try await transport.mutate(
                 .post, "/settings/jobs/\(MarqueeAPI.segment(id))/run", timeout: Timeout.longRunning,
-                changes: [.library, .settings]
+                changes: [.library, .settings, .catalog]
             )
         }
     }

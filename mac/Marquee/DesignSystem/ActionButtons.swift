@@ -1,5 +1,40 @@
 import SwiftUI
 
+/// The card actions, shared by the hover buttons, poster context menus and
+/// their accessibility actions. Each records its outcome in `titleState`, so
+/// every card showing the same title agrees without refetching its list.
+extension AppModel {
+    /// Admin quick-add to Radarr/Sonarr.
+    func quickAdd(_ id: API.TitleID) async throws {
+        let api = self.api
+        try await api.titles.add(id.mediaType, id: id.tmdbId)
+        // Remember it, so this card (and the same title in any other list)
+        // stops offering an add the next time it's drawn — the lists
+        // themselves deliberately don't refetch on your own action.
+        let status = try? await api.titles.status(id.mediaType, id: id.tmdbId)
+        titleState.added(id, status: status?.library.status)
+    }
+
+    /// Member request.
+    func requestTitle(_ id: API.TitleID) async throws {
+        try await api.requests.create(id.mediaType, id: id.tmdbId)
+        titleState.requested(id)
+    }
+
+    /// Sets a star; returns the state the server reports.
+    @discardableResult
+    func setFavorite(_ favorited: Bool, _ target: FavoriteTarget) async throws -> Bool {
+        let result = try await api.favorites.set(favorited, target.entityType, id: target.tmdbId)
+        titleState.favoriteChanged(target.entityType, target.tmdbId, to: result)
+        return result
+    }
+
+    /// Whether `target` is starred, counting anything changed from this Mac.
+    func isFavorited(_ target: FavoriteTarget) -> Bool {
+        titleState.favorited(target.entityType, target.tmdbId) ?? target.favorited
+    }
+}
+
 /// components/favorite-button.tsx — star toggle; the full variant is a pill.
 /// The server sends the state with whatever list the card came from, so the
 /// button starts correct and only writes.
@@ -8,10 +43,11 @@ struct FavoriteButton: View {
     var compact = false
 
     @Environment(AppModel.self) private var model
+    /// The optimistic state while a write is in flight.
     @State private var favorited: Bool?
     @State private var pending = false
 
-    private var isOn: Bool { favorited ?? target.favorited }
+    private var isOn: Bool { favorited ?? model.isFavorited(target) }
 
     var body: some View {
         Button {
@@ -50,14 +86,14 @@ struct FavoriteButton: View {
         let next = !isOn
         pending = true
         favorited = next
-        let api = model.api
         Task {
             do {
-                favorited = try await api.favorites.set(next, target.entityType, id: target.tmdbId)
+                try await model.setFavorite(next, target)
             } catch {
-                favorited = !next
                 model.flash(error: error)
             }
+            // The store has the answer now (or still the old state on failure).
+            favorited = nil
             pending = false
         }
     }
@@ -99,16 +135,10 @@ struct QuickAddButton: View {
     private func add() {
         pending = true
         error = nil
-        let api = model.api
         Task {
             do {
-                try await api.titles.add(id.mediaType, id: id.tmdbId)
+                try await model.quickAdd(id)
                 done = true
-                // Remember it, so this card (and the same title in any other
-                // list) stops offering an add the next time it's drawn — the
-                // lists themselves deliberately don't refetch on your own action.
-                let status = try? await api.titles.status(id.mediaType, id: id.tmdbId)
-                model.titleState.added(id, status: status?.library.status)
             } catch {
                 self.error = error.localizedDescription
             }
@@ -160,12 +190,10 @@ struct RequestButton: View {
     private func submit() {
         pending = true
         error = nil
-        let api = model.api
         Task {
             do {
-                try await api.requests.create(id.mediaType, id: id.tmdbId)
+                try await model.requestTitle(id)
                 requested = true
-                model.titleState.requested(id)
             } catch {
                 self.error = error.localizedDescription
             }

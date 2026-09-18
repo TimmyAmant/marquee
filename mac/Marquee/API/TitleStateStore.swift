@@ -26,7 +26,16 @@ final class TitleStateStore {
         var requested: Bool?
     }
 
+    /// A favorite toggled on one entity (a title, person, collection…).
+    struct FavoriteKey: Hashable {
+        let entityType: API.FavoriteEntityType
+        let tmdbId: Int
+    }
+
     private(set) var changes: [API.TitleID: Change] = [:]
+    /// Stars set from this Mac, so a star toggled from a card's context menu
+    /// and the same entity's star elsewhere agree without a refetch.
+    private(set) var favorites: [FavoriteKey: Bool] = [:]
 
     subscript(id: API.TitleID) -> Change? { changes[id] }
 
@@ -53,9 +62,17 @@ final class TitleStateStore {
         merge(id) { $0.status = status }
     }
 
+    func favorited(_ entityType: API.FavoriteEntityType, _ tmdbId: Int) -> Bool? {
+        favorites[FavoriteKey(entityType: entityType, tmdbId: tmdbId)]
+    }
+
+    func favoriteChanged(_ entityType: API.FavoriteEntityType, _ tmdbId: Int, to favorited: Bool) {
+        favorites[FavoriteKey(entityType: entityType, tmdbId: tmdbId)] = favorited
+    }
+
     func clear() {
-        guard !changes.isEmpty else { return }
-        changes = [:]
+        if !changes.isEmpty { changes = [:] }
+        if !favorites.isEmpty { favorites = [:] }
     }
 
     private func merge(_ id: API.TitleID, _ edit: (inout Change) -> Void) {

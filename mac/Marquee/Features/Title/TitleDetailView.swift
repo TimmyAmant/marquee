@@ -5,6 +5,7 @@ struct TitleDetailView: View {
     let id: API.TitleID
 
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
     @State private var screen: TitleDetailModel
     @State private var showingTrailer = false
     @State private var showingRelink = false
@@ -32,6 +33,19 @@ struct TitleDetailView: View {
         }
         .background(Theme.bg0)
         .navigationTitle(screen.name)
+        .toolbar {
+            if let webURL = model.webURL(for: .title(id)) {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button("Open in Browser") { openURL(webURL) }
+                        Button("Copy Link") { model.copyLink(webURL) }
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .help("Open this title on your Marquee server's website")
+                }
+            }
+        }
         // Only ⌘R refetches the page. Everything the viewer does here updates
         // `library` + `viewer` in place through `titles.status`, so the
         // ScrollView is never rebuilt and the scroll offset never moves.
@@ -107,7 +121,8 @@ struct TitleDetailView: View {
                                             profilePath: member.profilePath,
                                             name: member.name,
                                             character: member.character,
-                                            favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited)
+                                            favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
+                                            link: .person(member.tmdbId)
                                         ) {
                                             model.open(.person(member.tmdbId))
                                         }
@@ -187,8 +202,10 @@ private struct TitleBackdrop: View, Equatable {
             .overlay(alignment: .bottom) {
                 ZStack {
                     Theme.bg1
-                    if backdropPath.url(.original) != nil {
-                        RemoteImage(backdropPath, size: .original)
+                    // w1280 covers the widest window at 2x well enough; an
+                    // `original` backdrop decodes to tens of megabytes.
+                    if backdropPath.url(.w1280) != nil {
+                        RemoteImage(backdropPath, size: .w1280)
                     }
                     FilmGrain(seed: seed).opacity(Theme.grainOpacity)
                     // .fade — a scrim under the toolbar, then down to solid

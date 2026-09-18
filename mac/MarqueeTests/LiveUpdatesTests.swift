@@ -234,4 +234,35 @@ final class LiveUpdatesTests: XCTestCase {
         XCTAssertEqual(live.unreadCount, 2)
         XCTAssertTrue(live.isRunning)
     }
+
+    func testRepeatedUnreachablePollsGoOfflineUntilTheNextAnswer() async {
+        let live = makeLive()
+        await start(live)
+        let server = self.server
+
+        StubURLProtocol.handler = { _ in throw URLError(.cannotConnectToHost) }
+        for poll in 1...LiveUpdates.offlineThreshold {
+            XCTAssertFalse(live.isOffline, "Not offline after \(poll - 1) failed poll(s)")
+            live.refresh(.poll)
+            await live.settle()
+        }
+        XCTAssertTrue(live.isOffline)
+
+        StubURLProtocol.handler = { request in server.handle(request) }
+        live.refresh(.poll)
+        await live.settle()
+        XCTAssertFalse(live.isOffline, "The next answer clears it")
+    }
+
+    func testAServerErrorIsNotOffline() async {
+        let live = makeLive()
+        await start(live)
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(500, #"{"error":"Boom","code":"internal"}"#) }
+        for _ in 0..<LiveUpdates.offlineThreshold {
+            live.refresh(.poll)
+            await live.settle()
+        }
+        XCTAssertFalse(live.isOffline, "A server that answers is reachable")
+    }
 }
