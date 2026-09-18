@@ -166,7 +166,7 @@ final class LiveContractTests: XCTestCase {
         XCTAssertTrue(integrations.tmdb.connected)
         XCTAssertFalse(integrations.arrWebhooks.secret.isEmpty)
         let jobs = try await admin.jobs.list()
-        XCTAssertEqual(jobs.map(\.id).sorted(), ["arr-sync", "disk-space-snapshot", "jellyfin-sync", "plex-sync"])
+        XCTAssertEqual(jobs.map(\.id).sorted(), ["arr-sync", "cleanup", "disk-space-snapshot", "jellyfin-sync", "plex-sync"])
         let about = try await admin.about.info()
         XCTAssertEqual(about.version, info.version)
         let changelog = try await admin.about.changelog()

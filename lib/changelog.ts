@@ -11,6 +11,27 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.27.0",
+    date: "2026-09-18",
+    changes: [
+      "Titles you delete from Plex or Jellyfin now drop out of your library on the next sync, instead of showing \"In library\" forever.",
+      "One Sonarr show that TMDb doesn't know no longer stops Marquee from noticing series you've removed from Sonarr.",
+      "Opening a person or studio page no longer wipes the backdrops of the titles on it, and popular titles get their details refreshed again.",
+      "Household members now get a notification when a title they requested finishes downloading — once per request, not once per episode.",
+      "Big Sonarr imports no longer trip the webhook rate limit: only wrong secrets count against it, and a burst of events runs one library sync instead of one each. Webhooks can also send their secret in an X-Marquee-Secret header to keep it out of proxy logs.",
+      "ntfy notifications for titles with accents, non-Latin scripts or emoji now arrive instead of silently failing.",
+      "Removing a household member, or changing someone's password, now signs them out of the website right away (changing your own password signs you out too).",
+      "Hardening: the login rate limit can no longer be dodged with a fake X-Forwarded-For header, first-run setup can't create two admins, and every page sends basic security headers.",
+      "Pages now show a loading skeleton while they fetch, a friendly error with a Try again button when TMDb or a server doesn't answer, and a proper Not Found page.",
+      "A new daily Database Cleanup job (Settings → Jobs) trims old notifications, activity and disk snapshots, and expired app sign-ins.",
+      "Syncs can no longer run on top of each other, and Plex show scanning is gentler on big libraries.",
+      "The Docker container now shuts its database down cleanly on docker stop.",
+      "Marquee for Mac: right-click any poster or person for Open, Add/Request, Favorite, Copy Link and Open in Browser; title pages have Copy Link and Open in Browser too; posters work with VoiceOver.",
+      "Marquee for Mac: clicking a notification while the app is closed now opens that title, the app reconnects on its own when the network returns or the Mac wakes, and a banner shows when the server can't be reached.",
+      "Marquee for Mac: a failed page on Movies/Series shows a Retry row instead of ending the list, saving unrelated settings no longer jumps the list back to the top, ⌘F focuses search, and big backdrops use much less memory.",
+    ],
+  },
+  {
     version: "0.26.0",
     date: "2026-09-17",
     changes: [
