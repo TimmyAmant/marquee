@@ -35,9 +35,13 @@ jobs:
 
   mac:
     name: Mac app (build and tests)
-    runs-on: macos-15
+    # The app needs a current SDK (it relies on AppKit types that are only
+    # Sendable from the macOS 26 SDK on), so this runs on the newest image
+    # and its default Xcode rather than macos-15's Xcode 16.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - run: xcodebuild -version
       - run: brew install xcodegen
       - name: Generate project
         working-directory: mac
