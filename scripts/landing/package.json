@@ -1,0 +1,12 @@
+{
+  "name": "marquee-landing-render",
+  "private": true,
+  "description": "Renders the landing page's product screenshots and poster art (site/assets/img).",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  }
+}

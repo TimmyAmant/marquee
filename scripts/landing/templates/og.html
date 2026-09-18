@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- The 1200x630 social card (site/assets/og.jpg). The screenshot slot is the
+     rendered web title page, cropped; render.mjs fills it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..700,0,0;1,9..144,400..700,0,1&family=Manrope:wght@400..800&display=block">
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1200px;height:630px;overflow:hidden;background:#0a0a0c}
+.sign{position:absolute;inset:14px;border-radius:30px;background:linear-gradient(180deg,#1d1b23,#0f0e12);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px #000}
+.inner{position:absolute;inset:44px;border-radius:14px;overflow:hidden;background:#0a0a0c;box-shadow:0 0 0 1px #2c2a35}
+.inner::before{content:"";position:absolute;inset:0;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.glow{position:absolute;left:-120px;top:-220px;width:900px;height:620px;background:radial-gradient(closest-side,rgba(224,166,62,.16),rgba(224,166,62,0))}
+.copy{position:absolute;left:58px;top:58px;width:600px}
+.brand{position:relative;display:inline-block;font:600 34px/1 Fraunces;color:#f3f1ea;letter-spacing:-.01em}
+.brand::after{content:"";position:absolute;right:-13px;top:0;width:8px;height:8px;border-radius:50%;background:#e0a63e;box-shadow:0 0 10px rgba(224,166,62,.7)}
+h1{margin-top:62px;font:600 88px/.95 Fraunces;letter-spacing:-.034em;color:#f3f1ea}
+h1 em{font-style:italic;font-weight:500;color:#e0a63e}
+p{margin-top:28px;font:500 23px/1.45 Manrope;color:#a8a4b3;max-width:470px}
+.shot{position:absolute;left:606px;top:118px;width:620px;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px #3a3745,0 30px 70px rgba(0,0,0,.7)}
+.shot img{display:block;width:100%}
+.bulb{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:radial-gradient(circle at 40% 36%,#fff6de 0 20%,#f6c969 52%,#d4922b);box-shadow:0 0 5px 1px rgba(246,201,105,.85),0 0 16px 4px rgba(224,166,62,.3)}
+</style>
+</head>
+<body>
+<div class="sign" id="sign"></div>
+<div class="inner"><div class="glow"></div>
+  <div class="copy"><span class="brand">Marquee</span>
+    <h1>Your library,<br><em>in lights.</em></h1>
+    <p>A self-hosted dashboard for Plex, Jellyfin, Sonarr and Radarr. Open source.</p></div>
+  <div class="shot"><img data-slot="shot" alt=""></div>
+</div>
+<script>
+// Bulbs evenly spaced along the sign's rounded border.
+const s = document.getElementById('sign'), W = s.clientWidth, H = s.clientHeight, ins = 15, r = 30 - ins, w = W - 2 * ins, h = H - 2 * ins;
+const sx = w - 2 * r, sy = h - 2 * r, arc = Math.PI * r / 2, P = 2 * sx + 2 * sy + 4 * arc, n = Math.round(P / 25), st = P / n;
+const corner = (cx, cy, a0) => (t) => [cx + r * Math.cos(a0 + t * Math.PI / 2), cy + r * Math.sin(a0 + t * Math.PI / 2)];
+const segs = [[sx, (t) => [ins + r + t * sx, ins]], [arc, corner(ins + w - r, ins + r, -Math.PI / 2)], [sy, (t) => [ins + w, ins + r + t * sy]], [arc, corner(ins + w - r, ins + h - r, 0)],
+  [sx, (t) => [ins + w - r - t * sx, ins + h]], [arc, corner(ins + r, ins + h - r, Math.PI / 2)], [sy, (t) => [ins, ins + h - r - t * sy]], [arc, corner(ins + r, ins + r, Math.PI)]];
+for (let i = 0; i < n; i++) {
+  let d = i * st;
+  for (const [len, fn] of segs) { if (d <= len) { const [x, y] = fn(d / len); const b = document.createElement('i'); b.className = 'bulb'; b.style.left = x + 'px'; b.style.top = y + 'px'; s.appendChild(b); break; } d -= len; }
+}
+</script>
+</body>
+</html>

@@ -11,6 +11,8 @@ it's already in your Plex or Jellyfin library or being downloaded, and send
 anything missing straight to Sonarr or Radarr — all from one page, without
 digging through three different apps.
 
+**Website:** [timmyamant.github.io/marquee](https://timmyamant.github.io/marquee/)
+
 Runs on your home network (Unraid, Synology, a spare box, whatever) next to
 the Plex/Jellyfin/Sonarr/Radarr you already have. Not a hosted service — your
 data, your server.

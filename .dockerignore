@@ -11,3 +11,6 @@ mac
 docs
 unraid-templates
 *.md
+site
+scripts/landing
+.github

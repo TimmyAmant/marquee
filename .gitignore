@@ -47,3 +47,8 @@ mac/DerivedData/
 *.xcuserstate
 xcuserdata/
 mac/Marquee.xcodeproj/
+
+# landing page: renderer deps, render cache and local preview captures
+/scripts/landing/node_modules/
+/scripts/landing/.cache/
+/site/_preview/

@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.27.1",
+    date: "2026-09-18",
+    changes: [
+      "Marquee has a website: timmyamant.github.io/marquee — what it does, how it fits in front of Plex, Jellyfin, Sonarr and Radarr, the Mac app, and how to install it. Every film, person and streaming service in its screenshots is made up.",
+    ],
+  },
+  {
     version: "0.27.0",
     date: "2026-09-18",
     changes: [
