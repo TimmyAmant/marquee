@@ -1,0 +1,56 @@
+name: CI
+
+# Checks every push and pull request, so a broken build is caught when it
+# lands rather than when the next release image fails to build.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Website (lint, types, tests, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx eslint .
+      - run: npx tsc --noEmit
+      - run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          # Same placeholder the Dockerfile uses: the build imports the DB
+          # client but never connects.
+          DATABASE_URL: postgres://build:build@build-time-placeholder:5432/build
+          NEXT_TELEMETRY_DISABLED: 1
+
+  mac:
+    name: Mac app (build and tests)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - name: Generate project
+        working-directory: mac
+        run: xcodegen generate
+      - name: Build and test
+        working-directory: mac
+        run: |
+          set -o pipefail
+          xcodebuild -project Marquee.xcodeproj -scheme Marquee \
+            -destination 'platform=macOS' -derivedDataPath build/DerivedData \
+            test | tee xcodebuild.log
+          if grep -Eq '\.swift:[0-9]+:[0-9]+: warning:' xcodebuild.log; then
+            echo "::error::The Mac build has compiler warnings — it's kept at zero."
+            grep -E '\.swift:[0-9]+:[0-9]+: warning:' xcodebuild.log | sort -u
+            exit 1
+          fi

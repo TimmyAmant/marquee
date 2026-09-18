@@ -51,30 +51,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
         token.username = user.username;
         token.rememberMe = user.rememberMe ?? false;
         token.role = user.role;
+        token.signedInAt = Date.now();
+        return token;
       }
+      if (!token.userId) return token;
+
+      // Checked on every request rather than trusted from the 30-day JWT:
+      // a removed member, or anyone signed in before their password was
+      // changed, loses their browser session right away (returning null
+      // clears the cookie) — the same moment their API tokens are revoked.
+      // Role is read fresh here too, since it can change after sign-in
+      // (promotion, demotion, the admin-pinning migration).
+      const [row] = await db
+        .select({ role: users.role, passwordChangedAt: users.passwordChangedAt })
+        .from(users)
+        .where(eq(users.id, token.userId as string))
+        .limit(1);
+      if (!row) return null;
+      // Tokens from before this field existed have no signedInAt; fall back
+      // to when the JWT was issued.
+      const signedInAt =
+        typeof token.signedInAt === "number" ? token.signedInAt : (token.iat ?? 0) * 1000;
+      if (row.passwordChangedAt && row.passwordChangedAt.getTime() > signedInAt) return null;
+      token.role = row.role;
       return token;
     },
-    async session({ session, token }) {
+    session({ session, token }) {
       if (session.user && token.userId) {
         session.user.id = token.userId as string;
         session.user.username = token.username as string;
-        // Always read fresh from the DB rather than trusting whatever was
-        // baked into the JWT — role can change after sign-in (promotion,
-        // demotion, the admin-pinning migration), and with a 30-day JWT a
-        // one-time-only fetch would leave a demoted admin's stale token
-        // granting admin access until the token naturally expires.
-        const [row] = await db
-          .select({ role: users.role })
-          .from(users)
-          .where(eq(users.id, token.userId as string))
-          .limit(1);
-        session.user.role = row?.role ?? "member";
+        session.user.role = (token.role as typeof session.user.role) ?? "member";
       }
       return session;
     },

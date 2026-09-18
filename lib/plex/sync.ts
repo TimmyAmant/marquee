@@ -1,5 +1,6 @@
 import { and, desc, eq, gt, inArray, isNotNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
+import { singleFlight } from "@/lib/async/single-flight";
 import { plexServers, plexLibraryItems, integrationCredentials } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getPlexCredential } from "@/lib/integrations/credentials";
@@ -9,8 +10,13 @@ import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 import { EMPTY_MEDIA_DETAIL, mergeMediaDetail } from "@/lib/media-info";
 import type { MediaDetail } from "@/lib/media-info";
+import { mapWithLimit } from "@/lib/async/map-limit";
+import { rowsMissingFromSync } from "@/lib/library/prune";
 
-export async function syncPlexLibrary(userId: string): Promise<{ serverCount: number; itemCount: number }> {
+/** How many shows' episode listings to fetch from Plex at once. */
+const SHOW_FETCH_CONCURRENCY = 6;
+
+async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number; itemCount: number }> {
   const credential = await getPlexCredential(userId);
   if (!credential) throw new Error("Plex is not connected for this user");
 
@@ -42,6 +48,13 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
       continue;
     }
 
+    // Every rating key this run saw on this server. Once every section has
+    // been listed in full, anything stored that isn't in here was deleted
+    // from Plex and gets removed below — otherwise a deleted title would
+    // keep showing "In library" forever.
+    const seenRatingKeys = new Set<string>();
+    let listedEverySection = true;
+
     for (const section of sections) {
       if (section.type !== "movie" && section.type !== "show") continue;
       const mediaType = section.type === "movie" ? "movie" : "tv";
@@ -50,18 +63,23 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
       try {
         items = await plex.getSectionItems(serverUri, credential.authToken, section.key);
       } catch {
+        listedEverySection = false;
         continue;
       }
 
       // TV shows need one extra request per item (Plex only reports
       // Media/Part on individual episodes, not the show itself) — fetch
-      // those concurrently rather than one at a time in the loop below, or
-      // sync time would scale with the number of shows in the library.
+      // those a few at a time rather than one by one in the loop below, or
+      // sync time would scale with the number of shows in the library. A
+      // small cap keeps a big library from firing a thousand requests at
+      // the Plex server in the same instant.
       const sizeByRatingKey = new Map<string, number | null>();
       const folderPathByRatingKey = new Map<string, string | null>();
       const detailByRatingKey = new Map<string, MediaDetail>();
-      await Promise.all(
-        items.map(async (item) => {
+      await mapWithLimit(
+        items,
+        mediaType === "movie" ? items.length : SHOW_FETCH_CONCURRENCY,
+        async (item) => {
           if (mediaType === "movie") {
             sizeByRatingKey.set(item.ratingKey, plex.getFileSize(item));
             // Resolution, codecs, container and bitrate all ride along on the
@@ -75,7 +93,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
           sizeByRatingKey.set(item.ratingKey, info.sizeBytes);
           folderPathByRatingKey.set(item.ratingKey, info.folderPath);
           detailByRatingKey.set(item.ratingKey, info.detail);
-        }),
+        },
       );
 
       // Dynamic range is the one field a section listing can't answer: Plex
@@ -105,6 +123,7 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
       }
 
       for (const item of items) {
+        seenRatingKeys.add(item.ratingKey);
         const parsed = plex.parseExternalIds(item);
         let { tmdbId } = parsed;
         const { tvdbId, imdbId } = parsed;
@@ -168,6 +187,17 @@ export async function syncPlexLibrary(userId: string): Promise<{ serverCount: nu
             },
           });
         itemCount++;
+      }
+    }
+
+    if (listedEverySection) {
+      const stored = await db
+        .select({ id: plexLibraryItems.id, key: plexLibraryItems.ratingKey })
+        .from(plexLibraryItems)
+        .where(eq(plexLibraryItems.plexServerId, serverRow.id));
+      const gone = rowsMissingFromSync(stored, seenRatingKeys);
+      for (let i = 0; i < gone.length; i += 500) {
+        await db.delete(plexLibraryItems).where(inArray(plexLibraryItems.id, gone.slice(i, i + 500)));
       }
     }
   }
@@ -325,4 +355,10 @@ export async function getPlexFileInfo(
   if (!match) return null;
   const { filePath, ...detail } = match;
   return { ...detail, path: filePath };
+}
+
+/** One Plex sync per user at a time — a second caller while one is running
+ * shares its result instead of starting another. */
+export function syncPlexLibrary(userId: string) {
+  return singleFlight(`plex-sync:${userId}`, () => runSyncPlexLibrary(userId));
 }

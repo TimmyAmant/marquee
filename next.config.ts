@@ -23,6 +23,17 @@ const nextConfig: NextConfig = {
   // server's answer apart from something else on the same host.
   async headers() {
     return [
+      // Baseline hardening for every response. Framing is deliberately left
+      // alone: plenty of self-hosters embed Marquee in Organizr or Homarr,
+      // and a frame-ancestors rule would break that.
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
       { source: "/api/v1", headers: [{ key: "X-Marquee-API", value: "1" }] },
       { source: "/api/v1/:path*", headers: [{ key: "X-Marquee-API", value: "1" }] },
     ];

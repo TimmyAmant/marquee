@@ -157,7 +157,7 @@ export async function updateHouseholdMember(
     .set({
       username,
       displayName,
-      ...(password ? { passwordHash: await hash(password) } : {}),
+      ...(password ? { passwordHash: await hash(password), passwordChangedAt: new Date() } : {}),
       ...(actor.isAdmin && input.autoApproveMovies !== undefined
         ? { autoApproveMovies: input.autoApproveMovies }
         : {}),

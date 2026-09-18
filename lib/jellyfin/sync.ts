@@ -1,5 +1,6 @@
 import { and, eq, inArray, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
+import { singleFlight } from "@/lib/async/single-flight";
 import { jellyfinServers, jellyfinLibraryItems, integrationCredentials } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getJellyfinCredential } from "@/lib/integrations/credentials";
@@ -9,8 +10,9 @@ import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 import { EMPTY_MEDIA_DETAIL } from "@/lib/media-info";
 import type { MediaDetail } from "@/lib/media-info";
+import { rowsMissingFromSync } from "@/lib/library/prune";
 
-export async function syncJellyfinLibrary(
+async function runSyncJellyfinLibrary(
   userId: string,
 ): Promise<{ itemCount: number }> {
   const credential = await getJellyfinCredential(userId);
@@ -43,9 +45,11 @@ export async function syncJellyfinLibrary(
     return { itemCount: 0 };
   }
   let itemCount = 0;
+  const seenItemIds = new Set<string>();
 
   for (const item of items) {
     if (item.Type !== "Movie" && item.Type !== "Series") continue;
+    seenItemIds.add(item.Id);
     const mediaType: MediaType = item.Type === "Movie" ? "movie" : "tv";
 
     const parsed = jellyfin.parseExternalIds(item);
@@ -104,6 +108,18 @@ export async function syncJellyfinLibrary(
         },
       });
     itemCount++;
+  }
+
+  // The listing above is the whole server, so anything stored that it no
+  // longer includes was deleted from Jellyfin — drop it, or the title would
+  // keep showing "In library" forever.
+  const stored = await db
+    .select({ id: jellyfinLibraryItems.id, key: jellyfinLibraryItems.itemId })
+    .from(jellyfinLibraryItems)
+    .where(eq(jellyfinLibraryItems.jellyfinServerId, serverRow.id));
+  const gone = rowsMissingFromSync(stored, seenItemIds);
+  for (let i = 0; i < gone.length; i += 500) {
+    await db.delete(jellyfinLibraryItems).where(inArray(jellyfinLibraryItems.id, gone.slice(i, i + 500)));
   }
 
   return { itemCount };
@@ -233,4 +249,9 @@ export async function getJellyfinFileInfo(
   if (!match) return null;
   const { filePath, ...detail } = match;
   return { ...detail, path: filePath };
+}
+
+/** One Jellyfin sync per user at a time — see syncPlexLibrary. */
+export function syncJellyfinLibrary(userId: string) {
+  return singleFlight(`jellyfin-sync:${userId}`, () => runSyncJellyfinLibrary(userId));
 }

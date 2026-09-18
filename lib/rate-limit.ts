@@ -68,8 +68,19 @@ export function recordFailedAttempt(key: string, windowMs: number): void {
   bucket.count++;
 }
 
+/**
+ * The address rate limits are keyed on: the LAST X-Forwarded-For hop — the
+ * one the nearest proxy (Cloudflare, nginx, Caddy) appended — never the
+ * first: a client can put anything it likes at the front of that header, so
+ * keying on the first hop let anyone dodge the login limit by changing it
+ * on every attempt. A request with no proxy in front can still send a fake
+ * header, but that's only reachable from the LAN.
+ */
 export function getClientIp(request: Request): string {
   const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+  if (forwardedFor) {
+    const hops = forwardedFor.split(",").map((hop) => hop.trim()).filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
+  }
   return request.headers.get("x-real-ip") ?? "unknown";
 }

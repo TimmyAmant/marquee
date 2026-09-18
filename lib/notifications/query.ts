@@ -55,8 +55,15 @@ export async function createNotification(input: {
   title: string;
   eventType: NotificationEventType;
   message: string;
+  /** Also post to Discord / ntfy / the generic webhook. Those channels are
+   * household-wide, so a second notification about the same event (e.g. the
+   * requester's copy of a download the admin was already told about) passes
+   * false to avoid posting it twice. */
+  relay?: boolean;
 }): Promise<void> {
-  await db.insert(notifications).values(input);
+  const { relay = true, ...row } = input;
+  await db.insert(notifications).values(row);
+  if (!relay) return;
 
   // Best-effort relay to every configured channel — a channel being down or
   // unconfigured should never break the in-app notification (already saved

@@ -37,14 +37,19 @@ export async function upsertTitleLight(input: LightTitleInput) {
     .values(values)
     .onConflictDoUpdate({
       target: [titles.mediaType, titles.tmdbId],
+      // A light save comes from a list (credits, a studio's catalog) that
+      // often leaves fields out — a person's credits carry no backdrop, for
+      // one — so it only ever fills gaps and never blanks what a full fetch
+      // stored. It also leaves `refreshedAt` alone: bumping it here would
+      // keep a popular title looking fresh forever, so its full details
+      // (status, IDs) would never get re-fetched.
       set: {
         name: values.name,
-        overview: values.overview,
-        posterPath: values.posterPath,
-        backdropPath: values.backdropPath,
-        releaseDate: values.releaseDate,
-        firstAirDate: values.firstAirDate,
-        refreshedAt: values.refreshedAt,
+        overview: sql`coalesce(${titles.overview}, excluded.overview)`,
+        posterPath: sql`coalesce(excluded.poster_path, ${titles.posterPath})`,
+        backdropPath: sql`coalesce(excluded.backdrop_path, ${titles.backdropPath})`,
+        releaseDate: sql`coalesce(excluded.release_date, ${titles.releaseDate})`,
+        firstAirDate: sql`coalesce(excluded.first_air_date, ${titles.firstAirDate})`,
       },
     })
     .returning();

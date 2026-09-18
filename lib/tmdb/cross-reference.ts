@@ -12,6 +12,20 @@ import { findByTvdbId } from "@/lib/tmdb/client";
  * client, so there's no real cost being traded away here.
  */
 export async function resolveTmdbIdFromTvdbId(tvdbId: number): Promise<number | null> {
-  const result = await findByTvdbId(tvdbId).catch(() => null);
-  return result?.tv_results?.[0]?.id ?? null;
+  return (await lookupTmdbIdFromTvdbId(tvdbId)).tmdbId;
+}
+
+/** Same lookup, but tells "TMDb has no match for this show" apart from "the
+ * lookup itself failed" — callers that delete rows for anything they didn't
+ * see need the difference: a show TMDb simply doesn't know is safe to leave
+ * out, while a failed lookup means the picture is incomplete. */
+export async function lookupTmdbIdFromTvdbId(
+  tvdbId: number,
+): Promise<{ tmdbId: number | null; failed: boolean }> {
+  try {
+    const result = await findByTvdbId(tvdbId);
+    return { tmdbId: result?.tv_results?.[0]?.id ?? null, failed: false };
+  } catch {
+    return { tmdbId: null, failed: true };
+  }
 }

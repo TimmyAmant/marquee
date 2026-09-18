@@ -1,4 +1,5 @@
 import { hash } from "argon2";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
@@ -56,13 +57,25 @@ export async function createFirstAdmin(
 
   const { username, password, displayName } = parsed.data;
   const passwordHash = await hash(password);
-  // Only ever runs for the very first account (guarded above), so it's always
-  // the one that becomes admin — matches the one-off data migration that
-  // promotes the earliest existing user on already-running installs.
-  const [user] = await db
-    .insert(users)
-    .values({ username, passwordHash, displayName, role: "admin" })
-    .returning();
+  // Only ever runs for the very first account, so it's always the one that
+  // becomes admin — matches the one-off data migration that promotes the
+  // earliest existing user on already-running installs. The check above is
+  // only a fast path: two first-run submits landing together would both
+  // pass it, so the real check happens again under a transaction-scoped
+  // lock, where the second one waits for the first and then sees its user.
+  const user = await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('marquee-first-admin-setup'))`);
+    const [existing] = await tx.select({ id: users.id }).from(users).limit(1);
+    if (existing) return null;
+    const [created] = await tx
+      .insert(users)
+      .values({ username, passwordHash, displayName, role: "admin" })
+      .returning();
+    return created;
+  });
+  if (!user) {
+    return fail("setup_complete", "Setup has already been completed. Please sign in instead.");
+  }
 
   return { ok: true, user };
 }

@@ -49,4 +49,28 @@ echo "[entrypoint] Running database migrations..."
 npx drizzle-kit migrate
 
 echo "[entrypoint] Starting Marquee..."
-exec "$@"
+# Not `exec`: this script stays PID 1 so that on `docker stop` it can stop
+# the app first and then shut Postgres down cleanly, instead of Docker
+# killing Postgres mid-write when the stop timeout runs out.
+stop_postgres() {
+  su postgres -c "$PG_BIN/pg_ctl -D $PGDATA -m fast -w stop" >/dev/null 2>&1 || true
+}
+shutdown() {
+  echo "[entrypoint] Stopping Marquee..."
+  kill -TERM "$APP_PID" 2>/dev/null || true
+  wait "$APP_PID" 2>/dev/null || true
+  echo "[entrypoint] Stopping Postgres..."
+  stop_postgres
+  exit 0
+}
+trap shutdown TERM INT
+
+"$@" &
+APP_PID=$!
+set +e
+wait "$APP_PID"
+STATUS=$?
+# Only reached when the app exited on its own (a signal runs shutdown above
+# and exits there) — still leave Postgres in a clean state.
+stop_postgres
+exit "$STATUS"

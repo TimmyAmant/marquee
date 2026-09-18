@@ -46,6 +46,9 @@ export const users = pgTable(
     // movies can be trusted while TV still gets reviewed.
     autoApproveMovies: boolean("auto_approve_movies").default(false).notNull(),
     autoApproveTv: boolean("auto_approve_tv").default(false).notNull(),
+    // Browser sessions signed in before this moment are no longer valid —
+    // see the jwt callback in auth.ts. Null until the password first changes.
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],

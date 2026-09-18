@@ -2,12 +2,13 @@ import { syncAllConnectedPlexUsers } from "@/lib/plex/sync";
 import { syncAllConnectedJellyfinUsers } from "@/lib/jellyfin/sync";
 import { syncAllConnectedArrUsers } from "@/lib/arr/sync";
 import { snapshotDiskSpaceForAllConnectedUsers } from "@/lib/integrations/disk-space";
+import { pruneOldRecords } from "@/lib/jobs/cleanup";
 import { fail, type CoreResult } from "@/lib/core-result";
 
 // The scheduled maintenance jobs (see instrumentation.ts) as listed on
 // Settings → Jobs and GET /api/v1/settings/jobs, plus the manual "Run now".
 
-export const JOB_IDS = ["plex-sync", "jellyfin-sync", "arr-sync", "disk-space-snapshot"] as const;
+export const JOB_IDS = ["plex-sync", "jellyfin-sync", "arr-sync", "disk-space-snapshot", "cleanup"] as const;
 export type JobId = (typeof JOB_IDS)[number];
 
 export type JobDefinition = { id: JobId; name: string; schedule: string; description: string };
@@ -37,6 +38,13 @@ export const JOBS: JobDefinition[] = [
     schedule: "Daily at 3:00 AM",
     description: "Records free/used disk space for the storage forecast shown elsewhere in the app.",
   },
+  {
+    id: "cleanup",
+    name: "Database Cleanup",
+    schedule: "Daily at 3:30 AM",
+    description:
+      "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever.",
+  },
 ];
 
 const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
@@ -44,6 +52,7 @@ const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "jellyfin-sync": syncAllConnectedJellyfinUsers,
   "arr-sync": syncAllConnectedArrUsers,
   "disk-space-snapshot": snapshotDiskSpaceForAllConnectedUsers,
+  cleanup: pruneOldRecords,
 };
 
 export function isJobId(value: string): value is JobId {

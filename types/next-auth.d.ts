@@ -14,6 +14,8 @@ declare module "next-auth" {
     username?: string;
     rememberMe?: boolean;
     role?: UserRole;
+    /** Epoch ms of the password sign-in this token came from. */
+    signedInAt?: number;
   }
 }
 
@@ -23,5 +25,7 @@ declare module "next-auth/jwt" {
     username?: string;
     rememberMe?: boolean;
     role?: UserRole;
+    /** Epoch ms of the password sign-in this token came from. */
+    signedInAt?: number;
   }
 }

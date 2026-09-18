@@ -1,5 +1,6 @@
 import { and, eq, notInArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
+import { singleFlight } from "@/lib/async/single-flight";
 import { arrStatusCache, integrationCredentials } from "@/lib/db/schema";
 import type { ArrProvider } from "@/lib/db/schema";
 import { getArrCredential } from "@/lib/integrations/credentials";
@@ -7,10 +8,10 @@ import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-s
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
-import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
+import { lookupTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 
-export async function syncArrLibrary(
+async function runSyncArrLibrary(
   userId: string,
   provider: ArrProvider,
 ): Promise<{ count: number }> {
@@ -20,7 +21,7 @@ export async function syncArrLibrary(
 
   let count = 0;
   const seenTmdbIds: number[] = [];
-  let unresolvedCount = 0;
+  let failedLookupCount = 0;
 
   if (provider === "radarr") {
     const [movies, queuedIds] = await Promise.all([
@@ -84,12 +85,15 @@ export async function syncArrLibrary(
       sonarr.getQueuedSeriesIds(config).catch(() => new Set<number>()),
     ]);
     for (const series of allSeries) {
-      const resolvedTmdbId = await resolveTmdbIdFromTvdbId(series.tvdbId);
+      const lookup = await lookupTmdbIdFromTvdbId(series.tvdbId);
+      const resolvedTmdbId = lookup.tmdbId;
       if (!resolvedTmdbId) {
-        // Couldn't resolve this run (e.g. transient TMDb lookup failure) — the
-        // series may still genuinely exist in Sonarr, so don't let it fall out
-        // of `seenTmdbIds` and get treated as deleted below.
-        unresolvedCount++;
+        // A failed lookup (e.g. TMDb briefly unreachable) means this series
+        // may well have a cached row from an earlier run, so the cleanup
+        // below has to sit this one out. A series TMDb simply has no match
+        // for never had a row to begin with, so it doesn't block cleanup —
+        // otherwise one obscure show would switch cleanup off for good.
+        if (lookup.failed) failedLookupCount++;
         continue;
       }
       const tmdbId = await applyTmdbIdOverride(userId, "tv", resolvedTmdbId).catch(() => resolvedTmdbId);
@@ -134,11 +138,11 @@ export async function syncArrLibrary(
 
   // Titles removed from Radarr/Sonarr directly (outside Marquee) won't appear
   // in the list above — drop their cached rows so they don't linger forever
-  // as "still tracked" with a dead arrId. Skip this when some sonarr series
-  // failed to resolve to a tmdbId this run — `seenTmdbIds` would be an
-  // incomplete picture of what's actually still in Sonarr, and we'd wrongly
-  // delete rows for series that are still there.
-  if (unresolvedCount === 0) {
+  // as "still tracked" with a dead arrId. Skip this when a Sonarr series's
+  // TMDb lookup failed this run — `seenTmdbIds` would be an incomplete
+  // picture of what's actually still in Sonarr, and we'd wrongly delete rows
+  // for series that are still there.
+  if (failedLookupCount === 0) {
     if (seenTmdbIds.length > 0) {
       await db
         .delete(arrStatusCache)
@@ -196,4 +200,9 @@ export async function syncAllConnectedArrUsers(): Promise<void> {
       });
     }
   }
+}
+
+/** One sync per user and provider at a time — see syncPlexLibrary. */
+export function syncArrLibrary(userId: string, provider: ArrProvider) {
+  return singleFlight(`arr-sync:${provider}:${userId}`, () => runSyncArrLibrary(userId, provider));
 }

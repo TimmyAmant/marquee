@@ -12,6 +12,7 @@ export async function register() {
   const { syncAllConnectedJellyfinUsers } = await import("@/lib/jellyfin/sync");
   const { syncAllConnectedArrUsers } = await import("@/lib/arr/sync");
   const { snapshotDiskSpaceForAllConnectedUsers } = await import("@/lib/integrations/disk-space");
+  const { pruneOldRecords } = await import("@/lib/jobs/cleanup");
 
   cron.schedule("0 * * * *", () => {
     syncAllConnectedPlexUsers().catch((err) => {
@@ -30,6 +31,12 @@ export async function register() {
   cron.schedule("0 3 * * *", () => {
     snapshotDiskSpaceForAllConnectedUsers().catch((err) => {
       console.error("[disk-space-snapshot] scheduled snapshot failed:", err);
+    });
+  });
+
+  cron.schedule("30 3 * * *", () => {
+    pruneOldRecords().catch((err) => {
+      console.error("[cleanup] scheduled cleanup failed:", err);
     });
   });
 }

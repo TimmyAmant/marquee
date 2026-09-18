@@ -204,6 +204,13 @@
       "when": 1789700000000,
       "tag": "0028_add_media_detail_to_library_items",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789800000000,
+      "tag": "0029_add_password_changed_at",
+      "breakpoints": true
     }
   ]
 }

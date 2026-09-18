@@ -121,9 +121,12 @@ data, your server.
 ### Notifications
 - Bell icon in the nav polls for new activity: a title started downloading,
   finished downloading, or (for household members) one of your requests
-  was approved or declined.
+  was approved, declined, or is ready to watch.
 - Powered by Radarr/Sonarr webhooks — the URL and a per-account secret are
-  generated for you under **Settings → Integrations**.
+  generated for you under **Settings → Integrations**. If a reverse proxy
+  logs full URLs, you can drop `?secret=…` from the webhook URL and send it
+  as an `X-Marquee-Secret` header instead (Radarr/Sonarr → Connect →
+  Webhook → Headers).
 
 ### Favorites
 - One page listing every person and studio you've starred.
