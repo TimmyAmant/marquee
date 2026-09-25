@@ -1,5 +1,5 @@
 import { hash, verify } from "argon2";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
@@ -24,47 +24,43 @@ export type HouseholdMember = {
   /** When the profile photo last changed; null when there's none (lib/users/avatar.ts). */
   avatarUpdatedAt: Date | null;
   createdAt: Date;
+  /** Signs in with Plex / Jellyfin (lib/auth/media-signin.ts). Only
+   * whether — the linked ids themselves stay on the server. */
+  plexLinked: boolean;
+  jellyfinLinked: boolean;
+  /** False for an account made by Plex/Jellyfin sign-in or import that
+   * hasn't set a password yet. */
+  hasPassword: boolean;
 };
 
 export type Actor = { userId: string; isAdmin: boolean };
+
+const memberColumns = {
+  id: users.id,
+  username: users.username,
+  displayName: users.displayName,
+  role: users.role,
+  autoApproveMovies: users.autoApproveMovies,
+  autoApproveTv: users.autoApproveTv,
+  avatarUpdatedAt: users.avatarUpdatedAt,
+  createdAt: users.createdAt,
+  plexLinked: sql<boolean>`${users.plexUserId} is not null`,
+  jellyfinLinked: sql<boolean>`${users.jellyfinUserId} is not null`,
+  hasPassword: sql<boolean>`${users.passwordHash} is not null`,
+};
 
 /** Admins see every account (they're the ones who can edit/remove others);
  * members only ever see their own row, so household members can't see who
  * else lives in the house. */
 export async function listHouseholdMembersFor(actor: Actor): Promise<HouseholdMember[]> {
-  const rows = await db
-    .select({
-      id: users.id,
-      username: users.username,
-      displayName: users.displayName,
-      role: users.role,
-      autoApproveMovies: users.autoApproveMovies,
-      autoApproveTv: users.autoApproveTv,
-      avatarUpdatedAt: users.avatarUpdatedAt,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(asc(users.createdAt));
+  const rows = await db.select(memberColumns).from(users).orderBy(asc(users.createdAt));
 
   if (actor.isAdmin) return rows;
   return rows.filter((r) => r.id === actor.userId);
 }
 
 export async function getHouseholdMember(userId: string): Promise<HouseholdMember | null> {
-  const [row] = await db
-    .select({
-      id: users.id,
-      username: users.username,
-      displayName: users.displayName,
-      role: users.role,
-      autoApproveMovies: users.autoApproveMovies,
-      autoApproveTv: users.autoApproveTv,
-      avatarUpdatedAt: users.avatarUpdatedAt,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+  const [row] = await db.select(memberColumns).from(users).where(eq(users.id, userId)).limit(1);
   return row ?? null;
 }
 
@@ -126,7 +122,9 @@ const updateMemberSchema = z.object({
  * Changing your *own* password also takes `currentPassword`, so a browser
  * left signed in (or a stolen session cookie) can't be used to lock the
  * owner out of their account. The admin resetting someone else's password
- * doesn't need theirs — that's the household's only recovery path. */
+ * doesn't need theirs — that's the household's only recovery path — and an
+ * account that has no password yet (made by Plex/Jellyfin sign-in) sets
+ * its first one without. */
 export async function updateHouseholdMember(
   actor: Actor,
   input: {
@@ -201,6 +199,11 @@ const PASSWORD_CHANGE_WINDOW_MS = 15 * 60 * 1000;
  * argon2 check and refunded when it passes, so parallel guesses can't all
  * slip under the limit, and a correct password costs nothing. */
 async function verifyCurrentPassword(userId: string, currentPassword: unknown): Promise<CoreResult> {
+  const [row] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
+  // An account made by Plex/Jellyfin sign-in has no password to confirm:
+  // setting its first one needs only the session.
+  if (row && !row.passwordHash) return { ok: true };
+
   if (typeof currentPassword !== "string" || !currentPassword) {
     return fail("invalid", "Enter your current password to set a new one.");
   }
@@ -211,7 +214,6 @@ async function verifyCurrentPassword(userId: string, currentPassword: unknown): 
   }
   recordFailedAttempt(key, PASSWORD_CHANGE_WINDOW_MS);
 
-  const [row] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
   if (!row?.passwordHash || !(await verify(row.passwordHash, currentPassword))) {
     return fail("invalid", "Your current password is incorrect.");
   }

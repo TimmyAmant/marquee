@@ -57,6 +57,13 @@ export const users = pgTable(
     // none. Kept on the user row so every place that shows an account can
     // build a cache-busting photo URL without touching the image bytes.
     avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
+    // The Plex account (plex.tv numeric account id) and Jellyfin user (the
+    // admin's Jellyfin server's user id) this account signs in with, if any
+    // — see lib/auth/media-signin.ts. Set only by an explicit link, an admin
+    // import, or a first media-server sign-in; never guessed from a
+    // matching username or email.
+    plexUserId: text("plex_user_id").unique("users_plex_user_id_unique"),
+    jellyfinUserId: text("jellyfin_user_id").unique("users_jellyfin_user_id_unique"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],
@@ -583,6 +590,10 @@ export const appSettings = pgTable("app_settings", {
   ntfyUrlEnc: bytea("ntfy_url_enc"),
   ntfyUrlIv: bytea("ntfy_url_iv"),
   ntfyUrlTag: bytea("ntfy_url_tag"),
+  // "New accounts from Plex/Jellyfin sign-in": whether someone who may use
+  // the admin's Plex/Jellyfin server but has no Marquee account yet gets a
+  // member account on their first sign-in, or is told to ask the admin.
+  mediaServerSignup: boolean("media_server_signup").default(true).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

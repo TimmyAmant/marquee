@@ -21,6 +21,7 @@ describe("statusForCode", () => {
     expect(statusForCode("not_found")).toBe(404);
     expect(statusForCode("conflict")).toBe(409);
     expect(statusForCode("setup_complete")).toBe(409);
+    expect(statusForCode("expired")).toBe(410);
     expect(statusForCode("rate_limited")).toBe(429);
     expect(statusForCode("internal")).toBe(500);
     expect(statusForCode("upstream")).toBe(502);

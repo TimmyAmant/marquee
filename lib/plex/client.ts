@@ -22,7 +22,7 @@ const REQUEST_TIMEOUT_MS = 8000;
 // is a sync's job, not a page render's.
 const LIBRARY_TIMEOUT_MS = 120_000;
 
-function plexHeaders(clientId: string, token?: string) {
+export function plexHeaders(clientId: string, token?: string) {
   return {
     Accept: "application/json",
     "X-Plex-Product": PRODUCT,
@@ -37,6 +37,9 @@ export interface PlexPin {
   authToken: string | null;
 }
 
+// `strong=true` asks for a long random code instead of the 4-character one
+// meant for typing on a TV — the pin is only ever handed over inside the
+// app.plex.tv URL, and a short code would be guessable while it waits.
 export async function createPin(clientId: string): Promise<PlexPin> {
   const res = await fetch(`${PLEX_TV_BASE}/api/v2/pins?strong=true`, {
     method: "POST",

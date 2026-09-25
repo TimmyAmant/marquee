@@ -47,10 +47,30 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * credentials provider in auth.ts) and POST /api/v1/auth/login — same
  * buckets, so failures on one count against the other and neither can be
  * used to brute-force around the other's limit. Only failed attempts consume
- * budget. `ip` is getClientIp's answer, null when it can't be known.
- *
- * Two layers, so that guessing is slow without letting anyone lock the real
- * owner out:
+ * budget. `ip` is getClientIp's answer, null when it can't be known. The
+ * limits themselves are withLoginBudget's.
+ */
+export async function authenticateWithPassword(
+  username: string,
+  password: string,
+  ip: string | null,
+): Promise<PasswordLoginResult> {
+  return withLoginBudget("login", username, ip, async () => {
+    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    if (!user || !user.passwordHash) {
+      await verify(await getDummyHash(), password).catch(() => false);
+      return null;
+    }
+    return (await verify(user.passwordHash, password)) ? { user } : null;
+  });
+}
+
+/**
+ * Runs one sign-in attempt (`check` answers null for wrong credentials)
+ * under the password sign-in's limits, in buckets named by `scope` — "login"
+ * for Marquee passwords, "jellyfin-login" for Jellyfin passwords checked
+ * against the admin's Jellyfin server. Two layers, so that guessing is slow
+ * without letting anyone lock the real owner out:
  *  - Per client address (when known): 5 failures on one username, or 20
  *    across all of them, and that address is refused for the window. Only
  *    whoever made the failures is affected.
@@ -60,19 +80,22 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  *    right password still gets in, after at most a short wait.
  * Without a trusted address (no TRUSTED_PROXY_HOPS) there is no first layer:
  * everyone would share one address bucket, and filling it would lock
- * everyone out.
+ * everyone out. A `check` that throws (the service behind it unreachable)
+ * isn't anyone's failed guess: its attempt is refunded and the error passes
+ * through.
  */
-export async function authenticateWithPassword(
+export async function withLoginBudget<T extends object>(
+  scope: string,
   username: string,
-  password: string,
   ip: string | null,
-): Promise<PasswordLoginResult> {
+  check: () => Promise<T | null>,
+): Promise<({ ok: true } & T) | { ok: false; reason: "rate_limited" | "invalid_credentials" }> {
   const name = username.toLowerCase();
-  const usernameKey = `login:username:${name}`;
+  const usernameKey = `${scope}:username:${name}`;
   const clientLimits: [key: string, limit: number][] = ip
     ? [
-        [`login:client:${name}:${ip}`, LOGIN_CLIENT_LIMIT],
-        [`login:ip:${ip}`, LOGIN_IP_LIMIT],
+        [`${scope}:client:${name}:${ip}`, LOGIN_CLIENT_LIMIT],
+        [`${scope}:ip:${ip}`, LOGIN_IP_LIMIT],
       ]
     : [];
 
@@ -81,27 +104,30 @@ export async function authenticateWithPassword(
   }
 
   // The attempt is counted before the slow part, not after it: an argon2
-  // check takes long enough that a burst of parallel requests would all
-  // pass the read-only check above and each get a free guess. The slot is
-  // booked in the same synchronous step for the same reason. A correct
-  // password gets its attempt refunded below, so normal use costs nothing.
+  // check (or a round trip to Jellyfin) takes long enough that a burst of
+  // parallel requests would all pass the read-only check above and each get
+  // a free guess. The slot is booked in the same synchronous step for the
+  // same reason. A correct password gets its attempt refunded below, so
+  // normal use costs nothing.
   const wait = reserveSlot(usernameKey, loginBackoffMs(attemptCount(usernameKey)));
   recordFailedAttempt(usernameKey, LOGIN_WINDOW_MS);
   for (const [key] of clientLimits) recordFailedAttempt(key, LOGIN_WINDOW_MS);
   if (wait > 0) await sleep(wait);
 
-  const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-  if (!user || !user.passwordHash) {
-    await verify(await getDummyHash(), password).catch(() => false);
-    return { ok: false, reason: "invalid_credentials" };
-  }
+  const refund = () => {
+    refundAttempt(usernameKey);
+    for (const [key] of clientLimits) refundAttempt(key);
+  };
 
-  const valid = await verify(user.passwordHash, password);
-  if (!valid) {
-    return { ok: false, reason: "invalid_credentials" };
+  let result: T | null;
+  try {
+    result = await check();
+  } catch (err) {
+    refund();
+    throw err;
   }
+  if (!result) return { ok: false, reason: "invalid_credentials" };
 
-  refundAttempt(usernameKey);
-  for (const [key] of clientLimits) refundAttempt(key);
-  return { ok: true, user };
+  refund();
+  return { ok: true, ...result };
 }

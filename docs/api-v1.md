@@ -54,6 +54,16 @@ where the real server needed something the core contract didn't spell out.
    whole-series request it always did, and a server older than this simply
    leaves the new fields out — treat missing as null/false and keep the
    whole-series Request button.
+10. **Sign in with Plex / Jellyfin, linked accounts, import (additive).**
+    `GET /server-info` has `signIn`; new public `POST /auth/plex/start`,
+    `POST /auth/plex/poll` and `POST /auth/jellyfin` answer like
+    `POST /auth/login`; `/me` and `HouseholdMember` carry `linked` and
+    `hasPassword`; `/me/links/*`, `/users/import/{provider}` and
+    `/settings/sign-in` are new. A server older than this has no `signIn` in
+    `server-info` — offer password sign-in only. Accounts made through Plex
+    or Jellyfin may have no password (`hasPassword: false`): they set their
+    first one without `currentPassword`. New error code `410 expired` (a
+    Plex poll whose handle is used, unknown or past its 10 minutes).
 
 ---
 
@@ -61,7 +71,8 @@ where the real server needed something the core contract didn't spell out.
 
 - Base: `{server}/api/v1`. JSON bodies, `Content-Type: application/json`, camelCase keys.
 - Auth: `Authorization: Bearer mqt_<43 base64url chars>` on everything except
-  `server-info`, `auth/login` and `auth/setup`.
+  `server-info`, `auth/login`, `auth/setup`, `auth/plex/start`,
+  `auth/plex/poll` and `auth/jellyfin`.
 - Timestamps: ISO-8601 UTC with milliseconds. Calendar dates: `"YYYY-MM-DD"`.
   `year` fields are 4-character strings (`"1999"`) or `null`.
 - Nullable fields are always present.
@@ -81,7 +92,8 @@ Non-2xx responses are `{"error": "<message safe to show>", "code": "<code>"}`.
 | 404 | `not_found` | Unknown id, bad path segment (non-numeric id, unknown media type), unknown endpoint |
 | 409 | `conflict` | State conflict: already requested, already reviewed, integration not connected / not fully configured, not tracked in Sonarr/Radarr |
 | 409 | `setup_complete` | `auth/setup` once an account exists |
-| 429 | `rate_limited` | Login or setup rate limit |
+| 410 | `expired` | Plex sign-in/link poll with a handle that's used, unknown or older than 10 minutes — start again |
+| 429 | `rate_limited` | Login, setup, Plex/Jellyfin sign-in rate limit |
 | 500 | `internal` | Server bug; details are only in the server log |
 | 502 | `upstream` | A connected service (TMDb, Sonarr, Radarr, Plex, Jellyfin, Trakt…) failed, timed out, or TMDb isn't configured |
 
@@ -167,13 +179,26 @@ null where the underlying query doesn't carry it.
 
 ### `GET /server-info` — public
 
-Cheap: one `hasAnyUser()` query (3 s timeout), no integrations.
+Cheap: a few small queries (3 s timeout together), no calls to integrations.
 
 ```json
-{ "app": "marquee", "apiVersion": 1, "version": "0.22.0", "setupComplete": true, "status": "ok" }
+{
+  "app": "marquee",
+  "apiVersion": 1,
+  "version": "0.22.0",
+  "setupComplete": true,
+  "status": "ok",
+  "signIn": { "password": true, "plex": true, "jellyfin": false }
+}
 ```
 
-Database unreachable → still `200` with `"setupComplete": null, "status": "degraded"`.
+`signIn` says which sign-in buttons to show: `plex` / `jellyfin` are true
+while the admin has that server connected in Settings → Integrations (Plex
+also needs its first library sync done). Missing on older servers — show
+password sign-in only.
+
+Database unreachable → still `200` with `"setupComplete": null, "status": "degraded"`
+and `signIn` password-only.
 Legacy (pre-0.22.0) servers redirect this path to `/login` (HTML) — see core contract.
 
 ### `POST /auth/login` — public
@@ -236,6 +261,84 @@ Revokes the calling token only (other devices stay signed in).
 { "ok": true }
 ```
 
+### Sign in with Plex / Jellyfin — public
+
+Who may sign in: a **Plex** account the admin's Plex server is shared with
+(a friend, a Plex Home user, or the server's owner), or a **Jellyfin** user
+of the admin's Jellyfin server. The first sign-in of someone with no linked
+Marquee account creates a **member** account for them (username from
+Plex/Jellyfin, made unique with a number; no password) — unless the admin
+turned "New accounts from Plex/Jellyfin sign-in" off (`GET /settings/sign-in`),
+then it's `403` "Ask the admin to add you first.". Accounts are matched only
+by a link to that Plex/Jellyfin user, never by username or email; the Plex
+account that owns the server signs in as the admin (and is linked to it) if
+the admin has no Plex link yet.
+
+#### `POST /auth/plex/start` — public
+
+No body. Starts a Plex PIN on the server.
+
+```json
+{
+  "handle": "u8Zq3…43 chars…",
+  "authUrl": "https://app.plex.tv/auth#?clientID=…&code=…&context%5Bdevice%5D%5Bproduct%5D=Marquee",
+  "expiresAt": "2026-09-25T17:40:00.000Z"
+}
+```
+
+Open `authUrl` in the default browser, then poll with `handle` every 2 s
+until `expiresAt` (10 minutes). The handle is the only way to reach this
+sign-in — keep it to yourself; the Plex token never leaves the server.
+Errors: `409 conflict` "Plex sign-in isn't set up on this server.", `502
+upstream` "Couldn't start Plex sign-in. Try again.", `429 rate_limited` (30
+starts per client address per 10 minutes; 120 shared when the server can't
+tell addresses apart).
+
+#### `POST /auth/plex/poll` — public
+
+| Field | Type | |
+|---|---|---|
+| `handle` | string | required, from `start` |
+| `deviceName` | string | optional (deviation 2) |
+
+- **`202`** `{ "status": "pending" }` — not approved on plex.tv yet; poll again.
+- **`200`** — signed in; exactly the body of `POST /auth/login` (`{ token, expiresAt, user }`). The handle is used up.
+- **`410 expired`** "That Plex sign-in expired. Try again." — handle unknown, already used, or older than 10 minutes.
+- **`403 forbidden`** "This Plex account doesn't have access to this server." or "Ask the admin to add you first.".
+- `502 upstream` "Couldn't reach Plex. Try again." (the handle is used up; start again), `429 rate_limited`.
+
+```bash
+curl -s -X POST "$SERVER/api/v1/auth/plex/start"
+# → {"handle":"u8Zq…","authUrl":"https://app.plex.tv/auth#?…","expiresAt":"…"}
+curl -s -X POST "$SERVER/api/v1/auth/plex/poll" -H 'Content-Type: application/json' \
+  -d '{"handle":"u8Zq…","deviceName":"Anna’s Mac"}'
+# → 202 {"status":"pending"} … then 200 {"token":"mqt_…","expiresAt":"…","user":{…}}
+```
+
+#### `POST /auth/jellyfin` — public
+
+| Field | Type | |
+|---|---|---|
+| `username` | string | required — the Jellyfin username |
+| `password` | string | required — the Jellyfin password |
+| `deviceName` | string | optional |
+
+Checked with the admin's Jellyfin server (`/Users/AuthenticateByName`); the
+password is sent there and nowhere else, and never stored. Response: same as
+`POST /auth/login`.
+
+Errors: `400 invalid` "Enter your Jellyfin username and password.", `401
+invalid_credentials` "Incorrect Jellyfin username or password", `403
+forbidden` "Ask the admin to add you first.", `409 conflict` "Jellyfin
+sign-in isn't set up on this server.", `502 upstream` "Couldn't reach
+Jellyfin. Try again.", `429 rate_limited` — the same limits as `POST
+/auth/login`, in buckets of their own.
+
+```bash
+curl -s -X POST "$SERVER/api/v1/auth/jellyfin" -H 'Content-Type: application/json' \
+  -d '{"username":"anna","password":"…","deviceName":"Anna’s PC"}'
+```
+
 ### `GET /me` — user
 
 ```json
@@ -248,9 +351,16 @@ Revokes the calling token only (other devices stay signed in).
   "avatarUrl": "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549",
   "autoApproveMovies": false,
   "autoApproveTv": false,
-  "createdAt": "2026-09-17T17:10:57.821Z"
+  "createdAt": "2026-09-17T17:10:57.821Z",
+  "linked": { "plex": true, "jellyfin": false },
+  "hasPassword": true
 }
 ```
+
+`linked` says which media-server accounts this account signs in with (see
+"Linked accounts" in section 11). `hasPassword` is false for an account made
+by Plex/Jellyfin sign-in or import that hasn't set a password yet — it can
+set one with `PATCH /users/{id}` without `currentPassword`.
 
 Use `role` to decide which admin UI to show (Integrations/Activity/Jobs
 settings tabs, request review, Add buttons). The role is re-read on every
@@ -1253,9 +1363,14 @@ member) and, for the admin, "Add a household member".
   "autoApproveTv": true,
   "createdAt": "2026-09-17T17:12:40.991Z",
   "isCurrentUser": false,
-  "avatarUrl": null
+  "avatarUrl": null,
+  "linked": { "plex": false, "jellyfin": true },
+  "hasPassword": false
 }
 ```
+
+`linked` / `hasPassword`: as on `/me`. Website: a small "Plex" / "Jellyfin"
+tag on linked rows.
 
 `avatarUrl` (here, on `/me` and on the login/setup `user`) is the account's
 profile photo as a server-relative path, or null when there's none: fetch it
@@ -1299,7 +1414,7 @@ The edit form. All fields are sent the way the form sends them:
 | `username` | string | **required** (3–32 chars, as above; unique) |
 | `displayName` | string | optional, ≤ 80 chars; omitted or empty = unchanged |
 | `password` | string | optional, ≥ 8 chars; omitted or empty = unchanged |
-| `currentPassword` | string | **required with `password` when editing your own account** (the admin resetting someone else's password doesn't send it). Website: "Current password", shown only on your own row |
+| `currentPassword` | string | **required with `password` when editing your own account that has a password** (the admin resetting someone else's password doesn't send it, nor does an account with `hasPassword: false` setting its first one). Website: "Current password", shown only on your own row when it has a password |
 | `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. Website: "Auto-approve movie requests", shown only for non-admin rows |
 | `autoApproveTv` | bool | same, "Auto-approve TV requests" |
 
@@ -1349,6 +1464,96 @@ sent anywhere else. Every client reads them from here.
 Website: "Add photo" / "Change photo" / "Remove" at the top of a member's
 Edit form, saved as soon as a photo is picked (the form's Save isn't
 involved).
+
+### Linked accounts — user (your own account)
+
+Website: "Linked accounts" on Settings → Account, shown when the admin has
+Plex or Jellyfin connected (or the account is still linked to one). Each of
+these answers the updated **`Me`** (as `GET /me`).
+
+- **`POST /me/links/plex/start`** — no body. Same answer as
+  `POST /auth/plex/start` (`{ handle, authUrl, expiresAt }`); the handle
+  works only for this account's link, not for sign-in.
+- **`POST /me/links/plex/poll`** — `{ "handle": "…" }`. `202 { "status":
+  "pending" }` until approved on plex.tv, then `200` `Me`. `410 expired`,
+  `403` "This Plex account doesn't have access to this server.", `409`
+  "This Plex account is already linked to another Marquee account.".
+- **`POST /me/links/jellyfin`** — `{ "username": "…", "password": "…" }`,
+  checked with the admin's Jellyfin server (not stored). `200` `Me`. `401
+  invalid_credentials` "Incorrect Jellyfin username or password", `409`
+  "This Jellyfin account is already linked to another Marquee account.",
+  `429` as `POST /auth/jellyfin`.
+- **`DELETE /me/links/plex`**, **`DELETE /me/links/jellyfin`** — `200`
+  `Me` (also when it wasn't linked). `409` "Set a password first — without
+  Plex, there'd be no way to sign in to this account." when the account has
+  no password and no other link.
+
+Linking and unlinking never sign anything out. Removing a member removes
+their links with them.
+
+### Import from Plex / Jellyfin — admin
+
+Website: "Import from your media server" under "Add a household member",
+with an "Import from Plex" / "Import from Jellyfin" button per connected
+server, each opening a checklist.
+
+#### `GET /users/import/{provider}` — admin
+
+`provider` is `plex` or `jellyfin` (anything else `404`).
+
+```json
+{
+  "results": [
+    {
+      "id": "1234567",
+      "username": "anna.berg",
+      "displayName": "Anna Berg",
+      "thumb": "https://plex.tv/users/a1b2c3d4e5f6a7b8/avatar?c=1690000000",
+      "alreadyMember": false
+    },
+    { "id": "3333", "username": "Kids", "displayName": null, "thumb": null, "alreadyMember": true }
+  ]
+}
+```
+
+Plex: the admin's Plex friends with one of the admin's servers shared with
+them, and Plex Home users (the admin's own account isn't listed). Jellyfin:
+every enabled user of the admin's Jellyfin server; `thumb` is then a URL on
+that server (null without a picture), `id` its 32-hex user id.
+`alreadyMember`: an account is already linked to them (website: "Already a
+member", checkbox disabled). `username` is theirs on Plex/Jellyfin — the
+Marquee username an import creates is that, made to fit the username rules
+and unique. Errors: `409 conflict` "Connect Plex in Settings first." /
+"Connect Jellyfin in Settings first.", `502 upstream` "Couldn't reach Plex.
+Try again." / "Couldn't reach Jellyfin. Try again.", `403` "Only the admin
+can add household members.".
+
+#### `POST /users/import/{provider}` — admin
+
+Body: `{ "ids": ["1234567", "2222"] }` (at most 200). Creates a member
+account (no password — they sign in with Plex/Jellyfin) linked to each.
+
+```json
+{ "created": [ /* HouseholdMember */ ], "skipped": 1 }
+```
+
+`skipped` counts ids that aren't in a fresh listing any more or are already
+members. Errors: `400 invalid` '"ids" must be a list of ids.' / "Choose at
+least one person to import." / "Import at most 200 people at a time.", plus
+the `GET` errors.
+
+### `GET /settings/sign-in` · `PUT` — admin
+
+```json
+{ "mediaServerSignup": true }
+```
+
+"New accounts from Plex/Jellyfin sign-in" (default on): whether someone who
+may use the admin's Plex/Jellyfin server but has no linked account gets a
+member account on their first sign-in. `PUT` takes the same body
+(`mediaServerSignup` required, boolean) and answers the saved value. `403`
+"Only the admin can change sign-in settings.". Website: the checkbox under
+the Import buttons.
 
 ---
 
@@ -1646,6 +1851,9 @@ what to do, grouped by area.
 | Discovery & Auth | `GET /server-info` | public |
 | | `POST /auth/login` | public |
 | | `POST /auth/setup` | public |
+| | `POST /auth/plex/start` | public |
+| | `POST /auth/plex/poll` | public |
+| | `POST /auth/jellyfin` | public |
 | | `POST /auth/logout` | user |
 | | `GET /me` | user |
 | | `GET /badges` | user |
@@ -1692,6 +1900,12 @@ what to do, grouped by area.
 | | `PATCH /users/{id}` | user (self) / admin |
 | | `DELETE /users/{id}` | admin |
 | | `GET /users/{id}/avatar` · `PUT` · `DELETE` | user (self) / admin |
+| | `POST /me/links/plex/start` | user |
+| | `POST /me/links/plex/poll` | user |
+| | `DELETE /me/links/plex` | user |
+| | `POST /me/links/jellyfin` · `DELETE` | user |
+| | `GET /users/import/{provider}` · `POST` | admin |
+| | `GET /settings/sign-in` · `PUT` | admin |
 | Settings: Integrations | `GET /settings/integrations` | admin |
 | | `POST /settings/integrations/sync` | user |
 | | `POST /settings/integrations/webhook-secret` | admin |

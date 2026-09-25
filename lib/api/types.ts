@@ -29,7 +29,31 @@ export type ServerInfo = {
   version: string;
   setupComplete: boolean | null;
   status: "ok" | "degraded";
+  /** Which sign-in methods to offer. Plex/Jellyfin are true only while the
+   * admin has that server connected. Missing on older servers. */
+  signIn: SignInMethods;
 };
+
+export type SignInMethods = { password: true; plex: boolean; jellyfin: boolean };
+
+/** Which media-server accounts an account signs in with. */
+export type LinkedAccounts = { plex: boolean; jellyfin: boolean };
+
+/** POST /auth/plex/start and POST /me/links/plex/start. */
+export type PlexSignInStart = { handle: string; authUrl: string; expiresAt: string };
+
+/** The 202 answer of a Plex poll that's still waiting for plex.tv. */
+export type PlexPollPending = { status: "pending" };
+
+export type ImportCandidate = {
+  id: string;
+  username: string;
+  displayName: string | null;
+  thumb: string | null;
+  alreadyMember: boolean;
+};
+
+export type SignInSettings = { mediaServerSignup: boolean };
 
 export type User = {
   id: string;
@@ -46,6 +70,10 @@ export type Me = User & {
   autoApproveMovies: boolean;
   autoApproveTv: boolean;
   createdAt: string;
+  linked: LinkedAccounts;
+  /** False for an account made by Plex/Jellyfin sign-in that hasn't set a
+   * password; it sets one without a current password. */
+  hasPassword: boolean;
 };
 
 export type AuthResponse = { token: string; expiresAt: string; user: User };
@@ -471,7 +499,11 @@ export type HouseholdMember = {
   isCurrentUser: boolean;
   /** Same as User.avatarUrl. */
   avatarUrl: string | null;
+  linked: LinkedAccounts;
+  hasPassword: boolean;
 };
+
+export type ImportResult = { created: HouseholdMember[]; skipped: number };
 
 export type UpdateUserResponse = { ok: true; user: HouseholdMember; tokensRevoked: boolean };
 
