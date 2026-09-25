@@ -6,6 +6,7 @@ struct TitleDetailView: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
+    @Environment(\.navRailInset) private var navRailInset
     @State private var screen: TitleDetailModel
     @State private var showingTrailer = false
     @State private var showingRelink = false
@@ -77,7 +78,9 @@ struct TitleDetailView: View {
         // The mockup measures this page from the window's top edge, with the
         // toolbar floating over the artwork (`.backdrop{top:0}` under
         // `.toolbar.glass`), so the page starts under the top bar rather than
-        // below it.
+        // below it. The backdrop also runs under the navigation rail to the
+        // window's left edge, so the columns step past the rail themselves
+        // (`leading`).
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 // The backdrop sits behind the top of the page; the poster,
@@ -142,7 +145,7 @@ struct TitleDetailView: View {
                         maxWidth: Metrics.titleLeftWidth + Metrics.titleColumnGap + Metrics.titleRailWidth,
                         alignment: .leading
                     )
-                    .padding(.leading, Metrics.titleGutter)
+                    .padding(.leading, leading)
                     .padding(.trailing, Metrics.titleRightGutter)
                     .padding(.top, Metrics.titlePosterTop)
                 }
@@ -173,13 +176,19 @@ struct TitleDetailView: View {
                         }
                     }
                 }
-                .padding(.leading, Metrics.titleGutter)
+                .padding(.leading, leading)
                 .padding(.trailing, Metrics.titleRightGutter)
                 .padding(.top, 44)
                 .padding(.bottom, 60)
             }
         }
-        .ignoresSafeArea(.container, edges: .top)
+        .ignoresSafeArea(.container, edges: [.top, .leading])
+    }
+
+    /// `.tp-poster{left:48px}`, measured from the content area rather than
+    /// from the window edge the page now starts at.
+    private var leading: CGFloat {
+        navRailInset + Metrics.titleGutter
     }
 }
 

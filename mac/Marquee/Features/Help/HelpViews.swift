@@ -58,6 +58,7 @@ struct ErrorReferenceView: View {
             .frame(maxWidth: 820, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Error Reference")
         .task(id: model.reloadToken) {
@@ -138,6 +139,7 @@ struct ChangelogView: View {
             .frame(maxWidth: 760, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Releases")
         .task(id: model.reloadToken) {

@@ -21,6 +21,7 @@ struct RequestsView: View {
             .frame(maxWidth: 1080, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Requests")
     }

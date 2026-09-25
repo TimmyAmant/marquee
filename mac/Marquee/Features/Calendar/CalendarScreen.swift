@@ -48,6 +48,7 @@ struct CalendarScreen: View {
                     .frame(maxWidth: 1240)
                     .frame(maxWidth: .infinity)
                 }
+                .scrollsUnderNavRail()
             } else {
                 LoadingView(label: "Loading the calendar…")
                     .frame(maxHeight: .infinity)

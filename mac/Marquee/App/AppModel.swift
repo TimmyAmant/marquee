@@ -141,6 +141,9 @@ final class AppModel {
     var reloadToken = 0
     /// Bumped by Edit › Find (⌘F); the toolbar search field takes focus.
     var searchFocusRequest = 0
+    /// Bumped by Go › Show Menu (⌃⌘S); the navigation menu opens with focus
+    /// on the current section.
+    var navMenuRequest = 0
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
 
@@ -407,8 +410,8 @@ final class AppModel {
 
     // MARK: Navigation
 
-    /// Sidebar/menu navigation opens Movies and Series unfiltered, like the
-    /// web sidebar's plain /movies and /series links.
+    /// The navigation menu and the Go menu open Movies and Series unfiltered,
+    /// like the web menu's plain /movies and /series links.
     func select(_ item: SidebarItem, resetFilters: Bool = true) {
         if resetFilters {
             if item == .movies { movieFilters = API.BrowseQuery() }
