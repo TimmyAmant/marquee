@@ -316,22 +316,8 @@
                         Margin="0,0,0,4"
                         Click="OnProfileClick"
                         AutomationProperties.Name="Account and settings">
-                        <!-- 36 round initials on the accent gradient, inside a 2px white 15% ring. -->
-                        <Border
-                            Width="40"
-                            Height="40"
-                            CornerRadius="20"
-                            BorderThickness="2"
-                            BorderBrush="{ThemeResource MarqueeAvatarRingBrush}"
-                            Background="{ThemeResource MarqueeAvatarBrush}">
-                            <TextBlock
-                                x:Name="RailAvatarText"
-                                FontSize="13.7"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource MarqueeOnAccentBrush}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-                        </Border>
+                        <!-- The 36 round photo (or initials on the accent gradient), inside a 2px white 15% ring. -->
+                        <controls:AvatarView x:Name="RailAvatar" Diameter="40" RingThickness="2" />
                     </Button>
                     <Button
                         x:Name="RailSearchButton"
@@ -434,22 +420,12 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Border
+                                    <controls:AvatarView
+                                        x:Name="MenuAvatar"
                                         Grid.Column="0"
-                                        Width="42"
-                                        Height="42"
-                                        CornerRadius="21"
-                                        BorderThickness="2"
-                                        BorderBrush="{ThemeResource MarqueeAvatarRingBrush}"
-                                        Background="{ThemeResource MarqueeAvatarBrush}">
-                                        <TextBlock
-                                            x:Name="MenuAvatarText"
-                                            FontSize="14.4"
-                                            FontWeight="SemiBold"
-                                            Foreground="{ThemeResource MarqueeOnAccentBrush}"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center" />
-                                    </Border>
+                                        Diameter="42"
+                                        RingThickness="2"
+                                        VerticalAlignment="Center" />
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock
                                             x:Name="ViewerNameText"

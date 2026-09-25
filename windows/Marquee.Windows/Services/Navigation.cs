@@ -108,4 +108,7 @@ public interface INavigator
     bool CanGoBack { get; }
 
     void GoBack();
+
+    /// <summary>Restores and activates the window (a notification was clicked).</summary>
+    void BringToFront();
 }

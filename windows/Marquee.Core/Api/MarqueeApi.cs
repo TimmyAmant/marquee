@@ -37,6 +37,9 @@ public sealed partial class MarqueeApi
 
         /// <summary>Plex's first sync, "Run now", "Sync now", "Approve all".</summary>
         public static readonly TimeSpan LongRunning = TimeSpan.FromSeconds(600);
+
+        /// <summary>A photo upload: up to 15 MB, which the server then crops and re-encodes.</summary>
+        public static readonly TimeSpan Upload = TimeSpan.FromSeconds(120);
     }
 
     internal readonly Transport transport;
@@ -102,6 +105,28 @@ public sealed partial class MarqueeApi
         {
             var client = RequireClient();
             var response = await client.SendAsync<T>(method, path, null, body, timeout, ct).ConfigureAwait(false);
+            if (changes != ServerChange.None)
+            {
+                Events?.Record(changes);
+            }
+            return response;
+        }
+
+        /// <summary>
+        /// <see cref="MutateAsync{T}"/> with a raw body in its own content
+        /// type (a photo) instead of JSON.
+        /// </summary>
+        public async Task<T> MutateBytesAsync<T>(
+            HttpMethod method,
+            string path,
+            byte[] body,
+            string contentType,
+            TimeSpan? timeout = null,
+            ServerChange changes = ServerChange.None,
+            CancellationToken ct = default)
+        {
+            var client = RequireClient();
+            var response = await client.SendBytesAsync<T>(method, path, body, contentType, timeout, ct).ConfigureAwait(false);
             if (changes != ServerChange.None)
             {
                 Events?.Record(changes);

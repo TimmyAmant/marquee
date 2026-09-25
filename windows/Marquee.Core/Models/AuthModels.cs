@@ -22,6 +22,15 @@ public sealed record User
     /// <summary>Whose integrations and library this user sees.</summary>
     public required Guid LibraryOwnerId { get; init; }
 
+    /// <summary>
+    /// The profile photo as a server-relative path
+    /// (<c>/api/v1/users/{id}/avatar?v=…</c>), fetched with the bearer token
+    /// (<c>ApiClient.GetBytesAsync</c>); null when there is none, and on a
+    /// server older than 0.29.0. It changes whenever the photo does, so the
+    /// image can be cached under it for good.
+    /// </summary>
+    public string? AvatarUrl { get; init; }
+
     public bool IsAdmin => Role == UserRole.Admin;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
@@ -36,6 +45,10 @@ public sealed record Me
     public string? DisplayName { get; init; }
     public required UserRole Role { get; init; }
     public required Guid LibraryOwnerId { get; init; }
+
+    /// <inheritdoc cref="User.AvatarUrl"/>
+    public string? AvatarUrl { get; init; }
+
     public required bool AutoApproveMovies { get; init; }
     public required bool AutoApproveTv { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
@@ -52,6 +65,7 @@ public sealed record Me
         DisplayName = DisplayName,
         Role = Role,
         LibraryOwnerId = LibraryOwnerId,
+        AvatarUrl = AvatarUrl,
     };
 }
 

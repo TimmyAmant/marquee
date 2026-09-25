@@ -24,15 +24,21 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        var settings = new JsonSettingsStore();
         var session = new ServerSession(
-            new JsonSettingsStore(),
+            settings,
             new PasswordVaultTokenStore(),
             ApiClient.DefaultHandler,
             DeviceName());
-        var model = new AppModel(session, DispatcherQueue.GetForCurrentThread());
+        var model = new AppModel(session, DispatcherQueue.GetForCurrentThread(), settings);
         AppServices.Initialize(model);
 
         window = new MainWindow();
+        AppServices.WindowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+
+        // Before the window shows: when a click on a Windows notification
+        // launched the app, that click is delivered through this registration.
+        model.Notifications.Register();
         window.Activate();
 
         // Restores the saved session after the window is up, so the spinner

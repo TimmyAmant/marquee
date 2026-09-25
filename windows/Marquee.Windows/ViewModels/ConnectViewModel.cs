@@ -209,7 +209,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         {
             var user = await model.Session.LoginAsync(Username, Password);
             Password = "";
-            model.CompleteSignIn(user);
+            model.CompleteSignIn(user, interactive: true);
         }
         catch (ApiException error)
         {
@@ -237,7 +237,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         {
             var user = await model.Session.SetupAsync(DisplayName, Username, Password);
             Password = "";
-            model.CompleteSignIn(user);
+            model.CompleteSignIn(user, interactive: true);
         }
         catch (ApiException error) when (error.Kind == ApiErrorKind.SetupComplete)
         {

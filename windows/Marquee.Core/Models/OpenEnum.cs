@@ -257,6 +257,23 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             return "🔔";
         }
     }
+
+    /// <summary>
+    /// The heading of a system notification for this kind, the same words
+    /// the server's own Web Push uses (lib/push/deliver.ts); the message
+    /// goes under it. "Marquee" for a kind this app doesn't know.
+    /// </summary>
+    public string NotificationTitle
+    {
+        get
+        {
+            if (this == Grabbed) return "Downloading";
+            if (this == Downloaded) return "Ready to watch";
+            if (this == RequestApproved) return "Request approved";
+            if (this == RequestRejected) return "Request declined";
+            return "Marquee";
+        }
+    }
 }
 
 public readonly record struct ActivityEventType(string Value) : IOpenEnum<ActivityEventType>

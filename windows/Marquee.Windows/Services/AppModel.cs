@@ -72,6 +72,12 @@ public sealed partial class AppModel : ObservableObject
 
     public DispatcherQueue Dispatcher { get; }
 
+    /// <summary>The app's preferences file (the saved server, and each account's notification choice).</summary>
+    public ISettingsStore Settings { get; }
+
+    /// <summary>Windows notifications from the server's live stream, and the question that turns them on.</summary>
+    public NotificationCenter Notifications { get; }
+
     /// <summary>The main window, once it exists. Navigation helpers are no-ops without one.</summary>
     public INavigator? Navigator { get; set; }
 
@@ -129,10 +135,16 @@ public sealed partial class AppModel : ObservableObject
     private bool refreshingBadges;
     private bool badgeRefreshQueued;
 
-    public AppModel(ServerSession session, DispatcherQueue dispatcher)
+    /// <summary>A notification clicked before its account was signed in (it launched the app): opened once it is.</summary>
+    private NotificationTarget? pendingNotification;
+
+    /// <param name="settings">The same store the session keeps the server in.</param>
+    public AppModel(ServerSession session, DispatcherQueue dispatcher, ISettingsStore settings)
     {
         Session = session;
         Dispatcher = dispatcher;
+        Settings = settings;
+        Notifications = new NotificationCenter(this);
         session.StateChanged += OnSessionStateChanged;
         session.Unauthorized += OnSessionUnauthorized;
         Events.Changed += OnServerChanged;
@@ -274,7 +286,11 @@ public sealed partial class AppModel : ObservableObject
         }
     }
 
-    public void CompleteSignIn(User user)
+    /// <param name="interactive">
+    /// Signed in with a password (or first-run setup) rather than a saved
+    /// session at launch: only then does "Not now" get asked again.
+    /// </param>
+    public void CompleteSignIn(User user, bool interactive = false)
     {
         Viewer = user;
         AuthNotice = null;
@@ -283,6 +299,9 @@ public sealed partial class AppModel : ObservableObject
         SeriesFilters = BrowseQuery.Default;
         Phase = AppPhase.Ready;
         StartBadgePolling();
+        OpenPendingNotification();
+        // After the shell has drawn: the question comes over Discover, not over a blank window.
+        Dispatcher.TryEnqueue(DispatcherQueuePriority.Low, () => _ = Notifications.SignedInAsync(interactive));
     }
 
     /// <summary>Signs out of the server (revoking this PC's token) but stays on it.</summary>
@@ -320,10 +339,28 @@ public sealed partial class AppModel : ObservableObject
         Phase = AppPhase.SignIn;
     }
 
+    /// <summary>
+    /// The notification stream said the server revoked this PC's token (a
+    /// password change, Sign out elsewhere): back to sign-in with the same
+    /// notice a 401 gets, and the dead token dropped here too.
+    /// </summary>
+    internal async Task EndRevokedSessionAsync()
+    {
+        if (Phase != AppPhase.Ready)
+        {
+            return;
+        }
+        SessionEnded();
+        await Session.SignOutAsync();
+    }
+
     private void ClearSignedInState()
     {
         StopBadgePolling();
         Viewer = null;
+        pendingNotification = null;
+        Notifications.SignedOut();
+        AvatarImages.Clear();
     }
 
     /// <summary>
@@ -397,6 +434,60 @@ public sealed partial class AppModel : ObservableObject
     public void Open(Route route) => Navigator?.Open(route);
 
     public void OpenTitle(TitleId id) => Open(new Route.Title(id));
+
+    /// <summary>
+    /// A Windows notification was clicked: the window comes forward and the
+    /// title opens, marked read like a click in the bell. A click for an
+    /// account that isn't signed in yet (it launched the app) waits for
+    /// that sign-in; one for another account only brings the window forward.
+    /// </summary>
+    internal void OpenFromNotification(NotificationTarget? target)
+    {
+        Navigator?.BringToFront();
+        if (target == null)
+        {
+            return;
+        }
+        if (Phase == AppPhase.Ready && target.Account == Notifications.CurrentAccount)
+        {
+            OpenNotificationTarget(target);
+        }
+        else
+        {
+            pendingNotification = target;
+        }
+    }
+
+    private void OpenPendingNotification()
+    {
+        if (pendingNotification is not { } target)
+        {
+            return;
+        }
+        pendingNotification = null;
+        if (target.Account == Notifications.CurrentAccount)
+        {
+            OpenNotificationTarget(target);
+        }
+    }
+
+    private void OpenNotificationTarget(NotificationTarget target)
+    {
+        _ = MarkNotificationReadAsync(Api, target.NotificationId);
+        OpenTitle(target.Title);
+    }
+
+    private static async Task MarkNotificationReadAsync(MarqueeApi api, Guid id)
+    {
+        try
+        {
+            await api.Notifications.MarkReadAsync(id);
+        }
+        catch (ApiException)
+        {
+            // The bell still shows it unread; nothing to say here.
+        }
+    }
 
     public void OpenTitle(MediaType mediaType, int tmdbId) => OpenTitle(new TitleId(mediaType, tmdbId));
 
