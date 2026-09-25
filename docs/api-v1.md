@@ -1159,6 +1159,7 @@ The edit form. All fields are sent the way the form sends them:
 | `username` | string | **required** (3–32 chars, as above; unique) |
 | `displayName` | string | optional, ≤ 80 chars; omitted or empty = unchanged |
 | `password` | string | optional, ≥ 8 chars; omitted or empty = unchanged |
+| `currentPassword` | string | **required with `password` when editing your own account** (the admin resetting someone else's password doesn't send it). Website: "Current password", shown only on your own row |
 | `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. Website: "Auto-approve movie requests", shown only for non-admin rows |
 | `autoApproveTv` | bool | same, "Auto-approve TV requests" |
 
@@ -1168,8 +1169,11 @@ The edit form. All fields are sent the way the form sends them:
 
 `tokensRevoked` is true when a password was set — every API token of that
 account is gone (deviation 5). Errors: `403` "You can only edit your own
-account.", `404` "Account not found.", `400 invalid`, `409 conflict` "An
-account with that username already exists".
+account.", `404` "Account not found.", `400 invalid` (including "Enter your
+current password to set a new one." and "Your current password is
+incorrect."), `429 rate_limited` "Too many attempts. Try again in a few
+minutes." (5 wrong current passwords per account per 15 minutes), `409
+conflict` "An account with that username already exists".
 
 ### `DELETE /users/{id}` — admin
 

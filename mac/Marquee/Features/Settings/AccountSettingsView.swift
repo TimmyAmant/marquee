@@ -221,6 +221,7 @@ private struct EditMemberSheet: View {
     @State private var displayName = ""
     @State private var username = ""
     @State private var password = ""
+    @State private var currentPassword = ""
     @State private var autoApproveMovies = false
     @State private var autoApproveTv = false
     @State private var pending = false
@@ -238,6 +239,11 @@ private struct EditMemberSheet: View {
             SettingsField(label: "Name", text: $displayName)
             SettingsField(label: "Username", text: $username)
             SettingsField(label: "New password", text: $password, placeholder: "Leave blank to keep current password", secure: true)
+            // The server wants it whenever you set a new password on your
+            // own account; the admin resetting a member's doesn't know theirs.
+            if member.isCurrentUser {
+                SettingsField(label: "Current password", text: $currentPassword, placeholder: "Needed only when setting a new password", secure: true)
+            }
 
             if showsAutoApproval {
                 Toggle("Auto-approve movie requests", isOn: $autoApproveMovies)
@@ -283,6 +289,7 @@ private struct EditMemberSheet: View {
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
             displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines),
             password: password.nonBlank,
+            currentPassword: member.isCurrentUser ? currentPassword.nonBlank : nil,
             autoApproveMovies: showsAutoApproval ? autoApproveMovies : nil,
             autoApproveTv: showsAutoApproval ? autoApproveTv : nil
         )

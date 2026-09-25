@@ -44,11 +44,13 @@ function RemoveMemberButton({ member }: { member: HouseholdMember }) {
 function EditMemberForm({
   member,
   isAdmin,
+  isSelf,
   onCancel,
   onSaved,
 }: {
   member: HouseholdMember;
   isAdmin: boolean;
+  isSelf: boolean;
   onCancel: () => void;
   onSaved: () => void;
 }) {
@@ -91,6 +93,21 @@ function EditMemberForm({
           className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
         />
       </label>
+      {/* Only asked for on your own account (the server checks it whenever a
+          new password is set there); the admin resetting a member's password
+          doesn't know theirs. */}
+      {isSelf && (
+        <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
+          Current password
+          <input
+            type="password"
+            name="currentPassword"
+            autoComplete="current-password"
+            placeholder="Needed only when setting a new password"
+            className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
+          />
+        </label>
+      )}
 
       {isAdmin && member.role !== "admin" && (
         <>
@@ -156,6 +173,7 @@ export function HouseholdMembersList({
             <EditMemberForm
               member={member}
               isAdmin={isAdmin}
+              isSelf={member.id === currentUserId}
               onCancel={() => setEditingId(null)}
               onSaved={() => setEditingId(null)}
             />

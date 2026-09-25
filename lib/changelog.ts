@@ -22,6 +22,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       "The Docker container now starts with a Postgres password containing /, quotes or $, and an upgrade no longer fails when two identical pending requests were left over from a double click.",
       "A movie and a TV show that happen to share a TMDb id no longer show each other's Plex or Jellyfin file details.",
       "Updated Next.js and the sign-in library to versions with the latest security fixes.",
+      "Changing your own password now asks for your current one first, on the website and in the Mac and Windows apps, so a browser left signed in can't be used to lock you out. The admin resetting a member's password still doesn't need theirs.",
+      "Posters, backdrops and episode stills show a soft loading shimmer and fade in, instead of sitting as empty boxes until the artwork arrives.",
       "Marquee for Windows has started: an early native Windows app lives in windows/ of the repo, with sign-in, Discover, browsing, title pages, requests (including decline reasons), favorites, calendar and notifications. It isn't packaged for download yet.",
     ],
   },

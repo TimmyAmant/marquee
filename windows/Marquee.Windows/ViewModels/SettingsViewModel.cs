@@ -19,6 +19,7 @@ namespace Marquee.Windows.ViewModels;
 public sealed partial class SettingsViewModel : ObservableObject
 {
     public const string PasswordsDifferMessage = "The passwords don't match.";
+    public const string CurrentPasswordMissingMessage = "Enter your current password to set a new one.";
     public const string SavedNotice = "Saved.";
     public const string PasswordChangedNotice = "Your password was changed, which signed out every device. Sign in again with the new one.";
     public const string PasswordWarning = "Setting a new password signs you out of every device, including this PC.";
@@ -46,6 +47,9 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private string confirmPassword = "";
+
+    [ObservableProperty]
+    private string currentPassword = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SaveLabel))]
@@ -146,10 +150,17 @@ public sealed partial class SettingsViewModel : ObservableObject
             SaveError = PasswordsDifferMessage;
             return;
         }
+        // The server checks it too; asking here saves a round trip.
+        if (NewPassword.Length > 0 && CurrentPassword.Length == 0)
+        {
+            SaveError = CurrentPasswordMissingMessage;
+            return;
+        }
         var request = new UpdateUserRequest(
             viewer.Username,
             DisplayName.Trim().NonBlank(),
-            NewPassword.NonBlank());
+            NewPassword.NonBlank(),
+            CurrentPassword: CurrentPassword.NonBlank());
 
         IsSaving = true;
         try
@@ -157,6 +168,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             var result = await model.Api.Users.UpdateAsync(viewer.Id, request);
             NewPassword = "";
             ConfirmPassword = "";
+            CurrentPassword = "";
             if (result.TokensRevoked)
             {
                 await model.SignOutAsync();

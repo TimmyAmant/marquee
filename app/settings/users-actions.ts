@@ -64,6 +64,7 @@ export async function updateHouseholdMemberAction(
       userId: formData.get("userId"),
       username: formData.get("username"),
       password: formData.get("password") || undefined,
+      currentPassword: formData.get("currentPassword") || undefined,
       displayName: formData.get("displayName") || undefined,
       // The edit form always submits both checkboxes for the admin (an
       // unchecked box is simply absent from the form data).

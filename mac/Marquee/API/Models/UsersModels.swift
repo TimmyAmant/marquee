@@ -46,6 +46,9 @@ extension API {
         /// revokes every token of the account, including this Mac's when
         /// editing yourself (deviation 5).
         var password: String?
+        /// Required alongside `password` when editing your own account;
+        /// the admin resetting someone else's password doesn't send it.
+        var currentPassword: String?
         /// Admin only (ignored for members); nil leaves it unchanged. Shown only for non-admin rows.
         var autoApproveMovies: Bool?
         var autoApproveTv: Bool?
@@ -54,12 +57,14 @@ extension API {
             username: String,
             displayName: String? = nil,
             password: String? = nil,
+            currentPassword: String? = nil,
             autoApproveMovies: Bool? = nil,
             autoApproveTv: Bool? = nil
         ) {
             self.username = username
             self.displayName = displayName
             self.password = password
+            self.currentPassword = currentPassword
             self.autoApproveMovies = autoApproveMovies
             self.autoApproveTv = autoApproveTv
         }

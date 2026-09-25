@@ -1,4 +1,4 @@
-import { hash } from "argon2";
+import { hash, verify } from "argon2";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
@@ -6,6 +6,7 @@ import { users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { revokeAllApiTokensForUser } from "@/lib/api/token-store";
+import { isRateLimited, recordFailedAttempt, refundAttempt } from "@/lib/rate-limit";
 
 // Household-account management shared by the Settings → Account server
 // actions (app/settings/users-actions.ts) and /api/v1/users. Callers resolve
@@ -114,13 +115,20 @@ const updateMemberSchema = z.object({
  * new one is given — the only account-recovery path here, since there's no
  * email-based "forgot password" flow. Members may only edit their own
  * account; only the admin may edit anyone else's. A password change signs
- * every native client of that account out (its API tokens are revoked). */
+ * every native client of that account out (its API tokens are revoked).
+ *
+ * Changing your *own* password also takes `currentPassword`, so a browser
+ * left signed in (or a stolen session cookie) can't be used to lock the
+ * owner out of their account. The admin resetting someone else's password
+ * doesn't need theirs — that's the household's only recovery path. */
 export async function updateHouseholdMember(
   actor: Actor,
   input: {
     userId: unknown;
     username: unknown;
     password: unknown;
+    /** Required when `password` is set on the actor's own account. */
+    currentPassword?: unknown;
     displayName: unknown;
     /** Admin-only; ignored when the actor isn't the admin. Omit to leave unchanged. */
     autoApproveMovies?: boolean;
@@ -149,6 +157,11 @@ export async function updateHouseholdMember(
     return fail("conflict", "An account with that username already exists");
   }
 
+  if (password && userId === actor.userId) {
+    const check = await verifyCurrentPassword(userId, input.currentPassword);
+    if (!check.ok) return check;
+  }
+
   // Auto-approval is an admin-only setting on other members' accounts —
   // never let a member grant it to themselves via this same "edit my own
   // account" form.
@@ -171,6 +184,33 @@ export async function updateHouseholdMember(
   }
 
   return { ok: true, passwordChanged: updated.length > 0 && Boolean(password) };
+}
+
+const PASSWORD_CHANGE_LIMIT = 5;
+const PASSWORD_CHANGE_WINDOW_MS = 15 * 60 * 1000;
+
+/** The current-password check for changing your own password. Budgeted like
+ * sign-in (lib/auth/password-login.ts): the attempt is counted before the
+ * argon2 check and refunded when it passes, so parallel guesses can't all
+ * slip under the limit, and a correct password costs nothing. */
+async function verifyCurrentPassword(userId: string, currentPassword: unknown): Promise<CoreResult> {
+  if (typeof currentPassword !== "string" || !currentPassword) {
+    return fail("invalid", "Enter your current password to set a new one.");
+  }
+
+  const key = `password-change:${userId}`;
+  if (isRateLimited(key, PASSWORD_CHANGE_LIMIT)) {
+    return fail("rate_limited", "Too many attempts. Try again in a few minutes.");
+  }
+  recordFailedAttempt(key, PASSWORD_CHANGE_WINDOW_MS);
+
+  const [row] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!row?.passwordHash || !(await verify(row.passwordHash, currentPassword))) {
+    return fail("invalid", "Your current password is incorrect.");
+  }
+
+  refundAttempt(key);
+  return { ok: true };
 }
 
 /** Removes a household member's account entirely — admin-only (caller must

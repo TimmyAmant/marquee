@@ -54,6 +54,10 @@
                     <PasswordBox
                         Header="Confirm new password"
                         Password="{x:Bind ViewModel.ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <PasswordBox
+                        Header="Current password"
+                        PlaceholderText="Needed only when setting a new password"
+                        Password="{x:Bind ViewModel.CurrentPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock
                         Text="Setting a new password signs you out of every device, including this PC."
                         Style="{StaticResource CaptionTextBlockStyle}"

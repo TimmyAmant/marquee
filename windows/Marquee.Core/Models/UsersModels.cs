@@ -48,12 +48,17 @@ public sealed record CreateUserRequest(string Username, string Password, string?
 /// </param>
 /// <param name="AutoApproveMovies">Admin only (silently ignored for members); null leaves it unchanged. Shown only for non-admin rows.</param>
 /// <param name="AutoApproveTv">Same, for TV requests.</param>
+/// <param name="CurrentPassword">
+/// Required alongside <paramref name="Password"/> when editing your own
+/// account; the admin resetting someone else's password doesn't send it.
+/// </param>
 public sealed record UpdateUserRequest(
     string Username,
     string? DisplayName = null,
     string? Password = null,
     bool? AutoApproveMovies = null,
-    bool? AutoApproveTv = null);
+    bool? AutoApproveTv = null,
+    string? CurrentPassword = null);
 
 /// <summary><c>PATCH /users/{id}</c> response.</summary>
 public sealed record UpdateUserResult
