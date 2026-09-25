@@ -160,7 +160,7 @@ public sealed class MarqueeApiRequestsRequestTests
 
         var pending = await api.Requests.PendingAsync();
         Assert.Equal("http://192.168.1.10:8989", pending.SonarrUrl);
-        Assert.Single(pending.Results);
+        Assert.Equal(2, pending.Results.Count);
 
         var history = await api.Requests.HistoryAsync();
         Assert.Equal(RequestStatus.Rejected, Assert.Single(history).Status);

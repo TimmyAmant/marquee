@@ -44,7 +44,9 @@ public sealed class RequestsFixtureTests
         var pending = Fixtures.Decode<PendingRequests>("requests-pending");
 
         Assert.Equal("http://192.168.1.10:8989", pending.SonarrUrl);
-        var request = Assert.Single(pending.Results);
+        // The movie request, then a season request for a show.
+        Assert.Equal(2, pending.Results.Count);
+        var request = pending.Results[0];
         Assert.Equal(RequestId, request.Id);
         Assert.Equal("The Matrix", request.Title);
         Assert.Equal(MemberId, request.RequestedBy.UserId);
@@ -57,6 +59,12 @@ public sealed class RequestsFixtureTests
         Assert.Equal("Already available on a streaming service we have", pending.RejectionReasons[0]);
 
         Assert.Equal("http://192.168.1.10:8989/add/new?term=The%20Matrix", pending.ManualSonarrAddUrl(request)?.AbsoluteUri);
+
+        Assert.Null(request.Seasons);
+        var seasons = pending.Results[1];
+        Assert.Equal("Severance", seasons.Title);
+        Assert.Equal(new[] { 2 }, seasons.Seasons);
+        Assert.Equal("Season 2", seasons.SeasonsLabel);
     }
 
     [Fact]
