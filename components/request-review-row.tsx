@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +11,7 @@ import {
   REJECTION_REASON_PRESETS,
 } from "@/lib/requests/rejection-reasons";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { RequestTitle } from "@/components/request-title";
 import type { MediaType } from "@/lib/db/schema";
 
 export function RequestReviewRow({
@@ -22,6 +22,7 @@ export function RequestReviewRow({
   posterPath,
   requestedByName,
   requestedByUsername,
+  seasons,
   createdAt,
   sonarrUrl,
 }: {
@@ -32,6 +33,8 @@ export function RequestReviewRow({
   posterPath: string | null;
   requestedByName: string | null;
   requestedByUsername: string;
+  /** The seasons asked for; null for the whole series. */
+  seasons: number[] | null;
   createdAt: string;
   /** Admin's connected Sonarr base URL (Settings > Integrations), if any —
    * used to link straight to Sonarr's own "add series" search when Marquee
@@ -98,12 +101,7 @@ export function RequestReviewRow({
           <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg bg-bg-2">
             {src && <Image src={src} alt="" fill sizes="44px" className="object-cover" />}
           </div>
-          <Link
-            href={`/title/${mediaType}/${tmdbId}`}
-            className="text-sm font-medium text-text-primary hover:text-accent"
-          >
-            {title}
-          </Link>
+          <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} />
         </div>
       </td>
       <td className="px-4 py-3 text-text-secondary">{requester}</td>

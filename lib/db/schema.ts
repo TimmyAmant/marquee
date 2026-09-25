@@ -443,6 +443,11 @@ export const requests = pgTable(
     // requests declined before this existed, or through an older API client
     // that sends no reason.
     rejectionReason: text("rejection_reason"),
+    // The TV seasons asked for, sorted and without repeats (see
+    // lib/requests/seasons.ts). Null means the whole series: every movie,
+    // every request made before per-season requests existed, and any from
+    // a client that doesn't send seasons.
+    seasons: integer("seasons").array(),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),

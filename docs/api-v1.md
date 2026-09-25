@@ -46,6 +46,14 @@ where the real server needed something the core contract didn't spell out.
    Next.js generates itself (`405 Method Not Allowed`, automatic `OPTIONS`).
    Those two have empty bodies rather than the `{error, code}` shape. Unknown
    `/api/v1/...` paths return a normal `404 not_found` JSON error.
+9. **Season requests (additive).** `POST /titles/tv/{id}/request` takes an
+   optional `{"seasons": [1, 2]}`; the request DTOs carry `seasons` and
+   `seasonsLabel`; the title detail's `viewer` has `canRequestSeasons` and
+   `requestedSeasons`, and each `seasons[]` entry has `monitored`,
+   `requested` and `requestable`. A client that sends no `seasons` gets the
+   whole-series request it always did, and a server older than this simply
+   leaves the new fields out — treat missing as null/false and keep the
+   whole-series Request button.
 
 ---
 
@@ -491,6 +499,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "canAdd": false,
     "needsArrSetup": false,
     "canRequest": false,
+    "canRequestSeasons": false,
+    "requestedSeasons": null,
     "canRelink": true,
     "arrTracking": { "arrId": 412, "monitored": true }
   },
@@ -570,6 +580,20 @@ Field notes:
     `alreadyRequested` show "Requested — waiting for approval" instead; when
     `otherRequesters` is non-empty and you haven't requested, show "Also
     requested by A, B".
+  - `canRequestSeasons` (member, TV): nothing of yours is pending for the show
+    and at least one entry of `seasons` is `requestable`. The website then
+    makes "Request" open a season picker instead (and, once the show is in
+    the library — `library.status` isn't `untracked` — shows "Request more
+    seasons", which opens the same picker). Unlike `canRequest` it can be true
+    for a show that's already tracked or owned. Picker rows are `seasons` in
+    the same order: a checkbox when `requestable`, otherwise a tag — "In
+    library" (complete in Sonarr), "Monitored" (`monitored`), or "Requested"
+    (`requested`). "Select all" checks every requestable row; the button reads
+    "Request N season(s)" and sends `POST …/request` with `{"seasons": [...]}`.
+  - `requestedSeasons`: the seasons of your pending request (null when nothing
+    is pending or it's for the whole series). With it, the pending text reads
+    "Requested Seasons 1–3 — waiting for approval" (format it the way
+    `seasonsLabel` does in `/requests/mine`).
   - Always show the status badge for `library.status`.
   - `arrTracking` (admin only, non-null when Radarr/Sonarr has the title) →
     "Search now" (`POST …/search`) and "Stop/Start monitoring" (`PUT …/monitored`).
@@ -578,7 +602,21 @@ Field notes:
 - `seasons` (TV only, "Episodes" accordion): seasons with episodes, **newest
   first**. `have`/`total` are Sonarr episode-file counts ("3/10" badge, green
   when complete) or null when Sonarr doesn't track the show. Load episodes
-  with `GET …/seasons/{n}`.
+  with `GET …/seasons/{n}`. For the season picker, each also has:
+  `monitored` — Sonarr will fetch it (the season and the series are
+  monitored), null when Sonarr isn't connected or doesn't track the show;
+  `requested` — in one of your pending or approved requests for this show (a
+  pending whole-series request counts for every season); `requestable` — you
+  are a member and it isn't complete, monitored or already requested by you.
+  A season is complete when Sonarr has a file for every episode (for an
+  unmonitored season, every episode it lists, not just the aired monitored
+  ones `total` counts).
+
+  ```json
+  { "seasonNumber": 2, "name": "Season 2", "episodeCount": 10, "airDate": "2025-01-17",
+    "posterPath": "/abc.jpg", "have": null, "total": null,
+    "monitored": null, "requested": false, "requestable": true }
+  ```
 - `cast`: top 20 by billing order.
 - `franchise`: a TMDb collection (movies) or a curated TV crossover group.
   `collectionId`/`collectionFavorited` are null for TV groups; the star next to
@@ -635,7 +673,8 @@ request / monitor / favorite.
   "library": { "status": "tracked_monitored", "provider": "radarr", "configured": true, "file": null },
   "viewer": {
     "isAdmin": true, "favorited": false, "requestStatus": null, "alreadyRequested": false, "otherRequesters": [],
-    "canAdd": false, "needsArrSetup": false, "canRequest": false, "canRelink": true,
+    "canAdd": false, "needsArrSetup": false, "canRequest": false,
+    "canRequestSeasons": false, "requestedSeasons": null, "canRelink": true,
     "arrTracking": { "arrId": 412, "monitored": true }
   }
 }
@@ -822,12 +861,32 @@ and the admin the review queue (`/requests/pending`) plus "Past requests"
 admin enabled auto-approval for this member and media type, it's approved
 immediately (and stays pending if that approval fails).
 
+Body (optional, TV only): `{ "seasons": [1, 2] }` — request just those seasons.
+No body, `{}`, or `"seasons": null` requests the whole series, exactly as
+before; `seasons` is ignored for a movie.
+
 ```json
 { "ok": true, "requestId": "28713d50-27f2-4230-9c95-c1e6a000f6c0" }
 ```
 
-Errors: `409 conflict` "You've already requested this." / "You already have
-this in your library.", `404` / `502` (TMDb).
+Whole-series rules: blocked if you already have a pending or approved request
+for the title, or it's already tracked or owned.
+
+Season rules: `seasons` must be a non-empty list of at most 100 whole numbers,
+each a season TMDb lists for the show (0 = specials, only if TMDb has them);
+it's stored sorted and de-duplicated. Only a *pending* request of yours blocks
+it — asking for more seasons after an earlier request was approved is fine,
+and so is a show that's already tracked or owned. Seasons Sonarr already
+monitors, or has every episode of, are dropped; the request keeps the rest.
+
+Errors: `400 invalid` "Seasons must be a list of season numbers." / "Pick at
+least one season." / "That's too many seasons for one request." / "Season
+numbers must be whole numbers." / "Season 7 isn't listed for this show." /
+"This show has no specials listed." (also "Request body isn't valid JSON.");
+`409 conflict` "You've already requested this." / "You already have this in
+your library." (whole series) / "You've already requested this — it's waiting
+for approval." / "Those seasons are already in your library or on their way."
+(seasons); `404` / `502` (TMDb).
 
 ### `GET /requests/mine` — user
 
@@ -842,6 +901,8 @@ Your own requests, newest first.
       "tmdbId": 603,
       "title": "The Matrix",
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
       "status": "approved",
       "manuallyApproved": false,
       "rejectionReason": null,
@@ -864,11 +925,20 @@ null unless `status` is `rejected` and a reason was given; the website shows
 it as a second line under the "Declined" badge ("Reason: …"). Empty → "You
 haven't requested anything yet — find a title and hit Request."
 
+Every request DTO (here, `/requests/pending` and `/requests/history`) has
+`seasons` — the TV seasons asked for, ascending, or null for the whole series
+(every movie, and every request made before season requests existed) — and
+`seasonsLabel`, the same in words: `"Season 2"`, `"Seasons 1–3, 5, 7–8"`,
+`"Specials"`, `"Specials, Season 1"`, or null. The website shows the label
+as a small second line under the title.
+
 ### `GET /requests/pending` — admin
 
 The review queue, newest first. Like the website, loading it first
 auto-approves (and notifies the requester about) any pending request whose
-title is already in the library, and leaves those out.
+title is already in the library, and leaves those out. A season request is
+only settled that way once every season it asks for is monitored or complete
+in Sonarr — the show itself being in the library doesn't count.
 
 ```json
 {
@@ -887,8 +957,21 @@ title is already in the library, and leaves those out.
       "tmdbId": 603,
       "title": "The Matrix",
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
       "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z"
+    },
+    {
+      "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "title": "Severance",
+      "posterPath": "/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+      "seasons": [2],
+      "seasonsLabel": "Season 2",
+      "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
+      "createdAt": "2026-09-17T17:10:02.001Z"
     }
   ]
 }
@@ -914,6 +997,8 @@ than one request is pending. Empty → "No pending requests."
       "tmdbId": 603,
       "title": "The Matrix",
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
       "status": "rejected",
       "manuallyApproved": false,
       "rejectionReason": "Not enough space on the server right now",
@@ -942,11 +1027,17 @@ Always `0` for members. (`GET /badges` returns this together with the unread cou
 Adds the title with the admin's Radarr/Sonarr, marks it approved, notifies the
 requester. `{ "ok": true }`.
 
+For a season request: a show Sonarr doesn't have yet is added with only the
+requested seasons monitored (and searched for); a show it already has keeps
+what it monitors, gains the requested seasons, and gets a search queued for
+each of them. The notification names the seasons: `"Severance" (Season 2)
+was approved — it's on its way to your library.`
+
 Errors: `404` "Request not found or already reviewed.", `409` "Request was
 already reviewed." / "Connect Radarr in Settings first." / "Connect Sonarr in
 Settings first." / **"Couldn't resolve this show for Sonarr."** (offer manual
-approval), `502` "Couldn't add this movie to Radarr." / "Couldn't add this
-series to Sonarr.".
+approval) / "Sonarr doesn't list the requested seasons for this show.", `502`
+"Couldn't add this movie to Radarr." / "Couldn't add this series to Sonarr.".
 
 ### `POST /requests/{id}/manual-approve` — admin
 

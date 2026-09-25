@@ -100,9 +100,11 @@ export function titleDetailDto(
       requestStatus: data.activeRequestStatus,
       otherRequesters: data.otherRequesters,
       arrTracking: data.arrTracking,
+      seasonRequests: data.seasonRequests,
     }),
     seasons: seasonsNewestFirst(data.seasons).map((season) => {
       const stats = seasonCompleteness.get(season.season_number);
+      const state = data.seasonRequests.states.get(season.season_number);
       return {
         seasonNumber: season.season_number,
         name: season.name,
@@ -111,6 +113,9 @@ export function titleDetailDto(
         posterPath: season.poster_path,
         have: stats ? stats.have : null,
         total: stats ? stats.total : null,
+        monitored: state?.monitored ?? null,
+        requested: state?.requested ?? false,
+        requestable: state?.requestable ?? false,
       };
     }),
     cast: topBilledCast(data.cast).map((member) => ({

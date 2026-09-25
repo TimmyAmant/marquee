@@ -232,6 +232,13 @@
       "when": 1790100000000,
       "tag": "0032_add_push_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790367159752,
+      "tag": "0033_add_request_seasons",
+      "breakpoints": true
     }
   ]
 }

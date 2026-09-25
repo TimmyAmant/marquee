@@ -1,3 +1,5 @@
+import { seasonsForAdd, seasonsForUpdate } from "@/lib/sonarr/season-monitoring";
+
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
 // See the same constant in lib/radarr/client.ts — a slow/unreachable Sonarr
@@ -58,7 +60,7 @@ export interface SonarrSeriesLookupResult {
   title: string;
   tvdbId: number;
   images: { coverType: string; url: string }[];
-  seasons: unknown[];
+  seasons: { seasonNumber: number; monitored?: boolean }[];
   year: number;
 }
 
@@ -75,6 +77,8 @@ export interface SonarrSeasonStats {
   statistics?: {
     episodeFileCount: number;
     episodeCount: number;
+    /** Every episode of the season, monitored or not, aired or not. */
+    totalEpisodeCount?: number;
   };
 }
 
@@ -111,6 +115,42 @@ export async function setSeriesMonitored(
   await sonarrFetch(config, `/series/${seriesId}`, {
     method: "PUT",
     body: { ...series, monitored },
+  });
+}
+
+/** A season request for a series Sonarr already has: monitors the series
+ * and the requested seasons on top of whatever it already monitors. Sonarr
+ * carries a season's monitored flag down to its episodes on update. */
+export async function monitorSeriesSeasons(
+  config: ArrConfig,
+  seriesId: number,
+  requested: readonly number[],
+): Promise<void> {
+  const series = await sonarrFetch<Record<string, unknown> & { seasons?: SonarrSeasonStats[] }>(
+    config,
+    `/series/${seriesId}`,
+  );
+  await sonarrFetch(config, `/series/${seriesId}`, {
+    method: "PUT",
+    body: buildMonitorSeasonsBody(series, requested),
+  });
+}
+
+/** The PUT /series/{id} body for monitorSeriesSeasons: the series exactly as
+ * Sonarr sent it, with monitoring switched on for it and the requested seasons. */
+export function buildMonitorSeasonsBody<S extends { seasons?: SonarrSeasonStats[] }>(
+  series: S,
+  requested: readonly number[],
+) {
+  return { ...series, monitored: true, seasons: seasonsForUpdate(series.seasons ?? [], requested) };
+}
+
+/** Queues a search for one season's monitored episodes, same as the search
+ * button on a season in Sonarr — fire-and-forget like searchSeries. */
+export async function searchSeason(config: ArrConfig, seriesId: number, seasonNumber: number): Promise<void> {
+  await sonarrFetch(config, "/command", {
+    method: "POST",
+    body: { name: "SeasonSearch", seriesId, seasonNumber },
   });
 }
 
@@ -189,22 +229,31 @@ export function getCalendar(
   return sonarrFetch<SonarrCalendarEpisode[]>(config, `/calendar?${params.toString()}`);
 }
 
-export function addSeries(
-  config: ArrConfig,
-  input: {
-    lookupResult: SonarrSeriesLookupResult;
-    qualityProfileId: number;
-    rootFolderPath: string;
-  },
-) {
+export type AddSeriesInput = {
+  lookupResult: SonarrSeriesLookupResult;
+  qualityProfileId: number;
+  rootFolderPath: string;
+  /** A season request's seasons; null or omitted adds the whole series the
+   * way Sonarr's lookup result describes it. */
+  seasons?: readonly number[] | null;
+};
+
+/** The POST /series body. With `seasons`, only those are monitored, and the
+ * search-on-add only looks for monitored episodes, so it fetches just them. */
+export function buildAddSeriesBody(input: AddSeriesInput) {
+  return {
+    ...input.lookupResult,
+    qualityProfileId: input.qualityProfileId,
+    rootFolderPath: input.rootFolderPath,
+    monitored: true,
+    ...(input.seasons ? { seasons: seasonsForAdd(input.lookupResult.seasons ?? [], input.seasons) } : {}),
+    addOptions: { searchForMissingEpisodes: true },
+  };
+}
+
+export function addSeries(config: ArrConfig, input: AddSeriesInput) {
   return sonarrFetch<SonarrSeries>(config, "/series", {
     method: "POST",
-    body: {
-      ...input.lookupResult,
-      qualityProfileId: input.qualityProfileId,
-      rootFolderPath: input.rootFolderPath,
-      monitored: true,
-      addOptions: { searchForMissingEpisodes: true },
-    },
+    body: buildAddSeriesBody(input),
   });
 }
