@@ -1,4 +1,5 @@
 import {
+  foreignKey,
   pgTable,
   uuid,
   text,
@@ -30,7 +31,10 @@ export const users = pgTable(
   "users",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    username: text("username").notNull().unique(),
+    // The constraint keeps the name it had when this column was `email`
+    // (migration 0012 renamed the column, not the constraint), so the
+    // schema matches every existing database.
+    username: text("username").notNull().unique("users_email_unique"),
     passwordHash: text("password_hash"),
     displayName: text("display_name"),
     // Shared secret embedded in this user's Sonarr/Radarr webhook URLs
@@ -281,9 +285,9 @@ export const jellyfinLibraryItems = pgTable(
   "jellyfin_library_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    jellyfinServerId: uuid("jellyfin_server_id")
-      .notNull()
-      .references(() => jellyfinServers.id, { onDelete: "cascade" }),
+    // The foreign key is declared below, to keep the short name the
+    // migration that created it gave it.
+    jellyfinServerId: uuid("jellyfin_server_id").notNull(),
     itemId: text("item_id").notNull(),
     mediaType: text("media_type").notNull().$type<MediaType>(),
     tmdbId: integer("tmdb_id"),
@@ -307,6 +311,11 @@ export const jellyfinLibraryItems = pgTable(
   },
   (table) => [
     unique().on(table.jellyfinServerId, table.itemId),
+    foreignKey({
+      name: "jellyfin_library_items_server_id_fk",
+      columns: [table.jellyfinServerId],
+      foreignColumns: [jellyfinServers.id],
+    }).onDelete("cascade"),
     index("jellyfin_items_tmdb_idx").on(table.tmdbId),
     index("jellyfin_items_tvdb_idx").on(table.tvdbId),
   ],
