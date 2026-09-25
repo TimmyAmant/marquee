@@ -7,9 +7,8 @@
   left, with the frosted rail floating over its left edge) or the auth
   frame with ConnectPage (everything before sign-in). Both stay in the
   tree and swap visibility, which keeps the sign-in form's state across a
-  failed attempt and lets the shell come back instantly. The labeled menu
-  panel sits over both rows and is collapsed until the rail's menu button
-  opens it.
+  failed attempt and lets the shell come back instantly. The rail is the
+  whole menu: nothing opens over the page.
 
   Text, badges and the current-item styling are set from code-behind
   rather than bound: Window is not a FrameworkElement, so keeping its XAML
@@ -25,7 +24,7 @@
     xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d">
 
-    <Grid x:Name="Root" KeyDown="OnRootKeyDown">
+    <Grid x:Name="Root">
         <Grid.Resources>
             <!--
               Every pill in the navigation: a state fill (textPrimary 10% on
@@ -140,36 +139,6 @@
                 <Setter Property="Template" Value="{StaticResource NavPillTemplate}" />
                 <Setter Property="Background" Value="{ThemeResource MarqueeNavCurrentBrush}" />
                 <Setter Property="Foreground" Value="{ThemeResource MarqueeNavCurrentTextBrush}" />
-            </Style>
-
-            <!-- Menu rows: 40 high, 15/500, fully rounded, 14 horizontal padding. -->
-            <Style x:Key="NavMenuRowStyle" TargetType="Button">
-                <Setter Property="Template" Value="{StaticResource NavPillTemplate}" />
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Foreground" Value="{ThemeResource MarqueeNavTextBrush}" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Padding" Value="14,0,14,0" />
-                <Setter Property="Height" Value="40" />
-                <Setter Property="CornerRadius" Value="20" />
-                <Setter Property="FontSize" Value="15" />
-                <Setter Property="FontWeight" Value="Medium" />
-                <Setter Property="HorizontalAlignment" Value="Stretch" />
-                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="UseSystemFocusVisuals" Value="True" />
-            </Style>
-
-            <Style x:Key="NavMenuRowCurrentStyle" TargetType="Button" BasedOn="{StaticResource NavMenuRowStyle}">
-                <Setter Property="Background" Value="{ThemeResource MarqueeNavCurrentBrush}" />
-                <Setter Property="Foreground" Value="{ThemeResource MarqueeNavCurrentTextBrush}" />
-            </Style>
-
-            <!-- "Browse" / "Library": 11.5/600 muted, then a hairline to the right edge. -->
-            <Style x:Key="NavSectionHeaderTextStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="11.5" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{ThemeResource MarqueeNavTextMutedBrush}" />
-                <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
         </Grid.Resources>
 
@@ -297,7 +266,8 @@
               The rail is the menu: every destination, one click away, in
               the menu's order (profile; Search, Discover; Movies, Series;
               Favorites, Calendar, Requests), groups split by a short
-              hairline, then the menu button that opens the labeled panel.
+              hairline, and (only while a newer Marquee is out) the update
+              button, which opens Settings where "Update" is.
               Hovering or focusing an icon shows its name to the right.
               Each section button's Tag is its Section.Tag(); the code-behind
               makes the current one a solid pill.
@@ -418,255 +388,36 @@
                         </Grid>
                     </Button>
 
-                    <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
-
-                    <Button
-                        x:Name="RailMenuButton"
-                        Style="{StaticResource NavRailButtonStyle}"
-                        Click="OnRailMenuClick"
-                        AutomationProperties.Name="Open menu"
-                        ToolTipService.ToolTip="Menu"
-                        ToolTipService.Placement="Right">
-                        <FontIcon Glyph="&#xE700;" FontSize="19" />
-                    </Button>
+                    <!-- A newer Marquee: shown by UpdateUpdateButton() in code. -->
+                    <StackPanel x:Name="RailUpdateGroup" Spacing="4" Visibility="Collapsed">
+                        <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
+                        <Button
+                            x:Name="RailUpdateButton"
+                            Style="{StaticResource NavRailButtonStyle}"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Click="OnRailUpdateClick"
+                            AutomationProperties.Name="Update Marquee"
+                            ToolTipService.ToolTip="Update Marquee"
+                            ToolTipService.Placement="Right">
+                            <Grid>
+                                <FontIcon Glyph="&#xE896;" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Ellipse
+                                    Width="12"
+                                    Height="12"
+                                    Margin="0,4,4,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Fill="{ThemeResource MarqueeAccentBrush}"
+                                    Stroke="{ThemeResource MarqueeDotRingBrush}"
+                                    StrokeThickness="2" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
 
         <Frame x:Name="AuthFrame" Grid.Row="1" />
-
-        <!--
-          The labeled menu, over everything (nothing reflows), opened only by
-          the rail's menu button. The transparent layer behind the panel is
-          the click outside that closes it; the panel's fade, slide and scale
-          are storyboards built in code.
-        -->
-        <Grid x:Name="MenuLayer" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed">
-            <Border Background="Transparent" PointerPressed="OnMenuDismissPressed" />
-
-            <Border
-                x:Name="MenuPanel"
-                Width="288"
-                Margin="12"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Stretch"
-                CornerRadius="24"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource MarqueeGlassBorderBrush}"
-                Background="{ThemeResource MarqueeGlassBrush}"
-                Opacity="0"
-                RenderTransformOrigin="0,0.5"
-                TabFocusNavigation="Cycle">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Padding="12,16,12,12" XYFocusKeyboardNavigation="Enabled">
-                            <!-- The account: 38 avatar, name 15/600 over the server 11.5 muted, a chevron. Opens Settings. -->
-                            <Button
-                                x:Name="MenuProfileButton"
-                                Style="{StaticResource NavMenuRowStyle}"
-                                Height="Auto"
-                                Padding="6,6,12,6"
-                                CornerRadius="27"
-                                Click="OnProfileClick">
-                                <Grid ColumnSpacing="12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <controls:AvatarView
-                                        x:Name="MenuAvatar"
-                                        Grid.Column="0"
-                                        Diameter="42"
-                                        RingThickness="2"
-                                        VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock
-                                            x:Name="ViewerNameText"
-                                            FontSize="15"
-                                            FontWeight="SemiBold"
-                                            TextTrimming="CharacterEllipsis"
-                                            MaxLines="1" />
-                                        <TextBlock
-                                            x:Name="ServerText"
-                                            FontSize="11.5"
-                                            FontWeight="Normal"
-                                            Foreground="{ThemeResource MarqueeNavTextMutedBrush}"
-                                            TextTrimming="CharacterEllipsis"
-                                            MaxLines="1" />
-                                    </StackPanel>
-                                    <FontIcon
-                                        Grid.Column="2"
-                                        Glyph="&#xE76C;"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource MarqueeNavTextMutedBrush}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-
-                            <StackPanel Margin="0,12,0,0" Spacing="2">
-                                <!-- Search and Discover: 44 high, 16/600, 20 icons. -->
-                                <Button
-                                    x:Name="MenuSearchButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Height="44"
-                                    CornerRadius="22"
-                                    FontSize="16"
-                                    FontWeight="SemiBold"
-                                    Tag="search"
-                                    Click="OnSearchNavClick"
-                                    AutomationProperties.Name="Search">
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <FontIcon Glyph="&#xE721;" FontSize="20" />
-                                        <TextBlock Text="Search" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    x:Name="MenuDiscoverButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Height="44"
-                                    CornerRadius="22"
-                                    FontSize="16"
-                                    FontWeight="SemiBold"
-                                    Tag="discover"
-                                    Click="OnSectionNavClick"
-                                    AutomationProperties.Name="Discover">
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <FontIcon Glyph="&#xE909;" FontSize="20" />
-                                        <TextBlock Text="Discover" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-
-                                <Grid Margin="12,16,12,6" ColumnSpacing="12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Browse" Style="{StaticResource NavSectionHeaderTextStyle}" />
-                                    <Rectangle Grid.Column="1" Height="1" VerticalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
-                                </Grid>
-                                <Button
-                                    x:Name="MenuMoviesButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Tag="movies"
-                                    Click="OnSectionNavClick"
-                                    AutomationProperties.Name="Movies">
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <FontIcon Glyph="&#xE714;" FontSize="19" />
-                                        <TextBlock Text="Movies" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    x:Name="MenuSeriesButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Tag="series"
-                                    Click="OnSectionNavClick"
-                                    AutomationProperties.Name="Series">
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <FontIcon Glyph="&#xE7F4;" FontSize="19" />
-                                        <TextBlock Text="Series" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-
-                                <Grid Margin="12,16,12,6" ColumnSpacing="12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Library" Style="{StaticResource NavSectionHeaderTextStyle}" />
-                                    <Rectangle Grid.Column="1" Height="1" VerticalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
-                                </Grid>
-                                <Button
-                                    x:Name="MenuFavoritesButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Tag="favorites"
-                                    Click="OnSectionNavClick"
-                                    AutomationProperties.Name="Favorites">
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <FontIcon Glyph="&#xEB51;" FontSize="19" />
-                                        <TextBlock Text="Favorites" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    x:Name="MenuCalendarButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Tag="calendar"
-                                    Click="OnSectionNavClick"
-                                    AutomationProperties.Name="Calendar">
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <FontIcon Glyph="&#xE787;" FontSize="19" />
-                                        <TextBlock Text="Calendar" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    x:Name="MenuRequestsButton"
-                                    Style="{StaticResource NavMenuRowStyle}"
-                                    Tag="requests"
-                                    Click="OnSectionNavClick"
-                                    AutomationProperties.Name="Requests">
-                                    <Grid ColumnSpacing="14">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon Grid.Column="0" Glyph="&#xE8FD;" FontSize="19" />
-                                        <TextBlock Grid.Column="1" Text="Requests" VerticalAlignment="Center" />
-                                        <!-- components/requests-badge.tsx: the pending count on the accent, "9+" past nine. -->
-                                        <Border
-                                            x:Name="MenuRequestsBadge"
-                                            Grid.Column="2"
-                                            Height="18"
-                                            MinWidth="18"
-                                            Padding="5,0,5,0"
-                                            CornerRadius="9"
-                                            VerticalAlignment="Center"
-                                            Background="{ThemeResource MarqueeAccentBrush}"
-                                            Visibility="Collapsed">
-                                            <TextBlock
-                                                x:Name="MenuRequestsBadgeText"
-                                                FontSize="10.5"
-                                                FontWeight="Bold"
-                                                Foreground="{ThemeResource MarqueeOnAccentBrush}"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center" />
-                                        </Border>
-                                    </Grid>
-                                </Button>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- The footer: a hairline, then the wordmark (17 serif). -->
-                    <Border
-                        Grid.Row="1"
-                        Padding="20,12,20,12"
-                        BorderThickness="0,1,0,0"
-                        BorderBrush="{ThemeResource MarqueeGlassBorderBrush}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock
-                                Text="Marquee"
-                                FontFamily="{StaticResource MarqueeSerifFontFamily}"
-                                FontSize="17"
-                                FontWeight="SemiBold"
-                                CharacterSpacing="-10"
-                                Foreground="{ThemeResource MarqueeNavTextBrush}"
-                                VerticalAlignment="Center" />
-                            <Ellipse
-                                Width="6"
-                                Height="6"
-                                Margin="2,1,0,0"
-                                VerticalAlignment="Top"
-                                Fill="{ThemeResource MarqueeAccentBrush}" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-        </Grid>
     </Grid>
 </Window>

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Menu bar: Edit → Find, Go (the navigation menu and its sections), View → Reload, Library → Sync Now,
+/// Menu bar: Edit → Find, Go (the navigation sections), View → Reload, Library → Sync Now,
 /// Marquee → Check for Updates… / Change Server… / Sign Out, and Help links that mirror the web footer.
 struct MarqueeCommands: Commands {
     let model: AppModel
@@ -44,16 +44,6 @@ struct MarqueeCommands: Commands {
         }
 
         CommandMenu("Go") {
-            // The keyboard's way into the navigation menu (the rail opens it
-            // on hover or a click). ⌃⌘S is the Mac's Show Sidebar shortcut,
-            // and this menu is what replaced the sidebar.
-            Button("Show Menu") {
-                model.showMainWindow()
-                model.navMenuRequest &+= 1
-            }
-            .keyboardShortcut("s", modifiers: [.command, .control])
-            .disabled(model.phase != .ready)
-            Divider()
             ForEach(SidebarItem.allCases) { item in
                 Button(item.title) {
                     model.select(item)

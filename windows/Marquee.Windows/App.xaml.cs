@@ -54,8 +54,10 @@ public partial class App : Application
             new PasswordVaultTokenStore(),
             ApiClient.DefaultHandler,
             DeviceName());
-        var model = new AppModel(session, DispatcherQueue.GetForCurrentThread(), settings);
-        AppServices.Initialize(model);
+        var dispatcher = DispatcherQueue.GetForCurrentThread();
+        var model = new AppModel(session, dispatcher, settings);
+        var updater = new Updater(dispatcher);
+        AppServices.Initialize(model, updater);
 
         window = new MainWindow();
         AppServices.WindowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
@@ -68,6 +70,9 @@ public partial class App : Application
         // Restores the saved session after the window is up, so the spinner
         // has somewhere to show.
         _ = model.BootstrapAsync();
+
+        // Signed in or not: GitHub is asked, never the Marquee server.
+        updater.Start();
     }
 
     /// <summary>What the server's device list calls this PC (the <c>name</c> on its token row).</summary>

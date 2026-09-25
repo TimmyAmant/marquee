@@ -149,9 +149,6 @@ final class AppModel {
     var reloadToken = 0
     /// Bumped by Edit › Find (⌘F); the toolbar search field takes focus.
     var searchFocusRequest = 0
-    /// Bumped by Go › Show Menu (⌃⌘S); the navigation menu opens with focus
-    /// on the current section.
-    var navMenuRequest = 0
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
 

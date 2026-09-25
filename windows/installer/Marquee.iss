@@ -57,3 +57,13 @@ Name: "{autodesktop}\Marquee"; Filename: "{app}\Marquee.Windows.exe"; Tasks: des
 
 [Run]
 Filename: "{app}\Marquee.Windows.exe"; Description: "Open Marquee"; Flags: nowait postinstall skipifsilent
+; The app's own updater runs this installer silently with /relaunch=1 after
+; quitting, so Marquee comes back on the new version by itself. A plain
+; silent install (an admin's, or CI's) leaves it closed.
+Filename: "{app}\Marquee.Windows.exe"; Flags: nowait; Check: ShouldRelaunch
+
+[Code]
+function ShouldRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;

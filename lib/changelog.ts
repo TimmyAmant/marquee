@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.30.0",
+    date: "2026-09-25",
+    changes: [
+      "Marquee for Windows updates itself: it checks for a new release when it opens and once a day, and when there is one, an update button appears at the foot of the rail. It takes you to Settings › About, where Update downloads the new installer, checks it against the release, then closes Marquee, updates it and reopens it. Settings › About also has Check for updates and What's new. Install 0.30.0 once from the download link; later versions arrive through the button.",
+      "The Mac app shows the same update button on its rail when a new release is out, alongside Marquee › Check for Updates… and Settings › About.",
+      "Removed: the ☰ button at the bottom of the rail and the full menu it opened, on the website and in the Mac and Windows apps. Every section is already one click away on the rail. On a phone, where there's no rail, the menu button at the top still opens the menu.",
+      "Marquee for Windows shows its real version in Settings › About (it said 0.1.0).",
+    ],
+  },
+  {
     version: "0.29.0",
     date: "2026-09-25",
     changes: [

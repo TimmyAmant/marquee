@@ -22,8 +22,9 @@ mono = SF Mono.
 ## Navigation (all three platforms)
 
 After the Plex app's Apple TV menu. There is no fixed sidebar column: a small
-frosted **rail** floats over the page, and it opens into a frosted **menu
-panel** over the content. The web's `components/nav-menu.tsx` is the
+frosted **rail** floats over the page and is the whole menu. Only the
+website on a phone, where there's no room for the rail, opens a frosted
+**menu panel** over the content. The web's `components/nav-menu.tsx` is the
 reference implementation.
 
 - **Rail**: pinned 16 from the window's left edge, vertically centered in the
@@ -38,8 +39,10 @@ reference implementation.
   2. Search (magnifier) and Discover (compass).
   3. Movies and Series.
   4. Signed in only: Favorites, Calendar, Requests.
-  5. The menu button (three lines), after its own hairline: opens the
-     panel below, on click only.
+  5. Apps only, and only while a newer release is out: the update button
+     (a download arrow with an accent dot), after its own hairline. Opens
+     Settings › About, where "Update" and its progress are.
+  There is no menu button: nothing opens over the page on a desktop.
   Each item is 40×40 round with a 19 icon. The current page is a solid pill:
   textPrimary fill with a bg0 icon (white with a dark icon in dark mode, the
   reverse in light). Others are textSecondary, with a textPrimary-10% round
@@ -47,8 +50,8 @@ reference implementation.
   frosted label 12 to its right (13/500, fully rounded, 150ms fade); hovering
   never opens the panel. An admin with pending requests gets an 8px accent
   dot on the Requests icon.
-- **Opening the panel**: only by clicking the rail's menu button, or on
-  narrow windows/phones the header's menu button. It closes on Escape, on a
+- **Opening the panel** (website on narrow windows/phones only, where the
+  rail is hidden): the header's menu button. It closes on Escape, on a
   click outside, and after any navigation, and focus moves to the current
   item when it opens. The rail fades out (200ms) as the panel fades and
   slides in from 12 to the left, scale 0.98 → 1, 200ms ease-out.

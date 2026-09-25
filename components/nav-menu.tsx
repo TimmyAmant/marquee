@@ -52,7 +52,6 @@ const ICONS = {
   requests: (
     <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeLinecap="round" strokeLinejoin="round" />
   ),
-  menu: <path d="M5 7h14M5 12h14M5 17h14" strokeLinecap="round" />,
   person: (
     <>
       <circle cx="12" cy="8.5" r="3.5" />
@@ -93,12 +92,11 @@ function isCurrent(pathname: string, href: string): boolean {
 
 /**
  * The site's navigation, after the Plex app's Apple TV menu. A small frosted
- * rail floats at the left edge and is the menu itself: your photo (Settings)
+ * rail floats at the left edge and is the whole menu: your photo (Settings)
  * and one icon per section, each going straight there in one click, with
- * the section's name beside it on hover. The menu button at its foot opens
- * the full labeled menu as a frosted panel, only when clicked. Below the md
- * breakpoint the rail is hidden and the header's menu button opens that
- * panel as a drawer.
+ * the section's name beside it on hover. Nothing opens over the page on a
+ * desktop. Below the md breakpoint, where there's no room for the rail, the
+ * header's menu button opens the same destinations as a labeled drawer.
  */
 export function NavMenu({
   isSignedIn,
@@ -119,7 +117,6 @@ export function NavMenu({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   // Any navigation closes the menu, however it happened (a link in the
   // menu, a search result, back/forward). Same render-time reset as
@@ -146,10 +143,7 @@ export function NavMenu({
       panelRef.current?.querySelector<HTMLElement>("a[href]");
     target?.focus();
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setOpen(false);
-        menuButtonRef.current?.focus();
-      }
+      if (e.key === "Escape") setOpen(false);
     }
     function handlePointerDown(e: PointerEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false);
@@ -177,9 +171,7 @@ export function NavMenu({
     <>
       <nav
         aria-label="Main"
-        className={`nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] transition-opacity duration-200 md:flex ${
-          open ? "pointer-events-none opacity-0" : "opacity-100"
-        }`}
+        className="nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] md:flex"
       >
         <Link
           href={profileHref}
@@ -217,19 +209,6 @@ export function NavMenu({
             })}
           </Fragment>
         ))}
-        <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />
-        <button
-          ref={menuButtonRef}
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Open menu"
-          aria-expanded={open}
-          aria-controls="nav-menu-panel"
-          className="group relative flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-text-primary/10 hover:text-text-primary"
-        >
-          <Icon name="menu" className="h-[19px] w-[19px]" />
-          <RailLabel>Menu</RailLabel>
-        </button>
       </nav>
 
       {/* Narrow screens only: dims the page behind the drawer. */}
@@ -245,7 +224,7 @@ export function NavMenu({
         id="nav-menu-panel"
         ref={panelRef}
         inert={!open}
-        className={`nav-glass fixed bottom-3 left-3 top-3 z-50 flex w-[288px] max-w-[calc(100vw-24px)] origin-left flex-col overflow-hidden rounded-[24px] transition-[opacity,transform] duration-200 ease-out ${
+        className={`nav-glass fixed bottom-3 left-3 top-3 z-50 flex w-[288px] md:hidden max-w-[calc(100vw-24px)] origin-left flex-col overflow-hidden rounded-[24px] transition-[opacity,transform] duration-200 ease-out ${
           open ? "translate-x-0 scale-100 opacity-100" : "pointer-events-none -translate-x-3 scale-[0.98] opacity-0"
         }`}
       >

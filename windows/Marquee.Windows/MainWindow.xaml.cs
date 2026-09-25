@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Globalization;
 using System.Runtime.InteropServices;
 using Marquee.Core.Api;
 using Marquee.Core.Models;
@@ -13,7 +12,6 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace Marquee.Windows;
@@ -22,60 +20,39 @@ namespace Marquee.Windows;
 /// The one window: the sign-in flow until the session is ready, then the
 /// shell: a top bar (back, wordmark, search box, bell), the page frame, and
 /// the website's Plex-style navigation (components/nav-menu.tsx): a frosted
-/// rail floating at the left edge that is the menu itself (one icon per
-/// destination, each one click away), and a labeled menu panel over the page
-/// that only its menu button opens. Implements <see cref="INavigator"/> for
+/// rail floating at the left edge that is the whole menu (one icon per
+/// destination, each one click away, nothing opening over the page), plus an
+/// update button at its foot while a newer Marquee is out. Implements <see cref="INavigator"/> for
 /// the model, which is how view models open titles and sections without
 /// knowing about frames.
 ///
 /// To add a page: map its section in <see cref="PageFor(Section)"/> or its
 /// route in <see cref="PageFor(Route)"/>; everything else (current-item
 /// styling, back button, badges) already works. A new section also needs a
-/// rail button and a menu row in MainWindow.xaml whose <c>Tag</c> is
-/// <see cref="SectionExtensions.Tag"/>, listed in <see cref="railButtons"/>
-/// and <see cref="menuRows"/>.
+/// rail button in MainWindow.xaml whose <c>Tag</c> is
+/// <see cref="SectionExtensions.Tag"/>, listed in <see cref="railButtons"/>.
 /// </summary>
 public sealed partial class MainWindow : Window, INavigator
 {
     /// <summary>The website's type-ahead waits this long after the last keystroke (components/search-bar.tsx).</summary>
     private static readonly TimeSpan SuggestDelay = TimeSpan.FromMilliseconds(250);
 
-    /// <summary>The panel fades, slides and scales in (and the rail fades out) over this long, easing out.</summary>
-    private static readonly TimeSpan MenuAnimationDuration = TimeSpan.FromMilliseconds(200);
-
-    /// <summary>The closed panel sits this far left of its open position...</summary>
-    private const double MenuClosedOffset = -12;
-
-    /// <summary>...at this scale, growing from its left edge.</summary>
-    private const double MenuClosedScale = 0.98;
-
     private readonly AppModel model;
+    private readonly Updater updater;
     private readonly Style railStyle;
     private readonly Style railCurrentStyle;
-    private readonly Style menuRowStyle;
-    private readonly Style menuRowCurrentStyle;
 
     /// <summary>The rail's section buttons; each one's <c>Tag</c> is its section's <see cref="SectionExtensions.Tag"/>.</summary>
     private readonly Button[] railButtons;
 
-    /// <summary>The menu's section rows, tagged the same way.</summary>
-    private readonly Button[] menuRows;
-
-    private readonly CompositeTransform menuPanelTransform;
-    private readonly Storyboard menuOpenStoryboard;
-    private readonly Storyboard menuCloseStoryboard;
-
     private bool shellShown;
-    private bool menuOpen;
-
-    /// <summary>The section whose page (or a page pushed on it) is showing.</summary>
-    private Section currentSection = Section.Discover;
 
     private CancellationTokenSource? suggestCancellation;
 
     public MainWindow()
     {
         model = AppServices.Model;
+        updater = AppServices.Updater;
         InitializeComponent();
         Title = "Marquee";
         // The title bar's and taskbar's icon; the .exe carries the same one
@@ -91,8 +68,6 @@ public sealed partial class MainWindow : Window, INavigator
 
         railStyle = (Style)Root.Resources["NavRailButtonStyle"];
         railCurrentStyle = (Style)Root.Resources["NavRailButtonCurrentStyle"];
-        menuRowStyle = (Style)Root.Resources["NavMenuRowStyle"];
-        menuRowCurrentStyle = (Style)Root.Resources["NavMenuRowCurrentStyle"];
         railButtons =
         [
             RailSearchButton,
@@ -103,32 +78,11 @@ public sealed partial class MainWindow : Window, INavigator
             RailCalendarButton,
             RailRequestsButton,
         ];
-        menuRows =
-        [
-            MenuSearchButton,
-            MenuDiscoverButton,
-            MenuMoviesButton,
-            MenuSeriesButton,
-            MenuFavoritesButton,
-            MenuCalendarButton,
-            MenuRequestsButton,
-        ];
-
-        menuPanelTransform = new CompositeTransform
-        {
-            TranslateX = MenuClosedOffset,
-            ScaleX = MenuClosedScale,
-            ScaleY = MenuClosedScale,
-        };
-        MenuPanel.RenderTransform = menuPanelTransform;
-        menuOpenStoryboard = MenuStoryboard(opening: true);
-        menuCloseStoryboard = MenuStoryboard(opening: false);
-        menuCloseStoryboard.Completed += OnMenuCloseCompleted;
-
         model.Navigator = this;
         model.Notifications.AskPermission = AskForNotificationsAsync;
         model.PropertyChanged += OnModelPropertyChanged;
         model.SessionChanged += OnSessionChanged;
+        updater.PropertyChanged += OnUpdaterPropertyChanged;
         Activated += OnActivated;
         Closed += OnClosed;
 
@@ -136,6 +90,7 @@ public sealed partial class MainWindow : Window, INavigator
         ApplyPhase();
         UpdateAccount();
         UpdateBadges();
+        UpdateUpdateButton();
     }
 
     // MARK: INavigator
@@ -206,20 +161,15 @@ public sealed partial class MainWindow : Window, INavigator
 
     /// <summary>
     /// Marks the section that is showing as the current item, including
-    /// after Discover jumps into a grid: a solid pill on its rail button and
-    /// on its menu row. Settings is the avatar, which has no pill.
+    /// after Discover jumps into a grid: a solid pill on its rail button.
+    /// Settings is the avatar, which has no pill.
     /// </summary>
     private void SyncSelection(Section section)
     {
-        currentSection = section;
         var tag = section.Tag();
         foreach (var button in railButtons)
         {
             button.Style = button.Tag as string == tag ? railCurrentStyle : railStyle;
-        }
-        foreach (var row in menuRows)
-        {
-            row.Style = row.Tag as string == tag ? menuRowCurrentStyle : menuRowStyle;
         }
     }
 
@@ -235,10 +185,6 @@ public sealed partial class MainWindow : Window, INavigator
         SearchBox.Visibility = shell;
         NotificationsHost.Visibility = shell;
         AuthFrame.Visibility = ready ? Visibility.Collapsed : Visibility.Visible;
-        if (!ready)
-        {
-            CloseMenu();
-        }
 
         if (ready && !shellShown)
         {
@@ -258,36 +204,26 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>The account on the menu's profile row, and the photo (or initials) on both avatars.</summary>
+    /// <summary>The photo (or initials) on the rail's avatar, and its name.</summary>
     private void UpdateAccount()
     {
         var name = model.Viewer?.Label ?? "";
-        ViewerNameText.Text = name;
-        ServerText.Text = model.Session.Server?.DisplayName ?? "";
-
-        var photo = model.Viewer?.AvatarUrl ?? "";
         RailAvatar.Label = name;
-        RailAvatar.AvatarUrl = photo;
-        MenuAvatar.Label = name;
-        MenuAvatar.AvatarUrl = photo;
+        RailAvatar.AvatarUrl = model.Viewer?.AvatarUrl ?? "";
 
         var accountLabel = name.Length > 0 ? $"{name}: account and settings" : "Account and settings";
         AutomationProperties.SetName(RailProfileButton, accountLabel);
-        AutomationProperties.SetName(MenuProfileButton, accountLabel);
         ToolTipService.SetToolTip(RailProfileButton, name.Length > 0 ? name : "Settings");
     }
 
     /// <summary>
-    /// The bell's unread count; for an admin, the pending-requests count on
-    /// the menu's Requests row and the accent dot on the rail's Requests
-    /// button (members' pending count is always 0).
+    /// The bell's unread count; for an admin, the accent dot on the rail's
+    /// Requests button (members' pending count is always 0).
     /// </summary>
     private void UpdateBadges()
     {
         var pending = model.Viewer?.IsAdmin == true ? model.Badges.PendingRequests : 0;
-        MenuRequestsBadge.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
-        MenuRequestsBadgeText.Text = pending > 9 ? "9+" : pending.ToString(CultureInfo.CurrentCulture);
-        AutomationProperties.SetName(MenuRequestsButton, pending > 0 ? $"Requests, {pending} pending" : "Requests");
+        AutomationProperties.SetName(RailRequestsButton, pending > 0 ? $"Requests, {pending} pending" : "Requests");
         RailRequestsDot.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var unread = model.Badges.UnreadNotifications;
@@ -330,175 +266,21 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    // MARK: Menu (components/nav-menu.tsx)
+    // MARK: Rail (components/nav-menu.tsx)
 
-    /// <summary>
-    /// Opens the labeled panel over the page (only the rail's menu button
-    /// does), with focus on the current item, as the website does.
-    /// </summary>
-    private void OpenMenu()
+    /// <summary>The rail's update button: only while a newer Marquee is known.</summary>
+    private void UpdateUpdateButton()
     {
-        if (!shellShown)
-        {
-            return;
-        }
-        if (!menuOpen)
-        {
-            menuOpen = true;
-            MenuLayer.Visibility = Visibility.Visible;
-            MenuLayer.IsHitTestVisible = true;
-            Rail.IsHitTestVisible = false;
-            SetMenuPassthrough(true);
-            menuCloseStoryboard.Stop();
-            menuOpenStoryboard.Begin();
-        }
-        FocusCurrentMenuItem();
+        RailUpdateGroup.Visibility = updater.ShowsUpdate ? Visibility.Visible : Visibility.Collapsed;
+        var label = updater.IsInstalling ? "Updating Marquee…" : updater.UpdateLabel;
+        AutomationProperties.SetName(RailUpdateButton, label);
+        ToolTipService.SetToolTip(RailUpdateButton, label);
     }
 
-    /// <summary>
-    /// Fades the panel out and the rail back in. Focus inside the panel
-    /// moves to the rail's menu button rather than disappearing with it.
-    /// </summary>
-    private void CloseMenu()
-    {
-        if (!menuOpen)
-        {
-            return;
-        }
-        menuOpen = false;
-        var focusWasInMenu = IsFocusInMenu();
-        SetMenuPassthrough(false);
-        // Clicks during the fade reach the page instead of the closing panel.
-        MenuLayer.IsHitTestVisible = false;
-        Rail.IsHitTestVisible = true;
-        menuOpenStoryboard.Stop();
-        menuCloseStoryboard.Begin();
-        if (focusWasInMenu)
-        {
-            RailMenuButton.Focus(FocusState.Programmatic);
-        }
-    }
+    /// <summary>Settings, where "Update", its progress and "What's new" are.</summary>
+    private void OnRailUpdateClick(object sender, RoutedEventArgs e) => SelectSection(Section.Settings);
 
-    private void FocusCurrentMenuItem()
-    {
-        var tag = currentSection.Tag();
-        var target = menuRows.FirstOrDefault(row => row.Tag as string == tag) ?? MenuProfileButton;
-        // The panel was collapsed a moment ago; focus once it's in the layout.
-        model.Dispatcher.TryEnqueue(() =>
-        {
-            if (menuOpen)
-            {
-                target.Focus(FocusState.Programmatic);
-            }
-        });
-    }
-
-    private bool IsFocusInMenu()
-    {
-        if (Root.XamlRoot is not { } xamlRoot)
-        {
-            return false;
-        }
-        for (var element = FocusManager.GetFocusedElement(xamlRoot) as DependencyObject; element != null; element = VisualTreeHelper.GetParent(element))
-        {
-            if (ReferenceEquals(element, MenuPanel))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// The open panel covers the left end of the top bar, and Window.SetTitleBar
-    /// makes all of AppTitleBar's rectangle non-client, so without this the
-    /// top of the profile row would drag the window instead of taking the
-    /// click. While the menu is open, the strip of the top bar under the
-    /// panel passes pointer input through to it.
-    /// </summary>
-    private void SetMenuPassthrough(bool enabled)
-    {
-        if (!ExtendsContentIntoTitleBar || Root.XamlRoot is not { } xamlRoot)
-        {
-            return;
-        }
-        try
-        {
-            var source = Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(AppWindow.Id);
-            if (!enabled)
-            {
-                source.ClearRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough);
-                return;
-            }
-            var scale = xamlRoot.RasterizationScale;
-            var width = (int)Math.Ceiling((MenuPanel.Margin.Left + MenuPanel.Width) * scale);
-            var height = (int)Math.Ceiling(TopBar.ActualHeight * scale);
-            source.SetRegionRects(
-                Microsoft.UI.Input.NonClientRegionKind.Passthrough,
-                [new global::Windows.Graphics.RectInt32(0, 0, width, height)]);
-        }
-        catch (Exception error) when (error is COMException or ArgumentException or NotImplementedException)
-        {
-            // The drag region stays as it was; the panel still works below the top bar.
-        }
-    }
-
-    /// <summary>The panel's fade, slide from the left and scale from 0.98, with the rail fading the other way.</summary>
-    private Storyboard MenuStoryboard(bool opening)
-    {
-        var storyboard = new Storyboard();
-        AddAnimation(storyboard, MenuPanel, "Opacity", opening ? 0 : 1, opening ? 1 : 0);
-        AddAnimation(storyboard, menuPanelTransform, "TranslateX", opening ? MenuClosedOffset : 0, opening ? 0 : MenuClosedOffset);
-        AddAnimation(storyboard, menuPanelTransform, "ScaleX", opening ? MenuClosedScale : 1, opening ? 1 : MenuClosedScale);
-        AddAnimation(storyboard, menuPanelTransform, "ScaleY", opening ? MenuClosedScale : 1, opening ? 1 : MenuClosedScale);
-        AddAnimation(storyboard, Rail, "Opacity", opening ? 1 : 0, opening ? 0 : 1);
-        return storyboard;
-    }
-
-    private static void AddAnimation(Storyboard storyboard, DependencyObject target, string property, double from, double to)
-    {
-        var animation = new DoubleAnimation
-        {
-            From = from,
-            To = to,
-            Duration = new Duration(MenuAnimationDuration),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        };
-        Storyboard.SetTarget(animation, target);
-        Storyboard.SetTargetProperty(animation, property);
-        storyboard.Children.Add(animation);
-    }
-
-    private void OnMenuCloseCompleted(object? sender, object e)
-    {
-        if (!menuOpen)
-        {
-            MenuLayer.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    /// <summary>A click anywhere outside the panel closes it.</summary>
-    private void OnMenuDismissPressed(object sender, PointerRoutedEventArgs e)
-    {
-        CloseMenu();
-        e.Handled = true;
-    }
-
-    /// <summary>Escape closes the menu and puts focus back on the rail's menu button.</summary>
-    private void OnRootKeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        if (!menuOpen || e.Key != global::Windows.System.VirtualKey.Escape)
-        {
-            return;
-        }
-        CloseMenu();
-        RailMenuButton.Focus(FocusState.Keyboard);
-        e.Handled = true;
-    }
-
-    private void OnRailMenuClick(object sender, RoutedEventArgs e) => OpenMenu();
-
-    /// <summary>Every section button on the rail and row in the menu (Search aside): its <c>Tag</c> names the section.</summary>
+    /// <summary>Every section button on the rail (Search aside): its <c>Tag</c> names the section.</summary>
     private void OnSectionNavClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string tag } && SectionExtensions.FromTag(tag) is { } section)
@@ -507,17 +289,12 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>The avatar and the menu's profile row: the account, i.e. Settings.</summary>
+    /// <summary>The avatar: the account, i.e. Settings.</summary>
     private void OnProfileClick(object sender, RoutedEventArgs e) => SelectSection(Section.Settings);
 
-    /// <summary>Search on the rail and in the menu goes to the top bar's search box.</summary>
-    private void OnSearchNavClick(object sender, RoutedEventArgs e)
-    {
-        CloseMenu();
-        SearchBox.Focus(FocusState.Programmatic);
-    }
+    /// <summary>Search on the rail goes to the top bar's search box.</summary>
+    private void OnSearchNavClick(object sender, RoutedEventArgs e) => SearchBox.Focus(FocusState.Programmatic);
 
-    /// <summary>Navigates, which closes the menu (see <see cref="OnContentNavigated"/>).</summary>
     private void SelectSection(Section section) => model.Select(section);
 
     // MARK: Search (components/search-bar.tsx)
@@ -615,6 +392,14 @@ public sealed partial class MainWindow : Window, INavigator
 
     private void OnSessionChanged(object? sender, EventArgs e) => UpdateAccount();
 
+    private void OnUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(Updater.Update) or nameof(Updater.Phase))
+        {
+            UpdateUpdateButton();
+        }
+    }
+
     private void OnBackClick(object sender, RoutedEventArgs e) => GoBack();
 
     private void OnBackInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -626,12 +411,7 @@ public sealed partial class MainWindow : Window, INavigator
         args.Handled = true;
     }
 
-    /// <summary>Any navigation closes the menu, however it happened: a menu row, a search result, a notification, Back.</summary>
-    private void OnContentNavigated(object sender, NavigationEventArgs e)
-    {
-        BackButton.IsEnabled = ContentFrame.CanGoBack;
-        CloseMenu();
-    }
+    private void OnContentNavigated(object sender, NavigationEventArgs e) => BackButton.IsEnabled = ContentFrame.CanGoBack;
 
     private void OnReloadInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
@@ -653,6 +433,7 @@ public sealed partial class MainWindow : Window, INavigator
         suggestCancellation?.Cancel();
         model.PropertyChanged -= OnModelPropertyChanged;
         model.SessionChanged -= OnSessionChanged;
+        updater.PropertyChanged -= OnUpdaterPropertyChanged;
         Activated -= OnActivated;
         // The app ends with its only window: close the stream, and let a
         // later click on a notification launch the app afresh.

@@ -675,7 +675,7 @@ strong { color: var(--t1); font-weight: 650; }
   max-width: none;
 }
 
-/* the rail: every section, grouped by hairlines, then the menu button */
+/* the rail: every section, grouped by hairlines */
 .rail {
   position: absolute;
   left: 16px;
