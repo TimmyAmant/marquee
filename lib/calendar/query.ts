@@ -3,6 +3,7 @@ import * as radarr from "@/lib/radarr/client";
 import * as sonarr from "@/lib/sonarr/client";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { episodeDateKey } from "@/lib/calendar/grid";
 import type { MediaType } from "@/lib/db/schema";
 
 export type CalendarEntry = {
@@ -70,17 +71,35 @@ export async function getUpcomingReleases(
   if (sonarrCred) {
     const config = { baseUrl: sonarrCred.baseUrl, apiKey: sonarrCred.apiKey };
     const episodes = await sonarr.getCalendar(config, start, end).catch(() => []);
+    // A week of a daily show is a handful of episodes of the same series —
+    // resolve each series' TMDb id and poster once per render, not once per
+    // episode. The promise is cached so later episodes share the lookup.
+    const seriesLookups = new Map<number, Promise<{ tmdbId: number; posterPath: string | null } | null>>();
+    const lookupSeries = (tvdbId: number) => {
+      let lookup = seriesLookups.get(tvdbId);
+      if (!lookup) {
+        lookup = (async () => {
+          const tmdbId = await resolveTmdbIdFromTvdbId(tvdbId).catch(() => null);
+          if (tmdbId == null) return null;
+          const title = await getOrFetchTitle("tv", tmdbId).catch(() => null);
+          return { tmdbId, posterPath: title?.posterPath ?? null };
+        })();
+        seriesLookups.set(tvdbId, lookup);
+      }
+      return lookup;
+    };
     for (const episode of episodes) {
-      if (!episode.airDateUtc || !episode.series) continue;
-      const tmdbId = await resolveTmdbIdFromTvdbId(episode.series.tvdbId).catch(() => null);
-      if (tmdbId == null) continue;
-      const title = await getOrFetchTitle("tv", tmdbId).catch(() => null);
+      if (!episode.series) continue;
+      const date = episodeDateKey(episode);
+      if (!date) continue;
+      const series = await lookupSeries(episode.series.tvdbId);
+      if (!series) continue;
       entries.push({
-        date: toDateOnly(episode.airDateUtc),
+        date,
         mediaType: "tv",
-        tmdbId,
+        tmdbId: series.tmdbId,
         name: episode.series.title,
-        posterPath: title?.posterPath ?? null,
+        posterPath: series.posterPath,
         subtitle: `S${String(episode.seasonNumber).padStart(2, "0")}E${String(episode.episodeNumber).padStart(2, "0")}`,
       });
     }
