@@ -60,11 +60,6 @@ export async function POST(
   }
   const provider = providerParam;
 
-  const rateKey = `webhook-auth:${getClientIp(request)}`;
-  if (isRateLimited(rateKey, WEBHOOK_FAILED_AUTH_LIMIT)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
-
   // The header keeps the secret out of proxy and access logs; the query
   // string still works so webhooks set up before the header existed keep
   // going.
@@ -74,6 +69,16 @@ export async function POST(
   // a 500 — it's just a wrong URL, so answer like any other bad credential.
   const expectedSecret = UUID_PATTERN.test(userId) ? await getWebhookSecret(userId) : null;
   if (!secret || !expectedSecret || !secretsMatch(secret, expectedSecret)) {
+    // Limited only once the secret has failed, never ahead of checking it:
+    // without a trusted proxy every sender shares one bucket (and even with
+    // one, an address can be shared), so a limit in front of the check
+    // would let anyone who fills it silence Sonarr/Radarr's real events. A
+    // right secret always gets through; the secrets are far too long to
+    // guess, so this only sheds load from whoever keeps trying.
+    const rateKey = `webhook-auth:${getClientIp(request) ?? "unknown"}`;
+    if (isRateLimited(rateKey, WEBHOOK_FAILED_AUTH_LIMIT)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
     recordFailedAttempt(rateKey, WEBHOOK_RATE_WINDOW_MS);
     return NextResponse.json({ error: "Invalid or missing secret" }, { status: 401 });
   }

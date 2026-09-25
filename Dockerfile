@@ -19,7 +19,10 @@ LABEL org.opencontainers.image.source="https://github.com/TimmyAmant/marquee" \
 # defaults to) so a future rebuild never silently ends up with a server
 # version that can't read data directories from earlier installs — bump
 # this deliberately, alongside a documented migration path, not by accident.
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql-15 \
+#
+# gosu is how entrypoint.sh drops from root (which it needs to run Postgres
+# as the postgres user) to the unprivileged `node` user for the app itself.
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-15 gosu \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -37,7 +40,10 @@ COPY . .
 # first query. This placeholder only needs to exist, never to be reachable;
 # the real DATABASE_URL is built at container startup by entrypoint.sh.
 ENV DATABASE_URL="postgres://build:build@build-time-placeholder:5432/build"
-RUN npm run build
+# The app runs as `node`, and Next.js writes to .next at runtime (the image
+# optimizer's and fetch() caches) — so .next is the one part of the app it
+# owns. Chowned in the same layer as the build so it isn't stored twice.
+RUN npm run build && chown -R node:node .next
 
 ENV NODE_ENV=production
 EXPOSE 3000

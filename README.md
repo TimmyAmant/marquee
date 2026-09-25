@@ -254,6 +254,7 @@ Edit `.env` and fill in:
 | `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32` — **back this up**, losing it makes saved Sonarr/Radarr/Plex/Jellyfin credentials undecryptable |
 | `TMDB_API_KEY` (or `TMDB_ACCESS_TOKEN`) | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) — can also be set later from Settings → Integrations instead |
 | `TVDB_API_KEY` / `TVDB_PIN` | [thetvdb.com/api-information](https://thetvdb.com/api-information) |
+| `TRUSTED_PROXY_HOPS` | optional, default `0` — only set it if Marquee sits behind a reverse proxy or tunnel; see [Behind a proxy](#behind-a-proxy-trusted_proxy_hops) |
 
 Then:
 
@@ -408,6 +409,30 @@ in front of the whole domain will block anything that isn't a browser:
   `/api/webhooks/…` with a per-account secret, so they're unaffected — unless
   you deliberately route them through the domain, in which case exempt that
   path too.
+
+### Behind a proxy: `TRUSTED_PROXY_HOPS`
+
+Marquee rate-limits failed sign-ins per client address. It can only tell
+clients apart when a proxy it trusts says who they are, in the
+`X-Forwarded-For` header — without one, that header is whatever the client
+chose to send. So by default (`TRUSTED_PROXY_HOPS=0`) Marquee ignores it:
+sign-ins are slowed down per username instead (a few seconds between
+attempts once one has had several failures — never a lockout), and nobody
+can dodge the limit by making up an address.
+
+If every request reaches Marquee through proxies you control, set
+`TRUSTED_PROXY_HOPS` to how many of them there are, counting each one that
+adds to `X-Forwarded-For`:
+
+| Setup | Value |
+|---|---|
+| LAN only, or port forwarding straight to Marquee | `0` (the default) |
+| Cloudflare Tunnel (Option A), or one reverse proxy (Nginx Proxy Manager, Caddy, Traefik, SWAG) | `1` |
+| Cloudflare Tunnel into a reverse proxy (Option C with Authelia) | `2` |
+
+Then too many failed sign-ins from one address lock out only that address,
+for 15 minutes. Too high a value is worse than too low: it makes Marquee
+trust an address the client wrote itself.
 
 ## Local development
 

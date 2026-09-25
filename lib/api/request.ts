@@ -16,10 +16,46 @@ export function invalid(message: string): ApiError {
   return ApiError.of("invalid", message);
 }
 
+/** Every JSON body the API takes is a handful of fields; this is far more
+ * than any of them needs. */
+export const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+function bodyTooLarge(): ApiError {
+  return new ApiError(413, "invalid", "Request body is too large.");
+}
+
+/** Reads the body as text without holding more than MAX_JSON_BODY_BYTES in
+ * memory — some callers (sign-in, first-run setup) take requests from
+ * anyone. A declared Content-Length over the limit is refused up front, and
+ * a body that turns out longer anyway is cut off as soon as it crosses it
+ * (the same approach as readAvatarUpload). */
+async function readBodyText(request: Request): Promise<string> {
+  const declared = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > MAX_JSON_BODY_BYTES) throw bodyTooLarge();
+  if (!request.body) return "";
+
+  const decoder = new TextDecoder();
+  let text = "";
+  let total = 0;
+  const reader = request.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_JSON_BODY_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      throw bodyTooLarge();
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
+}
+
 /** Parses a JSON object body. An empty body is treated as `{}` so action
- * endpoints that take no parameters work with or without one. */
+ * endpoints that take no parameters work with or without one. Over
+ * MAX_JSON_BODY_BYTES is a 413. */
 export async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
-  const text = await request.text();
+  const text = await readBodyText(request);
   if (!text.trim()) return {};
   let parsed: unknown;
   try {

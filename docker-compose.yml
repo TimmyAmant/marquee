@@ -19,6 +19,7 @@ services:
       TMDB_API_KEY: ${TMDB_API_KEY}
       TVDB_API_KEY: ${TVDB_API_KEY}
       TVDB_PIN: ${TVDB_PIN}
+      TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-0}
     volumes:
       - marquee_postgres_data:/var/lib/postgresql/data
 
