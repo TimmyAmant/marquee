@@ -258,6 +258,49 @@
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel Spacing="12">
                     <TextBlock Text="{x:Bind ViewModel.AppVersionLabel}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <!-- Updates (Services/Updater.cs): the Mac's Settings › About, for this PC. -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Text="{x:Bind Updater.StatusText, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap"
+                            Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
+                        <TextBlock
+                            Text="{x:Bind Updater.StatusText, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap"
+                            Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <ProgressBar
+                            MaxWidth="360"
+                            HorizontalAlignment="Stretch"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="{x:Bind Updater.ProgressPercent, Mode=OneWay}"
+                            IsIndeterminate="{x:Bind Updater.IsProgressIndeterminate, Mode=OneWay}"
+                            Visibility="{x:Bind Updater.IsInstalling, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="Check for updates"
+                                Click="OnCheckForUpdatesClick"
+                                Visibility="{x:Bind Updater.CanCheck, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <Button
+                                Content="{x:Bind Updater.UpdateLabel, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Click="OnInstallUpdateClick"
+                                ToolTipService.ToolTip="Downloads the installer, checks it, then Marquee closes, updates and reopens"
+                                Visibility="{x:Bind Updater.CanInstall, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <Button
+                                Content="What's new"
+                                Click="OnReleaseNotesClick"
+                                Visibility="{x:Bind Updater.ShowsUpdate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <Button
+                                Content="Download manually"
+                                Click="OnReleaseNotesClick"
+                                Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </StackPanel>
                     <ProgressRing
                         IsActive="{x:Bind ViewModel.IsAboutLoading, Mode=OneWay}"
                         Visibility="{x:Bind ViewModel.IsAboutLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

@@ -10,10 +10,10 @@ public static class AppInfo
 {
     public const string UserAgentProduct = "Marquee-Windows";
 
-    /// <summary>The <c>Version</c> from Directory.Build.props, e.g. <c>0.1.0</c>.</summary>
+    /// <summary>The <c>Version</c> from Directory.Build.props, e.g. <c>0.30.0</c>.</summary>
     public static string Version { get; } = ReadVersion();
 
-    /// <summary><c>Marquee-Windows/0.1.0</c>, sent with every request so a server log can tell the clients apart.</summary>
+    /// <summary><c>Marquee-Windows/0.30.0</c>, sent with every request so a server log can tell the clients apart.</summary>
     public static string UserAgent => $"{UserAgentProduct}/{Version}";
 
     public static readonly Uri RepositoryUrl = new("https://github.com/TimmyAmant/marquee");
@@ -25,7 +25,7 @@ public static class AppInfo
         var informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         if (!string.IsNullOrWhiteSpace(informational))
         {
-            // "0.1.0+abc123" when a build appends the commit: keep the version alone.
+            // "0.30.0+abc123" when a build appends the commit: keep the version alone.
             var plus = informational.IndexOf('+');
             return plus >= 0 ? informational[..plus] : informational;
         }

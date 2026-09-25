@@ -21,5 +21,15 @@ public static class AppServices
     /// </summary>
     public static IntPtr WindowHandle { get; set; }
 
-    public static void Initialize(AppModel value) => model = value;
+    private static Updater? updater;
+
+    /// <summary>Checks for, downloads and installs newer releases of the app itself.</summary>
+    public static Updater Updater =>
+        updater ?? throw new InvalidOperationException("AppServices.Initialize has not run; App.OnLaunched builds the updater before any page.");
+
+    public static void Initialize(AppModel value, Updater updates)
+    {
+        model = value;
+        updater = updates;
+    }
 }

@@ -221,7 +221,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>"Marquee 0.28.0", from the last server-info answer.</summary>
     public string ServerVersionLabel => model.Session.ServerInfo is { } info ? $"Marquee {info.Version}" : "";
 
-    /// <summary>"Marquee for Windows 0.1.0".</summary>
+    /// <summary>"Marquee for Windows 0.30.0".</summary>
     public string AppVersionLabel => $"Marquee for Windows {AppInfo.Version}";
 
     public string SaveLabel => IsSaving ? "Saving…" : "Save changes";
