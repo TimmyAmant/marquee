@@ -243,6 +243,9 @@ export function NavMenu({
           if (openTimer.current) clearTimeout(openTimer.current);
           openTimer.current = null;
         }}
+        // Clicking a rail icon before the hover delay is up means "go
+        // there", not "open the menu" on the page it leads to.
+        onPointerDown={clearTimers}
         className={`nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] transition-opacity duration-200 md:flex ${
           open ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
