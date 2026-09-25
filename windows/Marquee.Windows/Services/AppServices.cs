@@ -15,5 +15,11 @@ public static class AppServices
     public static AppModel Model =>
         model ?? throw new InvalidOperationException("AppServices.Initialize has not run; App.OnLaunched builds the model before any page.");
 
+    /// <summary>
+    /// The main window's HWND, which a file picker needs in an unpackaged
+    /// app (<c>InitializeWithWindow.Initialize</c>). Zero until the window exists.
+    /// </summary>
+    public static IntPtr WindowHandle { get; set; }
+
     public static void Initialize(AppModel value) => model = value;
 }

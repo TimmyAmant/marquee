@@ -26,6 +26,9 @@ public sealed record HouseholdMember
     /// <summary>The "You" badge. "Edit" is offered on every row for the admin and on this one for a member.</summary>
     public required bool IsCurrentUser { get; init; }
 
+    /// <inheritdoc cref="User.AvatarUrl"/>
+    public string? AvatarUrl { get; init; }
+
     public bool IsAdmin => Role == UserRole.Admin;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
@@ -71,4 +74,14 @@ public sealed record UpdateUserResult
     /// your own account, this PC is signed out and must sign in again.
     /// </summary>
     public required bool TokensRevoked { get; init; }
+}
+
+/// <summary>
+/// <c>PUT /users/{id}/avatar</c> and <c>DELETE /users/{id}/avatar</c>: the
+/// account's new <see cref="User.AvatarUrl"/>, null once the photo is removed.
+/// </summary>
+public sealed record AvatarResult
+{
+    public required bool Ok { get; init; }
+    public string? AvatarUrl { get; init; }
 }

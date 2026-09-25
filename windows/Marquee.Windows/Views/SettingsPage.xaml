@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   app/settings/page.tsx's Account tab for this PC: the account card and its
-  edit form, the household members list (household-members-list.tsx) with
-  the admin's Add member, the server card (Change server, Sign out) and
-  About. Each card is a Border with the card brushes; the page is a single
+  edit form, the Notifications switch, the household members list
+  (household-members-list.tsx, each row with its photo) with the admin's
+  Add member, the server card (Change server, Sign out) and About. Each card is a Border with the card brushes; the page is a single
   column. The member dialogs are shown by the code-behind.
 -->
 <Page
@@ -84,6 +84,35 @@
                 </StackPanel>
             </Border>
 
+            <!--
+              Notifications (Settings > Account > Notifications on the
+              website): Windows notifications straight from the server's
+              stream while the app runs. Asked once after signing in; this
+              switch changes the answer.
+            -->
+            <TextBlock Text="Notifications" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="8">
+                    <ToggleSwitch
+                        Header="Show notifications on this PC"
+                        IsOn="{x:Bind ViewModel.NotificationsEnabled, Mode=TwoWay}"
+                        IsEnabled="{x:Bind ViewModel.NotificationsSupported, Mode=OneWay}"
+                        OnContent="On"
+                        OffContent="Off" />
+                    <TextBlock
+                        Text="When something starts downloading, is ready to watch, or a request is approved or declined, Windows shows it while Marquee is open. It comes straight from your Marquee server; nothing goes through an outside service."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.NotificationsNote, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.NotificationsNote, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
             <!-- Household members: every account for the admin, only your own for a member -->
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
@@ -148,10 +177,17 @@
                                         Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
                                     <Grid Padding="20,12" ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <controls:AvatarView
+                                            Grid.Column="0"
+                                            Label="{x:Bind Label}"
+                                            AvatarUrl="{x:Bind AvatarUrl}"
+                                            Diameter="36"
+                                            VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock
                                                 Text="{x:Bind Label}"
                                                 Style="{StaticResource BodyTextBlockStyle}"
@@ -165,7 +201,7 @@
                                                 TextWrapping="NoWrap"
                                                 TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                             <controls:TonePill
                                                 Text="Admin"
                                                 Tone="{x:Bind AdminTone}"

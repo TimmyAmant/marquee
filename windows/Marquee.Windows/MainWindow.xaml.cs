@@ -8,6 +8,7 @@ using Marquee.Windows.ViewModels;
 using Marquee.Windows.Views;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -137,6 +138,7 @@ public sealed partial class MainWindow : Window, INavigator
         menuCloseTimer.Tick += OnMenuCloseTimerTick;
 
         model.Navigator = this;
+        model.Notifications.AskPermission = AskForNotificationsAsync;
         model.PropertyChanged += OnModelPropertyChanged;
         model.SessionChanged += OnSessionChanged;
         Activated += OnActivated;
@@ -174,6 +176,16 @@ public sealed partial class MainWindow : Window, INavigator
         {
             ContentFrame.GoBack();
         }
+    }
+
+    /// <summary>A click on a Windows notification: out of the taskbar and to the front.</summary>
+    public void BringToFront()
+    {
+        if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+        {
+            presenter.Restore();
+        }
+        Activate();
     }
 
     /// <summary>
@@ -283,16 +295,18 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>The account on the menu's profile row, and the initials on both avatars.</summary>
+    /// <summary>The account on the menu's profile row, and the photo (or initials) on both avatars.</summary>
     private void UpdateAccount()
     {
         var name = model.Viewer?.Label ?? "";
         ViewerNameText.Text = name;
         ServerText.Text = model.Session.Server?.DisplayName ?? "";
 
-        var initials = Initials(name);
-        RailAvatarText.Text = initials;
-        MenuAvatarText.Text = initials;
+        var photo = model.Viewer?.AvatarUrl ?? "";
+        RailAvatar.Label = name;
+        RailAvatar.AvatarUrl = photo;
+        MenuAvatar.Label = name;
+        MenuAvatar.AvatarUrl = photo;
 
         var accountLabel = name.Length > 0 ? $"{name}: account and settings" : "Account and settings";
         AutomationProperties.SetName(RailProfileButton, accountLabel);
@@ -319,18 +333,38 @@ public sealed partial class MainWindow : Window, INavigator
         AutomationProperties.SetName(NotificationsButton, unread > 0 ? $"Notifications, {unread} unread" : "Notifications");
     }
 
+    // MARK: Notifications on this PC
+
     /// <summary>
-    /// Plex's round profile photo, with initials standing in (Marquee
-    /// accounts don't have pictures): the first letter of up to two words,
-    /// uppercased, or "?" without a name.
+    /// "Get notifications on this PC?", asked once the shell is up after
+    /// signing in (<see cref="NotificationCenter"/> decides when). True for
+    /// Turn on, false for Not now; null when a dialog was already open, so
+    /// it's asked another time instead.
     /// </summary>
-    private static string Initials(string label)
+    private async Task<bool?> AskForNotificationsAsync()
     {
-        var initials = string.Concat(label
-            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
-            .Take(2)
-            .Select(word => (char.IsSurrogatePair(word, 0) ? word[..2] : word[..1]).ToUpperInvariant()));
-        return initials.Length > 0 ? initials : "?";
+        if (Root.XamlRoot is not { } xamlRoot)
+        {
+            return null;
+        }
+        var dialog = new ContentDialog
+        {
+            XamlRoot = xamlRoot,
+            Title = "Get notifications on this PC?",
+            Content = "Marquee can tell you when something starts downloading, when it's ready to watch, and when a request is approved or declined. They come straight from your Marquee server while the app is open; nothing goes through an outside service. You can change this in Settings.",
+            PrimaryButtonText = "Turn on",
+            CloseButtonText = "Not now",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        try
+        {
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        catch (COMException)
+        {
+            // "Only a single ContentDialog can be open at any time."
+            return null;
+        }
     }
 
     // MARK: Menu (components/nav-menu.tsx)
@@ -763,6 +797,10 @@ public sealed partial class MainWindow : Window, INavigator
         model.PropertyChanged -= OnModelPropertyChanged;
         model.SessionChanged -= OnSessionChanged;
         Activated -= OnActivated;
+        // The app ends with its only window: close the stream, and let a
+        // later click on a notification launch the app afresh.
+        model.Notifications.AskPermission = null;
+        model.Notifications.Shutdown();
         if (ReferenceEquals(model.Navigator, this))
         {
             model.Navigator = null;

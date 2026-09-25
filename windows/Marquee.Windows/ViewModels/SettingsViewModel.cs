@@ -22,6 +22,7 @@ public sealed class HouseholdMemberRow
     {
         Member = member;
         Label = member.Label;
+        AvatarUrl = member.AvatarUrl ?? "";
         UsernameLine = member.DisplayName.NonBlank() != null ? member.Username : "";
         IsAdminRow = member.IsAdmin;
         IsCurrentUser = member.IsCurrentUser;
@@ -39,6 +40,9 @@ public sealed class HouseholdMemberRow
 
     /// <summary>The display name, else the username.</summary>
     public string Label { get; }
+
+    /// <summary>The photo's server path, empty for none (the avatar shows initials).</summary>
+    public string AvatarUrl { get; }
 
     /// <summary>The username, under a display name; empty when <see cref="Label"/> already is the username.</summary>
     public string UsernameLine { get; }
@@ -156,6 +160,23 @@ public sealed partial class SettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasMembersNotice))]
     private string? membersNotice;
 
+    // MARK: Notifications
+
+    /// <summary>The switch: Windows notifications for this account on this PC.</summary>
+    [ObservableProperty]
+    private bool notificationsEnabled;
+
+    /// <summary>False when Windows notifications can't work for this copy of the app; the switch is disabled.</summary>
+    [ObservableProperty]
+    private bool notificationsSupported;
+
+    /// <summary>Why the switch may not do what it says (not available, or turned off in Windows); empty otherwise.</summary>
+    [ObservableProperty]
+    private string notificationsNote = "";
+
+    /// <summary>Set while the switch is moved to match the model, so that isn't taken for the user flipping it.</summary>
+    private bool syncingNotifications;
+
     // MARK: About
 
     [ObservableProperty]
@@ -229,6 +250,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.PropertyChanged += OnModelPropertyChanged;
         model.SessionChanged += OnSessionChanged;
         model.Events.Changed += OnServerChanged;
+        model.Notifications.StateChanged += OnNotificationsStateChanged;
+        SyncNotifications();
         _ = LoadMembersAsync();
         _ = LoadAboutAsync();
     }
@@ -243,8 +266,75 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.PropertyChanged -= OnModelPropertyChanged;
         model.SessionChanged -= OnSessionChanged;
         model.Events.Changed -= OnServerChanged;
+        model.Notifications.StateChanged -= OnNotificationsStateChanged;
         aboutCancellation?.Cancel();
         membersCancellation?.Cancel();
+    }
+
+    // MARK: Notifications
+
+    /// <summary>The user flipped the switch: the choice is saved for this account and the stream follows it.</summary>
+    partial void OnNotificationsEnabledChanged(bool value)
+    {
+        if (!syncingNotifications)
+        {
+            model.Notifications.SetEnabled(value);
+        }
+    }
+
+    private void OnNotificationsStateChanged(object? sender, EventArgs e) => SyncNotifications();
+
+    private void SyncNotifications()
+    {
+        var notifications = model.Notifications;
+        syncingNotifications = true;
+        try
+        {
+            NotificationsSupported = notifications.IsSupported;
+            NotificationsEnabled = notifications.IsEnabled;
+        }
+        finally
+        {
+            syncingNotifications = false;
+        }
+        NotificationsNote = !notifications.IsSupported
+            ? "Windows notifications aren't available to this copy of Marquee."
+            : !notifications.IsEnabled
+                ? ""
+                : notifications.ServerLacksStream
+                    ? "Your Marquee server is too old to send notifications. Update it to get them here."
+                    : notifications.IsBlockedByWindows
+                        ? "Windows is set to hide notifications from Marquee. Turn them on in Windows Settings › System › Notifications."
+                        : "";
+    }
+
+    // MARK: Profile photos
+
+    /// <summary>
+    /// <c>PUT /users/{id}/avatar</c> for the edit dialog, answering the new
+    /// photo path. The member list reloads through <see cref="ServerChange.Users"/>;
+    /// your own photo also refreshes the account, so the rail shows it at once.
+    /// </summary>
+    internal async Task<string?> SetMemberPhotoAsync(Guid id, byte[] image, string contentType)
+    {
+        var result = await model.Api.Users.SetAvatarAsync(id, image, contentType);
+        await RefreshViewerIfOwnAsync(id);
+        return result.AvatarUrl;
+    }
+
+    /// <summary><c>DELETE /users/{id}/avatar</c> for the edit dialog: back to initials.</summary>
+    internal async Task RemoveMemberPhotoAsync(Guid id)
+    {
+        await model.Api.Users.RemoveAvatarAsync(id);
+        await RefreshViewerIfOwnAsync(id);
+    }
+
+    private async Task RefreshViewerIfOwnAsync(Guid id)
+    {
+        if (model.Viewer?.Id == id)
+        {
+            await model.RefreshViewerAsync();
+        }
     }
 
     // MARK: Account

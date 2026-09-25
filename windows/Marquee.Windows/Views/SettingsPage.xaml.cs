@@ -49,7 +49,15 @@ public sealed partial class SettingsPage : Page
     /// <summary>The edit dialog for one account: what the server saved, or null when cancelled.</summary>
     private async Task<UpdateUserResult?> ShowEditMemberDialogAsync(HouseholdMember member)
     {
-        var dialog = new EditMemberDialog(member, ViewModel.IsAdmin, ViewModel.UpdateMemberAsync) { XamlRoot = XamlRoot };
+        var dialog = new EditMemberDialog(
+            member,
+            ViewModel.IsAdmin,
+            ViewModel.UpdateMemberAsync,
+            ViewModel.SetMemberPhotoAsync,
+            ViewModel.RemoveMemberPhotoAsync)
+        {
+            XamlRoot = XamlRoot,
+        };
         var result = await dialog.ShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Saved : null;
     }

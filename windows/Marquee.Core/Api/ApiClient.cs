@@ -111,6 +111,15 @@ public sealed class ApiClient
 
     // MARK: Transport
 
+    /// <summary>What every JSON call asks for.</summary>
+    public const string JsonAccept = "application/json";
+
+    /// <summary>
+    /// The most of an error body read from a streaming answer (<see cref="OpenStreamAsync"/>);
+    /// the contract's error JSON is a few hundred bytes.
+    /// </summary>
+    private const int MaxStreamErrorBytes = 64 * 1024;
+
     /// <summary>
     /// Sends one request and decodes the answer.
     /// </summary>
@@ -127,44 +136,114 @@ public sealed class ApiClient
         CancellationToken ct = default)
     {
         var raw = await SendRawAsync(method, path, query, body, timeout, ct).ConfigureAwait(false);
+        return await DecodeAsync<T>(raw).ConfigureAwait(false);
+    }
 
-        if (raw.IsRedirect)
+    /// <summary>
+    /// Sends a raw body (a photo for <c>PUT /users/{id}/avatar</c>) with its
+    /// own content type, and decodes the JSON answer like <see cref="SendAsync{T}"/>.
+    /// </summary>
+    /// <param name="contentType">The body's media type, e.g. <c>image/jpeg</c>; one that doesn't parse is Invalid, before anything is sent.</param>
+    public async Task<T> SendBytesAsync<T>(
+        HttpMethod method,
+        string path,
+        byte[] body,
+        string contentType,
+        TimeSpan? timeout = null,
+        CancellationToken ct = default)
+    {
+        if (!MediaTypeHeaderValue.TryParse(contentType, out var mediaType))
         {
-            // A legacy server (or a login proxy) redirecting to an HTML page.
-            throw ApiException.NotMarquee(raw.StatusCode);
+            throw ApiException.Invalid($"Invalid content type: {contentType}");
         }
-        if (!raw.HasApiHeader && !raw.IsJson)
-        {
-            // A reverse proxy's "bad gateway" page means the server is down,
-            // not that it's the wrong kind of server.
-            if (raw.StatusCode is >= 502 and <= 504)
-            {
-                throw ApiException.Network(NetworkFailure.Refused, $"the proxy answered {raw.StatusCode}");
-            }
-            throw ApiException.NotMarquee(raw.StatusCode);
-        }
+        var content = new ByteArrayContent(body);
+        content.Headers.ContentType = mediaType;
+        var raw = await SendCoreAsync(method, BuildUrl(path, null), content, JsonAccept, timeout, ct).ConfigureAwait(false);
+        return await DecodeAsync<T>(raw).ConfigureAwait(false);
+    }
 
+    /// <summary>
+    /// <c>GET</c> of a path the server handed out, such as an
+    /// <c>avatarUrl</c> (<c>/api/v1/users/{id}/avatar?v=…</c>), answered with
+    /// the raw bytes (the JPEG). The path must be under <c>/api/v1</c> on
+    /// this same server; anything else is Invalid and nothing is sent, so a
+    /// hostile answer can't have the token carried somewhere else. A 404 is
+    /// NotFound (no photo, or not yours to see).
+    /// </summary>
+    public async Task<byte[]> GetBytesAsync(string serverPath, TimeSpan? timeout = null, CancellationToken ct = default)
+    {
+        var url = ResolveServerPath(serverPath);
+        var raw = await SendCoreAsync(HttpMethod.Get, url, null, "image/*, application/json", timeout, ct).ConfigureAwait(false);
         if (!raw.IsSuccess)
         {
-            var error = ApiException.FromResponse(raw.StatusCode, raw.BodyText, raw.HasApiHeader);
-            if (error.IsRejectedToken && Token != null && OnUnauthorized != null)
-            {
-                await OnUnauthorized().ConfigureAwait(false);
-            }
-            throw error;
+            // The image route answers a missing photo with a bare 404 (no
+            // body, no API header), so this classifies by status as well as
+            // by code instead of calling a header-less answer a stranger.
+            await ThrowFailureAsync(raw).ConfigureAwait(false);
         }
+        return raw.Body;
+    }
 
-        if (raw.Body.Length == 0 && typeof(T) == typeof(EmptyResponse))
-        {
-            return default!;
-        }
+    /// <summary>
+    /// Opens a long-lived <c>GET</c> (<c>/notifications/stream</c>) and hands
+    /// back its body as it arrives. <paramref name="headersTimeout"/> bounds
+    /// only the wait for the response headers; after that the request has
+    /// no timeout at all, and the caller decides when a quiet connection is
+    /// dead. A non-2xx answer throws the same <see cref="ApiException"/> a
+    /// JSON call would (a rejected token signs the session out); a 2xx that
+    /// isn't <paramref name="accept"/> is NotMarquee (a captive portal, a
+    /// proxy's page).
+    /// </summary>
+    /// <param name="accept">The media type expected, e.g. <c>text/event-stream</c>.</param>
+    public async Task<StreamingResponse> OpenStreamAsync(
+        string path,
+        string accept,
+        TimeSpan? headersTimeout = null,
+        CancellationToken ct = default)
+    {
+        using var request = CreateRequest(HttpMethod.Get, BuildUrl(path, null), accept);
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutSource.CancelAfter(headersTimeout ?? RequestTimeout);
+
+        HttpResponseMessage response;
         try
         {
-            return JsonSerializer.Deserialize<T>(raw.Body, Json.Options) ?? throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
+            response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeoutSource.Token).ConfigureAwait(false);
         }
-        catch (Exception decodeError) when (decodeError is JsonException or NotSupportedException)
+        catch (Exception error) when (error is not ApiException)
         {
-            throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
+            throw ApiException.Wrap(error, ct);
+        }
+
+        try
+        {
+            var status = (int)response.StatusCode;
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            if (status is < 200 or >= 300)
+            {
+                var errorBody = await ReadPrefixAsync(response.Content, MaxStreamErrorBytes, timeoutSource.Token).ConfigureAwait(false);
+                await ThrowFailureAsync(new RawResponse(
+                    status,
+                    response.Headers.Contains(ApiHeader),
+                    mediaType,
+                    response.Headers.Location?.OriginalString,
+                    errorBody)).ConfigureAwait(false);
+            }
+            if (!string.Equals(mediaType, accept, StringComparison.OrdinalIgnoreCase))
+            {
+                throw ApiException.NotMarquee(status);
+            }
+            var body = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+            return new StreamingResponse(response, body);
+        }
+        catch (Exception error)
+        {
+            response.Dispose();
+            if (error is ApiException)
+            {
+                throw;
+            }
+            throw ApiException.Wrap(error, ct);
         }
     }
 
@@ -185,22 +264,19 @@ public sealed class ApiClient
     /// <summary>The same for an absolute URL (following a probe's redirect on the same host).</summary>
     public async Task<RawResponse> SendRawAsync(HttpMethod method, Uri url, object? body = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(method, url);
-        request.Headers.TryAddWithoutValidation("Accept", "application/json");
-        request.Headers.TryAddWithoutValidation("User-Agent", AppInfo.UserAgent);
-        if (Token != null)
-        {
-            if (!IsWellFormedToken(Token))
-            {
-                throw ApiException.Unauthorized();
-            }
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-        }
+        HttpContent? content = null;
         if (body != null)
         {
-            request.Content = new ByteArrayContent(Encode(body));
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            content = new ByteArrayContent(Encode(body));
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         }
+        return await SendCoreAsync(method, url, content, JsonAccept, timeout, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>One buffered round trip; <paramref name="content"/> goes with the request and is disposed with it.</summary>
+    private async Task<RawResponse> SendCoreAsync(HttpMethod method, Uri url, HttpContent? content, string accept, TimeSpan? timeout, CancellationToken ct)
+    {
+        using var request = CreateRequest(method, url, accept, content);
 
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutSource.CancelAfter(timeout ?? RequestTimeout);
@@ -235,6 +311,101 @@ public sealed class ApiClient
         }
     }
 
+    /// <summary>
+    /// The headers every request carries. <paramref name="content"/> belongs
+    /// to the request from here on, and is disposed with it even when this throws.
+    /// </summary>
+    private HttpRequestMessage CreateRequest(HttpMethod method, Uri url, string accept, HttpContent? content = null)
+    {
+        var request = new HttpRequestMessage(method, url) { Content = content };
+        request.Headers.TryAddWithoutValidation("Accept", accept);
+        request.Headers.TryAddWithoutValidation("User-Agent", AppInfo.UserAgent);
+        if (Token != null)
+        {
+            if (!IsWellFormedToken(Token))
+            {
+                request.Dispose();
+                throw ApiException.Unauthorized();
+            }
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        }
+        return request;
+    }
+
+    /// <summary>The JSON contract's reading of an answer: its value on success, else the error it stands for.</summary>
+    private async Task<T> DecodeAsync<T>(RawResponse raw)
+    {
+        if (raw.IsRedirect)
+        {
+            // A legacy server (or a login proxy) redirecting to an HTML page.
+            throw ApiException.NotMarquee(raw.StatusCode);
+        }
+        if (!raw.HasApiHeader && !raw.IsJson)
+        {
+            // A reverse proxy's "bad gateway" page means the server is down,
+            // not that it's the wrong kind of server.
+            if (raw.StatusCode is >= 502 and <= 504)
+            {
+                throw ApiException.Network(NetworkFailure.Refused, $"the proxy answered {raw.StatusCode}");
+            }
+            throw ApiException.NotMarquee(raw.StatusCode);
+        }
+
+        if (!raw.IsSuccess)
+        {
+            await ThrowFailureAsync(raw).ConfigureAwait(false);
+        }
+
+        if (raw.Body.Length == 0 && typeof(T) == typeof(EmptyResponse))
+        {
+            return default!;
+        }
+        try
+        {
+            return JsonSerializer.Deserialize<T>(raw.Body, Json.Options) ?? throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
+        }
+        catch (Exception decodeError) when (decodeError is JsonException or NotSupportedException)
+        {
+            throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
+        }
+    }
+
+    /// <summary>
+    /// Throws the error a non-2xx answer stands for, after letting the
+    /// session drop a token the server itself rejected.
+    /// </summary>
+    private async Task ThrowFailureAsync(RawResponse raw)
+    {
+        if (raw.IsRedirect)
+        {
+            throw ApiException.NotMarquee(raw.StatusCode);
+        }
+        var error = ApiException.FromResponse(raw.StatusCode, raw.BodyText, raw.HasApiHeader);
+        if (error.IsRejectedToken && Token != null && OnUnauthorized != null)
+        {
+            await OnUnauthorized().ConfigureAwait(false);
+        }
+        throw error;
+    }
+
+    /// <summary>Up to <paramref name="limit"/> bytes of a body, for an error answer that is never read whole.</summary>
+    private static async Task<byte[]> ReadPrefixAsync(HttpContent content, int limit, CancellationToken ct)
+    {
+        await using var stream = await content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+        var buffer = new byte[limit];
+        var total = 0;
+        while (total < limit)
+        {
+            var read = await stream.ReadAsync(buffer.AsMemory(total, limit - total), ct).ConfigureAwait(false);
+            if (read == 0)
+            {
+                break;
+            }
+            total += read;
+        }
+        return buffer[..total];
+    }
+
     /// <summary>An answer before any interpretation.</summary>
     public readonly record struct RawResponse(int StatusCode, bool HasApiHeader, string? ContentType, string? Location, byte[] Body)
     {
@@ -242,6 +413,29 @@ public sealed class ApiClient
         public bool IsRedirect => StatusCode is >= 300 and < 400;
         public bool IsJson => ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true;
         public string BodyText => Encoding.UTF8.GetString(Body);
+    }
+
+    /// <summary>
+    /// An answer being read as it arrives (<see cref="OpenStreamAsync"/>).
+    /// Disposing it closes the connection.
+    /// </summary>
+    public sealed class StreamingResponse : IDisposable
+    {
+        private readonly HttpResponseMessage response;
+
+        internal StreamingResponse(HttpResponseMessage response, Stream body)
+        {
+            this.response = response;
+            Body = body;
+        }
+
+        public Stream Body { get; }
+
+        public void Dispose()
+        {
+            Body.Dispose();
+            response.Dispose();
+        }
     }
 
     // MARK: URLs and bodies
@@ -271,6 +465,38 @@ public sealed class ApiClient
         return Uri.TryCreate(text.ToString(), UriKind.Absolute, out var url)
             ? url
             : throw ApiException.Invalid($"Invalid request path: {path}");
+    }
+
+    /// <summary>
+    /// A server-relative path the server handed out (an <c>avatarUrl</c>) as
+    /// an absolute URL on this server. It has to stay under <c>/api/v1</c>
+    /// here: a path that would leave the server (<c>//elsewhere/…</c>, an
+    /// absolute URL for another host) or climb out of the API
+    /// (<c>/api/v1/../…</c>) is Invalid, so the bearer token only ever goes
+    /// where the other calls send it.
+    /// </summary>
+    private Uri ResolveServerPath(string path)
+    {
+        var origin = BaseUrl.GetLeftPart(UriPartial.Authority);
+        Uri? url = null;
+        if (path.StartsWith('/'))
+        {
+            if (!path.StartsWith("//", StringComparison.Ordinal) && !path.Contains('\\'))
+            {
+                Uri.TryCreate(origin + path, UriKind.Absolute, out url);
+            }
+        }
+        else
+        {
+            Uri.TryCreate(path, UriKind.Absolute, out url);
+        }
+        if (url == null
+            || !string.Equals(url.GetLeftPart(UriPartial.Authority), origin, StringComparison.OrdinalIgnoreCase)
+            || !url.AbsolutePath.StartsWith(BasePath + "/", StringComparison.Ordinal))
+        {
+            throw ApiException.Invalid($"Invalid server path: {path}");
+        }
+        return url;
     }
 
     private static byte[] Encode(object body)
