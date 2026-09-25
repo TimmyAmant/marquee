@@ -1,9 +1,64 @@
+using System.Globalization;
+
 namespace Marquee.Core.Models;
 
 // Requests (api-v1.md section 7): a member's own list, the admin's review
 // queue and history. The rejection reason fields arrive with server 0.28.0;
 // they are read leniently (missing key = null / empty list) so an older
 // server's answers still decode.
+
+/// <summary>lib/requests/labels.ts, for when the server didn't send its own label.</summary>
+public static class SeasonLabels
+{
+    /// <summary>
+    /// Null for null (the whole series) or an empty list; <c>[2]</c> → "Season 2",
+    /// <c>[1,2,3,5,7,8]</c> → "Seasons 1–3, 5, 7–8", <c>[0]</c> → "Specials",
+    /// <c>[0,1]</c> → "Specials, Season 1".
+    /// </summary>
+    public static string? SeasonsLabel(IEnumerable<int>? seasons)
+    {
+        if (seasons == null)
+        {
+            return null;
+        }
+        var sorted = seasons.Distinct().Order().ToList();
+        if (sorted.Count == 0)
+        {
+            return null;
+        }
+        var parts = new List<string>();
+        if (sorted.Contains(0))
+        {
+            parts.Add("Specials");
+        }
+        var numbered = sorted.Where(season => season != 0).ToList();
+        if (numbered.Count > 0)
+        {
+            var runs = new List<string>();
+            var start = numbered[0];
+            var end = start;
+            void Close() => runs.Add(start == end
+                ? start.ToString(CultureInfo.InvariantCulture)
+                : $"{start.ToString(CultureInfo.InvariantCulture)}–{end.ToString(CultureInfo.InvariantCulture)}");
+            foreach (var number in numbered.Skip(1))
+            {
+                if (number == end + 1)
+                {
+                    end = number;
+                }
+                else
+                {
+                    Close();
+                    start = number;
+                    end = number;
+                }
+            }
+            Close();
+            parts.Add((numbered.Count == 1 ? "Season " : "Seasons ") + string.Join(", ", runs));
+        }
+        return string.Join(", ", parts);
+    }
+}
 
 /// <summary>Who requested (or acted on) something.</summary>
 public sealed record RequestPerson
@@ -48,6 +103,15 @@ public sealed record MyRequest
     /// server that doesn't send the key.
     /// </summary>
     public string? RejectionReason { get; init; }
+
+    /// <summary>The requested seasons (TV); null for a whole series, a movie, or a server older than season requests.</summary>
+    public IReadOnlyList<int>? Seasons { get; init; }
+
+    /// <summary>"Seasons 1–3"; null when <see cref="Seasons"/> is.</summary>
+    public string? SeasonsLabel { get; init; }
+
+    /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
+    public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }
@@ -101,6 +165,15 @@ public sealed record PendingRequest
     public required RequestPerson RequestedBy { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 
+    /// <summary>The requested seasons (TV); null for a whole series, a movie, or a server older than season requests.</summary>
+    public IReadOnlyList<int>? Seasons { get; init; }
+
+    /// <summary>"Seasons 1–3"; null when <see cref="Seasons"/> is.</summary>
+    public string? SeasonsLabel { get; init; }
+
+    /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
+    public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
+
     public TitleId TitleId => new(MediaType, TmdbId);
 }
 
@@ -126,6 +199,15 @@ public sealed record ReviewedRequest
 
     /// <summary>The reason given when it was declined (server 0.28.0 and later); null otherwise, or from an older server.</summary>
     public string? RejectionReason { get; init; }
+
+    /// <summary>The requested seasons (TV); null for a whole series, a movie, or a server older than season requests.</summary>
+    public IReadOnlyList<int>? Seasons { get; init; }
+
+    /// <summary>"Seasons 1–3"; null when <see cref="Seasons"/> is.</summary>
+    public string? SeasonsLabel { get; init; }
+
+    /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
+    public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }

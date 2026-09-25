@@ -47,7 +47,11 @@ public sealed class MyRequestRow : RequestRowBase
         StatusLabel = request.StatusLabel;
         Tone = request.StatusTone.ToBadgeTone();
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
+        SeasonsLine = request.SeasonsText;
     }
+
+    /// <summary>"Seasons 1–3" under the title for a request of some seasons; empty for a whole series or a movie.</summary>
+    public string SeasonsLine { get; }
 
     public string StatusLabel { get; }
     public BadgeTone Tone { get; }
@@ -66,7 +70,11 @@ public sealed class ReviewedRow : RequestRowBase
         StatusLabel = request.StatusLabel;
         Tone = request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
+        SeasonsLine = request.SeasonsText;
     }
+
+    /// <summary>"Seasons 1–3" under the title; empty for a whole series or a movie.</summary>
+    public string SeasonsLine { get; }
 
     public string RequesterLabel { get; }
     public string StatusLabel { get; }
@@ -119,6 +127,7 @@ public sealed partial class PendingRow : ObservableObject
         TitleId = request.TitleId;
         RequesterLabel = request.RequestedBy.Label;
         DateLabel = Format.ShortDate(request.CreatedAt);
+        SeasonsLine = request.SeasonsText;
         posterUrl = request.PosterPath.Url(ImageSize.W92);
         // Only an https Sonarr can be opened from here (see ExternalLinks).
         this.manualSonarrUrl = ExternalLinks.CanOpen(manualSonarrUrl) ? manualSonarrUrl : null;
@@ -130,6 +139,10 @@ public sealed partial class PendingRow : ObservableObject
     public TitleId TitleId { get; }
     public string RequesterLabel { get; }
     public string DateLabel { get; }
+
+    /// <summary>"Seasons 1–3" under the title; empty for a whole series or a movie.</summary>
+    public string SeasonsLine { get; }
+
     public bool HasPoster => posterUrl != null;
     public ImageSource? Poster => posterUrl == null ? null : poster ??= new BitmapImage(posterUrl);
     public ICommand Open { get; }

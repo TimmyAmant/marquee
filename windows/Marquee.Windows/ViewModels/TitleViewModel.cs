@@ -180,7 +180,10 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(StatusLabel),
         nameof(StatusTone),
         nameof(ShowsRequested),
+        nameof(RequestedLine),
         nameof(CanRequest),
+        nameof(ShowsRequestMoreSeasons),
+        nameof(OpensSeasonPicker),
         nameof(CanAdd),
         nameof(AddLabel),
         nameof(HasTracking),
@@ -228,6 +231,7 @@ public sealed partial class TitleViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RequestLabel))]
     [NotifyPropertyChangedFor(nameof(AddLabel))]
+    [NotifyPropertyChangedFor(nameof(IsIdle))]
     private bool isAdding;
 
     [ObservableProperty]
@@ -364,8 +368,28 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <summary>The website's "Requested" pill (waiting for approval) in place of the Request button.</summary>
     public bool ShowsRequested => Viewer?.AlreadyRequested == true;
 
-    public bool CanRequest => Viewer is { AlreadyRequested: false, CanRequest: true, RequestStatus: null };
+    /// <summary>"Requested Seasons 1–3, waiting for approval", or without the seasons for a whole-series request.</summary>
+    public string RequestedLine => Viewer?.PendingRequestLine ?? "";
+
+    /// <summary>What the Request button does; <see cref="TitleRequestAction.None"/> until the page has loaded.</summary>
+    private TitleRequestAction RequestAction => detail?.RequestAction ?? TitleRequestAction.None;
+
+    /// <summary>The accent "Request": whole series, or the season picker on a TV show the server offers seasons for.</summary>
+    public bool CanRequest => RequestAction is TitleRequestAction.WholeSeries or TitleRequestAction.PickSeasons;
+
+    /// <summary>"Request more seasons" on a show that's already tracked or partly requested.</summary>
+    public bool ShowsRequestMoreSeasons => RequestAction == TitleRequestAction.PickMoreSeasons;
+
+    /// <summary>Request opens the season picker (the page shows it) instead of requesting the whole series.</summary>
+    public bool OpensSeasonPicker => RequestAction is TitleRequestAction.PickSeasons or TitleRequestAction.PickMoreSeasons;
+
+    /// <summary>Every season TMDb lists, in the accordion's order, for the picker.</summary>
+    public IReadOnlyList<SeasonSummary> PickerSeasons => detail?.Seasons ?? [];
+
     public string RequestLabel => IsAdding ? "Requesting…" : "Request";
+
+    /// <summary>Nothing in flight in the action area: the Request buttons (which use Click, not a command) can be pressed.</summary>
+    public bool IsIdle => !IsAdding;
     public bool CanAdd => Viewer?.CanAdd == true;
     public string AddLabel => IsAdding ? "Adding…" : $"Add to {Id.MediaType.ArrName}";
     public bool HasTracking => Viewer?.ArrTracking != null;
@@ -686,6 +710,19 @@ public sealed partial class TitleViewModel : ObservableObject
         {
             IsAdding = false;
         }
+    }
+
+    /// <summary>
+    /// The season picker's submit (<c>POST …/request</c> with <c>seasons</c>).
+    /// Throws <see cref="ApiException"/> for the picker to show inline; on
+    /// success the whole page reloads behind it, since the per-season rows
+    /// changed too (<c>…/status</c> only carries <c>library</c> + <c>viewer</c>).
+    /// </summary>
+    public async Task RequestSeasonsAsync(IReadOnlyList<int> seasons)
+    {
+        AddError = null;
+        await model.Api.Titles.RequestAsync(Id.MediaType, Id.TmdbId, seasons);
+        _ = LoadAsync();
     }
 
     /// <summary>"Add to Radarr/Sonarr" (<c>POST …/add</c>, admin).</summary>

@@ -10,6 +10,7 @@ struct TitleDetailView: View {
     @State private var screen: TitleDetailModel
     @State private var showingTrailer = false
     @State private var showingRelink = false
+    @State private var showingSeasonPicker = false
 
     init(id: API.TitleID) {
         self.id = id
@@ -72,6 +73,13 @@ struct TitleDetailView: View {
                 model.replaceTop(with: .title(API.TitleID(id.mediaType, newId)))
             }
         }
+        .sheet(isPresented: $showingSeasonPicker) {
+            if let detail = screen.detail {
+                SeasonRequestSheet(title: detail.name, seasons: detail.seasons) { seasons in
+                    try await screen.requestSeasons(seasons)
+                }
+            }
+        }
     }
 
     private func content(_ detail: API.TitleDetail) -> some View {
@@ -105,7 +113,8 @@ struct TitleDetailView: View {
                                     screen: screen,
                                     detail: detail,
                                     onTrailer: { showingTrailer = true },
-                                    onRelink: { showingRelink = true }
+                                    onRelink: { showingRelink = true },
+                                    onPickSeasons: { showingSeasonPicker = true }
                                 )
                                 .frame(maxWidth: Metrics.titleTextWidth, alignment: .leading)
                                 .padding(.top, Metrics.titleColumnTop)
@@ -312,6 +321,7 @@ private struct TitleMainColumn: View {
     let detail: API.TitleDetail
     let onTrailer: () -> Void
     let onRelink: () -> Void
+    let onPickSeasons: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -342,7 +352,7 @@ private struct TitleMainColumn: View {
             }
             .padding(.top, 10)
 
-            TitleActionRow(screen: screen, detail: detail, onRelink: onRelink)
+            TitleActionRow(screen: screen, detail: detail, onRelink: onRelink, onPickSeasons: onPickSeasons)
                 .padding(.top, 16)
 
             if let tagline = detail.tagline.nonBlank {
@@ -425,6 +435,7 @@ private struct TitleActionRow: View {
     let screen: TitleDetailModel
     let detail: API.TitleDetail
     let onRelink: () -> Void
+    let onPickSeasons: () -> Void
 
     @Environment(AppModel.self) private var model
 
@@ -435,16 +446,30 @@ private struct TitleActionRow: View {
                 StatusBadge(status: detail.library.status, large: true)
 
                 if viewer.alreadyRequested {
-                    Text("Requested — waiting for approval")
+                    Text(viewer.pendingRequestLine)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Theme.tracked)
                         .padding(.horizontal, 14)
                         .frame(height: 32)
                         .background(Capsule().fill(Theme.trackedBg))
-                } else if viewer.canRequest, viewer.requestStatus == nil {
-                    Button(screen.isAdding ? "Requesting…" : "Request") { screen.request() }
-                        .buttonStyle(AccentButtonStyle())
+                } else if let action = detail.requestAction {
+                    switch action {
+                    case .wholeSeries:
+                        Button(screen.isAdding ? "Requesting…" : action.buttonTitle) { screen.request() }
+                            .buttonStyle(AccentButtonStyle())
+                            .disabled(screen.isAdding)
+                    case .pickSeasons(more: false):
+                        Button(action.buttonTitle, action: onPickSeasons)
+                            .buttonStyle(AccentButtonStyle())
+                            .disabled(screen.isAdding)
+                    case .pickSeasons(more: true):
+                        // Among the tracking pills, so outlined like them.
+                        Button(action: onPickSeasons) {
+                            pillLabel("plus", action.buttonTitle, size: 13)
+                        }
+                        .buttonStyle(OutlineButtonStyle(pill: .large))
                         .disabled(screen.isAdding)
+                    }
                 }
 
                 if viewer.canAdd {
