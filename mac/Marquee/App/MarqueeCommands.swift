@@ -35,7 +35,7 @@ struct MarqueeCommands: Commands {
         CommandGroup(replacing: .textEditing) {
             Button("Find…") {
                 model.showMainWindow()
-                model.searchFocusRequest &+= 1
+                model.isSearchOpen = true
             }
             .keyboardShortcut("f", modifiers: .command)
             .disabled(model.phase != .ready)

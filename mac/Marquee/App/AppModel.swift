@@ -152,12 +152,12 @@ final class AppModel {
     var movieFilters = API.BrowseQuery()
     var seriesFilters = API.BrowseQuery()
 
-    var searchText = ""
     var banner: Banner?
     /// Bumped by View → Reload (⌘R) to force the visible screen to refetch.
     var reloadToken = 0
-    /// Bumped by Edit › Find (⌘F); the toolbar search field takes focus.
-    var searchFocusRequest = 0
+    /// The search panel (`SearchPanel`), opened by the rail's Search and
+    /// Edit › Find (⌘F).
+    var isSearchOpen = false
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
 
@@ -418,7 +418,7 @@ final class AppModel {
         titleState.clear()
         viewer = nil
         path = []
-        searchText = ""
+        isSearchOpen = false
     }
 
     /// Role/owner can change on the server underneath a signed-in session
