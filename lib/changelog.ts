@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.30.0",
+    date: "2026-09-25",
+    changes: [
+      "Marquee for Windows updates itself: when a new release is out, Settings › About (and the menu) offer an Update button that downloads the new installer, checks it, then closes Marquee, updates it and reopens it. Settings › About also has Check for updates. Install 0.30.0 once from the download link; later versions arrive through the button.",
+      "Marquee for Windows shows its real version in Settings › About (it said 0.1.0).",
+    ],
+  },
+  {
     version: "0.29.0",
     date: "2026-09-25",
     changes: [
