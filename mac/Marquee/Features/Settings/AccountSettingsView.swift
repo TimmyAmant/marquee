@@ -36,12 +36,12 @@ struct AccountSettingsView: View {
                     }
                     .padding(.top, 4)
                 }
-                .frame(maxWidth: 520, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .cardSurface()
 
                 SettingsSectionLabel(text: "Notifications")
                 NotificationSettingsCard()
-                    .frame(maxWidth: 520, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .cardSurface()
 
                 SettingsSectionLabel(text: viewer.isAdmin ? "Household members" : "Your account")
@@ -58,7 +58,7 @@ struct AccountSettingsView: View {
                             memberRow(member, isAdmin: viewer.isAdmin)
                         }
                     }
-                    .frame(maxWidth: 520)
+                    .frame(maxWidth: .infinity)
                     .cardSurface(padding: 0)
                 } else if let loadError {
                     InlineMessage(text: loadError)
@@ -74,7 +74,7 @@ struct AccountSettingsView: View {
                         .font(.system(size: 12.5))
                         .foregroundStyle(Theme.textSecondary)
                     CreateMemberForm()
-                        .frame(maxWidth: 520)
+                        .frame(maxWidth: .infinity)
                         .cardSurface()
                 }
             }

@@ -17,14 +17,14 @@
       passes it as -p:Version when it publishes). The updater compares it
       with GitHub's latest release, so it has to be the real one.
     -->
-    <Version>0.30.1</Version>
+    <Version>0.30.2</Version>
     <Authors>Timmy Amant</Authors>
     <Product>Marquee</Product>
     <Copyright>Copyright (c) Timmy Amant</Copyright>
     <RepositoryUrl>https://github.com/TimmyAmant/marquee</RepositoryUrl>
 
     <!--
-      Keep the informational version a plain "0.30.1": it is what the
+      Keep the informational version a plain "0.30.2": it is what the
       User-Agent header reports and what the updater compares, and the
       commit hash the SDK appends by default is noise in a server log.
     -->
