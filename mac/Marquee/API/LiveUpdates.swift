@@ -23,7 +23,7 @@ protocol NotificationWatermarkStore: AnyObject {
 /// `GET /badges` every minute (and on app activation, and right after a
 /// mutation that can move the counts):
 ///
-/// - `badges` drives the sidebar's Requests badge, the bell and the Dock tile.
+/// - `badges` drives the navigation menu's Requests badge, the bell and the Dock tile.
 /// - A count that moved on its own bumps `ServerEvents` so open screens reload.
 /// - When the unread count changes, the newest notifications are fetched and
 ///   any unread one newer than the stored watermark becomes a system banner

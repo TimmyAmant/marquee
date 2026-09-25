@@ -27,6 +27,29 @@ enum Theme {
 
     static let danger = Color(red: 0.97, green: 0.44, blue: 0.44)
 
+    /// `--marquee-glass*`: the navigation rail and menu's frosted glass
+    /// (components/nav-menu.tsx), laid over a material by `glassSurface(_:)`.
+    static let glass = dynamic(light: NSColor(hex: 0xFFFFFF, alpha: 0.74), dark: NSColor(hex: 0x1E1D25, alpha: 0.68))
+    static let glassBorder = dynamic(light: NSColor(hex: 0x211F1A, alpha: 0.10), dark: NSColor(hex: 0xFFFFFF, alpha: 0.09))
+    static let glassShadow = dynamic(light: NSColor(hex: 0x3C2D14, alpha: 0.16), dark: NSColor(hex: 0x000000, alpha: 0.5))
+
+    /// The far end of the profile avatar's gradient (nav-menu.tsx `Avatar`).
+    static let avatarRust = hex(0xC2583A)
+
+    /// nav-menu.tsx `Avatar`: 140°, accentHover → accent at 45% → rust. The
+    /// end points are where CSS puts a 140° gradient line on a square.
+    static var avatarGradient: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: accentHover, location: 0),
+                .init(color: accent, location: 0.45),
+                .init(color: avatarRust, location: 1),
+            ],
+            startPoint: UnitPoint(x: 0.05, y: -0.04),
+            endPoint: UnitPoint(x: 0.95, y: 1.04)
+        )
+    }
+
     /// Status strip colors under each poster (poster-card.tsx STATUS_BAR_CLASS).
     /// A status this app doesn't know gets no strip.
     static func statusBar(_ status: API.LibraryStatus) -> Color {
@@ -44,9 +67,12 @@ enum Theme {
     static let grainOpacity: Double = 0.05
 
     static func dynamic(light: UInt32, dark: UInt32) -> Color {
+        dynamic(light: NSColor(hex: light), dark: NSColor(hex: dark))
+    }
+
+    static func dynamic(light: NSColor, dark: NSColor) -> Color {
         Color(nsColor: NSColor(name: nil) { appearance in
-            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            return NSColor(hex: isDark ? dark : light)
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
         })
     }
 
@@ -104,11 +130,17 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
 
 /// Every number the mockup pins down (Docs/DESIGN_TARGET.md, from
 /// Design/Mockups/mockup.html's CSS). The reference frame is a 1440×900
-/// window: a 230pt sidebar and a 52pt top bar leave a 1210×848 content area,
-/// which is what this app's window already measures.
+/// window: the floating navigation rail and a 52pt top bar leave a 1368×848
+/// content area. (The mockup was drawn with a 230pt sidebar, so its content
+/// area was 1210 wide; its coordinates still apply unchanged.)
 enum Metrics {
     /// The window's unified toolbar, which the title backdrop bleeds under.
     static let topBar: CGFloat = 52
+    /// Where pages start: the navigation rail floats 16 in from the window's
+    /// left edge and is 56 wide (app/layout.tsx `md:pl-[72px]`). The shell
+    /// gives pages this much leading safe area and publishes it as
+    /// `navRailInset`; see `scrollsUnderNavRail()`.
+    static let contentLeading: CGFloat = 72
 
     // Shelf pages (Discover, Movies, Series, search, person, studio).
     /// `.page{padding:28px 0 28px 28px}` — 0 on the right so cards bleed off.
@@ -170,9 +202,57 @@ struct CardSurface: ViewModifier {
     }
 }
 
+/// `.nav-glass` (app/globals.css): the navigation rail and menu's frosted
+/// glass. The window's own material blurs the page behind, tinted to the
+/// web's fill, with a 1pt border and a deep shadow. The shadow is drawn only
+/// outside the shape, like a CSS box-shadow, so it doesn't darken the page
+/// seen through the glass.
+struct GlassSurface<S: InsettableShape>: ViewModifier {
+    let shape: S
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        // `0 24px 64px` dark, `0 20px 50px` light: a SwiftUI shadow radius is
+        // about half a CSS blur.
+        let radius: CGFloat = colorScheme == .dark ? 32 : 25
+        let y: CGFloat = colorScheme == .dark ? 24 : 20
+
+        content
+            .clipShape(shape)
+            .background {
+                ZStack {
+                    shape.fill(Color.black)
+                        .shadow(color: Theme.glassShadow, radius: radius, y: y)
+                        .mask {
+                            Rectangle()
+                                .padding(-(radius * 2 + y))
+                                .overlay { shape.fill(Color.black).blendMode(.destinationOut) }
+                                .compositingGroup()
+                        }
+                    shape.fill(.ultraThinMaterial)
+                    shape.fill(Theme.glass)
+                }
+            }
+            .overlay(shape.strokeBorder(Theme.glassBorder, lineWidth: 1))
+    }
+}
+
 extension View {
     func cardSurface(padding: CGFloat = 20, radius: CGFloat = 16) -> some View {
         modifier(CardSurface(padding: padding, radius: radius))
+    }
+
+    func glassSurface<S: InsettableShape>(_ shape: S) -> some View {
+        modifier(GlassSurface(shape: shape))
+    }
+
+    /// For a page's top-level scroll view: runs it under the floating
+    /// navigation rail to the window's left edge, so the toolbar's scroll
+    /// edge and the page's glow reach the edge too, while the content still
+    /// starts clear of the rail. Outside the main window's shell (the
+    /// standalone Help windows) there's no rail and this does nothing.
+    func scrollsUnderNavRail() -> some View {
+        modifier(ScrollsUnderNavRail())
     }
 
     /// Gold radial glow behind page headers (Discover/Movies/Series).
@@ -187,6 +267,24 @@ extension View {
             .frame(height: 420)
             .allowsHitTesting(false)
         }
+    }
+}
+
+extension EnvironmentValues {
+    /// How far the floating navigation rail reaches in from the window's left
+    /// edge: `Metrics.contentLeading` inside the main window's shell, else 0.
+    @Entry var navRailInset: CGFloat = 0
+}
+
+/// A scroll view keeps out of the leading safe area altogether, so it
+/// ignores the shell's and takes the rail's inset as a content margin.
+private struct ScrollsUnderNavRail: ViewModifier {
+    @Environment(\.navRailInset) private var inset
+
+    func body(content: Content) -> some View {
+        content
+            .contentMargins(.leading, inset, for: .scrollContent)
+            .ignoresSafeArea(.container, edges: .leading)
     }
 }
 

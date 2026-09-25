@@ -108,3 +108,15 @@ final class TitleMetaTests: XCTestCase {
         ])
     }
 }
+
+/// components/nav-menu.tsx `Avatar`: up to two initials, uppercased.
+final class NavAvatarTests: XCTestCase {
+    func testInitials() {
+        XCTAssertEqual(NavAvatar.initials(of: "admin"), "A")
+        XCTAssertEqual(NavAvatar.initials(of: "Timmy Amant"), "TA")
+        XCTAssertEqual(NavAvatar.initials(of: "  ada   king lovelace "), "AK")
+        XCTAssertEqual(NavAvatar.initials(of: "élodie"), "É")
+        XCTAssertEqual(NavAvatar.initials(of: ""), "?")
+        XCTAssertEqual(NavAvatar.initials(of: "   "), "?")
+    }
+}

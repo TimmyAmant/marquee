@@ -62,7 +62,7 @@ extension API {
             }
         }
 
-        /// "Movies" / "Series" (sidebar and page titles).
+        /// "Movies" / "Series" (navigation menu and page titles).
         var pluralLabel: String {
             switch self {
             case .movie: return "Movies"

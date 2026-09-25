@@ -1,38 +1,45 @@
 import SwiftUI
 
-/// app/layout.tsx: persistent sidebar + header (search, notifications) + content.
+/// app/layout.tsx: the floating navigation rail and menu + header (search,
+/// notifications) + content.
 struct MainWindowView: View {
     @Environment(AppModel.self) private var model
-    @State private var columnVisibility = NavigationSplitViewVisibility.all
 
     var body: some View {
         @Bindable var model = model
 
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            SidebarView()
-                .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 280)
-        } detail: {
-            NavigationStack(path: $model.path) {
-                SectionRootView(item: model.selection)
-                    .navigationDestination(for: Route.self) { route in
-                        RouteDestinationView(route: route)
-                    }
-            }
-            .id(model.selection)
-            .background(Theme.bg0)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if model.live.isOffline {
-                    OfflineStrip()
+        // Without a split view, the toolbar only shows a search field declared
+        // inside the stack, so every page brings its own. They share
+        // `model.searchText`; only the page on top acts on it.
+        NavigationStack(path: $model.path) {
+            SectionRootView(item: model.selection)
+                .modifier(SearchSupport(isOnTop: model.path.isEmpty))
+                .navigationDestination(for: Route.self) { route in
+                    RouteDestinationView(route: route)
+                        .modifier(SearchSupport(isOnTop: model.path.last == route))
                 }
+        }
+        .id(model.selection)
+        // The rail floats over the page's left edge, so pages lay out clear
+        // of it. Their scroll views run under it to the window edge
+        // (`scrollsUnderNavRail()`), as does the title page's backdrop.
+        .safeAreaPadding(.leading, Metrics.contentLeading)
+        .environment(\.navRailInset, Metrics.contentLeading)
+        .background(Theme.bg0)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if model.live.isOffline {
+                OfflineStrip()
             }
-            .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
+        }
+        .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
+        .overlay {
+            NavMenu()
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 NotificationsToolbarButton()
             }
         }
-        .modifier(SearchSupport())
         .overlay(alignment: .bottom) {
             BannerView()
         }
@@ -74,106 +81,14 @@ struct RouteDestinationView: View {
     }
 }
 
-// MARK: - Sidebar (components/sidebar.tsx)
-
-private struct SidebarView: View {
-    @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
-
-    var body: some View {
-        VStack(spacing: 0) {
-            List(selection: Binding(
-                get: { Optional(model.selection) },
-                set: { if let item = $0 { model.select(item) } }
-            )) {
-                Section {
-                    ForEach([SidebarItem.discover, .movies, .series]) { item in
-                        sidebarRow(item)
-                    }
-                }
-                Section("Library") {
-                    ForEach([SidebarItem.favorites, .calendar, .requests]) { item in
-                        sidebarRow(item)
-                    }
-                }
-            }
-            .listStyle(.sidebar)
-            .safeAreaInset(edge: .top) {
-                HStack {
-                    MarqueeWordmark(size: 22)
-                    Spacer()
-                }
-                .padding(.horizontal, 18)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
-            }
-
-            Divider()
-            HStack(spacing: 8) {
-                Button {
-                    openSettings()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Theme.accent)
-                        // .who — 12.5/500 name over the 11px server this Mac
-                        // is signed in to (the role lives in Settings › Account).
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(model.viewer?.label ?? "")
-                                .font(.system(size: 12.5, weight: .medium))
-                                .foregroundStyle(Theme.textSecondary)
-                                .lineLimit(1)
-                            Text(model.session.server?.displayName ?? "")
-                                .font(.system(size: 11))
-                                .foregroundStyle(Theme.textMuted)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help("Account & Settings")
-                AppearanceToggle()
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-        }
-    }
-
-    /// The Requests badge is the server's own pending count, polled by `LiveUpdates`.
-    @ViewBuilder
-    private func sidebarRow(_ item: SidebarItem) -> some View {
-        Label(item.title, systemImage: item.systemImage)
-            .badge(item == .requests ? model.pendingRequestCount : 0)
-            .tag(item)
-    }
-}
-
-/// components/theme-toggle.tsx — flips between light and dark.
-private struct AppearanceToggle: View {
-    @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Button {
-            appearance = colorScheme == .dark ? AppearancePreference.light.rawValue : AppearancePreference.dark.rawValue
-        } label: {
-            Image(systemName: colorScheme == .dark ? "moon" : "sun.max")
-                .font(.system(size: 13))
-                .frame(width: 28, height: 28)
-                .overlay(Circle().strokeBorder(Theme.borderStrong))
-        }
-        .buttonStyle(QuietButtonStyle())
-        .help(colorScheme == .dark ? "Switch to light theme" : "Switch to dark theme")
-    }
-}
-
 // MARK: - Search (components/search-bar.tsx)
 
 private struct SearchSupport: ViewModifier {
+    /// Whether this page is the one showing. The pages under it keep their
+    /// (hidden) copy of the field, which mustn't take focus, fetch
+    /// suggestions or route a picked one.
+    let isOnTop: Bool
+
     @Environment(AppModel.self) private var model
     @State private var suggestions: [API.SearchSuggestion] = []
     @FocusState private var searchFocused: Bool
@@ -186,9 +101,9 @@ private struct SearchSupport: ViewModifier {
         content
             .searchable(text: $model.searchText, placement: .toolbar, prompt: "Search an actor, a studio, a title…")
             .searchFocused($searchFocused)
-            // Edit › Find (⌘F).
+            // Edit › Find (⌘F), and the navigation menu's Search.
             .onChange(of: model.searchFocusRequest) { _, _ in
-                searchFocused = true
+                if isOnTop { searchFocused = true }
             }
             .searchSuggestions {
                 ForEach(suggestions, id: \.stableId) { suggestion in
@@ -204,7 +119,7 @@ private struct SearchSupport: ViewModifier {
             }
             .task(id: model.searchText) {
                 let query = model.searchText
-                guard !query.hasPrefix(Self.completionPrefix) else { return }
+                guard isOnTop, !query.hasPrefix(Self.completionPrefix) else { return }
                 guard query.trimmingCharacters(in: .whitespaces).count >= 2 else {
                     suggestions = []
                     return
@@ -220,7 +135,7 @@ private struct SearchSupport: ViewModifier {
 
     /// Picking a suggestion fills the field with a sentinel — route it instead.
     private func handleSearchText(_ text: String) {
-        guard text.hasPrefix(Self.completionPrefix) else { return }
+        guard isOnTop, text.hasPrefix(Self.completionPrefix) else { return }
         let stableId = String(text.dropFirst(Self.completionPrefix.count))
         let picked = suggestions.first(where: { $0.stableId == stableId })
         model.searchText = ""
