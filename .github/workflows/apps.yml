@@ -139,6 +139,20 @@ jobs:
           Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = $start } -ErrorAction SilentlyContinue |
             Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting', 'SideBySide' } |
             ForEach-Object { "---- $($_.ProviderName) $($_.Id)"; $_.Message }
+          if (-not $alive -or (Test-Path $crashLog)) {
+            # WinUI writes the real reason for a XAML failure (the file, line
+            # and position) only to the debugger, so run it once more under
+            # cdb and print what it says.
+            $cdb = "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\cdb.exe"
+            if (Test-Path $cdb) {
+              Remove-Item $crashLog -ErrorAction SilentlyContinue
+              $debugLog = "$PWD\smoke\debugger.txt"
+              $debugger = Start-Process -FilePath $cdb -ArgumentList '-g', '-G', '-logo', "`"$debugLog`"", '-c', '"sxn *; g; q"', "`"$exe`"" -PassThru -WindowStyle Hidden
+              if (-not $debugger.WaitForExit(90000)) { Stop-Process -Id $debugger.Id -Force; Get-Process Marquee.Windows -ErrorAction SilentlyContinue | Stop-Process -Force }
+              "---- debugger output (WinUI and XAML lines)"
+              Get-Content $debugLog -ErrorAction SilentlyContinue | Select-String -Pattern 'XAML|Xaml|WinUI|Error|error|Line|Position|Exception|Cannot' | Select-Object -First 80 | ForEach-Object { $_.Line }
+            } else { "cdb isn't on this runner at $cdb" }
+          }
           if (-not $alive) { throw "Marquee exited on startup (exit code $($app.ExitCode))." }
           if (Test-Path $crashLog) { throw "Marquee is running but logged a crash." }
           "Marquee is up after 20 seconds."
