@@ -3,12 +3,20 @@ import { syncAllConnectedJellyfinUsers } from "@/lib/jellyfin/sync";
 import { syncAllConnectedArrUsers } from "@/lib/arr/sync";
 import { snapshotDiskSpaceForAllConnectedUsers } from "@/lib/integrations/disk-space";
 import { pruneOldRecords } from "@/lib/jobs/cleanup";
+import { syncAllPlexWatchlists } from "@/lib/plex/watchlist";
 import { fail, type CoreResult } from "@/lib/core-result";
 
 // The scheduled maintenance jobs (see instrumentation.ts) as listed on
 // Settings → Jobs and GET /api/v1/settings/jobs, plus the manual "Run now".
 
-export const JOB_IDS = ["plex-sync", "jellyfin-sync", "arr-sync", "disk-space-snapshot", "cleanup"] as const;
+export const JOB_IDS = [
+  "plex-sync",
+  "jellyfin-sync",
+  "arr-sync",
+  "plex-watchlist",
+  "disk-space-snapshot",
+  "cleanup",
+] as const;
 export type JobId = (typeof JOB_IDS)[number];
 
 export type JobDefinition = { id: JobId; name: string; schedule: string; description: string };
@@ -33,6 +41,13 @@ export const JOBS: JobDefinition[] = [
     description: "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance.",
   },
   {
+    id: "plex-watchlist",
+    name: "Plex Watchlist Requests",
+    schedule: "Every 10 minutes",
+    description:
+      "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each.",
+  },
+  {
     id: "disk-space-snapshot",
     name: "Disk Space Snapshot",
     schedule: "Daily at 3:00 AM",
@@ -51,6 +66,7 @@ const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "plex-sync": syncAllConnectedPlexUsers,
   "jellyfin-sync": syncAllConnectedJellyfinUsers,
   "arr-sync": syncAllConnectedArrUsers,
+  "plex-watchlist": syncAllPlexWatchlists,
   "disk-space-snapshot": snapshotDiskSpaceForAllConnectedUsers,
   cleanup: pruneOldRecords,
 };

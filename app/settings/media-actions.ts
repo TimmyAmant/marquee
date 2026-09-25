@@ -9,13 +9,24 @@ import {
   linkJellyfin,
   listImportCandidates,
   pollPlexLink,
+  pollPlexWatchlist,
   setMediaServerSignup,
   startPlexLink,
+  startPlexWatchlist,
   unlinkAccount,
   type ImportCandidate,
 } from "@/lib/auth/media-signin";
 import type { MediaProvider } from "@/lib/auth/media-accounts";
-import { getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import {
+  disableWatchlist,
+  getWatchlistState,
+  setWatchlistTypes,
+  syncPlexWatchlist,
+  SYNC_NOW_LIMIT,
+  SYNC_NOW_WINDOW_MS,
+  type WatchlistState,
+} from "@/lib/plex/watchlist";
 
 // Settings → Account's "Linked accounts" (any signed-in account, for itself
 // only) and the admin's "Import from Plex / Jellyfin" and sign-up toggle —
@@ -109,4 +120,61 @@ export async function setMediaServerSignupAction(value: boolean): Promise<Action
   await setMediaServerSignup(value);
   revalidatePath("/settings");
   return { success: true };
+}
+
+// ── Plex Watchlist (Settings → Account, for the signed-in account) ─────────
+
+export type WatchlistActionResult = { state?: WatchlistState; error?: string };
+
+export async function startPlexWatchlistAction(): Promise<{ handle?: string; authUrl?: string; error?: string }> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  const result = await startPlexWatchlist(session.user.id, await clientIp());
+  return result.ok ? { handle: result.handle, authUrl: result.authUrl } : { error: result.error };
+}
+
+export async function pollPlexWatchlistAction(
+  handle: string,
+): Promise<{ status: "pending" } | { status: "done" } | { status: "error"; error: string }> {
+  const session = await auth();
+  if (!session?.user) return { status: "error", error: "Sign in required." };
+  const poll = await pollPlexWatchlist(session.user.id, handle, await clientIp());
+  if (poll.status === "pending") return { status: "pending" };
+  if (poll.status === "expired") return { status: "error", error: "That Plex sign-in expired. Try again." };
+  if (!poll.ok) return { status: "error", error: poll.error };
+  return { status: "done" };
+}
+
+export async function getPlexWatchlistAction(): Promise<WatchlistActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  return { state: await getWatchlistState(session.user.id) };
+}
+
+export async function setPlexWatchlistTypesAction(types: { movies?: boolean; tv?: boolean }): Promise<WatchlistActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  await setWatchlistTypes(session.user.id, {
+    movies: typeof types.movies === "boolean" ? types.movies : undefined,
+    tv: typeof types.tv === "boolean" ? types.tv : undefined,
+  });
+  return { state: await getWatchlistState(session.user.id) };
+}
+
+export async function disablePlexWatchlistAction(): Promise<WatchlistActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  await disableWatchlist(session.user.id);
+  return { state: await getWatchlistState(session.user.id) };
+}
+
+export async function syncPlexWatchlistAction(): Promise<WatchlistActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  if (!checkRateLimit(`plex-watchlist:sync:${session.user.id}`, SYNC_NOW_LIMIT, SYNC_NOW_WINDOW_MS)) {
+    return { error: "Checked a moment ago. Try again in a minute." };
+  }
+  await syncPlexWatchlist(session.user.id);
+  revalidatePath("/requests");
+  return { state: await getWatchlistState(session.user.id) };
 }

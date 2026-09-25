@@ -662,3 +662,56 @@ export const apiTokens = pgTable(
   },
   (table) => [index("api_tokens_user_id_idx").on(table.userId)],
 );
+
+/** A member's opt-in to "request what's on my Plex Watchlist". Plex only
+ * lets an account read its own watchlist, so this holds that member's own
+ * plex.tv token (encrypted like the integration tokens) — given for this and
+ * nothing else, and deleted when they turn it off or unlink Plex. A null
+ * token means it was switched off by Plex rejecting the token; lastError
+ * then says so. */
+export const plexWatchlists = pgTable("plex_watchlists", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** The plex.tv account the token belongs to — the account linked when it
+   * was turned on. */
+  plexUserId: text("plex_user_id").notNull(),
+  authTokenEnc: bytea("auth_token_enc"),
+  authTokenIv: bytea("auth_token_iv"),
+  authTokenTag: bytea("auth_token_tag"),
+  clientId: text("client_id").notNull(),
+  syncMovies: boolean("sync_movies").default(true).notNull(),
+  syncTv: boolean("sync_tv").default(true).notNull(),
+  /** plex.tv's ETag for the last watchlist fully handled: an unchanged list
+   * answers 304 and costs nothing. */
+  etag: text("etag"),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  lastError: text("last_error"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const plexWatchlistOutcomeValues = ["requested", "skipped"] as const;
+export type PlexWatchlistOutcome = (typeof plexWatchlistOutcomeValues)[number];
+
+/** Every watchlist title already handled for a member, so each is tried
+ * once: a request the admin declined isn't filed again every sync, and a
+ * title that was owned or already requested isn't re-checked forever. Kept
+ * when the watchlist is turned off, so turning it back on doesn't bring
+ * declined titles back. */
+export const plexWatchlistItems = pgTable(
+  "plex_watchlist_items",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    outcome: text("outcome").notNull().$type<PlexWatchlistOutcome>(),
+    requestId: uuid("request_id").references(() => requests.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.mediaType, table.tmdbId] }),
+    check("plex_watchlist_items_outcome_check", sql`${table.outcome} in ('requested','skipped')`),
+  ],
+);

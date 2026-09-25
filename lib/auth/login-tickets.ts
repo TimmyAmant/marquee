@@ -25,7 +25,7 @@ type Ticket = { userId: string; expiresAt: number };
 export type PlexPinEntry = {
   pinId: number;
   clientId: string;
-  purpose: { kind: "sign_in" } | { kind: "link"; userId: string };
+  purpose: { kind: "sign_in" } | { kind: "link"; userId: string } | { kind: "watchlist"; userId: string };
   /** Who started it, for the per-address cap: the client's address, or
    * SHARED_PIN_OWNER when it isn't known. */
   owner: string;
@@ -132,7 +132,7 @@ export function getPlexPin(handle: unknown, purpose: PlexPinEntry["purpose"], no
   }
   const samePurpose =
     entry.purpose.kind === purpose.kind &&
-    (entry.purpose.kind !== "link" || (purpose.kind === "link" && entry.purpose.userId === purpose.userId));
+    (entry.purpose.kind === "sign_in" || ("userId" in purpose && entry.purpose.userId === purpose.userId));
   return samePurpose ? { status: "ok", entry } : { status: "expired" };
 }
 

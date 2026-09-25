@@ -45,6 +45,19 @@ export type PlexSignInStart = { handle: string; authUrl: string; expiresAt: stri
 /** The 202 answer of a Plex poll that's still waiting for plex.tv. */
 export type PlexPollPending = { status: "pending" };
 
+/** GET/PATCH/DELETE /me/plex-watchlist, and the answer of its poll and sync. */
+export type PlexWatchlist = {
+  /** Plex is linked to this account, so the watchlist can be turned on. */
+  available: boolean;
+  enabled: boolean;
+  movies: boolean;
+  tv: boolean;
+  lastSyncedAt: string | null;
+  /** Why the last read failed, or why it was switched off; null when fine. */
+  lastError: string | null;
+  requestedCount: number;
+};
+
 export type ImportCandidate = {
   id: string;
   username: string;
