@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getUnreadCountAction,
@@ -24,7 +24,20 @@ function timeAgo(date: Date | string): string {
   return `${days}d ago`;
 }
 
-export function NotificationsBell() {
+/**
+ * The bell and its list. In the header (phones) it's the small round
+ * button with a count, the list dropping below it; on the rail (md and up)
+ * it's a rail item with a dot, the list opening beside the rail, and
+ * `railLabel` (the item's hover name) hidden while the list is open.
+ */
+export function NotificationsBell({
+  variant = "header",
+  railLabel,
+}: {
+  variant?: "header" | "rail";
+  railLabel?: ReactNode;
+} = {}) {
+  const onRail = variant === "rail";
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -73,14 +86,28 @@ export function NotificationsBell() {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={onRail ? "group relative" : "relative"}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="Notifications"
-        className="relative flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg-2/70 text-text-secondary backdrop-blur-[18px] transition-colors hover:border-accent hover:text-accent"
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+        aria-expanded={open}
+        className={
+          onRail
+            ? `relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                open ? "bg-text-primary text-bg-0" : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
+              }`
+            : "relative flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg-2/70 text-text-secondary backdrop-blur-[18px] transition-colors hover:border-accent hover:text-accent"
+        }
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={onRail ? 1.7 : 1.75}
+          aria-hidden
+          className={onRail ? "h-[19px] w-[19px]" : "h-4 w-4"}
+        >
           <path
             d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"
             strokeLinecap="round"
@@ -88,15 +115,23 @@ export function NotificationsBell() {
           />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-bg-0">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
+        {unreadCount > 0 &&
+          (onRail ? (
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />
+          ) : (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-bg-0">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          ))}
       </button>
+      {onRail && !open && railLabel}
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-2xl border border-border bg-bg-1 p-2 shadow-xl">
+        <div
+          className={`absolute z-50 w-80 rounded-2xl border border-border bg-bg-1 p-2 shadow-xl ${
+            onRail ? "left-full top-0 ml-3" : "right-0 top-11"
+          }`}
+        >
           <div className="flex items-center justify-between px-2 py-1.5">
             <span className="text-xs font-medium text-text-primary">Notifications</span>
             {items.some((n) => !n.read) && (
