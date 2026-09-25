@@ -16,10 +16,11 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-30">
       {/* The mockup's .tb-blur: taller than the 52px bar and masked away by
           62% of its height, so there's no hard edge where it ends — a title
-          page's backdrop keeps running underneath it. */}
+          page's backdrop keeps running underneath it. It reaches back over
+          the nav rail's margin to the window edge, like the backdrop. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[70px] backdrop-blur-[16px] backdrop-saturate-[1.15] [mask-image:linear-gradient(#000_62%,transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70px] backdrop-blur-[16px] md:-left-[72px] backdrop-saturate-[1.15] [mask-image:linear-gradient(#000_62%,transparent)]"
         style={{
           background:
             "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 78%, transparent), color-mix(in srgb, var(--marquee-bg-0) 50%, transparent) 72%, transparent)",
