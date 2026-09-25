@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Stands in for every page that doesn't exist yet, so the pane and the
+  Stands in for every page that doesn't exist yet, so the menu and the
   routes all lead somewhere. Replace the mapping in MainWindow.PageTypeFor
   and MainWindow.PageFor as real pages land.
 -->

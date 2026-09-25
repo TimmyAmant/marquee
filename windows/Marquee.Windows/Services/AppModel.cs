@@ -375,8 +375,8 @@ public sealed partial class AppModel : ObservableObject
     // MARK: Navigation
 
     /// <summary>
-    /// Pane navigation opens Movies and Series unfiltered, like the web
-    /// sidebar's plain /movies and /series links.
+    /// Menu navigation opens Movies and Series unfiltered, like the web
+    /// menu's plain /movies and /series links.
     /// </summary>
     public void Select(Section section, bool resetFilters = true)
     {

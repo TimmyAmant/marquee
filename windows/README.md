@@ -42,7 +42,7 @@ Building needs no code-signing certificate or Store account. Warnings are errors
 2. **Sign in** with your Marquee username and password. The first account on a brand-new server is created here instead, as the admin.
 3. That's it. Everything else, TMDb, Plex, Jellyfin, Sonarr, Radarr, Trakt and the rest, is configured on the server. Until the Integrations screen exists in the Windows app, edit it on the website.
 
-Your session token is kept in the Windows credential store, one entry per server, so the app stays signed in across launches. **Sign Out** revokes just this PC's token.
+Your session token is kept in the Windows credential store, one entry per server, so the app stays signed in across launches. **Sign out** (in Settings: click your avatar at the top of the navigation rail) revokes just this PC's token.
 
 ## What the app does
 
