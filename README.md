@@ -150,10 +150,12 @@ data, your server.
   hit **Request**. The admin reviews everything waiting for approval on
   the **Requests** page and approves or declines with one click, or hits
   **Approve all** to clear the whole queue at once when there's more than
-  one pending. The requester gets notified either way. Members have their
-  own **Requests** tab too, showing the status of everything they've asked
-  for — pending, declined, or (once approved) downloading/already in the
-  library.
+  one pending. The requester gets notified either way. Declining asks for a
+  reason, either a preset like "Already available on a streaming service we
+  have" or the admin's own words, which the member sees on their Requests
+  page and in the notification. Members have their own **Requests** tab
+  too, showing the status of everything they've asked for — pending,
+  declined, or (once approved) downloading/already in the library.
 - **Manually approve** — for a TV request Sonarr can't resolve on its own
   (no TVDB id on TMDb's record), the admin gets an "Add manually in Sonarr"
   link straight to Sonarr's own search, and can mark the request approved

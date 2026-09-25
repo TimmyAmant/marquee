@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fileDetails, iso, myRequest, requestPerson, titleCard, titleViewerState } from "./mappers";
+import { fileDetails, iso, myRequest, requestPerson, reviewedRequest, titleCard, titleViewerState } from "./mappers";
 
 describe("iso", () => {
   it("formats dates as ISO-8601 UTC with milliseconds", () => {
@@ -155,11 +155,43 @@ describe("request mapping", () => {
       posterPath: "/poster.jpg",
       status: "approved",
       manuallyApproved: false,
+      rejectionReason: null,
       createdAt: new Date("2026-09-01T00:00:00Z"),
       reviewedAt: null,
       libraryStatus: "tracked_downloading",
     });
-    expect(dto).toMatchObject({ statusLabel: "Downloading", statusTone: "downloading", reviewedAt: null });
+    expect(dto).toMatchObject({
+      statusLabel: "Downloading",
+      statusTone: "downloading",
+      rejectionReason: null,
+      reviewedAt: null,
+    });
     expect(dto.createdAt).toBe("2026-09-01T00:00:00.000Z");
+  });
+
+  it("carries the admin's rejection reason through to both request DTOs", () => {
+    const base = {
+      id: "11111111-1111-1111-1111-111111111111",
+      mediaType: "movie" as const,
+      tmdbId: 603,
+      title: "The Matrix",
+      posterPath: null,
+      status: "rejected" as const,
+      manuallyApproved: false,
+      rejectionReason: "Not enough space on the server right now",
+      createdAt: new Date("2026-09-01T00:00:00Z"),
+      reviewedAt: new Date("2026-09-02T00:00:00Z"),
+    };
+    expect(myRequest({ ...base, libraryStatus: null })).toMatchObject({
+      statusLabel: "Declined",
+      statusTone: "declined",
+      rejectionReason: "Not enough space on the server right now",
+    });
+    expect(reviewedRequest({ ...base, requestedByName: null, requestedByUsername: "member1" })).toMatchObject({
+      statusLabel: "Rejected",
+      rejectionReason: "Not enough space on the server right now",
+      requestedBy: { label: "member1" },
+      reviewedAt: "2026-09-02T00:00:00.000Z",
+    });
   });
 });

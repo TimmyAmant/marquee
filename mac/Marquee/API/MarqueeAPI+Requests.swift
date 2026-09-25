@@ -59,11 +59,22 @@ extension MarqueeAPI {
             )
         }
 
-        /// `POST /requests/{id}/reject` (admin) — declines and notifies the requester.
-        func reject(_ id: UUID) async throws {
+        /// `POST /requests/{id}/reject` (admin): declines and notifies the
+        /// requester. `reason` is free text, one of the queue's
+        /// `rejectionReasons` or the admin's own words, and ends up in the
+        /// requester's notification. nil sends no body at all, which is also
+        /// what a pre-0.28 server expects.
+        func reject(_ id: UUID, reason: String?) async throws {
+            struct Body: Encodable, Sendable { let reason: String }
+            let body: (any Encodable & Sendable)? = reason.map { Body(reason: $0) }
             let _: API.OK = try await transport.mutate(
-                .post, "/requests/\(MarqueeAPI.segment(id))/reject", changes: [.requests, .notifications]
+                .post, "/requests/\(MarqueeAPI.segment(id))/reject", body: body, changes: [.requests, .notifications]
             )
+        }
+
+        /// Declines without saying why.
+        func reject(_ id: UUID) async throws {
+            try await reject(id, reason: nil)
         }
 
         /// `POST /requests/approve-all` (admin) — one at a time; failures stay

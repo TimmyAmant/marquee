@@ -223,7 +223,14 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
   return { ok: true };
 }
 
-export async function rejectRequest(requestId: string, adminUserId: string): Promise<CoreResult> {
+/** `reason` is already normalized by the caller (lib/requests/rejection-reasons.ts)
+ * and optional: the web form always sends one, but an older API client may
+ * not, and a plain "was declined." is still better than refusing the reject. */
+export async function rejectRequest(
+  requestId: string,
+  adminUserId: string,
+  reason: string | null = null,
+): Promise<CoreResult> {
   const [request] = await db
     .select()
     .from(requests)
@@ -233,7 +240,7 @@ export async function rejectRequest(requestId: string, adminUserId: string): Pro
   // Same atomic re-guard as approveRequest — see comment there.
   const [updated] = await db
     .update(requests)
-    .set({ status: "rejected", reviewedByUserId: adminUserId, reviewedAt: new Date() })
+    .set({ status: "rejected", rejectionReason: reason, reviewedByUserId: adminUserId, reviewedAt: new Date() })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
@@ -245,7 +252,9 @@ export async function rejectRequest(requestId: string, adminUserId: string): Pro
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_rejected",
-      message: `"${request.title}" was declined.`,
+      // The reason rides along in the notification too, so the requester
+      // hears why without having to open their Requests page.
+      message: reason ? `"${request.title}" was declined: ${reason}` : `"${request.title}" was declined.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,

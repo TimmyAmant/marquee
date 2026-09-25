@@ -232,6 +232,33 @@ final class MarqueeAPIRequestTests: XCTestCase {
         XCTAssertEqual(StubURLProtocol.requests.first?.url?.query, "q=Romeo%20%2B%20Juliet")
     }
 
+    /// `reject` is one endpoint with two shapes (the table above covers the
+    /// bare one): with a reason it sends `{"reason": …}`, without one no body
+    /// at all, so a pre-0.28 server sees exactly what it always did.
+    func testRejectSendsTheReasonAsItsBody() async throws {
+        let response = try fixture("ok")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, response) }
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+
+        StubURLProtocol.requests = []
+        try await api.requests.reject(Self.requestId, reason: "Not enough space on the server right now")
+        let withReason = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(withReason.httpMethod, "POST")
+        XCTAssertEqual(withReason.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject")
+        XCTAssertEqual(withReason.value(forHTTPHeaderField: "Content-Type"), "application/json")
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: withReason)),
+            try Self.jsonObject(Data(#"{"reason":"Not enough space on the server right now"}"#.utf8))
+        )
+
+        StubURLProtocol.requests = []
+        try await api.requests.reject(Self.requestId, reason: nil)
+        let bare = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(bare.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject")
+        XCTAssertTrue(Self.body(of: bare).isEmpty, "nil reason sends no body")
+    }
+
     func testNoServerThrowsUnauthorizedWithoutSending() async {
         StubURLProtocol.requests = []
         do {

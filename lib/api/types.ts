@@ -331,6 +331,9 @@ export type MyRequest = {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  /** Why the admin declined it; null unless `status` is "rejected" and a
+   * reason was given. */
+  rejectionReason: string | null;
   libraryStatus: LibraryStatus | null;
   statusLabel: string;
   statusTone: "pending" | "declined" | "owned" | "downloading" | "coming_soon" | "approved";
@@ -348,7 +351,11 @@ export type PendingRequest = {
   createdAt: string;
 };
 
-export type PendingRequestsResponse = ListResponse<PendingRequest> & { sonarrUrl: string | null };
+export type PendingRequestsResponse = ListResponse<PendingRequest> & {
+  sonarrUrl: string | null;
+  /** The preset reasons the website's Reject chooser offers, in order. */
+  rejectionReasons: string[];
+};
 
 export type ReviewedRequest = {
   id: string;
@@ -358,6 +365,7 @@ export type ReviewedRequest = {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  rejectionReason: string | null;
   statusLabel: string;
   requestedBy: RequestPerson;
   createdAt: string;

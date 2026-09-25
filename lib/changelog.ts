@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.28.0",
+    date: "2026-09-25",
+    changes: [
+      "Declining a request now asks why: pick a reason from a short list (already on a streaming service you have, not released yet, no space right now, and so on) or write your own. The member sees the reason under Declined on their Requests page and in the notification.",
+      "API: POST /requests/{id}/reject takes an optional reason, GET /requests/pending lists the preset reasons, and /requests/mine and /requests/history include rejectionReason.",
+      "Marquee for Mac: declining a request offers the same list of reasons, and a declined request shows why.",
+    ],
+  },
+  {
     version: "0.27.1",
     date: "2026-09-18",
     changes: [

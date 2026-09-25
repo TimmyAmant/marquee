@@ -842,6 +842,7 @@ Your own requests, newest first.
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "status": "approved",
       "manuallyApproved": false,
+      "rejectionReason": null,
       "libraryStatus": "tracked_downloading",
       "statusLabel": "Downloading",
       "statusTone": "downloading",
@@ -855,8 +856,11 @@ Your own requests, newest first.
 `libraryStatus` is live for approved requests only (null otherwise).
 `statusLabel`/`statusTone`: `pending` "Pending review", `declined` "Declined",
 `owned` "In your library", `downloading` "Downloading", `coming_soon` "Coming
-soon", `approved` "Manually approved" or "Approved". Empty → "You haven't
-requested anything yet — find a title and hit Request."
+soon", `approved` "Manually approved" or "Approved". `rejectionReason` is why
+the admin declined it (e.g. `"Not enough space on the server right now"`),
+null unless `status` is `rejected` and a reason was given; the website shows
+it as a second line under the "Declined" badge ("Reason: …"). Empty → "You
+haven't requested anything yet — find a title and hit Request."
 
 ### `GET /requests/pending` — admin
 
@@ -867,6 +871,13 @@ title is already in the library, and leaves those out.
 ```json
 {
   "sonarrUrl": "http://192.168.1.10:8989",
+  "rejectionReasons": [
+    "Already available on a streaming service we have",
+    "Not released yet, ask again once it's out",
+    "Not enough space on the server right now",
+    "Not a fit for the household library",
+    "Couldn't find a good copy of it"
+  ],
   "results": [
     {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
@@ -882,7 +893,10 @@ title is already in the library, and leaves those out.
 ```
 
 `sonarrUrl` is the admin's Sonarr base URL (null if not connected), for the
-"Add manually in Sonarr" link. The website shows "Approve all" only when more
+"Add manually in Sonarr" link. `rejectionReasons` is the preset list the
+website's Reject chooser offers, in order; show the same list plus an "Other"
+choice with a free-text field, and send the chosen text to
+`POST /requests/{id}/reject`. The website shows "Approve all" only when more
 than one request is pending. Empty → "No pending requests."
 
 ### `GET /requests/history` — admin
@@ -900,6 +914,7 @@ than one request is pending. Empty → "No pending requests."
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "status": "rejected",
       "manuallyApproved": false,
+      "rejectionReason": "Not enough space on the server right now",
       "statusLabel": "Rejected",
       "requestedBy": { "userId": null, "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z",
@@ -909,7 +924,8 @@ than one request is pending. Empty → "No pending requests."
 }
 ```
 
-`statusLabel`: "Approved", "Manually approved" or "Rejected".
+`statusLabel`: "Approved", "Manually approved" or "Rejected". `rejectionReason`
+as in `/requests/mine`: the website shows it under the "Rejected" badge.
 
 ### `GET /requests/pending-count` — user
 
@@ -938,7 +954,20 @@ Errors: `404` "Request not found or already reviewed.", `409` "Request was alrea
 
 ### `POST /requests/{id}/reject` — admin
 
-Declines and notifies the requester. `{ "ok": true }`. Errors as for manual approval.
+Declines and notifies the requester. Takes an optional JSON body with why.
+Body: `{ "reason": "Not enough space on the server right now" }` (optional string).
+
+`reason` is free text: one of the `rejectionReasons` from `/requests/pending`
+or the admin's own words (no preset id, clients send the text itself).
+Whitespace is trimmed and collapsed, longer than 200 characters is truncated
+rather than rejected, and blank or absent means no reason (the website
+requires one; the API doesn't, so older clients keep working). It's stored as
+`rejectionReason` and appended to the requester's notification: `"The Matrix"
+was declined: Not enough space on the server right now` (with no reason the
+message stays `"The Matrix" was declined.`).
+
+`{ "ok": true }`. Errors as for manual approval, plus `400 invalid`
+`"reason" must be a string.`
 
 ### `POST /requests/approve-all` — admin
 
@@ -976,7 +1005,7 @@ could be approved, the first failure is returned as the error response instead
       "tmdbId": 603,
       "title": "The Matrix",
       "eventType": "request_rejected",
-      "message": "\"The Matrix\" was declined.",
+      "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
       "createdAt": "2026-09-17T17:12:41.470Z"
     }
@@ -985,7 +1014,9 @@ could be approved, the first failure is returned as the error response instead
 ```
 
 Newest first. Empty → "No notifications yet." The website shows relative
-times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap.
+times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap. A
+`request_rejected` message carries the admin's reason after a colon when one
+was given; without one it's just `"The Matrix" was declined.`
 
 ### `GET /notifications/unread-count` — user
 

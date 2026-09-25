@@ -137,6 +137,7 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(mine.first?.statusTone, .downloading)
         XCTAssertEqual(mine.first?.libraryStatus, .trackedDownloading)
         XCTAssertEqual(mine.first?.reviewedAt, APIClient.parseDate("2026-09-17T18:00:02.118Z"))
+        XCTAssertNil(mine.first?.rejectionReason, "An approved request carries no reason")
 
         let pending = try decode(API.PendingRequests.self, "requests-pending")
         let request = try XCTUnwrap(pending.results.first)
@@ -145,10 +146,14 @@ final class APIFixtureTests: XCTestCase {
             pending.manualSonarrAddURL(for: request)?.absoluteString,
             "http://192.168.1.10:8989/add/new?term=The%20Matrix"
         )
+        XCTAssertEqual(pending.rejectionReasons.count, 5)
+        XCTAssertEqual(pending.rejectionReasons.first, "Already available on a streaming service we have")
+        XCTAssertEqual(pending.rejectionReasonChoices, pending.rejectionReasons, "The server's list wins when it sent one")
 
         let history = try decode(API.ListResponse<API.ReviewedRequest>.self, "requests-history").results
         XCTAssertNil(history.first?.requestedBy.userId)
         XCTAssertEqual(history.first?.status, .rejected)
+        XCTAssertEqual(history.first?.rejectionReason, "Not enough space on the server right now")
 
         let notifications = try decode(API.NotificationList.self, "notifications")
         let item = try XCTUnwrap(notifications.results.first)
@@ -159,6 +164,19 @@ final class APIFixtureTests: XCTestCase {
         let activity = try decode(API.ListResponse<API.ActivityItem>.self, "activity").results
         XCTAssertEqual(activity.first?.sentence, "Timmy declined The Matrix")
         XCTAssertEqual(activity.first?.eventType, .requestRejected)
+    }
+
+    /// A server before 0.28 sends no `rejectionReasons`; the queue must still
+    /// decode, and the chooser falls back to the built-in list.
+    func testPendingQueueFromOlderServerDecodesWithoutReasons() throws {
+        let json = #"{"sonarrUrl":null,"results":[]}"#
+        let queue = try APIClient.decoder.decode(API.PendingRequests.self, from: Data(json.utf8))
+        XCTAssertNil(queue.sonarrUrl)
+        XCTAssertEqual(queue.rejectionReasons, [])
+        XCTAssertEqual(queue.rejectionReasonChoices, API.PendingRequests.defaultRejectionReasons)
+        // Re-encoding keeps the key the current doc specifies.
+        let encoded = String(decoding: try APIClient.encoder.encode(queue), as: UTF8.self)
+        XCTAssertTrue(encoded.contains(#""rejectionReasons":[]"#), encoded)
     }
 
     func testCalendarGrid() throws {

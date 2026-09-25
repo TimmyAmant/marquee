@@ -13,6 +13,7 @@ import {
   manuallyApproveRequest,
   rejectRequest,
 } from "@/lib/requests/mutate";
+import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
 
 // Thin session/form wrappers — the request lifecycle lives in
 // lib/requests/mutate.ts, shared with /api/v1/requests/*.
@@ -94,11 +95,19 @@ export async function manuallyApproveRequestAction(
 export async function rejectRequestAction(
   requestId: string,
   _prevState: ReviewState | undefined,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<ReviewState> {
   const admin = await requireAdmin("Only an admin can reject requests.");
   if (!admin.ok) return { error: admin.error };
 
-  const result = await rejectRequest(requestId, admin.userId);
+  // The row's chooser won't enable Decline until a reason is picked, but the
+  // form is just two inputs anyone can post, so the server owns the rule.
+  const resolved = resolveRejectionReason({
+    preset: formData.get("reason"),
+    custom: formData.get("customReason"),
+  });
+  if (!resolved.ok) return { error: resolved.error };
+
+  const result = await rejectRequest(requestId, admin.userId, resolved.reason);
   return result.ok ? { success: true } : { error: result.error };
 }

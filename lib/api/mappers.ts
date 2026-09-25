@@ -134,6 +134,7 @@ export function myRequest(row: {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  rejectionReason: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
   libraryStatus: LibraryStatus | null;
@@ -147,6 +148,7 @@ export function myRequest(row: {
     posterPath: row.posterPath,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
+    rejectionReason: row.rejectionReason,
     libraryStatus: row.libraryStatus,
     statusLabel: badge.label,
     statusTone: badge.tone,
@@ -163,6 +165,7 @@ export function reviewedRequest(row: {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  rejectionReason: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
   requestedByName: string | null;
@@ -176,6 +179,7 @@ export function reviewedRequest(row: {
     posterPath: row.posterPath,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
+    rejectionReason: row.rejectionReason,
     statusLabel: reviewedRequestLabel(row.status, row.manuallyApproved),
     requestedBy: requestPerson({ displayName: row.requestedByName, username: row.requestedByUsername }),
     createdAt: isoRequired(row.createdAt),
