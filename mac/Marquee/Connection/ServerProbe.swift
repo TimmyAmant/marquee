@@ -10,6 +10,10 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
     /// Nil when the server can't reach its database (`status == "degraded"`).
     let setupComplete: Bool?
     let status: String
+    /// Which sign-in methods the server offers (`password`, `plex`,
+    /// `jellyfin`); nil from servers that predate Plex/Jellyfin sign-in,
+    /// which offer only the password.
+    let signIn: SignInMethods?
 
     static let supportedAPIVersion = 1
     /// The first server release with the v1 API — what "Update required" asks for.
@@ -17,12 +21,20 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
 
     var isDegraded: Bool { status == "degraded" }
 
-    init(app: String = "marquee", apiVersion: Int = supportedAPIVersion, version: String, setupComplete: Bool?, status: String = "ok") {
+    init(
+        app: String = "marquee",
+        apiVersion: Int = supportedAPIVersion,
+        version: String,
+        setupComplete: Bool?,
+        status: String = "ok",
+        signIn: SignInMethods? = nil
+    ) {
         self.app = app
         self.apiVersion = apiVersion
         self.version = version
         self.setupComplete = setupComplete
         self.status = status
+        self.signIn = signIn
     }
 
     init(from decoder: Decoder) throws {
@@ -32,6 +44,34 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
         version = try container.decodeIfPresent(String.self, forKey: .version) ?? "unknown"
         setupComplete = try container.decodeIfPresent(Bool.self, forKey: .setupComplete)
         status = try container.decodeIfPresent(String.self, forKey: .status) ?? "ok"
+        // Lenient: an odd value from a newer server only hides the buttons.
+        signIn = try? container.decodeIfPresent(SignInMethods.self, forKey: .signIn)
+    }
+
+    /// "Sign in with Plex" is offered.
+    var offersPlexSignIn: Bool { signIn?.plex == true }
+    /// "Sign in with Jellyfin" is offered.
+    var offersJellyfinSignIn: Bool { signIn?.jellyfin == true }
+}
+
+/// `server-info.signIn`: the sign-in methods this server offers. Plex and
+/// Jellyfin appear only while that integration is connected.
+struct SignInMethods: Codable, Equatable, Hashable, Sendable {
+    var password: Bool
+    var plex: Bool
+    var jellyfin: Bool
+
+    init(password: Bool = true, plex: Bool = false, jellyfin: Bool = false) {
+        self.password = password
+        self.plex = plex
+        self.jellyfin = jellyfin
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        password = (try? container.decodeIfPresent(Bool.self, forKey: .password)) ?? true
+        plex = (try? container.decodeIfPresent(Bool.self, forKey: .plex)) ?? false
+        jellyfin = (try? container.decodeIfPresent(Bool.self, forKey: .jellyfin)) ?? false
     }
 }
 

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings > Account > Linked accounts > "Link Jellyfin": the Jellyfin
+  username and password of the account to link. Link stays disabled until
+  both are filled in; the server checks them against its Jellyfin and its
+  refusal shows in the InfoBar, with the dialog kept open.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.JellyfinLinkDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Link Jellyfin"
+    PrimaryButtonText="Link"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="False"
+    PrimaryButtonClick="OnLinkClick"
+    Closing="OnDialogClosing">
+
+    <StackPanel Spacing="12" MinWidth="380">
+        <TextBlock
+            Text="Sign in with your Jellyfin account to use it for Marquee too."
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+        <TextBox
+            x:Name="UsernameBox"
+            Header="Jellyfin username"
+            IsSpellCheckEnabled="False"
+            TextChanged="OnUsernameChanged" />
+        <PasswordBox
+            x:Name="PasswordInput"
+            Header="Jellyfin password"
+            PasswordChanged="OnPasswordChanged" />
+        <InfoBar
+            x:Name="ErrorBar"
+            Severity="Error"
+            IsOpen="False"
+            IsClosable="False" />
+    </StackPanel>
+</ContentDialog>

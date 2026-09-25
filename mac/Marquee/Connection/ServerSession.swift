@@ -455,7 +455,10 @@ final class ServerSession {
         )
         let user = try adopt(response, from: server)
         if let info = serverInfo {
-            serverInfo = ServerInfo(app: info.app, apiVersion: info.apiVersion, version: info.version, setupComplete: true, status: info.status)
+            serverInfo = ServerInfo(
+                app: info.app, apiVersion: info.apiVersion, version: info.version,
+                setupComplete: true, status: info.status, signIn: info.signIn
+            )
         }
         return user
     }
@@ -472,10 +475,21 @@ final class ServerSession {
     /// after a timeout the server may already have signed you in (a second
     /// token, a second strike against the login rate limit), so that one is
     /// reported, not resent.
-    private func postAuth(_ path: String, body: some Encodable, to server: ServerAddress, retries: Bool) async throws -> AuthTokenResponse {
+    private func postAuth(_ path: String, body: some Encodable & Sendable, to server: ServerAddress, retries: Bool) async throws -> AuthTokenResponse {
+        try await postAuth(path, to: server, retries: retries) { client in
+            try await client.post(path, body: body, as: AuthTokenResponse.self)
+        }
+    }
+
+    private func postAuth(
+        _ path: String,
+        to server: ServerAddress,
+        retries: Bool,
+        send: (APIClient) async throws -> AuthTokenResponse
+    ) async throws -> AuthTokenResponse {
         let client = APIClient(baseURL: server.baseURL, session: urlSession)
         do {
-            return try await client.post(path, body: body, as: AuthTokenResponse.self)
+            return try await send(client)
         } catch let error as APIError {
             guard case let .network(urlError) = error, Self.neverReachedServer.contains(urlError.code) else { throw error }
             Self.logger.info("\(path, privacy: .public) failed to connect (\(error.localizedDescription, privacy: .public)); checking the server")
@@ -484,7 +498,7 @@ final class ServerSession {
                 throw SignInConnectionError(message: problem)
             }
             guard retries else { throw error }
-            return try await client.post(path, body: body, as: AuthTokenResponse.self)
+            return try await send(client)
         }
     }
 
@@ -493,6 +507,51 @@ final class ServerSession {
     private static let neverReachedServer: Set<URLError.Code> = [
         .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .notConnectedToInternet, .dnsLookupFailed,
     ]
+
+    // MARK: Plex / Jellyfin sign-in
+
+    /// `POST /auth/plex/start`: the handle to poll with and the plex.tv page
+    /// to open in the browser. Offered when `serverInfo.signIn.plex`.
+    func startPlexSignIn() async throws -> API.PlexSignInStart {
+        guard let server else { throw APIError.notMarquee }
+        return try await unauthenticatedAPI(server).auth.plexStart()
+    }
+
+    /// Polls `POST /auth/plex/poll` every `interval` (2 s) until Plex says
+    /// yes — then stores the token exactly as `login` does — or the server
+    /// refuses the account (403: `MediaSignInError.refused` with its
+    /// reason), the PIN expires (410 or `expiresAt`: `.expired`), another
+    /// error comes back, or the task is cancelled (Cancel, the sign-in card
+    /// going away, quitting).
+    func finishPlexSignIn(_ start: API.PlexSignInStart, interval: Duration = PlexPoll.interval) async throws -> User {
+        guard let server else { throw APIError.notMarquee }
+        let auth = unauthenticatedAPI(server).auth
+        let deviceName = self.deviceName
+        let response = try await PlexPoll.run(expiresAt: start.expiresAt, interval: interval) {
+            try await auth.plexPoll(handle: start.handle, deviceName: deviceName)
+        }
+        return try adopt(response, from: server)
+    }
+
+    /// `POST /auth/jellyfin`: a Jellyfin username and password, checked by
+    /// the server against its Jellyfin; the token is stored as `login` does.
+    /// Offered when `serverInfo.signIn.jellyfin`.
+    func loginWithJellyfin(username: String, password: String) async throws -> User {
+        let username = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !username.isEmpty, !password.isEmpty else {
+            throw APIError.invalid("Enter your Jellyfin username and password.")
+        }
+        guard let server else { throw APIError.notMarquee }
+        let deviceName = self.deviceName
+        let response = try await postAuth("/auth/jellyfin", to: server, retries: true) { client in
+            try await MarqueeAPI(client: client).auth.jellyfin(username: username, password: password, deviceName: deviceName)
+        }
+        return try adopt(response, from: server)
+    }
+
+    private func unauthenticatedAPI(_ server: ServerAddress) -> MarqueeAPI {
+        MarqueeAPI(client: APIClient(baseURL: server.baseURL, session: urlSession))
+    }
 
     /// Signs out locally right away, then revokes the token on the server
     /// best-effort; an unreachable server can't keep the Mac signed in.

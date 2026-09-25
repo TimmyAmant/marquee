@@ -142,6 +142,31 @@ public sealed partial class MarqueeApi
             CancellationToken ct = default) =>
             RequireClient().PostAsync<T>(path, body, timeout, ct);
 
+        /// <summary>
+        /// A call whose statuses carry meaning of their own (a Plex sign-in
+        /// poll's 202 / 403 / 410): the undecoded answer for any 2xx or a
+        /// status in <paramref name="accepting"/>; see <see cref="ApiClient.ExchangeAsync"/>.
+        /// Nothing is recorded; the caller calls <see cref="Record"/> once it
+        /// knows the call succeeded.
+        /// </summary>
+        public Task<ApiClient.RawResponse> ExchangeAsync(
+            HttpMethod method,
+            string path,
+            object? body,
+            IReadOnlyCollection<int> accepting,
+            TimeSpan? timeout = null,
+            CancellationToken ct = default) =>
+            RequireClient().ExchangeAsync(method, path, body, accepting, timeout, ct);
+
+        /// <summary>Records <paramref name="changes"/> after a call made with <see cref="ExchangeAsync"/> succeeded.</summary>
+        public void Record(ServerChange changes)
+        {
+            if (changes != ServerChange.None)
+            {
+                Events?.Record(changes);
+            }
+        }
+
         private ApiClient RequireClient() => Client ?? throw ApiException.Unauthorized();
     }
 
