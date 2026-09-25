@@ -475,14 +475,20 @@ final class ServerSessionTests: XCTestCase {
     private static let server = ServerAddress(host: "127.0.0.1", port: 9)
 
     @MainActor
-    private func makeSession(token: String? = "mqt_saved") -> (ServerSession, InMemoryTokenStore, UserDefaults) {
+    private func makeSession(
+        token: String? = "mqt_saved",
+        probe: @escaping @Sendable (ServerAddress) async -> ProbeOutcome = { _ in .unreachable(.noResponse) }
+    ) -> (ServerSession, InMemoryTokenStore, UserDefaults) {
         let suite = "com.timmyamant.MarqueeTests.session.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.set(Self.server.baseURLString, forKey: ServerSession.serverDefaultsKey)
         let store = InMemoryTokenStore()
         if let token { store.save(token, for: Self.server.baseURLString) }
         StubURLProtocol.requests = []
-        let session = ServerSession(defaults: defaults, tokenStore: store, urlSession: StubURLProtocol.session(), deviceName: "Test Mac")
+        let session = ServerSession(
+            defaults: defaults, tokenStore: store, urlSession: StubURLProtocol.session(), deviceName: "Test Mac",
+            pinned: nil, probe: probe
+        )
         return (session, store, defaults)
     }
 
@@ -575,6 +581,47 @@ final class ServerSessionTests: XCTestCase {
         XCTAssertTrue(StubURLProtocol.requests.isEmpty, "Empty fields never reach the server's rate limiter")
     }
 
+    /// The sign-in screen sat open while the server restarted: the first POST
+    /// dies on the dropped connection, the server checks out, and the retry
+    /// signs in.
+    @MainActor
+    func testLoginRetriesOnceAfterADroppedConnection() async throws {
+        let attempts = LockedCounter()
+        StubURLProtocol.handler = { _ in
+            if attempts.increment() == 1 { throw URLError(.networkConnectionLost) }
+            return StubURLProtocol.json(200, Self.loginJSON)
+        }
+        let info = ServerInfo(app: "marquee", apiVersion: 1, version: "0.30.3", setupComplete: true, status: "ok")
+        let (session, store, _) = makeSession(token: nil, probe: { _ in .marquee(info) })
+
+        let user = try await session.login(username: "timmy", password: "hunter22")
+        XCTAssertEqual(user.displayName, "Timmy")
+        XCTAssertEqual(attempts.value, 2)
+        XCTAssertEqual(store.token(for: Self.server.baseURLString), "mqt_fresh")
+        XCTAssertEqual(session.serverInfo?.version, "0.30.3", "The check refreshes what the sign-in card shows")
+    }
+
+    /// Still unreachable after checking: the error says what the check found,
+    /// and nothing is sent a second time.
+    @MainActor
+    func testLoginExplainsWhenTheServerIsReallyGone() async {
+        let attempts = LockedCounter()
+        StubURLProtocol.handler = { _ in
+            attempts.increment()
+            throw URLError(.cannotConnectToHost)
+        }
+        let (session, _, _) = makeSession(token: nil, probe: { _ in .unreachable(.refused) })
+        do {
+            _ = try await session.login(username: "timmy", password: "hunter22")
+            XCTFail("Expected an error")
+        } catch let error as SignInConnectionError {
+            XCTAssertTrue(error.message.hasPrefix("Nothing is answering on port"), error.message)
+        } catch {
+            XCTFail("Unexpected \(error)")
+        }
+        XCTAssertEqual(attempts.value, 1)
+    }
+
     @MainActor
     func testLogoutClearsTokenEvenWhenRevokeFails() async {
         StubURLProtocol.handler = { _ in throw URLError(.timedOut) }
@@ -647,4 +694,15 @@ final class ServerSessionTests: XCTestCase {
             XCTAssertEqual(error as? APIError, expected, file: file, line: line)
         }
     }
+}
+
+/// A count the stub's handler (called off the main actor) can bump safely.
+private final class LockedCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+
+    var value: Int { lock.withLock { count } }
+
+    @discardableResult
+    func increment() -> Int { lock.withLock { count += 1; return count } }
 }

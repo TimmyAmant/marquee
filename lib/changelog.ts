@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.30.4",
+    date: "2026-09-25",
+    changes: [
+      "Fixed: signing in to the Mac app could fail with \"Couldn't reach your Marquee server\" even though the server was listed right there, if the server had restarted (a Docker update, say) while the sign-in screen was open. You had to scan for the server again first. Now the app checks the server again and retries by itself, and if the server really is gone it says what it found.",
+    ],
+  },
+  {
     version: "0.30.3",
     date: "2026-09-25",
     changes: [
