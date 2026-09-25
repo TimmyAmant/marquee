@@ -254,9 +254,9 @@ final class AppModel {
             // still there, so say so instead of silently asking for a
             // password — "Retry" re-reads it.
             await showSignIn(notice: Self.keychainUnreadableNotice)
-        } else if session.savedByEarlierBuild {
-            await showSignIn(notice: Self.signInAfterUpdateNotice)
         } else {
+            // After an update too (the new copy can't read the old copy's
+            // sign-in), the plain form: you just updated, so no explanation.
             await showSignIn()
         }
     }
@@ -264,11 +264,6 @@ final class AppModel {
     /// Shown when the login Keychain refused to answer.
     static let keychainUnreadableNotice =
         "Couldn't read your saved sign-in from the login Keychain. Sign in again, or reload (⌘R) to retry."
-
-    /// Shown after an update: macOS keeps a saved sign-in for the exact copy
-    /// of Marquee that saved it (see `KeychainTokenStore`).
-    static let signInAfterUpdateNotice =
-        "Marquee was updated. Sign in once more: macOS only lets the copy of Marquee that saved your sign-in read it back."
 
     private func showSignIn(notice: String? = nil) async {
         let outcome = await session.refreshInfo()
