@@ -24,6 +24,14 @@
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!--
+      The single-project MSIX tooling is what generates and ships the app's
+      resource index (Marquee.Windows.pri, which holds every page's compiled
+      XAML), unpackaged or not. Without it `Publish` left the .pri out, and
+      the installed app died loading MainWindow ("XAML parsing failed", MRT
+      "cannot find the file specified") before its window ever showed.
+    -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <Description>Marquee for Windows: the household media dashboard as a native app.</Description>
     <!-- Built from the Mac icon's artwork by windows/Scripts/make-icon.mjs. -->
     <ApplicationIcon>Assets\Marquee.ico</ApplicationIcon>
@@ -59,4 +67,18 @@
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
+  <!--
+    Belt and braces for the same failure: whatever the tooling does, the
+    published folder gets the app's .pri next to the .exe, where an
+    unpackaged app's resource loader looks for it.
+  -->
+  <Target Name="MarqueeCopyPriToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <MarqueeProjectPri Include="$(ProjectPriFullPath)" Condition="'$(ProjectPriFullPath)' != '' And Exists('$(ProjectPriFullPath)')" />
+      <MarqueeProjectPri Include="$(OutDir)$(TargetName).pri" Condition="'@(MarqueeProjectPri)' == '' And Exists('$(OutDir)$(TargetName).pri')" />
+      <MarqueeProjectPri Include="$(OutDir)resources.pri" Condition="'@(MarqueeProjectPri)' == '' And Exists('$(OutDir)resources.pri')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MarqueeProjectPri)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+    <Warning Condition="'@(MarqueeProjectPri)' == ''" Text="No app .pri was found to publish; the app will fail to load its XAML." />
+  </Target>
 </Project>

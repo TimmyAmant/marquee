@@ -96,6 +96,15 @@ jobs:
           msbuild windows/Marquee.Windows/Marquee.Windows.csproj -restore -t:Publish
           -p:Configuration=Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64
           -p:SelfContained=true -p:PublishDir=${{ runner.temp }}\Marquee\ -v:minimal
+      - name: Check the published app
+        shell: pwsh
+        # The app's own .pri holds its compiled XAML; without it the app
+        # can't draw a single window (it happened: see the csproj).
+        run: |
+          Get-ChildItem "${{ runner.temp }}\Marquee" -Filter *.pri | ForEach-Object { $_.Name }
+          if (-not (Get-ChildItem "${{ runner.temp }}\Marquee" -Filter *.pri | Where-Object { $_.Name -in 'resources.pri', 'Marquee.Windows.pri' })) {
+            throw "The published app has no resources.pri / Marquee.Windows.pri."
+          }
       - name: Build the installer
         shell: pwsh
         run: |
