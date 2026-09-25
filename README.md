@@ -14,17 +14,17 @@ Plex/Jellyfin/Sonarr/Radarr you already have. Your data, your server.
 
 **Website:** [timmyamant.github.io/marquee](https://timmyamant.github.io/marquee/)
 
-![Marquee's Discover page](docs/screenshots/web-discover.jpg)
+![Marquee's Discover page](docs/screenshots/web-discover-rail.jpg)
 
 <details>
 <summary><b>More screenshots</b>: a title page, and the light theme</summary>
 
-![A title page, showing library status and file details](docs/screenshots/web-title.jpg)
+![A title page, showing library status and file details](docs/screenshots/web-title-rail.jpg)
 
 | Website | Mac app |
 |---|---|
-| ![The website in its light theme](docs/screenshots/web-light-title.jpg) | ![The Mac app in its light theme](docs/screenshots/mac-light-title.jpg) |
-| ![Discover in the website's light theme](docs/screenshots/web-light-discover.jpg) | ![Discover in the Mac app's light theme](docs/screenshots/mac-light-discover.jpg) |
+| ![The website in its light theme](docs/screenshots/web-light-title-rail.jpg) | ![The Mac app in its light theme](docs/screenshots/mac-light-title-rail.jpg) |
+| ![Discover in the website's light theme](docs/screenshots/web-light-discover-rail.jpg) | ![Discover in the Mac app's light theme](docs/screenshots/mac-light-discover-rail.jpg) |
 
 </details>
 
@@ -127,7 +127,7 @@ They need a server running 0.22.0 or later.
 
 | | |
 |---|---|
-| ![Finding your server](docs/screenshots/mac-connect.jpg) | ![Discover in the Mac app](docs/screenshots/mac-discover.jpg) |
+| ![Finding your server](docs/screenshots/mac-connect.jpg) | ![Discover in the Mac app](docs/screenshots/mac-discover-rail.jpg) |
 
 ## Remote access
 

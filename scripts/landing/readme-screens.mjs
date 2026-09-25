@@ -26,10 +26,10 @@ const sharp = createRequire(path.join(REPO, 'package.json'))('sharp');
 const TITLE = process.argv[2] ?? '/title/movie/693134';
 
 const SHOTS = [
-  { file: 'web-discover.jpg', path: '/discover', theme: 'dark' },
-  { file: 'web-title.jpg', path: TITLE, theme: 'dark' },
-  { file: 'web-light-discover.jpg', path: '/discover', theme: 'light' },
-  { file: 'web-light-title.jpg', path: TITLE, theme: 'light' },
+  { file: 'web-discover-rail.jpg', path: '/discover', theme: 'dark' },
+  { file: 'web-title-rail.jpg', path: TITLE, theme: 'dark' },
+  { file: 'web-light-discover-rail.jpg', path: '/discover', theme: 'light' },
+  { file: 'web-light-title-rail.jpg', path: TITLE, theme: 'light' },
 ];
 
 async function main() {

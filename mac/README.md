@@ -2,7 +2,7 @@
 
 A native macOS client for [Marquee](../README.md), the self-hosted media dashboard, living in this repo alongside the server it talks to. It uses the server's `/api/v1` HTTP API, so it shows the same data the website does, in a real Mac app.
 
-![Marquee for Mac](../docs/screenshots/mac-title.jpg)
+![Marquee for Mac](../docs/screenshots/mac-title-rail.jpg)
 
 The app holds no library of its own. There's no database, no syncing, no webhook listener and no job scheduler on this side: your server already does all of that, and the Mac app reads and writes through the API.
 
