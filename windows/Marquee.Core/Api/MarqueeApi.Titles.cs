@@ -79,6 +79,22 @@ public sealed class TitlesEndpoints(MarqueeApi.Transport transport)
         return result.RequestId;
     }
 
+    /// <summary>
+    /// <c>POST /titles/tv/{tmdbId}/request</c> with <c>{"seasons": [...]}</c>:
+    /// just those seasons (sorted, de-duplicated). The server drops the ones
+    /// already monitored or complete; Conflict("Those seasons are already in
+    /// your library or on their way.") when nothing is left, Invalid for a
+    /// season TMDb doesn't list. Returns the new request's id.
+    /// </summary>
+    public async Task<Guid> RequestAsync(MediaType type, int tmdbId, IReadOnlyList<int> seasons, CancellationToken ct = default)
+    {
+        var body = new SeasonRequestBody(seasons.Distinct().Order().ToList());
+        var result = await transport.MutateAsync<TitleRequestCreated>(HttpMethod.Post, $"{Path(type, tmdbId)}/request",
+            body: body, timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Requests | ServerChange.Library, ct: ct)
+            .ConfigureAwait(false);
+        return result.RequestId;
+    }
+
     /// <summary><c>/titles/{type}/{tmdbId}</c>, the prefix every title route shares.</summary>
     public static string Path(MediaType type, int tmdbId) => $"/titles/{MarqueeApi.Segment(type)}/{tmdbId}";
 }

@@ -80,7 +80,15 @@
                                             <Border Width="40" Height="56" CornerRadius="6" Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                 <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
                                             </Border>
-                                            <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" VerticalAlignment="Center" Padding="4,2" />
+                                            <StackPanel VerticalAlignment="Center" Spacing="0">
+                                                <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
+                                                <TextBlock
+                                                    Text="{x:Bind SeasonsLine}"
+                                                    Visibility="{x:Bind SeasonsLine, Converter={StaticResource StringToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Margin="4,0,0,0" />
+                                            </StackPanel>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{x:Bind DateLabel}" Style="{StaticResource TableCellText}" />
                                         <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center">
@@ -168,7 +176,15 @@
                                             <Border Width="40" Height="56" CornerRadius="6" Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                 <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
                                             </Border>
-                                            <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" VerticalAlignment="Center" Padding="4,2" />
+                                            <StackPanel VerticalAlignment="Center" Spacing="0">
+                                                <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
+                                                <TextBlock
+                                                    Text="{x:Bind SeasonsLine}"
+                                                    Visibility="{x:Bind SeasonsLine, Converter={StaticResource StringToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Margin="4,0,0,0" />
+                                            </StackPanel>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{x:Bind RequesterLabel}" Style="{StaticResource TableCellText}" VerticalAlignment="Top" Margin="0,8,0,0" />
                                         <TextBlock Grid.Column="2" Text="{x:Bind DateLabel}" Style="{StaticResource TableCellText}" VerticalAlignment="Top" Margin="0,8,0,0" />
@@ -254,7 +270,15 @@
                                             <Border Width="40" Height="56" CornerRadius="6" Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                 <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
                                             </Border>
-                                            <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" VerticalAlignment="Center" Padding="4,2" />
+                                            <StackPanel VerticalAlignment="Center" Spacing="0">
+                                                <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
+                                                <TextBlock
+                                                    Text="{x:Bind SeasonsLine}"
+                                                    Visibility="{x:Bind SeasonsLine, Converter={StaticResource StringToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Margin="4,0,0,0" />
+                                            </StackPanel>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{x:Bind RequesterLabel}" Style="{StaticResource TableCellText}" />
                                         <TextBlock Grid.Column="2" Text="{x:Bind DateLabel}" Style="{StaticResource TableCellText}" />

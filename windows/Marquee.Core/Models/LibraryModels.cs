@@ -180,6 +180,22 @@ public sealed record TitleViewerState
     /// <summary>"Search now" and "Stop/Start monitoring" when non-null.</summary>
     public ArrTracking? ArrTracking { get; init; }
 
+    /// <summary>
+    /// TV: at least one season can be requested (season picker, "Request more
+    /// seasons"). Null from a server older than season requests, which only
+    /// takes whole-series requests.
+    /// </summary>
+    public bool? CanRequestSeasons { get; init; }
+
+    /// <summary>The seasons of your pending request; null when there's none or it's for the whole series.</summary>
+    public IReadOnlyList<int>? RequestedSeasons { get; init; }
+
+    /// <summary>"Requested Seasons 1–3, waiting for approval", or without the seasons for a whole-series request.</summary>
+    public string PendingRequestLine =>
+        SeasonLabels.SeasonsLabel(RequestedSeasons) is { } label
+            ? $"Requested {label}, waiting for approval"
+            : "Requested, waiting for approval";
+
     /// <summary>"Also requested by A, B", or null when it shouldn't show.</summary>
     public string? OtherRequestersLine =>
         OtherRequesters.Count == 0 || AlreadyRequested ? null : $"Also requested by {string.Join(", ", OtherRequesters)}";
