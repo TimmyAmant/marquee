@@ -1035,6 +1035,45 @@ was given; without one it's just `"The Matrix" was declined.`
 `{ "ok": true }`. `404 not_found` "Notification not found." for an unknown id
 or someone else's notification.
 
+### `GET /notifications/stream` — user
+
+Live notifications for an app that's running: a
+[Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+stream (`Content-Type: text/event-stream`) that stays open. The app shows each
+event as a system notification itself, so nothing goes through Apple's,
+Google's or anyone else's push service.
+
+```
+retry: 5000
+
+event: ready
+data: {}
+
+event: notification
+id: a23f7682-41ae-4e8a-8b17-14d903ab017a
+data: {"id":"a23f7682-41ae-4e8a-8b17-14d903ab017a","mediaType":"movie","tmdbId":27205,"title":"Inception","eventType":"request_rejected","message":"\"Inception\" was declined: Already available on a streaming service we have","read":false,"createdAt":"2026-09-25T11:25:16.885Z"}
+
+event: signed-out
+data: {}
+```
+
+- `ready` arrives first. After it, a `notification` event (one
+  `NotificationItem`, exactly as `GET /notifications` lists it) arrives the
+  moment the server creates one for this account.
+- A `: keep-alive` comment comes every 25 seconds. Each one is also when
+  the server re-checks the token: once it's revoked (Sign out, a password
+  change), the stream sends `signed-out` and closes. Sign in again.
+- The stream can drop (the server restarted, the Mac slept, a proxy timed
+  out). Reconnect after the `retry` delay, and catch up on anything missed
+  with `GET /notifications`, whose newest items a client compares with the
+  newest one it has already shown.
+- Behind nginx and similar proxies the response carries `X-Accel-Buffering:
+  no`, so events aren't held back; proxies with their own buffering need it
+  turned off for this path.
+
+The website doesn't use this: its notifications are Web Push, sent to the
+browsers that turned them on under Settings › Account › Notifications.
+
 ---
 
 ## 9. Calendar
@@ -1554,6 +1593,7 @@ what to do, grouped by area.
 | | `GET /notifications/unread-count` | user |
 | | `POST /notifications/read-all` | user |
 | | `POST /notifications/{id}/read` | user |
+| | `GET /notifications/stream` | user |
 | Calendar | `GET /calendar` | user |
 | Activity | `GET /settings/activity` | admin |
 | Settings: Account | `GET /users` | user |

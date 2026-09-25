@@ -6,6 +6,8 @@ import { getDiscordWebhookUrl, getGenericWebhookUrl, getNtfyUrl } from "@/lib/in
 import { sendDiscordMessage } from "@/lib/discord/client";
 import { sendWebhookNotification } from "@/lib/webhook/client";
 import { sendNtfyMessage } from "@/lib/ntfy/client";
+import { publishNotification } from "@/lib/notifications/bus";
+import { pushMessageFor, pushToUser } from "@/lib/push/deliver";
 
 const EVENT_EMOJI: Record<NotificationEventType, string> = {
   grabbed: "⬇️",
@@ -62,7 +64,14 @@ export async function createNotification(input: {
   relay?: boolean;
 }): Promise<void> {
   const { relay = true, ...row } = input;
-  await db.insert(notifications).values(row);
+  const [saved] = await db.insert(notifications).values(row).returning();
+
+  // Straight to the account's own devices: the apps' live streams and every
+  // browser that turned notifications on. Unlike the relays below these are
+  // personal, so they go out even for a copy that isn't relayed.
+  publishNotification(saved);
+  void pushToUser(saved.userId, pushMessageFor(saved));
+
   if (!relay) return;
 
   // Best-effort relay to every configured channel — a channel being down or

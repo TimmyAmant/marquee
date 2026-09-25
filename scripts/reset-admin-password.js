@@ -36,6 +36,8 @@ async function main() {
     // account, same as changing it from Settings does.
     if (updated.length > 0) {
       await sql`delete from api_tokens where user_id in ${sql(updated.map((row) => row.id))}`;
+      // And every browser's push notifications, same as a Settings change.
+      await sql`delete from push_subscriptions where user_id in ${sql(updated.map((row) => row.id))}`;
     }
     return updated;
   });

@@ -27,6 +27,6 @@ export const config = {
     // and the file-extension rule is limited to a single path segment so
     // "/title/tv/1399.js" can't slip past the gate and reach that page's
     // server actions.
-    "/((?!api/auth(?:/|$)|api/webhooks(?:/|$)|api/v1(?:/|$)|login(?:/|$)|setup(?:/|$)|_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$|icon$|apple-icon$|[^/]+\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
+    "/((?!api/auth(?:/|$)|api/webhooks(?:/|$)|api/v1(?:/|$)|login(?:/|$)|setup(?:/|$)|_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$|icon$|apple-icon$|[^/]+\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|webmanifest|woff|woff2)$).*)",
   ],
 };

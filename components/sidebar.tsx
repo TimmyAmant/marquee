@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { NavMenu } from "@/components/nav-menu";
+import { PushPrompt } from "@/components/push-prompt";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
@@ -31,13 +32,17 @@ export async function Sidebar() {
     : [];
 
   return (
-    <NavMenu
-      isSignedIn={Boolean(session?.user)}
-      isAdmin={isAdmin}
-      pendingRequestCount={pendingRequestCount}
-      userLabel={session?.user ? session.user.name || session.user.username || null : null}
-      avatarSrc={photo ? avatarPath(photo, "/api") : null}
-      serverLabel={serverLabel}
-    />
+    <>
+      <NavMenu
+        isSignedIn={Boolean(session?.user)}
+        isAdmin={isAdmin}
+        pendingRequestCount={pendingRequestCount}
+        userLabel={session?.user ? session.user.name || session.user.username || null : null}
+        avatarSrc={photo ? avatarPath(photo, "/api") : null}
+        serverLabel={serverLabel}
+      />
+      {/* Asks about notifications on this device after signing in. */}
+      {session?.user && <PushPrompt />}
+    </>
   );
 }

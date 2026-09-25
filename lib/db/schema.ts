@@ -572,6 +572,49 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// The server's own VAPID key pair for Web Push (lib/push/web-push.ts):
+// generated on first use and never shared with anyone. Browsers receive the
+// public half when they subscribe; the private half signs every push, and
+// is encrypted at rest like the credentials above. Exactly zero or one row.
+export const pushKeys = pgTable(
+  "push_keys",
+  {
+    id: integer("id").primaryKey().default(1),
+    publicKey: text("public_key").notNull(),
+    privateKeyEnc: bytea("private_key_enc").notNull(),
+    privateKeyIv: bytea("private_key_iv").notNull(),
+    privateKeyTag: bytea("private_key_tag").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check("push_keys_singleton", sql`${table.id} = 1`)],
+);
+
+// One row per browser that turned on notifications (the website's service
+// worker). The endpoint is the browser vendor's push address for that
+// browser; p256dh and auth are the browser's keys, which encrypt every
+// payload end to end, so the vendor's relay can't read it. Unique by
+// endpoint: a browser someone else signs in on moves to their account.
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** "Chrome on macOS" and the like, for Settings' device list. */
+    label: text("label"),
+    /** The site's own address when the browser subscribed: the VAPID contact
+     * ("sub") the push services ask for. */
+    origin: text("origin"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  },
+  (table) => [index("push_subscriptions_user_idx").on(table.userId)],
+);
+
 // Bearer tokens for native clients (the macOS app) calling /api/v1 — the web
 // UI keeps using Auth.js JWT cookies. Only a SHA-256 hash of each token is
 // stored, never the token itself. `expires_at` slides forward on use (at most

@@ -6,6 +6,7 @@ import { users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { revokeAllApiTokensForUser } from "@/lib/api/token-store";
+import { removeAllSubscriptions } from "@/lib/push/deliver";
 import { isRateLimited, recordFailedAttempt, refundAttempt } from "@/lib/rate-limit";
 
 // Household-account management shared by the Settings → Account server
@@ -119,7 +120,8 @@ const updateMemberSchema = z.object({
  * new one is given — the only account-recovery path here, since there's no
  * email-based "forgot password" flow. Members may only edit their own
  * account; only the admin may edit anyone else's. A password change signs
- * every native client of that account out (its API tokens are revoked).
+ * every native client of that account out (its API tokens are revoked) and
+ * stops its browsers' push notifications.
  *
  * Changing your *own* password also takes `currentPassword`, so a browser
  * left signed in (or a stolen session cookie) can't be used to lock the
@@ -185,6 +187,7 @@ export async function updateHouseholdMember(
 
   if (updated.length > 0 && password) {
     await revokeAllApiTokensForUser(userId);
+    await removeAllSubscriptions(userId);
   }
 
   return { ok: true, passwordChanged: updated.length > 0 && Boolean(password) };

@@ -124,6 +124,17 @@ data, your server.
 - Bell icon in the nav polls for new activity: a title started downloading,
   finished downloading, or (for household members) one of your requests
   was approved, declined, or is ready to watch.
+- **Notifications on your devices, sent by your own server.** After signing
+  in, Marquee asks whether this device should get notifications. On the
+  website these are standard Web Push: your server generates its own keys,
+  and messages are encrypted so only your device can read them. No account
+  or API key with any push service is needed; the browser's own push relay
+  (Apple, Google, Mozilla) only carries the sealed message. Web Push needs
+  Marquee opened over **https** (for example through a reverse proxy), and
+  on iPhone/iPad the site must be added to the Home Screen first. The Mac
+  and Windows apps get notifications straight from the server over a live
+  connection, with no relay at all. Manage devices and send a test under
+  **Settings → Account → Notifications**.
 - Powered by Radarr/Sonarr webhooks — the URL and a per-account secret are
   generated for you under **Settings → Integrations**. If a reverse proxy
   logs full URLs, you can drop `?secret=…` from the webhook URL and send it

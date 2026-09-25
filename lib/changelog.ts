@@ -18,6 +18,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Profile photos: add one from Settings › Account › Edit. It's kept on your Marquee server, never uploaded anywhere else, and shows in the menu and next to each household member. Photos are cropped to a square, turned the right way up, and stripped of their location and camera details.",
       "API: /me, the login response and household members include avatarUrl, and GET/PUT/DELETE /users/{id}/avatar read, replace and remove a photo.",
       "Marquee for Windows: Settings now manages household members too, adding, editing and removing accounts, like the website and the Mac app.",
+      "Notifications on your devices, sent by your own Marquee server: after you sign in, Marquee asks whether this device should get them (a request approved or declined, a title ready to watch). On the website they're Web Push, encrypted so only your device can read them, with no account at any push service; they need Marquee opened over https, and on iPhone the site added to the Home Screen. Settings › Account › Notifications turns them on or off, lists your devices and sends a test.",
+      "API: GET /notifications/stream, a live stream of new notifications for the Mac and Windows apps to show as system notifications without any outside push service.",
     ],
   },
   {

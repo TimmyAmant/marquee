@@ -3,6 +3,7 @@ import { auth, signOut } from "@/auth";
 import { CreateUserForm } from "./create-user-form";
 import { HouseholdMembersList } from "./household-members-list";
 import { SignOutButton } from "./sign-out-button";
+import { PushSettings } from "./push-settings";
 import { listHouseholdMembers } from "./users-actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
@@ -50,6 +51,12 @@ export default async function AccountSettingsPage() {
           <SignOutButton />
         </form>
       </div>
+
+      <h2 className="mt-10 font-display text-xl text-text-primary">Notifications</h2>
+      <p className="mt-2 text-sm text-text-secondary">
+        Requests approved or declined, and titles ready to watch, on this device.
+      </p>
+      <PushSettings />
 
       <h2 className="mt-10 font-display text-xl text-text-primary">
         {isAdmin ? "Household members" : "Your account"}
