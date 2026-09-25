@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { APP_VERSION } from "@/lib/api/version";
-import type { JellyfinConfig } from "@/lib/jellyfin/client";
+import { jellyfinTokenHeaders, type JellyfinConfig } from "@/lib/jellyfin/client";
 
 // Jellyfin user lookups behind "Sign in with Jellyfin" and "Import from
 // Jellyfin" (lib/auth/media-signin.ts). Endpoints and shapes are Jellyfin's
@@ -61,7 +61,8 @@ function quoted(value: string): string {
 }
 
 /** The MediaBrowser client descriptor Jellyfin requires on an
- * unauthenticated call. Sent as both `Authorization` (current) and
+ * unauthenticated call. Sent as both `Authorization` (the only one
+ * Jellyfin 12 accepts — checked against a 12.1 server) and
  * `X-Emby-Authorization` (older servers). */
 function clientAuthorization(deviceId: string, token?: string): string {
   const parts = [
@@ -129,7 +130,7 @@ export async function authenticateJellyfinUser(
 /** Every user on the admin's Jellyfin server (admin API key). */
 export async function listJellyfinUsers(config: JellyfinConfig): Promise<JellyfinUser[]> {
   const res = await fetch(`${config.baseUrl.replace(/\/+$/, "")}/Users`, {
-    headers: { Accept: "application/json", "X-Emby-Token": config.apiKey },
+    headers: { Accept: "application/json", ...jellyfinTokenHeaders(config.apiKey) },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Failed to list Jellyfin users (${res.status})`);

@@ -20,6 +20,14 @@ const REQUEST_TIMEOUT_MS = 8000;
 // See LIBRARY_TIMEOUT_MS in lib/radarr/client.ts.
 const LIBRARY_TIMEOUT_MS = 120_000;
 
+/** An API key or access token, in both the header Jellyfin 10.x reads
+ * (`X-Emby-Token`) and the one current servers require: Jellyfin 12 no
+ * longer accepts the legacy X-Emby-* headers on their own (401), while
+ * `Authorization: MediaBrowser Token="…"` works on 10.8 onwards. */
+export function jellyfinTokenHeaders(token: string): Record<string, string> {
+  return { "X-Emby-Token": token, Authorization: `MediaBrowser Token="${token.replace(/["\\,\r\n]/g, "")}"` };
+}
+
 async function jellyfinFetch<T>(
   config: JellyfinConfig,
   path: string,
@@ -29,7 +37,7 @@ async function jellyfinFetch<T>(
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
-      "X-Emby-Token": config.apiKey,
+      ...jellyfinTokenHeaders(config.apiKey),
     },
     signal: AbortSignal.timeout(timeoutMs),
   });

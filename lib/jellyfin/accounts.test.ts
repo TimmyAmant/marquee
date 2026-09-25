@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   authenticateJellyfinUser,
   jellyfinUserImageUrl,
+  listJellyfinUsers,
   normalizeJellyfinUserId,
   parseJellyfinAuthResult,
   parseJellyfinUser,
@@ -121,6 +122,16 @@ describe("authenticateJellyfinUser", () => {
 
     expect(logout.url).toBe("http://jf:8096/Sessions/Logout");
     expect((logout.init.headers as Record<string, string>)["X-Emby-Token"]).toBe("jf-access-token");
+  });
+
+  it("lists users with the API key in both token headers (Jellyfin 12 needs Authorization)", async () => {
+    const calls = stubFetch(Response.json([USER_DTO, { Name: "", Id: "bad" }]));
+    const users = await listJellyfinUsers({ baseUrl: "http://jf:8096", apiKey: "admin-key" });
+    expect(users.map((u) => u.name)).toEqual(["anna"]);
+    const headers = calls[0].init.headers as Record<string, string>;
+    expect(calls[0].url).toBe("http://jf:8096/Users");
+    expect(headers["X-Emby-Token"]).toBe("admin-key");
+    expect(headers.Authorization).toBe('MediaBrowser Token="admin-key"');
   });
 
   it("answers ok: false for wrong credentials", async () => {
