@@ -10,8 +10,8 @@ import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import type { AuthResponse } from "@/lib/api/types";
 
 /** Exchanges a username/password for a device bearer token. Shares the web
- * sign-in's rate-limit buckets (5 failures per username, 20 per IP, per 15
- * minutes) — see authenticateWithPassword. */
+ * sign-in's rate limits (per-address refusal, per-username backoff) — see
+ * authenticateWithPassword. */
 export const POST = withApi(async (request): Promise<AuthResponse> => {
   const body = await readJsonBody(request);
   const username = body.username;
