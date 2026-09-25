@@ -103,8 +103,14 @@ async function main() {
   const cssHref = await page.$eval('link[rel=stylesheet][href*="/_next/"]', (l) => l.href);
   let css = await (await page.request.get(cssHref)).text();
   // next/font ships the woff2 files itself; the template loads the same
-  // families (same names, same axes) from Google Fonts instead.
-  css = css.replace(/@font-face\{font-family:(?:Fraunces|Manrope);[^}]*\}/g, '');
+  // families (same names, same axes) from Google Fonts instead. A dev server
+  // (next dev) serves the CSS unminified, so allow for whitespace, and fold
+  // it onto one line like a production build's.
+  css = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@font-face\s*\{\s*font-family:\s*["']?(?:Fraunces|Manrope)["']?\s*;[^}]*\}/g, '')
+    .replace(/\s*\n\s*/g, ' ')
+    .trim();
 
   let html = await page.evaluate(() => '<!doctype html>\n' + document.documentElement.outerHTML);
   html = html
@@ -144,6 +150,12 @@ function rewrite({ file }) {
     img.dataset.slot = slot;
     ['srcset', 'sizes', 'loading'].forEach((a) => img.removeAttribute(a));
     img.setAttribute('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+    // media-image.tsx fades artwork in over a shimmer once it has loaded,
+    // which a page without scripts never sees: show it as loaded.
+    if (img.classList.replace('opacity-0', 'opacity-100')) {
+      const shimmer = img.previousElementSibling;
+      if (shimmer?.classList.contains('bg-shimmer')) shimmer.classList.replace('opacity-100', 'opacity-0');
+    }
   };
   const list = (container, name) => {
     container.dataset.list = name;
@@ -220,13 +232,25 @@ function rewrite({ file }) {
       `<div class="mt-3.5 grid grid-cols-2 gap-x-3.5 gap-y-3" data-list="file-cells">${cellHtml}</div></div></div>`,
   );
 
-  // Who's signed in, and where (the sidebar footer shows the server's host).
-  const account = need(document.querySelector('aside a[href="/settings"]'), 'sidebar account link');
-  account.children[0].dataset.field = 'viewer-name';
-  account.children[1].dataset.field = 'viewer-host';
+  // Who's signed in, and where: the rail's profile photo (initials, as the
+  // seeded account has no photo) and the menu panel's profile row, whose
+  // name sits over the server's host. The panel is closed in the shot, but
+  // it's in the page, so it gets the viewer too.
+  const railAvatar = need(document.querySelector('nav[aria-label="Main"] a[href="/settings"] > span'), 'rail profile photo');
+  railAvatar.dataset.field = 'viewer-initials';
+  const profile = need(document.querySelector('#nav-menu-panel a[href="/settings"]'), 'menu profile row');
+  profile.querySelector(':scope > span[aria-hidden]').dataset.field = 'viewer-initials';
+  const [profileName, profileHost] = need(profile.querySelector(':scope > span.min-w-0'), 'menu profile name').children;
+  profileName.dataset.field = 'viewer-name';
+  if (profileHost) profileHost.dataset.field = 'viewer-host';
 
-  // Scrub: scripts, preloads, React action payloads (they carry ids), links.
-  document.querySelectorAll('script, link[rel=preload], link[rel=modulepreload], link[rel=icon], link[rel=apple-touch-icon], meta[name=next-size-adjust], next-route-announcer, template, input[type=hidden]').forEach((el) => el.remove());
+  // The "Get notifications on this device?" card that follows a sign-in.
+  document.querySelector('#push-prompt-title')?.closest('[role=dialog]')?.remove();
+
+  // Scrub: scripts, preloads, React action payloads (they carry ids), links,
+  // and a dev server's overlay and its fonts.
+  document.querySelectorAll('script, link[rel=preload], link[rel=modulepreload], link[rel=icon], link[rel=apple-touch-icon], link[rel=manifest], meta[name=next-size-adjust], next-route-announcer, nextjs-portal, template, input[type=hidden]').forEach((el) => el.remove());
+  document.querySelectorAll('style').forEach((el) => el.textContent.includes('__nextjs') && el.remove());
   document.querySelectorAll('form').forEach((f) => ['action', 'method', 'enctype'].forEach((a) => f.removeAttribute(a)));
   document.querySelectorAll('a[href]').forEach((a) => {
     a.setAttribute('href', '#');
