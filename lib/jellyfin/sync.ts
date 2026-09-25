@@ -1,9 +1,9 @@
 import { and, eq, inArray, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { singleFlight } from "@/lib/async/single-flight";
+import { singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { jellyfinServers, jellyfinLibraryItems, integrationCredentials } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
-import { getJellyfinCredential } from "@/lib/integrations/credentials";
+import { assertStillConnected, getJellyfinCredential } from "@/lib/integrations/credentials";
 import * as jellyfin from "@/lib/jellyfin/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -11,6 +11,9 @@ import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 import { EMPTY_MEDIA_DETAIL } from "@/lib/media-info";
 import type { MediaDetail } from "@/lib/media-info";
 import { rowsMissingFromSync } from "@/lib/library/prune";
+
+/** How many items to write between checks that Jellyfin is still connected. */
+const CONNECTED_CHECK_EVERY = 100;
 
 async function runSyncJellyfinLibrary(
   userId: string,
@@ -20,6 +23,7 @@ async function runSyncJellyfinLibrary(
 
   const info = await jellyfin.testConnection(credential);
 
+  await assertStillConnected(userId, "jellyfin");
   const [serverRow] = await db
     .insert(jellyfinServers)
     .values({
@@ -47,7 +51,12 @@ async function runSyncJellyfinLibrary(
   let itemCount = 0;
   const seenItemIds = new Set<string>();
 
-  for (const item of items) {
+  // The listing can take minutes on a big library. If Jellyfin was
+  // disconnected meanwhile, writing now would bring its data back — check
+  // before writing, and keep checking as the item loop runs.
+  await assertStillConnected(userId, "jellyfin");
+  for (const [index, item] of items.entries()) {
+    if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertStillConnected(userId, "jellyfin");
     if (item.Type !== "Movie" && item.Type !== "Series") continue;
     seenItemIds.add(item.Id);
     const mediaType: MediaType = item.Type === "Movie" ? "movie" : "tv";
@@ -113,6 +122,7 @@ async function runSyncJellyfinLibrary(
   // The listing above is the whole server, so anything stored that it no
   // longer includes was deleted from Jellyfin — drop it, or the title would
   // keep showing "In library" forever.
+  await assertStillConnected(userId, "jellyfin");
   const stored = await db
     .select({ id: jellyfinLibraryItems.id, key: jellyfinLibraryItems.itemId })
     .from(jellyfinLibraryItems)
@@ -260,4 +270,9 @@ export async function getJellyfinFileInfo(
 /** One Jellyfin sync per user at a time — see syncPlexLibrary. */
 export function syncJellyfinLibrary(userId: string) {
   return singleFlight(`jellyfin-sync:${userId}`, () => runSyncJellyfinLibrary(userId));
+}
+
+/** Resolves once no Jellyfin sync for this user is running. */
+export function waitForJellyfinSync(userId: string) {
+  return whenIdle(`jellyfin-sync:${userId}`);
 }

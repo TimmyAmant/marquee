@@ -1,9 +1,9 @@
 import { and, desc, eq, gt, inArray, isNotNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { singleFlight } from "@/lib/async/single-flight";
+import { singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { plexServers, plexLibraryItems, integrationCredentials } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
-import { getPlexCredential } from "@/lib/integrations/credentials";
+import { assertStillConnected, getPlexCredential } from "@/lib/integrations/credentials";
 import * as plex from "@/lib/plex/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -16,6 +16,9 @@ import { rowsMissingFromSync } from "@/lib/library/prune";
 /** How many shows' episode listings to fetch from Plex at once. */
 const SHOW_FETCH_CONCURRENCY = 6;
 
+/** How many items to write between checks that Plex is still connected. */
+const CONNECTED_CHECK_EVERY = 100;
+
 async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number; itemCount: number }> {
   const credential = await getPlexCredential(userId);
   if (!credential) throw new Error("Plex is not connected for this user");
@@ -27,6 +30,9 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
     const serverUri = plex.pickBestConnection(resource.connections);
     if (!serverUri) continue;
 
+    // Disconnecting deletes the server rows; upserting one after that would
+    // bring the whole server back.
+    await assertStillConnected(userId, "plex");
     const [serverRow] = await db
       .insert(plexServers)
       .values({
@@ -122,7 +128,12 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
         }
       }
 
-      for (const item of items) {
+      // The fetches above can take minutes on a big library — make sure
+      // nobody disconnected Plex meanwhile before writing any of it, and
+      // keep checking as the item loop runs.
+      await assertStillConnected(userId, "plex");
+      for (const [index, item] of items.entries()) {
+        if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertStillConnected(userId, "plex");
         seenRatingKeys.add(item.ratingKey);
         const parsed = plex.parseExternalIds(item);
         let { tmdbId } = parsed;
@@ -191,6 +202,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
     }
 
     if (listedEverySection) {
+      await assertStillConnected(userId, "plex");
       const stored = await db
         .select({ id: plexLibraryItems.id, key: plexLibraryItems.ratingKey })
         .from(plexLibraryItems)
@@ -368,4 +380,9 @@ export async function getPlexFileInfo(
  * shares its result instead of starting another. */
 export function syncPlexLibrary(userId: string) {
   return singleFlight(`plex-sync:${userId}`, () => runSyncPlexLibrary(userId));
+}
+
+/** Resolves once no Plex sync for this user is running. */
+export function waitForPlexSync(userId: string) {
+  return whenIdle(`plex-sync:${userId}`);
 }
