@@ -10,8 +10,9 @@ on:
 jobs:
   publish:
     # A manual run from any other branch would overwrite :latest (and the
-    # version tag) with unreleased code, so only main and releases publish.
-    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+    # version tag) with unreleased code, so only main and full releases
+    # publish; a pre-release (a test build of the apps) doesn't.
+    if: (github.event_name == 'release' && !github.event.release.prerelease) || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read

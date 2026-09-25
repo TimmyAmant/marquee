@@ -296,13 +296,13 @@ itself, or takes an address you type in.
 It needs macOS 15 or later and a server running 0.22.0 or later. Build
 instructions are in [`mac/README.md`](mac/README.md).
 
-**Download:** [`Marquee-mac.zip`](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-mac.zip)
-from the latest release. Unzip it and move **Marquee** to Applications. The
-app isn't notarized by Apple, so the first launch is blocked: open **System
-Settings › Privacy & Security**, scroll to the message about Marquee and
-choose **Open Anyway**. After that, the app updates itself: when a new release
-is out it offers an **Update** button, and quits and reopens on the new
-version.
+**Download:** [**Marquee.dmg**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee.dmg).
+Open it and drag **Marquee** onto the Applications folder beside it. The app
+isn't notarized by Apple yet, so the very first launch is blocked: open
+**System Settings › Privacy & Security**, scroll to the message about Marquee
+and choose **Open Anyway**. After that, the app updates itself: when a new
+release is out it offers an **Update** button, and quits and reopens on the
+new version.
 
 ### Marquee for Windows (preview)
 
@@ -318,10 +318,12 @@ It needs Windows 10 1809 or later (or Windows 11) and a server running 0.22.0
 or later. Build instructions and the list of what's still missing are in
 [`windows/README.md`](windows/README.md).
 
-**Download:** [`Marquee-windows-x64.zip`](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-windows-x64.zip)
-from the latest release. Unzip it anywhere and run `Marquee.Windows.exe`;
-nothing else needs installing. It isn't code-signed yet, so SmartScreen may
-say "Windows protected your PC": choose **More info › Run anyway**.
+**Download:** [**Marquee-Setup.exe**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-Setup.exe).
+Run it: it installs Marquee for your account (no admin prompt), adds it to
+the Start menu, and opens it. Nothing else needs installing first. The
+installer isn't code-signed yet, so SmartScreen may say "Windows protected
+your PC": choose **More info › Run anyway**. Running a newer installer
+updates Marquee in place; uninstall it from Settings › Apps.
 
 ## Access from outside your network
 

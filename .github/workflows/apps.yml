@@ -1,11 +1,13 @@
 name: App downloads
 
-# Builds the Mac and Windows apps as downloads: a zip of Marquee.app and a
-# zip of a self-contained Windows folder (nothing to install first, not even
-# .NET). Every pull request and push to main keeps them as run artifacts,
-# for trying a change before it ships; a published release also gets them
-# attached as assets, which is where the Mac app's "Update" button and the
-# README's download links look.
+# Builds the Mac and Windows apps as ready-to-install downloads:
+#   Marquee.dmg          open it, drag Marquee into Applications
+#   Marquee-Setup.exe    a per-user Windows installer (no admin prompt)
+#   Marquee-mac.zip      the same Mac app zipped, with its SHA-256: what the
+#                        Mac app's own Update button downloads
+# Pull requests and main keep them as run artifacts for trying a change;
+# a published release gets them attached as assets, which is where the
+# download links (README, website) and the Mac updater point.
 on:
   pull_request:
   push:
@@ -52,6 +54,12 @@ jobs:
           ditto -c -k --keepParent "$app" dist/Marquee-mac.zip
           (cd dist && shasum -a 256 Marquee-mac.zip > Marquee-mac.zip.sha256)
           cat dist/Marquee-mac.zip.sha256
+          # The disk image people download: the app next to a shortcut to
+          # Applications, so installing is one drag.
+          mkdir -p dmg
+          ditto "$app" dmg/Marquee.app
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Marquee -srcfolder dmg -ov -format UDZO dist/Marquee.dmg
       # The ditto zip goes inside the artifact rather than the bare .app:
       # GitHub's own zipping of an artifact drops the symlinks and executable
       # bits a Mac app bundle needs.
@@ -63,7 +71,7 @@ jobs:
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-mac.zip dist/Marquee-mac.zip.sha256 --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee.dmg dist/Marquee-mac.zip dist/Marquee-mac.zip.sha256 --clobber
 
   windows:
     name: Windows app download
@@ -83,28 +91,27 @@ jobs:
       - name: Publish
         # Self-contained: the .NET runtime ships in the folder alongside the
         # Windows App SDK runtime (already self-contained in the project), so
-        # unzipping and running Marquee.Windows.exe is the whole install.
+        # the installer needs nothing else on the PC.
         run: >
           msbuild windows/Marquee.Windows/Marquee.Windows.csproj -restore -t:Publish
           -p:Configuration=Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64
           -p:SelfContained=true -p:PublishDir=${{ runner.temp }}\Marquee\ -v:minimal
-      - name: Package
+      - name: Build the installer
         shell: pwsh
         run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y | Out-Null }
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path "${{ runner.temp }}\Marquee" -DestinationPath dist\Marquee-windows-x64.zip
-          $hash = (Get-FileHash dist\Marquee-windows-x64.zip -Algorithm SHA256).Hash.ToLower()
-          "$hash  Marquee-windows-x64.zip" | Out-File -Encoding ascii dist\Marquee-windows-x64.zip.sha256
-          Get-Content dist\Marquee-windows-x64.zip.sha256
-      # The folder itself, not the zip: GitHub zips an artifact on download,
-      # so this comes down as one zip of the app folder.
+          & $iscc "/DAppVersion=${{ steps.version.outputs.version }}" "/DSourceDir=${{ runner.temp }}\Marquee" "/O$PWD\dist" windows\installer\Marquee.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-ChildItem dist
       - uses: actions/upload-artifact@v4
         with:
-          name: Marquee-windows-x64-${{ steps.version.outputs.version }}
-          path: ${{ runner.temp }}\Marquee\
+          name: Marquee-Setup-${{ steps.version.outputs.version }}
+          path: dist/Marquee-Setup.exe
       - name: Attach to the release
         if: github.event_name == 'release'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-windows-x64.zip dist/Marquee-windows-x64.zip.sha256 --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-Setup.exe --clobber
