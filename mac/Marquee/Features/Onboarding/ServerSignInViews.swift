@@ -88,18 +88,40 @@ struct SetupForm: View {
     }
 }
 
-/// app/(auth)/login/login-form.tsx, against `POST /api/v1/auth/login`.
+/// app/(auth)/login/login-form.tsx, against `POST /api/v1/auth/login` —
+/// plus "Sign in with Plex" (`/auth/plex/start` + `/auth/plex/poll`) and
+/// "Sign in with Jellyfin" (`/auth/jellyfin`) when `server-info.signIn`
+/// offers them. Older servers send no `signIn`, so no extra buttons.
 struct SignInForm: View {
+    enum Method: Equatable {
+        case password
+        case jellyfin
+    }
+
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    @State private var method: Method = .password
     @State private var username = ""
     @State private var password = ""
     @State private var error: String?
     @State private var pending = false
+    /// The Plex sign-in in progress: cancelled by Cancel, by the card going
+    /// away, and when Marquee quits.
+    @State private var plexTask: Task<Void, Never>?
+    @State private var waitingForPlex = false
 
     var body: some View {
         let info = model.session.serverInfo
+        let offersPlex = info?.offersPlexSignIn == true
+        let offersJellyfin = info?.offersJellyfinSignIn == true
+        let jellyfin = offersJellyfin && method == .jellyfin
+        let busy = pending || waitingForPlex
+
         VStack(alignment: .leading, spacing: 18) {
-            AuthHeading(title: "Welcome back", message: "Sign in to your Marquee account.")
+            AuthHeading(
+                title: "Welcome back",
+                message: jellyfin ? "Sign in with your Jellyfin account." : "Sign in to your Marquee account."
+            )
             if let server = model.session.server {
                 ServerChip(address: server, version: info?.version) {
                     model.changeServer()
@@ -108,20 +130,49 @@ struct SignInForm: View {
             if let notice = model.authNotice {
                 AuthNotice(text: notice)
             }
-            AuthField(label: "Username", text: $username, contentType: .username, autofocus: true)
-            AuthField(label: "Password", text: $password, secure: true, contentType: .password)
+            AuthField(label: jellyfin ? "Jellyfin username" : "Username", text: $username, contentType: .username, autofocus: true)
+            AuthField(label: jellyfin ? "Jellyfin password" : "Password", text: $password, secure: true, contentType: .password)
             if info?.isDegraded == true {
                 InlineMessage(text: "Your server can't reach its database right now, so signing in may fail.")
             }
             if let error { InlineMessage(text: error) }
             Button {
-                submit()
+                submit(jellyfin: jellyfin)
             } label: {
-                Text(pending ? "Signing in…" : "Sign in").frame(maxWidth: .infinity)
+                Text(pending ? "Signing in…" : (jellyfin ? "Sign in with Jellyfin" : "Sign in")).frame(maxWidth: .infinity)
             }
             .buttonStyle(AccentButtonStyle())
             .keyboardShortcut(.defaultAction)
-            .disabled(pending)
+            .disabled(busy)
+
+            if offersPlex || offersJellyfin {
+                AuthDivider()
+                VStack(spacing: 10) {
+                    if waitingForPlex {
+                        plexWaiting
+                    } else if offersPlex {
+                        Button {
+                            signInWithPlex()
+                        } label: {
+                            Text("Sign in with Plex").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(OutlineButtonStyle())
+                        .disabled(pending)
+                    }
+                    if offersJellyfin {
+                        Button {
+                            method = jellyfin ? .password : .jellyfin
+                            error = nil
+                            password = ""
+                        } label: {
+                            Text(jellyfin ? "Sign in with a Marquee account" : "Sign in with Jellyfin").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(OutlineButtonStyle())
+                        .disabled(busy)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
 
             // Setup is only offered while the server has no accounts; after
             // that, new household members are added by an admin in Settings.
@@ -137,21 +188,48 @@ struct SignInForm: View {
                         Text("Create an account").frame(maxWidth: .infinity)
                     }
                     .buttonStyle(OutlineButtonStyle())
-                    .disabled(pending)
+                    .disabled(busy)
                 }
                 .frame(maxWidth: .infinity)
             }
         }
+        .onDisappear { cancelPlex() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            cancelPlex()
+        }
     }
 
-    private func submit() {
-        guard !pending else { return }
+    private var plexWaiting: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                ProgressView().controlSize(.small)
+                Text("Waiting for Plex…")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Button("Cancel") { cancelPlex() }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    .keyboardShortcut(.cancelAction)
+            }
+            Text("Finish signing in in the browser window that just opened.")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func submit(jellyfin: Bool) {
+        guard !pending, !waitingForPlex else { return }
         pending = true
         error = nil
+        let session = model.session
         Task {
             defer { pending = false }
             do {
-                let user = try await model.session.login(username: username, password: password)
+                let user = jellyfin
+                    ? try await session.loginWithJellyfin(username: username, password: password)
+                    : try await session.login(username: username, password: password)
                 password = ""
                 model.completeSignIn(user)
             } catch {
@@ -159,6 +237,40 @@ struct SignInForm: View {
                 self.error = error.localizedDescription
             }
         }
+    }
+
+    private func signInWithPlex() {
+        guard !pending else { return }
+        plexTask?.cancel()
+        error = nil
+        waitingForPlex = true
+        let session = model.session
+        plexTask = Task {
+            do {
+                let start = try await session.startPlexSignIn()
+                guard let url = start.url else {
+                    throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
+                }
+                openURL(url)
+                let user = try await session.finishPlexSignIn(start)
+                waitingForPlex = false
+                plexTask = nil
+                model.completeSignIn(user)
+            } catch where PlexPoll.isCancellation(error) {
+                // Cancel, the card going away, or quitting: `cancelPlex` has
+                // already put the card back.
+            } catch {
+                waitingForPlex = false
+                plexTask = nil
+                self.error = error.localizedDescription
+            }
+        }
+    }
+
+    private func cancelPlex() {
+        plexTask?.cancel()
+        plexTask = nil
+        waitingForPlex = false
     }
 }
 

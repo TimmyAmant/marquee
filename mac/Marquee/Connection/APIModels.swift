@@ -17,8 +17,39 @@ struct User: Codable, Equatable, Hashable, Sendable {
     /// (`/api/v1/users/{id}/avatar?v=…`); nil when there's none, and from
     /// servers older than 0.29.
     var avatarUrl: String? = nil
+    /// Which Plex/Jellyfin accounts sign in to this one; nil from servers
+    /// that predate Plex/Jellyfin sign-in.
+    var linked: LinkedAccounts? = nil
+    /// False for an account made by Plex/Jellyfin sign-in or import that
+    /// hasn't set a password; nil from older servers (which always have one).
+    var hasPassword: Bool? = nil
 
     var isAdmin: Bool { role == .admin }
+}
+
+/// `linked` on `/me` and household members: which media-server accounts
+/// sign in to this Marquee account.
+struct LinkedAccounts: Codable, Equatable, Hashable, Sendable {
+    var plex: Bool
+    var jellyfin: Bool
+
+    init(plex: Bool = false, jellyfin: Bool = false) {
+        self.plex = plex
+        self.jellyfin = jellyfin
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        plex = (try? container.decodeIfPresent(Bool.self, forKey: .plex)) ?? false
+        jellyfin = (try? container.decodeIfPresent(Bool.self, forKey: .jellyfin)) ?? false
+    }
+
+    func isLinked(_ server: API.MediaServer) -> Bool {
+        switch server {
+        case .plex: plex
+        case .jellyfin: jellyfin
+        }
+    }
 }
 
 /// `POST /api/v1/auth/login` and `/auth/setup` response.
@@ -32,6 +63,19 @@ struct AuthTokenResponse: Decodable, Sendable {
 struct LoginRequest: Encodable, Sendable {
     let username: String
     let password: String
+    let deviceName: String
+}
+
+/// `POST /auth/jellyfin`.
+struct JellyfinLoginRequest: Encodable, Sendable {
+    let username: String
+    let password: String
+    let deviceName: String
+}
+
+/// `POST /auth/plex/poll`.
+struct PlexPollRequest: Encodable, Sendable {
+    let handle: String
     let deviceName: String
 }
 

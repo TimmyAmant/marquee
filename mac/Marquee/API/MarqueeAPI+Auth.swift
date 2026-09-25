@@ -40,6 +40,42 @@ extension MarqueeAPI {
             )
         }
 
+        /// `POST /auth/plex/start` (public, rate-limited): open `authUrl` in
+        /// the browser, then `plexPoll` with the handle. Offered only when
+        /// `server-info.signIn.plex`.
+        func plexStart() async throws -> API.PlexSignInStart {
+            try await transport.post("/auth/plex/start", timeout: MarqueeAPI.Timeout.integrations)
+        }
+
+        /// `POST /auth/plex/poll` — one poll: nil while Plex hasn't said yes
+        /// yet (202), the login response once it has (200). Throws
+        /// `MediaSignInError.refused` (403, with the server's reason) and
+        /// `.expired` (410).
+        func plexPoll(handle: String, deviceName: String) async throws -> API.AuthResponse? {
+            let (status, body) = try await transport.exchange(
+                .post, "/auth/plex/poll",
+                body: PlexPollRequest(handle: handle, deviceName: deviceName),
+                accepting: PlexPoll.answers,
+                timeout: MarqueeAPI.Timeout.integrations
+            )
+            guard let done = try PlexPoll.step(status: status, body: body) else { return nil }
+            return try APIClient.decode(API.AuthResponse.self, from: done, path: "/auth/plex/poll")
+        }
+
+        /// `POST /auth/jellyfin` (public, rate-limited): a Jellyfin username
+        /// and password, checked by the server against its Jellyfin. Errors:
+        /// `.invalidCredentials`, `.rateLimited`, `MediaSignInError.refused` (403).
+        func jellyfin(username: String, password: String, deviceName: String) async throws -> API.AuthResponse {
+            let (status, body) = try await transport.exchange(
+                .post, "/auth/jellyfin",
+                body: JellyfinLoginRequest(username: username, password: password, deviceName: deviceName),
+                accepting: [403],
+                timeout: MarqueeAPI.Timeout.integrations
+            )
+            if status == 403 { throw MediaSignInError.refusal(from: body) }
+            return try APIClient.decode(API.AuthResponse.self, from: body, path: "/auth/jellyfin")
+        }
+
         /// `POST /auth/logout` — revokes this token only.
         func logout() async throws {
             let _: API.OK = try await transport.mutate(.post, "/auth/logout", changes: [])
