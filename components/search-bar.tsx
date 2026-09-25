@@ -126,6 +126,8 @@ export function SearchBar({
       e.preventDefault();
       setHighlightedIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
     } else if (e.key === "Escape") {
+      // Only the suggestions close; a search dialog around this box stays.
+      e.stopPropagation();
       setIsOpen(false);
     }
   }

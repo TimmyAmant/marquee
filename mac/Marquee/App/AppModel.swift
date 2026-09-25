@@ -3,6 +3,12 @@ import Observation
 import AppKit
 import Network
 
+/// A section and the pages pushed on it, to come back to.
+struct SettingsReturn: Equatable {
+    let selection: SidebarItem
+    let path: [Route]
+}
+
 enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     case discover
     case movies
@@ -160,6 +166,9 @@ final class AppModel {
     var isSearchOpen = false
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
+    /// Where Settings was opened from, for its Back button; nil once you've
+    /// left Settings some other way.
+    var settingsReturn: SettingsReturn?
 
     /// Captured from the scene environment so non-view code (notification
     /// clicks, Settings links) can bring the main window back after it closed.
@@ -461,14 +470,30 @@ final class AppModel {
         if selection != item {
             selection = item
         }
+        if item != .settings {
+            settingsReturn = nil
+        }
         path = []
     }
 
     /// Settings, in the main window, on `tab`.
     func openSettings(_ tab: SettingsTab = .account) {
         settingsTab = tab
+        // Remember the page Settings was opened from (a title's "Connect
+        // Radarr…", say), so Settings can offer to go back to it.
+        if selection != .settings {
+            settingsReturn = SettingsReturn(selection: selection, path: path)
+        }
         select(.settings)
         showMainWindow()
+    }
+
+    /// Settings' Back: the section and pages it was opened from.
+    func returnFromSettings() {
+        guard let back = settingsReturn else { return }
+        settingsReturn = nil
+        select(back.selection, resetFilters: false)
+        path = back.path
     }
 
     func open(_ route: Route) {

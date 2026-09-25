@@ -130,6 +130,7 @@ private struct NavRail: View {
         .buttonStyle(.plain)
         .modifier(RailLabeled(label: viewer == nil ? "Sign in" : "Settings", focus: focus, item: .profile))
         .accessibilityLabel(viewer.map { "\($0.label): account and settings" } ?? "Sign in")
+        .accessibilityAddTraits(model.selection == .settings ? .isSelected : [])
     }
 
     /// Only while there's a newer Marquee (or its download is under way):

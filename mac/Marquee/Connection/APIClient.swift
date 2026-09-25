@@ -149,8 +149,12 @@ struct APIClient: Sendable {
         let isJSON = http.mimeType?.lowercased().contains("json") == true
         guard hasAPIHeader || isJSON else {
             // A reverse proxy's "bad gateway" page means the server is down,
-            // not that it's the wrong kind of server.
-            if (502...504).contains(http.statusCode) {
+            // not that it's the wrong kind of server. A gateway timeout may
+            // have reached it, so it's a timeout (never retried), not "down".
+            if http.statusCode == 504 {
+                throw APIError.network(URLError(.timedOut))
+            }
+            if (502...503).contains(http.statusCode) {
                 throw APIError.network(URLError(.cannotConnectToHost))
             }
             throw APIError.notMarquee

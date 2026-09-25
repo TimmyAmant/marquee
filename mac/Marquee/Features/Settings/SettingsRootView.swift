@@ -57,6 +57,18 @@ struct SettingsRootView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 14) {
+                    // Opened from a page ("Connect Radarr…" on a title, say):
+                    // the way back to it.
+                    if let back = model.settingsReturn {
+                        Button {
+                            model.returnFromSettings()
+                        } label: {
+                            Label(back.path.isEmpty ? "Back to \(back.selection.title)" : "Back", systemImage: "chevron.left")
+                                .font(.system(size: 12.5, weight: .medium))
+                        }
+                        .buttonStyle(QuietButtonStyle())
+                        .keyboardShortcut("[", modifiers: .command)
+                    }
                     Text("Settings")
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
