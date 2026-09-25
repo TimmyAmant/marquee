@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { notifications } from "@/lib/db/schema";
 import type { MediaType, NotificationEventType } from "@/lib/db/schema";
@@ -62,9 +62,15 @@ export async function createNotification(input: {
    * requester's copy of a download the admin was already told about) passes
    * false to avoid posting it twice. */
   relay?: boolean;
-}): Promise<void> {
-  const { relay = true, ...row } = input;
-  const [saved] = await db.insert(notifications).values(row).returning();
+  /** Skip it (and return false) if this user already has a notification for
+   * the same title and event since this moment. Sonarr sends one webhook per
+   * episode, so a season pack would otherwise notify (and relay) once per
+   * episode. */
+  dedupeSince?: Date;
+}): Promise<boolean> {
+  const { relay = true, dedupeSince, ...row } = input;
+  const saved = dedupeSince ? await insertUnlessRecent(row, dedupeSince) : await insertNotification(row);
+  if (!saved) return false;
 
   // Straight to the account's own devices: the apps' live streams and every
   // browser that turned notifications on. Unlike the relays below these are
@@ -72,7 +78,7 @@ export async function createNotification(input: {
   publishNotification(saved);
   void pushToUser(saved.userId, pushMessageFor(saved));
 
-  if (!relay) return;
+  if (!relay) return true;
 
   // Best-effort relay to every configured channel — a channel being down or
   // unconfigured should never break the in-app notification (already saved
@@ -102,4 +108,40 @@ export async function createNotification(input: {
       });
     })
     .catch(() => undefined);
+
+  return true;
+}
+
+type NewNotification = typeof notifications.$inferInsert;
+
+async function insertNotification(row: NewNotification) {
+  const [saved] = await db.insert(notifications).values(row).returning();
+  return saved;
+}
+
+/** Check-then-insert under a transaction-scoped advisory lock on this user,
+ * title and event. The episodes of a season pack import in parallel, and a
+ * plain check-then-insert lets several of them see "nothing yet" at once. A
+ * unique index can't express "since this moment", so a lock it is. */
+async function insertUnlessRecent(row: NewNotification, since: Date) {
+  const lockKey = `marquee-notification:${row.userId}:${row.mediaType}:${row.tmdbId}:${row.eventType}`;
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${lockKey}))`);
+    const [existing] = await tx
+      .select({ id: notifications.id })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, row.userId),
+          eq(notifications.mediaType, row.mediaType),
+          eq(notifications.tmdbId, row.tmdbId),
+          eq(notifications.eventType, row.eventType),
+          gte(notifications.createdAt, since),
+        ),
+      )
+      .limit(1);
+    if (existing) return null;
+    const [saved] = await tx.insert(notifications).values(row).returning();
+    return saved;
+  });
 }
