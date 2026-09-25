@@ -43,6 +43,7 @@ export type AuthenticatedToken = {
     role: UserRole;
     autoApproveMovies: boolean;
     autoApproveTv: boolean;
+    avatarUpdatedAt: Date | null;
     createdAt: Date;
   };
 };
@@ -65,6 +66,7 @@ export async function authenticateApiToken(token: string): Promise<Authenticated
       role: users.role,
       autoApproveMovies: users.autoApproveMovies,
       autoApproveTv: users.autoApproveTv,
+      avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
     })
     .from(apiTokens)
@@ -104,6 +106,7 @@ export async function authenticateApiToken(token: string): Promise<Authenticated
       role: row.role,
       autoApproveMovies: row.autoApproveMovies,
       autoApproveTv: row.autoApproveTv,
+      avatarUpdatedAt: row.avatarUpdatedAt,
       createdAt: row.createdAt,
     },
   };

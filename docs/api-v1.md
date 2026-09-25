@@ -187,7 +187,8 @@ Body:
     "username": "timmy",
     "displayName": "Timmy",
     "role": "admin",
-    "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1"
+    "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
+    "avatarUrl": null
   }
 }
 ```
@@ -236,6 +237,7 @@ Revokes the calling token only (other devices stay signed in).
   "displayName": "Timmy",
   "role": "admin",
   "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
+  "avatarUrl": "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549",
   "autoApproveMovies": false,
   "autoApproveTv": false,
   "createdAt": "2026-09-17T17:10:57.821Z"
@@ -1120,9 +1122,17 @@ member) and, for the admin, "Add a household member".
   "autoApproveMovies": false,
   "autoApproveTv": true,
   "createdAt": "2026-09-17T17:12:40.991Z",
-  "isCurrentUser": false
+  "isCurrentUser": false,
+  "avatarUrl": null
 }
 ```
+
+`avatarUrl` (here, on `/me` and on the login/setup `user`) is the account's
+profile photo as a server-relative path, or null when there's none: fetch it
+with the same bearer token (see "Profile photo" below). It changes whenever
+the photo does, so a client can cache the image under that URL for good.
+Website: the round picture in the navigation menu and beside each member,
+initials on the accent gradient when there's no photo.
 
 ### `GET /users` — user
 
@@ -1181,6 +1191,34 @@ Removes a member and everything of theirs (favorites, requests, tokens…).
 `{ "ok": true }`. Errors: `403` "You can't remove your own account." / "Can't
 remove the admin account." / "Only the admin can remove household members.",
 `404` "Account not found.".
+
+### Profile photo — user (self) / admin (anyone)
+
+Photos are stored by the Marquee server itself (in its database) and never
+sent anywhere else. Every client reads them from here.
+
+- **`GET /users/{id}/avatar`** answers with the image itself: a 512×512 JPEG.
+  `404` when the account has no photo, or when it isn't yours to see (a
+  member only sees their own; the admin sees everyone's). The URL from
+  `avatarUrl` carries `?v=`; under it the response is `Cache-Control:
+  private, max-age=31536000, immutable`. There's an `ETag` too, so
+  `If-None-Match` gets a `304`.
+- **`PUT /users/{id}/avatar`**: the request body is the image file (JPEG,
+  PNG, WebP, GIF or AVIF, at most 15 MB; send its own `Content-Type`). The
+  server turns it upright from its EXIF orientation, crops a square around
+  the most detailed area, re-encodes it as JPEG and drops all metadata (GPS
+  position included). HEIC isn't read: convert it to JPEG on the device
+  first. Response: `{ "ok": true, "avatarUrl": "/api/v1/users/…/avatar?v=…" }`.
+  Errors: `400 invalid` "That file isn't a photo Marquee can read. Use a JPEG,
+  PNG or WebP image." / "That photo is too big. Pick one under 15 MB." /
+  "Choose a photo to upload.", `403` "You can only change your own photo.",
+  `404` "Account not found.".
+- **`DELETE /users/{id}/avatar`** removes it (fine if there's none):
+  `{ "ok": true, "avatarUrl": null }`.
+
+Website: "Add photo" / "Change photo" / "Remove" at the top of a member's
+Edit form, saved as soon as a photo is picked (the form's Save isn't
+involved).
 
 ---
 
@@ -1522,6 +1560,7 @@ what to do, grouped by area.
 | | `POST /users` | admin |
 | | `PATCH /users/{id}` | user (self) / admin |
 | | `DELETE /users/{id}` | admin |
+| | `GET /users/{id}/avatar` · `PUT` · `DELETE` | user (self) / admin |
 | Settings: Integrations | `GET /settings/integrations` | admin |
 | | `POST /settings/integrations/sync` | user |
 | | `POST /settings/integrations/webhook-secret` | admin |

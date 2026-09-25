@@ -4,6 +4,7 @@
 import type * as Dto from "@/lib/api/types";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
+import { avatarPath } from "@/lib/users/avatar-path";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
@@ -197,6 +198,7 @@ export function householdMember(row: HouseholdMemberRow, currentUserId: string):
     autoApproveTv: row.autoApproveTv,
     createdAt: isoRequired(row.createdAt),
     isCurrentUser: row.id === currentUserId,
+    avatarUrl: avatarPath(row, "/api/v1"),
   };
 }
 

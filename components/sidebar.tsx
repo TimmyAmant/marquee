@@ -1,7 +1,11 @@
 import { headers } from "next/headers";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { NavMenu } from "@/components/nav-menu";
+import { db } from "@/lib/db/client";
+import { users } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
+import { avatarPath } from "@/lib/users/avatar-path";
 
 /**
  * The site's navigation (components/nav-menu.tsx): the floating rail on
@@ -15,6 +19,16 @@ export async function Sidebar() {
   const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
   // Under the name: which Marquee server this is, matching the Mac app.
   const serverLabel = (await headers()).get("host");
+  // Read fresh rather than from the session token, so a new photo shows on
+  // the very next page.
+  const [photo] = session?.user?.id
+    ? await db
+        .select({ id: users.id, avatarUpdatedAt: users.avatarUpdatedAt })
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1)
+        .catch(() => [])
+    : [];
 
   return (
     <NavMenu
@@ -22,6 +36,7 @@ export async function Sidebar() {
       isAdmin={isAdmin}
       pendingRequestCount={pendingRequestCount}
       userLabel={session?.user ? session.user.name || session.user.username || null : null}
+      avatarSrc={photo ? avatarPath(photo, "/api") : null}
       serverLabel={serverLabel}
     />
   );

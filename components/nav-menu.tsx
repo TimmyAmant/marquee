@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { RequestsBadge } from "@/components/requests-badge";
 import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserAvatar } from "@/components/user-avatar";
 
 /** Fired by the header's menu button on narrow screens, where the rail is
  * hidden and the header is the only thing on screen to open the menu from. */
@@ -84,32 +85,6 @@ function isCurrent(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Plex's round profile photo, with initials standing in: Marquee accounts
- * don't have pictures. */
-function Avatar({ label, size }: { label: string; size: number }) {
-  const initials =
-    label
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => Array.from(word)[0]?.toUpperCase() ?? "")
-      .join("") || "?";
-  return (
-    <span
-      aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-full font-semibold text-bg-0 ring-2 ring-white/15"
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.38,
-        background: "linear-gradient(140deg, var(--marquee-accent-hover), var(--marquee-accent) 45%, #c2583a)",
-      }}
-    >
-      {initials}
-    </span>
-  );
-}
-
 /** How long the pointer rests on the rail before it opens into the menu, so
  * sweeping past the left edge doesn't throw a panel over the page. */
 const HOVER_OPEN_DELAY_MS = 220;
@@ -119,7 +94,7 @@ const HOVER_CLOSE_DELAY_MS = 260;
 
 /**
  * The site's navigation, after the Plex app's Apple TV menu: a small
- * frosted rail floats at the left edge (profile, Search, Discover, the
+ * frosted rail floats at the left edge (profile photo, Search, Discover, the
  * section you're in, and a menu button), and resting on it, or pressing
  * the menu button, opens the full menu as a frosted panel over the page.
  * Below the md breakpoint the rail is hidden and the header's menu button
@@ -130,12 +105,15 @@ export function NavMenu({
   isAdmin,
   pendingRequestCount,
   userLabel,
+  avatarSrc,
   serverLabel,
 }: {
   isSignedIn: boolean;
   isAdmin: boolean;
   pendingRequestCount: number;
   userLabel: string | null;
+  /** The signed-in account's photo URL (lib/users/avatar-path.ts), if any. */
+  avatarSrc: string | null;
   serverLabel: string | null;
 }) {
   const pathname = usePathname();
@@ -256,7 +234,7 @@ export function NavMenu({
           title={isSignedIn ? name : "Sign in"}
           className="mb-1 rounded-full outline-offset-2"
         >
-          <Avatar label={name} size={36} />
+          <UserAvatar label={name} src={avatarSrc} size={36} />
         </Link>
         {railItems.map((item) => {
           const current = isCurrent(pathname, item.href);
@@ -325,7 +303,7 @@ export function NavMenu({
             aria-current={isCurrent(pathname, profileHref) ? "page" : undefined}
             className="group flex items-center gap-3 rounded-full py-1.5 pl-1.5 pr-3 transition-colors hover:bg-text-primary/10"
           >
-            <Avatar label={name} size={38} />
+            <UserAvatar label={name} src={avatarSrc} size={38} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-semibold leading-5 text-text-primary">{name}</span>
               {isSignedIn && serverLabel && (

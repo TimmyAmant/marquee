@@ -20,6 +20,8 @@ export type HouseholdMember = {
   role: UserRole;
   autoApproveMovies: boolean;
   autoApproveTv: boolean;
+  /** When the profile photo last changed; null when there's none (lib/users/avatar.ts). */
+  avatarUpdatedAt: Date | null;
   createdAt: Date;
 };
 
@@ -37,6 +39,7 @@ export async function listHouseholdMembersFor(actor: Actor): Promise<HouseholdMe
       role: users.role,
       autoApproveMovies: users.autoApproveMovies,
       autoApproveTv: users.autoApproveTv,
+      avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -55,6 +58,7 @@ export async function getHouseholdMember(userId: string): Promise<HouseholdMembe
       role: users.role,
       autoApproveMovies: users.autoApproveMovies,
       autoApproveTv: users.autoApproveTv,
+      avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
     })
     .from(users)

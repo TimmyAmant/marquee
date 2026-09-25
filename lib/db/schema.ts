@@ -49,10 +49,29 @@ export const users = pgTable(
     // Browser sessions signed in before this moment are no longer valid —
     // see the jwt callback in auth.ts. Null until the password first changes.
     passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+    // When the profile photo (userAvatars) last changed, null when there's
+    // none. Kept on the user row so every place that shows an account can
+    // build a cache-busting photo URL without touching the image bytes.
+    avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],
 );
+
+// Profile photos, kept in the database itself (so they live in the same
+// volume as everything else and go wherever a backup goes) rather than
+// uploaded anywhere. Only ever the server's own re-encoded copy: a square
+// JPEG, a few tens of kilobytes, with the original's metadata stripped (see
+// lib/users/avatar.ts). A table of its own so selecting users never drags
+// the bytes along.
+export const userAvatars = pgTable("user_avatars", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  image: bytea("image").notNull(),
+  contentType: text("content_type").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const sessions = pgTable("sessions", {
   sessionToken: text("session_token").primaryKey(),

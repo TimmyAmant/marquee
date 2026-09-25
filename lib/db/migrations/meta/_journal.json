@@ -218,6 +218,13 @@
       "when": 1789900000000,
       "tag": "0030_add_request_rejection_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790000000000,
+      "tag": "0031_add_user_avatars",
+      "breakpoints": true
     }
   ]
 }

@@ -37,6 +37,9 @@ export type User = {
   displayName: string | null;
   role: UserRole;
   libraryOwnerId: string;
+  /** Server-relative path of the profile photo (GET, bearer token), or null
+   * for none. Changes whenever the photo does. */
+  avatarUrl: string | null;
 };
 
 export type Me = User & {
@@ -436,9 +439,13 @@ export type HouseholdMember = {
   autoApproveTv: boolean;
   createdAt: string;
   isCurrentUser: boolean;
+  /** Same as User.avatarUrl. */
+  avatarUrl: string | null;
 };
 
 export type UpdateUserResponse = { ok: true; user: HouseholdMember; tokensRevoked: boolean };
+
+export type AvatarResponse = { ok: true; avatarUrl: string | null };
 
 export type SyncedServer = { name: string | null; lastSyncedAt: string | null };
 
