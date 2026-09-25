@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.29.0",
+    date: "2026-09-25",
+    changes: [
+      "A new navigation menu, after the Plex app on Apple TV: a small frosted rail floats at the left edge with your profile, Search, Discover and the section you're in. Rest the pointer on it, or press its menu button, and the full menu opens over the page. On a phone, the menu button at the top opens the same menu. Pages get the room the old sidebar took up, and a title's backdrop now runs to the edge of the window.",
+      "Profile photos: add one from Settings › Account › Edit. It's kept on your Marquee server, never uploaded anywhere else, and shows in the menu and next to each household member. Photos are cropped to a square, turned the right way up, and stripped of their location and camera details.",
+      "API: /me, the login response and household members include avatarUrl, and GET/PUT/DELETE /users/{id}/avatar read, replace and remove a photo.",
+      "Marquee for Windows: Settings now manages household members too, adding, editing and removing accounts, like the website and the Mac app.",
+    ],
+  },
+  {
     version: "0.28.0",
     date: "2026-09-25",
     changes: [
