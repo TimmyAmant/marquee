@@ -1,5 +1,12 @@
 {
   "sonarrUrl": "http://192.168.1.10:8989",
+  "rejectionReasons": [
+    "Already available on a streaming service we have",
+    "Not released yet, ask again once it's out",
+    "Not enough space on the server right now",
+    "Not a fit for the household library",
+    "Couldn't find a good copy of it"
+  ],
   "results": [
     {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",

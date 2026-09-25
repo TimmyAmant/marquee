@@ -409,6 +409,12 @@ export const requests = pgTable(
     // "approved" so it behaves like any other approved request everywhere
     // else; this only changes the label shown to the requester and admin.
     manuallyApproved: boolean("manually_approved").notNull().default(false),
+    // Why the admin declined it: one of the presets in
+    // lib/requests/rejection-reasons.ts or their own words, shown to the
+    // requester on their Requests page and in the notification. Null for
+    // requests declined before this existed, or through an older API client
+    // that sends no reason.
+    rejectionReason: text("rejection_reason"),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),

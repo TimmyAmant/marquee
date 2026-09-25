@@ -8,6 +8,7 @@
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "status": "approved",
       "manuallyApproved": false,
+      "rejectionReason": null,
       "libraryStatus": "tracked_downloading",
       "statusLabel": "Downloading",
       "statusTone": "downloading",

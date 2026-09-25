@@ -8,6 +8,7 @@
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "status": "rejected",
       "manuallyApproved": false,
+      "rejectionReason": "Not enough space on the server right now",
       "statusLabel": "Rejected",
       "requestedBy": {
         "userId": null,

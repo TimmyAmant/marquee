@@ -7,7 +7,7 @@
       "tmdbId": 603,
       "title": "The Matrix",
       "eventType": "request_rejected",
-      "message": "\"The Matrix\" was declined.",
+      "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
       "createdAt": "2026-09-17T17:12:41.470Z"
     }
