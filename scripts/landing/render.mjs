@@ -15,6 +15,7 @@
  * Writes, by default into site/assets/img (and site/assets/og.jpg):
  *   title-{dark,light}-{1600,1100,720}.webp      web title page (hero)
  *   title-{dark,light}-crop-{920,620}.webp       the same, cropped for phones
+ *   menu-{dark,light}-1520.webp                  its top left, rail hidden, under the menu mocks
  *   mac-{dark,light}-{1600,1000}.webp            Marquee for Mac window
  *   poster-{paper-harbor,holloway}.webp          request-ticket thumbnails
  *   og.jpg                                       social card
@@ -92,11 +93,12 @@ async function settle(page) {
   if (broken.length) throw new Error(`Images didn't load: ${broken.join(', ')}`);
 }
 
-/** Renders a title-page template with the slate filled in. */
-async function renderTemplate(browser, template, data, crop) {
+/** Renders a title-page template with the slate filled in, plus any extra CSS. */
+async function renderTemplate(browser, template, data, crop, css) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
   await page.goto(url(path.join(HERE, 'templates', template)), { waitUntil: 'networkidle' });
   await page.evaluate(fillPage, data);
+  if (css) await page.addStyleTag({ content: css });
   await settle(page);
   const fonts = await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family));
   const needed = template.startsWith('web') ? ['Fraunces', 'Manrope'] : ['NY', 'SF'];
@@ -200,6 +202,12 @@ async function main() {
         ogShot = path.join(CACHE, 'og-shot.png');
         await sharp(web.png).extract(extract).png().toFile(ogShot);
       }
+
+      // Under the site's menu mocks, which draw the rail themselves (and the
+      // real one fades out while the menu is open): the page without its
+      // rail, its top-left 760x680.
+      const bare = await renderTemplate(browser, 'web-title.html', data, null, 'nav[aria-label="Main"]{visibility:hidden!important}');
+      written.push(...(await webp(bare.png, `menu-${theme}`, [1520], { left: 0, top: 0, width: 1520, height: 1360 })));
 
       // Cropped to 1440x846, the frame the site's Mac section was laid out for.
       const mac = await renderTemplate(browser, 'mac-title.html', data);

@@ -147,50 +147,80 @@
 
 <!-- ───────────────────────── 2. Getting around ───────────────────────── -->
 <section class="section" id="menu" aria-labelledby="menu-title">
-  <div class="wrap menu-grid">
-    <figure class="menu-visual reveal">
-      <div class="stage" role="img" aria-label="Marquee’s menu open over a title page, as frosted glass: Jordan’s profile at the top, Search and Discover, then Movies, highlighted as the current page, and Series under Browse, and Favorites, Calendar and Requests, with 2 waiting, under Library.">
-        <picture>
-          <source media="(prefers-color-scheme: light)" srcset="assets/img/title-light-1600.webp">
-          <img class="stage-shot" src="assets/img/title-dark-1600.webp" width="1440" height="900" alt="" loading="lazy" decoding="async">
-        </picture>
-        <div class="navp">
-          <div class="navp-main">
-            <div class="navp-me">
-              <span class="av av-38">J</span>
-              <span class="navp-who"><span class="navp-name">Jordan</span><span class="navp-host">marquee.local</span></span>
-              <svg class="ic"><use href="#i-chevron"/></svg>
-            </div>
-            <div class="navp-rows">
-              <span class="navp-row big"><svg class="ic"><use href="#i-search"/></svg>Search</span>
-              <span class="navp-row big"><svg class="ic"><use href="#i-discover"/></svg>Discover</span>
-              <span class="navp-head">Browse</span>
-              <span class="navp-row is-current"><svg class="ic"><use href="#i-movies"/></svg>Movies</span>
-              <span class="navp-row"><svg class="ic"><use href="#i-series"/></svg>Series</span>
-              <span class="navp-head">Library</span>
-              <span class="navp-row"><svg class="ic"><use href="#i-favorites"/></svg>Favorites</span>
-              <span class="navp-row"><svg class="ic"><use href="#i-calendar"/></svg>Calendar</span>
-              <span class="navp-row"><svg class="ic"><use href="#i-requests"/></svg>Requests<span class="navp-count">2</span></span>
-            </div>
-          </div>
-          <div class="navp-foot">
-            <span class="navp-mark">Marquee</span>
-            <span class="navp-theme"><svg class="ic ic-moon"><use href="#i-moon"/></svg><svg class="ic ic-sun"><use href="#i-sun"/></svg></span>
+  <div class="wrap">
+    <div class="section-head split">
+      <div>
+        <p class="eyebrow">Getting around</p>
+        <h2 id="menu-title">Every section, <em>one click away.</em></h2>
+      </div>
+      <p class="section-intro">After the Plex app on Apple TV: a small frosted rail floats at the left edge with your photo and every section, grouped by hairlines. One click goes straight there, and resting on an icon shows its name.</p>
+    </div>
+
+    <div class="menu-shots">
+      <figure class="menu-shot reveal">
+        <div class="stage" role="img" aria-label="A Marquee title page with the rail at the left edge: Jordan’s profile photo, Search and Discover, Movies, highlighted as the current page, and Series, then Favorites, Calendar and Requests, with a dot for requests waiting, and the menu button. The pointer rests on Series, and a small frosted label beside it says Series.">
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="assets/img/menu-light-1520.webp">
+            <img class="stage-shot" src="assets/img/menu-dark-1520.webp" width="760" height="680" alt="" loading="lazy" decoding="async">
+          </picture>
+          <div class="rail">
+            <span class="rail-me"><span class="av av-36">J</span></span>
+            <span><svg class="ic"><use href="#i-search"/></svg></span>
+            <span><svg class="ic"><use href="#i-discover"/></svg></span>
+            <i class="rail-sep"></i>
+            <span class="is-current"><svg class="ic"><use href="#i-movies"/></svg></span>
+            <span class="is-hover"><svg class="ic"><use href="#i-series"/></svg><span class="rail-label">Series</span><svg class="cursor" viewBox="0 0 17 24"><path d="M1.5 1.5v17.2l4.3-4.1 2.9 6.8 2.8-1.2-2.9-6.7h6.1z"/></svg></span>
+            <i class="rail-sep"></i>
+            <span><svg class="ic"><use href="#i-favorites"/></svg></span>
+            <span><svg class="ic"><use href="#i-calendar"/></svg></span>
+            <span class="has-dot"><svg class="ic"><use href="#i-requests"/></svg></span>
+            <i class="rail-sep"></i>
+            <span><svg class="ic"><use href="#i-menu"/></svg></span>
           </div>
         </div>
-      </div>
-    </figure>
+        <figcaption><strong>Rest, then click.</strong> An icon’s name appears beside it, and one click goes straight to that page. The one you’re on is the solid pill.</figcaption>
+      </figure>
 
-    <div class="menu-copy feature-copy">
-      <p class="eyebrow">Getting around</p>
-      <h2 id="menu-title">A menu that <em>gets out of the way.</em></h2>
-      <p class="section-intro">After the Plex app on Apple TV: a small frosted rail floats at the left edge with your photo, Search, Discover and the section you’re in. Rest the pointer on it and the whole menu opens over the page; move away and it’s gone.</p>
-      <ul class="points">
-        <li><strong>Room for the page.</strong> Nothing sits beside it any more, so a title’s backdrop runs right to the edge of the window.</li>
-        <li><strong>The same everywhere.</strong> On the website, the Mac and Windows. On a phone, the menu button at the top opens it as a drawer.</li>
-        <li><strong>Your photo, on your server.</strong> Add one in Settings › Account and it shows in the menu and next to each household member. It’s stripped of location and camera details and never leaves your Marquee server.</li>
-      </ul>
+      <figure class="menu-shot reveal">
+        <div class="stage stage-panel" role="img" aria-label="The full menu open over the same page, as a frosted panel: Jordan’s profile at the top, Search and Discover, then Movies, highlighted, and Series under Browse, and Favorites, Calendar and Requests, with 2 waiting, under Library.">
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="assets/img/menu-light-1520.webp">
+            <img class="stage-shot" src="assets/img/menu-dark-1520.webp" width="760" height="680" alt="" loading="lazy" decoding="async">
+          </picture>
+          <div class="navp">
+            <div class="navp-main">
+              <div class="navp-me">
+                <span class="av av-38">J</span>
+                <span class="navp-who"><span class="navp-name">Jordan</span><span class="navp-host">marquee.local</span></span>
+                <svg class="ic"><use href="#i-chevron"/></svg>
+              </div>
+              <div class="navp-rows">
+                <span class="navp-row big"><svg class="ic"><use href="#i-search"/></svg>Search</span>
+                <span class="navp-row big"><svg class="ic"><use href="#i-discover"/></svg>Discover</span>
+                <span class="navp-head">Browse</span>
+                <span class="navp-row is-current"><svg class="ic"><use href="#i-movies"/></svg>Movies</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-series"/></svg>Series</span>
+                <span class="navp-head">Library</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-favorites"/></svg>Favorites</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-calendar"/></svg>Calendar</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-requests"/></svg>Requests<span class="navp-count">2</span></span>
+              </div>
+            </div>
+            <div class="navp-foot">
+              <span class="navp-mark">Marquee</span>
+              <span class="navp-theme"><svg class="ic ic-moon"><use href="#i-moon"/></svg><svg class="ic ic-sun"><use href="#i-sun"/></svg></span>
+            </div>
+          </div>
+        </div>
+        <figcaption><strong>☰ for the full menu.</strong> Every section by name, and your account. On a phone, the menu button at the top opens it as a drawer.</figcaption>
+      </figure>
     </div>
+
+    <dl class="fine-grid reveal">
+      <div><dt>Room for the page</dt><dd>Nothing sits beside the page any more, so a title’s backdrop runs right to the edge of the window.</dd></div>
+      <div><dt>The same everywhere</dt><dd>The website, the Mac app and the Windows app share the rail and the menu, frosted glass and all.</dd></div>
+      <div><dt>Your photo, on your server</dt><dd>Add one in Settings › Account and it tops the rail and shows next to each household member. It’s stripped of location and camera details and never leaves your Marquee server.</dd></div>
+    </dl>
   </div>
 </section>
 
@@ -353,7 +383,7 @@
 
       <ul class="points">
         <li><strong>Notifications straight from your server.</strong> System banners and a Dock badge, over a live connection with no relay in between. Click one and the title opens, even if the app was closed.</li>
-        <li><strong>The same menu, and your photo.</strong> The frosted rail and menu from the website, with your profile photo and each household member’s.</li>
+        <li><strong>The same rail, and your photo.</strong> Every section one click from the left edge, as on the website, with your profile photo on top.</li>
         <li><strong>Right-click everything.</strong> Open, Add or Request, Favorite, Copy Link and Open in Browser on any poster or person.</li>
       </ul>
 
@@ -394,7 +424,7 @@
 <section class="section section-alt win" id="windows" aria-labelledby="windows-title">
   <div class="wrap">
     <div class="win-grid">
-      <div class="win-visual reveal" role="img" aria-label="Marquee for Windows on its Requests page, with the navigation rail at the left and Requests highlighted. Under Past requests, Holloway Picture House, requested by Alex, is declined with the reason Already available on a streaming service we have, and Paper Harbor, requested by Sam, is approved. A Windows notification from Marquee says Paper Harbor finished downloading.">
+      <div class="win-visual reveal" role="img" aria-label="Marquee for Windows on its Requests page, with the rail of every section at the left and Requests highlighted. Under Past requests, Holloway Picture House, requested by Alex, is declined with the reason Already available on a streaming service we have, and Paper Harbor, requested by Sam, is approved. A Windows notification from Marquee says Paper Harbor finished downloading.">
         <div class="win-frame">
           <div class="win-bar">
             <span class="win-mark">Marquee<i></i></span>
@@ -403,11 +433,18 @@
             <span class="win-caps"><i class="cap-min"></i><i class="cap-max"></i><i class="cap-close"></i></span>
           </div>
           <div class="win-body">
-            <div class="wrail">
-              <span class="wrail-me"><span class="av av-36">J</span></span>
+            <div class="rail">
+              <span class="rail-me"><span class="av av-36">J</span></span>
               <span><svg class="ic"><use href="#i-search"/></svg></span>
               <span><svg class="ic"><use href="#i-discover"/></svg></span>
+              <i class="rail-sep"></i>
+              <span><svg class="ic"><use href="#i-movies"/></svg></span>
+              <span><svg class="ic"><use href="#i-series"/></svg></span>
+              <i class="rail-sep"></i>
+              <span><svg class="ic"><use href="#i-favorites"/></svg></span>
+              <span><svg class="ic"><use href="#i-calendar"/></svg></span>
               <span class="is-current"><svg class="ic"><use href="#i-requests"/></svg></span>
+              <i class="rail-sep"></i>
               <span><svg class="ic"><use href="#i-menu"/></svg></span>
             </div>
             <div class="wpage">
@@ -535,7 +572,7 @@
         <p class="release-meta"><span class="eyebrow">Recent release</span><time datetime="2026-09-25">September 25, 2026</time></p>
         <h2 id="latest-title"><span class="release-version">0.29.0</span> A new menu, photos and notifications</h2>
         <ul>
-          <li>A frosted rail floats at the left edge and opens into the full menu, after the Plex app on Apple TV. Pages get the room the sidebar took.</li>
+          <li>A frosted rail at the left edge puts every section one click away, after the Plex app on Apple TV, and ☰ opens the full menu. Pages get the room the sidebar took.</li>
           <li>Profile photos, kept on your Marquee server and shown in the menu and next to each household member.</li>
           <li>Notifications on your devices, sent by your own server: Web Push on the website, phones included, and a live connection in the Mac and Windows apps.</li>
           <li>Since 0.28.0: declined requests say why, a round of security fixes, and Marquee for Windows, now in preview.</li>

@@ -1,8 +1,11 @@
 # Landing page renders
 
 Everything in `site/assets/img/` (plus `site/assets/og.jpg`) is rendered here:
-the web title page, the Marquee for Mac window, the request-ticket posters and
-the social card. They all show a made-up film, **Emberline** (see
+the web title page, the same page without its rail (under the site's HTML
+mocks of the rail and the menu), the Marquee for Mac window, the
+request-ticket posters and the social card; only `mac-connect-560.webp`, the
+Mac app's first-run screen, is a capture. The renders all show a made-up film,
+**Emberline** (see
 `lib/slate.mjs`); no real title, person or streaming service appears.
 
 ## Render

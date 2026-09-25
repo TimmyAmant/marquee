@@ -636,18 +636,27 @@ strong { color: var(--t1); font-weight: 650; }
 }
 
 /* ------------------------------------------------ 2. getting around */
-/* The open menu, built like components/nav-menu.tsx: a frosted panel over
-   the title page. Sizes are in em off the panel's 16px. */
-.menu-grid {
+/* The rail and the open menu, built like components/nav-menu.tsx over the
+   title page (rendered without its own rail). Menu sizes are in em off the
+   panel's 16px. */
+.menu-shots {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: clamp(40px, 5vw, 72px) clamp(40px, 6vw, 88px);
-  align-items: center;
+  gap: 32px 22px;
+  margin-top: clamp(52px, 6vw, 76px);
 }
-.menu-visual { margin: 0; }
+.menu-shot { margin: 0; }
+.menu-shot figcaption {
+  max-width: 34rem;
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.menu-shots .reveal:nth-child(2) { transition-delay: .08s; }
 .stage {
   position: relative;
-  height: 580px;
+  height: 600px;
   overflow: hidden;
   isolation: isolate;
   border-radius: 18px;
@@ -657,14 +666,88 @@ strong { color: var(--t1); font-weight: 650; }
 @media (prefers-color-scheme: light) {
   .stage { box-shadow: 0 0 0 1px rgba(120, 92, 40, .3), var(--float-shadow); }
 }
-/* the title page at its real size, 1440 wide, running on under the menu
-   (which covers its navigation rail, as the real one does) */
+/* the title page's top left at its real size */
 .stage-shot {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1440px;
+  width: 760px;
   max-width: none;
+}
+
+/* the rail: every section, grouped by hairlines, then the menu button */
+.rail {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 7px;
+  transform: translateY(-50%);
+  border: 1px solid var(--glass-border);
+  border-radius: 30px;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  font-size: 16px;
+}
+.rail > span {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--t2);
+}
+.rail .ic { font-size: 19px; }
+.rail > .rail-me { margin-bottom: 4px; }
+.rail > .is-current { background: var(--t1); color: var(--bg0); }
+.rail > .is-hover { background: color-mix(in srgb, var(--t1) 10%, transparent); color: var(--t1); }
+.rail-sep { display: block; width: 24px; height: 1px; margin: 4px 0; background: var(--glass-border); }
+/* an admin with requests waiting */
+.rail > .has-dot::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg1);
+}
+/* the name beside an icon on hover (RailLabel) */
+.rail-label {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  font: 500 13px/1.2 var(--sans);
+  color: var(--t1);
+  white-space: nowrap;
+}
+.cursor {
+  position: absolute;
+  left: 23px;
+  top: 21px;
+  width: 17px;
+  height: 24px;
+  fill: #111;
+  stroke: #fff;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / .35));
 }
 
 .navp {
@@ -795,13 +878,12 @@ strong { color: var(--t1); font-weight: 650; }
 }
 
 @media (max-width: 900px) {
-  .menu-grid { grid-template-columns: minmax(0, 1fr); }
-  .menu-copy { order: -1; }
+  .menu-shots { grid-template-columns: minmax(0, 1fr); max-width: 560px; margin-inline: auto; }
 }
 @media (max-width: 640px) {
+  .stage { height: 580px; border-radius: 16px; }
   /* a phone opens the same menu as a drawer over a dimmed page */
-  .stage { border-radius: 16px; }
-  .stage::after { content: ""; position: absolute; inset: 0; z-index: 1; background: rgb(0 0 0 / .45); }
+  .stage-panel::after { content: ""; position: absolute; inset: 0; z-index: 1; background: rgb(0 0 0 / .45); }
 }
 
 /* ------------------------------------------------- 3. how it connects */
@@ -1538,30 +1620,7 @@ kbd {
 .cap-close::before, .cap-close::after { width: 13px; height: 1px; background: currentColor; transform: rotate(45deg); }
 .cap-close::after { transform: rotate(-45deg); }
 
-.win-body { position: relative; height: 380px; }
-.wrail {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 7px;
-  transform: translateY(-50%);
-  border: 1px solid var(--glass-border);
-  border-radius: 30px;
-  background: var(--glass);
-  box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(28px) saturate(1.6);
-  backdrop-filter: blur(28px) saturate(1.6);
-  font-size: 16px;
-}
-.wrail > span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--t2); }
-.wrail .ic { font-size: 19px; }
-.wrail .wrail-me { margin-bottom: 4px; }
-.wrail .is-current { background: var(--t1); color: var(--bg0); }
+.win-body { position: relative; height: 540px; }
 .wpage { position: absolute; inset: 0 0 0 72px; padding: 14px 22px 0 24px; }
 .wpage-title { font: 600 26px/1.1 Georgia, var(--serif); letter-spacing: -.01em; color: var(--t1); }
 .wpage-muted { margin-top: 8px; font-size: 13px; color: var(--t3-text); }
@@ -1625,7 +1684,7 @@ kbd {
 @media (max-width: 560px) {
   .win-search { display: none; }
   .win-bell { margin-left: auto; }
-  .win-body { height: 500px; }
+  .win-body { height: 600px; }
   .wpage { padding-right: 14px; padding-left: 14px; }
   .wrow { grid-template-columns: 30px minmax(0, 1fr); align-items: start; }
   .wrow-status { grid-column: 2; }
