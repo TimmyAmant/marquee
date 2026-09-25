@@ -65,8 +65,9 @@ export async function getPendingRequests(viewerUserId: string) {
         // once every season is monitored or complete there. A show Sonarr
         // doesn't track falls through to the usual owned-anywhere check.
         const library = await getSonarrSeasonStates(viewerUserId, r.tvdbId).catch(() => null);
-        if (library) {
-          const everySeason = library.filter((s) => s.seasonNumber > 0).map((s) => s.seasonNumber);
+        const everySeason = (library ?? []).filter((s) => s.seasonNumber > 0).map((s) => s.seasonNumber);
+        // Sonarr listing only specials says nothing yet: fall through.
+        if (library && everySeason.length > 0) {
           const covered = seasonsStillNeeded(everySeason, library).length === 0;
           return { status: covered ? ("seasons_covered" as const) : ("untracked" as const) };
         }

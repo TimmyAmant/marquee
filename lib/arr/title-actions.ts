@@ -108,6 +108,10 @@ export async function addSeriesToSonarrForUser(
   userId: string,
   tmdbId: number,
   seasons: readonly number[] | null = null,
+  /** Approving a request (rather than the admin's own Add button): a
+   * whole-series request then also turns on every season of a show Sonarr
+   * already has only part of. */
+  forRequest = false,
 ): Promise<CoreResult> {
   if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
 
@@ -140,12 +144,18 @@ export async function addSeriesToSonarrForUser(
         await sonarr.searchSeason(config, existing.id, seasonNumber);
       }
       added = existing;
-    } else if (existing) {
-      // A whole-series request (or re-adding a show "Stop monitoring" turned
-      // off). The show may be in Sonarr with only some seasons on, because a
-      // season request added it: turn every season on and look for them.
+    } else if (existing && forRequest) {
+      // Approving a whole-series request. The show may be in Sonarr with only
+      // some seasons on, because a season request added it: turn every season
+      // on and look for them.
       await sonarr.monitorWholeSeries(config, existing.id);
       await sonarr.searchSeries(config, existing.id);
+      added = existing;
+    } else if (existing) {
+      // The admin's Add on a show Sonarr already has (the status cache was
+      // behind): just turn the series back on, as before — the admin chose
+      // its seasons in Sonarr.
+      await sonarr.setSeriesMonitored(config, existing.id, true);
       added = existing;
     } else {
       const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);

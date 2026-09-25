@@ -178,7 +178,7 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
   const result =
     request.mediaType === "movie"
       ? await addMovieToRadarrForUser(adminUserId, request.tmdbId)
-      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons);
+      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true);
 
   if (!result.ok) return result;
 

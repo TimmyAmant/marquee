@@ -247,6 +247,12 @@ final class SeasonRequestTests: XCTestCase {
         XCTAssertEqual(tracked.requestAction, .pickSeasons(more: true))
         XCTAssertEqual(tracked.requestAction?.buttonTitle, "Request more seasons")
 
+        // An earlier request was approved (say, by hand) but nothing is in the
+        // library yet: still just "Request", as on the website.
+        let approvedUntracked = try tvDetail(seasons: [season(2), season(1)], canRequest: false, requestStatus: "approved")
+        XCTAssertEqual(approvedUntracked.requestAction, .pickSeasons(more: false))
+        XCTAssertEqual(approvedUntracked.requestAction?.buttonTitle, "Request")
+
         let nothingLeft = try tvDetail(
             seasons: [season(1, monitored: true, requestable: false)],
             viewer: ["canRequestSeasons": false, "requestedSeasons": NSNull()],

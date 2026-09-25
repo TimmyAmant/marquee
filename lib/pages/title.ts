@@ -81,13 +81,21 @@ export async function loadTitleStatus(
         ])
       : [null, []];
   const seasonNumbers = tvSeasons.map((s) => s.season_number);
-  const viewerSeasons = summarizeViewerRequests(viewerRequests, seasonNumbers, seasonLibrary !== null);
+  // Once Sonarr is connected, it answers whether an approved season is on
+  // its way — including when the show was deleted there since (no record),
+  // which makes those seasons requestable again. Without Sonarr, the
+  // approved requests are all there is to go on.
+  const sonarrConnected = isArrFullyConfigured(sonarrCredential);
+  const viewerSeasons = summarizeViewerRequests(viewerRequests, seasonNumbers, seasonLibrary !== null || sonarrConnected);
   const seasonStates = seasonRequestStates({
     seasonNumbers,
     library: seasonLibrary,
     requested: viewerSeasons.requested,
     isMember,
-    ownedOutsideSonarr: seasonLibrary === null && libraryStatus.status !== "untracked",
+    ownedOutsideSonarr:
+      seasonLibrary === null &&
+      libraryStatus.status !== "untracked" &&
+      (libraryStatus.provider === "plex" || libraryStatus.provider === "jellyfin"),
   });
   const seasonRequests = {
     states: seasonStates,

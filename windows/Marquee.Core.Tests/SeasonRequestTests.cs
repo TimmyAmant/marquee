@@ -276,6 +276,11 @@ public sealed class SeasonRequestTests
             NewViewer(), canRequest: false, status: "tracked_monitored");
         Assert.Equal(TitleRequestAction.PickMoreSeasons, tracked.RequestAction);
 
+        // An earlier request was approved (say, by hand) but nothing is in the
+        // library yet: still just "Request", as on the website.
+        var approvedUntracked = TvDetail([Season(2), Season(1)], NewViewer(), canRequest: false, requestStatus: "approved");
+        Assert.Equal(TitleRequestAction.PickSeasons, approvedUntracked.RequestAction);
+
         var nothingLeft = TvDetail(
             [Season(1, monitored: true, requestable: false)],
             NewViewer(canRequestSeasons: false), canRequest: false, status: "tracked_monitored");
