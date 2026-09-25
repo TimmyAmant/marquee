@@ -234,7 +234,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get
         {
-            if (AppVersion.Parse(model.Session.ServerInfo?.Version) is not { } server
+            // About's own GET /settings/about first: a restored sign-in
+            // doesn't re-read server-info.
+            if (AppVersion.Parse(aboutServerVersion ?? model.Session.ServerInfo?.Version) is not { } server
                 || AppServices.Updater.LatestRelease is not { } latest)
             {
                 return "";
@@ -246,6 +248,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     public bool HasServerUpdateText => ServerUpdateText.Length > 0;
+
+    /// <summary>The server's version from the last About answer.</summary>
+    private string? aboutServerVersion;
 
     /// <summary>"Marquee for Windows 0.30.0".</summary>
     public string AppVersionLabel => $"Marquee for Windows {AppInfo.Version}";
@@ -613,6 +618,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             {
                 return;
             }
+            aboutServerVersion = about.Version;
+            OnPropertyChanged(nameof(ServerUpdateText));
+            OnPropertyChanged(nameof(HasServerUpdateText));
             AboutRows =
             [
                 new FactRow("Version", about.VersionLabel),

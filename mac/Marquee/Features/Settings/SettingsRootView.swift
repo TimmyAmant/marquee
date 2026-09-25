@@ -424,7 +424,9 @@ struct AboutSettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 UpdateStatusView(style: .settings)
                 ServerUpdateLine(
-                    server: model.session.serverInfo.flatMap { AppVersion($0.version) },
+                    // This page's own GET /settings/about: the server-info
+                    // probe isn't made when a saved sign-in is restored.
+                    server: (info?.version ?? model.session.serverInfo?.version).flatMap { AppVersion($0) },
                     latest: model.updater.latestRelease
                 )
             }
