@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// app/settings/page.tsx + household-members-list.tsx + create-user-form.tsx.
 /// `GET /users` returns every account for an admin and only your own for a
@@ -37,6 +38,11 @@ struct AccountSettingsView: View {
                 }
                 .frame(maxWidth: 520, alignment: .leading)
                 .cardSurface()
+
+                SettingsSectionLabel(text: "Notifications")
+                NotificationSettingsCard()
+                    .frame(maxWidth: 520, alignment: .leading)
+                    .cardSurface()
 
                 SettingsSectionLabel(text: viewer.isAdmin ? "Household members" : "Your account")
                 Text(viewer.isAdmin
@@ -114,6 +120,8 @@ struct AccountSettingsView: View {
 
     private func memberRow(_ member: API.HouseholdMember, isAdmin: Bool) -> some View {
         HStack(spacing: 10) {
+            UserAvatarView(label: member.label, avatarUrl: member.avatarUrl, size: 36)
+                .padding(.trailing, 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.label)
                     .font(.system(size: 13.5))
@@ -160,6 +168,156 @@ struct AccountSettingsView: View {
                 members = previous
                 removeError = error.localizedDescription
             }
+        }
+    }
+}
+
+/// app/settings/push-settings.tsx's switch, for this Mac: banners for this
+/// account's notifications, which come straight from the Marquee server over
+/// `LiveUpdates`' stream. The bell has them either way.
+private struct NotificationSettingsCard: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+
+    /// System Settings › Notifications › Marquee.
+    private static let systemSettingsURL = URL(
+        string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(Bundle.main.bundleIdentifier ?? "com.timmyamant.Marquee")"
+    )!
+
+    var body: some View {
+        let consent = model.notificationConsent
+
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Show notifications on this Mac")
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Toggle("Show notifications on this Mac", isOn: Binding(
+                    get: { consent.isEnabled },
+                    set: { on in
+                        if on {
+                            Task { await consent.turnOn() }
+                        } else {
+                            consent.turnOff()
+                        }
+                    }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+            }
+
+            Text("When a request is approved or declined, and when something you asked for is ready to watch. They come straight from your Marquee server; the bell keeps them either way.")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if consent.choice == .on, consent.authorization == .denied {
+                HStack(spacing: 10) {
+                    Text("Notifications for Marquee are turned off in System Settings.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Open System Settings") { openURL(Self.systemSettingsURL) }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
+                }
+            }
+
+            streamStatus
+                .font(.system(size: 11.5))
+                .foregroundStyle(Theme.textMuted)
+        }
+    }
+
+    @ViewBuilder
+    private var streamStatus: some View {
+        if model.live.isStreaming {
+            Label("Connected: new ones arrive the moment they happen.", systemImage: "dot.radiowaves.left.and.right")
+        } else if model.live.streamUnsupported {
+            Label("This server is too old to send them live, so they arrive within a minute.", systemImage: "clock")
+        } else {
+            Label("Connecting to your server…", systemImage: "arrow.triangle.2.circlepath")
+        }
+    }
+}
+
+/// household-members-list.tsx `PhotoField` — the edit sheet's profile photo,
+/// saved the moment one is picked or removed, on its own endpoint: the
+/// sheet's Save isn't involved. The photo stays on the Marquee server.
+private struct MemberPhotoField: View {
+    let member: API.HouseholdMember
+
+    @Environment(AppModel.self) private var model
+    @State private var avatarUrl: String?
+    @State private var choosing = false
+    @State private var busy = false
+    @State private var error: String?
+
+    var body: some View {
+        HStack(spacing: 16) {
+            UserAvatarView(label: member.label, avatarUrl: avatarUrl, size: 64)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 10) {
+                    Button(busy ? "Saving…" : (avatarUrl == nil ? "Add photo" : "Change photo")) {
+                        choosing = true
+                    }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    if avatarUrl != nil {
+                        Button("Remove") { remove() }
+                            .buttonStyle(QuietButtonStyle())
+                            .font(.system(size: 12))
+                    }
+                }
+                .disabled(busy)
+                Text("Kept on this server and shown in the menu and the apps.")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let error { InlineMessage(text: error) }
+            }
+        }
+        .onAppear {
+            avatarUrl = member.avatarUrl
+        }
+        .fileImporter(isPresented: $choosing, allowedContentTypes: [.image]) { result in
+            switch result {
+            case let .success(url): upload(url)
+            case let .failure(failure): error = failure.localizedDescription
+            }
+        }
+    }
+
+    private func upload(_ file: URL) {
+        let api = model.api
+        let id = member.id
+        run {
+            let prepared = try await AvatarUpload.prepare(fileAt: file)
+            return try await api.users.setAvatar(id, data: prepared.data, contentType: prepared.contentType)
+        }
+    }
+
+    private func remove() {
+        let api = model.api
+        let id = member.id
+        run {
+            try await api.users.removeAvatar(id)
+            return nil
+        }
+    }
+
+    /// Runs one change and shows where the photo is now.
+    private func run(_ change: @escaping @MainActor () async throws -> String?) {
+        busy = true
+        error = nil
+        Task {
+            do {
+                avatarUrl = try await change()
+                // The rail and the menu show your own photo from `/me`.
+                if member.isCurrentUser { model.refreshViewer() }
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = false
         }
     }
 }
@@ -236,6 +394,7 @@ private struct EditMemberSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Edit \(member.username)")
                 .font(.marqueeDisplay(22))
+            MemberPhotoField(member: member)
             SettingsField(label: "Name", text: $displayName)
             SettingsField(label: "Username", text: $username)
             SettingsField(label: "New password", text: $password, placeholder: "Leave blank to keep current password", secure: true)

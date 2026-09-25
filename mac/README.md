@@ -51,15 +51,15 @@ Your session token is kept in the login Keychain, one item per server, so the ap
 | Favorites and every star | `GET /favorites`, `PUT`/`DELETE /favorites/{type}/{id}` |
 | Person / Studio pages | `GET /people/{id}`, `/companies/{id}` |
 | Calendar | `GET /calendar?month=` |
-| Notifications bell and Dock badge | `GET /badges`, `/notifications` |
-| Settings → Account & members | `GET /me`, `GET`/`POST`/`PATCH`/`DELETE /users` |
+| Notifications bell, banners and Dock badge | `GET /notifications/stream`, `/badges`, `/notifications` |
+| Settings → Account & members | `GET /me`, `GET`/`POST`/`PATCH`/`DELETE /users`, `GET`/`PUT`/`DELETE /users/{id}/avatar` |
 | Settings → Integrations | `GET /settings/integrations` and each provider's own endpoint |
 | Settings → Activity / Jobs / About | `GET /settings/activity`, `/settings/jobs`, `/settings/about` |
 | Help → Error Reference / Releases | `GET /help/errors`, `/changelog` |
 
 Mac-specific additions: system notification banners and a Dock badge for unread notifications, `marquee://` deep links (`marquee://title/movie/603`), menu commands with keyboard shortcuts (⌘1–⌘6 sections, ⌘R reload, ⇧⌘R sync now, ⇧⌘E surprise me), and a light/dark appearance override.
 
-The server has no push channel, so `LiveUpdates` polls `GET /badges` once a minute (and on app activation) to drive the badges and announce new notifications.
+Notifications come straight from your Marquee server, with no outside push service: `LiveUpdates` keeps `GET /notifications/stream` (Server-Sent Events) open and turns each new notification into a system banner the moment it's created, reconnecting after a drop (5 seconds, doubling to a minute). `GET /badges` is still polled once a minute (and on app activation) to drive the badges and as a safety net. After signing in, the app asks "Get notifications on this Mac?" before macOS's own permission prompt; the answer is kept per server and account and can be changed under Settings → Account → Notifications.
 
 ## Project layout
 

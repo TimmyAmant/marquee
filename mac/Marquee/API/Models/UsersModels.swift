@@ -15,9 +15,17 @@ extension API {
         let createdAt: Date
         /// The "You" badge.
         let isCurrentUser: Bool
+        /// The profile photo (see `User.avatarUrl`).
+        var avatarUrl: String? = nil
 
         var isAdmin: Bool { role == .admin }
         var label: String { displayName.nonBlank ?? username }
+    }
+
+    /// `PUT` and `DELETE /users/{id}/avatar`: where the photo is now (nil once removed).
+    struct AvatarResult: Codable, Hashable, Sendable {
+        let ok: Bool
+        let avatarUrl: String?
     }
 
     /// `POST /users` body ("Add a household member").

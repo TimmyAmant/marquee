@@ -20,6 +20,8 @@ extension API {
         let displayName: String?
         let role: UserRole
         let libraryOwnerId: UUID
+        /// The profile photo (see `User.avatarUrl`).
+        var avatarUrl: String? = nil
         let autoApproveMovies: Bool
         let autoApproveTv: Bool
         let createdAt: Date
@@ -29,7 +31,10 @@ extension API {
         var label: String { displayName.nonBlank ?? username }
 
         var user: User {
-            User(id: id, username: username, displayName: displayName, role: role, libraryOwnerId: libraryOwnerId)
+            User(
+                id: id, username: username, displayName: displayName, role: role,
+                libraryOwnerId: libraryOwnerId, avatarUrl: avatarUrl
+            )
         }
     }
 

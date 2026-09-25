@@ -183,7 +183,7 @@ private struct NavRail: View {
 
         VStack(spacing: 4) {
             Button(action: onProfile) {
-                NavAvatar(label: name, size: 36)
+                UserAvatarView(label: name, avatarUrl: model.viewer?.avatarUrl, size: 36)
                     .frame(width: 40, height: 40)
                     .contentShape(Circle())
             }
@@ -275,6 +275,7 @@ private struct NavMenuPanel: View {
                     NavProfileRow(
                         name: model.viewer?.label ?? "",
                         server: model.session.server?.displayName,
+                        avatarUrl: model.viewer?.avatarUrl,
                         action: onProfile
                     )
                     .focused(focus, equals: .profile)
@@ -345,13 +346,14 @@ private struct NavMenuPanel: View {
 private struct NavProfileRow: View {
     let name: String
     let server: String?
+    let avatarUrl: String?
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                NavAvatar(label: name, size: 38)
+                UserAvatarView(label: name, avatarUrl: avatarUrl, size: 38)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(name)
                         .font(.system(size: 15, weight: .semibold))
@@ -474,33 +476,6 @@ private struct AppearanceToggle: View {
 }
 
 // MARK: - Shared pieces
-
-/// Plex's round profile photo, with initials standing in: Marquee accounts
-/// don't have pictures.
-struct NavAvatar: View {
-    let label: String
-    let size: CGFloat
-
-    var body: some View {
-        Text(Self.initials(of: label))
-            .font(.system(size: size * 0.38, weight: .semibold))
-            .foregroundStyle(Theme.bg0)
-            .frame(width: size, height: size)
-            .background(Circle().fill(Theme.avatarGradient))
-            // `ring-2 ring-white/15`, drawn outside the circle.
-            .overlay(Circle().strokeBorder(Color.white.opacity(0.15), lineWidth: 2).padding(-2))
-            .accessibilityHidden(true)
-    }
-
-    /// The first letter of the first two words, uppercased; "?" for none.
-    nonisolated static func initials(of label: String) -> String {
-        let letters = label
-            .split(whereSeparator: \.isWhitespace)
-            .prefix(2)
-            .compactMap { $0.first.map { String($0).uppercased() } }
-        return letters.isEmpty ? "?" : letters.joined()
-    }
-}
 
 /// A rail button or menu row, fully rounded. The current one is a solid
 /// textPrimary pill with bg0 content (white with a dark icon in dark mode,

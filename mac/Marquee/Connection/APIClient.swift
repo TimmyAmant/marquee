@@ -37,6 +37,25 @@ struct APIClient: Sendable {
         return URLSession(configuration: configuration)
     }()
 
+    /// The longest a live stream may go without a byte: the server sends a
+    /// keep-alive every 25 seconds, so three missed ones means it's gone.
+    static let streamIdleTimeout: TimeInterval = 75
+
+    /// For `events(_:onEvent:)`: the same settings as `defaultSession`, but a
+    /// stream stays open for as long as Marquee runs, so there's no total cap.
+    static let streamingSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = streamIdleTimeout
+        configuration.timeoutIntervalForResource = 60 * 60 * 24 * 7
+        configuration.waitsForConnectivity = false
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.httpAdditionalHeaders = ["User-Agent": "Marquee-macOS/\(AppInfo.version)"]
+        return URLSession(configuration: configuration)
+    }()
+
     init(
         baseURL: URL,
         token: String? = nil,
@@ -97,29 +116,24 @@ struct APIClient: Sendable {
 
     // MARK: Transport
 
-    /// - Parameter path: Relative to `/api/v1`, e.g. `"/me"`.
+    /// - Parameters:
+    ///   - path: Relative to `/api/v1`, e.g. `"/me"`.
+    ///   - contentType: What `body` is: JSON unless it's a file's own bytes
+    ///     (a profile photo).
     func send<Response: Decodable>(
         _ method: HTTPMethod,
         _ path: String,
         query: [String: String?] = [:],
         body: Data? = nil,
+        contentType: String = "application/json",
         timeout: TimeInterval = requestTimeout,
         as type: Response.Type = Response.self
     ) async throws -> Response {
         let normalizedPath = path.hasPrefix("/") ? path : "/" + path
-        guard let url = HTTPRequest.url(base: baseURL.absoluteString, path: Self.basePath + normalizedPath, query: query) else {
-            throw APIError.invalid("Invalid request path: \(path)")
-        }
-
-        var request = URLRequest(url: url, timeoutInterval: timeout)
-        request.httpMethod = method.rawValue
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        var request = try makeRequest(method, Self.basePath + normalizedPath, query: query, accept: "application/json", timeout: timeout)
         if let body {
             request.httpBody = body
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         }
 
         let data: Data
@@ -146,11 +160,7 @@ struct APIClient: Sendable {
         }
 
         guard (200..<300).contains(http.statusCode) else {
-            let error = APIError.from(statusCode: http.statusCode, body: data)
-            if error == .unauthorized, token != nil, let onUnauthorized {
-                await onUnauthorized()
-            }
-            throw error
+            throw await failure(statusCode: http.statusCode, body: data)
         }
 
         if data.isEmpty, let empty = EmptyResponse() as? Response {
@@ -162,6 +172,109 @@ struct APIClient: Sendable {
             Self.logger.error("Decoding \(normalizedPath, privacy: .public) failed: \(String(describing: error), privacy: .public)")
             throw APIError.server("Your Marquee server sent a response this version of the app couldn't read.")
         }
+    }
+
+    /// A GET for a file rather than JSON, at a server-relative path the
+    /// server itself handed out (`avatarUrl`: `/api/v1/users/{id}/avatar?v=…`),
+    /// sent with the bearer token. Only ever this server: a full URL is refused.
+    func data(atServerPath path: String, timeout: TimeInterval = requestTimeout) async throws -> Data {
+        guard path.hasPrefix("/"), !path.hasPrefix("//") else {
+            throw APIError.invalid("Invalid request path: \(path)")
+        }
+        let request = try makeRequest(.get, path, accept: "image/*", timeout: timeout)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.wrapping(error)
+        }
+        guard let http = response as? HTTPURLResponse else { throw APIError.notMarquee }
+        guard (200..<300).contains(http.statusCode) else {
+            throw await failure(statusCode: http.statusCode, body: data)
+        }
+        return data
+    }
+
+    /// Opens a Server-Sent Events stream (`GET /notifications/stream`) and
+    /// hands each event to `onEvent` as it arrives, until the server closes
+    /// the stream (the return) or the connection drops (a throw).
+    ///
+    /// - Returns: The reconnection delay the server asked for (`retry:`), if any.
+    @concurrent
+    func events(
+        _ path: String,
+        onEvent: @escaping @Sendable (ServerSentEvent) async -> Void
+    ) async throws -> Duration? {
+        let request = try makeRequest(.get, Self.basePath + path, accept: "text/event-stream", timeout: Self.streamIdleTimeout)
+        // A test's stub session stands in for both.
+        let session = self.session === Self.defaultSession ? Self.streamingSession : self.session
+
+        let bytes: URLSession.AsyncBytes
+        let response: URLResponse
+        do {
+            (bytes, response) = try await session.bytes(for: request)
+        } catch {
+            throw APIError.wrapping(error)
+        }
+        guard let http = response as? HTTPURLResponse else { throw APIError.notMarquee }
+        guard (200..<300).contains(http.statusCode) else {
+            var body = Data()
+            do {
+                for try await byte in bytes where body.count < 65_536 {
+                    body.append(byte)
+                }
+            } catch {
+                throw APIError.wrapping(error)
+            }
+            throw await failure(statusCode: http.statusCode, body: body)
+        }
+        // A server from before the stream existed answers something else.
+        guard http.mimeType?.lowercased() == "text/event-stream" else { throw APIError.notFound }
+
+        var lines = ServerSentEventLineSplitter()
+        var parser = ServerSentEventParser()
+        do {
+            for try await byte in bytes {
+                guard let line = lines.feed(byte), let event = parser.consume(line) else { continue }
+                await onEvent(event)
+            }
+        } catch {
+            throw APIError.wrapping(error)
+        }
+        return parser.reconnectionTime
+    }
+
+    // MARK: Requests
+
+    /// - Parameter path: From the server's root, `/api/v1` included.
+    private func makeRequest(
+        _ method: HTTPMethod,
+        _ path: String,
+        query: [String: String?] = [:],
+        accept: String,
+        timeout: TimeInterval
+    ) throws -> URLRequest {
+        guard let url = HTTPRequest.url(base: baseURL.absoluteString, path: path, query: query) else {
+            throw APIError.invalid("Invalid request path: \(path)")
+        }
+        var request = URLRequest(url: url, timeoutInterval: timeout)
+        request.httpMethod = method.rawValue
+        request.setValue(accept, forHTTPHeaderField: "Accept")
+        if let token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return request
+    }
+
+    /// The error for a non-2xx answer, after signing the session out on a 401
+    /// to a call that sent a token.
+    private func failure(statusCode: Int, body: Data) async -> APIError {
+        let error = APIError.from(statusCode: statusCode, body: body)
+        if error == .unauthorized, token != nil, let onUnauthorized {
+            await onUnauthorized()
+        }
+        return error
     }
 
     // MARK: JSON

@@ -1,7 +1,8 @@
 import XCTest
 @testable import Marquee
 
-// Badge polling and notification banners against a stubbed server.
+// The notification stream, badge polling and notification banners against a
+// stubbed server.
 
 @MainActor
 final class LiveUpdatesTests: XCTestCase {
@@ -11,6 +12,11 @@ final class LiveUpdatesTests: XCTestCase {
         private var unread = 0
         private var pending = 0
         private var notifications: [(id: UUID, createdAt: String, read: Bool)] = []
+        /// What `GET /notifications/stream` sends before closing; nil is a
+        /// server from before the stream (404).
+        private var stream: [(id: UUID, createdAt: String)]? = []
+        private var streamSignsOut = false
+        private(set) var meRequests = 0
 
         func set(unread: Int, pending: Int = 0) {
             lock.withLock {
@@ -31,11 +37,39 @@ final class LiveUpdatesTests: XCTestCase {
             }
         }
 
+        /// One notification the server created just now.
+        func add(_ id: UUID, at createdAt: String) {
+            lock.withLock {
+                notifications.insert((id, createdAt, false), at: 0)
+                unread = notifications.filter { !$0.read }.count
+            }
+        }
+
+        /// The next stream connection delivers these (after `ready`).
+        func streamNext(_ items: [(id: UUID, createdAt: String)], signsOut: Bool = false) {
+            lock.withLock {
+                stream = items
+                streamSignsOut = signsOut
+            }
+        }
+
+        func removeStream() {
+            lock.withLock { stream = nil }
+        }
+
         func markAllRead() {
             lock.withLock {
                 notifications = notifications.map { ($0.id, $0.createdAt, true) }
                 unread = 0
             }
+        }
+
+        private static func item(_ id: UUID, _ createdAt: String, read: Bool) -> String {
+            """
+            {"id":"\(id.uuidString.lowercased())","mediaType":"movie","tmdbId":603,"title":"The Matrix",\
+            "eventType":"downloaded","message":"\\"The Matrix\\" finished downloading.","read":\(read),\
+            "createdAt":"\(createdAt)"}
+            """
         }
 
         func handle(_ request: URLRequest) -> (Int, [String: String], Data) {
@@ -44,14 +78,24 @@ final class LiveUpdatesTests: XCTestCase {
                 case "/api/v1/badges":
                     return StubURLProtocol.json(200, #"{"unreadNotifications":\#(unread),"pendingRequests":\#(pending)}"#)
                 case "/api/v1/notifications":
-                    let items = notifications.map { item in
-                        """
-                        {"id":"\(item.id.uuidString.lowercased())","mediaType":"movie","tmdbId":603,"title":"The Matrix",\
-                        "eventType":"downloaded","message":"\\"The Matrix\\" finished downloading.","read":\(item.read),\
-                        "createdAt":"\(item.createdAt)"}
-                        """
-                    }
+                    let items = notifications.map { Self.item($0.id, $0.createdAt, read: $0.read) }
                     return StubURLProtocol.json(200, #"{"unreadCount":\#(unread),"results":[\#(items.joined(separator: ","))]}"#)
+                case "/api/v1/notifications/stream":
+                    guard let stream else {
+                        return StubURLProtocol.json(404, #"{"error":"Not found","code":"not_found"}"#)
+                    }
+                    var body = "retry: 5000\n\nevent: ready\ndata: {}\n\n: keep-alive\n\n"
+                    for item in stream {
+                        body += "event: notification\nid: \(item.id.uuidString.lowercased())\ndata: \(Self.item(item.id, item.createdAt, read: false))\n\n"
+                    }
+                    if streamSignsOut { body += "event: signed-out\ndata: {}\n\n" }
+                    // Each connection delivers them once.
+                    self.stream = []
+                    streamSignsOut = false
+                    return (200, ["Content-Type": "text/event-stream; charset=utf-8", "X-Marquee-API": "1"], Data(body.utf8))
+                case "/api/v1/me":
+                    meRequests += 1
+                    return StubURLProtocol.json(401, #"{"error":"Your session has ended.","code":"unauthorized"}"#)
                 default:
                     return StubURLProtocol.json(404, #"{"error":"Not found","code":"not_found"}"#)
                 }
@@ -60,10 +104,8 @@ final class LiveUpdatesTests: XCTestCase {
     }
 
     private final class FakeBanners: NotificationBannerPosting {
-        var prepareCalls = 0
         var posted: [API.NotificationItem] = []
 
-        func prepare() { prepareCalls += 1 }
         func post(_ notification: API.NotificationItem) { posted.append(notification) }
     }
 
@@ -82,7 +124,11 @@ final class LiveUpdatesTests: XCTestCase {
     /// The last label handed to the Dock tile.
     private var dockLabel: String?
 
-    private func makeLive() -> LiveUpdates {
+    /// - Parameter streams: Opens the notification stream too; the poll
+    ///   tests leave it closed so every request is one they made. A test
+    ///   that streams stops `live` before it returns, so no connection
+    ///   outlives it.
+    private func makeLive(streams: Bool = false) -> LiveUpdates {
         server = StubServer()
         banners = FakeBanners()
         watermarks = MemoryWatermarks()
@@ -96,8 +142,10 @@ final class LiveUpdatesTests: XCTestCase {
             banners: banners,
             watermarks: watermarks,
             pollInterval: .seconds(3600),
+            streamsNotifications: streams,
             setDockBadge: { [weak self] label in self?.dockLabel = label }
         )
+        live.bannersEnabled = true
         return live
     }
 
@@ -106,6 +154,18 @@ final class LiveUpdatesTests: XCTestCase {
         let events = self.events
         live.start(identity: identity) { MarqueeAPI(client: client, events: events) }
         await live.settle()
+    }
+
+    /// For what the stream does in the background.
+    private func waitUntil(_ what: String, _ condition: () -> Bool) async {
+        let deadline = ContinuousClock.now + .seconds(3)
+        while !condition() {
+            guard ContinuousClock.now < deadline else {
+                XCTFail("Timed out waiting until \(what)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
     }
 
     override func tearDown() {
@@ -121,7 +181,6 @@ final class LiveUpdatesTests: XCTestCase {
         XCTAssertEqual(live.badges, API.Badges(unreadNotifications: 2, pendingRequests: 0))
         XCTAssertEqual(live.unreadCount, 2)
         XCTAssertEqual(banners.posted.count, 0, "Unread notifications from before this run aren't announced")
-        XCTAssertEqual(banners.prepareCalls, 1)
         XCTAssertEqual(dockLabel, "2")
         XCTAssertEqual(watermarks.values[identity], APIClient.parseDate("2026-09-17T10:11:00.000Z"))
         XCTAssertEqual(events.revision(of: .all), 0, "The first poll has nothing to compare against")
@@ -264,5 +323,98 @@ final class LiveUpdatesTests: XCTestCase {
             await live.settle()
         }
         XCTAssertFalse(live.isOffline, "A server that answers is reachable")
+    }
+
+    func testWithBannersOffTheWatermarkStillMoves() async {
+        let live = makeLive()
+        live.bannersEnabled = false
+        await start(live)
+
+        server.add(2, from: 20)
+        live.refresh(.poll)
+        await live.settle()
+        XCTAssertEqual(banners.posted.count, 0, "\"Not now\": the bell has them, no banners")
+        XCTAssertEqual(live.unreadCount, 2)
+        XCTAssertEqual(watermarks.values[identity], APIClient.parseDate("2026-09-17T10:21:00.000Z"))
+
+        // Turning banners on later doesn't replay what was already there.
+        live.bannersEnabled = true
+        live.refresh(.poll)
+        await live.settle()
+        XCTAssertEqual(banners.posted.count, 0)
+    }
+
+    // MARK: The stream
+
+    func testAStreamedNotificationIsAnnouncedAtOnceAndOnlyOnce() async {
+        let live = makeLive(streams: true)
+        defer { live.stop() }
+        // Marquee ran before; one old notification is already known.
+        watermarks.values[identity] = APIClient.parseDate("2026-09-17T10:05:00.000Z")
+        server.add(1, from: 0)
+        let fresh = UUID()
+        server.streamNext([(fresh, "2026-09-17T10:30:00.000Z")])
+        await start(live)
+
+        await waitUntil("the streamed notification is announced") { banners.posted.count == 1 }
+        XCTAssertEqual(banners.posted.first?.id, fresh)
+        XCTAssertEqual(banners.posted.first?.titleID.route.absoluteString, "marquee://title/movie/603")
+        XCTAssertEqual(watermarks.values[identity], APIClient.parseDate("2026-09-17T10:30:00.000Z"))
+        XCTAssertGreaterThanOrEqual(events.remoteRevision(of: .notifications), 1, "The bell reloads")
+        XCTAssertGreaterThanOrEqual(events.remoteRevision(of: .requests), 1)
+
+        // The next poll finds it on the server: no second banner.
+        server.add(fresh, at: "2026-09-17T10:30:00.000Z")
+        live.refresh(.poll)
+        await live.settle()
+        XCTAssertEqual(banners.posted.count, 1)
+        XCTAssertEqual(live.unreadCount, 2)
+    }
+
+    func testAPolledNotificationIsNotAnnouncedAgainByTheStream() async {
+        let live = makeLive(streams: true)
+        defer { live.stop() }
+        watermarks.values[identity] = APIClient.parseDate("2026-09-17T10:05:00.000Z")
+        await start(live)
+        await waitUntil("the first connection ends and waits to reconnect") { live.streamWaiting }
+
+        // The poll sees it first (the stream was down)...
+        let fresh = UUID()
+        server.add(fresh, at: "2026-09-17T10:40:00.000Z")
+        live.refresh(.poll)
+        await live.settle()
+        XCTAssertEqual(banners.posted.map(\.id), [fresh])
+
+        // ...then the stream reconnects and delivers it too.
+        let before = events.remoteRevision(of: .notifications)
+        server.streamNext([(fresh, "2026-09-17T10:40:00.000Z")])
+        live.refresh(.activation)
+        await waitUntil("the stream delivers it") { events.remoteRevision(of: .notifications) > before }
+        await live.settle()
+        XCTAssertEqual(banners.posted.map(\.id), [fresh], "Announced once")
+    }
+
+    func testSignedOutOnTheStreamChecksTheSession() async {
+        let live = makeLive(streams: true)
+        defer { live.stop() }
+        server.streamNext([], signsOut: true)
+        await start(live)
+
+        // The token was revoked: /me answers 401, which is what signs the app out.
+        await waitUntil("/me is asked") { server.meRequests == 1 }
+    }
+
+    func testAServerWithoutTheStreamKeepsPolling() async {
+        let live = makeLive(streams: true)
+        defer { live.stop() }
+        server.removeStream()
+        await start(live)
+
+        await waitUntil("the stream gives up") { live.streamUnsupported }
+        XCTAssertFalse(live.isStreaming)
+        server.add(1, from: 50)
+        live.refresh(.poll)
+        await live.settle()
+        XCTAssertEqual(live.unreadCount, 1, "The poll carries on")
     }
 }

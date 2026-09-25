@@ -67,6 +67,8 @@ final class APIFixtureTests: XCTestCase {
         "household-member": decodes(API.HouseholdMember.self),
         "users": decodes(API.ListResponse<API.HouseholdMember>.self),
         "user-update": decodes(API.UpdateUserResult.self),
+        "avatar-set": decodes(API.AvatarResult.self),
+        "avatar-removed": decodes(API.AvatarResult.self),
         "integrations": decodes(API.IntegrationsOverview.self),
         "webhook-secret": decodes(API.ArrWebhooks.self),
         "arr-connect": decodes(API.ArrConnectionResult.self),
@@ -86,7 +88,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 54, "Docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 56, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -235,6 +237,16 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNil(person.deathday)
         XCTAssertNotNil(person.age)
     }
+
+    func testProfilePhotoURLs() throws {
+        let me = try decode(API.Me.self, "me")
+        XCTAssertEqual(me.avatarUrl, "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549")
+        XCTAssertEqual(me.user.avatarUrl, me.avatarUrl, "The rail reads the photo from the User built from /me")
+        XCTAssertNil(try decode(API.AuthResponse.self, "auth-login").user.avatarUrl)
+        XCTAssertNil(try decode(API.HouseholdMember.self, "household-member").avatarUrl)
+        XCTAssertNotNil(try decode(API.AvatarResult.self, "avatar-set").avatarUrl)
+        XCTAssertNil(try decode(API.AvatarResult.self, "avatar-removed").avatarUrl)
+    }
 }
 
 final class APIValueTypeTests: XCTestCase {
@@ -269,6 +281,7 @@ final class APIValueTypeTests: XCTestCase {
         XCTAssertEqual(user.role, .unknown("guest"))
         XCTAssertFalse(user.isAdmin)
         XCTAssertEqual(user.label, "sam")
+        XCTAssertNil(user.avatarUrl, "A server from before profile photos sends no avatarUrl")
     }
 
     func testBlankOptionalDaysDecodeAsNil() throws {

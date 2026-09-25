@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Extracts every example response in Docs/api-v1.md into
-MarqueeTests/Fixtures/api/*.json, which APIFixtureTests decodes with the DTOs.
+"""Extracts every example response in the repo's docs/api-v1.md into
+MarqueeTests/Fixtures/api/*.json, which APIFixtureTests decodes with the DTOs,
+plus the Server-Sent Events example (notifications-stream.sse), which
+ServerSentEventTests parses.
 
-Run from the repo root after the doc changes:  Scripts/extract-api-fixtures.py
+Run from mac/ after the doc changes:  Scripts/extract-api-fixtures.py
 
 The doc's examples are written for people, so a few placeholders are filled in
 to make them valid JSON (each one is listed in NORMALIZE):
@@ -17,7 +19,8 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DOC = os.path.join(ROOT, "Docs", "api-v1.md")
+# The API reference lives with the server, at the repo root (../docs from mac/).
+DOC = os.path.join(os.path.dirname(ROOT), "docs", "api-v1.md")
 OUT = os.path.join(ROOT, "MarqueeTests", "Fixtures", "api")
 
 # One name per ```json block, in document order, with the heading it must sit
@@ -80,19 +83,29 @@ BLOCKS = [
 INLINE = {
     # Deviation 7: the error body every TMDb-backed endpoint answers without TMDb.
     "error-upstream": re.compile(r'`502 (\{"code":"upstream".*?\})`'),
+    # Profile photo: PUT and DELETE /users/{id}/avatar.
+    "avatar-set": re.compile(r'Response: `(\{ "ok": true, "avatarUrl": "/api/v1/users/[^`]*\})`'),
+    "avatar-removed": re.compile(r'removes it \(fine if there\'s none\):\s*`(\{ "ok": true, "avatarUrl": null \})`'),
 }
 
+# Plain ``` blocks copied as they are: (heading, fixture file).
+TEXT_BLOCKS = [
+    ("`GET /notifications/stream`", "notifications-stream.sse"),
+]
 
-def blocks(markdown):
-    heading, inside, lines = None, False, []
+
+def blocks(markdown, fence="```json"):
+    """(heading, text) for each fenced block opened by exactly `fence`."""
+    heading, inside, lines, opened = None, False, [], None
     for line in markdown.split("\n"):
         if not inside and re.match(r"^#{2,4} ", line):
             heading = line
-        elif line.strip() == "```json":
-            inside, lines = True, []
+        elif not inside and line.strip().startswith("```"):
+            inside, lines, opened = True, [], line.strip()
         elif inside and line.strip() == "```":
             inside = False
-            yield heading, "\n".join(lines)
+            if opened == fence:
+                yield heading, "\n".join(lines)
         elif inside:
             lines.append(line)
 
@@ -130,10 +143,22 @@ def main():
         (re.compile(r'"83c55a49-…"'), lambda m: '"83c55a49-6153-4cb9-ae22-4a42d48f4cf3"'),
     ]
 
+    text_blocks = {}
+    plain = list(blocks(markdown, fence="```"))
+    for expected, filename in TEXT_BLOCKS:
+        match = next((text for heading, text in plain if heading and expected in heading), None)
+        if match is None:
+            sys.exit(f"No plain example under {expected!r}. Update TEXT_BLOCKS.")
+        text_blocks[filename] = match
+
     os.makedirs(OUT, exist_ok=True)
     for existing in os.listdir(OUT):
-        if existing.endswith(".json"):
+        if existing.endswith(".json") or existing in text_blocks:
             os.remove(os.path.join(OUT, existing))
+    for filename, text in text_blocks.items():
+        # Byte for byte, with the blank line that ends the last event.
+        with open(os.path.join(OUT, filename), "w", encoding="utf-8") as file:
+            file.write(text + "\n\n")
     for name, text in raw.items():
         for pattern, replacement in NORMALIZE:
             text = pattern.sub(replacement, text)
@@ -144,7 +169,7 @@ def main():
         with open(os.path.join(OUT, name + ".json"), "w", encoding="utf-8") as file:
             json.dump(value, file, ensure_ascii=False, indent=2)
             file.write("\n")
-    print(f"Wrote {len(raw)} fixtures to {os.path.relpath(OUT, ROOT)}")
+    print(f"Wrote {len(raw) + len(text_blocks)} fixtures to {os.path.relpath(OUT, ROOT)}")
 
 
 if __name__ == "__main__":

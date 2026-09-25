@@ -109,14 +109,14 @@ final class TitleMetaTests: XCTestCase {
     }
 }
 
-/// components/nav-menu.tsx `Avatar`: up to two initials, uppercased.
-final class NavAvatarTests: XCTestCase {
+/// components/user-avatar.tsx `initialsOf`: up to two initials, uppercased.
+final class UserAvatarTests: XCTestCase {
     func testInitials() {
-        XCTAssertEqual(NavAvatar.initials(of: "admin"), "A")
-        XCTAssertEqual(NavAvatar.initials(of: "Timmy Amant"), "TA")
-        XCTAssertEqual(NavAvatar.initials(of: "  ada   king lovelace "), "AK")
-        XCTAssertEqual(NavAvatar.initials(of: "élodie"), "É")
-        XCTAssertEqual(NavAvatar.initials(of: ""), "?")
-        XCTAssertEqual(NavAvatar.initials(of: "   "), "?")
+        XCTAssertEqual(UserAvatarView.initials(of: "admin"), "A")
+        XCTAssertEqual(UserAvatarView.initials(of: "Timmy Amant"), "TA")
+        XCTAssertEqual(UserAvatarView.initials(of: "  ada   king lovelace "), "AK")
+        XCTAssertEqual(UserAvatarView.initials(of: "élodie"), "É")
+        XCTAssertEqual(UserAvatarView.initials(of: ""), "?")
+        XCTAssertEqual(UserAvatarView.initials(of: "   "), "?")
     }
 }

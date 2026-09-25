@@ -28,6 +28,16 @@ extension MarqueeAPI {
         func markRead(_ id: UUID) async throws {
             let _: API.OK = try await transport.mutate(.post, "/notifications/\(MarqueeAPI.segment(id))/read", changes: .notifications)
         }
+
+        /// `GET /notifications/stream` — new notifications the moment the
+        /// server creates them, as Server-Sent Events (`ready`, then one
+        /// `notification` per `API.NotificationItem`, `signed-out` once the
+        /// token is revoked). Returns when the server closes the stream and
+        /// throws when it drops; `.notFound` from a server that predates it.
+        /// - Returns: The reconnection delay the server asked for, if any.
+        func stream(onEvent: @escaping @Sendable (ServerSentEvent) async -> Void) async throws -> Duration? {
+            try await transport.events("/notifications/stream", onEvent: onEvent)
+        }
     }
 
     struct CalendarEndpoints: Sendable {
@@ -74,6 +84,31 @@ extension MarqueeAPI {
             let _: API.OK = try await transport.mutate(
                 .delete, "/users/\(MarqueeAPI.segment(id))", changes: [.users, .requests, .notifications]
             )
+        }
+
+        /// `GET /users/{id}/avatar` — the photo itself (a 512×512 JPEG), at the
+        /// `avatarUrl` the server gave out. `.notFound` when there's none or
+        /// it isn't yours to see.
+        func avatar(at avatarUrl: String) async throws -> Data {
+            try await transport.data(at: avatarUrl)
+        }
+
+        /// `PUT /users/{id}/avatar` — yours, or anyone's (admin). `data` is the
+        /// image file (JPEG, PNG, WebP, GIF or AVIF, at most 15 MB; not HEIC);
+        /// the server crops and re-encodes it.
+        /// - Returns: The new `avatarUrl`.
+        @discardableResult
+        func setAvatar(_ id: UUID, data: Data, contentType: String) async throws -> String? {
+            let result: API.AvatarResult = try await transport.upload(
+                .put, "/users/\(MarqueeAPI.segment(id))/avatar",
+                data: data, contentType: contentType, timeout: Timeout.integrations, changes: .users
+            )
+            return result.avatarUrl
+        }
+
+        /// `DELETE /users/{id}/avatar` — back to initials (fine if there's no photo).
+        func removeAvatar(_ id: UUID) async throws {
+            let _: API.AvatarResult = try await transport.mutate(.delete, "/users/\(MarqueeAPI.segment(id))/avatar", changes: .users)
         }
     }
 }
