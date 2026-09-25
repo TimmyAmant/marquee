@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Marquee.Core.Models;
 using Marquee.Core.Tests.Support;
 
@@ -70,11 +71,9 @@ public sealed class TitlesFixtureTests
         Assert.Equal(Json.ParseDate("2025-11-02T09:14:00.000Z"), file.DateAdded);
         Assert.Equal("FraMeSToR", file.ReleaseGroup);
         Assert.Null(file.Edition);
-        // The doc's example predates container and bitrateKbps; a server
-        // that omits them must still decode.
-        Assert.Null(file.Container);
-        Assert.Null(file.BitrateKbps);
-        Assert.Null(file.BitrateLabel);
+        Assert.Equal("MKV", file.Container);
+        Assert.Equal(58421, file.BitrateKbps);
+        Assert.Equal("58.4 Mbps", file.BitrateLabel);
 
         Assert.True(detail.Viewer.IsAdmin);
         Assert.Null(detail.Viewer.RequestStatus);
@@ -113,6 +112,21 @@ public sealed class TitlesFixtureTests
         Assert.False(status.Viewer.CanAdd);
         Assert.NotNull(status.Viewer.ArrTracking);
         Assert.True(status.Viewer.ArrTracking.Monitored);
+    }
+
+    [Fact]
+    public void FileDetailsFromAServerWithoutContainerOrBitrateStillDecode()
+    {
+        // Servers before 0.26 don't send these two.
+        var body = JsonNode.Parse(Fixtures.Read("title-detail"))!;
+        var fileNode = body["library"]!["file"]!.AsObject();
+        fileNode.Remove("container");
+        fileNode.Remove("bitrateKbps");
+
+        var file = Json.Decode<TitleDetail>(body.ToJsonString()).Library.File!;
+        Assert.Null(file.Container);
+        Assert.Null(file.BitrateKbps);
+        Assert.Null(file.BitrateLabel);
     }
 
     [Fact]
