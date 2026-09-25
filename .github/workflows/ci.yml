@@ -74,10 +74,12 @@ jobs:
       # so unlike the Mac job there is no build log to grep afterwards.
       - name: Core tests
         run: dotnet test windows/Marquee.Core.Tests/Marquee.Core.Tests.csproj -c Release
-      # The Windows App SDK build needs the Windows SDK on the runner, which
-      # windows-latest has. A WinUI project has to be built for one concrete
-      # platform (x64, x86 or ARM64), so this passes x64 explicitly; only the
-      # app project is built, not the .sln, so the Core projects aren't
-      # compiled a second time.
+      # The app is built with Visual Studio's MSBuild rather than `dotnet
+      # build`: the Windows App SDK's resource (PRI) step loads a packaging
+      # task that only ships with Visual Studio, which windows-latest has.
+      # A WinUI project has to be built for one concrete platform, so this
+      # passes x64; only the app project is built, not the .sln, so the Core
+      # projects aren't compiled a second time.
+      - uses: microsoft/setup-msbuild@v2
       - name: Build the app
-        run: dotnet build windows/Marquee.Windows/Marquee.Windows.csproj -c Release -p:Platform=x64
+        run: msbuild windows/Marquee.Windows/Marquee.Windows.csproj -restore -p:Configuration=Release -p:Platform=x64 -v:minimal

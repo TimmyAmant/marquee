@@ -23,12 +23,14 @@ dotnet build Marquee.Core/Marquee.Core.csproj
 dotnet test Marquee.Core.Tests/Marquee.Core.Tests.csproj
 ```
 
-The app itself is WinUI 3 and needs Windows. Open `Marquee.sln` in Visual Studio and press F5, or from a terminal:
+The app itself is WinUI 3 and needs Windows with Visual Studio 2022 (its Windows App SDK / WinUI component). Open `Marquee.sln` and press F5, or from a Developer PowerShell:
 
 ```powershell
 cd windows
-dotnet build Marquee.Windows/Marquee.Windows.csproj -c Release -p:Platform=x64
+msbuild Marquee.Windows/Marquee.Windows.csproj -restore -p:Configuration=Release -p:Platform=x64
 ```
+
+Use Visual Studio's `msbuild` rather than `dotnet build` for the app: the Windows App SDK's resource step loads a packaging task that ships with Visual Studio, not with the .NET SDK.
 
 Build the two project files rather than the solution on macOS or Linux: the solution includes the app, and the Windows targeting pack isn't available there.
 
