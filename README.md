@@ -13,6 +13,18 @@ digging through three different apps.
 
 **Website:** [timmyamant.github.io/marquee](https://timmyamant.github.io/marquee/)
 
+## Download
+
+| | |
+|---|---|
+| **Server** (required) | `docker pull timmyamant/marquee:latest`, or the Unraid template. See [Quick start](#quick-start-docker) |
+| **Mac app** | [**⬇ Marquee.dmg**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee.dmg): open it and drag Marquee into Applications. The first launch needs System Settings › Privacy & Security › **Open Anyway**; after that it updates itself |
+| **Windows app** | [**⬇ Marquee-Setup.exe**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-Setup.exe): run it to install (no admin needed). If SmartScreen appears: **More info › Run anyway** |
+
+The apps are optional: the website does everything they do, in any browser.
+Every [release](https://github.com/TimmyAmant/marquee/releases/latest) has
+both installers attached.
+
 Runs on your home network (Unraid, Synology, a spare box, whatever) next to
 the Plex/Jellyfin/Sonarr/Radarr you already have. Not a hosted service — your
 data, your server.
@@ -33,7 +45,7 @@ data, your server.
 
 </details>
 
-**Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Marquee for Windows](#marquee-for-windows-preview) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
+**Contents:** [Download](#download) · [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Marquee for Windows](#marquee-for-windows-preview) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
 
 ## Features
 
