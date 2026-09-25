@@ -110,6 +110,8 @@ final class AppModel {
     /// Whether the signed-in account wants banners on this Mac, and the
     /// "Get notifications on this Mac?" card that asks.
     let notificationConsent: NotificationConsent
+    /// Newer Marquee releases, and installing one.
+    let updater = Updater()
     /// Profile photos, by `avatarUrl`.
     let avatars = AvatarImageStore()
     /// What this Mac has changed about titles since the lists showing them
@@ -189,6 +191,9 @@ final class AppModel {
         session.onUnauthorized = { [weak self] in
             self?.sessionEnded()
         }
+        updater.onNewUpdate = { [weak self] update in
+            self?.flash("Marquee \(update.version) is available. Update it from the menu or Settings › About.")
+        }
     }
 
     /// Unread notifications from the server's `/badges`, polled by `live`.
@@ -211,6 +216,10 @@ final class AppModel {
         guard phase == .launching, !bootstrapped else { return }
         bootstrapped = true
         startReconnectTriggers()
+        // A pinned (automated) run stays off GitHub; Check for Updates… still works.
+        if session.pinned == nil {
+            updater.startAutomaticChecks()
+        }
         Task {
             await connectToSavedServer()
         }
@@ -239,15 +248,21 @@ final class AppModel {
             // still there, so say so instead of silently asking for a
             // password — "Retry" re-reads it.
             await showSignIn(notice: Self.keychainUnreadableNotice)
+        } else if session.savedByEarlierBuild {
+            await showSignIn(notice: Self.signInAfterUpdateNotice)
         } else {
             await showSignIn()
         }
     }
 
-    /// Shown when the login Keychain refused to answer — usually a relaunch of
-    /// a freshly rebuilt (re-signed) binary, which macOS treats as a new app.
+    /// Shown when the login Keychain refused to answer.
     static let keychainUnreadableNotice =
         "Couldn't read your saved sign-in from the login Keychain. Sign in again, or reload (⌘R) to retry."
+
+    /// Shown after an update: macOS keeps a saved sign-in for the exact copy
+    /// of Marquee that saved it (see `KeychainTokenStore`).
+    static let signInAfterUpdateNotice =
+        "Marquee was updated. Sign in once more: macOS only lets the copy of Marquee that saved your sign-in read it back."
 
     private func showSignIn(notice: String? = nil) async {
         let outcome = await session.refreshInfo()

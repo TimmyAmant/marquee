@@ -302,6 +302,18 @@ private struct NavMenuPanel: View {
             }
             .scrollBounceBehavior(.basedOnSize)
 
+            // A newer Marquee: "Update", its progress, or why it failed.
+            if UpdateStatusView.showsInMenu(model.updater) {
+                UpdateStatusView(style: .menu)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .overlay(alignment: .top) {
+                        Rectangle()
+                            .fill(Theme.glassBorder)
+                            .frame(height: 1)
+                    }
+            }
+
             HStack(spacing: 12) {
                 MarqueeWordmark(size: 17)
                 Spacer(minLength: 0)

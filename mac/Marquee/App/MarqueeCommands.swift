@@ -1,14 +1,28 @@
 import SwiftUI
 
 /// Menu bar: Edit → Find, Go (the navigation menu and its sections), View → Reload, Library → Sync Now,
-/// Marquee → Change Server… / Sign Out, and Help links that mirror the web footer.
+/// Marquee → Check for Updates… / Change Server… / Sign Out, and Help links that mirror the web footer.
 struct MarqueeCommands: Commands {
     let model: AppModel
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openURL) private var openURL
+    @Environment(\.openSettings) private var openSettings
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {}
+
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") {
+                let model = self.model
+                let openSettings = self.openSettings
+                UpdateAlerts.checkNow(model.updater) {
+                    // The download's progress shows in Settings › About.
+                    model.settingsTab = .about
+                    if model.viewer != nil { openSettings() }
+                }
+            }
+            .disabled(model.updater.isInstalling)
+        }
 
         // Replaces the text-view Find submenu, whose Find… would otherwise
         // claim ⌘F first; the toolbar search is the app's only search.
