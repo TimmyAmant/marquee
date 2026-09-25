@@ -19,10 +19,34 @@ public partial class App : Application
 
     public App()
     {
-        InitializeComponent();
+        CrashReporter.Install(this);
+        try
+        {
+            InitializeComponent();
+        }
+        catch (Exception error)
+        {
+            // App.xaml's resources failed to load: nothing can show, so say
+            // why before the process goes.
+            CrashReporter.Report(error, "Loading App.xaml", fatal: true);
+            throw;
+        }
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        try
+        {
+            Launch();
+        }
+        catch (Exception error)
+        {
+            CrashReporter.Report(error, "Starting up", fatal: true);
+            Exit();
+        }
+    }
+
+    private void Launch()
     {
         var settings = new JsonSettingsStore();
         var session = new ServerSession(

@@ -98,6 +98,9 @@ public sealed partial class MainWindow : Window, INavigator
         model = AppServices.Model;
         InitializeComponent();
         Title = "Marquee";
+        // The title bar's and taskbar's icon; the .exe carries the same one
+        // (ApplicationIcon in the project) for Explorer and the Start menu.
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "Marquee.ico"));
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         if (MicaController.IsSupported())

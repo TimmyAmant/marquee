@@ -32,6 +32,7 @@ OutputBaseFilename=Marquee-Setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=..\Marquee.Windows\Assets\Marquee.ico
 UninstallDisplayName=Marquee
 UninstallDisplayIcon={app}\Marquee.Windows.exe
 VersionInfoVersion={#AppVersion}

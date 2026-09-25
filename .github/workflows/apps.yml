@@ -109,6 +109,46 @@ jobs:
         with:
           name: Marquee-Setup-${{ steps.version.outputs.version }}
           path: dist/Marquee-Setup.exe
+      # Installs and launches the app for real, the way someone downloading
+      # it would, and fails the build if it doesn't stay up: a compile that
+      # passes can still die on launch (a XAML resource that won't parse, a
+      # runtime file publish left out). The crash log (CrashReporter) and
+      # Windows' own error events are printed, and a screenshot is kept.
+      - name: Install and launch
+        shell: pwsh
+        env:
+          MARQUEE_NO_CRASH_DIALOG: "1"
+        run: |
+          $start = Get-Date
+          Start-Process -FilePath dist\Marquee-Setup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
+          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Marquee\Marquee.Windows.exe'
+          if (-not (Test-Path $exe)) { throw "The installer didn't put Marquee.Windows.exe at $exe" }
+          $app = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 20
+          $alive = -not $app.HasExited
+          New-Item -ItemType Directory -Force smoke | Out-Null
+          try {
+            Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+            $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $shot = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+            [System.Drawing.Graphics]::FromImage($shot).CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+            $shot.Save("$PWD\smoke\screen.png")
+          } catch { "Couldn't take a screenshot: $_" }
+          $crashLog = Join-Path $env:LOCALAPPDATA 'Marquee\crash.log'
+          if (Test-Path $crashLog) { "---- crash.log"; Get-Content $crashLog; Copy-Item $crashLog smoke\ }
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = $start } -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting', 'SideBySide' } |
+            ForEach-Object { "---- $($_.ProviderName) $($_.Id)"; $_.Message }
+          if (-not $alive) { throw "Marquee exited on startup (exit code $($app.ExitCode))." }
+          if (Test-Path $crashLog) { throw "Marquee is running but logged a crash." }
+          "Marquee is up after 20 seconds."
+          Stop-Process -Id $app.Id
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Marquee-smoke-test
+          path: smoke/
+          if-no-files-found: ignore
       - name: Attach to the release
         if: github.event_name == 'release'
         shell: bash

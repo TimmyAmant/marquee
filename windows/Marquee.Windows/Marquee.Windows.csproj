@@ -25,6 +25,8 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <Description>Marquee for Windows: the household media dashboard as a native app.</Description>
+    <!-- Built from the Mac icon's artwork by windows/Scripts/make-icon.mjs. -->
+    <ApplicationIcon>Assets\Marquee.ico</ApplicationIcon>
 
     <!--
       The view models keep [ObservableProperty] on fields so they compile
@@ -37,6 +39,11 @@
     -->
     <NoWarn>$(NoWarn);MVVMTK0045;NETSDK1206</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Also loose next to the .exe, where MainWindow sets it as the window's icon. -->
+    <Content Include="Assets\Marquee.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.260224002" />
