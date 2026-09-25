@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { LibraryStatus } from "@/components/status-badge";
 
@@ -70,7 +70,7 @@ export function PosterCard({
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-bg-2 ring-1 ring-border transition-all group-hover:-translate-y-1 group-hover:shadow-[0_16px_34px_rgba(0,0,0,0.6),0_4px_10px_rgba(0,0,0,0.4)] group-hover:ring-border-strong">
         <Link href={href} className="absolute inset-0 z-0" title={filePath ?? undefined}>
           {src ? (
-            <Image
+            <MediaImage
               src={src}
               alt={name}
               fill

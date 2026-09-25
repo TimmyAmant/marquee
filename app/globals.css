@@ -152,6 +152,42 @@ h3,
   }
 }
 
+/* Loading skeleton for poster/backdrop artwork — a soft sheen sweeps across
+   the card's surface until the TMDb image paints, so a grid of cards never
+   flashes as empty boxes before the artwork arrives (those images load a beat
+   after the rest of the page). Colors come from the theme's own surface
+   tokens, so it adapts to light/dark; MediaImage fades the artwork in over the
+   top once it loads and then removes this layer. */
+@keyframes marquee-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.bg-shimmer {
+  background-color: var(--marquee-bg-2);
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    var(--marquee-bg-3) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: marquee-shimmer 1.6s ease-in-out infinite;
+}
+
+/* Respect users who ask for less motion — hold a plain surface tint instead
+   of sweeping the sheen. */
+@media (prefers-reduced-motion: reduce) {
+  .bg-shimmer {
+    animation: none;
+  }
+}
+
 /* subtle film-grain texture for hero/backdrop surfaces — the containing
    element already establishes its own positioning context (e.g. Tailwind's
    `absolute` in title-hero.tsx); setting `position: relative` here too used

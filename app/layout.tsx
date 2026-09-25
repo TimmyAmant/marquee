@@ -36,9 +36,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // The theme-init script below sets data-theme on <html> before React
+    // hydrates, so the attribute never matches the server's HTML by design.
     <html
       lang="en"
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex bg-bg-0 text-text-primary">
         {/* Sets data-theme before first paint so there's no flash of the
