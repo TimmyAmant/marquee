@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.30.3",
+    date: "2026-09-25",
+    changes: [
+      "The Mac app's sign-in screen after an update no longer explains why you're signing in again; it's just the sign-in form.",
+    ],
+  },
+  {
     version: "0.30.2",
     date: "2026-09-25",
     changes: [
