@@ -4,6 +4,8 @@ import { CreateUserForm } from "./create-user-form";
 import { HouseholdMembersList } from "./household-members-list";
 import { SignOutButton } from "./sign-out-button";
 import { listHouseholdMembers } from "./users-actions";
+import { UserAvatar } from "@/components/user-avatar";
+import { avatarPath } from "@/lib/users/avatar-path";
 
 export default async function AccountSettingsPage() {
   const session = await auth();
@@ -11,6 +13,8 @@ export default async function AccountSettingsPage() {
 
   const members = await listHouseholdMembers();
   const isAdmin = session.user.role === "admin";
+  // Your own row is always in the list (members see only theirs).
+  const me = members.find((member) => member.id === session.user.id);
 
   return (
     <div>
@@ -21,6 +25,11 @@ export default async function AccountSettingsPage() {
 
       <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
         <div className="flex flex-col gap-4 text-sm">
+          <UserAvatar
+            label={session.user.name || session.user.username || "?"}
+            src={me ? avatarPath(me, "/api") : null}
+            size={56}
+          />
           <div>
             <p className="text-text-muted">Name</p>
             <p className="mt-1 text-text-primary">{session.user.name || "—"}</p>
