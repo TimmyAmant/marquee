@@ -65,6 +65,13 @@ public sealed partial class Updater : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowsUpdate), nameof(StatusText), nameof(UpdateLabel), nameof(CanCheck), nameof(CanInstall), nameof(ReleasePage), nameof(ShowsManualDownload))]
     private AvailableUpdate? update;
 
+    /// <summary>
+    /// The newest published release, whatever this app's version: what the
+    /// server is compared with in Settings › About. Null until a check answers.
+    /// </summary>
+    [ObservableProperty]
+    private AppVersion? latestRelease;
+
     /// <summary>0 to 1 while downloading.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StatusText), nameof(ProgressPercent))]
@@ -222,6 +229,7 @@ public sealed partial class Updater : ObservableObject
         try
         {
             var result = await service.CheckAsync(AppVersion.Current);
+            LatestRelease = result.Latest;
             // An install started while this was out; its phase wins.
             if (Phase != UpdatePhase.Checking)
             {

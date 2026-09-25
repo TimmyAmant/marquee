@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Marquee.Core;
 using Marquee.Core.Api;
 using Marquee.Core.Models;
+using Marquee.Core.Updates;
 using Marquee.Windows.Services;
 
 namespace Marquee.Windows.ViewModels;
@@ -97,6 +98,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         nameof(RoleLabel),
         nameof(ServerLabel),
         nameof(ServerVersionLabel),
+        nameof(ServerUpdateText),
+        nameof(HasServerUpdateText),
     ];
 
     private readonly AppModel model;
@@ -221,6 +224,29 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>"Marquee 0.28.0", from the last server-info answer.</summary>
     public string ServerVersionLabel => model.Session.ServerInfo is { } info ? $"Marquee {info.Version}" : "";
 
+    /// <summary>
+    /// Settings › About's line about the server: whether it runs the newest
+    /// release, and if not, how to get it (the server updates by pulling its
+    /// Docker image, which this app can't do). Empty until both versions are
+    /// known.
+    /// </summary>
+    public string ServerUpdateText
+    {
+        get
+        {
+            if (AppVersion.Parse(model.Session.ServerInfo?.Version) is not { } server
+                || AppServices.Updater.LatestRelease is not { } latest)
+            {
+                return "";
+            }
+            return server >= latest
+                ? $"Your server is up to date (Marquee {server})."
+                : $"Your server is on {server}; {latest} is out. Update it by pulling the new Docker image (on Unraid: the Docker tab › Check for Updates, then apply the update).";
+        }
+    }
+
+    public bool HasServerUpdateText => ServerUpdateText.Length > 0;
+
     /// <summary>"Marquee for Windows 0.30.0".</summary>
     public string AppVersionLabel => $"Marquee for Windows {AppInfo.Version}";
 
@@ -251,6 +277,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.SessionChanged += OnSessionChanged;
         model.Events.Changed += OnServerChanged;
         model.Notifications.StateChanged += OnNotificationsStateChanged;
+        AppServices.Updater.PropertyChanged += OnUpdaterPropertyChanged;
         SyncNotifications();
         _ = LoadMembersAsync();
         _ = LoadAboutAsync();
@@ -267,6 +294,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.SessionChanged -= OnSessionChanged;
         model.Events.Changed -= OnServerChanged;
         model.Notifications.StateChanged -= OnNotificationsStateChanged;
+        AppServices.Updater.PropertyChanged -= OnUpdaterPropertyChanged;
         aboutCancellation?.Cancel();
         membersCancellation?.Cancel();
     }
@@ -639,6 +667,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     private void OnSessionChanged(object? sender, EventArgs e) => NotifyDerived();
+
+    /// <summary>A check answered with the newest release: the server line follows.</summary>
+    private void OnUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Updater.LatestRelease))
+        {
+            OnPropertyChanged(nameof(ServerUpdateText));
+            OnPropertyChanged(nameof(HasServerUpdateText));
+        }
+    }
 
     /// <summary>
     /// Any change to household accounts through this app (the dialogs, the
