@@ -16,7 +16,7 @@
     xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d"
     Title="Request seasons"
-    PrimaryButtonText="Request 0 seasons"
+    PrimaryButtonText="Request seasons"
     CloseButtonText="Cancel"
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="False"

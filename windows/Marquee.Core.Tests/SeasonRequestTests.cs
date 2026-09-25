@@ -294,7 +294,7 @@ public sealed class SeasonRequestTests
         var selection = new SeasonPickerSelection(detail.Seasons);
         Assert.Equal([3, 1], selection.Requestable);
         Assert.Empty(selection.Seasons);
-        Assert.Equal("Request 0 seasons", selection.SubmitTitle);
+        Assert.Equal("Request seasons", selection.SubmitTitle);
 
         selection.Set(2, true);
         // A monitored season can't be picked.

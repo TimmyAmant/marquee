@@ -32,7 +32,8 @@ struct SeasonPickerSelection: Hashable, Sendable {
 
     /// "Request 1 season" / "Request 3 seasons".
     var submitTitle: String {
-        "Request \(selected.count) season\(selected.count == 1 ? "" : "s")"
+        // Nothing picked yet (the button is disabled): no "0", as on the website.
+        selected.isEmpty ? "Request seasons" : "Request \(selected.count) season\(selected.count == 1 ? "" : "s")"
     }
 }
 

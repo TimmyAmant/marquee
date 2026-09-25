@@ -267,7 +267,7 @@ final class SeasonRequestTests: XCTestCase {
         var selection = SeasonPickerSelection(seasons: detail.seasons)
         XCTAssertEqual(selection.requestable, [3, 1])
         XCTAssertTrue(selection.seasons.isEmpty)
-        XCTAssertEqual(selection.submitTitle, "Request 0 seasons")
+        XCTAssertEqual(selection.submitTitle, "Request seasons")
 
         selection.set(2, true)
         XCTAssertTrue(selection.seasons.isEmpty, "A monitored season can't be picked")

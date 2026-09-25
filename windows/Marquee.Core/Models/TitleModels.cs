@@ -417,7 +417,8 @@ public sealed class SeasonPickerSelection
     /// <summary>What the request sends, sorted.</summary>
     public IReadOnlyList<int> Seasons => selected.Order().ToList();
 
-    /// <summary>"Request 1 season" / "Request 3 seasons".</summary>
-    public string SubmitTitle =>
-        $"Request {selected.Count.ToString(CultureInfo.CurrentCulture)} {(selected.Count == 1 ? "season" : "seasons")}";
+    /// <summary>"Request 1 season" / "Request 3 seasons"; "Request seasons" while nothing is picked (the button is disabled then), as on the website.</summary>
+    public string SubmitTitle => selected.Count == 0
+        ? "Request seasons"
+        : $"Request {selected.Count.ToString(CultureInfo.CurrentCulture)} {(selected.Count == 1 ? "season" : "seasons")}";
 }
