@@ -25,7 +25,7 @@ import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import * as jellyfin from "@/lib/jellyfin/client";
 import * as plex from "@/lib/plex/client";
-import { syncPlexLibrary, getPlexSummary, waitForPlexSync } from "@/lib/plex/sync";
+import { syncPlexLibrary, getPlexSummary, resyncPlexLibraryFromScratch, waitForPlexSync } from "@/lib/plex/sync";
 import { syncJellyfinLibrary, waitForJellyfinSync } from "@/lib/jellyfin/sync";
 import { syncArrLibrary, waitForArrSync } from "@/lib/arr/sync";
 import { verifyTmdbAccessToken } from "@/lib/tmdb/client";
@@ -222,16 +222,11 @@ export async function checkPlexAuthFor(adminUserId: string, pinId: number): Prom
   const pin = await plex.checkPin(clientId, pinId).catch(() => null);
   if (!pin?.authToken) return { connected: false };
 
-  // A (re)connect may be a different Plex account: forget the servers the
-  // old one owned before the first sync brings in the new account's own, so
-  // nothing — the library, or Plex sign-in's access check — keeps trusting
-  // them even if that sync fails. The new token goes in first, so a sync
-  // still running on the old one stops at its next check; waiting for it
-  // means it can't write old servers back after they're cleared.
+  // A (re)connect may be a different Plex account. The new token goes in
+  // first, so a sync still running on the old one stops at its next check;
+  // then the old servers are cleared and the new account's synced.
   await upsertPlexCredential(adminUserId, { authToken: pin.authToken, clientId });
-  await waitForPlexSync(adminUserId);
-  await db.delete(plexServers).where(eq(plexServers.userId, adminUserId));
-  await syncPlexLibrary(adminUserId).catch(() => undefined);
+  await resyncPlexLibraryFromScratch(adminUserId).catch(() => undefined);
 
   const summary = await getPlexSummary(adminUserId);
 

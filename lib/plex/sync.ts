@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { singleFlight, whenIdle } from "@/lib/async/single-flight";
+import { runExclusive, singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { plexServers, plexLibraryItems, integrationCredentials } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getPlexCredential, IntegrationDisconnectedError } from "@/lib/integrations/credentials";
@@ -78,6 +78,10 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
       if (section.type !== "movie" && section.type !== "show") continue;
       const mediaType = section.type === "movie" ? "movie" : "tv";
 
+      // Checked per section too, so a reconnect waiting on this sync (see
+      // resyncPlexLibraryFromScratch) isn't held up by a whole library's
+      // worth of fetches.
+      await assertSamePlexConnection(userId, credential.authToken);
       let items: plex.PlexMetadataItem[];
       try {
         items = await plex.getSectionItems(serverUri, credential.authToken, section.key);
@@ -300,6 +304,7 @@ export async function syncPlexLibraryIfStale(userId: string): Promise<void> {
     .select({ lastSyncedAt: plexServers.lastSyncedAt })
     .from(plexServers)
     .where(eq(plexServers.userId, userId))
+    .orderBy(desc(plexServers.lastSyncedAt))
     .limit(1);
 
   const isStale =
@@ -416,6 +421,20 @@ export async function getPlexFileInfo(
  * shares its result instead of starting another. */
 export function syncPlexLibrary(userId: string) {
   return singleFlight(`plex-sync:${userId}`, () => runSyncPlexLibrary(userId));
+}
+
+/** For a (re)connect, which may be a different Plex account: once any sync
+ * already running has stopped, clears every server the user had — so
+ * neither the library nor Plex sign-in's access check keeps trusting the
+ * old account's, even if this sync fails — and syncs the new one. It's one
+ * run under the sync's own key, so no other sync can start between the
+ * clearing and the syncing and have its servers wiped. */
+export function resyncPlexLibraryFromScratch(userId: string) {
+  return runExclusive(`plex-sync:${userId}`, async () => {
+    // Cascades to plex_library_items via its own FK.
+    await db.delete(plexServers).where(eq(plexServers.userId, userId));
+    return runSyncPlexLibrary(userId);
+  });
 }
 
 /** Resolves once no Plex sync for this user is running. */

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { debounce, singleFlight, whenIdle } from "./single-flight";
+import { debounce, runExclusive, singleFlight, whenIdle } from "./single-flight";
 
 describe("singleFlight", () => {
   it("shares one run between overlapping callers", async () => {
@@ -22,6 +22,46 @@ describe("singleFlight", () => {
   it("clears the key after a failure", async () => {
     await expect(singleFlight("k3", async () => Promise.reject(new Error("x")))).rejects.toThrow("x");
     expect(await singleFlight("k3", async () => "ok")).toBe("ok");
+  });
+});
+
+describe("runExclusive", () => {
+  it("waits for the run in flight, then runs on its own", async () => {
+    const order: string[] = [];
+    let release!: () => void;
+    const first = singleFlight("ex", () => new Promise<void>((r) => (release = r)).then(() => void order.push("first")));
+    const exclusive = runExclusive("ex", async () => void order.push("exclusive"));
+    await Promise.resolve();
+    expect(order).toEqual([]);
+    release();
+    await Promise.all([first, exclusive]);
+    expect(order).toEqual(["first", "exclusive"]);
+  });
+
+  it("isn't beaten by a run that starts while it waits", async () => {
+    const order: string[] = [];
+    let release!: () => void;
+    const first = singleFlight("ex2", () => new Promise<void>((r) => (release = r)).then(() => void order.push("first")));
+    const exclusive = runExclusive("ex2", async () => void order.push("exclusive"));
+    // Joins the first run rather than starting between it and the exclusive one.
+    const joined = singleFlight("ex2", async () => void order.push("late"));
+    release();
+    await Promise.all([first, exclusive, joined]);
+    expect(order).toEqual(["first", "exclusive"]);
+    // Anything started while the exclusive run is going shares it.
+    let releaseExclusive!: () => void;
+    const second = runExclusive("ex3", () => new Promise<string>((r) => (releaseExclusive = () => r("mine"))));
+    await Promise.resolve();
+    const sharer = singleFlight("ex3", async () => "other");
+    releaseExclusive();
+    expect(await Promise.all([second, sharer])).toEqual(["mine", "mine"]);
+  });
+
+  it("still runs after the one in flight fails", async () => {
+    const failing = singleFlight("ex4", async () => Promise.reject(new Error("x")));
+    const exclusive = runExclusive("ex4", async () => "ok");
+    await expect(failing).rejects.toThrow("x");
+    expect(await exclusive).toBe("ok");
   });
 });
 

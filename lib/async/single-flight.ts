@@ -19,6 +19,17 @@ export function singleFlight<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+/** Runs `fn` as the key's next run, on its own: waits out the run in
+ * flight (and any that start while waiting), then starts `fn` under the key
+ * in the same tick as the check, so no other run can slip in first. Runs
+ * started meanwhile join `fn`'s. */
+export async function runExclusive<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  for (let running = inFlight.get(key); running; running = inFlight.get(key)) {
+    await running.catch(() => undefined);
+  }
+  return singleFlight(key, fn);
+}
+
 /** Resolves once no run for `key` is in flight — immediately if there isn't
  * one, and whether the running one succeeds or fails. Lets a disconnect
  * wait for a sync to stop writing before it deletes that sync's data. */
