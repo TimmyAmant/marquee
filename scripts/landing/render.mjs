@@ -201,7 +201,7 @@ async function main() {
         await sharp(web.png).extract(extract).png().toFile(ogShot);
       }
 
-      // Cropped above the sidebar footer, like the captures it replaces.
+      // Cropped to 1440x846, the frame the site's Mac section was laid out for.
       const mac = await renderTemplate(browser, 'mac-title.html', data);
       written.push(...(await webp(mac.png, `mac-${theme}`, [1600, 1000], { left: 0, top: 0, width: 2880, height: 1692 })));
     }

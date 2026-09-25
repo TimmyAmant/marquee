@@ -50,8 +50,10 @@ Use `--art <dir>` (or `MARQUEE_ARTWORK_DIR`) for another folder and
 - `templates/web-title.html` is a snapshot of the real web app's title page,
   with the app's own CSS inlined and every field tagged for the slate.
 - `templates/mac-title.html` is the Mac window, rebuilt from
-  `mac/Design/Mockups/mockup.html` and matched against captures of the app.
-  It uses the Mac's system fonts (New York, SF Pro), so render on a Mac.
+  `mac/Design/Mockups/mockup.html` and matched against captures of the app,
+  with the floating navigation rail from `mac/Docs/DESIGN_TARGET.md` ›
+  Navigation (no sidebar; pages start 72pt in). It uses the Mac's system
+  fonts (New York, SF Pro), so render on a Mac.
 - `templates/og.html` is the 1200×630 social card.
 - `lib/` holds the slate, the placeholders, the lettering, the template filler
   and the browser launcher.
@@ -67,4 +69,6 @@ Use `--art <dir>` (or `MARQUEE_ARTWORK_DIR`) for another folder and
 
   It signs in as the seeded admin, rewrites a real movie page in the browser
   (every title, person, image, provider, link and id is replaced), and refuses
-  to save if any of the original page's text survives.
+  to save if any of the original page's text survives. A `next dev` server on
+  the same port works too: its overlay is stripped and its CSS folded onto
+  one line.
