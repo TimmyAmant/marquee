@@ -44,9 +44,22 @@ async function getRow(userId: string) {
   return row ?? null;
 }
 
-function tokenOf(row: typeof plexWatchlists.$inferSelect): string | null {
+/** The stored token; "unreadable" when it can't be decrypted (the
+ * server's encryption key changed), which is handled like Plex rejecting it. */
+function tokenOf(row: typeof plexWatchlists.$inferSelect): string | null | "unreadable" {
   if (!row.authTokenEnc || !row.authTokenIv || !row.authTokenTag) return null;
-  return decryptSecret({ ciphertext: row.authTokenEnc, iv: row.authTokenIv, tag: row.authTokenTag });
+  try {
+    return decryptSecret({ ciphertext: row.authTokenEnc, iv: row.authTokenIv, tag: row.authTokenTag });
+  } catch {
+    return "unreadable";
+  }
+}
+
+async function switchOffRejected(userId: string): Promise<void> {
+  await db
+    .update(plexWatchlists)
+    .set({ authTokenEnc: null, authTokenIv: null, authTokenTag: null, etag: null, lastError: WATCHLIST_TOKEN_REJECTED })
+    .where(eq(plexWatchlists.userId, userId));
 }
 
 export async function getWatchlistState(userId: string): Promise<WatchlistState> {
@@ -138,6 +151,10 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
   if (!row) return { requested: 0 };
   const token = tokenOf(row);
   if (!token) return { requested: 0 };
+  if (token === "unreadable") {
+    await switchOffRejected(userId);
+    return { requested: 0 };
+  }
 
   const [user] = await db
     .select({ plexUserId: users.plexUserId, role: users.role })
@@ -160,10 +177,7 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
   }
 
   if (fetched.status === "unauthorized") {
-    await db
-      .update(plexWatchlists)
-      .set({ authTokenEnc: null, authTokenIv: null, authTokenTag: null, etag: null, lastError: WATCHLIST_TOKEN_REJECTED })
-      .where(eq(plexWatchlists.userId, userId));
+    await switchOffRejected(userId);
     return { requested: 0 };
   }
   if (fetched.status === "unchanged") {
