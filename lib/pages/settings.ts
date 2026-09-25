@@ -41,17 +41,24 @@ export const ACTIVITY_EVENT_VERBS: Record<ActivityEventType, string> = {
 };
 
 /**
- * Settings → Integrations for the admin: refreshes any stale library sync
- * first (like the page), then reads every integration's connection state.
+ * Settings → Integrations for the admin: kicks off any stale library sync in
+ * the background, then reads every integration's connection state.
  * Secrets never leave this function except as booleans — apart from the
  * admin's own Sonarr/Radarr webhook secret, which the page shows in full.
  */
 export async function loadIntegrationsPage(adminUserId: string) {
-  await Promise.all([
-    syncPlexLibraryIfStale(adminUserId),
-    syncJellyfinLibraryIfStale(adminUserId),
-    syncArrLibraryIfStale(adminUserId),
-  ]);
+  // Not awaited: a full sync of a big library takes minutes, and the page
+  // only needs the connection state. The counts catch up on the next visit.
+  // Each sync already runs single-flight, so repeat visits share one run.
+  for (const [name, sync] of [
+    ["plex", syncPlexLibraryIfStale],
+    ["jellyfin", syncJellyfinLibraryIfStale],
+    ["arr", syncArrLibraryIfStale],
+  ] as const) {
+    sync(adminUserId).catch((err) => {
+      console.error(`[settings] background ${name} sync failed for user ${adminUserId}:`, err);
+    });
+  }
 
   const [
     sonarrCred,

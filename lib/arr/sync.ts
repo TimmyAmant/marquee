@@ -167,6 +167,16 @@ async function runSyncArrLibrary(
 
 const AUTO_SYNC_STALE_MS = 15 * 60 * 1000;
 
+declare global {
+  var __marqueeArrSyncAttempts: Map<string, number> | undefined;
+}
+
+// When each user's Sonarr/Radarr last had an on-visit sync attempted. The
+// cache rows' checkedAt can't answer that for an empty library (there are
+// no rows) or a failing one (nothing gets written), and without this every
+// page visit in either case would kick off another full sync.
+const lastAttemptAt: Map<string, number> = (globalThis.__marqueeArrSyncAttempts ??= new Map());
+
 export async function syncArrLibraryIfStale(userId: string): Promise<void> {
   for (const provider of ["sonarr", "radarr"] as const) {
     const credential = await getArrCredential(userId, provider);
@@ -178,8 +188,11 @@ export async function syncArrLibraryIfStale(userId: string): Promise<void> {
       .where(and(eq(arrStatusCache.userId, userId), eq(arrStatusCache.provider, provider)))
       .limit(1);
 
-    const isStale = !row || Date.now() - row.checkedAt.getTime() > AUTO_SYNC_STALE_MS;
+    const attemptKey = `${provider}:${userId}`;
+    const lastSyncedAt = Math.max(row?.checkedAt.getTime() ?? 0, lastAttemptAt.get(attemptKey) ?? 0);
+    const isStale = Date.now() - lastSyncedAt > AUTO_SYNC_STALE_MS;
     if (isStale) {
+      lastAttemptAt.set(attemptKey, Date.now());
       await syncArrLibrary(userId, provider).catch((err) => {
         console.error(`[arr-sync] ${provider} failed for user ${userId}:`, err);
       });
