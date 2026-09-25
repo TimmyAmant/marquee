@@ -199,6 +199,13 @@ final class InMemoryTokenStore: TokenStore {
 /// server, keeps its token in memory instead of the Keychain, and refuses to
 /// talk to any other host. A stray click in an automated run then can't reach
 /// — or sign out of — the real server this Mac normally uses.
+/// Sign-in couldn't reach the server even after checking it again; the
+/// message is what the check found (`ProbeOutcome.problemMessage`).
+struct SignInConnectionError: LocalizedError, Equatable {
+    let message: String
+    var errorDescription: String? { message }
+}
+
 struct PinnedServer: Sendable, Equatable {
     static let defaultsKey = "marquee.server.pinned"
     static let environmentKey = "MARQUEE_PINNED_SERVER"
@@ -264,6 +271,8 @@ final class ServerSession {
     @ObservationIgnored private let tokenStore: TokenStore
     @ObservationIgnored private let fallbackTokens = InMemoryTokenStore()
     @ObservationIgnored private let urlSession: URLSession
+    /// `ServerProbe.probe`; tests answer for it.
+    @ObservationIgnored private let probe: @Sendable (ServerAddress) async -> ProbeOutcome
 
     private static let logger = Logger(subsystem: "com.timmyamant.Marquee", category: "session")
 
@@ -272,10 +281,12 @@ final class ServerSession {
         tokenStore: TokenStore = KeychainTokenStore(),
         urlSession: URLSession = APIClient.defaultSession,
         deviceName: String? = nil,
-        pinned: PinnedServer? = PinnedServer.resolve()
+        pinned: PinnedServer? = PinnedServer.resolve(),
+        probe: @escaping @Sendable (ServerAddress) async -> ProbeOutcome = { await ServerProbe.probe($0) }
     ) {
         self.defaults = defaults
         self.urlSession = urlSession
+        self.probe = probe
         self.pinned = pinned
         if let pinned {
             // Pinned runs never read or write the Keychain, and never read the
@@ -345,7 +356,7 @@ final class ServerSession {
     @discardableResult
     func refreshInfo() async -> ProbeOutcome {
         guard let server else { return .unreachable(.noResponse) }
-        let outcome = await ServerProbe.probe(server)
+        let outcome = await probe(server)
         if server == self.server, case let .marquee(info) = outcome {
             serverInfo = info
         }
@@ -417,11 +428,10 @@ final class ServerSession {
             throw APIError.invalid("Enter your username and password.")
         }
         guard let server else { throw APIError.notMarquee }
-        let client = APIClient(baseURL: server.baseURL, session: urlSession)
-        let response = try await client.post(
+        let response = try await postAuth(
             "/auth/login",
             body: LoginRequest(username: username, password: password, deviceName: deviceName),
-            as: AuthTokenResponse.self
+            to: server
         )
         return try adopt(response, from: server)
     }
@@ -429,8 +439,7 @@ final class ServerSession {
     /// `POST /auth/setup`: the server's first (admin) account.
     func setup(displayName: String, username: String, password: String) async throws -> User {
         guard let server else { throw APIError.notMarquee }
-        let client = APIClient(baseURL: server.baseURL, session: urlSession)
-        let response = try await client.post(
+        let response = try await postAuth(
             "/auth/setup",
             body: SetupRequest(
                 username: username.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -438,13 +447,35 @@ final class ServerSession {
                 displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines),
                 deviceName: deviceName
             ),
-            as: AuthTokenResponse.self
+            to: server
         )
         let user = try adopt(response, from: server)
         if let info = serverInfo {
             serverInfo = ServerInfo(app: info.app, apiVersion: info.apiVersion, version: info.version, setupComplete: true, status: info.status)
         }
         return user
+    }
+
+    /// A sign-in (or setup) POST that survives the sign-in screen having sat
+    /// open while the server restarted (a Docker update, say): the pooled
+    /// connection is dead by then, and URLSession won't retry a POST on a
+    /// fresh one, so it failed as "Couldn't reach your Marquee server" with
+    /// the server right there. On a transport failure the server is checked
+    /// again and, if it's there, the request goes once more; if it isn't,
+    /// the error says what the check found.
+    private func postAuth(_ path: String, body: some Encodable, to server: ServerAddress) async throws -> AuthTokenResponse {
+        let client = APIClient(baseURL: server.baseURL, session: urlSession)
+        do {
+            return try await client.post(path, body: body, as: AuthTokenResponse.self)
+        } catch let error as APIError {
+            guard case .network = error, !error.isCancellation else { throw error }
+            Self.logger.info("\(path, privacy: .public) failed to connect (\(error.localizedDescription, privacy: .public)); checking the server and retrying")
+            let outcome = await refreshInfo()
+            if let problem = outcome.problemMessage(for: server) {
+                throw SignInConnectionError(message: problem)
+            }
+            return try await client.post(path, body: body, as: AuthTokenResponse.self)
+        }
     }
 
     /// Signs out locally right away, then revokes the token on the server
