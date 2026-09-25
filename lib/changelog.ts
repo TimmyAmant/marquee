@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.31.2",
+    date: "2026-09-25",
+    changes: [
+      "Settings › About in the Mac and Windows apps now says whether your server is up to date. If a newer Marquee is out, it names the version and how to update the server (pull the new Docker image; on Unraid, the Docker tab's Check for Updates).",
+      "The README is much shorter, with new screenshots of the current layout; the remote access guide has its own page.",
+      "Under the hood: the database migration history is back in step with the schema, so future database changes generate cleanly. Nothing in your database changes.",
+    ],
+  },
+  {
     version: "0.31.1",
     date: "2026-09-25",
     changes: [
