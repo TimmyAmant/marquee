@@ -8,6 +8,7 @@ Dockerfile
 .dockerignore
 docker-compose.yml
 mac
+windows
 docs
 unraid-templates
 *.md
