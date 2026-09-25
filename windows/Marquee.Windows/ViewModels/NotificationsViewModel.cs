@@ -120,6 +120,18 @@ public sealed partial class NotificationsViewModel : ObservableObject
         loadCancellation?.Cancel();
     }
 
+    /// <summary>
+    /// Signed out (or switched server): forget the list, so the next account
+    /// never sees, or clicks, the last one's notifications.
+    /// </summary>
+    public void Reset()
+    {
+        loadCancellation?.Cancel();
+        Items = null;
+        ErrorMessage = null;
+        IsLoading = false;
+    }
+
     // MARK: Loading
 
     [RelayCommand]

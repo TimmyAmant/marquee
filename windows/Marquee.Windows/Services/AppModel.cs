@@ -626,7 +626,11 @@ public sealed partial class AppModel : ObservableObject
         finally
         {
             refreshingBadges = false;
-            if (badgeRefreshQueued && generation == badgeGeneration)
+            // A refresh that queued behind this one runs now, even when this
+            // one belonged to a session that has since ended: that queued
+            // refresh may be the next sign-in's first, and dropping it left
+            // the counts at 0 until the next poll.
+            if (badgeRefreshQueued && Phase == AppPhase.Ready)
             {
                 badgeRefreshQueued = false;
                 _ = RefreshBadgesAsync(BadgeRefreshReason.LocalChange);

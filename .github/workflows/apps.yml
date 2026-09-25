@@ -41,6 +41,18 @@ jobs:
         # The app's version is the server's: the updater compares it with
         # the release tag, which is package.json's version.
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Check the release tag matches package.json
+        if: github.event_name == 'release'
+        shell: bash
+        # A release whose tag isn't the built version would make the Mac
+        # updater reject every download and the Windows one reinstall the old
+        # build forever: stop before anything is attached.
+        run: |
+          expected="v${{ steps.version.outputs.version }}"
+          if [ "${{ github.event.release.tag_name }}" != "$expected" ]; then
+            echo "::error::Release tag ${{ github.event.release.tag_name }} doesn't match package.json ($expected)."
+            exit 1
+          fi
       - name: Build
         working-directory: mac
         run: |
@@ -67,12 +79,22 @@ jobs:
           # Laid out by mac/Scripts/dmg-settings.py; the window title carries
           # the version.
           python3 -m venv "$RUNNER_TEMP/dmgbuild"
-          "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet dmgbuild
+          # Pinned: dmg-settings.py is Python dmgbuild runs, and a renamed
+          # setting in a newer release would be dropped without an error.
+          "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet dmgbuild==1.6.5
           "$RUNNER_TEMP/dmgbuild/bin/dmgbuild" -s mac/Scripts/dmg-settings.py -D app="$app" \
             "Marquee ${{ steps.version.outputs.version }}" "dist/Marquee-${{ steps.version.outputs.version }}.dmg"
           # The same image under its old name, which links published before
           # 0.30.1 (releases/latest/download/Marquee.dmg) still point at.
           cp "dist/Marquee-${{ steps.version.outputs.version }}.dmg" dist/Marquee.dmg
+          # The layout is written into the image, not checked by anything
+          # else: make sure what people will see is there.
+          mount="$(mktemp -d)"
+          hdiutil attach -quiet -nobrowse -readonly -mountpoint "$mount" dist/Marquee.dmg
+          for item in Marquee.app Applications "Read Me.txt" .background.tiff .DS_Store; do
+            [ -e "$mount/$item" ] || { echo "::error::The disk image is missing $item"; hdiutil detach -quiet "$mount"; exit 1; }
+          done
+          hdiutil detach -quiet "$mount"
       # The ditto zip goes inside the artifact rather than the bare .app:
       # GitHub's own zipping of an artifact drops the symlinks and executable
       # bits a Mac app bundle needs.
@@ -80,11 +102,6 @@ jobs:
         with:
           name: Marquee-mac-${{ steps.version.outputs.version }}
           path: dist/
-      - name: Attach to the release
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "dist/Marquee-${{ steps.version.outputs.version }}.dmg" dist/Marquee.dmg dist/Marquee-mac.zip dist/Marquee-mac.zip.sha256 --clobber
 
   windows:
     name: Windows app download
@@ -101,6 +118,18 @@ jobs:
         id: version
         shell: bash
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Check the release tag matches package.json
+        if: github.event_name == 'release'
+        shell: bash
+        # A release whose tag isn't the built version would make the Mac
+        # updater reject every download and the Windows one reinstall the old
+        # build forever: stop before anything is attached.
+        run: |
+          expected="v${{ steps.version.outputs.version }}"
+          if [ "${{ github.event.release.tag_name }}" != "$expected" ]; then
+            echo "::error::Release tag ${{ github.event.release.tag_name }} doesn't match package.json ($expected)."
+            exit 1
+          fi
       - name: Publish
         # Self-contained: the .NET runtime ships in the folder alongside the
         # Windows App SDK runtime (already self-contained in the project), so
@@ -139,7 +168,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Marquee-Setup-${{ steps.version.outputs.version }}
-          path: dist/Marquee-Setup-${{ steps.version.outputs.version }}.exe
+          # Everything the release gets: the versioned installer, its old
+          # name for 0.30.0's updater, and both checksums.
+          path: dist/
       # Installs and launches the app for real, the way someone downloading
       # it would, and fails the build if it doesn't stay up: a compile that
       # passes can still die on launch (a XAML resource that won't parse, a
@@ -194,13 +225,26 @@ jobs:
           name: Marquee-smoke-test
           path: smoke/
           if-no-files-found: ignore
-      - name: Attach to the release
-        if: github.event_name == 'release'
-        shell: bash
+
+  # Both apps' files go onto the release together, and only once both built
+  # and passed: a release with only one app's download would be "latest" to
+  # the other app's updater with nothing to install.
+  attach:
+    name: Attach to the release
+    if: github.event_name == 'release'
+    needs: [mac, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Marquee-{mac,Setup}-*
+          path: assets
+          merge-multiple: true
+      - name: Upload
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >
-          gh release upload "${{ github.event.release.tag_name }}"
-          "dist/Marquee-Setup-${{ steps.version.outputs.version }}.exe"
-          "dist/Marquee-Setup-${{ steps.version.outputs.version }}.exe.sha256"
-          dist/Marquee-Setup.exe dist/Marquee-Setup.exe.sha256 --clobber
+        run: |
+          ls -la assets
+          gh release upload "${{ github.event.release.tag_name }}" assets/* --repo "${{ github.repository }}" --clobber

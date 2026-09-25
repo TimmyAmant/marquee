@@ -245,11 +245,12 @@ public sealed class NotificationStream : IDisposable
         using (var reader = new StreamReader(response.Body, Encoding.UTF8))
         {
             idle.CancelAfter(idleTimeout);
+            var lines = new BoundedLineReader(reader, ServerSentEventParser.MaxEventLength);
             try
             {
                 while (true)
                 {
-                    var line = await reader.ReadLineAsync(idle.Token).ConfigureAwait(false);
+                    var line = await lines.ReadLineAsync(idle.Token).ConfigureAwait(false);
                     if (line == null)
                     {
                         break;
@@ -280,9 +281,11 @@ public sealed class NotificationStream : IDisposable
             {
                 return (Outcome.Stopped, parser.RetryMilliseconds);
             }
-            catch (Exception error) when (error is OperationCanceledException or IOException or HttpRequestException or ObjectDisposedException)
+            catch (Exception error) when (error is OperationCanceledException or IOException or HttpRequestException or ObjectDisposedException or InvalidDataException)
             {
-                // The idle timeout, or the connection dropping mid-read.
+                // The idle timeout, the connection dropping mid-read, or an
+                // oversized line or event: all end this connection, and the
+                // usual backoff applies.
             }
         }
         return (ready ? Outcome.Dropped : Outcome.Failed, parser.RetryMilliseconds);

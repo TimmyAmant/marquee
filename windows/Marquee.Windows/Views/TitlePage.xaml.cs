@@ -57,7 +57,7 @@ public sealed partial class TitlePage : Page
             return;
         }
         var dialog = new RelinkDialog(title.MediaType) { XamlRoot = XamlRoot };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary || dialog.Target is not { } target)
+        if (await dialog.TryShowAsync() != ContentDialogResult.Primary || dialog.Target is not { } target)
         {
             return;
         }
@@ -75,7 +75,7 @@ public sealed partial class TitlePage : Page
                 Content = error.Message,
                 CloseButtonText = "OK",
             };
-            await failed.ShowAsync();
+            await failed.TryShowAsync();
         }
     }
 
@@ -91,7 +91,7 @@ public sealed partial class TitlePage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,
         };
-        if (await confirm.ShowAsync() == ContentDialogResult.Primary)
+        if (await confirm.TryShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.AddAllMissingCommand.ExecuteAsync(null);
         }
@@ -107,6 +107,14 @@ public sealed partial class TitlePage : Page
         }
         var package = new global::Windows.ApplicationModel.DataTransfer.DataPackage();
         package.SetText(path);
-        global::Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+        try
+        {
+            global::Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Another app (a clipboard manager, Remote Desktop) is holding the
+            // clipboard; nothing is copied, rather than the app closing.
+        }
     }
 }

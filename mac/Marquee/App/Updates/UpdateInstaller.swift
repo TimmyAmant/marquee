@@ -148,6 +148,11 @@ enum UpdateInstaller {
         done
 
         old="$current.old"
+        # A previous run that couldn't put the old copy back left it here:
+        # that's the only good copy, so restore it rather than delete it.
+        if [ ! -e "$current" ] && [ -e "$old" ]; then
+          mv "$old" "$current" || { echo "Marquee is only at $old; move it back to $current." >&2; exit 1; }
+        fi
         rm -rf "$old"
         if ! mv "$current" "$old"; then
           echo "Couldn't move $current aside; nothing was changed." >&2
@@ -157,7 +162,10 @@ enum UpdateInstaller {
         if ! mv "$new" "$current"; then
           echo "Couldn't move the new app into place; putting the old one back." >&2
           rm -rf "$current"
-          mv "$old" "$current"
+          if ! mv "$old" "$current"; then
+            echo "Couldn't put the old app back either: Marquee is at $old. Move it to $current." >&2
+            exit 1
+          fi
           "$open_app" "$current"
           exit 1
         fi

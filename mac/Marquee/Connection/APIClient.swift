@@ -240,7 +240,18 @@ struct APIClient: Sendable {
         var parser = ServerSentEventParser()
         do {
             for try await byte in bytes {
-                guard let line = lines.feed(byte), let event = parser.consume(line) else { continue }
+                guard let line = lines.feed(byte) else {
+                    if lines.pendingLength > ServerSentEventParser.maxEventLength {
+                        throw URLError(.dataLengthExceedsMaximum)
+                    }
+                    continue
+                }
+                guard let event = parser.consume(line) else {
+                    if parser.pendingDataLength > ServerSentEventParser.maxEventLength {
+                        throw URLError(.dataLengthExceedsMaximum)
+                    }
+                    continue
+                }
                 await onEvent(event)
             }
         } catch {

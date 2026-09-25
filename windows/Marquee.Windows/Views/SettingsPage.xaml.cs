@@ -34,13 +34,25 @@ public sealed partial class SettingsPage : Page
     {
         base.OnNavigatedTo(e);
         ViewModel.Activate();
+        if (stoppedTracking)
+        {
+            // Back to a page kept in the frame's cache: listen again.
+            stoppedTracking = false;
+            Bindings.Update();
+        }
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
         ViewModel.Deactivate();
+        // The OneWay bindings to the app-long Updater subscribe to it; let
+        // them go with the page rather than pile up on it visit after visit.
+        Bindings.StopTracking();
+        stoppedTracking = true;
     }
+
+    private bool stoppedTracking;
 
     // MARK: Updates
 
@@ -55,7 +67,7 @@ public sealed partial class SettingsPage : Page
     private async Task<HouseholdMember?> ShowAddMemberDialogAsync()
     {
         var dialog = new AddMemberDialog(ViewModel.CreateMemberAsync) { XamlRoot = XamlRoot };
-        var result = await dialog.ShowAsync();
+        var result = await dialog.TryShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Created : null;
     }
 
@@ -71,7 +83,7 @@ public sealed partial class SettingsPage : Page
         {
             XamlRoot = XamlRoot,
         };
-        var result = await dialog.ShowAsync();
+        var result = await dialog.TryShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Saved : null;
     }
 
@@ -87,6 +99,6 @@ public sealed partial class SettingsPage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
         };
-        return await confirm.ShowAsync() == ContentDialogResult.Primary;
+        return await confirm.TryShowAsync() == ContentDialogResult.Primary;
     }
 }

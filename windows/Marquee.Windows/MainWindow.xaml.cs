@@ -195,11 +195,14 @@ public sealed partial class MainWindow : Window, INavigator
             // Leave nothing of the previous account behind: a blank page, no
             // back stack, no half-typed search, so the next sign-in starts at Discover.
             NotificationsFlyoutHost.Hide();
+            NotificationsPanel.ViewModel.Reset();
             CloseSearch();
             ContentFrame.Navigate(typeof(PlaceholderPage));
             ContentFrame.BackStack.Clear();
             BackButton.IsEnabled = false;
         }
+        // The sign-in banner follows the phase.
+        UpdateUpdateButton();
     }
 
     /// <summary>The photo (or initials) on the rail's avatar, and its name.</summary>
@@ -266,13 +269,42 @@ public sealed partial class MainWindow : Window, INavigator
 
     // MARK: Rail (components/nav-menu.tsx)
 
-    /// <summary>The rail's update button: only while a newer Marquee is known.</summary>
+    /// <summary>
+    /// The rail's update button, only while a newer Marquee is known; and
+    /// before sign-in, where the rail and Settings aren't, the banner offering it.
+    /// </summary>
     private void UpdateUpdateButton()
     {
         RailUpdateGroup.Visibility = updater.ShowsUpdate ? Visibility.Visible : Visibility.Collapsed;
         var label = updater.IsInstalling ? "Updating Marquee…" : updater.UpdateLabel;
         AutomationProperties.SetName(RailUpdateButton, label);
         ToolTipService.SetToolTip(RailUpdateButton, label);
+
+        AuthUpdateBar.IsOpen = updater.ShowsUpdate && !shellShown && !authUpdateBarDismissed;
+        AuthUpdateBar.Title = updater.UpdateLabel;
+        AuthUpdateBar.Message = updater.StatusText;
+        AuthUpdateButton.Content = updater.IsInstalledCopy ? "Update" : "Download";
+        AuthUpdateButton.IsEnabled = !updater.IsBusy;
+    }
+
+    /// <summary>Closed by hand: stays closed for this run of the app.</summary>
+    private bool authUpdateBarDismissed;
+
+    private void OnAuthUpdateBarClosed(InfoBar sender, object args)
+    {
+        authUpdateBarDismissed = true;
+    }
+
+    private void OnAuthUpdateClick(object sender, RoutedEventArgs e)
+    {
+        if (updater.IsInstalledCopy)
+        {
+            _ = updater.InstallAsync();
+        }
+        else
+        {
+            _ = ExternalLinks.OpenAsync(updater.ReleasePage);
+        }
     }
 
     /// <summary>Settings, where "Update", its progress and "What's new" are.</summary>
@@ -432,7 +464,7 @@ public sealed partial class MainWindow : Window, INavigator
 
     private void OnUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(Updater.Update) or nameof(Updater.Phase))
+        if (e.PropertyName is nameof(Updater.Update) or nameof(Updater.Phase) or nameof(Updater.StatusText))
         {
             UpdateUpdateButton();
         }

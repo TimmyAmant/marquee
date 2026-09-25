@@ -40,6 +40,8 @@ final class Updater {
 
     static let firstCheckDelay: Duration = .seconds(10)
     static let checkInterval: Duration = .seconds(24 * 60 * 60)
+    /// After a check found a newer release with no Mac download yet.
+    static let noDownloadRetry: Duration = .seconds(15 * 60)
     /// The version whose "is available" banner has been shown.
     static let announcedKey = "marquee.update.announcedVersion"
 
@@ -86,8 +88,11 @@ final class Updater {
         scheduleTask = Task { [weak self] in
             try? await Task.sleep(for: Updater.firstCheckDelay)
             while !Task.isCancelled {
-                await self?.check()
-                try? await Task.sleep(for: Updater.checkInterval)
+                let result = await self?.check()
+                // A release caught in the few minutes before CI attaches its
+                // downloads: look again soon rather than tomorrow.
+                let soon = result == .failed(.noDownload)
+                try? await Task.sleep(for: soon ? Updater.noDownloadRetry : Updater.checkInterval)
             }
         }
     }

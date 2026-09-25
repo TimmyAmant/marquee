@@ -27,6 +27,9 @@ public static class AppServices
     public static Updater Updater =>
         updater ?? throw new InvalidOperationException("AppServices.Initialize has not run; App.OnLaunched builds the updater before any page.");
 
+    /// <summary>The model, or null before <see cref="Initialize"/> (a callback that can arrive early).</summary>
+    public static AppModel? TryGetModel() => model;
+
     public static void Initialize(AppModel value, Updater updates)
     {
         model = value;

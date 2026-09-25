@@ -4,6 +4,7 @@ using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
 
 namespace Marquee.Windows;
 
@@ -33,16 +34,56 @@ public partial class App : Application
         }
     }
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         try
         {
+            if (await HandedToRunningCopyAsync())
+            {
+                Exit();
+                return;
+            }
             Launch();
         }
         catch (Exception error)
         {
             CrashReporter.Report(error, "Starting up", fatal: true);
             Exit();
+        }
+    }
+
+    /// <summary>The name every copy registers under; the first one owns it.</summary>
+    private const string InstanceKey = "Marquee.Main";
+
+    /// <summary>
+    /// One Marquee at a time. Two copies each held their own settings file in
+    /// memory and wrote it back whole, undoing each other's changes, and each
+    /// kept its own notification stream, so every notification showed twice.
+    /// A second launch (the Start menu while it's already open) hands its
+    /// activation to the running copy, which comes to the front, and quits.
+    /// </summary>
+    private static async Task<bool> HandedToRunningCopyAsync()
+    {
+        var main = AppInstance.FindOrRegisterForKey(InstanceKey);
+        if (main.IsCurrent)
+        {
+            main.Activated += OnActivatedByAnotherCopy;
+            return false;
+        }
+        var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
+        // Off the UI thread, as the Windows App SDK asks: the redirect
+        // blocks on COM, which can deadlock the STA thread.
+        var redirect = Task.Run(async () => await main.RedirectActivationToAsync(activation));
+        await Task.WhenAny(redirect, Task.Delay(TimeSpan.FromSeconds(5)));
+        return true;
+    }
+
+    /// <summary>Another launch handed over: bring the window forward. Raised on a background thread.</summary>
+    private static void OnActivatedByAnotherCopy(object? sender, AppActivationArguments e)
+    {
+        if (AppServices.TryGetModel() is { } model)
+        {
+            model.Dispatcher.TryEnqueue(() => model.Navigator?.BringToFront());
         }
     }
 

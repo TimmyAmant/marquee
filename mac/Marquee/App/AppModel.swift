@@ -2,6 +2,7 @@ import SwiftUI
 import Observation
 import AppKit
 import Network
+import UserNotifications
 
 /// A section and the pages pushed on it, to come back to.
 struct SettingsReturn: Equatable {
@@ -244,17 +245,23 @@ final class AppModel {
     /// at sign-in on a 401, or on the can't-reach card. No token → sign-in,
     /// after a server-info probe so the card knows whether setup is done.
     private func connectToSavedServer() async {
+        // A Change Server… (or another server picked) while this is out
+        // makes its answer stale; it must not pull the app back to it.
+        connectGeneration &+= 1
+        let generation = connectGeneration
         guard session.server != nil else {
             connect.reset()
             phase = .connect
             return
         }
         if session.hasToken {
-            switch await session.restore() {
+            let restored = await session.restore()
+            guard generation == connectGeneration else { return }
+            switch restored {
             case let .signedIn(user):
                 completeSignIn(user, restored: true)
             case .signedOut:
-                await showSignIn()
+                await showSignIn(generation: generation)
             case let .unreachable(outcome):
                 showUnreachable(outcome)
             }
@@ -262,20 +269,25 @@ final class AppModel {
             // The Keychain wouldn't answer. The saved session is probably
             // still there, so say so instead of silently asking for a
             // password — "Retry" re-reads it.
-            await showSignIn(notice: Self.keychainUnreadableNotice)
+            await showSignIn(notice: Self.keychainUnreadableNotice, generation: generation)
         } else {
             // After an update too (the new copy can't read the old copy's
             // sign-in), the plain form: you just updated, so no explanation.
-            await showSignIn()
+            await showSignIn(generation: generation)
         }
     }
+
+    /// Bumped by every connect attempt and by Change Server…; a connect
+    /// whose number is no longer current drops its result.
+    @ObservationIgnored private var connectGeneration = 0
 
     /// Shown when the login Keychain refused to answer.
     static let keychainUnreadableNotice =
         "Couldn't read your saved sign-in from the login Keychain. Sign in again, or reload (⌘R) to retry."
 
-    private func showSignIn(notice: String? = nil) async {
+    private func showSignIn(notice: String? = nil, generation: Int) async {
         let outcome = await session.refreshInfo()
+        guard generation == connectGeneration else { return }
         guard case let .marquee(info) = outcome else {
             showUnreachable(outcome)
             return
@@ -354,6 +366,7 @@ final class AppModel {
     /// Menu › Change Server…, and the "Change" links: signs out, forgets the
     /// server, and starts the find-your-server flow over.
     func changeServer() {
+        connectGeneration &+= 1
         let previous = session.server?.displayName
         session.forgetServer()
         clearSignedInState()
@@ -420,6 +433,11 @@ final class AppModel {
     }
 
     private func clearSignedInState() {
+        // The last account's notifications leave Notification Center with it,
+        // so the next person on this Mac neither sees nor clicks them.
+        if !AppInfo.isRunningTests {
+            UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        }
         pendingURL = nil
         live.stop()
         notificationConsent.end()
@@ -434,9 +452,13 @@ final class AppModel {
     /// (promotion, integrations connected) — re-read `/me`, like auth.ts's
     /// session callback. A 401 here signs out through `sessionEnded()`.
     func refreshViewer() {
-        guard phase == .ready else { return }
+        guard phase == .ready, let asked = viewer else { return }
+        let server = session.server
         Task {
             guard let user = try? await session.refreshUser(), phase == .ready else { return }
+            // Signed out and back in (maybe as someone else) while /me was
+            // out: this answer is about the previous account.
+            guard user.id == asked.id, session.server == server, viewer?.id == asked.id else { return }
             if user != viewer { viewer = user }
         }
     }
