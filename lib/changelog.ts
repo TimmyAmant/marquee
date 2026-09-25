@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.31.0",
+    date: "2026-09-25",
+    changes: [
+      "Search and notifications moved onto the rail, on the website and in the Mac and Windows apps. The bell sits right under your photo, with a dot when something's unread, and its list opens beside the rail.",
+      "Search opens as a pop-up over the page: click Search on the rail (or press ⌘F on the Mac, Ctrl+F on Windows), type, and pick a suggestion or press Return for all results. Escape or a click outside closes it.",
+      "The top bar no longer carries a search box or the bell. On a phone, the website keeps its bell at the top, and search is in the menu.",
+    ],
+  },
+  {
     version: "0.30.4",
     date: "2026-09-25",
     changes: [

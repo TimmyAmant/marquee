@@ -36,7 +36,10 @@ reference implementation.
      uppercased) in bg0 on a 140° gradient accentHover → accent (45%) →
      #c2583a, with a 2px white-15% ring; a plain person glyph when signed
      out. Opens Settings (the account), or sign-in.
-  2. Search (magnifier) and Discover (compass).
+  2. Signed in only: Notifications (bell, with an 8px accent dot while any
+     are unread; the list opens beside the rail). Then Search (magnifier,
+     opens a 560-wide floating search panel over the page; ⌘F / Ctrl+F) and
+     Discover (compass).
   3. Movies and Series.
   4. Signed in only: Favorites, Calendar, Requests.
   5. Apps only, and only while a newer release is out: the update button
