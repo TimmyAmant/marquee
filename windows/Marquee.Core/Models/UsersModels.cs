@@ -29,6 +29,12 @@ public sealed record HouseholdMember
     /// <inheritdoc cref="User.AvatarUrl"/>
     public string? AvatarUrl { get; init; }
 
+    /// <summary>The "Plex" / "Jellyfin" tags; null from older servers.</summary>
+    public LinkedAccounts? Linked { get; init; }
+
+    /// <inheritdoc cref="User.HasPassword"/>
+    public bool? HasPassword { get; init; }
+
     public bool IsAdmin => Role == UserRole.Admin;
 
     /// <summary>What the website prints: the display name, else the username.</summary>

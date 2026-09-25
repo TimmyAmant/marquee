@@ -332,8 +332,60 @@ public sealed class ApiClient
         return request;
     }
 
+    /// <summary>
+    /// Like <see cref="SendAsync{T}"/>, but hands back every 2xx answer, and
+    /// the non-2xx ones in <paramref name="accepting"/>, undecoded: for calls
+    /// whose statuses carry meaning of their own (a Plex sign-in poll's
+    /// 202 / 403 / 410). Any other answer throws exactly as
+    /// <see cref="SendAsync{T}"/> would; decode a body with <see cref="Decode{T}"/>.
+    /// </summary>
+    public async Task<RawResponse> ExchangeAsync(
+        HttpMethod method,
+        string path,
+        object? body = null,
+        IReadOnlyCollection<int>? accepting = null,
+        TimeSpan? timeout = null,
+        CancellationToken ct = default)
+    {
+        var raw = await SendRawAsync(method, path, null, body, timeout, ct).ConfigureAwait(false);
+        EnsureMarquee(raw);
+        if (!raw.IsSuccess && accepting?.Contains(raw.StatusCode) != true)
+        {
+            await ThrowFailureAsync(raw).ConfigureAwait(false);
+        }
+        return raw;
+    }
+
+    /// <summary>A body as <typeparamref name="T"/>; one this app can't read is Server.</summary>
+    public static T Decode<T>(RawResponse raw)
+    {
+        if (raw.Body.Length == 0 && typeof(T) == typeof(EmptyResponse))
+        {
+            return default!;
+        }
+        try
+        {
+            return JsonSerializer.Deserialize<T>(raw.Body, Json.Options) ?? throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
+        }
+        catch (Exception decodeError) when (decodeError is JsonException or NotSupportedException)
+        {
+            throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
+        }
+    }
+
     /// <summary>The JSON contract's reading of an answer: its value on success, else the error it stands for.</summary>
     private async Task<T> DecodeAsync<T>(RawResponse raw)
+    {
+        EnsureMarquee(raw);
+        if (!raw.IsSuccess)
+        {
+            await ThrowFailureAsync(raw).ConfigureAwait(false);
+        }
+        return Decode<T>(raw);
+    }
+
+    /// <summary>Throws unless the answer came from a Marquee v1 API (or a proxy saying it's down).</summary>
+    private static void EnsureMarquee(RawResponse raw)
     {
         if (raw.IsRedirect)
         {
@@ -349,24 +401,6 @@ public sealed class ApiClient
                 throw ApiException.Network(NetworkFailure.Refused, $"the proxy answered {raw.StatusCode}");
             }
             throw ApiException.NotMarquee(raw.StatusCode);
-        }
-
-        if (!raw.IsSuccess)
-        {
-            await ThrowFailureAsync(raw).ConfigureAwait(false);
-        }
-
-        if (raw.Body.Length == 0 && typeof(T) == typeof(EmptyResponse))
-        {
-            return default!;
-        }
-        try
-        {
-            return JsonSerializer.Deserialize<T>(raw.Body, Json.Options) ?? throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
-        }
-        catch (Exception decodeError) when (decodeError is JsonException or NotSupportedException)
-        {
-            throw ApiException.Server(ApiException.UnreadableResponseMessage, raw.StatusCode, raw.HasApiHeader);
         }
     }
 

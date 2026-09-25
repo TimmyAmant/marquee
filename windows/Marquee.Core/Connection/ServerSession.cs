@@ -291,6 +291,67 @@ public sealed class ServerSession
         return user;
     }
 
+    // MARK: Plex / Jellyfin sign-in
+
+    /// <summary>
+    /// <c>POST /auth/plex/start</c>: the handle to poll with and the plex.tv
+    /// page to open in the browser. Offered when <c>ServerInfo.SignIn.Plex</c>.
+    /// </summary>
+    public Task<PlexSignInStart> StartPlexSignInAsync(CancellationToken ct = default)
+    {
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        return UnauthenticatedApi(server).Auth.PlexStartAsync(ct);
+    }
+
+    /// <summary>
+    /// Polls <c>POST /auth/plex/poll</c> every <paramref name="interval"/>
+    /// (2 s) until Plex says yes, then stores the token exactly as
+    /// <see cref="LoginAsync"/> does. Ends early when the server refuses
+    /// the account (403: Forbidden with its reason), the PIN expires (410 or
+    /// <c>ExpiresAt</c>: Expired), any other error comes back, or
+    /// <paramref name="ct"/> is cancelled (Cancel, leaving the page, quitting:
+    /// a Network/Cancelled error).
+    /// </summary>
+    public async Task<User> FinishPlexSignInAsync(PlexSignInStart start, TimeSpan? interval = null, CancellationToken ct = default)
+    {
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        var auth = UnauthenticatedApi(server).Auth;
+        var response = await PlexPoll.RunAsync(
+            start.ExpiresAt,
+            token => auth.PlexPollAsync(start.Handle, DeviceName, token),
+            interval,
+            ct: ct).ConfigureAwait(false);
+        return Adopt(response, server);
+    }
+
+    /// <summary>
+    /// <c>POST /auth/jellyfin</c>: a Jellyfin username and password, checked
+    /// by the server against its Jellyfin; the token is stored as
+    /// <see cref="LoginAsync"/> does. Offered when <c>ServerInfo.SignIn.Jellyfin</c>.
+    /// </summary>
+    public async Task<User> LoginWithJellyfinAsync(string username, string password, CancellationToken ct = default)
+    {
+        username = username.Trim();
+        if (username.Length == 0 || password.Length == 0)
+        {
+            throw ApiException.Invalid("Enter your Jellyfin username and password.");
+        }
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        var response = await UnauthenticatedApi(server).Auth.JellyfinAsync(username, password, DeviceName, ct).ConfigureAwait(false);
+        return Adopt(response, server);
+    }
+
+    private MarqueeApi UnauthenticatedApi(ServerAddress server) => new(new ApiClient(server.BaseUrl, handler: handler));
+
     /// <summary>
     /// Signs out locally right away, then revokes the token on the server
     /// best-effort; an unreachable server can't keep this PC signed in.

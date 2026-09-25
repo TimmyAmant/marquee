@@ -27,6 +27,8 @@ public sealed class HouseholdMemberRow
         UsernameLine = member.DisplayName.NonBlank() != null ? member.Username : "";
         IsAdminRow = member.IsAdmin;
         IsCurrentUser = member.IsCurrentUser;
+        PlexTag = member.Linked?.Plex == true ? "Plex" : "";
+        JellyfinTag = member.Linked?.Jellyfin == true ? "Jellyfin" : "";
         CanEdit = viewerIsAdmin || member.IsCurrentUser;
         CanRemove = viewerIsAdmin && !member.IsAdmin && !member.IsCurrentUser;
         ShowsDivider = showsDivider;
@@ -56,6 +58,14 @@ public sealed class HouseholdMemberRow
 
     public BadgeTone AdminTone { get; } = BadgeTone.Tracked;
     public BadgeTone YouTone { get; } = BadgeTone.Neutral;
+
+    /// <summary>"Plex" on an account linked to a Plex user; empty (the pill collapses) otherwise.</summary>
+    public string PlexTag { get; }
+
+    /// <summary>"Jellyfin" on an account linked to a Jellyfin user; empty otherwise.</summary>
+    public string JellyfinTag { get; }
+
+    public BadgeTone LinkTone { get; } = BadgeTone.Owned;
 
     /// <summary>"Edit" on every row for the admin, on your own row for a member.</summary>
     public bool CanEdit { get; }
@@ -100,11 +110,25 @@ public sealed partial class SettingsViewModel : ObservableObject
         nameof(ServerVersionLabel),
         nameof(ServerUpdateText),
         nameof(HasServerUpdateText),
+        nameof(NeedsCurrentPassword),
+        nameof(ShowsLinkedAccounts),
+        nameof(HasNoPassword),
+        nameof(PlexLinkStatus),
+        nameof(JellyfinLinkStatus),
+        nameof(CanLinkPlex),
+        nameof(CanUnlinkPlex),
+        nameof(CanLinkJellyfin),
+        nameof(CanUnlinkJellyfin),
+        nameof(ShowsMediaServerMembers),
+        nameof(CanImportFromPlex),
+        nameof(CanImportFromJellyfin),
+        nameof(HasNoMediaServers),
     ];
 
     private readonly AppModel model;
     private CancellationTokenSource? aboutCancellation;
     private CancellationTokenSource? membersCancellation;
+    private CancellationTokenSource? plexLinkCancellation;
     private bool active;
 
     // MARK: The edit form
@@ -163,6 +187,43 @@ public sealed partial class SettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasMembersNotice))]
     private string? membersNotice;
 
+    // MARK: Linked accounts and Plex/Jellyfin members
+
+    /// <summary>Linking Plex: the browser is open at plex.tv and the poll is running.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanLinkPlex))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkPlex))]
+    [NotifyPropertyChangedFor(nameof(CanLinkJellyfin))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkJellyfin))]
+    private bool isLinkingPlex;
+
+    /// <summary>An unlink (or the Jellyfin link) is in flight.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanLinkPlex))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkPlex))]
+    [NotifyPropertyChangedFor(nameof(CanLinkJellyfin))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkJellyfin))]
+    private bool isChangingLinks;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLinksError))]
+    private string? linksError;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLinksNotice))]
+    private string? linksNotice;
+
+    /// <summary>"New accounts from Plex/Jellyfin sign-in" (admin); the switch shows once it's loaded.</summary>
+    [ObservableProperty]
+    private bool mediaServerSignup;
+
+    /// <summary><c>GET /settings/sign-in</c> answered (an older server answers NotFound, and the switch stays hidden).</summary>
+    [ObservableProperty]
+    private bool hasSignInSettings;
+
+    /// <summary>Set while the switch is moved to match the server, so that isn't taken for the admin flipping it.</summary>
+    private bool syncingSignInSettings;
+
     // MARK: Notifications
 
     /// <summary>The switch: Windows notifications for this account on this PC.</summary>
@@ -215,6 +276,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Set by the page: "Remove {username}?", true only when confirmed.</summary>
     internal Func<HouseholdMember, Task<bool>>? RemoveMemberPrompt { get; set; }
 
+    /// <summary>Set by the page: the "Link Jellyfin" dialog, true once it linked the account.</summary>
+    internal Func<Task<bool>>? LinkJellyfinPrompt { get; set; }
+
+    /// <summary>Set by the page: "Import from Plex/Jellyfin", answering what was imported or null when cancelled.</summary>
+    internal Func<MediaServerKind, Task<ImportUsersResult?>>? ImportMembersPrompt { get; set; }
+
     public string Username => model.Viewer?.Username ?? "";
     public string RoleLabel => model.Viewer?.Role.Label ?? "";
 
@@ -264,6 +331,40 @@ public sealed partial class SettingsViewModel : ObservableObject
         ? "Everyone with an account on this Marquee server. There's no public signup: add accounts for the rest of your household here."
         : "Only the admin sees and manages every account. Yours is below.";
 
+    /// <summary>
+    /// The form asks for your current password with a new one, unless your
+    /// account has none yet (made by Plex/Jellyfin sign-in or import).
+    /// </summary>
+    public bool NeedsCurrentPassword => model.Viewer?.HasPassword != false;
+
+    // Linked accounts: only servers with Plex/Jellyfin sign-in send `linked`.
+    public bool ShowsLinkedAccounts => model.Viewer?.Linked != null;
+    public bool HasNoPassword => model.Viewer?.HasPassword == false;
+    private bool PlexLinked => model.Viewer?.Linked?.Plex == true;
+    private bool JellyfinLinked => model.Viewer?.Linked?.Jellyfin == true;
+    private bool OffersPlex => model.Session.ServerInfo?.OffersPlexSignIn == true;
+    private bool OffersJellyfin => model.Session.ServerInfo?.OffersJellyfinSignIn == true;
+
+    public string PlexLinkStatus => LinkStatus(MediaServerKind.Plex, PlexLinked, OffersPlex);
+    public string JellyfinLinkStatus => LinkStatus(MediaServerKind.Jellyfin, JellyfinLinked, OffersJellyfin);
+    public bool CanLinkPlex => !PlexLinked && OffersPlex && !IsLinkingPlex && !IsChangingLinks;
+    public bool CanUnlinkPlex => PlexLinked && !IsLinkingPlex && !IsChangingLinks;
+    public bool CanLinkJellyfin => !JellyfinLinked && OffersJellyfin && !IsLinkingPlex && !IsChangingLinks;
+    public bool CanUnlinkJellyfin => JellyfinLinked && !IsLinkingPlex && !IsChangingLinks;
+    public bool HasLinksError => LinksError != null;
+    public bool HasLinksNotice => LinksNotice != null;
+
+    // The admin's Plex/Jellyfin members card.
+    public bool ShowsMediaServerMembers => IsAdmin && model.Viewer?.Linked != null;
+    public bool CanImportFromPlex => OffersPlex;
+    public bool CanImportFromJellyfin => OffersJellyfin;
+    public bool HasNoMediaServers => !OffersPlex && !OffersJellyfin;
+
+    private static string LinkStatus(MediaServerKind server, bool linked, bool offered) =>
+        linked ? $"Linked: you can sign in with your {server.Label()} account."
+            : offered ? "Not linked."
+            : $"{server.Label()} isn't connected to this server.";
+
     public bool ShowsMembersError => MembersError != null && Members == null;
     public bool HasMembersActionError => MembersActionError != null;
     public bool HasMembersNotice => MembersNotice != null;
@@ -284,8 +385,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.Notifications.StateChanged += OnNotificationsStateChanged;
         AppServices.Updater.PropertyChanged += OnUpdaterPropertyChanged;
         SyncNotifications();
+        NotifyDerived();
         _ = LoadMembersAsync();
         _ = LoadAboutAsync();
+        _ = LoadSignInSettingsAsync();
+        // Which of Plex/Jellyfin are connected now (server-info.signIn).
+        _ = model.Session.RefreshInfoAsync();
     }
 
     public void Deactivate()
@@ -302,6 +407,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         AppServices.Updater.PropertyChanged -= OnUpdaterPropertyChanged;
         aboutCancellation?.Cancel();
         membersCancellation?.Cancel();
+        CancelLinkPlex();
     }
 
     // MARK: Notifications
@@ -393,8 +499,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             SaveError = PasswordsDifferMessage;
             return;
         }
-        // The server checks it too; asking here saves a round trip.
-        if (NewPassword.Length > 0 && CurrentPassword.Length == 0)
+        // The server checks it too; asking here saves a round trip. An
+        // account without a password yet has none to give.
+        if (NewPassword.Length > 0 && NeedsCurrentPassword && CurrentPassword.Length == 0)
         {
             SaveError = CurrentPasswordMissingMessage;
             return;
@@ -403,7 +510,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             viewer.Username,
             DisplayName.Trim().NonBlank(),
             NewPassword.NonBlank(),
-            CurrentPassword: CurrentPassword.NonBlank());
+            CurrentPassword: NeedsCurrentPassword ? CurrentPassword.NonBlank() : null);
 
         IsSaving = true;
         try
@@ -599,6 +706,214 @@ public sealed partial class SettingsViewModel : ObservableObject
         MembersNotice = null;
     }
 
+    // MARK: Linked accounts
+
+    /// <summary>
+    /// "Link Plex": <c>POST /me/links/plex/start</c>, the plex.tv page in the
+    /// browser, then <c>POST /me/links/plex/poll</c> every 2 seconds until
+    /// it's linked, refused, expired or cancelled.
+    /// </summary>
+    [RelayCommand]
+    private async Task LinkPlexAsync()
+    {
+        if (!CanLinkPlex)
+        {
+            return;
+        }
+        ClearLinksMessages();
+        plexLinkCancellation?.Cancel();
+        var cancellation = new CancellationTokenSource();
+        plexLinkCancellation = cancellation;
+        IsLinkingPlex = true;
+        var api = model.Api;
+        try
+        {
+            var start = await api.Links.PlexStartAsync(cancellation.Token);
+            if (!Uri.TryCreate(start.AuthUrl, UriKind.Absolute, out var url) || !await ExternalLinks.OpenAsync(url))
+            {
+                LinksError = ConnectViewModel.PlexPageUnopenedMessage;
+                return;
+            }
+            await PlexPoll.UntilAsync(start.ExpiresAt, token => api.Links.PlexPollAsync(start.Handle, token), ct: cancellation.Token);
+            LinksNotice = "Your Plex account is linked.";
+            await model.RefreshViewerAsync();
+        }
+        catch (ApiException error)
+        {
+            if (!error.IsCancellation && !cancellation.IsCancellationRequested)
+            {
+                LinksError = error.Message;
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(plexLinkCancellation, cancellation))
+            {
+                plexLinkCancellation = null;
+                IsLinkingPlex = false;
+            }
+            cancellation.Dispose();
+        }
+    }
+
+    /// <summary>"Cancel" while waiting for Plex; also leaving the page.</summary>
+    [RelayCommand]
+    private void CancelLinkPlex()
+    {
+        var cancellation = plexLinkCancellation;
+        plexLinkCancellation = null;
+        IsLinkingPlex = false;
+        cancellation?.Cancel();
+    }
+
+    /// <summary>"Link Jellyfin": the dialog sends <c>POST /me/links/jellyfin</c> itself and shows a refusal in place.</summary>
+    [RelayCommand]
+    private async Task LinkJellyfinAsync()
+    {
+        if (!CanLinkJellyfin || LinkJellyfinPrompt is not { } prompt)
+        {
+            return;
+        }
+        ClearLinksMessages();
+        if (await prompt())
+        {
+            LinksNotice = "Your Jellyfin account is linked.";
+            await model.RefreshViewerAsync();
+        }
+    }
+
+    [RelayCommand]
+    private Task UnlinkPlexAsync() => UnlinkAsync(MediaServerKind.Plex);
+
+    [RelayCommand]
+    private Task UnlinkJellyfinAsync() => UnlinkAsync(MediaServerKind.Jellyfin);
+
+    /// <summary><c>DELETE /me/links/{server}</c>; the server refuses when it would leave no way to sign in.</summary>
+    private async Task UnlinkAsync(MediaServerKind server)
+    {
+        if (IsChangingLinks || IsLinkingPlex)
+        {
+            return;
+        }
+        ClearLinksMessages();
+        IsChangingLinks = true;
+        try
+        {
+            await model.Api.Links.UnlinkAsync(server);
+            LinksNotice = $"Your {server.Label()} account is unlinked.";
+            await model.RefreshViewerAsync();
+        }
+        catch (ApiException error)
+        {
+            LinksError = error.Message;
+        }
+        finally
+        {
+            IsChangingLinks = false;
+        }
+    }
+
+    /// <summary><c>POST /me/links/jellyfin</c>, for the Link Jellyfin dialog.</summary>
+    internal Task LinkJellyfinAccountAsync(string username, string password) => model.Api.Links.JellyfinAsync(username, password);
+
+    private void ClearLinksMessages()
+    {
+        LinksError = null;
+        LinksNotice = null;
+    }
+
+    // MARK: Plex / Jellyfin members (admin)
+
+    [RelayCommand]
+    private Task ImportFromPlexAsync() => ImportMembersAsync(MediaServerKind.Plex);
+
+    [RelayCommand]
+    private Task ImportFromJellyfinAsync() => ImportMembersAsync(MediaServerKind.Jellyfin);
+
+    /// <summary>"Import from Plex/Jellyfin": the dialog loads the list and imports; the member list reloads through <see cref="ServerChange.Users"/>.</summary>
+    private async Task ImportMembersAsync(MediaServerKind server)
+    {
+        if (!IsAdmin || ImportMembersPrompt is not { } prompt)
+        {
+            return;
+        }
+        ClearMembersMessages();
+        if (await prompt(server) is { } result)
+        {
+            MembersNotice = ImportSummary(result.Created.Count, result.Skipped);
+        }
+    }
+
+    public static string ImportSummary(int created, int skipped)
+    {
+        var made = created == 1 ? "Imported 1 member." : $"Imported {created} members.";
+        return skipped > 0 ? $"{made} {skipped} skipped (already members, or couldn't be added)." : made;
+    }
+
+    /// <summary><c>GET /users/import/{server}</c>, for the import dialog.</summary>
+    internal Task<IReadOnlyList<ImportCandidate>> LoadImportCandidatesAsync(MediaServerKind server) => model.Api.Users.ImportCandidatesAsync(server);
+
+    /// <summary><c>POST /users/import/{server}</c>, for the import dialog.</summary>
+    internal Task<ImportUsersResult> RunImportAsync(MediaServerKind server, IReadOnlyList<ExternalId> ids) => model.Api.Users.ImportAsync(server, ids);
+
+    /// <summary><c>GET /settings/sign-in</c> (admin); NotFound from an older server keeps the switch hidden.</summary>
+    private async Task LoadSignInSettingsAsync()
+    {
+        if (!IsAdmin)
+        {
+            return;
+        }
+        try
+        {
+            var settings = await model.Api.Users.SignInSettingsAsync();
+            syncingSignInSettings = true;
+            try
+            {
+                MediaServerSignup = settings.MediaServerSignup;
+            }
+            finally
+            {
+                syncingSignInSettings = false;
+            }
+            HasSignInSettings = true;
+        }
+        catch (ApiException)
+        {
+            HasSignInSettings = false;
+        }
+    }
+
+    /// <summary>The admin flipped "New accounts from Plex/Jellyfin sign-in": <c>PUT /settings/sign-in</c>, put back on failure.</summary>
+    partial void OnMediaServerSignupChanged(bool value)
+    {
+        if (!syncingSignInSettings)
+        {
+            _ = SaveSignInSettingsAsync(value);
+        }
+    }
+
+    private async Task SaveSignInSettingsAsync(bool value)
+    {
+        MembersActionError = null;
+        try
+        {
+            await model.Api.Users.SaveSignInSettingsAsync(new SignInSettings { MediaServerSignup = value });
+        }
+        catch (ApiException error)
+        {
+            MembersActionError = error.Message;
+            syncingSignInSettings = true;
+            try
+            {
+                MediaServerSignup = !value;
+            }
+            finally
+            {
+                syncingSignInSettings = false;
+            }
+        }
+    }
+
     // MARK: About
 
     [RelayCommand]
@@ -664,7 +979,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             if (model.Viewer is { } viewer && viewer.IsAdmin != IsAdmin)
             {
                 IsAdmin = viewer.IsAdmin;
+                OnPropertyChanged(nameof(ShowsMediaServerMembers));
                 _ = LoadMembersAsync();
+                _ = LoadSignInSettingsAsync();
             }
         }
         else if (e.PropertyName == nameof(AppModel.ReloadToken))

@@ -43,6 +43,9 @@ public enum ApiErrorKind
 
     /// <summary>Something answered, but not a Marquee v1 API (no <c>X-Marquee-API</c>).</summary>
     NotMarquee,
+
+    /// <summary>410: a Plex sign-in (or link) whose PIN expired, or that outlived its <c>expiresAt</c>.</summary>
+    Expired,
 }
 
 /// <summary>Why a <see cref="ApiErrorKind.Network"/> failure happened, as far as the socket layer could tell.</summary>
