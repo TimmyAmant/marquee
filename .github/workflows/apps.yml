@@ -1,0 +1,110 @@
+name: App downloads
+
+# Builds the Mac and Windows apps as downloads: a zip of Marquee.app and a
+# zip of a self-contained Windows folder (nothing to install first, not even
+# .NET). Every pull request and push to main keeps them as run artifacts,
+# for trying a change before it ships; a published release also gets them
+# attached as assets, which is where the Mac app's "Update" button and the
+# README's download links look.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: apps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    name: Mac app download
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - name: Work out the version
+        id: version
+        # The app's version is the server's: the updater compares it with
+        # the release tag, which is package.json's version.
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Build
+        working-directory: mac
+        run: |
+          set -o pipefail
+          xcodegen generate
+          xcodebuild -project Marquee.xcodeproj -scheme Marquee -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath build/DerivedData \
+            MARKETING_VERSION=${{ steps.version.outputs.version }} \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            build | tail -20
+      - name: Package
+        run: |
+          app=mac/build/DerivedData/Build/Products/Release/Marquee.app
+          codesign --verify --deep --strict "$app"
+          mkdir -p dist
+          # ditto keeps the bundle's symlinks, permissions and signature intact
+          # (a plain zip can break the signature).
+          ditto -c -k --keepParent "$app" dist/Marquee-mac.zip
+          (cd dist && shasum -a 256 Marquee-mac.zip > Marquee-mac.zip.sha256)
+          cat dist/Marquee-mac.zip.sha256
+      # The ditto zip goes inside the artifact rather than the bare .app:
+      # GitHub's own zipping of an artifact drops the symlinks and executable
+      # bits a Mac app bundle needs.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Marquee-mac-${{ steps.version.outputs.version }}
+          path: dist/
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-mac.zip dist/Marquee-mac.zip.sha256 --clobber
+
+  windows:
+    name: Windows app download
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: microsoft/setup-msbuild@v2
+      - name: Work out the version
+        id: version
+        shell: bash
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Publish
+        # Self-contained: the .NET runtime ships in the folder alongside the
+        # Windows App SDK runtime (already self-contained in the project), so
+        # unzipping and running Marquee.Windows.exe is the whole install.
+        run: >
+          msbuild windows/Marquee.Windows/Marquee.Windows.csproj -restore -t:Publish
+          -p:Configuration=Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64
+          -p:SelfContained=true -p:PublishDir=${{ runner.temp }}\Marquee\ -v:minimal
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path "${{ runner.temp }}\Marquee" -DestinationPath dist\Marquee-windows-x64.zip
+          $hash = (Get-FileHash dist\Marquee-windows-x64.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  Marquee-windows-x64.zip" | Out-File -Encoding ascii dist\Marquee-windows-x64.zip.sha256
+          Get-Content dist\Marquee-windows-x64.zip.sha256
+      # The folder itself, not the zip: GitHub zips an artifact on download,
+      # so this comes down as one zip of the app folder.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Marquee-windows-x64-${{ steps.version.outputs.version }}
+          path: ${{ runner.temp }}\Marquee\
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-windows-x64.zip dist/Marquee-windows-x64.zip.sha256 --clobber
