@@ -32,7 +32,10 @@ public sealed class HouseholdMemberRow
         Remove = remove;
     }
 
-    public HouseholdMember Member { get; }
+    // Internal, not public: a public Core record here would make the XAML
+    // compiler generate an activator for it, and its required members
+    // don't allow that (CS9035). Bindings use the flattened properties.
+    internal HouseholdMember Member { get; }
 
     /// <summary>The display name, else the username.</summary>
     public string Label { get; }
@@ -180,13 +183,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// or null when the admin cancelled. The dialogs need the page's
     /// XamlRoot, which is why they aren't here.
     /// </summary>
-    public Func<Task<HouseholdMember?>>? AddMemberPrompt { get; set; }
+    internal Func<Task<HouseholdMember?>>? AddMemberPrompt { get; set; }
 
     /// <summary>Set by the page: the edit dialog for a row, answering the saved result or null when cancelled.</summary>
-    public Func<HouseholdMember, Task<UpdateUserResult?>>? EditMemberPrompt { get; set; }
+    internal Func<HouseholdMember, Task<UpdateUserResult?>>? EditMemberPrompt { get; set; }
 
     /// <summary>Set by the page: "Remove {username}?", true only when confirmed.</summary>
-    public Func<HouseholdMember, Task<bool>>? RemoveMemberPrompt { get; set; }
+    internal Func<HouseholdMember, Task<bool>>? RemoveMemberPrompt { get; set; }
 
     public string Username => model.Viewer?.Username ?? "";
     public string RoleLabel => model.Viewer?.Role.Label ?? "";
@@ -454,10 +457,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary><c>POST /users</c>, for the Add member dialog.</summary>
-    public Task<HouseholdMember> CreateMemberAsync(CreateUserRequest request) => model.Api.Users.CreateAsync(request);
+    internal Task<HouseholdMember> CreateMemberAsync(CreateUserRequest request) => model.Api.Users.CreateAsync(request);
 
     /// <summary><c>PATCH /users/{id}</c>, for the edit dialog.</summary>
-    public Task<UpdateUserResult> UpdateMemberAsync(Guid id, UpdateUserRequest request) => model.Api.Users.UpdateAsync(id, request);
+    internal Task<UpdateUserResult> UpdateMemberAsync(Guid id, UpdateUserRequest request) => model.Api.Users.UpdateAsync(id, request);
 
     private void ShowMembers(IEnumerable<HouseholdMember> list)
     {

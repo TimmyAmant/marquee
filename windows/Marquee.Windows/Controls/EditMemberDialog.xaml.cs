@@ -50,7 +50,8 @@ public sealed partial class EditMemberDialog : ContentDialog
     }
 
     /// <summary>What the server saved; null until Save succeeds.</summary>
-    public UpdateUserResult? Saved { get; private set; }
+    // Internal: see HouseholdMemberRow.Member.
+    internal UpdateUserResult? Saved { get; private set; }
 
     private bool CanSave => UsernameBox.Text.Trim().Length > 0;
 

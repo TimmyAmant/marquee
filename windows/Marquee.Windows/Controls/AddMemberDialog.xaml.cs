@@ -28,7 +28,9 @@ public sealed partial class AddMemberDialog : ContentDialog
     }
 
     /// <summary>The account the server created; null until Create account succeeds.</summary>
-    public HouseholdMember? Created { get; private set; }
+    // Internal: see HouseholdMemberRow.Member (a public Core record on a
+    // XAML type fails the build with CS9035).
+    internal HouseholdMember? Created { get; private set; }
 
     private bool CanCreate => UsernameBox.Text.Trim().Length > 0 && PasswordInput.Password.Length > 0;
 
