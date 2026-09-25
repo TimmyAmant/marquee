@@ -22,6 +22,11 @@
   --marquee-tracked-bg: #10202f;
   --marquee-untracked-bg: #201f26;
 
+  /* The navigation menu's frosted panel (components/nav-menu.tsx). */
+  --marquee-glass: rgb(30 29 37 / 0.68);
+  --marquee-glass-border: rgb(255 255 255 / 0.09);
+  --marquee-glass-shadow: 0 24px 64px rgb(0 0 0 / 0.5);
+
   --background: var(--marquee-bg-0);
   --foreground: var(--marquee-text-primary);
 
@@ -55,6 +60,10 @@
   --marquee-tracked-bg: #e5f0fa;
   --marquee-untracked-bg: #efece3;
 
+  --marquee-glass: rgb(255 255 255 / 0.74);
+  --marquee-glass-border: rgb(33 31 26 / 0.1);
+  --marquee-glass-shadow: 0 20px 50px rgb(60 45 20 / 0.16);
+
   color-scheme: light;
 }
 
@@ -80,6 +89,10 @@
     --marquee-tracked: #2f6fb0;
     --marquee-tracked-bg: #e5f0fa;
     --marquee-untracked-bg: #efece3;
+
+  --marquee-glass: rgb(255 255 255 / 0.74);
+  --marquee-glass-border: rgb(33 31 26 / 0.1);
+  --marquee-glass-shadow: 0 20px 50px rgb(60 45 20 / 0.16);
 
     color-scheme: light;
   }
@@ -201,4 +214,16 @@ h3,
   pointer-events: none;
   opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Frosted glass for the navigation rail and its expanded menu, after the
+   Plex app's Apple TV menu: the page shows through, blurred, so the menu
+   reads as floating over whatever is behind it rather than as a column
+   carved out of the layout. */
+.nav-glass {
+  background: var(--marquee-glass);
+  border: 1px solid var(--marquee-glass-border);
+  box-shadow: var(--marquee-glass-shadow);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
 }

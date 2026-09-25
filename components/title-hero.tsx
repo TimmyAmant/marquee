@@ -117,7 +117,7 @@ export function TitleHero({
     // top (Docs/DESIGN_TARGET.md).
     <div className="relative -mt-[52px]">
       {backdrop && (
-        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px]">
+        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px] md:-left-[72px]">
           <MediaImage src={backdrop} alt="" fill priority className="object-cover" />
           {/* Two gradients, same as the mockup's .backdrop .fade: down to the
               page background at the bottom, plus a left-hand scrim so the

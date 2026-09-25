@@ -22,10 +22,12 @@ export function SearchBar({
   variant = "default",
   initialValue = "",
   onNavigate,
+  autoFocus = false,
 }: {
   variant?: "default" | "compact";
   initialValue?: string;
   onNavigate?: () => void;
+  autoFocus?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -141,6 +143,7 @@ export function SearchBar({
           onFocus={() => suggestions.length > 0 && setIsOpen(true)}
           placeholder="Search an actor, a studio, a title…"
           autoComplete="off"
+          autoFocus={autoFocus}
           className={
             isCompact
               ? "h-8 w-full rounded-full border border-border bg-bg-2/70 px-3.5 text-[13px] text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] backdrop-blur-[18px] placeholder:text-text-muted outline-none transition-colors focus:border-accent"

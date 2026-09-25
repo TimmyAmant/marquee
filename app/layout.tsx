@@ -57,7 +57,10 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeSync />
         <Sidebar />
-        <div className="flex min-h-full min-w-0 flex-1 flex-col md:pl-[230px]">
+        {/* 72px clears the floating nav rail (16px from the edge, 50 wide)
+            with room to spare; full-bleed artwork like a title's backdrop
+            pulls itself back under the rail. */}
+        <div className="flex min-h-full min-w-0 flex-1 flex-col md:pl-[72px]">
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />

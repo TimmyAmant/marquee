@@ -22,7 +22,8 @@ export default async function SearchPage({
       <div className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h1 className="font-display text-3xl text-text-primary">Search Marquee</h1>
         <div className="mt-8">
-          <SearchBar />
+          {/* The menu's Search item lands here, ready to type. */}
+          <SearchBar autoFocus />
         </div>
       </div>
     );
