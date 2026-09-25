@@ -2,7 +2,7 @@ import { verify } from "argon2";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
-import { isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
+import { isRateLimited, recordFailedAttempt, refundAttempt } from "@/lib/rate-limit";
 
 export type PasswordLoginResult =
   | { ok: true; user: typeof users.$inferSelect }
@@ -31,19 +31,24 @@ export async function authenticateWithPassword(
     return { ok: false, reason: "rate_limited" };
   }
 
+  // The attempt is counted before the slow part, not after it: an argon2
+  // check takes long enough that a burst of parallel requests would all
+  // pass the read-only check above and each get a free guess. A correct
+  // password gets its attempt refunded below, so normal use costs nothing.
+  recordFailedAttempt(usernameKey, LOGIN_WINDOW_MS);
+  recordFailedAttempt(ipKey, LOGIN_WINDOW_MS);
+
   const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
   if (!user || !user.passwordHash) {
-    recordFailedAttempt(usernameKey, LOGIN_WINDOW_MS);
-    recordFailedAttempt(ipKey, LOGIN_WINDOW_MS);
     return { ok: false, reason: "invalid_credentials" };
   }
 
   const valid = await verify(user.passwordHash, password);
   if (!valid) {
-    recordFailedAttempt(usernameKey, LOGIN_WINDOW_MS);
-    recordFailedAttempt(ipKey, LOGIN_WINDOW_MS);
     return { ok: false, reason: "invalid_credentials" };
   }
 
+  refundAttempt(usernameKey);
+  refundAttempt(ipKey);
   return { ok: true, user };
 }

@@ -320,6 +320,7 @@ export type PlexFileInfo = {
  */
 export async function getPlexFileInfo(
   userId: string,
+  mediaType: MediaType,
   tmdbId: number,
   tvdbId: number | null,
 ): Promise<PlexFileInfo | null> {
@@ -331,9 +332,15 @@ export async function getPlexFileInfo(
   if (servers.length === 0) return null;
   const serverIds = servers.map((s) => s.id);
 
-  const idMatch = tvdbId
-    ? or(eq(plexLibraryItems.tmdbId, tmdbId), eq(plexLibraryItems.tvdbId, tvdbId))
-    : eq(plexLibraryItems.tmdbId, tmdbId);
+  // Scoped to the media type: TMDb numbers movies and shows separately, so
+  // the same id can be a film on one side and a series on the other, and a
+  // movie page must not light up as owned because of a show.
+  const idMatch = and(
+    eq(plexLibraryItems.mediaType, mediaType),
+    tvdbId
+      ? or(eq(plexLibraryItems.tmdbId, tmdbId), eq(plexLibraryItems.tvdbId, tvdbId))
+      : eq(plexLibraryItems.tmdbId, tmdbId),
+  );
 
   const [match] = await db
     .select({

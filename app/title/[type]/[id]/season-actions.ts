@@ -18,6 +18,10 @@ export async function getSeasonEpisodesAction(
   seasonNumber: number,
 ): Promise<SeasonEpisodesResult> {
   const viewer = await getViewerContext();
+  // Server actions are reachable without going through the page, so don't
+  // lean on the proxy's redirect: this one spends the instance's TMDb and
+  // Sonarr credentials, and only signed-in accounts get to do that.
+  if (!viewer.session) return { episodes: [], hasFileMap: {} };
   const { episodes, hasFileMap } = await loadSeasonEpisodes(viewer, tmdbId, tvdbId, seasonNumber);
   return { episodes, hasFileMap: Object.fromEntries(hasFileMap) };
 }

@@ -214,6 +214,7 @@ export type JellyfinFileInfo = {
  */
 export async function getJellyfinFileInfo(
   userId: string,
+  mediaType: MediaType,
   tmdbId: number,
   tvdbId: number | null,
 ): Promise<JellyfinFileInfo | null> {
@@ -225,9 +226,14 @@ export async function getJellyfinFileInfo(
   if (servers.length === 0) return null;
   const serverIds = servers.map((s) => s.id);
 
-  const idMatch = tvdbId
-    ? or(eq(jellyfinLibraryItems.tmdbId, tmdbId), eq(jellyfinLibraryItems.tvdbId, tvdbId))
-    : eq(jellyfinLibraryItems.tmdbId, tmdbId);
+  // Scoped to the media type for the same reason as getPlexFileInfo: a TMDb
+  // movie id and TV id can collide.
+  const idMatch = and(
+    eq(jellyfinLibraryItems.mediaType, mediaType),
+    tvdbId
+      ? or(eq(jellyfinLibraryItems.tmdbId, tmdbId), eq(jellyfinLibraryItems.tvdbId, tvdbId))
+      : eq(jellyfinLibraryItems.tmdbId, tmdbId),
+  );
 
   const [match] = await db
     .select({
