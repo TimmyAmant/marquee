@@ -92,14 +92,13 @@ enum UpdateInstaller {
     }
 
     /// When the running copy can't be replaced: the checked download goes to
-    /// Downloads for the person to drag to Applications themselves.
+    /// Downloads for the person to drag to Applications themselves, named
+    /// for its version ("Marquee 0.31.0.app") so several downloads there
+    /// can be told apart.
     nonisolated static func keepForManualInstall(_ app: URL, version: AppVersion) -> URL? {
         let fileManager = FileManager.default
         guard let downloads = fileManager.urls(for: .downloadsDirectory, in: .userDomainMask).first else { return nil }
-        var destination = downloads.appendingPathComponent(appName)
-        if fileManager.fileExists(atPath: destination.path) {
-            destination = downloads.appendingPathComponent("Marquee \(version).app")
-        }
+        let destination = downloads.appendingPathComponent(manualInstallName(for: version))
         try? fileManager.removeItem(at: destination)
         do {
             try fileManager.moveItem(at: app, to: destination)
@@ -107,6 +106,11 @@ enum UpdateInstaller {
         } catch {
             return nil
         }
+    }
+
+    /// "Marquee 0.31.0.app".
+    nonisolated static func manualInstallName(for version: AppVersion) -> String {
+        "Marquee \(version).app"
     }
 
     // MARK: The swap

@@ -5,7 +5,6 @@ struct BrowseView: View {
     let mediaType: API.MediaType
 
     @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
 
     @State private var extras: API.BrowseExtras?
     @State private var cards: [API.TitleCard] = []
@@ -38,8 +37,7 @@ struct BrowseView: View {
             VStack(alignment: .leading, spacing: 28) {
                 if let error, error.isTMDbUnconfigured {
                     TMDbMissingNotice(isAdmin: model.viewer?.isAdmin == true) {
-                        model.settingsTab = .integrations
-                        openSettings()
+                        model.openSettings(.integrations)
                     }
                     .padding(.trailing, Metrics.pagePadding)
                 } else {

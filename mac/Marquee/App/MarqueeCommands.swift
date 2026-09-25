@@ -6,19 +6,25 @@ struct MarqueeCommands: Commands {
     let model: AppModel
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openURL) private var openURL
-    @Environment(\.openSettings) private var openSettings
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {}
 
+        // Settings is a page of the main window, not a window of its own.
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") {
+                model.openSettings()
+            }
+            .keyboardShortcut(",", modifiers: .command)
+            .disabled(model.phase != .ready)
+        }
+
         CommandGroup(after: .appInfo) {
             Button("Check for Updates…") {
                 let model = self.model
-                let openSettings = self.openSettings
                 UpdateAlerts.checkNow(model.updater) {
                     // The download's progress shows in Settings › About.
-                    model.settingsTab = .about
-                    if model.viewer != nil { openSettings() }
+                    if model.viewer != nil { model.openSettings(.about) }
                 }
             }
             .disabled(model.updater.isInstalling)
@@ -44,7 +50,7 @@ struct MarqueeCommands: Commands {
         }
 
         CommandMenu("Go") {
-            ForEach(SidebarItem.allCases) { item in
+            ForEach(SidebarItem.sections) { item in
                 Button(item.title) {
                     model.select(item)
                 }

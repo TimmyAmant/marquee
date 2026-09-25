@@ -57,11 +57,6 @@ struct MarqueeApp: App {
                 .frame(minWidth: 520, minHeight: 420)
         }
         .defaultSize(width: 640, height: 620)
-
-        Settings {
-            SettingsRootView()
-                .environment(model)
-        }
     }
 }
 

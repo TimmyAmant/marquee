@@ -10,6 +10,12 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     case favorites
     case calendar
     case requests
+    /// Reached from your photo on the rail, ⌘, and "Connect …" links; not a
+    /// rail section or a Go menu item of its own.
+    case settings
+
+    /// The sections the Go menu lists (⌘1…⌘6).
+    static var sections: [SidebarItem] { allCases.filter { $0 != .settings } }
 
     var id: String { rawValue }
 
@@ -21,6 +27,7 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
         case .favorites: return "Favorites"
         case .calendar: return "Calendar"
         case .requests: return "Requests"
+        case .settings: return "Settings"
         }
     }
 
@@ -32,6 +39,7 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
         case .favorites: return "heart"
         case .calendar: return "calendar"
         case .requests: return "list.bullet"
+        case .settings: return "gearshape"
         }
     }
 
@@ -43,6 +51,7 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
         case .favorites: return "4"
         case .calendar: return "5"
         case .requests: return "6"
+        case .settings: return ","
         }
     }
 }
@@ -189,7 +198,7 @@ final class AppModel {
             self?.sessionEnded()
         }
         updater.onNewUpdate = { [weak self] update in
-            self?.flash("Marquee \(update.version) is available. Update it from the menu or Settings › About.")
+            self?.flash("Marquee \(update.version) is available. Update it from the rail or Settings › About.")
         }
     }
 
@@ -458,6 +467,13 @@ final class AppModel {
             selection = item
         }
         path = []
+    }
+
+    /// Settings, in the main window, on `tab`.
+    func openSettings(_ tab: SettingsTab = .account) {
+        settingsTab = tab
+        select(.settings)
+        showMainWindow()
     }
 
     func open(_ route: Route) {

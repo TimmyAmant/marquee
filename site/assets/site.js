@@ -159,4 +159,34 @@
       }, 2200);
     });
   });
+  /* ---- download buttons ---------------------------------------------------
+     Downloads carry their version ("Marquee-0.31.0.dmg"), so a Downloads
+     folder of several stays readable, which means the file for the latest
+     release can't be a fixed link. Ask GitHub which it is and point the
+     buttons straight at it; without an answer they open the release page. */
+  const downloads = document.querySelectorAll('[data-download]');
+  if (downloads.length && window.fetch) {
+    const patterns = {
+      mac: [/^Marquee-\d[\d.]*\.dmg$/, /^Marquee\.dmg$/],
+      windows: [/^Marquee-Setup-\d[\d.]*\.exe$/, /^Marquee-Setup\.exe$/],
+    };
+    fetch('https://api.github.com/repos/TimmyAmant/marquee/releases/latest', {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((release) => {
+        if (!release || !Array.isArray(release.assets)) return;
+        downloads.forEach((link) => {
+          for (const pattern of patterns[link.dataset.download] || []) {
+            const asset = release.assets.find((item) => pattern.test(item.name));
+            if (asset) {
+              link.href = asset.browser_download_url;
+              link.title = `${asset.name} (${release.tag_name})`;
+              return;
+            }
+          }
+        });
+      })
+      .catch(() => {});
+  }
 })();

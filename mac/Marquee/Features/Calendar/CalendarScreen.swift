@@ -4,7 +4,6 @@ import SwiftUI
 /// Sonarr air dates, in the server's time zone.
 struct CalendarScreen: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
 
     /// nil until the first load: the server picks its own current month.
     @State private var month: API.CalendarMonth?
@@ -24,7 +23,7 @@ struct CalendarScreen: View {
                         : "The household admin hasn't connected Sonarr or Radarr yet.",
                     systemImage: "calendar",
                     actionTitle: model.viewer?.isAdmin == true ? "Connect an integration" : nil,
-                    action: model.viewer?.isAdmin == true ? { model.settingsTab = .integrations; openSettings() } : nil
+                    action: model.viewer?.isAdmin == true ? { model.openSettings(.integrations) } : nil
                 )
                 .frame(maxHeight: .infinity)
             } else if let error, page == nil {

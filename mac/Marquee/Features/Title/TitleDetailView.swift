@@ -427,7 +427,6 @@ private struct TitleActionRow: View {
     let onRelink: () -> Void
 
     @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         let viewer = detail.viewer
@@ -488,8 +487,7 @@ private struct TitleActionRow: View {
 
                 if viewer.needsArrSetup {
                     Button("Connect \(detail.mediaType.arrName) to add this title") {
-                        model.settingsTab = .integrations
-                        openSettings()
+                        model.openSettings(.integrations)
                     }
                     .buttonStyle(QuietButtonStyle(color: Theme.accent))
                     .font(.system(size: 12.5))
