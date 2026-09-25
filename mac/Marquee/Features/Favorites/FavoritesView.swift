@@ -89,6 +89,7 @@ struct FavoritesView: View {
             .frame(maxWidth: 1240, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Favorites")
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: .library), local: model.events.revision(of: .favorites))) {

@@ -36,9 +36,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // The theme-init script below sets data-theme on <html> before React
+    // hydrates, so the attribute never matches the server's HTML by design.
     <html
       lang="en"
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex bg-bg-0 text-text-primary">
         {/* Sets data-theme before first paint so there's no flash of the
@@ -54,7 +57,10 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeSync />
         <Sidebar />
-        <div className="flex min-h-full min-w-0 flex-1 flex-col md:pl-[230px]">
+        {/* 72px clears the floating nav rail (16px from the edge, 50 wide)
+            with room to spare; full-bleed artwork like a title's backdrop
+            pulls itself back under the rail. */}
+        <div className="flex min-h-full min-w-0 flex-1 flex-col md:pl-[72px]">
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />

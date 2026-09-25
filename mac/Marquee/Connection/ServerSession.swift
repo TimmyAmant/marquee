@@ -3,13 +3,17 @@ import Observation
 import OSLog
 
 /// What a token store can answer. `unavailable` is deliberately separate from
-/// `missing`: a Keychain that can't be read right now (locked, an ACL race, a
-/// freshly re-signed binary) is not the same as an account that was signed
-/// out, and treating the two alike drops a perfectly good session.
+/// `missing`: a Keychain that can't be read right now (locked, an ACL race) is
+/// not the same as an account that was signed out, and treating the two alike
+/// drops a perfectly good session.
 enum TokenLookup: Equatable, Sendable {
     case found(String)
     case missing
     case unavailable
+    /// A token is saved, but by another build of Marquee (before an update),
+    /// and macOS won't let this one read it without asking for the login
+    /// keychain password. Sign in again.
+    case earlierBuild
 }
 
 /// Where bearer tokens live, keyed by server base URL.
@@ -28,27 +32,96 @@ extension TokenStore {
     }
 }
 
-/// The login Keychain: service `com.timmyamant.Marquee.api`, one item per server.
+/// The login Keychain: service `com.timmyamant.Marquee.api`, one item per
+/// server and build of Marquee.
+///
+/// macOS lets only the build that created an item read it back (see
+/// `Keychain`), and every update is a new build. So each item is marked
+/// (`comment`) with the code identity of the build that created it, and this
+/// build reads only its own: another build's item is `.earlierBuild`, never a
+/// "wants to use your confidential information" prompt. Saving after that
+/// creates this build's own item beside the old one (named "<server> #<tag>"),
+/// since the old one can't be deleted without asking; its token is blanked.
 struct KeychainTokenStore: TokenStore {
     static let service = "com.timmyamant.Marquee.api"
     /// A read that fails is retried before the session gives up on it.
     static let readAttempts = 3
     private static let logger = Logger(subsystem: "com.timmyamant.Marquee", category: "session")
 
+    /// This build's code identity; nil (unknown) reads the plain item as
+    /// before, prompt and all.
+    var identity: String? = CodeIdentity.current
+
+    enum ReadPlan: Equatable {
+        case read(account: String)
+        case earlierBuild
+        case missing
+    }
+
+    enum SavePlan: Equatable {
+        case update(account: String)
+        case add(account: String)
+    }
+
+    /// "<server>", or "<server> #<tag>" for an item a later build added.
+    static func belongs(_ account: String, to server: String) -> Bool {
+        account == server || account.hasPrefix(server + " #")
+    }
+
+    static func readPlan(_ items: [Keychain.Item], server: String, identity: String?) -> ReadPlan {
+        let saved = items.filter { belongs($0.account, to: server) }
+        guard !saved.isEmpty else { return .missing }
+        guard let identity else {
+            return saved.contains { $0.account == server } ? .read(account: server) : .missing
+        }
+        if let mine = saved.first(where: { $0.comment == identity }) { return .read(account: mine.account) }
+        return .earlierBuild
+    }
+
+    static func savePlan(_ items: [Keychain.Item], server: String, identity: String?) -> SavePlan {
+        let saved = items.filter { belongs($0.account, to: server) }
+        guard let identity else {
+            return saved.contains { $0.account == server } ? .update(account: server) : .add(account: server)
+        }
+        if let mine = saved.first(where: { $0.comment == identity }) { return .update(account: mine.account) }
+        let taken = Set(items.map(\.account))
+        guard taken.contains(server) else { return .add(account: server) }
+        let tagged = "\(server) #\(CodeIdentity.tag(identity))"
+        return taken.contains(tagged) ? .update(account: tagged) : .add(account: tagged)
+    }
+
     func lookup(for server: String) -> TokenLookup {
         var lastStatus: OSStatus = errSecSuccess
         for attempt in 1...Self.readAttempts {
-            switch Keychain.read(service: Self.service, account: server) {
-            case let .found(data):
-                guard let token = String(data: data, encoding: .utf8) else { return .missing }
-                return .found(token)
-            case .notFound:
-                return .missing
+            let items: [Keychain.Item]
+            switch Keychain.items(service: Self.service) {
+            case let .found(found):
+                items = found
             case let .error(status):
                 lastStatus = status
-                Self.logger.error(
-                    "Keychain read for \(server, privacy: .public) failed (\(status)), attempt \(attempt) of \(Self.readAttempts)"
-                )
+                Self.logger.error("Keychain list failed (\(status)), attempt \(attempt) of \(Self.readAttempts)")
+                continue
+            }
+
+            switch Self.readPlan(items, server: server, identity: identity) {
+            case .missing:
+                return .missing
+            case .earlierBuild:
+                Self.logger.notice("The saved sign-in for \(server, privacy: .public) belongs to an earlier build of Marquee")
+                return .earlierBuild
+            case let .read(account):
+                switch Keychain.read(service: Self.service, account: account) {
+                case let .found(data):
+                    guard let token = String(data: data, encoding: .utf8), !token.isEmpty else { return .missing }
+                    return .found(token)
+                case .notFound:
+                    return .missing
+                case let .error(status):
+                    lastStatus = status
+                    Self.logger.error(
+                        "Keychain read for \(server, privacy: .public) failed (\(status)), attempt \(attempt) of \(Self.readAttempts)"
+                    )
+                }
             }
         }
         Self.logger.error("Giving up on the Keychain for \(server, privacy: .public) (\(lastStatus)) — not treating it as signed out")
@@ -61,11 +134,39 @@ struct KeychainTokenStore: TokenStore {
     }
 
     func save(_ token: String, for server: String) -> Bool {
-        Keychain.add(Data(token.utf8), service: Self.service, account: server, label: "Marquee server session")
+        guard case let .found(items) = Keychain.items(service: Self.service) else { return false }
+        let data = Data(token.utf8)
+        let saved: Bool
+        switch Self.savePlan(items, server: server, identity: identity) {
+        case let .update(account):
+            saved = Keychain.update(data, service: Self.service, account: account)
+        case let .add(account):
+            saved = Keychain.add(data, service: Self.service, account: account, label: "Marquee server session", comment: identity)
+        }
+        // Earlier builds' tokens for this server: no use to anyone now, so
+        // blank them (allowed without asking, unlike deleting them).
+        if saved, let identity {
+            for item in items where Self.belongs(item.account, to: server) && item.comment != identity {
+                Keychain.update(Data(), service: Self.service, account: item.account)
+            }
+        }
+        return saved
     }
 
     func delete(for server: String) {
-        Keychain.delete(service: Self.service, account: server)
+        guard let identity, case let .found(items) = Keychain.items(service: Self.service) else {
+            Keychain.delete(service: Self.service, account: server)
+            return
+        }
+        // This build's item goes; an earlier build's can't be deleted (macOS
+        // refuses, and might ask), so its token is blanked instead.
+        for item in items where Self.belongs(item.account, to: server) {
+            if item.comment == identity {
+                Keychain.delete(service: Self.service, account: item.account)
+            } else {
+                Keychain.update(Data(), service: Self.service, account: item.account)
+            }
+        }
     }
 }
 
@@ -146,6 +247,9 @@ final class ServerSession {
     /// finds no token should say so rather than silently asking for a password
     /// again, and may retry — nothing about the failure is cached.
     private(set) var tokenUnavailable = false
+    /// The saved token belongs to an earlier build of Marquee (this one is an
+    /// update), which macOS won't let this build read: sign in again.
+    private(set) var savedByEarlierBuild = false
 
     /// Called after any authenticated call is answered with 401 `unauthorized`
     /// and the token has been dropped.
@@ -375,16 +479,19 @@ final class ServerSession {
     private func currentToken() -> String? {
         guard let server else { return nil }
         if tokenLoaded { return token }
-        switch tokenStore.lookup(for: server.baseURLString) {
+        let lookup = tokenStore.lookup(for: server.baseURLString)
+        switch lookup {
         case let .found(value):
             token = value
             tokenLoaded = true
             tokenUnavailable = false
-        case .missing:
+            savedByEarlierBuild = false
+        case .missing, .earlierBuild:
             // The fallback store holds the token when the Keychain refused the write.
             token = fallbackTokens.token(for: server.baseURLString)
             tokenLoaded = true
             tokenUnavailable = false
+            savedByEarlierBuild = token == nil && lookup == .earlierBuild
         case .unavailable:
             if tokenUnavailable == false { tokenUnavailable = true }
             return fallbackTokens.token(for: server.baseURLString)
@@ -404,6 +511,7 @@ final class ServerSession {
         }
         token = response.token
         tokenLoaded = true
+        savedByEarlierBuild = false
         user = response.user
         return response.user
     }
@@ -421,6 +529,7 @@ final class ServerSession {
             token = nil
             tokenLoaded = true
             tokenUnavailable = false
+            savedByEarlierBuild = false
         }
     }
 

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 
 export function PersonHeader({
@@ -22,7 +22,7 @@ export function PersonHeader({
     <div className="flex flex-col gap-8 sm:flex-row">
       <div className="relative aspect-[2/3] w-48 shrink-0 overflow-hidden rounded-xl bg-bg-2 ring-1 ring-border">
         {src && (
-          <Image src={src} alt={name} fill sizes="192px" className="object-cover" />
+          <MediaImage src={src} alt={name} fill sizes="192px" className="object-cover" />
         )}
       </div>
       <div>

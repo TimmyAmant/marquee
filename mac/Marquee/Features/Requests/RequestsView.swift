@@ -21,6 +21,7 @@ struct RequestsView: View {
             .frame(maxWidth: 1080, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Requests")
     }
@@ -96,8 +97,14 @@ private struct MemberRequestsList: View {
                                 Text(Format.shortDate(row.createdAt))
                                     .foregroundStyle(Theme.textSecondary)
                                     .frame(width: 170, alignment: .leading)
-                                TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
-                                    .frame(width: 170, alignment: .leading)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
+                                    // The admin's reason, under "Declined" like the web page.
+                                    if let reason = row.rejectionReason {
+                                        RejectionReasonLine(reason: reason)
+                                    }
+                                }
+                                .frame(width: 170, alignment: .leading)
                             }
                             .font(.system(size: 13))
                             .padding(.horizontal, 16)
@@ -170,6 +177,7 @@ private struct AdminRequestsList: View {
                             RequestReviewRow(
                                 row: row,
                                 manualSonarrURL: queue?.manualSonarrAddURL(for: row),
+                                rejectionReasons: queue?.rejectionReasonChoices ?? API.PendingRequests.defaultRejectionReasons,
                                 onSettled: { settled.insert(row.id) }
                             )
                         }
@@ -202,8 +210,13 @@ private struct AdminRequestsList: View {
                             Text(Format.shortDate(row.createdAt))
                                 .foregroundStyle(Theme.textSecondary)
                                 .frame(width: 170, alignment: .leading)
-                            TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
-                                .frame(width: 170, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 4) {
+                                TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                                if let reason = row.rejectionReason {
+                                    RejectionReasonLine(reason: reason)
+                                }
+                            }
+                            .frame(width: 170, alignment: .leading)
                         }
                         .font(.system(size: 13))
                         .padding(.horizontal, 16)
@@ -262,11 +275,25 @@ private struct AdminRequestsList: View {
     }
 }
 
+/// "Reason: …" under a Declined/Rejected pill (requests/page.tsx's second line).
+private struct RejectionReasonLine: View {
+    let reason: String
+
+    var body: some View {
+        Text("Reason: \(reason)")
+            .font(.system(size: 11))
+            .foregroundStyle(Theme.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
 /// components/request-review-row.tsx.
 private struct RequestReviewRow: View {
     let row: API.PendingRequest
     /// `{sonarrUrl}/add/new?term=…`, offered when Sonarr can't resolve the show.
     let manualSonarrURL: URL?
+    /// What the Decline sheet lists, from the queue (or the built-in list).
+    let rejectionReasons: [String]
     let onSettled: () -> Void
 
     @Environment(AppModel.self) private var model
@@ -277,6 +304,9 @@ private struct RequestReviewRow: View {
     @State private var approveError: String?
     @State private var otherError: String?
     @State private var showManualApprove = false
+    /// Reject is a two-step, like the web row: the button opens the reason
+    /// chooser, and only its Decline actually sends anything.
+    @State private var choosingReason = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
@@ -292,7 +322,7 @@ private struct RequestReviewRow: View {
                 .padding(.top, 18)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
-                    Button(busy == "reject" ? "Rejecting…" : "Reject") { reject() }
+                    Button(busy == "reject" ? "Rejecting…" : "Reject") { choosingReason = true }
                         .buttonStyle(OutlineButtonStyle(compact: true))
                     if showManualApprove {
                         Button(busy == "manual" ? "Approving…" : "Manually approve") { manuallyApprove() }
@@ -324,6 +354,11 @@ private struct RequestReviewRow: View {
         .font(.system(size: 13))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .sheet(isPresented: $choosingReason) {
+            DeclineRequestSheet(title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) { reason in
+                reject(reason: reason)
+            }
+        }
     }
 
     private func run(_ label: String, _ action: @escaping @MainActor (MarqueeAPI) async throws -> Void) {
@@ -355,11 +390,96 @@ private struct RequestReviewRow: View {
         run("approve") { try await $0.requests.approve(row.id) }
     }
 
-    private func reject() {
-        run("reject") { try await $0.requests.reject(row.id) }
+    private func reject(reason: String) {
+        run("reject") { try await $0.requests.reject(row.id, reason: reason) }
     }
 
     private func manuallyApprove() {
         run("manual") { try await $0.requests.manuallyApprove(row.id) }
+    }
+}
+
+/// The web row's Reject chooser as a sheet: the server's preset reasons plus
+/// "Other" with a free-text field. Decline stays disabled until there's a
+/// reason to send (the server checks again either way).
+private struct DeclineRequestSheet: View {
+    let title: String
+    let requester: String
+    let reasons: [String]
+    /// Runs the reject with the chosen reason, after the sheet has closed.
+    let onDecline: (String) -> Void
+
+    /// The free-text choice. Only the chooser's label: what gets sent is the
+    /// admin's own words, never this word itself.
+    static let other = "Other"
+    /// The server's cap, counted in Unicode scalars the way the server counts
+    /// code points (not Characters, which would let a run of emoji through
+    /// that the server then shortens), so what's typed is what's stored.
+    static let maxReasonLength = 200
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var choice: String?
+    @State private var customReason = ""
+
+    private var options: [String] { reasons + [Self.other] }
+
+    /// What Decline would send: the preset, or the trimmed custom text.
+    private var reason: String? {
+        guard let choice else { return nil }
+        guard choice == Self.other else { return choice }
+        let trimmed = customReason.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Decline request")
+                .font(.marqueeDisplay(22))
+            Text("Let \(requester) know why \"\(title)\" isn't being added. They'll see it under Declined on their Requests page and in the notification.")
+                .font(.system(size: 12.5))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Picker("Reason", selection: $choice) {
+                ForEach(options, id: \.self) { option in
+                    Text(option).tag(Optional(option))
+                }
+            }
+            .pickerStyle(.radioGroup)
+            .labelsHidden()
+            .font(.system(size: 13))
+
+            if choice == Self.other {
+                TextField("Tell them why", text: $customReason)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 13))
+                    .onChange(of: customReason) { _, value in
+                        let scalars = value.unicodeScalars
+                        if scalars.count > Self.maxReasonLength {
+                            customReason = String(scalars.prefix(Self.maxReasonLength))
+                        }
+                    }
+            }
+
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .buttonStyle(OutlineButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+                Button("Decline") { decline() }
+                    .buttonStyle(AccentButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(reason == nil)
+            }
+        }
+        .padding(24)
+        .frame(width: 460)
+        .background(Theme.bg1)
+    }
+
+    private func decline() {
+        guard let reason else { return }
+        dismiss()
+        onDecline(reason)
     }
 }

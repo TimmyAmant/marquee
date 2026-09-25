@@ -11,6 +11,37 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.29.0",
+    date: "2026-09-25",
+    changes: [
+      "A new navigation menu, after the Plex app on Apple TV: a small frosted bar floats at the left edge with your photo and an icon for every section, and one click goes straight there. Rest on an icon to see its name; the ☰ button opens the full labeled menu. On a phone, the menu button at the top opens it. Pages get the room the old sidebar took up, and a title's backdrop now runs to the edge of the window. The Mac and Windows apps have the same menu.",
+      "Profile photos: add one from Settings › Account › Edit. It's kept on your Marquee server, never uploaded anywhere else, and shows in the menu and next to each household member. Photos are cropped to a square, turned the right way up, and stripped of their location and camera details.",
+      "API: /me, the login response and household members include avatarUrl, and GET/PUT/DELETE /users/{id}/avatar read, replace and remove a photo.",
+      "Notifications on your devices, sent by your own Marquee server: after you sign in, Marquee asks whether this device should get them (a request approved or declined, a title ready to watch). On the website they're Web Push, encrypted so only your device can read them, with no account at any push service; they need Marquee opened over https, and on iPhone the site added to the Home Screen. Settings › Account › Notifications turns them on or off, lists your devices and sends a test.",
+      "API: GET /notifications/stream, a live stream of new notifications for the Mac and Windows apps to show as system notifications without any outside push service.",
+      "The Mac and Windows apps can be downloaded from each release: Marquee.dmg (open it and drag Marquee into Applications) and Marquee-Setup.exe (installs for your account, no admin needed). Links are in the README and on the website.",
+      "Marquee for Mac updates itself: when a new release is out it shows an Update button, then downloads it, checks it, and quits and reopens on the new version. It no longer runs in the App Sandbox, which is what lets it replace itself; your settings come along. After an update you sign in once more.",
+      "Marquee for Mac and Windows: profile photos, and notifications that come straight from your server over a live connection (each app asks after you sign in). Windows gets real Windows notifications, its own icon, and Settings › Household members.",
+    ],
+  },
+  {
+    version: "0.28.0",
+    date: "2026-09-25",
+    changes: [
+      "Declining a request now asks why: pick a reason from a short list (already on a streaming service you have, not released yet, no space right now, and so on) or write your own. The member sees the reason under Declined on their Requests page and in the notification.",
+      "API: POST /requests/{id}/reject takes an optional reason, GET /requests/pending lists the preset reasons, and /requests/mine and /requests/history include rejectionReason.",
+      "Marquee for Mac: declining a request offers the same list of reasons, and a declined request shows why.",
+      "Hardening from a security review: the sign-in gate no longer lets look-alike paths through (a page's server actions were reachable without signing in), the login limit can't be beaten with a burst of parallel guesses, the admin password reset script now signs browsers out too, Plex sync ignores servers other accounts shared with you, and a Discord relay can no longer @everyone.",
+      "A title requested from the website is recorded under its real TMDb name and poster, not whatever the browser sent.",
+      "The Docker container now starts with a Postgres password containing /, quotes or $, and an upgrade no longer fails when two identical pending requests were left over from a double click.",
+      "A movie and a TV show that happen to share a TMDb id no longer show each other's Plex or Jellyfin file details.",
+      "Updated Next.js and the sign-in library to versions with the latest security fixes.",
+      "Changing your own password now asks for your current one first, on the website and in the Mac and Windows apps, so a browser left signed in can't be used to lock you out. The admin resetting a member's password still doesn't need theirs.",
+      "Posters, backdrops and episode stills show a soft loading shimmer and fade in, instead of sitting as empty boxes until the artwork arrives.",
+      "Marquee for Windows has started: an early native Windows app lives in windows/ of the repo, with sign-in, Discover, browsing, title pages, requests (including decline reasons), favorites, calendar and notifications. It isn't packaged for download yet.",
+    ],
+  },
+  {
     version: "0.27.1",
     date: "2026-09-18",
     changes: [

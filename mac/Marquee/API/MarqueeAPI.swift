@@ -3,7 +3,7 @@ import Foundation
 // MARK: - The typed /api/v1 layer
 //
 // `MarqueeAPI` is a Sendable facade over `APIClient` with one typed async
-// method per endpoint in Docs/api-v1.md (all 81), namespaced by area:
+// method per endpoint in docs/api-v1.md (all 85), namespaced by area:
 //
 //     let detail = try await model.api.titles.detail(.movie, id: 603)
 //     try await model.api.requests.approve(request.id)
@@ -123,6 +123,42 @@ struct MarqueeAPI: Sendable {
             let client = try requireClient()
             let data = try body.map(Self.encode)
             return try await client.send(.post, path, body: data, timeout: timeout, as: type)
+        }
+
+        /// A call whose body is a file's own bytes (a profile photo), recorded
+        /// like `mutate` once it succeeds.
+        @concurrent
+        func upload<Response: Decodable & Sendable>(
+            _ method: HTTPMethod,
+            _ path: String,
+            data: Data,
+            contentType: String,
+            timeout: TimeInterval = Timeout.standard,
+            changes: ServerEvents.Change,
+            as type: Response.Type = Response.self
+        ) async throws -> Response {
+            let client = try requireClient()
+            let response = try await client.send(method, path, body: data, contentType: contentType, timeout: timeout, as: type)
+            if !changes.isEmpty, let events {
+                await events.record(changes)
+            }
+            return response
+        }
+
+        /// A file rather than JSON, at a server-relative path the server
+        /// handed out (`avatarUrl`).
+        @concurrent
+        func data(at serverPath: String, timeout: TimeInterval = Timeout.standard) async throws -> Data {
+            try await requireClient().data(atServerPath: serverPath, timeout: timeout)
+        }
+
+        /// A Server-Sent Events stream, until it ends; see `APIClient.events`.
+        @concurrent
+        func events(
+            _ path: String,
+            onEvent: @escaping @Sendable (ServerSentEvent) async -> Void
+        ) async throws -> Duration? {
+            try await requireClient().events(path, onEvent: onEvent)
         }
 
         private func requireClient() throws -> APIClient {

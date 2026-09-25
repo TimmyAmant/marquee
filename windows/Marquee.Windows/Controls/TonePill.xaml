@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A status pill in one of the three badge palettes (the Mac's TonePill):
+  request status labels, a season's episode count, "Have it" / "Missing".
+  Three Borders with theme brushes, the same way PosterCard draws its badge,
+  so the colors keep following light/dark switches; the code-behind only
+  chooses which one is visible.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.TonePill"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    HorizontalAlignment="Left"
+    VerticalAlignment="Center">
+
+    <Grid>
+        <Border
+            x:Name="OwnedBorder"
+            Visibility="Collapsed"
+            Padding="8,2"
+            CornerRadius="10"
+            Background="{ThemeResource OwnedBadgeBackgroundBrush}"
+            BorderBrush="{ThemeResource OwnedBadgeForegroundBrush}"
+            BorderThickness="1">
+            <TextBlock
+                x:Name="OwnedText"
+                FontSize="11"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource OwnedBadgeForegroundBrush}" />
+        </Border>
+        <Border
+            x:Name="TrackedBorder"
+            Visibility="Collapsed"
+            Padding="8,2"
+            CornerRadius="10"
+            Background="{ThemeResource TrackedBadgeBackgroundBrush}"
+            BorderBrush="{ThemeResource TrackedBadgeForegroundBrush}"
+            BorderThickness="1">
+            <TextBlock
+                x:Name="TrackedText"
+                FontSize="11"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+        </Border>
+        <Border
+            x:Name="NeutralBorder"
+            Visibility="Collapsed"
+            Padding="8,2"
+            CornerRadius="10"
+            Background="{ThemeResource NeutralBadgeBackgroundBrush}"
+            BorderBrush="{ThemeResource NeutralBadgeForegroundBrush}"
+            BorderThickness="1">
+            <TextBlock
+                x:Name="NeutralText"
+                FontSize="11"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource NeutralBadgeForegroundBrush}" />
+        </Border>
+    </Grid>
+</UserControl>

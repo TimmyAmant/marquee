@@ -33,7 +33,7 @@ data, your server.
 
 </details>
 
-**Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
+**Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Marquee for Windows](#marquee-for-windows-preview) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
 
 ## Features
 
@@ -124,6 +124,17 @@ data, your server.
 - Bell icon in the nav polls for new activity: a title started downloading,
   finished downloading, or (for household members) one of your requests
   was approved, declined, or is ready to watch.
+- **Notifications on your devices, sent by your own server.** After signing
+  in, Marquee asks whether this device should get notifications. On the
+  website these are standard Web Push: your server generates its own keys,
+  and messages are encrypted so only your device can read them. No account
+  or API key with any push service is needed; the browser's own push relay
+  (Apple, Google, Mozilla) only carries the sealed message. Web Push needs
+  Marquee opened over **https** (for example through a reverse proxy), and
+  on iPhone/iPad the site must be added to the Home Screen first. The Mac
+  and Windows apps get notifications straight from the server over a live
+  connection, with no relay at all. Manage devices and send a test under
+  **Settings → Account → Notifications**.
 - Powered by Radarr/Sonarr webhooks — the URL and a per-account secret are
   generated for you under **Settings → Integrations**. If a reverse proxy
   logs full URLs, you can drop `?secret=…` from the webhook URL and send it
@@ -150,10 +161,12 @@ data, your server.
   hit **Request**. The admin reviews everything waiting for approval on
   the **Requests** page and approves or declines with one click, or hits
   **Approve all** to clear the whole queue at once when there's more than
-  one pending. The requester gets notified either way. Members have their
-  own **Requests** tab too, showing the status of everything they've asked
-  for — pending, declined, or (once approved) downloading/already in the
-  library.
+  one pending. The requester gets notified either way. Declining asks for a
+  reason, either a preset like "Already available on a streaming service we
+  have" or the admin's own words, which the member sees on their Requests
+  page and in the notification. Members have their own **Requests** tab
+  too, showing the status of everything they've asked for — pending,
+  declined, or (once approved) downloading/already in the library.
 - **Manually approve** — for a TV request Sonarr can't resolve on its own
   (no TVDB id on TMDb's record), the admin gets an "Add manually in Sonarr"
   link straight to Sonarr's own search, and can mark the request approved
@@ -282,6 +295,36 @@ itself, or takes an address you type in.
 
 It needs macOS 15 or later and a server running 0.22.0 or later. Build
 instructions are in [`mac/README.md`](mac/README.md).
+
+**Download:** [**Marquee.dmg**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee.dmg).
+Open it and drag **Marquee** onto the Applications folder beside it. The app
+isn't notarized by Apple yet, so the very first launch is blocked: open
+**System Settings › Privacy & Security**, scroll to the message about Marquee
+and choose **Open Anyway**. After that, the app updates itself: when a new
+release is out it offers an **Update** button, and quits and reopens on the
+new version (where it asks you to sign in once more; see
+[`mac/README.md`](mac/README.md#updating) for why).
+
+### Marquee for Windows (preview)
+
+A native Windows client is taking shape in [`windows/`](windows/). It's a
+WinUI 3 app that mirrors the Mac app's architecture and talks to the same
+`/api/v1` API, so it shows the same data. It covers Discover, the Movies and
+Series grids, search, title pages with add and request, requests (including
+decline reasons), favorites, the calendar, household members, profile photos
+and notifications; integrations settings, deep links and the network scan
+aren't built yet.
+
+It needs Windows 10 1809 or later (or Windows 11) and a server running 0.22.0
+or later. Build instructions and the list of what's still missing are in
+[`windows/README.md`](windows/README.md).
+
+**Download:** [**Marquee-Setup.exe**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-Setup.exe).
+Run it: it installs Marquee for your account (no admin prompt), adds it to
+the Start menu, and opens it. Nothing else needs installing first. The
+installer isn't code-signed yet, so SmartScreen may say "Windows protected
+your PC": choose **More info › Run anyway**. Running a newer installer
+updates Marquee in place; uninstall it from Settings › Apps.
 
 ## Access from outside your network
 

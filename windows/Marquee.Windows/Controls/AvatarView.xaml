@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  An account's round picture (the website's Avatar in nav-menu.tsx and the
+  member list): the profile photo when there is one, else up to two
+  initials in bg0 on the accent gradient. An optional ring (the rail's 2px
+  white 15%) sits outside the picture, inside Diameter. The code-behind
+  sizes the parts and swaps the photo in once it has loaded.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.AvatarView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    IsTabStop="False">
+
+    <Border
+        x:Name="PictureFrame"
+        BorderBrush="{ThemeResource MarqueeAvatarRingBrush}"
+        Background="{ThemeResource MarqueeAvatarBrush}">
+        <Grid>
+            <TextBlock
+                x:Name="InitialsText"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource MarqueeOnAccentBrush}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsHitTestVisible="False" />
+            <Ellipse x:Name="PhotoEllipse" Visibility="Collapsed" IsHitTestVisible="False" />
+        </Grid>
+    </Border>
+</UserControl>

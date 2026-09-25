@@ -86,6 +86,9 @@ export default async function RequestsPage() {
                         >
                           {badge.label}
                         </span>
+                        {r.status === "rejected" && r.rejectionReason && (
+                          <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
+                        )}
                       </td>
                     </tr>
                   );
@@ -199,6 +202,9 @@ export default async function RequestsPage() {
                         >
                           {reviewedRequestLabel(r.status, r.manuallyApproved)}
                         </span>
+                        {r.status === "rejected" && r.rejectionReason && (
+                          <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
+                        )}
                       </td>
                     </tr>
                   );

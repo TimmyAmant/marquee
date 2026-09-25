@@ -37,6 +37,7 @@ struct PersonDetailView: View {
             .padding(.vertical, Metrics.pagePadding)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle(person?.name ?? "")
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
@@ -144,6 +145,7 @@ struct CompanyDetailView: View {
             .padding(.vertical, Metrics.pagePadding)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle(company?.name ?? "")
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {

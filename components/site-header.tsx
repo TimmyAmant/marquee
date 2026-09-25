@@ -2,30 +2,25 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { NotificationsBell } from "@/components/notifications-bell";
-import { MobileNav } from "@/components/mobile-nav";
-import { getPendingRequestCount } from "@/lib/requests/query";
+import { NavMenuButton } from "@/components/nav-menu-button";
 
 /**
- * Slim top bar — primary nav lives in the persistent Sidebar (desktop only,
- * see components/sidebar.tsx) so this only carries what doesn't fit there:
- * search, notifications, and the account link. Mobile still gets the brand
- * mark and hamburger here, since the sidebar is hidden below md and this is
- * the only nav surface at that width (MobileNav's own drawer covers the
- * same links the sidebar has, unchanged from before this split).
+ * Slim top bar: the wordmark, search and notifications. Navigation itself
+ * is the floating rail and its menu (components/nav-menu.tsx); below md the
+ * rail is hidden, so the menu button here opens the same menu as a drawer.
  */
 export async function SiteHeader() {
   const session = await auth();
-  const isAdmin = session?.user?.role === "admin";
-  const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
 
   return (
     <header className="sticky top-0 z-30">
       {/* The mockup's .tb-blur: taller than the 52px bar and masked away by
           62% of its height, so there's no hard edge where it ends — a title
-          page's backdrop keeps running underneath it. */}
+          page's backdrop keeps running underneath it. It reaches back over
+          the nav rail's margin to the window edge, like the backdrop. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[70px] backdrop-blur-[16px] backdrop-saturate-[1.15] [mask-image:linear-gradient(#000_62%,transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70px] backdrop-blur-[16px] md:-left-[72px] backdrop-saturate-[1.15] [mask-image:linear-gradient(#000_62%,transparent)]"
         style={{
           background:
             "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 78%, transparent), color-mix(in srgb, var(--marquee-bg-0) 50%, transparent) 72%, transparent)",
@@ -34,7 +29,7 @@ export async function SiteHeader() {
       <div className="relative flex h-[52px] items-center gap-4 px-4 sm:pl-[22px] sm:pr-4">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-text-primary md:hidden"
+          className="flex shrink-0 items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-text-primary"
         >
           <span className="relative">
             Marquee
@@ -52,12 +47,7 @@ export async function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-3 md:hidden">
           {session?.user && <NotificationsBell />}
-          <MobileNav
-            isSignedIn={Boolean(session?.user)}
-            isAdmin={isAdmin}
-            pendingRequestCount={pendingRequestCount}
-            userLabel={session?.user ? session.user.name || session.user.username || null : null}
-          />
+          <NavMenuButton />
         </div>
       </div>
     </header>

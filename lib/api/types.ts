@@ -37,6 +37,9 @@ export type User = {
   displayName: string | null;
   role: UserRole;
   libraryOwnerId: string;
+  /** Server-relative path of the profile photo (GET, bearer token), or null
+   * for none. Changes whenever the photo does. */
+  avatarUrl: string | null;
 };
 
 export type Me = User & {
@@ -331,6 +334,9 @@ export type MyRequest = {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  /** Why the admin declined it; null unless `status` is "rejected" and a
+   * reason was given. */
+  rejectionReason: string | null;
   libraryStatus: LibraryStatus | null;
   statusLabel: string;
   statusTone: "pending" | "declined" | "owned" | "downloading" | "coming_soon" | "approved";
@@ -348,7 +354,11 @@ export type PendingRequest = {
   createdAt: string;
 };
 
-export type PendingRequestsResponse = ListResponse<PendingRequest> & { sonarrUrl: string | null };
+export type PendingRequestsResponse = ListResponse<PendingRequest> & {
+  sonarrUrl: string | null;
+  /** The preset reasons the website's Reject chooser offers, in order. */
+  rejectionReasons: string[];
+};
 
 export type ReviewedRequest = {
   id: string;
@@ -358,6 +368,7 @@ export type ReviewedRequest = {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  rejectionReason: string | null;
   statusLabel: string;
   requestedBy: RequestPerson;
   createdAt: string;
@@ -428,9 +439,13 @@ export type HouseholdMember = {
   autoApproveTv: boolean;
   createdAt: string;
   isCurrentUser: boolean;
+  /** Same as User.avatarUrl. */
+  avatarUrl: string | null;
 };
 
 export type UpdateUserResponse = { ok: true; user: HouseholdMember; tokensRevoked: boolean };
+
+export type AvatarResponse = { ok: true; avatarUrl: string | null };
 
 export type SyncedServer = { name: string | null; lastSyncedAt: string | null };
 

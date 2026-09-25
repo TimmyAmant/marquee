@@ -15,9 +15,17 @@ extension API {
         let createdAt: Date
         /// The "You" badge.
         let isCurrentUser: Bool
+        /// The profile photo (see `User.avatarUrl`).
+        var avatarUrl: String? = nil
 
         var isAdmin: Bool { role == .admin }
         var label: String { displayName.nonBlank ?? username }
+    }
+
+    /// `PUT` and `DELETE /users/{id}/avatar`: where the photo is now (nil once removed).
+    struct AvatarResult: Codable, Hashable, Sendable {
+        let ok: Bool
+        let avatarUrl: String?
     }
 
     /// `POST /users` body ("Add a household member").
@@ -46,6 +54,9 @@ extension API {
         /// revokes every token of the account, including this Mac's when
         /// editing yourself (deviation 5).
         var password: String?
+        /// Required alongside `password` when editing your own account;
+        /// the admin resetting someone else's password doesn't send it.
+        var currentPassword: String?
         /// Admin only (ignored for members); nil leaves it unchanged. Shown only for non-admin rows.
         var autoApproveMovies: Bool?
         var autoApproveTv: Bool?
@@ -54,12 +65,14 @@ extension API {
             username: String,
             displayName: String? = nil,
             password: String? = nil,
+            currentPassword: String? = nil,
             autoApproveMovies: Bool? = nil,
             autoApproveTv: Bool? = nil
         ) {
             self.username = username
             self.displayName = displayName
             self.password = password
+            self.currentPassword = currentPassword
             self.autoApproveMovies = autoApproveMovies
             self.autoApproveTv = autoApproveTv
         }

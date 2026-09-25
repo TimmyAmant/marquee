@@ -6,7 +6,10 @@ async function postToWebhook(webhookUrl: string, content: string): Promise<boole
   const res = await fetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
+    // Titles in these messages come from TMDb, and request titles ultimately
+    // from a member's browser, so never let "@everyone" in one turn into a
+    // real ping.
+    body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   return res.ok;

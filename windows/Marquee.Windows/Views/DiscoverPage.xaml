@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app/discover/page.tsx: the shelves from GET /discover as horizontal rails.
+  The page's own vertical ScrollViewer holds one rail per shelf; each rail
+  is a horizontal ScrollViewer around an ItemsRepeater, so the mouse wheel
+  keeps scrolling the page while the rails scroll sideways with their bars.
+  The shelves bleed off the right edge (no right padding), like the website.
+-->
+<Page
+    x:Class="Marquee.Windows.Views.DiscoverPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <Grid>
+        <ScrollViewer Visibility="{x:Bind ViewModel.HasShelves, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Padding="28,20,0,28">
+                <TextBlock Text="Discover" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,16" />
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Shelves, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Vertical" Spacing="24" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ShelfViewModel">
+                            <StackPanel Spacing="10">
+                                <Grid Margin="0,0,28,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Text="{x:Bind Title}"
+                                        Style="{StaticResource SubtitleTextBlockStyle}"
+                                        VerticalAlignment="Center" />
+                                    <HyperlinkButton
+                                        Grid.Column="1"
+                                        Content="See all"
+                                        Command="{x:Bind SeeAll}"
+                                        Visibility="{x:Bind HasSeeAll, Converter={StaticResource BoolToVisibility}}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+
+                                <ScrollViewer
+                                    HorizontalScrollMode="Enabled"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Disabled"
+                                    VerticalScrollBarVisibility="Disabled"
+                                    Visibility="{x:Bind HasPosters, Converter={StaticResource BoolToVisibility}}">
+                                    <ItemsRepeater ItemsSource="{x:Bind Posters}" Margin="0,0,28,8">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Horizontal" Spacing="14" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:PosterItem">
+                                                <controls:PosterCard Item="{x:Bind}" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
+
+                                <ScrollViewer
+                                    HorizontalScrollMode="Enabled"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Disabled"
+                                    VerticalScrollBarVisibility="Disabled"
+                                    Visibility="{x:Bind HasChips, Converter={StaticResource BoolToVisibility}}">
+                                    <ItemsRepeater ItemsSource="{x:Bind Chips}" Margin="0,0,28,8">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Horizontal" Spacing="8" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ChipItem">
+                                                <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Loading: only until the first answer; a reload keeps the shelves up. -->
+        <StackPanel
+            Spacing="12"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
+            <TextBlock
+                Text="Loading Discover…"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Error, when there is nothing else to show. -->
+        <StackPanel
+            Spacing="12"
+            MaxWidth="440"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Couldn't load Discover" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                TextAlignment="Center" />
+            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- TMDb isn't configured on the server (api-v1.md deviation 7). -->
+        <StackPanel
+            Spacing="12"
+            MaxWidth="440"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Connect TMDb to start browsing" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="{x:Bind ViewModel.TmdbMissingMessage, Mode=OneWay}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                TextAlignment="Center" />
+            <Button
+                Content="Open Settings"
+                Command="{x:Bind ViewModel.OpenSettingsCommand}"
+                Visibility="{x:Bind ViewModel.CanOpenSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Loaded, and every shelf came back empty. -->
+        <StackPanel
+            Spacing="12"
+            MaxWidth="440"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Nothing to show yet" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (F5)."
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                TextAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Page>

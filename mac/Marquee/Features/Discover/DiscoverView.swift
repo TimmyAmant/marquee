@@ -41,6 +41,7 @@ struct DiscoverView: View {
             .padding(.leading, Metrics.pagePadding)
             .padding(.vertical, Metrics.pagePadding)
         }
+        .scrollsUnderNavRail()
         .marqueeGlow()
         .background(Theme.bg0)
         .navigationTitle("Discover")

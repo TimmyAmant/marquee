@@ -234,8 +234,8 @@ export async function getTitleLibraryStatus(
   // already confirmed, one after the other. The Radarr lookup is the same
   // one `getArrStatus` needs below, so it's handed down rather than repeated.
   const [plexFile, jellyfinFile, sonarrExtra, radarrLookup] = await Promise.all([
-    getPlexFileInfo(userId, tmdbId, tvdbId).catch(() => null),
-    getJellyfinFileInfo(userId, tmdbId, tvdbId).catch(() => null),
+    getPlexFileInfo(userId, mediaType, tmdbId, tvdbId).catch(() => null),
+    getJellyfinFileInfo(userId, mediaType, tmdbId, tvdbId).catch(() => null),
     mediaType === "tv" ? getSonarrFileExtras(userId, tvdbId).catch(() => null) : Promise.resolve(null),
     mediaType === "movie"
       ? lookUpRadarrMovie(userId, tmdbId).catch(() => null)

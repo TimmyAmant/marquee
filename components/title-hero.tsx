@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { MediaImage } from "@/components/media-image";
 import type { LibraryStatus } from "@/components/status-badge";
 import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";
@@ -116,8 +117,8 @@ export function TitleHero({
     // top (Docs/DESIGN_TARGET.md).
     <div className="relative -mt-[52px]">
       {backdrop && (
-        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px]">
-          <Image src={backdrop} alt="" fill priority className="object-cover" />
+        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px] md:-left-[72px]">
+          <MediaImage src={backdrop} alt="" fill priority className="object-cover" />
           {/* Two gradients, same as the mockup's .backdrop .fade: down to the
               page background at the bottom, plus a left-hand scrim so the
               poster and title always have something dark behind them. */}
@@ -140,7 +141,7 @@ export function TitleHero({
             <div className="flex flex-wrap gap-6 sm:gap-8 min-[1440px]:flex-nowrap">
               {/* Nothing but the poster and the title sits on the artwork. */}
               <div className="relative h-[240px] w-[160px] shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px]">
-                {poster && <Image src={poster} alt={name} fill sizes="224px" className="object-cover" />}
+                {poster && <MediaImage src={poster} alt={name} fill sizes="224px" className="object-cover" />}
               </div>
 
               <div className="min-w-0 flex-1 basis-[280px] xl:pt-[76px] min-[1440px]:w-[546px] min-[1440px]:flex-none min-[1440px]:basis-auto">

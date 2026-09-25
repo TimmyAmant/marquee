@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
 import { loginAction } from "./actions";
 
 export function LoginForm() {
@@ -13,7 +14,19 @@ export function LoginForm() {
         Sign in to your Marquee account.
       </p>
 
-      <form action={formAction} className="mt-6 flex flex-col gap-4">
+      <form
+        action={formAction}
+        // A fresh sign-in asks about notifications again, even if "Not now"
+        // was picked last time (components/push-prompt.tsx).
+        onSubmit={() => {
+          try {
+            localStorage.removeItem(PUSH_PROMPT_DISMISSED_KEY);
+          } catch {
+            // Private mode: nothing was stored.
+          }
+        }}
+        className="mt-6 flex flex-col gap-4"
+      >
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
           Username
           <input

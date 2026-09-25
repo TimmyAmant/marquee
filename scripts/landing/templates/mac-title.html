@@ -1,8 +1,14 @@
 <!doctype html>
 <!-- Marquee for Mac, title page: rebuilt from mac/Design/Mockups/mockup.html
      (the design both apps follow) and checked against real captures of the
-     app. Rendered by render.mjs at 1440x900 and cropped above the sidebar
-     footer. Fields are filled from lib/slate.mjs through lib/fill.mjs. -->
+     app, then moved onto the floating navigation of 0.29.0
+     (mac/Docs/DESIGN_TARGET.md › Navigation, Features/Shell/NavMenu.swift):
+     no sidebar; the frosted rail, which is the menu itself (every section,
+     grouped by hairlines, then the menu button), 16 from the window's left
+     edge and centred below the toolbar; pages starting 72 in, and the
+     backdrop running under the rail to the edge. The title was opened from
+     Movies, so Movies is the current pill. Rendered by render.mjs at 1440x900 and cropped to
+     1440x846. Fields are filled from lib/slate.mjs through lib/fill.mjs. -->
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
@@ -20,7 +26,8 @@
   --border:#2c2a35;--borderStrong:#3a3745;
   --t1:#f3f1ea;--t2:#a8a4b3;--t3:#6f6c7d;
   --accent:#e0a63e;--own:#4caf7d;--ownBg:#14251c;
-  --sidebar:#1f1f33;--sidebarSel:#323242;--sidebarText:#a3a2b6;--sidebarMuted:#6d6c82;--sidebarBtn:#393850;
+  --accentHover:#f0b954;
+  --navGlass:rgba(30,29,37,.68);--navGlassEdge:rgba(255,255,255,.09);--navGlassShadow:0 24px 64px rgba(0,0,0,.5);
   --traffic:#4c4c5b;--glass:rgba(38,36,34,.52);--glassEdge:rgba(255,255,255,.1);--glassText:#c9c3c0;
   --tbTint:linear-gradient(rgba(10,10,12,.5),rgba(10,10,12,.34));--tbEdge:rgba(255,255,255,.07);
   --facts:rgba(21,20,26,.94);--scroll:#a0a0a2;--cardShadow:0 18px 40px rgba(0,0,0,.35);
@@ -34,7 +41,8 @@
   --border:#e1dccd;--borderStrong:#ccc4b0;
   --t1:#211f1a;--t2:#5c574c;--t3:#8b8575;
   --accent:#b3791f;--own:#2f7a52;--ownBg:#e3f3ea;
-  --sidebar:#f2f1ef;--sidebarSel:#e4e3e1;--sidebarText:#5f5c57;--sidebarMuted:#9a968e;--sidebarBtn:#e6e4e0;
+  --accentHover:#9c6818;
+  --navGlass:rgba(255,255,255,.74);--navGlassEdge:rgba(33,31,26,.10);--navGlassShadow:0 20px 50px rgba(60,45,20,.16);
   --traffic:#dcdbde;--glass:rgba(255,253,248,.55);--glassEdge:rgba(0,0,0,.08);--glassText:#6d665c;
   --tbTint:linear-gradient(rgba(250,248,244,.55),rgba(250,248,244,.32));--tbEdge:rgba(0,0,0,.07);
   --facts:rgba(255,255,255,.94);--scroll:#81807e;--cardShadow:0 18px 40px rgba(70,52,18,.12);
@@ -48,26 +56,29 @@ body{font-family:var(--sans);color:var(--t1);font-size:13px}
 .ic{display:block;flex:none}
 img{display:block}
 
-/* ---------- sidebar ---------- */
-.sidebar{position:absolute;left:0;top:0;bottom:0;width:230px;background:var(--sidebar);z-index:30}
-.traffic{position:absolute;top:19px;left:19px;display:flex;gap:9.4px}
+/* ---------- navigation rail (NavMenu.swift › NavRail) ----------
+   16 from the window's left edge, centred in the area below the 52pt
+   toolbar: 8 of padding (7 inside a 1pt border), 40pt buttons 4 apart,
+   groups split by a 24-wide hairline with 4 above and below. */
+.traffic{position:absolute;top:19px;left:19px;display:flex;gap:9.4px;z-index:12}
 .traffic i{width:14px;height:14px;border-radius:50%;background:var(--traffic);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.18)}
-.sb-toggle{position:absolute;top:8px;left:185px;width:36px;height:36px;border-radius:50%;background:var(--sidebarBtn);display:grid;place-items:center;color:var(--sidebarText)}
-.brand{position:absolute;top:57px;left:19px;font-family:var(--serif);font-size:22px;font-weight:650;letter-spacing:-.01em;line-height:1;color:var(--t1)}
-.brand::after{content:"";position:absolute;right:-9px;top:0;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(224,166,62,.55)}
-.nav{position:absolute;top:98px;left:10px;right:10px}
-.nav-item{height:32px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:10px;font-size:13px;font-weight:500;color:var(--sidebarText)}
-.nav-item .ic{color:var(--sidebarMuted)}
-.nav-item.sel{background:var(--sidebarSel);color:var(--t1);font-weight:600}
-.nav-item.sel .ic{color:var(--sidebarText)}
-.nav-label{font-size:11px;font-weight:600;color:var(--sidebarMuted);padding:14px 10px 6px}
-.side-foot{position:absolute;left:0;right:0;bottom:0;height:52px;padding:0 14px 0 14px;border-top:1px solid rgba(127,127,150,.14);display:flex;align-items:center;gap:9px}
-.who .nm{font-size:12.5px;color:var(--t2);font-weight:500;line-height:15px}
-.who .rl{font-size:11px;color:var(--t3);line-height:14px}
-.roundbtn{margin-left:auto;width:28px;height:28px;border-radius:50%;border:1px solid rgba(127,127,150,.2);display:grid;place-items:center;color:var(--t2)}
+.rail{position:absolute;left:16px;top:calc(52px + (900px - 52px) / 2);transform:translateY(-50%);z-index:20;
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:999px;
+  background:var(--navGlass);box-shadow:inset 0 0 0 1px var(--navGlassEdge),var(--navGlassShadow);
+  backdrop-filter:blur(28px) saturate(1.6)}
+.rail-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--t2)}
+.rail-btn.cur{background:var(--t1);color:var(--bg0)}
+.rail-me{width:40px;height:40px;margin-bottom:4px;display:grid;place-items:center}
+.rail-sep{width:24px;height:1px;margin:4px 0;background:var(--navGlassEdge)}
+.rail-btn.dot{position:relative}
+.rail-btn.dot::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg1)}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--accentHover),var(--accent) 45%,#c2583a);
+  box-shadow:0 0 0 2px rgba(255,255,255,.15);color:var(--bg0);font-size:13.7px;font-weight:600;line-height:1}
 
 /* ---------- content ---------- */
-.content{position:absolute;left:230px;top:0;right:0;bottom:0;overflow:hidden;background:var(--bg0)}
+/* The page starts 72 in (Metrics.contentLeading); the backdrop runs under the rail to the edge. */
+.content{position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;background:var(--bg0)}
 .backdrop{position:absolute;left:0;right:0;top:0;height:380px;overflow:hidden}
 .backdrop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .backdrop .grain{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
@@ -75,8 +86,8 @@ img{display:block}
   linear-gradient(to bottom,color-mix(in srgb,var(--fadeTo) 55%,transparent) 0%,transparent 20%,transparent 40%,color-mix(in srgb,var(--fadeTo) 72%,transparent) 74%,var(--fadeTo) 100%),
   linear-gradient(to right,color-mix(in srgb,var(--fadeTo) 50%,transparent),transparent 42%)}
 
-.page{position:relative;padding:246px 0 40px 304px;z-index:4}
-.tp-poster{position:absolute;left:48px;top:170px;width:224px;height:336px;border-radius:12px;overflow:hidden;background:var(--bg2);
+.page{position:relative;padding:246px 0 40px 376px;z-index:4}
+.tp-poster{position:absolute;left:120px;top:170px;width:224px;height:336px;border-radius:12px;overflow:hidden;background:var(--bg2);
   box-shadow:0 0 0 1px var(--borderStrong),0 28px 64px rgba(0,0,0,.65),0 8px 20px rgba(0,0,0,.45)}
 [data-theme="light"] .tp-poster{box-shadow:0 0 0 1px var(--borderStrong),0 28px 64px rgba(60,45,20,.35),0 8px 20px rgba(60,45,20,.2)}
 .tp-poster img{width:100%;height:100%;object-fit:cover}
@@ -115,7 +126,7 @@ img{display:block}
 .pname{font-size:12.5px;font-weight:600;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px}
 .prole{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:14px}
 
-.tp-side{position:absolute;left:866px;top:246px;width:288px;z-index:4}
+.tp-side{position:absolute;left:954px;top:246px;width:288px;z-index:4}
 .facts{background:var(--facts);border:1px solid var(--border);border-radius:16px;padding:4px 18px 16px;box-shadow:var(--cardShadow);backdrop-filter:blur(20px)}
 .rating{display:flex;align-items:center;justify-content:space-between;height:50px}
 .rating b{font-family:var(--serif);font-size:22px;color:var(--accent);font-weight:700;letter-spacing:-.01em}
@@ -138,7 +149,7 @@ img{display:block}
 
 /* ---------- toolbar: glass over the backdrop ---------- */
 .tb-glass{position:absolute;left:0;right:0;top:0;height:53px;z-index:9;background:var(--tbTint);backdrop-filter:blur(18px) saturate(1.1);border-bottom:1px solid var(--tbEdge)}
-.toolbar{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;padding:0 7px;z-index:10;gap:9px}
+.toolbar{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;padding:0 7px 0 92px;z-index:10;gap:9px}
 .gbtn{width:36px;height:36px;border-radius:50%;background:var(--glass);box-shadow:inset 0 0 0 1px var(--glassEdge);backdrop-filter:blur(18px);display:grid;place-items:center;color:var(--glassText)}
 .gbtn.bell{color:var(--accent)}
 .search{margin-left:auto;margin-right:0;width:326px;height:36px;border-radius:18px;background:var(--glass);box-shadow:inset 0 0 0 1px var(--glassEdge);backdrop-filter:blur(18px);display:flex;align-items:center;gap:8px;padding:0 14px;color:var(--glassText);font-size:13px;font-weight:500}
@@ -146,26 +157,6 @@ img{display:block}
 </style>
 </head>
 <body>
-<div class="sidebar">
-  <div class="traffic"><i></i><i></i><i></i></div>
-  <div class="sb-toggle"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="15" rx="3.2"/><path d="M9.5 4.5v15M5.6 8.2h1.6M5.6 11h1.6M5.6 13.8h1.6"/></svg></div>
-  <div class="brand">Marquee</div>
-  <nav class="nav">
-    <div class="nav-item sel"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg><span>Discover</span></div>
-    <div class="nav-item"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 4.5v15M16.5 4.5v15M3.5 9.5h4M3.5 14.5h4M16.5 9.5h4M16.5 14.5h4"/></svg><span>Movies</span></div>
-    <div class="nav-item"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 20.5h7M12 17v3.5"/></svg><span>Series</span></div>
-    <div class="nav-label">Library</div>
-    <div class="nav-item"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.5s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 6.6a4.2 4.2 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg><span>Favorites</span></div>
-    <div class="nav-item"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></div>
-    <div class="nav-item"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="5" cy="6.5" r=".9" fill="currentColor"/><circle cx="5" cy="12" r=".9" fill="currentColor"/><circle cx="5" cy="17.5" r=".9" fill="currentColor"/></svg><span>Requests</span></div>
-  </nav>
-  <div class="side-foot">
-    <svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e0a63e" stroke-width="1.4"><circle cx="12" cy="12" r="9.6"/><circle cx="12" cy="9.8" r="3.3"/><path d="M5.9 18.4c1.4-2.3 3.5-3.5 6.1-3.5s4.7 1.2 6.1 3.5"/></svg>
-    <div class="who"><div class="nm" data-field="viewer-name">Jordan</div><div class="rl" data-field="viewer-host">marquee.local</div></div>
-    <div class="roundbtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1z"/></svg></div>
-  </div>
-</div>
-
 <main class="content">
   <div class="backdrop"><img data-slot="backdrop" alt=""><div class="grain"></div><div class="fade"></div></div>
   <div class="tp-poster"><img data-slot="poster" data-bind-alt="title" alt=""></div>
@@ -221,6 +212,21 @@ img{display:block}
     <div class="gbtn bell"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 16.5v-5.5a6 6 0 0 1 12 0v5.5l1.6 1.8H4.4z"/><path d="M10 20.8a2.2 2.2 0 0 0 4 0"/></svg></div>
     <div class="search"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/></svg><span>Search an actor, a studio, a title…</span></div>
   </div>
+  <div class="traffic"><i></i><i></i><i></i></div>
+  <nav class="rail" aria-label="Main">
+    <div class="rail-me"><span class="avatar" data-field="viewer-initials">J</span></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4l5.1 5.1"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg></div>
+    <i class="rail-sep"></i>
+    <div class="rail-btn cur"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 4.5v15M16.5 4.5v15M3.5 9.5h4M3.5 14.5h4M16.5 9.5h4M16.5 14.5h4"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 20.5h7M12 17v3.5"/></svg></div>
+    <i class="rail-sep"></i>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.5s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 6.6a4.2 4.2 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></div>
+    <div class="rail-btn dot"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="5" cy="6.5" r=".9" fill="currentColor"/><circle cx="5" cy="12" r=".9" fill="currentColor"/><circle cx="5" cy="17.5" r=".9" fill="currentColor"/></svg></div>
+    <i class="rail-sep"></i>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h15"/></svg></div>
+  </nav>
   <div class="scrollbar"></div>
 </main>
 </body>

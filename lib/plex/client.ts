@@ -71,6 +71,8 @@ export interface PlexResource {
   name: string;
   clientIdentifier: string;
   provides: string;
+  /** False for a server another Plex account has shared with this one. */
+  owned?: boolean;
   connections: PlexConnection[];
 }
 
@@ -81,7 +83,11 @@ export async function getResources(clientId: string, token: string): Promise<Ple
   });
   if (!res.ok) throw new Error(`Failed to list Plex resources (${res.status})`);
   const resources: PlexResource[] = await res.json();
-  return resources.filter((r) => r.provides.split(",").includes("server"));
+  // Only the admin's own servers: a friend's shared server isn't the
+  // household library, and syncing it would both mark their titles as owned
+  // here and hand the admin's account-wide token to a machine someone else
+  // runs.
+  return resources.filter((r) => r.owned !== false && r.provides.split(",").includes("server"));
 }
 
 export function pickBestConnection(connections: PlexConnection[]): string | null {

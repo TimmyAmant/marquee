@@ -19,6 +19,7 @@ export function titlePageData(slate, viewer, images, theme) {
       'file-path': slate.file.path,
       'viewer-name': viewer.name,
       'viewer-host': viewer.host,
+      'viewer-initials': viewer.name.split(/\s+/).slice(0, 2).map((word) => word[0].toUpperCase()).join(''),
     },
     lists: {
       credits: slate.credits,

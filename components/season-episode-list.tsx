@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Image from "next/image";
+import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getSeasonEpisodesAction, type SeasonEpisodesResult } from "@/app/title/[type]/[id]/season-actions";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb/client";
@@ -121,7 +121,7 @@ export function EpisodeList({
           <div key={episode.id} className="flex gap-3 p-4 sm:gap-4">
             <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-bg-2 sm:w-32">
               {still && (
-                <Image src={still} alt={episode.name} fill sizes="(min-width: 640px) 128px, 96px" className="object-cover" />
+                <MediaImage src={still} alt={episode.name} fill sizes="(min-width: 640px) 128px, 96px" className="object-cover" />
               )}
             </div>
             <div className="min-w-0 flex-1">

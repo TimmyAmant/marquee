@@ -1,7 +1,7 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
 import { queryInt } from "@/lib/api/request";
-import { isoRequired } from "@/lib/api/mappers";
+import { notificationItem } from "@/lib/api/mappers";
 import { getRecentNotifications, getUnreadCount } from "@/lib/notifications/query";
 import type { ListResponse, NotificationItem } from "@/lib/api/types";
 
@@ -18,15 +18,6 @@ export const GET = withApi(async (request): Promise<ListResponse<NotificationIte
 
   return {
     unreadCount,
-    results: rows.map((n) => ({
-      id: n.id,
-      mediaType: n.mediaType,
-      tmdbId: n.tmdbId,
-      title: n.title,
-      eventType: n.eventType,
-      message: n.message,
-      read: n.read,
-      createdAt: isoRequired(n.createdAt),
-    })),
+    results: rows.map(notificationItem),
   };
 });

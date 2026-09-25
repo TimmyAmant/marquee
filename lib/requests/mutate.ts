@@ -21,7 +21,7 @@ export async function createRequest(
   viewer: Extract<ViewerIdentity, { userId: string }>,
   input: { mediaType: MediaType; tmdbId: number; title: string; posterPath: string | null },
 ): Promise<CoreResult<{ requestId: string }>> {
-  const { mediaType, tmdbId, title, posterPath } = input;
+  const { mediaType, tmdbId } = input;
 
   const existing = await getActiveRequestStatus(viewer.userId, mediaType, tmdbId);
   if (existing) return fail("conflict", "You've already requested this.");
@@ -30,6 +30,19 @@ export async function createRequest(
   // shows as owned, but re-check server-side since that status can change
   // between page load and submit (e.g. someone else just added it).
   const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+
+  // The name and poster the admin's queue (and every notification relay)
+  // shows come from the server's own TMDb record when it has one. The web
+  // button binds them in the browser, so on their own they'd let a member
+  // dress up one title as another; the client's values only stand in when
+  // TMDb can't be reached, and then trimmed to something a row can hold.
+  const fallbackTitle = typeof input.title === "string" ? input.title.trim().slice(0, 200) : "";
+  const title = cachedTitle?.name ?? (fallbackTitle || "Untitled");
+  const posterPath = cachedTitle
+    ? cachedTitle.posterPath
+    : typeof input.posterPath === "string" && /^(\/|https:\/\/)/.test(input.posterPath)
+      ? input.posterPath.slice(0, 500)
+      : null;
   const currentStatus = await getTitleLibraryStatus(
     viewer.libraryOwnerId,
     mediaType,
@@ -223,7 +236,14 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
   return { ok: true };
 }
 
-export async function rejectRequest(requestId: string, adminUserId: string): Promise<CoreResult> {
+/** `reason` is already normalized by the caller (lib/requests/rejection-reasons.ts)
+ * and optional: the web form always sends one, but an older API client may
+ * not, and a plain "was declined." is still better than refusing the reject. */
+export async function rejectRequest(
+  requestId: string,
+  adminUserId: string,
+  reason: string | null = null,
+): Promise<CoreResult> {
   const [request] = await db
     .select()
     .from(requests)
@@ -233,7 +253,7 @@ export async function rejectRequest(requestId: string, adminUserId: string): Pro
   // Same atomic re-guard as approveRequest — see comment there.
   const [updated] = await db
     .update(requests)
-    .set({ status: "rejected", reviewedByUserId: adminUserId, reviewedAt: new Date() })
+    .set({ status: "rejected", rejectionReason: reason, reviewedByUserId: adminUserId, reviewedAt: new Date() })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
@@ -245,7 +265,9 @@ export async function rejectRequest(requestId: string, adminUserId: string): Pro
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_rejected",
-      message: `"${request.title}" was declined.`,
+      // The reason rides along in the notification too, so the requester
+      // hears why without having to open their Requests page.
+      message: reason ? `"${request.title}" was declined: ${reason}` : `"${request.title}" was declined.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,

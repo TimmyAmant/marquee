@@ -58,3 +58,28 @@ jobs:
             grep -E '\.swift:[0-9]+:[0-9]+: warning:' xcodebuild.log | sort -u
             exit 1
           fi
+
+  windows:
+    name: Windows app (Core tests and build)
+    # Marquee.Core and its tests are platform neutral and would run on Linux,
+    # but the WinUI app itself only builds on Windows, so both steps share
+    # one runner rather than paying for a second checkout and restore.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      # Warnings are already errors through windows/Directory.Build.props,
+      # so unlike the Mac job there is no build log to grep afterwards.
+      - name: Core tests
+        run: dotnet test windows/Marquee.Core.Tests/Marquee.Core.Tests.csproj -c Release
+      # The app is built with Visual Studio's MSBuild rather than `dotnet
+      # build`: the Windows App SDK's resource (PRI) step loads a packaging
+      # task that only ships with Visual Studio, which windows-latest has.
+      # A WinUI project has to be built for one concrete platform, so this
+      # passes x64; only the app project is built, not the .sln, so the Core
+      # projects aren't compiled a second time.
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build the app
+        run: msbuild windows/Marquee.Windows/Marquee.Windows.csproj -restore -p:Configuration=Release -p:Platform=x64 -v:minimal

@@ -35,6 +35,23 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
+<!-- The app's line icons (components/nav-menu.tsx), for the menu mocks. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="i-discover" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m15.2 8.8-1.9 4.5-4.5 1.9 1.9-4.5 4.5-1.9Z"/></symbol>
+  <symbol id="i-movies" viewBox="0 0 24 24"><path d="M4 6h16v12H4V6ZM4 6l2.5 4M8 6l2.5 4M12 6l2.5 4M16 6l2.5 4"/></symbol>
+  <symbol id="i-series" viewBox="0 0 24 24"><path d="M4 5h16v11H4V5ZM9 20h6M4 16l3-3M20 16l-3-3"/></symbol>
+  <symbol id="i-favorites" viewBox="0 0 24 24"><path d="m12 19-7-6.1C2.5 10.5 3 6.5 6.5 5.5c2-.6 3.8.2 5.5 2.3 1.7-2.1 3.5-2.9 5.5-2.3 3.5 1 4 5 1.5 7.4L12 19Z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1ZM4 10h16M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-requests" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 1.8H4.4L6 16.5ZM10 20.8a2.2 2.2 0 0 0 4 0"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></symbol>
+</svg>
+
 <header class="site-header">
   <div class="wrap header-inner">
     <a class="brand" href="#top" aria-label="Marquee, back to top">Marquee</a>
@@ -43,7 +60,8 @@
         <li><a href="#library">At a glance</a></li>
         <li><a href="#connects">How it connects</a></li>
         <li><a href="#requests">Requests</a></li>
-        <li><a href="#mac">Mac app</a></li>
+        <li><a href="#mac">Mac</a></li>
+        <li><a href="#windows">Windows</a></li>
         <li><a href="#install">Install</a></li>
       </ul>
     </nav>
@@ -66,7 +84,7 @@
       <a class="btn btn-primary" href="#install">Install with Docker</a>
       <a class="btn btn-ghost" href="https://github.com/TimmyAmant/marquee">View the source</a>
     </div>
-    <p class="fineprint"><span class="nw">Open source under MIT</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">One container for amd64 and arm64</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">In beta, <a href="https://github.com/TimmyAmant/marquee/releases/latest">v0.27.1</a></span></p>
+    <p class="fineprint"><span class="nw">Open source under MIT</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">One container for amd64 and arm64</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">In beta, <a href="https://github.com/TimmyAmant/marquee/releases/latest">v0.29.0</a></span></p>
   </div>
 
   <div class="wrap">
@@ -81,7 +99,7 @@
           <source media="(max-width: 640px) and (prefers-color-scheme: light)" srcset="assets/img/title-light-crop-620.webp 620w, assets/img/title-light-crop-920.webp 920w" sizes="92vw" width="920" height="620">
           <source media="(max-width: 640px)" srcset="assets/img/title-dark-crop-620.webp 620w, assets/img/title-dark-crop-920.webp 920w" sizes="92vw" width="920" height="620">
           <source media="(prefers-color-scheme: light)" srcset="assets/img/title-light-720.webp 720w, assets/img/title-light-1100.webp 1100w, assets/img/title-light-1600.webp 1600w" sizes="(max-width: 1240px) 92vw, 1120px" width="1600" height="1000">
-          <img class="shot" src="assets/img/title-dark-1600.webp" srcset="assets/img/title-dark-720.webp 720w, assets/img/title-dark-1100.webp 1100w, assets/img/title-dark-1600.webp 1600w" sizes="(max-width: 1240px) 92vw, 1120px" width="1600" height="1000" fetchpriority="high" alt="Marquee’s page for Emberline, a made-up film. A green “Already in your library” badge sits under the title next to Search now, Stop monitoring and Fix ID, and a File details card lists the file’s location, size, 4K resolution, video codec, Dolby Vision HDR10 and TrueHD Atmos audio.">
+          <img class="shot" src="assets/img/title-dark-1600.webp" srcset="assets/img/title-dark-720.webp 720w, assets/img/title-dark-1100.webp 1100w, assets/img/title-dark-1600.webp 1600w" sizes="(max-width: 1240px) 92vw, 1120px" width="1600" height="1000" fetchpriority="high" alt="Marquee’s page for Emberline, a made-up film, with the navigation rail floating at the left edge and the backdrop running under it. A green “Already in your library” badge sits under the title next to Search now, Stop monitoring and Fix ID, and a File details card lists the file’s location, size, 4K resolution, video codec, Dolby Vision HDR10 and TrueHD Atmos audio.">
         </picture>
       </div>
     </figure>
@@ -127,7 +145,86 @@
   </div>
 </section>
 
-<!-- ───────────────────────── 2. How it connects ───────────────────────── -->
+<!-- ───────────────────────── 2. Getting around ───────────────────────── -->
+<section class="section" id="menu" aria-labelledby="menu-title">
+  <div class="wrap">
+    <div class="section-head split">
+      <div>
+        <p class="eyebrow">Getting around</p>
+        <h2 id="menu-title">Every section, <em>one click away.</em></h2>
+      </div>
+      <p class="section-intro">After the Plex app on Apple TV: a small frosted rail floats at the left edge with your photo and every section, grouped by hairlines. One click goes straight there, and resting on an icon shows its name.</p>
+    </div>
+
+    <div class="menu-shots">
+      <figure class="menu-shot reveal">
+        <div class="stage" role="img" aria-label="A Marquee title page with the rail at the left edge: Jordan’s profile photo, Search and Discover, Movies, highlighted as the current page, and Series, then Favorites, Calendar and Requests, with a dot for requests waiting, and the menu button. The pointer rests on Series, and a small frosted label beside it says Series.">
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="assets/img/menu-light-1520.webp">
+            <img class="stage-shot" src="assets/img/menu-dark-1520.webp" width="760" height="680" alt="" loading="lazy" decoding="async">
+          </picture>
+          <div class="rail">
+            <span class="rail-me"><span class="av av-36">J</span></span>
+            <span><svg class="ic"><use href="#i-search"/></svg></span>
+            <span><svg class="ic"><use href="#i-discover"/></svg></span>
+            <i class="rail-sep"></i>
+            <span class="is-current"><svg class="ic"><use href="#i-movies"/></svg></span>
+            <span class="is-hover"><svg class="ic"><use href="#i-series"/></svg><span class="rail-label">Series</span><svg class="cursor" viewBox="0 0 17 24"><path d="M1.5 1.5v17.2l4.3-4.1 2.9 6.8 2.8-1.2-2.9-6.7h6.1z"/></svg></span>
+            <i class="rail-sep"></i>
+            <span><svg class="ic"><use href="#i-favorites"/></svg></span>
+            <span><svg class="ic"><use href="#i-calendar"/></svg></span>
+            <span class="has-dot"><svg class="ic"><use href="#i-requests"/></svg></span>
+            <i class="rail-sep"></i>
+            <span><svg class="ic"><use href="#i-menu"/></svg></span>
+          </div>
+        </div>
+        <figcaption><strong>Rest, then click.</strong> An icon’s name appears beside it, and one click goes straight to that page. The one you’re on is the solid pill.</figcaption>
+      </figure>
+
+      <figure class="menu-shot reveal">
+        <div class="stage stage-panel" role="img" aria-label="The full menu open over the same page, as a frosted panel: Jordan’s profile at the top, Search and Discover, then Movies, highlighted, and Series under Browse, and Favorites, Calendar and Requests, with 2 waiting, under Library.">
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="assets/img/menu-light-1520.webp">
+            <img class="stage-shot" src="assets/img/menu-dark-1520.webp" width="760" height="680" alt="" loading="lazy" decoding="async">
+          </picture>
+          <div class="navp">
+            <div class="navp-main">
+              <div class="navp-me">
+                <span class="av av-38">J</span>
+                <span class="navp-who"><span class="navp-name">Jordan</span><span class="navp-host">marquee.local</span></span>
+                <svg class="ic"><use href="#i-chevron"/></svg>
+              </div>
+              <div class="navp-rows">
+                <span class="navp-row big"><svg class="ic"><use href="#i-search"/></svg>Search</span>
+                <span class="navp-row big"><svg class="ic"><use href="#i-discover"/></svg>Discover</span>
+                <span class="navp-head">Browse</span>
+                <span class="navp-row is-current"><svg class="ic"><use href="#i-movies"/></svg>Movies</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-series"/></svg>Series</span>
+                <span class="navp-head">Library</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-favorites"/></svg>Favorites</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-calendar"/></svg>Calendar</span>
+                <span class="navp-row"><svg class="ic"><use href="#i-requests"/></svg>Requests<span class="navp-count">2</span></span>
+              </div>
+            </div>
+            <div class="navp-foot">
+              <span class="navp-mark">Marquee</span>
+              <span class="navp-theme"><svg class="ic ic-moon"><use href="#i-moon"/></svg><svg class="ic ic-sun"><use href="#i-sun"/></svg></span>
+            </div>
+          </div>
+        </div>
+        <figcaption><strong>☰ for the full menu.</strong> Every section by name, and your account. On a phone, the menu button at the top opens it as a drawer.</figcaption>
+      </figure>
+    </div>
+
+    <dl class="fine-grid reveal">
+      <div><dt>Room for the page</dt><dd>Nothing sits beside the page any more, so a title’s backdrop runs right to the edge of the window.</dd></div>
+      <div><dt>The same everywhere</dt><dd>The website, the Mac app and the Windows app share the rail and the menu, frosted glass and all.</dd></div>
+      <div><dt>Your photo, on your server</dt><dd>Add one in Settings › Account and it tops the rail and shows next to each household member. It’s stripped of location and camera details and never leaves your Marquee server.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ───────────────────────── 3. How it connects ───────────────────────── -->
 <section class="section section-alt" id="connects" aria-labelledby="connects-title">
   <div class="wrap">
     <div class="section-head centered">
@@ -160,8 +257,8 @@
         <dl class="credits">
           <div class="credit"><dt>The admin</dt><dd>adds titles, approves requests</dd></div>
           <div class="credit"><dt>The household</dt><dd>browses, favorites, requests</dd></div>
-          <div class="credit"><dt>Alerts</dt><dd>the bell, Discord, ntfy, webhooks</dd></div>
-          <div class="credit"><dt>Anywhere</dt><dd>browser, phone, Mac app, JSON API</dd></div>
+          <div class="credit"><dt>Alerts</dt><dd>the bell, your devices, Discord, ntfy, webhooks</dd></div>
+          <div class="credit"><dt>Anywhere</dt><dd>browser, phone, Mac and Windows apps, JSON API</dd></div>
         </dl>
       </div>
     </div>
@@ -170,7 +267,7 @@
   </div>
 </section>
 
-<!-- ───────────────────────── 3. Requests ───────────────────────── -->
+<!-- ───────────────────────── 4. Requests ───────────────────────── -->
 <section class="section" id="requests" aria-labelledby="requests-title">
   <div class="wrap">
     <div class="section-head split">
@@ -207,7 +304,7 @@
         <div class="step-body">
           <p class="step-no">2</p>
           <h3>You approve</h3>
-          <p>Everything waiting sits on one Requests page. Approve all clears the queue.</p>
+          <p>Everything waiting sits on one Requests page. Approve all clears the queue; a decline asks you why.</p>
           <div class="mini mini-queue" aria-hidden="true">
             <div class="queue-head"><span>Pending</span><span class="queue-all">Approve all</span></div>
             <div class="queue-row">
@@ -232,11 +329,19 @@
         <div class="step-body">
           <p class="step-no">3</p>
           <h3>Sam hears back</h3>
-          <p>When Radarr finishes the download, Sam’s bell says it’s ready. Once per request, not once per episode.</p>
-          <div class="mini mini-bell" aria-hidden="true">
-            <div class="bell-top"><span>Notifications</span><span class="bell-mark">Mark all read</span></div>
-            <div class="bell-item unread"><i></i><div><p>Paper Harbor, which you requested, is ready to watch</p><p class="bell-time">just now</p></div></div>
-            <div class="bell-item"><div><p>“Paper Harbor” was approved — it’s on its way to your library.</p><p class="bell-time">3h ago</p></div></div>
+          <p>When Radarr finishes the download, a notification lands on Sam’s phone, once per request. A decline comes with your reason.</p>
+          <div class="mini mini-phone" aria-hidden="true">
+            <p class="phone-time">9:41</p>
+            <div class="notif">
+              <img src="assets/favicon.svg" width="30" height="30" alt="">
+              <div class="notif-text">
+                <p class="notif-head"><span>Marquee</span><span>now</span></p>
+                <p class="notif-title">Ready to watch</p>
+                <p class="notif-body">Paper Harbor, which you requested, is ready to watch</p>
+              </div>
+            </div>
+            <div class="notif-stack"></div>
+            <div class="notif-stack"></div>
           </div>
         </div>
         <div class="stub">
@@ -246,6 +351,20 @@
       </li>
     </ol>
 
+    <div class="push reveal">
+      <div class="push-head">
+        <span class="push-bell" aria-hidden="true"><svg class="ic"><use href="#i-bell"/></svg></span>
+        <h3>Notifications, from <em>your own server.</em></h3>
+        <p>After you sign in, Marquee asks whether this device should get notifications: a request approved or declined, a title ready to watch. Your server sends them itself, so there’s no third-party service to sign up for and no API key to paste in.</p>
+      </div>
+      <dl class="push-facts">
+        <div><dt>Sealed</dt><dd>On the website they’re standard Web Push, encrypted end to end so only your device can read them. The browser’s own push relay carries the sealed message and nothing more.</dd></div>
+        <div><dt>On your phone</dt><dd>Open Marquee over https, for example through a tunnel or reverse proxy. On iPhone and iPad, add it to the Home Screen first.</dd></div>
+        <div><dt>No relay at all</dt><dd>The Mac and Windows apps get them straight from your server, over a live connection.</dd></div>
+        <div><dt>Your devices</dt><dd>Settings › Account › Notifications turns them on or off, lists your devices and sends a test.</dd></div>
+      </dl>
+    </div>
+
     <dl class="fine-grid reveal">
       <div><dt>Trusted members skip the line</dt><dd>Auto-approve one member’s movie requests, TV requests, or both, and they go straight to Radarr or Sonarr.</dd></div>
       <div><dt>Bring a watchlist</dt><dd>Paste a public Trakt list or watchlist, and anything you don’t already have or haven’t requested joins the queue.</dd></div>
@@ -254,26 +373,34 @@
   </div>
 </section>
 
-<!-- ───────────────────────── 4. Mac app ───────────────────────── -->
+<!-- ───────────────────────── 5. Mac app ───────────────────────── -->
 <section class="section section-alt mac" id="mac" aria-labelledby="mac-title">
   <div class="wrap mac-grid">
-    <div class="mac-copy">
+    <div class="mac-copy feature-copy">
       <p class="eyebrow">Marquee for Mac</p>
       <h2 id="mac-title">Your server, <em>in a native window.</em></h2>
       <p class="section-intro">A real SwiftUI app with no library of its own. It finds the Marquee server on your home network by itself, signs in with a token kept in your Keychain, and shows exactly what the website shows. On a phone, the website works just as well.</p>
 
-      <ul class="mac-points">
-        <li><strong>Notifications, the Mac way.</strong> System banners and a Dock badge for anything new; click one and the title opens, even if the app was closed.</li>
+      <ul class="points">
+        <li><strong>Notifications straight from your server.</strong> System banners and a Dock badge, over a live connection with no relay in between. Click one and the title opens, even if the app was closed.</li>
+        <li><strong>The same rail, and your photo.</strong> Every section one click from the left edge, as on the website, with your profile photo on top.</li>
         <li><strong>Right-click everything.</strong> Open, Add or Request, Favorite, Copy Link and Open in Browser on any poster or person.</li>
-        <li><strong>Links that land.</strong> A <code>marquee://</code> link opens straight to a title.</li>
       </ul>
+
+      <div class="get">
+        <div class="get-row">
+          <a class="btn btn-primary" href="https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee.dmg"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Download for Mac</a>
+          <a class="btn btn-ghost" href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md">Build instructions <span aria-hidden="true">→</span></a>
+        </div>
+        <p class="get-note">Open it and drag Marquee onto the Applications folder beside it. It isn’t notarized yet, so the first launch needs System&nbsp;Settings › Privacy&nbsp;&amp;&nbsp;Security › <span class="nw">Open Anyway</span>. After that, it updates itself.</p>
+      </div>
     </div>
 
     <div class="mac-visual reveal">
       <figure class="mac-window">
         <picture>
           <source media="(prefers-color-scheme: light)" srcset="assets/img/mac-light-1000.webp 1000w, assets/img/mac-light-1600.webp 1600w" sizes="(max-width: 900px) 92vw, calc(50vw + 60px)" width="1600" height="940">
-          <img src="assets/img/mac-dark-1600.webp" srcset="assets/img/mac-dark-1000.webp 1000w, assets/img/mac-dark-1600.webp 1600w" sizes="(max-width: 900px) 92vw, calc(50vw + 60px)" width="1600" height="940" loading="lazy" decoding="async" alt="Marquee for Mac showing the page for Emberline, a made-up film: the poster, the library badge and actions under the title, and cards with the TMDb score, release details and file details.">
+          <img src="assets/img/mac-dark-1600.webp" srcset="assets/img/mac-dark-1000.webp 1000w, assets/img/mac-dark-1600.webp 1600w" sizes="(max-width: 900px) 92vw, calc(50vw + 60px)" width="1600" height="940" loading="lazy" decoding="async" alt="Marquee for Mac showing the page for Emberline, a made-up film: the navigation rail floating at the left edge, the poster, the library badge and actions under the title, and cards with the TMDb score, release details and file details.">
         </picture>
       </figure>
       <figure class="mac-connect">
@@ -285,18 +412,93 @@
       <ul class="keys" aria-label="Keyboard shortcuts">
         <li><span class="keycombo"><kbd>⌘</kbd><kbd>1</kbd>–<kbd>6</kbd></span> sections</li>
         <li><span class="keycombo"><kbd>⌘</kbd><kbd>F</kbd></span> search</li>
-        <li><span class="keycombo"><kbd>⇧</kbd><kbd>⌘</kbd><kbd>R</kbd></span> sync now</li>
+        <li><span class="keycombo"><kbd>⌃</kbd><kbd>⌘</kbd><kbd>S</kbd></span> menu</li>
         <li><span class="keycombo"><kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd></span> surprise me</li>
       </ul>
-      <div class="mac-get">
-        <p class="mac-req">Needs macOS 15 Sequoia or later and a Marquee server on 0.22.0 or newer. Build it from the repo with Xcode and XcodeGen; no Apple Developer account needed.</p>
-        <a class="btn btn-ghost btn-sm" href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md">Build instructions <span aria-hidden="true">→</span></a>
+      <p class="mac-req">Needs macOS 15 Sequoia or later and a Marquee server on 0.22.0 or newer; profile photos and live notifications need 0.29.0. Free and open source, like the server.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 6. Windows app ───────────────────────── -->
+<section class="section section-alt win" id="windows" aria-labelledby="windows-title">
+  <div class="wrap">
+    <div class="win-grid">
+      <div class="win-visual reveal" role="img" aria-label="Marquee for Windows on its Requests page, with the rail of every section at the left and Requests highlighted. Under Past requests, Holloway Picture House, requested by Alex, is declined with the reason Already available on a streaming service we have, and Paper Harbor, requested by Sam, is approved. A Windows notification from Marquee says Paper Harbor finished downloading.">
+        <div class="win-frame">
+          <div class="win-bar">
+            <span class="win-mark">Marquee<i></i></span>
+            <span class="win-search"><span>Search an actor, a studio, a title…</span><svg class="ic"><use href="#i-search"/></svg></span>
+            <span class="win-bell"><svg class="ic"><use href="#i-bell"/></svg></span>
+            <span class="win-caps"><i class="cap-min"></i><i class="cap-max"></i><i class="cap-close"></i></span>
+          </div>
+          <div class="win-body">
+            <div class="rail">
+              <span class="rail-me"><span class="av av-36">J</span></span>
+              <span><svg class="ic"><use href="#i-search"/></svg></span>
+              <span><svg class="ic"><use href="#i-discover"/></svg></span>
+              <i class="rail-sep"></i>
+              <span><svg class="ic"><use href="#i-movies"/></svg></span>
+              <span><svg class="ic"><use href="#i-series"/></svg></span>
+              <i class="rail-sep"></i>
+              <span><svg class="ic"><use href="#i-favorites"/></svg></span>
+              <span><svg class="ic"><use href="#i-calendar"/></svg></span>
+              <span class="is-current"><svg class="ic"><use href="#i-requests"/></svg></span>
+              <i class="rail-sep"></i>
+              <span><svg class="ic"><use href="#i-menu"/></svg></span>
+            </div>
+            <div class="wpage">
+              <p class="wpage-title">Requests</p>
+              <p class="wpage-muted">No pending requests.</p>
+              <p class="wpage-sub">Past requests</p>
+              <div class="wlist">
+                <div class="wrow">
+                  <span class="wthumb"><img src="assets/img/poster-holloway.webp" width="192" height="288" alt="" loading="lazy" decoding="async"></span>
+                  <span class="wrow-main"><span class="wrow-title">Holloway Picture House</span><span class="wrow-by">Alex</span></span>
+                  <span class="wrow-status"><span class="wbadge wb-declined">Declined</span><span class="wreason">Reason: Already available on a streaming service we have</span></span>
+                </div>
+                <div class="wrow">
+                  <span class="wthumb"><img src="assets/img/poster-paper-harbor.webp" width="192" height="288" alt="" loading="lazy" decoding="async"></span>
+                  <span class="wrow-main"><span class="wrow-title">Paper Harbor</span><span class="wrow-by">Sam</span></span>
+                  <span class="wrow-status"><span class="wbadge wb-approved">Approved</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="toast">
+          <p class="toast-top"><img src="assets/favicon.svg" width="16" height="16" alt=""><span>Marquee</span><span>···</span></p>
+          <p class="toast-title">Ready to watch</p>
+          <p class="toast-body">Paper Harbor finished downloading</p>
+        </div>
+      </div>
+
+      <div class="win-copy feature-copy">
+        <p class="eyebrow">Marquee for Windows <span class="tag">Preview</span></p>
+        <h2 id="windows-title">And now, <em>on Windows.</em></h2>
+        <p class="section-intro">A native WinUI 3 app, built alongside the Mac one: the same menu and the same pages, talking to the same server. Type in your server’s address, sign in, and the household’s library is there.</p>
+
+        <ul class="points">
+          <li><strong>Everything the house uses.</strong> Discover, Movies and Series, search, title pages with Add or Request, favorites, the calendar, and requests with their decline reasons.</li>
+          <li><strong>Notifications with no relay.</strong> While Marquee is open, your server’s notifications show up as Windows notifications, straight over a live connection.</li>
+          <li><strong>Run the household from it.</strong> Add, edit and remove members, and give each one a photo.</li>
+        </ul>
+        <p class="win-later">Not there yet: integrations settings (use the website for now), <code>marquee://</code> links, and finding your server on the network by itself.</p>
+
+        <div class="get">
+          <div class="get-row">
+            <a class="btn btn-primary" href="https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-Setup.exe"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Download for Windows</a>
+            <a class="btn btn-ghost" href="https://github.com/TimmyAmant/marquee/blob/main/windows/README.md">Build instructions <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="get-note">Run it: it installs Marquee for your account (no admin prompt), adds it to the Start menu and opens it. It isn’t code-signed yet, so if SmartScreen says “Windows protected your PC”, choose <span class="nw">More info › Run anyway</span>. A newer installer updates it in place.</p>
+          <p class="get-note">Needs Windows 10 1809 or later, or Windows 11, and a Marquee server on 0.22.0 or newer; photos and notifications need 0.29.0.</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ───────────────────────── 5. Install ───────────────────────── -->
+<!-- ───────────────────────── 7. Install ───────────────────────── -->
 <section class="section" id="install" aria-labelledby="install-title">
   <div class="wrap">
     <div class="section-head split">
@@ -343,7 +545,7 @@
       </div>
       <div class="more reveal">
         <h3>Away from home</h3>
-        <p>Marquee speaks plain HTTP on your network. The README walks through a Cloudflare Tunnel on your own domain, and putting Authelia or Cloudflare Access in front, with what to exempt so the Mac app and webhooks keep working.</p>
+        <p>Marquee speaks plain HTTP on your network. The README walks through a Cloudflare Tunnel on your own domain, which also brings the https that notifications on phones need, and putting Authelia or Cloudflare Access in front, with what to exempt so the apps and webhooks keep working.</p>
         <p class="more-links"><a href="https://github.com/TimmyAmant/marquee#access-from-outside-your-network">Remote access guide</a></p>
       </div>
     </div>
@@ -352,9 +554,9 @@
       <h3 class="stays-title">Your library stays on <em>your server.</em></h3>
       <dl class="credits credits-wide">
         <div class="credit"><dt>No cloud</dt><dd>No account with us, no hosted service and no analytics.</dd></div>
-        <div class="credit"><dt>Your data</dt><dd>What you own, what the house asked for, and who they are live in a Postgres database inside the container, which doesn’t listen outside it.</dd></div>
+        <div class="credit"><dt>Your data</dt><dd>What you own, what the house asked for, who they are and their profile photos live in a Postgres database inside the container, which doesn’t listen outside it.</dd></div>
         <div class="credit"><dt>Your keys</dt><dd>Saved Plex, Jellyfin, Sonarr and Radarr credentials are encrypted at rest with <span class="nw">AES-256-GCM</span>. Passwords are hashed with argon2 and sign-ins are rate-limited.</dd></div>
-        <div class="credit"><dt>Calls out</dt><dd>Only to what you connect: TMDb for metadata and artwork, plus TheTVDB, Trakt, plex.tv and your notification channels if you use them.</dd></div>
+        <div class="credit"><dt>Calls out</dt><dd>Only to what you connect: TMDb for metadata and artwork, plus TheTVDB, Trakt, plex.tv and your notification channels if you use them. Notifications in a browser pass through that browser’s push relay, sealed so it can’t read them.</dd></div>
       </dl>
       <p class="beta-note">Marquee is in beta and changes often. Back up your database before updating.</p>
     </div>
@@ -367,15 +569,15 @@
     <article class="release reveal">
       <div class="release-stub" aria-hidden="true"><span>Now showing</span></div>
       <div class="release-body">
-        <p class="release-meta"><span class="eyebrow">Recent release</span><time datetime="2026-09-18">September 18, 2026</time></p>
-        <h2 id="latest-title"><span class="release-version">0.27.0</span> Sync fixes, safer sign-in, Mac&nbsp;polish</h2>
+        <p class="release-meta"><span class="eyebrow">Recent release</span><time datetime="2026-09-25">September 25, 2026</time></p>
+        <h2 id="latest-title"><span class="release-version">0.29.0</span> A new menu, photos and notifications</h2>
         <ul>
-          <li>Household members now get a notification when a title they requested finishes downloading.</li>
-          <li>Titles you delete from Plex or Jellyfin drop out of your library on the next sync.</li>
-          <li>Removing a household member, or changing someone’s password, signs them out of the website right away.</li>
-          <li>Marquee for Mac reconnects on its own when the network returns or the Mac wakes.</li>
+          <li>A frosted rail at the left edge puts every section one click away, after the Plex app on Apple TV, and ☰ opens the full menu. Pages get the room the sidebar took.</li>
+          <li>Profile photos, kept on your Marquee server and shown in the menu and next to each household member.</li>
+          <li>Notifications on your devices, sent by your own server: Web Push on the website, phones included, and a live connection in the Mac and Windows apps.</li>
+          <li>Since 0.28.0: declined requests say why, a round of security fixes, and Marquee for Windows, now in preview.</li>
         </ul>
-        <p class="release-links"><a href="https://github.com/TimmyAmant/marquee/releases/tag/v0.27.0">Release notes</a><a href="https://github.com/TimmyAmant/marquee/releases">Every release</a></p>
+        <p class="release-links"><a href="https://github.com/TimmyAmant/marquee/releases/tag/v0.29.0">Release notes</a><a href="https://github.com/TimmyAmant/marquee/releases">Every release</a></p>
       </div>
     </article>
   </div>
@@ -391,7 +593,7 @@
     <dl class="end-credits">
       <div><dt>Source</dt><dd><a href="https://github.com/TimmyAmant/marquee">GitHub</a></dd></div>
       <div><dt>Image</dt><dd><a href="https://hub.docker.com/r/timmyamant/marquee">Docker Hub</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/pkgs/container/marquee">GitHub Packages</a></dd></div>
-      <div><dt>Docs</dt><dd><a href="https://github.com/TimmyAmant/marquee#readme">README</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/api-v1.md">API reference</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md">Mac app</a></dd></div>
+      <div><dt>Docs</dt><dd><a href="https://github.com/TimmyAmant/marquee#readme">README</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/api-v1.md">API reference</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md">Mac app</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/windows/README.md">Windows app</a></dd></div>
       <div><dt>Changelog</dt><dd><a href="https://github.com/TimmyAmant/marquee/releases">Releases</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/lib/changelog.ts">Full history</a></dd></div>
       <div><dt>Support</dt><dd><a href="https://github.com/TimmyAmant/marquee/issues">Issues</a></dd></div>
       <div><dt>License</dt><dd><a href="https://github.com/TimmyAmant/marquee/blob/main/LICENSE">MIT</a></dd></div>

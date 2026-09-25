@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The WinUI 3 client. Everything that talks to the server lives in
+    Marquee.Core; this project is the shell, the pages and the two Windows
+    specific stores (credential vault, settings file).
+
+    Unpackaged on purpose: a plain `dotnet build` produces something that
+    runs, and the Windows App SDK runtime ships inside the output
+    (WindowsAppSDKSelfContained), so neither a developer nor CI needs the
+    framework package installed. Build with an explicit platform, e.g.
+    `dotnet build -c Release -p:Platform=x64`; WinUI has no AnyCPU.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <RootNamespace>Marquee.Windows</RootNamespace>
+    <AssemblyName>Marquee.Windows</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!--
+      The single-project MSIX tooling is what generates and ships the app's
+      resource index (Marquee.Windows.pri, which holds every page's compiled
+      XAML), unpackaged or not. Without it `Publish` left the .pri out, and
+      the installed app died loading MainWindow ("XAML parsing failed", MRT
+      "cannot find the file specified") before its window ever showed.
+    -->
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Description>Marquee for Windows: the household media dashboard as a native app.</Description>
+    <!-- Built from the Mac icon's artwork by windows/Scripts/make-icon.mjs. -->
+    <ApplicationIcon>Assets\Marquee.ico</ApplicationIcon>
+
+    <!--
+      The view models keep [ObservableProperty] on fields so they compile
+      under C# 12 (the .NET 8 SDK) as well as newer SDKs. On a newer SDK the
+      MVVM Toolkit flags that pattern as not Native AOT compatible for WinRT
+      (MVVMTK0045); the app is never published with Native AOT, and warnings
+      are errors here, so that one diagnostic is silenced. NETSDK1206 is the
+      SDK noticing a dependency that still ships "win10-x64" assets, which is
+      the package's business, not this project's.
+    -->
+    <NoWarn>$(NoWarn);MVVMTK0045;NETSDK1206</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Also loose next to the .exe, where MainWindow sets it as the window's icon. -->
+    <Content Include="Assets\Marquee.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.260224002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9169" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Marquee.Core\Marquee.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!--
+    Belt and braces for the same failure: whatever the tooling does, the
+    published folder gets the app's .pri next to the .exe, where an
+    unpackaged app's resource loader looks for it.
+  -->
+  <Target Name="MarqueeCopyPriToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <MarqueeProjectPri Include="$(ProjectPriFullPath)" Condition="'$(ProjectPriFullPath)' != '' And Exists('$(ProjectPriFullPath)')" />
+      <MarqueeProjectPri Include="$(OutDir)$(TargetName).pri" Condition="'@(MarqueeProjectPri)' == '' And Exists('$(OutDir)$(TargetName).pri')" />
+      <MarqueeProjectPri Include="$(OutDir)resources.pri" Condition="'@(MarqueeProjectPri)' == '' And Exists('$(OutDir)resources.pri')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MarqueeProjectPri)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+    <Warning Condition="'@(MarqueeProjectPri)' == ''" Text="No app .pri was found to publish; the app will fail to load its XAML." />
+  </Target>
+</Project>

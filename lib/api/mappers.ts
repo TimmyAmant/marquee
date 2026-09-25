@@ -4,6 +4,7 @@
 import type * as Dto from "@/lib/api/types";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
+import { avatarPath } from "@/lib/users/avatar-path";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
@@ -134,6 +135,7 @@ export function myRequest(row: {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  rejectionReason: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
   libraryStatus: LibraryStatus | null;
@@ -147,6 +149,7 @@ export function myRequest(row: {
     posterPath: row.posterPath,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
+    rejectionReason: row.rejectionReason,
     libraryStatus: row.libraryStatus,
     statusLabel: badge.label,
     statusTone: badge.tone,
@@ -163,6 +166,7 @@ export function reviewedRequest(row: {
   posterPath: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
+  rejectionReason: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
   requestedByName: string | null;
@@ -176,6 +180,7 @@ export function reviewedRequest(row: {
     posterPath: row.posterPath,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
+    rejectionReason: row.rejectionReason,
     statusLabel: reviewedRequestLabel(row.status, row.manuallyApproved),
     requestedBy: requestPerson({ displayName: row.requestedByName, username: row.requestedByUsername }),
     createdAt: isoRequired(row.createdAt),
@@ -193,9 +198,33 @@ export function householdMember(row: HouseholdMemberRow, currentUserId: string):
     autoApproveTv: row.autoApproveTv,
     createdAt: isoRequired(row.createdAt),
     isCurrentUser: row.id === currentUserId,
+    avatarUrl: avatarPath(row, "/api/v1"),
   };
 }
 
 export function syncedServers(servers: { name: string | null; lastSyncedAt: Date | null }[]): Dto.SyncedServer[] {
   return servers.map((s) => ({ name: s.name, lastSyncedAt: iso(s.lastSyncedAt) }));
+}
+
+/** One notification as /notifications lists it and the live stream sends it. */
+export function notificationItem(n: {
+  id: string;
+  mediaType: Dto.NotificationItem["mediaType"];
+  tmdbId: number;
+  title: string;
+  eventType: Dto.NotificationItem["eventType"];
+  message: string;
+  read: boolean;
+  createdAt: Date;
+}): Dto.NotificationItem {
+  return {
+    id: n.id,
+    mediaType: n.mediaType,
+    tmdbId: n.tmdbId,
+    title: n.title,
+    eventType: n.eventType,
+    message: n.message,
+    read: n.read,
+    createdAt: isoRequired(n.createdAt),
+  };
 }

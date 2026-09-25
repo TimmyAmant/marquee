@@ -160,7 +160,7 @@ struct SettingsSectionLabel: View {
     }
 }
 
-/// Brand wordmark with the accent dot (sidebar / auth screens).
+/// Brand wordmark with the accent dot (navigation menu / auth screens).
 struct MarqueeWordmark: View {
     var size: CGFloat = 24
 

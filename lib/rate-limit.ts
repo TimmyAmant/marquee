@@ -57,7 +57,9 @@ export function isRateLimited(key: string, limit: number): boolean {
 /** Records a failed attempt against the budget. Use only after confirming the
  * attempt actually failed (e.g. wrong password) — successful attempts should
  * never consume budget, or legitimate users get locked out by their own
- * normal usage. */
+ * normal usage. (Or record it up front and `refundAttempt` on success, when
+ * the check itself is slow enough that parallel attempts could all pass
+ * `isRateLimited` before any failure lands.) */
 export function recordFailedAttempt(key: string, windowMs: number): void {
   const now = Date.now();
   const bucket = buckets.get(key);
@@ -66,6 +68,15 @@ export function recordFailedAttempt(key: string, windowMs: number): void {
     return;
   }
   bucket.count++;
+}
+
+/** Gives back one attempt recorded up front for a check that then succeeded,
+ * so a correct password costs nothing. A window that already expired has
+ * nothing to give back. */
+export function refundAttempt(key: string): void {
+  const bucket = buckets.get(key);
+  if (!bucket || Date.now() > bucket.resetAt) return;
+  if (bucket.count > 0) bucket.count--;
 }
 
 /**

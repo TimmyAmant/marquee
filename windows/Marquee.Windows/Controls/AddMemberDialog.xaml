@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app/settings/create-user-form.tsx: "Add a household member" for the admin.
+  Create account stays disabled until there is a username and a password;
+  the server checks the rest (3 to 32 characters of letters, numbers and
+  _ . - for the username, at least 8 for the password) and its message
+  shows in the InfoBar, with the dialog kept open.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.AddMemberDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Add a household member"
+    PrimaryButtonText="Create account"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="False"
+    PrimaryButtonClick="OnCreateClick"
+    Closing="OnDialogClosing">
+
+    <StackPanel Spacing="12" MinWidth="380">
+        <TextBlock
+            Text="There's no public signup. Create accounts for the other people in your household here; they sign in with the username and password you choose."
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+        <TextBox
+            x:Name="DisplayNameBox"
+            Header="Name"
+            PlaceholderText="Optional: how the household sees them"
+            MaxLength="80" />
+        <TextBox
+            x:Name="UsernameBox"
+            Header="Username"
+            PlaceholderText="3 to 32 letters, numbers, _ . -"
+            IsSpellCheckEnabled="False"
+            MaxLength="32"
+            TextChanged="OnUsernameChanged" />
+        <PasswordBox
+            x:Name="PasswordInput"
+            Header="Password"
+            PlaceholderText="At least 8 characters"
+            PasswordChanged="OnPasswordChanged" />
+        <InfoBar
+            x:Name="ErrorBar"
+            Severity="Error"
+            IsOpen="False"
+            IsClosable="False" />
+    </StackPanel>
+</ContentDialog>

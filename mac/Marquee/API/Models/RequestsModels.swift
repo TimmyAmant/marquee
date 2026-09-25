@@ -28,6 +28,9 @@ extension API {
         let posterPath: ImageRef?
         let status: RequestStatus
         let manuallyApproved: Bool
+        /// Why the admin declined it; nil unless `status` is `.rejected` and a
+        /// reason was given. Shown under the "Declined" pill.
+        let rejectionReason: String?
         /// Live for approved requests only.
         let libraryStatus: LibraryStatus?
         /// "Pending review", "Declined", "In your library", "Downloading",
@@ -44,9 +47,47 @@ extension API {
     struct PendingRequests: Codable, Hashable, Sendable {
         /// The admin's Sonarr base URL (nil if not connected), for "Add manually in Sonarr".
         let sonarrUrl: String?
+        /// The preset reasons the website's Reject chooser offers, in order.
+        /// Empty from a server older than 0.28, which didn't send any.
+        let rejectionReasons: [String]
         /// Newest first. Empty → "No pending requests."; "Approve all" only
         /// when more than one is pending.
         let results: [PendingRequest]
+
+        /// The website's presets as of 0.28, offered when the server sent no
+        /// list: an older server still takes the reason as free text, so the
+        /// chooser works against it too.
+        static let defaultRejectionReasons: [String] = [
+            "Already available on a streaming service we have",
+            "Not released yet, ask again once it's out",
+            "Not enough space on the server right now",
+            "Not a fit for the household library",
+            "Couldn't find a good copy of it",
+        ]
+
+        /// What the Reject chooser lists: the server's reasons, else the built-in ones.
+        var rejectionReasonChoices: [String] {
+            rejectionReasons.isEmpty ? Self.defaultRejectionReasons : rejectionReasons
+        }
+
+        init(sonarrUrl: String?, rejectionReasons: [String] = [], results: [PendingRequest]) {
+            self.sonarrUrl = sonarrUrl
+            self.rejectionReasons = rejectionReasons
+            self.results = results
+        }
+
+        /// `rejectionReasons` is optional on the wire so a pre-0.28 server's
+        /// queue still decodes; everything else is as the doc specifies.
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            sonarrUrl = try container.decodeIfPresent(String.self, forKey: .sonarrUrl)
+            rejectionReasons = try container.decodeIfPresent([String].self, forKey: .rejectionReasons) ?? []
+            results = try container.decode([PendingRequest].self, forKey: .results)
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case sonarrUrl, rejectionReasons, results
+        }
 
         /// `{sonarrUrl}/add/new?term={title}`: offered when approving a TV
         /// request fails with "Couldn't resolve this show for Sonarr."
@@ -84,6 +125,9 @@ extension API {
         let posterPath: ImageRef?
         let status: RequestStatus
         let manuallyApproved: Bool
+        /// Why it was declined; nil unless `status` is `.rejected` and the
+        /// admin gave one. Shown under the "Rejected" pill.
+        let rejectionReason: String?
         /// "Approved", "Manually approved" or "Rejected".
         let statusLabel: String
         /// `userId` is always nil here.

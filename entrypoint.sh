@@ -27,23 +27,39 @@ su postgres -c "$PG_BIN/pg_ctl -D $PGDATA -l $PGDATA/postgresql.log -w -o '-c li
 
 # Idempotent — safe to run on every start, not just the first one, since a
 # role/database created on a previous run already satisfies these checks.
+#
+# The password reaches psql through a file rather than a nested shell
+# string: inside `su -c "..."` a quote, "$" or backtick in it would be
+# parsed a second time (or break the SQL), so a perfectly good password
+# could keep the container from starting. Only the SQL quoting rule
+# applies here (a single quote doubles).
+SQL_PASSWORD=${POSTGRES_PASSWORD//\'/\'\'}
+ROLE_SQL=$(mktemp)
+chown postgres:postgres "$ROLE_SQL"
+chmod 600 "$ROLE_SQL"
 if ! su postgres -c "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='$POSTGRES_USER'\"" | grep -q 1; then
   echo "[entrypoint] Creating role $POSTGRES_USER..."
-  su postgres -c "psql -c \"CREATE ROLE \\\"$POSTGRES_USER\\\" WITH LOGIN PASSWORD '$POSTGRES_PASSWORD';\""
+  printf "CREATE ROLE \"%s\" WITH LOGIN PASSWORD '%s';\n" "$POSTGRES_USER" "$SQL_PASSWORD" > "$ROLE_SQL"
 else
   # Password may have changed since the role was first created (e.g. the
   # container was recreated with a different POSTGRES_PASSWORD) — keep
   # Postgres in sync with whatever's currently configured, since that's
   # also what DATABASE_URL below will be built from.
-  su postgres -c "psql -c \"ALTER ROLE \\\"$POSTGRES_USER\\\" WITH PASSWORD '$POSTGRES_PASSWORD';\"" >/dev/null
+  printf "ALTER ROLE \"%s\" WITH PASSWORD '%s';\n" "$POSTGRES_USER" "$SQL_PASSWORD" > "$ROLE_SQL"
 fi
+su postgres -c "psql -q -f '$ROLE_SQL'"
+rm -f "$ROLE_SQL"
 
 if ! su postgres -c "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='$POSTGRES_DB'\"" | grep -q 1; then
   echo "[entrypoint] Creating database $POSTGRES_DB..."
   su postgres -c "createdb -O \"$POSTGRES_USER\" \"$POSTGRES_DB\""
 fi
 
-export DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB"
+# Percent-encoded, because a password straight out of `openssl rand -base64`
+# has a "/" in it half the time, and postgres-js refuses the whole URL as
+# invalid when one turns up in the userinfo.
+URL_PASSWORD=$(node -e 'process.stdout.write(encodeURIComponent(process.env.POSTGRES_PASSWORD))')
+export DATABASE_URL="postgres://$POSTGRES_USER:$URL_PASSWORD@localhost:5432/$POSTGRES_DB"
 
 echo "[entrypoint] Running database migrations..."
 npx drizzle-kit migrate

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app/favorites/page.tsx: Movies, TV Shows, Collections, People and Studios,
+  each a grid (studios are chips), from one GET /favorites.
+-->
+<Page
+    x:Class="Marquee.Windows.Views.FavoritesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <DataTemplate x:Key="PosterTemplate" x:DataType="vm:PosterItem">
+            <controls:PosterCard Item="{x:Bind}" />
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <ScrollViewer>
+            <StackPanel Padding="28,20,28,40" Spacing="32">
+                <TextBlock Text="Favorites" Style="{StaticResource TitleTextBlockStyle}" />
+
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasMovies, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="Movies" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Movies, Mode=OneWay}" ItemTemplate="{StaticResource PosterTemplate}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </StackPanel>
+
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasTv, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="TV Shows" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tv, Mode=OneWay}" ItemTemplate="{StaticResource PosterTemplate}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </StackPanel>
+
+                <!-- A collection card opens its earliest movie. -->
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasCollections, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="Collections" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Collections, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:CollectionItem">
+                                <Button
+                                    Command="{x:Bind Open}"
+                                    Width="150"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalContentAlignment="Top"
+                                    ToolTipService.ToolTip="{x:Bind Name}"
+                                    AutomationProperties.Name="{x:Bind Name}">
+                                    <StackPanel Spacing="6">
+                                        <Grid
+                                            Height="225"
+                                            CornerRadius="8"
+                                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                            BorderThickness="1">
+                                            <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
+                                            <TextBlock
+                                                Text="{x:Bind Name}"
+                                                Visibility="{x:Bind HasPoster, Converter={StaticResource InvertedBoolToVisibility}}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                TextWrapping="Wrap"
+                                                TextAlignment="Center"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Margin="12" />
+                                        </Grid>
+                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" MaxLines="1" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </StackPanel>
+
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasPeople, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="People" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.People, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PersonItem">
+                                <controls:PersonCard Item="{x:Bind}" />
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </StackPanel>
+
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="Studios" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <ScrollViewer
+                        HorizontalScrollMode="Enabled"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Disabled">
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Studios, Mode=OneWay}" Margin="0,0,0,8">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Horizontal" Spacing="8" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ChipItem">
+                                    <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel
+            Spacing="12"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
+            <TextBlock
+                Text="Loading your favorites…"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel
+            Spacing="12"
+            MaxWidth="440"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Couldn't load your favorites" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                TextAlignment="Center" />
+            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel
+            Spacing="12"
+            MaxWidth="440"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Nothing favorited yet" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="Star anything from its page or card to see it here."
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                TextAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Page>

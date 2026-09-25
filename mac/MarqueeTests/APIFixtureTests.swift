@@ -67,6 +67,8 @@ final class APIFixtureTests: XCTestCase {
         "household-member": decodes(API.HouseholdMember.self),
         "users": decodes(API.ListResponse<API.HouseholdMember>.self),
         "user-update": decodes(API.UpdateUserResult.self),
+        "avatar-set": decodes(API.AvatarResult.self),
+        "avatar-removed": decodes(API.AvatarResult.self),
         "integrations": decodes(API.IntegrationsOverview.self),
         "webhook-secret": decodes(API.ArrWebhooks.self),
         "arr-connect": decodes(API.ArrConnectionResult.self),
@@ -86,7 +88,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 54, "Docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 56, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -137,6 +139,7 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(mine.first?.statusTone, .downloading)
         XCTAssertEqual(mine.first?.libraryStatus, .trackedDownloading)
         XCTAssertEqual(mine.first?.reviewedAt, APIClient.parseDate("2026-09-17T18:00:02.118Z"))
+        XCTAssertNil(mine.first?.rejectionReason, "An approved request carries no reason")
 
         let pending = try decode(API.PendingRequests.self, "requests-pending")
         let request = try XCTUnwrap(pending.results.first)
@@ -145,10 +148,14 @@ final class APIFixtureTests: XCTestCase {
             pending.manualSonarrAddURL(for: request)?.absoluteString,
             "http://192.168.1.10:8989/add/new?term=The%20Matrix"
         )
+        XCTAssertEqual(pending.rejectionReasons.count, 5)
+        XCTAssertEqual(pending.rejectionReasons.first, "Already available on a streaming service we have")
+        XCTAssertEqual(pending.rejectionReasonChoices, pending.rejectionReasons, "The server's list wins when it sent one")
 
         let history = try decode(API.ListResponse<API.ReviewedRequest>.self, "requests-history").results
         XCTAssertNil(history.first?.requestedBy.userId)
         XCTAssertEqual(history.first?.status, .rejected)
+        XCTAssertEqual(history.first?.rejectionReason, "Not enough space on the server right now")
 
         let notifications = try decode(API.NotificationList.self, "notifications")
         let item = try XCTUnwrap(notifications.results.first)
@@ -159,6 +166,19 @@ final class APIFixtureTests: XCTestCase {
         let activity = try decode(API.ListResponse<API.ActivityItem>.self, "activity").results
         XCTAssertEqual(activity.first?.sentence, "Timmy declined The Matrix")
         XCTAssertEqual(activity.first?.eventType, .requestRejected)
+    }
+
+    /// A server before 0.28 sends no `rejectionReasons`; the queue must still
+    /// decode, and the chooser falls back to the built-in list.
+    func testPendingQueueFromOlderServerDecodesWithoutReasons() throws {
+        let json = #"{"sonarrUrl":null,"results":[]}"#
+        let queue = try APIClient.decoder.decode(API.PendingRequests.self, from: Data(json.utf8))
+        XCTAssertNil(queue.sonarrUrl)
+        XCTAssertEqual(queue.rejectionReasons, [])
+        XCTAssertEqual(queue.rejectionReasonChoices, API.PendingRequests.defaultRejectionReasons)
+        // Re-encoding keeps the key the current doc specifies.
+        let encoded = String(decoding: try APIClient.encoder.encode(queue), as: UTF8.self)
+        XCTAssertTrue(encoded.contains(#""rejectionReasons":[]"#), encoded)
     }
 
     func testCalendarGrid() throws {
@@ -217,6 +237,16 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNil(person.deathday)
         XCTAssertNotNil(person.age)
     }
+
+    func testProfilePhotoURLs() throws {
+        let me = try decode(API.Me.self, "me")
+        XCTAssertEqual(me.avatarUrl, "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549")
+        XCTAssertEqual(me.user.avatarUrl, me.avatarUrl, "The rail reads the photo from the User built from /me")
+        XCTAssertNil(try decode(API.AuthResponse.self, "auth-login").user.avatarUrl)
+        XCTAssertNil(try decode(API.HouseholdMember.self, "household-member").avatarUrl)
+        XCTAssertNotNil(try decode(API.AvatarResult.self, "avatar-set").avatarUrl)
+        XCTAssertNil(try decode(API.AvatarResult.self, "avatar-removed").avatarUrl)
+    }
 }
 
 final class APIValueTypeTests: XCTestCase {
@@ -251,6 +281,7 @@ final class APIValueTypeTests: XCTestCase {
         XCTAssertEqual(user.role, .unknown("guest"))
         XCTAssertFalse(user.isAdmin)
         XCTAssertEqual(user.label, "sam")
+        XCTAssertNil(user.avatarUrl, "A server from before profile photos sends no avatarUrl")
     }
 
     func testBlankOptionalDaysDecodeAsNil() throws {

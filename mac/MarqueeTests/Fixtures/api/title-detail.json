@@ -86,6 +86,8 @@
       "dynamicRange": "HDR10",
       "audioCodec": "TrueHD Atmos",
       "audioChannels": 7.1,
+      "container": "MKV",
+      "bitrateKbps": 58421,
       "dateAdded": "2025-11-02T09:14:00.000Z",
       "releaseGroup": "FraMeSToR",
       "edition": null

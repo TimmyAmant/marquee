@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Stands in for every page that doesn't exist yet, so the menu and the
+  routes all lead somewhere. Replace the mapping in MainWindow.PageTypeFor
+  and MainWindow.PageFor as real pages land.
+-->
+<Page
+    x:Class="Marquee.Windows.Views.PlaceholderPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel x:Name="Body" Padding="28" Spacing="8" Visibility="Collapsed">
+        <TextBlock x:Name="HeadingText" Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock
+            Text="This part of Marquee for Windows is still being built."
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+    </StackPanel>
+</Page>

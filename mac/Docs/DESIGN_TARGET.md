@@ -5,8 +5,10 @@ rendered as `discover.png` and `title.png`. Both platforms must match it and
 therefore each other. Values below are taken from that file; when anything is
 unclear, read the CSS there rather than guessing.
 
-Reference frame: a 1440×900 window, 230px sidebar, 52px top bar, so the content
-area is 1210×848. Every coordinate below is relative to the content area's
+Reference frame: a 1440×900 window, 52px top bar and the floating navigation
+rail (see Navigation below), which leaves a 72px left margin, so the content
+area is 1368×848. (The mockup predates the rail and was drawn with a 230px
+sidebar; its content-area coordinates still apply unchanged.) Every coordinate below is relative to the content area's
 top-left corner (below the top bar). The content is **left-aligned** with a
 48px gutter on the title page and 28px on shelf pages — not centered — so the
 two platforms agree at any window width.
@@ -16,6 +18,62 @@ bg3 #26242e, border #2c2a35, borderStrong #3a3745, text #f3f1ea / #a8a4b3 /
 #6f6c7d, accent #e0a63e, owned #4caf7d on #14251c, tracked #4f8fd1 on #10202f.
 Serif = New York (web: the existing `font-display`), sans = SF Pro Text,
 mono = SF Mono.
+
+## Navigation (all three platforms)
+
+After the Plex app's Apple TV menu. There is no fixed sidebar column: a small
+frosted **rail** floats over the page, and it opens into a frosted **menu
+panel** over the content. The web's `components/nav-menu.tsx` is the
+reference implementation.
+
+- **Rail**: pinned 16 from the window's left edge, vertically centered in the
+  content area. A capsule (radius 30, padding 7) of frosted glass. **The
+  rail is the menu**: every destination is on it, and one click goes
+  straight there. Items stacked with 4 gaps, groups split by a 24-wide 1px
+  hairline (glass border color, 4 above and below):
+  1. Profile picture, 36 round: the photo, else initials (up to two,
+     uppercased) in bg0 on a 140° gradient accentHover → accent (45%) →
+     #c2583a, with a 2px white-15% ring; a plain person glyph when signed
+     out. Opens Settings (the account), or sign-in.
+  2. Search (magnifier) and Discover (compass).
+  3. Movies and Series.
+  4. Signed in only: Favorites, Calendar, Requests.
+  5. The menu button (three lines), after its own hairline: opens the
+     panel below, on click only.
+  Each item is 40×40 round with a 19 icon. The current page is a solid pill:
+  textPrimary fill with a bg0 icon (white with a dark icon in dark mode, the
+  reverse in light). Others are textSecondary, with a textPrimary-10% round
+  hover. Hovering (or keyboard-focusing) an item shows its name in a small
+  frosted label 12 to its right (13/500, fully rounded, 150ms fade); hovering
+  never opens the panel. An admin with pending requests gets an 8px accent
+  dot on the Requests icon.
+- **Opening the panel**: only by clicking the rail's menu button, or on
+  narrow windows/phones the header's menu button. It closes on Escape, on a
+  click outside, and after any navigation, and focus moves to the current
+  item when it opens. The rail fades out (200ms) as the panel fades and
+  slides in from 12 to the left, scale 0.98 → 1, 200ms ease-out.
+- **Panel**: 288 wide, inset 12 from the top, bottom and left of the window,
+  radius 24, frosted glass, overlaying the content (nothing reflows).
+  - Profile row: 38 avatar, name 15/600 over the server address 11.5 muted,
+    a chevron at the right. Pill hover. Opens Settings.
+  - Search and Discover: rows 44 high, 16/600, 20 icons, 14 gap.
+  - Section header "Browse", then Movies and Series; section header
+    "Library", then Favorites, Calendar and Requests (with the pending-count
+    badge). Section rows are 40 high, 15/500, 19 icons. A section header is
+    11.5/600 muted text followed by a 1px hairline in the glass border color
+    running to the right edge, 16 above, 6 below.
+  - Rows are fully rounded pills, 14 horizontal padding. Current row: solid
+    textPrimary fill, bg0 text and icon, shadow 0 6 18 black 25%. Hover:
+    textPrimary 10%.
+  - Footer, separated by a hairline: the Marquee wordmark (17 serif) and the
+    light/dark toggle.
+- **Glass**: dark: fill rgb(30 29 37 / .68), 1px border white 9%, shadow
+  0 24 64 black 50%. Light: fill white 74%, border rgb(33 31 26 / .10),
+  shadow 0 20 50 rgb(60 45 20 / .16). Background blur 28 with saturation
+  1.6. Use the platform's own material where it looks the same (NSVisualEffect
+  / `.ultraThinMaterial` on the Mac, Acrylic on Windows), tinted to these fills.
+- **Content**: starts 72 from the window's left edge; full-bleed artwork (the
+  title page's backdrop) runs under the rail to the edge.
 
 ## Title page
 

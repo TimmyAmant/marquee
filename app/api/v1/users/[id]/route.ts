@@ -12,6 +12,9 @@ import type { Ok, UpdateUserResponse } from "@/lib/api/types";
  * the website's edit form: `username` is required; `displayName` and
  * `password` are optional (omitted/empty = unchanged); `autoApproveMovies` /
  * `autoApproveTv` are honored only for the admin (omitted = unchanged).
+ * Setting a new password on your own account also needs `currentPassword`
+ * (400 `invalid` when it's missing or wrong); the admin resetting someone
+ * else's password doesn't.
  * Setting a password revokes every API token of that account, including the
  * caller's own when editing yourself — sign in again afterwards.
  */
@@ -32,6 +35,7 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Up
         userId,
         username: body.username,
         password: optionalString(body, "password") || undefined,
+        currentPassword: optionalString(body, "currentPassword") || undefined,
         displayName: optionalString(body, "displayName") || undefined,
         autoApproveMovies: optionalBoolean(body, "autoApproveMovies"),
         autoApproveTv: optionalBoolean(body, "autoApproveTv"),

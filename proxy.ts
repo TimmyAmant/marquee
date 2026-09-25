@@ -14,13 +14,19 @@ export default auth((req) => {
 export const config = {
   matcher: [
     // Auth/page-flow routes, Next.js internals, the code-generated
-    // icon/apple-icon routes, anything under public/ (matched generically by
-    // file extension so a new static asset doesn't silently get auth-gated
-    // too), and the webhook ingestion endpoint — that one is called by
-    // Radarr/Sonarr directly (no session cookie) and authenticates itself
-    // via a per-user secret in the URL instead. /api/v1 is the native-app
-    // JSON API: its routes authenticate bearer tokens themselves and must
-    // answer 401 JSON, never a redirect to the HTML login page.
-    "/((?!api/auth|api/webhooks|api/v1/|api/v1$|login|setup|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|woff|woff2)$).*)",
+    // icon/apple-icon routes, top-level files under public/ (matched
+    // generically by file extension so a new static asset doesn't silently
+    // get auth-gated too), and the webhook ingestion endpoint — that one is
+    // called by Radarr/Sonarr directly (no session cookie) and authenticates
+    // itself via a per-user secret in the URL instead. /api/v1 is the
+    // native-app JSON API: its routes authenticate bearer tokens themselves
+    // and must answer 401 JSON, never a redirect to the HTML login page.
+    //
+    // Each exclusion is anchored (a following "/" or the end of the path):
+    // a bare prefix like "login" would also let "/login-history" through,
+    // and the file-extension rule is limited to a single path segment so
+    // "/title/tv/1399.js" can't slip past the gate and reach that page's
+    // server actions.
+    "/((?!api/auth(?:/|$)|api/webhooks(?:/|$)|api/v1(?:/|$)|login(?:/|$)|setup(?:/|$)|_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$|icon$|apple-icon$|[^/]+\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|webmanifest|woff|woff2)$).*)",
   ],
 };

@@ -49,10 +49,29 @@ export const users = pgTable(
     // Browser sessions signed in before this moment are no longer valid —
     // see the jwt callback in auth.ts. Null until the password first changes.
     passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+    // When the profile photo (userAvatars) last changed, null when there's
+    // none. Kept on the user row so every place that shows an account can
+    // build a cache-busting photo URL without touching the image bytes.
+    avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],
 );
+
+// Profile photos, kept in the database itself (so they live in the same
+// volume as everything else and go wherever a backup goes) rather than
+// uploaded anywhere. Only ever the server's own re-encoded copy: a square
+// JPEG, a few tens of kilobytes, with the original's metadata stripped (see
+// lib/users/avatar.ts). A table of its own so selecting users never drags
+// the bytes along.
+export const userAvatars = pgTable("user_avatars", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  image: bytea("image").notNull(),
+  contentType: text("content_type").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const sessions = pgTable("sessions", {
   sessionToken: text("session_token").primaryKey(),
@@ -409,6 +428,12 @@ export const requests = pgTable(
     // "approved" so it behaves like any other approved request everywhere
     // else; this only changes the label shown to the requester and admin.
     manuallyApproved: boolean("manually_approved").notNull().default(false),
+    // Why the admin declined it: one of the presets in
+    // lib/requests/rejection-reasons.ts or their own words, shown to the
+    // requester on their Requests page and in the notification. Null for
+    // requests declined before this existed, or through an older API client
+    // that sends no reason.
+    rejectionReason: text("rejection_reason"),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),
@@ -546,6 +571,49 @@ export const appSettings = pgTable("app_settings", {
   ntfyUrlTag: bytea("ntfy_url_tag"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// The server's own VAPID key pair for Web Push (lib/push/web-push.ts):
+// generated on first use and never shared with anyone. Browsers receive the
+// public half when they subscribe; the private half signs every push, and
+// is encrypted at rest like the credentials above. Exactly zero or one row.
+export const pushKeys = pgTable(
+  "push_keys",
+  {
+    id: integer("id").primaryKey().default(1),
+    publicKey: text("public_key").notNull(),
+    privateKeyEnc: bytea("private_key_enc").notNull(),
+    privateKeyIv: bytea("private_key_iv").notNull(),
+    privateKeyTag: bytea("private_key_tag").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check("push_keys_singleton", sql`${table.id} = 1`)],
+);
+
+// One row per browser that turned on notifications (the website's service
+// worker). The endpoint is the browser vendor's push address for that
+// browser; p256dh and auth are the browser's keys, which encrypt every
+// payload end to end, so the vendor's relay can't read it. Unique by
+// endpoint: a browser someone else signs in on moves to their account.
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** "Chrome on macOS" and the like, for Settings' device list. */
+    label: text("label"),
+    /** The site's own address when the browser subscribed: the VAPID contact
+     * ("sub") the push services ask for. */
+    origin: text("origin"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  },
+  (table) => [index("push_subscriptions_user_idx").on(table.userId)],
+);
 
 // Bearer tokens for native clients (the macOS app) calling /api/v1 — the web
 // UI keeps using Auth.js JWT cookies. Only a SHA-256 hash of each token is

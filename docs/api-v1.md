@@ -187,7 +187,8 @@ Body:
     "username": "timmy",
     "displayName": "Timmy",
     "role": "admin",
-    "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1"
+    "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
+    "avatarUrl": null
   }
 }
 ```
@@ -236,6 +237,7 @@ Revokes the calling token only (other devices stay signed in).
   "displayName": "Timmy",
   "role": "admin",
   "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
+  "avatarUrl": "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549",
   "autoApproveMovies": false,
   "autoApproveTv": false,
   "createdAt": "2026-09-17T17:10:57.821Z"
@@ -842,6 +844,7 @@ Your own requests, newest first.
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "status": "approved",
       "manuallyApproved": false,
+      "rejectionReason": null,
       "libraryStatus": "tracked_downloading",
       "statusLabel": "Downloading",
       "statusTone": "downloading",
@@ -855,8 +858,11 @@ Your own requests, newest first.
 `libraryStatus` is live for approved requests only (null otherwise).
 `statusLabel`/`statusTone`: `pending` "Pending review", `declined` "Declined",
 `owned` "In your library", `downloading` "Downloading", `coming_soon` "Coming
-soon", `approved` "Manually approved" or "Approved". Empty → "You haven't
-requested anything yet — find a title and hit Request."
+soon", `approved` "Manually approved" or "Approved". `rejectionReason` is why
+the admin declined it (e.g. `"Not enough space on the server right now"`),
+null unless `status` is `rejected` and a reason was given; the website shows
+it as a second line under the "Declined" badge ("Reason: …"). Empty → "You
+haven't requested anything yet — find a title and hit Request."
 
 ### `GET /requests/pending` — admin
 
@@ -867,6 +873,13 @@ title is already in the library, and leaves those out.
 ```json
 {
   "sonarrUrl": "http://192.168.1.10:8989",
+  "rejectionReasons": [
+    "Already available on a streaming service we have",
+    "Not released yet, ask again once it's out",
+    "Not enough space on the server right now",
+    "Not a fit for the household library",
+    "Couldn't find a good copy of it"
+  ],
   "results": [
     {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
@@ -882,7 +895,10 @@ title is already in the library, and leaves those out.
 ```
 
 `sonarrUrl` is the admin's Sonarr base URL (null if not connected), for the
-"Add manually in Sonarr" link. The website shows "Approve all" only when more
+"Add manually in Sonarr" link. `rejectionReasons` is the preset list the
+website's Reject chooser offers, in order; show the same list plus an "Other"
+choice with a free-text field, and send the chosen text to
+`POST /requests/{id}/reject`. The website shows "Approve all" only when more
 than one request is pending. Empty → "No pending requests."
 
 ### `GET /requests/history` — admin
@@ -900,6 +916,7 @@ than one request is pending. Empty → "No pending requests."
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "status": "rejected",
       "manuallyApproved": false,
+      "rejectionReason": "Not enough space on the server right now",
       "statusLabel": "Rejected",
       "requestedBy": { "userId": null, "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z",
@@ -909,7 +926,8 @@ than one request is pending. Empty → "No pending requests."
 }
 ```
 
-`statusLabel`: "Approved", "Manually approved" or "Rejected".
+`statusLabel`: "Approved", "Manually approved" or "Rejected". `rejectionReason`
+as in `/requests/mine`: the website shows it under the "Rejected" badge.
 
 ### `GET /requests/pending-count` — user
 
@@ -938,7 +956,20 @@ Errors: `404` "Request not found or already reviewed.", `409` "Request was alrea
 
 ### `POST /requests/{id}/reject` — admin
 
-Declines and notifies the requester. `{ "ok": true }`. Errors as for manual approval.
+Declines and notifies the requester. Takes an optional JSON body with why.
+Body: `{ "reason": "Not enough space on the server right now" }` (optional string).
+
+`reason` is free text: one of the `rejectionReasons` from `/requests/pending`
+or the admin's own words (no preset id, clients send the text itself).
+Whitespace is trimmed and collapsed, longer than 200 characters is truncated
+rather than rejected, and blank or absent means no reason (the website
+requires one; the API doesn't, so older clients keep working). It's stored as
+`rejectionReason` and appended to the requester's notification: `"The Matrix"
+was declined: Not enough space on the server right now` (with no reason the
+message stays `"The Matrix" was declined.`).
+
+`{ "ok": true }`. Errors as for manual approval, plus `400 invalid`
+`"reason" must be a string.`
 
 ### `POST /requests/approve-all` — admin
 
@@ -976,7 +1007,7 @@ could be approved, the first failure is returned as the error response instead
       "tmdbId": 603,
       "title": "The Matrix",
       "eventType": "request_rejected",
-      "message": "\"The Matrix\" was declined.",
+      "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
       "createdAt": "2026-09-17T17:12:41.470Z"
     }
@@ -985,7 +1016,9 @@ could be approved, the first failure is returned as the error response instead
 ```
 
 Newest first. Empty → "No notifications yet." The website shows relative
-times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap.
+times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap. A
+`request_rejected` message carries the admin's reason after a colon when one
+was given; without one it's just `"The Matrix" was declined.`
 
 ### `GET /notifications/unread-count` — user
 
@@ -1001,6 +1034,45 @@ times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap.
 
 `{ "ok": true }`. `404 not_found` "Notification not found." for an unknown id
 or someone else's notification.
+
+### `GET /notifications/stream` — user
+
+Live notifications for an app that's running: a
+[Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+stream (`Content-Type: text/event-stream`) that stays open. The app shows each
+event as a system notification itself, so nothing goes through Apple's,
+Google's or anyone else's push service.
+
+```
+retry: 5000
+
+event: ready
+data: {}
+
+event: notification
+id: a23f7682-41ae-4e8a-8b17-14d903ab017a
+data: {"id":"a23f7682-41ae-4e8a-8b17-14d903ab017a","mediaType":"movie","tmdbId":27205,"title":"Inception","eventType":"request_rejected","message":"\"Inception\" was declined: Already available on a streaming service we have","read":false,"createdAt":"2026-09-25T11:25:16.885Z"}
+
+event: signed-out
+data: {}
+```
+
+- `ready` arrives first. After it, a `notification` event (one
+  `NotificationItem`, exactly as `GET /notifications` lists it) arrives the
+  moment the server creates one for this account.
+- A `: keep-alive` comment comes every 25 seconds. Each one is also when
+  the server re-checks the token: once it's revoked (Sign out, a password
+  change), the stream sends `signed-out` and closes. Sign in again.
+- The stream can drop (the server restarted, the Mac slept, a proxy timed
+  out). Reconnect after the `retry` delay, and catch up on anything missed
+  with `GET /notifications`, whose newest items a client compares with the
+  newest one it has already shown.
+- Behind nginx and similar proxies the response carries `X-Accel-Buffering:
+  no`, so events aren't held back; proxies with their own buffering need it
+  turned off for this path.
+
+The website doesn't use this: its notifications are Web Push, sent to the
+browsers that turned them on under Settings › Account › Notifications.
 
 ---
 
@@ -1089,9 +1161,17 @@ member) and, for the admin, "Add a household member".
   "autoApproveMovies": false,
   "autoApproveTv": true,
   "createdAt": "2026-09-17T17:12:40.991Z",
-  "isCurrentUser": false
+  "isCurrentUser": false,
+  "avatarUrl": null
 }
 ```
+
+`avatarUrl` (here, on `/me` and on the login/setup `user`) is the account's
+profile photo as a server-relative path, or null when there's none: fetch it
+with the same bearer token (see "Profile photo" below). It changes whenever
+the photo does, so a client can cache the image under that URL for good.
+Website: the round picture in the navigation menu and beside each member,
+initials on the accent gradient when there's no photo.
 
 ### `GET /users` — user
 
@@ -1128,6 +1208,7 @@ The edit form. All fields are sent the way the form sends them:
 | `username` | string | **required** (3–32 chars, as above; unique) |
 | `displayName` | string | optional, ≤ 80 chars; omitted or empty = unchanged |
 | `password` | string | optional, ≥ 8 chars; omitted or empty = unchanged |
+| `currentPassword` | string | **required with `password` when editing your own account** (the admin resetting someone else's password doesn't send it). Website: "Current password", shown only on your own row |
 | `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. Website: "Auto-approve movie requests", shown only for non-admin rows |
 | `autoApproveTv` | bool | same, "Auto-approve TV requests" |
 
@@ -1137,8 +1218,11 @@ The edit form. All fields are sent the way the form sends them:
 
 `tokensRevoked` is true when a password was set — every API token of that
 account is gone (deviation 5). Errors: `403` "You can only edit your own
-account.", `404` "Account not found.", `400 invalid`, `409 conflict` "An
-account with that username already exists".
+account.", `404` "Account not found.", `400 invalid` (including "Enter your
+current password to set a new one." and "Your current password is
+incorrect."), `429 rate_limited` "Too many attempts. Try again in a few
+minutes." (5 wrong current passwords per account per 15 minutes), `409
+conflict` "An account with that username already exists".
 
 ### `DELETE /users/{id}` — admin
 
@@ -1146,6 +1230,34 @@ Removes a member and everything of theirs (favorites, requests, tokens…).
 `{ "ok": true }`. Errors: `403` "You can't remove your own account." / "Can't
 remove the admin account." / "Only the admin can remove household members.",
 `404` "Account not found.".
+
+### Profile photo — user (self) / admin (anyone)
+
+Photos are stored by the Marquee server itself (in its database) and never
+sent anywhere else. Every client reads them from here.
+
+- **`GET /users/{id}/avatar`** answers with the image itself: a 512×512 JPEG.
+  `404` when the account has no photo, or when it isn't yours to see (a
+  member only sees their own; the admin sees everyone's). The URL from
+  `avatarUrl` carries `?v=`; under it the response is `Cache-Control:
+  private, max-age=31536000, immutable`. There's an `ETag` too, so
+  `If-None-Match` gets a `304`.
+- **`PUT /users/{id}/avatar`**: the request body is the image file (JPEG,
+  PNG, WebP, GIF or AVIF, at most 15 MB; send its own `Content-Type`). The
+  server turns it upright from its EXIF orientation, crops a square around
+  the most detailed area, re-encodes it as JPEG and drops all metadata (GPS
+  position included). HEIC isn't read: convert it to JPEG on the device
+  first. Response: `{ "ok": true, "avatarUrl": "/api/v1/users/…/avatar?v=…" }`.
+  Errors: `400 invalid` "That file isn't a photo Marquee can read. Use a JPEG,
+  PNG or WebP image." / "That photo is too big. Pick one under 15 MB." /
+  "Choose a photo to upload.", `403` "You can only change your own photo.",
+  `404` "Account not found.".
+- **`DELETE /users/{id}/avatar`** removes it (fine if there's none):
+  `{ "ok": true, "avatarUrl": null }`.
+
+Website: "Add photo" / "Change photo" / "Remove" at the top of a member's
+Edit form, saved as soon as a photo is picked (the form's Save isn't
+involved).
 
 ---
 
@@ -1481,12 +1593,14 @@ what to do, grouped by area.
 | | `GET /notifications/unread-count` | user |
 | | `POST /notifications/read-all` | user |
 | | `POST /notifications/{id}/read` | user |
+| | `GET /notifications/stream` | user |
 | Calendar | `GET /calendar` | user |
 | Activity | `GET /settings/activity` | admin |
 | Settings: Account | `GET /users` | user |
 | | `POST /users` | admin |
 | | `PATCH /users/{id}` | user (self) / admin |
 | | `DELETE /users/{id}` | admin |
+| | `GET /users/{id}/avatar` · `PUT` · `DELETE` | user (self) / admin |
 | Settings: Integrations | `GET /settings/integrations` | admin |
 | | `POST /settings/integrations/sync` | user |
 | | `POST /settings/integrations/webhook-secret` | admin |

@@ -20,18 +20,24 @@ async function main() {
   const databaseUrl =
     process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("build-time-placeholder")
       ? process.env.DATABASE_URL
-      : `postgres://${process.env.POSTGRES_USER || "marquee"}:${process.env.POSTGRES_PASSWORD}@localhost:5432/${process.env.POSTGRES_DB || "marquee"}`;
+      : `postgres://${process.env.POSTGRES_USER || "marquee"}:${encodeURIComponent(process.env.POSTGRES_PASSWORD || "")}@localhost:5432/${process.env.POSTGRES_DB || "marquee"}`;
 
   const client = postgres(databaseUrl, { max: 1 });
   const passwordHash = await hash(newPassword);
   const result = await client.begin(async (sql) => {
+    // password_changed_at is what signs the browser out: the session JWT is
+    // rejected once it predates the change (auth.ts), so whoever locked the
+    // admin out doesn't keep a working cookie for another 30 days.
     const updated = await sql`
-      update users set password_hash = ${passwordHash} where role = 'admin' returning id, username
+      update users set password_hash = ${passwordHash}, password_changed_at = now()
+      where role = 'admin' returning id, username
     `;
     // A reset password also signs every native app (API token) out of the
     // account, same as changing it from Settings does.
     if (updated.length > 0) {
       await sql`delete from api_tokens where user_id in ${sql(updated.map((row) => row.id))}`;
+      // And every browser's push notifications, same as a Settings change.
+      await sql`delete from push_subscriptions where user_id in ${sql(updated.map((row) => row.id))}`;
     }
     return updated;
   });
@@ -42,7 +48,7 @@ async function main() {
   }
 
   console.log(`Password updated for admin account "${result[0].username}".`);
-  console.log("Any signed-in native apps for this account have been signed out.");
+  console.log("Every browser and native app signed in to this account has been signed out.");
   await client.end();
 }
 
