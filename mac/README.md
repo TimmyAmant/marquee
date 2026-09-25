@@ -13,6 +13,16 @@ The app holds no library of its own. There's no database, no syncing, no webhook
 - Xcode 16 or later (built against Xcode 27)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) — the Xcode project isn't committed, it's generated from `project.yml`
 
+## Installing
+
+Each [release](https://github.com/TimmyAmant/marquee/releases/latest) has a **Marquee.dmg** (universal, built by `.github/workflows/apps.yml`): open it and drag **Marquee** onto the Applications folder beside it. It isn't notarized, so the first time you open it macOS says it can't check it for malicious software: choose **Done**, then **System Settings → Privacy & Security → Open Anyway**. That's once per install. (The release's `Marquee-mac.zip` and its `.sha256` are for the app's own updater.)
+
+### Updating
+
+Marquee checks GitHub for a newer release ten seconds after it opens and then once a day, and **Marquee → Check for Updates…** asks straight away. When there is one, the navigation menu and **Settings → About** offer **Update**: the app downloads the zip, checks its size and SHA-256 against what GitHub lists, unpacks it, makes sure it's a correctly signed Marquee of the right version, then quits and reopens as the new version. It needs to be in a folder you can write to (Applications is fine), not opened straight from Downloads or a disk image.
+
+Because the app replaces itself, it runs outside the App Sandbox (from 0.29). The first launch of 0.29 brings the sandboxed version's settings across. After an update you sign in once more: the builds are ad-hoc signed, and macOS only lets the exact build that saved a login-Keychain item read it back (a Developer ID signature would carry the sign-in across updates).
+
 ## Building
 
 ```bash
@@ -36,7 +46,7 @@ Signing is set to **Sign to Run Locally** (`CODE_SIGN_IDENTITY = "-"`), so no Ap
 2. **Sign in** with your Marquee username and password. The first account on a brand-new server is created here instead, as the admin.
 3. That's it. Everything else — TMDb, Plex, Jellyfin, Sonarr, Radarr, Trakt and the rest — is configured on the server, and **Settings (⌘,) → Integrations** edits it in place.
 
-Your session token is kept in the login Keychain, one item per server, so the app stays signed in across launches. **Marquee → Change Server…** moves to a different server; **Sign Out** revokes just this Mac's token.
+Your session token is kept in the login Keychain, one item per server (and per build of the app; see Updating), so the app stays signed in across launches. **Marquee → Change Server…** moves to a different server; **Sign Out** revokes just this Mac's token.
 
 ## What the app does
 
@@ -65,16 +75,16 @@ Notifications come straight from your Marquee server, with no outside push servi
 
 ```
 MarqueeMac/
-├── project.yml                 XcodeGen spec (targets, signing, Info.plist, entitlements)
+├── project.yml                 XcodeGen spec (targets, signing, Info.plist)
 ├── Marquee.xcodeproj           generated
 ├── Marquee/
-│   ├── App/                    @main app, scenes, menu commands, AppModel (session + navigation)
+│   ├── App/                    @main app, scenes, menu commands, AppModel (session + navigation), Updates/ (the updater)
 │   ├── Connection/             finding a server, signing in, the bearer token, APIClient, APIError
 │   ├── API/                    the typed /api/v1 facade, its DTOs, ServerEvents, LiveUpdates
 │   ├── Core/                   Format/Quality/TitleMeta, the Keychain helper, URL building
 │   ├── DesignSystem/           Theme tokens, poster cards, badges, buttons, image loading
 │   ├── Features/               one folder per screen
-│   └── Resources/              Info.plist, entitlements, asset catalog
+│   └── Resources/              Info.plist, asset catalog
 ├── MarqueeTests/               DTO fixtures, request shapes, connection/session logic, live contract
 ├── Docs/API_V1_CORE.md        discovery + sign-in contract (full API: ../docs/api-v1.md)
 └── Scripts/local-server.sh     a disposable server for the live tests

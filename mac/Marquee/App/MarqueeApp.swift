@@ -8,6 +8,11 @@ struct MarqueeApp: App {
     @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
 
     init() {
+        // Before anything reads a setting. Not for the unit tests' host, nor a
+        // pinned (automated) run, which leave this Mac's real settings alone.
+        if !AppInfo.isRunningTests, PinnedServer.resolve() == nil {
+            SandboxMigration.run()
+        }
         let model = AppModel()
         _model = State(initialValue: model)
         AppDelegate.model = model

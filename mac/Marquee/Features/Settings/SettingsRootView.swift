@@ -319,6 +319,10 @@ struct AboutSettingsView: View {
 
     var body: some View {
         SettingsPane(title: "About Marquee", subtitle: "Version, library stats, and where to get help.") {
+            SettingsSectionLabel(text: "Updates")
+            UpdateStatusView(style: .settings)
+                .cardSurface(padding: 18)
+
             if let info {
                 VStack(spacing: 0) {
                     SettingsStatRow(label: "Server Version", value: info.versionLabel)

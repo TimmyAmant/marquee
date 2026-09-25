@@ -302,7 +302,8 @@ isn't notarized by Apple yet, so the very first launch is blocked: open
 **System Settings › Privacy & Security**, scroll to the message about Marquee
 and choose **Open Anyway**. After that, the app updates itself: when a new
 release is out it offers an **Update** button, and quits and reopens on the
-new version.
+new version (where it asks you to sign in once more; see
+[`mac/README.md`](mac/README.md#updating) for why).
 
 ### Marquee for Windows (preview)
 
