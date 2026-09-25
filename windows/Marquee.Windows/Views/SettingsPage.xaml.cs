@@ -8,10 +8,10 @@ using Microsoft.UI.Xaml.Navigation;
 namespace Marquee.Windows.Views;
 
 /// <summary>
-/// The Settings section, reached from the NavigationView's own Settings
-/// item. The page owns the household member dialogs (Add member, Edit,
-/// the Remove confirmation), because a ContentDialog needs its XamlRoot,
-/// and lends them to the view model.
+/// The Settings section, reached from the avatar on the rail and the menu's
+/// profile row. The page owns the household member dialogs (Add member,
+/// Edit, the Remove confirmation), because a ContentDialog needs its
+/// XamlRoot, and lends them to the view model.
 /// </summary>
 public sealed partial class SettingsPage : Page
 {

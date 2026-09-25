@@ -2,7 +2,7 @@ using Marquee.Core.Models;
 
 namespace Marquee.Windows.Services;
 
-/// <summary>The NavigationView's sections, the counterpart of the Mac app's <c>SidebarItem</c> plus Search and Settings.</summary>
+/// <summary>The shell's sections (the rail and the menu), the counterpart of the Mac app's <c>SidebarItem</c> plus Search and Settings.</summary>
 public enum Section
 {
     Discover,
@@ -17,10 +17,10 @@ public enum Section
 
 public static class SectionExtensions
 {
-    /// <summary>The NavigationViewItem's <c>Tag</c> in MainWindow.xaml.</summary>
+    /// <summary>The menu row's <c>Tag</c> in MainWindow.xaml.</summary>
     public static string Tag(this Section section) => section.ToString().ToLowerInvariant();
 
-    /// <summary>The label in the pane and the page heading.</summary>
+    /// <summary>The label in the menu and the page heading.</summary>
     public static string Title(this Section section) => section switch
     {
         Section.Discover => "Discover",

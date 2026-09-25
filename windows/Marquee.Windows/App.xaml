@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   App-wide resources: the WinUI control styles, the converters every page
-  uses, and the status badge palette (the Mac app's Theme.owned/tracked
-  colors) in light, dark and high contrast. No RequestedTheme is set, so
-  light/dark follows Windows.
+  uses, the status badge palette (the Mac app's Theme.owned/tracked colors)
+  and the navigation's glass and text colors (mac/Docs/DESIGN_TARGET.md,
+  "Navigation"), in light, dark and high contrast. No RequestedTheme is
+  set, so light/dark follows Windows.
 -->
 <Application
     x:Class="Marquee.Windows.App"
@@ -17,6 +18,14 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!--
+              The Marquee* navigation brushes are the website's tokens
+              (app/globals.css): the .nav-glass fill and border, text
+              primary / secondary / muted, bg0 for text on a solid pill,
+              the accent, and the avatar's 140° accent gradient. The glass
+              is in-app Acrylic tinted to the web's fill, so the page shows
+              through it blurred the way backdrop-filter does on the web.
+            -->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="#2F7A52" />
@@ -25,6 +34,30 @@
                     <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="#E5F0FA" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#5C574C" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="#EFECE3" />
+
+                    <AcrylicBrush
+                        x:Key="MarqueeGlassBrush"
+                        TintColor="#FFFFFF"
+                        TintOpacity="0.74"
+                        TintLuminosityOpacity="0.74"
+                        FallbackColor="#F5FFFFFF" />
+                    <SolidColorBrush x:Key="MarqueeGlassBorderBrush" Color="#1A211F1A" />
+                    <SolidColorBrush x:Key="MarqueeNavTextBrush" Color="#211F1A" />
+                    <SolidColorBrush x:Key="MarqueeNavTextSecondaryBrush" Color="#5C574C" />
+                    <SolidColorBrush x:Key="MarqueeNavTextMutedBrush" Color="#8B8575" />
+                    <SolidColorBrush x:Key="MarqueeNavHoverBrush" Color="#1A211F1A" />
+                    <SolidColorBrush x:Key="MarqueeNavPressedBrush" Color="#29211F1A" />
+                    <SolidColorBrush x:Key="MarqueeNavCurrentBrush" Color="#211F1A" />
+                    <SolidColorBrush x:Key="MarqueeNavCurrentTextBrush" Color="#FAF8F4" />
+                    <SolidColorBrush x:Key="MarqueeAccentBrush" Color="#B3791F" />
+                    <SolidColorBrush x:Key="MarqueeOnAccentBrush" Color="#FAF8F4" />
+                    <SolidColorBrush x:Key="MarqueeAvatarRingBrush" Color="#26FFFFFF" />
+                    <SolidColorBrush x:Key="MarqueeDotRingBrush" Color="#FFFFFF" />
+                    <LinearGradientBrush x:Key="MarqueeAvatarBrush" StartPoint="0.05,-0.04" EndPoint="0.95,1.04">
+                        <GradientStop Color="#9C6818" Offset="0" />
+                        <GradientStop Color="#B3791F" Offset="0.45" />
+                        <GradientStop Color="#C2583A" Offset="1" />
+                    </LinearGradientBrush>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Default">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="#4CAF7D" />
@@ -33,6 +66,30 @@
                     <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="#10202F" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#A8A4B3" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="#201F26" />
+
+                    <AcrylicBrush
+                        x:Key="MarqueeGlassBrush"
+                        TintColor="#1E1D25"
+                        TintOpacity="0.68"
+                        TintLuminosityOpacity="0.68"
+                        FallbackColor="#F51E1D25" />
+                    <SolidColorBrush x:Key="MarqueeGlassBorderBrush" Color="#17FFFFFF" />
+                    <SolidColorBrush x:Key="MarqueeNavTextBrush" Color="#F3F1EA" />
+                    <SolidColorBrush x:Key="MarqueeNavTextSecondaryBrush" Color="#A8A4B3" />
+                    <SolidColorBrush x:Key="MarqueeNavTextMutedBrush" Color="#6F6C7D" />
+                    <SolidColorBrush x:Key="MarqueeNavHoverBrush" Color="#1AF3F1EA" />
+                    <SolidColorBrush x:Key="MarqueeNavPressedBrush" Color="#29F3F1EA" />
+                    <SolidColorBrush x:Key="MarqueeNavCurrentBrush" Color="#F3F1EA" />
+                    <SolidColorBrush x:Key="MarqueeNavCurrentTextBrush" Color="#0A0A0C" />
+                    <SolidColorBrush x:Key="MarqueeAccentBrush" Color="#E0A63E" />
+                    <SolidColorBrush x:Key="MarqueeOnAccentBrush" Color="#0A0A0C" />
+                    <SolidColorBrush x:Key="MarqueeAvatarRingBrush" Color="#26FFFFFF" />
+                    <SolidColorBrush x:Key="MarqueeDotRingBrush" Color="#131217" />
+                    <LinearGradientBrush x:Key="MarqueeAvatarBrush" StartPoint="0.05,-0.04" EndPoint="0.95,1.04">
+                        <GradientStop Color="#F0B954" Offset="0" />
+                        <GradientStop Color="#E0A63E" Offset="0.45" />
+                        <GradientStop Color="#C2583A" Offset="1" />
+                    </LinearGradientBrush>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
@@ -41,8 +98,27 @@
                     <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+
+                    <!-- No translucency in high contrast: solid system colors, the current item in the highlight pair. -->
+                    <SolidColorBrush x:Key="MarqueeGlassBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MarqueeGlassBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeNavTextBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeNavTextSecondaryBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeNavTextMutedBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeNavHoverBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="MarqueeNavPressedBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="MarqueeNavCurrentBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="MarqueeNavCurrentTextBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeAccentBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="MarqueeOnAccentBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeAvatarRingBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MarqueeDotRingBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MarqueeAvatarBrush" Color="{ThemeResource SystemColorHighlightColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+
+            <!-- The wordmark's serif (the website's font-display, New York on the Mac). -->
+            <FontFamily x:Key="MarqueeSerifFontFamily">Georgia</FontFamily>
 
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <converters:BoolToVisibilityConverter x:Key="InvertedBoolToVisibility" Invert="True" />
