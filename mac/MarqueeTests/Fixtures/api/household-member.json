@@ -7,5 +7,10 @@
   "autoApproveTv": true,
   "createdAt": "2026-09-17T17:12:40.991Z",
   "isCurrentUser": false,
-  "avatarUrl": null
+  "avatarUrl": null,
+  "linked": {
+    "plex": false,
+    "jellyfin": true
+  },
+  "hasPassword": false
 }

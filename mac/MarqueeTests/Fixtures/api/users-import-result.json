@@ -1,5 +1,5 @@
 {
-  "results": [
+  "created": [
     {
       "id": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
       "username": "member1",
@@ -16,5 +16,6 @@
       },
       "hasPassword": false
     }
-  ]
+  ],
+  "skipped": 1
 }

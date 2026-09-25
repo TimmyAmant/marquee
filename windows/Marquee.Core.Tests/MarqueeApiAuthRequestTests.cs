@@ -190,9 +190,11 @@ public sealed class MarqueeApiAuthRequestTests
         Assert.False(me.AutoApproveMovies);
         Assert.False(me.AutoApproveTv);
         Assert.Equal(Json.ParseDate("2026-09-17T17:10:57.821Z"), me.CreatedAt);
-        // The same account, photo aside: the doc's login example has none
-        // and its /me example has one.
-        Assert.Equal(login.User with { AvatarUrl = null }, me.User with { AvatarUrl = null });
+        // The same account, photo and linked sign-ins aside: the doc's login
+        // example has neither, its /me example has both.
+        Assert.Equal(login.User with { AvatarUrl = null }, me.User with { AvatarUrl = null, Linked = null, HasPassword = null });
+        Assert.Equal(new LinkedAccounts { Plex = true, Jellyfin = false }, me.User.Linked);
+        Assert.True(me.User.HasPassword);
 
         var badges = Fixtures.Decode<Badges>("badges");
         Assert.Equal(2, badges.UnreadNotifications);
