@@ -3,9 +3,11 @@
      (the design both apps follow) and checked against real captures of the
      app, then moved onto the floating navigation of 0.29.0
      (mac/Docs/DESIGN_TARGET.md › Navigation, Features/Shell/NavMenu.swift):
-     no sidebar, the frosted rail 16 from the window's left edge and centred
-     below the toolbar, pages starting 72 in, and the backdrop running under
-     the rail to the edge. Rendered by render.mjs at 1440x900 and cropped to
+     no sidebar; the frosted rail, which is the menu itself (every section,
+     grouped by hairlines, then the menu button), 16 from the window's left
+     edge and centred below the toolbar; pages starting 72 in, and the
+     backdrop running under the rail to the edge. The title was opened from
+     Movies, so Movies is the current pill. Rendered by render.mjs at 1440x900 and cropped to
      1440x846. Fields are filled from lib/slate.mjs through lib/fill.mjs. -->
 <html lang="en" data-theme="dark">
 <head>
@@ -56,7 +58,8 @@ img{display:block}
 
 /* ---------- navigation rail (NavMenu.swift › NavRail) ----------
    16 from the window's left edge, centred in the area below the 52pt
-   toolbar: 8 of padding (7 inside a 1pt border), 40pt buttons 4 apart. */
+   toolbar: 8 of padding (7 inside a 1pt border), 40pt buttons 4 apart,
+   groups split by a 24-wide hairline with 4 above and below. */
 .traffic{position:absolute;top:19px;left:19px;display:flex;gap:9.4px;z-index:12}
 .traffic i{width:14px;height:14px;border-radius:50%;background:var(--traffic);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.18)}
 .rail{position:absolute;left:16px;top:calc(52px + (900px - 52px) / 2);transform:translateY(-50%);z-index:20;
@@ -66,6 +69,9 @@ img{display:block}
 .rail-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--t2)}
 .rail-btn.cur{background:var(--t1);color:var(--bg0)}
 .rail-me{width:40px;height:40px;margin-bottom:4px;display:grid;place-items:center}
+.rail-sep{width:24px;height:1px;margin:4px 0;background:var(--navGlassEdge)}
+.rail-btn.dot{position:relative}
+.rail-btn.dot::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg1)}
 .avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
   background:linear-gradient(140deg,var(--accentHover),var(--accent) 45%,#c2583a);
   box-shadow:0 0 0 2px rgba(255,255,255,.15);color:var(--bg0);font-size:13.7px;font-weight:600;line-height:1}
@@ -209,9 +215,17 @@ img{display:block}
   <div class="traffic"><i></i><i></i><i></i></div>
   <nav class="rail" aria-label="Main">
     <div class="rail-me"><span class="avatar" data-field="viewer-initials">J</span></div>
-    <div class="rail-btn"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4l5.1 5.1"/></svg></div>
-    <div class="rail-btn cur"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg></div>
-    <div class="rail-btn"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h15"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4l5.1 5.1"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg></div>
+    <i class="rail-sep"></i>
+    <div class="rail-btn cur"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 4.5v15M16.5 4.5v15M3.5 9.5h4M3.5 14.5h4M16.5 9.5h4M16.5 14.5h4"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 20.5h7M12 17v3.5"/></svg></div>
+    <i class="rail-sep"></i>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.5s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 6.6a4.2 4.2 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg></div>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></div>
+    <div class="rail-btn dot"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="5" cy="6.5" r=".9" fill="currentColor"/><circle cx="5" cy="12" r=".9" fill="currentColor"/><circle cx="5" cy="17.5" r=".9" fill="currentColor"/></svg></div>
+    <i class="rail-sep"></i>
+    <div class="rail-btn"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h15"/></svg></div>
   </nav>
   <div class="scrollbar"></div>
 </main>
