@@ -17,13 +17,35 @@ export function seasonsForAdd<T extends SonarrSeasonLike>(
 }
 
 /** A series Sonarr already has: the requested seasons are switched on and
- * everything already monitored stays that way — a request only ever adds. */
+ * everything Sonarr was actually fetching stays that way — a request only
+ * ever adds. `seriesMonitored` matters because "Stop monitoring" turns off
+ * the series and leaves every season's own flag on: those seasons weren't
+ * being fetched, and turning the series back on for one requested season
+ * mustn't start downloading all the rest. */
 export function seasonsForUpdate<T extends SonarrSeasonLike>(
   seasons: readonly T[],
   requested: readonly number[],
+  seriesMonitored = true,
 ): (T & { monitored: boolean })[] {
   const wanted = new Set(requested);
-  return seasons.map((s) => ({ ...s, monitored: Boolean(s.monitored) || wanted.has(s.seasonNumber) }));
+  return seasons.map((s) => ({
+    ...s,
+    monitored: (seriesMonitored && Boolean(s.monitored)) || wanted.has(s.seasonNumber),
+  }));
+}
+
+/** Every season a whole-series request covers: all of them but specials
+ * (season 0), which Sonarr leaves off when it adds a whole series too, plus
+ * specials if they were already on. For approving a whole-series request on
+ * a show a season request had already added with only some seasons. */
+export function seasonsForWholeSeries<T extends SonarrSeasonLike>(
+  seasons: readonly T[],
+  seriesMonitored = true,
+): (T & { monitored: boolean })[] {
+  return seasons.map((s) => ({
+    ...s,
+    monitored: s.seasonNumber > 0 || (seriesMonitored && Boolean(s.monitored)),
+  }));
 }
 
 /** The requested seasons Sonarr actually lists for the show. TMDb and TVDB

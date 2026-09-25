@@ -1,4 +1,4 @@
-import { seasonsForAdd, seasonsForUpdate } from "@/lib/sonarr/season-monitoring";
+import { seasonsForAdd, seasonsForUpdate, seasonsForWholeSeries } from "@/lib/sonarr/season-monitoring";
 
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
@@ -138,11 +138,39 @@ export async function monitorSeriesSeasons(
 
 /** The PUT /series/{id} body for monitorSeriesSeasons: the series exactly as
  * Sonarr sent it, with monitoring switched on for it and the requested seasons. */
-export function buildMonitorSeasonsBody<S extends { seasons?: SonarrSeasonStats[] }>(
+export function buildMonitorSeasonsBody<S extends { seasons?: SonarrSeasonStats[]; monitored?: unknown }>(
   series: S,
   requested: readonly number[],
 ) {
-  return { ...series, monitored: true, seasons: seasonsForUpdate(series.seasons ?? [], requested) };
+  return {
+    ...series,
+    monitored: true,
+    seasons: seasonsForUpdate(series.seasons ?? [], requested, series.monitored !== false),
+  };
+}
+
+/** Approving a whole-series request on a series Sonarr already has: the
+ * series and every season (specials only if already on) monitored. */
+export async function monitorWholeSeries(config: ArrConfig, seriesId: number): Promise<void> {
+  const series = await sonarrFetch<Record<string, unknown> & { seasons?: SonarrSeasonStats[] }>(
+    config,
+    `/series/${seriesId}`,
+  );
+  await sonarrFetch(config, `/series/${seriesId}`, {
+    method: "PUT",
+    body: buildMonitorWholeSeriesBody(series),
+  });
+}
+
+/** The PUT /series/{id} body for monitorWholeSeries. */
+export function buildMonitorWholeSeriesBody<S extends { seasons?: SonarrSeasonStats[]; monitored?: unknown }>(
+  series: S,
+) {
+  return {
+    ...series,
+    monitored: true,
+    seasons: seasonsForWholeSeries(series.seasons ?? [], series.monitored !== false),
+  };
 }
 
 /** Queues a search for one season's monitored episodes, same as the search

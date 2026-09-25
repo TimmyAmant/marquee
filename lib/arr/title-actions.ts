@@ -141,7 +141,11 @@ export async function addSeriesToSonarrForUser(
       }
       added = existing;
     } else if (existing) {
-      await sonarr.setSeriesMonitored(config, existing.id, true);
+      // A whole-series request (or re-adding a show "Stop monitoring" turned
+      // off). The show may be in Sonarr with only some seasons on, because a
+      // season request added it: turn every season on and look for them.
+      await sonarr.monitorWholeSeries(config, existing.id);
+      await sonarr.searchSeries(config, existing.id);
       added = existing;
     } else {
       const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);

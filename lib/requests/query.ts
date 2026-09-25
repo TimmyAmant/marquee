@@ -59,6 +59,18 @@ export async function getPendingRequests(viewerUserId: string) {
         const covered = library !== null && seasonsStillNeeded(r.seasons, library).length === 0;
         return { status: covered ? ("seasons_covered" as const) : ("untracked" as const) };
       }
+      if (r.mediaType === "tv") {
+        // A whole-series request for a show Sonarr has only some seasons of
+        // (a housemate's season request added it) isn't covered yet: only
+        // once every season is monitored or complete there. A show Sonarr
+        // doesn't track falls through to the usual owned-anywhere check.
+        const library = await getSonarrSeasonStates(viewerUserId, r.tvdbId).catch(() => null);
+        if (library) {
+          const everySeason = library.filter((s) => s.seasonNumber > 0).map((s) => s.seasonNumber);
+          const covered = seasonsStillNeeded(everySeason, library).length === 0;
+          return { status: covered ? ("seasons_covered" as const) : ("untracked" as const) };
+        }
+      }
       return getTitleLibraryStatus(viewerUserId, r.mediaType, r.tmdbId, r.tvdbId).catch(
         () => ({ status: "untracked" as const, provider: null, configured: false, file: null }),
       );
@@ -158,13 +170,24 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
     .where(eq(requests.requestedByUserId, userId))
     .orderBy(desc(requests.createdAt));
 
-  const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) =>
-    r.status === "approved"
-      ? getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
-          .then((s) => s.status)
-          .catch(() => null)
-      : Promise.resolve(null),
-  );
+  const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) => {
+    if (r.status !== "approved") return Promise.resolve(null);
+    // An approved season request is "in your library" only once every
+    // season it asked for is complete — the show as a whole being owned
+    // (the seasons already there) says nothing about the new ones. Until
+    // then it reads "Approved".
+    if (r.seasons) {
+      return getSonarrSeasonStates(libraryOwnerId, r.tvdbId)
+        .then((library) => {
+          const done = new Set((library ?? []).filter((s) => s.complete).map((s) => s.seasonNumber));
+          return library && r.seasons!.every((n) => done.has(n)) ? ("owned" as const) : null;
+        })
+        .catch(() => null);
+    }
+    return getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
+      .then((s) => s.status)
+      .catch(() => null);
+  });
 
   return rows.map((r, i) => ({ ...r, libraryStatus: libraryStatuses[i] }));
 }

@@ -81,12 +81,13 @@ export async function loadTitleStatus(
         ])
       : [null, []];
   const seasonNumbers = tvSeasons.map((s) => s.season_number);
-  const viewerSeasons = summarizeViewerRequests(viewerRequests, seasonNumbers);
+  const viewerSeasons = summarizeViewerRequests(viewerRequests, seasonNumbers, seasonLibrary !== null);
   const seasonStates = seasonRequestStates({
     seasonNumbers,
     library: seasonLibrary,
     requested: viewerSeasons.requested,
     isMember,
+    ownedOutsideSonarr: seasonLibrary === null && libraryStatus.status !== "untracked",
   });
   const seasonRequests = {
     states: seasonStates,

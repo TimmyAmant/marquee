@@ -167,3 +167,30 @@ describe("seasonPickerState", () => {
     expect(seasonPickerState(undefined)).toBe("unavailable");
   });
 });
+
+describe("approved requests once Sonarr tracks the show", () => {
+  it("count as requested only while Sonarr has no record of it", () => {
+    const rows = [{ status: "approved" as const, seasons: [1] }];
+    expect(summarizeViewerRequests(rows, [1, 2]).requested.has(1)).toBe(true);
+    // Tracked: Sonarr's monitoring decides, so a season unmonitored there
+    // after approval can be asked for again.
+    expect(summarizeViewerRequests(rows, [1, 2], true).requested.has(1)).toBe(false);
+    // A pending request always counts.
+    expect(summarizeViewerRequests([{ status: "pending", seasons: [2] }], [1, 2], true).requested.has(2)).toBe(true);
+  });
+});
+
+describe("a show owned in Plex or Jellyfin but not in Sonarr", () => {
+  it("offers no season to request", () => {
+    const states = seasonRequestStates({
+      seasonNumbers: [1, 2],
+      library: null,
+      requested: new Set(),
+      isMember: true,
+      ownedOutsideSonarr: true,
+    });
+    expect([...states.values()].map((s) => s.requestable)).toEqual([false, false]);
+    expect(seasonPickerState(states.get(1))).toBe("complete");
+    expect(canRequestSeasons({ isMember: true, isTv: true, hasPending: false, states })).toBe(false);
+  });
+});

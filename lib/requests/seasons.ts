@@ -80,15 +80,20 @@ export type ViewerSeasonRequests = {
 };
 
 /** A pending whole-series request asks for every season, so all of them
- * count as requested. An approved one doesn't: by then Sonarr's own
- * monitoring is the better answer to whether a season is on its way. */
+ * count as requested. An approved request only counts while Sonarr isn't
+ * tracking the show: once it is, Sonarr's own monitoring is the better
+ * answer to whether a season is on its way — and a season whose approved
+ * request was later undone there (unmonitored, or the show deleted) can be
+ * asked for again. */
 export function summarizeViewerRequests(
   rows: readonly ViewerTitleRequest[],
   allSeasons: readonly number[],
+  sonarrTracking = false,
 ): ViewerSeasonRequests {
   const pending = rows.find((r) => r.status === "pending") ?? null;
   const requested = new Set<number>();
   for (const row of rows) {
+    if (row.status === "approved" && sonarrTracking) continue;
     if (row.seasons) row.seasons.forEach((n) => requested.add(n));
     else if (row.status === "pending") allSeasons.forEach((n) => requested.add(n));
   }
@@ -110,6 +115,9 @@ export function seasonRequestStates(input: {
   library: SeasonLibraryState[] | null;
   requested: ReadonlySet<number>;
   isMember: boolean;
+  /** In Plex or Jellyfin but not in Sonarr: owned, with no per-season
+   * detail, so every season counts as complete rather than requestable. */
+  ownedOutsideSonarr?: boolean;
 }): Map<number, SeasonRequestState> {
   const byNumber = new Map((input.library ?? []).map((s) => [s.seasonNumber, s]));
   const states = new Map<number, SeasonRequestState>();
@@ -117,7 +125,7 @@ export function seasonRequestStates(input: {
     const sonarr = byNumber.get(n);
     // A tracked show with a season Sonarr doesn't list yet: not monitored.
     const monitored = input.library ? (sonarr?.monitored ?? false) : null;
-    const complete = sonarr?.complete ?? false;
+    const complete = sonarr?.complete ?? Boolean(input.ownedOutsideSonarr && !input.library);
     const requested = input.requested.has(n);
     states.set(n, {
       monitored,

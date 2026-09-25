@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { seasonsForAdd, seasonsForUpdate, seasonsSonarrKnows } from "./season-monitoring";
-import { buildAddSeriesBody, buildMonitorSeasonsBody, type SonarrSeriesLookupResult } from "./client";
+import { seasonsForAdd, seasonsForUpdate, seasonsForWholeSeries, seasonsSonarrKnows } from "./season-monitoring";
+import { buildAddSeriesBody, buildMonitorSeasonsBody, buildMonitorWholeSeriesBody, type SonarrSeriesLookupResult } from "./client";
 
 const lookupResult: SonarrSeriesLookupResult = {
   title: "Severance",
@@ -41,6 +41,46 @@ describe("seasonsForUpdate", () => {
       { seasonNumber: 2, monitored: false },
       { seasonNumber: 3, monitored: true },
     ]);
+  });
+});
+
+describe("seasonsForUpdate on a series someone stopped monitoring", () => {
+  it("turns on only the requested season, not the seasons still flagged underneath", () => {
+    // "Stop monitoring" turns the series off and leaves each season's flag on.
+    const current = [
+      { seasonNumber: 1, monitored: true },
+      { seasonNumber: 2, monitored: true },
+      { seasonNumber: 3, monitored: false },
+    ];
+    expect(seasonsForUpdate(current, [3], false)).toEqual([
+      { seasonNumber: 1, monitored: false },
+      { seasonNumber: 2, monitored: false },
+      { seasonNumber: 3, monitored: true },
+    ]);
+    expect(buildMonitorSeasonsBody({ id: 7, monitored: false, seasons: current }, [3]).seasons.map((x) => x.monitored)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+  });
+});
+
+describe("seasonsForWholeSeries", () => {
+  it("turns every season on, and specials only if they already were", () => {
+    const current = [
+      { seasonNumber: 0, monitored: false },
+      { seasonNumber: 1, monitored: false },
+      { seasonNumber: 2, monitored: true },
+      { seasonNumber: 3, monitored: false },
+    ];
+    expect(seasonsForWholeSeries(current).map((x) => x.monitored)).toEqual([false, true, true, true]);
+    expect(seasonsForWholeSeries([{ seasonNumber: 0, monitored: true }]).map((x) => x.monitored)).toEqual([true]);
+    expect(seasonsForWholeSeries([{ seasonNumber: 0, monitored: true }], false).map((x) => x.monitored)).toEqual([false]);
+  });
+
+  it("builds the PUT body with the series monitored and its other fields kept", () => {
+    const body = buildMonitorWholeSeriesBody({ id: 7, title: "Severance", monitored: false, seasons: [{ seasonNumber: 1, monitored: false }] });
+    expect(body).toEqual({ id: 7, title: "Severance", monitored: true, seasons: [{ seasonNumber: 1, monitored: true }] });
   });
 });
 
@@ -95,8 +135,10 @@ describe("buildMonitorSeasonsBody", () => {
       title: "Severance",
       monitored: true,
       path: "/tv/Severance",
+      // The series was off, so season 1's leftover flag wasn't being fetched
+      // and stays off; only the requested season comes on.
       seasons: [
-        { seasonNumber: 1, monitored: true },
+        { seasonNumber: 1, monitored: false },
         { seasonNumber: 2, monitored: true },
       ],
     });

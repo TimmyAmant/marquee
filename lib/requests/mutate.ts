@@ -68,6 +68,17 @@ export async function createRequest(
     // Unlike a whole-series request, this is fine for a show that's already
     // tracked or owned — only the seasons Sonarr already has covered drop out.
     const library = await getSonarrSeasonStates(viewer.libraryOwnerId, cachedTitle.tvdbId).catch(() => null);
+    if (!library) {
+      // Sonarr isn't tracking it, so there's no per-season detail: a show
+      // that's in Plex or Jellyfin anyway is owned whole, and approving
+      // seasons of it would only download them a second time.
+      const status = await getTitleLibraryStatus(viewer.libraryOwnerId, mediaType, tmdbId, cachedTitle.tvdbId).catch(
+        () => null,
+      );
+      if (status && status.status !== "untracked") {
+        return fail("conflict", "You already have this in your library.");
+      }
+    }
     seasons = seasonsStillNeeded(seasons, library);
     if (seasons.length === 0) return fail("conflict", "Those seasons are already in your library or on their way.");
   }

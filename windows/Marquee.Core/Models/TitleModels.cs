@@ -292,9 +292,14 @@ public sealed record TitleDetail
             {
                 return seasonsOffered ? TitleRequestAction.PickSeasons : TitleRequestAction.WholeSeries;
             }
-            // Already tracked, or an earlier request was approved: more seasons
-            // of a show that's partly in the library or on its way.
-            return seasonsOffered ? TitleRequestAction.PickMoreSeasons : TitleRequestAction.None;
+            // "More" only when some of the show is already in the library or on
+            // its way, as on the website; an approved request for a show that
+            // isn't there yet still just reads "Request".
+            if (!seasonsOffered)
+            {
+                return TitleRequestAction.None;
+            }
+            return Library.Status == LibraryStatus.Untracked ? TitleRequestAction.PickSeasons : TitleRequestAction.PickMoreSeasons;
         }
     }
 

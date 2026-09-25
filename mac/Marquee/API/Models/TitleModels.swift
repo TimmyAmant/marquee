@@ -197,9 +197,10 @@ extension API {
                 return seasonsOffered ? .pickSeasons(more: false) : .wholeSeries
             }
             if seasonsOffered {
-                // Already tracked, or an earlier request was approved: more
-                // seasons of a show that's partly in the library or on its way.
-                return .pickSeasons(more: true)
+                // "more" only when some of the show is already in the library
+                // or on its way, as on the website; an approved request for a
+                // show that isn't there yet still just reads "Request".
+                return .pickSeasons(more: library.status != .untracked)
             }
             return nil
         }
