@@ -5,7 +5,6 @@ struct SearchResultsView: View {
     let query: String
 
     @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
 
     @State private var results: API.SearchResults?
     @State private var error: APIError?
@@ -19,8 +18,7 @@ struct SearchResultsView: View {
 
                 if let error, error.isTMDbUnconfigured {
                     TMDbMissingNotice(isAdmin: model.viewer?.isAdmin == true) {
-                        model.settingsTab = .integrations
-                        openSettings()
+                        model.openSettings(.integrations)
                     }
                 } else if let results {
                     if results.isEmpty {

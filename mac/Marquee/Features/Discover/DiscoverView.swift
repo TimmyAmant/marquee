@@ -3,7 +3,6 @@ import SwiftUI
 /// app/discover/page.tsx — curated shelves, all from `GET /discover`.
 struct DiscoverView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
 
     @State private var shelves: API.DiscoverShelves?
     @State private var loading = true
@@ -17,8 +16,7 @@ struct DiscoverView: View {
             VStack(alignment: .leading, spacing: Metrics.shelfSpacing) {
                 if let error, error.isTMDbUnconfigured {
                     TMDbMissingNotice(isAdmin: model.viewer?.isAdmin == true) {
-                        model.settingsTab = .integrations
-                        openSettings()
+                        model.openSettings(.integrations)
                     }
                     .padding(.trailing, Metrics.pagePadding)
                 } else if let shelves {

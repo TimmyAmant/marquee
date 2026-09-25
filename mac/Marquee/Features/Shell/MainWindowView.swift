@@ -72,6 +72,7 @@ private struct SectionRootView: View {
         case .favorites: FavoritesView()
         case .calendar: CalendarScreen()
         case .requests: RequestsView()
+        case .settings: SettingsRootView()
         }
     }
 }

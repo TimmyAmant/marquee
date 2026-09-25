@@ -4,46 +4,106 @@ enum SettingsTab: String, Hashable, CaseIterable {
     case account, integrations, activity, jobs, about
 }
 
-/// components/settings-nav.tsx as a native Settings window (⌘,).
+extension SettingsTab {
+    var title: String {
+        switch self {
+        case .account: return "Account"
+        case .integrations: return "Integrations"
+        case .activity: return "Activity"
+        case .jobs: return "Jobs"
+        case .about: return "About"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .account: return "person.crop.circle"
+        case .integrations: return "powerplug"
+        case .activity: return "clock"
+        case .jobs: return "arrow.triangle.2.circlepath"
+        case .about: return "info.circle"
+        }
+    }
+
+    /// Integrations, Activity and Jobs are the admin's.
+    var isAdminOnly: Bool {
+        switch self {
+        case .integrations, .activity, .jobs: return true
+        case .account, .about: return false
+        }
+    }
+}
+
+/// app/settings/layout.tsx with components/settings-nav.tsx: Settings as a
+/// page of the main window (your photo on the rail, ⌘,), the tabs across
+/// the top and the chosen one below.
 struct SettingsRootView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        @Bindable var model = model
+        let isAdmin = model.viewer?.isAdmin == true
+        let tabs = SettingsTab.allCases.filter { isAdmin || !$0.isAdminOnly }
+        // A member sent to an admin-only tab (an old link) lands on Account.
+        let current = tabs.contains(model.settingsTab) ? model.settingsTab : .account
 
-        Group {
-            if let viewer = model.viewer {
-                TabView(selection: $model.settingsTab) {
-                    AccountSettingsView()
-                        .tabItem { Label("Account", systemImage: "person.crop.circle") }
-                        .tag(SettingsTab.account)
-                    if viewer.isAdmin {
-                        IntegrationsSettingsView()
-                            .tabItem { Label("Integrations", systemImage: "powerplug") }
-                            .tag(SettingsTab.integrations)
-                        ActivitySettingsView()
-                            .tabItem { Label("Activity", systemImage: "clock") }
-                            .tag(SettingsTab.activity)
-                        JobsSettingsView()
-                            .tabItem { Label("Jobs", systemImage: "arrow.triangle.2.circlepath") }
-                            .tag(SettingsTab.jobs)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Settings")
+                    .font(.marqueeDisplay(30))
+                    .foregroundStyle(Theme.textPrimary)
+                    .accessibilityAddTraits(.isHeader)
+                HStack(spacing: 6) {
+                    ForEach(tabs, id: \.self) { tab in
+                        SettingsTabButton(tab: tab, current: tab == current) {
+                            model.settingsTab = tab
+                        }
                     }
-                    AboutSettingsView()
-                        .tabItem { Label("About", systemImage: "info.circle") }
-                        .tag(SettingsTab.about)
                 }
-            } else {
-                EmptyStateView(
-                    title: "Sign in to Marquee",
-                    message: "Settings are available once you've signed in from the main window.",
-                    systemImage: "lock"
-                )
-                .frame(width: 520, height: 320)
             }
+            .padding(.horizontal, 28)
+            .padding(.top, 24)
+            .padding(.bottom, 4)
+
+            Group {
+                switch current {
+                case .account: AccountSettingsView()
+                case .integrations: IntegrationsSettingsView()
+                case .activity: ActivitySettingsView()
+                case .jobs: JobsSettingsView()
+                case .about: AboutSettingsView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(width: 760, height: 680)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.bg0)
         .tint(Theme.accent)
+    }
+}
+
+/// One of the tabs: a pill, solid for the current one.
+private struct SettingsTabButton: View {
+    let tab: SettingsTab
+    let current: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Label(tab.title, systemImage: tab.systemImage)
+                .font(.system(size: 13, weight: .medium))
+                .padding(.horizontal, 14)
+                .frame(height: 32)
+                .foregroundStyle(current ? Theme.bg0 : (hovering ? Theme.textPrimary : Theme.textSecondary))
+                .background(
+                    Capsule().fill(current ? Theme.textPrimary : (hovering ? Theme.textPrimary.opacity(0.1) : .clear))
+                )
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
+        .accessibilityAddTraits(current ? .isSelected : [])
     }
 }
 

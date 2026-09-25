@@ -9,7 +9,6 @@ import SwiftUI
 /// start `Metrics.contentLeading` in, clear of the rail.
 struct NavMenu: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.openSettings) private var openSettings
 
     @FocusState private var focus: RailItem?
 
@@ -29,8 +28,7 @@ struct NavMenu: View {
 
     /// The profile opens Settings on its Account tab (the website's /settings).
     private func showAccount() {
-        model.settingsTab = .account
-        openSettings()
+        model.openSettings(.account)
     }
 
     /// The website's Search is a page; here it's the toolbar's search field.
@@ -40,8 +38,7 @@ struct NavMenu: View {
 
     /// A newer Marquee: Settings › About, where "Update" and its progress are.
     private func showUpdate() {
-        model.settingsTab = .about
-        openSettings()
+        model.openSettings(.about)
     }
 }
 
@@ -117,6 +114,12 @@ private struct NavRail: View {
                 }
             }
             .frame(width: 40, height: 40)
+            // On Settings, a ring in place of the other items' solid pill.
+            .overlay {
+                if model.selection == .settings {
+                    Circle().strokeBorder(Theme.textPrimary, lineWidth: 2)
+                }
+            }
             .contentShape(Circle())
         }
         .buttonStyle(.plain)

@@ -17,6 +17,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "App downloads carry their version in the name: Marquee-0.30.1.dmg for the Mac and Marquee-Setup-0.30.1.exe for Windows, so a Downloads folder with several of them shows which is newest. The download buttons on the website go straight to the latest one.",
       "The Mac disk image has a proper install window: Marquee and your Applications folder with an arrow between them, how to get past macOS's first-launch warning, and a Read Me covering installing, connecting to your server and updates. Its window title shows the version.",
       "If the Mac app can't replace itself and leaves the new version in Downloads, it's named for its version too (Marquee 0.30.1.app).",
+      "Settings in the Mac app is now a page of the main window instead of a separate window, with Account, Integrations, Activity, Jobs and About as tabs across the top. Your photo on the rail, ⌘, and the \"Connect…\" links open it. (The Windows app already worked this way.)",
     ],
   },
   {
