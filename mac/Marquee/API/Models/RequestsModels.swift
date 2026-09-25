@@ -13,6 +13,37 @@ extension API {
         let label: String
     }
 
+    /// lib/requests/labels.ts `seasonsLabel`, for when the server didn't send
+    /// its own label: nil for nil (the whole series) or an empty list;
+    /// `[2]` → "Season 2", `[1,2,3,5,7,8]` → "Seasons 1–3, 5, 7–8",
+    /// `[0]` → "Specials", `[0,1]` → "Specials, Season 1".
+    static func seasonsLabel(_ seasons: [Int]?) -> String? {
+        guard let seasons else { return nil }
+        let sorted = Array(Set(seasons)).sorted()
+        guard !sorted.isEmpty else { return nil }
+        var parts: [String] = []
+        if sorted.contains(0) { parts.append("Specials") }
+        let numbered = sorted.filter { $0 != 0 }
+        if let first = numbered.first {
+            var runs: [String] = []
+            var start = first
+            var end = first
+            func close() { runs.append(start == end ? "\(start)" : "\(start)–\(end)") }
+            for number in numbered.dropFirst() {
+                if number == end + 1 {
+                    end = number
+                } else {
+                    close()
+                    start = number
+                    end = number
+                }
+            }
+            close()
+            parts.append((numbered.count == 1 ? "Season " : "Seasons ") + runs.joined(separator: ", "))
+        }
+        return parts.joined(separator: ", ")
+    }
+
     /// `POST /titles/{type}/{tmdbId}/request` response.
     struct RequestCreated: Codable, Hashable, Sendable {
         let ok: Bool
@@ -39,8 +70,15 @@ extension API {
         let statusTone: RequestTone
         let createdAt: Date
         let reviewedAt: Date?
+        /// The requested seasons (TV); nil for a whole series, a movie, or a
+        /// server older than season requests.
+        let seasons: [Int]?
+        /// "Seasons 1–3", nil when `seasons` is.
+        let seasonsLabel: String?
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
+        /// What the requests screens print under the title.
+        var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
     }
 
     /// `GET /requests/pending`: the admin's review queue.
@@ -112,8 +150,15 @@ extension API {
         let posterPath: ImageRef?
         let requestedBy: RequestPerson
         let createdAt: Date
+        /// The requested seasons (TV); nil for a whole series, a movie, or a
+        /// server older than season requests.
+        let seasons: [Int]?
+        /// "Seasons 1–3", nil when `seasons` is.
+        let seasonsLabel: String?
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
+        /// What the requests screens print under the title.
+        var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
     }
 
     /// `GET /requests/history`: "Past requests", the 50 most recently reviewed.
@@ -134,8 +179,15 @@ extension API {
         let requestedBy: RequestPerson
         let createdAt: Date
         let reviewedAt: Date?
+        /// The requested seasons (TV); nil for a whole series, a movie, or a
+        /// server older than season requests.
+        let seasons: [Int]?
+        /// "Seasons 1–3", nil when `seasons` is.
+        let seasonsLabel: String?
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
+        /// What the requests screens print under the title.
+        var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
     }
 
     /// `POST /requests/approve-all`.

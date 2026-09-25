@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The website's season picker: every season TMDb lists, in the Episodes
+  accordion's order, each with a checkbox or the tag saying why it has none.
+  "Select all" ticks every requestable season. Request sends the request
+  itself and keeps the dialog open with the server's message on a failure;
+  it stays disabled while nothing is ticked.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.SeasonRequestDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d"
+    Title="Request seasons"
+    PrimaryButtonText="Request seasons"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="False"
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    Closing="OnClosing">
+
+    <StackPanel Spacing="12" MinWidth="380">
+        <TextBlock
+            x:Name="ExplanationText"
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+        <CheckBox x:Name="SelectAllBox" Content="Select all" Click="OnSelectAllClick" />
+        <Border
+            CornerRadius="8"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+            <ScrollViewer x:Name="RowsScroller" MaxHeight="340" Padding="0,4">
+                <ItemsRepeater x:Name="RowsRepeater">
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SeasonPickerRow">
+                            <Grid Padding="12,2" MinHeight="40" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox
+                                    Grid.Column="0"
+                                    IsChecked="{x:Bind IsChecked, Mode=TwoWay}"
+                                    Visibility="{x:Bind IsRequestable, Converter={StaticResource BoolToVisibility}}"
+                                    VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{x:Bind EpisodeLine}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                    </StackPanel>
+                                </CheckBox>
+                                <!-- Lined up with the checkbox rows' labels. -->
+                                <StackPanel
+                                    Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    Spacing="8"
+                                    Margin="28,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Visibility="{x:Bind IsRequestable, Converter={StaticResource InvertedBoolToVisibility}}">
+                                    <TextBlock Text="{x:Bind Name}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Text="{x:Bind EpisodeLine}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                </StackPanel>
+                                <controls:TonePill
+                                    Grid.Column="1"
+                                    Text="{x:Bind Tag}"
+                                    Tone="{x:Bind TagTone}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </ScrollViewer>
+        </Border>
+        <TextBlock
+            x:Name="ErrorText"
+            Visibility="Collapsed"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="Wrap" />
+    </StackPanel>
+</ContentDialog>

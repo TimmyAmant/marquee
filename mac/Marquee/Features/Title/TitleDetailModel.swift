@@ -142,6 +142,23 @@ final class TitleDetailModel {
         }
     }
 
+    /// The season picker's submit. Throws for the picker to show inline. On
+    /// success the picker closes and the whole page reloads behind it, since
+    /// the per-season rows changed too (`titles.status` only carries
+    /// `library` + `viewer`).
+    func requestSeasons(_ seasons: [Int]) async throws {
+        guard let api else { throw APIError.unauthorized }
+        try await api.requests.create(id.mediaType, id: id.tmdbId, seasons: seasons)
+        Task {
+            await load(api)
+            guard let detail else { return }
+            titleState?.statusChanged(id, to: detail.library.status)
+            if detail.viewer.alreadyRequested {
+                titleState?.requested(id)
+            }
+        }
+    }
+
     func searchNow() {
         guard let api, !isSearching else { return }
         isSearching = true

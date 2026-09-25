@@ -6,6 +6,8 @@
       "tmdbId": 603,
       "title": "The Matrix",
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
       "status": "rejected",
       "manuallyApproved": false,
       "rejectionReason": "Not enough space on the server right now",

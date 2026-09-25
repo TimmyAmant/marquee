@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getPendingRequests, getReviewedRequests, getMyRequests } from "@/lib/requests/query";
@@ -10,6 +9,7 @@ import { getArrCredential } from "@/lib/integrations/credentials";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
+import { RequestTitle } from "@/components/request-title";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   pending: "bg-tracked-bg text-tracked",
@@ -69,12 +69,12 @@ export default async function RequestsPage() {
                               <Image src={src} alt="" fill sizes="40px" className="object-cover" />
                             )}
                           </div>
-                          <Link
-                            href={`/title/${r.mediaType}/${r.tmdbId}`}
-                            className="text-sm font-medium text-text-primary hover:text-accent"
-                          >
-                            {r.title}
-                          </Link>
+                          <RequestTitle
+                            mediaType={r.mediaType}
+                            tmdbId={r.tmdbId}
+                            title={r.title}
+                            seasons={r.seasons}
+                          />
                         </div>
                       </td>
                       <td className="px-4 py-3 text-text-secondary">
@@ -144,6 +144,7 @@ export default async function RequestsPage() {
                   posterPath={r.posterPath}
                   requestedByName={r.requestedByName}
                   requestedByUsername={r.requestedByUsername}
+                  seasons={r.seasons}
                   createdAt={r.createdAt.toISOString()}
                   sonarrUrl={sonarrUrl}
                 />
@@ -178,12 +179,12 @@ export default async function RequestsPage() {
                               <Image src={src} alt="" fill sizes="40px" className="object-cover" />
                             )}
                           </div>
-                          <Link
-                            href={`/title/${r.mediaType}/${r.tmdbId}`}
-                            className="text-sm font-medium text-text-primary hover:text-accent"
-                          >
-                            {r.title}
-                          </Link>
+                          <RequestTitle
+                            mediaType={r.mediaType}
+                            tmdbId={r.tmdbId}
+                            title={r.title}
+                            seasons={r.seasons}
+                          />
                         </div>
                       </td>
                       <td className="px-4 py-3 text-text-secondary">

@@ -116,7 +116,27 @@ public sealed record SeasonSummary
 
     public int? Total { get; init; }
 
+    /// <summary>
+    /// Season requests (null from an older server): whether Sonarr monitors
+    /// this season; null when Sonarr doesn't track the show or isn't connected.
+    /// </summary>
+    public bool? Monitored { get; init; }
+
+    /// <summary>In one of the viewer's pending or approved requests for this title.</summary>
+    public bool? Requested { get; init; }
+
+    /// <summary>The season picker offers a checkbox: not complete, not monitored, not already requested by this viewer.</summary>
+    public bool? Requestable { get; init; }
+
     public int Id => SeasonNumber;
+
+    /// <summary>The season picker's row: a checkbox, or the reason there isn't one.</summary>
+    public SeasonRequestState RequestState =>
+        Requestable == true ? SeasonRequestState.Requestable
+        : IsComplete ? SeasonRequestState.InLibrary
+        : Monitored == true ? SeasonRequestState.Monitored
+        : Requested == true ? SeasonRequestState.Requested
+        : SeasonRequestState.Unavailable;
 
     /// <summary>The "3/10" badge, null when Sonarr doesn't track the show.</summary>
     public string? CompletenessLabel =>
@@ -126,6 +146,53 @@ public sealed record SeasonSummary
 
     /// <summary>Green badge: every episode has a file.</summary>
     public bool IsComplete => Have is { } have && Total is { } total && total > 0 && have >= total;
+}
+
+/// <summary>A row of the season picker.</summary>
+public enum SeasonRequestState
+{
+    /// <summary>A checkbox.</summary>
+    Requestable,
+
+    /// <summary>"In library": every episode has a file.</summary>
+    InLibrary,
+
+    /// <summary>"Monitored": Sonarr is already after it.</summary>
+    Monitored,
+
+    /// <summary>"Requested": in one of your requests.</summary>
+    Requested,
+
+    /// <summary>Not offered, for no reason the server spelled out.</summary>
+    Unavailable,
+}
+
+public static class SeasonRequestStateExtensions
+{
+    /// <summary>The tag in place of the checkbox; empty for a checkbox row or an unexplained one.</summary>
+    public static string Tag(this SeasonRequestState state) => state switch
+    {
+        SeasonRequestState.InLibrary => "In library",
+        SeasonRequestState.Monitored => "Monitored",
+        SeasonRequestState.Requested => "Requested",
+        _ => "",
+    };
+}
+
+/// <summary>What the title page's Request button does.</summary>
+public enum TitleRequestAction
+{
+    /// <summary>No Request button.</summary>
+    None,
+
+    /// <summary><c>POST …/request</c> with no body: a movie, a whole series, or a server too old to take seasons.</summary>
+    WholeSeries,
+
+    /// <summary>"Request" opens the season picker.</summary>
+    PickSeasons,
+
+    /// <summary>"Request more seasons" (the show is already tracked or partly requested) opens the season picker.</summary>
+    PickMoreSeasons,
 }
 
 public sealed record CastMember
@@ -206,6 +273,37 @@ public sealed record TitleDetail
     public TitleId Id => new(MediaType, TmdbId);
 
     /// <summary>
+    /// What the action area's Request button does for this viewer. A server
+    /// from before season requests doesn't send <c>canRequestSeasons</c>, so
+    /// it keeps today's whole-series Request.
+    /// </summary>
+    public TitleRequestAction RequestAction
+    {
+        get
+        {
+            if (Viewer.AlreadyRequested)
+            {
+                return TitleRequestAction.None;
+            }
+            var seasonsOffered = MediaType == MediaType.Tv
+                && Viewer.CanRequestSeasons == true
+                && Seasons.Any(season => season.RequestState == SeasonRequestState.Requestable);
+            if (Viewer is { CanRequest: true, RequestStatus: null })
+            {
+                return seasonsOffered ? TitleRequestAction.PickSeasons : TitleRequestAction.WholeSeries;
+            }
+            // "More" only when some of the show is already in the library or on
+            // its way, as on the website; an approved request for a show that
+            // isn't there yet still just reads "Request".
+            if (!seasonsOffered)
+            {
+                return TitleRequestAction.None;
+            }
+            return Library.Status == LibraryStatus.Untracked ? TitleRequestAction.PickSeasons : TitleRequestAction.PickMoreSeasons;
+        }
+    }
+
+    /// <summary>
     /// The same title with a fresh <c>library</c> + <c>viewer</c> from
     /// <c>Titles.StatusAsync</c>, for updating the page after add / request /
     /// monitor / favorite without re-fetching the whole thing.
@@ -261,4 +359,66 @@ public sealed record TitleRequestCreated
 {
     public required bool Ok { get; init; }
     public required Guid RequestId { get; init; }
+}
+
+/// <summary><c>POST /titles/tv/{tmdbId}/request</c> body for some seasons; the whole series sends no body.</summary>
+public sealed record SeasonRequestBody(IReadOnlyList<int> Seasons);
+
+/// <summary>
+/// The season picker's selection: only requestable seasons can be picked,
+/// and "Select all" toggles all of them. The Mac's <c>SeasonPickerSelection</c>.
+/// </summary>
+public sealed class SeasonPickerSelection
+{
+    private readonly HashSet<int> selected = [];
+
+    public SeasonPickerSelection(IEnumerable<SeasonSummary> seasons)
+    {
+        Requestable = seasons
+            .Where(season => season.RequestState == SeasonRequestState.Requestable)
+            .Select(season => season.SeasonNumber)
+            .ToList();
+    }
+
+    /// <summary>The seasons with a checkbox, in the picker's order.</summary>
+    public IReadOnlyList<int> Requestable { get; }
+
+    public bool AllSelected => Requestable.Count > 0 && Requestable.All(selected.Contains);
+
+    public bool IsSelected(int season) => selected.Contains(season);
+
+    public void Set(int season, bool on)
+    {
+        if (!Requestable.Contains(season))
+        {
+            return;
+        }
+        if (on)
+        {
+            selected.Add(season);
+        }
+        else
+        {
+            selected.Remove(season);
+        }
+    }
+
+    /// <summary>"Select all": everything when anything is unticked, else nothing.</summary>
+    public void ToggleAll()
+    {
+        var all = AllSelected;
+        selected.Clear();
+        if (!all)
+        {
+            selected.UnionWith(Requestable);
+        }
+    }
+
+    /// <summary>What the request sends, sorted.</summary>
+    public IReadOnlyList<int> Seasons => selected.Order().ToList();
+
+    /// <summary>"Request 1 season" / "Request 3 seasons"; "Request seasons" while nothing is picked (the button is disabled then), as on the website.</summary>
+    public string SubmitTitle => selected.Count == 0
+        ? "Request seasons"
+        : $"Request {selected.Count.ToString(CultureInfo.CurrentCulture)} {(selected.Count == 1 ? "season" : "seasons")}";
 }

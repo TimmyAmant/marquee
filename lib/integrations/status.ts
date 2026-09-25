@@ -6,6 +6,7 @@ import { getJellyfinFileInfo } from "@/lib/jellyfin/sync";
 import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaDetail } from "@/lib/media-info";
+import { isSeasonComplete, type SeasonLibraryState } from "@/lib/requests/seasons";
 
 export type FileInfo = {
   /** For Plex-owned TV, this is the folder every episode's file has in
@@ -279,6 +280,32 @@ export async function getSonarrSeasonCompleteness(
   userId: string,
   tvdbId: number | null,
 ): Promise<SeasonCompleteness[] | null> {
+  const states = await getSonarrSeasonStates(userId, tvdbId);
+  return states ? seasonCompletenessOf(states) : null;
+}
+
+/** The accordion's have/total badges from getSonarrSeasonStates, for a
+ * caller that already has those and shouldn't ask Sonarr twice. Specials
+ * are left out unless they're all the show has. */
+export function seasonCompletenessOf(states: SonarrSeasonState[]): SeasonCompleteness[] {
+  return states
+    .filter((s) => s.seasonNumber > 0 || states.length === 1)
+    .map((s) => ({ seasonNumber: s.seasonNumber, have: s.have, total: s.total }));
+}
+
+export type SonarrSeasonState = SeasonCompleteness & SeasonLibraryState;
+
+/**
+ * Every season of a show as the library owner's Sonarr has it — the
+ * completeness counts plus whether Sonarr will fetch it (the season and the
+ * series both monitored), specials included. What season requests are
+ * judged against. Null when Sonarr isn't connected or isn't tracking the
+ * show (or can't be reached).
+ */
+export async function getSonarrSeasonStates(
+  userId: string,
+  tvdbId: number | null,
+): Promise<SonarrSeasonState[] | null> {
   if (!tvdbId) return null;
 
   const credential = await getArrCredential(userId, "sonarr");
@@ -288,13 +315,22 @@ export async function getSonarrSeasonCompleteness(
   const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
   if (!series) return null;
 
-  return (series.seasons ?? [])
-    .filter((s) => s.seasonNumber > 0 || (series.seasons?.length ?? 0) === 1)
-    .map((s) => ({
+  return (series.seasons ?? []).map((s) => {
+    const have = s.statistics?.episodeFileCount ?? 0;
+    const total = s.statistics?.episodeCount ?? 0;
+    return {
       seasonNumber: s.seasonNumber,
-      have: s.statistics?.episodeFileCount ?? 0,
-      total: s.statistics?.episodeCount ?? 0,
-    }));
+      have,
+      total,
+      monitored: series.monitored && s.monitored,
+      complete: isSeasonComplete({
+        monitored: s.monitored,
+        episodeFileCount: have,
+        episodeCount: total,
+        totalEpisodeCount: s.statistics?.totalEpisodeCount,
+      }),
+    };
+  });
 }
 
 /**

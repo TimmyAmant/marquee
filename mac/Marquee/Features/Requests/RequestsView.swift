@@ -63,13 +63,24 @@ private struct TableCard<Content: View>: View {
     }
 }
 
+/// The poster and title, with the requested seasons ("Seasons 1–3") under the
+/// title when the request was for some seasons rather than the whole series.
 @MainActor
-private func titleCell(_ title: String, _ posterPath: API.ImageRef?, action: @escaping () -> Void) -> some View {
+private func titleCell(
+    _ title: String, _ posterPath: API.ImageRef?, seasons: String? = nil, action: @escaping () -> Void
+) -> some View {
     HStack(spacing: 12) {
         RequestPoster(posterPath: posterPath)
-        Button(title, action: action)
-            .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
-            .font(.system(size: 13, weight: .medium))
+        VStack(alignment: .leading, spacing: 2) {
+            Button(title, action: action)
+                .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
+                .font(.system(size: 13, weight: .medium))
+            if let seasons {
+                Text(seasons)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+        }
     }
 }
 
@@ -92,7 +103,7 @@ private struct MemberRequestsList: View {
                         ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
                             HStack(spacing: 0) {
-                                titleCell(row.title, row.posterPath) { model.openTitle(row.titleID) }
+                                titleCell(row.title, row.posterPath, seasons: row.seasonsText) { model.openTitle(row.titleID) }
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 Text(Format.shortDate(row.createdAt))
                                     .foregroundStyle(Theme.textSecondary)
@@ -202,7 +213,7 @@ private struct AdminRequestsList: View {
                     ForEach(Array(reviewed.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { Divider().overlay(Theme.border) }
                         HStack(spacing: 0) {
-                            titleCell(row.title, row.posterPath) { model.openTitle(row.titleID) }
+                            titleCell(row.title, row.posterPath, seasons: row.seasonsText) { model.openTitle(row.titleID) }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text(row.requestedBy.label)
                                 .foregroundStyle(Theme.textSecondary)
@@ -310,7 +321,7 @@ private struct RequestReviewRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
-            titleCell(row.title, row.posterPath) { model.openTitle(row.titleID) }
+            titleCell(row.title, row.posterPath, seasons: row.seasonsText) { model.openTitle(row.titleID) }
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text(row.requestedBy.label)
                 .foregroundStyle(Theme.textSecondary)

@@ -102,6 +102,8 @@
     "canAdd": false,
     "needsArrSetup": false,
     "canRequest": false,
+    "canRequestSeasons": false,
+    "requestedSeasons": null,
     "canRelink": true,
     "arrTracking": {
       "arrId": 412,

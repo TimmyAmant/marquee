@@ -64,6 +64,7 @@ export function TitleHero({
   isAdmin,
   alreadyRequested,
   otherRequesters,
+  seasonPicker,
   tvdbId,
   arrTracking,
   file,
@@ -89,6 +90,7 @@ export function TitleHero({
   isAdmin?: boolean;
   alreadyRequested?: boolean;
   otherRequesters?: string[];
+  seasonPicker?: React.ComponentProps<typeof AddToLibraryButton>["seasonPicker"];
   tvdbId?: number | null;
   arrTracking?: ArrTrackingInfo | null;
   /** Renders a "File details" card in the sidebar below the rating/status
@@ -169,6 +171,7 @@ export function TitleHero({
                     isAdmin={isAdmin}
                     alreadyRequested={alreadyRequested}
                     otherRequesters={otherRequesters}
+                    seasonPicker={seasonPicker}
                   />
 
                   {isAdmin && arrTracking && (

@@ -8,7 +8,7 @@ import { avatarPath } from "@/lib/users/avatar-path";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
-import { myRequestBadge, reviewedRequestLabel } from "@/lib/requests/labels";
+import { myRequestBadge, reviewedRequestLabel, seasonsLabel } from "@/lib/requests/labels";
 
 export function iso(date: Date | string | null | undefined): string | null {
   if (!date) return null;
@@ -97,6 +97,8 @@ export function titleViewerState(input: {
   requestStatus: RequestStatus | null;
   otherRequesters: string[];
   arrTracking: ArrTrackingInfo | null;
+  /** From loadTitleStatus's seasonRequests; omitted for a movie. */
+  seasonRequests?: { canRequestSeasons: boolean; requestedSeasons: number[] | null };
 }): Dto.TitleViewerState {
   const untracked = input.status === "untracked";
   const alreadyRequested = input.requestStatus === "pending";
@@ -109,9 +111,16 @@ export function titleViewerState(input: {
     canAdd: untracked && input.isAdmin && input.configured,
     needsArrSetup: untracked && input.isAdmin && !input.configured,
     canRequest: untracked && !input.isAdmin && !alreadyRequested,
+    canRequestSeasons: input.seasonRequests?.canRequestSeasons ?? false,
+    requestedSeasons: input.seasonRequests?.requestedSeasons ?? null,
     canRelink: input.isAdmin && !untracked,
     arrTracking: input.isAdmin && input.arrTracking ? { arrId: input.arrTracking.arrId, monitored: input.arrTracking.monitored } : null,
   };
+}
+
+/** A request's seasons as every request DTO carries them. */
+export function requestSeasons(seasons: number[] | null): { seasons: number[] | null; seasonsLabel: string | null } {
+  return { seasons: seasons ?? null, seasonsLabel: seasonsLabel(seasons ?? null) };
 }
 
 export function requestPerson(input: {
@@ -133,6 +142,7 @@ export function myRequest(row: {
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  seasons: number[] | null;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -147,6 +157,7 @@ export function myRequest(row: {
     tmdbId: row.tmdbId,
     title: row.title,
     posterPath: row.posterPath,
+    ...requestSeasons(row.seasons),
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,
@@ -164,6 +175,7 @@ export function reviewedRequest(row: {
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  seasons: number[] | null;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -178,6 +190,7 @@ export function reviewedRequest(row: {
     tmdbId: row.tmdbId,
     title: row.title,
     posterPath: row.posterPath,
+    ...requestSeasons(row.seasons),
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,

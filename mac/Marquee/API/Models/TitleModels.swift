@@ -88,8 +88,31 @@ extension API {
             /// Sonarr episode-file counts; nil when Sonarr doesn't track the show.
             let have: Int?
             let total: Int?
+            /// Season requests (nil from an older server). Whether Sonarr
+            /// monitors this season; nil when Sonarr doesn't track the show or
+            /// isn't connected.
+            let monitored: Bool?
+            /// In one of the viewer's pending or approved requests for this title.
+            let requested: Bool?
+            /// The season picker offers a checkbox: not complete, not
+            /// monitored, not already requested by this viewer.
+            let requestable: Bool?
 
             var id: Int { seasonNumber }
+
+            /// The season picker's row: a checkbox, or why there isn't one.
+            var requestState: SeasonRequestState {
+                if requestable == true { return .requestable }
+                if isComplete { return .inLibrary }
+                if monitored == true { return .monitored }
+                if requested == true { return .requested }
+                return .unavailable
+            }
+
+            /// "1 episode" / "10 episodes".
+            var episodeCountLabel: String {
+                "\(episodeCount) episode\(episodeCount == 1 ? "" : "s")"
+            }
 
             /// The "3/10" badge, nil when Sonarr doesn't track the show.
             var completenessLabel: String? {
@@ -161,6 +184,27 @@ extension API {
 
         var id: TitleID { TitleID(mediaType, tmdbId) }
 
+        /// What the action area's Request button does for this viewer, or nil
+        /// when there's no Request button (see `TitleRequestAction`).
+        var requestAction: TitleRequestAction? {
+            guard !viewer.alreadyRequested else { return nil }
+            // A server from before season requests doesn't send
+            // `canRequestSeasons`: today's whole-series Request, unchanged.
+            let seasonsOffered = mediaType == .tv
+                && viewer.canRequestSeasons == true
+                && seasons.contains { $0.requestState == .requestable }
+            if viewer.canRequest, viewer.requestStatus == nil {
+                return seasonsOffered ? .pickSeasons(more: false) : .wholeSeries
+            }
+            if seasonsOffered {
+                // "more" only when some of the show is already in the library
+                // or on its way, as on the website; an approved request for a
+                // show that isn't there yet still just reads "Request".
+                return .pickSeasons(more: library.status != .untracked)
+            }
+            return nil
+        }
+
         /// The same title with a fresh `library` + `viewer` from `titles.status`,
         /// for updating the page after add / request / monitor / favorite.
         func updating(_ status: TitleStatus) -> TitleDetail {
@@ -171,6 +215,47 @@ extension API {
                 keywords: keywords, links: links, library: status.library, viewer: status.viewer,
                 seasons: seasons, cast: cast, franchise: franchise, studios: studios, similar: similar
             )
+        }
+    }
+
+    /// A row of the season picker.
+    enum SeasonRequestState: Hashable, Sendable {
+        /// A checkbox.
+        case requestable
+        /// "In library": every episode has a file.
+        case inLibrary
+        /// "Monitored": Sonarr is already after it.
+        case monitored
+        /// "Requested": in one of your requests.
+        case requested
+        /// Not offered, for no reason the server spelled out.
+        case unavailable
+
+        /// The tag in place of the checkbox.
+        var tag: String? {
+            switch self {
+            case .requestable, .unavailable: nil
+            case .inLibrary: "In library"
+            case .monitored: "Monitored"
+            case .requested: "Requested"
+            }
+        }
+    }
+
+    /// The title page's Request button.
+    enum TitleRequestAction: Hashable, Sendable {
+        /// `POST …/request` with no body: a movie, a whole series, or a
+        /// server too old to take seasons.
+        case wholeSeries
+        /// Opens the season picker. `more`: the show is already tracked or
+        /// partly requested, so the button reads "Request more seasons".
+        case pickSeasons(more: Bool)
+
+        var buttonTitle: String {
+            switch self {
+            case .wholeSeries, .pickSeasons(more: false): "Request"
+            case .pickSeasons(more: true): "Request more seasons"
+            }
         }
     }
 

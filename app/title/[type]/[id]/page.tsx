@@ -7,6 +7,9 @@ import { FranchiseRow } from "@/components/franchise-row";
 import { SeasonAccordion } from "@/components/season-episode-list";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadTitlePage } from "@/lib/pages/title";
+import { seasonsNewestFirst } from "@/lib/title-meta";
+import { seasonPickerState } from "@/lib/requests/seasons";
+import { seasonsLabel } from "@/lib/requests/labels";
 
 export default async function TitlePage({
   params,
@@ -50,6 +53,7 @@ export default async function TitlePage({
     collectionFavorited,
     seasons,
     seasonCompleteness,
+    seasonRequests,
     runtimeLabel,
     titleMeta,
     credits,
@@ -86,6 +90,21 @@ export default async function TitlePage({
         isAdmin={viewer.session ? viewer.isAdmin : undefined}
         alreadyRequested={activeRequestStatus === "pending"}
         otherRequesters={otherRequesters}
+        seasonPicker={
+          type === "tv" && viewer.session && !viewer.isAdmin
+            ? {
+                // Same order as the Episodes accordion below.
+                rows: seasonsNewestFirst(seasons).map((season) => ({
+                  seasonNumber: season.season_number,
+                  name: season.name,
+                  episodeCount: season.episode_count,
+                  state: seasonPickerState(seasonRequests.states.get(season.season_number)),
+                })),
+                canRequestSeasons: seasonRequests.canRequestSeasons,
+                requestedSeasonsLabel: seasonsLabel(seasonRequests.requestedSeasons),
+              }
+            : undefined
+        }
         tvdbId={title.tvdbId}
         arrTracking={arrTracking}
         file={libraryStatus.file}

@@ -1,5 +1,51 @@
 import { describe, it, expect } from "vitest";
-import { myRequestBadge, reviewedRequestLabel } from "./labels";
+import {
+  activityRequestTitle,
+  myRequestBadge,
+  quotedRequestTitle,
+  reviewedRequestLabel,
+  seasonsLabel,
+} from "./labels";
+
+describe("seasonsLabel", () => {
+  it("is null for a whole-series request", () => {
+    expect(seasonsLabel(null)).toBeNull();
+    expect(seasonsLabel([])).toBeNull();
+  });
+
+  it("names a single season", () => {
+    expect(seasonsLabel([2])).toBe("Season 2");
+  });
+
+  it("collapses consecutive seasons into ranges", () => {
+    expect(seasonsLabel([1, 2, 3])).toBe("Seasons 1–3");
+    expect(seasonsLabel([1, 2, 3, 5, 7, 8])).toBe("Seasons 1–3, 5, 7–8");
+    expect(seasonsLabel([1, 3])).toBe("Seasons 1, 3");
+    expect(seasonsLabel([4, 5])).toBe("Seasons 4–5");
+  });
+
+  it("calls season 0 Specials", () => {
+    expect(seasonsLabel([0])).toBe("Specials");
+    expect(seasonsLabel([0, 1])).toBe("Specials, Season 1");
+    expect(seasonsLabel([0, 1, 2])).toBe("Specials, Seasons 1–2");
+  });
+
+  it("tolerates unsorted or repeated input", () => {
+    expect(seasonsLabel([3, 1, 2, 2])).toBe("Seasons 1–3");
+  });
+});
+
+describe("request titles with seasons", () => {
+  it("leaves whole-series titles exactly as before", () => {
+    expect(quotedRequestTitle("Severance", null)).toBe('"Severance"');
+    expect(activityRequestTitle("Severance", null)).toBe("Severance");
+  });
+
+  it("appends the seasons label", () => {
+    expect(quotedRequestTitle("Severance", [2])).toBe('"Severance" (Season 2)');
+    expect(activityRequestTitle("Severance", [1, 2])).toBe("Severance (Seasons 1–2)");
+  });
+});
 
 describe("myRequestBadge", () => {
   it("labels pending and rejected requests regardless of library status", () => {

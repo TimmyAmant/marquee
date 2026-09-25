@@ -183,6 +183,13 @@ export type TitleViewerState = {
   canAdd: boolean;
   needsArrSetup: boolean;
   canRequest: boolean;
+  /** A member can request specific seasons of this show: nothing of theirs
+   * is pending for it and at least one season is `requestable`. Unlike
+   * `canRequest`, true for a show that's already tracked or owned. */
+  canRequestSeasons: boolean;
+  /** The seasons of the viewer's pending request for this title; null when
+   * nothing is pending or it's for the whole series. */
+  requestedSeasons: number[] | null;
   canRelink: boolean;
   arrTracking: ArrTracking | null;
 };
@@ -207,6 +214,14 @@ export type SeasonSummary = {
   /** Sonarr episode-file counts; null when Sonarr doesn't track the show. */
   have: number | null;
   total: number | null;
+  /** Sonarr will fetch this season (it and the series are monitored); null
+   * when Sonarr isn't connected or doesn't track the show. */
+  monitored: boolean | null;
+  /** In one of the viewer's pending or approved requests for this title. */
+  requested: boolean;
+  /** The viewer (a member) could ask for this season: not complete, not
+   * monitored, not already requested by them. Always false for the admin. */
+  requestable: boolean;
 };
 
 export type TitleDetail = {
@@ -332,6 +347,11 @@ export type MyRequest = {
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  /** The TV seasons asked for, ascending; null for the whole series (every
+   * movie, and requests made before per-season requests existed). */
+  seasons: number[] | null;
+  /** `seasons` in words, e.g. "Seasons 1–3, 5"; null when `seasons` is. */
+  seasonsLabel: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
   /** Why the admin declined it; null unless `status` is "rejected" and a
@@ -350,6 +370,11 @@ export type PendingRequest = {
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  /** The TV seasons asked for, ascending; null for the whole series (every
+   * movie, and requests made before per-season requests existed). */
+  seasons: number[] | null;
+  /** `seasons` in words, e.g. "Seasons 1–3, 5"; null when `seasons` is. */
+  seasonsLabel: string | null;
   requestedBy: RequestPerson;
   createdAt: string;
 };
@@ -366,6 +391,11 @@ export type ReviewedRequest = {
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  /** The TV seasons asked for, ascending; null for the whole series (every
+   * movie, and requests made before per-season requests existed). */
+  seasons: number[] | null;
+  /** `seasons` in words, e.g. "Seasons 1–3, 5"; null when `seasons` is. */
+  seasonsLabel: string | null;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;

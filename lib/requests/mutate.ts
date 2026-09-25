@@ -3,11 +3,14 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
-import { getActiveRequestStatus } from "@/lib/requests/query";
+import { getActiveRequestStatus, getViewerTitleRequests } from "@/lib/requests/query";
+import { activityRequestTitle, quotedRequestTitle } from "@/lib/requests/labels";
+import { parseSeasonsInput, seasonsStillNeeded, unlistedSeasonError } from "@/lib/requests/seasons";
 import { addMovieToRadarrForUser, addSeriesToSonarrForUser } from "@/lib/arr/title-actions";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
-import { getTitleLibraryStatus } from "@/lib/integrations/status";
+import { getSonarrSeasonStates, getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import type { TmdbTvDetails } from "@/lib/tmdb/client";
 import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
@@ -19,17 +22,66 @@ import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
 export async function createRequest(
   viewer: Extract<ViewerIdentity, { userId: string }>,
-  input: { mediaType: MediaType; tmdbId: number; title: string; posterPath: string | null },
+  input: {
+    mediaType: MediaType;
+    tmdbId: number;
+    title: string;
+    posterPath: string | null;
+    /** TV only, as the client sent it (validated here): a list of season
+     * numbers, or omitted/null for the whole series. Ignored for movies. */
+    seasons?: unknown;
+  },
 ): Promise<CoreResult<{ requestId: string }>> {
   const { mediaType, tmdbId } = input;
 
-  const existing = await getActiveRequestStatus(viewer.userId, mediaType, tmdbId);
-  if (existing) return fail("conflict", "You've already requested this.");
+  const parsedSeasons = mediaType === "tv" ? parseSeasonsInput(input.seasons) : { ok: true as const, seasons: null };
+  if (!parsedSeasons.ok) return fail("invalid", parsedSeasons.error);
+  let seasons = parsedSeasons.seasons;
+
+  // A season request is only blocked by one still waiting for approval —
+  // asking for more seasons after an earlier request was approved is the
+  // point. A whole-series request keeps its original rule: any request that
+  // wasn't declined blocks another.
+  if (seasons) {
+    const pending = await getViewerTitleRequests(viewer.userId, mediaType, tmdbId);
+    if (pending.some((r) => r.status === "pending")) {
+      return fail("conflict", "You've already requested this — it's waiting for approval.");
+    }
+  } else {
+    const existing = await getActiveRequestStatus(viewer.userId, mediaType, tmdbId);
+    if (existing) return fail("conflict", "You've already requested this.");
+  }
 
   // Defense in depth: the Request button is already hidden once a title
   // shows as owned, but re-check server-side since that status can change
   // between page load and submit (e.g. someone else just added it).
   const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+
+  if (seasons) {
+    // Checked against the server's own TMDb record, never the client's idea
+    // of which seasons exist.
+    if (!cachedTitle) return fail("upstream", "Couldn't check this show's seasons with TMDb right now.");
+    const listed = ((cachedTitle.rawTmdb as TmdbTvDetails | null)?.seasons ?? []).map((s) => s.season_number);
+    const unlisted = unlistedSeasonError(seasons, listed);
+    if (unlisted) return fail("invalid", unlisted);
+
+    // Unlike a whole-series request, this is fine for a show that's already
+    // tracked or owned — only the seasons Sonarr already has covered drop out.
+    const library = await getSonarrSeasonStates(viewer.libraryOwnerId, cachedTitle.tvdbId).catch(() => null);
+    if (!library) {
+      // Sonarr isn't tracking it, so there's no per-season detail: a show
+      // that's in Plex or Jellyfin anyway is owned whole, and approving
+      // seasons of it would only download them a second time.
+      const status = await getTitleLibraryStatus(viewer.libraryOwnerId, mediaType, tmdbId, cachedTitle.tvdbId).catch(
+        () => null,
+      );
+      if (status && status.status !== "untracked") {
+        return fail("conflict", "You already have this in your library.");
+      }
+    }
+    seasons = seasonsStillNeeded(seasons, library);
+    if (seasons.length === 0) return fail("conflict", "Those seasons are already in your library or on their way.");
+  }
 
   // The name and poster the admin's queue (and every notification relay)
   // shows come from the server's own TMDb record when it has one. The web
@@ -43,14 +95,16 @@ export async function createRequest(
     : typeof input.posterPath === "string" && /^(\/|https:\/\/)/.test(input.posterPath)
       ? input.posterPath.slice(0, 500)
       : null;
-  const currentStatus = await getTitleLibraryStatus(
-    viewer.libraryOwnerId,
-    mediaType,
-    tmdbId,
-    cachedTitle?.tvdbId ?? null,
-  ).catch(() => null);
-  if (currentStatus && currentStatus.status !== "untracked") {
-    return fail("conflict", "You already have this in your library.");
+  if (!seasons) {
+    const currentStatus = await getTitleLibraryStatus(
+      viewer.libraryOwnerId,
+      mediaType,
+      tmdbId,
+      cachedTitle?.tvdbId ?? null,
+    ).catch(() => null);
+    if (currentStatus && currentStatus.status !== "untracked") {
+      return fail("conflict", "You already have this in your library.");
+    }
   }
 
   // The read-then-write check above can't stop a second concurrent submit
@@ -64,6 +118,7 @@ export async function createRequest(
       tmdbId,
       title,
       posterPath,
+      seasons,
     })
     .returning({ id: requests.id })
     .then(([row]) => row)
@@ -71,14 +126,19 @@ export async function createRequest(
       if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
       throw err;
     });
-  if (!inserted) return fail("conflict", "You've already requested this.");
+  if (!inserted) {
+    return fail(
+      "conflict",
+      seasons ? "You've already requested this — it's waiting for approval." : "You've already requested this.",
+    );
+  }
 
   await logActivityEvent({
     actorUserId: viewer.userId,
     eventType: "request_created",
     mediaType,
     tmdbId,
-    title,
+    title: activityRequestTitle(title, seasons),
   }).catch(() => undefined);
 
   // Admin-set per member (Settings -> household member edit) — if this
@@ -118,7 +178,7 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
   const result =
     request.mediaType === "movie"
       ? await addMovieToRadarrForUser(adminUserId, request.tmdbId)
-      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId);
+      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true);
 
   if (!result.ok) return result;
 
@@ -140,14 +200,14 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_approved",
-      message: `"${request.title}" was approved — it's on its way to your library.`,
+      message: `${quotedRequestTitle(request.title, request.seasons)} was approved — it's on its way to your library.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
       eventType: "request_approved",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,
-      title: request.title,
+      title: activityRequestTitle(request.title, request.seasons),
     }).catch(() => undefined),
   ]);
 
@@ -220,14 +280,14 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_approved",
-      message: `"${request.title}" was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
+      message: `${quotedRequestTitle(request.title, request.seasons)} was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
       eventType: "request_manually_approved",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,
-      title: request.title,
+      title: activityRequestTitle(request.title, request.seasons),
     }).catch(() => undefined),
   ]);
 
@@ -267,14 +327,16 @@ export async function rejectRequest(
       eventType: "request_rejected",
       // The reason rides along in the notification too, so the requester
       // hears why without having to open their Requests page.
-      message: reason ? `"${request.title}" was declined: ${reason}` : `"${request.title}" was declined.`,
+      message: reason
+        ? `${quotedRequestTitle(request.title, request.seasons)} was declined: ${reason}`
+        : `${quotedRequestTitle(request.title, request.seasons)} was declined.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
       eventType: "request_rejected",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,
-      title: request.title,
+      title: activityRequestTitle(request.title, request.seasons),
     }).catch(() => undefined),
   ]);
 

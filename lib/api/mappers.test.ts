@@ -76,6 +76,24 @@ describe("titleViewerState", () => {
     expect(titleViewerState({ ...base, isAdmin: true, status: "owned", configured: true, arrTracking: tracking }).arrTracking).toEqual(tracking);
     expect(titleViewerState({ ...base, isAdmin: false, status: "owned", configured: true, arrTracking: tracking }).arrTracking).toBeNull();
   });
+
+  it("defaults the season fields for a movie or an older loader", () => {
+    expect(titleViewerState({ ...base, isAdmin: false, status: "untracked", configured: true })).toMatchObject({
+      canRequestSeasons: false,
+      requestedSeasons: null,
+    });
+  });
+
+  it("passes season request state through, independent of whole-series canRequest", () => {
+    const state = titleViewerState({
+      ...base,
+      isAdmin: false,
+      status: "tracked_monitored",
+      configured: true,
+      seasonRequests: { canRequestSeasons: true, requestedSeasons: null },
+    });
+    expect(state).toMatchObject({ canRequest: false, canRequestSeasons: true, requestedSeasons: null });
+  });
 });
 
 describe("fileDetails", () => {
@@ -153,6 +171,7 @@ describe("request mapping", () => {
       tmdbId: 1399,
       title: "Game of Thrones",
       posterPath: "/poster.jpg",
+      seasons: [1, 2, 3, 5],
       status: "approved",
       manuallyApproved: false,
       rejectionReason: null,
@@ -161,6 +180,8 @@ describe("request mapping", () => {
       libraryStatus: "tracked_downloading",
     });
     expect(dto).toMatchObject({
+      seasons: [1, 2, 3, 5],
+      seasonsLabel: "Seasons 1–3, 5",
       statusLabel: "Downloading",
       statusTone: "downloading",
       rejectionReason: null,
@@ -176,6 +197,7 @@ describe("request mapping", () => {
       tmdbId: 603,
       title: "The Matrix",
       posterPath: null,
+      seasons: null,
       status: "rejected" as const,
       manuallyApproved: false,
       rejectionReason: "Not enough space on the server right now",
@@ -183,6 +205,8 @@ describe("request mapping", () => {
       reviewedAt: new Date("2026-09-02T00:00:00Z"),
     };
     expect(myRequest({ ...base, libraryStatus: null })).toMatchObject({
+      seasons: null,
+      seasonsLabel: null,
       statusLabel: "Declined",
       statusTone: "declined",
       rejectionReason: "Not enough space on the server right now",

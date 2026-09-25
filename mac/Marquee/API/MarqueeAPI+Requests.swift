@@ -9,10 +9,18 @@ extension MarqueeAPI {
 
         /// `POST /titles/{type}/{tmdbId}/request` — "Request". Auto-approved when
         /// the admin enabled that for you. `.conflict("You've already requested this.")`.
+        ///
+        /// `seasons` (TV only) requests just those seasons, as `{"seasons": [1, 2]}`;
+        /// the server drops the ones already monitored or complete and answers
+        /// `.conflict` when nothing is left, `.invalid` for a season TMDb doesn't
+        /// list. nil sends no body at all: the whole series, which is also all
+        /// a server older than season requests understands.
         @discardableResult
-        func create(_ type: API.MediaType, id tmdbId: Int) async throws -> UUID {
+        func create(_ type: API.MediaType, id tmdbId: Int, seasons: [Int]? = nil) async throws -> UUID {
+            struct Body: Encodable, Sendable { let seasons: [Int] }
+            let body: (any Encodable & Sendable)? = seasons.map { Body(seasons: Array(Set($0)).sorted()) }
             let result: API.RequestCreated = try await transport.mutate(
-                .post, TitlesEndpoints.path(type, tmdbId) + "/request", timeout: Timeout.integrations,
+                .post, TitlesEndpoints.path(type, tmdbId) + "/request", body: body, timeout: Timeout.integrations,
                 changes: [.requests, .library]
             )
             return result.requestId

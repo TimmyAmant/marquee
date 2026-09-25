@@ -5,17 +5,28 @@ import type { LibraryStatus } from "@/components/status-badge";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { formatRuntime, formatDateLabel, languageLabel, countryCodeToFlagEmoji } from "@/lib/format";
 import { computeYearRange, relabelTvStatus, extractMovieCredits, extractTvCredits } from "@/lib/title-meta";
-import { getTitleLibraryStatus, getSonarrSeasonCompleteness, getArrTrackingInfo } from "@/lib/integrations/status";
+import {
+  getTitleLibraryStatus,
+  getSonarrSeasonStates,
+  seasonCompletenessOf,
+  getArrTrackingInfo,
+} from "@/lib/integrations/status";
 import type { TitleLibraryStatus } from "@/lib/integrations/status";
 import { getLibraryStatusMap } from "@/lib/library/query";
 import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getActiveRequestStatus, getActiveRequestStatusMap, getOtherPendingRequesters } from "@/lib/requests/query";
+import {
+  getActiveRequestStatus,
+  getActiveRequestStatusMap,
+  getOtherPendingRequesters,
+  getViewerTitleRequests,
+} from "@/lib/requests/query";
+import { canRequestSeasons, seasonRequestStates, summarizeViewerRequests } from "@/lib/requests/seasons";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
-import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
+import type { TmdbMovieDetails, TmdbSeasonSummary, TmdbTvDetails } from "@/lib/tmdb/client";
 
 /**
  * The title page's library status plus this viewer's state for it (favorite,
@@ -28,6 +39,7 @@ export async function loadTitleStatus(
   type: MediaType,
   tmdbId: number,
   tvdbId: number | null,
+  tvSeasons: TmdbSeasonSummary[] = [],
 ) {
   const libraryStatus: Pick<TitleLibraryStatus, "status" | "configured" | "file"> &
     Partial<Pick<TitleLibraryStatus, "provider">> = viewer.libraryOwnerId
@@ -57,7 +69,62 @@ export async function loadTitleStatus(
       ? await getArrTrackingInfo(viewer.libraryOwnerId, type, tmdbId, tvdbId).catch(() => null)
       : null;
 
-  return { libraryStatus, titleFavorited, activeRequestStatus, otherRequesters, arrConfigured, arrTracking };
+  // Per-season state for a show: what Sonarr has of each season (also the
+  // accordion's have/total badges) and, for a member, which seasons they've
+  // asked for and which they still can.
+  const isMember = viewer.userId !== null && !viewer.isAdmin;
+  const [seasonLibrary, viewerRequests] =
+    type === "tv" && tvSeasons.length > 0 && viewer.userId
+      ? await Promise.all([
+          getSonarrSeasonStates(viewer.libraryOwnerId, tvdbId).catch(() => null),
+          isMember ? getViewerTitleRequests(viewer.userId, type, tmdbId) : Promise.resolve([]),
+        ])
+      : [null, []];
+  const seasonNumbers = tvSeasons.map((s) => s.season_number);
+  // Once Sonarr is connected, it answers whether an approved season is on
+  // its way — including when the show was deleted there since (no record),
+  // which makes those seasons requestable again. Without Sonarr, the
+  // approved requests are all there is to go on.
+  const sonarrConnected = isArrFullyConfigured(sonarrCredential);
+  const viewerSeasons = summarizeViewerRequests(viewerRequests, seasonNumbers, seasonLibrary !== null || sonarrConnected);
+  const seasonStates = seasonRequestStates({
+    seasonNumbers,
+    library: seasonLibrary,
+    requested: viewerSeasons.requested,
+    isMember,
+    ownedOutsideSonarr:
+      seasonLibrary === null &&
+      libraryStatus.status !== "untracked" &&
+      (libraryStatus.provider === "plex" || libraryStatus.provider === "jellyfin"),
+  });
+  const seasonRequests = {
+    states: seasonStates,
+    canRequestSeasons: canRequestSeasons({
+      isMember,
+      isTv: type === "tv",
+      hasPending: viewerSeasons.hasPending,
+      states: seasonStates,
+    }),
+    requestedSeasons: viewerSeasons.pendingSeasons,
+  };
+
+  return {
+    libraryStatus,
+    titleFavorited,
+    activeRequestStatus,
+    otherRequesters,
+    arrConfigured,
+    arrTracking,
+    seasonLibrary,
+    seasonRequests,
+  };
+}
+
+/** The seasons the title page lists for a show: every one TMDb has that has
+ * episodes. Empty for a movie. */
+export function tvSeasonsOf(type: MediaType, raw: unknown): TmdbSeasonSummary[] {
+  if (type !== "tv") return [];
+  return ((raw as TmdbTvDetails | null)?.seasons ?? []).filter((s) => s.episode_count > 0);
 }
 
 /**
@@ -73,6 +140,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
 
   const year = (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null;
 
+  const seasons = tvSeasonsOf(type, title.rawTmdb);
   const {
     libraryStatus,
     titleFavorited,
@@ -80,7 +148,9 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     otherRequesters,
     arrConfigured,
     arrTracking,
-  } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId);
+    seasonLibrary,
+    seasonRequests,
+  } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
   const trailer = raw ? findTrailer(raw.videos) : null;
@@ -205,12 +275,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
         ])
       : [new Map<string, LibraryStatus>(), new Map<string, RequestStatus>(), new Set<number>(), false];
 
-  const seasons = type === "tv" ? (raw as TmdbTvDetails | null)?.seasons?.filter((s) => s.episode_count > 0) ?? [] : [];
-
-  const seasonCompleteness =
-    type === "tv" && seasons.length > 0 && viewer.libraryOwnerId
-      ? await getSonarrSeasonCompleteness(viewer.libraryOwnerId, title.tvdbId).catch(() => null)
-      : null;
+  const seasonCompleteness = seasonLibrary ? seasonCompletenessOf(seasonLibrary) : null;
 
   // Movies: TMDb's own runtime. TV: averaged across TMDb's per-episode
   // runtimes (Sonarr has no per-series runtime, and episode-to-episode
@@ -300,6 +365,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     collectionFavorited,
     seasons,
     seasonCompleteness,
+    seasonRequests,
     runtimeMinutes,
     runtimeLabel,
     titleMeta,

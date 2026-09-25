@@ -1,0 +1,12 @@
+{
+  "seasonNumber": 2,
+  "name": "Season 2",
+  "episodeCount": 10,
+  "airDate": "2025-01-17",
+  "posterPath": "/abc.jpg",
+  "have": null,
+  "total": null,
+  "monitored": null,
+  "requested": false,
+  "requestable": true
+}

@@ -51,6 +51,21 @@ export async function createRequestAction(
   return result.ok ? { success: true } : { error: result.error };
 }
 
+/** The title page's season picker. Called directly rather than as a form
+ * action since the chosen seasons are component state; `seasons` is whatever
+ * the browser sent, and createRequest validates it. */
+export async function requestSeasonsAction(tmdbId: number, seasons: unknown): Promise<RequestState> {
+  const viewer = await getViewerContext();
+  if (!viewer.session) return { error: "Sign in to request titles." };
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) return { error: "That title couldn't be requested." };
+  // null would quietly turn this into a whole-series request; the picker
+  // always sends a list.
+  if (!Array.isArray(seasons)) return { error: "Pick at least one season." };
+
+  const result = await createRequest(viewer, { mediaType: "tv", tmdbId, title: "", posterPath: null, seasons });
+  return result.ok ? { success: true } : { error: result.error };
+}
+
 export type ReviewState = { error?: string; success?: boolean };
 
 export async function approveRequestAction(

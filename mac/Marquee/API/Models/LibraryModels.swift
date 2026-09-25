@@ -91,6 +91,22 @@ extension API {
         let canRelink: Bool
         /// "Search now" and "Stop/Start monitoring" when non-nil.
         let arrTracking: ArrTracking?
+        /// TV: at least one season can be requested (season picker, "Request
+        /// more seasons"). nil from a server older than season requests,
+        /// which only takes whole-series requests.
+        let canRequestSeasons: Bool?
+        /// The seasons of your pending request; nil when there's none or it's
+        /// for the whole series.
+        let requestedSeasons: [Int]?
+
+        /// "Requested Seasons 1–3 — waiting for approval", or without the
+        /// seasons for a whole-series request.
+        var pendingRequestLine: String {
+            if let label = API.seasonsLabel(requestedSeasons) {
+                return "Requested \(label) — waiting for approval"
+            }
+            return "Requested — waiting for approval"
+        }
 
         /// "Also requested by A, B", or nil when it shouldn't show.
         var otherRequestersLine: String? {

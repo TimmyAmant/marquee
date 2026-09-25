@@ -160,16 +160,22 @@
                                             Background="{ThemeResource TrackedBadgeBackgroundBrush}"
                                             VerticalAlignment="Center">
                                             <TextBlock
-                                                Text="Requested, waiting for approval"
+                                                Text="{x:Bind ViewModel.RequestedLine, Mode=OneWay}"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 FontWeight="SemiBold"
                                                 Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
                                         </Border>
                                         <Button
                                             Content="{x:Bind ViewModel.RequestLabel, Mode=OneWay}"
-                                            Command="{x:Bind ViewModel.RequestCommand}"
+                                            Click="OnRequestClick"
+                                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.CanRequest, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             Style="{StaticResource AccentButtonStyle}" />
+                                        <Button
+                                            Content="Request more seasons"
+                                            Click="OnRequestClick"
+                                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.ShowsRequestMoreSeasons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                         <Button
                                             Content="{x:Bind ViewModel.AddLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.AddCommand}"

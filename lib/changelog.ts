@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.32.0",
+    date: "2026-09-25",
+    changes: [
+      "Request single seasons: on a TV show, Request opens a season picker. Each season shows whether it's in the library, being fetched (monitored), or already requested, and the rest can be ticked; \"Select all\" picks every one left. Works on the website and in the Mac and Windows apps.",
+      "Request more seasons of a show you already have part of: the button appears on shows that are in the library or on their way whenever there are seasons left to ask for.",
+      "When the admin approves a season request, Sonarr is told to fetch just those seasons (and searches for them right away), whether the show is new to Sonarr or already there with other seasons. A whole-show request still adds every season.",
+      "Requests, the admin's queue, the history and the notifications name the seasons (\"Severance (Season 2) was approved\").",
+    ],
+  },
+  {
     version: "0.31.2",
     date: "2026-09-25",
     changes: [

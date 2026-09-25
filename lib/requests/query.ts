@@ -2,9 +2,12 @@ import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
-import { getTitleLibraryStatus } from "@/lib/integrations/status";
+import { getSonarrSeasonStates, getTitleLibraryStatus } from "@/lib/integrations/status";
 import { createNotification } from "@/lib/notifications/query";
 import { mapWithLimit } from "@/lib/async/map-limit";
+import { quotedRequestTitle } from "@/lib/requests/labels";
+import { seasonsStillNeeded, type ViewerTitleRequest } from "@/lib/requests/seasons";
+import type { LibraryStatus } from "@/components/status-badge";
 
 // Each row's library status can be a live Sonarr/Radarr lookup — a long
 // queue shouldn't fire them all at the admin's home server at once.
@@ -26,6 +29,7 @@ export async function getPendingRequests(viewerUserId: string) {
       tvdbId: titles.tvdbId,
       title: requests.title,
       posterPath: requests.posterPath,
+      seasons: requests.seasons,
       createdAt: requests.createdAt,
       requestedByUserId: requests.requestedByUserId,
       requestedByName: users.displayName,
@@ -42,10 +46,36 @@ export async function getPendingRequests(viewerUserId: string) {
 
   if (rows.length === 0) return [];
 
-  const statuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) =>
-    getTitleLibraryStatus(viewerUserId, r.mediaType, r.tmdbId, r.tvdbId).catch(
-      () => ({ status: "untracked" as const, provider: null, configured: false, file: null }),
-    ),
+  // A season request is usually for more of a show that's already in the
+  // library, so the show being tracked says nothing about it: it only goes
+  // stale once every season it asks for is monitored or complete in Sonarr
+  // (reported here as "seasons_covered").
+  const statuses: { status: LibraryStatus | "seasons_covered" }[] = await mapWithLimit(
+    rows,
+    STATUS_LOOKUP_CONCURRENCY,
+    async (r) => {
+      if (r.seasons) {
+        const library = await getSonarrSeasonStates(viewerUserId, r.tvdbId).catch(() => null);
+        const covered = library !== null && seasonsStillNeeded(r.seasons, library).length === 0;
+        return { status: covered ? ("seasons_covered" as const) : ("untracked" as const) };
+      }
+      if (r.mediaType === "tv") {
+        // A whole-series request for a show Sonarr has only some seasons of
+        // (a housemate's season request added it) isn't covered yet: only
+        // once every season is monitored or complete there. A show Sonarr
+        // doesn't track falls through to the usual owned-anywhere check.
+        const library = await getSonarrSeasonStates(viewerUserId, r.tvdbId).catch(() => null);
+        const everySeason = (library ?? []).filter((s) => s.seasonNumber > 0).map((s) => s.seasonNumber);
+        // Sonarr listing only specials says nothing yet: fall through.
+        if (library && everySeason.length > 0) {
+          const covered = seasonsStillNeeded(everySeason, library).length === 0;
+          return { status: covered ? ("seasons_covered" as const) : ("untracked" as const) };
+        }
+      }
+      return getTitleLibraryStatus(viewerUserId, r.mediaType, r.tmdbId, r.tvdbId).catch(
+        () => ({ status: "untracked" as const, provider: null, configured: false, file: null }),
+      );
+    },
   );
 
   const alreadyOwnedIds = rows
@@ -68,9 +98,11 @@ export async function getPendingRequests(viewerUserId: string) {
       rows.flatMap((r, i) => {
         if (!reconciledIds.has(r.id)) return [];
         const message =
-          statuses[i].status === "coming_soon"
-            ? `"${r.title}" is already being tracked — it's not released yet.`
-            : `"${r.title}" was already in your library.`;
+          statuses[i].status === "seasons_covered"
+            ? `${quotedRequestTitle(r.title, r.seasons)} is already in your library or on its way.`
+            : statuses[i].status === "coming_soon"
+              ? `"${r.title}" is already being tracked — it's not released yet.`
+              : `"${r.title}" was already in your library.`;
         return createNotification({
           userId: r.requestedByUserId,
           mediaType: r.mediaType,
@@ -96,6 +128,7 @@ export async function getReviewedRequests(limit = 50) {
       tmdbId: requests.tmdbId,
       title: requests.title,
       posterPath: requests.posterPath,
+      seasons: requests.seasons,
       status: requests.status,
       manuallyApproved: requests.manuallyApproved,
       rejectionReason: requests.rejectionReason,
@@ -123,6 +156,7 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       tvdbId: titles.tvdbId,
       title: requests.title,
       posterPath: requests.posterPath,
+      seasons: requests.seasons,
       status: requests.status,
       manuallyApproved: requests.manuallyApproved,
       rejectionReason: requests.rejectionReason,
@@ -137,13 +171,24 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
     .where(eq(requests.requestedByUserId, userId))
     .orderBy(desc(requests.createdAt));
 
-  const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) =>
-    r.status === "approved"
-      ? getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
-          .then((s) => s.status)
-          .catch(() => null)
-      : Promise.resolve(null),
-  );
+  const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) => {
+    if (r.status !== "approved") return Promise.resolve(null);
+    // An approved season request is "in your library" only once every
+    // season it asked for is complete — the show as a whole being owned
+    // (the seasons already there) says nothing about the new ones. Until
+    // then it reads "Approved".
+    if (r.seasons) {
+      return getSonarrSeasonStates(libraryOwnerId, r.tvdbId)
+        .then((library) => {
+          const done = new Set((library ?? []).filter((s) => s.complete).map((s) => s.seasonNumber));
+          return library && r.seasons!.every((n) => done.has(n)) ? ("owned" as const) : null;
+        })
+        .catch(() => null);
+    }
+    return getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
+      .then((s) => s.status)
+      .catch(() => null);
+  });
 
   return rows.map((r, i) => ({ ...r, libraryStatus: libraryStatuses[i] }));
 }
@@ -216,6 +261,31 @@ export async function getActiveRequestStatusMap(
     map.set(key, row.status);
   }
   return map;
+}
+
+/** This user's pending and approved requests for one title, with their
+ * seasons — what the title page needs to tell which seasons they've already
+ * asked for, and whether a new season request would be a duplicate. */
+export async function getViewerTitleRequests(
+  userId: string,
+  mediaType: MediaType,
+  tmdbId: number,
+): Promise<ViewerTitleRequest[]> {
+  const rows = await db
+    .select({ status: requests.status, seasons: requests.seasons })
+    .from(requests)
+    .where(
+      and(
+        eq(requests.requestedByUserId, userId),
+        eq(requests.mediaType, mediaType),
+        eq(requests.tmdbId, tmdbId),
+        ne(requests.status, "rejected"),
+      ),
+    )
+    .orderBy(desc(requests.createdAt));
+  return rows.flatMap((r) =>
+    r.status === "pending" || r.status === "approved" ? [{ status: r.status, seasons: r.seasons }] : [],
+  );
 }
 
 /** Other household members with a pending request for this same title —

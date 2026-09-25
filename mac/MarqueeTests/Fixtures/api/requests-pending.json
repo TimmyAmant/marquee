@@ -14,6 +14,8 @@
       "tmdbId": 603,
       "title": "The Matrix",
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
       "requestedBy": {
         "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
         "displayName": null,
@@ -21,6 +23,24 @@
         "label": "member1"
       },
       "createdAt": "2026-09-17T17:12:41.415Z"
+    },
+    {
+      "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "title": "Severance",
+      "posterPath": "/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+      "seasons": [
+        2
+      ],
+      "seasonsLabel": "Season 2",
+      "requestedBy": {
+        "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "displayName": null,
+        "username": "member1",
+        "label": "member1"
+      },
+      "createdAt": "2026-09-17T17:10:02.001Z"
     }
   ]
 }

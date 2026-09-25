@@ -7,6 +7,7 @@ import { useActionState } from "react";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import { RequestButton } from "@/components/request-button";
+import { SeasonRequestPicker, type SeasonPickerRow } from "@/components/season-request-picker";
 import type { MediaType } from "@/lib/db/schema";
 
 export function AddToLibraryButton({
@@ -19,6 +20,7 @@ export function AddToLibraryButton({
   isAdmin,
   alreadyRequested,
   otherRequesters,
+  seasonPicker,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -30,12 +32,22 @@ export function AddToLibraryButton({
   isAdmin?: boolean;
   alreadyRequested?: boolean;
   otherRequesters?: string[];
+  /** A TV show's seasons for a member's season picker; omitted for movies
+   * and admins, who keep the whole-title Request/Add buttons. */
+  seasonPicker?: {
+    rows: SeasonPickerRow[];
+    canRequestSeasons: boolean;
+    /** seasonsLabel of the member's pending request, e.g. "Seasons 1–3". */
+    requestedSeasonsLabel: string | null;
+  };
 }) {
   const router = useRouter();
   const action =
     mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
 
   const [state, formAction, isPending] = useActionState(action, undefined);
+  const pickSeasons = mediaType === "tv" && Boolean(seasonPicker?.canRequestSeasons);
+  const requestedSeasonsLabel = seasonPicker?.requestedSeasonsLabel ?? null;
 
   useEffect(() => {
     if (state?.success) {
@@ -51,13 +63,26 @@ export function AddToLibraryButton({
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={state?.success ? "tracked_monitored" : status} />
 
-        {status === "untracked" && !state?.success && isAdmin === false && !alreadyRequested && (
+        {status === "untracked" && !state?.success && isAdmin === false && !alreadyRequested && !pickSeasons && (
           <RequestButton mediaType={mediaType} tmdbId={tmdbId} title={name} posterPath={posterPath} />
         )}
 
-        {status === "untracked" && isAdmin === false && alreadyRequested && (
+        {/* A member picks seasons for a show whenever any are left to ask
+            for — for one already in the library, that's "more seasons". */}
+        {isAdmin === false && !alreadyRequested && pickSeasons && seasonPicker && (
+          <SeasonRequestPicker
+            tmdbId={tmdbId}
+            showName={name}
+            rows={seasonPicker.rows}
+            triggerLabel={status === "untracked" ? "Request" : "Request more seasons"}
+          />
+        )}
+
+        {isAdmin === false && alreadyRequested && (status === "untracked" || requestedSeasonsLabel) && (
           <span className="flex h-8 items-center rounded-full bg-tracked-bg px-4 text-[13px] font-medium text-tracked">
-            Requested — waiting for approval
+            {requestedSeasonsLabel
+              ? `Requested ${requestedSeasonsLabel} — waiting for approval`
+              : "Requested — waiting for approval"}
           </span>
         )}
 

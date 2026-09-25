@@ -10,7 +10,12 @@ import { findByImdbId } from "@/lib/tmdb/client";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
+import { seasonsSonarrKnows } from "@/lib/sonarr/season-monitoring";
 import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
+
+/** TMDb listed the requested seasons (createRequest checked), but Sonarr's
+ * TVDB-based season list has none of them, so there's nothing to monitor. */
+const SONARR_UNKNOWN_SEASONS_ERROR = "Sonarr doesn't list the requested seasons for this show.";
 import { fail, type CoreResult } from "@/lib/core-result";
 
 // Title-page Sonarr/Radarr operations shared by the title page's server
@@ -94,8 +99,20 @@ export async function addMovieToRadarrForUser(userId: string, tmdbId: number): P
   return { ok: true };
 }
 
-/** Core "add this series to Sonarr" logic — see addMovieToRadarrForUser. */
-export async function addSeriesToSonarrForUser(userId: string, tmdbId: number): Promise<CoreResult> {
+/** Core "add this series to Sonarr" logic — see addMovieToRadarrForUser.
+ * `seasons` comes from an approved season request: only those seasons get
+ * monitored and searched for (on top of anything already monitored). Null,
+ * the default, is the whole series — the title page's Add button and every
+ * whole-series request. */
+export async function addSeriesToSonarrForUser(
+  userId: string,
+  tmdbId: number,
+  seasons: readonly number[] | null = null,
+  /** Approving a request (rather than the admin's own Add button): a
+   * whole-series request then also turns on every season of a show Sonarr
+   * already has only part of. */
+  forRequest = false,
+): Promise<CoreResult> {
   if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
 
   const credential = await getArrCredential(userId, "sonarr");
@@ -117,16 +134,40 @@ export async function addSeriesToSonarrForUser(userId: string, tmdbId: number): 
     // rejects a duplicate add in that case, so re-enable monitoring on the
     // existing entry instead of trying to add it again from scratch.
     const existing = await sonarr.getSeriesByTvdbId(config, title.tvdbId).catch(() => null);
-    if (existing) {
+    if (existing && seasons) {
+      const known = seasonsSonarrKnows(existing.seasons ?? [], seasons);
+      if (known.length === 0) return fail("conflict", SONARR_UNKNOWN_SEASONS_ERROR);
+      await sonarr.monitorSeriesSeasons(config, existing.id, known);
+      // Monitoring alone only catches episodes as they're released; these
+      // seasons have usually aired already, so ask Sonarr to go find them.
+      for (const seasonNumber of known) {
+        await sonarr.searchSeason(config, existing.id, seasonNumber);
+      }
+      added = existing;
+    } else if (existing && forRequest) {
+      // Approving a whole-series request. The show may be in Sonarr with only
+      // some seasons on, because a season request added it: turn every season
+      // on and look for them.
+      await sonarr.monitorWholeSeries(config, existing.id);
+      await sonarr.searchSeries(config, existing.id);
+      added = existing;
+    } else if (existing) {
+      // The admin's Add on a show Sonarr already has (the status cache was
+      // behind): just turn the series back on, as before — the admin chose
+      // its seasons in Sonarr.
       await sonarr.setSeriesMonitored(config, existing.id, true);
       added = existing;
     } else {
       const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);
       if (!lookupResult) throw new Error("No lookup result");
+      if (seasons && seasonsSonarrKnows(lookupResult.seasons ?? [], seasons).length === 0) {
+        return fail("conflict", SONARR_UNKNOWN_SEASONS_ERROR);
+      }
       added = await sonarr.addSeries(config, {
         lookupResult,
         qualityProfileId: credential.qualityProfileId,
         rootFolderPath: credential.rootFolderPath,
+        seasons,
       });
     }
   } catch {

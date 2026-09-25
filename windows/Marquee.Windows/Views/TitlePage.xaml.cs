@@ -12,8 +12,8 @@ namespace Marquee.Windows.Views;
 /// <summary>
 /// A movie or series. Navigated to with a <see cref="Route.Title"/> (what
 /// <c>AppModel.OpenTitle</c> sends) or a bare <see cref="TitleId"/>; either
-/// way <see cref="Id"/> says which title. The two dialogs (Fix ID, Add all)
-/// live here because a ContentDialog needs the page's XamlRoot.
+/// way <see cref="Id"/> says which title. The dialogs (season picker, Fix ID,
+/// Add all) live here because a ContentDialog needs the page's XamlRoot.
 /// </summary>
 public sealed partial class TitlePage : Page
 {
@@ -47,6 +47,23 @@ public sealed partial class TitlePage : Page
     {
         base.OnNavigatedFrom(e);
         ViewModel.Deactivate();
+    }
+
+    /// <summary>
+    /// "Request" and "Request more seasons": the season picker on a TV show
+    /// the server offers seasons for, else today's whole-series request. The
+    /// picker sends the request itself and keeps a failure inline; the page
+    /// reloads once it succeeds.
+    /// </summary>
+    private async void OnRequestClick(object sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.OpensSeasonPicker)
+        {
+            await ViewModel.RequestCommand.ExecuteAsync(null);
+            return;
+        }
+        var dialog = new SeasonRequestDialog(ViewModel.Name, ViewModel.PickerSeasons, ViewModel.RequestSeasonsAsync) { XamlRoot = XamlRoot };
+        await dialog.TryShowAsync();
     }
 
     /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>

@@ -41,6 +41,7 @@ BLOCKS = [
     ("`GET /search?q=`", ["search"]),
     ("`GET /search/suggest?q=`", ["search-suggest"]),
     ("`GET /titles/{type}/{tmdbId}`", ["title-detail"]),
+    ("`GET /titles/{type}/{tmdbId}`", ["title-season"]),
     ("`GET /titles/tv/{tmdbId}/seasons/{seasonNumber}`", ["season-episodes"]),
     ("`GET /titles/{type}/{tmdbId}/status`", ["title-status"]),
     ("`POST /titles/{type}/{tmdbId}/add`", ["title-add"]),
