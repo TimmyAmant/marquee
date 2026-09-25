@@ -17,14 +17,21 @@ export type JellyfinConfig = { baseUrl: string; apiKey: string };
 // Jellyfin instance shouldn't be able to hang a page render indefinitely.
 const REQUEST_TIMEOUT_MS = 8000;
 
-async function jellyfinFetch<T>(config: JellyfinConfig, path: string): Promise<T> {
+// See LIBRARY_TIMEOUT_MS in lib/radarr/client.ts.
+const LIBRARY_TIMEOUT_MS = 120_000;
+
+async function jellyfinFetch<T>(
+  config: JellyfinConfig,
+  path: string,
+  timeoutMs: number = REQUEST_TIMEOUT_MS,
+): Promise<T> {
   const url = new URL(`${config.baseUrl.replace(/\/$/, "")}${path}`);
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
       "X-Emby-Token": config.apiKey,
     },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   if (!res.ok) {
@@ -102,6 +109,7 @@ export async function getLibraryItems(config: JellyfinConfig): Promise<JellyfinI
   const body = await jellyfinFetch<{ Items: JellyfinItem[] }>(
     config,
     `/Items?${params.toString()}`,
+    LIBRARY_TIMEOUT_MS,
   );
   return body.Items ?? [];
 }

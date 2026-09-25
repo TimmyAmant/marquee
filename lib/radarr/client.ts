@@ -6,10 +6,15 @@ export type ArrConfig = { baseUrl: string; apiKey: string };
 // they already handle any other rejection, so no call site needs to change.
 const REQUEST_TIMEOUT_MS = 8000;
 
+/** The full-library listing a sync pulls. The timeout covers reading the
+ * body too, and a few thousand movies' JSON off a home server can take far
+ * longer than 8s — this runs in the background, so it can afford to wait. */
+export const LIBRARY_TIMEOUT_MS = 120_000;
+
 async function radarrFetch<T>(
   config: ArrConfig,
   path: string,
-  options: { method?: string; body?: unknown } = {},
+  options: { method?: string; body?: unknown; timeoutMs?: number } = {},
 ): Promise<T> {
   const url = new URL(`${config.baseUrl.replace(/\/$/, "")}/api/v3${path}`);
   const res = await fetch(url, {
@@ -19,7 +24,7 @@ async function radarrFetch<T>(
       "Content-Type": "application/json",
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -102,7 +107,7 @@ export async function getMovieByTmdbId(config: ArrConfig, tmdbId: number): Promi
 }
 
 export function getAllMovies(config: ArrConfig): Promise<RadarrMovie[]> {
-  return radarrFetch<RadarrMovie[]>(config, "/movie");
+  return radarrFetch<RadarrMovie[]>(config, "/movie", { timeoutMs: LIBRARY_TIMEOUT_MS });
 }
 
 export async function setMovieMonitored(
