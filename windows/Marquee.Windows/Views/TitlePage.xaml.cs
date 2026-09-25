@@ -1,0 +1,112 @@
+using Marquee.Core.Api;
+using Marquee.Core.Models;
+using Marquee.Windows.Controls;
+using Marquee.Windows.Services;
+using Marquee.Windows.ViewModels;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+
+namespace Marquee.Windows.Views;
+
+/// <summary>
+/// A movie or series. Navigated to with a <see cref="Route.Title"/> (what
+/// <c>AppModel.OpenTitle</c> sends) or a bare <see cref="TitleId"/>; either
+/// way <see cref="Id"/> says which title. The two dialogs (Fix ID, Add all)
+/// live here because a ContentDialog needs the page's XamlRoot.
+/// </summary>
+public sealed partial class TitlePage : Page
+{
+    public TitleViewModel ViewModel { get; }
+
+    public TitlePage()
+    {
+        ViewModel = new TitleViewModel(AppServices.Model);
+        InitializeComponent();
+    }
+
+    /// <summary>The title this page shows; null only when navigated to without a parameter.</summary>
+    public TitleId? Id { get; private set; }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        Id = e.Parameter switch
+        {
+            Route.Title route => route.Id,
+            TitleId id => id,
+            _ => (TitleId?)null,
+        };
+        if (Id is { } title)
+        {
+            ViewModel.Activate(title);
+        }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        ViewModel.Deactivate();
+    }
+
+    /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>
+    private async void OnFixIdClick(object sender, RoutedEventArgs e)
+    {
+        if (Id is not { } title)
+        {
+            return;
+        }
+        var dialog = new RelinkDialog(title.MediaType) { XamlRoot = XamlRoot };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary || dialog.Target is not { } target)
+        {
+            return;
+        }
+        try
+        {
+            var newTmdbId = await ViewModel.RelinkAsync(target);
+            AppServices.Model.OpenTitle(title.MediaType, newTmdbId);
+        }
+        catch (ApiException error)
+        {
+            var failed = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "Couldn't fix the match",
+                Content = error.Message,
+                CloseButtonText = "OK",
+            };
+            await failed.ShowAsync();
+        }
+    }
+
+    /// <summary>The franchise row's "Add all N missing", behind a confirmation like the website.</summary>
+    private async void OnAddAllClick(object sender, RoutedEventArgs e)
+    {
+        var confirm = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = ViewModel.AddAllConfirmation,
+            Content = "Each title is added with your Sonarr or Radarr, one at a time.",
+            PrimaryButtonText = "Add all",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        if (await confirm.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.AddAllMissingCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>The "Location" row's Copy button.</summary>
+    private void OnCopyPathClick(object sender, RoutedEventArgs e)
+    {
+        var path = ViewModel.FilePath;
+        if (path.Length == 0)
+        {
+            return;
+        }
+        var package = new global::Windows.ApplicationModel.DataTransfer.DataPackage();
+        package.SetText(path);
+        global::Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+    }
+}

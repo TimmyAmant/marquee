@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Everything before the shell: the connect card (enter and check a server
+  address), the sign-in and first-run setup cards, and the can't-reach card
+  for a saved server. One page with one card visible at a time, following
+  ConnectViewModel.Is*Step, so switching cards keeps the typed fields.
+-->
+<Page
+    x:Class="Marquee.Windows.Views.ConnectPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="OnLoaded">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel
+            MaxWidth="440"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Padding="32,48,32,48"
+            Spacing="20">
+            <TextBlock Text="Marquee" Style="{StaticResource TitleLargeTextBlockStyle}" />
+
+            <!-- Launching: restoring the saved session. -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsLaunching, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <ProgressRing IsActive="{x:Bind ViewModel.IsLaunching, Mode=OneWay}" Width="32" Height="32" HorizontalAlignment="Left" />
+                <TextBlock
+                    Text="Connecting to your server…"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <!-- Connect: which server. -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsConnectStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Connect to your server" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="Enter the IP address or URL of the computer running Marquee. The port is usually 3000."
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <TextBox
+                    x:Name="AddressBox"
+                    Header="IP address or URL"
+                    PlaceholderText="192.168.1.20:3000"
+                    Text="{x:Bind ViewModel.Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    IsSpellCheckEnabled="False"
+                    KeyDown="OnAddressKeyDown" />
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.HasAddressError, Mode=OneWay}"
+                    Severity="Error"
+                    Message="{x:Bind ViewModel.AddressError, Mode=OneWay}"
+                    IsClosable="False" />
+                <Button
+                    Content="{x:Bind ViewModel.CheckLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.CheckCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <!-- Sign in. -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsSignInStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Welcome back" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="Sign in to your Marquee account."
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <HyperlinkButton
+                        Grid.Column="1"
+                        Content="Change"
+                        Command="{x:Bind ViewModel.ChangeServerCommand}"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.HasAuthNotice, Mode=OneWay}"
+                    Severity="Informational"
+                    Message="{x:Bind ViewModel.AuthNotice, Mode=OneWay}"
+                    IsClosable="False" />
+                <HyperlinkButton
+                    Content="{x:Bind ViewModel.RetryLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.RetryCommand}"
+                    Visibility="{x:Bind ViewModel.CanRetryRestore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <TextBox
+                    Header="Username"
+                    Text="{x:Bind ViewModel.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    IsSpellCheckEnabled="False"
+                    KeyDown="OnSignInKeyDown" />
+                <PasswordBox
+                    Header="Password"
+                    Password="{x:Bind ViewModel.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    KeyDown="OnSignInKeyDown" />
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.IsDegraded, Mode=OneWay}"
+                    Severity="Warning"
+                    Message="Your server can't reach its database right now, so signing in may fail."
+                    IsClosable="False" />
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.HasFormError, Mode=OneWay}"
+                    Severity="Error"
+                    Message="{x:Bind ViewModel.FormError, Mode=OneWay}"
+                    IsClosable="False" />
+                <Button
+                    Content="{x:Bind ViewModel.SignInLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.SignInCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch" />
+                <!-- Setup is only offered while the server has no accounts. -->
+                <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="New to Marquee?"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        HorizontalAlignment="Center" />
+                    <Button
+                        Content="Create an account"
+                        Command="{x:Bind ViewModel.ShowSetupCommand}"
+                        HorizontalAlignment="Stretch" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- First-run setup: the server's first (admin) account. -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsSetupStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Set up Marquee" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="Create the first account on this server. It becomes the admin, and accounts for other household members can be added later from Settings."
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <HyperlinkButton
+                        Grid.Column="1"
+                        Content="Change"
+                        Command="{x:Bind ViewModel.ChangeServerCommand}"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <TextBox
+                    Header="Name"
+                    Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    KeyDown="OnSetupKeyDown" />
+                <TextBox
+                    Header="Username"
+                    Text="{x:Bind ViewModel.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    IsSpellCheckEnabled="False"
+                    KeyDown="OnSetupKeyDown" />
+                <PasswordBox
+                    Header="Password"
+                    Password="{x:Bind ViewModel.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    KeyDown="OnSetupKeyDown" />
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.HasFormError, Mode=OneWay}"
+                    Severity="Error"
+                    Message="{x:Bind ViewModel.FormError, Mode=OneWay}"
+                    IsClosable="False" />
+                <Button
+                    Content="{x:Bind ViewModel.SetupLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.SetupCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch" />
+                <StackPanel Spacing="8" Margin="0,8,0,0">
+                    <TextBlock
+                        Text="Already have an account?"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        HorizontalAlignment="Center" />
+                    <Button
+                        Content="Log in"
+                        Command="{x:Bind ViewModel.ShowSignInCommand}"
+                        HorizontalAlignment="Stretch" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Can't reach the saved server. -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsUnreachable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{x:Bind ViewModel.UnreachableTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.UnreachableExplanation, Mode=OneWay}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <StackPanel>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.HasUnreachableDetail, Mode=OneWay}"
+                    Severity="Error"
+                    Message="{x:Bind ViewModel.UnreachableDetail, Mode=OneWay}"
+                    IsClosable="False" />
+                <Button
+                    Content="{x:Bind ViewModel.RetryLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.RetryCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch" />
+                <Button
+                    Content="Change server"
+                    Command="{x:Bind ViewModel.ChangeServerCommand}"
+                    HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

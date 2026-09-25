@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app/layout.tsx: the persistent sidebar plus content. Row 0 is the custom
+  title bar (the drag region); row 1 holds either the NavigationView shell
+  (signed in) or the auth frame with ConnectPage (everything before that).
+  Both stay in the tree and swap visibility, which keeps the sign-in form's
+  state across a failed attempt and lets the shell come back instantly.
+
+  Text in the pane footer and the badge are set from code-behind rather
+  than bound: Window is not a FrameworkElement, so keeping its XAML to plain
+  named elements avoids leaning on x:Bind support at the window level.
+-->
+<Window
+    x:Class="Marquee.Windows.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <Grid x:Name="Root">
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="F5" Invoked="OnReloadInvoked" />
+        </Grid.KeyboardAccelerators>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- The drag region; the caption buttons draw over its right end. -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48" Background="Transparent">
+            <TextBlock
+                Text="Marquee"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                VerticalAlignment="Center"
+                Margin="16,0,0,0"
+                IsHitTestVisible="False" />
+        </Grid>
+
+        <NavigationView
+            x:Name="NavigationPane"
+            Grid.Row="1"
+            Visibility="Collapsed"
+            PaneDisplayMode="Left"
+            OpenPaneLength="240"
+            IsSettingsVisible="True"
+            IsBackButtonVisible="Visible"
+            IsBackEnabled="False"
+            IsTitleBarAutoPaddingEnabled="False"
+            ItemInvoked="OnNavigationItemInvoked"
+            BackRequested="OnNavigationBackRequested">
+            <!--
+              components/search-bar.tsx: type-ahead from GET /search/suggest,
+              Enter opens the results page. Suggestions display through
+              SuggestionItem.ToString() rather than a template, keeping this
+              file free of bindings (see the note at the top).
+            -->
+            <NavigationView.AutoSuggestBox>
+                <AutoSuggestBox
+                    x:Name="SearchBox"
+                    PlaceholderText="Search an actor, a studio, a title…"
+                    QueryIcon="Find"
+                    TextChanged="OnSearchTextChanged"
+                    QuerySubmitted="OnSearchQuerySubmitted" />
+            </NavigationView.AutoSuggestBox>
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="Discover" Tag="discover">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE909;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Movies" Tag="movies">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE714;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Series" Tag="series">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7F4;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Search" Tag="search">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE721;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemHeader Content="Library" />
+                <NavigationViewItem Content="Requests" Tag="requests">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8FD;" />
+                    </NavigationViewItem.Icon>
+                    <NavigationViewItem.InfoBadge>
+                        <InfoBadge x:Name="RequestsBadge" Visibility="Collapsed" />
+                    </NavigationViewItem.InfoBadge>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Favorites" Tag="favorites">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xEB51;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Calendar" Tag="calendar">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE787;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <NavigationView.FooterMenuItems>
+                <!-- components/notifications-bell.tsx: the bell opens its list as a flyout beside the pane. -->
+                <NavigationViewItem x:Name="NotificationsItem" Content="Notifications" Tag="notifications" SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xEA8F;" />
+                    </NavigationViewItem.Icon>
+                    <NavigationViewItem.InfoBadge>
+                        <InfoBadge x:Name="NotificationsBadge" Visibility="Collapsed" />
+                    </NavigationViewItem.InfoBadge>
+                    <FlyoutBase.AttachedFlyout>
+                        <Flyout x:Name="NotificationsFlyoutHost" Placement="Right" Opened="OnNotificationsOpened" Closed="OnNotificationsClosed">
+                            <controls:NotificationsFlyout x:Name="NotificationsPanel" CloseRequested="OnNotificationsCloseRequested" />
+                        </Flyout>
+                    </FlyoutBase.AttachedFlyout>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Sign out" Tag="signout" SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7E8;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+
+            <!-- components/sidebar.tsx's .who: the account over the server it is signed in to. -->
+            <NavigationView.PaneFooter>
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="16,8,16,8">
+                    <FontIcon Glyph="&#xE77B;" FontSize="20" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock
+                            x:Name="ViewerNameText"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            TextTrimming="CharacterEllipsis"
+                            MaxLines="1" />
+                        <TextBlock
+                            x:Name="ServerText"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextTrimming="CharacterEllipsis"
+                            MaxLines="1" />
+                    </StackPanel>
+                </StackPanel>
+            </NavigationView.PaneFooter>
+
+            <Frame x:Name="ContentFrame" Navigated="OnContentNavigated" />
+        </NavigationView>
+
+        <Frame x:Name="AuthFrame" Grid.Row="1" />
+    </Grid>
+</Window>
