@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app/settings/page.tsx's Account tab for this PC: the account card and its
+  edit form, the server card (Change server, Sign out) and About. Each card
+  is a Border with the card brushes; the page is a single column.
+-->
+<Page
+    x:Class="Marquee.Windows.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <Style x:Key="SettingsCard" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="640" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" />
+
+            <!-- Account -->
+            <TextBlock Text="Account" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Username" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{x:Bind ViewModel.Username, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" IsTextSelectionEnabled="True" />
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Role" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{x:Bind ViewModel.RoleLabel, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+                    <TextBox
+                        Header="Name"
+                        PlaceholderText="How the household sees you"
+                        Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        MaxLength="80" />
+                    <PasswordBox
+                        Header="New password"
+                        PlaceholderText="Leave blank to keep the current password"
+                        Password="{x:Bind ViewModel.NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <PasswordBox
+                        Header="Confirm new password"
+                        Password="{x:Bind ViewModel.ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock
+                        Text="Setting a new password signs you out of every device, including this PC."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <InfoBar
+                        IsOpen="{x:Bind ViewModel.HasSaveError, Mode=OneWay}"
+                        Severity="Error"
+                        Message="{x:Bind ViewModel.SaveError, Mode=OneWay}"
+                        IsClosable="False" />
+                    <InfoBar
+                        IsOpen="{x:Bind ViewModel.HasSaveNotice, Mode=OneWay}"
+                        Severity="Success"
+                        Message="{x:Bind ViewModel.SaveNotice, Mode=OneWay}"
+                        IsClosable="False" />
+                    <Button
+                        Content="{x:Bind ViewModel.SaveLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.SaveCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <!-- Server -->
+            <TextBlock Text="Server" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="This PC is signed in to" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" IsTextSelectionEnabled="True" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <TextBlock
+                        Text="Sign out revokes this PC's session only; other devices stay signed in. Change server forgets this server and starts over at the connect screen."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Sign out" Command="{x:Bind ViewModel.SignOutCommand}" />
+                        <Button Content="Change server" Command="{x:Bind ViewModel.ChangeServerCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- About -->
+            <TextBlock Text="About" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{x:Bind ViewModel.AppVersionLabel}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <ProgressRing
+                        IsActive="{x:Bind ViewModel.IsAboutLoading, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsAboutLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Left" />
+                    <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.HasAboutError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.AboutError, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                        <Button Content="Try again" Command="{x:Bind ViewModel.LoadAboutCommand}" />
+                    </StackPanel>
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.AboutRows, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="0" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FactRow">
+                                <Grid ColumnSpacing="12" MinHeight="34" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Text="{x:Bind Label}"
+                                        Style="{StaticResource BodyTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{x:Bind Value}"
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        VerticalAlignment="Center"
+                                        IsTextSelectionEnabled="True" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.AboutLinks, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Horizontal" Spacing="8" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LinkItem">
+                                <HyperlinkButton Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

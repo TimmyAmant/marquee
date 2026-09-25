@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Everything the Windows app knows about a Marquee server, with no WinUI or
+    Windows dependency: the /api/v1 transport, the typed endpoints and their
+    DTOs, and the sign-in session. It builds and tests on any platform, which
+    is what lets CI run the contract tests on Linux while only the app itself
+    needs a Windows runner.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Marquee.Core</RootNamespace>
+    <AssemblyName>Marquee.Core</AssemblyName>
+    <Description>Platform-neutral client for a Marquee server's /api/v1: transport, typed endpoints, models and the sign-in session.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Marquee.Core.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,28 @@
+<Project>
+  <!--
+    Shared by every project under windows/: the platform-neutral Core library,
+    its tests and the WinUI app. Warnings are errors here for the same reason
+    the Mac build fails on a single compiler warning: a warning that survives
+    one release is invisible by the next.
+  -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+
+    <Version>0.1.0</Version>
+    <Authors>Timmy Amant</Authors>
+    <Product>Marquee</Product>
+    <Copyright>Copyright (c) Timmy Amant</Copyright>
+    <RepositoryUrl>https://github.com/TimmyAmant/marquee</RepositoryUrl>
+
+    <!--
+      Keep the informational version a plain "0.1.0": it is what the
+      User-Agent header reports, and the commit hash the SDK appends by
+      default is noise in a server log.
+    -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+</Project>

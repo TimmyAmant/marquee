@@ -1,0 +1,5 @@
+# Build output and per-user IDE state for the Windows client.
+bin/
+obj/
+.vs/
+*.user

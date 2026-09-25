@@ -33,7 +33,7 @@ data, your server.
 
 </details>
 
-**Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
+**Contents:** [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Marquee for Windows](#marquee-for-windows-preview) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
 
 ## Features
 
@@ -284,6 +284,20 @@ itself, or takes an address you type in.
 
 It needs macOS 15 or later and a server running 0.22.0 or later. Build
 instructions are in [`mac/README.md`](mac/README.md).
+
+### Marquee for Windows (preview)
+
+A native Windows client is taking shape in [`windows/`](windows/). It's a
+WinUI 3 app that mirrors the Mac app's architecture and talks to the same
+`/api/v1` API, so it shows the same data. The first cut covers Discover, the
+Movies and Series grids, search, title pages with add and request, requests
+(including decline reasons), favorites, the calendar and account settings;
+integrations settings, deep links, notification toasts and the network scan
+aren't built yet.
+
+It needs Windows 10 1809 or later (or Windows 11) and a server running 0.22.0
+or later. Build instructions and the list of what's still missing are in
+[`windows/README.md`](windows/README.md).
 
 ## Access from outside your network
 

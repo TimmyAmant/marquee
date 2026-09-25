@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app/company/[id]/page.tsx: the logo, the name with the star, the catalog
+  size and description, then the catalog grid with its local filters.
+-->
+<Page
+    x:Class="Marquee.Windows.Views.CompanyPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <Grid>
+        <ScrollViewer Visibility="{x:Bind ViewModel.HasCompany, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Padding="28,20,28,40" Spacing="36">
+                <Grid ColumnSpacing="28">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Logos are usually dark-on-transparent, so the tile stays white in both themes. -->
+                    <Grid
+                        Grid.Column="0"
+                        Width="176"
+                        Height="110"
+                        VerticalAlignment="Top"
+                        CornerRadius="12"
+                        Background="White"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        Padding="18">
+                        <Image Source="{x:Bind ViewModel.Logo, Mode=OneWay}" Stretch="Uniform" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Name, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasLogo, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Foreground="Black"
+                            TextWrapping="Wrap"
+                            TextAlignment="Center"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" Spacing="8" MaxWidth="760" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Name, Mode=OneWay}"
+                                Style="{StaticResource TitleLargeTextBlockStyle}"
+                                TextWrapping="Wrap"
+                                IsTextSelectionEnabled="True"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Command="{x:Bind ViewModel.ToggleFavoriteCommand}"
+                                Padding="8,4"
+                                VerticalAlignment="Center"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}"
+                                AutomationProperties.Name="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}">
+                                <FontIcon Glyph="{x:Bind ViewModel.FavoriteGlyph, Mode=OneWay}" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                            </Button>
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.CountLine, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Description, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasDescription, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap"
+                            IsTextSelectionEnabled="True" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.ShowsInlineError, Mode=OneWay}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                            IsClosable="False" />
+                    </StackPanel>
+                </Grid>
+
+                <controls:MediaList List="{x:Bind ViewModel.Titles, Mode=OneWay}" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel
+            Spacing="12"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
+            <TextBlock
+                Text="Loading the catalog…"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel
+            Spacing="12"
+            MaxWidth="440"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Couldn't load this studio" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                TextAlignment="Center" />
+            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Page>

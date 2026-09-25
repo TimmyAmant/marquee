@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/media-list.tsx: the count, a title search, the All/Movies/TV
+  filter and the sort over a poster grid. Used by the person and studio
+  pages; each hands it a MediaListViewModel through the List property.
+
+  The pickers are wired through code-behind rather than two-way bindings
+  because List is null until the page has loaded, and a two-way path through
+  a null object has nothing to write to.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.MediaList"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="16">
+        <!-- The server sent nothing at all. -->
+        <TextBlock
+            Text="{x:Bind List.EmptyMessage, Mode=OneWay}"
+            Visibility="{x:Bind List.HasCards, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+        <StackPanel Spacing="16" Visibility="{x:Bind List.HasCards, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock
+                    Text="{x:Bind List.CountLabel, Mode=OneWay}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    VerticalAlignment="Center"
+                    Margin="0,0,8,0" />
+                <TextBox
+                    x:Name="SearchBox"
+                    PlaceholderText="Search these titles…"
+                    Width="200"
+                    IsSpellCheckEnabled="False"
+                    TextChanged="OnSearchTextChanged" />
+                <!-- Both option lists are set from code-behind (MediaListViewModel.TypeOptions / OrderOptions). -->
+                <ComboBox
+                    x:Name="TypeBox"
+                    SelectionChanged="OnTypeChanged"
+                    VerticalAlignment="Center" />
+                <ComboBox
+                    x:Name="OrderBox"
+                    SelectionChanged="OnOrderChanged"
+                    VerticalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock
+                Text="No titles match these filters."
+                Visibility="{x:Bind List.NoMatches, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+            <ItemsRepeater ItemsSource="{x:Bind List.Visible, Mode=OneWay}">
+                <ItemsRepeater.Layout>
+                    <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PosterItem">
+                        <controls:PosterCard Item="{x:Bind}" />
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
