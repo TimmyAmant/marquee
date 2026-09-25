@@ -14,12 +14,14 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "0.29.0",
     date: "2026-09-25",
     changes: [
-      "A new navigation menu, after the Plex app on Apple TV: a small frosted rail floats at the left edge with your profile, Search, Discover and the section you're in. Rest the pointer on it, or press its menu button, and the full menu opens over the page. On a phone, the menu button at the top opens the same menu. Pages get the room the old sidebar took up, and a title's backdrop now runs to the edge of the window.",
+      "A new navigation menu, after the Plex app on Apple TV: a small frosted bar floats at the left edge with your photo and an icon for every section, and one click goes straight there. Rest on an icon to see its name; the ☰ button opens the full labeled menu. On a phone, the menu button at the top opens it. Pages get the room the old sidebar took up, and a title's backdrop now runs to the edge of the window. The Mac and Windows apps have the same menu.",
       "Profile photos: add one from Settings › Account › Edit. It's kept on your Marquee server, never uploaded anywhere else, and shows in the menu and next to each household member. Photos are cropped to a square, turned the right way up, and stripped of their location and camera details.",
       "API: /me, the login response and household members include avatarUrl, and GET/PUT/DELETE /users/{id}/avatar read, replace and remove a photo.",
-      "Marquee for Windows: Settings now manages household members too, adding, editing and removing accounts, like the website and the Mac app.",
       "Notifications on your devices, sent by your own Marquee server: after you sign in, Marquee asks whether this device should get them (a request approved or declined, a title ready to watch). On the website they're Web Push, encrypted so only your device can read them, with no account at any push service; they need Marquee opened over https, and on iPhone the site added to the Home Screen. Settings › Account › Notifications turns them on or off, lists your devices and sends a test.",
       "API: GET /notifications/stream, a live stream of new notifications for the Mac and Windows apps to show as system notifications without any outside push service.",
+      "The Mac and Windows apps can be downloaded from each release: Marquee.dmg (open it and drag Marquee into Applications) and Marquee-Setup.exe (installs for your account, no admin needed). Links are in the README and on the website.",
+      "Marquee for Mac updates itself: when a new release is out it shows an Update button, then downloads it, checks it, and quits and reopens on the new version. It no longer runs in the App Sandbox, which is what lets it replace itself; your settings come along. After an update you sign in once more.",
+      "Marquee for Mac and Windows: profile photos, and notifications that come straight from your server over a live connection (each app asks after you sign in). Windows gets real Windows notifications, its own icon, and Settings › Household members.",
     ],
   },
   {
