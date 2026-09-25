@@ -5,8 +5,6 @@ using Marquee.Core.Tests.Support;
 namespace Marquee.Core.Tests;
 
 // The section 13 example decoded as the Mac's APIFixtureTests decodes it.
-// Note the fixture lists four jobs where the doc's prose lists five: it
-// predates the cleanup job, which JobId still names.
 
 public sealed class JobsFixtureTests
 {
@@ -15,8 +13,8 @@ public sealed class JobsFixtureTests
     {
         var jobs = Fixtures.Decode<ListResponse<Job>>("jobs").Results;
 
-        Assert.Equal(4, jobs.Count);
-        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.DiskSpaceSnapshot], jobs.Select(job => job.Id));
+        Assert.Equal(5, jobs.Count);
+        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.DiskSpaceSnapshot, JobId.Cleanup], jobs.Select(job => job.Id));
         Assert.All(jobs, job => Assert.True(job.Id.IsKnown));
 
         var arrSync = jobs[2];
@@ -24,6 +22,7 @@ public sealed class JobsFixtureTests
         Assert.Equal("Every hour", arrSync.Schedule);
         Assert.Equal("Refreshes tracked/monitored status from every connected Sonarr and Radarr instance.", arrSync.Description);
         Assert.Equal("Daily at 3:00 AM", jobs[3].Schedule);
+        Assert.Equal("Daily at 3:30 AM", jobs[4].Schedule);
     }
 
     [Fact]
