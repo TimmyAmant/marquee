@@ -96,6 +96,7 @@ jobs:
           msbuild windows/Marquee.Windows/Marquee.Windows.csproj -restore -t:Publish
           -p:Configuration=Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64
           -p:SelfContained=true -p:PublishDir=${{ runner.temp }}\Marquee\ -v:minimal
+          -p:Version=${{ steps.version.outputs.version }}
       - name: Check the published app
         shell: pwsh
         # The app's own .pri holds its compiled XAML; without it the app
@@ -113,6 +114,10 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
           & $iscc "/DAppVersion=${{ steps.version.outputs.version }}" "/DSourceDir=${{ runner.temp }}\Marquee" "/O$PWD\dist" windows\installer\Marquee.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # The app's updater checks the installer it downloads against this
+          # (and GitHub's own digest of the asset, when it has one).
+          $hash = (Get-FileHash dist\Marquee-Setup.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Marquee-Setup.exe" | Out-File -Encoding ascii dist\Marquee-Setup.exe.sha256
           Get-ChildItem dist
       - uses: actions/upload-artifact@v4
         with:
@@ -177,4 +182,4 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-Setup.exe --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/Marquee-Setup.exe dist/Marquee-Setup.exe.sha256 --clobber
