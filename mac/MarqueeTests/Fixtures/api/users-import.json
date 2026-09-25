@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "id": "1234567",
+      "username": "anna.berg",
+      "displayName": "Anna Berg",
+      "thumb": "https://plex.tv/users/a1b2c3d4e5f6a7b8/avatar?c=1690000000",
+      "alreadyMember": false
+    },
+    {
+      "id": "3333",
+      "username": "Kids",
+      "displayName": null,
+      "thumb": null,
+      "alreadyMember": true
+    }
+  ]
+}

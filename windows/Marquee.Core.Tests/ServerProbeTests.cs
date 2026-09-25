@@ -142,7 +142,9 @@ public sealed class ServerProbeTests
         var stub = new StubHttpMessageHandler();
         stub.AnswerFixture("server-info");
         var outcome = await ServerProbe.ProbeAsync(Address, stub);
-        Assert.Equal(new ProbeOutcome.Marquee(Info("0.22.0", true)), outcome);
+        // The doc's example offers Plex sign-in alongside passwords.
+        var signIn = new SignInMethods { Password = true, Plex = true, Jellyfin = false };
+        Assert.Equal(new ProbeOutcome.Marquee(Info("0.22.0", true) with { SignIn = signIn }), outcome);
 
         var request = Assert.Single(stub.Requests);
         Assert.Equal("/api/v1/server-info", request.Path);

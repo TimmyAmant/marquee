@@ -31,6 +31,18 @@ public sealed record User
     /// </summary>
     public string? AvatarUrl { get; init; }
 
+    /// <summary>
+    /// Which Plex/Jellyfin accounts sign in to this one; null from servers
+    /// that predate Plex/Jellyfin sign-in.
+    /// </summary>
+    public LinkedAccounts? Linked { get; init; }
+
+    /// <summary>
+    /// False for an account made by Plex/Jellyfin sign-in or import that
+    /// hasn't set a password; null from older servers (which always have one).
+    /// </summary>
+    public bool? HasPassword { get; init; }
+
     public bool IsAdmin => Role == UserRole.Admin;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
@@ -53,6 +65,12 @@ public sealed record Me
     public required bool AutoApproveTv { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 
+    /// <inheritdoc cref="User.Linked"/>
+    public LinkedAccounts? Linked { get; init; }
+
+    /// <inheritdoc cref="User.HasPassword"/>
+    public bool? HasPassword { get; init; }
+
     public bool IsAdmin => Role == UserRole.Admin;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
@@ -66,6 +84,8 @@ public sealed record Me
         Role = Role,
         LibraryOwnerId = LibraryOwnerId,
         AvatarUrl = AvatarUrl,
+        Linked = Linked,
+        HasPassword = HasPassword,
     };
 }
 
@@ -90,6 +110,18 @@ public sealed record ServerInfo
 
     public string Status { get; init; } = "ok";
 
+    /// <summary>
+    /// Which sign-in methods the server offers; null from servers that
+    /// predate Plex/Jellyfin sign-in, which offer only the password.
+    /// </summary>
+    public SignInMethods? SignIn { get; init; }
+
+    /// <summary>"Sign in with Plex" is offered.</summary>
+    public bool OffersPlexSignIn => SignIn?.Plex == true;
+
+    /// <summary>"Sign in with Jellyfin" is offered.</summary>
+    public bool OffersJellyfinSignIn => SignIn?.Jellyfin == true;
+
     public bool IsMarquee => App == "marquee";
     public bool IsSupported => ApiVersion == SupportedApiVersion;
     public bool IsDegraded => Status == "degraded";
@@ -106,6 +138,17 @@ public sealed record AuthResponse
 }
 
 public sealed record LoginRequest(string Username, string Password, string DeviceName);
+
+/// <summary>
+/// <c>server-info.signIn</c>: the sign-in methods this server offers. Plex
+/// and Jellyfin appear only while that integration is connected.
+/// </summary>
+public sealed record SignInMethods
+{
+    public bool Password { get; init; } = true;
+    public bool Plex { get; init; }
+    public bool Jellyfin { get; init; }
+}
 
 public sealed record SetupRequest(string Username, string Password, string DisplayName, string DeviceName);
 

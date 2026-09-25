@@ -85,6 +85,28 @@ public sealed class ApiException : Exception
     public static ApiException Server(string? message, int? statusCode = null, bool hasApiHeader = false) =>
         new(ApiErrorKind.Server, message ?? "Your Marquee server ran into a problem. Try again in a moment.", message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
+    /// <summary>What a Plex sign-in that expired says (410, or past its <c>expiresAt</c>).</summary>
+    public const string PlexSignInExpiredMessage = "The Plex sign-in expired. Try again.";
+
+    /// <summary>A refused Plex/Jellyfin sign-in with no reason given.</summary>
+    public const string SignInRefusedDefaultMessage = "This account can't sign in to this Marquee server.";
+
+    /// <summary>
+    /// 403 from Plex/Jellyfin sign-in or linking: Forbidden, but with the
+    /// server's own reason as the message ("This Plex account doesn't have
+    /// access to this server.", "Ask the admin to add you first.") instead
+    /// of "Only an admin can do that.".
+    /// </summary>
+    public static ApiException Refused(string? message, int? statusCode = null, bool hasApiHeader = false) =>
+        new(ApiErrorKind.Forbidden, message ?? SignInRefusedDefaultMessage, message, statusCode: statusCode, hasApiHeader: hasApiHeader);
+
+    /// <summary>Reads a 403's <c>error</c> as a <see cref="Refused"/>.</summary>
+    public static ApiException RefusedFromResponse(int statusCode, string body, bool hasApiHeader = false) =>
+        Refused(DecodeBody(body)?.Error?.Trim().NonBlank(), statusCode, hasApiHeader);
+
+    public static ApiException PlexSignInExpired(int? statusCode = null, bool hasApiHeader = false) =>
+        new(ApiErrorKind.Expired, PlexSignInExpiredMessage, statusCode: statusCode, hasApiHeader: hasApiHeader);
+
     public static ApiException Network(NetworkFailure failure, string? detail = null, Exception? inner = null) =>
         new(ApiErrorKind.Network, NetworkMessage(failure, detail), failure: failure, inner: inner);
 

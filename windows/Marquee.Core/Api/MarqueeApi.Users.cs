@@ -115,4 +115,30 @@ public sealed class UsersEndpoints(MarqueeApi.Transport transport)
         transport.MutateAsync<AvatarResult>(HttpMethod.Delete, AvatarPath(id), changes: ServerChange.Users, ct: ct);
 
     private static string AvatarPath(Guid id) => $"/users/{MarqueeApi.Segment(id)}/avatar";
+
+    // MARK: Plex / Jellyfin members
+
+    /// <summary>
+    /// <c>GET /users/import/{plex|jellyfin}</c> (admin): the Plex users the
+    /// server is shared with, or the Jellyfin users, each marked when
+    /// already a member.
+    /// </summary>
+    public Task<IReadOnlyList<ImportCandidate>> ImportCandidatesAsync(MediaServerKind server, CancellationToken ct = default) =>
+        transport.GetListAsync<ImportCandidate>(ImportPath(server), timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
+    /// <summary><c>POST /users/import/{plex|jellyfin}</c> (admin): creates linked member accounts for <paramref name="ids"/>.</summary>
+    public Task<ImportUsersResult> ImportAsync(MediaServerKind server, IReadOnlyList<ExternalId> ids, CancellationToken ct = default) =>
+        transport.MutateAsync<ImportUsersResult>(
+            HttpMethod.Post, ImportPath(server), body: new ImportUsersRequest(ids),
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Users, ct: ct);
+
+    /// <summary><c>GET /settings/sign-in</c> (admin). NotFound from servers without Plex/Jellyfin sign-in.</summary>
+    public Task<SignInSettings> SignInSettingsAsync(CancellationToken ct = default) =>
+        transport.GetAsync<SignInSettings>("/settings/sign-in", ct: ct);
+
+    /// <summary><c>PUT /settings/sign-in</c> (admin). The answer's body isn't needed.</summary>
+    public Task SaveSignInSettingsAsync(SignInSettings settings, CancellationToken ct = default) =>
+        transport.MutateAsync<EmptyResponse>(HttpMethod.Put, "/settings/sign-in", body: settings, changes: ServerChange.Users, ct: ct);
+
+    private static string ImportPath(MediaServerKind server) => $"/users/import/{MarqueeApi.Segment(server.WireValue())}";
 }

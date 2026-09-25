@@ -68,7 +68,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         Title = $"Edit {member.Username}";
         DisplayNameBox.Text = member.DisplayName ?? "";
         UsernameBox.Text = member.Username;
-        CurrentPasswordInput.Visibility = member.IsCurrentUser ? Visibility.Visible : Visibility.Collapsed;
+        CurrentPasswordInput.Visibility = NeedsCurrentPassword ? Visibility.Visible : Visibility.Collapsed;
         AutoApprovePanel.Visibility = showsAutoApproval ? Visibility.Visible : Visibility.Collapsed;
         AutoApproveMoviesBox.IsChecked = member.AutoApproveMovies;
         AutoApproveTvBox.IsChecked = member.AutoApproveTv;
@@ -82,6 +82,12 @@ public sealed partial class EditMemberDialog : ContentDialog
     internal UpdateUserResult? Saved { get; private set; }
 
     private bool CanSave => UsernameBox.Text.Trim().Length > 0;
+
+    /// <summary>
+    /// Your own account asks for its current password with a new one,
+    /// unless it has none yet (made by Plex/Jellyfin sign-in or import).
+    /// </summary>
+    private bool NeedsCurrentPassword => member.IsCurrentUser && member.HasPassword != false;
 
     private void OnUsernameChanged(object sender, TextChangedEventArgs e) => Validate();
 
@@ -97,9 +103,9 @@ public sealed partial class EditMemberDialog : ContentDialog
         }
         ErrorBar.IsOpen = false;
         var password = NewPasswordInput.Password.NonBlank();
-        var currentPassword = member.IsCurrentUser ? CurrentPasswordInput.Password.NonBlank() : null;
+        var currentPassword = NeedsCurrentPassword ? CurrentPasswordInput.Password.NonBlank() : null;
         // The server checks it too; asking here saves a round trip.
-        if (password != null && member.IsCurrentUser && currentPassword == null)
+        if (password != null && NeedsCurrentPassword && currentPassword == null)
         {
             ShowError(SettingsViewModel.CurrentPasswordMissingMessage);
             args.Cancel = true;

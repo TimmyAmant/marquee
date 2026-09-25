@@ -7,7 +7,9 @@ import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
 export const API_VERSION_HEADER = "X-Marquee-API";
 export const API_VERSION = 1;
 
-export type ApiErrorCode = CoreErrorCode | "invalid_credentials";
+// "expired": a Plex sign-in handle that's used, unknown or past its 10
+// minutes (POST /auth/plex/poll) — start again.
+export type ApiErrorCode = CoreErrorCode | "expired";
 
 const DEFAULT_STATUS: Record<ApiErrorCode, number> = {
   invalid: 400,
@@ -16,6 +18,7 @@ const DEFAULT_STATUS: Record<ApiErrorCode, number> = {
   forbidden: 403,
   not_found: 404,
   conflict: 409,
+  expired: 410,
   setup_complete: 409,
   rate_limited: 429,
   internal: 500,

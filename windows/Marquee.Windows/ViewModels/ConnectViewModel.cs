@@ -40,9 +40,22 @@ public sealed partial class ConnectViewModel : ObservableObject
         nameof(UnreachableExplanation),
         nameof(UnreachableDetail),
         nameof(HasUnreachableDetail),
+        nameof(OffersPlexSignIn),
+        nameof(OffersJellyfinSignIn),
+        nameof(OffersMediaSignIn),
+        nameof(ShowsPlexButton),
+        nameof(UsesJellyfin),
+        nameof(SignInSubtitle),
+        nameof(UsernameHeader),
+        nameof(PasswordHeader),
+        nameof(SignInLabel),
+        nameof(JellyfinToggleLabel),
     ];
 
     private readonly AppModel model;
+
+    /// <summary>The Plex sign-in in progress; cancelled by Cancel, by leaving the sign-in card, and when the window closes.</summary>
+    private CancellationTokenSource? plexCancellation;
 
     // MARK: Server address
 
@@ -77,7 +90,28 @@ public sealed partial class ConnectViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SignInLabel))]
     [NotifyPropertyChangedFor(nameof(SetupLabel))]
+    [NotifyCanExecuteChangedFor(nameof(SignInWithPlexCommand))]
     private bool isSubmitting;
+
+    // MARK: Plex / Jellyfin sign-in
+
+    /// <summary>"Sign in with Jellyfin" was chosen: the same two fields, posted to <c>/auth/jellyfin</c>.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UsesJellyfin))]
+    [NotifyPropertyChangedFor(nameof(SignInSubtitle))]
+    [NotifyPropertyChangedFor(nameof(UsernameHeader))]
+    [NotifyPropertyChangedFor(nameof(PasswordHeader))]
+    [NotifyPropertyChangedFor(nameof(SignInLabel))]
+    [NotifyPropertyChangedFor(nameof(JellyfinToggleLabel))]
+    private bool isJellyfinMode;
+
+    /// <summary>The browser is open at plex.tv and the poll is running.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsPlexButton))]
+    [NotifyCanExecuteChangedFor(nameof(SignInCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SignInWithPlexCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleJellyfinCommand))]
+    private bool isWaitingForPlex;
 
     public ConnectViewModel(AppModel model)
     {
@@ -117,12 +151,27 @@ public sealed partial class ConnectViewModel : ObservableObject
     public bool IsRetrying => model.IsRetryingConnection;
     public string RetryLabel => IsRetrying ? "Connecting…" : "Retry";
 
+    // MARK: Plex / Jellyfin (server-info.signIn; an older server sends none, so no buttons)
+
+    public bool OffersPlexSignIn => model.Session.ServerInfo?.OffersPlexSignIn == true;
+    public bool OffersJellyfinSignIn => model.Session.ServerInfo?.OffersJellyfinSignIn == true;
+    public bool OffersMediaSignIn => OffersPlexSignIn || OffersJellyfinSignIn;
+    public bool ShowsPlexButton => OffersPlexSignIn && !IsWaitingForPlex;
+
+    /// <summary>The form posts to <c>/auth/jellyfin</c>.</summary>
+    public bool UsesJellyfin => IsJellyfinMode && OffersJellyfinSignIn;
+
+    public string SignInSubtitle => UsesJellyfin ? "Sign in with your Jellyfin account." : "Sign in to your Marquee account.";
+    public string UsernameHeader => UsesJellyfin ? "Jellyfin username" : "Username";
+    public string PasswordHeader => UsesJellyfin ? "Jellyfin password" : "Password";
+    public string JellyfinToggleLabel => UsesJellyfin ? "Sign in with a Marquee account" : "Sign in with Jellyfin";
+
     // MARK: Labels
 
     public bool HasAddressError => AddressError != null;
     public bool HasFormError => FormError != null;
     public string CheckLabel => IsChecking ? "Checking…" : "Check";
-    public string SignInLabel => IsSubmitting ? "Signing in…" : "Sign in";
+    public string SignInLabel => IsSubmitting ? "Signing in…" : (UsesJellyfin ? "Sign in with Jellyfin" : "Sign in");
     public string SetupLabel => IsSubmitting ? "Creating account…" : "Create admin account";
 
     // MARK: Can't-reach card
@@ -195,11 +244,16 @@ public sealed partial class ConnectViewModel : ObservableObject
         }
     }
 
-    /// <summary>app/(auth)/login/login-form.tsx, against <c>POST /api/v1/auth/login</c>.</summary>
-    [RelayCommand]
+    private bool CanSignIn => !IsWaitingForPlex;
+
+    /// <summary>
+    /// app/(auth)/login/login-form.tsx, against <c>POST /api/v1/auth/login</c>,
+    /// or <c>POST /api/v1/auth/jellyfin</c> after "Sign in with Jellyfin".
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSignIn))]
     private async Task SignInAsync()
     {
-        if (IsSubmitting)
+        if (IsSubmitting || IsWaitingForPlex)
         {
             return;
         }
@@ -207,7 +261,9 @@ public sealed partial class ConnectViewModel : ObservableObject
         IsSubmitting = true;
         try
         {
-            var user = await model.Session.LoginAsync(Username, Password);
+            var user = UsesJellyfin
+                ? await model.Session.LoginWithJellyfinAsync(Username, Password)
+                : await model.Session.LoginAsync(Username, Password);
             Password = "";
             model.CompleteSignIn(user, interactive: true);
         }
@@ -256,6 +312,83 @@ public sealed partial class ConnectViewModel : ObservableObject
         }
     }
 
+    private bool CanSignInWithPlex => !IsWaitingForPlex && !IsSubmitting;
+
+    /// <summary>
+    /// "Sign in with Plex": <c>POST /auth/plex/start</c>, the plex.tv page in
+    /// the browser, then <c>POST /auth/plex/poll</c> every 2 seconds until
+    /// Plex says yes (the token is stored like a password sign-in's), the
+    /// server refuses the account, the PIN expires, or Cancel.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSignInWithPlex))]
+    private async Task SignInWithPlexAsync()
+    {
+        if (IsWaitingForPlex || IsSubmitting)
+        {
+            return;
+        }
+        FormError = null;
+        plexCancellation?.Cancel();
+        var cancellation = new CancellationTokenSource();
+        plexCancellation = cancellation;
+        IsWaitingForPlex = true;
+        try
+        {
+            var start = await model.Session.StartPlexSignInAsync(cancellation.Token);
+            if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
+            {
+                FormError = PlexPageUnopenedMessage;
+                return;
+            }
+            var user = await model.Session.FinishPlexSignInAsync(start, ct: cancellation.Token);
+            Password = "";
+            model.CompleteSignIn(user, interactive: true);
+        }
+        catch (ApiException error)
+        {
+            // Cancel (or leaving the card) needs no message.
+            if (!error.IsCancellation && !cancellation.IsCancellationRequested)
+            {
+                FormError = error.Message;
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(plexCancellation, cancellation))
+            {
+                plexCancellation = null;
+                IsWaitingForPlex = false;
+            }
+            cancellation.Dispose();
+        }
+    }
+
+    public const string PlexPageUnopenedMessage = "Couldn't open the Plex sign-in page in your browser.";
+
+    /// <summary>"Cancel" while waiting for Plex.</summary>
+    [RelayCommand]
+    private void CancelPlex() => CancelPlexSignIn();
+
+    /// <summary>Stops a Plex sign-in in progress (Cancel, leaving the card, the window closing).</summary>
+    public void CancelPlexSignIn()
+    {
+        var cancellation = plexCancellation;
+        plexCancellation = null;
+        IsWaitingForPlex = false;
+        cancellation?.Cancel();
+    }
+
+    private bool CanToggleJellyfin => !IsWaitingForPlex;
+
+    /// <summary>"Sign in with Jellyfin" / "Sign in with a Marquee account".</summary>
+    [RelayCommand(CanExecute = nameof(CanToggleJellyfin))]
+    private void ToggleJellyfin()
+    {
+        FormError = null;
+        Password = "";
+        IsJellyfinMode = !IsJellyfinMode;
+    }
+
     [RelayCommand]
     private void ShowSetup()
     {
@@ -294,6 +427,11 @@ public sealed partial class ConnectViewModel : ObservableObject
         {
             // A stale error from the other card would be confusing.
             FormError = null;
+            if (!IsSignInStep)
+            {
+                // Leaving the sign-in card ends a Plex sign-in in progress.
+                CancelPlexSignIn();
+            }
         }
         NotifyDerived();
     }

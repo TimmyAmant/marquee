@@ -9,6 +9,7 @@
 export type CoreErrorCode =
   | "invalid"
   | "unauthorized"
+  | "invalid_credentials"
   | "forbidden"
   | "not_found"
   | "conflict"

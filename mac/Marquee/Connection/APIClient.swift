@@ -130,6 +130,46 @@ struct APIClient: Sendable {
         as type: Response.Type = Response.self
     ) async throws -> Response {
         let normalizedPath = path.hasPrefix("/") ? path : "/" + path
+        let (status, data) = try await perform(method, normalizedPath, query: query, body: body, contentType: contentType, timeout: timeout)
+
+        guard (200..<300).contains(status) else {
+            throw await failure(statusCode: status, body: data)
+        }
+
+        if data.isEmpty, let empty = EmptyResponse() as? Response {
+            return empty
+        }
+        return try Self.decode(Response.self, from: data, path: normalizedPath)
+    }
+
+    /// Like `send`, but hands back the status and body of every 2xx answer,
+    /// and of the non-2xx ones in `accepting`, instead of decoding: for calls
+    /// whose statuses carry meaning of their own (a Plex sign-in poll's
+    /// 202 / 403 / 410). Any other answer throws exactly as `send` would.
+    func exchange(
+        _ method: HTTPMethod,
+        _ path: String,
+        body: Data? = nil,
+        accepting: Set<Int> = [],
+        timeout: TimeInterval = requestTimeout
+    ) async throws -> (status: Int, body: Data) {
+        let normalizedPath = path.hasPrefix("/") ? path : "/" + path
+        let (status, data) = try await perform(method, normalizedPath, body: body, contentType: "application/json", timeout: timeout)
+        guard (200..<300).contains(status) || accepting.contains(status) else {
+            throw await failure(statusCode: status, body: data)
+        }
+        return (status, data)
+    }
+
+    /// One request to `/api/v1` + `normalizedPath`, checked to be Marquee's answer.
+    private func perform(
+        _ method: HTTPMethod,
+        _ normalizedPath: String,
+        query: [String: String?] = [:],
+        body: Data?,
+        contentType: String,
+        timeout: TimeInterval
+    ) async throws -> (Int, Data) {
         var request = try makeRequest(method, Self.basePath + normalizedPath, query: query, accept: "application/json", timeout: timeout)
         if let body {
             request.httpBody = body
@@ -162,18 +202,15 @@ struct APIClient: Sendable {
         if !hasAPIHeader {
             Self.logger.warning("\(method.rawValue, privacy: .public) \(normalizedPath, privacy: .public) answered without \(Self.apiHeader, privacy: .public)")
         }
+        return (http.statusCode, data)
+    }
 
-        guard (200..<300).contains(http.statusCode) else {
-            throw await failure(statusCode: http.statusCode, body: data)
-        }
-
-        if data.isEmpty, let empty = EmptyResponse() as? Response {
-            return empty
-        }
+    /// Decodes a response body; a shape this app can't read is `.server`.
+    static func decode<Response: Decodable>(_ type: Response.Type, from data: Data, path: String) throws -> Response {
         do {
-            return try Self.decoder.decode(Response.self, from: data)
+            return try decoder.decode(Response.self, from: data)
         } catch {
-            Self.logger.error("Decoding \(normalizedPath, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+            logger.error("Decoding \(path, privacy: .public) failed: \(String(describing: error), privacy: .public)")
             throw APIError.server("Your Marquee server sent a response this version of the app couldn't read.")
         }
     }

@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { getClientIp } from "@/lib/rate-limit";
 import { authenticateWithPassword } from "@/lib/auth/password-login";
+import { consumeLoginTicket } from "@/lib/auth/login-tickets";
 
 const REMEMBER_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const DEFAULT_MAX_AGE = 60 * 60 * 24; // 1 day when "keep me signed in" is unchecked
@@ -49,6 +50,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    // Plex/Jellyfin sign-in (lib/auth/media-signin.ts). The server checks the
+    // person with Plex or Jellyfin first, then issues a one-time login ticket
+    // for the account it settled on; this provider only trades that ticket
+    // for a session. A ticket is 256 random bits, lives 2 minutes, and is
+    // gone the moment it's used — see lib/auth/login-tickets.ts.
+    Credentials({
+      id: "media-server",
+      name: "Plex or Jellyfin",
+      credentials: {
+        ticket: { label: "Ticket", type: "text" },
+        remember: { label: "Remember me", type: "text" },
+      },
+      authorize: async (credentials) => {
+        const userId = consumeLoginTicket(credentials?.ticket);
+        if (!userId) return null;
+        const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        if (!user) return null;
+        return {
+          id: user.id,
+          username: user.username,
+          name: user.displayName ?? undefined,
+          rememberMe: credentials?.remember === "on",
+          role: user.role,
+        };
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -62,8 +89,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       if (!token.userId) return token;
 
-      // Checked on every request rather than trusted from the 30-day JWT:
-      // a removed member, or anyone signed in before their password was
+      // Checked on every request rather than trusted from the 30-day JWT,
+      // whichever provider signed the browser in (password, or a Plex/Jellyfin
+      // ticket — both leave the account id in token.userId): a removed member, or anyone signed in before their password was
       // changed, loses their browser session right away (returning null
       // clears the cookie) — the same moment their API tokens are revoked.
       // Role is read fresh here too, since it can change after sign-in

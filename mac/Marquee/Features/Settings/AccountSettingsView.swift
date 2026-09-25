@@ -39,6 +39,14 @@ struct AccountSettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .cardSurface()
 
+                // Servers with Plex/Jellyfin sign-in send `linked` on /me.
+                if viewer.linked != nil {
+                    SettingsSectionLabel(text: "Linked accounts")
+                    LinkedAccountsCard(viewer: viewer)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .cardSurface()
+                }
+
                 SettingsSectionLabel(text: "Notifications")
                 NotificationSettingsCard()
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -76,6 +84,13 @@ struct AccountSettingsView: View {
                     CreateMemberForm()
                         .frame(maxWidth: .infinity)
                         .cardSurface()
+
+                    if viewer.linked != nil {
+                        SettingsSectionLabel(text: "Plex and Jellyfin members")
+                        MediaServerMembersCard()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .cardSurface()
+                    }
                 }
             }
         }
@@ -90,6 +105,10 @@ struct AccountSettingsView: View {
             } catch {
                 if members == nil { loadError = error.localizedDescription }
             }
+        }
+        .task {
+            // Which of Plex/Jellyfin are connected now (server-info.signIn).
+            await model.session.refreshInfo()
         }
         .sheet(item: $editing) { member in
             EditMemberSheet(member: member)
@@ -133,6 +152,12 @@ struct AccountSettingsView: View {
                 }
             }
             Spacer()
+            if member.linked?.plex == true {
+                TonePill(text: "Plex", tone: .tracked, small: true)
+            }
+            if member.linked?.jellyfin == true {
+                TonePill(text: "Jellyfin", tone: .tracked, small: true)
+            }
             if member.isAdmin {
                 TonePill(text: "Admin", tone: .accent, small: true)
             }
@@ -385,6 +410,11 @@ private struct EditMemberSheet: View {
     @State private var pending = false
     @State private var error: String?
 
+    /// Your own account, unless it has no password yet (`hasPassword` false).
+    private var needsCurrentPassword: Bool {
+        member.isCurrentUser && member.hasPassword != false
+    }
+
     /// Auto-approval is an admin setting, and only for non-admin accounts.
     private var showsAutoApproval: Bool {
         model.viewer?.isAdmin == true && !member.isAdmin
@@ -400,7 +430,8 @@ private struct EditMemberSheet: View {
             SettingsField(label: "New password", text: $password, placeholder: "Leave blank to keep current password", secure: true)
             // The server wants it whenever you set a new password on your
             // own account; the admin resetting a member's doesn't know theirs.
-            if member.isCurrentUser {
+            // An account made by Plex/Jellyfin sign-in has none to give.
+            if needsCurrentPassword {
                 SettingsField(label: "Current password", text: $currentPassword, placeholder: "Needed only when setting a new password", secure: true)
             }
 
@@ -448,7 +479,7 @@ private struct EditMemberSheet: View {
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
             displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines),
             password: password.nonBlank,
-            currentPassword: member.isCurrentUser ? currentPassword.nonBlank : nil,
+            currentPassword: needsCurrentPassword ? currentPassword.nonBlank : nil,
             autoApproveMovies: showsAutoApproval ? autoApproveMovies : nil,
             autoApproveTv: showsAutoApproval ? autoApproveTv : nil
         )

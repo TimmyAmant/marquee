@@ -212,6 +212,8 @@ export function householdMember(row: HouseholdMemberRow, currentUserId: string):
     createdAt: isoRequired(row.createdAt),
     isCurrentUser: row.id === currentUserId,
     avatarUrl: avatarPath(row, "/api/v1"),
+    linked: { plex: row.plexLinked, jellyfin: row.jellyfinLinked },
+    hasPassword: row.hasPassword,
   };
 }
 

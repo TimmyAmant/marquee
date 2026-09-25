@@ -63,7 +63,7 @@
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsSignInStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="Welcome back" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Sign in to your Marquee account."
+                    Text="{x:Bind ViewModel.SignInSubtitle, Mode=OneWay}"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Grid>
@@ -97,12 +97,12 @@
                     Command="{x:Bind ViewModel.RetryCommand}"
                     Visibility="{x:Bind ViewModel.CanRetryRestore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <TextBox
-                    Header="Username"
+                    Header="{x:Bind ViewModel.UsernameHeader, Mode=OneWay}"
                     Text="{x:Bind ViewModel.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     IsSpellCheckEnabled="False"
                     KeyDown="OnSignInKeyDown" />
                 <PasswordBox
-                    Header="Password"
+                    Header="{x:Bind ViewModel.PasswordHeader, Mode=OneWay}"
                     Password="{x:Bind ViewModel.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     KeyDown="OnSignInKeyDown" />
                 <InfoBar
@@ -120,6 +120,45 @@
                     Command="{x:Bind ViewModel.SignInCommand}"
                     Style="{StaticResource AccentButtonStyle}"
                     HorizontalAlignment="Stretch" />
+                <!--
+                  Sign in with Plex / Jellyfin, when server-info.signIn offers
+                  them (an older server sends no signIn, so none of this shows).
+                -->
+                <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersMediaSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="or"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        HorizontalAlignment="Center" />
+                    <Button
+                        Content="Sign in with Plex"
+                        Command="{x:Bind ViewModel.SignInWithPlexCommand}"
+                        Visibility="{x:Bind ViewModel.ShowsPlexButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch" />
+                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.IsWaitingForPlex, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <ProgressRing IsActive="{x:Bind ViewModel.IsWaitingForPlex, Mode=OneWay}" Width="16" Height="16" />
+                                <TextBlock Text="Waiting for Plex…" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.CancelPlexCommand}" />
+                        </Grid>
+                        <TextBlock
+                            Text="Finish signing in in the browser window that just opened."
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button
+                        Content="{x:Bind ViewModel.JellyfinToggleLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.ToggleJellyfinCommand}"
+                        Visibility="{x:Bind ViewModel.OffersJellyfinSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch" />
+                </StackPanel>
                 <!-- Setup is only offered while the server has no accounts. -->
                 <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock

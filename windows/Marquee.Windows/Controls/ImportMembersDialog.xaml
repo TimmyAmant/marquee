@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings > Account > "Import from Plex" / "Import from Jellyfin" (admin):
+  everyone the admin shares the Plex server with, or every Jellyfin user,
+  each with a checkbox. Existing members are listed, ticked and disabled,
+  with "Already a member". Import creates a member account linked to each
+  person picked; a refusal shows in the InfoBar with the dialog kept open.
+  The code-behind sets the title and loads the list when the dialog opens.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.ImportMembersDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d"
+    PrimaryButtonText="Import"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="False"
+    PrimaryButtonClick="OnImportClick"
+    Opened="OnOpened"
+    Closing="OnDialogClosing">
+
+    <StackPanel Spacing="12" MinWidth="400">
+        <TextBlock
+            x:Name="IntroText"
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+        <ProgressRing x:Name="LoadingRing" IsActive="True" Width="20" Height="20" HorizontalAlignment="Left" />
+        <TextBlock
+            x:Name="EmptyText"
+            Visibility="Collapsed"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            TextWrapping="Wrap" />
+        <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="CandidateList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ImportCandidateRow">
+                        <Grid ColumnSpacing="8" Padding="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox
+                                Grid.Column="0"
+                                IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                IsEnabled="{x:Bind CanSelect}">
+                                <StackPanel Spacing="1">
+                                    <TextBlock Text="{x:Bind Label}" Style="{StaticResource BodyTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Text="{x:Bind UsernameLine}"
+                                        Visibility="{x:Bind UsernameLine, Converter={StaticResource StringToVisibility}}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </CheckBox>
+                            <controls:TonePill
+                                Grid.Column="1"
+                                Text="{x:Bind MemberTag}"
+                                Tone="{x:Bind MemberTone}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        <InfoBar
+            x:Name="ErrorBar"
+            Severity="Error"
+            IsOpen="False"
+            IsClosable="False" />
+    </StackPanel>
+</ContentDialog>

@@ -39,6 +39,44 @@ public sealed class AuthEndpoints(MarqueeApi.Transport transport)
     public Task<AuthResponse> SetupAsync(string username, string password, string displayName, string deviceName, CancellationToken ct = default) =>
         transport.PostAsync<AuthResponse>("/auth/setup", new SetupRequest(username, password, displayName, deviceName), ct: ct);
 
+    /// <summary>
+    /// <c>POST /auth/plex/start</c> (public, rate-limited): open
+    /// <c>AuthUrl</c> in the browser, then <see cref="PlexPollAsync"/> with
+    /// the handle. Offered only when <c>server-info.signIn.plex</c>.
+    /// </summary>
+    public Task<PlexSignInStart> PlexStartAsync(CancellationToken ct = default) =>
+        transport.PostAsync<PlexSignInStart>("/auth/plex/start", timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
+    /// <summary>
+    /// <c>POST /auth/plex/poll</c>: one poll. Null while Plex hasn't said yes
+    /// yet (202), the login response once it has (200). Throws Forbidden
+    /// with the server's reason (403) and Expired (410).
+    /// </summary>
+    public async Task<AuthResponse?> PlexPollAsync(string handle, string deviceName, CancellationToken ct = default)
+    {
+        var raw = await transport.ExchangeAsync(
+            HttpMethod.Post, "/auth/plex/poll", new PlexPollRequest(handle, deviceName),
+            PlexPoll.Answers, MarqueeApi.Timeouts.Integrations, ct).ConfigureAwait(false);
+        return PlexPoll.Step(raw) is { } done ? ApiClient.Decode<AuthResponse>(done) : null;
+    }
+
+    /// <summary>
+    /// <c>POST /auth/jellyfin</c> (public, rate-limited): a Jellyfin username
+    /// and password, checked by the server against its Jellyfin. Errors:
+    /// InvalidCredentials, RateLimited, Forbidden with the server's reason (403).
+    /// </summary>
+    public async Task<AuthResponse> JellyfinAsync(string username, string password, string deviceName, CancellationToken ct = default)
+    {
+        var raw = await transport.ExchangeAsync(
+            HttpMethod.Post, "/auth/jellyfin", new JellyfinLoginRequest(username, password, deviceName),
+            [403], MarqueeApi.Timeouts.Integrations, ct).ConfigureAwait(false);
+        if (raw.StatusCode == 403)
+        {
+            throw ApiException.RefusedFromResponse(raw.StatusCode, raw.BodyText, raw.HasApiHeader);
+        }
+        return ApiClient.Decode<AuthResponse>(raw);
+    }
+
     /// <summary><c>POST /auth/logout</c>: revokes this token only. Nothing on screen changes, so nothing is recorded.</summary>
     public Task LogoutAsync(CancellationToken ct = default) =>
         transport.MutateAsync<OK>(HttpMethod.Post, "/auth/logout", ct: ct);

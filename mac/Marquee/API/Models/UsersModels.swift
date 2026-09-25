@@ -17,6 +17,10 @@ extension API {
         let isCurrentUser: Bool
         /// The profile photo (see `User.avatarUrl`).
         var avatarUrl: String? = nil
+        /// The "Plex" / "Jellyfin" tags; nil from older servers.
+        var linked: LinkedAccounts? = nil
+        /// See `User.hasPassword`; nil from older servers.
+        var hasPassword: Bool? = nil
 
         var isAdmin: Bool { role == .admin }
         var label: String { displayName.nonBlank ?? username }

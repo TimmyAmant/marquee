@@ -70,6 +70,7 @@ struct MarqueeAPI: Sendable {
     var calendar: CalendarEndpoints { CalendarEndpoints(transport: transport) }
     var activity: ActivityEndpoints { ActivityEndpoints(transport: transport) }
     var users: UsersEndpoints { UsersEndpoints(transport: transport) }
+    var links: LinksEndpoints { LinksEndpoints(transport: transport) }
     var integrations: IntegrationsEndpoints { IntegrationsEndpoints(transport: transport) }
     var jobs: JobsEndpoints { JobsEndpoints(transport: transport) }
     var about: AboutEndpoints { AboutEndpoints(transport: transport) }
@@ -143,6 +144,30 @@ struct MarqueeAPI: Sendable {
                 await events.record(changes)
             }
             return response
+        }
+
+        /// A call whose statuses carry meaning of their own (a Plex sign-in
+        /// poll's 202 / 403 / 410): the raw status and body of any 2xx answer
+        /// or one in `accepting`; see `APIClient.exchange`. Nothing is
+        /// recorded — the caller records once it knows the call succeeded.
+        @concurrent
+        func exchange(
+            _ method: HTTPMethod,
+            _ path: String,
+            body: (any Encodable & Sendable)? = nil,
+            accepting: Set<Int>,
+            timeout: TimeInterval = Timeout.standard
+        ) async throws -> (status: Int, body: Data) {
+            let client = try requireClient()
+            let data = try body.map(Self.encode)
+            return try await client.exchange(method, path, body: data, accepting: accepting, timeout: timeout)
+        }
+
+        /// Records `changes` after a call made with `exchange` succeeded.
+        func record(_ changes: ServerEvents.Change) async {
+            if !changes.isEmpty, let events {
+                await events.record(changes)
+            }
         }
 
         /// A file rather than JSON, at a server-relative path the server

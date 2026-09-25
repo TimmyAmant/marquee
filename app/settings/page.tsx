@@ -5,6 +5,9 @@ import { HouseholdMembersList } from "./household-members-list";
 import { SignOutButton } from "./sign-out-button";
 import { PushSettings } from "./push-settings";
 import { listHouseholdMembers } from "./users-actions";
+import { LinkedAccounts } from "./linked-accounts";
+import { ImportMembers } from "./import-members";
+import { getMediaServerSignup, getSignInMethods } from "@/lib/auth/media-signin";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 
@@ -12,8 +15,13 @@ export default async function AccountSettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const members = await listHouseholdMembers();
   const isAdmin = session.user.role === "admin";
+  const [members, methods, mediaServerSignup] = await Promise.all([
+    listHouseholdMembers(),
+    getSignInMethods(),
+    isAdmin ? getMediaServerSignup() : Promise.resolve(true),
+  ]);
+  const available = { plex: methods.plex, jellyfin: methods.jellyfin };
   // Your own row is always in the list (members see only theirs).
   const me = members.find((member) => member.id === session.user.id);
 
@@ -52,6 +60,18 @@ export default async function AccountSettingsPage() {
         </form>
       </div>
 
+      {me && (available.plex || available.jellyfin || me.plexLinked || me.jellyfinLinked) && (
+        <>
+          <h2 className="mt-10 font-display text-xl text-text-primary">Linked accounts</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            Sign in with the account you use for the household&apos;s media server.
+          </p>
+          <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+            <LinkedAccounts linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked }} available={available} />
+          </div>
+        </>
+      )}
+
       <h2 className="mt-10 font-display text-xl text-text-primary">Notifications</h2>
       <p className="mt-2 text-sm text-text-secondary">
         Requests approved or declined, and titles ready to watch, on this device.
@@ -80,6 +100,19 @@ export default async function AccountSettingsPage() {
           <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
             <CreateUserForm />
           </div>
+
+          {(available.plex || available.jellyfin) && (
+            <>
+              <h2 className="mt-10 font-display text-xl text-text-primary">Import from your media server</h2>
+              <p className="mt-2 text-sm text-text-secondary">
+                Add the people you already share your server with. They sign in with that account — no
+                password to hand out.
+              </p>
+              <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
+                <ImportMembers available={available} mediaServerSignup={mediaServerSignup} />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

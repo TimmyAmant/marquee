@@ -197,15 +197,16 @@ function EditMemberForm({
           type="password"
           name="password"
           autoComplete="new-password"
-          placeholder="Leave blank to keep current password"
+          placeholder={member.hasPassword ? "Leave blank to keep current password" : "Leave blank for no password"}
           minLength={8}
           className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
         />
       </label>
       {/* Only asked for on your own account (the server checks it whenever a
           new password is set there); the admin resetting a member's password
-          doesn't know theirs. */}
-      {isSelf && (
+          doesn't know theirs, and an account made by Plex/Jellyfin sign-in
+          has none yet. */}
+      {isSelf && member.hasPassword && (
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
           Current password
           <input
@@ -297,6 +298,16 @@ export function HouseholdMembersList({
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {member.plexLinked && (
+                <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
+                  Plex
+                </span>
+              )}
+              {member.jellyfinLinked && (
+                <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
+                  Jellyfin
+                </span>
+              )}
               {member.role === "admin" && (
                 <span className="rounded-full border border-accent/50 px-2.5 py-0.5 text-xs text-accent">
                   Admin

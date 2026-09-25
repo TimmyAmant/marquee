@@ -146,6 +146,33 @@ export const ERROR_REFERENCE: ErrorReferenceCategory[] = [
         meaning: "Non-admin accounts can't edit anyone else's profile.",
         whatToDo: "Ask the admin to make the change from Settings → Household members.",
       },
+      {
+        message: "This Plex account doesn't have access to this server.",
+        meaning:
+          "You signed in to Plex with an account the admin's Plex server isn't shared with, so it can't be used here.",
+        whatToDo: "Sign in to Plex with the account the admin shares their server with, or ask them to share it with you.",
+      },
+      {
+        message: "Ask the admin to add you first.",
+        meaning:
+          "Plex/Jellyfin checked out, but there's no Marquee account for you yet and the admin has turned off new accounts from Plex/Jellyfin sign-in.",
+        whatToDo: "Ask the admin to import you (Settings → Account → Import from your media server) or turn new accounts back on.",
+      },
+      {
+        message: "Incorrect Jellyfin username or password",
+        meaning: "The household's Jellyfin server didn't accept those credentials (or that Jellyfin user is disabled).",
+        whatToDo: "Use the username and password you use for Jellyfin itself.",
+      },
+      {
+        message: "That Plex sign-in expired. Try again.",
+        meaning: "Plex sign-in waits 10 minutes for you to approve it on plex.tv, and each one can only be used once.",
+        whatToDo: "Start again with Sign in with Plex and finish in the tab that opens.",
+      },
+      {
+        message: "This Plex account is already linked to another Marquee account.",
+        meaning: "Each Plex (or Jellyfin) account can sign in to only one Marquee account.",
+        whatToDo: "Unlink it from the other account first, or ask the admin.",
+      },
     ],
   },
   {
