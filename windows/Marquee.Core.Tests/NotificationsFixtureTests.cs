@@ -24,7 +24,7 @@ public sealed class NotificationsFixtureTests
         Assert.Equal("The Matrix", item.Title);
         Assert.Equal(NotificationEventType.RequestRejected, item.EventType);
         Assert.Equal("👎", item.EventType.Emoji);
-        Assert.Equal("\"The Matrix\" was declined.", item.Message);
+        Assert.Equal("\"The Matrix\" was declined: Not enough space on the server right now", item.Message);
         Assert.False(item.Read);
         Assert.Equal(Json.ParseDate("2026-09-17T17:12:41.470Z"), item.CreatedAt);
         Assert.Equal(new TitleId(MediaType.Movie, 603), item.TitleId);
@@ -62,7 +62,7 @@ public sealed class NotificationsFixtureTests
     {
         // Like Swift's synthesized Decodable: a message the server left out
         // is a broken response, not an empty string.
-        var json = Fixtures.Read("notifications").Replace("\"message\": \"\\\"The Matrix\\\" was declined.\",", "", StringComparison.Ordinal);
+        var json = Fixtures.Read("notifications").Replace("\"message\": \"\\\"The Matrix\\\" was declined: Not enough space on the server right now\",", "", StringComparison.Ordinal);
         Assert.Throws<System.Text.Json.JsonException>(() => Json.Decode<NotificationList>(json));
     }
 

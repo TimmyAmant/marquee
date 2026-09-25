@@ -34,7 +34,7 @@ public sealed class RequestsFixtureTests
         Assert.Equal(Json.ParseDate("2026-09-17T18:00:02.118Z"), request.ReviewedAt);
         Assert.Equal(new TitleId(MediaType.Movie, 603), request.TitleId);
         Assert.Equal("movie:603", request.TitleId.ToString());
-        // Older server: the key is absent, which reads as no reason.
+        // An approved request carries no reason.
         Assert.Null(request.RejectionReason);
     }
 
@@ -53,8 +53,8 @@ public sealed class RequestsFixtureTests
         Assert.Equal("member1", request.RequestedBy.Label);
         Assert.Equal(Json.ParseDate("2026-09-17T17:12:41.415Z"), request.CreatedAt);
         Assert.Equal(new TitleId(MediaType.Movie, 603), request.TitleId);
-        // Older server: no saved reasons to offer.
-        Assert.Empty(pending.RejectionReasons);
+        Assert.Equal(5, pending.RejectionReasons.Count);
+        Assert.Equal("Already available on a streaming service we have", pending.RejectionReasons[0]);
 
         Assert.Equal("http://192.168.1.10:8989/add/new?term=The%20Matrix", pending.ManualSonarrAddUrl(request)?.AbsoluteUri);
     }
@@ -94,7 +94,7 @@ public sealed class RequestsFixtureTests
         Assert.Null(request.RequestedBy.UserId);
         Assert.Equal("member1", request.RequestedBy.Label);
         Assert.Equal(Json.ParseDate("2026-09-17T17:12:41.468Z"), request.ReviewedAt);
-        Assert.Null(request.RejectionReason);
+        Assert.Equal("Not enough space on the server right now", request.RejectionReason);
     }
 
     [Fact]
