@@ -7,8 +7,9 @@
   left, with the frosted rail floating over its left edge) or the auth
   frame with ConnectPage (everything before sign-in). Both stay in the
   tree and swap visibility, which keeps the sign-in form's state across a
-  failed attempt and lets the shell come back instantly. The menu panel
-  sits over both rows and is collapsed until the rail opens it.
+  failed attempt and lets the shell come back instantly. The labeled menu
+  panel sits over both rows and is collapsed until the rail's menu button
+  opens it.
 
   Text, badges and the current-item styling are set from code-behind
   rather than bound: Window is not a FrameworkElement, so keeping its XAML
@@ -293,9 +294,13 @@
             <Frame x:Name="ContentFrame" Margin="72,0,0,0" Navigated="OnContentNavigated" />
 
             <!--
-              The rail: profile, Search, Discover, the section you're in when
-              it's another one, and the menu button. Resting the pointer on
-              it opens the menu.
+              The rail is the menu: every destination, one click away, in
+              the menu's order (profile; Search, Discover; Movies, Series;
+              Favorites, Calendar, Requests), groups split by a short
+              hairline, then the menu button that opens the labeled panel.
+              Hovering or focusing an icon shows its name to the right.
+              Each section button's Tag is its Section.Tag(); the code-behind
+              makes the current one a solid pill.
             -->
             <Border
                 x:Name="Rail"
@@ -306,25 +311,28 @@
                 CornerRadius="28"
                 BorderThickness="1"
                 BorderBrush="{ThemeResource MarqueeGlassBorderBrush}"
-                Background="{ThemeResource MarqueeGlassBrush}"
-                PointerEntered="OnRailPointerEntered"
-                PointerExited="OnRailPointerExited">
+                Background="{ThemeResource MarqueeGlassBrush}">
                 <StackPanel Spacing="4" XYFocusKeyboardNavigation="Enabled">
                     <Button
                         x:Name="RailProfileButton"
                         Style="{StaticResource NavRailButtonStyle}"
                         Margin="0,0,0,4"
                         Click="OnProfileClick"
-                        AutomationProperties.Name="Account and settings">
+                        AutomationProperties.Name="Account and settings"
+                        ToolTipService.ToolTip="Settings"
+                        ToolTipService.Placement="Right">
                         <!-- The 36 round photo (or initials on the accent gradient), inside a 2px white 15% ring. -->
                         <controls:AvatarView x:Name="RailAvatar" Diameter="40" RingThickness="2" />
                     </Button>
+
                     <Button
                         x:Name="RailSearchButton"
                         Style="{StaticResource NavRailButtonStyle}"
+                        Tag="search"
                         Click="OnSearchNavClick"
                         AutomationProperties.Name="Search"
-                        ToolTipService.ToolTip="Search">
+                        ToolTipService.ToolTip="Search"
+                        ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE721;" FontSize="19" />
                     </Button>
                     <Button
@@ -333,19 +341,68 @@
                         Tag="discover"
                         Click="OnSectionNavClick"
                         AutomationProperties.Name="Discover"
-                        ToolTipService.ToolTip="Discover">
+                        ToolTipService.ToolTip="Discover"
+                        ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE909;" FontSize="19" />
                     </Button>
-                    <!-- Always the current item when it shows; its glyph, name and tooltip follow the section. -->
+
+                    <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
+
                     <Button
-                        x:Name="RailSectionButton"
-                        Style="{StaticResource NavRailButtonCurrentStyle}"
+                        x:Name="RailMoviesButton"
+                        Style="{StaticResource NavRailButtonStyle}"
+                        Tag="movies"
+                        Click="OnSectionNavClick"
+                        AutomationProperties.Name="Movies"
+                        ToolTipService.ToolTip="Movies"
+                        ToolTipService.Placement="Right">
+                        <FontIcon Glyph="&#xE714;" FontSize="19" />
+                    </Button>
+                    <Button
+                        x:Name="RailSeriesButton"
+                        Style="{StaticResource NavRailButtonStyle}"
+                        Tag="series"
+                        Click="OnSectionNavClick"
+                        AutomationProperties.Name="Series"
+                        ToolTipService.ToolTip="Series"
+                        ToolTipService.Placement="Right">
+                        <FontIcon Glyph="&#xE7F4;" FontSize="19" />
+                    </Button>
+
+                    <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
+
+                    <Button
+                        x:Name="RailFavoritesButton"
+                        Style="{StaticResource NavRailButtonStyle}"
+                        Tag="favorites"
+                        Click="OnSectionNavClick"
+                        AutomationProperties.Name="Favorites"
+                        ToolTipService.ToolTip="Favorites"
+                        ToolTipService.Placement="Right">
+                        <FontIcon Glyph="&#xEB51;" FontSize="19" />
+                    </Button>
+                    <Button
+                        x:Name="RailCalendarButton"
+                        Style="{StaticResource NavRailButtonStyle}"
+                        Tag="calendar"
+                        Click="OnSectionNavClick"
+                        AutomationProperties.Name="Calendar"
+                        ToolTipService.ToolTip="Calendar"
+                        ToolTipService.Placement="Right">
+                        <FontIcon Glyph="&#xE787;" FontSize="19" />
+                    </Button>
+                    <Button
+                        x:Name="RailRequestsButton"
+                        Style="{StaticResource NavRailButtonStyle}"
                         HorizontalContentAlignment="Stretch"
                         VerticalContentAlignment="Stretch"
-                        Visibility="Collapsed"
-                        Click="OnRailSectionClick">
+                        Tag="requests"
+                        Click="OnSectionNavClick"
+                        AutomationProperties.Name="Requests"
+                        ToolTipService.ToolTip="Requests"
+                        ToolTipService.Placement="Right">
                         <Grid>
-                            <FontIcon x:Name="RailSectionIcon" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <FontIcon Glyph="&#xE8FD;" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <!-- An admin's pending requests: an 8px accent dot with a 2px bg1 ring. -->
                             <Ellipse
                                 x:Name="RailRequestsDot"
@@ -360,12 +417,16 @@
                                 Visibility="Collapsed" />
                         </Grid>
                     </Button>
+
+                    <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
+
                     <Button
                         x:Name="RailMenuButton"
                         Style="{StaticResource NavRailButtonStyle}"
                         Click="OnRailMenuClick"
                         AutomationProperties.Name="Open menu"
-                        ToolTipService.ToolTip="Menu">
+                        ToolTipService.ToolTip="Menu"
+                        ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE700;" FontSize="19" />
                     </Button>
                 </StackPanel>
@@ -375,9 +436,10 @@
         <Frame x:Name="AuthFrame" Grid.Row="1" />
 
         <!--
-          The menu, over everything (nothing reflows). The transparent layer
-          behind the panel is the click outside that closes it; the panel's
-          fade, slide and scale are storyboards built in code.
+          The labeled menu, over everything (nothing reflows), opened only by
+          the rail's menu button. The transparent layer behind the panel is
+          the click outside that closes it; the panel's fade, slide and scale
+          are storyboards built in code.
         -->
         <Grid x:Name="MenuLayer" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed">
             <Border Background="Transparent" PointerPressed="OnMenuDismissPressed" />
@@ -394,10 +456,7 @@
                 Background="{ThemeResource MarqueeGlassBrush}"
                 Opacity="0"
                 RenderTransformOrigin="0,0.5"
-                TabFocusNavigation="Cycle"
-                PointerEntered="OnMenuPointerEntered"
-                PointerMoved="OnMenuPointerMoved"
-                PointerExited="OnMenuPointerExited">
+                TabFocusNavigation="Cycle">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />

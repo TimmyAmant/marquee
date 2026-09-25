@@ -7,7 +7,6 @@ using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
 using Marquee.Windows.Views;
 using Microsoft.UI.Composition.SystemBackdrops;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -23,32 +22,23 @@ namespace Marquee.Windows;
 /// The one window: the sign-in flow until the session is ready, then the
 /// shell: a top bar (back, wordmark, search box, bell), the page frame, and
 /// the website's Plex-style navigation (components/nav-menu.tsx): a frosted
-/// rail floating at the left edge that opens into a frosted menu panel over
-/// the page. Implements <see cref="INavigator"/> for the model, which is how
-/// view models open titles and sections without knowing about frames.
+/// rail floating at the left edge that is the menu itself (one icon per
+/// destination, each one click away), and a labeled menu panel over the page
+/// that only its menu button opens. Implements <see cref="INavigator"/> for
+/// the model, which is how view models open titles and sections without
+/// knowing about frames.
 ///
 /// To add a page: map its section in <see cref="PageFor(Section)"/> or its
 /// route in <see cref="PageFor(Route)"/>; everything else (current-item
 /// styling, back button, badges) already works. A new section also needs a
-/// menu row in MainWindow.xaml whose <c>Tag</c> is <see cref="SectionExtensions.Tag"/>,
-/// listed in <see cref="menuRows"/>.
+/// rail button and a menu row in MainWindow.xaml whose <c>Tag</c> is
+/// <see cref="SectionExtensions.Tag"/>, listed in <see cref="railButtons"/>
+/// and <see cref="menuRows"/>.
 /// </summary>
 public sealed partial class MainWindow : Window, INavigator
 {
     /// <summary>The website's type-ahead waits this long after the last keystroke (components/search-bar.tsx).</summary>
     private static readonly TimeSpan SuggestDelay = TimeSpan.FromMilliseconds(250);
-
-    /// <summary>
-    /// How long the pointer rests on the rail before it opens into the menu,
-    /// so sweeping past the left edge doesn't throw a panel over the page.
-    /// </summary>
-    private static readonly TimeSpan MenuHoverOpenDelay = TimeSpan.FromMilliseconds(220);
-
-    /// <summary>
-    /// Grace period after the pointer leaves the open menu, so overshooting
-    /// its edge by a few pixels doesn't snap it shut.
-    /// </summary>
-    private static readonly TimeSpan MenuHoverCloseDelay = TimeSpan.FromMilliseconds(260);
 
     /// <summary>The panel fades, slides and scales in (and the rail fades out) over this long, easing out.</summary>
     private static readonly TimeSpan MenuAnimationDuration = TimeSpan.FromMilliseconds(200);
@@ -65,28 +55,18 @@ public sealed partial class MainWindow : Window, INavigator
     private readonly Style menuRowStyle;
     private readonly Style menuRowCurrentStyle;
 
-    /// <summary>The menu's section rows; each one's <c>Tag</c> is its section's <see cref="SectionExtensions.Tag"/>.</summary>
+    /// <summary>The rail's section buttons; each one's <c>Tag</c> is its section's <see cref="SectionExtensions.Tag"/>.</summary>
+    private readonly Button[] railButtons;
+
+    /// <summary>The menu's section rows, tagged the same way.</summary>
     private readonly Button[] menuRows;
 
     private readonly CompositeTransform menuPanelTransform;
     private readonly Storyboard menuOpenStoryboard;
     private readonly Storyboard menuCloseStoryboard;
-    private readonly DispatcherQueueTimer menuOpenTimer;
-    private readonly DispatcherQueueTimer menuCloseTimer;
 
     private bool shellShown;
     private bool menuOpen;
-
-    /// <summary>Whether the mouse is over the rail's rectangle, tracked through the open panel too (which covers it).</summary>
-    private bool pointerOverRail;
-
-    /// <summary>
-    /// Set when the menu closes, or a rail item is clicked, with the mouse on
-    /// the rail: the rail doesn't unfold again until the pointer has left it,
-    /// so picking a row that happens to sit over the rail doesn't reopen the
-    /// menu on the next nudge of the mouse.
-    /// </summary>
-    private bool hoverOpenSuppressed;
 
     /// <summary>The section whose page (or a page pushed on it) is showing.</summary>
     private Section currentSection = Section.Discover;
@@ -113,6 +93,16 @@ public sealed partial class MainWindow : Window, INavigator
         railCurrentStyle = (Style)Root.Resources["NavRailButtonCurrentStyle"];
         menuRowStyle = (Style)Root.Resources["NavMenuRowStyle"];
         menuRowCurrentStyle = (Style)Root.Resources["NavMenuRowCurrentStyle"];
+        railButtons =
+        [
+            RailSearchButton,
+            RailDiscoverButton,
+            RailMoviesButton,
+            RailSeriesButton,
+            RailFavoritesButton,
+            RailCalendarButton,
+            RailRequestsButton,
+        ];
         menuRows =
         [
             MenuSearchButton,
@@ -134,11 +124,6 @@ public sealed partial class MainWindow : Window, INavigator
         menuOpenStoryboard = MenuStoryboard(opening: true);
         menuCloseStoryboard = MenuStoryboard(opening: false);
         menuCloseStoryboard.Completed += OnMenuCloseCompleted;
-
-        menuOpenTimer = OneShotTimer(MenuHoverOpenDelay);
-        menuOpenTimer.Tick += OnMenuOpenTimerTick;
-        menuCloseTimer = OneShotTimer(MenuHoverCloseDelay);
-        menuCloseTimer.Tick += OnMenuCloseTimerTick;
 
         model.Navigator = this;
         model.Notifications.AskPermission = AskForNotificationsAsync;
@@ -219,48 +204,23 @@ public sealed partial class MainWindow : Window, INavigator
         _ => (typeof(PlaceholderPage), route.Description),
     };
 
-    /// <summary>The rail's icon for a section it only shows while you're in it; null for the rest.</summary>
-    private static string? RailGlyph(Section section) => section switch
-    {
-        Section.Movies => "",
-        Section.Series => "",
-        Section.Favorites => "",
-        Section.Calendar => "",
-        Section.Requests => "",
-        _ => null,
-    };
-
     /// <summary>
     /// Marks the section that is showing as the current item, including
-    /// after Discover jumps into a grid: a solid pill on its menu row and on
-    /// the rail. The rail always has Search and Discover; any other section
-    /// gets its own rail button while you're in it, so the rail always shows
-    /// where you are. Settings is the avatar, which has no pill.
+    /// after Discover jumps into a grid: a solid pill on its rail button and
+    /// on its menu row. Settings is the avatar, which has no pill.
     /// </summary>
     private void SyncSelection(Section section)
     {
         currentSection = section;
         var tag = section.Tag();
+        foreach (var button in railButtons)
+        {
+            button.Style = button.Tag as string == tag ? railCurrentStyle : railStyle;
+        }
         foreach (var row in menuRows)
         {
             row.Style = row.Tag as string == tag ? menuRowCurrentStyle : menuRowStyle;
         }
-        RailSearchButton.Style = section == Section.Search ? railCurrentStyle : railStyle;
-        RailDiscoverButton.Style = section == Section.Discover ? railCurrentStyle : railStyle;
-
-        if (RailGlyph(section) is { } glyph)
-        {
-            var title = section.Title();
-            RailSectionIcon.Glyph = glyph;
-            AutomationProperties.SetName(RailSectionButton, title);
-            ToolTipService.SetToolTip(RailSectionButton, title);
-            RailSectionButton.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            RailSectionButton.Visibility = Visibility.Collapsed;
-        }
-        UpdateBadges();
     }
 
     // MARK: Shell state
@@ -328,7 +288,7 @@ public sealed partial class MainWindow : Window, INavigator
         MenuRequestsBadge.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
         MenuRequestsBadgeText.Text = pending > 9 ? "9+" : pending.ToString(CultureInfo.CurrentCulture);
         AutomationProperties.SetName(MenuRequestsButton, pending > 0 ? $"Requests, {pending} pending" : "Requests");
-        RailRequestsDot.Visibility = pending > 0 && currentSection == Section.Requests ? Visibility.Visible : Visibility.Collapsed;
+        RailRequestsDot.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var unread = model.Badges.UnreadNotifications;
         NotificationsBadge.Value = unread;
@@ -373,14 +333,11 @@ public sealed partial class MainWindow : Window, INavigator
     // MARK: Menu (components/nav-menu.tsx)
 
     /// <summary>
-    /// Opens the panel over the page. Opening with a click or the keyboard
-    /// moves focus to the current item; opening on hover leaves focus where
-    /// it was.
+    /// Opens the labeled panel over the page (only the rail's menu button
+    /// does), with focus on the current item, as the website does.
     /// </summary>
-    private void OpenMenu(bool moveFocus)
+    private void OpenMenu()
     {
-        menuOpenTimer.Stop();
-        menuCloseTimer.Stop();
         if (!shellShown)
         {
             return;
@@ -395,10 +352,7 @@ public sealed partial class MainWindow : Window, INavigator
             menuCloseStoryboard.Stop();
             menuOpenStoryboard.Begin();
         }
-        if (moveFocus)
-        {
-            FocusCurrentMenuItem();
-        }
+        FocusCurrentMenuItem();
     }
 
     /// <summary>
@@ -407,14 +361,11 @@ public sealed partial class MainWindow : Window, INavigator
     /// </summary>
     private void CloseMenu()
     {
-        menuOpenTimer.Stop();
-        menuCloseTimer.Stop();
         if (!menuOpen)
         {
             return;
         }
         menuOpen = false;
-        hoverOpenSuppressed = pointerOverRail;
         var focusWasInMenu = IsFocusInMenu();
         SetMenuPassthrough(false);
         // Clicks during the fade reach the page instead of the closing panel.
@@ -518,81 +469,6 @@ public sealed partial class MainWindow : Window, INavigator
         storyboard.Children.Add(animation);
     }
 
-    private DispatcherQueueTimer OneShotTimer(TimeSpan interval)
-    {
-        var timer = model.Dispatcher.CreateTimer();
-        timer.Interval = interval;
-        timer.IsRepeating = false;
-        return timer;
-    }
-
-    /// <summary>
-    /// Pointer enter and exit events bubble up from the buttons inside the
-    /// rail and the panel, so an exit only counts once the pointer has
-    /// actually left the element.
-    /// </summary>
-    private static bool IsPointerOutside(PointerRoutedEventArgs e, FrameworkElement element)
-    {
-        var position = e.GetCurrentPoint(element).Position;
-        return position.X < 0 || position.Y < 0 || position.X >= element.ActualWidth || position.Y >= element.ActualHeight;
-    }
-
-    private static bool IsMouse(PointerRoutedEventArgs e) =>
-        e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse;
-
-    /// <summary>Resting the mouse on the rail opens the menu (touch and pen use the menu button).</summary>
-    private void OnRailPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        if (!IsMouse(e))
-        {
-            return;
-        }
-        pointerOverRail = true;
-        if (menuOpen || hoverOpenSuppressed || menuOpenTimer.IsRunning)
-        {
-            return;
-        }
-        menuOpenTimer.Start();
-    }
-
-    private void OnRailPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        if (!IsPointerOutside(e, Rail))
-        {
-            return;
-        }
-        pointerOverRail = false;
-        hoverOpenSuppressed = false;
-        menuOpenTimer.Stop();
-    }
-
-    private void OnMenuPointerEntered(object sender, PointerRoutedEventArgs e) => menuCloseTimer.Stop();
-
-    /// <summary>The open panel covers the rail, so it keeps track of whether the mouse is over the rail's spot.</summary>
-    private void OnMenuPointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        if (IsMouse(e))
-        {
-            pointerOverRail = !IsPointerOutside(e, Rail);
-        }
-    }
-
-    /// <summary>Leaving the open panel with the mouse closes it after a short grace period.</summary>
-    private void OnMenuPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        if (!menuOpen || !IsMouse(e) || !IsPointerOutside(e, MenuPanel))
-        {
-            return;
-        }
-        pointerOverRail = false;
-        menuCloseTimer.Stop();
-        menuCloseTimer.Start();
-    }
-
-    private void OnMenuOpenTimerTick(DispatcherQueueTimer sender, object args) => OpenMenu(moveFocus: false);
-
-    private void OnMenuCloseTimerTick(DispatcherQueueTimer sender, object args) => CloseMenu();
-
     private void OnMenuCloseCompleted(object? sender, object e)
     {
         if (!menuOpen)
@@ -620,9 +496,9 @@ public sealed partial class MainWindow : Window, INavigator
         e.Handled = true;
     }
 
-    private void OnRailMenuClick(object sender, RoutedEventArgs e) => OpenMenu(moveFocus: true);
+    private void OnRailMenuClick(object sender, RoutedEventArgs e) => OpenMenu();
 
-    /// <summary>The rail's Discover and every section row in the menu: the row's <c>Tag</c> names the section.</summary>
+    /// <summary>Every section button on the rail and row in the menu (Search aside): its <c>Tag</c> names the section.</summary>
     private void OnSectionNavClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string tag } && SectionExtensions.FromTag(tag) is { } section)
@@ -631,36 +507,18 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>The rail's button for the section you're in: back to that section's root.</summary>
-    private void OnRailSectionClick(object sender, RoutedEventArgs e) => SelectSection(currentSection);
-
     /// <summary>The avatar and the menu's profile row: the account, i.e. Settings.</summary>
     private void OnProfileClick(object sender, RoutedEventArgs e) => SelectSection(Section.Settings);
 
     /// <summary>Search on the rail and in the menu goes to the top bar's search box.</summary>
     private void OnSearchNavClick(object sender, RoutedEventArgs e)
     {
-        CancelHoverOpen();
         CloseMenu();
         SearchBox.Focus(FocusState.Programmatic);
     }
 
     /// <summary>Navigates, which closes the menu (see <see cref="OnContentNavigated"/>).</summary>
-    private void SelectSection(Section section)
-    {
-        CancelHoverOpen();
-        model.Select(section);
-    }
-
-    /// <summary>
-    /// A click on the rail cancels a pending hover-open, so the menu doesn't
-    /// unfold over the page that was just picked while the mouse rests there.
-    /// </summary>
-    private void CancelHoverOpen()
-    {
-        menuOpenTimer.Stop();
-        hoverOpenSuppressed = pointerOverRail;
-    }
+    private void SelectSection(Section section) => model.Select(section);
 
     // MARK: Search (components/search-bar.tsx)
 
@@ -793,10 +651,6 @@ public sealed partial class MainWindow : Window, INavigator
     private void OnClosed(object sender, WindowEventArgs args)
     {
         suggestCancellation?.Cancel();
-        menuOpenTimer.Stop();
-        menuCloseTimer.Stop();
-        menuOpenTimer.Tick -= OnMenuOpenTimerTick;
-        menuCloseTimer.Tick -= OnMenuCloseTimerTick;
         model.PropertyChanged -= OnModelPropertyChanged;
         model.SessionChanged -= OnSessionChanged;
         Activated -= OnActivated;
