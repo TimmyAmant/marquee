@@ -26,6 +26,9 @@ export type PlexPinEntry = {
   pinId: number;
   clientId: string;
   purpose: { kind: "sign_in" } | { kind: "link"; userId: string };
+  /** Who started it, for the per-address cap: the client's address, or
+   * SHARED_PIN_OWNER when it isn't known. */
+  owner: string;
   expiresAt: number;
   /** When plex.tv was last asked about this PIN (see shouldCheckPin). */
   lastCheckedAt: number;
@@ -70,20 +73,42 @@ export function consumeLoginTicket(ticket: unknown, now = Date.now()): string | 
   return now > entry.expiresAt ? null : entry.userId;
 }
 
-/** Live Plex sign-ins at once, across everyone. A household needs a
- * handful; the cap keeps the map (and the plex.tv checks each live PIN
- * makes) bounded however many addresses someone starts them from. */
-export const MAX_LIVE_PLEX_PINS = 50;
+/** Live Plex sign-ins at once, across everyone. The cap keeps the map (and
+ * the plex.tv checks each live PIN makes) bounded however many addresses
+ * someone starts them from. */
+export const MAX_LIVE_PLEX_PINS = 300;
+/** Live Plex sign-ins from one address: a person needs one or two, so one
+ * address can't take every slot and lock the household out. */
+export const MAX_LIVE_PLEX_PINS_PER_OWNER = 5;
+/** The owner key for sign-ins whose address isn't known; they share a
+ * bigger allowance, since everyone behind a proxy that hides addresses
+ * lands on it. */
+export const SHARED_PIN_OWNER = "shared";
+export const MAX_LIVE_PLEX_PINS_SHARED = 20;
 
-/** Null when MAX_LIVE_PLEX_PINS are already live (expired ones are swept first). */
+/** Whether `owner` may start another Plex sign-in now. Checked before
+ * plex.tv is asked for a PIN, and again when the handle is made. */
+export function hasPlexPinCapacity(owner: string, now = Date.now()): boolean {
+  let total = 0;
+  let mine = 0;
+  for (const [key, value] of pins) {
+    if (value.expiresAt <= now) {
+      pins.delete(key);
+      continue;
+    }
+    total++;
+    if (value.owner === owner) mine++;
+  }
+  const perOwner = owner === SHARED_PIN_OWNER ? MAX_LIVE_PLEX_PINS_SHARED : MAX_LIVE_PLEX_PINS_PER_OWNER;
+  return total < MAX_LIVE_PLEX_PINS && mine < perOwner;
+}
+
+/** Null when the caps above are reached (expired handles don't count). */
 export function createPlexPinHandle(
   entry: Omit<PlexPinEntry, "expiresAt" | "lastCheckedAt">,
   now = Date.now(),
 ): { handle: string; expiresAt: number } | null {
-  if (pins.size >= MAX_LIVE_PLEX_PINS) {
-    for (const [key, value] of pins) if (value.expiresAt <= now) pins.delete(key);
-    if (pins.size >= MAX_LIVE_PLEX_PINS) return null;
-  }
+  if (!hasPlexPinCapacity(entry.owner, now)) return null;
   const handle = randomSecret();
   const expiresAt = now + PLEX_PIN_TTL_MS;
   pins.set(handle, { ...entry, expiresAt, lastCheckedAt: 0 });

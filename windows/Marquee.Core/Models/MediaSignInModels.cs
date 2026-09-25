@@ -8,6 +8,24 @@ namespace Marquee.Core.Models;
 // response field is optional so an older server (which sends none of them)
 // simply shows no new buttons.
 
+/// <summary>Plex sign-in pages the app is willing to open.</summary>
+public static class PlexWeb
+{
+    /// <summary>
+    /// The URL when it's a plex.tv page over https, else null: the app hands
+    /// it to the browser, and a server (or something pretending to be one)
+    /// mustn't be able to make it open a file or another app's URL scheme.
+    /// </summary>
+    public static Uri? Url(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var url)
+            || !string.Equals(url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            return null;
+        var host = url.Host.ToLowerInvariant();
+        return host == "plex.tv" || host.EndsWith(".plex.tv", StringComparison.Ordinal) ? url : null;
+    }
+}
+
 /// <summary>The media servers a Marquee account can sign in with.</summary>
 public enum MediaServerKind
 {
@@ -52,6 +70,9 @@ public sealed record PlexSignInStart
     public required string Handle { get; init; }
     public required string AuthUrl { get; init; }
     public required DateTimeOffset ExpiresAt { get; init; }
+
+    /// <summary><see cref="AuthUrl"/> if it's a plex.tv page (see <see cref="PlexWeb.Url"/>).</summary>
+    public Uri? Url => PlexWeb.Url(AuthUrl);
 }
 
 /// <summary><c>POST /auth/plex/poll</c> body.</summary>

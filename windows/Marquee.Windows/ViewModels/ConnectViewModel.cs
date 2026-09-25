@@ -335,7 +335,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         try
         {
             var start = await model.Session.StartPlexSignInAsync(cancellation.Token);
-            if (!Uri.TryCreate(start.AuthUrl, UriKind.Absolute, out var url) || !await ExternalLinks.OpenAsync(url))
+            if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
             {
                 FormError = PlexPageUnopenedMessage;
                 return;

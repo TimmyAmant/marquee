@@ -1,9 +1,9 @@
-import { and, desc, eq, gt, inArray, isNotNull, notInArray, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { plexServers, plexLibraryItems, integrationCredentials } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
-import { assertStillConnected, getPlexCredential } from "@/lib/integrations/credentials";
+import { getPlexCredential, IntegrationDisconnectedError } from "@/lib/integrations/credentials";
 import * as plex from "@/lib/plex/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -16,8 +16,21 @@ import { rowsMissingFromSync } from "@/lib/library/prune";
 /** How many shows' episode listings to fetch from Plex at once. */
 const SHOW_FETCH_CONCURRENCY = 6;
 
+/** How long a server can be missing from plex.tv's list before it's
+ * forgotten (see the end of runSyncPlexLibrary). */
+const MISSING_SERVER_GRACE_MS = 24 * 60 * 60 * 1000;
+
 /** How many items to write between checks that Plex is still connected. */
 const CONNECTED_CHECK_EVERY = 100;
+
+/** Throws unless Plex is still connected with the token this sync started
+ * with. Disconnecting deletes the servers; reconnecting (maybe to another
+ * Plex account) does too — either way a sync already under way must not
+ * write the old account's servers and items back afterwards. */
+async function assertSamePlexConnection(userId: string, authToken: string): Promise<void> {
+  const current = await getPlexCredential(userId);
+  if (!current || current.authToken !== authToken) throw new IntegrationDisconnectedError("plex");
+}
 
 async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number; itemCount: number }> {
   const credential = await getPlexCredential(userId);
@@ -32,7 +45,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
 
     // Disconnecting deletes the server rows; upserting one after that would
     // bring the whole server back.
-    await assertStillConnected(userId, "plex");
+    await assertSamePlexConnection(userId, credential.authToken);
     const [serverRow] = await db
       .insert(plexServers)
       .values({
@@ -131,9 +144,9 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
       // The fetches above can take minutes on a big library — make sure
       // nobody disconnected Plex meanwhile before writing any of it, and
       // keep checking as the item loop runs.
-      await assertStillConnected(userId, "plex");
+      await assertSamePlexConnection(userId, credential.authToken);
       for (const [index, item] of items.entries()) {
-        if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertStillConnected(userId, "plex");
+        if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertSamePlexConnection(userId, credential.authToken);
         seenRatingKeys.add(item.ratingKey);
         const parsed = plex.parseExternalIds(item);
         let { tmdbId } = parsed;
@@ -202,7 +215,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
     }
 
     if (listedEverySection) {
-      await assertStillConnected(userId, "plex");
+      await assertSamePlexConnection(userId, credential.authToken);
       const stored = await db
         .select({ id: plexLibraryItems.id, key: plexLibraryItems.ratingKey })
         .from(plexLibraryItems)
@@ -214,19 +227,28 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
     }
   }
 
-  // Servers this Plex account no longer owns (it was reconnected to another
-  // account, or a server was removed) go, with their items: they'd keep
-  // showing titles as owned, and Plex sign-in checks access against these
-  // rows — an old server's users mustn't keep getting in.
-  await assertStillConnected(userId, "plex");
-  const current = resources.map((r) => r.clientIdentifier);
-  await db
-    .delete(plexServers)
-    .where(
-      current.length > 0
-        ? and(eq(plexServers.userId, userId), notInArray(plexServers.machineIdentifier, current))
-        : eq(plexServers.userId, userId),
-    );
+  // A server this account no longer lists (removed, or given away) goes,
+  // with its items, once it has been missing for a day: it'd keep showing
+  // titles as owned, and Plex sign-in checks access against these rows.
+  // The grace period is because plex.tv sometimes returns a partial or
+  // empty list; an empty list never clears anything. Reconnecting to
+  // another Plex account doesn't wait — checkPlexAuthFor clears every
+  // server first.
+  if (resources.length > 0) {
+    await assertSamePlexConnection(userId, credential.authToken);
+    await db
+      .delete(plexServers)
+      .where(
+        and(
+          eq(plexServers.userId, userId),
+          notInArray(
+            plexServers.machineIdentifier,
+            resources.map((r) => r.clientIdentifier),
+          ),
+          or(isNull(plexServers.lastSyncedAt), lt(plexServers.lastSyncedAt, new Date(Date.now() - MISSING_SERVER_GRACE_MS))),
+        ),
+      );
+  }
 
   return { serverCount: resources.length, itemCount };
 }

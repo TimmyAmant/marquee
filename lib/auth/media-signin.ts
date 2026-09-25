@@ -7,6 +7,8 @@ import { withLoginBudget } from "@/lib/auth/password-login";
 import {
   claimPlexPin,
   createPlexPinHandle,
+  hasPlexPinCapacity,
+  SHARED_PIN_OWNER,
   getPlexPin,
   shouldCheckPin,
   type PlexPinEntry,
@@ -253,6 +255,8 @@ const PIN_POLL_WINDOW_MS = 10 * 60 * 1000;
 
 export type PlexPinStart = { handle: string; authUrl: string; expiresAt: Date };
 
+const TOO_MANY_WAITING = "Too many Plex sign-ins are waiting right now. Try again in a few minutes.";
+
 /** Starts a Plex PIN for signing in (or, with `link`, for linking the
  * signed-in account) and returns the handle to poll with. */
 export async function startPlexPin(
@@ -267,14 +271,17 @@ export async function startPlexPin(
   const plex = await getPlexContext();
   if (!plex) return fail("conflict", PLEX_NOT_CONNECTED);
 
+  const owner = ip ?? SHARED_PIN_OWNER;
+  if (!hasPlexPinCapacity(owner)) return fail("rate_limited", TOO_MANY_WAITING);
+
   let pin;
   try {
     pin = await createPin(plex.clientId);
   } catch {
     return fail("upstream", "Couldn't start Plex sign-in. Try again.");
   }
-  const created = createPlexPinHandle({ pinId: pin.id, clientId: plex.clientId, purpose });
-  if (!created) return fail("rate_limited", "Too many Plex sign-ins are waiting right now. Try again in a few minutes.");
+  const created = createPlexPinHandle({ pinId: pin.id, clientId: plex.clientId, purpose, owner });
+  if (!created) return fail("rate_limited", TOO_MANY_WAITING);
   const { handle, expiresAt } = created;
   return { ok: true, handle, authUrl: buildPlexAuthUrl(plex.clientId, pin.code), expiresAt: new Date(expiresAt) };
 }

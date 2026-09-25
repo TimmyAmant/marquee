@@ -78,6 +78,14 @@ final class MediaSignInDecodingTests: XCTestCase {
         XCTAssertNil(try url("https://app.plex.tv.evil.example/auth"))
         XCTAssertNil(try url("https://evilplex.tv/auth"))
         XCTAssertNil(try url("marquee://title/movie/1"))
+
+        // The admin's "Connect Plex" in Settings goes through the same check.
+        func connectURL(_ authUrl: String) throws -> URL? {
+            try decode(API.PlexPinStart.self, #"{"authUrl":"\#(authUrl)","pinId":1}"#).url
+        }
+        XCTAssertNotNil(try connectURL("https://app.plex.tv/auth#?code=ABCD"))
+        XCTAssertNil(try connectURL("file:///Applications/Calculator.app"))
+        XCTAssertNil(try connectURL("https://evilplex.tv/auth"))
     }
 
     func testPlexStartAndImportShapes() throws {

@@ -729,7 +729,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             var start = await api.Links.PlexStartAsync(cancellation.Token);
-            if (!Uri.TryCreate(start.AuthUrl, UriKind.Absolute, out var url) || !await ExternalLinks.OpenAsync(url))
+            if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
             {
                 LinksError = ConnectViewModel.PlexPageUnopenedMessage;
                 return;

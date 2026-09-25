@@ -144,7 +144,7 @@ extension API {
         let authUrl: String
         let pinId: Int
 
-        var url: URL? { URL(string: authUrl) }
+        var url: URL? { API.plexWebURL(authUrl) }
     }
 
     /// `GET …/plex/pin/{pinId}`: one poll. The website polls every 2.5 s and

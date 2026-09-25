@@ -101,10 +101,11 @@ const plexTv = {
   adminAccount: { id: 7777, username: "tim", title: "Tim" } as Record<string, unknown>,
   resources: [] as { clientIdentifier: string; provides: string; owned?: boolean }[],
 };
+const createPin = vi.fn(async () => ({ id: 99, code: "abcdefghijklmnopqrstuvwxy", authToken: null }));
 const checkPin = vi.fn(async () => ({ id: 99, code: "code", authToken: plexTv.authToken }));
 vi.mock("@/lib/plex/client", () => ({
   plexHeaders: () => ({}),
-  createPin: async () => ({ id: 99, code: "abcdefghijklmnopqrstuvwxy", authToken: null }),
+  createPin: () => createPin(),
   checkPin: () => checkPin(),
   buildPlexAuthUrl: (clientId: string, code: string) => `https://app.plex.tv/auth#?clientID=${clientId}&code=${code}`,
 }));
@@ -160,6 +161,15 @@ describe("Plex sign-in", () => {
     expect(started.handle).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(started.authUrl).toBe("https://app.plex.tv/auth#?clientID=instance-client-id&code=abcdefghijklmnopqrstuvwxy");
     expect(started.expiresAt.getTime() - Date.now()).toBe(10 * 60 * 1000);
+  });
+
+  it("lets one address keep only a few sign-ins waiting, without asking plex.tv for more", async () => {
+    const ip = freshIp();
+    for (let i = 0; i < 5; i++) expect((await startPlexSignIn(ip)).ok).toBe(true);
+    const calls = createPin.mock.calls.length;
+    expect(await startPlexSignIn(ip)).toMatchObject({ ok: false, code: "rate_limited" });
+    expect(createPin.mock.calls.length).toBe(calls);
+    expect((await startPlexSignIn(freshIp())).ok).toBe(true);
   });
 
   it("isn't offered without a synced Plex server", async () => {

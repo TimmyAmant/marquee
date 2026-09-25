@@ -256,6 +256,21 @@ public sealed class MediaSignInSessionTests
         ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
     };
 
+    [Theory]
+    [InlineData("https://app.plex.tv/auth#?code=ABCD", true)]
+    [InlineData("https://plex.tv/link", true)]
+    [InlineData("http://app.plex.tv/auth", false)]
+    [InlineData("file:///C:/Windows/System32/calc.exe", false)]
+    [InlineData("https://app.plex.tv.evil.example/auth", false)]
+    [InlineData("https://evilplex.tv/auth", false)]
+    [InlineData("marquee://title/movie/1", false)]
+    public void PlexStartOpensOnlyPlexTvOverHttps(string authUrl, bool opens)
+    {
+        Assert.Equal(opens, (Start() with { AuthUrl = authUrl }).Url != null);
+        var pin = new PlexPinStart { AuthUrl = authUrl, PinId = 1 };
+        Assert.Equal(opens, pin.Url != null);
+    }
+
     private static (ServerSession Session, InMemoryTokenStore Store, StubHttpMessageHandler Stub) Make()
     {
         var settings = new InMemorySettingsStore();

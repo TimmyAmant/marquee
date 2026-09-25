@@ -6,6 +6,16 @@ import Foundation
 // spell everything `API.…`.
 
 extension API {
+    /// Only a plex.tv page over https: the app hands Plex sign-in URLs to
+    /// the browser, and a server (or something pretending to be one)
+    /// mustn't be able to make it open a file or another app's URL scheme.
+    static func plexWebURL(_ string: String) -> URL? {
+        guard let url = URL(string: string), url.scheme == "https",
+              let host = url.host?.lowercased(), host == "plex.tv" || host.hasSuffix(".plex.tv")
+        else { return nil }
+        return url
+    }
+
     typealias User = Marquee.User
     typealias ServerInfo = Marquee.ServerInfo
     /// `POST /auth/login` and `/auth/setup`.
@@ -68,15 +78,7 @@ extension API {
         let authUrl: String
         let expiresAt: Date
 
-        /// Only a plex.tv sign-in page over https: the app hands this to the
-        /// browser, and a server (or something pretending to be one) mustn't
-        /// be able to make it open a file or another app's URL scheme.
-        var url: URL? {
-            guard let url = URL(string: authUrl), url.scheme == "https",
-                  let host = url.host?.lowercased(), host == "plex.tv" || host.hasSuffix(".plex.tv")
-            else { return nil }
-            return url
-        }
+        var url: URL? { API.plexWebURL(authUrl) }
     }
 
     /// `POST /me/links/plex/poll` body.

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_LIVE_PLEX_PINS,
+  MAX_LIVE_PLEX_PINS_PER_OWNER,
+  MAX_LIVE_PLEX_PINS_SHARED,
+  SHARED_PIN_OWNER,
   claimPlexPin,
   consumeLoginTicket,
   createPlexPinHandle,
@@ -13,9 +16,12 @@ import {
 } from "./login-tickets";
 
 
-/** createPlexPinHandle, which is null only at the live-PIN cap. */
-function makeHandle(...args: Parameters<typeof createPlexPinHandle>) {
-  const created = createPlexPinHandle(...args);
+let ownerCount = 0;
+
+/** createPlexPinHandle from a fresh address each time, so the caps don't
+ * get in the way of the tests that aren't about them. */
+function makeHandle(entry: Omit<Parameters<typeof createPlexPinHandle>[0], "owner">, now?: number) {
+  const created = createPlexPinHandle({ ...entry, owner: `10.0.0.${++ownerCount}` }, now);
   if (!created) throw new Error("hit the live PIN cap");
   return created;
 }
@@ -107,15 +113,31 @@ describe("Plex PIN handles", () => {
   });
 });
 
-describe("the live Plex PIN cap", () => {
-  it("refuses new PINs past the cap until old ones expire", () => {
+describe("the live Plex PIN caps", () => {
+  const start = (owner: string, at: number) =>
+    createPlexPinHandle({ pinId: 1, clientId: "c", purpose: { kind: "sign_in" }, owner }, at);
+
+  it("allow a few per address, and other addresses still get in", () => {
     const now = Date.now() + 10 * 24 * 60 * 60 * 1000; // clear of other tests' PINs
-    const start = (at: number) => createPlexPinHandle({ pinId: 1, clientId: "c", purpose: { kind: "sign_in" } }, at);
+    for (let i = 0; i < MAX_LIVE_PLEX_PINS_PER_OWNER; i++) expect(start("192.0.2.1", now)).not.toBeNull();
+    expect(start("192.0.2.1", now)).toBeNull();
+    expect(start("192.0.2.2", now)).not.toBeNull();
+    // Once they've expired, the first address has room again.
+    expect(start("192.0.2.1", now + 11 * 60 * 1000)).not.toBeNull();
+  });
+
+  it("give unknown addresses a shared, bigger allowance", () => {
+    const now = Date.now() + 20 * 24 * 60 * 60 * 1000;
+    for (let i = 0; i < MAX_LIVE_PLEX_PINS_SHARED; i++) expect(start(SHARED_PIN_OWNER, now)).not.toBeNull();
+    expect(start(SHARED_PIN_OWNER, now)).toBeNull();
+  });
+
+  it("refuse new PINs past the overall cap until old ones expire", () => {
+    const now = Date.now() + 30 * 24 * 60 * 60 * 1000;
     let made = 0;
-    while (start(now) !== null) made++;
-    expect(made).toBeLessThanOrEqual(MAX_LIVE_PLEX_PINS);
-    expect(start(now)).toBeNull();
-    // Once they've expired they're swept, and there's room again.
-    expect(start(now + 11 * 60 * 1000)).not.toBeNull();
+    while (start(`198.51.100.${made}`, now) !== null) made++;
+    expect(made).toBe(MAX_LIVE_PLEX_PINS);
+    expect(start("203.0.113.9", now)).toBeNull();
+    expect(start("203.0.113.9", now + 11 * 60 * 1000)).not.toBeNull();
   });
 });

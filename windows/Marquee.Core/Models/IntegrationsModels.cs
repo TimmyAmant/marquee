@@ -153,8 +153,8 @@ public sealed record PlexPinStart
     public required string AuthUrl { get; init; }
     public required int PinId { get; init; }
 
-    /// <summary><see cref="AuthUrl"/> parsed, null if Plex sent something the browser couldn't open anyway.</summary>
-    public Uri? Url => Uri.TryCreate(AuthUrl, UriKind.Absolute, out var url) ? url : null;
+    /// <summary><see cref="AuthUrl"/> if it's a plex.tv page (see <see cref="PlexWeb.Url"/>).</summary>
+    public Uri? Url => PlexWeb.Url(AuthUrl);
 }
 
 /// <summary>
