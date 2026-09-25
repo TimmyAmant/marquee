@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { fail, type CoreResult } from "@/lib/core-result";
 
 /** True once at least one account exists — used to gate the one-time first-run
@@ -23,11 +23,11 @@ export const setupSchema = z.object({
   displayName: z.string().min(1).max(80).optional(),
 });
 
-/** The client IP the setup rate limit is keyed on — first X-Forwarded-For
- * hop, else "unknown" (deliberately not the login limiter's getClientIp,
- * which also consults X-Real-IP, so web and API setup share one bucket). */
+/** The client address the setup rate limit is keyed on — getClientIp, so
+ * web and API setup share one bucket, and one shared "unknown" bucket when
+ * no trusted proxy says who the client is. */
 export function setupClientIp(headers: Headers): string {
-  return headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  return getClientIp(headers) ?? "unknown";
 }
 
 export type SetupInput = { username: unknown; password: unknown; displayName: unknown };
