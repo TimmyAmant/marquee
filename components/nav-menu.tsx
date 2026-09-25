@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { RequestsBadge } from "@/components/requests-badge";
 import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -53,6 +53,12 @@ const ICONS = {
     <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeLinecap="round" strokeLinejoin="round" />
   ),
   menu: <path d="M5 7h14M5 12h14M5 17h14" strokeLinecap="round" />,
+  person: (
+    <>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 19.5c1.2-3.3 3.8-5 7-5s5.8 1.7 7 5" strokeLinecap="round" />
+    </>
+  ),
   chevron: <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />,
 } as const;
 
@@ -85,20 +91,14 @@ function isCurrent(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** How long the pointer rests on the rail before it opens into the menu, so
- * sweeping past the left edge doesn't throw a panel over the page. */
-const HOVER_OPEN_DELAY_MS = 220;
-/** Grace period after the pointer leaves the open menu, so overshooting its
- * edge by a few pixels doesn't snap it shut. */
-const HOVER_CLOSE_DELAY_MS = 260;
-
 /**
- * The site's navigation, after the Plex app's Apple TV menu: a small
- * frosted rail floats at the left edge (profile photo, Search, Discover, the
- * section you're in, and a menu button), and resting on it, or pressing
- * the menu button, opens the full menu as a frosted panel over the page.
- * Below the md breakpoint the rail is hidden and the header's menu button
- * opens the same panel as a drawer.
+ * The site's navigation, after the Plex app's Apple TV menu. A small frosted
+ * rail floats at the left edge and is the menu itself: your photo (Settings)
+ * and one icon per section, each going straight there in one click, with
+ * the section's name beside it on hover. The menu button at its foot opens
+ * the full labeled menu as a frosted panel, only when clicked. Below the md
+ * breakpoint the rail is hidden and the header's menu button opens that
+ * panel as a drawer.
  */
 export function NavMenu({
   isSignedIn,
@@ -120,11 +120,6 @@ export function NavMenu({
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Set when the menu was opened from the keyboard or a tap, which moves
-  // focus into it; opening on hover leaves focus where it was.
-  const focusOnOpen = useRef(false);
 
   // Any navigation closes the menu, however it happened (a link in the
   // menu, a search result, back/forward). Same render-time reset as
@@ -135,28 +130,8 @@ export function NavMenu({
     if (open) setOpen(false);
   }
 
-  function clearTimers() {
-    if (openTimer.current) clearTimeout(openTimer.current);
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    openTimer.current = null;
-    closeTimer.current = null;
-  }
-
-  function openMenu(moveFocus: boolean) {
-    clearTimers();
-    focusOnOpen.current = moveFocus;
-    setOpen(true);
-  }
-
-  function closeMenu(restoreFocus = false) {
-    clearTimers();
-    setOpen(false);
-    if (restoreFocus) menuButtonRef.current?.focus();
-  }
-
   useEffect(() => {
     function handleOpenRequest() {
-      focusOnOpen.current = true;
       setOpen(true);
     }
     window.addEventListener(OPEN_NAV_EVENT, handleOpenRequest);
@@ -165,12 +140,11 @@ export function NavMenu({
 
   useEffect(() => {
     if (!open) return;
-    if (focusOnOpen.current) {
-      const target =
-        panelRef.current?.querySelector<HTMLElement>("[aria-current=page]") ??
-        panelRef.current?.querySelector<HTMLElement>("a[href]");
-      target?.focus();
-    }
+    // Opened by a click or a key, so focus goes into the menu.
+    const target =
+      panelRef.current?.querySelector<HTMLElement>("[aria-current=page]") ??
+      panelRef.current?.querySelector<HTMLElement>("a[href]");
+    target?.focus();
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setOpen(false);
@@ -188,21 +162,12 @@ export function NavMenu({
     };
   }, [open]);
 
-  useEffect(
-    () => () => {
-      if (openTimer.current) clearTimeout(openTimer.current);
-      if (closeTimer.current) clearTimeout(closeTimer.current);
-    },
-    [],
-  );
-
   const name = userLabel ?? "Sign in";
   const profileHref = isSignedIn ? "/settings" : "/login";
   const library = isSignedIn ? LIBRARY : [];
-  // The rail keeps Plex's short list (profile, Search, Discover, menu) and
-  // adds whichever other section you're in, so it always shows where you are.
-  const currentExtra = [...BROWSE, ...library].find((item) => isCurrent(pathname, item.href));
-  const railItems = [SEARCH, DISCOVER, ...(currentExtra ? [currentExtra] : [])];
+  // Every section is on the rail, in the menu's order: Search and Discover,
+  // then Browse, then (signed in) Library, a short hairline between groups.
+  const railGroups = [[SEARCH, DISCOVER], BROWSE, library].filter((group) => group.length > 0);
 
   function badgeFor(item: Destination) {
     return item.href === "/requests" && isAdmin ? <RequestsBadge initialCount={pendingRequestCount} /> : null;
@@ -212,18 +177,6 @@ export function NavMenu({
     <>
       <nav
         aria-label="Main"
-        onPointerEnter={(e) => {
-          if (e.pointerType !== "mouse" || open) return;
-          if (closeTimer.current) clearTimeout(closeTimer.current);
-          openTimer.current = setTimeout(() => openMenu(false), HOVER_OPEN_DELAY_MS);
-        }}
-        onPointerLeave={() => {
-          if (openTimer.current) clearTimeout(openTimer.current);
-          openTimer.current = null;
-        }}
-        // Clicking a rail icon before the hover delay is up means "go
-        // there", not "open the menu" on the page it leads to.
-        onPointerDown={clearTimers}
         className={`nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] transition-opacity duration-200 md:flex ${
           open ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
@@ -231,51 +184,58 @@ export function NavMenu({
         <Link
           href={profileHref}
           aria-label={isSignedIn ? `${name}: account and settings` : "Sign in"}
-          title={isSignedIn ? name : "Sign in"}
-          className="mb-1 rounded-full outline-offset-2"
+          aria-current={isCurrent(pathname, profileHref) ? "page" : undefined}
+          className="group relative mb-1 rounded-full outline-offset-2"
         >
-          <UserAvatar label={name} src={avatarSrc} size={36} />
+          <ProfilePicture signedIn={isSignedIn} label={name} src={avatarSrc} size={36} />
+          <RailLabel>{isSignedIn ? "Settings" : "Sign in"}</RailLabel>
         </Link>
-        {railItems.map((item) => {
-          const current = isCurrent(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-label={item.label}
-              aria-current={current ? "page" : undefined}
-              title={item.label}
-              className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-                current
-                  ? "bg-text-primary text-bg-0"
-                  : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
-              }`}
-            >
-              <Icon name={item.icon} className="h-[19px] w-[19px]" />
-              {item.href === "/requests" && isAdmin && pendingRequestCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />
-              )}
-            </Link>
-          );
-        })}
+        {railGroups.map((group, index) => (
+          <Fragment key={group[0].href}>
+            {index > 0 && <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />}
+            {group.map((item) => {
+              const current = isCurrent(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-label={item.label}
+                  aria-current={current ? "page" : undefined}
+                  className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                    current
+                      ? "bg-text-primary text-bg-0"
+                      : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
+                  }`}
+                >
+                  <Icon name={item.icon} className="h-[19px] w-[19px]" />
+                  {item.href === "/requests" && isAdmin && pendingRequestCount > 0 && (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />
+                  )}
+                  <RailLabel>{item.label}</RailLabel>
+                </Link>
+              );
+            })}
+          </Fragment>
+        ))}
+        <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />
         <button
           ref={menuButtonRef}
           type="button"
-          onClick={() => openMenu(true)}
+          onClick={() => setOpen(true)}
           aria-label="Open menu"
           aria-expanded={open}
           aria-controls="nav-menu-panel"
-          title="Menu"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-text-primary/10 hover:text-text-primary"
+          className="group relative flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-text-primary/10 hover:text-text-primary"
         >
           <Icon name="menu" className="h-[19px] w-[19px]" />
+          <RailLabel>Menu</RailLabel>
         </button>
       </nav>
 
       {/* Narrow screens only: dims the page behind the drawer. */}
       <div
         aria-hidden
-        onClick={() => closeMenu()}
+        onClick={() => setOpen(false)}
         className={`fixed inset-0 z-40 bg-black/45 transition-opacity duration-200 md:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
@@ -285,14 +245,6 @@ export function NavMenu({
         id="nav-menu-panel"
         ref={panelRef}
         inert={!open}
-        onPointerEnter={() => {
-          if (closeTimer.current) clearTimeout(closeTimer.current);
-          closeTimer.current = null;
-        }}
-        onPointerLeave={(e) => {
-          if (e.pointerType !== "mouse") return;
-          closeTimer.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY_MS);
-        }}
         className={`nav-glass fixed bottom-3 left-3 top-3 z-50 flex w-[288px] max-w-[calc(100vw-24px)] origin-left flex-col overflow-hidden rounded-[24px] transition-[opacity,transform] duration-200 ease-out ${
           open ? "translate-x-0 scale-100 opacity-100" : "pointer-events-none -translate-x-3 scale-[0.98] opacity-0"
         }`}
@@ -303,7 +255,7 @@ export function NavMenu({
             aria-current={isCurrent(pathname, profileHref) ? "page" : undefined}
             className="group flex items-center gap-3 rounded-full py-1.5 pl-1.5 pr-3 transition-colors hover:bg-text-primary/10"
           >
-            <UserAvatar label={name} src={avatarSrc} size={38} />
+            <ProfilePicture signedIn={isSignedIn} label={name} src={avatarSrc} size={38} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-semibold leading-5 text-text-primary">{name}</span>
               {isSignedIn && serverLabel && (
@@ -346,6 +298,35 @@ export function NavMenu({
         </div>
       </div>
     </>
+  );
+}
+
+/** Your photo or initials when signed in; a plain person when not, rather
+ * than the initials of "Sign in". */
+function ProfilePicture({ signedIn, label, src, size }: { signedIn: boolean; label: string; src: string | null; size: number }) {
+  if (signedIn) return <UserAvatar label={label} src={src} size={size} />;
+  return (
+    <span
+      aria-hidden
+      className="flex shrink-0 items-center justify-center rounded-full bg-text-primary/10 text-text-secondary"
+      style={{ width: size, height: size }}
+    >
+      <Icon name="person" className="h-1/2 w-1/2" />
+    </span>
+  );
+}
+
+/** The name that appears beside a rail icon on hover or keyboard focus, so
+ * the icons never have to be guessed at. Decorative: the link itself
+ * carries the same name as its accessible label. */
+function RailLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      aria-hidden
+      className="nav-glass pointer-events-none absolute left-full top-1/2 ml-3 -translate-x-1 -translate-y-1/2 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium text-text-primary opacity-0 shadow-none transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+    >
+      {children}
+    </span>
   );
 }
 

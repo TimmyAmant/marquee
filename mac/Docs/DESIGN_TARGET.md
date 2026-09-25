@@ -27,28 +27,31 @@ panel** over the content. The web's `components/nav-menu.tsx` is the
 reference implementation.
 
 - **Rail**: pinned 16 from the window's left edge, vertically centered in the
-  content area. A capsule (radius 30, padding 7) of frosted glass, items
-  stacked with 4 gaps:
-  1. Profile avatar, 36 round: initials (up to two, uppercased) in bg0 on a
-     140° gradient accentHover → accent (45%) → #c2583a, with a 2px
-     white-15% ring. Opens Settings (the account).
-  2. Search, 40×40 round, magnifier icon (19).
-  3. Discover, compass icon.
-  4. Only when the current page is another section (Movies, Series,
-     Favorites, Calendar, Requests): that section's icon, so the rail always
-     shows where you are.
-  5. Menu button, three-line icon: opens the panel.
-  The current item is a solid pill: textPrimary fill with bg0 icon (white
-  with a dark icon in dark mode, the reverse in light). Others are
-  textSecondary, with a textPrimary-10% round hover. An admin with pending
-  requests gets an 8px accent dot on the Requests icon.
-- **Opening**: resting the pointer on the rail for 220ms, clicking the menu
-  button, or (narrow windows/phones) the header's menu button. It closes
-  when the pointer has been off the panel for 260ms, on Escape, on a click
-  outside, and after any navigation. Opening with a click or the keyboard
-  moves focus to the current item; opening on hover doesn't move focus.
-  Rail fades out (200ms) as the panel fades and slides in from 12 to the
-  left, scale 0.98 → 1, 200ms ease-out.
+  content area. A capsule (radius 30, padding 7) of frosted glass. **The
+  rail is the menu**: every destination is on it, and one click goes
+  straight there. Items stacked with 4 gaps, groups split by a 24-wide 1px
+  hairline (glass border color, 4 above and below):
+  1. Profile picture, 36 round: the photo, else initials (up to two,
+     uppercased) in bg0 on a 140° gradient accentHover → accent (45%) →
+     #c2583a, with a 2px white-15% ring; a plain person glyph when signed
+     out. Opens Settings (the account), or sign-in.
+  2. Search (magnifier) and Discover (compass).
+  3. Movies and Series.
+  4. Signed in only: Favorites, Calendar, Requests.
+  5. The menu button (three lines), after its own hairline: opens the
+     panel below, on click only.
+  Each item is 40×40 round with a 19 icon. The current page is a solid pill:
+  textPrimary fill with a bg0 icon (white with a dark icon in dark mode, the
+  reverse in light). Others are textSecondary, with a textPrimary-10% round
+  hover. Hovering (or keyboard-focusing) an item shows its name in a small
+  frosted label 12 to its right (13/500, fully rounded, 150ms fade); hovering
+  never opens the panel. An admin with pending requests gets an 8px accent
+  dot on the Requests icon.
+- **Opening the panel**: only by clicking the rail's menu button, or on
+  narrow windows/phones the header's menu button. It closes on Escape, on a
+  click outside, and after any navigation, and focus moves to the current
+  item when it opens. The rail fades out (200ms) as the panel fades and
+  slides in from 12 to the left, scale 0.98 → 1, 200ms ease-out.
 - **Panel**: 288 wide, inset 12 from the top, bottom and left of the window,
   radius 24, frosted glass, overlaying the content (nothing reflows).
   - Profile row: 38 avatar, name 15/600 over the server address 11.5 muted,
