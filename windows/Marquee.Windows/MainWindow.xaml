@@ -2,8 +2,8 @@
 <!--
   app/layout.tsx plus components/nav-menu.tsx and components/site-header.tsx
   (the spec is mac/Docs/DESIGN_TARGET.md, "Navigation"). Row 0 is the top
-  bar: back, the wordmark over the drag region, the search box and the
-  bell. Row 1 holds either the shell (the content frame, 72 in from the
+  bar: back and the wordmark over the drag region (search and the bell
+  are on the rail). Row 1 holds either the shell (the content frame, 72 in from the
   left, with the frosted rail floating over its left edge) or the auth
   frame with ConnectPage (everything before sign-in). Both stay in the
   tree and swap visibility, which keeps the sign-in form's state across a
@@ -144,6 +144,7 @@
 
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="F5" Invoked="OnReloadInvoked" />
+            <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OnFindInvoked" />
             <KeyboardAccelerator Key="Left" Modifiers="Menu" Invoked="OnBackInvoked" />
         </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
@@ -152,18 +153,16 @@
         </Grid.RowDefinitions>
 
         <!--
-          components/site-header.tsx. Only AppTitleBar is the drag region
-          (Window.SetTitleBar makes its whole rectangle non-client), so the
-          back button, the search box and the bell sit in their own columns
-          beside it rather than inside it. The last column keeps clear of
-          the caption buttons, which the system draws over the right end.
+          components/site-header.tsx, minus search and the bell, which live on
+          the rail. Only AppTitleBar is the drag region (Window.SetTitleBar
+          makes its whole rectangle non-client), so the back button sits in
+          its own column beside it. The last column keeps clear of the
+          caption buttons, which the system draws over the right end.
         -->
         <Grid x:Name="TopBar" Grid.Row="0" Height="52">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" MinWidth="48" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="138" />
             </Grid.ColumnDefinitions>
 
@@ -207,54 +206,6 @@
                         Fill="{ThemeResource MarqueeAccentBrush}" />
                 </StackPanel>
             </Grid>
-
-            <!--
-              components/search-bar.tsx: type-ahead from GET /search/suggest,
-              Enter opens the results page. Suggestions display through
-              SuggestionItem.ToString() rather than a template, keeping this
-              file free of bindings (see the note at the top).
-            -->
-            <AutoSuggestBox
-                x:Name="SearchBox"
-                Grid.Column="2"
-                Width="300"
-                VerticalAlignment="Center"
-                Visibility="Collapsed"
-                PlaceholderText="Search an actor, a studio, a title…"
-                QueryIcon="Find"
-                AutomationProperties.Name="Search"
-                TextChanged="OnSearchTextChanged"
-                QuerySubmitted="OnSearchQuerySubmitted" />
-
-            <!-- components/notifications-bell.tsx: the bell opens its list as a flyout below it. -->
-            <Grid x:Name="NotificationsHost" Grid.Column="3" Margin="10,0,6,0" VerticalAlignment="Center" Visibility="Collapsed">
-                <Button
-                    x:Name="NotificationsButton"
-                    Style="{StaticResource NavRailButtonStyle}"
-                    Width="36"
-                    Height="36"
-                    CornerRadius="18"
-                    Margin="0,4,6,0"
-                    AutomationProperties.Name="Notifications"
-                    ToolTipService.ToolTip="Notifications">
-                    <FontIcon Glyph="&#xEA8F;" FontSize="17" />
-                    <Button.Flyout>
-                        <Flyout
-                            x:Name="NotificationsFlyoutHost"
-                            Placement="BottomEdgeAlignedRight"
-                            Opened="OnNotificationsOpened"
-                            Closed="OnNotificationsClosed">
-                            <controls:NotificationsFlyout x:Name="NotificationsPanel" CloseRequested="OnNotificationsCloseRequested" />
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-                <InfoBadge
-                    x:Name="NotificationsBadge"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    IsHitTestVisible="False"
-                    Visibility="Collapsed" />
-            </Grid>
         </Grid>
 
         <!-- The signed-in shell: the pages, and the rail floating over their left edge. -->
@@ -264,8 +215,8 @@
 
             <!--
               The rail is the menu: every destination, one click away, in
-              the menu's order (profile; Search, Discover; Movies, Series;
-              Favorites, Calendar, Requests), groups split by a short
+              the menu's order (profile and notifications; Search, Discover;
+              Movies, Series; Favorites, Calendar, Requests), groups split by a short
               hairline, and (only while a newer Marquee is out) the update
               button, which opens Settings where "Update" is.
               Hovering or focusing an icon shows its name to the right.
@@ -294,6 +245,36 @@
                         <!-- The 36 round photo (or initials on the accent gradient), inside a 2px white 15% ring. -->
                         <controls:AvatarView x:Name="RailAvatar" Diameter="40" RingThickness="2" />
                     </Button>
+
+                    <!-- components/notifications-bell.tsx: the bell opens its list beside the rail. -->
+                    <Grid>
+                        <Button
+                            x:Name="NotificationsButton"
+                            Style="{StaticResource NavRailButtonStyle}"
+                            AutomationProperties.Name="Notifications"
+                            ToolTipService.ToolTip="Notifications"
+                            ToolTipService.Placement="Right">
+                            <FontIcon Glyph="&#xEA8F;" FontSize="19" />
+                            <Button.Flyout>
+                                <Flyout
+                                    x:Name="NotificationsFlyoutHost"
+                                    Placement="RightEdgeAlignedTop"
+                                    Opened="OnNotificationsOpened"
+                                    Closed="OnNotificationsClosed">
+                                    <controls:NotificationsFlyout x:Name="NotificationsPanel" CloseRequested="OnNotificationsCloseRequested" />
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <InfoBadge
+                            x:Name="NotificationsBadge"
+                            Margin="0,-2,-4,0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed" />
+                    </Grid>
+
+                    <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />
 
                     <Button
                         x:Name="RailSearchButton"
@@ -419,5 +400,36 @@
         </Grid>
 
         <Frame x:Name="AuthFrame" Grid.Row="1" />
+
+        <!--
+          components/search-bar.tsx as a floating panel over the page, opened
+          by the rail's Search and Ctrl+F: type-ahead from GET
+          /search/suggest, Enter opens the results page, Escape or a click
+          outside closes it. Suggestions display through
+          SuggestionItem.ToString() rather than a template, keeping this
+          file free of bindings (see the note at the top).
+        -->
+        <Grid x:Name="SearchLayer" Grid.Row="1" Visibility="Collapsed" KeyDown="OnSearchLayerKeyDown">
+            <Border Background="#47000000" PointerPressed="OnSearchDismissPressed" />
+            <Border
+                Width="560"
+                Margin="0,40,0,0"
+                Padding="10"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                CornerRadius="18"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource MarqueeGlassBorderBrush}"
+                Background="{ThemeResource MarqueeGlassBrush}">
+                <AutoSuggestBox
+                    x:Name="SearchBox"
+                    FontSize="17"
+                    PlaceholderText="Search an actor, a studio, a title…"
+                    QueryIcon="Find"
+                    AutomationProperties.Name="Search"
+                    TextChanged="OnSearchTextChanged"
+                    QuerySubmitted="OnSearchQuerySubmitted" />
+            </Border>
+        </Grid>
     </Grid>
 </Window>

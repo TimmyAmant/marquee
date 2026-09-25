@@ -1,22 +1,17 @@
 import SwiftUI
 
-/// app/layout.tsx: the floating navigation rail and menu + header (search,
-/// notifications) + content.
+/// app/layout.tsx: the floating navigation rail (with search and
+/// notifications) + content. Search opens as a floating panel over the page.
 struct MainWindowView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         @Bindable var model = model
 
-        // Without a split view, the toolbar only shows a search field declared
-        // inside the stack, so every page brings its own. They share
-        // `model.searchText`; only the page on top acts on it.
         NavigationStack(path: $model.path) {
             SectionRootView(item: model.selection)
-                .modifier(SearchSupport(isOnTop: model.path.isEmpty))
                 .navigationDestination(for: Route.self) { route in
                     RouteDestinationView(route: route)
-                        .modifier(SearchSupport(isOnTop: model.path.last == route))
                 }
         }
         .id(model.selection)
@@ -35,11 +30,16 @@ struct MainWindowView: View {
         .overlay {
             NavMenu()
         }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                NotificationsToolbarButton()
+        .overlay {
+            if model.isSearchOpen {
+                SearchPanel()
+                    .transition(.opacity)
             }
         }
+        .animation(.easeOut(duration: 0.15), value: model.isSearchOpen)
+        // Any navigation closes it, however it happened.
+        .onChange(of: model.selection) { model.isSearchOpen = false }
+        .onChange(of: model.path) { model.isSearchOpen = false }
         .overlay(alignment: .bottom) {
             BannerView()
         }
@@ -92,125 +92,10 @@ struct RouteDestinationView: View {
     }
 }
 
-// MARK: - Search (components/search-bar.tsx)
-
-private struct SearchSupport: ViewModifier {
-    /// Whether this page is the one showing. The pages under it keep their
-    /// (hidden) copy of the field, which mustn't take focus, fetch
-    /// suggestions or route a picked one.
-    let isOnTop: Bool
-
-    @Environment(AppModel.self) private var model
-    @State private var suggestions: [API.SearchSuggestion] = []
-    @FocusState private var searchFocused: Bool
-
-    private static let completionPrefix = "\u{2063}marquee:"
-
-    func body(content: Content) -> some View {
-        @Bindable var model = model
-
-        content
-            .searchable(text: $model.searchText, placement: .toolbar, prompt: "Search an actor, a studio, a title…")
-            .searchFocused($searchFocused)
-            // Edit › Find (⌘F), and the navigation menu's Search.
-            .onChange(of: model.searchFocusRequest) { _, _ in
-                if isOnTop { searchFocused = true }
-            }
-            .searchSuggestions {
-                ForEach(suggestions, id: \.stableId) { suggestion in
-                    SuggestionRow(suggestion: suggestion)
-                        .searchCompletion(Self.completionPrefix + suggestion.stableId)
-                }
-            }
-            .onSubmit(of: .search) {
-                model.search(model.searchText)
-            }
-            .onChange(of: model.searchText) { _, newValue in
-                handleSearchText(newValue)
-            }
-            .task(id: model.searchText) {
-                let query = model.searchText
-                guard isOnTop, !query.hasPrefix(Self.completionPrefix) else { return }
-                guard query.trimmingCharacters(in: .whitespaces).count >= 2 else {
-                    suggestions = []
-                    return
-                }
-                try? await Task.sleep(for: .milliseconds(250))
-                if Task.isCancelled { return }
-                // A failed suggest call just leaves the list as it was; the
-                // Search screen reports real errors.
-                let results = (try? await model.api.search.suggestions(query)) ?? []
-                if !Task.isCancelled { suggestions = results }
-            }
-    }
-
-    /// Picking a suggestion fills the field with a sentinel — route it instead.
-    private func handleSearchText(_ text: String) {
-        guard isOnTop, text.hasPrefix(Self.completionPrefix) else { return }
-        let stableId = String(text.dropFirst(Self.completionPrefix.count))
-        let picked = suggestions.first(where: { $0.stableId == stableId })
-        model.searchText = ""
-        suggestions = []
-        guard let suggestion = picked else { return }
-        if let titleID = suggestion.titleID {
-            model.openTitle(titleID)
-        } else if suggestion.mediaType == .person {
-            model.open(.person(suggestion.id))
-        }
-    }
-}
-
-private struct SuggestionRow: View {
-    let suggestion: API.SearchSuggestion
-
-    var body: some View {
-        HStack(spacing: 10) {
-            RemoteImage(suggestion.posterPath, size: .w92, showsShimmer: false)
-                .frame(width: 26, height: 36)
-                .background(Theme.bg2)
-                .clipShape(RoundedRectangle(cornerRadius: 3))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(suggestion.name).lineLimit(1)
-                if let subtitle = suggestion.subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-            Text(suggestion.mediaType.label)
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 1.5)
-                .overlay(Capsule().strokeBorder(.secondary.opacity(0.5)))
-        }
-    }
-}
-
 // MARK: - Notifications (components/notifications-bell.tsx)
 
-private struct NotificationsToolbarButton: View {
-    @Environment(AppModel.self) private var model
-    @State private var showing = false
-
-    var body: some View {
-        Button {
-            showing.toggle()
-        } label: {
-            Image(systemName: model.unreadCount > 0 ? "bell.badge" : "bell")
-                .symbolRenderingMode(.palette)
-                .foregroundStyle(Theme.accent, Theme.textSecondary)
-        }
-        .help(model.live.badges.bellLabel.map { "Notifications (\($0) unread)" } ?? "Notifications")
-        .popover(isPresented: $showing, arrowEdge: .bottom) {
-            NotificationsPopover(dismiss: { showing = false })
-                .environment(model)
-        }
-    }
-}
-
-private struct NotificationsPopover: View {
+/// The notifications list, opened from the bell on the rail.
+struct NotificationsPopover: View {
     @Environment(AppModel.self) private var model
     let dismiss: () -> Void
 

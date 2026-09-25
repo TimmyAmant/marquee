@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { SearchBar } from "@/components/search-bar";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { NavMenuButton } from "@/components/nav-menu-button";
 
 /**
- * Slim top bar: the wordmark, search and notifications. Navigation itself
- * is the floating rail and its menu (components/nav-menu.tsx); below md the
- * rail is hidden, so the menu button here opens the same menu as a drawer.
+ * Slim top bar: the wordmark. Navigation, search and notifications are on
+ * the floating rail (components/nav-menu.tsx); below md the rail is hidden,
+ * so here the bell and the menu button (which opens the same menu as a
+ * drawer, with search) stand in for it.
  */
 export async function SiteHeader() {
   const session = await auth();
@@ -36,14 +36,6 @@ export async function SiteHeader() {
             <span className="absolute -right-2.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-accent" />
           </span>
         </Link>
-
-        <div className="ml-auto hidden w-[300px] shrink-0 md:block">
-          <SearchBar variant="compact" />
-        </div>
-
-        <div className="hidden items-center gap-2.5 md:flex">
-          {session?.user && <NotificationsBell />}
-        </div>
 
         <div className="ml-auto flex items-center gap-3 md:hidden">
           {session?.user && <NotificationsBell />}

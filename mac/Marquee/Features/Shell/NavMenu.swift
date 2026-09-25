@@ -31,9 +31,9 @@ struct NavMenu: View {
         model.openSettings(.account)
     }
 
-    /// The website's Search is a page; here it's the toolbar's search field.
+    /// The search panel, over the page.
     private func focusSearch() {
-        model.searchFocusRequest &+= 1
+        model.isSearchOpen = true
     }
 
     /// A newer Marquee: Settings › About, where "Update" and its progress are.
@@ -53,15 +53,16 @@ private enum NavMetrics {
 /// Everything on the rail, top to bottom; also what keyboard focus can land on.
 private enum RailItem: Hashable {
     case profile
+    case notifications
     case search
     case section(SidebarItem)
     case update
 }
 
-/// Every destination, in the menu's order: your photo, then Search and
-/// Discover, Movies and Series, and Favorites, Calendar and Requests, with a
-/// short hairline between the groups (and before the update button, when
-/// there's an update).
+/// Every destination, in the menu's order: your photo and notifications,
+/// then Search and Discover, Movies and Series, and Favorites, Calendar and
+/// Requests, with a short hairline between the groups (and before the update
+/// button, when there's an update).
 private struct NavRail: View {
     @Environment(AppModel.self) private var model
     let focus: FocusState<RailItem?>.Binding
@@ -70,10 +71,14 @@ private struct NavRail: View {
     let onSelect: (SidebarItem) -> Void
     let onUpdate: () -> Void
 
+    @State private var showingNotifications = false
+
     var body: some View {
         VStack(spacing: 4) {
             profile
                 .padding(.bottom, 4)
+            notifications
+            RailHairline()
 
             NavRailButton(systemImage: "magnifyingglass", label: "Search", focus: focus, item: .search, action: onSearch)
             section(.discover)
@@ -142,6 +147,29 @@ private struct NavRail: View {
         )
     }
 
+    /// components/notifications-bell.tsx: the bell, with a dot while any are
+    /// unread; the list opens beside the rail.
+    private var notifications: some View {
+        let unread = model.unreadCount
+        let label = model.live.badges.bellLabel.map { "Notifications, \($0) unread" } ?? "Notifications"
+        return NavRailButton(
+            systemImage: unread > 0 ? "bell.badge" : "bell",
+            label: "Notifications",
+            focus: focus,
+            item: .notifications,
+            current: showingNotifications,
+            showsDot: unread > 0,
+            hidesLabel: showingNotifications
+        ) {
+            showingNotifications.toggle()
+        }
+        .accessibilityLabel(label)
+        .popover(isPresented: $showingNotifications, arrowEdge: .trailing) {
+            NotificationsPopover(dismiss: { showingNotifications = false })
+                .environment(model)
+        }
+    }
+
     private func section(_ item: SidebarItem) -> some View {
         let pending = item == .requests ? model.pendingRequestCount : 0
         return NavRailButton(
@@ -178,6 +206,8 @@ private struct NavRailButton: View {
     var current = false
     /// An admin with pending requests: an 8pt accent dot on the icon.
     var showsDot = false
+    /// No name label beside it (its popover is open there).
+    var hidesLabel = false
     let action: () -> Void
 
     var body: some View {
@@ -197,7 +227,7 @@ private struct NavRailButton: View {
                     .allowsHitTesting(false)
             }
         }
-        .modifier(RailLabeled(label: label, focus: focus, item: item))
+        .modifier(RailLabeled(label: label, focus: focus, item: item, hidden: hidesLabel))
         .accessibilityLabel(label)
         .accessibilityAddTraits(current ? .isSelected : [])
     }
@@ -210,10 +240,11 @@ private struct RailLabeled: ViewModifier {
     let label: String
     let focus: FocusState<RailItem?>.Binding
     let item: RailItem
+    var hidden = false
     @State private var hovering = false
 
     func body(content: Content) -> some View {
-        let showing = hovering || focus.wrappedValue == item
+        let showing = !hidden && (hovering || focus.wrappedValue == item)
         content
             .focused(focus, equals: item)
             .onHover { hovering = $0 }

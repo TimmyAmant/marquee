@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { RequestsBadge } from "@/components/requests-badge";
 import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -92,10 +93,10 @@ function isCurrent(pathname: string, href: string): boolean {
 
 /**
  * The site's navigation, after the Plex app's Apple TV menu. A small frosted
- * rail floats at the left edge and is the whole menu: your photo (Settings)
- * and one icon per section, each going straight there in one click, with
- * the section's name beside it on hover. Nothing opens over the page on a
- * desktop. Below the md breakpoint, where there's no room for the rail, the
+ * rail floats at the left edge and is the whole menu: your photo (Settings),
+ * notifications, and one icon per section, each going straight there in one
+ * click, with the section's name beside it on hover. Search opens as a
+ * floating panel over the page. Below the md breakpoint, where there's no room for the rail, the
  * header's menu button opens the same destinations as a labeled drawer.
  */
 export function NavMenu({
@@ -116,6 +117,7 @@ export function NavMenu({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Any navigation closes the menu, however it happened (a link in the
@@ -125,6 +127,7 @@ export function NavMenu({
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);
     if (open) setOpen(false);
+    if (searchOpen) setSearchOpen(false);
   }
 
   useEffect(() => {
@@ -182,11 +185,36 @@ export function NavMenu({
           <ProfilePicture signedIn={isSignedIn} label={name} src={avatarSrc} size={36} />
           <RailLabel>{isSignedIn ? "Settings" : "Sign in"}</RailLabel>
         </Link>
+        {isSignedIn && (
+          <>
+            <NotificationsBell variant="rail" railLabel={<RailLabel>Notifications</RailLabel>} />
+            <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />
+          </>
+        )}
         {railGroups.map((group, index) => (
           <Fragment key={group[0].href}>
             {index > 0 && <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />}
             {group.map((item) => {
               const current = isCurrent(pathname, item.href);
+              if (item === SEARCH) {
+                return (
+                  <button
+                    key={item.href}
+                    type="button"
+                    onClick={() => setSearchOpen(true)}
+                    aria-label="Search"
+                    aria-haspopup="dialog"
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                      current || searchOpen
+                        ? "bg-text-primary text-bg-0"
+                        : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
+                    }`}
+                  >
+                    <Icon name={item.icon} className="h-[19px] w-[19px]" />
+                    <RailLabel>{item.label}</RailLabel>
+                  </button>
+                );
+              }
               return (
                 <Link
                   key={item.href}
@@ -210,6 +238,8 @@ export function NavMenu({
           </Fragment>
         ))}
       </nav>
+
+      {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}
 
       {/* Narrow screens only: dims the page behind the drawer. */}
       <div
@@ -277,6 +307,31 @@ export function NavMenu({
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * components/search-bar.tsx as a floating panel over the page, from the
+ * rail's Search: type-ahead suggestions, Enter for the results page, Escape
+ * or a click outside to close. Navigating closes it too (NavMenu resets it
+ * on every route change).
+ */
+function SearchDialog({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Search" className="fixed inset-0 z-50 hidden md:block">
+      <div aria-hidden onClick={onClose} className="absolute inset-0 bg-black/30" />
+      <div className="nav-glass relative mx-auto mt-[90px] w-[560px] max-w-[calc(100vw-120px)] rounded-[20px] p-2.5 shadow-[0_24px_60px_rgb(0_0_0/0.35)]">
+        <SearchBar autoFocus onNavigate={onClose} />
+      </div>
+    </div>
   );
 }
 

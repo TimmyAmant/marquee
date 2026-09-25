@@ -18,7 +18,7 @@ namespace Marquee.Windows;
 
 /// <summary>
 /// The one window: the sign-in flow until the session is ready, then the
-/// shell: a top bar (back, wordmark, search box, bell), the page frame, and
+/// shell: a top bar (back, wordmark), the page frame, the search panel, and
 /// the website's Plex-style navigation (components/nav-menu.tsx): a frosted
 /// rail floating at the left edge that is the whole menu (one icon per
 /// destination, each one click away, nothing opening over the page), plus an
@@ -182,8 +182,6 @@ public sealed partial class MainWindow : Window, INavigator
         var shell = ready ? Visibility.Visible : Visibility.Collapsed;
         ShellContent.Visibility = shell;
         BackButton.Visibility = shell;
-        SearchBox.Visibility = shell;
-        NotificationsHost.Visibility = shell;
         AuthFrame.Visibility = ready ? Visibility.Collapsed : Visibility.Visible;
 
         if (ready && !shellShown)
@@ -197,7 +195,7 @@ public sealed partial class MainWindow : Window, INavigator
             // Leave nothing of the previous account behind: a blank page, no
             // back stack, no half-typed search, so the next sign-in starts at Discover.
             NotificationsFlyoutHost.Hide();
-            ClearSearch();
+            CloseSearch();
             ContentFrame.Navigate(typeof(PlaceholderPage));
             ContentFrame.BackStack.Clear();
             BackButton.IsEnabled = false;
@@ -292,8 +290,8 @@ public sealed partial class MainWindow : Window, INavigator
     /// <summary>The avatar: the account, i.e. Settings.</summary>
     private void OnProfileClick(object sender, RoutedEventArgs e) => SelectSection(Section.Settings);
 
-    /// <summary>Search on the rail goes to the top bar's search box.</summary>
-    private void OnSearchNavClick(object sender, RoutedEventArgs e) => SearchBox.Focus(FocusState.Programmatic);
+    /// <summary>Search on the rail opens the search panel over the page.</summary>
+    private void OnSearchNavClick(object sender, RoutedEventArgs e) => OpenSearch();
 
     private void SelectSection(Section section) => model.Select(section);
 
@@ -351,14 +349,54 @@ public sealed partial class MainWindow : Window, INavigator
         {
             model.Search(args.QueryText);
         }
-        ClearSearch();
+        else
+        {
+            return;
+        }
+        CloseSearch();
     }
 
-    private void ClearSearch()
+    /// <summary>The search panel over the page, with the cursor in its box.</summary>
+    private void OpenSearch()
+    {
+        if (!shellShown)
+        {
+            return;
+        }
+        SearchLayer.Visibility = Visibility.Visible;
+        // Collapsed a moment ago: focus once it's in the layout.
+        model.Dispatcher.TryEnqueue(() => SearchBox.Focus(FocusState.Programmatic));
+    }
+
+    /// <summary>Hides the panel and forgets what was typed.</summary>
+    private void CloseSearch()
     {
         suggestCancellation?.Cancel();
         SearchBox.Text = "";
         SearchBox.ItemsSource = null;
+        SearchLayer.Visibility = Visibility.Collapsed;
+    }
+
+    private void OnFindInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        OpenSearch();
+        args.Handled = true;
+    }
+
+    private void OnSearchLayerKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == global::Windows.System.VirtualKey.Escape)
+        {
+            CloseSearch();
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>A click outside the panel closes it.</summary>
+    private void OnSearchDismissPressed(object sender, PointerRoutedEventArgs e)
+    {
+        CloseSearch();
+        e.Handled = true;
     }
 
     // MARK: Notifications (components/notifications-bell.tsx)
@@ -411,7 +449,15 @@ public sealed partial class MainWindow : Window, INavigator
         args.Handled = true;
     }
 
-    private void OnContentNavigated(object sender, NavigationEventArgs e) => BackButton.IsEnabled = ContentFrame.CanGoBack;
+    /// <summary>Any navigation closes the search panel, however it happened.</summary>
+    private void OnContentNavigated(object sender, NavigationEventArgs e)
+    {
+        BackButton.IsEnabled = ContentFrame.CanGoBack;
+        if (SearchLayer.Visibility == Visibility.Visible)
+        {
+            CloseSearch();
+        }
+    }
 
     private void OnReloadInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
