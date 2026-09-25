@@ -593,7 +593,7 @@ export const appSettings = pgTable("app_settings", {
   // "New accounts from Plex/Jellyfin sign-in": whether someone who may use
   // the admin's Plex/Jellyfin server but has no Marquee account yet gets a
   // member account on their first sign-in, or is told to ask the admin.
-  mediaServerSignup: boolean("media_server_signup").default(true).notNull(),
+  mediaServerSignup: boolean("media_server_signup").default(false).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

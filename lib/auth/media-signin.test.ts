@@ -97,6 +97,8 @@ vi.mock("@/lib/integrations/credentials", () => ({
 const plexTv = {
   authToken: null as string | null,
   account: { id: 1111, username: "friendly", title: "Friend" } as Record<string, unknown>,
+  /** The account behind the admin's integration token ("admin-token"). */
+  adminAccount: { id: 7777, username: "tim", title: "Tim" } as Record<string, unknown>,
   resources: [] as { clientIdentifier: string; provides: string; owned?: boolean }[],
 };
 const checkPin = vi.fn(async () => ({ id: 99, code: "code", authToken: plexTv.authToken }));
@@ -110,7 +112,8 @@ vi.mock("@/lib/plex/accounts", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/plex/accounts")>();
   return {
     ...original,
-    getPlexAccount: async () => original.parsePlexAccount(plexTv.account),
+    getPlexAccount: async (_clientId: string, token: string) =>
+      original.parsePlexAccount(token === "admin-token" ? plexTv.adminAccount : plexTv.account),
     getServerResources: async () => plexTv.resources,
   };
 });
@@ -132,7 +135,7 @@ async function startedHandle(ip: string) {
 /** Polls until the PIN check isn't throttled (at most one plex.tv check a
  * second per handle). */
 async function pollNow(handle: string, ip: string) {
-  vi.setSystemTime(Date.now() + 1500);
+  vi.setSystemTime(Date.now() + 2500);
   return pollPlexSignIn(handle, ip);
 }
 
@@ -183,8 +186,17 @@ describe("Plex sign-in", () => {
     expect(await pollPlexSignIn("made-up", freshIp())).toEqual({ status: "expired" });
   });
 
+  it("refuses a newcomer by default: new accounts from sign-in start off", async () => {
+    const ip = freshIp();
+    plexTv.authToken = "member-token";
+    const result = await pollNow(await startedHandle(ip), ip);
+    expect(result).toMatchObject({ status: "done", ok: false, code: "forbidden", error: "Ask the admin to add you first." });
+    expect(tables.users).toHaveLength(1);
+  });
+
   it("creates a member for a new Plex friend, then signs the same person in again", async () => {
     const ip = freshIp();
+    tables.appSettings = [{ id: "s", mediaServerSignup: true }];
     plexTv.authToken = "member-token";
     const first = await pollNow(await startedHandle(ip), ip);
     expect(first).toMatchObject({ status: "done", ok: true });
@@ -198,6 +210,7 @@ describe("Plex sign-in", () => {
 
   it("uses a handle once: after success it's expired", async () => {
     const ip = freshIp();
+    tables.appSettings = [{ id: "s", mediaServerSignup: true }];
     plexTv.authToken = "member-token";
     const handle = await startedHandle(ip);
     expect(await pollNow(handle, ip)).toMatchObject({ status: "done", ok: true });
@@ -206,6 +219,7 @@ describe("Plex sign-in", () => {
 
   it("never matches an existing account by username", async () => {
     const ip = freshIp();
+    tables.appSettings = [{ id: "s", mediaServerSignup: true }];
     plexTv.authToken = "member-token";
     plexTv.account = { id: 2222, username: "tester", title: "Not the admin" };
     const result = await pollNow(await startedHandle(ip), ip);
@@ -241,6 +255,20 @@ describe("Plex sign-in", () => {
     });
   });
 
+  it("never makes someone admin for merely having `owned` in their own server list", async () => {
+    // A server the admin's connected Plex account doesn't own any more (a
+    // reconnect to another account), or a Home member seeing it as owned:
+    // only the connected account's own Plex id counts.
+    const ip = freshIp();
+    tables.appSettings = [{ id: "s", mediaServerSignup: false }];
+    plexTv.authToken = "someone-token";
+    plexTv.account = { id: 4242, username: "old-owner", title: "Old Owner" };
+    plexTv.resources = [{ clientIdentifier: "admin-server", provides: "server", owned: true }];
+    const result = await pollNow(await startedHandle(ip), ip);
+    expect(result).toMatchObject({ status: "done", ok: false, code: "forbidden" });
+    expect(tables.users.find((u) => u.id === "admin")?.plexUserId ?? null).toBeNull();
+  });
+
   it("links the server's owner to the admin account and signs in as the admin", async () => {
     const ip = freshIp();
     tables.appSettings = [{ id: "s", mediaServerSignup: false }];
@@ -260,7 +288,7 @@ describe("Plex linking", () => {
     const started = await startPlexLink("m1", ip);
     if (!started.ok) throw new Error(started.error);
     plexTv.authToken = "member-token";
-    vi.setSystemTime(Date.now() + 1500);
+    vi.setSystemTime(Date.now() + 2500);
 
     // Another account can't finish someone else's link, and a sign-in poll
     // can't use a link handle.
@@ -280,7 +308,7 @@ describe("Plex linking", () => {
     const started = await startPlexLink("m2", ip);
     if (!started.ok) throw new Error(started.error);
     plexTv.authToken = "member-token";
-    vi.setSystemTime(Date.now() + 1500);
+    vi.setSystemTime(Date.now() + 2500);
     expect(await pollPlexLink("m2", started.handle, ip)).toMatchObject({ status: "done", ok: false, code: "conflict" });
     expect(tables.users.find((u) => u.id === "m2")?.plexUserId).toBeNull();
   });

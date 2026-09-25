@@ -190,7 +190,9 @@ function PlexButton({ remember }: { remember: boolean }) {
 export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boolean } }) {
   const [mode, setMode] = useState<"password" | "jellyfin">("password");
   const [remember, setRemember] = useState(true);
-  const hasMediaSignIn = methods.plex || methods.jellyfin;
+  // The other ways in, under an "or": Plex always, Jellyfin unless its form
+  // is the one showing (then "Use a Marquee password instead" is the way back).
+  const hasOtherMethods = methods.plex || (methods.jellyfin && mode !== "jellyfin");
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-8">
@@ -205,7 +207,7 @@ export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boo
         <PasswordForm remember={remember} setRemember={setRemember} />
       )}
 
-      {hasMediaSignIn && (
+      {hasOtherMethods && (
         <>
           <div className="my-6 flex items-center gap-3 text-xs text-text-muted">
             <span className="h-px flex-1 bg-border" />

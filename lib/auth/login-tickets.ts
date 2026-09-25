@@ -70,10 +70,20 @@ export function consumeLoginTicket(ticket: unknown, now = Date.now()): string | 
   return now > entry.expiresAt ? null : entry.userId;
 }
 
+/** Live Plex sign-ins at once, across everyone. A household needs a
+ * handful; the cap keeps the map (and the plex.tv checks each live PIN
+ * makes) bounded however many addresses someone starts them from. */
+export const MAX_LIVE_PLEX_PINS = 50;
+
+/** Null when MAX_LIVE_PLEX_PINS are already live (expired ones are swept first). */
 export function createPlexPinHandle(
   entry: Omit<PlexPinEntry, "expiresAt" | "lastCheckedAt">,
   now = Date.now(),
-): { handle: string; expiresAt: number } {
+): { handle: string; expiresAt: number } | null {
+  if (pins.size >= MAX_LIVE_PLEX_PINS) {
+    for (const [key, value] of pins) if (value.expiresAt <= now) pins.delete(key);
+    if (pins.size >= MAX_LIVE_PLEX_PINS) return null;
+  }
   const handle = randomSecret();
   const expiresAt = now + PLEX_PIN_TTL_MS;
   pins.set(handle, { ...entry, expiresAt, lastCheckedAt: 0 });
@@ -103,7 +113,7 @@ export function getPlexPin(handle: unknown, purpose: PlexPinEntry["purpose"], no
 
 /** Minimum time between plex.tv checks of one PIN. Clients poll every 2 s;
  * anything faster answers "pending" without bothering plex.tv. */
-export const PIN_CHECK_SPACING_MS = 1000;
+export const PIN_CHECK_SPACING_MS = 2000;
 
 /** Books a plex.tv check of this PIN now, unless one happened too recently. */
 export function shouldCheckPin(entry: PlexPinEntry, now = Date.now()): boolean {

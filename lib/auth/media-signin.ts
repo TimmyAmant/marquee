@@ -93,10 +93,14 @@ const JELLYFIN_NOT_CONNECTED = "Jellyfin sign-in isn't set up on this server.";
 
 // ── The sign-up setting ────────────────────────────────────────────────────
 
-/** "New accounts from Plex/Jellyfin sign-in" — on until the admin turns it off. */
+/** "New accounts from Plex/Jellyfin sign-in" — off until the admin turns it
+ * on. Off by default because on it lets everyone the admin has ever shared
+ * Plex with (or who has a Jellyfin login) into Marquee, and lets a removed
+ * member back in with a fresh account; with it off, only accounts the admin
+ * imported or linked can use Plex/Jellyfin sign-in. */
 export async function getMediaServerSignup(): Promise<boolean> {
   const [row] = await db.select({ value: appSettings.mediaServerSignup }).from(appSettings).limit(1);
-  return row?.value ?? true;
+  return row?.value ?? false;
 }
 
 export async function setMediaServerSignup(value: boolean): Promise<void> {
@@ -269,7 +273,9 @@ export async function startPlexPin(
   } catch {
     return fail("upstream", "Couldn't start Plex sign-in. Try again.");
   }
-  const { handle, expiresAt } = createPlexPinHandle({ pinId: pin.id, clientId: plex.clientId, purpose });
+  const created = createPlexPinHandle({ pinId: pin.id, clientId: plex.clientId, purpose });
+  if (!created) return fail("rate_limited", "Too many Plex sign-ins are waiting right now. Try again in a few minutes.");
+  const { handle, expiresAt } = created;
   return { ok: true, handle, authUrl: buildPlexAuthUrl(plex.clientId, pin.code), expiresAt: new Date(expiresAt) };
 }
 
@@ -286,8 +292,9 @@ async function pollPlexPin(
   purpose: PlexPinEntry["purpose"],
   ip: string | null,
 ): Promise<PlexPinPoll<{ account: PlexAccount; access: { access: boolean; owner: boolean }; plex: PlexContext }>> {
-  // Polls aren't worth a shared bucket: a handle is only good for its own
-  // PIN, and plex.tv is asked at most once a second per handle anyway.
+  // Polls need no shared bucket: a handle is only good for its own PIN,
+  // plex.tv is asked at most every 2 s per handle, and at most
+  // MAX_LIVE_PLEX_PINS handles exist at once.
   if (ip && !checkRateLimit(`plex-pin:poll:${ip}`, PIN_POLL_LIMIT, PIN_POLL_WINDOW_MS)) {
     return { status: "done", ...fail("rate_limited", "Too many attempts. Try again in a few minutes.") };
   }
@@ -307,15 +314,38 @@ async function pollPlexPin(
   if (!plex) return { status: "done", ...fail("conflict", PLEX_NOT_CONNECTED) };
 
   try {
-    const [account, resources] = await Promise.all([
+    const [account, resources, adminAccount] = await Promise.all([
       getPlexAccount(entry.clientId, pin.authToken),
       getServerResources(entry.clientId, pin.authToken),
+      getAdminPlexAccount(plex),
     ]);
     if (!account) return { status: "done", ...fail("upstream", "Plex didn't say which account this is. Try again.") };
-    return { status: "done", ok: true, account, access: plexServerAccess(resources, plex.machineIds), plex };
+    // "Owner" — the one Plex identity that may become the Marquee admin —
+    // is exactly the Plex account connected in Settings → Integrations, by
+    // plex.tv's own id for that token. Not the `owned` flag in the member's
+    // resource list: that's the member's view of things, and it would also
+    // keep pointing at a server the admin has since moved away from.
+    const { access } = plexServerAccess(resources, plex.machineIds);
+    const owner = adminAccount !== null && account.id === adminAccount.id;
+    return { status: "done", ok: true, account, access: { access, owner }, plex };
   } catch {
     return { status: "done", ...fail("upstream", "Couldn't reach Plex. Try again.") };
   }
+}
+
+/** The admin's own Plex account (whose token the integration holds), for the
+ * owner check. Cached per token for a few minutes: it only changes when the
+ * admin reconnects Plex, which brings a new token. */
+const adminAccountCache = new Map<string, { account: PlexAccount; expires: number }>();
+const ADMIN_ACCOUNT_TTL_MS = 10 * 60 * 1000;
+
+async function getAdminPlexAccount(plex: PlexContext): Promise<PlexAccount | null> {
+  const cached = adminAccountCache.get(plex.authToken);
+  if (cached && cached.expires > Date.now()) return cached.account;
+  const account = await getPlexAccount(plex.clientId, plex.authToken).catch(() => null);
+  adminAccountCache.clear();
+  if (account) adminAccountCache.set(plex.authToken, { account, expires: Date.now() + ADMIN_ACCOUNT_TTL_MS });
+  return account;
 }
 
 export async function startPlexSignIn(ip: string | null) {

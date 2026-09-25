@@ -1548,7 +1548,7 @@ the `GET` errors.
 { "mediaServerSignup": true }
 ```
 
-"New accounts from Plex/Jellyfin sign-in" (default on): whether someone who
+"New accounts from Plex/Jellyfin sign-in" (default off): whether someone who
 may use the admin's Plex/Jellyfin server but has no linked account gets a
 member account on their first sign-in. `PUT` takes the same body
 (`mediaServerSignup` required, boolean) and answers the saved value. `403`

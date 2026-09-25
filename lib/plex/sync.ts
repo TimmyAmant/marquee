@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, isNotNull, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, notInArray, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { plexServers, plexLibraryItems, integrationCredentials } from "@/lib/db/schema";
@@ -213,6 +213,20 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
       }
     }
   }
+
+  // Servers this Plex account no longer owns (it was reconnected to another
+  // account, or a server was removed) go, with their items: they'd keep
+  // showing titles as owned, and Plex sign-in checks access against these
+  // rows — an old server's users mustn't keep getting in.
+  await assertStillConnected(userId, "plex");
+  const current = resources.map((r) => r.clientIdentifier);
+  await db
+    .delete(plexServers)
+    .where(
+      current.length > 0
+        ? and(eq(plexServers.userId, userId), notInArray(plexServers.machineIdentifier, current))
+        : eq(plexServers.userId, userId),
+    );
 
   return { serverCount: resources.length, itemCount };
 }

@@ -68,7 +68,15 @@ extension API {
         let authUrl: String
         let expiresAt: Date
 
-        var url: URL? { URL(string: authUrl) }
+        /// Only a plex.tv sign-in page over https: the app hands this to the
+        /// browser, and a server (or something pretending to be one) mustn't
+        /// be able to make it open a file or another app's URL scheme.
+        var url: URL? {
+            guard let url = URL(string: authUrl), url.scheme == "https",
+                  let host = url.host?.lowercased(), host == "plex.tv" || host.hasSuffix(".plex.tv")
+            else { return nil }
+            return url
+        }
     }
 
     /// `POST /me/links/plex/poll` body.

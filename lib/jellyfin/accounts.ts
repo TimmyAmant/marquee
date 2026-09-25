@@ -106,6 +106,9 @@ export async function authenticateJellyfinUser(
       "X-Emby-Authorization": authorization,
     },
     body: JSON.stringify({ Username: username, Pw: password }),
+    // Never follow a redirect with the password in the body: a 307/308
+    // would re-send it wherever it points. A redirect is a failure here.
+    redirect: "manual",
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (res.status === 401 || res.status === 403) return { ok: false };
@@ -119,6 +122,7 @@ export async function authenticateJellyfinUser(
     await fetch(`${root}/Sessions/Logout`, {
       method: "POST",
       headers: { Authorization: signedIn, "X-Emby-Authorization": signedIn, "X-Emby-Token": parsed.accessToken },
+      redirect: "manual",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     }).catch(() => undefined);
   }

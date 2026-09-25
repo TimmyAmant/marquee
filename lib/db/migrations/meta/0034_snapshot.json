@@ -316,7 +316,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",

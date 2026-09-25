@@ -65,6 +65,21 @@ final class MediaSignInDecodingTests: XCTestCase {
         XCTAssertNil(old.hasPassword)
     }
 
+    /// The app only ever opens a plex.tv sign-in page over https, whatever
+    /// the server sends.
+    func testPlexStartOpensOnlyPlexTvOverHttps() throws {
+        func url(_ authUrl: String) throws -> URL? {
+            try decode(API.PlexSignInStart.self, #"{"handle":"h","authUrl":"\#(authUrl)","expiresAt":"2026-09-25T12:10:00.000Z"}"#).url
+        }
+        XCTAssertNotNil(try url("https://app.plex.tv/auth#?code=ABCD"))
+        XCTAssertNotNil(try url("https://plex.tv/link"))
+        XCTAssertNil(try url("http://app.plex.tv/auth"))
+        XCTAssertNil(try url("file:///Applications/Calculator.app"))
+        XCTAssertNil(try url("https://app.plex.tv.evil.example/auth"))
+        XCTAssertNil(try url("https://evilplex.tv/auth"))
+        XCTAssertNil(try url("marquee://title/movie/1"))
+    }
+
     func testPlexStartAndImportShapes() throws {
         let start = try decode(API.PlexSignInStart.self, #"{"handle":"h_123","authUrl":"https://app.plex.tv/auth#?code=ABCD","expiresAt":"2026-09-25T12:10:00.000Z"}"#)
         XCTAssertEqual(start.handle, "h_123")
