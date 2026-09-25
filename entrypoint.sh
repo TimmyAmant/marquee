@@ -19,8 +19,35 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
   mkdir -p "$PGDATA"
   chown -R postgres:postgres "$PGDATA"
   chmod 0700 "$PGDATA"
-  su postgres -c "$PG_BIN/initdb -D $PGDATA --auth=trust" >/dev/null
+  su postgres -c "$PG_BIN/initdb -D $PGDATA --auth-local=peer --auth-host=scram-sha-256" >/dev/null
 fi
+
+# Who may connect to Postgres, rewritten on every start so installs whose
+# data directory was initialized with --auth=trust (every one before this)
+# get it too. Trust let anything in the container connect as any role,
+# superuser included, without a password — so the app, which runs
+# unprivileged below, could have taken over the database and the files
+# Postgres owns. Now only the postgres OS user reaches the postgres role
+# (peer, over the unix socket — how this script manages roles), and
+# everything else needs a password (the app role's is re-set below on
+# every start, stored as SCRAM). The previous file is kept once, in case
+# it had been edited by hand.
+HBA="$PGDATA/pg_hba.conf"
+HBA_MARKER="# Managed by Marquee's entrypoint.sh"
+if ! grep -qF "$HBA_MARKER" "$HBA" 2>/dev/null; then
+  [ -f "$HBA" ] && cp -p "$HBA" "$HBA.before-marquee"
+  echo "[entrypoint] Requiring passwords for Postgres connections (previous pg_hba.conf kept as pg_hba.conf.before-marquee)..."
+fi
+cat > "$HBA" <<EOF
+$HBA_MARKER — rewritten on every start.
+# TYPE  DATABASE  USER      ADDRESS       METHOD
+local   all       postgres                peer
+local   all       all                     scram-sha-256
+host    all       all       127.0.0.1/32  scram-sha-256
+host    all       all       ::1/128       scram-sha-256
+EOF
+chown postgres:postgres "$HBA"
+chmod 0600 "$HBA"
 
 echo "[entrypoint] Starting Postgres..."
 su postgres -c "$PG_BIN/pg_ctl -D $PGDATA -l $PGDATA/postgresql.log -w -o '-c listen_addresses=localhost' start"
@@ -61,8 +88,11 @@ fi
 URL_PASSWORD=$(node -e 'process.stdout.write(encodeURIComponent(process.env.POSTGRES_PASSWORD))')
 export DATABASE_URL="postgres://$POSTGRES_USER:$URL_PASSWORD@localhost:5432/$POSTGRES_DB"
 
+# Everything from here on runs as the unprivileged `node` user, not root:
+# the app never needs root, and shouldn't hold it if it's ever compromised.
+# What it writes at runtime (.next's caches) is owned by node in the image.
 echo "[entrypoint] Running database migrations..."
-npx drizzle-kit migrate
+gosu node npx drizzle-kit migrate
 
 echo "[entrypoint] Starting Marquee..."
 # Not `exec`: this script stays PID 1 so that on `docker stop` it can stop
@@ -81,7 +111,7 @@ shutdown() {
 }
 trap shutdown TERM INT
 
-"$@" &
+gosu node "$@" &
 APP_PID=$!
 set +e
 wait "$APP_PID"
