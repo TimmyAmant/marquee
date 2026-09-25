@@ -296,19 +296,32 @@ itself, or takes an address you type in.
 It needs macOS 15 or later and a server running 0.22.0 or later. Build
 instructions are in [`mac/README.md`](mac/README.md).
 
+**Download:** [`Marquee-mac.zip`](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-mac.zip)
+from the latest release. Unzip it and move **Marquee** to Applications. The
+app isn't notarized by Apple, so the first launch is blocked: open **System
+Settings › Privacy & Security**, scroll to the message about Marquee and
+choose **Open Anyway**. After that, the app updates itself: when a new release
+is out it offers an **Update** button, and quits and reopens on the new
+version.
+
 ### Marquee for Windows (preview)
 
 A native Windows client is taking shape in [`windows/`](windows/). It's a
 WinUI 3 app that mirrors the Mac app's architecture and talks to the same
-`/api/v1` API, so it shows the same data. The first cut covers Discover, the
-Movies and Series grids, search, title pages with add and request, requests
-(including decline reasons), favorites, the calendar and account settings;
-integrations settings, deep links, notification toasts and the network scan
+`/api/v1` API, so it shows the same data. It covers Discover, the Movies and
+Series grids, search, title pages with add and request, requests (including
+decline reasons), favorites, the calendar, household members, profile photos
+and notifications; integrations settings, deep links and the network scan
 aren't built yet.
 
 It needs Windows 10 1809 or later (or Windows 11) and a server running 0.22.0
 or later. Build instructions and the list of what's still missing are in
 [`windows/README.md`](windows/README.md).
+
+**Download:** [`Marquee-windows-x64.zip`](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-windows-x64.zip)
+from the latest release. Unzip it anywhere and run `Marquee.Windows.exe`;
+nothing else needs installing. It isn't code-signed yet, so SmartScreen may
+say "Windows protected your PC": choose **More info › Run anyway**.
 
 ## Access from outside your network
 
