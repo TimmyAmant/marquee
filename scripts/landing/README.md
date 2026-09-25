@@ -75,3 +75,20 @@ Use `--art <dir>` (or `MARQUEE_ARTWORK_DIR`) for another folder and
   to save if any of the original page's text survives. A `next dev` server on
   the same port works too: its overlay is stripped and its CSS folded onto
   one line.
+
+## README screenshots
+
+`docs/screenshots` are real captures of a test server, not renders:
+
+1. `mac/Scripts/local-server.sh up`, then give it a library: a `plex_servers`
+   row for the `tester` admin and a few `plex_library_items` (TMDb ids, an
+   `added_at`, a size and resolution), then open each title once through
+   the API so it's cached; otherwise Recently Added stays empty.
+2. Website: `node scripts/landing/readme-screens.mjs` writes `web-*.jpg`
+   (Discover and a title page, dark and light).
+3. Mac: run a Debug build pinned to the test server with the screenshot
+   switch, which hides the "TEST RUN" badge (Debug builds only):
+   `MARQUEE_SCREENSHOTS=1 MARQUEE_PINNED_SERVER=http://127.0.0.1:3100
+   MARQUEE_PINNED_TOKEN=<token> …/Marquee.app/Contents/MacOS/Marquee
+   -marquee-theme dark` (or `light`), and capture the window with
+   `screencapture -o -l <window id>`.

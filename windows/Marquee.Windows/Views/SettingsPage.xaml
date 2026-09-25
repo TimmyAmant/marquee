@@ -273,6 +273,12 @@
                             Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                             TextWrapping="Wrap"
                             Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <!-- The server: up to date, or how to update it. -->
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ServerUpdateText, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            TextWrapping="Wrap"
+                            Visibility="{x:Bind ViewModel.HasServerUpdateText, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <ProgressBar
                             MaxWidth="360"
                             HorizontalAlignment="Stretch"

@@ -50,6 +50,9 @@ final class Updater {
     private(set) var update: AvailableUpdate?
     /// Why the last check didn't get an answer (shown in Settings › About).
     private(set) var checkError: UpdateError?
+    /// The newest published release, whatever this app's version: what the
+    /// server is compared with ("Your server is up to date").
+    private(set) var latestRelease: AppVersion?
 
     let currentVersion: AppVersion?
 
@@ -125,11 +128,13 @@ final class Updater {
         switch result {
         case let .upToDate(latest):
             Self.logger.info("Up to date (latest release \(latest?.description ?? "?", privacy: .public))")
+            if let latest { latestRelease = latest }
             checkError = nil
             update = nil
             phase = .upToDate
         case let .available(available):
             Self.logger.info("Marquee \(available.version.description, privacy: .public) is available")
+            latestRelease = available.version
             checkError = nil
             update = available
             phase = .available

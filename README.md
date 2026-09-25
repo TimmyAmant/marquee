@@ -1,42 +1,25 @@
 # Marquee
 
-> **🚧 Beta.** Actively developed and tested daily against a real Plex/Sonarr/Radarr
-> setup, but still early — expect rough edges, schema changes between updates,
-> and the occasional bug. Back up your database before updating. Found something
-> broken? [Open an issue](https://github.com/TimmyAmant/marquee/issues).
-
 A self-hosted dashboard that ties your media metadata together with what you
-actually own. Look up any actor, studio, or franchise, see instantly whether
-it's already in your Plex or Jellyfin library or being downloaded, and send
-anything missing straight to Sonarr or Radarr — all from one page, without
-digging through three different apps.
+actually own. Look up any actor, studio or franchise, see at once whether it's
+already in your Plex or Jellyfin library or downloading, and send anything
+missing straight to Sonarr or Radarr, from one page.
+
+It runs on your home network (Unraid, Synology, a spare box) next to the
+Plex/Jellyfin/Sonarr/Radarr you already have. Your data, your server.
+
+> **Beta.** Tested daily against a real setup, but expect rough edges. Back up
+> your database before updating, and [open an issue](https://github.com/TimmyAmant/marquee/issues)
+> if something breaks.
 
 **Website:** [timmyamant.github.io/marquee](https://timmyamant.github.io/marquee/)
 
-## Download
-
-| | |
-|---|---|
-| **Server** (required) | `docker pull timmyamant/marquee:latest`, or the Unraid template. See [Quick start](#quick-start-docker) |
-| **Mac app** | [**⬇ Marquee-<version>.dmg**](https://github.com/TimmyAmant/marquee/releases/latest), on the latest release: open it and drag Marquee into Applications. The first launch needs System Settings › Privacy & Security › **Open Anyway**; after that it updates itself |
-| **Windows app** | [**⬇ Marquee-Setup-<version>.exe**](https://github.com/TimmyAmant/marquee/releases/latest), on the latest release: run it to install (no admin needed). If SmartScreen appears: **More info › Run anyway** |
-
-The apps are optional: the website does everything they do, in any browser.
-Every [release](https://github.com/TimmyAmant/marquee/releases/latest) has
-both installers attached.
-
-Runs on your home network (Unraid, Synology, a spare box, whatever) next to
-the Plex/Jellyfin/Sonarr/Radarr you already have. Not a hosted service — your
-data, your server.
-
 ![Marquee's Discover page](docs/screenshots/web-discover.jpg)
 
-<p align="center">
-  <img src="docs/screenshots/web-title.jpg" alt="A title page, showing library status and file details" width="100%">
-</p>
-
 <details>
-<summary><b>Light theme</b> — the same screens, for anyone who doesn't live in the dark</summary>
+<summary><b>More screenshots</b>: a title page, and the light theme</summary>
+
+![A title page, showing library status and file details](docs/screenshots/web-title.jpg)
 
 | Website | Mac app |
 |---|---|
@@ -45,199 +28,53 @@ data, your server.
 
 </details>
 
-**Contents:** [Download](#download) · [Features](#features) · [Quick start](#quick-start-docker) · [Unraid](#unraid) · [Marquee for Mac](#marquee-for-mac) · [Marquee for Windows](#marquee-for-windows-preview) · [Remote access](#access-from-outside-your-network) · [Development](#local-development) · [API](docs/api-v1.md)
+## Download
+
+| | |
+|---|---|
+| **Server** (required) | `docker pull timmyamant/marquee:latest`, or the Unraid template. See [Quick start](#quick-start-docker) |
+| **Mac app** | **Marquee-&lt;version&gt;.dmg** from the [latest release](https://github.com/TimmyAmant/marquee/releases/latest) |
+| **Windows app** | **Marquee-Setup-&lt;version&gt;.exe** from the [latest release](https://github.com/TimmyAmant/marquee/releases/latest) |
+
+The apps are optional: the website does everything they do, in any browser.
 
 ## Features
 
-### Home & Discover
-- Trending-this-week and coming-soon rails on the homepage (public, no
-  account needed to browse).
-- Discover page: filter by **Movies / TV / Both**, sort by **Popular / Top
-  rated / Newest**, filter by **year** and by any of the 16+ TMDb genres.
-- **Hide titles you already track** toggle, so Discover only shows what you
-  don't have yet.
-- Quick-add button right on the poster — add to Sonarr/Radarr without
-  opening the title page.
-- **Surprise me** button — picks a random title matching your current
-  filters, for when you just want something to watch tonight.
-
-### Search
-- Title, person, and studio search with live autocomplete suggestions.
-- **Genre search** — type "action", "horror", "comedy" (or a TV genre like
-  "Sci-Fi & Fantasy") and get every matching movie/TV show.
-- **Theme/keyword search** — for queries that aren't a genre (e.g. "natural
-  disaster"), falls back to TMDb's keyword tagging to find matches.
-
-### Title pages
-- Full details: overview, runtime, rating, genres, year(s), status
-  (Continuing/Ended/etc.), network, trailer, and links to IMDb/TheTVDB/
-  Instagram/X (Twitter)/Facebook.
-- Live ownership status: **Owned / Downloading / Monitored / Coming soon /
-  Not owned**, checked directly against Plex, Jellyfin, and Sonarr/Radarr —
-  an unreleased title that's already being tracked shows as "Coming soon"
-  instead of looking like something's actually missing.
-- One-click **Add to Radarr/Sonarr** (admin) using your saved quality
-  profile/root folder — re-enables monitoring automatically if the title
-  was already added and then unmonitored. Household members see a
-  **Request** button instead — see [Household accounts &
-  requests](#household-accounts--requests) below.
-- Full cast list with character names, linking to each person's page.
-- **Studio/production company** section, with conglomerates (Disney,
-  Marvel, Lucasfilm, etc.) merged into one entry instead of listed
-  separately.
-- **Franchise & crossover** section: movie collections (Harry Potter,
-  James Bond, etc.) pulled directly from TMDb; a curated list for TV
-  crossovers (Arrowverse, 9-1-1 Universe, One Chicago, NCIS Franchise).
-- "More like this" recommendations.
-- TV shows: season selector with per-season completeness, full episode
-  list with per-episode have-it/missing status.
-- **File details** section: location (with copy-to-clipboard), size,
-  runtime, and — for Radarr-owned movies — resolution, video codec, HDR,
-  audio, quality profile, edition, and release group.
-- **"Wrong match? Fix ID"** (admin-only) — a title occasionally gets synced
-  under the wrong TMDb/TVDB match (e.g. a mislabeled Plex library folder).
-  Enter the correct TMDb, IMDb, or TVDB id and Marquee repoints every
-  synced row currently linked to the wrong one over to the right title, no
-  need to fix the match in Plex/Jellyfin/Sonarr first.
-
-### People & studios
-- Full filmography for any actor/person — every movie and TV credit with
-  character name, cross-referenced against your library.
-- Full catalog for any studio, with the same conglomerate-merging as title
-  pages.
-- **Favorite** button on people and studios to build a personal watchlist.
-
-### My Library
-- One aggregated view of everything already in Plex, Jellyfin, Sonarr, and
-  Radarr — shared with every household member, not just the admin who
-  connected the integrations.
-- Header stats: movie count, TV show count, total size on disk, plus a
-  count of anything monitored/downloading but not yet owned.
-- Filter by type (Movie/TV) and status (Owned/Downloading/Monitored/Coming
-  soon), sort by Newest/Oldest/A–Z/Recently added, search within your
-  library, and switch between grid and table views.
-- **Stop monitoring** a title directly from the library (admin-only).
-- **Missing from collections** tab — franchises you own at least one part of
-  but not all of (e.g. Iron Man 1 without 2 or 3), so you can spot and fill
-  the gaps in a series without hunting for it one title at a time.
-- **Resolution badges** (4K/1080p/720p) on owned Radarr movies, in both the
-  grid and table views and on title pages.
-- **Storage forecast** — once there's a few days of history, a "free space
-  runs out in ~N days" estimate based on how fast your root folders are
-  actually filling up.
-
-### Calendar
-- Month grid of upcoming releases and air dates, pulled straight from
-  Radarr's/Sonarr's own calendar data — accurate release/digital/physical
-  dates for movies, per-episode air dates for TV.
-- Shared with every household member, same as My Library.
-
-### Notifications
-- Bell icon in the nav polls for new activity: a title started downloading,
-  finished downloading, or (for household members) one of your requests
-  was approved, declined, or is ready to watch.
-- **Notifications on your devices, sent by your own server.** After signing
-  in, Marquee asks whether this device should get notifications. On the
-  website these are standard Web Push: your server generates its own keys,
-  and messages are encrypted so only your device can read them. No account
-  or API key with any push service is needed; the browser's own push relay
-  (Apple, Google, Mozilla) only carries the sealed message. Web Push needs
-  Marquee opened over **https** (for example through a reverse proxy), and
-  on iPhone/iPad the site must be added to the Home Screen first. The Mac
-  and Windows apps get notifications straight from the server over a live
-  connection, with no relay at all. Manage devices and send a test under
-  **Settings → Account → Notifications**.
-- Powered by Radarr/Sonarr webhooks — the URL and a per-account secret are
-  generated for you under **Settings → Integrations**. If a reverse proxy
-  logs full URLs, you can drop `?secret=…` from the webhook URL and send it
-  as an `X-Marquee-Secret` header instead (Radarr/Sonarr → Connect →
-  Webhook → Headers).
-
-### Favorites
-- One page listing every person and studio you've starred.
-
-### Trakt import
-- Paste a public Trakt list or watchlist URL and every matching title not
-  already owned or requested gets added to the Requests queue — Trakt
-  connects with a free API app's client id, no OAuth/sign-in required (the
-  list just needs to be public on Trakt's side).
-
-### Household accounts & requests
-- One-time first-run setup creates the **admin** account — no public
-  signup page after that.
-- The admin adds accounts for other household members from **Settings →
-  Account**, and can remove them later. Members only ever see their own
-  account there, not the rest of the household.
-- Members get the full app — Discover, Search, My Library, Favorites,
-  Calendar — but instead of adding titles directly to Sonarr/Radarr, they
-  hit **Request**. The admin reviews everything waiting for approval on
-  the **Requests** page and approves or declines with one click, or hits
-  **Approve all** to clear the whole queue at once when there's more than
-  one pending. The requester gets notified either way. Declining asks for a
-  reason, either a preset like "Already available on a streaming service we
-  have" or the admin's own words, which the member sees on their Requests
-  page and in the notification. Members have their own **Requests** tab
-  too, showing the status of everything they've asked for — pending,
-  declined, or (once approved) downloading/already in the library.
-- **Manually approve** — for a TV request Sonarr can't resolve on its own
-  (no TVDB id on TMDb's record), the admin gets an "Add manually in Sonarr"
-  link straight to Sonarr's own search, and can mark the request approved
-  by hand once it's added outside the app. The requester sees "Manually
-  approved" so they know it was handled, not stuck.
-- Only the admin can connect or reconfigure Plex/Jellyfin/Sonarr/Radarr
-  (**Settings → Integrations**) — members can browse and request, not
-  wire up new download sources.
-- **Settings → Integrations** (admin-only):
-  - **TMDb** — one shared API key/access token for the whole instance,
-    editable in-app (test-and-save) or via environment variable.
-  - **TheTVDB** — optional; fills in a TV show's poster and overview when
-    TMDb doesn't have them yet (common for very new or niche releases), the
-    same way Sonarr's own metadata does. Free API key from
-    thetvdb.com/dashboard/account/apikey.
-  - **Plex** — OAuth connect, shows your library's movie/TV counts, syncs
-    automatically in the background.
-  - **Jellyfin** — server URL + API key (test-and-save; generate the key
-    from Jellyfin's own dashboard under Administration → API Keys). Can be
-    connected alongside Plex, instead of it, or not at all.
-  - **Sonarr / Radarr** — server URL + API key (test-and-save), with
-    default quality profile and root folder for new adds.
-  - **Disconnect** any of the above with one click — removes the saved
-    credential and whatever that integration had synced, so nothing stale
-    lingers behind.
-- **Settings → Activity** (admin-only): a reverse-chronological feed of who
-  requested what and who reviewed it — separate from the per-recipient
-  notification bell.
-- "Keep me signed in for 30 days" login option, rate-limited sign-in
-  attempts, and all saved integration credentials encrypted at rest.
-
-### Error reference
-- A plain-language error reference page (`/help/errors`, linked from the
-  footer of every page) explaining every user-facing error message in the
-  app — what it means and what to do about it — so a stuck admin or
-  household member isn't left guessing.
-
-### Version & changelog
-- A version number in the footer of every page links to `/changelog`, a
-  running list of what changed, was fixed, or was added in each release.
-
-### Self-hosting
-- Single self-contained Docker image — Postgres runs inside the same
-  container as the app, so there's nothing else to install or wire up.
-  Database migrations apply automatically on every start.
-- Works out of the box on Unraid, either via Docker Compose or a native
-  Community Applications template.
-- Mobile-friendly — a hamburger nav and touch-scrollable rows/tables mean
-  it's fully usable from a phone, not just desktop.
-- Reachable from outside your home network — see [Access from outside your
-  network](#access-from-outside-your-network) for a Cloudflare Tunnel, your
-  own domain, and an Authelia login in front.
+- **Discover**: trending and coming-soon rows, filters by type, genre, year and
+  sort, a "hide what I already have" toggle, quick-add on every poster, and
+  **Surprise me**.
+- **Search** titles, people and studios with live suggestions, plus genre
+  ("horror") and theme ("natural disaster") searches.
+- **Title pages** show whether you own it, it's downloading, monitored or
+  coming soon, checked live against Plex, Jellyfin, Sonarr and Radarr. They also
+  have cast, studios, franchises, recommendations, per-episode status for TV,
+  file details (resolution, codec, HDR, audio), and a **Fix ID** for titles
+  synced under the wrong match.
+- **People and studios**: full filmographies and catalogs, cross-referenced
+  with your library, and favorites.
+- **My Library**: everything in Plex, Jellyfin, Sonarr and Radarr in one view,
+  with filters, grid or table, resolution badges, collections you've only
+  partly got, and a free-space forecast.
+- **Calendar** of upcoming releases and air dates from Sonarr and Radarr.
+- **Notifications** when something starts or finishes downloading, or a
+  request is approved or declined: in the app, and pushed to your devices by
+  your own server (Web Push, and live in the Mac and Windows apps). Also
+  Discord, ntfy and webhooks.
+- **Household accounts**: the admin adds everyone else. Members browse and
+  **Request**; the admin approves or declines (with a reason) on the
+  **Requests** page.
+- **Trakt import** of public lists and watchlists into the request queue.
+- **Settings** for integrations (TMDb, TheTVDB, Plex, Jellyfin, Sonarr,
+  Radarr), household members and an activity feed. Credentials are
+  encrypted at rest.
+- One **Docker image** with Postgres inside and migrations on every start.
+  It works on a phone too.
 
 ## Quick start (Docker)
 
-**Requirements:** Docker + Docker Compose, and free API keys from
+You'll need Docker with Compose, and free API keys from
 [TMDb](https://www.themoviedb.org/settings/api) and
-[TheTVDB](https://thetvdb.com/api-information) (both free, a couple minutes
-to sign up).
+[TheTVDB](https://thetvdb.com/api-information).
 
 ```bash
 git clone https://github.com/TimmyAmant/marquee.git
@@ -245,231 +82,81 @@ cd marquee
 cp .env.local.example .env
 ```
 
-Edit `.env` and fill in:
+Fill in `.env`:
 
-| Variable | Where to get it |
+| Variable | What to put |
 |---|---|
-| `POSTGRES_PASSWORD` | pick anything — this is only for the database bundled inside the container, it's never exposed outside it |
+| `POSTGRES_PASSWORD` | anything; it's only for the database inside the container |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
-| `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32` — **back this up**, losing it makes saved Sonarr/Radarr/Plex/Jellyfin credentials undecryptable |
-| `TMDB_API_KEY` (or `TMDB_ACCESS_TOKEN`) | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) — can also be set later from Settings → Integrations instead |
-| `TVDB_API_KEY` / `TVDB_PIN` | [thetvdb.com/api-information](https://thetvdb.com/api-information) |
-| `TRUSTED_PROXY_HOPS` | optional, default `0` — only set it if Marquee sits behind a reverse proxy or tunnel; see [Behind a proxy](#behind-a-proxy-trusted_proxy_hops) |
-
-Then:
+| `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32`. **Back it up**: without it, saved integration credentials can't be read |
+| `TMDB_API_KEY` | your TMDb key (or set it later in Settings › Integrations) |
+| `TVDB_API_KEY` / `TVDB_PIN` | your TheTVDB key |
+| `TRUSTED_PROXY_HOPS` | optional, only behind a reverse proxy or tunnel: see [Remote access](docs/remote-access.md#behind-a-proxy-trusted_proxy_hops) |
 
 ```bash
 docker compose up -d
 ```
 
-This pulls the prebuilt image from
-[Docker Hub](https://hub.docker.com/r/timmyamant/marquee) (amd64 and arm64;
-the same image is published to [GitHub
-Packages](https://github.com/TimmyAmant/marquee/pkgs/container/marquee) as
-`ghcr.io/timmyamant/marquee`)
-instead of building locally, so it's up in seconds. If you've changed the
-source and want to run your own build instead, use
-`docker compose up -d --build`.
+Open `http://<your-server-ip>:3000`. The first visit creates the admin
+account; then connect your services in **Settings › Integrations**.
 
-Visit `http://<your-server-ip>:3000`. First visit creates the admin account
-(one-time setup, no public signup after); connect Plex/Jellyfin/Sonarr/Radarr from
-**Settings → Integrations** once you're in.
+The image is on [Docker Hub](https://hub.docker.com/r/timmyamant/marquee) and
+[GitHub Packages](https://github.com/TimmyAmant/marquee/pkgs/container/marquee)
+(amd64 and arm64). To run your own build: `docker compose up -d --build`.
 
 ## Unraid
 
-Two ways to run it on Unraid, pick one:
+Search **marquee** in the **Apps** tab (Community Applications) and install it.
+Fill in `POSTGRES_PASSWORD` and the other fields; the rest has sensible
+defaults. The template is [`unraid-templates/marquee.xml`](unraid-templates/marquee.xml).
+Prefer Compose? Point the **Compose Manager** plugin at `docker-compose.yml`.
 
-**Option A — Compose Manager**
-Install the **Compose Manager** plugin from Community Applications, point it
-at this repo's `docker-compose.yml`. Change `APP_PORT` in `.env` first if it
-collides with something else you're running.
+## Mac and Windows apps
 
-**Option B — native Community Applications template (recommended)**
-Marquee is listed directly in Community Applications — open the **Apps**
-tab, search "marquee", and install it. It's a single container — just fill
-in `POSTGRES_PASSWORD` and the other fields the template asks for (same
-variables as the `.env` table above); everything else, including where the
-database is stored, is pre-filled with sane defaults.
+Native apps that talk to your server and update themselves from each
+[release](https://github.com/TimmyAmant/marquee/releases/latest). The Mac app
+finds your server on the network by itself; on Windows, type its address.
+They need a server running 0.22.0 or later.
 
-The template lives at
-[`unraid-templates/marquee.xml`](unraid-templates/marquee.xml) in this repo.
-
-## Marquee for Mac
-
-A native macOS client lives in [`mac/`](mac/). It's a real Mac app — SwiftUI,
-no browser — that talks to your own server over the `/api/v1` API, so it shows
-exactly what the website shows. It finds your server on your home network by
-itself, or takes an address you type in.
+- **Mac** (macOS 15+): open the `.dmg` and drag Marquee into Applications. The
+  app isn't notarized yet, so the first launch needs **System Settings ›
+  Privacy & Security › Open Anyway**. Details: [`mac/README.md`](mac/README.md).
+- **Windows** (10 1809+ or 11, preview): run the installer; no admin rights
+  needed. It isn't code-signed yet, so SmartScreen may need **More info › Run
+  anyway**. Details: [`windows/README.md`](windows/README.md).
 
 | | |
 |---|---|
 | ![Finding your server](docs/screenshots/mac-connect.jpg) | ![Discover in the Mac app](docs/screenshots/mac-discover.jpg) |
-| ![A title page in the Mac app](docs/screenshots/mac-title.jpg) | ![Requests in the Mac app](docs/screenshots/mac-requests.jpg) |
 
-It needs macOS 15 or later and a server running 0.22.0 or later. Build
-instructions are in [`mac/README.md`](mac/README.md).
+## Remote access
 
-**Download:** **Marquee-<version>.dmg** from the [latest release](https://github.com/TimmyAmant/marquee/releases/latest) (each download carries its version, e.g. `Marquee-0.31.0.dmg`).
-Open it and drag **Marquee** onto the Applications folder beside it. The app
-isn't notarized by Apple yet, so the very first launch is blocked: open
-**System Settings › Privacy & Security**, scroll to the message about Marquee
-and choose **Open Anyway**. After that, the app updates itself: when a new
-release is out it offers an **Update** button, and quits and reopens on the
-new version (where it asks you to sign in once more; see
-[`mac/README.md`](mac/README.md#updating) for why).
+Marquee speaks plain HTTP on your LAN. To reach it from anywhere, the
+recommended way is a free **Cloudflare Tunnel** with your own domain: no open
+ports, and HTTPS included. The [remote access guide](docs/remote-access.md)
+walks through the tunnel, port forwarding, putting Authelia or Cloudflare
+Access in front, and the `TRUSTED_PROXY_HOPS` setting.
 
-### Marquee for Windows (preview)
-
-A native Windows client is taking shape in [`windows/`](windows/). It's a
-WinUI 3 app that mirrors the Mac app's architecture and talks to the same
-`/api/v1` API, so it shows the same data. It covers Discover, the Movies and
-Series grids, search, title pages with add and request, requests (including
-decline reasons), favorites, the calendar, household members, profile photos
-and notifications; integrations settings, deep links and the network scan
-aren't built yet.
-
-It needs Windows 10 1809 or later (or Windows 11) and a server running 0.22.0
-or later. Build instructions and the list of what's still missing are in
-[`windows/README.md`](windows/README.md).
-
-**Download:** **Marquee-Setup-<version>.exe** from the [latest release](https://github.com/TimmyAmant/marquee/releases/latest) (e.g. `Marquee-Setup-0.31.0.exe`).
-Run it: it installs Marquee for your account (no admin prompt), adds it to
-the Start menu, and opens it. Nothing else needs installing first. The
-installer isn't code-signed yet, so SmartScreen may say "Windows protected
-your PC": choose **More info › Run anyway**. Running a newer installer
-updates Marquee in place; uninstall it from Settings › Apps.
-
-## Access from outside your network
-
-Marquee runs on your LAN and speaks plain HTTP. To use it from a phone on
-mobile data, or from anywhere that isn't home, pick one of these.
-
-### Option A — Cloudflare Tunnel and a domain (recommended)
-
-A tunnel dials out from your server to Cloudflare, so nothing is exposed
-inbound: no ports open on your router, and your home IP stays private. It's
-free, and it gives you HTTPS on your own domain.
-
-1. Point a domain (or subdomain) at Cloudflare — the free plan is enough.
-2. In the [Zero Trust dashboard](https://one.dash.cloudflare.com) go to
-   **Networks → Tunnels → Create a tunnel**, choose **Cloudflared**, and name
-   it.
-3. Install the connector on the machine running Marquee. On Unraid, install
-   **cloudflared** from Community Applications and paste the tunnel token;
-   elsewhere run the `docker run … cloudflared tunnel run --token …` command
-   the dashboard gives you.
-4. Add a **public hostname**: `marquee.example.com` → **HTTP** →
-   `<your-server-ip>:3000` (the port you set as `APP_PORT`). If the connector
-   runs in Docker on the same host, use the host's LAN IP rather than
-   `localhost`.
-5. Visit `https://marquee.example.com`. Certificates are handled for you.
-
-Keep an eye on Cloudflare's upload limits if you use the tunnel for anything
-else; Marquee itself only serves pages and JSON, so it stays well inside them.
-
-### Option B — Port forwarding
-
-Forward a port on your router to `<your-server-ip>:3000`. It works, and it's
-the least safe of the three: your home IP is public, there's no HTTPS unless
-you add a reverse proxy with a certificate, and the login page is exposed to
-the whole internet. Marquee rate-limits sign-ins and hashes passwords with
-argon2, but a tunnel is still the better answer. If you do this anyway, put a
-reverse proxy with TLS in front and never forward the database port.
-
-### Option C — Authelia (or Cloudflare Access) in front
-
-Either option above puts Marquee's own login page on the internet. To require
-a second, stronger login — with 2FA — before anyone even reaches it, put an
-identity provider in front.
-
-**Cloudflare Access** is the simplest if you're already tunnelling: in Zero
-Trust, add an **Application** for `marquee.example.com` and a policy (allow
-your own email addresses, one-time PIN or a social login). No extra container.
-
-**[Authelia](https://www.authelia.com)** keeps it self-hosted, and needs a
-reverse proxy that supports forward auth — Traefik, Caddy, or Nginx Proxy
-Manager — because a tunnel alone can't ask another service whether a request
-is allowed:
-
-1. Run Authelia and your reverse proxy on the same host as Marquee, with a
-   users file or LDAP backend and 2FA turned on.
-2. Give the proxy a route for `marquee.example.com` that forward-auths to
-   Authelia and proxies to `<your-server-ip>:3000`.
-3. Point the tunnel's public hostname at the **proxy**, not at Marquee.
-
-**Important, for the Mac app and for Sonarr/Radarr webhooks.** A login portal
-in front of the whole domain will block anything that isn't a browser:
-
-- **[Marquee for Mac](#marquee-for-mac)** signs in with a bearer token on
-  `/api/v1`. Exempt that path in your policy (an Authelia `bypass` rule for
-  `/api/v1*`, or a Cloudflare Access **service token**), or point the app at
-  the LAN address when you're home. Marquee authenticates those requests
-  itself — the API is never open.
-- **Webhooks** from Sonarr and Radarr are sent on your LAN to
-  `/api/webhooks/…` with a per-account secret, so they're unaffected — unless
-  you deliberately route them through the domain, in which case exempt that
-  path too.
-
-### Behind a proxy: `TRUSTED_PROXY_HOPS`
-
-Marquee rate-limits failed sign-ins per client address. It can only tell
-clients apart when a proxy it trusts says who they are, in the
-`X-Forwarded-For` header — without one, that header is whatever the client
-chose to send. So by default (`TRUSTED_PROXY_HOPS=0`) Marquee ignores it:
-sign-ins are slowed down per username instead (a few seconds between
-attempts once one has had several failures — never a lockout), and nobody
-can dodge the limit by making up an address.
-
-If every request reaches Marquee through proxies you control, set
-`TRUSTED_PROXY_HOPS` to how many of them there are, counting each one that
-adds to `X-Forwarded-For`:
-
-| Setup | Value |
-|---|---|
-| LAN only, or port forwarding straight to Marquee | `0` (the default) |
-| Cloudflare Tunnel (Option A), or one reverse proxy (Nginx Proxy Manager, Caddy, Traefik, SWAG) | `1` |
-| Cloudflare Tunnel into a reverse proxy (Option C with Authelia) | `2` |
-
-Then too many failed sign-ins from one address lock out only that address,
-for 15 minutes. Too high a value is worse than too low: it makes Marquee
-trust an address the client wrote itself.
-
-## Local development
-
-The app container bundles Postgres for production/self-hosting, but for
-local development it's easiest to run a plain throwaway Postgres alongside
-`npm run dev`:
+## Development
 
 ```bash
 npm install
 docker run -d --name marquee-dev-db -p 5432:5432 -e POSTGRES_PASSWORD=devpass -e POSTGRES_DB=marquee postgres:16-alpine
-cp .env.local.example .env.local   # set DATABASE_URL=postgres://postgres:devpass@localhost:5432/marquee
+cp .env.local.example .env.local   # DATABASE_URL=postgres://postgres:devpass@localhost:5432/marquee
 npm run dev
 ```
 
-Schema changes: `npx drizzle-kit generate` then `npx drizzle-kit migrate`.
+Schema changes: `npx drizzle-kit generate`, then `npx drizzle-kit migrate`.
+The JSON API the apps use is documented in [`docs/api-v1.md`](docs/api-v1.md).
 
-## Locked out? Reset the admin password
+## Locked out?
 
-Since there's no public signup page and no email server, the only way back
-in if the admin forgets their password is directly through the container —
-if the site is running, you already have everything you need.
-
-Find your container's name (`docker ps` if you're not sure — `marquee-app-1`
-for Docker Compose, `Marquee` on Unraid by default), then run:
+Reset the admin password from inside the container (`marquee-app-1` with
+Compose, `Marquee` on Unraid):
 
 ```bash
 docker exec -it <container-name> npm run reset-admin-password -- <new-password>
 ```
-
-Password must be at least 8 characters. This updates the admin account's
-password directly in the database — no login required.
-
-## API
-
-Everything the website does is available over a JSON API for native clients
-and scripts: [`docs/api-v1.md`](docs/api-v1.md). Sign in with your normal
-account to get a device token, then read and write the same data.
 
 ## Support
 

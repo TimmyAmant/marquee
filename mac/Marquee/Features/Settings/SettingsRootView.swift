@@ -421,8 +421,16 @@ struct AboutSettingsView: View {
     var body: some View {
         SettingsPane(title: "About Marquee", subtitle: "Version, library stats, and where to get help.") {
             SettingsSectionLabel(text: "Updates")
-            UpdateStatusView(style: .settings)
-                .cardSurface(padding: 18)
+            VStack(alignment: .leading, spacing: 14) {
+                UpdateStatusView(style: .settings)
+                ServerUpdateLine(
+                    // This page's own GET /settings/about: the server-info
+                    // probe isn't made when a saved sign-in is restored.
+                    server: (info?.version ?? model.session.serverInfo?.version).flatMap { AppVersion($0) },
+                    latest: model.updater.latestRelease
+                )
+            }
+            .cardSurface(padding: 18)
 
             if let info {
                 VStack(spacing: 0) {
@@ -484,6 +492,37 @@ struct AboutSettingsView: View {
             }
             .buttonStyle(QuietButtonStyle())
             if !last { Divider().overlay(Theme.border) }
+        }
+    }
+}
+
+/// Settings › About's line about the server, under a hairline: whether it
+/// runs the newest release, and if not, how to get it. The server updates by
+/// pulling its Docker image, which the app can't do for you. Nothing until
+/// both versions are known (the first update check hasn't answered yet, or
+/// the server didn't say).
+struct ServerUpdateLine: View {
+    let server: AppVersion?
+    let latest: AppVersion?
+
+    var body: some View {
+        if let server, let latest {
+            Divider().overlay(Theme.border)
+            if server >= latest {
+                Label("Your server is up to date (Marquee \(server.description)).", systemImage: "checkmark.circle")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.textSecondary)
+            } else {
+                Label {
+                    Text("Your server is on \(server.description); \(latest.description) is out. Update it by pulling the new Docker image (on Unraid: the Docker tab › Check for Updates, then apply the update).")
+                        .fixedSize(horizontal: false, vertical: true)
+                } icon: {
+                    Image(systemName: "arrow.down.circle")
+                        .foregroundStyle(Theme.accent)
+                }
+                .font(.system(size: 12.5))
+                .foregroundStyle(Theme.textPrimary)
+            }
         }
     }
 }

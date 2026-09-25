@@ -23,7 +23,7 @@ struct RootView: View {
         .background(Theme.bg0)
         .tint(Theme.accent)
         .overlay(alignment: .bottomTrailing) {
-            if let pinned = model.session.pinned {
+            if let pinned = model.session.pinned, !PinnedServerBadge.hiddenForScreenshots {
                 PinnedServerBadge(server: pinned.address.displayName)
             }
         }
@@ -38,6 +38,16 @@ struct RootView: View {
 /// obvious on screen that this window isn't talking to the real server.
 private struct PinnedServerBadge: View {
     let server: String
+
+    /// MARQUEE_SCREENSHOTS=1, for the README's captures of a test run
+    /// (scripts/landing). Debug builds only: a release always shows it.
+    static var hiddenForScreenshots: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["MARQUEE_SCREENSHOTS"] == "1"
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
         Text("TEST RUN · \(server)")

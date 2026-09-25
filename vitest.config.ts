@@ -10,6 +10,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.ts"],
-    exclude: ["node_modules/**"],
+    // .claude/worktrees holds other checkouts of this repo (agents'
+    // working copies); their tests are theirs, not this tree's.
+    exclude: ["node_modules/**", ".claude/**"],
   },
 });
