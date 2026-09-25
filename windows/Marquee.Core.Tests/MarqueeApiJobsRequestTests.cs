@@ -96,7 +96,7 @@ public sealed class MarqueeApiJobsRequestTests
 
         var jobs = await api.Jobs.ListAsync();
 
-        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.DiskSpaceSnapshot], jobs.Select(job => job.Id));
+        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.DiskSpaceSnapshot, JobId.Cleanup], jobs.Select(job => job.Id));
         Assert.Equal("Daily at 3:00 AM", jobs[3].Schedule);
     }
 
