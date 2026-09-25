@@ -189,7 +189,7 @@ final class AppModel {
             self?.sessionEnded()
         }
         updater.onNewUpdate = { [weak self] update in
-            self?.flash("Marquee \(update.version) is available. Update it from the menu or Settings › About.")
+            self?.flash("Marquee \(update.version) is available. Update it from the rail or Settings › About.")
         }
     }
 

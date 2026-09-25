@@ -1,0 +1,38 @@
+Marquee for Mac
+===============
+
+Installing
+----------
+Drag Marquee onto the Applications folder in this window. Then open it from
+Applications (or Launchpad, or Spotlight).
+
+Opening it the first time
+-------------------------
+Marquee isn't notarized by Apple yet, so the first time you open it macOS
+says it can't check it for malicious software. Choose Done, then:
+
+  1. Open System Settings › Privacy & Security.
+  2. Scroll down to the message about Marquee and click Open Anyway.
+  3. Confirm with your password or Touch ID.
+
+That's once per install.
+
+Connecting
+----------
+Marquee is the app for your own Marquee server. On first launch it looks for
+servers on your network; pick yours (or type its address, e.g.
+192.168.1.20:3000) and sign in with your Marquee account.
+
+Updating
+--------
+You don't need to download new versions yourself. Marquee checks for updates
+when it opens and once a day; when one is out, an update button appears on
+the left-hand rail. Settings › About (and Marquee › Check for Updates…) has
+Update too: Marquee downloads the new version, checks it, then quits and
+reopens on it.
+
+Every download is named for its version (e.g. Marquee-0.31.0.dmg), so the
+newest one in your Downloads folder is the one with the highest number.
+
+More: https://github.com/TimmyAmant/marquee
+Problems: https://github.com/TimmyAmant/marquee/issues

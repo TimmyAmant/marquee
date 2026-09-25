@@ -18,8 +18,8 @@ digging through three different apps.
 | | |
 |---|---|
 | **Server** (required) | `docker pull timmyamant/marquee:latest`, or the Unraid template. See [Quick start](#quick-start-docker) |
-| **Mac app** | [**⬇ Marquee.dmg**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee.dmg): open it and drag Marquee into Applications. The first launch needs System Settings › Privacy & Security › **Open Anyway**; after that it updates itself |
-| **Windows app** | [**⬇ Marquee-Setup.exe**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-Setup.exe): run it to install (no admin needed). If SmartScreen appears: **More info › Run anyway** |
+| **Mac app** | [**⬇ Marquee-<version>.dmg**](https://github.com/TimmyAmant/marquee/releases/latest), on the latest release: open it and drag Marquee into Applications. The first launch needs System Settings › Privacy & Security › **Open Anyway**; after that it updates itself |
+| **Windows app** | [**⬇ Marquee-Setup-<version>.exe**](https://github.com/TimmyAmant/marquee/releases/latest), on the latest release: run it to install (no admin needed). If SmartScreen appears: **More info › Run anyway** |
 
 The apps are optional: the website does everything they do, in any browser.
 Every [release](https://github.com/TimmyAmant/marquee/releases/latest) has
@@ -308,7 +308,7 @@ itself, or takes an address you type in.
 It needs macOS 15 or later and a server running 0.22.0 or later. Build
 instructions are in [`mac/README.md`](mac/README.md).
 
-**Download:** [**Marquee.dmg**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee.dmg).
+**Download:** **Marquee-<version>.dmg** from the [latest release](https://github.com/TimmyAmant/marquee/releases/latest) (each download carries its version, e.g. `Marquee-0.31.0.dmg`).
 Open it and drag **Marquee** onto the Applications folder beside it. The app
 isn't notarized by Apple yet, so the very first launch is blocked: open
 **System Settings › Privacy & Security**, scroll to the message about Marquee
@@ -331,7 +331,7 @@ It needs Windows 10 1809 or later (or Windows 11) and a server running 0.22.0
 or later. Build instructions and the list of what's still missing are in
 [`windows/README.md`](windows/README.md).
 
-**Download:** [**Marquee-Setup.exe**](https://github.com/TimmyAmant/marquee/releases/latest/download/Marquee-Setup.exe).
+**Download:** **Marquee-Setup-<version>.exe** from the [latest release](https://github.com/TimmyAmant/marquee/releases/latest) (e.g. `Marquee-Setup-0.31.0.exe`).
 Run it: it installs Marquee for your account (no admin prompt), adds it to
 the Start menu, and opens it. Nothing else needs installing first. The
 installer isn't code-signed yet, so SmartScreen may say "Windows protected

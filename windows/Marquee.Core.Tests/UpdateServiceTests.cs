@@ -83,6 +83,24 @@ public sealed class UpdateServiceTests : IDisposable
     }
 
     [Fact]
+    public void VersionedInstallerIsPreferred()
+    {
+        var json = $$"""
+            {"tag_name":"v0.31.0","html_url":"https://github.com/TimmyAmant/marquee/releases/tag/v0.31.0","assets":[
+              {"name":"Marquee-Setup.exe","browser_download_url":"{{InstallerUrl}}","size":10},
+              {"name":"Marquee-Setup.exe.sha256","browser_download_url":"{{ChecksumUrl}}","size":85},
+              {"name":"Marquee-Setup-0.31.0.exe","browser_download_url":"https://github.com/TimmyAmant/marquee/releases/download/v0.31.0/Marquee-Setup-0.31.0.exe","size":20},
+              {"name":"Marquee-Setup-0.31.0.exe.sha256","browser_download_url":"https://github.com/TimmyAmant/marquee/releases/download/v0.31.0/Marquee-Setup-0.31.0.exe.sha256","size":92}
+            ]}
+            """;
+        var update = AvailableUpdate.From(GitHubRelease.Parse(json));
+        Assert.NotNull(update);
+        Assert.EndsWith("/Marquee-Setup-0.31.0.exe", update.Download.AbsoluteUri);
+        Assert.EndsWith("/Marquee-Setup-0.31.0.exe.sha256", update.ChecksumFile?.AbsoluteUri);
+        Assert.Equal(20, update.Size);
+    }
+
+    [Fact]
     public void ReleaseWithoutWindowsDownloadOffersNothing()
     {
         Assert.Null(AvailableUpdate.From(GitHubRelease.Parse(Release(withInstaller: false))));

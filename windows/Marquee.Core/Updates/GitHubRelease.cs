@@ -54,13 +54,18 @@ public sealed record UpdateCheck(AppVersion Latest, AvailableUpdate? Update)
 
 /// <summary>
 /// A release newer than this app, with a Windows download
-/// (.github/workflows/apps.yml attaches <c>Marquee-Setup.exe</c> and its
-/// <c>.sha256</c>).
+/// (.github/workflows/apps.yml attaches <c>Marquee-Setup-0.31.0.exe</c> and
+/// its <c>.sha256</c>, and the same installer as <c>Marquee-Setup.exe</c>
+/// for 0.30.0, whose updater only knows that name).
 /// </summary>
 public sealed class AvailableUpdate
 {
+    /// <summary>The unversioned name, from releases before 0.31.0.</summary>
     public const string AssetName = "Marquee-Setup.exe";
     public const string ChecksumAssetName = "Marquee-Setup.exe.sha256";
+
+    /// <summary>"Marquee-Setup-0.31.0.exe", the name releases use from 0.31.0 on.</summary>
+    public static string VersionedAssetName(AppVersion version) => $"Marquee-Setup-{version.Text}.exe";
 
     public AvailableUpdate(AppVersion version, Uri releasePage, Uri download, long size, string? sha256, Uri? checksumFile)
     {
@@ -98,7 +103,15 @@ public sealed class AvailableUpdate
         }
         // Null only when the JSON said "assets": null.
         IReadOnlyList<GitHubReleaseAsset> assets = release.Assets ?? Array.Empty<GitHubReleaseAsset>();
-        var installer = assets.FirstOrDefault(asset => asset.Name == AssetName);
+        // The versioned installer when the release has one, else the old name.
+        var versioned = VersionedAssetName(version);
+        var installer = assets.FirstOrDefault(asset => asset.Name == versioned);
+        var checksumName = versioned + ".sha256";
+        if (installer == null)
+        {
+            installer = assets.FirstOrDefault(asset => asset.Name == AssetName);
+            checksumName = ChecksumAssetName;
+        }
         if (installer == null
             || installer.Size <= 0
             || !Uri.TryCreate(installer.BrowserDownloadUrl, UriKind.Absolute, out var download))
@@ -106,7 +119,7 @@ public sealed class AvailableUpdate
             return null;
         }
         Uri? checksumFile = null;
-        if (assets.FirstOrDefault(asset => asset.Name == ChecksumAssetName) is { } checksum
+        if (assets.FirstOrDefault(asset => asset.Name == checksumName) is { } checksum
             && Uri.TryCreate(checksum.BrowserDownloadUrl, UriKind.Absolute, out var checksumUrl))
         {
             checksumFile = checksumUrl;

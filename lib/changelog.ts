@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.30.1",
+    date: "2026-09-25",
+    changes: [
+      "App downloads carry their version in the name: Marquee-0.30.1.dmg for the Mac and Marquee-Setup-0.30.1.exe for Windows, so a Downloads folder with several of them shows which is newest. The download buttons on the website go straight to the latest one.",
+      "The Mac disk image has a proper install window: Marquee and your Applications folder with an arrow between them, how to get past macOS's first-launch warning, and a Read Me covering installing, connecting to your server and updates. Its window title shows the version.",
+      "If the Mac app can't replace itself and leaves the new version in Downloads, it's named for its version too (Marquee 0.30.1.app).",
+    ],
+  },
+  {
     version: "0.30.0",
     date: "2026-09-25",
     changes: [

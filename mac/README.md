@@ -15,7 +15,7 @@ The app holds no library of its own. There's no database, no syncing, no webhook
 
 ## Installing
 
-Each [release](https://github.com/TimmyAmant/marquee/releases/latest) has a **Marquee.dmg** (universal, built by `.github/workflows/apps.yml`): open it and drag **Marquee** onto the Applications folder beside it. It isn't notarized, so the first time you open it macOS says it can't check it for malicious software: choose **Done**, then **System Settings → Privacy & Security → Open Anyway**. That's once per install. (The release's `Marquee-mac.zip` and its `.sha256` are for the app's own updater.)
+Each [release](https://github.com/TimmyAmant/marquee/releases/latest) has a **Marquee-<version>.dmg**, e.g. `Marquee-0.31.0.dmg` (universal, built by `.github/workflows/apps.yml`): open it and drag **Marquee** onto the Applications folder beside it. It isn't notarized, so the first time you open it macOS says it can't check it for malicious software: choose **Done**, then **System Settings → Privacy & Security → Open Anyway**. That's once per install. (The release's `Marquee-mac.zip` and its `.sha256` are for the app's own updater.)
 
 ### Updating
 
