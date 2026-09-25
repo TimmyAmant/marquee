@@ -34,6 +34,12 @@ extension SettingsTab {
     }
 }
 
+/// How wide Settings' column is: the header and every tab share it, centered
+/// in the window.
+enum SettingsLayout {
+    static let columnWidth: CGFloat = 760
+}
+
 /// app/settings/layout.tsx with components/settings-nav.tsx: Settings as a
 /// page of the main window (your photo on the rail, ⌘,), the tabs across
 /// the top and the chosen one below.
@@ -46,34 +52,40 @@ struct SettingsRootView: View {
         // A member sent to an admin-only tab (an old link) lands on Account.
         let current = tabs.contains(model.settingsTab) ? model.settingsTab : .account
 
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Settings")
-                    .font(.marqueeDisplay(30))
-                    .foregroundStyle(Theme.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                HStack(spacing: 6) {
-                    ForEach(tabs, id: \.self) { tab in
-                        SettingsTabButton(tab: tab, current: tab == current) {
-                            model.settingsTab = tab
+        // One scroll view for the header and the tab, so both center on the
+        // same width whether or not a scroll bar takes room at the edge.
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Settings")
+                        .font(.marqueeDisplay(30))
+                        .foregroundStyle(Theme.textPrimary)
+                        .accessibilityAddTraits(.isHeader)
+                    HStack(spacing: 6) {
+                        ForEach(tabs, id: \.self) { tab in
+                            SettingsTabButton(tab: tab, current: tab == current) {
+                                model.settingsTab = tab
+                            }
                         }
                     }
                 }
-            }
-            .padding(.horizontal, 28)
-            .padding(.top, 24)
-            .padding(.bottom, 4)
+                .padding(.horizontal, 28)
+                .padding(.top, 24)
+                .padding(.bottom, 4)
+                .frame(maxWidth: SettingsLayout.columnWidth, alignment: .leading)
+                .frame(maxWidth: .infinity)
 
-            Group {
-                switch current {
-                case .account: AccountSettingsView()
-                case .integrations: IntegrationsSettingsView()
-                case .activity: ActivitySettingsView()
-                case .jobs: JobsSettingsView()
-                case .about: AboutSettingsView()
+                Group {
+                    switch current {
+                    case .account: AccountSettingsView()
+                    case .integrations: IntegrationsSettingsView()
+                    case .activity: ActivitySettingsView()
+                    case .jobs: JobsSettingsView()
+                    case .about: AboutSettingsView()
+                    }
                 }
+                .environment(\.settingsPaneScrolls, false)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.bg0)
@@ -107,6 +119,12 @@ private struct SettingsTabButton: View {
     }
 }
 
+extension EnvironmentValues {
+    /// False inside `SettingsRootView`, whose one scroll view holds the
+    /// header and the pane together.
+    @Entry var settingsPaneScrolls = true
+}
+
 /// Shared scaffolding for each settings pane.
 struct SettingsPane<Content: View>: View {
     let title: String
@@ -114,30 +132,41 @@ struct SettingsPane<Content: View>: View {
     var trailing: AnyView?
     @ViewBuilder let content: () -> Content
 
+    @Environment(\.settingsPaneScrolls) private var scrolls
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(title)
-                            .font(.marqueeDisplay(24))
-                            .foregroundStyle(Theme.textPrimary)
-                        if let subtitle {
-                            Text(subtitle)
-                                .font(.system(size: 12.5))
-                                .foregroundStyle(Theme.textSecondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    Spacer()
-                    if let trailing { trailing }
-                }
-                content()
-            }
-            .padding(28)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        if scrolls {
+            ScrollView { column }
+                .background(Theme.bg0)
+        } else {
+            column
         }
-        .background(Theme.bg0)
+    }
+
+    private var column: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.marqueeDisplay(24))
+                        .foregroundStyle(Theme.textPrimary)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Theme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer()
+                if let trailing { trailing }
+            }
+            content()
+        }
+        .padding(28)
+        // The page's column, centered; the scroll view stays full width
+        // so its scroll bar sits at the window's edge.
+        .frame(maxWidth: SettingsLayout.columnWidth, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
 }
 

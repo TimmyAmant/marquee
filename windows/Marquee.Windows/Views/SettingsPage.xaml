@@ -30,7 +30,8 @@
     </Page.Resources>
 
     <ScrollViewer>
-        <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="640" HorizontalAlignment="Left">
+        <!-- The Mac's Settings column (SettingsLayout.columnWidth): up to 760 wide; a Stretch element under its MaxWidth is centered in the page. -->
+        <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="760" HorizontalAlignment="Stretch">
             <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" />
 
             <!-- Account -->

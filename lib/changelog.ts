@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.30.2",
+    date: "2026-09-25",
+    changes: [
+      "Settings in the Mac and Windows apps sits in a centered column instead of against the left edge, and the Mac's Account cards use the column's full width like the other tabs.",
+    ],
+  },
+  {
     version: "0.30.1",
     date: "2026-09-25",
     changes: [
