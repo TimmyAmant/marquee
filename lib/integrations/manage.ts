@@ -25,9 +25,9 @@ import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import * as jellyfin from "@/lib/jellyfin/client";
 import * as plex from "@/lib/plex/client";
-import { syncPlexLibrary, getPlexSummary } from "@/lib/plex/sync";
-import { syncJellyfinLibrary } from "@/lib/jellyfin/sync";
-import { syncArrLibrary } from "@/lib/arr/sync";
+import { syncPlexLibrary, getPlexSummary, waitForPlexSync } from "@/lib/plex/sync";
+import { syncJellyfinLibrary, waitForJellyfinSync } from "@/lib/jellyfin/sync";
+import { syncArrLibrary, waitForArrSync } from "@/lib/arr/sync";
 import { verifyTmdbAccessToken } from "@/lib/tmdb/client";
 import { verifyTraktClientId } from "@/lib/trakt/client";
 import { verifyTvdbApiKey } from "@/lib/tvdb/client";
@@ -155,6 +155,14 @@ export async function disconnectIntegration(adminUserId: string, provider: Integ
   await db
     .delete(integrationCredentials)
     .where(and(eq(integrationCredentials.userId, adminUserId), eq(integrationCredentials.provider, provider)));
+
+  // A sync already running would keep writing rows after the deletes below
+  // and bring the library back. With the credential gone it stops at its
+  // next still-connected check, so wait for that before clearing its data —
+  // whatever it wrote in the meantime gets deleted along with the rest.
+  if (provider === "plex") await waitForPlexSync(adminUserId);
+  else if (provider === "jellyfin") await waitForJellyfinSync(adminUserId);
+  else await waitForArrSync(adminUserId, provider);
 
   if (provider === "plex") {
     // Cascades to plex_library_items via its own FK.

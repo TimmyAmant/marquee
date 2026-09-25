@@ -4,10 +4,13 @@ export type ArrConfig = { baseUrl: string; apiKey: string };
 // instance shouldn't be able to hang a page render indefinitely.
 const REQUEST_TIMEOUT_MS = 8000;
 
+// See LIBRARY_TIMEOUT_MS in lib/radarr/client.ts.
+const LIBRARY_TIMEOUT_MS = 120_000;
+
 async function sonarrFetch<T>(
   config: ArrConfig,
   path: string,
-  options: { method?: string; body?: unknown } = {},
+  options: { method?: string; body?: unknown; timeoutMs?: number } = {},
 ): Promise<T> {
   const url = new URL(`${config.baseUrl.replace(/\/$/, "")}/api/v3${path}`);
   const res = await fetch(url, {
@@ -17,7 +20,7 @@ async function sonarrFetch<T>(
       "Content-Type": "application/json",
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -96,7 +99,7 @@ export async function getSeriesByTvdbId(config: ArrConfig, tvdbId: number): Prom
 }
 
 export function getAllSeries(config: ArrConfig): Promise<SonarrSeries[]> {
-  return sonarrFetch<SonarrSeries[]>(config, "/series");
+  return sonarrFetch<SonarrSeries[]>(config, "/series", { timeoutMs: LIBRARY_TIMEOUT_MS });
 }
 
 export async function setSeriesMonitored(
@@ -158,6 +161,8 @@ export interface SonarrCalendarEpisode {
   seasonNumber: number;
   episodeNumber: number;
   title: string;
+  /** yyyy-mm-dd — the air date as the network lists it, not a UTC slice. */
+  airDate?: string;
   airDateUtc?: string;
   hasFile: boolean;
   monitored: boolean;

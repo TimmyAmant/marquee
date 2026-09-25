@@ -19,6 +19,15 @@ export function singleFlight<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+/** Resolves once no run for `key` is in flight — immediately if there isn't
+ * one, and whether the running one succeeds or fails. Lets a disconnect
+ * wait for a sync to stop writing before it deletes that sync's data. */
+export async function whenIdle(key: string): Promise<void> {
+  const running = inFlight.get(key);
+  if (!running) return;
+  await running.catch(() => undefined);
+}
+
 declare global {
   var __marqueeDebounceTimers: Map<string, ReturnType<typeof setTimeout>> | undefined;
 }

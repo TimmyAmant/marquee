@@ -70,3 +70,15 @@ export function computeCalendarGrid(monthQuery: string | undefined | null, now: 
     nextMonth: monthParam(nextMonthDate.getFullYear(), nextMonthDate.getMonth()),
   };
 }
+
+/** The calendar day an episode belongs on. Sonarr's `airDate` is already the
+ * local air date, so prefer it; slicing `airDateUtc` instead would push an
+ * evening US broadcast onto the next day. Without `airDate`, convert the UTC
+ * instant to the server's local day, the same zone the grid is laid out in. */
+export function episodeDateKey(episode: { airDate?: string | null; airDateUtc?: string | null }): string | null {
+  if (episode.airDate && /^\d{4}-\d{2}-\d{2}$/.test(episode.airDate)) return episode.airDate;
+  if (!episode.airDateUtc) return null;
+  const instant = new Date(episode.airDateUtc);
+  if (Number.isNaN(instant.getTime())) return null;
+  return toDateKey(instant);
+}

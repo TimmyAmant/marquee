@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, max, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   plexServers,
@@ -49,13 +49,26 @@ export type LibraryItem = {
   otherFilePath: string | null;
 };
 
+// Just the title columns a library row needs. Selecting the whole `titles`
+// row would drag every title's raw TMDb/TVDB JSON (cast, videos, seasons)
+// across the wire on each library load, only to throw it away.
+const libraryTitleColumns = {
+  id: titles.id,
+  mediaType: titles.mediaType,
+  tmdbId: titles.tmdbId,
+  name: titles.name,
+  posterPath: titles.posterPath,
+  releaseDate: titles.releaseDate,
+  firstAirDate: titles.firstAirDate,
+};
+
 export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
   const byKey = new Map<string, LibraryItem>();
 
   const [radarrRows, sonarrRows] = await Promise.all([
     db
       .select({
-        title: titles,
+        title: libraryTitleColumns,
         status: arrStatusCache.status,
         sizeBytes: arrStatusCache.sizeBytes,
         monitored: arrStatusCache.monitored,
@@ -70,7 +83,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       .where(and(eq(arrStatusCache.userId, userId), eq(arrStatusCache.provider, "radarr"))),
     db
       .select({
-        title: titles,
+        title: libraryTitleColumns,
         status: arrStatusCache.status,
         sizeBytes: arrStatusCache.sizeBytes,
         monitored: arrStatusCache.monitored,
@@ -154,7 +167,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
   if (plexServerIds.length > 0) {
     const plexRows = await db
       .select({
-        title: titles,
+        title: libraryTitleColumns,
         sizeBytes: plexLibraryItems.sizeBytes,
         addedAt: plexLibraryItems.addedAt,
         filePath: plexLibraryItems.filePath,
@@ -223,7 +236,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
   if (jellyfinServerIds.length > 0) {
     const jellyfinRows = await db
       .select({
-        title: titles,
+        title: libraryTitleColumns,
         sizeBytes: jellyfinLibraryItems.sizeBytes,
         addedAt: jellyfinLibraryItems.addedAt,
         filePath: jellyfinLibraryItems.filePath,
@@ -307,18 +320,115 @@ export function summarizeLibrary(library: LibraryItem[]): LibrarySummary {
   };
 }
 
+export type RecentlyAddedItem = Pick<
+  LibraryItem,
+  "titleId" | "mediaType" | "tmdbId" | "name" | "posterPath" | "year" | "status"
+> & { addedAt: Date };
+
 /**
  * Most-recently-added owned titles, for Discover's "Recently Added" row —
  * only Plex/Jellyfin-sourced rows carry an addedAt timestamp (arr-only rows
  * don't track one), so anything without it is dropped rather than sorted
  * arbitrarily to one end.
+ *
+ * Sorted and limited in SQL, per media server, rather than by building the
+ * whole library and slicing it — this runs on every Discover load. A title
+ * on more than one server counts at its newest addedAt.
  */
-export async function getRecentlyAdded(userId: string, limit = 20): Promise<LibraryItem[]> {
-  const library = await getUserLibrary(userId);
-  return library
-    .filter((item): item is LibraryItem & { addedAt: Date } => item.addedAt !== null)
+export async function getRecentlyAdded(userId: string, limit = 20): Promise<RecentlyAddedItem[]> {
+  const [plexServerRows, jellyfinServerRows] = await Promise.all([
+    db.select({ id: plexServers.id }).from(plexServers).where(eq(plexServers.userId, userId)),
+    db.select({ id: jellyfinServers.id }).from(jellyfinServers).where(eq(jellyfinServers.userId, userId)),
+  ]);
+  const plexServerIds = plexServerRows.map((r) => r.id);
+  const jellyfinServerIds = jellyfinServerRows.map((r) => r.id);
+
+  const plexAddedAt = max(plexLibraryItems.addedAt);
+  const jellyfinAddedAt = max(jellyfinLibraryItems.addedAt);
+  const [plexRows, jellyfinRows] = await Promise.all([
+    plexServerIds.length === 0
+      ? []
+      : db
+          .select({ title: libraryTitleColumns, addedAt: plexAddedAt })
+          .from(plexLibraryItems)
+          .innerJoin(
+            titles,
+            and(eq(titles.mediaType, plexLibraryItems.mediaType), eq(titles.tmdbId, plexLibraryItems.tmdbId)),
+          )
+          .where(and(inArray(plexLibraryItems.plexServerId, plexServerIds), isNotNull(plexLibraryItems.addedAt)))
+          .groupBy(titles.id)
+          .orderBy(desc(plexAddedAt))
+          .limit(limit),
+    jellyfinServerIds.length === 0
+      ? []
+      : db
+          .select({ title: libraryTitleColumns, addedAt: jellyfinAddedAt })
+          .from(jellyfinLibraryItems)
+          .innerJoin(
+            titles,
+            and(
+              eq(titles.mediaType, jellyfinLibraryItems.mediaType),
+              eq(titles.tmdbId, jellyfinLibraryItems.tmdbId),
+            ),
+          )
+          .where(
+            and(
+              inArray(jellyfinLibraryItems.jellyfinServerId, jellyfinServerIds),
+              isNotNull(jellyfinLibraryItems.addedAt),
+            ),
+          )
+          .groupBy(titles.id)
+          .orderBy(desc(jellyfinAddedAt))
+          .limit(limit),
+  ]);
+
+  const byTitle = new Map<string, { title: (typeof plexRows)[number]["title"]; addedAt: Date }>();
+  for (const { title, addedAt } of [...plexRows, ...jellyfinRows]) {
+    if (!addedAt) continue;
+    const existing = byTitle.get(title.id);
+    if (!existing || addedAt > existing.addedAt) byTitle.set(title.id, { title, addedAt });
+  }
+  const newest = [...byTitle.values()]
     .sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime())
     .slice(0, limit);
+  if (newest.length === 0) return [];
+
+  // Same precedence as getUserLibrary: a media-server title is "owned"
+  // unless its *arr is re-grabbing it right now.
+  const movieIds = newest.filter((r) => r.title.mediaType === "movie").map((r) => r.title.tmdbId);
+  const tvIds = newest.filter((r) => r.title.mediaType === "tv").map((r) => r.title.tmdbId);
+  const arrMatches = [
+    movieIds.length > 0
+      ? and(eq(arrStatusCache.provider, "radarr"), inArray(arrStatusCache.externalId, movieIds))
+      : undefined,
+    tvIds.length > 0
+      ? and(eq(arrStatusCache.provider, "sonarr"), inArray(arrStatusCache.externalId, tvIds))
+      : undefined,
+  ];
+  const downloadingRows = await db
+    .select({ provider: arrStatusCache.provider, externalId: arrStatusCache.externalId })
+    .from(arrStatusCache)
+    .where(
+      and(
+        eq(arrStatusCache.userId, userId),
+        eq(arrStatusCache.status, "tracked_downloading"),
+        or(...arrMatches),
+      ),
+    );
+  const downloading = new Set(
+    downloadingRows.map((r) => `${r.provider === "radarr" ? "movie" : "tv"}:${r.externalId}`),
+  );
+
+  return newest.map(({ title, addedAt }) => ({
+    titleId: title.id,
+    mediaType: title.mediaType,
+    tmdbId: title.tmdbId,
+    name: title.name,
+    posterPath: title.posterPath,
+    year: toYear(title),
+    status: downloading.has(`${title.mediaType}:${title.tmdbId}`) ? "tracked_downloading" : "owned",
+    addedAt,
+  }));
 }
 
 /**

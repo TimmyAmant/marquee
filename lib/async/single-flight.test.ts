@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { debounce, singleFlight } from "./single-flight";
+import { debounce, singleFlight, whenIdle } from "./single-flight";
 
 describe("singleFlight", () => {
   it("shares one run between overlapping callers", async () => {
@@ -22,6 +22,24 @@ describe("singleFlight", () => {
   it("clears the key after a failure", async () => {
     await expect(singleFlight("k3", async () => Promise.reject(new Error("x")))).rejects.toThrow("x");
     expect(await singleFlight("k3", async () => "ok")).toBe("ok");
+  });
+});
+
+describe("whenIdle", () => {
+  it("resolves at once with nothing running", async () => {
+    await expect(whenIdle("idle-none")).resolves.toBeUndefined();
+  });
+
+  it("waits for the running call to finish, even if it fails", async () => {
+    let finished = false;
+    const run = singleFlight("idle-fail", async () => {
+      await new Promise((r) => setTimeout(r, 5));
+      finished = true;
+      throw new Error("boom");
+    });
+    run.catch(() => undefined);
+    await whenIdle("idle-fail");
+    expect(finished).toBe(true);
   });
 });
 

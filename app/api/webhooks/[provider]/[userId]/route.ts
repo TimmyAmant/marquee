@@ -20,6 +20,12 @@ const WEBHOOK_RATE_WINDOW_MS = 60 * 1000;
  * per-episode events collapses into one library sync. */
 const SYNC_DEBOUNCE_MS = 5000;
 
+/** A season pack imports as one Download event per episode, often over
+ * several minutes. Within this window a repeat event for the same title
+ * and event type is the same news, so it doesn't notify (or post to
+ * Discord/ntfy/the webhook/push) again. */
+const NOTIFICATION_DEDUPE_WINDOW_MS = 30 * 60 * 1000;
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function secretsMatch(provided: string, expected: string): boolean {
@@ -116,6 +122,7 @@ export async function POST(
       title,
       eventType: eventType === "Grab" ? "grabbed" : "downloaded",
       message,
+      dedupeSince: new Date(Date.now() - NOTIFICATION_DEDUPE_WINDOW_MS),
     }).catch(() => undefined);
 
     if (eventType === "Download") {
