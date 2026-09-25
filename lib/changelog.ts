@@ -11,6 +11,18 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.33.0",
+    date: "2026-09-25",
+    changes: [
+      "Sign in with Plex or Jellyfin: once the admin has connected Plex or Jellyfin, the sign-in page (and the Mac and Windows apps) offers \"Sign in with Plex\" and a Jellyfin username and password. Anyone who can use your server can get in with the account they already have.",
+      "Import from Plex / Jellyfin in Settings (\"Import from your media server\"): pick the people who share your server and they each get a member account that signs in with Plex or Jellyfin. A new setting lets anyone with access get an account the first time they sign in; it's off by default, so only people you import (or who link their account) get in.",
+      "Linked accounts in Settings › Account: link your own Plex or Jellyfin account to your Marquee account to sign in with it, and unlink it again.",
+      "The Plex server owner signing in with Plex is recognised as the admin. Plex sign-ins are checked against plex.tv on every sign-in, and Marquee never stores a member's Plex token.",
+      "Fixed: newer Jellyfin versions could reject Marquee's requests; it now sends its token the way they expect.",
+      "Fixed: reconnecting Plex to a different account while a sync was running could keep the old account's servers.",
+    ],
+  },
+  {
     version: "0.32.0",
     date: "2026-09-25",
     changes: [
