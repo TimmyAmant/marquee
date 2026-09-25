@@ -209,6 +209,9 @@ struct CardSurface: ViewModifier {
 /// seen through the glass.
 struct GlassSurface<S: InsettableShape>: ViewModifier {
     let shape: S
+    /// Off for content that reaches past the glass on purpose (the rail's
+    /// name labels).
+    var clipsContent = true
     @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
@@ -217,8 +220,13 @@ struct GlassSurface<S: InsettableShape>: ViewModifier {
         let radius: CGFloat = colorScheme == .dark ? 32 : 25
         let y: CGFloat = colorScheme == .dark ? 24 : 20
 
-        content
-            .clipShape(shape)
+        Group {
+            if clipsContent {
+                content.clipShape(shape)
+            } else {
+                content
+            }
+        }
             .background {
                 ZStack {
                     shape.fill(Color.black)
@@ -242,8 +250,8 @@ extension View {
         modifier(CardSurface(padding: padding, radius: radius))
     }
 
-    func glassSurface<S: InsettableShape>(_ shape: S) -> some View {
-        modifier(GlassSurface(shape: shape))
+    func glassSurface<S: InsettableShape>(_ shape: S, clipsContent: Bool = true) -> some View {
+        modifier(GlassSurface(shape: shape, clipsContent: clipsContent))
     }
 
     /// For a page's top-level scroll view: runs it under the floating

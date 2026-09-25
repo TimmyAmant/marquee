@@ -2,11 +2,13 @@ import SwiftUI
 import AppKit
 
 /// components/nav-menu.tsx — the app's navigation, after the Plex app's
-/// Apple TV menu: a small frosted rail floats at the window's left edge
-/// (profile, Search, Discover, the section you're in, and a menu button),
-/// and resting on it, or pressing the menu button, opens the full menu as a
-/// frosted panel over the page. Nothing reflows: pages always start
-/// `Metrics.contentLeading` in, clear of the rail.
+/// Apple TV menu. A small frosted rail floats at the window's left edge and
+/// is the menu itself: your photo (Settings) and one icon per section, each
+/// going straight there in one click, with the section's name beside it on
+/// hover. The menu button at its foot opens the full labeled menu as a
+/// frosted panel over the page, only when clicked (or Go › Show Menu).
+/// Nothing reflows: pages always start `Metrics.contentLeading` in, clear of
+/// the rail.
 ///
 /// The panel sits below the window's toolbar rather than over it, where the
 /// traffic lights and the back button live.
@@ -15,11 +17,6 @@ struct NavMenu: View {
     @Environment(\.openSettings) private var openSettings
 
     @State private var isOpen = false
-    /// Set when the menu was opened with a click or the keyboard, which moves
-    /// focus to the current item; opening on hover leaves focus where it was.
-    @State private var focusOnOpen = false
-    @State private var openTask: Task<Void, Never>?
-    @State private var closeTask: Task<Void, Never>?
     @FocusState private var focus: NavFocus?
 
     var body: some View {
@@ -28,24 +25,24 @@ struct NavMenu: View {
                 focus: $focus,
                 onProfile: showAccount,
                 onSearch: focusSearch,
-                onMenu: { openMenu(moveFocus: true) }
+                onSelect: select,
+                onMenu: openMenu
             )
-            .onHover(perform: railHover)
             .padding(.leading, NavMetrics.railInset)
-            // Rail fades out as the panel comes in.
+            // Rail fades out as the panel comes in, and leaves the key loop.
             .opacity(isOpen ? 0 : 1)
             .allowsHitTesting(!isOpen)
+            .disabled(isOpen)
             .accessibilityHidden(isOpen)
 
             if isOpen {
                 NavMenuPanel(
                     focus: $focus,
-                    initialFocus: focusOnOpen ? .section(model.selection) : nil,
+                    initialFocus: .section(model.selection),
                     onProfile: showAccount,
                     onSearch: focusSearch,
                     onSelect: select
                 )
-                .onHover(perform: panelHover)
                 .background {
                     NavDismissMonitor(
                         onClickOutside: { closeMenu() },
@@ -67,53 +64,21 @@ struct NavMenu: View {
         // search result, a notification, Go › Back).
         .onChange(of: model.selection) { closeMenu() }
         .onChange(of: model.path) { closeMenu() }
-        .onChange(of: model.navMenuRequest) { openMenu(moveFocus: true) }
-        .onDisappear { cancelTimers() }
+        .onChange(of: model.navMenuRequest) { openMenu() }
     }
 
     // MARK: Opening and closing
 
-    private func openMenu(moveFocus: Bool) {
-        cancelTimers()
-        focusOnOpen = moveFocus
+    /// Only ever from a click or the keyboard, so focus moves into the menu
+    /// (onto the current section).
+    private func openMenu() {
         isOpen = true
     }
 
     private func closeMenu(restoringFocus: Bool = false) {
-        cancelTimers()
         guard isOpen else { return }
         isOpen = false
-        if restoringFocus { focus = .menuButton }
-    }
-
-    private func cancelTimers() {
-        openTask?.cancel()
-        closeTask?.cancel()
-        openTask = nil
-        closeTask = nil
-    }
-
-    private func railHover(_ inside: Bool) {
-        openTask?.cancel()
-        openTask = nil
-        guard inside, !isOpen else { return }
-        closeTask?.cancel()
-        openTask = Task {
-            try? await Task.sleep(for: NavMetrics.hoverOpenDelay)
-            guard !Task.isCancelled else { return }
-            openMenu(moveFocus: false)
-        }
-    }
-
-    private func panelHover(_ inside: Bool) {
-        closeTask?.cancel()
-        closeTask = nil
-        guard !inside, isOpen else { return }
-        closeTask = Task {
-            try? await Task.sleep(for: NavMetrics.hoverCloseDelay)
-            guard !Task.isCancelled else { return }
-            closeMenu()
-        }
+        if restoringFocus { focus = .rail(.menu) }
     }
 
     // MARK: Destinations
@@ -141,13 +106,6 @@ struct NavMenu: View {
 
 /// Timings and insets from Docs/DESIGN_TARGET.md › Navigation.
 private enum NavMetrics {
-    /// How long the pointer rests on the rail before it opens into the menu,
-    /// so sweeping past the window's left edge doesn't throw a panel over
-    /// the page.
-    static let hoverOpenDelay: Duration = .milliseconds(220)
-    /// Grace period after the pointer leaves the open menu, so overshooting
-    /// its edge by a few points doesn't snap it shut.
-    static let hoverCloseDelay: Duration = .milliseconds(260)
     /// The rail's distance from the window's left edge.
     static let railInset: CGFloat = 16
     /// The panel's distance from the window's left and bottom edges and from
@@ -157,11 +115,11 @@ private enum NavMetrics {
     static let panelRadius: CGFloat = 24
 }
 
-/// What keyboard focus can land on, so opening the menu from the keyboard
-/// can put it on the current section and Escape can hand it back to the
-/// menu button.
+/// What keyboard focus can land on, so opening the menu can put it on the
+/// current section and Escape can hand it back to the menu button. The rail
+/// and the panel each have their own.
 private enum NavFocus: Hashable {
-    case menuButton
+    case rail(RailItem)
     case profile
     case search
     case section(SidebarItem)
@@ -169,60 +127,99 @@ private enum NavFocus: Hashable {
 
 // MARK: - Rail
 
-/// Plex's short list (profile, Search, Discover, menu), plus whichever other
-/// section you're in, so the rail always shows where you are.
+/// Everything on the rail, top to bottom.
+private enum RailItem: Hashable {
+    case profile
+    case search
+    case section(SidebarItem)
+    case menu
+}
+
+/// Every destination, in the menu's order: your photo, then Search and
+/// Discover, Movies and Series, and Favorites, Calendar and Requests, with a
+/// short hairline between the groups and before the menu button.
 private struct NavRail: View {
     @Environment(AppModel.self) private var model
     let focus: FocusState<NavFocus?>.Binding
     let onProfile: () -> Void
     let onSearch: () -> Void
+    let onSelect: (SidebarItem) -> Void
     let onMenu: () -> Void
 
     var body: some View {
-        let name = model.viewer?.label ?? ""
-
         VStack(spacing: 4) {
-            Button(action: onProfile) {
-                UserAvatarView(label: name, avatarUrl: model.viewer?.avatarUrl, size: 36)
-                    .frame(width: 40, height: 40)
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .padding(.bottom, 4)
-            .help(name)
-            .accessibilityLabel("\(name): account and settings")
+            profile
+                .padding(.bottom, 4)
 
-            NavRailButton(systemImage: "magnifyingglass", label: "Search", action: onSearch)
-                .help("Search (⌘F)")
-
+            NavRailButton(systemImage: "magnifyingglass", label: "Search", focus: focus, item: .search, action: onSearch)
             section(.discover)
-            if model.selection != .discover {
-                section(model.selection)
-            }
-
-            NavRailButton(systemImage: "line.3.horizontal", label: "Open menu", action: onMenu)
-                .focused(focus, equals: .menuButton)
-                .help("Menu (⌃⌘S)")
+            RailHairline()
+            section(.movies)
+            section(.series)
+            RailHairline()
+            section(.favorites)
+            section(.calendar)
+            section(.requests)
+            RailHairline()
+            NavRailButton(systemImage: "line.3.horizontal", label: "Menu", focus: focus, item: .menu, action: onMenu)
+                .accessibilityLabel("Open menu")
         }
         // 7 of padding inside a 1pt border: 56 wide, ending 72 from the edge.
         .padding(8)
-        .glassSurface(Capsule())
+        // Unclipped, so the name labels can sit beside the rail.
+        .glassSurface(Capsule(), clipsContent: false)
         .contentShape(Capsule())
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Main")
+    }
+
+    /// Your photo (or initials); a plain person glyph when signed out.
+    private var profile: some View {
+        let viewer = model.viewer
+        return Button(action: onProfile) {
+            Group {
+                if let viewer {
+                    UserAvatarView(label: viewer.label, avatarUrl: viewer.avatarUrl, size: 36)
+                } else {
+                    Image(systemName: "person")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(Theme.textPrimary.opacity(0.1)))
+                }
+            }
+            .frame(width: 40, height: 40)
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .modifier(RailLabeled(label: viewer == nil ? "Sign in" : "Settings", focus: focus, item: .profile))
+        .accessibilityLabel(viewer.map { "\($0.label): account and settings" } ?? "Sign in")
     }
 
     private func section(_ item: SidebarItem) -> some View {
         let pending = item == .requests ? model.pendingRequestCount : 0
         return NavRailButton(
             systemImage: item.systemImage,
-            label: pending > 0 ? "\(item.title), \(pending) pending" : item.title,
+            label: item.title,
+            focus: focus,
+            item: .section(item),
             current: model.selection == item,
             showsDot: pending > 0
         ) {
-            model.select(item)
+            onSelect(item)
         }
-        .help("\(item.title) (⌘\(String(item.shortcut.character)))")
+        .accessibilityLabel(pending > 0 ? "\(item.title), \(pending) pending" : item.title)
+    }
+}
+
+/// Between the rail's groups: 24 wide, in the glass border color.
+private struct RailHairline: View {
+    var body: some View {
+        Rectangle()
+            .fill(Theme.glassBorder)
+            .frame(width: 24, height: 1)
+            .padding(.vertical, 4)
+            .accessibilityHidden(true)
     }
 }
 
@@ -230,6 +227,8 @@ private struct NavRail: View {
 private struct NavRailButton: View {
     let systemImage: String
     let label: String
+    let focus: FocusState<NavFocus?>.Binding
+    let item: RailItem
     var current = false
     /// An admin with pending requests: an 8pt accent dot on the icon.
     var showsDot = false
@@ -252,18 +251,53 @@ private struct NavRailButton: View {
                     .allowsHitTesting(false)
             }
         }
+        .modifier(RailLabeled(label: label, focus: focus, item: item))
         .accessibilityLabel(label)
         .accessibilityAddTraits(current ? .isSelected : [])
     }
 }
+
+/// `RailLabel`: the item's name in a small frosted capsule 12 to its right,
+/// on hover or keyboard focus, so the icons never have to be guessed at.
+/// Decorative: the button carries the same name as its accessible label.
+private struct RailLabeled: ViewModifier {
+    let label: String
+    let focus: FocusState<NavFocus?>.Binding
+    let item: RailItem
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        let showing = hovering || focus.wrappedValue == .rail(item)
+        content
+            .focused(focus, equals: .rail(item))
+            .onHover { hovering = $0 }
+            .overlay(alignment: .leading) {
+                Text(label)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .glassSurface(Capsule())
+                    // From the button's leading edge: its 40, then 12.
+                    .offset(x: 40 + 12 + (showing ? 0 : -4))
+                    .opacity(showing ? 1 : 0)
+                    .animation(.easeOut(duration: 0.15), value: showing)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+    }
+}
+
 
 // MARK: - Panel
 
 private struct NavMenuPanel: View {
     @Environment(AppModel.self) private var model
     let focus: FocusState<NavFocus?>.Binding
-    /// Where focus goes once the panel is on screen; nil when it opened on hover.
-    let initialFocus: NavFocus?
+    /// Where focus goes once the panel is on screen: the current section.
+    let initialFocus: NavFocus
     let onProfile: () -> Void
     let onSearch: () -> Void
     let onSelect: (SidebarItem) -> Void
@@ -333,7 +367,7 @@ private struct NavMenuPanel: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Main menu")
         .task {
-            if let initialFocus { focus.wrappedValue = initialFocus }
+            focus.wrappedValue = initialFocus
         }
     }
 
