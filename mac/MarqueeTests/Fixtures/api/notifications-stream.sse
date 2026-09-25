@@ -1,0 +1,12 @@
+retry: 5000
+
+event: ready
+data: {}
+
+event: notification
+id: a23f7682-41ae-4e8a-8b17-14d903ab017a
+data: {"id":"a23f7682-41ae-4e8a-8b17-14d903ab017a","mediaType":"movie","tmdbId":27205,"title":"Inception","eventType":"request_rejected","message":"\"Inception\" was declined: Already available on a streaming service we have","read":false,"createdAt":"2026-09-25T11:25:16.885Z"}
+
+event: signed-out
+data: {}
+

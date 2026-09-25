@@ -4,6 +4,7 @@
   "displayName": "Timmy",
   "role": "admin",
   "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
+  "avatarUrl": "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549",
   "autoApproveMovies": false,
   "autoApproveTv": false,
   "createdAt": "2026-09-17T17:10:57.821Z"

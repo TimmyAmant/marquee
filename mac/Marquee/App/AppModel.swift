@@ -104,8 +104,14 @@ final class AppModel {
     let connect = ConnectModel()
     /// Bumped by API mutations and by polling; screens key reloads off it.
     let events: ServerEvents
-    /// Badge polling, the Dock badge and notification banners while signed in.
+    /// The notification stream, badge polling, the Dock badge and
+    /// notification banners while signed in.
     let live: LiveUpdates
+    /// Whether the signed-in account wants banners on this Mac, and the
+    /// "Get notifications on this Mac?" card that asks.
+    let notificationConsent: NotificationConsent
+    /// Profile photos, by `avatarUrl`.
+    let avatars = AvatarImageStore()
     /// What this Mac has changed about titles since the lists showing them
     /// were fetched, so cards don't offer an add that already happened.
     let titleState = TitleStateStore()
@@ -165,12 +171,17 @@ final class AppModel {
     /// so a flapping Wi-Fi join doesn't fire a burst of probes.
     static let autoRetryDelay: Duration = .seconds(2)
 
-    init(session: ServerSession = ServerSession()) {
+    init(session: ServerSession = ServerSession(), notificationConsent: NotificationConsent = NotificationConsent()) {
         self.session = session
         let events = ServerEvents()
         self.events = events
-        live = LiveUpdates(events: events) { label in
+        let live = LiveUpdates(events: events) { label in
             NSApp.dockTile.badgeLabel = label
+        }
+        self.live = live
+        self.notificationConsent = notificationConsent
+        notificationConsent.onChange = { enabled in
+            live.bannersEnabled = enabled
         }
         connect.onSelect = { [weak self] address, info in
             self?.selectServer(address, info: info)
@@ -217,7 +228,7 @@ final class AppModel {
         if session.hasToken {
             switch await session.restore() {
             case let .signedIn(user):
-                completeSignIn(user)
+                completeSignIn(user, restored: true)
             case .signedOut:
                 await showSignIn()
             case let .unreachable(outcome):
@@ -334,7 +345,9 @@ final class AppModel {
         authForm = target
     }
 
-    func completeSignIn(_ user: API.User) {
+    /// - Parameter restored: The saved session came back at launch, rather
+    ///   than someone signing in with a password just now.
+    func completeSignIn(_ user: API.User, restored: Bool = false) {
         viewer = user
         authNotice = nil
         connectionProblem = nil
@@ -347,6 +360,10 @@ final class AppModel {
         live.start(identity: identity) { [weak self] in
             guard let self, self.phase == .ready else { return nil }
             return self.api
+        }
+        let consent = notificationConsent
+        Task {
+            await consent.begin(identity: identity, freshSignIn: !restored)
         }
     }
 
@@ -380,6 +397,8 @@ final class AppModel {
     private func clearSignedInState() {
         pendingURL = nil
         live.stop()
+        notificationConsent.end()
+        avatars.clear()
         titleState.clear()
         viewer = nil
         path = []
@@ -403,9 +422,15 @@ final class AppModel {
         live.refresh(.activation)
     }
 
-    /// The app came to the front: catch up on counts (and banners) right away.
+    /// The app came to the front: catch up on counts (and banners) right away,
+    /// and pick up a change made in System Settings › Notifications.
     func applicationDidBecomeActive() {
         refreshCounts()
+        guard phase == .ready else { return }
+        let consent = notificationConsent
+        Task {
+            await consent.refreshAuthorization()
+        }
     }
 
     // MARK: Navigation

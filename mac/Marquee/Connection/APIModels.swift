@@ -13,6 +13,10 @@ struct User: Codable, Equatable, Hashable, Sendable {
     let role: API.UserRole
     /// Whose integrations and library this user sees.
     let libraryOwnerId: UUID
+    /// The profile photo as a server-relative path with a `?v=` version
+    /// (`/api/v1/users/{id}/avatar?v=…`); nil when there's none, and from
+    /// servers older than 0.29.
+    var avatarUrl: String? = nil
 
     var isAdmin: Bool { role == .admin }
 }

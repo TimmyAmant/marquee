@@ -13,10 +13,17 @@ final class MarqueeAPIRequestTests: XCTestCase {
         var query: [String: String] = [:]
         /// Expected JSON body; nil means no body at all.
         var body: String?
-        /// The fixture the stub answers with.
+        /// Expected file body instead of JSON (a profile photo): its bytes and Content-Type.
+        var upload: (bytes: Data, contentType: String)?
+        /// The fixture the stub answers with (`.json` unless it names another extension).
         let response: String
+        /// The stub response's Content-Type.
+        var responseType = "application/json"
         let call: (MarqueeAPI) async throws -> Void
     }
+
+    /// A few bytes standing in for a photo: the upload sends them as they are.
+    private static let photo = Data([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46])
 
     private static let requestId = UUID(uuidString: "28713D50-27F2-4230-9C95-C1E6A000F6C0")!
     private static let userId = UUID(uuidString: "83C55A49-6153-4CB9-AE22-4A42D48F4CF3")!
@@ -29,7 +36,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
     }
 
     private func fixture(_ name: String) throws -> Data {
-        let url = Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/api/\(name).json")
+        let file = name.contains(".") ? name : name + ".json"
+        let url = Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/api/\(file)")
         return try Data(contentsOf: url)
     }
 
@@ -123,6 +131,9 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/notifications/bedcb20b-fa30-4683-b000-42affc320087/read", response: "ok") {
                 try await $0.notifications.markRead(Self.notificationId)
             },
+            Case(method: "GET", path: "/notifications/stream", response: "notifications-stream.sse", responseType: "text/event-stream") {
+                _ = try await $0.notifications.stream { _ in }
+            },
             // Calendar, activity
             Case(method: "GET", path: "/calendar", query: ["month": "2026-09"], response: "calendar") { _ = try await $0.calendar.month(API.CalendarMonth(year: 2026, month: 9)) },
             Case(method: "GET", path: "/settings/activity", response: "activity") { _ = try await $0.activity.recent() },
@@ -135,6 +146,16 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 _ = try await $0.users.update(user, API.UpdateUserRequest(username: "kid", autoApproveTv: true))
             },
             Case(method: "DELETE", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3", response: "ok") { try await $0.users.remove(user) },
+            // The `avatarUrl` exactly as the server hands it out, version and all.
+            Case(method: "GET", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar", query: ["v": "1790334036549"], response: "ok", responseType: "image/jpeg") {
+                _ = try await $0.users.avatar(at: "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar?v=1790334036549")
+            },
+            Case(method: "PUT", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar", upload: (Self.photo, "image/jpeg"), response: "avatar-set") {
+                try await $0.users.setAvatar(user, data: Self.photo, contentType: "image/jpeg")
+            },
+            Case(method: "DELETE", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar", response: "avatar-removed") {
+                try await $0.users.removeAvatar(user)
+            },
             // Integrations
             Case(method: "GET", path: "/settings/integrations", response: "integrations") { _ = try await $0.integrations.overview() },
             Case(method: "POST", path: "/settings/integrations/sync", response: "ok") { try await $0.integrations.syncNow() },
@@ -176,8 +197,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 81, "Docs/api-v1.md documents 81 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 81, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 85, "docs/api-v1.md documents 85 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 85, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
@@ -186,8 +207,9 @@ final class MarqueeAPIRequestTests: XCTestCase {
         for testCase in cases {
             let label = "\(testCase.method) \(testCase.path)"
             let response = try fixture(testCase.response)
+            let headers = ["Content-Type": testCase.responseType, "X-Marquee-API": "1"]
             StubURLProtocol.requests = []
-            StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, response) }
+            StubURLProtocol.handler = { _ in (200, headers, response) }
             let before = events.revision(of: .all)
 
             do {
@@ -212,6 +234,9 @@ final class MarqueeAPIRequestTests: XCTestCase {
             if let expected = testCase.body {
                 XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json", label)
                 XCTAssertEqual(try Self.jsonObject(body), try Self.jsonObject(Data(expected.utf8)), label)
+            } else if let upload = testCase.upload {
+                XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), upload.contentType, label)
+                XCTAssertEqual(body, upload.bytes, "\(label) sends the file's own bytes")
             } else {
                 XCTAssertTrue(body.isEmpty, "\(label) sends no body")
             }

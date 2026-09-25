@@ -43,6 +43,16 @@ struct MainWindowView: View {
         .overlay(alignment: .bottom) {
             BannerView()
         }
+        .overlay(alignment: .bottomTrailing) {
+            ZStack {
+                if model.notificationConsent.isAsking {
+                    NotificationPromptCard()
+                        .padding(16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.easeOut(duration: 0.25), value: model.notificationConsent.isAsking)
+        }
         .onAppear {
             // `LiveUpdates` keeps the counts current; this just catches up when
             // the window is reopened.
