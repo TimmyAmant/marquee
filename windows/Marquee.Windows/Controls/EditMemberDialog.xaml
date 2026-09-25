@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  household-members-list.tsx's edit form: name, username and a new
+  password for any row the viewer may edit. "Current password" shows only
+  on your own account (the server wants it with a new password there; the
+  admin resetting someone else's doesn't know theirs), and the two
+  auto-approve boxes only for the admin editing a non-admin account. The
+  code-behind picks which parts show and fills in the account.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.EditMemberDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    PrimaryButtonText="Save"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    PrimaryButtonClick="OnSaveClick"
+    Closing="OnDialogClosing">
+
+    <StackPanel Spacing="12" MinWidth="380">
+        <TextBox
+            x:Name="DisplayNameBox"
+            Header="Name"
+            PlaceholderText="Leave blank to keep the current name"
+            MaxLength="80" />
+        <TextBox
+            x:Name="UsernameBox"
+            Header="Username"
+            IsSpellCheckEnabled="False"
+            MaxLength="32"
+            TextChanged="OnUsernameChanged" />
+        <PasswordBox
+            x:Name="NewPasswordInput"
+            Header="New password"
+            PlaceholderText="Leave blank to keep the current password" />
+        <PasswordBox
+            x:Name="CurrentPasswordInput"
+            Header="Current password"
+            PlaceholderText="Needed only when setting a new password"
+            Visibility="Collapsed" />
+        <StackPanel x:Name="AutoApprovePanel" Visibility="Collapsed">
+            <CheckBox x:Name="AutoApproveMoviesBox" Content="Auto-approve movie requests" />
+            <CheckBox x:Name="AutoApproveTvBox" Content="Auto-approve TV requests" />
+        </StackPanel>
+        <TextBlock
+            x:Name="PasswordNoteText"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            TextWrapping="Wrap" />
+        <InfoBar
+            x:Name="ErrorBar"
+            Severity="Error"
+            IsOpen="False"
+            IsClosable="False" />
+    </StackPanel>
+</ContentDialog>

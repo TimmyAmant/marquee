@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   app/settings/page.tsx's Account tab for this PC: the account card and its
-  edit form, the server card (Change server, Sign out) and About. Each card
-  is a Border with the card brushes; the page is a single column.
+  edit form, the household members list (household-members-list.tsx) with
+  the admin's Add member, the server card (Change server, Sign out) and
+  About. Each card is a Border with the card brushes; the page is a single
+  column. The member dialogs are shown by the code-behind.
 -->
 <Page
     x:Class="Marquee.Windows.Views.SettingsPage"
@@ -11,6 +13,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -78,6 +81,115 @@
                         Command="{x:Bind ViewModel.SaveCommand}"
                         Style="{StaticResource AccentButtonStyle}"
                         HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <!-- Household members: every account for the admin, only your own for a member -->
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Household members" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.MembersCaption, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <Button
+                    Grid.Column="1"
+                    Content="Add member"
+                    Command="{x:Bind ViewModel.AddMemberCommand}"
+                    Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    VerticalAlignment="Bottom" />
+            </Grid>
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasMembersNotice, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.HasMembersNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                Severity="Success"
+                Message="{x:Bind ViewModel.MembersNotice, Mode=OneWay}"
+                IsClosable="False" />
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasMembersActionError, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.HasMembersActionError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                Severity="Error"
+                Message="{x:Bind ViewModel.MembersActionError, Mode=OneWay}"
+                IsClosable="False" />
+            <Border Style="{StaticResource SettingsCard}" Padding="0">
+                <StackPanel>
+                    <ProgressRing
+                        IsActive="{x:Bind ViewModel.IsMembersLoading, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsMembersLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Width="20"
+                        Height="20"
+                        Margin="20"
+                        HorizontalAlignment="Left" />
+                    <StackPanel Padding="20" Spacing="8" Visibility="{x:Bind ViewModel.ShowsMembersError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.MembersError, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                        <Button Content="Try again" Command="{x:Bind ViewModel.LoadMembersCommand}" />
+                    </StackPanel>
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Members, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="0" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:HouseholdMemberRow">
+                                <StackPanel>
+                                    <Border
+                                        Height="1"
+                                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                        Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+                                    <Grid Padding="20,12" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock
+                                                Text="{x:Bind Label}"
+                                                Style="{StaticResource BodyTextBlockStyle}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                Text="{x:Bind UsernameLine}"
+                                                Visibility="{x:Bind UsernameLine, Converter={StaticResource StringToVisibility}}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <controls:TonePill
+                                                Text="Admin"
+                                                Tone="{x:Bind AdminTone}"
+                                                Visibility="{x:Bind IsAdminRow, Converter={StaticResource BoolToVisibility}}" />
+                                            <controls:TonePill
+                                                Text="You"
+                                                Tone="{x:Bind YouTone}"
+                                                Visibility="{x:Bind IsCurrentUser, Converter={StaticResource BoolToVisibility}}" />
+                                            <Button
+                                                Content="Edit"
+                                                Command="{x:Bind Edit}"
+                                                CommandParameter="{x:Bind}"
+                                                Visibility="{x:Bind CanEdit, Converter={StaticResource BoolToVisibility}}" />
+                                            <Button
+                                                Content="Remove"
+                                                Command="{x:Bind Remove}"
+                                                CommandParameter="{x:Bind}"
+                                                Visibility="{x:Bind CanRemove, Converter={StaticResource BoolToVisibility}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
                 </StackPanel>
             </Border>
 

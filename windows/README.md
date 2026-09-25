@@ -59,6 +59,7 @@ Your session token is kept in the Windows credential store, one entry per server
 | Calendar | `GET /calendar?month=` |
 | Notifications bell | `GET /badges`, `/notifications` |
 | Settings → Account, server and About | `GET /me`, `PATCH /users/{id}`, `GET /settings/about` |
+| Settings → Household members (list, add, edit, remove) | `GET /users`, `POST /users`, `PATCH /users/{id}`, `DELETE /users/{id}` |
 
 Declining a request can carry a reason, which the requester then sees next to the declined request on their own Requests tab. Declining without a reason sends no body at all, which every server version accepts; a reason needs a server running 0.28.0 or later.
 
@@ -66,13 +67,13 @@ Declining a request can carry a reason, which the requester then sees next to th
 
 This is the first cut, and it deliberately stops at the screens above. Not built yet:
 
-- **Settings → Integrations and household members.** Connecting or reconfiguring TMDb, Plex, Jellyfin, Sonarr, Radarr and the rest, and adding or removing household accounts, is done on the website for now. Settings covers your own account (name, password), the server and About.
+- **Settings → Integrations.** Connecting or reconfiguring TMDb, Plex, Jellyfin, Sonarr, Radarr and the rest is done on the website for now. Settings covers your own account (name, password), household members, the server and About.
 - **Deep links.** No `marquee://` handler yet, so a link from a notification or another app doesn't open the title in the Windows app.
 - **Notification toasts.** The server has no push channel. The app polls `GET /badges` every minute while it's open (the bell and the Requests badge follow), but nothing surfaces new activity while it's in the background.
 - **Discovery scan.** The Mac app's **Search my network** isn't ported yet; type the server's address instead.
 - **Cached lists don't learn about your own actions yet.** Adding or requesting a title on its page updates that page; a grid you came from re-fetches on its next visit rather than redrawing the card in place (the Mac's `TitleStateStore`).
 
-The rest of the Mac app's table, Settings → Activity / Jobs and Help → Error Reference / Releases, follows (Integrations and household members are covered above). The endpoints for all of it are already in `Marquee.Core`, so the remaining work is screens, not plumbing.
+The rest of the Mac app's table, Settings → Activity / Jobs and Help → Error Reference / Releases, follows (Integrations is covered above). The endpoints for all of it are already in `Marquee.Core`, so the remaining work is screens, not plumbing.
 
 ## Project layout
 
