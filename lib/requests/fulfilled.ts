@@ -1,6 +1,6 @@
-import { and, eq, gte, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { notifications, requests } from "@/lib/db/schema";
+import { requests } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications/query";
 
@@ -40,21 +40,10 @@ export async function notifyRequestersOfDownload(input: {
   }
 
   for (const [userId, since] of earliestByUser) {
-    const [already] = await db
-      .select({ id: notifications.id })
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.userId, userId),
-          eq(notifications.mediaType, input.mediaType),
-          eq(notifications.tmdbId, input.tmdbId),
-          eq(notifications.eventType, "downloaded"),
-          gte(notifications.createdAt, since),
-        ),
-      )
-      .limit(1);
-    if (already) continue;
-
+    // The "already told since they asked" check and the insert happen
+    // atomically inside createNotification — the episodes of a season pack
+    // arrive as parallel webhooks, and checking here first let several of
+    // them through at once.
     await createNotification({
       userId,
       mediaType: input.mediaType,
@@ -66,6 +55,7 @@ export async function notifyRequestersOfDownload(input: {
           ? `${input.title}, which you requested, is ready to watch`
           : `${input.title}, which you requested, has new episodes ready to watch`,
       relay: false,
+      dedupeSince: since,
     });
   }
 }

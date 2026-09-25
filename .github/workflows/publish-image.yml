@@ -7,6 +7,12 @@ on:
     types: [published]
   workflow_dispatch:
 
+# One at a time, in order: two releases close together could otherwise
+# finish out of order and leave :latest on the older one.
+concurrency:
+  group: publish-image
+  cancel-in-progress: false
+
 jobs:
   publish:
     # A manual run from any other branch would overwrite :latest (and the
@@ -24,6 +30,10 @@ jobs:
         id: meta
         run: |
           version="$(node -p "require('./package.json').version")"
+          if [ "${{ github.event_name }}" = "release" ] && [ "${{ github.event.release.tag_name }}" != "v$version" ]; then
+            echo "::error::Release tag ${{ github.event.release.tag_name }} doesn't match package.json (v$version)."
+            exit 1
+          fi
           echo "tags=ghcr.io/${GITHUB_REPOSITORY,,}:latest,ghcr.io/${GITHUB_REPOSITORY,,}:${version}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@v3

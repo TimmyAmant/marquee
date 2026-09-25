@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import {
   getUnreadCountAction,
@@ -12,6 +12,24 @@ import {
 type NotificationRow = Awaited<ReturnType<typeof getRecentNotificationsAction>>[number];
 
 const POLL_INTERVAL_MS = 30_000;
+
+/** Where the rail takes over from the header (Tailwind's md). */
+const RAIL_QUERY = "(min-width: 768px)";
+
+function subscribeToRailQuery(onChange: () => void) {
+  const query = window.matchMedia(RAIL_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+/** Whether the rail is showing; false on the server, where nothing polls. */
+function useRailShowing(): boolean {
+  return useSyncExternalStore(
+    subscribeToRailQuery,
+    () => window.matchMedia(RAIL_QUERY).matches,
+    () => false,
+  );
+}
 
 function timeAgo(date: Date | string): string {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -38,6 +56,10 @@ export function NotificationsBell({
   railLabel?: ReactNode;
 } = {}) {
   const onRail = variant === "rail";
+  // Both bells are mounted (CSS hides one), so only the one on screen polls:
+  // otherwise every signed-in page would ask twice every 30 seconds, and
+  // server actions queue one at a time behind real clicks.
+  const visible = useRailShowing() === onRail;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -49,10 +71,11 @@ export function NotificationsBell({
   }, []);
 
   useEffect(() => {
+    if (!visible) return;
     refreshCount();
     const interval = setInterval(refreshCount, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [refreshCount]);
+  }, [refreshCount, visible]);
 
   useEffect(() => {
     if (!open) return;
@@ -144,7 +167,9 @@ export function NotificationsBell({
               </button>
             )}
           </div>
-          <div className="max-h-96 overflow-y-auto">
+          {/* On the rail the list starts beside the bell, above the middle
+              of the window, so short windows cap it to what fits. */}
+          <div className={onRail ? "max-h-[min(24rem,calc(50dvh+80px))] overflow-y-auto" : "max-h-96 overflow-y-auto"}>
             {items.length === 0 ? (
               <p className="px-2 py-4 text-center text-xs text-text-secondary">No notifications yet.</p>
             ) : (

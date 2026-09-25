@@ -38,7 +38,7 @@ public sealed partial class RequestsPage : Page
     private async Task<string?> ChooseReasonAsync(PendingRow row)
     {
         var dialog = new DeclineRequestDialog(row.Title, row.RequesterLabel, ViewModel.RejectionReasons) { XamlRoot = XamlRoot };
-        var result = await dialog.ShowAsync();
+        var result = await dialog.TryShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Reason : null;
     }
 }

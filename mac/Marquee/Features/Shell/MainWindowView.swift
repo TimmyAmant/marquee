@@ -15,6 +15,10 @@ struct MainWindowView: View {
                 }
         }
         .id(model.selection)
+        // While the search panel is up, the page behind it takes no focus,
+        // clicks or VoiceOver, so Tab and Escape stay with the panel.
+        .disabled(model.isSearchOpen)
+        .accessibilityHidden(model.isSearchOpen)
         // The rail floats over the page's left edge, so pages lay out clear
         // of it. Their scroll views run under it to the window edge
         // (`scrollsUnderNavRail()`), as does the title page's backdrop.
@@ -29,6 +33,8 @@ struct MainWindowView: View {
         .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
         .overlay {
             NavMenu()
+                .disabled(model.isSearchOpen)
+                .accessibilityHidden(model.isSearchOpen)
         }
         .overlay {
             if model.isSearchOpen {

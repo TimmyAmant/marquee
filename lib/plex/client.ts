@@ -18,6 +18,10 @@ const PRODUCT = "Marquee";
 // clients' REQUEST_TIMEOUT_MS.
 const REQUEST_TIMEOUT_MS = 8000;
 
+// See LIBRARY_TIMEOUT_MS in lib/radarr/client.ts — a whole section listing
+// is a sync's job, not a page render's.
+const LIBRARY_TIMEOUT_MS = 120_000;
+
 function plexHeaders(clientId: string, token?: string) {
   return {
     Accept: "application/json",
@@ -267,7 +271,7 @@ export async function getSectionItems(
     `${serverUri}/library/sections/${sectionKey}/all?includeGuids=1`,
     {
       headers: { Accept: "application/json", "X-Plex-Token": token },
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(LIBRARY_TIMEOUT_MS),
     },
   );
   if (!res.ok) throw new Error(`Failed to list section items (${res.status})`);

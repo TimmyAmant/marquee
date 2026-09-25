@@ -1,15 +1,19 @@
 import { and, eq, notInArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { singleFlight } from "@/lib/async/single-flight";
+import { singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { arrStatusCache, integrationCredentials } from "@/lib/db/schema";
 import type { ArrProvider } from "@/lib/db/schema";
-import { getArrCredential } from "@/lib/integrations/credentials";
+import { assertStillConnected, getArrCredential } from "@/lib/integrations/credentials";
 import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { lookupTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
+
+/** How many titles to write between checks that the provider is still
+ * connected. */
+const CONNECTED_CHECK_EVERY = 100;
 
 async function runSyncArrLibrary(
   userId: string,
@@ -28,7 +32,12 @@ async function runSyncArrLibrary(
       radarr.getAllMovies(config),
       radarr.getQueuedMovieIds(config).catch(() => new Set<number>()),
     ]);
-    for (const movie of movies) {
+    // Disconnecting deletes this provider's cached rows; upserting after that
+    // would bring them back. Check before writing (the listing above can be
+    // slow) and keep checking as the loop runs.
+    await assertStillConnected(userId, provider);
+    for (const [index, movie] of movies.entries()) {
+      if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertStillConnected(userId, provider);
       const tmdbId = await applyTmdbIdOverride(userId, "movie", movie.tmdbId).catch(
         () => movie.tmdbId,
       );
@@ -84,7 +93,10 @@ async function runSyncArrLibrary(
       sonarr.getAllSeries(config),
       sonarr.getQueuedSeriesIds(config).catch(() => new Set<number>()),
     ]);
-    for (const series of allSeries) {
+    // Same disconnect guard as the Radarr branch above.
+    await assertStillConnected(userId, provider);
+    for (const [index, series] of allSeries.entries()) {
+      if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertStillConnected(userId, provider);
       const lookup = await lookupTmdbIdFromTvdbId(series.tvdbId);
       const resolvedTmdbId = lookup.tmdbId;
       if (!resolvedTmdbId) {
@@ -143,6 +155,7 @@ async function runSyncArrLibrary(
   // picture of what's actually still in Sonarr, and we'd wrongly delete rows
   // for series that are still there.
   if (failedLookupCount === 0) {
+    await assertStillConnected(userId, provider);
     if (seenTmdbIds.length > 0) {
       await db
         .delete(arrStatusCache)
@@ -167,6 +180,16 @@ async function runSyncArrLibrary(
 
 const AUTO_SYNC_STALE_MS = 15 * 60 * 1000;
 
+declare global {
+  var __marqueeArrSyncAttempts: Map<string, number> | undefined;
+}
+
+// When each user's Sonarr/Radarr last had an on-visit sync attempted. The
+// cache rows' checkedAt can't answer that for an empty library (there are
+// no rows) or a failing one (nothing gets written), and without this every
+// page visit in either case would kick off another full sync.
+const lastAttemptAt: Map<string, number> = (globalThis.__marqueeArrSyncAttempts ??= new Map());
+
 export async function syncArrLibraryIfStale(userId: string): Promise<void> {
   for (const provider of ["sonarr", "radarr"] as const) {
     const credential = await getArrCredential(userId, provider);
@@ -178,8 +201,11 @@ export async function syncArrLibraryIfStale(userId: string): Promise<void> {
       .where(and(eq(arrStatusCache.userId, userId), eq(arrStatusCache.provider, provider)))
       .limit(1);
 
-    const isStale = !row || Date.now() - row.checkedAt.getTime() > AUTO_SYNC_STALE_MS;
+    const attemptKey = `${provider}:${userId}`;
+    const lastSyncedAt = Math.max(row?.checkedAt.getTime() ?? 0, lastAttemptAt.get(attemptKey) ?? 0);
+    const isStale = Date.now() - lastSyncedAt > AUTO_SYNC_STALE_MS;
     if (isStale) {
+      lastAttemptAt.set(attemptKey, Date.now());
       await syncArrLibrary(userId, provider).catch((err) => {
         console.error(`[arr-sync] ${provider} failed for user ${userId}:`, err);
       });
@@ -205,4 +231,9 @@ export async function syncAllConnectedArrUsers(): Promise<void> {
 /** One sync per user and provider at a time — see syncPlexLibrary. */
 export function syncArrLibrary(userId: string, provider: ArrProvider) {
   return singleFlight(`arr-sync:${provider}:${userId}`, () => runSyncArrLibrary(userId, provider));
+}
+
+/** Resolves once no sync of this provider for this user is running. */
+export function waitForArrSync(userId: string, provider: ArrProvider) {
+  return whenIdle(`arr-sync:${provider}:${userId}`);
 }

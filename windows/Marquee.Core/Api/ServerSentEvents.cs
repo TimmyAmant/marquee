@@ -23,6 +23,13 @@ public sealed record ServerSentEvent(string Type, string Data, string? Id);
 /// </summary>
 public sealed class ServerSentEventParser
 {
+    /// <summary>
+    /// The most one event's data may hold. A notification is a few hundred
+    /// bytes; anything answering with endless data lines (a broken proxy,
+    /// something else at the address) is cut off rather than buffered forever.
+    /// </summary>
+    public const int MaxEventLength = 64 * 1024;
+
     private readonly StringBuilder data = new();
     private string eventType = "";
 
@@ -69,6 +76,10 @@ public sealed class ServerSentEventParser
                 eventType = value;
                 break;
             case "data":
+                if (data.Length + value.Length + 1 > MaxEventLength)
+                {
+                    throw new InvalidDataException($"An event's data passed {MaxEventLength} characters.");
+                }
                 data.Append(value).Append('\n');
                 break;
             case "id":
@@ -131,5 +142,59 @@ public sealed class ServerSentEventParser
         data.Clear();
         eventType = "";
         return dispatched;
+    }
+}
+
+/// <summary>
+/// <see cref="StreamReader.ReadLineAsync(CancellationToken)"/> with a limit:
+/// splits on CRLF, LF and CR as the spec does, but refuses a line longer than
+/// <c>maxLength</c> (throwing <see cref="InvalidDataException"/>) instead of
+/// buffering a stream that never sends a newline.
+/// </summary>
+internal sealed class BoundedLineReader
+{
+    private readonly StreamReader reader;
+    private readonly int maxLength;
+    private readonly StringBuilder line = new();
+    private readonly char[] one = new char[1];
+    private bool afterCarriageReturn;
+
+    public BoundedLineReader(StreamReader reader, int maxLength)
+    {
+        this.reader = reader;
+        this.maxLength = maxLength;
+    }
+
+    /// <summary>The next line without its terminator; null at the end of the stream.</summary>
+    public async ValueTask<string?> ReadLineAsync(CancellationToken ct)
+    {
+        line.Clear();
+        while (true)
+        {
+            // StreamReader buffers underneath, so one character at a time
+            // costs a copy, not a read from the network.
+            var read = await reader.ReadAsync(one.AsMemory(), ct).ConfigureAwait(false);
+            if (read == 0)
+            {
+                return line.Length > 0 ? line.ToString() : null;
+            }
+            var c = one[0];
+            if (c == '\n' && afterCarriageReturn)
+            {
+                // The LF of a CRLF whose CR already ended the line.
+                afterCarriageReturn = false;
+                continue;
+            }
+            afterCarriageReturn = c == '\r';
+            if (c is '\n' or '\r')
+            {
+                return line.ToString();
+            }
+            if (line.Length >= maxLength)
+            {
+                throw new InvalidDataException($"A line passed {maxLength} characters.");
+            }
+            line.Append(c);
+        }
     }
 }

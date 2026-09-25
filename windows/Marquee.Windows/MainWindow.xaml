@@ -402,6 +402,26 @@
         <Frame x:Name="AuthFrame" Grid.Row="1" />
 
         <!--
+          A newer Marquee, offered before sign-in too: Settings (where the
+          update normally lives) isn't reachable until then, and an update may
+          be exactly what fixes signing in. Filled in by UpdateUpdateButton().
+        -->
+        <InfoBar
+            x:Name="AuthUpdateBar"
+            Grid.Row="1"
+            MaxWidth="560"
+            Margin="16,0,16,24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Severity="Informational"
+            IsOpen="False"
+            CloseButtonClick="OnAuthUpdateBarClosed">
+            <InfoBar.ActionButton>
+                <Button x:Name="AuthUpdateButton" Content="Update" Click="OnAuthUpdateClick" />
+            </InfoBar.ActionButton>
+        </InfoBar>
+
+        <!--
           components/search-bar.tsx as a floating panel over the page, opened
           by the rail's Search and Ctrl+F: type-ahead from GET
           /search/suggest, Enter opens the results page, Escape or a click

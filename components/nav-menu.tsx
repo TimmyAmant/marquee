@@ -119,6 +119,7 @@ export function NavMenu({
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   // Any navigation closes the menu, however it happened (a link in the
   // menu, a search result, back/forward). Same render-time reset as
@@ -200,6 +201,7 @@ export function NavMenu({
                 return (
                   <button
                     key={item.href}
+                    ref={searchButtonRef}
                     type="button"
                     onClick={() => setSearchOpen(true)}
                     aria-label="Search"
@@ -239,7 +241,15 @@ export function NavMenu({
         ))}
       </nav>
 
-      {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}
+      {searchOpen && (
+        <SearchDialog
+          onNavigate={() => setSearchOpen(false)}
+          onDismiss={() => {
+            setSearchOpen(false);
+            searchButtonRef.current?.focus();
+          }}
+        />
+      )}
 
       {/* Narrow screens only: dims the page behind the drawer. */}
       <div
@@ -313,23 +323,47 @@ export function NavMenu({
 /**
  * components/search-bar.tsx as a floating panel over the page, from the
  * rail's Search: type-ahead suggestions, Enter for the results page, Escape
- * or a click outside to close. Navigating closes it too (NavMenu resets it
- * on every route change).
+ * (once the suggestions are closed) or a click outside to dismiss, which
+ * hands focus back to the rail's Search. Tab stays inside it. Navigating
+ * closes it too (NavMenu resets it on every route change).
  */
-function SearchDialog({ onClose }: { onClose: () => void }) {
+function SearchDialog({ onNavigate, onDismiss }: { onNavigate: () => void; onDismiss: () => void }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onDismiss();
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>("input, button, [href], [tabindex]:not([tabindex='-1'])"),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !panelRef.current.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onDismiss]);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Search" className="fixed inset-0 z-50 hidden md:block">
-      <div aria-hidden onClick={onClose} className="absolute inset-0 bg-black/30" />
-      <div className="nav-glass relative mx-auto mt-[90px] w-[560px] max-w-[calc(100vw-120px)] rounded-[20px] p-2.5 shadow-[0_24px_60px_rgb(0_0_0/0.35)]">
-        <SearchBar autoFocus onNavigate={onClose} />
+      <div aria-hidden onClick={onDismiss} className="absolute inset-0 bg-black/30" />
+      <div
+        ref={panelRef}
+        className="nav-glass relative mx-auto mt-[90px] w-[560px] max-w-[calc(100vw-120px)] rounded-[20px] p-2.5 shadow-[0_24px_60px_rgb(0_0_0/0.35)]"
+      >
+        <SearchBar autoFocus onNavigate={onNavigate} />
       </div>
     </div>
   );

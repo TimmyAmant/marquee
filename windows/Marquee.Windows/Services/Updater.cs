@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Marquee.Core;
 using Marquee.Core.Updates;
@@ -56,12 +57,12 @@ public sealed partial class Updater : ObservableObject
     private CancellationTokenSource? installCancellation;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsInstalling), nameof(StatusText), nameof(CanCheck), nameof(CanInstall), nameof(IsProgressIndeterminate), nameof(HasFailed))]
+    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsInstalling), nameof(StatusText), nameof(CanCheck), nameof(CanInstall), nameof(IsProgressIndeterminate), nameof(HasFailed), nameof(ShowsManualDownload))]
     private UpdatePhase phase = UpdatePhase.Idle;
 
     /// <summary>The newest release, while it's newer than this app.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowsUpdate), nameof(StatusText), nameof(UpdateLabel), nameof(CanCheck), nameof(CanInstall), nameof(ReleasePage))]
+    [NotifyPropertyChangedFor(nameof(ShowsUpdate), nameof(StatusText), nameof(UpdateLabel), nameof(CanCheck), nameof(CanInstall), nameof(ReleasePage), nameof(ShowsManualDownload))]
     private AvailableUpdate? update;
 
     /// <summary>0 to 1 while downloading.</summary>
@@ -94,7 +95,18 @@ public sealed partial class Updater : ObservableObject
     public bool CanCheck => Update == null && !IsBusy;
 
     /// <summary>"Update": a newer release is known and isn't already downloading.</summary>
-    public bool CanInstall => Update != null && !IsInstalling;
+    public bool CanInstall => Update != null && !IsBusy && IsInstalledCopy;
+
+    /// <summary>
+    /// Whether this is the copy the installer installed (its uninstall entry
+    /// points at this folder). Otherwise the installer would update that copy,
+    /// not this one, which would then offer the same update every day; a dev
+    /// build or a copied folder gets "Download manually" instead.
+    /// </summary>
+    public bool IsInstalledCopy { get; } = DetectInstalledCopy();
+
+    /// <summary>"Download manually": after a failure, or when this copy can't update itself.</summary>
+    public bool ShowsManualDownload => HasFailed || (Update != null && !IsInstalledCopy);
 
     public bool HasFailed => Phase == UpdatePhase.Failed;
 
@@ -112,6 +124,8 @@ public sealed partial class Updater : ObservableObject
     {
         UpdatePhase.Checking => "Checking for updates…",
         UpdatePhase.UpToDate => "You're up to date.",
+        UpdatePhase.Available when Update is { } available && !IsInstalledCopy =>
+            $"Marquee {available.Version} is available. This copy of Marquee isn't the installed one, so download the new version from GitHub.",
         UpdatePhase.Available when Update is { } available => $"Marquee {available.Version} is available. You have {CurrentVersion}.",
         UpdatePhase.Downloading => $"Downloading Marquee {Update?.Version}… {(int)Math.Round(Progress * 100)}%",
         UpdatePhase.Installing => "Installing. Marquee will close and reopen by itself.",
@@ -134,14 +148,65 @@ public sealed partial class Updater : ObservableObject
         timer.Interval = FirstCheckDelay;
         timer.Tick += OnTimerTick;
         timer.Start();
+        // Nothing is downloading yet, so installers left by earlier updates go.
+        _ = Task.Run(DeleteOldInstallers);
     }
 
-    private void OnTimerTick(DispatcherQueueTimer sender, object args)
+    private async void OnTimerTick(DispatcherQueueTimer sender, object args)
     {
         sender.Stop();
-        sender.Interval = CheckInterval;
+        await CheckAsync();
+        // A release caught in the few minutes before CI attaches its
+        // downloads: look again soon rather than tomorrow.
+        sender.Interval = Phase == UpdatePhase.Failed && lastCheckKind == UpdateErrorKind.NoDownload
+            ? NoDownloadRetry
+            : CheckInterval;
         sender.Start();
-        _ = CheckAsync();
+    }
+
+    /// <summary>After a check found a newer release with no Windows download yet.</summary>
+    public static readonly TimeSpan NoDownloadRetry = TimeSpan.FromMinutes(15);
+
+    private UpdateErrorKind? lastCheckKind;
+
+    private static string DownloadFolder => Path.Combine(Path.GetTempPath(), "Marquee-update");
+
+    private static void DeleteOldInstallers()
+    {
+        try
+        {
+            if (Directory.Exists(DownloadFolder))
+            {
+                Directory.Delete(DownloadFolder, recursive: true);
+            }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            // In use or locked; the next launch tries again.
+        }
+    }
+
+    /// <summary>
+    /// The per-user uninstall entry Inno Setup writes (Marquee.iss's AppId
+    /// plus "_is1"), compared with the folder this .exe runs from.
+    /// </summary>
+    private static bool DetectInstalledCopy()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{879059C2-E41A-4B11-9541-A33DABB34E0A}_is1");
+            if (key?.GetValue("InstallLocation") is not string location || location.Length == 0)
+            {
+                return false;
+            }
+            static string Normalize(string path) => Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return string.Equals(Normalize(location), Normalize(AppContext.BaseDirectory), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception error) when (error is System.Security.SecurityException or UnauthorizedAccessException or IOException or ArgumentException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Asks GitHub for the newest release. Does nothing while a check or install is under way.</summary>
@@ -153,14 +218,25 @@ public sealed partial class Updater : ObservableObject
         }
         Phase = UpdatePhase.Checking;
         ErrorMessage = null;
+        lastCheckKind = null;
         try
         {
             var result = await service.CheckAsync(AppVersion.Current);
+            // An install started while this was out; its phase wins.
+            if (Phase != UpdatePhase.Checking)
+            {
+                return;
+            }
             Update = result.Update;
             Phase = result.IsUpToDate ? UpdatePhase.UpToDate : UpdatePhase.Available;
         }
         catch (UpdateException error)
         {
+            lastCheckKind = error.Kind;
+            if (Phase != UpdatePhase.Checking)
+            {
+                return;
+            }
             // A known update stays on offer when a later check fails.
             if (Update != null)
             {
@@ -180,7 +256,7 @@ public sealed partial class Updater : ObservableObject
     /// </summary>
     public async Task InstallAsync()
     {
-        if (IsInstalling)
+        if (IsBusy || !IsInstalledCopy)
         {
             return;
         }
@@ -201,8 +277,7 @@ public sealed partial class Updater : ObservableObject
         try
         {
             var expected = await service.ExpectedSha256Async(available, token);
-            var folder = Path.Combine(Path.GetTempPath(), "Marquee-update");
-            var installer = Path.Combine(folder, $"Marquee-Setup-{available.Version}.exe");
+            var installer = Path.Combine(DownloadFolder, $"Marquee-Setup-{available.Version}.exe");
             var reporter = new global::System.Progress<double>(value => Progress = value);
             await service.DownloadAsync(available, expected, installer, reporter, token);
 

@@ -2,7 +2,7 @@ import { randomUUID, randomBytes } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { integrationCredentials, users } from "@/lib/db/schema";
-import type { ArrProvider } from "@/lib/db/schema";
+import type { ArrProvider, IntegrationProvider } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
 
 export type ArrCredential = {
@@ -108,6 +108,31 @@ export async function updateArrDefaults(
     .where(
       and(eq(integrationCredentials.userId, userId), eq(integrationCredentials.provider, provider)),
     );
+}
+
+/** Whether the user still has this integration saved — cheap enough for a
+ * long sync to re-check as it goes, so a disconnect partway through stops
+ * it instead of letting it write the just-deleted data back. */
+export async function hasIntegrationCredential(userId: string, provider: IntegrationProvider): Promise<boolean> {
+  const [row] = await db
+    .select({ id: integrationCredentials.id })
+    .from(integrationCredentials)
+    .where(and(eq(integrationCredentials.userId, userId), eq(integrationCredentials.provider, provider)))
+    .limit(1);
+  return Boolean(row);
+}
+
+/** Thrown by a sync that found its integration disconnected mid-run. */
+export class IntegrationDisconnectedError extends Error {
+  constructor(provider: IntegrationProvider) {
+    super(`${provider} was disconnected during the sync`);
+    this.name = "IntegrationDisconnectedError";
+  }
+}
+
+/** Throws IntegrationDisconnectedError if the integration is gone. */
+export async function assertStillConnected(userId: string, provider: IntegrationProvider): Promise<void> {
+  if (!(await hasIntegrationCredential(userId, provider))) throw new IntegrationDisconnectedError(provider);
 }
 
 export type PlexCredential = {

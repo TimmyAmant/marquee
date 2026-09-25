@@ -71,13 +71,24 @@ export async function importTraktList(
 
     const title = cachedTitle?.name ?? entity.title;
 
-    await db.insert(requests).values({
-      requestedByUserId: adminUserId,
-      mediaType,
-      tmdbId,
-      title,
-      posterPath: cachedTitle?.posterPath ?? null,
-    });
+    // The same title twice in one list, or a request made while the import
+    // runs, trips the one-active-request-per-user unique index. That's a
+    // skip, not a reason to abort the rest of the import.
+    const inserted = await db
+      .insert(requests)
+      .values({
+        requestedByUserId: adminUserId,
+        mediaType,
+        tmdbId,
+        title,
+        posterPath: cachedTitle?.posterPath ?? null,
+      })
+      .onConflictDoNothing()
+      .returning({ id: requests.id });
+    if (inserted.length === 0) {
+      skippedCount++;
+      continue;
+    }
 
     await logActivityEvent({
       actorUserId: adminUserId,

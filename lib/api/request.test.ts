@@ -1,6 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { ApiError } from "./errors";
-import { parseIdSegment, parseMediaType, parseUuidSegment, queryBool, queryInt, readJsonBody } from "./request";
+import {
+  MAX_JSON_BODY_BYTES,
+  parseIdSegment,
+  parseMediaType,
+  parseUuidSegment,
+  queryBool,
+  queryInt,
+  readJsonBody,
+} from "./request";
 
 function codeOf(fn: () => unknown): string | null {
   try {
@@ -63,5 +71,44 @@ describe("readJsonBody", () => {
   it("rejects invalid JSON and non-objects with 400 invalid", async () => {
     await expect(readJsonBody(req("{nope"))).rejects.toMatchObject({ code: "invalid", status: 400 });
     await expect(readJsonBody(req("[1,2]"))).rejects.toMatchObject({ code: "invalid" });
+  });
+});
+
+describe("readJsonBody size limit", () => {
+  const streamOf = (bytes: number) =>
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        // Several chunks, so the cap has to trip mid-stream.
+        for (let sent = 0; sent < bytes; sent += 16 * 1024) {
+          controller.enqueue(new Uint8Array(Math.min(16 * 1024, bytes - sent)).fill(0x20));
+        }
+        controller.close();
+      },
+    });
+  const streamed = (bytes: number) =>
+    new Request("http://localhost/api/v1/x", {
+      method: "POST",
+      body: streamOf(bytes),
+      duplex: "half",
+    } as RequestInit);
+
+  it("refuses a declared Content-Length over the limit with 413 before reading", async () => {
+    const request = new Request("http://localhost/api/v1/x", {
+      method: "POST",
+      body: "{}",
+      headers: { "content-length": String(MAX_JSON_BODY_BYTES + 1) },
+    });
+    await expect(readJsonBody(request)).rejects.toMatchObject({ code: "invalid", status: 413 });
+  });
+
+  it("cuts off an undeclared body once it crosses the limit", async () => {
+    await expect(readJsonBody(streamed(MAX_JSON_BODY_BYTES + 1))).rejects.toMatchObject({
+      code: "invalid",
+      status: 413,
+    });
+  });
+
+  it("still reads a body right at the limit", async () => {
+    await expect(readJsonBody(streamed(MAX_JSON_BODY_BYTES))).resolves.toEqual({});
   });
 });

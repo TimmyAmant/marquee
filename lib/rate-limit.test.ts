@@ -1,5 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { getClientIp, isRateLimited, recordFailedAttempt, refundAttempt } from "./rate-limit";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  attemptCount,
+  getClientIp,
+  isRateLimited,
+  recordFailedAttempt,
+  refundAttempt,
+  reserveSlot,
+} from "./rate-limit";
 
 const req = (headers: Record<string, string>) => new Request("http://marquee.local/", { headers });
 
@@ -24,17 +31,69 @@ describe("recordFailedAttempt / refundAttempt", () => {
   });
 });
 
-describe("getClientIp", () => {
-  it("uses the hop the nearest proxy appended, not the client-supplied first one", () => {
-    expect(getClientIp(req({ "x-forwarded-for": "1.2.3.4, 203.0.113.9" }))).toBe("203.0.113.9");
+describe("reserveSlot / attemptCount", () => {
+  it("lets an idle key straight through and queues the next one behind it", () => {
+    const key = `test:slot:${Math.random()}`;
+    expect(reserveSlot(key, 1000)).toBe(0);
+    const wait = reserveSlot(key, 1000);
+    expect(wait).toBeGreaterThan(900);
+    expect(wait).toBeLessThanOrEqual(1000);
+    expect(reserveSlot(key, 1000)).toBeGreaterThan(1900);
   });
 
-  it("handles a single hop", () => {
+  it("doesn't queue anything while the spacing is zero", () => {
+    const key = `test:slot-zero:${Math.random()}`;
+    expect(reserveSlot(key, 0)).toBe(0);
+    expect(reserveSlot(key, 0)).toBe(0);
+  });
+
+  it("counts the attempts in the current window", () => {
+    const key = `test:count:${Math.random()}`;
+    expect(attemptCount(key)).toBe(0);
+    recordFailedAttempt(key, 60_000);
+    recordFailedAttempt(key, 60_000);
+    expect(attemptCount(key)).toBe(2);
+  });
+});
+
+describe("getClientIp", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("trusts nothing by default, whatever the client sends", () => {
+    expect(getClientIp(req({ "x-forwarded-for": "203.0.113.9" }))).toBeNull();
+    expect(getClientIp(req({ "x-real-ip": "10.0.0.2" }))).toBeNull();
+    expect(getClientIp(req({}))).toBeNull();
+  });
+
+  it("ignores a TRUSTED_PROXY_HOPS that isn't a positive integer", () => {
+    for (const value of ["", "abc", "-1", "1.5"]) {
+      vi.stubEnv("TRUSTED_PROXY_HOPS", value);
+      expect(getClientIp(req({ "x-forwarded-for": "203.0.113.9" }))).toBeNull();
+    }
+  });
+
+  it("with one proxy, uses the entry it appended, not the client-supplied ones before it", () => {
+    vi.stubEnv("TRUSTED_PROXY_HOPS", "1");
+    expect(getClientIp(req({ "x-forwarded-for": "1.2.3.4, 203.0.113.9" }))).toBe("203.0.113.9");
     expect(getClientIp(req({ "x-forwarded-for": "203.0.113.9" }))).toBe("203.0.113.9");
   });
 
-  it("falls back to X-Real-IP, then unknown", () => {
-    expect(getClientIp(req({ "x-real-ip": "10.0.0.2" }))).toBe("10.0.0.2");
-    expect(getClientIp(req({}))).toBe("unknown");
+  it("with two proxies, skips the inner proxy's own entry", () => {
+    vi.stubEnv("TRUSTED_PROXY_HOPS", "2");
+    expect(getClientIp(req({ "x-forwarded-for": "1.2.3.4, 203.0.113.9, 172.17.0.5" }))).toBe("203.0.113.9");
+  });
+
+  it("gives up on a header shorter than the configured chain, and never reads X-Real-IP", () => {
+    vi.stubEnv("TRUSTED_PROXY_HOPS", "2");
+    expect(getClientIp(req({ "x-forwarded-for": "203.0.113.9" }))).toBeNull();
+    vi.stubEnv("TRUSTED_PROXY_HOPS", "1");
+    expect(getClientIp(req({ "x-real-ip": "10.0.0.2" }))).toBeNull();
+  });
+
+  it("accepts a plain Headers object too (server actions)", () => {
+    vi.stubEnv("TRUSTED_PROXY_HOPS", "1");
+    expect(getClientIp(new Headers({ "x-forwarded-for": "203.0.113.9" }))).toBe("203.0.113.9");
   });
 });

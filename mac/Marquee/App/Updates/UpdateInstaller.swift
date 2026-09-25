@@ -92,15 +92,18 @@ enum UpdateInstaller {
     }
 
     /// When the running copy can't be replaced: the checked download goes to
-    /// Downloads for the person to drag to Applications themselves, named
-    /// for its version ("Marquee 0.31.0.app") so several downloads there
-    /// can be told apart.
+    /// Downloads for the person to drag to Applications themselves. It's
+    /// `Marquee.app` (so dragging it replaces the old copy rather than
+    /// sitting beside it) inside a folder named for its version ("Marquee
+    /// 0.31.0"), so several downloads there can be told apart.
     nonisolated static func keepForManualInstall(_ app: URL, version: AppVersion) -> URL? {
         let fileManager = FileManager.default
         guard let downloads = fileManager.urls(for: .downloadsDirectory, in: .userDomainMask).first else { return nil }
-        let destination = downloads.appendingPathComponent(manualInstallName(for: version))
-        try? fileManager.removeItem(at: destination)
+        let folder = downloads.appendingPathComponent(manualInstallFolderName(for: version), isDirectory: true)
+        let destination = folder.appendingPathComponent(appName)
+        try? fileManager.removeItem(at: folder)
         do {
+            try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
             try fileManager.moveItem(at: app, to: destination)
             return destination
         } catch {
@@ -108,9 +111,9 @@ enum UpdateInstaller {
         }
     }
 
-    /// "Marquee 0.31.0.app".
-    nonisolated static func manualInstallName(for version: AppVersion) -> String {
-        "Marquee \(version).app"
+    /// "Marquee 0.31.0".
+    nonisolated static func manualInstallFolderName(for version: AppVersion) -> String {
+        "Marquee \(version)"
     }
 
     // MARK: The swap
@@ -145,6 +148,11 @@ enum UpdateInstaller {
         done
 
         old="$current.old"
+        # A previous run that couldn't put the old copy back left it here:
+        # that's the only good copy, so restore it rather than delete it.
+        if [ ! -e "$current" ] && [ -e "$old" ]; then
+          mv "$old" "$current" || { echo "Marquee is only at $old; move it back to $current." >&2; exit 1; }
+        fi
         rm -rf "$old"
         if ! mv "$current" "$old"; then
           echo "Couldn't move $current aside; nothing was changed." >&2
@@ -154,7 +162,10 @@ enum UpdateInstaller {
         if ! mv "$new" "$current"; then
           echo "Couldn't move the new app into place; putting the old one back." >&2
           rm -rf "$current"
-          mv "$old" "$current"
+          if ! mv "$old" "$current"; then
+            echo "Couldn't put the old app back either: Marquee is at $old. Move it to $current." >&2
+            exit 1
+          fi
           "$open_app" "$current"
           exit 1
         fi

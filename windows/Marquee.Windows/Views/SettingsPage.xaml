@@ -299,7 +299,7 @@
                             <Button
                                 Content="Download manually"
                                 Click="OnReleaseNotesClick"
-                                Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                Visibility="{x:Bind Updater.ShowsManualDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </StackPanel>
                     <ProgressRing

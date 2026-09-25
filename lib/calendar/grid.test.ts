@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeCalendarGrid, monthParam, toDateKey } from "./grid";
+import { computeCalendarGrid, episodeDateKey, monthParam, toDateKey } from "./grid";
 
 // All dates here are constructed in local time, like the page, so the tests
 // hold in any server time zone.
@@ -34,5 +34,23 @@ describe("computeCalendarGrid", () => {
   it("falls back to the current month for an unparseable query", () => {
     const grid = computeCalendarGrid("next-month", now);
     expect(monthParam(grid.year, grid.monthIndex)).toBe("2026-09");
+  });
+});
+
+describe("episodeDateKey", () => {
+  it("prefers Sonarr's local airDate over the UTC instant", () => {
+    // A 9pm Eastern broadcast is already the next day in UTC.
+    expect(episodeDateKey({ airDate: "2026-09-17", airDateUtc: "2026-09-18T01:00:00Z" })).toBe("2026-09-17");
+  });
+
+  it("falls back to the server-local day of airDateUtc, matching the grid", () => {
+    const instant = new Date(2026, 8, 17, 21, 0); // 9pm local
+    expect(episodeDateKey({ airDateUtc: instant.toISOString() })).toBe("2026-09-17");
+    expect(episodeDateKey({ airDateUtc: instant.toISOString() })).toBe(toDateKey(instant));
+  });
+
+  it("returns null with no usable date", () => {
+    expect(episodeDateKey({})).toBeNull();
+    expect(episodeDateKey({ airDateUtc: "not a date" })).toBeNull();
   });
 });

@@ -11,6 +11,22 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.31.1",
+    date: "2026-09-25",
+    changes: [
+      "Fixed: the calendar put evening TV episodes on the next day (it used the UTC date). They're on the day they air where the server is.",
+      "Fixed: a season pack arriving from Sonarr could send the same \"ready to watch\" or \"finished downloading\" notification several times, to the app and to Discord, ntfy and push. Each now goes out once.",
+      "Fixed: a request the admin declined could flip back to approved if two pages were loading at the same moment.",
+      "Fixed: disconnecting Plex, Jellyfin, Sonarr or Radarr while a sync was running could bring the library back, and titles stayed \"In library\" forever.",
+      "Faster: Discover and the library no longer load every title's full TMDb record, and Settings › Integrations no longer waits for a whole library sync before it opens. Big libraries get longer to answer a full sync instead of timing out every hour.",
+      "Security: logins can't be used to lock the admin out any more (failed attempts slow down instead of blocking the right password), don't reveal which usernames exist, and refuse oversized requests. Sonarr/Radarr webhooks can't be silenced by someone spamming bad attempts. The server now runs as an unprivileged user inside the container, and its database requires a password. If Marquee sits behind a reverse proxy, set TRUSTED_PROXY_HOPS (see the README) so rate limits see real addresses.",
+      "Mac and Windows apps: an update caught in the few minutes before its downloads are attached is checked again in 15 minutes instead of the next day. On Windows, an update is offered on the sign-in screen too, and a check finishing mid-download no longer interrupts it.",
+      "Mac: Settings opened from a page (\"Connect Radarr…\" on a title) has a Back button to that page; the page behind the search pop-up no longer takes keyboard focus; a notification from the previous account is cleared on sign-out.",
+      "Windows: only one copy of the app runs at a time (a second launch brings the open one forward), the bell no longer shows the previous account's notifications, and a few rare crashes (copying a file path while another app holds the clipboard, two dialogs at once) are fixed.",
+      "Website: the notification bell polls once instead of twice, Escape closes the search suggestions before the search box, and old Mac download links work again.",
+    ],
+  },
+  {
     version: "0.31.0",
     date: "2026-09-25",
     changes: [

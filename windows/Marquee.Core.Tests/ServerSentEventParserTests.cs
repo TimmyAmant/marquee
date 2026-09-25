@@ -158,3 +158,41 @@ public sealed class ServerSentEventParserTests
         Assert.Empty(parser.FeedText("event: notification\ndata: {}\n"));
     }
 }
+
+public sealed class BoundedStreamTests
+{
+    private static StreamReader Reader(string text) => new(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)));
+
+    [Fact]
+    public async Task SplitsOnEveryLineEnding()
+    {
+        var lines = new BoundedLineReader(Reader("a\r\nb\nc\rd"), 100);
+        var read = new List<string?>();
+        for (var index = 0; index < 5; index++)
+        {
+            read.Add(await lines.ReadLineAsync(CancellationToken.None));
+        }
+        Assert.Equal(new string?[] { "a", "b", "c", "d", null }, read);
+    }
+
+    [Fact]
+    public async Task RefusesALineThatNeverEnds()
+    {
+        var lines = new BoundedLineReader(Reader(new string('x', 500)), 100);
+        await Assert.ThrowsAsync<InvalidDataException>(() => lines.ReadLineAsync(CancellationToken.None).AsTask());
+    }
+
+    [Fact]
+    public void RefusesAnEventThatNeverEnds()
+    {
+        var parser = new ServerSentEventParser();
+        var chunk = "data: " + new string('x', 1000);
+        Assert.Throws<InvalidDataException>(() =>
+        {
+            for (var index = 0; index < 100; index++)
+            {
+                parser.Feed(chunk);
+            }
+        });
+    }
+}

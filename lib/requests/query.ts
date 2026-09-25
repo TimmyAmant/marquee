@@ -4,6 +4,11 @@ import { requests, users, titles } from "@/lib/db/schema";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import { createNotification } from "@/lib/notifications/query";
+import { mapWithLimit } from "@/lib/async/map-limit";
+
+// Each row's library status can be a live Sonarr/Radarr lookup — a long
+// queue shouldn't fire them all at the admin's home server at once.
+const STATUS_LOOKUP_CONCURRENCY = 6;
 
 /**
  * Pending requests for the admin to review, with a reconciliation pass first:
@@ -37,11 +42,9 @@ export async function getPendingRequests(viewerUserId: string) {
 
   if (rows.length === 0) return [];
 
-  const statuses = await Promise.all(
-    rows.map((r) =>
-      getTitleLibraryStatus(viewerUserId, r.mediaType, r.tmdbId, r.tvdbId).catch(
-        () => ({ status: "untracked" as const, provider: null, configured: false, file: null }),
-      ),
+  const statuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) =>
+    getTitleLibraryStatus(viewerUserId, r.mediaType, r.tmdbId, r.tvdbId).catch(
+      () => ({ status: "untracked" as const, provider: null, configured: false, file: null }),
     ),
   );
 
@@ -50,18 +53,20 @@ export async function getPendingRequests(viewerUserId: string) {
     .map((r) => r.id);
 
   if (alreadyOwnedIds.length > 0) {
-    await db
+    // Only flip requests that are still pending: the admin may have rejected
+    // (or approved) one while the lookups above were running, and this must
+    // neither overwrite that decision nor notify the requester twice. Only
+    // the rows this update actually changed get a notification.
+    const reconciled = await db
       .update(requests)
       .set({ status: "approved", reviewedAt: new Date() })
-      .where(inArray(requests.id, alreadyOwnedIds));
+      .where(and(inArray(requests.id, alreadyOwnedIds), eq(requests.status, "pending")))
+      .returning({ id: requests.id });
+    const reconciledIds = new Set(reconciled.map((r) => r.id));
 
-    const reconciledIndexes = rows.reduce<number[]>((acc, r, i) => {
-      if (alreadyOwnedIds.includes(r.id)) acc.push(i);
-      return acc;
-    }, []);
     await Promise.all(
-      reconciledIndexes.map((i) => {
-        const r = rows[i];
+      rows.flatMap((r, i) => {
+        if (!reconciledIds.has(r.id)) return [];
         const message =
           statuses[i].status === "coming_soon"
             ? `"${r.title}" is already being tracked — it's not released yet.`
@@ -132,14 +137,12 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
     .where(eq(requests.requestedByUserId, userId))
     .orderBy(desc(requests.createdAt));
 
-  const libraryStatuses = await Promise.all(
-    rows.map((r) =>
-      r.status === "approved"
-        ? getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
-            .then((s) => s.status)
-            .catch(() => null)
-        : Promise.resolve(null),
-    ),
+  const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) =>
+    r.status === "approved"
+      ? getTitleLibraryStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
+          .then((s) => s.status)
+          .catch(() => null)
+      : Promise.resolve(null),
   );
 
   return rows.map((r, i) => ({ ...r, libraryStatus: libraryStatuses[i] }));

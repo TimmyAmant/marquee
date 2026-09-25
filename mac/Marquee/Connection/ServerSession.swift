@@ -431,7 +431,8 @@ final class ServerSession {
         let response = try await postAuth(
             "/auth/login",
             body: LoginRequest(username: username, password: password, deviceName: deviceName),
-            to: server
+            to: server,
+            retries: true
         )
         return try adopt(response, from: server)
     }
@@ -447,7 +448,10 @@ final class ServerSession {
                 displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines),
                 deviceName: deviceName
             ),
-            to: server
+            to: server,
+            // Never sent twice: a first attempt that did reach the server
+            // would make the second fail as "already set up".
+            retries: false
         )
         let user = try adopt(response, from: server)
         if let info = serverInfo {
@@ -463,20 +467,32 @@ final class ServerSession {
     /// the server right there. On a transport failure the server is checked
     /// again and, if it's there, the request goes once more; if it isn't,
     /// the error says what the check found.
-    private func postAuth(_ path: String, body: some Encodable, to server: ServerAddress) async throws -> AuthTokenResponse {
+    ///
+    /// Only failures where the request can't have been handled are retried:
+    /// after a timeout the server may already have signed you in (a second
+    /// token, a second strike against the login rate limit), so that one is
+    /// reported, not resent.
+    private func postAuth(_ path: String, body: some Encodable, to server: ServerAddress, retries: Bool) async throws -> AuthTokenResponse {
         let client = APIClient(baseURL: server.baseURL, session: urlSession)
         do {
             return try await client.post(path, body: body, as: AuthTokenResponse.self)
         } catch let error as APIError {
-            guard case .network = error, !error.isCancellation else { throw error }
-            Self.logger.info("\(path, privacy: .public) failed to connect (\(error.localizedDescription, privacy: .public)); checking the server and retrying")
+            guard case let .network(urlError) = error, Self.neverReachedServer.contains(urlError.code) else { throw error }
+            Self.logger.info("\(path, privacy: .public) failed to connect (\(error.localizedDescription, privacy: .public)); checking the server")
             let outcome = await refreshInfo()
             if let problem = outcome.problemMessage(for: server) {
                 throw SignInConnectionError(message: problem)
             }
+            guard retries else { throw error }
             return try await client.post(path, body: body, as: AuthTokenResponse.self)
         }
     }
+
+    /// Transport failures that mean the request never got to the server: a
+    /// dead pooled connection, nothing listening, no route.
+    private static let neverReachedServer: Set<URLError.Code> = [
+        .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .notConnectedToInternet, .dnsLookupFailed,
+    ]
 
     /// Signs out locally right away, then revokes the token on the server
     /// best-effort; an unreachable server can't keep the Mac signed in.
