@@ -17,6 +17,11 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Declining a request now asks why: pick a reason from a short list (already on a streaming service you have, not released yet, no space right now, and so on) or write your own. The member sees the reason under Declined on their Requests page and in the notification.",
       "API: POST /requests/{id}/reject takes an optional reason, GET /requests/pending lists the preset reasons, and /requests/mine and /requests/history include rejectionReason.",
       "Marquee for Mac: declining a request offers the same list of reasons, and a declined request shows why.",
+      "Hardening from a security review: the sign-in gate no longer lets look-alike paths through (a page's server actions were reachable without signing in), the login limit can't be beaten with a burst of parallel guesses, the admin password reset script now signs browsers out too, Plex sync ignores servers other accounts shared with you, and a Discord relay can no longer @everyone.",
+      "A title requested from the website is recorded under its real TMDb name and poster, not whatever the browser sent.",
+      "The Docker container now starts with a Postgres password containing /, quotes or $, and an upgrade no longer fails when two identical pending requests were left over from a double click.",
+      "A movie and a TV show that happen to share a TMDb id no longer show each other's Plex or Jellyfin file details.",
+      "Updated Next.js and the sign-in library to versions with the latest security fixes.",
     ],
   },
   {

@@ -21,7 +21,7 @@ export async function createRequest(
   viewer: Extract<ViewerIdentity, { userId: string }>,
   input: { mediaType: MediaType; tmdbId: number; title: string; posterPath: string | null },
 ): Promise<CoreResult<{ requestId: string }>> {
-  const { mediaType, tmdbId, title, posterPath } = input;
+  const { mediaType, tmdbId } = input;
 
   const existing = await getActiveRequestStatus(viewer.userId, mediaType, tmdbId);
   if (existing) return fail("conflict", "You've already requested this.");
@@ -30,6 +30,19 @@ export async function createRequest(
   // shows as owned, but re-check server-side since that status can change
   // between page load and submit (e.g. someone else just added it).
   const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+
+  // The name and poster the admin's queue (and every notification relay)
+  // shows come from the server's own TMDb record when it has one. The web
+  // button binds them in the browser, so on their own they'd let a member
+  // dress up one title as another; the client's values only stand in when
+  // TMDb can't be reached, and then trimmed to something a row can hold.
+  const fallbackTitle = typeof input.title === "string" ? input.title.trim().slice(0, 200) : "";
+  const title = cachedTitle?.name ?? (fallbackTitle || "Untitled");
+  const posterPath = cachedTitle
+    ? cachedTitle.posterPath
+    : typeof input.posterPath === "string" && /^(\/|https:\/\/)/.test(input.posterPath)
+      ? input.posterPath.slice(0, 500)
+      : null;
   const currentStatus = await getTitleLibraryStatus(
     viewer.libraryOwnerId,
     mediaType,
