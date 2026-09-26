@@ -649,7 +649,9 @@ Field notes:
 - `library.status`/`provider`: where ownership came from (`plex`, `jellyfin`,
   `sonarr`, `radarr`, or null). `configured`: the library owner's
   Radarr (movies) / Sonarr (TV) has a root folder and quality profile.
-- `library.file` ("File details" card) is non-null only for `owned` titles.
+- `library.file` ("File details" card) is non-null for `owned` titles, and
+  for a show Sonarr has some episodes of (`tracked_downloading`: its folder,
+  size on disk so far and quality profile).
   Website rows, in order, each skipped when its value is null: Location (with
   Copy), Size, Runtime (`facts.runtimeLabel`), Added, Resolution
   (`resolutionTier ?? resolution`), Quality profile, Video (`videoCodec`),

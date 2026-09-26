@@ -13,8 +13,9 @@ export type FileInfo = {
    * common (derived at sync time from per-episode paths, since Plex only
    * reports Media/Part on individual episodes, not the show itself) —
    * falls back to Sonarr's series path if that derivation ever comes back
-   * null. Always present when `file` itself is non-null (only ever set for
-   * fully "owned" items, never for downloading/missing/monitored). */
+   * null. Always present when `file` itself is non-null (set for "owned" items,
+   * and for a show Sonarr has some episodes of; never for missing or
+   * monitored ones). */
   path: string | null;
   sizeBytes: number;
   quality?: string;
@@ -116,12 +117,12 @@ async function getArrStatus(
   if (!series) return { status: "untracked", provider: "sonarr", configured, file: null };
 
   const status = deriveSonarrStatus(series);
-  // Only a fully-owned series gets a location shown — a partially-downloaded
-  // one (status "tracked_downloading") already has some episode files and
-  // thus a nonzero sizeOnDisk, but showing a path/size for something still
-  // incomplete would read as "this is done" when it isn't.
+  // A show with some episodes on disk ("tracked_downloading") gets its
+  // folder and size too: the badge beside it already says it's still
+  // coming, and where the episodes that are here live is exactly what the
+  // card is for.
   const file: FileInfo | null =
-    status === "owned" && series.statistics?.sizeOnDisk
+    (status === "owned" || status === "tracked_downloading") && series.statistics?.sizeOnDisk
       ? { path: series.path ?? null, sizeBytes: series.statistics.sizeOnDisk }
       : null;
 
@@ -263,7 +264,12 @@ export async function getTitleLibraryStatus(
     };
   }
 
-  return getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup);
+  const arrStatus = await getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup);
+  // Sonarr's quality profile, already fetched above, for a show only Sonarr has.
+  if (mediaType === "tv" && arrStatus.file && sonarrExtra?.quality && !arrStatus.file.quality) {
+    return { ...arrStatus, file: { ...arrStatus.file, quality: sonarrExtra.quality } };
+  }
+  return arrStatus;
 }
 
 export type SeasonCompleteness = { seasonNumber: number; have: number; total: number };
