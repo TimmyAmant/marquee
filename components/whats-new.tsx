@@ -84,20 +84,28 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
 
   if (!shown) return null;
 
-  function onClose() {
+  // Remembered as soon as it's dismissed, not when the (asynchronous)
+  // close event gets round to it; `close` also covers any other way out.
+  function dismiss() {
     if (key.current && shown) remember(key.current, shown.version);
-    setShown(null);
+    dialogRef.current?.close();
   }
 
   return (
     <dialog
       ref={dialogRef}
       aria-labelledby="whats-new-title"
-      onClose={onClose}
+      onCancel={() => {
+        if (key.current && shown) remember(key.current, shown.version);
+      }}
+      onClose={() => {
+        if (key.current && shown) remember(key.current, shown.version);
+        setShown(null);
+      }}
       // A click on the backdrop lands on the <dialog> itself; the card
       // inside it fills the dialog, so clicks on the card never do.
       onClick={(event) => {
-        if (event.target === event.currentTarget) event.currentTarget.close();
+        if (event.target === event.currentTarget) dismiss();
       }}
       className="mb-0 mt-auto max-h-[85dvh] w-full max-w-none overflow-hidden rounded-t-2xl border border-border bg-bg-1 p-0 text-text-primary backdrop:bg-black/60 open:flex open:flex-col sm:m-auto sm:max-h-[min(40rem,calc(100dvh-2rem))] sm:w-[min(32rem,calc(100vw-2rem))] sm:rounded-2xl"
     >
@@ -128,7 +136,7 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
         <div className="flex flex-col gap-3 border-t border-border px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/changelog"
-            onClick={() => dialogRef.current?.close()}
+            onClick={dismiss}
             className="text-center text-[13px] text-text-secondary underline-offset-4 hover:text-text-primary hover:underline"
           >
             See all changes
@@ -136,7 +144,7 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
           <button
             ref={okRef}
             type="button"
-            onClick={() => dialogRef.current?.close()}
+            onClick={dismiss}
             className="rounded-full bg-accent px-8 py-2.5 text-sm font-semibold text-bg-0 transition-colors hover:bg-accent-hover sm:py-2"
           >
             OK
