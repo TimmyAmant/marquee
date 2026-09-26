@@ -4,9 +4,13 @@ import SwiftUI
 /// notifications) + content. Search opens as a floating panel over the page.
 struct MainWindowView: View {
     @Environment(AppModel.self) private var model
+    /// Settings › Account › Menu position.
+    @AppStorage(NavRailPosition.storageKey) private var railPositionValue = NavRailPosition.left.rawValue
 
     var body: some View {
         @Bindable var model = model
+        let railPosition = NavRailPosition(stored: railPositionValue)
+        let railInsets = railPosition.contentInsets
 
         NavigationStack(path: $model.path) {
             SectionRootView(item: model.selection)
@@ -19,11 +23,12 @@ struct MainWindowView: View {
         // clicks or VoiceOver, so Tab and Escape stay with the panel.
         .disabled(model.isSearchOpen)
         .accessibilityHidden(model.isSearchOpen)
-        // The rail floats over the page's left edge, so pages lay out clear
-        // of it. Their scroll views run under it to the window edge
-        // (`scrollsUnderNavRail()`), as does the title page's backdrop.
-        .safeAreaPadding(.leading, Metrics.contentLeading)
-        .environment(\.navRailInset, Metrics.contentLeading)
+        // The rail floats over the page's left edge (or whichever edge
+        // Settings put it on), so pages lay out clear of it. Their scroll
+        // views run under it to the window edge (`scrollsUnderNavRail()`),
+        // as does the title page's backdrop.
+        .safeAreaPadding(railInsets)
+        .environment(\.navRailInsets, railInsets)
         .background(Theme.bg0)
         .safeAreaInset(edge: .top, spacing: 0) {
             if model.live.isOffline {
@@ -33,6 +38,7 @@ struct MainWindowView: View {
         .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
         .overlay {
             NavMenu()
+                .environment(\.navRailPosition, railPosition)
                 .disabled(model.isSearchOpen)
                 .accessibilityHidden(model.isSearchOpen)
         }
@@ -48,12 +54,17 @@ struct MainWindowView: View {
         .onChange(of: model.path) { model.isSearchOpen = false }
         .overlay(alignment: .bottom) {
             BannerView()
+                // Above a rail along the bottom.
+                .padding(.bottom, railInsets.bottom)
         }
         .overlay(alignment: .bottomTrailing) {
             ZStack {
                 if model.notificationConsent.isAsking {
                     NotificationPromptCard()
                         .padding(16)
+                        // Clear of a rail on the right or along the bottom.
+                        .padding(.trailing, railInsets.trailing)
+                        .padding(.bottom, railInsets.bottom)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }

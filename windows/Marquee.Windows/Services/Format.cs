@@ -15,6 +15,13 @@ public static class Format
     public static string ShortDate(DateTimeOffset moment) =>
         moment.ToLocalTime().ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
 
+    /// <summary>"Sep 17, 2026 4:03 PM": Settings › Activity's timestamps (the Mac's <c>Format.dateTime</c>).</summary>
+    public static string DateAndTime(DateTimeOffset moment)
+    {
+        var local = moment.ToLocalTime();
+        return $"{local.ToString("MMM d, yyyy", CultureInfo.CurrentCulture)} {local.ToString("t", CultureInfo.CurrentCulture)}";
+    }
+
     /// <summary>"September 2, 1964": a person's birthday.</summary>
     public static string LongDate(DateOnly day) => day.ToString("MMMM d, yyyy", CultureInfo.CurrentCulture);
 

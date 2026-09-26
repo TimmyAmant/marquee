@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/genre-card.tsx (the Mac's GenreCard): Discover's genre tiles.
+  The genre's own color, its backdrop over it at 45% (60% on hover), and the
+  name in large heavy serif type with a soft shadow. The Mac draws the name in
+  the system serif (New York) at 34pt heavy; Georgia Bold is the serif every
+  Windows install has. The Viewbox shrinks a long name to fit, as the Mac's
+  minimumScaleFactor does; the shadow is a composition drop shadow masked by
+  the text, set up in code (XAML has no text shadow).
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.GenreTile"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Width="288"
+    Height="160">
+
+    <Button
+        x:Name="TileButton"
+        Command="{x:Bind Item.Open, Mode=OneWay}"
+        Padding="0"
+        Margin="0"
+        Background="Transparent"
+        BorderThickness="0"
+        CornerRadius="12"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        HorizontalContentAlignment="Stretch"
+        VerticalContentAlignment="Stretch"
+        AutomationProperties.Name="{x:Bind Item.Label, Mode=OneWay}">
+        <Grid x:Name="Tile" CornerRadius="12" Background="{x:Bind Item.TintBrush, Mode=OneWay}">
+            <Image
+                x:Name="Backdrop"
+                Source="{x:Bind Item.Image, Mode=OneWay}"
+                Stretch="UniformToFill"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Opacity="0.45" />
+
+            <Viewbox
+                StretchDirection="DownOnly"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Margin="16,10">
+                <Grid>
+                    <Grid x:Name="ShadowHost" />
+                    <TextBlock
+                        x:Name="NameText"
+                        Text="{x:Bind Item.Label, Mode=OneWay}"
+                        MaxWidth="256"
+                        FontFamily="Georgia"
+                        FontSize="34"
+                        FontWeight="Bold"
+                        CharacterSpacing="-10"
+                        LineHeight="36"
+                        LineStackingStrategy="BlockLineHeight"
+                        Foreground="White"
+                        TextWrapping="WrapWholeWords"
+                        TextAlignment="Center" />
+                </Grid>
+            </Viewbox>
+
+            <!-- ring-1 ring-inset ring-white/[0.07]. -->
+            <Border
+                CornerRadius="12"
+                BorderThickness="1"
+                BorderBrush="#12FFFFFF"
+                IsHitTestVisible="False" />
+        </Grid>
+    </Button>
+</UserControl>

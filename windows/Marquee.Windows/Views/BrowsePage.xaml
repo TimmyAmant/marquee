@@ -28,6 +28,7 @@
                         Margin="0,0,28,0" />
                     <ScrollViewer
                         HorizontalScrollMode="Enabled"
+                        controls:WheelScroll.PassToPage="True"
                         HorizontalScrollBarVisibility="Auto"
                         VerticalScrollMode="Disabled"
                         VerticalScrollBarVisibility="Disabled">
@@ -47,6 +48,7 @@
                 <!-- The filter bar keeps the 28px gutter; it scrolls sideways in a narrow window. -->
                 <ScrollViewer
                     HorizontalScrollMode="Enabled"
+                    controls:WheelScroll.PassToPage="True"
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollMode="Disabled"
                     VerticalScrollBarVisibility="Disabled"
@@ -94,11 +96,11 @@
                 <!-- infinite-results-grid.tsx -->
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Cards}" Margin="0,0,28,0">
                     <ItemsRepeater.Layout>
-                        <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                        <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
                     </ItemsRepeater.Layout>
                     <ItemsRepeater.ItemTemplate>
                         <DataTemplate x:DataType="vm:PosterItem">
-                            <controls:PosterCard Item="{x:Bind}" />
+                            <controls:PosterCard Item="{x:Bind}" FillsColumn="True" />
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>

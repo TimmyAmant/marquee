@@ -6,9 +6,12 @@ import SwiftUI
 /// going straight there in one click, with the section's name beside it on
 /// hover. Nothing opens over the page. When a newer Marquee is out, an
 /// update button joins the foot of the rail. Nothing reflows: pages always
-/// start `Metrics.contentLeading` in, clear of the rail.
+/// start `Metrics.contentLeading` in, clear of the rail. Settings can move it
+/// to the right, or lay it out as a row along the top or bottom
+/// (`NavRailPosition`, from the environment).
 struct NavMenu: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.navRailPosition) private var position
 
     @FocusState private var focus: RailItem?
 
@@ -20,8 +23,8 @@ struct NavMenu: View {
             onSelect: { model.select($0) },
             onUpdate: showUpdate
         )
-        .padding(.leading, NavMetrics.railInset)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(Edge.Set(position.edge), NavMetrics.railInset)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
     }
 
     // MARK: Destinations
@@ -44,13 +47,13 @@ struct NavMenu: View {
 
 /// Docs/DESIGN_TARGET.md › Navigation.
 private enum NavMetrics {
-    /// The rail's distance from the window's left edge.
+    /// The rail's distance from the window's edge (the left, by default).
     static let railInset: CGFloat = 16
 }
 
 // MARK: - Rail
 
-/// Everything on the rail, top to bottom; also what keyboard focus can land on.
+/// Everything on the rail, top to bottom (or left to right); also what keyboard focus can land on.
 private enum RailItem: Hashable {
     case profile
     case notifications
@@ -65,6 +68,7 @@ private enum RailItem: Hashable {
 /// button, when there's an update).
 private struct NavRail: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.navRailPosition) private var position
     let focus: FocusState<RailItem?>.Binding
     let onProfile: () -> Void
     let onSearch: () -> Void
@@ -74,9 +78,12 @@ private struct NavRail: View {
     @State private var showingNotifications = false
 
     var body: some View {
-        VStack(spacing: 4) {
+        let stack = position.isVertical
+            ? AnyLayout(VStackLayout(spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 4))
+        return stack {
             profile
-                .padding(.bottom, 4)
+                .padding(position.isVertical ? .bottom : .trailing, 4)
             notifications
             RailHairline()
 
@@ -94,7 +101,7 @@ private struct NavRail: View {
                 updateButton
             }
         }
-        // 7 of padding inside a 1pt border: 56 wide, ending 72 from the edge.
+        // 7 of padding inside a 1pt border: 56 thick, ending 72 from the edge.
         .padding(8)
         // Unclipped, so the name labels can sit beside the rail.
         .glassSurface(Capsule(), clipsContent: false)
@@ -149,7 +156,7 @@ private struct NavRail: View {
     }
 
     /// components/notifications-bell.tsx: the bell, with a dot while any are
-    /// unread; the list opens beside the rail.
+    /// unread; the list opens beside the rail, on the page's side.
     private var notifications: some View {
         let unread = model.unreadCount
         let label = model.live.badges.bellLabel.map { "Notifications, \($0) unread" } ?? "Notifications"
@@ -165,7 +172,7 @@ private struct NavRail: View {
             showingNotifications.toggle()
         }
         .accessibilityLabel(label)
-        .popover(isPresented: $showingNotifications, arrowEdge: .trailing) {
+        .popover(isPresented: $showingNotifications, arrowEdge: position.towardContent) {
             NotificationsPopover(dismiss: { showingNotifications = false })
                 .environment(model)
         }
@@ -187,13 +194,17 @@ private struct NavRail: View {
     }
 }
 
-/// Between the rail's groups: 24 wide, in the glass border color.
+/// Between the rail's groups: 24 long, across the rail, in the glass
+/// border color.
 private struct RailHairline: View {
+    @Environment(\.navRailPosition) private var position
+
     var body: some View {
+        let vertical = position.isVertical
         Rectangle()
             .fill(Theme.glassBorder)
-            .frame(width: 24, height: 1)
-            .padding(.vertical, 4)
+            .frame(width: vertical ? 24 : 1, height: vertical ? 1 : 24)
+            .padding(vertical ? .vertical : .horizontal, 4)
             .accessibilityHidden(true)
     }
 }
@@ -234,10 +245,12 @@ private struct NavRailButton: View {
     }
 }
 
-/// `RailLabel`: the item's name in a small frosted capsule 12 to its right,
-/// on hover or keyboard focus, so the icons never have to be guessed at.
-/// Decorative: the button carries the same name as its accessible label.
+/// `RailLabel`: the item's name in a small frosted capsule 12 to its right
+/// (or on whichever side the page is, when the rail has moved), on hover or
+/// keyboard focus, so the icons never have to be guessed at. Decorative: the
+/// button carries the same name as its accessible label.
 private struct RailLabeled: ViewModifier {
+    @Environment(\.navRailPosition) private var position
     let label: String
     let focus: FocusState<RailItem?>.Binding
     let item: RailItem
@@ -249,7 +262,7 @@ private struct RailLabeled: ViewModifier {
         content
             .focused(focus, equals: item)
             .onHover { hovering = $0 }
-            .overlay(alignment: .leading) {
+            .overlay(alignment: Self.anchor(position.towardContent)) {
                 Text(label)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
@@ -258,13 +271,34 @@ private struct RailLabeled: ViewModifier {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .glassSurface(Capsule())
-                    // From the button's leading edge: its 40, then 12.
-                    .offset(x: 40 + 12 + (showing ? 0 : -4))
+                    // From the button's near edge: its 40, then 12, sliding
+                    // the last 4 in as it appears.
+                    .offset(Self.offset(position.towardContent, distance: 40 + 12 - (showing ? 0 : 4)))
                     .opacity(showing ? 1 : 0)
                     .animation(.easeOut(duration: 0.15), value: showing)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
+    }
+
+    /// The label starts level with the button's edge away from `side`...
+    private static func anchor(_ side: Edge) -> Alignment {
+        switch side {
+        case .trailing: return .leading
+        case .leading: return .trailing
+        case .bottom: return .top
+        case .top: return .bottom
+        }
+    }
+
+    /// ...and moves `distance` toward `side`.
+    private static func offset(_ side: Edge, distance: CGFloat) -> CGSize {
+        switch side {
+        case .trailing: return CGSize(width: distance, height: 0)
+        case .leading: return CGSize(width: -distance, height: 0)
+        case .bottom: return CGSize(width: 0, height: distance)
+        case .top: return CGSize(width: 0, height: -distance)
+        }
     }
 }
 

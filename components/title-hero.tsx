@@ -126,13 +126,14 @@ export function TitleHero({
   const poster = tmdbImageUrl(posterPath, "w500");
 
   return (
-    // -mt-[52px] lifts the page under the floating top bar: in the mockup
+    // -mt-[52px] lifts the page under the floating top bar (72px when the
+    // nav rail is a bar along the top and the header holds it): in the mockup
     // .backdrop sits at top:0 of the content area with the toolbar over it,
     // so the poster's 170 and the title/rail's 246 are all from the window
     // top (Docs/DESIGN_TARGET.md).
-    <div className="relative -mt-[52px]">
+    <div className="relative -mt-[52px] md:rail-top:-mt-[72px]">
       {backdrop && (
-        <div className="grain-overlay absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px] md:-left-[72px]">
+        <div className="grain-overlay rail-under absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px]">
           <MediaImage src={backdrop} alt="" fill priority className="object-cover" />
           {/* Two gradients, same as the mockup's .backdrop .fade: down to the
               page background at the bottom, plus a left-hand scrim so the

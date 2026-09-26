@@ -86,7 +86,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         TvLimitBox.Text = MemberAccessForm.LimitText(member.TvQuotaLimit);
         TvDaysBox.Text = MemberAccessForm.DaysText(member.TvQuotaDays);
         PasswordNoteText.Text = member.IsCurrentUser
-            ? SettingsViewModel.PasswordWarning
+            ? AccountSettingsViewModel.PasswordWarning
             : $"Setting a new password signs {member.Label} out of every device.";
     }
 
@@ -120,7 +120,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         // The server checks it too; asking here saves a round trip.
         if (password != null && NeedsCurrentPassword && currentPassword == null)
         {
-            ShowError(SettingsViewModel.CurrentPasswordMissingMessage);
+            ShowError(AccountSettingsViewModel.CurrentPasswordMissingMessage);
             args.Cancel = true;
             return;
         }

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
 using Marquee.Core.Models;
@@ -70,6 +71,16 @@ public sealed partial class AppModel : ObservableObject
     /// <summary>Bumped by API mutations and by polling; pages key their reloads off it.</summary>
     public ServerEvents Events { get; } = new();
 
+    /// <summary>
+    /// What this PC changed about titles since the lists showing them were
+    /// fetched (a poster's quick add or request, a title page action), so
+    /// cards drawn later, and the same title in other rows, agree without a
+    /// refetch. Each change is also sent on the UI thread through
+    /// <see cref="WeakReferenceMessenger.Default"/> as a
+    /// <see cref="TitleStateChangedEventArgs"/> for the cards already on screen.
+    /// </summary>
+    public TitleStateStore TitleState { get; } = new();
+
     public DispatcherQueue Dispatcher { get; }
 
     /// <summary>The app's preferences file (the saved server, and each account's notification choice).</summary>
@@ -125,6 +136,20 @@ public sealed partial class AppModel : ObservableObject
     [ObservableProperty]
     private BrowseQuery seriesFilters = BrowseQuery.Default;
 
+    /// <summary>Settings' tab, remembered while the app runs; the avatar reopens Settings where it was left.</summary>
+    [ObservableProperty]
+    private SettingsTab settingsTab = SettingsTab.Account;
+
+    /// <summary>
+    /// Which edge the navigation bar sits on (Settings › Account › This PC):
+    /// this PC's choice, kept in <see cref="Settings"/>; the window follows
+    /// it as soon as it changes.
+    /// </summary>
+    [ObservableProperty]
+    private MenuPosition menuPosition;
+
+    partial void OnMenuPositionChanged(MenuPosition value) => MenuPositionSetting.Write(Settings, value);
+
     /// <summary>The session's server, token or user changed (already on the UI thread).</summary>
     public event EventHandler? SessionChanged;
 
@@ -145,9 +170,11 @@ public sealed partial class AppModel : ObservableObject
         Dispatcher = dispatcher;
         Settings = settings;
         Notifications = new NotificationCenter(this);
+        MenuPosition = MenuPositionSetting.Read(settings);
         session.StateChanged += OnSessionStateChanged;
         session.Unauthorized += OnSessionUnauthorized;
         Events.Changed += OnServerChanged;
+        TitleState.Changed += OnTitleStateChanged;
     }
 
     public bool IsSignedIn => Phase == AppPhase.Ready;
@@ -293,6 +320,7 @@ public sealed partial class AppModel : ObservableObject
     public void CompleteSignIn(User user, bool interactive = false)
     {
         Viewer = user;
+        TitleState.Clear();
         AuthNotice = null;
         ConnectionProblem = null;
         MovieFilters = BrowseQuery.Default;
@@ -358,6 +386,7 @@ public sealed partial class AppModel : ObservableObject
     {
         StopBadgePolling();
         Viewer = null;
+        TitleState.Clear();
         pendingNotification = null;
         Notifications.SignedOut();
         AvatarImages.Clear();
@@ -404,6 +433,8 @@ public sealed partial class AppModel : ObservableObject
         {
             return;
         }
+        // The refetch is authoritative again.
+        TitleState.Clear();
         ReloadToken++;
         _ = RefreshViewerAsync();
         RefreshCounts();
@@ -429,6 +460,17 @@ public sealed partial class AppModel : ObservableObject
             }
         }
         Navigator?.ShowSection(section);
+    }
+
+    /// <summary>
+    /// Settings on <paramref name="tab"/> (the Mac's <c>openSettings</c>):
+    /// "Connect an integration" links open Integrations, the update button
+    /// About. Already on Settings, the page just switches tab.
+    /// </summary>
+    public void OpenSettings(SettingsTab tab)
+    {
+        SettingsTab = tab;
+        Select(Section.Settings);
     }
 
     public void Open(Route route) => Navigator?.Open(route);
@@ -638,7 +680,40 @@ public sealed partial class AppModel : ObservableObject
         }
     }
 
+    // MARK: Poster quick actions
+
+    /// <summary>
+    /// A poster's "+ Add" (admin): into Radarr/Sonarr, then the status the
+    /// server reports now, remembered so every card showing the title drops
+    /// the button and shows the new badge. Throws the add's <see cref="ApiException"/>.
+    /// </summary>
+    public async Task QuickAddAsync(TitleId id)
+    {
+        var api = Api;
+        await api.Titles.AddAsync(id.MediaType, id.TmdbId);
+        LibraryStatus? status = null;
+        try
+        {
+            status = (await api.Titles.StatusAsync(id.MediaType, id.TmdbId)).Library.Status;
+        }
+        catch (ApiException)
+        {
+            // The add went through; the badge catches up on the next load.
+        }
+        TitleState.Added(id, status);
+    }
+
+    /// <summary>A poster's "Request" (member). Throws the request's <see cref="ApiException"/>.</summary>
+    public async Task RequestTitleAsync(TitleId id)
+    {
+        await Api.Titles.RequestAsync(id.MediaType, id.TmdbId);
+        TitleState.Requested(id);
+    }
+
     // MARK: Events from other threads
+
+    private void OnTitleStateChanged(object? sender, TitleStateChangedEventArgs e) =>
+        Dispatcher.TryEnqueue(() => WeakReferenceMessenger.Default.Send(e));
 
     private void OnSessionStateChanged(object? sender, EventArgs e) =>
         Dispatcher.TryEnqueue(() => SessionChanged?.Invoke(this, EventArgs.Empty));

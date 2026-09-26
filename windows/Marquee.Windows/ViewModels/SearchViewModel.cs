@@ -205,12 +205,12 @@ public sealed partial class SearchViewModel : ObservableObject
             .Select(person => new PersonItem(model, person.TmdbId, person.Name, person.KnownForDepartment, person.ProfilePath, person.Favorited))
             .ToList();
         Studios = results.Studios
-            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId))))
+            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
             .ToList();
-        Titles = results.Titles.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+        Titles = results.Titles.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
         if (results.Theme is { Items.Count: > 0 } theme)
         {
-            ThemeItems = theme.Items.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+            ThemeItems = theme.Items.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
             ThemeTitle = $"{theme.Label} movies & TV";
         }
         else
@@ -234,7 +234,7 @@ public sealed partial class SearchViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.Select(Section.Settings);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
 
     /// <summary>The page's own search box: a new query is a new page on the stack, like the website's URL.</summary>
     [RelayCommand]

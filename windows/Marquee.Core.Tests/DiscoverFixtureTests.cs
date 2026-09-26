@@ -122,6 +122,73 @@ public sealed class DiscoverFixtureTests
     }
 
     [Fact]
+    public void DiscoverShelfTiles()
+    {
+        var shelves = Fixtures.Decode<DiscoverShelves>("discover");
+
+        var studio = Assert.Single(shelves.Studios).Tile();
+        Assert.Equal(ShelfTileKind.Logo, studio.Kind);
+        Assert.Equal(2, studio.Id);
+        Assert.Equal("Walt Disney Pictures", studio.Name);
+        Assert.Equal("https://image.tmdb.org/t/p/w500/wdrC.png", studio.ImageUrl?.AbsoluteUri);
+        Assert.Null(studio.Tint);
+
+        var network = Assert.Single(shelves.Networks).Tile();
+        Assert.Equal(ShelfTileKind.Logo, network.Kind);
+        Assert.Equal(213, network.Id);
+        Assert.Equal("Netflix", network.Name);
+        Assert.Equal("https://image.tmdb.org/t/p/w500/wwem.png", network.ImageUrl?.AbsoluteUri);
+        Assert.Null(network.Tint);
+
+        var genre = Assert.Single(shelves.MovieGenres.Tiles());
+        Assert.Equal(ShelfTileKind.Genre, genre.Kind);
+        Assert.Equal(28, genre.Id);
+        Assert.Equal("Action", genre.Name);
+        Assert.Equal("https://image.tmdb.org/t/p/w780/qeQJ.jpg", genre.ImageUrl?.AbsoluteUri);
+        Assert.Equal(0x991B1Bu, genre.Tint);
+
+        var series = Assert.Single(shelves.SeriesGenres.Tiles());
+        Assert.Equal("Action & Adventure", series.Name);
+        Assert.NotNull(series.ImageUrl);
+        Assert.StartsWith("https://image.tmdb.org/t/p/w780/", series.ImageUrl.AbsoluteUri);
+        Assert.Equal(0x991B1Bu, series.Tint);
+
+        // No artwork: the tile falls back to the name (logo) or the tint alone (genre).
+        Assert.Null((shelves.Studios[0] with { LogoPath = null }).Tile().ImageUrl);
+        Assert.Null((shelves.Networks[0] with { LogoPath = null }).Tile().ImageUrl);
+        Assert.Null((shelves.MovieGenres[0] with { BackdropPath = null }).Tile(0).ImageUrl);
+
+        // A studio chip's small logo (search results, favorites, a title page).
+        var company = Fixtures.Decode<CompanyCard>("company-card");
+        Assert.Equal("https://image.tmdb.org/t/p/w185/hUze.png", company.ChipLogoUrl()?.AbsoluteUri);
+        Assert.Null((company with { LogoPath = null }).ChipLogoUrl());
+    }
+
+    [Fact]
+    public void GenreTintsMatchTheWebsite()
+    {
+        Assert.Equal(0x991B1Bu, ShelfTiles.GenreTint(28, 5));
+        Assert.Equal(0x155E75u, ShelfTiles.GenreTint(878, 0));
+        Assert.Equal(0x155E75u, ShelfTiles.GenreTint(10765, 0));
+        Assert.Equal(0x115E59u, ShelfTiles.GenreTint(10767, 0));
+
+        // An unlisted genre cycles the fallback palette by its place in the rail.
+        Assert.Equal(0x991B1Bu, ShelfTiles.GenreTint(1, 0));
+        Assert.Equal(0x6B21A8u, ShelfTiles.GenreTint(1, 1));
+        Assert.Equal(0x065F46u, ShelfTiles.GenreTint(1, 5));
+        Assert.Equal(0x991B1Bu, ShelfTiles.GenreTint(1, 6));
+
+        var genres = new[]
+        {
+            new GenreTile { Id = 1, Name = "One" },
+            new GenreTile { Id = 2, Name = "Two" },
+            new GenreTile { Id = 18, Name = "Drama" },
+        }.Tiles();
+        Assert.Equal([0x991B1Bu, 0x6B21A8u, 0x334155u], genres.Select(tile => tile.Tint!.Value));
+        Assert.All(genres, tile => Assert.Null(tile.ImageUrl));
+    }
+
+    [Fact]
     public void BrowseExtrasValues()
     {
         var extras = Fixtures.Decode<BrowseExtras>("browse-extras");

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings › Jobs (app/settings/jobs/page.tsx, the Mac's JobsSettingsView),
+  the admin's: the server's maintenance jobs, each with what it does, its
+  schedule, what it did when run from this PC, and Run now.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Views.Settings.JobsSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="20">
+        <StackPanel Spacing="4">
+            <TextBlock Text="Jobs" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock
+                Text="Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule."
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ProgressRing
+            IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            Width="20"
+            Height="20"
+            HorizontalAlignment="Left" />
+        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock
+                Text="{x:Bind ViewModel.Error, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                TextWrapping="Wrap" />
+            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+        </StackPanel>
+        <TextBlock
+            Text="This server reports no scheduled jobs."
+            Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+
+        <Border
+            Style="{StaticResource SettingsCard}"
+            Padding="0"
+            Visibility="{x:Bind ViewModel.HasJobs, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ItemsRepeater ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}">
+                <ItemsRepeater.Layout>
+                    <StackLayout Orientation="Vertical" Spacing="0" />
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="vm:JobRow">
+                        <StackPanel>
+                            <Border
+                                Height="1"
+                                Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+                            <Grid Padding="20,14" ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="3" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="{x:Bind Description}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBlock
+                                            Text="{x:Bind Schedule}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock
+                                            Text="{x:Bind RanLine, Mode=OneWay}"
+                                            Visibility="{x:Bind RanLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Text="{x:Bind Error, Mode=OneWay}"
+                                        Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Text="Done."
+                                        Visibility="{x:Bind IsDone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    Content="{x:Bind RunLabel, Mode=OneWay}"
+                                    Command="{x:Bind RunCommand}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </Border>
+    </StackPanel>
+</UserControl>

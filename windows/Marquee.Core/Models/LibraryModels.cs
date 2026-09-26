@@ -109,7 +109,7 @@ public sealed record FileDetails
     }
 
     /// <summary>Port of lib/format.ts's <c>formatBytes</c>: one decimal, 1024-based units.</summary>
-    private static string FormatBytes(long bytes)
+    internal static string FormatBytes(long bytes)
     {
         if (bytes <= 0)
         {

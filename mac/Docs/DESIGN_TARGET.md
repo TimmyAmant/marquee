@@ -46,6 +46,11 @@ reference implementation.
      (a download arrow with an accent dot), after its own hairline. Opens
      Settings › About, where "Update" and its progress are.
   There is no menu button: nothing opens over the page on a desktop.
+  Mac: Settings › Account › "Menu position" (Left, the default, Right, Top
+  or Bottom; kept per Mac) moves the rail to that edge, centered along it,
+  16 in. At the top or bottom the same items run left to right as a row
+  (hairlines turn vertical, 1×24). Pages keep 72 clear on that edge only,
+  and hover names and the notifications list open toward the page.
   Each item is 40×40 round with a 19 icon. The current page is a solid pill:
   textPrimary fill with a bg0 icon (white with a dark icon in dark mode, the
   reverse in light). Others are textSecondary, with a textPrimary-10% round

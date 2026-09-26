@@ -113,15 +113,15 @@ public sealed partial class FavoritesViewModel : ObservableObject
             {
                 return;
             }
-            Movies = fresh.Movies.Select(card => new PosterItem(card, OpenTitleCommand)).ToList();
-            Tv = fresh.Tv.Select(card => new PosterItem(card, OpenTitleCommand)).ToList();
+            Movies = fresh.Movies.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
+            Tv = fresh.Tv.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
             Collections = fresh.Collections.Select(collection => new CollectionItem(model, collection)).ToList();
             // A person on this page is favorited by definition; the server's flag is only null on older answers.
             People = fresh.People
                 .Select(person => new PersonItem(model, person.TmdbId, person.Name, person.KnownForDepartment, person.ProfilePath, person.Favorited ?? true))
                 .ToList();
             Studios = fresh.Studios
-                .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId))))
+                .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
                 .ToList();
             IsEmpty = fresh.IsEmpty;
             HasAnswer = true;

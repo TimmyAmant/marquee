@@ -687,6 +687,9 @@ public sealed partial class TitleViewModel : ObservableObject
         try
         {
             var status = await model.Api.Titles.StatusAsync(Id.MediaType, Id.TmdbId);
+            // Posters of this title elsewhere (Discover, a grid behind this
+            // page) drop a stale "+ Add" / "Request" and take the new badge.
+            model.TitleState.StatusChanged(status.Id, status.Library.Status, status.Viewer.AlreadyRequested);
             if (detail is { } latest && latest.Id == status.Id)
             {
                 SetDetail(latest.Updating(status), rebuild: false);
@@ -748,11 +751,11 @@ public sealed partial class TitleViewModel : ObservableObject
         cast = fresh.Cast
             .Select(member => new PersonItem(model, member.TmdbId, member.Name, member.Character, member.ProfilePath, member.Favorited))
             .ToList();
-        franchiseItems = fresh.Franchise?.Items.Select(card => new PosterItem(card, OpenTitleCommand)).ToList() ?? [];
+        franchiseItems = fresh.Franchise?.Items.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList() ?? [];
         studios = fresh.Studios
-            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId))))
+            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
             .ToList();
-        similar = fresh.Similar.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+        similar = fresh.Similar.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
     }
 
     /// <summary>The facts card's rows, in the website's order; rows the server didn't fill are left out.</summary>
@@ -1036,7 +1039,28 @@ public sealed partial class TitleViewModel : ObservableObject
         {
             IsAddingAll = false;
         }
-        await RefreshStatusAsync();
+        // The whole page, not just this title's status: the collection's
+        // posters need their new badges, and "Add all" its new count.
+        await ReloadKeepingAddAllResultAsync();
+    }
+
+    /// <summary>A quiet full refetch after "Add all" that keeps its result line.</summary>
+    private async Task ReloadKeepingAddAllResultAsync()
+    {
+        try
+        {
+            var fresh = await model.Api.Titles.DetailAsync(Id.MediaType, Id.TmdbId);
+            if (detail is { } latest && latest.Id == fresh.Id)
+            {
+                var result = AddAllResult;
+                SetDetail(fresh, rebuild: true);
+                AddAllResult = result;
+            }
+        }
+        catch (ApiException)
+        {
+            await RefreshStatusAsync();
+        }
     }
 
     /// <summary>"Wrong match? Fix ID": repoints the title; the page navigates to the id it returns.</summary>
@@ -1059,7 +1083,7 @@ public sealed partial class TitleViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.Select(Section.Settings);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
 
     // MARK: Reload triggers
 

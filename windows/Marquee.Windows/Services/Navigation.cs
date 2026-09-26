@@ -48,6 +48,41 @@ public static class SectionExtensions
 }
 
 /// <summary>
+/// Settings' tabs across the top (the Mac's <c>SettingsTab</c>, the
+/// website's components/settings-nav.tsx). Integrations, Activity and Jobs
+/// are the admin's.
+/// </summary>
+public enum SettingsTab
+{
+    Account,
+    Integrations,
+    Activity,
+    Jobs,
+    About,
+}
+
+public static class SettingsTabExtensions
+{
+    public static string Title(this SettingsTab tab) => tab switch
+    {
+        SettingsTab.Account => "Account",
+        SettingsTab.Integrations => "Integrations",
+        SettingsTab.Activity => "Activity",
+        SettingsTab.Jobs => "Jobs",
+        SettingsTab.About => "About",
+        _ => tab.ToString(),
+    };
+
+    /// <summary>Integrations, Activity and Jobs are the admin's; a member sees Account and About.</summary>
+    public static bool IsAdminOnly(this SettingsTab tab) =>
+        tab is SettingsTab.Integrations or SettingsTab.Activity or SettingsTab.Jobs;
+
+    /// <summary>The tab to show: a member sent to an admin tab (an old link) lands on Account.</summary>
+    public static SettingsTab Visible(this SettingsTab tab, bool isAdmin) =>
+        tab.IsAdminOnly() && !isAdmin ? SettingsTab.Account : tab;
+}
+
+/// <summary>
 /// A page pushed on top of a section (the Mac app's <c>Route</c>). The
 /// window maps each case to a page type; a route without a page yet lands
 /// on the placeholder, so navigation never throws while the app is being

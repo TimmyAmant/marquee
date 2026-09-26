@@ -365,6 +365,7 @@
                                 <!-- components/external-links.tsx: "▶ Trailer", then the server's ordered row. -->
                                 <ScrollViewer
                                     HorizontalScrollMode="Enabled"
+                                    controls:WheelScroll.PassToPage="True"
                                     HorizontalScrollBarVisibility="Auto"
                                     VerticalScrollMode="Disabled"
                                     VerticalScrollBarVisibility="Disabled"
@@ -492,6 +493,7 @@
                             <TextBlock Text="Cast" Style="{StaticResource SubtitleTextBlockStyle}" />
                             <ScrollViewer
                                 HorizontalScrollMode="Enabled"
+                                controls:WheelScroll.PassToPage="True"
                                 HorizontalScrollBarVisibility="Auto"
                                 VerticalScrollMode="Disabled"
                                 VerticalScrollBarVisibility="Disabled">
@@ -648,6 +650,7 @@
                         <TextBlock Text="Studio" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <ScrollViewer
                             HorizontalScrollMode="Enabled"
+                            controls:WheelScroll.PassToPage="True"
                             HorizontalScrollBarVisibility="Auto"
                             VerticalScrollMode="Disabled"
                             VerticalScrollBarVisibility="Disabled">
@@ -657,7 +660,7 @@
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate x:DataType="vm:ChipItem">
-                                        <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                        <controls:StudioChip Item="{x:Bind}" />
                                     </DataTemplate>
                                 </ItemsRepeater.ItemTemplate>
                             </ItemsRepeater>
@@ -668,6 +671,7 @@
                         <TextBlock Text="More like this" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <ScrollViewer
                             HorizontalScrollMode="Enabled"
+                            controls:WheelScroll.PassToPage="True"
                             HorizontalScrollBarVisibility="Auto"
                             VerticalScrollMode="Disabled"
                             VerticalScrollBarVisibility="Disabled">

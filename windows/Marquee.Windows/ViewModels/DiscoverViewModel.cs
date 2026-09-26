@@ -195,7 +195,7 @@ public sealed partial class DiscoverViewModel : ObservableObject
         {
             if (cards.Count > 0)
             {
-                var items = cards.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+                var items = cards.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
                 list.Add(ShelfViewModel.OfPosters(title, items, seeAll));
             }
         }
@@ -213,21 +213,21 @@ public sealed partial class DiscoverViewModel : ObservableObject
         Posters("Popular Movies", response.PopularMovies, seeAllMovies);
         Chips(
             "Movie Genres",
-            response.MovieGenres.Select(genre => new ChipItem(genre.Name, new RelayCommand(() => model.Browse(MediaType.Movie, genreId: genre.Id)))).ToList(),
+            response.MovieGenres.Tiles().Select(tile => new ChipItem(tile, new RelayCommand(() => model.Browse(MediaType.Movie, genreId: tile.Id)))).ToList(),
             seeAllMovies);
         Posters("Upcoming Movies", response.UpcomingMovies);
         Chips(
             "Studios",
-            response.Studios.Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)))).ToList());
+            response.Studios.Select(studio => new ChipItem(studio.Tile(), new RelayCommand(() => model.OpenCompany(studio.TmdbId)))).ToList());
         Posters("Popular Series", response.PopularSeries, seeAllSeries);
         Chips(
             "Series Genres",
-            response.SeriesGenres.Select(genre => new ChipItem(genre.Name, new RelayCommand(() => model.Browse(MediaType.Tv, genreId: genre.Id)))).ToList(),
+            response.SeriesGenres.Tiles().Select(tile => new ChipItem(tile, new RelayCommand(() => model.Browse(MediaType.Tv, genreId: tile.Id)))).ToList(),
             seeAllSeries);
         Posters("Upcoming Series", response.UpcomingSeries);
         Chips(
             "Networks",
-            response.Networks.Select(network => new ChipItem(network.Name, new RelayCommand(() => model.Browse(MediaType.Tv, networkId: network.TmdbId)))).ToList());
+            response.Networks.Select(network => new ChipItem(network.Tile(), new RelayCommand(() => model.Browse(MediaType.Tv, networkId: network.TmdbId)))).ToList());
         return list;
     }
 
@@ -243,7 +243,7 @@ public sealed partial class DiscoverViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.Select(Section.Settings);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
 
     // MARK: Reload triggers
 

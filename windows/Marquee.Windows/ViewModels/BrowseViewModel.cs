@@ -331,7 +331,7 @@ public sealed partial class BrowseViewModel : ObservableObject
             SyncPickers();
             if (extras.BecauseYouWatched is { Items.Count: > 0 } watched)
             {
-                var items = watched.Items.Select(card => new PosterItem(card, OpenTitleCommand)).ToList();
+                var items = watched.Items.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
                 BecauseYouWatched = ShelfViewModel.OfPosters($"Because you watched {watched.Title}", items);
             }
         }
@@ -418,7 +418,7 @@ public sealed partial class BrowseViewModel : ObservableObject
                 {
                     if (seen.Add(card.Id))
                     {
-                        Cards.Add(new PosterItem(card, OpenTitleCommand));
+                        Cards.Add(new PosterItem(model, card, OpenTitleCommand));
                         appended++;
                     }
                 }
@@ -494,7 +494,7 @@ public sealed partial class BrowseViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.Select(Section.Settings);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
 
     // MARK: Reload triggers
 

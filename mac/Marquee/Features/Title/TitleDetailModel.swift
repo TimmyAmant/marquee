@@ -287,7 +287,9 @@ final class TitleDetailModel {
                 ? "Added \(targets.count - failures) of \(targets.count) — \(failures) failed"
                 : "Added all \(targets.count)"
             isAddingAll = false
-            await refreshStatus()
+            // The whole page, not just this title's status: the collection's
+            // posters need their new badges, and "Add all" its new count.
+            await load(api)
         }
     }
 }

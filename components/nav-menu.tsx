@@ -95,9 +95,13 @@ function isCurrent(pathname: string, href: string): boolean {
  * The site's navigation, after the Plex app's Apple TV menu. A small frosted
  * rail floats at the left edge and is the whole menu: your photo (Settings),
  * notifications, and one icon per section, each going straight there in one
- * click, with the section's name beside it on hover. Search opens as a
- * floating panel over the page. Below the md breakpoint, where there's no room for the rail, the
- * header's menu button opens the same destinations as a labeled drawer.
+ * click, with the section's name beside it on hover. Settings › Account ›
+ * Appearance can move it to the right edge or lay it out as a bar along the
+ * top or bottom (lib/rail-position.ts; the layout switches in CSS off
+ * data-rail on <html>). Search opens as a floating panel over the page.
+ * Below the md breakpoint, where there's no room for the rail, the header's
+ * menu button opens the same destinations as a labeled drawer, wherever the
+ * rail is set to go.
  */
 export function NavMenu({
   isSignedIn,
@@ -175,13 +179,13 @@ export function NavMenu({
     <>
       <nav
         aria-label="Main"
-        className="nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] md:flex"
+        className="nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] md:flex rail-right:left-auto rail-right:right-4 rail-bar:left-1/2 rail-bar:-translate-x-1/2 rail-bar:translate-y-0 rail-bar:flex-row rail-top:top-3 rail-bottom:top-auto rail-bottom:bottom-[calc(12px+env(safe-area-inset-bottom))]"
       >
         <Link
           href={profileHref}
           aria-label={isSignedIn ? `${name}: account and settings` : "Sign in"}
           aria-current={isCurrent(pathname, profileHref) ? "page" : undefined}
-          className="group relative mb-1 rounded-full outline-offset-2"
+          className="group relative mb-1 rounded-full outline-offset-2 rail-bar:mb-0 rail-bar:mr-1"
         >
           <ProfilePicture signedIn={isSignedIn} label={name} src={avatarSrc} size={36} />
           <RailLabel>{isSignedIn ? "Settings" : "Sign in"}</RailLabel>
@@ -189,12 +193,12 @@ export function NavMenu({
         {isSignedIn && (
           <>
             <NotificationsBell variant="rail" railLabel={<RailLabel>Notifications</RailLabel>} />
-            <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />
+            <RailDivider />
           </>
         )}
         {railGroups.map((group, index) => (
           <Fragment key={group[0].href}>
-            {index > 0 && <span aria-hidden className="my-1 h-px w-6 bg-[var(--marquee-glass-border)]" />}
+            {index > 0 && <RailDivider />}
             {group.map((item) => {
               const current = isCurrent(pathname, item.href);
               if (item === SEARCH) {
@@ -384,14 +388,26 @@ function ProfilePicture({ signedIn, label, src, size }: { signedIn: boolean; lab
   );
 }
 
+/** The hairline between groups of rail items: across a vertical rail,
+ * upright in a horizontal bar. */
+function RailDivider() {
+  return (
+    <span
+      aria-hidden
+      className="my-1 h-px w-6 shrink-0 bg-[var(--marquee-glass-border)] rail-bar:mx-1 rail-bar:my-0 rail-bar:h-6 rail-bar:w-px"
+    />
+  );
+}
+
 /** The name that appears beside a rail icon on hover or keyboard focus, so
- * the icons never have to be guessed at. Decorative: the link itself
- * carries the same name as its accessible label. */
+ * the icons never have to be guessed at: on the content side of the rail,
+ * wherever it sits (.rail-label in app/globals.css). Decorative: the link
+ * itself carries the same name as its accessible label. */
 function RailLabel({ children }: { children: React.ReactNode }) {
   return (
     <span
       aria-hidden
-      className="nav-glass pointer-events-none absolute left-full top-1/2 ml-3 -translate-x-1 -translate-y-1/2 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium text-text-primary opacity-0 shadow-none transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+      className="rail-label nav-glass pointer-events-none absolute whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium text-text-primary opacity-0 shadow-none transition-[opacity,translate] duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
     >
       {children}
     </span>
