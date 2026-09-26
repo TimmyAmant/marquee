@@ -51,7 +51,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
         let user = Self.userId
         let browseQuery = API.BrowseQuery(sort: .topRated, genreId: 28, year: 1999, networkId: 213, hideOwned: false)
         var arr: [Case] = []
-        for (provider, name) in [(API.ArrProvider.sonarr, "sonarr"), (.radarr, "radarr")] {
+        for (provider, name) in [(API.ArrProvider.sonarr, "sonarr"), (.radarr, "radarr"), (.sonarr4k, "sonarr4k"), (.radarr4k, "radarr4k")] {
             arr += [
                 Case(method: "PUT", path: "/settings/integrations/\(name)", body: #"{"baseUrl":"http://10.0.0.2:8989","apiKey":"k"}"#, response: "arr-connect") {
                     _ = try await $0.integrations.arr(provider).connect(baseUrl: "http://10.0.0.2:8989", apiKey: "k")
@@ -216,8 +216,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 91, "docs/api-v1.md documents 91 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 91, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 99, "docs/api-v1.md documents 99 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 99, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
@@ -301,6 +301,30 @@ final class MarqueeAPIRequestTests: XCTestCase {
         let bare = try XCTUnwrap(StubURLProtocol.requests.first)
         XCTAssertEqual(bare.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject")
         XCTAssertTrue(Self.body(of: bare).isEmpty, "nil reason sends no body")
+    }
+
+    /// "Request in 4K" and "Add to 4K Radarr/Sonarr" (0.37+): the same two
+    /// endpoints with `{"is4k": true}`; a 4K request ignores `seasons`.
+    func testFourKRequestAndAddSendIs4k() async throws {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+        let calls: [(String, String, (MarqueeAPI) async throws -> Void)] = [
+            ("request-created", "/titles/movie/603/request", { _ = try await $0.requests.create(.movie, id: 603, is4k: true) }),
+            ("request-created", "/titles/tv/1399/request", { _ = try await $0.requests.create(.tv, id: 1399, seasons: [1, 2], is4k: true) }),
+            ("title-add", "/titles/movie/603/add", { try await $0.titles.add(.movie, id: 603, is4k: true) }),
+            ("title-add", "/titles/tv/1399/add", { try await $0.titles.add(.tv, id: 1399, is4k: true) }),
+        ]
+        for (response, path, call) in calls {
+            let data = try fixture(response)
+            StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, data) }
+            StubURLProtocol.requests = []
+            try await call(api)
+            let sent = try XCTUnwrap(StubURLProtocol.requests.first, path)
+            XCTAssertEqual(sent.httpMethod, "POST", path)
+            XCTAssertEqual(sent.url?.path, "/api/v1" + path, path)
+            XCTAssertEqual(sent.value(forHTTPHeaderField: "Content-Type"), "application/json", path)
+            XCTAssertEqual(try Self.jsonObject(Self.body(of: sent)), ["is4k": true] as NSDictionary, path)
+        }
     }
 
     func testNoServerThrowsUnauthorizedWithoutSending() async {

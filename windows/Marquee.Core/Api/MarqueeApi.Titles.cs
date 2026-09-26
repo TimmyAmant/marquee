@@ -39,6 +39,15 @@ public sealed class TitlesEndpoints(MarqueeApi.Transport transport)
         transport.MutateAsync<OK>(HttpMethod.Post, $"{Path(type, tmdbId)}/add",
             timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library | ServerChange.Requests, ct: ct);
 
+    /// <summary>
+    /// <c>POST /titles/{type}/{tmdbId}/add</c> with <c>{"is4k": true}</c>
+    /// (0.37+): "Add to 4K Radarr/Sonarr" (admin, <see cref="FourKViewerState.CanAdd"/>).
+    /// Errors name "the 4K Radarr" / "the 4K Sonarr".
+    /// </summary>
+    public Task AddFourKAsync(MediaType type, int tmdbId, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(HttpMethod.Post, $"{Path(type, tmdbId)}/add", body: new FourKBody(true),
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library | ServerChange.Requests, ct: ct);
+
     /// <summary><c>POST /titles/{type}/{tmdbId}/search</c>: "Search now" (admin). Website text: "Search queued."</summary>
     public Task SearchNowAsync(MediaType type, int tmdbId, CancellationToken ct = default) =>
         transport.MutateAsync<OK>(HttpMethod.Post, $"{Path(type, tmdbId)}/search",
@@ -91,6 +100,22 @@ public sealed class TitlesEndpoints(MarqueeApi.Transport transport)
         var body = new SeasonRequestBody(seasons.Distinct().Order().ToList());
         var result = await transport.MutateAsync<TitleRequestCreated>(HttpMethod.Post, $"{Path(type, tmdbId)}/request",
             body: body, timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Requests | ServerChange.Library, ct: ct)
+            .ConfigureAwait(false);
+        return result.RequestId;
+    }
+
+    /// <summary>
+    /// <c>POST /titles/{type}/{tmdbId}/request</c> with <c>{"is4k": true}</c>
+    /// (0.37+): "Request in 4K" (<see cref="FourKViewerState.CanRequest"/>).
+    /// Always the whole title, separate from a regular request.
+    /// Conflict("4K requests aren't set up on this server.") / ("You've
+    /// already requested this in 4K.") / ("It's already in the 4K library or
+    /// on its way."). Returns the new request's id.
+    /// </summary>
+    public async Task<Guid> RequestFourKAsync(MediaType type, int tmdbId, CancellationToken ct = default)
+    {
+        var result = await transport.MutateAsync<TitleRequestCreated>(HttpMethod.Post, $"{Path(type, tmdbId)}/request",
+            body: new FourKBody(true), timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Requests | ServerChange.Library, ct: ct)
             .ConfigureAwait(false);
         return result.RequestId;
     }

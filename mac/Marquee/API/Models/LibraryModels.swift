@@ -99,6 +99,9 @@ extension API {
         /// The seasons of your pending request; nil when there's none or it's
         /// for the whole series.
         let requestedSeasons: [Int]?
+        /// The 4K copy (0.37+): non-nil when the admin has a 4K Radarr (movies)
+        /// / 4K Sonarr (TV). nil from an older server or without one.
+        let fourK: FourKViewerState?
 
         /// "Requested Seasons 1–3 — waiting for approval", or without the
         /// seasons for a whole-series request.
@@ -116,6 +119,33 @@ extension API {
         }
     }
 
+    /// `viewer.fourK`: the title in the 4K Radarr/Sonarr (components/fourk-controls.tsx).
+    struct FourKViewerState: Codable, Hashable, Sendable {
+        /// How the 4K instance has the title, read live; `.untracked` when it doesn't.
+        let status: LibraryStatus
+        /// Your own 4K request (`pending`/`approved`); nil when none or declined.
+        let requestStatus: RequestStatus?
+        /// "Request in 4K" (`requests.create(…, is4k: true)`).
+        let canRequest: Bool
+        /// "Add to 4K Radarr/Sonarr" (`titles.add(…, is4k: true)`, admin).
+        let canAdd: Bool
+
+        /// The gold outline chip: "In 4K", "4K downloading", "4K missing",
+        /// "4K coming soon"; nil when the 4K instance doesn't have it.
+        var statusLabel: String? {
+            switch status {
+            case .owned: "In 4K"
+            case .trackedDownloading: "4K downloading"
+            case .trackedMonitored: "4K missing"
+            case .comingSoon: "4K coming soon"
+            case .untracked, .unknown: nil
+            }
+        }
+
+        /// The "4K requested" chip: your 4K request is still pending.
+        var isRequestPending: Bool { requestStatus == .pending }
+    }
+
     /// `GET /titles/{type}/{tmdbId}/status`: just `library` + `viewer`, the
     /// cheap refresh after add / request / monitor / favorite.
     struct TitleStatus: Codable, Hashable, Sendable {
@@ -125,6 +155,11 @@ extension API {
         let viewer: TitleViewerState
 
         var id: TitleID { TitleID(mediaType, tmdbId) }
+    }
+
+    /// `{"is4k": true}`: the body of "Request in 4K" and "Add to 4K Radarr/Sonarr".
+    struct FourKBody: Encodable, Hashable, Sendable {
+        var is4k = true
     }
 
     /// `PUT …/monitored` response.

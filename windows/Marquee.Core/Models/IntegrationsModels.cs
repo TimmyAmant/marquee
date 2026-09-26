@@ -18,6 +18,16 @@ public sealed record IntegrationsOverview
     public required JellyfinSettings Jellyfin { get; init; }
     public required ArrSettings Sonarr { get; init; }
     public required ArrSettings Radarr { get; init; }
+
+    /// <summary>The optional 4K Sonarr (0.37+); null from an older server.</summary>
+    public ArrSettings? Sonarr4k { get; init; }
+
+    /// <summary>The optional 4K Radarr (0.37+); null from an older server.</summary>
+    public ArrSettings? Radarr4k { get; init; }
+
+    /// <summary>The server offers 4K Sonarr/Radarr (0.37+).</summary>
+    public bool HasFourKArr => Sonarr4k != null && Radarr4k != null;
+
     public required TmdbSettings Tmdb { get; init; }
     public required ConnectionState Trakt { get; init; }
     public required ConnectionState Tvdb { get; init; }
@@ -40,6 +50,14 @@ public sealed record IntegrationsOverview
 
     /// <summary>The Sonarr or Radarr section by provider, for a view that renders both from one template.</summary>
     public ArrSettings Arr(ArrProvider provider) => provider == ArrProvider.Sonarr ? Sonarr : Radarr;
+
+    /// <summary>Any of the four by provider; null for a 4K one an older server doesn't send.</summary>
+    public ArrSettings? ArrOrNull(ArrProvider provider)
+    {
+        if (provider == ArrProvider.Sonarr4k) return Sonarr4k;
+        if (provider == ArrProvider.Radarr4k) return Radarr4k;
+        return Arr(provider);
+    }
 }
 
 /// <summary>A Plex or Jellyfin server whose library was synced.</summary>
@@ -138,8 +156,22 @@ public sealed record ArrWebhooks
     public required string RadarrUrl { get; init; }
     public required string SonarrUrl { get; init; }
 
+    /// <summary>The 4K Radarr's webhook (0.37+, same secret); null from an older server.</summary>
+    public string? Radarr4kUrl { get; init; }
+
+    /// <summary>The 4K Sonarr's webhook (0.37+, same secret); null from an older server.</summary>
+    public string? Sonarr4kUrl { get; init; }
+
     /// <summary>The webhook URL for one provider's Connect settings.</summary>
     public string Url(ArrProvider provider) => provider == ArrProvider.Sonarr ? SonarrUrl : RadarrUrl;
+
+    /// <summary>Any of the four by provider; null for a 4K one an older server doesn't send.</summary>
+    public string? UrlOrNull(ArrProvider provider)
+    {
+        if (provider == ArrProvider.Sonarr4k) return Sonarr4kUrl;
+        if (provider == ArrProvider.Radarr4k) return Radarr4kUrl;
+        return Url(provider);
+    }
 }
 
 public sealed record RootFolder

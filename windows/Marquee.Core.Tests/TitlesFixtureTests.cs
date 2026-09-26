@@ -220,4 +220,43 @@ public sealed class TitlesFixtureTests
         Assert.True(created.Ok);
         Assert.Equal(Guid.Parse("28713d50-27f2-4230-9c95-c1e6a000f6c0"), created.RequestId);
     }
+
+    [Fact]
+    public void FourKViewerDecodes()
+    {
+        var fourK = Fixtures.Decode<TitleDetail>("title-detail").Viewer.FourK;
+        Assert.NotNull(fourK);
+        Assert.Equal(LibraryStatus.Untracked, fourK.Status);
+        Assert.Null(fourK.RequestStatus);
+        Assert.False(fourK.CanRequest);
+        Assert.True(fourK.CanAdd);
+        Assert.Null(fourK.StatusLabel);
+        Assert.False(fourK.IsRequested);
+
+        // No 4K instance for this type: an explicit null.
+        Assert.Null(Fixtures.Decode<TitleStatus>("title-status").Viewer.FourK);
+    }
+
+    [Fact]
+    public void OlderServerWithoutFourKDecodes()
+    {
+        var json = JsonNode.Parse(Fixtures.Read("title-detail"))!.AsObject();
+        json["viewer"]!.AsObject().Remove("fourK");
+        Assert.Null(Json.Decode<TitleDetail>(json.ToJsonString()).Viewer.FourK);
+    }
+
+    [Theory]
+    [InlineData("owned", "In 4K")]
+    [InlineData("tracked_downloading", "4K downloading")]
+    [InlineData("tracked_monitored", "4K missing")]
+    [InlineData("coming_soon", "4K coming soon")]
+    [InlineData("untracked", null)]
+    [InlineData("someday", null)]
+    public void FourKStatusLabelsMatchTheWebsite(string status, string? label)
+    {
+        var fourK = Json.Decode<FourKViewerState>(
+            $$"""{"status":"{{status}}","requestStatus":"pending","canRequest":false,"canAdd":false}""");
+        Assert.Equal(label, fourK.StatusLabel);
+        Assert.True(fourK.IsRequested);
+    }
 }

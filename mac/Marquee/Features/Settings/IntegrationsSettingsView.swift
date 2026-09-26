@@ -25,6 +25,23 @@ struct IntegrationsSettingsView: View {
                 section("Download Clients") {
                     ArrCard(provider: .sonarr, settings: overview.sonarr)
                     ArrCard(provider: .radarr, settings: overview.radarr)
+                    // 0.37+; an older server omits them.
+                    if let sonarr4k = overview.sonarr4k {
+                        ArrCard(
+                            provider: .sonarr4k,
+                            settings: sonarr4k,
+                            title: "4K Sonarr (optional)",
+                            description: "A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr."
+                        )
+                    }
+                    if let radarr4k = overview.radarr4k {
+                        ArrCard(
+                            provider: .radarr4k,
+                            settings: radarr4k,
+                            title: "4K Radarr (optional)",
+                            description: "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr."
+                        )
+                    }
                 }
                 section("Metadata Sources") {
                     TMDbCard(settings: overview.tmdb)
@@ -41,7 +58,11 @@ struct IntegrationsSettingsView: View {
                     )
                 }
                 section("Notifications") {
-                    ArrWebhooksCard(webhooks: overview.arrWebhooks)
+                    ArrWebhooksCard(
+                        webhooks: overview.arrWebhooks,
+                        radarr4kConnected: overview.radarr4k?.connected == true,
+                        sonarr4kConnected: overview.sonarr4k?.connected == true
+                    )
                     SecretCard(
                         title: "Discord notifications",
                         description: "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected.",
@@ -388,6 +409,9 @@ private struct JellyfinCard: View {
 private struct ArrCard: View {
     let provider: API.ArrProvider
     let settings: API.ArrSettings
+    /// The card's heading; the provider's name unless given ("4K Sonarr (optional)").
+    var title: String?
+    var description: String?
 
     @Environment(AppModel.self) private var model
     @State private var baseUrl = ""
@@ -402,7 +426,8 @@ private struct ArrCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: provider.displayName,
+            title: title ?? provider.displayName,
+            description: description,
             connected: settings.connected,
             headerAccessory: settings.connected
                 ? AnyView(DisconnectButton(name: provider.displayName) { try await $0.integrations.arr(provider).disconnect() })
@@ -940,6 +965,9 @@ private struct TraktCard: View {
 
 private struct ArrWebhooksCard: View {
     let webhooks: API.ArrWebhooks
+    /// A connected 4K instance shows its own URL too (0.37+).
+    var radarr4kConnected = false
+    var sonarr4kConnected = false
 
     @Environment(AppModel.self) private var model
     @State private var current: API.ArrWebhooks?
@@ -958,6 +986,12 @@ private struct ArrWebhooksCard: View {
         ) {
             CopyField(value: live.radarrUrl, label: "Radarr webhook URL")
             CopyField(value: live.sonarrUrl, label: "Sonarr webhook URL")
+            if radarr4kConnected, let url = live.radarr4kUrl {
+                CopyField(value: url, label: "4K Radarr webhook URL")
+            }
+            if sonarr4kConnected, let url = live.sonarr4kUrl {
+                CopyField(value: url, label: "4K Sonarr webhook URL")
+            }
             if let error { InlineMessage(text: error) }
             if confirming {
                 HStack(spacing: 8) {

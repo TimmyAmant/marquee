@@ -23,6 +23,9 @@ final class TitleDetailModel {
     /// The action area under the title.
     private(set) var isAdding = false
     private(set) var addError: String?
+    /// "Request in 4K" / "Add to 4K Radarr/Sonarr" in flight (their errors
+    /// land in `addError` too).
+    private(set) var isFourKBusy = false
     /// The Sonarr/Radarr tracking row.
     private(set) var isSearching = false
     private(set) var isTogglingMonitor = false
@@ -139,6 +142,31 @@ final class TitleDetailModel {
                 addError = error.localizedDescription
             }
             isAdding = false
+        }
+    }
+
+    /// "Request in 4K" (`viewer.fourK.canRequest`): always the whole title.
+    func requestIn4K() {
+        runFourK { api, id in _ = try await api.requests.create(id.mediaType, id: id.tmdbId, is4k: true) }
+    }
+
+    /// "Add to 4K Radarr/Sonarr" (`viewer.fourK.canAdd`, admin).
+    func addTo4K() {
+        runFourK { api, id in _ = try await api.titles.add(id.mediaType, id: id.tmdbId, is4k: true) }
+    }
+
+    private func runFourK(_ action: @escaping @MainActor (MarqueeAPI, API.TitleID) async throws -> Void) {
+        guard let api, !isFourKBusy else { return }
+        isFourKBusy = true
+        addError = nil
+        Task {
+            do {
+                try await action(api, id)
+                await refreshStatus()
+            } catch {
+                addError = error.localizedDescription
+            }
+            isFourKBusy = false
         }
     }
 
