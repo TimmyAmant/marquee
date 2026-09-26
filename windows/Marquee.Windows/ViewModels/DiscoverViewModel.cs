@@ -195,7 +195,7 @@ public sealed partial class DiscoverViewModel : ObservableObject
         {
             if (cards.Count > 0)
             {
-                var items = cards.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+                var items = cards.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
                 list.Add(ShelfViewModel.OfPosters(title, items, seeAll));
             }
         }

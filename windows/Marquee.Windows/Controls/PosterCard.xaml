@@ -8,6 +8,17 @@
   The status badge is three Borders with theme brushes rather than one whose
   colors are computed in code: {ThemeResource} keeps following light/dark
   switches at runtime, and nothing here touches resources from code.
+
+  The quick action ("+ Add to Radarr", "Request", the "Requested" pill)
+  sits at the foot of the artwork like components/poster-card.tsx's hover
+  slot. It is a sibling of the card button, not a child, so clicking it never
+  also opens the title (PersonCard's star does the same). The code-behind
+  shows it while the pointer is over the card, while focus is anywhere in
+  the card (so Tab reaches it), while it's working or showing an error, and
+  always on a PC with no mouse (the website's [@media(hover:hover)]).
+
+  In a grid (FillsColumn) the card follows its column's width and the
+  artwork keeps 2:3, so the columns stretch to the row's full width.
 -->
 <UserControl
     x:Class="Marquee.Windows.Controls.PosterCard"
@@ -16,132 +27,226 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Width="150">
+    Width="150"
+    PointerEntered="OnPointerEntered"
+    PointerExited="OnPointerExited"
+    PointerCanceled="OnPointerExited"
+    GotFocus="OnGotFocus"
+    LostFocus="OnLostFocus">
 
-    <Button
-        x:Name="CardButton"
-        Command="{x:Bind Item.Open, Mode=OneWay}"
-        CommandParameter="{x:Bind Item, Mode=OneWay}"
-        Padding="0"
-        Margin="0"
-        Background="Transparent"
-        BorderThickness="0"
-        HorizontalAlignment="Stretch"
-        HorizontalContentAlignment="Stretch"
-        VerticalContentAlignment="Top"
-        ToolTipService.ToolTip="{x:Bind Item.Name, Mode=OneWay}"
-        AutomationProperties.Name="{x:Bind Item.AccessibleName, Mode=OneWay}">
-        <StackPanel Spacing="6">
-            <Grid
-                Height="225"
-                CornerRadius="8"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                BorderThickness="1">
-                <Image Source="{x:Bind Item.Poster, Mode=OneWay}" Stretch="UniformToFill" />
+    <Grid>
+        <Button
+            x:Name="CardButton"
+            Command="{x:Bind Item.Open, Mode=OneWay}"
+            CommandParameter="{x:Bind Item, Mode=OneWay}"
+            Padding="0"
+            Margin="0"
+            Background="Transparent"
+            BorderThickness="0"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Top"
+            ToolTipService.ToolTip="{x:Bind Item.Name, Mode=OneWay}"
+            AutomationProperties.Name="{x:Bind Item.AccessibleName, Mode=OneWay}">
+            <StackPanel Spacing="6">
+                <Grid
+                    x:Name="Artwork"
+                    Height="225"
+                    CornerRadius="8"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <Image Source="{x:Bind Item.Poster, Mode=OneWay}" Stretch="UniformToFill" />
 
-                <!-- No artwork: the name stands in, like the website's grey tile. -->
+                    <!-- No artwork: the name stands in, like the website's grey tile. -->
+                    <TextBlock
+                        Text="{x:Bind Item.Name, Mode=OneWay}"
+                        Visibility="{x:Bind Item.HasPoster, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        TextAlignment="Center"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="12" />
+
+                    <!-- "MOVIE" / "SERIES" on rows that mix both. -->
+                    <Border
+                        Visibility="{x:Bind Item.TypeLabel, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="6"
+                        Padding="6,2"
+                        CornerRadius="4"
+                        Background="#B3000000">
+                        <TextBlock
+                            Text="{x:Bind Item.TypeLabel, Mode=OneWay}"
+                            FontSize="9"
+                            FontWeight="SemiBold"
+                            CharacterSpacing="80"
+                            Foreground="White" />
+                    </Border>
+
+                    <Border
+                        Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="6"
+                        Padding="7,2"
+                        CornerRadius="9"
+                        Background="{ThemeResource OwnedBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource OwnedBadgeForegroundBrush}"
+                        BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource OwnedBadgeForegroundBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Visibility="{x:Bind Item.IsTrackedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="6"
+                        Padding="7,2"
+                        CornerRadius="9"
+                        Background="{ThemeResource TrackedBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource TrackedBadgeForegroundBrush}"
+                        BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource TrackedBadgeForegroundBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Visibility="{x:Bind Item.IsNeutralTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="6"
+                        Padding="7,2"
+                        CornerRadius="9"
+                        Background="{ThemeResource NeutralBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource NeutralBadgeForegroundBrush}"
+                        BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource NeutralBadgeForegroundBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource NeutralBadgeForegroundBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
                 <TextBlock
                     Text="{x:Bind Item.Name, Mode=OneWay}"
-                    Visibility="{x:Bind Item.HasPoster, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    TextTrimming="CharacterEllipsis"
+                    MaxLines="1" />
+                <TextBlock
+                    Text="{x:Bind Item.FooterLine, Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    TextWrapping="Wrap"
-                    TextAlignment="Center"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Margin="12" />
+                    TextTrimming="CharacterEllipsis"
+                    MaxLines="1"
+                    MinHeight="16" />
+            </StackPanel>
+        </Button>
 
-                <!-- "MOVIE" / "SERIES" on rows that mix both. -->
-                <Border
-                    Visibility="{x:Bind Item.TypeLabel, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Margin="6"
-                    Padding="6,2"
-                    CornerRadius="4"
-                    Background="#B3000000">
-                    <TextBlock
-                        Text="{x:Bind Item.TypeLabel, Mode=OneWay}"
-                        FontSize="9"
-                        FontWeight="SemiBold"
-                        CharacterSpacing="80"
-                        Foreground="White" />
-                </Border>
+        <!--
+          Drawn last, over the artwork's foot. Its height follows the artwork
+          (the code-behind sets both), and the empty part of this Grid has no
+          background, so a click above the panel still reaches the card.
+        -->
+        <Grid
+            x:Name="QuickActionLayer"
+            Height="225"
+            VerticalAlignment="Top"
+            Visibility="Collapsed">
+            <Border
+                VerticalAlignment="Bottom"
+                Height="72"
+                CornerRadius="0,0,8,8"
+                IsHitTestVisible="False">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                        <GradientStop Color="#00000000" Offset="0" />
+                        <GradientStop Color="#99000000" Offset="0.45" />
+                        <GradientStop Color="#D9000000" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
 
-                <Border
-                    Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    Margin="6"
-                    Padding="7,2"
-                    CornerRadius="9"
-                    Background="{ThemeResource OwnedBadgeBackgroundBrush}"
-                    BorderBrush="{ThemeResource OwnedBadgeForegroundBrush}"
-                    BorderThickness="1">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
-                        <TextBlock
-                            Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                            FontSize="10"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource OwnedBadgeForegroundBrush}" />
-                    </StackPanel>
-                </Border>
+            <StackPanel VerticalAlignment="Bottom" Margin="8" Spacing="4">
+                <Button
+                    Command="{x:Bind Item.QuickAddCommand, Mode=OneWay}"
+                    Visibility="{x:Bind Item.IsAddAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch"
+                    Height="26"
+                    Padding="8,0"
+                    CornerRadius="13"
+                    FontSize="11.5"
+                    FontWeight="SemiBold"
+                    AutomationProperties.Name="{x:Bind Item.AddLabel, Mode=OneWay}">
+                    <TextBlock Text="{x:Bind Item.AddButtonLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                </Button>
 
+                <Button
+                    Command="{x:Bind Item.RequestCommand, Mode=OneWay}"
+                    Visibility="{x:Bind Item.IsRequestAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch"
+                    Height="26"
+                    Padding="8,0"
+                    CornerRadius="13"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    AutomationProperties.Name="Request">
+                    <TextBlock Text="{x:Bind Item.RequestButtonLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                </Button>
+
+                <!-- request-button.tsx's compact "Requested": a pill, not a button. -->
                 <Border
-                    Visibility="{x:Bind Item.IsTrackedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    Margin="6"
-                    Padding="7,2"
-                    CornerRadius="9"
+                    Visibility="{x:Bind Item.IsRequestedAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Padding="8,4"
+                    CornerRadius="12"
                     Background="{ThemeResource TrackedBadgeBackgroundBrush}"
                     BorderBrush="{ThemeResource TrackedBadgeForegroundBrush}"
                     BorderThickness="1">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource TrackedBadgeForegroundBrush}" />
-                        <TextBlock
-                            Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                            FontSize="10"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
-                    </StackPanel>
+                    <TextBlock
+                        Text="Requested"
+                        FontSize="10.5"
+                        FontWeight="SemiBold"
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
                 </Border>
 
                 <Border
-                    Visibility="{x:Bind Item.IsNeutralTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    Margin="6"
-                    Padding="7,2"
-                    CornerRadius="9"
-                    Background="{ThemeResource NeutralBadgeBackgroundBrush}"
-                    BorderBrush="{ThemeResource NeutralBadgeForegroundBrush}"
-                    BorderThickness="1">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource NeutralBadgeForegroundBrush}" />
-                        <TextBlock
-                            Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                            FontSize="10"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource NeutralBadgeForegroundBrush}" />
-                    </StackPanel>
+                    Visibility="{x:Bind Item.HasQuickActionError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Padding="6,2"
+                    CornerRadius="4"
+                    Background="#E6000000">
+                    <TextBlock
+                        Text="{x:Bind Item.QuickActionError, Mode=OneWay}"
+                        FontSize="10"
+                        TextWrapping="Wrap"
+                        MaxLines="3"
+                        TextTrimming="CharacterEllipsis"
+                        TextAlignment="Center"
+                        Foreground="#FFF87171" />
                 </Border>
-            </Grid>
-
-            <TextBlock
-                Text="{x:Bind Item.Name, Mode=OneWay}"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                TextTrimming="CharacterEllipsis"
-                MaxLines="1" />
-            <TextBlock
-                Text="{x:Bind Item.FooterLine, Mode=OneWay}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                TextTrimming="CharacterEllipsis"
-                MaxLines="1"
-                MinHeight="16" />
-        </StackPanel>
-    </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </UserControl>
