@@ -235,12 +235,13 @@ public sealed partial class MainWindow : Window, INavigator
 
     /// <summary>
     /// The bell's unread count; for an admin, the accent dot on the rail's
-    /// Requests button (members' pending count is always 0).
+    /// Requests button: pending requests plus open problem reports, since
+    /// both wait on that page (members' counts are always 0).
     /// </summary>
     private void UpdateBadges()
     {
-        var pending = model.Viewer?.IsAdmin == true ? model.Badges.PendingRequests : 0;
-        AutomationProperties.SetName(RailRequestsButton, pending > 0 ? $"Requests, {pending} pending" : "Requests");
+        var pending = model.Viewer?.IsAdmin == true ? model.Badges.RequestsBadge : 0;
+        AutomationProperties.SetName(RailRequestsButton, pending > 0 ? $"Requests, {pending} waiting" : "Requests");
         RailRequestsDot.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var unread = model.Badges.UnreadNotifications;
