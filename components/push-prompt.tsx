@@ -78,7 +78,7 @@ export function PushPrompt() {
     <div
       role="dialog"
       aria-labelledby="push-prompt-title"
-      className="nav-glass fixed bottom-4 left-4 right-4 z-50 rounded-2xl p-4 sm:left-auto sm:w-[340px]"
+      className="nav-glass fixed bottom-4 left-4 right-4 z-50 rounded-2xl p-4 sm:left-auto sm:w-[340px] md:rail-right:right-[84px] md:rail-bottom:bottom-[calc(84px+env(safe-area-inset-bottom))]"
     >
       <p id="push-prompt-title" className="text-[15px] font-semibold text-text-primary">
         {mode === "ask" ? "Get notifications on this device?" : "Notifications on your iPhone or iPad"}

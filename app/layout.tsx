@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Manrope } from "next/font/google";
+import { cookies } from "next/headers";
 import Script from "next/script";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeSync } from "@/components/theme-sync";
+import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -30,17 +32,23 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Which edge the nav rail sits on, this device's choice (Settings ›
+  // Account › Appearance). Rendered here so the first paint already has it;
+  // the rail and everything that makes room for it follow data-rail in CSS.
+  const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
+
   return (
     // The theme-init script below sets data-theme on <html> before React
     // hydrates, so the attribute never matches the server's HTML by design.
     <html
       lang="en"
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
+      data-rail={railPosition}
       suppressHydrationWarning
     >
       <body className="min-h-full flex bg-bg-0 text-text-primary">
@@ -57,10 +65,10 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeSync />
         <Sidebar />
-        {/* 72px clears the floating nav rail (16px from the edge, 50 wide)
-            with room to spare; full-bleed artwork like a title's backdrop
-            pulls itself back under the rail. */}
-        <div className="flex min-h-full min-w-0 flex-1 flex-col md:pl-[72px]">
+        {/* .rail-inset (app/globals.css) makes room for the floating nav
+            rail on whichever edge it sits; full-bleed artwork like a
+            title's backdrop pulls itself back under it (.rail-under). */}
+        <div className="rail-inset flex min-h-full min-w-0 flex-1 flex-col">
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />
