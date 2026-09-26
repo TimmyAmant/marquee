@@ -14,10 +14,11 @@ namespace Marquee.Windows.Controls;
 /// "Edit {username}". Save sends <c>PATCH /users/{id}</c> through the
 /// function it was given, the way the website's form sends it: the username
 /// always, an empty name or password left out (unchanged), the current
-/// password only for your own account, the auto-approve flags only when
-/// the boxes show, and (0.39+) the role and request limits only when the
-/// admin edits another non-admin account (a blank limit is sent as null:
-/// no limit). A refusal shows the server's message and keeps the
+/// password only for your own account, and for the admin editing another
+/// non-admin account what they can do: on 0.48+ every permission switch
+/// (<see cref="MemberPermissionsEditor"/>), before that the auto-approve
+/// flags and (0.39+) the role; plus (0.39+) the request limits (a blank
+/// limit is sent as null: no limit). A refusal shows the server's message and keeps the
 /// dialog open. After <c>ShowAsync</c> returns
 /// <c>ContentDialogResult.Primary</c>, <see cref="Saved"/> is the server's
 /// answer; the caller signs out when it revoked this PC's token. The
@@ -35,6 +36,7 @@ public sealed partial class EditMemberDialog : ContentDialog
 
     private readonly HouseholdMember member;
     private readonly bool showsAutoApproval;
+    private readonly bool showsPermissions;
     private readonly bool showsAccess;
     private readonly Func<Guid, UpdateUserRequest, Task<UpdateUserResult>> update;
     private readonly Func<Guid, byte[], string, Task<string?>> setPhoto;
@@ -62,9 +64,13 @@ public sealed partial class EditMemberDialog : ContentDialog
         this.setPhoto = setPhoto;
         this.removePhoto = removePhoto;
         avatarUrl = member.AvatarUrl ?? "";
-        showsAutoApproval = viewerIsAdmin && !member.IsAdmin;
-        // Role and limits are the admin's, for another non-admin account on a 0.39+ server.
-        showsAccess = showsAutoApproval && !member.IsCurrentUser && member.SupportsRequestLimits;
+        var showsAdminFields = viewerIsAdmin && !member.IsAdmin;
+        // 0.48+: the switches, for another non-admin account; they replace Role and auto-approval.
+        showsPermissions = showsAdminFields && !member.IsCurrentUser && member.SupportsPermissions;
+        showsAutoApproval = showsAdminFields && !showsPermissions;
+        // Limits (and before 0.48 the role) are the admin's, for another non-admin account on a 0.39+ server.
+        showsAccess = showsAdminFields && !member.IsCurrentUser && member.SupportsRequestLimits;
+        Access = new MemberPermissionsEditor(member.Can);
         InitializeComponent();
 
         PhotoAvatar.Label = member.Label;
@@ -77,7 +83,9 @@ public sealed partial class EditMemberDialog : ContentDialog
         AutoApprovePanel.Visibility = showsAutoApproval ? Visibility.Visible : Visibility.Collapsed;
         AutoApproveMoviesBox.IsChecked = member.AutoApproveMovies;
         AutoApproveTvBox.IsChecked = member.AutoApproveTv;
+        PermissionsPanel.Visibility = showsPermissions ? Visibility.Visible : Visibility.Collapsed;
         AccessPanel.Visibility = showsAccess ? Visibility.Visible : Visibility.Collapsed;
+        RoleBox.Visibility = showsPermissions ? Visibility.Collapsed : Visibility.Visible;
         RoleBox.ItemsSource = new[] { MemberAccessForm.MemberChoice, MemberAccessForm.TrustedChoice };
         RoleBox.SelectedIndex = MemberAccessForm.InitialRole(member) == UserRole.Trusted ? 1 : 0;
         LimitsHeaderText.Text = MemberAccessForm.LimitsHeader;
@@ -89,6 +97,9 @@ public sealed partial class EditMemberDialog : ContentDialog
             ? AccountSettingsViewModel.PasswordWarning
             : $"Setting a new password signs {member.Label} out of every device.";
     }
+
+    /// <summary>"What they can do" and the switches (0.48+); shown only for the admin editing another member.</summary>
+    public MemberPermissionsEditor Access { get; }
 
     /// <summary>What the server saved; null until Save succeeds.</summary>
     // Internal: see HouseholdMemberRow.Member.
@@ -131,15 +142,21 @@ public sealed partial class EditMemberDialog : ContentDialog
             AutoApproveMovies: showsAutoApproval ? AutoApproveMoviesBox.IsChecked == true : (bool?)null,
             AutoApproveTv: showsAutoApproval ? AutoApproveTvBox.IsChecked == true : (bool?)null,
             CurrentPassword: currentPassword);
+        if (showsPermissions && !showsAccess)
+        {
+            request = Access.Apply(request);
+        }
         if (showsAccess)
         {
-            var (withAccess, accessError) = MemberAccessForm.Apply(
-                request,
-                trusted: RoleBox.SelectedIndex == 1,
-                MovieLimitBox.Text,
-                MovieDaysBox.Text,
-                TvLimitBox.Text,
-                TvDaysBox.Text);
+            var (withAccess, accessError) = showsPermissions
+                ? MemberAccessForm.Apply(request, Access, MovieLimitBox.Text, MovieDaysBox.Text, TvLimitBox.Text, TvDaysBox.Text)
+                : MemberAccessForm.Apply(
+                    request,
+                    trusted: RoleBox.SelectedIndex == 1,
+                    MovieLimitBox.Text,
+                    MovieDaysBox.Text,
+                    TvLimitBox.Text,
+                    TvDaysBox.Text);
             if (withAccess == null)
             {
                 ShowError(accessError ?? "Check the request limits.");

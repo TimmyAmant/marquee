@@ -11,6 +11,7 @@ export function RequestButton({
   posterPath,
   compact = false,
   alreadyRequested = false,
+  formId,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -26,6 +27,9 @@ export function RequestButton({
    * similar-titles row would show "Request" again for something already
    * requested on an earlier visit. */
   alreadyRequested?: boolean;
+  /** The form's id, for an Advanced section elsewhere on the page to send
+   * its fields with it (components/add-advanced-options.tsx). */
+  formId?: string;
 }) {
   const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
   const [state, formAction, isPending] = useActionState(action, undefined);
@@ -46,6 +50,7 @@ export function RequestButton({
 
   return (
     <form
+      id={formId}
       action={formAction}
       className={
         compact

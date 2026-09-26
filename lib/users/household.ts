@@ -8,6 +8,14 @@ import { fail, type CoreResult } from "@/lib/core-result";
 import { revokeAllApiTokensForUser } from "@/lib/api/token-store";
 import { removeAllSubscriptions } from "@/lib/push/deliver";
 import { isRateLimited, recordFailedAttempt, refundAttempt } from "@/lib/rate-limit";
+import {
+  applyPermissionChanges,
+  can,
+  normalizePermissions,
+  parsePermissionChanges,
+  presetPermissions,
+  storedPermissionFields,
+} from "@/lib/users/permissions";
 
 // Household-account management shared by the Settings → Account server
 // actions (app/settings/users-actions.ts) and /api/v1/users. Callers resolve
@@ -21,6 +29,9 @@ export type HouseholdMember = {
   role: UserRole;
   autoApproveMovies: boolean;
   autoApproveTv: boolean;
+  /** The switches that are on (lib/users/permissions.ts); the admin's are
+   * ignored — they can do everything. */
+  permissions: string[];
   /** When the profile photo last changed; null when there's none (lib/users/avatar.ts). */
   avatarUpdatedAt: Date | null;
   createdAt: Date;
@@ -51,6 +62,7 @@ const memberColumns = {
   role: users.role,
   autoApproveMovies: users.autoApproveMovies,
   autoApproveTv: users.autoApproveTv,
+  permissions: users.permissions,
   avatarUpdatedAt: users.avatarUpdatedAt,
   createdAt: users.createdAt,
   plexLinked: sql<boolean>`${users.plexUserId} is not null`,
@@ -149,11 +161,18 @@ export async function updateHouseholdMember(
     /** Required when `password` is set on the actor's own account. */
     currentPassword?: unknown;
     displayName: unknown;
-    /** Admin-only; ignored when the actor isn't the admin. Omit to leave unchanged. */
+    /** Admin-only; ignored when the actor isn't the admin. Omit to leave
+     * unchanged. From before permissions: movies (or TV) including their 4K
+     * requests, applied only when it differs from what the account has. */
     autoApproveMovies?: boolean;
     autoApproveTv?: boolean;
-    /** Admin-only, for another member's account: "member" or "trusted". */
+    /** Admin-only, for another member's account: "member" or "trusted" —
+     * fills in that preset's permissions, when it's a change. */
     role?: unknown;
+    /** Admin-only, for another member's account: switches to change,
+     * `{ "reviewRequests": true, "requestTv": false }` (lib/users/permissions.ts).
+     * Applied after `role`. Refused from anyone but the admin. */
+    permissions?: unknown;
     /** Admin-only request limits: a limit of null (or "") removes it. */
     movieQuotaLimit?: unknown;
     movieQuotaDays?: unknown;
@@ -165,13 +184,25 @@ export async function updateHouseholdMember(
     return fail("forbidden", "You can only edit your own account.");
   }
 
+  // Nobody but the admin changes what an account may do — not even their
+  // own (lib/users/permissions.ts).
+  if (input.permissions !== undefined && !actor.isAdmin) {
+    return fail("forbidden", "Only the admin can change what someone may do.");
+  }
   const adminFields = actor.isAdmin ? parseAdminFields(input) : { ok: true as const, set: {} };
   if (!adminFields.ok) return fail("invalid", adminFields.error);
-  if ("role" in adminFields.set) {
-    if (input.userId === actor.userId) return fail("invalid", "You can't change your own role.");
+  const { role: requestedRole, ...limitFields } = adminFields.set;
+  const permissionChanges = input.permissions === undefined ? null : parsePermissionChanges(input.permissions);
+  if (permissionChanges && !permissionChanges.ok) return fail("invalid", permissionChanges.error);
+  if (requestedRole !== undefined || permissionChanges) {
+    if (input.userId === actor.userId) {
+      return fail("invalid", requestedRole !== undefined ? "You can't change your own role." : "You can't change your own permissions.");
+    }
     if (typeof input.userId === "string") {
       const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId)).limit(1);
-      if (target?.role === "admin") return fail("invalid", "The admin's role can't be changed.");
+      if (target?.role === "admin") {
+        return fail("invalid", requestedRole !== undefined ? "The admin's role can't be changed." : "The admin can always do everything.");
+      }
     }
   }
 
@@ -198,24 +229,30 @@ export async function updateHouseholdMember(
     if (!check.ok) return check;
   }
 
-  // Auto-approval is an admin-only setting on other members' accounts —
-  // never let a member grant it to themselves via this same "edit my own
+  // Permissions are an admin-only setting on other members' accounts —
+  // never let a member grant them to themselves via this same "edit my own
   // account" form.
+  const permissionFields =
+    actor.isAdmin && userId !== actor.userId
+      ? await nextPermissions(userId, {
+          role: requestedRole,
+          autoApproveMovies: input.autoApproveMovies,
+          autoApproveTv: input.autoApproveTv,
+          changes: permissionChanges?.ok ? permissionChanges.changes : undefined,
+        })
+      : null;
   const updated = await db
     .update(users)
     .set({
       username,
       displayName,
       ...(password ? { passwordHash: await hash(password), passwordChangedAt: new Date() } : {}),
-      ...(actor.isAdmin && input.autoApproveMovies !== undefined
-        ? { autoApproveMovies: input.autoApproveMovies }
-        : {}),
-      ...(actor.isAdmin && input.autoApproveTv !== undefined ? { autoApproveTv: input.autoApproveTv } : {}),
-      ...adminFields.set,
+      ...limitFields,
+      ...(permissionFields ?? {}),
     })
-    // The admin's role is never changed here (nor anyone made admin) — also
-    // guarded in the update itself.
-    .where("role" in adminFields.set ? and(eq(users.id, userId), ne(users.role, "admin")) : eq(users.id, userId))
+    // The admin's role and permissions are never changed here (nor anyone
+    // made admin) — also guarded in the update itself.
+    .where(permissionFields ? and(eq(users.id, userId), ne(users.role, "admin")) : eq(users.id, userId))
     .returning({ id: users.id });
 
   if (updated.length > 0 && password) {
@@ -224,6 +261,45 @@ export async function updateHouseholdMember(
   }
 
   return { ok: true, passwordChanged: updated.length > 0 && Boolean(password) };
+}
+
+/** What a member's switches become after an admin's edit — null when
+ * nothing about them changes (or it's the admin's own row). In order: a
+ * preset ("member" / "trusted") when the role is a change, the old
+ * auto-approve flags when they differ from what the account has (each
+ * covers its type's 4K requests too, as it did), then the switches sent. */
+async function nextPermissions(
+  userId: string,
+  edit: {
+    role?: UserRole;
+    autoApproveMovies?: boolean;
+    autoApproveTv?: boolean;
+    changes?: Partial<Record<string, boolean>>;
+  },
+): Promise<ReturnType<typeof storedPermissionFields> | null> {
+  const [target] = await db
+    .select({ role: users.role, permissions: users.permissions })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!target || target.role === "admin") return null;
+
+  const before = normalizePermissions(target.permissions);
+  let next: string[] = before;
+  if ((edit.role === "member" || edit.role === "trusted") && edit.role !== target.role) {
+    next = presetPermissions(edit.role);
+  }
+  const legacy = (on: boolean | undefined, regular: "autoApproveMovies" | "autoApproveTv", fourK: "autoApprove4kMovies" | "autoApprove4kTv") => {
+    if (on === undefined || on === can({ role: target.role, permissions: next }, regular)) return;
+    next = applyPermissionChanges(next, { [regular]: on, [fourK]: on });
+  };
+  legacy(edit.autoApproveMovies, "autoApproveMovies", "autoApprove4kMovies");
+  legacy(edit.autoApproveTv, "autoApproveTv", "autoApprove4kTv");
+  if (edit.changes) next = applyPermissionChanges(next, edit.changes);
+
+  const normalized = normalizePermissions(next);
+  const same = normalized.length === before.length && normalized.every((p, i) => p === before[i]);
+  return same ? null : storedPermissionFields(normalized);
 }
 
 type AdminFieldsInput = {

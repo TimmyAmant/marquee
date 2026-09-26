@@ -1,13 +1,13 @@
 import { and, eq, gte, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users, type MediaType } from "@/lib/db/schema";
-import { hasRequestLimits } from "@/lib/users/roles";
+import { can } from "@/lib/users/permissions";
 
 // Request limits: a member may be allowed, say, 5 movies in any 7 days
 // (set per member by the admin). Every request that wasn't declined counts —
 // regular, 4K, a season request and a Plex Watchlist one alike — and a slot
-// comes back once its request is `days` old. Admins and trusted members are
-// never limited.
+// comes back once its request is `days` old. The admin, and anyone with the
+// bypassLimits permission (lib/users/permissions.ts), is never limited.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const MAX_QUOTA_DAYS = 365;
@@ -60,6 +60,7 @@ export function quotaExceededMessage(mediaType: MediaType, quota: QuotaState, no
 
 type LimitColumns = {
   role: string;
+  permissions: string[];
   movieQuotaLimit: number | null;
   movieQuotaDays: number;
   tvQuotaLimit: number | null;
@@ -72,6 +73,7 @@ export async function getQuota(userId: string, mediaType: MediaType, now = new D
   const [user] = await db
     .select({
       role: users.role,
+      permissions: users.permissions,
       movieQuotaLimit: users.movieQuotaLimit,
       movieQuotaDays: users.movieQuotaDays,
       tvQuotaLimit: users.tvQuotaLimit,
@@ -89,7 +91,7 @@ export async function getQuotaFor(
   mediaType: MediaType,
   now = new Date(),
 ): Promise<QuotaState | null> {
-  if (!hasRequestLimits(user.role)) return null;
+  if (can(user, "bypassLimits")) return null;
   const limit = mediaType === "movie" ? user.movieQuotaLimit : user.tvQuotaLimit;
   const days = mediaType === "movie" ? user.movieQuotaDays : user.tvQuotaDays;
   if (limit === null) return null;

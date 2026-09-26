@@ -1,5 +1,5 @@
 import { ApiError } from "@/lib/api/errors";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can, type Permission } from "@/lib/users/permissions";
 import { parseBearerToken } from "@/lib/api/tokens";
 import { authenticateApiToken, type AuthenticatedToken } from "@/lib/api/token-store";
 import { authenticateApiKey } from "@/lib/api/api-key-store";
@@ -124,11 +124,12 @@ export async function credentialStillValid(request: Request, ctx: ApiContext): P
   }
 }
 
-/** Same as requireApiUser, plus 403 unless the user works the review
- * queue: the admin or a trusted member (lib/users/roles.ts). */
-export async function requireApiReviewer(request: Request, message = "Only an admin can review requests."): Promise<ApiContext> {
+/** Same as requireApiUser, plus 403 unless the account may do `permission`
+ * (lib/users/permissions.ts): always the admin, otherwise whoever has that
+ * switch on — read fresh with the credential on every request. */
+export async function requireApiPermission(request: Request, permission: Permission, message: string): Promise<ApiContext> {
   const ctx = await requireApiUser(request);
-  if (!canReviewRequests(ctx.user.role)) throw ApiError.of("forbidden", message);
+  if (!can(ctx.user, permission)) throw ApiError.of("forbidden", message);
   return ctx;
 }
 

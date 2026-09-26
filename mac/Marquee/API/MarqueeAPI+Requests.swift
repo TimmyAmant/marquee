@@ -19,12 +19,23 @@ extension MarqueeAPI {
         /// `is4k` (0.37+, `viewer.fourK.canRequest`) is "Request in 4K": sends
         /// `{"is4k": true}` and always asks for the whole title, so `seasons`
         /// is ignored. `.conflict("You've already requested this in 4K.")` etc.
+        ///
+        /// `overrides` (0.48+, Advanced request options) pick the server,
+        /// profile, folder and tags, flat in the same body; nil sends exactly
+        /// what it did before.
         @discardableResult
-        func create(_ type: API.MediaType, id tmdbId: Int, seasons: [Int]? = nil, is4k: Bool = false) async throws -> UUID {
+        func create(
+            _ type: API.MediaType, id tmdbId: Int, seasons: [Int]? = nil, is4k: Bool = false,
+            overrides: API.AddOverrides? = nil
+        ) async throws -> UUID {
             struct Body: Encodable, Sendable { let seasons: [Int] }
-            let body: (any Encodable & Sendable)? = is4k
-                ? API.FourKBody()
-                : seasons.map { Body(seasons: Array(Set($0)).sorted()) }
+            let picked = is4k ? nil : seasons.map { Array(Set($0)).sorted() }
+            let body: (any Encodable & Sendable)?
+            if let overrides {
+                body = API.RequestCreateBody(seasons: picked, is4k: is4k ? true : nil, overrides: overrides)
+            } else {
+                body = is4k ? API.FourKBody() : picked.map { Body(seasons: $0) }
+            }
             let result: API.RequestCreated = try await transport.mutate(
                 .post, TitlesEndpoints.path(type, tmdbId) + "/request", body: body, timeout: Timeout.integrations,
                 changes: [.requests, .library]

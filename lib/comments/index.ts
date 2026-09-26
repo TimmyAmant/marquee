@@ -1,8 +1,9 @@
-import { and, asc, count, eq, inArray, isNotNull, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { comments, issues, requests, users, type MediaType } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can, type Permission, type PermissionSubject } from "@/lib/users/permissions";
+import { usersWhoCan } from "@/lib/users/access";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications/query";
@@ -28,7 +29,13 @@ import type { Comment, CommentAuthor, CommentThread } from "@/lib/api/types";
 // /api/v1/{requests,issues}/{id}/comments.
 
 export type CommentTarget = { kind: "request" | "issue"; id: string };
-export type CommentViewer = { userId: string; role: string | null | undefined };
+export type CommentViewer = PermissionSubject & { userId: string };
+
+/** Who works a thread besides its owner: whoever reviews requests, or
+ * handles problem reports (lib/users/permissions.ts). */
+function threadPermission(kind: CommentTarget["kind"]): Permission {
+  return kind === "request" ? "reviewRequests" : "manageIssues";
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NOT_FOUND = { request: "Request not found.", issue: "Report not found." } as const;
@@ -88,15 +95,15 @@ async function loadParent(target: CommentTarget): Promise<Parent | null> {
 }
 
 /** The requester or reporter, and reviewers. Pure. */
-export function canSeeThread(viewer: CommentViewer, ownerId: string): boolean {
-  return viewer.userId === ownerId || canReviewRequests(viewer.role);
+export function canSeeThread(viewer: CommentViewer, ownerId: string, kind: CommentTarget["kind"]): boolean {
+  return viewer.userId === ownerId || can(viewer, threadPermission(kind));
 }
 
 /** The parent, if this viewer may see its thread; "not found" otherwise, so
  * a thread someone can't see is indistinguishable from one that isn't there. */
 async function openThread(viewer: CommentViewer, target: CommentTarget): Promise<CoreResult<{ parent: Parent }>> {
   const parent = await loadParent(target);
-  if (!parent || !canSeeThread(viewer, parent.ownerId)) return fail("not_found", NOT_FOUND[target.kind]);
+  if (!parent || !canSeeThread(viewer, parent.ownerId, target.kind)) return fail("not_found", NOT_FOUND[target.kind]);
   return { ok: true, parent };
 }
 
@@ -104,7 +111,14 @@ function parentColumn(target: CommentTarget) {
   return target.kind === "request" ? eq(comments.requestId, target.id) : eq(comments.issueId, target.id);
 }
 
-type AuthorRow = { id: string; displayName: string | null; username: string; role: string; avatarUpdatedAt: Date | null };
+type AuthorRow = {
+  id: string;
+  displayName: string | null;
+  username: string;
+  role: string;
+  permissions: string[];
+  avatarUpdatedAt: Date | null;
+};
 
 function authorDto(user: AuthorRow | undefined, avatarBase: "/api" | "/api/v1"): CommentAuthor {
   if (!user) return { userId: null, label: "Someone", avatarUrl: null, role: null };
@@ -112,7 +126,7 @@ function authorDto(user: AuthorRow | undefined, avatarBase: "/api" | "/api/v1"):
     userId: user.id,
     label: user.displayName || user.username,
     avatarUrl: avatarPath(user, avatarBase),
-    role: user.role === "admin" ? "admin" : user.role === "trusted" ? "reviewer" : "member",
+    role: user.role === "admin" ? "admin" : can(user, "reviewRequests") || can(user, "manageIssues") ? "reviewer" : "member",
   };
 }
 
@@ -140,6 +154,7 @@ export async function listComments(
             displayName: users.displayName,
             username: users.username,
             role: users.role,
+            permissions: users.permissions,
             avatarUpdatedAt: users.avatarUpdatedAt,
           })
           .from(users)
@@ -257,10 +272,7 @@ export function commentRecipients(input: {
 
 async function notifyThread(authorId: string, target: CommentTarget, parent: Parent, body: string): Promise<void> {
   const [reviewerRows, commenterRows, [author]] = await Promise.all([
-    db
-      .select({ id: users.id })
-      .from(users)
-      .where(or(eq(users.role, "admin"), eq(users.role, "trusted"))),
+    usersWhoCan(threadPermission(target.kind)),
     db
       .selectDistinct({ id: comments.authorUserId })
       .from(comments)

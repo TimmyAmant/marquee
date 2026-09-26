@@ -2,7 +2,8 @@ import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can, requestPermission } from "@/lib/users/permissions";
+import { getAccess } from "@/lib/users/access";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import type { TmdbTvDetails } from "@/lib/tmdb/client";
 import { getSonarrSeasonStates } from "@/lib/integrations/status";
@@ -26,7 +27,7 @@ export async function getRequestEditOptions(
   requestId: string,
 ): Promise<CoreResult<{ options: RequestEditOptions }>> {
   const [request] = await db.select().from(requests).where(eq(requests.id, requestId)).limit(1);
-  if (!request || (request.requestedByUserId !== actor.userId && !canReviewRequests(actor.role))) {
+  if (!request || (request.requestedByUserId !== actor.userId && !can(actor, "reviewRequests"))) {
     return fail("not_found", "Request not found.");
   }
   if (request.status !== "pending") {
@@ -34,7 +35,11 @@ export async function getRequestEditOptions(
   }
 
   const adminUserId = await getAdminUserId();
-  const fourKAvailable = request.is4k || (adminUserId ? await isFourKReady(adminUserId, request.mediaType).catch(() => false) : false);
+  // Switching to 4K is for a requester who may ask for 4K of this type.
+  const requesterMay4k = can(await getAccess(request.requestedByUserId), requestPermission(request.mediaType, true));
+  const fourKAvailable =
+    request.is4k ||
+    (requesterMay4k && adminUserId ? await isFourKReady(adminUserId, request.mediaType).catch(() => false) : false);
 
   let seasonRows: RequestEditOptions["seasonRows"] = [];
   if (request.mediaType === "tv") {

@@ -429,6 +429,76 @@
                         </ItemsRepeater>
                     </StackPanel>
                 </Border>
+
+                <!--
+                  MARK: Everyone's requests (0.48+): for an account that may see
+                  everyone's requests but not review them. Everyone else's,
+                  pending and reviewed, newest first, with no buttons.
+                -->
+                <StackPanel Spacing="12" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsEveryone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{x:Bind ViewModel.EveryoneHeading}" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.EveryoneError, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.ShowsEveryoneError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.EveryoneEmptyText}"
+                        Visibility="{x:Bind ViewModel.IsEveryoneEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Border Style="{StaticResource TableCard}" Visibility="{x:Bind ViewModel.HasEveryone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <Grid Padding="16,10" ColumnSpacing="12" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="130" />
+                                    <ColumnDefinition Width="180" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Title" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="1" Text="Requested by" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="2" Text="Requested" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="3" Text="Status" Style="{StaticResource TableHeaderText}" />
+                            </Grid>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.Everyone, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Vertical" Spacing="0" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:EveryoneRow">
+                                        <Grid Padding="16,10" ColumnSpacing="12" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="180" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                                <Border Width="40" Height="56" CornerRadius="6" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                                                    <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
+                                                </Border>
+                                                <StackPanel VerticalAlignment="Center" Spacing="0">
+                                                    <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
+                                                    <TextBlock
+                                                        Text="{x:Bind SeasonsLine}"
+                                                        Visibility="{x:Bind SeasonsLine, Converter={StaticResource StringToVisibility}}"
+                                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        Margin="4,0,0,0" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{x:Bind RequesterLabel}" Style="{StaticResource TableCellText}" />
+                                            <TextBlock Grid.Column="2" Text="{x:Bind DateLabel}" Style="{StaticResource TableCellText}" />
+                                            <controls:TonePill Grid.Column="3" Text="{x:Bind StatusLabel}" Tone="{x:Bind Tone}" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </StackPanel>
 
             <!-- MARK: Admin -->

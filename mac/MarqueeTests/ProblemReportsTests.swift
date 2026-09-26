@@ -89,13 +89,13 @@ final class ProblemReportsTests: XCTestCase {
         let detail = try decode(API.TitleDetail.self, fixture("title-detail"))
         XCTAssertEqual(detail.viewer.canReport, false)
         XCTAssertEqual(detail.viewer.openReports, 0)
-        XCTAssertFalse(detail.viewer.showsReportProblem)
+        XCTAssertFalse(detail.viewer.showsReportProblem())
 
         let reportable = try decode(API.TitleStatus.self, withViewer("title-status") {
             $0["canReport"] = true
             $0["openReports"] = 2
         })
-        XCTAssertTrue(reportable.viewer.showsReportProblem)
+        XCTAssertTrue(reportable.viewer.showsReportProblem())
         XCTAssertEqual(detail.updating(reportable).viewer.openReports, 2)
     }
 
@@ -107,7 +107,7 @@ final class ProblemReportsTests: XCTestCase {
         let detail = try decode(API.TitleDetail.self, withViewer("title-detail", old))
         XCTAssertNil(detail.viewer.canReport)
         XCTAssertNil(detail.viewer.openReports)
-        XCTAssertFalse(detail.viewer.showsReportProblem, "No report button against an older server")
+        XCTAssertFalse(detail.viewer.showsReportProblem(), "No report button against an older server")
         let status = try decode(API.TitleStatus.self, withViewer("title-status", old))
         XCTAssertNil(status.viewer.canReport)
 

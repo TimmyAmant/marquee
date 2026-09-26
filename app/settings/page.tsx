@@ -20,6 +20,7 @@ import { getMediaServerSignup, getSignInMethods } from "@/lib/auth/media-signin"
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { parseSsoErrorCode, ssoErrorMessage } from "@/lib/auth/sso/messages";
+import { can } from "@/lib/users/permissions";
 
 export default async function AccountSettingsPage({
   searchParams,
@@ -30,12 +31,14 @@ export default async function AccountSettingsPage({
   if (!session?.user) redirect("/login");
 
   const isAdmin = session.user.role === "admin";
+  // The blocklist can be handed to a member (lib/users/permissions.ts).
+  const managesBlocklist = can(session.user, "manageBlocklist");
   const [members, methods, mediaServerSignup, watchlist, blocklistRows] = await Promise.all([
     listHouseholdMembers(),
     getSignInMethods(),
     isAdmin ? getMediaServerSignup() : Promise.resolve(true),
     getWatchlistState(session.user.id),
-    isAdmin ? listBlocklist() : Promise.resolve([]),
+    managesBlocklist ? listBlocklist() : Promise.resolve([]),
   ]);
   const blocklist = blocklistRows.map(blocklistEntryDto);
   const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
@@ -163,7 +166,11 @@ export default async function AccountSettingsPage({
               </div>
             </>
           )}
+        </>
+      )}
 
+      {managesBlocklist && (
+        <>
           <h2 className="mt-10 font-display text-xl text-text-primary">Request blocklist</h2>
           <p className="mt-2 text-sm text-text-secondary">
             Titles and keywords nobody can request. Block a single title from its page.

@@ -1,8 +1,9 @@
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { notifications, requests, users } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications/query";
 import { quotedRequestTitle } from "@/lib/requests/labels";
+import { usersWhoCan } from "@/lib/users/access";
 
 // "Anna requested “Dune” (Season 2)" to everyone who reviews requests — the
 // admin and trusted members — so a request doesn't sit unseen until someone
@@ -13,11 +14,7 @@ import { quotedRequestTitle } from "@/lib/requests/labels";
  * the household channels (Discord and the rest), so those hear about it
  * once. Each reviewer's own channels follow their own choices. */
 async function reviewersExcept(userId: string) {
-  const reviewers = await db
-    .select({ id: users.id, role: users.role })
-    .from(users)
-    .where(and(inArray(users.role, ["admin", "trusted"]), ne(users.id, userId)));
-  return reviewers.sort((a, b) => (a.role === "admin" ? -1 : b.role === "admin" ? 1 : 0));
+  return (await usersWhoCan("reviewRequests")).filter((reviewer) => reviewer.id !== userId);
 }
 
 /** Once a request has been reviewed, its alerts have done their job: mark

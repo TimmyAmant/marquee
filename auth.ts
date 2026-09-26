@@ -98,7 +98,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Role is read fresh here too, since it can change after sign-in
       // (promotion, demotion, the admin-pinning migration).
       const [row] = await db
-        .select({ role: users.role, passwordChangedAt: users.passwordChangedAt, lastActiveAt: users.lastActiveAt })
+        .select({
+          role: users.role,
+          permissions: users.permissions,
+          passwordChangedAt: users.passwordChangedAt,
+          lastActiveAt: users.lastActiveAt,
+        })
         .from(users)
         .where(eq(users.id, token.userId as string))
         .limit(1);
@@ -109,6 +114,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         typeof token.signedInAt === "number" ? token.signedInAt : (token.iat ?? 0) * 1000;
       if (row.passwordChangedAt && row.passwordChangedAt.getTime() > signedInAt) return null;
       token.role = row.role;
+      // Permissions likewise (lib/users/permissions.ts): the admin changing
+      // a member's switches applies on their very next page load.
+      token.permissions = row.permissions;
       recordActivity(token.userId as string, row.lastActiveAt);
       return token;
     },
@@ -117,6 +125,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.userId as string;
         session.user.username = token.username as string;
         session.user.role = (token.role as typeof session.user.role) ?? "member";
+        session.user.permissions = Array.isArray(token.permissions) ? token.permissions : [];
       }
       return session;
     },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can } from "@/lib/users/permissions";
 import { approveRequest, rejectRequest } from "@/lib/requests/mutate";
 
 // The "Approve" / "Decline" buttons on a new-request push notification
@@ -19,7 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Sign in to Marquee first." }, { status: 401 });
-  if (!canReviewRequests(session.user.role)) {
+  if (!can(session.user, "reviewRequests")) {
     return NextResponse.json({ error: "Only the admin can review requests." }, { status: 403 });
   }
   const { id, action } = await params;

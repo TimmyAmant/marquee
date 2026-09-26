@@ -12,6 +12,10 @@ import type { Ok, UpdateUserResponse } from "@/lib/api/types";
  * the website's edit form: `username` is required; `displayName` and
  * `password` are optional (omitted/empty = unchanged); `autoApproveMovies` /
  * `autoApproveTv` are honored only for the admin (omitted = unchanged).
+ * `permissions` (0.48+, the admin, on someone else's account): switches to
+ * change, e.g. `{ "requestTv": false, "viewRequests": true }` — others stay
+ * as they are; anyone else sending it gets 403. `role` "member" / "trusted"
+ * fills in that preset's switches when it's a change.
  * Setting a new password on your own account also needs `currentPassword`
  * (400 `invalid` when it's missing or wrong); the admin resetting someone
  * else's password doesn't.
@@ -45,6 +49,8 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Up
         movieQuotaDays: body.movieQuotaDays,
         tvQuotaLimit: body.tvQuotaLimit,
         tvQuotaDays: body.tvQuotaDays,
+        // 0.48+, admin only (lib/users/permissions.ts).
+        permissions: body.permissions,
       },
     ),
   );

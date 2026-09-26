@@ -1,6 +1,7 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+import { normalizePermissions, presetPermissions, storedPermissionFields, TRUSTED_PRESET } from "@/lib/users/permissions";
 import { fail, type CoreErrorCode, type CoreFailure, type CoreResult } from "@/lib/core-result";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isUniqueViolation, uniqueUsername, unlinkWouldLockOut } from "@/lib/auth/media-accounts";
@@ -295,7 +296,8 @@ async function createSsoMember(identity: SsoIdentity, role: "member" | "trusted"
         username,
         displayName: identity.displayName,
         passwordHash: null,
-        role,
+        // The Member or Trusted preset (lib/users/permissions.ts).
+        ...storedPermissionFields(presetPermissions(role)),
         ssoIssuer: identity.issuer,
         ssoSubject: identity.subject,
       })
@@ -350,12 +352,17 @@ export async function resolveSsoSignIn(identity: SsoIdentity, config: SsoConfig)
   }
 
   if (shouldPromoteToTrusted(user.role, identity, policy)) {
-    const [promoted] = await db
-      .update(users)
-      .set({ role: "trusted" })
-      .where(and(eq(users.id, user.id), eq(users.role, "member")))
-      .returning();
-    if (promoted) user = promoted;
+    // Promotion adds the Trusted preset's switches to whatever they have —
+    // never takes one away (so an admin's extra grants stay).
+    const granted = normalizePermissions([...user.permissions, ...TRUSTED_PRESET]);
+    if (granted.length !== normalizePermissions(user.permissions).length) {
+      const [promoted] = await db
+        .update(users)
+        .set(storedPermissionFields(granted))
+        .where(and(eq(users.id, user.id), eq(users.role, "member")))
+        .returning();
+      if (promoted) user = promoted;
+    }
   }
   return { ok: true, user };
 }

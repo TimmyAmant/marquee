@@ -18,8 +18,9 @@ function fourKFor(
   isAdmin: boolean,
   fourK: Parameters<typeof fourKViewerState>[1],
   blocked: { reason: string | null } | null,
+  mayRequest: boolean,
 ) {
-  const state = fourKViewerState(isAdmin, fourK);
+  const state = fourKViewerState(isAdmin, fourK, mayRequest);
   return state && blocked ? { ...state, canRequest: false } : state;
 }
 
@@ -43,6 +44,7 @@ export default async function TitlePage({
   const {
     title,
     raw,
+    permissions,
     libraryStatus,
     titleFavorited,
     activeRequestStatus,
@@ -81,6 +83,7 @@ export default async function TitlePage({
     keywords,
     titleSidebar,
   } = data;
+  const mayRequest = { movie: permissions.requestMovies, tv: permissions.requestTv };
 
   return (
     <div>
@@ -128,11 +131,15 @@ export default async function TitlePage({
         }
         tvdbId={title.tvdbId}
         arrTracking={arrTracking}
-        fourK={viewer.session ? fourKFor(viewer.isAdmin, fourK, blocked) : null}
+        fourK={
+          viewer.session
+            ? fourKFor(viewer.isAdmin, fourK, blocked, permissions[type === "movie" ? "request4kMovies" : "request4kTv"])
+            : null
+        }
         blocked={viewer.session ? blocked : null}
         notFoundSince={notFoundSince?.toISOString() ?? null}
         report={
-          viewer.session && canReportProblem(libraryStatus.status, fourK?.status ?? null)
+          viewer.session && permissions.reportIssues && canReportProblem(libraryStatus.status, fourK?.status ?? null)
             ? { seasonNumbers: seasons.map((s) => s.season_number), openReports }
             : null
         }
@@ -141,6 +148,8 @@ export default async function TitlePage({
           // The same summaries the API's `viewer.myRequests` carries.
           titleViewerState({
             isAdmin: viewer.isAdmin,
+            mediaType: type,
+            permissions,
             status: libraryStatus.status,
             configured: libraryStatus.configured,
             favorited: false,
@@ -149,6 +158,15 @@ export default async function TitlePage({
             arrTracking: null,
             myRequests,
           }).myRequests
+        }
+        may={
+          viewer.session
+            ? {
+                request: mayRequest[type],
+                advanced: permissions.advancedRequests,
+                manageBlocklist: permissions.manageBlocklist,
+              }
+            : undefined
         }
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
@@ -186,6 +204,7 @@ export default async function TitlePage({
             collectionFavorited={collectionFavorited}
             isAdmin={viewer.session ? viewer.isAdmin : undefined}
             pageTitle={{ mediaType: type, tmdbId }}
+            mayRequest={mayRequest}
           />
         )}
         <StudioRow companies={companies} favoritedIds={companyFavoritedIds} showFavorite={Boolean(viewer.session)} />
@@ -198,6 +217,7 @@ export default async function TitlePage({
           showFavorite={Boolean(viewer.session)}
           arrConfigured={viewer.session ? arrConfigured : undefined}
           isAdmin={viewer.session ? viewer.isAdmin : undefined}
+          mayRequest={mayRequest}
         />
       </div>
     </div>

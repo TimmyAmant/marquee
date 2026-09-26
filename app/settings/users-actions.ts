@@ -10,6 +10,7 @@ import {
   updateHouseholdMember,
   type HouseholdMember as HouseholdMemberRow,
 } from "@/lib/users/household";
+import { PERMISSIONS } from "@/lib/users/permissions";
 
 // A type alias, not `export type { … }` — a re-export from a "use server"
 // file is treated as a server action export and fails the build.
@@ -66,15 +67,17 @@ export async function updateHouseholdMemberAction(
       password: formData.get("password") || undefined,
       currentPassword: formData.get("currentPassword") || undefined,
       displayName: formData.get("displayName") || undefined,
-      // The edit form always submits both checkboxes for the admin (an
-      // unchecked box is simply absent from the form data).
       ...(isAdmin
         ? {
-            autoApproveMovies: formData.get("autoApproveMovies") === "on",
-            autoApproveTv: formData.get("autoApproveTv") === "on",
-            // Only on another member's row (the form leaves them out on the
-            // admin's own).
-            ...(formData.has("role") ? { role: formData.get("role") } : {}),
+            // Every switch, on another member's row (the form leaves them
+            // out on the admin's own); an unchecked box is simply absent.
+            ...(formData.get("permissionsForm") === "1"
+              ? {
+                  permissions: Object.fromEntries(
+                    PERMISSIONS.map((permission) => [permission, formData.get(`perm:${permission}`) === "on"]),
+                  ),
+                }
+              : {}),
             ...(formData.has("movieQuotaLimit")
               ? {
                   movieQuotaLimit: formData.get("movieQuotaLimit"),

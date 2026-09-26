@@ -2,21 +2,21 @@
 
 import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can } from "@/lib/users/permissions";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { getAddOptions, type AddOptions } from "@/lib/arr/add-options-server";
 
 /** The website's "Advanced" section under Approve (and the admin's Add):
  * the servers a title could go to, with their pickers and defaults. For
- * the admin and trusted members — always the admin's servers. */
+ * whoever may use Advanced request options — always the admin's servers. */
 export async function getAddOptionsAction(
   mediaType: MediaType,
   tmdbId: number,
   fourK: boolean,
 ): Promise<{ ok: true; options: AddOptions } | { ok: false; error: string }> {
   const session = await auth();
-  if (!session?.user || !canReviewRequests(session.user.role)) {
-    return { ok: false, error: "Only an admin can approve requests." };
+  if (!session?.user || !can(session.user, "advancedRequests")) {
+    return { ok: false, error: "Advanced request options aren't turned on for your account." };
   }
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
     return { ok: false, error: "That title couldn't be found." };

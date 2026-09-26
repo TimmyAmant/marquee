@@ -9,6 +9,8 @@ import { franchiseRequestableItems } from "@/lib/title-meta";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { permissionMap } from "@/lib/users/permissions";
+import { getAccess } from "@/lib/users/access";
 
 // "Request all N missing" on a franchise row, for household members — the
 // admin's "Add all" counterpart. The set is worked out again here from the
@@ -64,6 +66,7 @@ export async function requestAllMissing(
     franchise.franchiseRequestStatusMap,
     blockedKeys,
     viewer.isAdmin,
+    permissionMap((await getAccess(viewer.userId)) ?? { role: "member", permissions: [] }),
   );
   const byKey = new Map(franchise.franchiseItems.map((item) => [`${item.mediaType}:${item.tmdbId}`, item]));
 

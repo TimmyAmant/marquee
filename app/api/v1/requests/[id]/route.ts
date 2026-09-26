@@ -13,7 +13,7 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Ok
   const id = parseUuidSegment(params.id, "Request not found.");
   const body = await readJsonBody(request);
   unwrap(
-    await editRequest({ userId: ctx.user.id, role: ctx.user.role }, id, {
+    await editRequest({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id, {
       // Absent leaves them as they are; null seasons is the whole series.
       seasons: "seasons" in body ? body.seasons : undefined,
       is4k: "is4k" in body ? body.is4k : undefined,
@@ -26,6 +26,6 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Ok
 export const DELETE = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
   const ctx = await requireApiUser(request);
   const id = parseUuidSegment(params.id, "Request not found.");
-  unwrap(await cancelRequest({ userId: ctx.user.id, role: ctx.user.role }, id));
+  unwrap(await cancelRequest({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id));
   return { ok: true };
 });

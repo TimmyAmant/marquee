@@ -84,6 +84,7 @@ export function TitleHero({
   cast,
   share,
   myRequests = [],
+  may,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -129,6 +130,9 @@ export function TitleHero({
   share?: { publicBase: string | null } | null;
   /** The viewer's own requests for this title: Edit / Cancel and comments. */
   myRequests?: TitleRequestSummary[];
+  /** What the viewer may do here (lib/users/permissions.ts); omitted when
+   * signed out. */
+  may?: { request: boolean; advanced: boolean; manageBlocklist: boolean };
 }) {
   // Rating/status/network live in the sidebar instead — this line is just
   // the quick facts, matching the reference layout's short line under the
@@ -202,6 +206,8 @@ export function TitleHero({
                     seasonPicker={seasonPicker}
                     inArr={Boolean(arrTracking)}
                     blocked={blocked ?? null}
+                    canRequest={may?.request ?? false}
+                    advanced={may?.advanced ?? false}
                   />
 
                   {notFoundSince && (
@@ -214,7 +220,7 @@ export function TitleHero({
                     </Link>
                   )}
 
-                  {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} />}
+                  {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} advanced={may?.advanced ?? false} />}
 
                   {report && (
                     <ReportProblemButton
@@ -235,7 +241,9 @@ export function TitleHero({
                     />
                   )}
 
-                  {isAdmin && <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked ?? null} />}
+                  {may?.manageBlocklist && (
+                    <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked ?? null} />
+                  )}
 
                   {isAdmin && arrTracking && (
                     <ArrTrackingControls

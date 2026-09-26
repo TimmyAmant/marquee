@@ -189,12 +189,23 @@ public sealed class MarqueeApiAuthRequestTests
 
         var me = Fixtures.Decode<Me>("me");
         Assert.Equal("timmy", me.Username);
-        Assert.False(me.AutoApproveMovies);
-        Assert.False(me.AutoApproveTv);
+        // The admin: everything on (0.48+ sends the switches, all true).
+        Assert.True(me.AutoApproveMovies);
+        Assert.True(me.AutoApproveTv);
+        Assert.Equal(Permissions.All, me.Permissions);
+        Assert.Equal(Permissions.All, me.User.Permissions);
         Assert.Equal(Json.ParseDate("2026-09-17T17:10:57.821Z"), me.CreatedAt);
-        // The same account, photo and linked sign-ins aside: the doc's login
-        // example has neither, its /me example has both.
-        Assert.Equal(login.User with { AvatarUrl = null }, me.User with { AvatarUrl = null, Linked = null, HasPassword = null });
+        // The same account, photo, linked sign-ins and permissions aside: the
+        // doc's login example has none of them, its /me example has them all.
+        Assert.Equal(login.User with { AvatarUrl = null, Permissions = null }, me.User with
+        {
+            AvatarUrl = null,
+            Linked = null,
+            HasPassword = null,
+            Permissions = null,
+            AutoApproveMovies = null,
+            AutoApproveTv = null,
+        });
         Assert.Equal(new LinkedAccounts { Plex = true, Jellyfin = false }, me.User.Linked);
         Assert.True(me.User.HasPassword);
 

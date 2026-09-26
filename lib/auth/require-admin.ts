@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can, type Permission } from "@/lib/users/permissions";
 
 export type RequireAdminResult = { ok: true; userId: string } | { ok: false; error: string };
 
@@ -18,11 +18,12 @@ export async function requireAdmin(message = "Only the admin can do this."): Pro
   return { ok: true, userId: session.user.id };
 }
 
-/** "The admin or a trusted member" — whoever works the review queue
- * (requests and problem reports; lib/users/roles.ts). */
-export async function requireReviewer(message = "Only the admin can review requests."): Promise<RequireAdminResult> {
+/** The signed-in account may do `permission` (lib/users/permissions.ts) —
+ * always the admin, otherwise whoever has that switch on. Read fresh from
+ * the database on every request (see the jwt callback in auth.ts). */
+export async function requirePermission(permission: Permission, message: string): Promise<RequireAdminResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Sign in required." };
-  if (!canReviewRequests(session.user.role)) return { ok: false, error: message };
+  if (!can(session.user, permission)) return { ok: false, error: message };
   return { ok: true, userId: session.user.id };
 }
