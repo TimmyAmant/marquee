@@ -30,7 +30,7 @@ struct PinnedServerTests {
         let suite = defaults("http://192.168.1.35:3000")
         let session = ServerSession(defaults: suite, tokenStore: FailingTokenStore(), pinned: pinned)
         #expect(session.server?.baseURLString == "http://127.0.0.1:3100")
-        // The seeded token comes from the environment, not the Keychain.
+        // The seeded token comes from the environment, not the sessions file.
         #expect(session.hasToken)
     }
 
@@ -51,19 +51,19 @@ struct PinnedServerTests {
     }
 }
 
-/// Stands in for the Keychain: any use at all is a test failure.
+/// Stands in for the sessions file: any use at all is a test failure.
 private struct FailingTokenStore: TokenStore {
     func token(for server: String) -> String? {
-        Issue.record("A pinned session read the Keychain for \(server)")
+        Issue.record("A pinned session read the saved sessions for \(server)")
         return nil
     }
 
     func save(_ token: String, for server: String) -> Bool {
-        Issue.record("A pinned session wrote the Keychain for \(server)")
+        Issue.record("A pinned session wrote the saved sessions for \(server)")
         return false
     }
 
     func delete(for server: String) {
-        Issue.record("A pinned session deleted the Keychain item for \(server)")
+        Issue.record("A pinned session deleted the saved session for \(server)")
     }
 }

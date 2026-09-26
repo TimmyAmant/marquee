@@ -26,7 +26,7 @@ struct MarqueeApp: App {
                 .onAppear {
                     (AppearancePreference(rawValue: appearance) ?? .system).apply()
                     // As a unit-test host the app stays on its launch screen:
-                    // no saved-server restore, Keychain read or badge polling.
+                    // no saved-server restore, saved-session read or badge polling.
                     if !AppInfo.isRunningTests {
                         model.bootstrap()
                     }
