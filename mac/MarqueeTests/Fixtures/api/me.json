@@ -10,7 +10,8 @@
   "createdAt": "2026-09-17T17:10:57.821Z",
   "linked": {
     "plex": true,
-    "jellyfin": false
+    "jellyfin": false,
+    "sso": false
   },
   "hasPassword": true,
   "requestLimits": {

@@ -16,6 +16,8 @@ import { NotificationChannelCards } from "@/components/notification-channel-card
 import { WebhookConnectCard } from "@/components/webhook-connect-card";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
+import { SsoSettingsCard } from "@/components/sso-settings-card";
+import { getSsoSettingsView } from "@/lib/auth/sso/config";
 
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
@@ -38,7 +40,8 @@ export default async function IntegrationsSettingsPage() {
       channels,
     },
     headerList,
-  ] = await Promise.all([loadIntegrationsPage(session.user.id), headers()]);
+    sso,
+  ] = await Promise.all([loadIntegrationsPage(session.user.id), headers(), getSsoSettingsView()]);
 
   const baseUrl = webhookBaseUrl(headerList);
 
@@ -83,6 +86,13 @@ export default async function IntegrationsSettingsPage() {
               }}
               name={jellyfin.existing && jellyfin.summary.servers.length > 0 ? jellyfin.name : null}
             />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">Sign-in</h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <SsoSettingsCard initial={sso} defaultPublicUrl={baseUrl} />
           </div>
         </section>
 

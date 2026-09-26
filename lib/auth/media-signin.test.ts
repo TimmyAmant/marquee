@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 type Row = Record<string, unknown>;
 type Cond = { op: "eq"; col: string; val: unknown } | { op: "and"; conds: Cond[] } | { op: "isNull"; col: string };
 
-const tables: Record<string, Row[]> = { users: [], plexServers: [], appSettings: [] };
+const tables: Record<string, Row[]> = { users: [], plexServers: [], appSettings: [], ssoSettings: [] };
 let nextId = 1;
 
 vi.mock("drizzle-orm", () => ({
@@ -27,9 +27,10 @@ vi.mock("@/lib/db/schema", () => {
   const table = (name: string, cols: string[]) =>
     Object.assign(Object.fromEntries(cols.map((c) => [c, `${name}.${c}`])), { __name: name });
   return {
-    users: table("users", ["id", "username", "displayName", "passwordHash", "role", "plexUserId", "jellyfinUserId"]),
+    users: table("users", ["id", "username", "displayName", "passwordHash", "role", "plexUserId", "jellyfinUserId", "ssoSubject"]),
     plexServers: table("plexServers", ["userId", "machineIdentifier"]),
     appSettings: table("appSettings", ["id", "mediaServerSignup"]),
+    ssoSettings: table("ssoSettings", ["name", "allowSignup"]),
   };
 });
 
@@ -325,7 +326,13 @@ describe("getSignInMethods", () => {
       jellyfin: false,
       jellyfinName: "Jellyfin",
       signup: false,
+      quickConnect: false,
+      sso: null,
     });
+
+    tables.ssoSettings = [{ name: "Authentik", allowSignup: true }];
+    expect(await getSignInMethods()).toMatchObject({ sso: { name: "Authentik", signup: true } });
+    tables.ssoSettings = [];
 
     tables.appSettings = [{ id: "s", mediaServerSignup: true }];
     expect(await getSignInMethods()).toMatchObject({ plex: true, signup: true });

@@ -2,7 +2,14 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
-import { jellyfinLoginAction, loginAction, pollPlexSignInAction, startPlexSignInAction } from "./actions";
+import {
+  jellyfinLoginAction,
+  loginAction,
+  pollPlexSignInAction,
+  pollQuickConnectAction,
+  startPlexSignInAction,
+  startQuickConnectAction,
+} from "./actions";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -67,20 +74,101 @@ function PasswordForm({ remember, setRemember }: { remember: boolean; setRemembe
   );
 }
 
+/** Jellyfin's Quick Connect: shows a code to approve in a Jellyfin app the
+ * person is already signed in to, and signs in once they have (the server
+ * asks Jellyfin; this page only polls). */
+function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel: () => void }) {
+  const [code, setCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const cancelled = useRef(false);
+  // Read at sign-in time, so ticking the box doesn't start over.
+  const rememberRef = useRef(remember);
+  useEffect(() => {
+    rememberRef.current = remember;
+  }, [remember]);
+
+  useEffect(() => {
+    cancelled.current = false;
+    (async () => {
+      const started = await startQuickConnectAction();
+      if (cancelled.current) return;
+      if (!started.handle || !started.code) {
+        setError(started.error ?? "Couldn't start Quick Connect. Try again.");
+        return;
+      }
+      setCode(started.code);
+      resetPushPrompt();
+      const deadline = Date.now() + PLEX_TIMEOUT_MS;
+      while (!cancelled.current && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, PLEX_POLL_MS));
+        if (cancelled.current) return;
+        // On approval the action signs in and redirects.
+        const poll = await pollQuickConnectAction(started.handle, rememberRef.current);
+        if (poll.status === "error") {
+          setError(poll.error);
+          setCode(null);
+          return;
+        }
+      }
+      if (!cancelled.current) {
+        setError("Timed out waiting for Quick Connect. Try again.");
+        setCode(null);
+      }
+    })();
+    return () => {
+      cancelled.current = true;
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-0 p-4 text-sm">
+      {code ? (
+        <>
+          <p className="text-text-secondary">
+            In a Jellyfin app you&apos;re signed in to, open your profile → Quick Connect and enter this code:
+          </p>
+          <p className="text-center font-mono text-3xl tracking-[0.3em] text-text-primary" aria-live="polite">
+            {code}
+          </p>
+          <p className="text-xs text-text-muted">Waiting for approval…</p>
+        </>
+      ) : (
+        !error && <p className="text-text-secondary">Getting a code…</p>
+      )}
+      {error && <p className="text-red-400">{error}</p>}
+      <button type="button" onClick={onCancel} className="self-start text-text-secondary hover:text-accent">
+        {error ? "Back" : "Cancel"}
+      </button>
+    </div>
+  );
+}
+
 /** The same fields, checked against the admin's Jellyfin server instead. */
 function JellyfinForm({
   name,
+  quickConnect,
   remember,
   setRemember,
   onCancel,
 }: {
   /** "Jellyfin", or "Emby" when that's what the server is. */
   name: string;
+  /** Offer "Use Quick Connect" (Jellyfin only). */
+  quickConnect: boolean;
   remember: boolean;
   setRemember: (v: boolean) => void;
   onCancel: () => void;
 }) {
   const [state, formAction, isPending] = useActionState(jellyfinLoginAction, undefined);
+  const [usingQuickConnect, setUsingQuickConnect] = useState(false);
+  if (usingQuickConnect) {
+    return (
+      <div className="mt-6 flex flex-col gap-4">
+        <QuickConnectPanel remember={remember} onCancel={() => setUsingQuickConnect(false)} />
+        <RememberCheckbox checked={remember} onChange={setRemember} />
+      </div>
+    );
+  }
   return (
     <form action={formAction} onSubmit={resetPushPrompt} className="mt-6 flex flex-col gap-4">
       <p className="text-sm text-text-secondary">Use the username and password you use for {name}.</p>
@@ -104,6 +192,11 @@ function JellyfinForm({
       >
         {isPending ? "Signing in…" : `Sign in with ${name}`}
       </button>
+      {quickConnect && (
+        <button type="button" onClick={() => setUsingQuickConnect(true)} className={secondaryButtonClass}>
+          Use Quick Connect
+        </button>
+      )}
       <button type="button" onClick={onCancel} className="text-sm text-text-secondary hover:text-accent">
         Use a Marquee password instead
       </button>
@@ -190,26 +283,51 @@ function PlexButton({ remember }: { remember: boolean }) {
   );
 }
 
-type Methods = { plex: boolean; jellyfin: boolean; jellyfinName: string; signup: boolean };
+type Methods = {
+  plex: boolean;
+  jellyfin: boolean;
+  jellyfinName: string;
+  signup: boolean;
+  quickConnect: boolean;
+  sso: { name: string; signup: boolean } | null;
+};
 
-/** "Plex", "Jellyfin", or "Plex (or Emby)" — the media-server sign-ins on
- * offer, for the sign-up line. Null when there are none. */
+/** "Plex", "Jellyfin", "Plex (or Emby)", "Authentik (or Plex)"… — the
+ * sign-ins that make new accounts, for the sign-up line. Null when none do. */
 function signupMethodNames(methods: Methods): string | null {
-  if (methods.plex && methods.jellyfin) return `Plex (or ${methods.jellyfinName})`;
-  if (methods.plex) return "Plex";
-  if (methods.jellyfin) return methods.jellyfinName;
-  return null;
+  const names: string[] = [];
+  if (methods.sso?.signup) names.push(methods.sso.name);
+  if (methods.signup && methods.plex) names.push("Plex");
+  if (methods.signup && methods.jellyfin) names.push(methods.jellyfinName);
+  if (names.length === 0) return null;
+  const [first, ...rest] = names;
+  return rest.length > 0 ? `${first} (or ${rest.join(" or ")})` : first;
 }
 
-export function LoginForm({ methods }: { methods: Methods }) {
+/** "Sign in with <SSO>": a plain link to the server, which sends the
+ * browser on to the identity provider and back (app/api/auth/sso). */
+function SsoButton({ name, remember }: { name: string; remember: boolean }) {
+  return (
+    <a
+      href={`/api/auth/sso/start${remember ? "?remember=1" : ""}`}
+      onClick={resetPushPrompt}
+      className={`${secondaryButtonClass} text-center`}
+    >
+      Sign in with {name}
+    </a>
+  );
+}
+
+export function LoginForm({ methods, ssoError }: { methods: Methods; ssoError: string | null }) {
   const [mode, setMode] = useState<"password" | "jellyfin">("password");
   const [remember, setRemember] = useState(true);
-  // The other ways in, under an "or": Plex always, Jellyfin unless its form
-  // is the one showing (then "Use a Marquee password instead" is the way back).
-  const hasOtherMethods = methods.plex || (methods.jellyfin && mode !== "jellyfin");
-  // With new accounts from Plex/Jellyfin sign-in on, that's how a newcomer
-  // gets in — there's no other sign-up.
-  const signupNames = methods.signup ? signupMethodNames(methods) : null;
+  // The other ways in, under an "or": SSO and Plex always, Jellyfin unless
+  // its form is the one showing (then "Use a Marquee password instead" is
+  // the way back).
+  const hasOtherMethods = Boolean(methods.sso) || methods.plex || (methods.jellyfin && mode !== "jellyfin");
+  // With new accounts from Plex/Jellyfin/SSO sign-in on, that's how a
+  // newcomer gets in — there's no other sign-up.
+  const signupNames = signupMethodNames(methods);
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-8">
@@ -218,9 +336,12 @@ export function LoginForm({ methods }: { methods: Methods }) {
         Sign in to your Marquee account.
       </p>
 
+      {ssoError && <p className="mt-4 text-sm text-red-400">{ssoError}</p>}
+
       {mode === "jellyfin" && methods.jellyfin ? (
         <JellyfinForm
           name={methods.jellyfinName}
+          quickConnect={methods.quickConnect}
           remember={remember}
           setRemember={setRemember}
           onCancel={() => setMode("password")}
@@ -237,6 +358,7 @@ export function LoginForm({ methods }: { methods: Methods }) {
             <span className="h-px flex-1 bg-border" />
           </div>
           <div className="flex flex-col gap-3">
+            {methods.sso && <SsoButton name={methods.sso.name} remember={remember} />}
             {methods.plex && <PlexButton remember={remember} />}
             {methods.jellyfin && mode !== "jellyfin" && (
               <button type="button" onClick={() => setMode("jellyfin")} className={secondaryButtonClass}>

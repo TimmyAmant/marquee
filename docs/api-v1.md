@@ -74,6 +74,14 @@ where the real server needed something the core contract didn't spell out.
     `GET /titles/{type}/{tmdbId}/add-options` lists what can be picked. A
     server older than this answers `404 not_found` on the new endpoints —
     hide the "Advanced" options and the server list there.
+12. **Single sign-on and Jellyfin Quick Connect (0.44+, additive).**
+    `GET /server-info`'s `signIn` gains `sso` (`{ name, signup }` or null)
+    and `quickConnect`; `linked` (on `/me` and `HouseholdMember`) gains
+    `sso`. New public `POST /auth/sso/start` + `POST /auth/sso/poll` and
+    `POST /auth/jellyfin/quick-connect/start` + `…/poll` answer like the Plex
+    PIN flow; new `/me/links/sso/*` and admin `/settings/sso`. A server
+    older than this has neither field — treat missing as null/false and
+    don't offer the buttons.
 
 ---
 
@@ -82,7 +90,8 @@ where the real server needed something the core contract didn't spell out.
 - Base: `{server}/api/v1`. JSON bodies, `Content-Type: application/json`, camelCase keys.
 - Auth: `Authorization: Bearer mqt_<43 base64url chars>` on everything except
   `server-info`, `auth/login`, `auth/setup`, `auth/plex/start`,
-  `auth/plex/poll` and `auth/jellyfin`.
+  `auth/plex/poll`, `auth/jellyfin`, `auth/jellyfin/quick-connect/start`,
+  `auth/jellyfin/quick-connect/poll`, `auth/sso/start` and `auth/sso/poll`.
 - Timestamps: ISO-8601 UTC with milliseconds. Calendar dates: `"YYYY-MM-DD"`.
   `year` fields are 4-character strings (`"1999"`) or `null`.
 - Nullable fields are always present.
@@ -102,7 +111,7 @@ Non-2xx responses are `{"error": "<message safe to show>", "code": "<code>"}`.
 | 404 | `not_found` | Unknown id, bad path segment (non-numeric id, unknown media type), unknown endpoint |
 | 409 | `conflict` | State conflict: already requested, already reviewed, integration not connected / not fully configured, not tracked in Sonarr/Radarr |
 | 409 | `setup_complete` | `auth/setup` once an account exists |
-| 410 | `expired` | Plex sign-in/link poll with a handle that's used, unknown or older than 10 minutes — start again |
+| 410 | `expired` | Plex, SSO or Quick Connect sign-in/link poll with a handle that's used, unknown or older than 10 minutes — start again |
 | 429 | `rate_limited` | Login, setup, Plex/Jellyfin sign-in rate limit |
 | 500 | `internal` | Server bug; details are only in the server log |
 | 502 | `upstream` | A connected service (TMDb, Sonarr, Radarr, Plex, Jellyfin, Trakt…) failed, timed out, or TMDb isn't configured |
@@ -198,7 +207,15 @@ Cheap: a few small queries (3 s timeout together), no calls to integrations.
   "version": "0.22.0",
   "setupComplete": true,
   "status": "ok",
-  "signIn": { "password": true, "plex": true, "jellyfin": false, "jellyfinName": "Jellyfin", "signup": true }
+  "signIn": {
+    "password": true,
+    "plex": true,
+    "jellyfin": true,
+    "jellyfinName": "Jellyfin",
+    "signup": true,
+    "quickConnect": true,
+    "sso": { "name": "Authentik", "signup": false }
+  }
 }
 ```
 
@@ -223,6 +240,17 @@ screen, under the Plex/Jellyfin buttons, naming only the methods offered
 (e.g. "New here? Use Sign in with Plex — your account is made for you.").
 False: say nothing; someone without an account gets `403` "There's no
 Marquee account for this Plex account yet. Ask the admin to add you.".
+
+`quickConnect` (0.44+; treat missing as false): `jellyfin` is on and the
+server is Jellyfin (Emby has no Quick Connect) — offer "Use Quick Connect"
+on the Jellyfin sign-in (see `POST /auth/jellyfin/quick-connect/start`).
+Whether Jellyfin has it switched on is only known when it's started (`409`).
+
+`sso` (0.44+; treat missing as null): single sign-on is set up — show a
+"Sign in with {name}" button (see "Sign in with single sign-on" below).
+`sso.signup`: new accounts from SSO sign-in are on; mention it in the
+newcomer line like `signup` (e.g. "New here? Use Sign in with Authentik —
+your account is made for you.").
 
 Database unreachable → still `200` with `"setupComplete": null, "status": "degraded"`
 and `signIn` password-only.
@@ -368,6 +396,92 @@ curl -s -X POST "$SERVER/api/v1/auth/jellyfin" -H 'Content-Type: application/jso
   -d '{"username":"anna","password":"…","deviceName":"Anna’s PC"}'
 ```
 
+#### `POST /auth/jellyfin/quick-connect/start` — public (0.44+)
+
+Jellyfin's Quick Connect (Jellyfin 10.8+; never Emby): sign in without
+typing a password, by approving a code in a Jellyfin app you're already
+signed in to. Offered when `signIn.quickConnect`. No body.
+
+```json
+{
+  "handle": "Qc7Lm…43 chars…",
+  "code": "482915",
+  "expiresAt": "2026-09-25T17:40:00.000Z"
+}
+```
+
+Show `code` large ("In a Jellyfin app you're signed in to, open your profile
+→ Quick Connect and enter this code"), then poll with `handle` every 2 s
+until `expiresAt`. The Quick Connect secret stays on the server. Errors:
+`409 conflict` "Jellyfin sign-in isn't set up on this server." / "Emby
+doesn't have Quick Connect." / "Quick Connect is turned off on this Jellyfin
+server. The admin can turn it on in Jellyfin's Dashboard → General.", `502
+upstream` "Couldn't reach Jellyfin. Try again.", `429 rate_limited` (same
+limits as `POST /auth/plex/start`).
+
+#### `POST /auth/jellyfin/quick-connect/poll` — public (0.44+)
+
+`{ "handle": "…", "deviceName": "…" }` (`deviceName` optional). Exactly like
+`POST /auth/plex/poll`: `202 { "status": "pending" }` until approved; then
+`200` with the body of `POST /auth/login`, once; `410 expired` "That Quick
+Connect code expired. Try again."; `403 forbidden` "There's no Marquee
+account for this Jellyfin account yet. Ask the admin to add you." (new
+accounts off) or "Jellyfin didn't accept that Quick Connect code. Try
+again.". Who it signs in as is decided exactly like `POST /auth/jellyfin`
+(the linked account, or a new member when allowed).
+
+### Sign in with single sign-on — public (0.44+)
+
+The admin's own OpenID Connect identity provider (Authentik, Authelia,
+Pocket ID, Keycloak, Google…), set up in Settings → Integrations (`GET
+/settings/sso`). Offered when `signIn.sso` isn't null; label the button
+"Sign in with {sso.name}". The app never sees the provider's tokens or the
+client secret: the browser does the provider's sign-in, the server checks
+it, and the app polls for a Marquee token — like Plex.
+
+Who may sign in, in order: nobody outside the admin's "required group" (when
+one is set); the account linked to that identity (issuer + subject); with
+"match by verified email" on, the one non-admin account whose username is
+the identity's email, only when the provider marks it verified; a new member
+account when "New accounts from single sign-on" is on; otherwise `403`.
+Members in the admin's "trusted group" become `trusted` on sign-in; nobody is
+ever made admin this way.
+
+#### `POST /auth/sso/start` — public
+
+`{ "deviceName": "…" }` (optional — shown on the page the browser opens).
+
+```json
+{
+  "handle": "pX2vR…43 chars…",
+  "authUrl": "https://marquee.example.com/login/sso/app?key=Hc9…43 chars…",
+  "expiresAt": "2026-09-25T17:40:00.000Z"
+}
+```
+
+Open `authUrl` in the default browser — only if it's `https`, or on the
+server's own origin (it's always Marquee's own "Continue with {name}?" page,
+at the address the admin set as Marquee's; it goes on to the identity
+provider when the person continues). Then poll with `handle` every 2 s until
+`expiresAt` (10 minutes); keep it to yourself. Errors: `409 conflict`
+"Single sign-on isn't set up on this server.", `502 upstream` "Couldn't
+reach {name}. Try again.", `429 rate_limited` (30 per client address per 10
+minutes).
+
+#### `POST /auth/sso/poll` — public
+
+`{ "handle": "…", "deviceName": "…" }` (`deviceName` optional; defaults to
+the one given to `start`).
+
+- **`202`** `{ "status": "pending" }` — not finished in the browser yet.
+- **`200`** — signed in; the body of `POST /auth/login`. The handle is used up.
+- **`410 expired`** "That sign-in expired. Try again."
+- **`403 forbidden`** "Your {name} account isn't allowed to use Marquee. Ask the admin to add you to the right group." / "There's no Marquee account for this {name} account yet. Ask the admin to add you." / "{name} sign-in was cancelled.".
+- `502 upstream` "Couldn't finish signing in with {name}. Try again, or ask the admin to check the server log." (the provider refused the code or the ID token didn't check out), `429 rate_limited`.
+
+The browser tab ends on a Marquee page saying "You're signed in — go back to
+the Marquee app" (or why not).
+
 ### `GET /me` — user
 
 ```json
@@ -381,7 +495,7 @@ curl -s -X POST "$SERVER/api/v1/auth/jellyfin" -H 'Content-Type: application/jso
   "autoApproveMovies": false,
   "autoApproveTv": false,
   "createdAt": "2026-09-17T17:10:57.821Z",
-  "linked": { "plex": true, "jellyfin": false },
+  "linked": { "plex": true, "jellyfin": false, "sso": false },
   "hasPassword": true,
   "requestLimits": { "movie": null, "tv": null }
 }
@@ -396,8 +510,9 @@ request that wasn't declined counts, 4K and Watchlist ones included. The
 website shows members a line above their requests: "Movies: 3 of 5
 requests left (every 7 days)" or "Movies: none left — more in 3 days".
 
-`linked` says which media-server accounts this account signs in with (see
-"Linked accounts" in section 11). `hasPassword` is false for an account made
+`linked` says which media-server accounts (and, 0.44+, single sign-on —
+treat a missing `sso` as false) this account signs in with (see "Linked
+accounts" in section 11). `hasPassword` is false for an account made
 by Plex/Jellyfin sign-in or import that hasn't set a password yet — it can
 set one with `PATCH /users/{id}` without `currentPassword`.
 
@@ -1769,7 +1884,7 @@ member) and, for the admin, "Add a household member".
   "createdAt": "2026-09-17T17:12:40.991Z",
   "isCurrentUser": false,
   "avatarUrl": null,
-  "linked": { "plex": false, "jellyfin": true },
+  "linked": { "plex": false, "jellyfin": true, "sso": false },
   "hasPassword": false,
   "lastActiveAt": "2026-09-25T18:42:10.000Z",
   "movieQuotaLimit": 5,
@@ -1780,7 +1895,7 @@ member) and, for the admin, "Add a household member".
 ```
 
 `linked` / `hasPassword`: as on `/me`. Website: a small "Plex" / "Jellyfin"
-tag on linked rows.
+/ "SSO" tag on linked rows.
 
 `lastActiveAt`: the last time the account used the website or an app, kept
 to within 5 minutes; null when it never has (at first, it's when the
@@ -1889,8 +2004,8 @@ involved).
 ### Linked accounts — user (your own account)
 
 Website: "Linked accounts" on Settings → Account, shown when the admin has
-Plex or Jellyfin connected (or the account is still linked to one). Each of
-these answers the updated **`Me`** (as `GET /me`).
+Plex, Jellyfin or single sign-on set up (or the account is still linked to
+one). Each of these answers the updated **`Me`** (as `GET /me`).
 
 - **`POST /me/links/plex/start`** — no body. Same answer as
   `POST /auth/plex/start` (`{ handle, authUrl, expiresAt }`); the handle
@@ -1904,10 +2019,19 @@ these answers the updated **`Me`** (as `GET /me`).
   invalid_credentials` "Incorrect Jellyfin username or password", `409`
   "This Jellyfin account is already linked to another Marquee account.",
   `429` as `POST /auth/jellyfin`.
-- **`DELETE /me/links/plex`**, **`DELETE /me/links/jellyfin`** — `200`
-  `Me` (also when it wasn't linked). `409` "Set a password first — without
-  Plex, there'd be no way to sign in to this account." when the account has
-  no password and no other link.
+- **`POST /me/links/sso/start`** (0.44+) — no body. Same answer as `POST
+  /auth/sso/start`; the page it opens asks to link {name} to this account,
+  and the handle works only for this account's link.
+- **`POST /me/links/sso/poll`** (0.44+) — `{ "handle": "…" }`. `202` until
+  finished in the browser, then `200` `Me`. `410 expired`, `403` "Your
+  {name} account isn't allowed to use Marquee…" (required group), `409`
+  "This {name} account is already linked to another Marquee account.".
+  Linking replaces an earlier SSO link of this account.
+- **`DELETE /me/links/plex`**, **`DELETE /me/links/jellyfin`**, **`DELETE
+  /me/links/sso`** (0.44+) — `200` `Me` (also when it wasn't linked). `409`
+  "Set a password first — without Plex, there'd be no way to sign in to this
+  account." (or "without Jellyfin" / "without single sign-on") when the
+  account has no password and no other link.
 
 Linking and unlinking never sign anything out. Removing a member removes
 their links with them. Unlinking Plex also turns off the Plex Watchlist.
@@ -2030,6 +2154,81 @@ member account on their first sign-in. `PUT` takes the same body
 (`mediaServerSignup` required, boolean) and answers the saved value. `403`
 "Only the admin can change sign-in settings.". Website: the checkbox under
 the Import buttons.
+
+### `GET /settings/sso` · `PUT` · `DELETE` — admin (0.44+)
+
+Single sign-on with any OpenID Connect provider. Website: the "Single
+sign-on" card under Settings → Integrations → Sign-in.
+
+```json
+{
+  "configured": true,
+  "name": "Authentik",
+  "issuer": "https://auth.example.com/application/o/marquee/",
+  "clientId": "marquee",
+  "hasClientSecret": true,
+  "scopes": "openid profile email",
+  "publicUrl": "https://marquee.example.com",
+  "callbackUrl": "https://marquee.example.com/api/auth/sso/callback",
+  "allowSignup": false,
+  "matchEmail": false,
+  "requiredGroup": "marquee-users",
+  "trustedGroup": null,
+  "groupsClaim": "groups"
+}
+```
+
+- `configured: false` — not set up; the other fields are the defaults, with
+  `publicUrl` / `callbackUrl` from the address this request came in on.
+- `publicUrl`: Marquee's address as people reach it; `callbackUrl` (derived)
+  is the redirect URI to register with the provider **exactly**. The web
+  button and the apps' pages always use this address.
+- The client secret is never returned; `hasClientSecret` says whether one is
+  saved (none = a public client, PKCE only).
+- `allowSignup` (default off): new member accounts from SSO sign-in.
+  `matchEmail` (default off): link an existing account whose username is
+  the person's email on their first sign-in — only when the provider says
+  `email_verified: true`, never the admin account, never an account already
+  linked to another identity.
+- `requiredGroup`: only identities with this group (in the `groupsClaim`
+  claim of the ID token or userinfo; a dotted path like
+  `realm_access.roles` works) may sign in or link. `trustedGroup`: members
+  with it become `trusted` when they sign in (never admin; never demoted).
+
+`PUT` takes the same fields (`configured`, `hasClientSecret` and
+`callbackUrl` ignored) plus `clientSecret` (write-only; missing or blank
+keeps the saved one — only while `issuer` stays the same provider) and
+`clearClientSecret: true` (remove it). It fetches the provider's discovery
+document first and stores the issuer exactly as that states it; answers the
+saved settings. Errors: `400 invalid` ("Give the sign-in button a name, like
+Authentik.", "Enter the provider's issuer URL (starting with https://).",
+"Enter the client ID from your identity provider.", "Enter Marquee's
+address, like https://marquee.example.com.", "Enter the client secret again
+— the saved one belongs to the previous provider."), `502 upstream` with the
+reason discovery failed. `DELETE` turns SSO off (answers the defaults);
+accounts keep their links for if the same provider is set up again. `403`
+"Only the admin can change sign-in settings." for members.
+
+#### `POST /settings/sso/test` — admin (0.44+)
+
+`{ "issuer": "https://auth.example.com/application/o/marquee/" }` (the issuer
+or its `…/.well-known/openid-configuration` URL). Checks the discovery
+document without saving anything.
+
+```json
+{
+  "issuer": "https://auth.example.com/application/o/marquee/",
+  "authorizationEndpoint": "https://auth.example.com/application/o/authorize/",
+  "tokenEndpoint": "https://auth.example.com/application/o/token/",
+  "userinfoEndpoint": "https://auth.example.com/application/o/userinfo/",
+  "warnings": []
+}
+```
+
+`warnings`: things that work but deserve a look ("The provider isn't using
+https — sign-ins and the client secret travel unencrypted."). Errors: `400
+invalid`, `502 upstream` with the reason ("… answered 404.", "The provider
+calls itself "…", not "…". Use its issuer URL exactly.").
 
 ---
 

@@ -153,3 +153,80 @@ export function shouldCheckPin(entry: PlexPinEntry, now = Date.now()): boolean {
 export function claimPlexPin(handle: string): boolean {
   return pins.delete(handle);
 }
+
+// ── Jellyfin Quick Connect ─────────────────────────────────────────────────
+// A Quick Connect request's secret is what Jellyfin trades for the person's
+// identity once they approve the code, so it stays here; clients get a
+// random handle for it (lib/auth/media-signin.ts). Same caps and lifetime as
+// Plex PINs.
+
+export const QUICK_CONNECT_TTL_MS = 10 * 60 * 1000;
+
+export type QuickConnectEntry = {
+  secret: string;
+  code: string;
+  /** The Jellyfin device id the request was made under; every call about
+   * it uses the same one. */
+  deviceId: string;
+  owner: string;
+  expiresAt: number;
+  lastCheckedAt: number;
+};
+
+declare global {
+  var __marqueeQuickConnects: Map<string, QuickConnectEntry> | undefined;
+}
+
+const quickConnects: Map<string, QuickConnectEntry> = (globalThis.__marqueeQuickConnects ??= new Map());
+
+export function hasQuickConnectCapacity(owner: string, now = Date.now()): boolean {
+  let total = 0;
+  let mine = 0;
+  for (const [key, value] of quickConnects) {
+    if (value.expiresAt <= now) {
+      quickConnects.delete(key);
+      continue;
+    }
+    total++;
+    if (value.owner === owner) mine++;
+  }
+  const perOwner = owner === SHARED_PIN_OWNER ? MAX_LIVE_PLEX_PINS_SHARED : MAX_LIVE_PLEX_PINS_PER_OWNER;
+  return total < MAX_LIVE_PLEX_PINS && mine < perOwner;
+}
+
+export function createQuickConnectHandle(
+  entry: Omit<QuickConnectEntry, "expiresAt" | "lastCheckedAt">,
+  now = Date.now(),
+): { handle: string; expiresAt: number } | null {
+  if (!hasQuickConnectCapacity(entry.owner, now)) return null;
+  const handle = randomSecret();
+  const expiresAt = now + QUICK_CONNECT_TTL_MS;
+  quickConnects.set(handle, { ...entry, expiresAt, lastCheckedAt: 0 });
+  return { handle, expiresAt };
+}
+
+/** A live Quick Connect request, or null for an unknown, used or expired handle. */
+export function getQuickConnect(handle: unknown, now = Date.now()): QuickConnectEntry | null {
+  if (typeof handle !== "string" || !handle) return null;
+  const entry = quickConnects.get(handle);
+  if (!entry) return null;
+  if (now > entry.expiresAt) {
+    quickConnects.delete(handle);
+    return null;
+  }
+  return entry;
+}
+
+/** Books a Jellyfin check of this request now, unless one happened within
+ * PIN_CHECK_SPACING_MS. */
+export function shouldCheckQuickConnect(entry: QuickConnectEntry, now = Date.now()): boolean {
+  if (now - entry.lastCheckedAt < PIN_CHECK_SPACING_MS) return false;
+  entry.lastCheckedAt = now;
+  return true;
+}
+
+/** Takes an approved request out of play: true only for the one caller
+ * that gets to sign in with it. */
+export function claimQuickConnect(handle: string): boolean {
+  return quickConnects.delete(handle);
+}

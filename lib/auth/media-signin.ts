@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { appSettings, plexServers, users } from "@/lib/db/schema";
@@ -6,7 +7,12 @@ import { getAdminUserId } from "@/lib/auth/get-admin";
 import { withLoginBudget } from "@/lib/auth/password-login";
 import {
   claimPlexPin,
+  claimQuickConnect,
   createPlexPinHandle,
+  createQuickConnectHandle,
+  getQuickConnect,
+  hasQuickConnectCapacity,
+  shouldCheckQuickConnect,
   hasPlexPinCapacity,
   SHARED_PIN_OWNER,
   getPlexPin,
@@ -16,6 +22,7 @@ import {
 import {
   decideSignIn,
   importedDisplayName,
+  isUniqueViolation,
   MEDIA_PROVIDER_LABEL,
   noAccountMessage,
   PLEX_NO_ACCESS_MESSAGE,
@@ -27,7 +34,14 @@ import {
 import { getJellyfinCredential, getPlexCredential } from "@/lib/integrations/credentials";
 import { buildPlexAuthUrl, checkPin, createPin } from "@/lib/plex/client";
 import { disableWatchlist, enableWatchlist, syncPlexWatchlist } from "@/lib/plex/watchlist";
-import { getMediaServerName } from "@/lib/jellyfin/product";
+import { getMediaServerName, MEDIA_SERVER_PRODUCT_NAME } from "@/lib/jellyfin/product";
+import { getSsoButton } from "@/lib/auth/sso/config";
+import {
+  authenticateWithQuickConnect,
+  checkQuickConnect,
+  initiateQuickConnect,
+  QuickConnectUnavailable,
+} from "@/lib/jellyfin/quick-connect";
 import {
   getPlexAccount,
   getPlexSharedUsers,
@@ -70,6 +84,13 @@ export type SignInMethods = {
   /** New accounts from Plex/Jellyfin sign-in are on, and at least one of
    * them is offered: the sign-in screens tell newcomers to use it. */
   signup: boolean;
+  /** Jellyfin (not Emby, which has no such thing) is connected, so "Use
+   * Quick Connect" can be offered next to the Jellyfin sign-in. Whether the
+   * Jellyfin server has it switched on is only known once it's tried. */
+  quickConnect: boolean;
+  /** "Sign in with <name>" (single sign-on), or null when it isn't set up.
+   * `signup`: new accounts from SSO sign-in are on. */
+  sso: { name: string; signup: boolean } | null;
 };
 
 type PlexContext = { adminId: string; clientId: string; authToken: string; machineIds: string[] };
@@ -99,10 +120,11 @@ async function getJellyfinContext(): Promise<JellyfinContext | null> {
 
 /** Which sign-in methods the login page and apps should offer. */
 export async function getSignInMethods(): Promise<SignInMethods> {
-  const [plex, jellyfin, signupAllowed] = await Promise.all([
+  const [plex, jellyfin, signupAllowed, sso] = await Promise.all([
     getPlexContext(),
     getJellyfinContext(),
     getMediaServerSignup(),
+    getSsoButton(),
   ]);
   return {
     password: true,
@@ -110,6 +132,8 @@ export async function getSignInMethods(): Promise<SignInMethods> {
     jellyfin: Boolean(jellyfin),
     jellyfinName: jellyfin?.name ?? "Jellyfin",
     signup: signupAllowed && Boolean(plex || jellyfin),
+    quickConnect: jellyfin !== null && jellyfin.name === MEDIA_SERVER_PRODUCT_NAME.jellyfin,
+    sso,
   };
 }
 
@@ -139,30 +163,27 @@ export async function setMediaServerSignup(value: boolean): Promise<void> {
 
 // ── Link state ─────────────────────────────────────────────────────────────
 
-export type LinkState = { linked: { plex: boolean; jellyfin: boolean }; hasPassword: boolean };
+export type LinkState = { linked: { plex: boolean; jellyfin: boolean; sso: boolean }; hasPassword: boolean };
 
 export async function getLinkState(userId: string): Promise<LinkState | null> {
   const [row] = await db
     .select({
       plex: sql<boolean>`${users.plexUserId} is not null`,
       jellyfin: sql<boolean>`${users.jellyfinUserId} is not null`,
+      sso: sql<boolean>`${users.ssoSubject} is not null`,
       hasPassword: sql<boolean>`${users.passwordHash} is not null`,
     })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
-  return row ? { linked: { plex: row.plex, jellyfin: row.jellyfin }, hasPassword: row.hasPassword } : null;
+  return row
+    ? { linked: { plex: row.plex, jellyfin: row.jellyfin, sso: row.sso }, hasPassword: row.hasPassword }
+    : null;
 }
 
 // ── Accounts ───────────────────────────────────────────────────────────────
 
 const LINK_COLUMN = { plex: users.plexUserId, jellyfin: users.jellyfinUserId } as const;
-
-function isUniqueViolation(err: unknown): boolean {
-  const codeOf = (e: unknown) => (e && typeof e === "object" && "code" in e ? (e as { code: unknown }).code : null);
-  const cause = err && typeof err === "object" && "cause" in err ? (err as { cause: unknown }).cause : null;
-  return codeOf(err) === "23505" || codeOf(cause) === "23505";
-}
 
 async function findLinkedUser(provider: MediaProvider, externalId: string): Promise<UserRow | null> {
   const [row] = await db.select().from(users).where(eq(LINK_COLUMN[provider], externalId)).limit(1);
@@ -524,6 +545,88 @@ export async function signInWithJellyfin(username: string, password: string, ip:
   );
 }
 
+// ── Jellyfin Quick Connect ─────────────────────────────────────────────────
+
+export type QuickConnectStart = { handle: string; code: string; expiresAt: Date };
+
+const QUICK_CONNECT_OFF =
+  "Quick Connect is turned off on this Jellyfin server. The admin can turn it on in Jellyfin's Dashboard → General.";
+
+/** Starts a Quick Connect sign-in: the code to approve in a Jellyfin app,
+ * and a handle to poll with. Rate-limited like Plex PINs; Emby has none. */
+export async function startQuickConnect(ip: string | null): Promise<CoreResult<QuickConnectStart>> {
+  const allowed = ip
+    ? checkRateLimit(`quick-connect:start:${ip}`, PIN_START_LIMIT, PIN_START_WINDOW_MS)
+    : checkRateLimit("quick-connect:start:shared", PIN_START_SHARED_LIMIT, PIN_START_WINDOW_MS);
+  if (!allowed) return fail("rate_limited", "Too many attempts. Try again in a few minutes.");
+
+  const jellyfin = await getJellyfinContext();
+  if (!jellyfin) return fail("conflict", JELLYFIN_NOT_CONNECTED);
+  if (jellyfin.name !== MEDIA_SERVER_PRODUCT_NAME.jellyfin) return fail("conflict", `${jellyfin.name} doesn't have Quick Connect.`);
+
+  const owner = ip ?? SHARED_PIN_OWNER;
+  const waiting = "Too many Quick Connect sign-ins are waiting right now. Try again in a few minutes.";
+  if (!hasQuickConnectCapacity(owner)) return fail("rate_limited", waiting);
+
+  const deviceId = `marquee-qc-${randomUUID()}`;
+  let request;
+  try {
+    request = await initiateQuickConnect(jellyfin.baseUrl, deviceId);
+  } catch (err) {
+    if (err instanceof QuickConnectUnavailable) return fail("conflict", QUICK_CONNECT_OFF);
+    return fail("upstream", "Couldn't reach Jellyfin. Try again.");
+  }
+  const created = createQuickConnectHandle({ secret: request.secret, code: request.code, deviceId, owner });
+  if (!created) return fail("rate_limited", waiting);
+  return { ok: true, handle: created.handle, code: request.code, expiresAt: new Date(created.expiresAt) };
+}
+
+/** One poll of a Quick Connect sign-in: pending until the code is approved
+ * in a Jellyfin app, then — once per handle — the account to sign in as,
+ * decided exactly like a Jellyfin password sign-in. */
+export async function pollQuickConnect(handle: unknown, ip: string | null): Promise<PlexPinPoll<{ user: UserRow }>> {
+  if (ip && !checkRateLimit(`quick-connect:poll:${ip}`, PIN_POLL_LIMIT, PIN_POLL_WINDOW_MS)) {
+    return { status: "done", ...fail("rate_limited", "Too many attempts. Try again in a few minutes.") };
+  }
+  const entry = getQuickConnect(handle);
+  if (!entry) return { status: "expired" };
+  if (!shouldCheckQuickConnect(entry)) return { status: "pending" };
+
+  const jellyfin = await getJellyfinContext();
+  if (!jellyfin) {
+    claimQuickConnect(handle as string);
+    return { status: "done", ...fail("conflict", JELLYFIN_NOT_CONNECTED) };
+  }
+  let approved: boolean | null;
+  try {
+    approved = await checkQuickConnect(jellyfin.baseUrl, entry.secret, entry.deviceId);
+  } catch {
+    return { status: "pending" };
+  }
+  if (approved === null) {
+    claimQuickConnect(handle as string);
+    return { status: "expired" };
+  }
+  if (!approved) return { status: "pending" };
+  // First poll to see it approved takes the handle.
+  if (!claimQuickConnect(handle as string)) return { status: "expired" };
+
+  let jellyfinUser;
+  try {
+    jellyfinUser = await authenticateWithQuickConnect(jellyfin.baseUrl, entry.secret, entry.deviceId);
+  } catch {
+    return { status: "done", ...fail("upstream", "Couldn't reach Jellyfin. Try again.") };
+  }
+  if (!jellyfinUser) return { status: "done", ...fail("forbidden", "Jellyfin didn't accept that Quick Connect code. Try again.") };
+  const result = await resolveSignIn(
+    "jellyfin",
+    { externalId: jellyfinUser.id, username: jellyfinUser.name, title: jellyfinUser.name, ownsServer: false },
+    jellyfin.adminId,
+    jellyfin.name,
+  );
+  return { status: "done", ...result };
+}
+
 export async function linkJellyfin(
   userId: string,
   username: string,
@@ -568,6 +671,7 @@ export async function unlinkAccount(userId: string, provider: MediaProvider): Pr
       hasPassword: state.hasPassword,
       plexLinked: state.linked.plex,
       jellyfinLinked: state.linked.jellyfin,
+      ssoLinked: state.linked.sso,
     })
   ) {
     return fail(

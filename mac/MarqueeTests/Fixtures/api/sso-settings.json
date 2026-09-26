@@ -1,0 +1,15 @@
+{
+  "configured": true,
+  "name": "Authentik",
+  "issuer": "https://auth.example.com/application/o/marquee/",
+  "clientId": "marquee",
+  "hasClientSecret": true,
+  "scopes": "openid profile email",
+  "publicUrl": "https://marquee.example.com",
+  "callbackUrl": "https://marquee.example.com/api/auth/sso/callback",
+  "allowSignup": false,
+  "matchEmail": false,
+  "requiredGroup": "marquee-users",
+  "trustedGroup": null,
+  "groupsClaim": "groups"
+}

@@ -357,6 +357,11 @@ export function HouseholdMembersList({
                   {jellyfinName}
                 </span>
               )}
+              {member.ssoLinked && (
+                <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
+                  SSO
+                </span>
+              )}
               {member.role === "admin" && (
                 <span className="rounded-full border border-accent/50 px-2.5 py-0.5 text-xs text-accent">
                   Admin

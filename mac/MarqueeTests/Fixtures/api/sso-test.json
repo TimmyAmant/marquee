@@ -1,0 +1,7 @@
+{
+  "issuer": "https://auth.example.com/application/o/marquee/",
+  "authorizationEndpoint": "https://auth.example.com/application/o/authorize/",
+  "tokenEndpoint": "https://auth.example.com/application/o/token/",
+  "userinfoEndpoint": "https://auth.example.com/application/o/userinfo/",
+  "warnings": []
+}

@@ -16,7 +16,15 @@ const DB_CHECK_TIMEOUT_MS = 3000;
  * page shows the same buttons. */
 export const GET = withApi(async (): Promise<ServerInfo> => {
   let setupComplete: boolean | null = null;
-  let signIn: SignInMethods = { password: true, plex: false, jellyfin: false, jellyfinName: "Jellyfin", signup: false };
+  let signIn: SignInMethods = {
+    password: true,
+    plex: false,
+    jellyfin: false,
+    jellyfinName: "Jellyfin",
+    signup: false,
+    quickConnect: false,
+    sso: null,
+  };
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     [setupComplete, signIn] = await Promise.race([

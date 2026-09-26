@@ -7,8 +7,13 @@
   "signIn": {
     "password": true,
     "plex": true,
-    "jellyfin": false,
+    "jellyfin": true,
     "jellyfinName": "Jellyfin",
-    "signup": true
+    "signup": true,
+    "quickConnect": true,
+    "sso": {
+      "name": "Authentik",
+      "signup": false
+    }
   }
 }

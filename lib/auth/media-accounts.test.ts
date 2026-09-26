@@ -142,4 +142,12 @@ describe("unlinkWouldLockOut", () => {
     expect(unlinkWouldLockOut("plex", { hasPassword: false, plexLinked: true, jellyfinLinked: true })).toBe(false);
     expect(unlinkWouldLockOut("jellyfin", { hasPassword: false, plexLinked: false, jellyfinLinked: true })).toBe(true);
   });
+
+  it("counts a single sign-on link as a way in, and guards unlinking it", () => {
+    const ssoOnly = { hasPassword: false, plexLinked: false, jellyfinLinked: false, ssoLinked: true };
+    expect(unlinkWouldLockOut("sso", ssoOnly)).toBe(true);
+    expect(unlinkWouldLockOut("plex", { ...ssoOnly, plexLinked: true })).toBe(false);
+    expect(unlinkWouldLockOut("sso", { ...ssoOnly, jellyfinLinked: true })).toBe(false);
+    expect(unlinkWouldLockOut("sso", { ...ssoOnly, hasPassword: true })).toBe(false);
+  });
 });
