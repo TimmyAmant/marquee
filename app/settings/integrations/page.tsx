@@ -83,6 +83,7 @@ export default async function IntegrationsSettingsPage() {
                 movieCount: jellyfin.summary.movieCount,
                 tvCount: jellyfin.summary.tvCount,
               }}
+              name={jellyfin.existing && jellyfin.summary.servers.length > 0 ? jellyfin.name : null}
             />
           </div>
         </section>

@@ -42,7 +42,15 @@ export type ServerInfo = {
   signIn: SignInMethods;
 };
 
-export type SignInMethods = { password: true; plex: boolean; jellyfin: boolean };
+export type SignInMethods = {
+  password: true;
+  plex: boolean;
+  jellyfin: boolean;
+  /** 0.40+: "Jellyfin", or "Emby" when the connected server is Emby (it
+   * speaks the same API, so everything "jellyfin" works with it). Label
+   * the Jellyfin sign-in, linking and import with this. */
+  jellyfinName: string;
+};
 
 /** Which media-server accounts an account signs in with. */
 export type LinkedAccounts = { plex: boolean; jellyfin: boolean };
@@ -627,6 +635,8 @@ export type IntegrationsSettings = {
   plex: { connected: boolean; servers: SyncedServer[]; movieCount: number; tvCount: number; totalBytes: number };
   jellyfin: {
     connected: boolean;
+    /** 0.40+: "Jellyfin", or "Emby" when the connected server is Emby. */
+    name: string;
     baseUrl: string | null;
     hasApiKey: boolean;
     servers: SyncedServer[];

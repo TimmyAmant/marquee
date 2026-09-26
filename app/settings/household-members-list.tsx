@@ -307,10 +307,13 @@ export function HouseholdMembersList({
   members,
   currentUserId,
   isAdmin,
+  jellyfinName = "Jellyfin",
 }: {
   members: HouseholdMember[];
   currentUserId: string;
   isAdmin: boolean;
+  /** "Emby" when that's the connected server. */
+  jellyfinName?: string;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -351,7 +354,7 @@ export function HouseholdMembersList({
               )}
               {member.jellyfinLinked && (
                 <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
-                  Jellyfin
+                  {jellyfinName}
                 </span>
               )}
               {member.role === "admin" && (

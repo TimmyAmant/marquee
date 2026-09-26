@@ -1,0 +1,1 @@
+ALTER TABLE "jellyfin_servers" ADD COLUMN "product" text;

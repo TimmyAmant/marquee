@@ -1,4 +1,5 @@
 import { and, eq, inArray, or } from "drizzle-orm";
+import { productOf } from "@/lib/jellyfin/product";
 import { db } from "@/lib/db/client";
 import { singleFlight, whenIdle } from "@/lib/async/single-flight";
 import { jellyfinServers, jellyfinLibraryItems, integrationCredentials } from "@/lib/db/schema";
@@ -30,11 +31,12 @@ async function runSyncJellyfinLibrary(
       userId,
       serverId: info.Id,
       name: info.ServerName,
+      product: productOf(info),
       lastSyncedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: [jellyfinServers.userId, jellyfinServers.serverId],
-      set: { name: info.ServerName, lastSyncedAt: new Date() },
+      set: { name: info.ServerName, product: productOf(info), lastSyncedAt: new Date() },
     })
     .returning();
 

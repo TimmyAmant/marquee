@@ -7,8 +7,11 @@ import { DisconnectButton } from "@/components/disconnect-button";
 export function JellyfinConnectCard({
   existing,
   summary,
+  name,
 }: {
   existing: { baseUrl: string; hasApiKey: boolean } | null;
+  /** "Jellyfin" or "Emby" once connected and synced; null before. */
+  name?: string | null;
   summary: {
     servers: { name: string | null; lastSyncedAt: string | null }[];
     movieCount: number;
@@ -23,7 +26,12 @@ export function JellyfinConnectCard({
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl text-text-primary">Jellyfin</h3>
+        <div>
+          <h3 className="font-display text-xl text-text-primary">Jellyfin or Emby</h3>
+          <p className="mt-1 text-xs text-text-muted">
+            Emby speaks the same language as Jellyfin, so either works here{name ? ` — connected to ${name}` : ""}.
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           {existing?.hasApiKey && (
             <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
@@ -42,7 +50,8 @@ export function JellyfinConnectCard({
       )}
 
       <p className="mt-2 text-sm text-text-secondary">
-        Generate an API key from Jellyfin&apos;s dashboard: Administration → API Keys.
+        Generate an API key from the dashboard: Administration → API Keys in Jellyfin, or Advanced → API Keys in
+        Emby.
       </p>
 
       <form action={formAction} className="mt-4 flex flex-col gap-3">

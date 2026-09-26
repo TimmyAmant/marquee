@@ -13,5 +13,7 @@ export default async function LoginPage() {
   // Only the methods that can work right now: Plex/Jellyfin sign-in need the
   // admin's server connected in Settings → Integrations.
   const methods = await getSignInMethods();
-  return <LoginForm methods={{ plex: methods.plex, jellyfin: methods.jellyfin }} />;
+  return (
+    <LoginForm methods={{ plex: methods.plex, jellyfin: methods.jellyfin, jellyfinName: methods.jellyfinName }} />
+  );
 }

@@ -288,6 +288,13 @@
       "when": 1790390828697,
       "tag": "0040_add_quotas_trusted",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790392084931,
+      "tag": "0041_add_media_server_product",
+      "breakpoints": true
     }
   ]
 }

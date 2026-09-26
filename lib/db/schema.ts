@@ -299,6 +299,10 @@ export const jellyfinServers = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     serverId: text("server_id").notNull(),
     name: text("name"),
+    /** "jellyfin" or "emby": Emby speaks the same API, so the Jellyfin
+     * integration serves both; this only decides the name people see
+     * (lib/jellyfin/product.ts). Null until the first sync. */
+    product: text("product").$type<"jellyfin" | "emby">(),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   },
   (table) => [unique().on(table.userId, table.serverId)],

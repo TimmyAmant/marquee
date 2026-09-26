@@ -70,7 +70,11 @@ export default async function AccountSettingsPage() {
             Sign in with the account you use for the household&apos;s media server.
           </p>
           <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-            <LinkedAccounts linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked }} available={available} />
+            <LinkedAccounts
+              linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked }}
+              available={available}
+              jellyfinName={methods.jellyfinName}
+            />
           </div>
           {watchlist.available && (
             <div className="mt-4 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
@@ -95,7 +99,7 @@ export default async function AccountSettingsPage() {
           : "Edit your name, username, or password below."}
       </p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-        <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} />
+        <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} jellyfinName={methods.jellyfinName} />
       </div>
 
       {isAdmin && (
@@ -117,7 +121,11 @@ export default async function AccountSettingsPage() {
                 password to hand out.
               </p>
               <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
-                <ImportMembers available={available} mediaServerSignup={mediaServerSignup} />
+                <ImportMembers
+                  available={available}
+                  mediaServerSignup={mediaServerSignup}
+                  jellyfinName={methods.jellyfinName}
+                />
               </div>
             </>
           )}

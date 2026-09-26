@@ -69,10 +69,13 @@ function PasswordForm({ remember, setRemember }: { remember: boolean; setRemembe
 
 /** The same fields, checked against the admin's Jellyfin server instead. */
 function JellyfinForm({
+  name,
   remember,
   setRemember,
   onCancel,
 }: {
+  /** "Jellyfin", or "Emby" when that's what the server is. */
+  name: string;
   remember: boolean;
   setRemember: (v: boolean) => void;
   onCancel: () => void;
@@ -80,13 +83,13 @@ function JellyfinForm({
   const [state, formAction, isPending] = useActionState(jellyfinLoginAction, undefined);
   return (
     <form action={formAction} onSubmit={resetPushPrompt} className="mt-6 flex flex-col gap-4">
-      <p className="text-sm text-text-secondary">Use the username and password you use for Jellyfin.</p>
+      <p className="text-sm text-text-secondary">Use the username and password you use for {name}.</p>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Jellyfin username
+        {name} username
         <input type="text" name="username" required autoComplete="username" className={inputClass} />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Jellyfin password
+        {name} password
         <input type="password" name="password" required autoComplete="current-password" className={inputClass} />
       </label>
 
@@ -99,7 +102,7 @@ function JellyfinForm({
         disabled={isPending}
         className="mt-2 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {isPending ? "Signing in…" : "Sign in with Jellyfin"}
+        {isPending ? "Signing in…" : `Sign in with ${name}`}
       </button>
       <button type="button" onClick={onCancel} className="text-sm text-text-secondary hover:text-accent">
         Use a Marquee password instead
@@ -187,7 +190,7 @@ function PlexButton({ remember }: { remember: boolean }) {
   );
 }
 
-export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boolean } }) {
+export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boolean; jellyfinName: string } }) {
   const [mode, setMode] = useState<"password" | "jellyfin">("password");
   const [remember, setRemember] = useState(true);
   // The other ways in, under an "or": Plex always, Jellyfin unless its form
@@ -202,7 +205,12 @@ export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boo
       </p>
 
       {mode === "jellyfin" && methods.jellyfin ? (
-        <JellyfinForm remember={remember} setRemember={setRemember} onCancel={() => setMode("password")} />
+        <JellyfinForm
+          name={methods.jellyfinName}
+          remember={remember}
+          setRemember={setRemember}
+          onCancel={() => setMode("password")}
+        />
       ) : (
         <PasswordForm remember={remember} setRemember={setRemember} />
       )}
@@ -218,7 +226,7 @@ export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boo
             {methods.plex && <PlexButton remember={remember} />}
             {methods.jellyfin && mode !== "jellyfin" && (
               <button type="button" onClick={() => setMode("jellyfin")} className={secondaryButtonClass}>
-                Sign in with Jellyfin
+                Sign in with {methods.jellyfinName}
               </button>
             )}
           </div>
