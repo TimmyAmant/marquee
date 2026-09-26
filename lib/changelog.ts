@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.44.4",
+    date: "2026-09-26",
+    changes: [
+      "Household members get \"Request all N missing\" on a collection (and TV crossover rows), next to where the admin has \"Add all\". It requests every title not already in the library, requested or blocked, through the normal request rules — limits, blocklist and auto-approve all apply — and says how many went through and why any didn't. Reviewers get one alert for the batch. On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.44.3",
     date: "2026-09-26",
     changes: [
