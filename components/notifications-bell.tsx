@@ -45,7 +45,8 @@ function timeAgo(date: Date | string): string {
 /**
  * The bell and its list. In the header (phones) it's the small round
  * button with a count, the list dropping below it; on the rail (md and up)
- * it's a rail item with a dot, the list opening beside the rail, and
+ * it's a rail item with a dot, the list opening beside the rail (toward
+ * the content, wherever the rail sits), and
  * `railLabel` (the item's hover name) hidden while the list is open.
  */
 export function NotificationsBell({
@@ -152,7 +153,7 @@ export function NotificationsBell({
       {open && (
         <div
           className={`absolute z-50 w-80 rounded-2xl border border-border bg-bg-1 p-2 shadow-xl ${
-            onRail ? "left-full top-0 ml-3" : "right-0 top-11"
+            onRail ? "rail-popover" : "right-0 top-11"
           }`}
         >
           <div className="flex items-center justify-between px-2 py-1.5">
@@ -167,9 +168,11 @@ export function NotificationsBell({
               </button>
             )}
           </div>
-          {/* On the rail the list starts beside the bell, above the middle
-              of the window, so short windows cap it to what fits. */}
-          <div className={onRail ? "max-h-[min(24rem,calc(50dvh+80px))] overflow-y-auto" : "max-h-96 overflow-y-auto"}>
+          {/* On the rail the list opens toward the content — beside a side
+              rail, from above the middle of the window, or below or above a
+              top or bottom bar — so short windows cap it to what fits
+              (.rail-popover in app/globals.css). */}
+          <div className={onRail ? "rail-popover-list overflow-y-auto" : "max-h-96 overflow-y-auto"}>
             {items.length === 0 ? (
               <p className="px-2 py-4 text-center text-xs text-text-secondary">No notifications yet.</p>
             ) : (

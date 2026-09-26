@@ -227,3 +227,146 @@ h3,
   -webkit-backdrop-filter: blur(28px) saturate(1.6);
   backdrop-filter: blur(28px) saturate(1.6);
 }
+
+/* Which edge the rail sits on (Settings › Account › Appearance; see
+   lib/rail-position.ts): data-rail on <html>, rendered by the root layout
+   from a cookie and switched live by the setting. Left is the default and
+   what every rule below starts from. These variants are for one-off
+   adjustments; the positional pieces that change with every edge are the
+   plain rules underneath. */
+@custom-variant rail-right (&:where([data-rail="right"] *));
+@custom-variant rail-top (&:where([data-rail="top"] *));
+@custom-variant rail-bottom (&:where([data-rail="bottom"] *));
+/* Top or bottom: the rail laid out as a horizontal bar. */
+@custom-variant rail-bar (&:where([data-rail="top"] *, [data-rail="bottom"] *));
+
+/* Everything below only applies where the rail shows (Tailwind's md);
+   narrow screens use the drawer whatever the setting. Plain rules outside
+   Tailwind's layers, so they win over the elements' own inset/margin
+   utilities without any ordering games. */
+@media (min-width: 48rem) {
+  /* The content column's margin for the rail: 72px clears it (16px from
+     the edge, 50 across) with room to spare. At the top the header grows
+     instead (components/site-header.tsx). */
+  .rail-inset {
+    padding-left: 72px;
+  }
+  [data-rail="right"] .rail-inset {
+    padding-left: 0;
+    padding-right: 72px;
+  }
+  [data-rail="top"] .rail-inset {
+    padding-left: 0;
+  }
+  [data-rail="bottom"] .rail-inset {
+    padding-left: 0;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  /* Full-bleed artwork (an absolutely positioned layer) reaching back
+     under the rail's margin to the window edge. */
+  .rail-under {
+    left: -72px;
+  }
+  [data-rail="right"] .rail-under {
+    left: 0;
+    right: -72px;
+  }
+  [data-rail="top"] .rail-under,
+  [data-rail="bottom"] .rail-under {
+    left: 0;
+  }
+
+  /* The same for a block in the flow (Discover's glow): pulled under the
+     margin, then padded back out of it. */
+  .rail-bleed {
+    margin-left: -72px;
+    padding-left: 72px;
+  }
+  [data-rail="right"] .rail-bleed {
+    margin-left: 0;
+    padding-left: 0;
+    margin-right: -72px;
+    padding-right: 72px;
+  }
+  [data-rail="top"] .rail-bleed,
+  [data-rail="bottom"] .rail-bleed {
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  /* A rail item's name on hover or focus, on the content side of the rail:
+     beside it on the left and right, below a top bar, above a bottom one. */
+  .rail-label {
+    left: 100%;
+    top: 50%;
+    margin-left: 12px;
+    translate: -4px -50%;
+  }
+  .group:hover > .rail-label,
+  .group:focus-visible > .rail-label {
+    translate: 0 -50%;
+  }
+  [data-rail="right"] .rail-label {
+    left: auto;
+    right: 100%;
+    margin-left: 0;
+    margin-right: 12px;
+    translate: 4px -50%;
+  }
+  [data-rail="right"] .group:hover > .rail-label,
+  [data-rail="right"] .group:focus-visible > .rail-label {
+    translate: 0 -50%;
+  }
+  [data-rail="top"] .rail-label {
+    left: 50%;
+    top: 100%;
+    margin: 12px 0 0;
+    translate: -50% -4px;
+  }
+  [data-rail="bottom"] .rail-label {
+    left: 50%;
+    top: auto;
+    bottom: 100%;
+    margin: 0 0 12px;
+    translate: -50% 4px;
+  }
+  [data-rail="top"] .group:hover > .rail-label,
+  [data-rail="top"] .group:focus-visible > .rail-label,
+  [data-rail="bottom"] .group:hover > .rail-label,
+  [data-rail="bottom"] .group:focus-visible > .rail-label {
+    translate: -50% 0;
+  }
+
+  /* A panel opened from the rail (the notifications list), toward the
+     content, and its scrolling list capped to what fits from there. */
+  .rail-popover {
+    left: 100%;
+    top: 0;
+    margin-left: 12px;
+  }
+  .rail-popover-list {
+    max-height: min(24rem, calc(50dvh + 80px));
+  }
+  [data-rail="right"] .rail-popover {
+    left: auto;
+    right: 100%;
+    margin-left: 0;
+    margin-right: 12px;
+  }
+  [data-rail="top"] .rail-popover {
+    left: 0;
+    top: 100%;
+    margin: 12px 0 0;
+  }
+  [data-rail="bottom"] .rail-popover {
+    left: 0;
+    top: auto;
+    bottom: 100%;
+    margin: 0 0 12px;
+  }
+  [data-rail="top"] .rail-popover-list,
+  [data-rail="bottom"] .rail-popover-list {
+    max-height: min(24rem, calc(100dvh - 180px));
+  }
+}

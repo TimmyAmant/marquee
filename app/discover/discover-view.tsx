@@ -86,10 +86,10 @@ export async function DiscoverView({
   );
 
   return (
-    // Reaches back under the nav rail's 72px margin (and pads the shelves
+    // Reaches back under the nav rail's 72px margin (.rail-bleed) (and pads the shelves
     // back out of it) so the glow runs to the window edge, like a title's
     // backdrop, instead of stopping in a visible seam.
-    <div className="relative overflow-hidden md:-ml-[72px] md:pl-[72px]">
+    <div className="rail-bleed relative overflow-hidden">
       <div
         className="pointer-events-none absolute inset-0 -z-10 h-96"
         style={{

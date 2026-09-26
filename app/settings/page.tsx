@@ -1,9 +1,12 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { CreateUserForm } from "./create-user-form";
 import { HouseholdMembersList } from "./household-members-list";
 import { SignOutButton } from "./sign-out-button";
 import { PushSettings } from "./push-settings";
+import { RailPositionSetting } from "./rail-position-setting";
+import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
 import { ImportMembers } from "./import-members";
@@ -29,6 +32,7 @@ export default async function AccountSettingsPage() {
     isAdmin ? listBlocklist() : Promise.resolve([]),
   ]);
   const blocklist = blocklistRows.map(blocklistEntryDto);
+  const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
   const available = { plex: methods.plex, jellyfin: methods.jellyfin };
   // Your own row is always in the list (members see only theirs).
   const me = members.find((member) => member.id === session.user.id);
@@ -94,6 +98,12 @@ export default async function AccountSettingsPage() {
         Requests approved or declined, and titles ready to watch, on this device.
       </p>
       <PushSettings />
+
+      <h2 className="mt-10 font-display text-xl text-text-primary">Appearance</h2>
+      <p className="mt-2 text-sm text-text-secondary">How Marquee looks on this device.</p>
+      <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+        <RailPositionSetting initial={railPosition} />
+      </div>
 
       <h2 className="mt-10 font-display text-xl text-text-primary">
         {isAdmin ? "Household members" : "Your account"}
