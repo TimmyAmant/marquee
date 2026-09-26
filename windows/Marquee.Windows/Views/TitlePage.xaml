@@ -526,25 +526,32 @@
                                     TextTrimming="CharacterEllipsis"
                                     MaxLines="1" />
 
-                                <!-- components/external-links.tsx: "▶ Trailer", then the server's ordered row. -->
-                                <ScrollViewer
-                                    HorizontalScrollMode="Enabled"
-                                    controls:WheelScroll.PassToPage="True"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Disabled"
-                                    VerticalScrollBarVisibility="Disabled"
+                                <!--
+                                  components/external-links.tsx: "▶ Trailer", then the server's
+                                  ordered row. A rail like the others: when it overflows, its
+                                  arrows sit at the right end.
+                                -->
+                                <Grid
+                                    ColumnSpacing="8"
                                     Visibility="{x:Bind ViewModel.HasLinks, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Links, Mode=OneWay}" Margin="0,0,0,6">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Orientation="Horizontal" Spacing="8" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:LinkItem">
-                                                <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </ScrollViewer>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ScrollViewer x:Name="LinksRail" controls:RailScroll.IsRail="True">
+                                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Links, Mode=OneWay}" Margin="0,0,0,6">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Orientation="Horizontal" Spacing="8" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:LinkItem">
+                                                    <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
+                                    </ScrollViewer>
+                                    <controls:RailArrows Grid.Column="1" Target="{x:Bind LinksRail}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                                </Grid>
 
                                 <HyperlinkButton
                                     Content="Open in browser"
@@ -660,11 +667,7 @@
                             </Grid>
                             <ScrollViewer
                                 x:Name="CastRail"
-                                HorizontalScrollMode="Enabled"
-                                controls:WheelScroll.PassToPage="True"
-                                HorizontalScrollBarVisibility="Auto"
-                                VerticalScrollMode="Disabled"
-                                VerticalScrollBarVisibility="Disabled">
+                                controls:RailScroll.IsRail="True">
                                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Cast, Mode=OneWay}" Margin="0,0,0,8">
                                     <ItemsRepeater.Layout>
                                         <StackLayout Orientation="Horizontal" Spacing="14" />
@@ -835,11 +838,7 @@
                         </Grid>
                         <ScrollViewer
                             x:Name="StudiosRail"
-                            HorizontalScrollMode="Enabled"
-                            controls:WheelScroll.PassToPage="True"
-                            HorizontalScrollBarVisibility="Auto"
-                            VerticalScrollMode="Disabled"
-                            VerticalScrollBarVisibility="Disabled">
+                            controls:RailScroll.IsRail="True">
                             <ItemsRepeater ItemsSource="{x:Bind ViewModel.Studios, Mode=OneWay}" Margin="0,0,0,8">
                                 <ItemsRepeater.Layout>
                                     <StackLayout Orientation="Horizontal" Spacing="8" />
@@ -860,11 +859,7 @@
                         </Grid>
                         <ScrollViewer
                             x:Name="SimilarRail"
-                            HorizontalScrollMode="Enabled"
-                            controls:WheelScroll.PassToPage="True"
-                            HorizontalScrollBarVisibility="Auto"
-                            VerticalScrollMode="Disabled"
-                            VerticalScrollBarVisibility="Disabled">
+                            controls:RailScroll.IsRail="True">
                             <ItemsRepeater ItemsSource="{x:Bind ViewModel.Similar, Mode=OneWay}" ItemTemplate="{StaticResource PosterTemplate}" Margin="0,0,0,8">
                                 <ItemsRepeater.Layout>
                                     <StackLayout Orientation="Horizontal" Spacing="14" />
