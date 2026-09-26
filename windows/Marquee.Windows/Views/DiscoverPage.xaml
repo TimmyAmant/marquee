@@ -84,6 +84,46 @@
                                         </ItemsRepeater.ItemTemplate>
                                     </ItemsRepeater>
                                 </ScrollViewer>
+
+                                <!-- Studios / Networks: logo-card.tsx. -->
+                                <ScrollViewer
+                                    HorizontalScrollMode="Enabled"
+                                    controls:WheelScroll.PassToPage="True"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Disabled"
+                                    VerticalScrollBarVisibility="Disabled"
+                                    Visibility="{x:Bind HasLogoTiles, Converter={StaticResource BoolToVisibility}}">
+                                    <ItemsRepeater ItemsSource="{x:Bind Chips}" Margin="0,0,28,8">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Horizontal" Spacing="14" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ChipItem">
+                                                <controls:LogoTile Item="{x:Bind}" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
+
+                                <!-- Movie / Series Genres: genre-card.tsx. -->
+                                <ScrollViewer
+                                    HorizontalScrollMode="Enabled"
+                                    controls:WheelScroll.PassToPage="True"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Disabled"
+                                    VerticalScrollBarVisibility="Disabled"
+                                    Visibility="{x:Bind HasGenreTiles, Converter={StaticResource BoolToVisibility}}">
+                                    <ItemsRepeater ItemsSource="{x:Bind Chips}" Margin="0,0,28,8">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Horizontal" Spacing="12" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ChipItem">
+                                                <controls:GenreTile Item="{x:Bind}" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>

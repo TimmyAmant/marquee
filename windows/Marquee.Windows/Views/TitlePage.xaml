@@ -660,7 +660,7 @@
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate x:DataType="vm:ChipItem">
-                                        <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                        <controls:StudioChip Item="{x:Bind}" />
                                     </DataTemplate>
                                 </ItemsRepeater.ItemTemplate>
                             </ItemsRepeater>

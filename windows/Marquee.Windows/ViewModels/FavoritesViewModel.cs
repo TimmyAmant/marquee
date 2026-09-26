@@ -121,7 +121,7 @@ public sealed partial class FavoritesViewModel : ObservableObject
                 .Select(person => new PersonItem(model, person.TmdbId, person.Name, person.KnownForDepartment, person.ProfilePath, person.Favorited ?? true))
                 .ToList();
             Studios = fresh.Studios
-                .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId))))
+                .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
                 .ToList();
             IsEmpty = fresh.IsEmpty;
             HasAnswer = true;
