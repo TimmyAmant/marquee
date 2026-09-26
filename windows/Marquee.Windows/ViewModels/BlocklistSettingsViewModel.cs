@@ -92,14 +92,15 @@ public sealed partial class BlocklistSettingsViewModel : ObservableObject
     public bool CanBlock => !IsBlocking && Keyword.NonBlank() != null;
 
     /// <summary>
-    /// <c>GET /settings/blocklist</c> for the admin; hides the section for a
-    /// member and on a server that answers 404. Any other failure keeps
+    /// <c>GET /settings/blocklist</c> for the admin and (0.48+) anyone who may
+    /// manage the blocklist; hides the section for everyone else and on a server that answers 404.
+    /// Any other failure keeps
     /// whatever showed before (hidden the first time).
     /// </summary>
-    public async Task LoadAsync(bool isAdmin)
+    public async Task LoadAsync(bool managesBlocklist)
     {
         loadCancellation?.Cancel();
-        if (!isAdmin)
+        if (!managesBlocklist)
         {
             IsVisible = false;
             Rows = [];
@@ -168,7 +169,7 @@ public sealed partial class BlocklistSettingsViewModel : ObservableObject
             Error = failure.Message;
             return;
         }
-        await LoadAsync(isAdmin: true);
+        await LoadAsync(managesBlocklist: true);
     }
 
     /// <summary>"Block a keyword or genre" (<c>POST /settings/blocklist</c>): the form clears on success.</summary>
@@ -186,7 +187,7 @@ public sealed partial class BlocklistSettingsViewModel : ObservableObject
             await model.Api.Blocklist.BlockKeywordAsync(Keyword, Reason);
             Keyword = "";
             Reason = "";
-            await LoadAsync(isAdmin: true);
+            await LoadAsync(managesBlocklist: true);
         }
         catch (ApiException failure)
         {

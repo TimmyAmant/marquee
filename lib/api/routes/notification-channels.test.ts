@@ -187,12 +187,12 @@ describe("/me/notification-preferences", () => {
     prefs.savePreferences.mockResolvedValue({ ok: true });
     const got = await call(prefsRoute.GET, { token: MEMBER });
     expect(await got.json()).toEqual({ events: rows });
-    expect(prefs.getPreferences).toHaveBeenCalledWith(MEMBER_ID, "member");
+    expect(prefs.getPreferences).toHaveBeenCalledWith(MEMBER_ID, expect.objectContaining({ role: "member" }));
 
     const body = { events: [{ event: "request_approved", push: false }] };
     const put = await call(prefsRoute.PUT, { token: MEMBER, method: "PUT", body });
     expect(put.status).toBe(200);
-    expect(prefs.savePreferences).toHaveBeenCalledWith(MEMBER_ID, "member", body);
+    expect(prefs.savePreferences).toHaveBeenCalledWith(MEMBER_ID, expect.objectContaining({ role: "member" }), body);
   });
 
   it("passes on a refusal", async () => {

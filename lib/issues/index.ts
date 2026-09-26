@@ -18,6 +18,8 @@ import { createNotification } from "@/lib/notifications/query";
 import { searchTitle } from "@/lib/arr/title-actions";
 import { searchFourK } from "@/lib/arr/fourk";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { can } from "@/lib/users/permissions";
+import { getAccess } from "@/lib/users/access";
 
 /** Reports one person may send in an hour. */
 const REPORTS_PER_HOUR = 10;
@@ -38,6 +40,9 @@ export async function reportIssue(
   tmdbId: number,
   input: ReportInput,
 ): Promise<CoreResult<{ issueId: string }>> {
+  if (!can(await getAccess(userId), "reportIssues")) {
+    return fail("forbidden", "Reporting problems isn't turned on for your account.");
+  }
   const parsed = parseReport(mediaType, input);
   if (!parsed.ok) return fail("invalid", parsed.error);
   // Counted per report sent, not per report still open: withdrawing and
@@ -118,9 +123,10 @@ export type IssueRow = {
 
 const RECENT_RESOLVED = 30;
 
-/** The admin sees every open report and the latest fixed ones; a member only
- * their own. Newest first. */
-export async function listIssues(viewer: { userId: string; isAdmin: boolean }): Promise<IssueRow[]> {
+/** Whoever handles problem reports (the manageIssues permission) sees every
+ * open report and the latest fixed ones; anyone else only their own. Newest
+ * first. */
+export async function listIssues(viewer: { userId: string; managesIssues: boolean }): Promise<IssueRow[]> {
   const columns = {
     id: issues.id,
     mediaType: issues.mediaType,
@@ -140,7 +146,7 @@ export async function listIssues(viewer: { userId: string; isAdmin: boolean }): 
     reportedByUsername: users.username,
   };
   const base = db.select(columns).from(issues).innerJoin(users, eq(users.id, issues.reportedByUserId));
-  if (!viewer.isAdmin) {
+  if (!viewer.managesIssues) {
     return base.where(eq(issues.reportedByUserId, viewer.userId)).orderBy(desc(issues.createdAt)).limit(100);
   }
   const [open, resolved] = await Promise.all([
@@ -236,13 +242,14 @@ export async function searchAgainForIssue(reviewerUserId: string, issueId: strin
   return main;
 }
 
-/** A member may withdraw their own open report; the admin any. */
-export async function deleteIssue(viewer: { userId: string; isAdmin: boolean }, issueId: string): Promise<CoreResult> {
+/** Anyone may withdraw their own open report; whoever handles problem
+ * reports may remove any. */
+export async function deleteIssue(viewer: { userId: string; managesIssues: boolean }, issueId: string): Promise<CoreResult> {
   if (!UUID.test(issueId)) return fail("not_found", "Report not found.");
   const deleted = await db
     .delete(issues)
     .where(
-      viewer.isAdmin
+      viewer.managesIssues
         ? eq(issues.id, issueId)
         : and(eq(issues.id, issueId), eq(issues.reportedByUserId, viewer.userId), eq(issues.status, "open")),
     )

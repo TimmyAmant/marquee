@@ -380,6 +380,84 @@ public static class RequestHistory
         history.Where(request => !request.IsAddFailed).ToList();
 }
 
+/// <summary>A row of "Everyone's requests": someone else's request, pending or reviewed, to look at.</summary>
+public sealed record EveryoneRequest
+{
+    public required Guid Id { get; init; }
+    public required string Title { get; init; }
+    public ImageRef? PosterPath { get; init; }
+    public required TitleId TitleId { get; init; }
+    public required string RequesterLabel { get; init; }
+
+    /// <summary>The requester's username: whose it is.</summary>
+    public required string Username { get; init; }
+
+    public required DateTimeOffset CreatedAt { get; init; }
+    public required RequestStatus Status { get; init; }
+
+    /// <summary>"Waiting for review", or the reviewed request's own label ("Approved", "Manually approved", "Rejected").</summary>
+    public required string StatusLabel { get; init; }
+
+    /// <summary>"Seasons 1–3" and/or "In 4K" under the title; empty for a regular whole series or movie.</summary>
+    public required string DetailText { get; init; }
+}
+
+/// <summary>
+/// requests/page.tsx's "Everyone's requests" (0.48+): for an account that
+/// may see everyone's requests (<c>viewRequests</c>) but not review them,
+/// under their own: everyone else's pending and reviewed requests, newest
+/// first, with no buttons.
+/// </summary>
+public static class EveryonesRequests
+{
+    public const string Heading = "Everyone's requests";
+    public const string EmptyText = "Nobody else has asked for anything yet.";
+    public const string PendingLabel = "Waiting for review";
+
+    /// <summary>
+    /// <c>/requests/pending</c> and <c>/requests/history</c> together, the
+    /// viewer's own left out (they're in the list above), newest first.
+    /// History rows carry no user id, so the username tells whose they are.
+    /// </summary>
+    public static IReadOnlyList<EveryoneRequest> Rows(
+        IEnumerable<PendingRequest> pending,
+        IEnumerable<ReviewedRequest> history,
+        string viewerUsername)
+    {
+        var waiting = pending.Select(request => new EveryoneRequest
+        {
+            Id = request.Id,
+            Title = request.Title,
+            PosterPath = request.PosterPath,
+            TitleId = request.TitleId,
+            RequesterLabel = request.RequestedBy.Label,
+            CreatedAt = request.CreatedAt,
+            Status = RequestStatus.Pending,
+            StatusLabel = PendingLabel,
+            DetailText = request.DetailText,
+            Username = request.RequestedBy.Username,
+        });
+        var reviewed = history.Select(request => new EveryoneRequest
+        {
+            Id = request.Id,
+            Title = request.Title,
+            PosterPath = request.PosterPath,
+            TitleId = request.TitleId,
+            RequesterLabel = request.RequestedBy.Label,
+            CreatedAt = request.CreatedAt,
+            Status = request.Status,
+            StatusLabel = request.StatusLabel,
+            DetailText = request.DetailText,
+            Username = request.RequestedBy.Username,
+        });
+        return waiting.Concat(reviewed)
+            .Where(row => !string.Equals(row.Username, viewerUsername, StringComparison.Ordinal))
+            .DistinctBy(row => row.Id)
+            .OrderByDescending(row => row.CreatedAt)
+            .ToList();
+    }
+}
+
 /// <summary><c>addedTo</c> on a past request (0.43+): the server and the settings it was added with.</summary>
 public sealed record AddedTo
 {

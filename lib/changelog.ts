@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.48.0",
+    date: "2026-09-26",
+    changes: [
+      "Permissions: when you edit a household member you now get switches for exactly what they can do — request movies, TV, 4K movies, 4K TV; auto-approve each of those; Advanced request options; see everyone's requests; review requests; handle problem reports; report problems; manage the blocklist; no request limits. Member and Trusted are presets that fill the switches in, and \"Custom\" shows when they match neither.",
+      "Nothing changes on upgrade: everyone keeps exactly what they could do before. Settings, integrations, accounts, API keys and sign-in stay admin-only and can't be granted.",
+      "Also fixed: the Can't find list's Search again and Mark as found on the website didn't check who was asking.",
+      "On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.47.2",
     date: "2026-09-26",
     changes: [

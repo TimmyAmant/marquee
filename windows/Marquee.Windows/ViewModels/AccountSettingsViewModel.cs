@@ -12,7 +12,7 @@ namespace Marquee.Windows.ViewModels;
 /// <summary>
 /// A row of "Household members" (household-members-list.tsx): the name,
 /// the username under it when there is a name, the admin's "Active 3 hours
-/// ago" line on other members' rows, the "Admin", "Trusted" and "You" tags,
+/// ago" line on other members' rows, the "Admin", "Trusted"/"Custom" and "You" tags,
 /// and the Edit and Remove buttons each viewer is offered. Immutable; the
 /// list is rebuilt from every <c>GET /users</c> answer.
 /// </summary>
@@ -30,7 +30,7 @@ public sealed class HouseholdMemberRow
             ? member.LastActiveLine(DateTimeOffset.Now) ?? ""
             : "";
         IsAdminRow = member.IsAdmin;
-        TrustedTag = member.IsTrusted ? "Trusted" : "";
+        TrustedTag = member.PresetTag;
         IsCurrentUser = member.IsCurrentUser;
         PlexTag = member.Linked?.Plex == true ? "Plex" : "";
         JellyfinTag = member.Linked?.Jellyfin == true ? jellyfinName : "";
@@ -66,7 +66,7 @@ public sealed class HouseholdMemberRow
     /// <summary>The "Admin" tag.</summary>
     public bool IsAdminRow { get; }
 
-    /// <summary>The "Trusted" tag (0.39+): can approve requests and handle problem reports. Empty collapses it.</summary>
+    /// <summary>The "Trusted" tag (0.39+), or (0.48+) "Custom" for switches matching neither preset. Empty collapses it.</summary>
     public string TrustedTag { get; }
 
     /// <summary>The "You" tag.</summary>
@@ -374,8 +374,18 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     /// <summary>Your own channels and "What you hear about" (0.45+ servers), under Notifications.</summary>
     public PersonalNotificationsViewModel Personal { get; }
 
-    /// <summary>The admin's "Request blocklist" (0.41+ servers).</summary>
+    /// <summary>"Request blocklist" (0.41+ servers): the admin's, and (0.48+) anyone's who may manage it.</summary>
     public BlocklistSettingsViewModel Blocklist { get; }
+
+    /// <summary>What the viewer could do when the blocklist and "What you hear about" were last loaded.</summary>
+    private Permissions? loadedFor;
+
+    /// <summary>Loads the blocklist for what the viewer may do now: shown only with <c>manageBlocklist</c> (always the admin).</summary>
+    private void LoadBlocklist()
+    {
+        loadedFor = model.Viewer?.Can;
+        _ = Blocklist.LoadAsync(loadedFor?.ManageBlocklist == true);
+    }
 
     /// <summary>
     /// Set by the page: "Add a household member", answering the new account
@@ -515,7 +525,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         _ = LoadMembersAsync();
         _ = LoadSignInSettingsAsync();
         _ = LoadPlexWatchlistAsync();
-        _ = Blocklist.LoadAsync(IsAdmin);
+        LoadBlocklist();
         _ = Personal.LoadAsync();
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
         _ = model.Session.RefreshInfoAsync();
@@ -1304,8 +1314,14 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
                 OnPropertyChanged(nameof(ShowsMediaServerMembers));
                 _ = LoadMembersAsync();
                 _ = LoadSignInSettingsAsync();
-                _ = Blocklist.LoadAsync(IsAdmin);
+                LoadBlocklist();
                 // Reviewers get more events to choose from.
+                _ = Personal.LoadAsync();
+            }
+            else if (model.Viewer is { } changed && changed.Can != loadedFor)
+            {
+                // The admin changed what this account may do (0.48+).
+                LoadBlocklist();
                 _ = Personal.LoadAsync();
             }
         }
@@ -1313,7 +1329,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         {
             _ = LoadMembersAsync();
             _ = LoadPlexWatchlistAsync();
-            _ = Blocklist.LoadAsync(IsAdmin);
+            LoadBlocklist();
             _ = Personal.LoadAsync();
         }
         else if (e.PropertyName == nameof(AppModel.MenuPosition))

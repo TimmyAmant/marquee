@@ -17,7 +17,7 @@ function target(kind: unknown, id: unknown): CommentTarget | null {
 
 async function viewer() {
   const session = await auth();
-  return session?.user ? { userId: session.user.id, role: session.user.role } : null;
+  return session?.user ? { userId: session.user.id, role: session.user.role, permissions: session.user.permissions } : null;
 }
 
 export async function loadCommentsAction(

@@ -78,7 +78,7 @@ vi.mock("@/lib/db/client", () => {
               (values.ssoSubject != null && r.ssoIssuer === values.ssoIssuer && r.ssoSubject === values.ssoSubject),
           );
           if (clash) return [];
-          const row = { id: `user-${nextId++}`, role: "member", passwordHash: null, ssoIssuer: null, ssoSubject: null, ...values };
+          const row = { id: `user-${nextId++}`, role: "member", permissions: ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "reportIssues"], passwordHash: null, ssoIssuer: null, ssoSubject: null, ...values };
           tables.users.push(row);
           return [{ ...row }];
         },
@@ -121,6 +121,7 @@ vi.mock("@/lib/auth/media-signin", () => ({
 }));
 
 import { resetSsoFlows } from "./flows";
+import { presetFor, TRUSTED_PRESET } from "@/lib/users/permissions";
 import {
   completeSsoCallback,
   continueAppFlow,
@@ -145,9 +146,9 @@ beforeEach(async () => {
   resetSsoFlows();
   nextId = 1;
   tables.users = [
-    { id: "admin", username: "tim@example.com", role: "admin", passwordHash: "h", ssoIssuer: null, ssoSubject: null },
-    { id: "anna", username: "anna@example.com", role: "member", passwordHash: "h", ssoIssuer: null, ssoSubject: null },
-    { id: "linked", username: "bob", role: "member", passwordHash: null, ssoIssuer: FAKE_ISSUER, ssoSubject: "bob-sub" },
+    { id: "admin", username: "tim@example.com", role: "admin", permissions: [], passwordHash: "h", ssoIssuer: null, ssoSubject: null },
+    { id: "anna", username: "anna@example.com", role: "member", permissions: ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "reportIssues"], passwordHash: "h", ssoIssuer: null, ssoSubject: null },
+    { id: "linked", username: "bob", role: "member", permissions: ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "reportIssues"], passwordHash: null, ssoIssuer: FAKE_ISSUER, ssoSubject: "bob-sub" },
   ];
   config.current = {
     name: "Authentik",
@@ -227,6 +228,17 @@ describe("website sign-in", () => {
     expect(tables.users.find((u) => u.id === "linked")?.role).toBe("trusted");
     await webSignIn({ sub: "carol", preferred_username: "carol", groups: ["trusted"] });
     expect(tables.users.find((u) => u.ssoSubject === "carol")?.role).toBe("trusted");
+    // …with the Trusted preset's permissions (lib/users/permissions.ts).
+    for (const who of [tables.users.find((u) => u.id === "linked"), tables.users.find((u) => u.ssoSubject === "carol")]) {
+      expect(presetFor(who as { role: string; permissions: string[] })).toBe("trusted");
+    }
+
+    // An admin's extra grant survives the next sign-in's promotion.
+    const bob = tables.users.find((u) => u.id === "linked")!;
+    bob.role = "member";
+    bob.permissions = [...TRUSTED_PRESET, "manageBlocklist"];
+    await webSignIn({ sub: "bob-sub", groups: ["trusted"] });
+    expect(bob.permissions).toContain("manageBlocklist");
 
     tables.users[0].ssoIssuer = FAKE_ISSUER;
     tables.users[0].ssoSubject = "tim-sub";

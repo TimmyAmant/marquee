@@ -8,6 +8,6 @@ import type { PersonalNotificationChannel } from "@/lib/api/types";
 /** "Send a test" through one of your own channels. */
 export const POST = withApi<{ id: string }>(async (request, { id }): Promise<PersonalNotificationChannel> => {
   const ctx = await requireApiUser(request);
-  const { channel } = unwrap(await testChannel({ id: ctx.user.id, role: ctx.user.role }, id));
+  const { channel } = unwrap(await testChannel({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id));
   return personalChannelDto(channel);
 });

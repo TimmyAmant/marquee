@@ -9,7 +9,7 @@ import type { NotificationPreferences } from "@/lib/api/types";
 /** Which events reach the bell, device push, and each of your channels. */
 export const GET = withApi(async (request): Promise<NotificationPreferences> => {
   const ctx = await requireApiUser(request);
-  return preferencesDto({ id: ctx.user.id, role: ctx.user.role });
+  return preferencesDto({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions });
 });
 
 /** `{ events: [{ event, inApp?, push?, channels?: { <id>: bool } }] }`:
@@ -17,6 +17,6 @@ export const GET = withApi(async (request): Promise<NotificationPreferences> => 
 export const PUT = withApi(async (request): Promise<NotificationPreferences> => {
   const ctx = await requireApiUser(request);
   const body = await readJsonBody(request);
-  unwrap(await savePreferences(ctx.user.id, ctx.user.role, body));
-  return preferencesDto({ id: ctx.user.id, role: ctx.user.role });
+  unwrap(await savePreferences(ctx.user.id, ctx.user, body));
+  return preferencesDto({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions });
 });

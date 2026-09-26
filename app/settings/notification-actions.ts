@@ -33,10 +33,10 @@ import type {
 // /me/notification-preferences. Every action acts only on the signed-in
 // account; the channel id someone sends is always checked against it.
 
-async function actor(): Promise<Actor | null> {
+async function actor(): Promise<(Actor & { permissions: string[] }) | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
-  return { id: session.user.id, role: session.user.role ?? "member" };
+  return { id: session.user.id, role: session.user.role ?? "member", permissions: session.user.permissions };
 }
 
 export type ChannelsResult = { data?: PersonalNotificationChannels; error?: string };
@@ -122,7 +122,7 @@ export async function savePreferencesAction(
 ): Promise<PreferencesResult> {
   const me = await actor();
   if (!me) return { error: SIGNED_OUT };
-  const result = await savePreferences(me.id, me.role, { events });
+  const result = await savePreferences(me.id, me, { events });
   if (!result.ok) return { error: result.error };
   return { data: await preferencesDto(me) };
 }

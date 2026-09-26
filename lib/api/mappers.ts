@@ -16,6 +16,7 @@ import { resolutionTierOf } from "@/lib/quality";
 import { myRequestBadge, reviewedRequestLabel, seasonsLabel } from "@/lib/requests/labels";
 import type { NotFoundRow } from "@/lib/requests/not-found";
 import { notFoundHint } from "@/lib/requests/not-found-rules";
+import { can, permissionMap, requestPermission, type PermissionMap } from "@/lib/users/permissions";
 
 export function iso(date: Date | string | null | undefined): string | null {
   if (!date) return null;
@@ -101,13 +102,15 @@ export function libraryInfo(
 export function fourKViewerState(
   isAdmin: boolean,
   fourK: { configured: boolean; status: LibraryStatus; requestStatus: RequestStatus | null } | null,
+  /** The viewer may request this type in 4K (request4kMovies / request4kTv). */
+  mayRequest: boolean,
 ): Dto.FourKViewerState | null {
   if (!fourK) return null;
   const free = fourK.configured && isUnwanted(fourK.status);
   return {
     status: fourK.status,
     requestStatus: fourK.requestStatus,
-    canRequest: free && !isAdmin && fourK.requestStatus === null,
+    canRequest: free && !isAdmin && mayRequest && fourK.requestStatus === null,
     canAdd: free && isAdmin,
   };
 }
@@ -125,6 +128,9 @@ function noFourKRequest(state: Dto.FourKViewerState | null): Dto.FourKViewerStat
 
 export function titleViewerState(input: {
   isAdmin: boolean;
+  mediaType: MediaType;
+  /** What the viewer may do (loadTitleStatus's `permissions`). */
+  permissions: PermissionMap;
   status: LibraryStatus;
   configured: boolean;
   favorited: boolean;
@@ -155,6 +161,8 @@ export function titleViewerState(input: {
 
   const untracked = isUnwanted(input.status);
   const alreadyRequested = input.requestStatus === "pending";
+  const mayRequest = input.permissions[requestPermission(input.mediaType, false)];
+  const fourK = fourKViewerState(input.isAdmin, input.fourK ?? null, input.permissions[requestPermission(input.mediaType, true)]);
   return {
     isAdmin: input.isAdmin,
     favorited: input.favorited,
@@ -167,13 +175,13 @@ export function titleViewerState(input: {
     // back on; an Add next to it would do the same thing twice.
     canAdd: untracked && input.isAdmin && input.configured && !input.arrTracking,
     needsArrSetup: untracked && input.isAdmin && !input.configured,
-    canRequest: untracked && !input.isAdmin && !alreadyRequested && !blocked,
-    canRequestSeasons: !blocked && (input.seasonRequests?.canRequestSeasons ?? false),
+    canRequest: untracked && !input.isAdmin && mayRequest && !alreadyRequested && !blocked,
+    canRequestSeasons: !blocked && mayRequest && (input.seasonRequests?.canRequestSeasons ?? false),
     requestedSeasons: input.seasonRequests?.requestedSeasons ?? null,
     canRelink: input.isAdmin && !untracked,
     arrTracking: input.isAdmin && input.arrTracking ? { arrId: input.arrTracking.arrId, monitored: input.arrTracking.monitored } : null,
-    fourK: blocked ? noFourKRequest(fourKViewerState(input.isAdmin, input.fourK ?? null)) : fourKViewerState(input.isAdmin, input.fourK ?? null),
-    canReport: canReportProblem(input.status, input.fourK?.status ?? null),
+    fourK: blocked ? noFourKRequest(fourK) : fourK,
+    canReport: input.permissions.reportIssues && canReportProblem(input.status, input.fourK?.status ?? null),
     openReports: input.openReports ?? 0,
     blocked,
     notFoundSince: iso(input.notFoundSince ?? null),
@@ -352,8 +360,10 @@ export function householdMember(row: HouseholdMemberRow, currentUserId: string):
     username: row.username,
     displayName: row.displayName,
     role: row.role,
-    autoApproveMovies: row.autoApproveMovies,
-    autoApproveTv: row.autoApproveTv,
+    // From before permissions: the same as `permissions.autoApproveMovies` / `…Tv`.
+    autoApproveMovies: can(row, "autoApproveMovies"),
+    autoApproveTv: can(row, "autoApproveTv"),
+    permissions: permissionMap(row),
     createdAt: isoRequired(row.createdAt),
     isCurrentUser: row.id === currentUserId,
     avatarUrl: avatarPath(row, "/api/v1"),

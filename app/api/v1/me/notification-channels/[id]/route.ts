@@ -10,7 +10,7 @@ import type { PersonalNotificationChannel } from "@/lib/api/types";
 export const PATCH = withApi<{ id: string }>(async (request, { id }): Promise<PersonalNotificationChannel> => {
   const ctx = await requireApiUser(request);
   const body = await readJsonBody(request);
-  const { channel } = unwrap(await updateChannel({ id: ctx.user.id, role: ctx.user.role }, id, body));
+  const { channel } = unwrap(await updateChannel({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id, body));
   return personalChannelDto(channel);
 });
 

@@ -31,6 +31,7 @@ export function FranchiseRow({
   collectionFavorited,
   isAdmin,
   pageTitle,
+  mayRequest,
 }: {
   title: string;
   items: FranchiseItem[];
@@ -56,12 +57,17 @@ export function FranchiseRow({
   /** The title page this row sits on — household members' "Request all N
    * missing" asks the server to request this title's franchise. */
   pageTitle?: { mediaType: MediaType; tmdbId: number };
+  /** Which types the viewer may request (lib/users/permissions.ts). */
+  mayRequest?: { movie: boolean; tv: boolean };
 }) {
   if (items.length === 0) return null;
 
   const missingItems = franchiseMissingItems(items, statusMap, arrConfigured, isAdmin);
   // The posters below that show a Request button, all at once.
-  const requestableItems = franchiseRequestableItems(items, statusMap, requestStatusMap, blockedKeys, isAdmin);
+  const requestableItems = franchiseRequestableItems(items, statusMap, requestStatusMap, blockedKeys, isAdmin, {
+    requestMovies: mayRequest?.movie ?? false,
+    requestTv: mayRequest?.tv ?? false,
+  });
 
   return (
     <section>
@@ -83,7 +89,11 @@ export function FranchiseRow({
         {items.map((item) => {
           const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
           const canQuickAdd = isUnwanted(status) && isAdmin === true && arrConfigured?.[item.mediaType];
-          const canRequest = isUnwanted(status) && isAdmin === false && !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
+          const canRequest =
+            isUnwanted(status) &&
+            isAdmin === false &&
+            Boolean(mayRequest?.[item.mediaType]) &&
+            !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
           return (
             <PosterCard
               key={`${item.mediaType}-${item.tmdbId}`}

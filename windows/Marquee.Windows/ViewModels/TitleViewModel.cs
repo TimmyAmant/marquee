@@ -518,8 +518,11 @@ public sealed partial class TitleViewModel : ObservableObject
 
     // MARK: Problem reports (viewer.canReport / openReports, 0.38+; components/report-problem-button.tsx)
 
-    /// <summary>"Report a problem": the title (or its 4K copy) is owned or downloading. An older server never says so.</summary>
-    public bool CanReport => Viewer?.CanReport == true;
+    /// <summary>
+    /// "Report a problem": the title (or its 4K copy) is owned or downloading
+    /// and (0.48+) the account may report problems. An older server never says so.
+    /// </summary>
+    public bool CanReport => Viewer?.CanReport == true && ViewerCan.ReportIssues;
 
     /// <summary>The "Problem reported" pill before the button: one sent from here, or one of yours still open.</summary>
     public bool ShowsProblemReported => CanReport && (reportSent || Viewer?.OpenReports > 0);
@@ -595,23 +598,32 @@ public sealed partial class TitleViewModel : ObservableObject
     // MARK: Request blocklist (viewer.blocked, 0.41+; components/block-requests-button.tsx)
 
     private TitleBlock? Blocked => Viewer?.Blocked;
-    private bool ViewerIsAdmin => Viewer?.IsAdmin == true;
 
-    /// <summary>A member's "Requests are closed for this title — reason" in place of Request.</summary>
-    public bool ShowsBlockedPill => Blocked != null && !ViewerIsAdmin;
+    /// <summary>
+    /// What the signed-in account may do (<c>/me</c>'s permissions, 0.48+;
+    /// the role before). Before the account is known, the title's own
+    /// <c>isAdmin</c> decides between everything and nothing.
+    /// </summary>
+    private Permissions ViewerCan => model.Viewer?.Can ?? (Viewer?.IsAdmin == true ? Permissions.All : Permissions.None);
+
+    /// <summary>Block and unblock requests: the admin's, and (0.48+) anyone's with <c>manageBlocklist</c>.</summary>
+    private bool ManagesBlocklist => ViewerCan.ManageBlocklist;
+
+    /// <summary>"Requests are closed for this title — reason" in place of Request, for anyone who can't unblock it.</summary>
+    public bool ShowsBlockedPill => Blocked != null && !ManagesBlocklist;
 
     public string BlockedLine => Blocked?.MemberLine ?? "";
 
-    /// <summary>The admin's "Requests blocked by “anime”": a keyword did it, so it's unblocked from Settings.</summary>
-    public bool ShowsBlockedByKeyword => ViewerIsAdmin && Blocked?.KeywordLine != null;
+    /// <summary>"Requests blocked by “anime”" for whoever manages the blocklist: a keyword did it, so it's unblocked from Settings.</summary>
+    public bool ShowsBlockedByKeyword => ManagesBlocklist && Blocked?.KeywordLine != null;
 
     public string BlockedKeywordLine => Blocked?.KeywordLine ?? "";
 
-    /// <summary>The admin's "Block requests"; hidden on a server older than the blocklist.</summary>
-    public bool CanBlock => ViewerIsAdmin && Viewer?.HasBlocklist == true && Blocked == null;
+    /// <summary>"Block requests" for whoever manages the blocklist; hidden on a server older than the blocklist.</summary>
+    public bool CanBlock => ManagesBlocklist && Viewer?.HasBlocklist == true && Blocked == null;
 
-    /// <summary>The admin's "Unblock requests" on a title blocked from its own page.</summary>
-    public bool CanUnblock => ViewerIsAdmin && Blocked != null && Blocked.KeywordLine == null;
+    /// <summary>"Unblock requests" on a title blocked from its own page.</summary>
+    public bool CanUnblock => ManagesBlocklist && Blocked != null && Blocked.KeywordLine == null;
 
     public string UnblockLabel => IsUnblocking ? "Unblocking…" : "Unblock requests";
 
@@ -1241,6 +1253,14 @@ public sealed partial class TitleViewModel : ObservableObject
         if (e.PropertyName == nameof(AppModel.ReloadToken))
         {
             _ = LoadAsync();
+        }
+        else if (e.PropertyName == nameof(AppModel.Viewer))
+        {
+            // What the account may do can change underneath (0.48+): report, block.
+            foreach (var name in StatusProperties)
+            {
+                OnPropertyChanged(name);
+            }
         }
     }
 

@@ -7,11 +7,13 @@
 //
 // Paths use the route folders' own parameter names ([id] → {id}).
 
+import type { Permission } from "@/lib/users/permissions";
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-/** Who may call it: no credential; any account; the admin or a trusted
- * member (the review queue); the admin only. */
-export type ApiAuthLevel = "public" | "user" | "reviewer" | "admin";
+/** Who may call it: no credential; any account; the admin only; or the
+ * admin and any account with that permission (lib/users/permissions.ts). */
+export type ApiAuthLevel = "public" | "user" | "admin" | Permission;
 
 export type ApiOperation = {
   method: HttpMethod;
@@ -90,12 +92,12 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["POST", "/titles/{type}/{id}/share", "user", "Share a title with household members."],
     ["GET", "/users/shareable", "user", "Who a title can be shared with."],
     ["POST", "/titles/{type}/{id}/add", "admin", "Add a title straight to Sonarr/Radarr."],
-    ["GET", "/titles/{type}/{id}/add-options", "reviewer", "The servers, quality profiles and folders a title can be added with."],
+    ["GET", "/titles/{type}/{id}/add-options", "advancedRequests", "The servers, quality profiles and folders a title can be added with."],
     ["POST", "/titles/{type}/{id}/search", "admin", "Ask Sonarr/Radarr to search for a title now."],
     ["PUT", "/titles/{type}/{id}/monitored", "admin", "Turn monitoring on or off in Sonarr/Radarr."],
     ["POST", "/titles/{type}/{id}/relink", "admin", "Point a title at a different Sonarr/Radarr entry."],
-    ["POST", "/titles/{type}/{id}/block", "admin", "Block requests for a title."],
-    ["DELETE", "/titles/{type}/{id}/block", "admin", "Unblock requests for a title."],
+    ["POST", "/titles/{type}/{id}/block", "manageBlocklist", "Block requests for a title."],
+    ["DELETE", "/titles/{type}/{id}/block", "manageBlocklist", "Unblock requests for a title."],
   ]),
   ...group("People & companies", [
     ["GET", "/people/{id}", "user", "A person's page: biography and credits."],
@@ -112,31 +114,31 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["POST", "/titles/{type}/{id}/request", "user", "Request a title (or some seasons of a series)."],
     ["POST", "/titles/{type}/{id}/request-all-missing", "user", "Request every missing season of a series."],
     ["GET", "/requests/mine", "user", "The signed-in account's own requests."],
-    ["GET", "/requests/pending", "reviewer", "Requests waiting for review."],
-    ["GET", "/requests/history", "reviewer", "Reviewed requests (paginated)."],
-    ["GET", "/requests/pending-count", "user", "How many requests are waiting (0 for members)."],
-    ["GET", "/requests/not-found", "reviewer", "Approved requests Sonarr/Radarr can't find."],
-    ["POST", "/requests/{id}/not-found/search", "reviewer", "Search again for a request Sonarr/Radarr couldn't find."],
-    ["POST", "/requests/{id}/not-found/dismiss", "reviewer", "Dismiss a can't-find alert."],
-    ["POST", "/requests/{id}/approve", "reviewer", "Approve a request (optionally with server/profile overrides)."],
-    ["POST", "/requests/{id}/manual-approve", "reviewer", "Approve a request without adding it to Sonarr/Radarr."],
-    ["POST", "/requests/{id}/reject", "reviewer", "Decline a request, with an optional reason."],
-    ["POST", "/requests/approve-all", "reviewer", "Approve every pending request."],
+    ["GET", "/requests/pending", "viewRequests", "Requests waiting for review."],
+    ["GET", "/requests/history", "viewRequests", "Reviewed requests (paginated)."],
+    ["GET", "/requests/pending-count", "user", "How many requests are waiting (0 unless you may review requests)."],
+    ["GET", "/requests/not-found", "reviewRequests", "Approved requests Sonarr/Radarr can't find."],
+    ["POST", "/requests/{id}/not-found/search", "reviewRequests", "Search again for a request Sonarr/Radarr couldn't find."],
+    ["POST", "/requests/{id}/not-found/dismiss", "reviewRequests", "Dismiss a can't-find alert."],
+    ["POST", "/requests/{id}/approve", "reviewRequests", "Approve a request (optionally with server/profile overrides)."],
+    ["POST", "/requests/{id}/manual-approve", "admin", "Approve a request without adding it to Sonarr/Radarr."],
+    ["POST", "/requests/{id}/reject", "reviewRequests", "Decline a request, with an optional reason."],
+    ["POST", "/requests/approve-all", "reviewRequests", "Approve every pending request."],
     ["PATCH", "/requests/{id}", "user", "Change a request's seasons or 4K while it's pending."],
     ["DELETE", "/requests/{id}", "user", "Cancel a request."],
     ["GET", "/requests/{id}/edit-options", "user", "What a pending request can be changed to."],
-    ["POST", "/requests/{id}/retry", "reviewer", "Retry adding a request Sonarr/Radarr couldn't take."],
+    ["POST", "/requests/{id}/retry", "reviewRequests", "Retry adding a request Sonarr/Radarr couldn't take."],
     ["GET", "/requests/{id}/comments", "user", "A request's conversation."],
     ["POST", "/requests/{id}/comments", "user", "Comment on a request."],
     ["PATCH", "/requests/{id}/comments/{commentId}", "user", "Edit your comment on a request."],
     ["DELETE", "/requests/{id}/comments/{commentId}", "user", "Delete a comment on a request."],
   ]),
   ...group("Problem reports", [
-    ["POST", "/titles/{type}/{id}/issues", "user", "Report a problem with a title."],
-    ["GET", "/issues", "user", "Problem reports (all for reviewers, your own for members)."],
-    ["DELETE", "/issues/{id}", "user", "Withdraw your open report, or delete any as a reviewer."],
-    ["POST", "/issues/{id}/resolve", "reviewer", "Resolve a problem report."],
-    ["POST", "/issues/{id}/search", "reviewer", "Ask Sonarr/Radarr to search again for a reported title."],
+    ["POST", "/titles/{type}/{id}/issues", "user", "Report a problem with a title (reportIssues)."],
+    ["GET", "/issues", "user", "Problem reports (all with manageIssues, otherwise your own)."],
+    ["DELETE", "/issues/{id}", "user", "Withdraw your open report, or delete any with manageIssues."],
+    ["POST", "/issues/{id}/resolve", "manageIssues", "Resolve a problem report."],
+    ["POST", "/issues/{id}/search", "manageIssues", "Ask Sonarr/Radarr to search again for a reported title."],
     ["GET", "/issues/{id}/comments", "user", "A problem report's conversation."],
     ["POST", "/issues/{id}/comments", "user", "Comment on a problem report."],
     ["PATCH", "/issues/{id}/comments/{commentId}", "user", "Edit your comment on a problem report."],
@@ -196,9 +198,9 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["PUT", "/settings/sso", "admin", "Save single sign-on settings."],
     ["DELETE", "/settings/sso", "admin", "Turn single sign-on off."],
     ["POST", "/settings/sso/test", "admin", "Test single sign-on settings."],
-    ["GET", "/settings/blocklist", "admin", "The request blocklist."],
-    ["POST", "/settings/blocklist", "admin", "Block a keyword or genre."],
-    ["DELETE", "/settings/blocklist/{id}", "admin", "Remove a blocklist entry."],
+    ["GET", "/settings/blocklist", "manageBlocklist", "The request blocklist."],
+    ["POST", "/settings/blocklist", "manageBlocklist", "Block a keyword or genre."],
+    ["DELETE", "/settings/blocklist/{id}", "manageBlocklist", "Remove a blocklist entry."],
   ]),
   ...group("API keys", [
     ["GET", "/settings/api-keys", "admin", "Every API key (never the secret). Not callable with an API key.", { response: "ApiKeyList" }],

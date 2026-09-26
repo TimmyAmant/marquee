@@ -363,6 +363,30 @@ extension API {
         }
     }
 
+    /// `POST /titles/{type}/{tmdbId}/request` body with "Advanced" picks
+    /// (0.48+, Advanced request options): `seasons` or `is4k` as before, and
+    /// the overrides flat beside them, as Approve takes them.
+    struct RequestCreateBody: Encodable, Sendable {
+        var seasons: [Int]?
+        var is4k: Bool?
+        var overrides: AddOverrides
+
+        private enum CodingKeys: String, CodingKey {
+            case seasons, is4k, serverId, qualityProfileId, rootFolderPath, tags, seriesType
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(seasons, forKey: .seasons)
+            try container.encodeIfPresent(is4k, forKey: .is4k)
+            try container.encodeIfPresent(overrides.serverId, forKey: .serverId)
+            try container.encodeIfPresent(overrides.qualityProfileId, forKey: .qualityProfileId)
+            try container.encodeIfPresent(overrides.rootFolderPath, forKey: .rootFolderPath)
+            try container.encodeIfPresent(overrides.tags, forKey: .tags)
+            try container.encodeIfPresent(overrides.seriesType, forKey: .seriesType)
+        }
+    }
+
     /// `/requests/history`'s `addedTo` (0.43+): where an approved request
     /// was added, and with what.
     struct AddedTo: Codable, Hashable, Sendable {

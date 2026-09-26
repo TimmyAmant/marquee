@@ -1,6 +1,6 @@
 import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
 import { isUnwanted } from "@/lib/library/status-tone";
-import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
+import { and, eq, isNotNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
@@ -21,9 +21,11 @@ import { clearRequestAlerts, notifyReviewersOfRequest, refreshRequestAlerts } fr
 import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { hasOverrides, type AddOverrides } from "@/lib/arr/add-options";
-import { canReviewRequests } from "@/lib/users/roles";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
+import { usersWhoCan } from "@/lib/users/access";
+import { can, autoApprovePermission, requestPermission, type PermissionSubject } from "@/lib/users/permissions";
+import { getAccess } from "@/lib/users/access";
 
 // Request lifecycle shared by the web's server actions (lib/requests/actions.ts)
 // and /api/v1/requests/*. Callers verify who is acting (signed in / admin);
@@ -45,14 +47,26 @@ export async function createRequest(
     /** Don't alert reviewers about this one: the Plex Watchlist sync sends
      * one alert for its whole batch instead (lib/requests/alerts.ts). */
     quiet?: boolean;
+    /** The requester's own "Advanced" picks (server, quality profile, folder,
+     * tags), already parsed — only for someone with the advancedRequests
+     * permission. Used when it's approved, unless the reviewer picks others. */
+    overrides?: AddOverrides;
   },
 ): Promise<CoreResult<{ requestId: string }>> {
   const { mediaType, tmdbId } = input;
+  // What this account may ask for (lib/users/permissions.ts), read fresh.
+  const access = await getAccess(viewer.userId);
+  const refused = requestRefusal(access, mediaType, input.is4k === true);
+  if (refused) return refused;
+  if (hasOverrides(input.overrides) && !can(access, "advancedRequests")) {
+    return fail("forbidden", "Picking the server, quality or folder isn't turned on for your account.");
+  }
+  const overrides = hasOverrides(input.overrides) ? input.overrides! : null;
   // The admin's blocklist (lib/requests/blocklist.ts) — before anything else,
   // for 4K and Plex Watchlist requests alike.
   const block = await findBlock(mediaType, tmdbId);
   if (block) return fail("forbidden", blockedMessage(block));
-  if (input.is4k === true) return createFourKRequest(viewer, input);
+  if (input.is4k === true) return createFourKRequest(viewer, input, access, overrides);
 
   const parsedSeasons = mediaType === "tv" ? parseSeasonsInput(input.seasons) : { ok: true as const, seasons: null };
   if (!parsedSeasons.ok) return fail("invalid", parsedSeasons.error);
@@ -142,6 +156,7 @@ export async function createRequest(
         title,
         posterPath,
         seasons,
+        addOverrides: overrides,
       })
       .returning({ id: requests.id })
       .then(([row]) => row)
@@ -172,14 +187,7 @@ export async function createRequest(
   // approval flow the admin's Approve button uses. Falls back to sitting
   // pending (like any failed manual approval) if it isn't set up, or under
   // "Couldn't add" — with the reviewers told — if Radarr is unreachable.
-  const [requester] = await db
-    .select({ role: users.role, autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
-    .from(users)
-    .where(eq(users.id, viewer.userId));
-  // A trusted member's requests go straight through (lib/users/roles.ts).
-  const autoApprove =
-    requester?.role === "trusted" || (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv);
-  if (autoApprove) {
+  if (can(access, autoApprovePermission(mediaType, false))) {
     const adminUserId = await getAdminUserId();
     if (adminUserId) {
       const approved = await approveRequest(inserted.id, adminUserId).catch(() => null);
@@ -198,6 +206,8 @@ export async function createRequest(
 async function createFourKRequest(
   viewer: Extract<ViewerIdentity, { userId: string }>,
   input: { mediaType: MediaType; tmdbId: number; title: string; posterPath: string | null },
+  access: PermissionSubject | null,
+  overrides: AddOverrides | null,
 ): Promise<CoreResult<{ requestId: string }>> {
   const { mediaType, tmdbId } = input;
   const adminUserId = await getAdminUserId();
@@ -227,6 +237,7 @@ async function createFourKRequest(
         posterPath: cachedTitle.posterPath,
         seasons: null,
         is4k: true,
+        addOverrides: overrides,
       })
       .returning({ id: requests.id })
       .then(([row]) => row)
@@ -247,11 +258,7 @@ async function createFourKRequest(
     title: `${cachedTitle.name} in 4K`,
   }).catch(() => undefined);
 
-  const [requester] = await db
-    .select({ role: users.role, autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
-    .from(users)
-    .where(eq(users.id, viewer.userId));
-  if (requester?.role === "trusted" || (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv)) {
+  if (can(access, autoApprovePermission(mediaType, true))) {
     const approved = await approveRequest(inserted.id, adminUserId).catch(() => null);
     if (approved && "addFailed" in approved) await notifyReviewersOfAddFailure(inserted.id).catch(() => undefined);
   }
@@ -260,6 +267,13 @@ async function createFourKRequest(
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
   revalidatePath("/requests");
   return { ok: true, requestId: inserted.id };
+}
+
+/** Why this account can't ask for this kind of title, or null when it can. */
+function requestRefusal(access: PermissionSubject | null, mediaType: MediaType, is4k: boolean): CoreFailure | null {
+  if (can(access, requestPermission(mediaType, is4k))) return null;
+  const what = mediaType === "movie" ? (is4k ? "4K movies" : "movies") : is4k ? "4K TV" : "TV";
+  return fail("forbidden", `Requesting ${what} isn't turned on for your account.`);
 }
 
 /** Whose Sonarr/Radarr an approval uses: the reviewer's own when they're
@@ -352,6 +366,16 @@ export async function approveRequest(
   const adminUserId = await credentialOwnerFor(reviewerUserId);
   if (!adminUserId) return fail("conflict", "There's no admin account to add titles with.");
 
+  // The requester's own Advanced picks (advancedRequests), if they made
+  // any and the reviewer didn't pick others.
+  const [asked] = await db
+    .select({ addOverrides: requests.addOverrides })
+    .from(requests)
+    .where(eq(requests.id, requestId))
+    .limit(1);
+  const requested = asked?.addOverrides ?? null;
+  const picks = hasOverrides(overrides) ? overrides : (requested ?? {});
+
   const claimedAt = new Date();
   const [request] = await db
     .update(requests)
@@ -359,7 +383,7 @@ export async function approveRequest(
       status: "approved",
       reviewedByUserId: reviewerUserId,
       reviewedAt: claimedAt,
-      addOverrides: hasOverrides(overrides) ? overrides : null,
+      addOverrides: hasOverrides(picks) ? picks : null,
     })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning();
@@ -367,7 +391,7 @@ export async function approveRequest(
 
   // Executes using the approving admin's own Sonarr/Radarr credential —
   // there's no shared/instance-wide credential, only per-user ones.
-  const result = await addForRequest(adminUserId, request, overrides);
+  const result = await addForRequest(adminUserId, request, picks);
   if (!result.ok) {
     if (result.code === "upstream") {
       await markAddFailed(request.id, result.error, claimedAt);
@@ -375,7 +399,7 @@ export async function approveRequest(
     }
     const reverted = await db
       .update(requests)
-      .set({ status: "pending", reviewedByUserId: null, reviewedAt: null, addOverrides: null })
+      .set({ status: "pending", reviewedByUserId: null, reviewedAt: null, addOverrides: requested })
       .where(and(eq(requests.id, requestId), eq(requests.status, "approved"), eq(requests.reviewedAt, claimedAt)))
       .returning({ id: requests.id })
       .catch((err) => {
@@ -476,11 +500,7 @@ async function notifyReviewersOfAddFailure(requestId: string): Promise<void> {
     .where(eq(requests.id, requestId))
     .limit(1);
   if (!request?.addFailedAt) return;
-  const reviewers = await db
-    .select({ id: users.id, role: users.role })
-    .from(users)
-    .where(inArray(users.role, ["admin", "trusted"]));
-  reviewers.sort((a, b) => (a.role === "admin" ? -1 : b.role === "admin" ? 1 : 0));
+  const reviewers = await usersWhoCan("reviewRequests");
   const who = request.requesterName || request.requesterUsername;
   const what = requestName(request, true);
   for (const [index, reviewer] of reviewers.entries()) {
@@ -645,7 +665,8 @@ export async function rejectRequest(
 
 // ── Changing your mind ───────────────────────────────────────────────────
 
-export type RequestActor = { userId: string; role: string | null | undefined };
+/** Who's acting, with what they may do (lib/users/permissions.ts). */
+export type RequestActor = PermissionSubject & { userId: string };
 
 /** Cancels one of your own requests while it's still waiting for review:
  * it's gone, its slot in your request limit is free again, and the
@@ -665,7 +686,7 @@ export async function cancelRequest(actor: RequestActor, requestId: string): Pro
     .limit(1);
   // Someone else's request reads like one that isn't there, unless you
   // review requests (then Decline is the way).
-  if (!request || (request.ownerId !== actor.userId && !canReviewRequests(actor.role))) {
+  if (!request || (request.ownerId !== actor.userId && !can(actor, "reviewRequests"))) {
     return fail("not_found", "Request not found.");
   }
   if (request.ownerId !== actor.userId) return fail("forbidden", "Only whoever asked can cancel it — decline it instead.");
@@ -708,7 +729,7 @@ export async function editRequest(
   input: { seasons?: unknown; is4k?: unknown },
 ): Promise<CoreResult> {
   const [request] = await db.select().from(requests).where(eq(requests.id, requestId)).limit(1);
-  const reviewer = canReviewRequests(actor.role);
+  const reviewer = can(actor, "reviewRequests");
   if (!request || (request.requestedByUserId !== actor.userId && !reviewer)) {
     return fail("not_found", "Request not found.");
   }
@@ -735,6 +756,10 @@ export async function editRequest(
 
   const sameSeasons = JSON.stringify(seasons) === JSON.stringify(request.seasons);
   if (is4k === request.is4k && sameSeasons) return { ok: true };
+  // It stays the requester's request, so it's what they may ask for that
+  // counts — whoever's changing it.
+  const refused = requestRefusal(await getAccess(request.requestedByUserId), request.mediaType, is4k);
+  if (refused) return refused;
 
   const libraryOwnerId = await getLibraryOwnerUserId(request.requestedByUserId);
   const checked = is4k

@@ -487,6 +487,8 @@ private struct TitleActionRow: View {
 
     var body: some View {
         let viewer = detail.viewer
+        // 0.48+: the blocklist can be handed to a member.
+        let managesBlocklist = model.viewer?.can(.manageBlocklist) == true
         VStack(alignment: .leading, spacing: 8) {
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 StatusBadge(status: detail.library.status, large: true)
@@ -512,8 +514,9 @@ private struct TitleActionRow: View {
                 }
 
                 // components/add-to-library-button.tsx (0.41+): on the
-                // admin's blocklist, a member sees why instead of Request.
-                if !viewer.isAdmin, let block = viewer.block {
+                // blocklist, a member sees why instead of Request (whoever
+                // manages it gets Unblock instead).
+                if !managesBlocklist, let block = viewer.block {
                     Text(block.closedLine)
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
@@ -535,7 +538,7 @@ private struct TitleActionRow: View {
                     case .wholeSeries:
                         Button(screen.isAdding ? "Requesting…" : action.buttonTitle) { screen.request() }
                             .buttonStyle(AccentButtonStyle())
-                            .disabled(screen.isAdding)
+                            .disabled(screen.isAdding || screen.advancedAdd.isLoading)
                     case .pickSeasons(more: false):
                         Button(action.buttonTitle, action: onPickSeasons)
                             .buttonStyle(AccentButtonStyle())
@@ -577,7 +580,7 @@ private struct TitleActionRow: View {
                     } else if fourK.canRequest {
                         Button(screen.isFourKBusy ? "Requesting…" : "Request in 4K") { screen.requestIn4K() }
                             .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))
-                            .disabled(screen.isFourKBusy)
+                            .disabled(screen.isFourKBusy || screen.advancedAdd4K.isLoading)
                     }
                     if fourK.canAdd {
                         Button(screen.isFourKBusy ? "Adding…" : "Add to 4K \(detail.mediaType.arrName)") { screen.addTo4K() }
@@ -598,7 +601,7 @@ private struct TitleActionRow: View {
                 // components/report-problem-button.tsx (0.38+): once something
                 // is reported, a "Problem reported" pill and "Report another"
                 // (another episode can still be reported).
-                if viewer.showsReportProblem {
+                if viewer.showsReportProblem(reportsIssues: model.viewer?.can(.reportIssues) == true) {
                     if screen.hasReportedProblem {
                         Text("Problem reported")
                             .font(.system(size: 13))
@@ -625,7 +628,7 @@ private struct TitleActionRow: View {
                 .buttonStyle(OutlineButtonStyle(pill: .large))
 
                 // components/block-requests-button.tsx (0.41+).
-                if viewer.offersBlocking {
+                if viewer.offersBlocking(managesBlocklist: managesBlocklist) {
                     blockControl(viewer.block)
                 }
 
@@ -683,7 +686,7 @@ private struct TitleActionRow: View {
             if let message = screen.trackingMessage {
                 InlineMessage(text: message.text, isError: message.isError)
             }
-            if askingBlockReason && viewer.offersBlocking && viewer.block == nil {
+            if askingBlockReason && viewer.offersBlocking(managesBlocklist: managesBlocklist) && viewer.block == nil {
                 blockReasonField
             }
             if let error = screen.blockError {
@@ -694,9 +697,16 @@ private struct TitleActionRow: View {
 
     // MARK: Advanced (add overrides)
 
-    /// Which Add actions "Advanced" applies to: Add, Add to 4K, or both.
+    /// Which actions "Advanced" applies to: Add / Request, the 4K Add /
+    /// Request, or both. Requests only with Advanced request options (0.48+),
+    /// and only the whole-title ones (the season picker sends none).
     private func advancedTargets(_ viewer: API.TitleViewerState) -> (standard: Bool, fourK: Bool) {
-        (viewer.canAdd, viewer.fourK?.canAdd == true)
+        let requests = model.viewer?.can(.advancedRequests) == true
+        let fourKRequest = viewer.fourK.map { $0.canRequest && !$0.isRequestPending } ?? false
+        return (
+            viewer.canAdd || (requests && !viewer.alreadyRequested && detail.requestAction == .wholeSeries),
+            viewer.fourK?.canAdd == true || (requests && fourKRequest)
+        )
     }
 
     private func offersAdvancedAdd(_ viewer: API.TitleViewerState) -> Bool {
@@ -725,14 +735,14 @@ private struct TitleActionRow: View {
             AddOptionsPanel(
                 advanced: Binding(get: { screen.advancedAdd }, set: { screen.advancedAdd = $0 }),
                 mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: false,
-                heading: both ? "Add to \(arrName)" : nil
+                heading: both ? (viewer.canAdd ? "Add to \(arrName)" : "Request") : nil
             )
         }
         if targets.fourK && screen.advancedAdd4K.isExpanded {
             AddOptionsPanel(
                 advanced: Binding(get: { screen.advancedAdd4K }, set: { screen.advancedAdd4K = $0 }),
                 mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: true,
-                heading: both ? "Add to 4K \(arrName)" : nil
+                heading: both ? (viewer.fourK?.canAdd == true ? "Add to 4K \(arrName)" : "Request in 4K") : nil
             )
         }
     }

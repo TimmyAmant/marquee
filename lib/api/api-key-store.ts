@@ -148,6 +148,7 @@ export async function authenticateApiKey(key: string, now = new Date()): Promise
       role: users.role,
       autoApproveMovies: users.autoApproveMovies,
       autoApproveTv: users.autoApproveTv,
+      permissions: users.permissions,
       avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
     })
@@ -181,6 +182,7 @@ export async function authenticateApiKey(key: string, now = new Date()): Promise
       role: row.role,
       autoApproveMovies: row.autoApproveMovies,
       autoApproveTv: row.autoApproveTv,
+      permissions: row.permissions,
       avatarUpdatedAt: row.avatarUpdatedAt,
       createdAt: row.createdAt,
     },

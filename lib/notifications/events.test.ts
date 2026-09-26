@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { notificationEventTypeValues } from "@/lib/db/schema";
+import { MEMBER_PRESET, TRUSTED_PRESET } from "@/lib/users/permissions";
 import {
   bellAndPushFor,
   channelWants,
@@ -12,7 +13,7 @@ import {
 
 describe("notification events", () => {
   it("lists reviewer events only for reviewers, and problem reports only for the admin", () => {
-    expect(eventsFor("member")).toEqual([
+    expect(eventsFor({ role: "member", permissions: MEMBER_PRESET })).toEqual([
       "request_approved",
       "request_declined",
       "request_available",
@@ -22,9 +23,9 @@ describe("notification events", () => {
       "request_comment",
       "title_shared",
     ]);
-    expect(eventsFor("trusted")).toEqual([...eventsFor("member"), "request_pending", "request_not_found", "watchlist_requests"]);
-    expect(eventsFor("admin")).toEqual([
-      ...eventsFor("member"),
+    expect(eventsFor({ role: "trusted", permissions: TRUSTED_PRESET })).toEqual([...eventsFor({ role: "member", permissions: MEMBER_PRESET }), "request_pending", "request_not_found", "watchlist_requests"]);
+    expect(eventsFor({ role: "admin", permissions: [] })).toEqual([
+      ...eventsFor({ role: "member", permissions: MEMBER_PRESET }),
       "request_pending",
       "request_not_found",
       "issue_reported",
@@ -33,7 +34,7 @@ describe("notification events", () => {
   });
 
   it("lists comments for everyone, never for the household channels", () => {
-    expect(eventsFor("member")).toContain("request_comment");
+    expect(eventsFor({ role: "member", permissions: MEMBER_PRESET })).toContain("request_comment");
     expect(householdEvents).not.toContain("request_comment");
     expect(householdWants(["request_comment"], "request_comment")).toBe(false);
     expect(bellAndPushFor(undefined, "request_comment")).toEqual({ inApp: true, push: true });
@@ -71,7 +72,7 @@ describe("a shared title", () => {
 
 describe("defaults keep today's behaviour", () => {
   it("puts everything in the bell and on devices when nothing was chosen", () => {
-    for (const event of eventsFor("admin").filter((e) => e !== "request_still_looking")) {
+    for (const event of eventsFor({ role: "admin", permissions: [] }).filter((e) => e !== "request_still_looking")) {
       expect(bellAndPushFor(undefined, event)).toEqual({ inApp: true, push: true });
       expect(bellAndPushFor({}, event)).toEqual({ inApp: true, push: true });
     }

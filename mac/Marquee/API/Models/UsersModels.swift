@@ -34,6 +34,9 @@ extension API {
         var movieQuotaDays: Int? = nil
         var tvQuotaLimit: Int? = nil
         var tvQuotaDays: Int? = nil
+        /// 0.48+: what they may do (all on for the admin); nil from older
+        /// servers, which go by `role` and the auto-approve flags.
+        var permissions: Permissions? = nil
 
         var isAdmin: Bool { role == .admin }
         /// The "Trusted" tag.
@@ -51,7 +54,7 @@ extension API {
         private enum CodingKeys: String, CodingKey {
             case id, username, displayName, role, autoApproveMovies, autoApproveTv, createdAt
             case isCurrentUser, avatarUrl, linked, hasPassword, lastActiveAt
-            case movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays
+            case movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays, permissions
         }
     }
 }
@@ -76,6 +79,7 @@ extension API.HouseholdMember {
         movieQuotaDays = try c.decodeIfPresent(Int.self, forKey: .movieQuotaDays)
         tvQuotaLimit = try c.decodeIfPresent(Int.self, forKey: .tvQuotaLimit)
         tvQuotaDays = try c.decodeIfPresent(Int.self, forKey: .tvQuotaDays)
+        permissions = try c.decodeIfPresent(API.Permissions.self, forKey: .permissions)
     }
 }
 
@@ -121,6 +125,11 @@ extension API {
         /// 0.39+, admin only, another member's account: `.member` or
         /// `.trusted`; nil leaves it unchanged.
         var role: UserRole?
+        /// 0.48+, admin only, another member's account: every switch, sent as
+        /// the full map (the server works the role out from them). nil leaves
+        /// them unchanged; an older server goes by `role` and the
+        /// auto-approve flags instead.
+        var permissions: Permissions?
         /// 0.39+, admin only: each type's request limit; nil leaves both
         /// the limit and its days unchanged.
         var movieQuota: QuotaChange?
@@ -134,6 +143,7 @@ extension API {
             autoApproveMovies: Bool? = nil,
             autoApproveTv: Bool? = nil,
             role: UserRole? = nil,
+            permissions: Permissions? = nil,
             movieQuota: QuotaChange? = nil,
             tvQuota: QuotaChange? = nil
         ) {
@@ -144,6 +154,7 @@ extension API {
             self.autoApproveMovies = autoApproveMovies
             self.autoApproveTv = autoApproveTv
             self.role = role
+            self.permissions = permissions
             self.movieQuota = movieQuota
             self.tvQuota = tvQuota
         }
@@ -177,7 +188,7 @@ extension API {
 
         private enum CodingKeys: String, CodingKey {
             case username, displayName, password, currentPassword, autoApproveMovies, autoApproveTv
-            case role, movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays
+            case role, permissions, movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays
         }
 
         func encode(to encoder: Encoder) throws {
@@ -189,6 +200,7 @@ extension API {
             try c.encodeIfPresent(autoApproveMovies, forKey: .autoApproveMovies)
             try c.encodeIfPresent(autoApproveTv, forKey: .autoApproveTv)
             try c.encodeIfPresent(role, forKey: .role)
+            try c.encodeIfPresent(permissions, forKey: .permissions)
             // A limit that's being changed is always sent, `null` to remove
             // it; an untouched one is omitted (unchanged).
             if let movieQuota {

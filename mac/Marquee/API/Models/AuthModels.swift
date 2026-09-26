@@ -65,9 +65,10 @@ extension API {
         var hasPassword: Bool? = nil
         /// 0.39+: the account's request limits; nil from older servers.
         var requestLimits: RequestLimits? = nil
+        /// 0.48+: what this account may do; nil from older servers.
+        var permissions: Permissions? = nil
 
         var isAdmin: Bool { role == .admin }
-        var canReviewRequests: Bool { role.canReviewRequests }
         /// What the website prints: the display name, else the username.
         var label: String { displayName.nonBlank ?? username }
 
@@ -75,7 +76,8 @@ extension API {
             User(
                 id: id, username: username, displayName: displayName, role: role,
                 libraryOwnerId: libraryOwnerId, avatarUrl: avatarUrl,
-                linked: linked, hasPassword: hasPassword
+                linked: linked, hasPassword: hasPassword, permissions: permissions,
+                autoApproveMovies: autoApproveMovies, autoApproveTv: autoApproveTv
             )
         }
     }

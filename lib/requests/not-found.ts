@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNotNull, isNull, lte, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { appSettings, notifications, requests, titles, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
@@ -23,6 +23,8 @@ import {
   parseNotFoundAfterHours,
   type NotFoundObservation,
 } from "@/lib/requests/not-found-rules";
+import { usersWhoCan } from "@/lib/users/access";
+import { can } from "@/lib/users/permissions";
 
 // "Can't find" (the not-found-check job, lib/jobs/registry.ts): approved
 // requests Sonarr/Radarr still has nothing for — released, monitored, no
@@ -104,6 +106,7 @@ type Candidate = {
   reviewedAt: Date | null;
   requesterId: string;
   requesterRole: string;
+  requesterPermissions: string[];
   requesterName: string | null;
   requesterUsername: string;
   arrServerId: string | null;
@@ -188,6 +191,7 @@ export async function checkNotFoundRequests(now = new Date()): Promise<void> {
       reviewedAt: requests.reviewedAt,
       requesterId: requests.requestedByUserId,
       requesterRole: users.role,
+      requesterPermissions: users.permissions,
       requesterName: users.displayName,
       requesterUsername: users.username,
       arrServerId: requests.arrServerId,
@@ -260,12 +264,8 @@ async function releaseYear(mediaType: MediaType, tmdbId: number): Promise<number
 
 /** Reviewers, the admin first — the admin's copy is the one relayed to the
  * household channels, so those hear about it once. */
-async function reviewers() {
-  const rows = await db
-    .select({ id: users.id, role: users.role })
-    .from(users)
-    .where(inArray(users.role, ["admin", "trusted"]));
-  return rows.sort((a, b) => (a.role === "admin" ? -1 : b.role === "admin" ? 1 : 0));
+function reviewers() {
+  return usersWhoCan("reviewRequests");
 }
 
 /** "Couldn't find Ice Age (2002) — requested by Susan" to every reviewer,
@@ -294,7 +294,7 @@ async function notifyNotFound(row: Candidate, seasons: number[] | null, year: nu
       relay: index === 0,
     }).catch(() => undefined);
   }
-  if (row.requesterRole !== "admin" && row.requesterRole !== "trusted") {
+  if (!can({ role: row.requesterRole, permissions: row.requesterPermissions }, "reviewRequests")) {
     await createNotification({
       ...common,
       userId: row.requesterId,

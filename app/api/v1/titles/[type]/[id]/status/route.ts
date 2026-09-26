@@ -28,6 +28,8 @@ export const GET = withApi<TitleParams>(async (request, params): Promise<TitleSt
     library: libraryInfo(status.libraryStatus),
     viewer: titleViewerState({
       isAdmin: ctx.user.isAdmin,
+      mediaType,
+      permissions: status.permissions,
       status: status.libraryStatus.status,
       configured: status.libraryStatus.configured,
       favorited: Boolean(status.titleFavorited),

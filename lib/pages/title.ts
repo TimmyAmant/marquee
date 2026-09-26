@@ -2,8 +2,8 @@ import type { TitleMeta, TitleSidebarData } from "@/components/title-hero";
 import { findBlock, getBlockedTitleKeys } from "@/lib/requests/blocklist";
 import { getOpenIssuesFor } from "@/lib/issues";
 import { getTitleNotFoundSince } from "@/lib/requests/not-found";
-import { roleOf } from "@/lib/notifications/preferences";
-import { canReviewRequests } from "@/lib/users/roles";
+import { can, NO_PERMISSIONS, permissionMap } from "@/lib/users/permissions";
+import { getAccess } from "@/lib/users/access";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
 import type { FranchiseItem } from "@/components/franchise-row";
@@ -49,6 +49,9 @@ export async function loadTitleStatus(
   tvdbId: number | null,
   tvSeasons: TmdbSeasonSummary[] = [],
 ) {
+  // What this viewer may do here (lib/users/permissions.ts), read fresh.
+  const access = viewer.userId ? await getAccess(viewer.userId).catch(() => null) : null;
+  const permissions = access ? permissionMap(access) : NO_PERMISSIONS;
   const libraryStatus: Pick<TitleLibraryStatus, "status" | "configured" | "file"> &
     Partial<Pick<TitleLibraryStatus, "provider">> = viewer.libraryOwnerId
     ? await getTitleLibraryStatus(viewer.libraryOwnerId, type, tmdbId, tvdbId)
@@ -118,7 +121,7 @@ export async function loadTitleStatus(
   const openReports = viewer.userId ? await getOpenIssuesFor(viewer.userId, type, tmdbId) : 0;
   const blocked = viewer.userId ? await findBlock(type, tmdbId).catch(() => null) : null;
   // "Can't find" (lib/requests/not-found.ts), for whoever reviews requests.
-  const reviews = viewer.userId !== null && (viewer.isAdmin || canReviewRequests(await roleOf(viewer.userId).catch(() => null)));
+  const reviews = viewer.userId !== null && can(access, "reviewRequests");
   const notFoundSince = reviews ? await getTitleNotFoundSince(type, tmdbId).catch(() => null) : null;
   // The viewer's own requests, for Cancel / Edit and their conversations.
   const myRequests = viewer.userId ? await getViewerRequestsForTitle(viewer.userId, type, tmdbId) : [];
@@ -126,7 +129,8 @@ export async function loadTitleStatus(
   const seasonRequests = {
     states: seasonStates,
     canRequestSeasons: canRequestSeasons({
-      isMember,
+      // Only for someone who may request TV at all.
+      isMember: isMember && permissions.requestTv,
       isTv: type === "tv",
       hasPending: viewerSeasons.hasPending,
       states: seasonStates,
@@ -148,6 +152,7 @@ export async function loadTitleStatus(
     blocked,
     notFoundSince,
     myRequests,
+    permissions,
   };
 }
 
@@ -276,6 +281,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     blocked,
     notFoundSince,
     myRequests,
+    permissions,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -410,6 +416,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     title,
     raw,
     year,
+    permissions,
     libraryStatus,
     titleFavorited,
     activeRequestStatus,

@@ -26,7 +26,8 @@ final class BlocklistTests: XCTestCase {
         let detail = try decode(API.TitleDetail.self, fixture("title-detail"))
         XCTAssertEqual(detail.viewer.blocked, .notBlocked, "null: not blocked, but the server can block")
         XCTAssertNil(detail.viewer.block)
-        XCTAssertTrue(detail.viewer.offersBlocking, "The admin gets Block requests")
+        XCTAssertTrue(detail.viewer.offersBlocking(managesBlocklist: true), "Whoever manages the blocklist gets Block requests")
+        XCTAssertFalse(detail.viewer.offersBlocking(managesBlocklist: false), "Without Manage the blocklist, no Block requests")
 
         let status = try decode(API.TitleStatus.self, fixture("title-status"))
         let block = try XCTUnwrap(status.viewer.block)
@@ -45,14 +46,15 @@ final class BlocklistTests: XCTestCase {
         let status = try decode(API.TitleStatus.self, json)
         XCTAssertEqual(status.viewer.block?.keyword, "anime")
         XCTAssertEqual(status.viewer.block?.closedLine, "Requests are closed for this title")
-        XCTAssertFalse(status.viewer.offersBlocking, "Members can't block")
+        XCTAssertFalse(status.viewer.offersBlocking(managesBlocklist: false), "Members can't block")
+        XCTAssertTrue(status.viewer.offersBlocking(managesBlocklist: true), "A member with Manage the blocklist can")
     }
 
     func testOlderServerWithoutBlocklistDecodes() throws {
         let detail = try decode(API.TitleDetail.self, withViewer("title-detail") { $0.removeValue(forKey: "blocked") })
         XCTAssertNil(detail.viewer.blocked)
         XCTAssertNil(detail.viewer.block)
-        XCTAssertFalse(detail.viewer.offersBlocking, "No Block requests against a server that can't")
+        XCTAssertFalse(detail.viewer.offersBlocking(managesBlocklist: true), "No Block requests against a server that can't")
         let status = try decode(API.TitleStatus.self, withViewer("title-status") { $0.removeValue(forKey: "blocked") })
         XCTAssertNil(status.viewer.blocked)
     }

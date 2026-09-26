@@ -107,7 +107,7 @@ export function franchiseMissingItems<T extends { mediaType: "movie" | "tv"; tmd
 /** The franchise row's "Request all N missing" set for a household member
  * (plain or trusted): exactly the titles whose poster shows a Request button
  * — not in the library at all, not already asked for by this viewer, not on
- * the admin's blocklist. Empty for the admin (who gets "Add all") and when
+ * the admin's blocklist, of a type they may request. Empty for the admin (who gets "Add all") and when
  * signed out. A keyword block is left to createRequest's refusal, as the
  * poster buttons do. */
 export function franchiseRequestableItems<T extends { mediaType: "movie" | "tv"; tmdbId: number }>(
@@ -116,6 +116,8 @@ export function franchiseRequestableItems<T extends { mediaType: "movie" | "tv";
   requestedKeys: { has(key: string): boolean } | undefined,
   blockedKeys: { has(key: string): boolean } | undefined,
   isAdmin: boolean | undefined,
+  /** What the viewer may request (lib/users/permissions.ts). */
+  may: { requestMovies: boolean; requestTv: boolean },
 ): { mediaType: "movie" | "tv"; tmdbId: number }[] {
   if (isAdmin !== false) return [];
   const seen = new Set<string>();
@@ -123,6 +125,7 @@ export function franchiseRequestableItems<T extends { mediaType: "movie" | "tv";
   for (const item of items) {
     const key = `${item.mediaType}:${item.tmdbId}`;
     if (seen.has(key) || statusKeys.has(key) || requestedKeys?.has(key) || blockedKeys?.has(key)) continue;
+    if (!(item.mediaType === "movie" ? may.requestMovies : may.requestTv)) continue;
     seen.add(key);
     result.push({ mediaType: item.mediaType, tmdbId: item.tmdbId });
   }

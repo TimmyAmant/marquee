@@ -25,6 +25,8 @@ export function AddToLibraryButton({
   seasonPicker,
   inArr = false,
   blocked = null,
+  canRequest = true,
+  advanced = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -42,6 +44,10 @@ export function AddToLibraryButton({
   /** On the admin's blocklist: a member sees "Requests are closed" instead
    * of Request (lib/requests/blocklist.ts). */
   blocked?: { reason: string | null } | null;
+  /** A member may request this type (requestMovies / requestTv). */
+  canRequest?: boolean;
+  /** A member may pick the server, quality and folder (advancedRequests). */
+  advanced?: boolean;
   /** A TV show's seasons for a member's season picker; omitted for movies
    * and admins, who keep the whole-title Request/Add buttons. */
   seasonPicker?: {
@@ -60,6 +66,8 @@ export function AddToLibraryButton({
 
   const [state, formAction, isPending] = useActionState(action, undefined);
   const pickSeasons = mediaType === "tv" && Boolean(seasonPicker?.canRequestSeasons);
+  const showRequest =
+    open && !state?.success && isAdmin === false && canRequest && !alreadyRequested && !pickSeasons && !blocked;
   const requestedSeasonsLabel = seasonPicker?.requestedSeasonsLabel ?? null;
 
   useEffect(() => {
@@ -82,18 +90,25 @@ export function AddToLibraryButton({
           </span>
         )}
 
-        {open && !state?.success && isAdmin === false && !alreadyRequested && !pickSeasons && !blocked && (
-          <RequestButton mediaType={mediaType} tmdbId={tmdbId} title={name} posterPath={posterPath} />
+        {showRequest && (
+          <RequestButton
+            mediaType={mediaType}
+            tmdbId={tmdbId}
+            title={name}
+            posterPath={posterPath}
+            formId={`request-${mediaType}-${tmdbId}`}
+          />
         )}
 
         {/* A member picks seasons for a show whenever any are left to ask
             for — for one already in the library, that's "more seasons". */}
-        {isAdmin === false && !alreadyRequested && pickSeasons && seasonPicker && !blocked && (
+        {isAdmin === false && canRequest && !alreadyRequested && pickSeasons && seasonPicker && !blocked && (
           <SeasonRequestPicker
             tmdbId={tmdbId}
             showName={name}
             rows={seasonPicker.rows}
             triggerLabel={open ? "Request" : "Request more seasons"}
+            advanced={advanced}
           />
         )}
 
@@ -134,6 +149,10 @@ export function AddToLibraryButton({
           formId={`add-${mediaType}-${tmdbId}`}
           disabled={isPending}
         />
+      )}
+
+      {showRequest && advanced && (
+        <AddAdvancedOptions mediaType={mediaType} tmdbId={tmdbId} formId={`request-${mediaType}-${tmdbId}`} />
       )}
 
       {open && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (

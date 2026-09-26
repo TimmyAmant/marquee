@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
+import { presetPermissions } from "@/lib/users/permissions";
 
 // Comment threads on requests and problem reports, against a real Postgres
 // (PGlite): who may see and write, the notes a thread starts with, the edit
@@ -29,7 +30,15 @@ vi.mock("@/lib/api/token-store", () => ({
       tokenId: "t",
       tokenName: "test",
       expiresAt: new Date("2030-01-01"),
-      user: { id: who.id, username: who.role, displayName: null, role: who.role, avatarUpdatedAt: null, createdAt: new Date() },
+      user: {
+        id: who.id,
+        username: who.role,
+        displayName: null,
+        role: who.role,
+        permissions: presetPermissions(who.role === "trusted" ? "trusted" : "member"),
+        avatarUpdatedAt: null,
+        createdAt: new Date(),
+      },
     };
   },
 }));
@@ -58,7 +67,7 @@ async function db() {
 }
 
 async function addUser(username: string, role: "admin" | "trusted" | "member") {
-  const [row] = await (await db()).insert(users).values({ username, role }).returning({ id: users.id });
+  const [row] = await (await db()).insert(users).values({ username, role, permissions: presetPermissions(role === "trusted" ? "trusted" : "member") }).returning({ id: users.id });
   return row.id;
 }
 
@@ -96,7 +105,11 @@ beforeEach(async () => {
     .returning();
 });
 
-const as = (who: keyof typeof ids) => ({ userId: ids[who], role: who === "anna" || who === "ben" ? "member" : who });
+const as = (who: keyof typeof ids) => ({
+  userId: ids[who],
+  role: who === "anna" || who === "ben" ? "member" : who,
+  permissions: presetPermissions(who === "trusted" ? "trusted" : "member"),
+});
 
 describe("who takes part", () => {
   it("is the requester and the reviewers; anyone else gets not found", async () => {

@@ -7,6 +7,8 @@ declare module "next-auth" {
       id: string;
       username: string;
       role: UserRole;
+      /** The switches that are on (lib/users/permissions.ts) — ask can(). */
+      permissions: string[];
     } & DefaultSession["user"];
   }
 
@@ -25,6 +27,8 @@ declare module "next-auth/jwt" {
     username?: string;
     rememberMe?: boolean;
     role?: UserRole;
+    /** Read fresh from the database on every request, like role. */
+    permissions?: string[];
     /** Epoch ms of the password sign-in this token came from. */
     signedInAt?: number;
   }

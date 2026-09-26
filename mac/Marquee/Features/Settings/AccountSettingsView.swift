@@ -23,7 +23,7 @@ struct AccountSettingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     detail("Name", viewer.displayName.nonBlank ?? "—")
                     detail("Username", viewer.username)
-                    detail("Role", viewer.role.label)
+                    detail("Role", viewer.roleLabel)
                     detail("Server", model.session.server?.displayName ?? "—")
                     HStack(alignment: .bottom) {
                         // This Mac's own look: the theme, and which edge of
@@ -120,7 +120,10 @@ struct AccountSettingsView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardSurface()
                     }
+                }
 
+                // The admin's, or a member's the admin handed it to (0.48+).
+                if viewer.can(.manageBlocklist) {
                     BlocklistSettingsSection()
                 }
             }
@@ -214,8 +217,9 @@ struct AccountSettingsView: View {
             if member.isAdmin {
                 TonePill(text: "Admin", tone: .accent, small: true)
             }
-            if member.isTrusted {
-                TonePill(text: "Trusted", tone: .accent, small: true)
+            // "Trusted" or "Custom" (0.48+: from their switches).
+            if let tag = member.presetTag {
+                TonePill(text: tag, tone: .accent, small: true)
             }
             if member.isCurrentUser {
                 TonePill(text: "You", tone: .neutral, small: true)
@@ -461,9 +465,11 @@ private struct EditMemberSheet: View {
     @State private var username = ""
     @State private var password = ""
     @State private var currentPassword = ""
-    @State private var autoApproveMovies = false
-    @State private var autoApproveTv = false
-    @State private var role: API.UserRole = .member
+    /// What they may do (the switches, or an older server's role and
+    /// auto-approval); set up in `onAppear`.
+    @State private var access: MemberAccessEditor?
+    /// The fields' own height, so the sheet fits them (up to a cap).
+    @State private var fieldsHeight: CGFloat = 0
     @State private var movieLimit = ""
     @State private var movieDays = "7"
     @State private var tvLimit = ""
@@ -476,18 +482,55 @@ private struct EditMemberSheet: View {
         member.isCurrentUser && member.hasPassword != false
     }
 
-    /// Auto-approval is an admin setting, and only for non-admin accounts.
-    private var showsAutoApproval: Bool {
+    /// Only the admin changes what someone may do, and never the admin's.
+    private var isAdminEditingMember: Bool {
         model.viewer?.isAdmin == true && !member.isAdmin
     }
 
-    /// The role and request limits (0.39+): the admin, on another
-    /// non-admin member of a server that has them.
-    private var showsRoleAndLimits: Bool {
-        showsAutoApproval && !member.isCurrentUser && member.reportsRequestLimits
+    /// Request limits (0.39+): the admin, on another non-admin member of a
+    /// server that has them.
+    private var showsLimits: Bool {
+        isAdminEditingMember && !member.isCurrentUser && member.reportsRequestLimits
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // As tall as the fields, up to 640pt; the permission switches
+            // scroll past that.
+            ScrollView {
+                fields
+                    .padding(24)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fieldsHeight = $0 }
+            }
+            .frame(height: min(max(fieldsHeight, 1), 640))
+
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .buttonStyle(OutlineButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+                Button(pending ? "Saving…" : "Save") { save() }
+                    .buttonStyle(AccentButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(pending)
+            }
+            .padding([.horizontal, .bottom], 24)
+        }
+        .toggleStyle(.checkbox)
+        .frame(width: 460)
+        .background(Theme.bg1)
+        .onAppear {
+            displayName = member.displayName ?? ""
+            username = member.username
+            access = MemberAccessEditor(member: member, viewerIsAdmin: model.viewer?.isAdmin == true)
+            movieLimit = member.movieQuotaLimit.map(String.init) ?? ""
+            movieDays = String(member.movieQuotaDays ?? 7)
+            tvLimit = member.tvQuotaLimit.map(String.init) ?? ""
+            tvDays = String(member.tvQuotaDays ?? 7)
+        }
+    }
+
+    private var fields: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Edit \(member.username)")
                 .font(.marqueeDisplay(22))
@@ -502,24 +545,17 @@ private struct EditMemberSheet: View {
                 SettingsField(label: "Current password", text: $currentPassword, placeholder: "Needed only when setting a new password", secure: true)
             }
 
-            if showsAutoApproval {
-                Toggle("Auto-approve movie requests", isOn: $autoApproveMovies)
-                Toggle("Auto-approve TV requests", isOn: $autoApproveTv)
+            if let access, access.showsPermissions(isCurrentUser: member.isCurrentUser) {
+                MemberPermissionsEditor(editor: Binding(get: { access }, set: { self.access = $0 }))
+            } else if let access, access.showsLegacyAutoApproval {
+                legacyAccessFields(access)
             }
 
-            if showsRoleAndLimits {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Role")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
-                    Picker("Role", selection: $role) {
-                        Text("Member").tag(API.UserRole.member)
-                        Text("Trusted — can approve requests and handle problem reports").tag(API.UserRole.trusted)
-                    }
-                    .labelsHidden()
-                }
+            if showsLimits {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Request limits (blank for none; trusted members have none)")
+                    Text(access?.mode == .permissions
+                         ? "Request limits (blank for none; not for someone with No request limits)"
+                         : "Request limits (blank for none; trusted members have none)")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textSecondary)
                     limitRow("Movies", limit: $movieLimit, days: $movieDays)
@@ -535,32 +571,30 @@ private struct EditMemberSheet: View {
             }
 
             if let error { InlineMessage(text: error) }
-
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }
-                    .buttonStyle(OutlineButtonStyle())
-                    .keyboardShortcut(.cancelAction)
-                Button(pending ? "Saving…" : "Save") { save() }
-                    .buttonStyle(AccentButtonStyle())
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(pending)
-            }
         }
-        .toggleStyle(.checkbox)
-        .padding(24)
-        .frame(width: 420)
-        .background(Theme.bg1)
-        .onAppear {
-            displayName = member.displayName ?? ""
-            username = member.username
-            autoApproveMovies = member.autoApproveMovies
-            autoApproveTv = member.autoApproveTv
-            role = member.isTrusted ? .trusted : .member
-            movieLimit = member.movieQuotaLimit.map(String.init) ?? ""
-            movieDays = String(member.movieQuotaDays ?? 7)
-            tvLimit = member.tvQuotaLimit.map(String.init) ?? ""
-            tvDays = String(member.tvQuotaDays ?? 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// An older server (no `permissions`): auto-approval, and the role (0.39+).
+    @ViewBuilder
+    private func legacyAccessFields(_ access: MemberAccessEditor) -> some View {
+        Toggle("Auto-approve movie requests", isOn: Binding(
+            get: { access.autoApproveMovies }, set: { self.access?.autoApproveMovies = $0 }
+        ))
+        Toggle("Auto-approve TV requests", isOn: Binding(
+            get: { access.autoApproveTv }, set: { self.access?.autoApproveTv = $0 }
+        ))
+        if access.showsLegacyRole {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Role")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                Picker("Role", selection: Binding(get: { access.role }, set: { self.access?.role = $0 })) {
+                    Text("Member").tag(API.UserRole.member)
+                    Text("Trusted — can approve requests and handle problem reports").tag(API.UserRole.trusted)
+                }
+                .labelsHidden()
+            }
         }
     }
 
@@ -591,7 +625,7 @@ private struct EditMemberSheet: View {
     private func save() {
         var movieQuota: API.UpdateUserRequest.QuotaChange?
         var tvQuota: API.UpdateUserRequest.QuotaChange?
-        if showsRoleAndLimits {
+        if showsLimits {
             movieQuota = .init(limitText: movieLimit, daysText: movieDays)
             tvQuota = .init(limitText: tvLimit, daysText: tvDays)
             guard movieQuota != nil, tvQuota != nil else {
@@ -601,17 +635,15 @@ private struct EditMemberSheet: View {
         }
         pending = true
         error = nil
-        let request = API.UpdateUserRequest(
+        var request = API.UpdateUserRequest(
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
             displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines),
             password: password.nonBlank,
             currentPassword: needsCurrentPassword ? currentPassword.nonBlank : nil,
-            autoApproveMovies: showsAutoApproval ? autoApproveMovies : nil,
-            autoApproveTv: showsAutoApproval ? autoApproveTv : nil,
-            role: showsRoleAndLimits ? role : nil,
             movieQuota: movieQuota,
             tvQuota: tvQuota
         )
+        access?.apply(to: &request, isCurrentUser: member.isCurrentUser)
         let api = model.api
         Task {
             do {
@@ -625,6 +657,59 @@ private struct EditMemberSheet: View {
                 self.error = error.localizedDescription
             }
             pending = false
+        }
+    }
+}
+
+/// app/settings/permissions-editor.tsx (0.48+): "What they can do" — a
+/// preset picker that fills in the switches (and reads Custom by itself when
+/// they match neither), then the switches in groups, each with what it does.
+private struct MemberPermissionsEditor: View {
+    @Binding var editor: MemberAccessEditor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("What they can do")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                Picker("What they can do", selection: Binding(get: { editor.preset }, set: { editor.pick($0) })) {
+                    ForEach(API.PermissionPreset.allCases, id: \.self) { preset in
+                        Text(MemberAccessEditor.pickerLabel(preset))
+                            .tag(preset)
+                            .selectionDisabled(!editor.isPickable(preset))
+                    }
+                }
+                .labelsHidden()
+            }
+
+            ForEach(API.PermissionGroup.all) { group in
+                VStack(alignment: .leading, spacing: 8) {
+                    SettingsSectionLabel(text: group.title)
+                    ForEach(group.items) { item in
+                        Toggle(isOn: Binding(
+                            get: { editor.isOn(item.permission) },
+                            set: { editor.set(item.permission, on: $0) }
+                        )) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(item.label)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Theme.textPrimary)
+                                Text(editor.description(for: item))
+                                    .font(.system(size: 11.5))
+                                    .foregroundStyle(Theme.textMuted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .disabled(editor.isLocked(item.permission))
+                    }
+                }
+            }
+
+            Text(API.PermissionGroup.footer)
+                .font(.system(size: 11.5))
+                .foregroundStyle(Theme.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

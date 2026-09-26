@@ -4,15 +4,21 @@
 // database, no request — GET /api/v1/openapi.json serves it as is.
 import { keyAccessFor } from "@/lib/api/key-policy";
 import { API_OPERATIONS, type ApiAuthLevel, type ApiOperation } from "@/lib/api/openapi/registry";
+import { permissionLabel } from "@/lib/users/permissions";
 
 type Json = Record<string, unknown>;
 
-const AUTH_DESCRIPTIONS: Record<ApiAuthLevel, string> = {
+const AUTH_DESCRIPTIONS: Record<"public" | "user" | "admin", string> = {
   public: "No credential needed.",
   user: "Any signed-in account.",
-  reviewer: "The admin or a trusted member (the review queue); 403 for others.",
-  admin: "The admin only; 403 for members.",
+  admin: "The admin only; 403 for everyone else, whatever their permissions.",
 };
+
+/** Who may call it, in words. */
+export function authDescription(auth: ApiAuthLevel): string {
+  if (auth === "public" || auth === "user" || auth === "admin") return AUTH_DESCRIPTIONS[auth];
+  return `The admin, or an account with the “${permissionLabel(auth)}” permission (\`${auth}\`); 403 for others.`;
+}
 
 const KEY_ACCESS_DESCRIPTIONS = {
   read: "Any API key may call this.",
@@ -138,7 +144,7 @@ function operationObject(op: ApiOperation): Json {
     operationId: `${op.method.toLowerCase()}${op.path.replace(/\{([^}]+)\}/g, "By-$1").replace(/[^A-Za-z0-9]+(.)?/g, (_, c: string | undefined) => (c ? c.toUpperCase() : ""))}`,
     tags: [op.tag],
     summary: op.summary,
-    description: `${AUTH_DESCRIPTIONS[op.auth]}${op.auth === "public" ? "" : ` ${KEY_ACCESS_DESCRIPTIONS[keyAccess]}`}`,
+    description: `${authDescription(op.auth)}${op.auth === "public" ? "" : ` ${KEY_ACCESS_DESCRIPTIONS[keyAccess]}`}`,
     security,
     "x-marquee-auth": op.auth,
     "x-api-key-access": op.auth === "public" ? "read" : keyAccess,

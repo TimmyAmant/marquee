@@ -11,7 +11,7 @@ import { pollTelegramLink } from "@/lib/notifications/personal";
 export const POST = withApi(async (request) => {
   const ctx = await requireApiUser(request);
   const body = await readJsonBody(request);
-  const result = unwrap(await pollTelegramLink({ id: ctx.user.id, role: ctx.user.role }, body.code, body.name));
+  const result = unwrap(await pollTelegramLink({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, body.code, body.name));
   if (result.status === "pending") return apiJson({ status: "pending" }, { status: 202 });
   return apiJson(personalChannelDto(result.channel), { status: 201 });
 });

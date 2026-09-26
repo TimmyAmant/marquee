@@ -35,6 +35,7 @@ vi.mock("@/lib/api/token-store", () => ({
         role: user.role,
         autoApproveMovies: false,
         autoApproveTv: false,
+        permissions: presets[user.role],
         avatarUpdatedAt: null,
         createdAt: new Date(),
       },
@@ -42,6 +43,25 @@ vi.mock("@/lib/api/token-store", () => ({
   },
 }));
 vi.mock("@/lib/integrations/library-owner", () => ({ getLibraryOwnerUserId: async () => ADMIN_ID }));
+const presets = vi.hoisted(() => ({
+  admin: [] as string[],
+  trusted: [
+    "requestMovies", "requestTv", "request4kMovies", "request4kTv", "autoApproveMovies", "autoApproveTv",
+    "autoApprove4kMovies", "autoApprove4kTv", "advancedRequests", "viewRequests", "reviewRequests", "manageIssues",
+    "reportIssues", "bypassLimits",
+  ],
+  member: ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "reportIssues"],
+}));
+const access = vi.hoisted(() => ({
+  getAccess: vi.fn(async (id: string) =>
+    id === "33333333-3333-4333-8333-333333333333"
+      ? { role: "member", permissions: presets.member }
+      : id === "22222222-2222-4222-8222-222222222222"
+        ? { role: "trusted", permissions: presets.trusted }
+        : { role: "admin", permissions: [] },
+  ),
+}));
+vi.mock("@/lib/users/access", () => access);
 vi.mock("@/lib/auth/get-admin", () => ({ getAdminUserId: async () => ADMIN_ID }));
 
 vi.mock("@/lib/tmdb/client", async (importOriginal) => ({
@@ -81,6 +101,7 @@ vi.mock("@/lib/requests/alerts", () => alerts);
 import { requestAllMessage, requestAllMissing } from "./request-all";
 import * as route from "@/app/api/v1/titles/[type]/[id]/request-all-missing/route";
 import { titleDetailDto } from "@/lib/api/title-dto";
+import { permissionMap } from "@/lib/users/permissions";
 import { franchiseRequestableItems } from "@/lib/title-meta";
 
 const member = { userId: MEMBER_ID, isAdmin: false, libraryOwnerId: ADMIN_ID };
@@ -104,13 +125,15 @@ beforeEach(() => {
   mutate.createRequest.mockImplementation(async (_viewer, input) => ({ ok: true, requestId: `req-${input.tmdbId}` }));
 });
 
+const ALL_TYPES = { requestMovies: true, requestTv: true };
+
 describe("franchiseRequestableItems", () => {
   const statusKeys = new Set(["movie:425"]);
   const requested = new Set(["movie:950"]);
   const blocked = new Set(["movie:8355"]);
 
   it("leaves out owned/tracked, already-requested and blocked titles", () => {
-    expect(franchiseRequestableItems(collection, statusKeys, requested, blocked, false)).toEqual([
+    expect(franchiseRequestableItems(collection, statusKeys, requested, blocked, false, ALL_TYPES)).toEqual([
       { mediaType: "movie", tmdbId: 57800 },
       { mediaType: "movie", tmdbId: 278154 },
     ]);
@@ -122,14 +145,14 @@ describe("franchiseRequestableItems", () => {
       { mediaType: "tv" as const, tmdbId: 60735 },
       { mediaType: "tv" as const, tmdbId: 60735 },
     ];
-    expect(franchiseRequestableItems(shows, new Set(["tv:1412"]), undefined, undefined, false)).toEqual([
+    expect(franchiseRequestableItems(shows, new Set(["tv:1412"]), undefined, undefined, false, ALL_TYPES)).toEqual([
       { mediaType: "tv", tmdbId: 60735 },
     ]);
   });
 
   it("is empty for the admin and signed-out viewers", () => {
-    expect(franchiseRequestableItems(collection, statusKeys, requested, blocked, true)).toEqual([]);
-    expect(franchiseRequestableItems(collection, statusKeys, requested, blocked, undefined)).toEqual([]);
+    expect(franchiseRequestableItems(collection, statusKeys, requested, blocked, true, ALL_TYPES)).toEqual([]);
+    expect(franchiseRequestableItems(collection, statusKeys, requested, blocked, undefined, ALL_TYPES)).toEqual([]);
   });
 });
 
@@ -267,6 +290,7 @@ describe("POST /titles/{type}/{id}/request-all-missing", () => {
 describe("the title DTO's franchise", () => {
   function pageData() {
     return {
+      permissions: permissionMap({ role: "member", permissions: presets.member }),
       title: { name: "Ice Age", tvdbId: null, imdbId: null, overview: null, posterPath: null, backdropPath: null, status: null, releaseDate: null, firstAirDate: null },
       raw: null,
       year: "2002",
@@ -315,5 +339,12 @@ describe("the title DTO's franchise", () => {
     const asAdmin = titleDetailDto("movie", 425, true, pageData()).franchise;
     expect(asAdmin?.requestAllMissing).toEqual([]);
     expect(asAdmin?.addAllMissing.map((i) => i.tmdbId)).toEqual([950, 8355, 57800, 278154]);
+  });
+
+  it("offers nothing to request to a member who may not request movies", () => {
+    const data = { ...pageData(), permissions: permissionMap({ role: "member", permissions: ["requestTv"] }) };
+    const detail = titleDetailDto("movie", 425, false, data);
+    expect(detail.franchise?.requestAllMissing).toEqual([]);
+    expect(detail.franchise?.items.every((item) => !item.canRequest)).toBe(true);
   });
 });

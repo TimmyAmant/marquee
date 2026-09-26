@@ -25,6 +25,7 @@ export function SimilarTitlesRow({
   showFavorite,
   arrConfigured,
   isAdmin,
+  mayRequest,
 }: {
   items: SimilarTitle[];
   statusMap: Map<string, LibraryStatus>;
@@ -40,6 +41,8 @@ export function SimilarTitlesRow({
   /** Undefined when signed out. Admins get the direct Add action; household
    * members get Request instead, same as everywhere else in the app. */
   isAdmin?: boolean;
+  /** Which types the viewer may request (lib/users/permissions.ts). */
+  mayRequest?: { movie: boolean; tv: boolean };
 }) {
   if (items.length === 0) return null;
 
@@ -48,7 +51,11 @@ export function SimilarTitlesRow({
       {items.map((item) => {
         const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
         const canQuickAdd = isUnwanted(status) && isAdmin === true && arrConfigured?.[item.mediaType];
-        const canRequest = isUnwanted(status) && isAdmin === false && !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
+        const canRequest =
+            isUnwanted(status) &&
+            isAdmin === false &&
+            Boolean(mayRequest?.[item.mediaType]) &&
+            !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
         return (
           <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
             <PosterCard

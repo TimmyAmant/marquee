@@ -344,11 +344,19 @@ Body:
     "username": "timmy",
     "displayName": "Timmy",
     "role": "admin",
+    "permissions": {
+      "requestMovies": true, "requestTv": true, "request4kMovies": true, "request4kTv": true,
+      "autoApproveMovies": true, "autoApproveTv": true, "autoApprove4kMovies": true, "autoApprove4kTv": true,
+      "advancedRequests": true, "viewRequests": true, "reviewRequests": true, "manageIssues": true,
+      "reportIssues": true, "manageBlocklist": true, "bypassLimits": true
+    },
     "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
     "avatarUrl": null
   }
 }
 ```
+
+`user.permissions` (0.48+): as on `GET /me`.
 
 Errors: `400 invalid` ("Enter your username and password." — missing/blank
 field), `401 invalid_credentials` ("Incorrect username or password"),
@@ -559,10 +567,16 @@ the Marquee app" (or why not).
   "username": "timmy",
   "displayName": "Timmy",
   "role": "admin",
+  "permissions": {
+    "requestMovies": true, "requestTv": true, "request4kMovies": true, "request4kTv": true,
+    "autoApproveMovies": true, "autoApproveTv": true, "autoApprove4kMovies": true, "autoApprove4kTv": true,
+    "advancedRequests": true, "viewRequests": true, "reviewRequests": true, "manageIssues": true,
+    "reportIssues": true, "manageBlocklist": true, "bypassLimits": true
+  },
   "libraryOwnerId": "54caac33-73d6-4864-8e12-1ea6b212d2f1",
   "avatarUrl": "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549",
-  "autoApproveMovies": false,
-  "autoApproveTv": false,
+  "autoApproveMovies": true,
+  "autoApproveTv": true,
   "createdAt": "2026-09-17T17:10:57.821Z",
   "linked": { "plex": true, "jellyfin": false, "sso": false },
   "hasPassword": true,
@@ -585,19 +599,45 @@ accounts" in section 11). `hasPassword` is false for an account made
 by Plex/Jellyfin sign-in or import that hasn't set a password yet — it can
 set one with `PATCH /users/{id}` without `currentPassword`.
 
-Use `role` to decide which admin UI to show (Integrations/Activity/Jobs
-settings tabs, request review, Add buttons). The role is re-read on every
+`permissions` (0.48+; an older server omits it) is what this account may
+do — every switch, `true` or `false`, and always all `true` for the admin.
+Use it to decide what to show; the server enforces each one (`403
+forbidden` without it), re-reading them on every request, so a change the
+admin makes applies straight away:
+
+| Permission | Lets them | Enforced by |
+|---|---|---|
+| `requestMovies`, `requestTv` | ask for movies / TV (and a show's seasons) | `POST /titles/{type}/{id}/request`, `request-all-missing`, Plex Watchlist sync, `PATCH /requests/{id}` |
+| `request4kMovies`, `request4kTv` | ask for the 4K copy (once there's a 4K Radarr/Sonarr) | the same, with `is4k` |
+| `autoApproveMovies`, `autoApproveTv`, `autoApprove4kMovies`, `autoApprove4kTv` | have that kind of request approved straight away | — |
+| `advancedRequests` | pick the server, quality profile, folder and tags — when asking for a title, and when approving or retrying one | `GET /titles/{type}/{id}/add-options`; the override fields of request / approve / retry |
+| `viewRequests` | see everyone's requests | `GET /requests/pending`, `/requests/history` |
+| `reviewRequests` | approve, decline, change and approve-all others' requests; Can't find and Couldn't add. Brings `viewRequests` with it | approve / reject / approve-all / retry, `/requests/not-found…`, `PATCH /requests/{id}` on someone else's, `pendingRequests` etc. on `/badges` |
+| `manageIssues` | see every problem report, mark them fixed, search again, remove any | `GET /issues` (all), `/issues/{id}/resolve`, `/search`, `DELETE /issues/{id}` |
+| `reportIssues` | report a problem | `POST /titles/{type}/{id}/issues` |
+| `manageBlocklist` | block titles and keywords | `/settings/blocklist…`, `/titles/{type}/{id}/block` |
+| `bypassLimits` | ignore request limits (`requestLimits` then null) | — |
+
+What's the admin's alone — settings, integrations, household accounts, API
+keys, single sign-on, sign-in, jobs, activity, Add buttons, relink,
+monitoring, manual approval — isn't a permission, and can't be granted.
+Treat an unknown permission as off, and a missing one as off too.
+
+Use `role` only for the admin's own UI (Integrations/Activity/Jobs settings
+tabs, Add buttons, household accounts). The role is re-read on every
 request, so a demotion takes effect immediately (`403`s).
 
-`role` is `admin`, `member`, or (0.39+) `trusted`: a member who also works
-the review queue — `/requests/pending`, `/pending-count`, `/history`,
-approve / reject / approve-all (not manual-approve, which promises the admin
-adds it by hand), and problem reports (`GET
-/issues` shows them everything, resolve, search again, remove). Approving
-adds the title with the admin's Sonarr/Radarr. Their own requests are
-approved straight away and they have no request limits. Everything else
-(settings, integrations, accounts, Add buttons) stays admin-only. Treat an
-unknown role like `member`.
+`role` is `admin`, `member`, or (0.39+) `trusted`. Since 0.48 a non-admin
+role is the preset nearest their `permissions`: `trusted` exactly when
+they're the Trusted preset (everything but the blocklist: the review queue
+and problem reports, requests approved straight away, Advanced options, no
+limits), `member` otherwise — including a custom mix. So an app that still
+goes by the role never shows more than the account may use. Approving adds
+the title with the admin's Sonarr/Radarr. Treat an unknown role like
+`member`.
+
+`autoApproveMovies` / `autoApproveTv` are the same as
+`permissions.autoApproveMovies` / `.autoApproveTv` (kept for older apps).
 
 ### `GET /badges` — user
 
@@ -608,7 +648,9 @@ The header counters in one call, suitable for polling (website: bell every
 { "unreadNotifications": 2, "pendingRequests": 1, "openIssues": 1, "notFoundRequests": 1, "failedRequests": 0 }
 ```
 
-`pendingRequests` is always `0` for members (as on the website).
+Each count is `0` unless the account may act on it (as on the website):
+`pendingRequests`, `notFoundRequests` and `failedRequests` need
+`reviewRequests`; `openIssues` needs `manageIssues`.
 `openIssues` (0.38+; an older server omits it): open problem reports, also
 `0` for members. `notFoundRequests` (0.46+; an older server omits it):
 requests listed under "Can't find", `0` for members. `failedRequests`
@@ -1469,6 +1511,18 @@ its `lastError` says "You've reached your request limit, so the rest of your
 watchlist waits until you have requests left.". A trusted member's
 requests are approved straight away.
 
+Permissions (0.48+, see `/me`): asking for movies, TV, 4K movies or 4K TV
+each needs its switch (`requestMovies`, `requestTv`, `request4kMovies`,
+`request4kTv`): `403 forbidden` "Requesting TV isn't turned on for your
+account." (movies / TV / 4K movies / 4K TV). `autoApprove…` approves it
+straight away; `bypassLimits` skips the limit. An account with
+`advancedRequests` may also send the approve body's `serverId`,
+`qualityProfileId`, `rootFolderPath`, `tags` and `seriesType` (from
+`add-options`); they're kept with the request and used when it's approved,
+unless the reviewer picks others. Anyone else sending them gets `403
+forbidden` "Picking the server, quality or folder isn't turned on for your
+account.".
+
 ```json
 { "ok": true, "requestId": "28713d50-27f2-4230-9c95-c1e6a000f6c0" }
 ```
@@ -1882,7 +1936,10 @@ can't be cancelled or changed.
 is added — the website's "Advanced" section under Approve. Every field is
 optional; an omitted one is the server's default (its anime defaults for an
 anime show — see `GET /titles/{type}/{tmdbId}/add-options`). No body at all
-is the plain Approve it always was. Admins and trusted members may send them.
+is the plain Approve it always was (and then the requester's own picks, when
+they had `advancedRequests` and made some). Sending any needs
+`advancedRequests` as well as `reviewRequests` (0.48+): `403 forbidden`
+"Picking the server, quality or folder isn't turned on for your account.".
 
 | Body field | Type | |
 |---|---|---|
@@ -2701,6 +2758,12 @@ member) and, for the admin, "Add a household member".
   "role": "member",
   "autoApproveMovies": false,
   "autoApproveTv": true,
+  "permissions": {
+    "requestMovies": true, "requestTv": true, "request4kMovies": true, "request4kTv": true,
+    "autoApproveMovies": false, "autoApproveTv": true, "autoApprove4kMovies": false, "autoApprove4kTv": true,
+    "advancedRequests": false, "viewRequests": false, "reviewRequests": false, "manageIssues": false,
+    "reportIssues": true, "manageBlocklist": false, "bypassLimits": false
+  },
   "createdAt": "2026-09-17T17:12:40.991Z",
   "isCurrentUser": false,
   "avatarUrl": null,
@@ -2716,6 +2779,24 @@ member) and, for the admin, "Add a household member".
 
 `linked` / `hasPassword`: as on `/me`. Website: a small "Plex" / "Jellyfin"
 / "SSO" tag on linked rows.
+
+`permissions` (0.48+): as on `/me` — all `true` for the admin. Website: a
+"Trusted" or "Custom" tag on a row whose switches are the Trusted preset or
+neither preset. The edit form groups them under "What they can do", a
+select of "Member — requests, and reports problems", "Trusted — also
+reviews requests and problem reports" and "Custom" (picked by itself when
+the switches match neither), then:
+
+- **Requests** — "Request movies", "Request TV", "Request 4K movies",
+  "Request 4K TV", "Advanced request options", "No request limits";
+- **Approved straight away** — "Movies", "TV", "4K movies", "4K TV";
+- **Helping run things** — "See everyone's requests" (on and locked while
+  "Review requests" is on: "Comes with reviewing requests."), "Review
+  requests", "Handle problem reports", "Report problems", "Manage the
+  blocklist";
+
+each with a line saying what it does, and "Settings, integrations,
+household accounts, API keys and sign-in stay yours alone." underneath.
 
 `lastActiveAt`: the last time the account used the website or an app, kept
 to within 5 minutes; null when it never has (at first, it's when the
@@ -2768,9 +2849,10 @@ The edit form. All fields are sent the way the form sends them:
 | `displayName` | string | optional, ≤ 80 chars; omitted or empty = unchanged |
 | `password` | string | optional, ≥ 8 chars; omitted or empty = unchanged |
 | `currentPassword` | string | **required with `password` when editing your own account that has a password** (the admin resetting someone else's password doesn't send it, nor does an account with `hasPassword: false` setting its first one). Website: "Current password", shown only on your own row when it has a password |
-| `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. Website: "Auto-approve movie requests", shown only for non-admin rows |
-| `autoApproveTv` | bool | same, "Auto-approve TV requests" |
-| `role` | string | 0.39+, admin only, another member's account: `"member"` or `"trusted"`. Website: a "Role" select ("Member", "Trusted — can approve requests and handle problem reports"). Errors: "Role is member or trusted.", "You can't change your own role.", "The admin's role can't be changed." |
+| `permissions` | object | 0.48+, admin only, another member's account: the switches to change, e.g. `{ "requestTv": false, "viewRequests": true }` — any subset of the names on `/me`, each `true`/`false`; the rest stay as they are. Applied after `role`. The role is then worked out from them (`trusted` for exactly the Trusted preset). Errors: `403 forbidden` "Only the admin can change what someone may do." (anyone else, even on their own account), `400 invalid` "You can't change your own permissions.", "The admin can always do everything.", "There's no permission called “…”.", "“…” is true or false." |
+| `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. From before permissions: when it differs from what they have, turns `autoApproveMovies` and `autoApprove4kMovies` on or off together |
+| `autoApproveTv` | bool | same, for `autoApproveTv` and `autoApprove4kTv` |
+| `role` | string | 0.39+, admin only, another member's account: `"member"` or `"trusted"` — when it's a change, fills in that preset's permissions. Errors: "Role is member or trusted.", "You can't change your own role.", "The admin's role can't be changed." |
 | `movieQuotaLimit`, `tvQuotaLimit` | number \| null | 0.39+, admin only: at most this many requests of that type in any `…QuotaDays` days (1–1000); `null` or `""` removes the limit; omitted = unchanged. Website: "Request limits" rows "Movies [ ] every [7] days" |
 | `movieQuotaDays`, `tvQuotaDays` | number | 0.39+, admin only: 1–365 (default 7) |
 
@@ -3719,7 +3801,8 @@ as on `/badges`. `movies` / `series`: titles in the household library.
 ### `GET /openapi.json` — public (0.47+)
 
 This API as an OpenAPI 3.1 description: every endpoint with its auth level
-(`x-marquee-auth`: `public`, `user`, `reviewer`, `admin`) and what an API key
+(`x-marquee-auth`: `public`, `user`, `admin`, or since 0.48 the permission
+it needs, like `reviewRequests` — `reviewer` before) and what an API key
 may do there (`x-api-key-access`). It lists every operation but describes
 bodies only for the newer endpoints — this document stays the full
 reference. The website shows it at `/api-docs`.

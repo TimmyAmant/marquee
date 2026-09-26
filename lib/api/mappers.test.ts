@@ -10,6 +10,7 @@ import {
   titleCard,
   titleViewerState,
 } from "./mappers";
+import { MEMBER_PRESET, permissionMap } from "@/lib/users/permissions";
 
 describe("iso", () => {
   it("formats dates as ISO-8601 UTC with milliseconds", () => {
@@ -46,6 +47,8 @@ describe("titleCard", () => {
 
 describe("titleViewerState", () => {
   const base = {
+    mediaType: "tv" as const,
+    permissions: permissionMap({ role: "member", permissions: MEMBER_PRESET }),
     favorited: false,
     requestStatus: null,
     otherRequesters: [] as string[],
@@ -258,24 +261,24 @@ describe("fourKViewerState", () => {
   const free = { configured: true, status: "untracked" as const, requestStatus: null };
 
   it("is null without a 4K instance", () => {
-    expect(fourKViewerState(false, null)).toBeNull();
+    expect(fourKViewerState(false, null, true)).toBeNull();
   });
 
   it("offers a member Request in 4K and the admin Add, while the 4K instance doesn't have it", () => {
-    expect(fourKViewerState(false, free)).toMatchObject({ canRequest: true, canAdd: false });
-    expect(fourKViewerState(true, free)).toMatchObject({ canRequest: false, canAdd: true });
+    expect(fourKViewerState(false, free, true)).toMatchObject({ canRequest: true, canAdd: false });
+    expect(fourKViewerState(true, free, true)).toMatchObject({ canRequest: false, canAdd: true });
   });
 
   it("stays open while the 4K instance has it but isn't monitoring it", () => {
     const unmonitored = { ...free, status: "tracked_unmonitored" as const };
-    expect(fourKViewerState(false, unmonitored)).toMatchObject({ canRequest: true, status: "tracked_unmonitored" });
-    expect(fourKViewerState(true, unmonitored)).toMatchObject({ canAdd: true });
+    expect(fourKViewerState(false, unmonitored, true)).toMatchObject({ canRequest: true, status: "tracked_unmonitored" });
+    expect(fourKViewerState(true, unmonitored, true)).toMatchObject({ canAdd: true });
   });
 
   it("offers neither once it's requested, in the 4K library, or the instance isn't set up", () => {
-    expect(fourKViewerState(false, { ...free, requestStatus: "pending" })).toMatchObject({ canRequest: false });
-    expect(fourKViewerState(false, { ...free, status: "owned" })).toMatchObject({ canRequest: false, status: "owned" });
-    expect(fourKViewerState(true, { ...free, configured: false })).toMatchObject({ canAdd: false });
+    expect(fourKViewerState(false, { ...free, requestStatus: "pending" }, true)).toMatchObject({ canRequest: false });
+    expect(fourKViewerState(false, { ...free, status: "owned" }, true)).toMatchObject({ canRequest: false, status: "owned" });
+    expect(fourKViewerState(true, { ...free, configured: false }, true)).toMatchObject({ canAdd: false });
   });
 });
 
@@ -327,6 +330,8 @@ describe("Can't find mapping", () => {
     expect(row.notFoundSince).toBeNull();
     const viewer = titleViewerState({
       isAdmin: true,
+      mediaType: "movie",
+      permissions: permissionMap({ role: "admin", permissions: [] }),
       status: "tracked_monitored",
       configured: true,
       favorited: false,

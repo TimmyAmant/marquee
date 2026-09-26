@@ -31,8 +31,8 @@ export async function personalChannelsDto(actor: Actor): Promise<PersonalNotific
   return { available, channels: channels.map(personalChannelDto) };
 }
 
-export async function preferencesDto(actor: Actor): Promise<NotificationPreferences> {
-  return { events: await getPreferences(actor.id, actor.role) };
+export async function preferencesDto(actor: Actor & { permissions: readonly string[] }): Promise<NotificationPreferences> {
+  return { events: await getPreferences(actor.id, actor) };
 }
 
 export async function householdEventsDto(): Promise<HouseholdNotificationEvents> {

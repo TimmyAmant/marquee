@@ -72,6 +72,7 @@ vi.mock("@/lib/arr/title-actions", () => arr);
 
 import { resetTestDatabase, testDatabase } from "@/lib/test/pglite";
 import { notifications, requests, users } from "@/lib/db/schema";
+import { MEMBER_PRESET, TRUSTED_PRESET, presetPermissions } from "@/lib/users/permissions";
 import {
   approveRequest,
   cancelRequest,
@@ -95,7 +96,7 @@ let anna: string;
 let ben: string;
 
 async function addUser(username: string, role: "admin" | "trusted" | "member", extra: Partial<typeof users.$inferInsert> = {}) {
-  const [row] = await (await db()).insert(users).values({ username, role, ...extra }).returning({ id: users.id });
+  const [row] = await (await db()).insert(users).values({ username, role, permissions: presetPermissions(role === "trusted" ? "trusted" : "member"), ...extra }).returning({ id: users.id });
   return row.id;
 }
 
@@ -138,7 +139,7 @@ describe("cancelling a request", () => {
     expect(alerts.length).toBe(2); // the admin and the trusted member
     expect(alerts.every((a) => !a.read)).toBe(true);
 
-    expect(await cancelRequest({ userId: anna, role: "member" }, created.requestId)).toEqual({ ok: true });
+    expect(await cancelRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, created.requestId)).toEqual({ ok: true });
     expect(await requestRow(created.requestId)).toBeUndefined();
     expect((await getQuota(anna, "movie"))?.remaining).toBe(1);
     const cleared = await (await db()).select().from(notifications).where(eq(notifications.eventType, "request_created"));
@@ -157,7 +158,7 @@ describe("cancelling a request", () => {
     const kept = both.find((r) => r.ok);
     if (!kept?.ok) return;
     const [cancelled, next] = await Promise.all([
-      cancelRequest({ userId: anna, role: "member" }, kept.requestId),
+      cancelRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, kept.requestId),
       createRequest(viewer(anna), { mediaType: "movie", tmdbId: 78, title: "Blade Runner", posterPath: null }),
     ]);
     expect(cancelled).toEqual({ ok: true });
@@ -167,13 +168,13 @@ describe("cancelling a request", () => {
 
   it("never touches someone else's request or one that's been reviewed", async () => {
     const bens = await pendingRequest(ben);
-    expect(await cancelRequest({ userId: anna, role: "member" }, bens.id)).toMatchObject({ ok: false, code: "not_found" });
+    expect(await cancelRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, bens.id)).toMatchObject({ ok: false, code: "not_found" });
     // A reviewer declines instead.
-    expect(await cancelRequest({ userId: trusted, role: "trusted" }, bens.id)).toMatchObject({ ok: false, code: "forbidden" });
+    expect(await cancelRequest({ userId: trusted, role: "trusted", permissions: TRUSTED_PRESET }, bens.id)).toMatchObject({ ok: false, code: "forbidden" });
     expect(await requestRow(bens.id)).toBeDefined();
 
     const approved = await pendingRequest(anna, { status: "approved", tmdbId: 1 });
-    expect(await cancelRequest({ userId: anna, role: "member" }, approved.id)).toMatchObject({ ok: false, code: "conflict" });
+    expect(await cancelRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, approved.id)).toMatchObject({ ok: false, code: "conflict" });
     expect((await requestRow(approved.id)).status).toBe("approved");
   });
 });
@@ -182,7 +183,7 @@ describe("editing a pending request", () => {
   it("lets the requester change the seasons, and refreshes the reviewers' alert", async () => {
     const show = await pendingRequest(anna, { mediaType: "tv", tmdbId: 95396, title: "Severance", seasons: [1] });
     await notifyReviewersOfRequest(show.id);
-    expect(await editRequest({ userId: anna, role: "member" }, show.id, { seasons: [2, 3, 2] })).toEqual({ ok: true });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, show.id, { seasons: [2, 3, 2] })).toEqual({ ok: true });
     const row = await requestRow(show.id);
     expect(row.seasons).toEqual([2, 3]);
     expect(row.editedAt).not.toBeNull();
@@ -193,9 +194,9 @@ describe("editing a pending request", () => {
   it("drops seasons Sonarr already has, and refuses seasons TMDb doesn't list", async () => {
     const show = await pendingRequest(anna, { mediaType: "tv", tmdbId: 95396, title: "Severance", seasons: [1] });
     library.getSonarrSeasonStates.mockResolvedValueOnce([{ seasonNumber: 2, monitored: true, complete: false }]);
-    expect(await editRequest({ userId: anna, role: "member" }, show.id, { seasons: [2, 3] })).toEqual({ ok: true });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, show.id, { seasons: [2, 3] })).toEqual({ ok: true });
     expect((await requestRow(show.id)).seasons).toEqual([3]);
-    expect(await editRequest({ userId: anna, role: "member" }, show.id, { seasons: [7] })).toMatchObject({
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, show.id, { seasons: [7] })).toMatchObject({
       ok: false,
       code: "invalid",
       error: "Season 7 isn't listed for this show.",
@@ -204,36 +205,36 @@ describe("editing a pending request", () => {
 
   it("switches to 4K as the whole title, and back", async () => {
     const show = await pendingRequest(anna, { mediaType: "tv", tmdbId: 95396, title: "Severance", seasons: [1] });
-    expect(await editRequest({ userId: anna, role: "member" }, show.id, { is4k: true })).toEqual({ ok: true });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, show.id, { is4k: true })).toEqual({ ok: true });
     expect(await requestRow(show.id)).toMatchObject({ is4k: true, seasons: null });
-    expect(await editRequest({ userId: anna, role: "member" }, show.id, { is4k: true, seasons: [1] })).toMatchObject({
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, show.id, { is4k: true, seasons: [1] })).toMatchObject({
       ok: false,
       code: "invalid",
     });
-    expect(await editRequest({ userId: anna, role: "member" }, show.id, { is4k: false, seasons: [2] })).toEqual({ ok: true });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, show.id, { is4k: false, seasons: [2] })).toEqual({ ok: true });
     expect(await requestRow(show.id)).toMatchObject({ is4k: false, seasons: [2] });
   });
 
   it("refuses 4K when it isn't set up, or when there's already a 4K request", async () => {
     const movie = await pendingRequest(anna);
     fourK.isFourKReady.mockResolvedValueOnce(false);
-    expect(await editRequest({ userId: anna, role: "member" }, movie.id, { is4k: true })).toMatchObject({ code: "conflict" });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, movie.id, { is4k: true })).toMatchObject({ code: "conflict" });
     await pendingRequest(anna, { is4k: true });
-    expect(await editRequest({ userId: anna, role: "member" }, movie.id, { is4k: true })).toMatchObject({ code: "conflict" });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, movie.id, { is4k: true })).toMatchObject({ code: "conflict" });
     expect((await requestRow(movie.id)).is4k).toBe(false);
   });
 
   it("lets a reviewer change anyone's, but a member only their own, and only while pending", async () => {
     const bens = await pendingRequest(ben, { mediaType: "tv", tmdbId: 95396, title: "Severance", seasons: [1] });
-    expect(await editRequest({ userId: anna, role: "member" }, bens.id, { seasons: [2] })).toMatchObject({ code: "not_found" });
-    expect(await getRequestEditOptions({ userId: anna, role: "member" }, bens.id)).toMatchObject({ code: "not_found" });
-    expect(await editRequest({ userId: trusted, role: "trusted" }, bens.id, { seasons: [2] })).toEqual({ ok: true });
+    expect(await editRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, bens.id, { seasons: [2] })).toMatchObject({ code: "not_found" });
+    expect(await getRequestEditOptions({ userId: anna, role: "member", permissions: MEMBER_PRESET }, bens.id)).toMatchObject({ code: "not_found" });
+    expect(await editRequest({ userId: trusted, role: "trusted", permissions: TRUSTED_PRESET }, bens.id, { seasons: [2] })).toEqual({ ok: true });
     expect((await requestRow(bens.id)).seasons).toEqual([2]);
     // Ben hears about it, through the request's conversation.
     const [told] = await (await db()).select().from(notifications).where(eq(notifications.userId, ben));
     expect(told).toMatchObject({ eventType: "request_comment", message: `trusted commented on "Severance" (Season 2): Changed this request to Season 2.` });
 
-    const options = await getRequestEditOptions({ userId: admin, role: "admin" }, bens.id);
+    const options = await getRequestEditOptions({ userId: admin, role: "admin", permissions: [] }, bens.id);
     expect(options.ok && options.options.seasonRows.map((r) => [r.seasonNumber, r.state])).toEqual([
       [3, "requestable"],
       [2, "requestable"],
@@ -241,7 +242,7 @@ describe("editing a pending request", () => {
     ]);
 
     await (await db()).update(requests).set({ status: "approved" }).where(eq(requests.id, bens.id));
-    expect(await editRequest({ userId: ben, role: "member" }, bens.id, { seasons: [3] })).toMatchObject({ code: "conflict" });
+    expect(await editRequest({ userId: ben, role: "member", permissions: MEMBER_PRESET }, bens.id, { seasons: [3] })).toMatchObject({ code: "conflict" });
   });
 });
 
@@ -261,7 +262,7 @@ describe("an approval Sonarr/Radarr can't take", () => {
     const told = await (await db()).select().from(notifications).where(eq(notifications.userId, anna));
     expect(told).toEqual([]);
     // Nor can it be cancelled or changed now.
-    expect(await cancelRequest({ userId: anna, role: "member" }, movie.id)).toMatchObject({ code: "conflict" });
+    expect(await cancelRequest({ userId: anna, role: "member", permissions: MEMBER_PRESET }, movie.id)).toMatchObject({ code: "conflict" });
 
     // Still unreachable: the error is kept, fresh.
     arr.addMovieToRadarrForUser.mockResolvedValueOnce({ ok: false, code: "upstream", error: "Still down." });
@@ -295,7 +296,7 @@ describe("an approval Sonarr/Radarr can't take", () => {
   });
 
   it("tells the reviewers when an automatic approval couldn't be added", async () => {
-    const auto = await addUser("carl", "member", { autoApproveMovies: true });
+    const auto = await addUser("carl", "member", { permissions: [...MEMBER_PRESET, "autoApproveMovies", "autoApprove4kMovies"] });
     arr.addMovieToRadarrForUser.mockResolvedValueOnce({ ok: false, code: "upstream", error: "Couldn't add this movie to Radarr." });
     const created = await createRequest(viewer(auto), { mediaType: "movie", tmdbId: 438631, title: "Dune", posterPath: null });
     expect(created.ok).toBe(true);

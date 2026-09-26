@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -98,6 +98,24 @@ describe("STATUS_TEXT", () => {
     expect(STATUS_TEXT.tracked_unmonitored.name).toBe("Not monitored");
     expect(STATUS_TEXT.tracked_unmonitored.meaning).toMatch(/won't download on its own/);
     expect(STATUS_COLORS_NOTE).toBe("Same colors as Radarr and Sonarr.");
+  });
+});
+
+// The old hue-named "tracked" token is gone; a class still using it would
+// silently render with no color at all.
+describe("retired color classes", () => {
+  it("are used nowhere in app/ or components/", () => {
+    const stale = /\b(bg|text|border)-tracked(-bg|\/\d+)?\b/;
+    const offenders: string[] = [];
+    function walk(dir: string) {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (/\.(tsx?|css)$/.test(entry.name) && stale.test(readFileSync(path, "utf8"))) offenders.push(path);
+      }
+    }
+    for (const dir of ["app", "components", "lib"]) walk(join(process.cwd(), dir));
+    expect(offenders).toEqual([]);
   });
 });
 

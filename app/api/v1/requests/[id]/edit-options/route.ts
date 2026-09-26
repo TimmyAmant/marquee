@@ -10,5 +10,5 @@ import type { RequestEditOptions } from "@/lib/api/types";
 export const GET = withApi<{ id: string }>(async (request, params): Promise<RequestEditOptions> => {
   const ctx = await requireApiUser(request);
   const id = parseUuidSegment(params.id, "Request not found.");
-  return unwrap(await getRequestEditOptions({ userId: ctx.user.id, role: ctx.user.role }, id)).options;
+  return unwrap(await getRequestEditOptions({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id)).options;
 });

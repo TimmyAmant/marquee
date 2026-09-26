@@ -11,6 +11,7 @@ import {
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { loadTitlePage } from "@/lib/pages/title";
 import type { MediaType } from "@/lib/db/schema";
+import { requestPermission } from "@/lib/users/permissions";
 
 type TitlePageData = NonNullable<Awaited<ReturnType<typeof loadTitlePage>>>;
 
@@ -42,7 +43,7 @@ export function titleDetailDto(
       favorited: maps.favorited.has(item.tmdbId),
       requested,
       canQuickAdd: isUnwanted(status) && isAdmin && data.arrConfigured[item.mediaType],
-      canRequest: isUnwanted(status) && !isAdmin,
+      canRequest: isUnwanted(status) && !isAdmin && data.permissions[requestPermission(item.mediaType, false)],
     });
   };
 
@@ -101,6 +102,8 @@ export function titleDetailDto(
     library: libraryInfo(libraryStatus),
     viewer: titleViewerState({
       isAdmin,
+      mediaType: type,
+      permissions: data.permissions,
       status: libraryStatus.status,
       configured: libraryStatus.configured,
       favorited: Boolean(data.titleFavorited),
@@ -157,6 +160,7 @@ export function titleDetailDto(
             data.franchiseRequestStatusMap,
             data.blockedKeys,
             isAdmin,
+            data.permissions,
           ),
         }
       : null,
