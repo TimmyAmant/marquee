@@ -142,6 +142,16 @@ public sealed class TitlesEndpoints(MarqueeApi.Transport transport)
         return result.RequestId;
     }
 
+    /// <summary>
+    /// <c>POST /titles/{type}/{tmdbId}/request-all-missing</c>: a franchise
+    /// row's "Request all N missing" (members; Forbidden for the admin). The
+    /// server works the set out from this title's collection itself and
+    /// requests each; a partial result still succeeds, with its message.
+    /// </summary>
+    public Task<RequestAllMissingResult> RequestAllMissingAsync(MediaType type, int tmdbId, CancellationToken ct = default) =>
+        transport.MutateAsync<RequestAllMissingResult>(HttpMethod.Post, $"{Path(type, tmdbId)}/request-all-missing",
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Requests | ServerChange.Library, ct: ct);
+
     /// <summary><c>/titles/{type}/{tmdbId}</c>, the prefix every title route shares.</summary>
     public static string Path(MediaType type, int tmdbId) => $"/titles/{MarqueeApi.Segment(type)}/{tmdbId}";
 }

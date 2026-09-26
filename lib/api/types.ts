@@ -459,6 +459,8 @@ export type TitleDetail = {
     collectionFavorited: boolean | null;
     items: TitleCard[];
     addAllMissing: { mediaType: MediaType; tmdbId: number }[];
+    /** A household member's "Request all N missing" set; empty for the admin. */
+    requestAllMissing: { mediaType: MediaType; tmdbId: number }[];
   } | null;
   studios: CompanyCard[];
   similar: TitleCard[];
@@ -477,6 +479,15 @@ export type Episode = {
 export type SeasonEpisodes = { tmdbId: number; seasonNumber: number; episodes: Episode[] };
 
 export type RelinkResult = { ok: true; newTmdbId: number };
+
+/** POST /titles/{type}/{tmdbId}/request-all-missing. */
+export type RequestAllMissingResult = {
+  ok: true;
+  total: number;
+  requested: number;
+  refused: { mediaType: MediaType; tmdbId: number; title: string; error: string }[];
+  message: string;
+};
 
 // ── People & companies ──────────────────────────────────────────────────────
 

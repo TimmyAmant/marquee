@@ -4,9 +4,10 @@ import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { AddAllButton } from "@/components/add-all-button";
+import { RequestAllButton } from "@/components/request-all-button";
 import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
-import { franchiseMissingItems } from "@/lib/title-meta";
+import { franchiseMissingItems, franchiseRequestableItems } from "@/lib/title-meta";
 
 export type FranchiseItem = {
   tmdbId: number;
@@ -28,6 +29,7 @@ export function FranchiseRow({
   collectionId,
   collectionFavorited,
   isAdmin,
+  pageTitle,
 }: {
   title: string;
   items: FranchiseItem[];
@@ -50,10 +52,15 @@ export function FranchiseRow({
    * household members get Request instead, same as everywhere else in the
    * app — neither action ever shows to a signed-out visitor. */
   isAdmin?: boolean;
+  /** The title page this row sits on — household members' "Request all N
+   * missing" asks the server to request this title's franchise. */
+  pageTitle?: { mediaType: MediaType; tmdbId: number };
 }) {
   if (items.length === 0) return null;
 
   const missingItems = franchiseMissingItems(items, statusMap, arrConfigured, isAdmin);
+  // The posters below that show a Request button, all at once.
+  const requestableItems = franchiseRequestableItems(items, statusMap, requestStatusMap, blockedKeys, isAdmin);
 
   return (
     <section>
@@ -67,6 +74,9 @@ export function FranchiseRow({
           />
         )}
         {isAdmin === true && <AddAllButton items={missingItems} />}
+        {isAdmin === false && pageTitle && (
+          <RequestAllButton mediaType={pageTitle.mediaType} tmdbId={pageTitle.tmdbId} count={requestableItems.length} />
+        )}
       </div>
       <PosterGrid>
         {items.map((item) => {
