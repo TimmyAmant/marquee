@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.37.0",
+    date: "2026-09-26",
+    changes: [
+      "4K servers: connect a second Sonarr and/or Radarr for 4K copies in Settings › Integrations (\"4K Sonarr\" and \"4K Radarr\", both optional). Your main library stays as it is.",
+      "Members can then press \"Request in 4K\" on a title, even one you already have in HD. Approving it adds the title to the 4K server, and they're told when it's ready. You can also \"Add to 4K Radarr/Sonarr\" yourself.",
+      "Title pages show what the 4K server has (\"In 4K\", \"4K downloading\"…), and requests say \"In 4K\" in every list. On the website and in the Mac and Windows apps.",
+      "The 4K servers get their own webhook URLs (Settings › Integrations › Notifications) so downloads there notify too.",
+    ],
+  },
+  {
     version: "0.36.0",
     date: "2026-09-26",
     changes: [
