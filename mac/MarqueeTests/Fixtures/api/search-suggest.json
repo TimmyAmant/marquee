@@ -5,7 +5,8 @@
       "mediaType": "movie",
       "name": "The Matrix",
       "posterPath": "/aOIu.jpg",
-      "subtitle": "1999"
+      "subtitle": "1999",
+      "status": "owned"
     },
     {
       "id": 6384,
@@ -13,6 +14,22 @@
       "name": "Keanu Reeves",
       "posterPath": "/8RZL.jpg",
       "subtitle": "Acting"
+    },
+    {
+      "id": 604,
+      "mediaType": "movie",
+      "name": "The Matrix Reloaded",
+      "posterPath": "/9TGH.jpg",
+      "subtitle": "2003",
+      "status": "tracked_downloading"
+    },
+    {
+      "id": 624860,
+      "mediaType": "movie",
+      "name": "The Matrix Resurrections",
+      "posterPath": "/8c4a.jpg",
+      "subtitle": "2021",
+      "status": "untracked"
     }
   ]
 }

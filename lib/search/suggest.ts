@@ -1,4 +1,6 @@
 import { searchMulti } from "@/lib/tmdb/client";
+import { getLibraryStatusMap } from "@/lib/library/query";
+import type { LibraryStatus } from "@/components/status-badge";
 
 export type SearchSuggestion = {
   id: number;
@@ -6,19 +8,27 @@ export type SearchSuggestion = {
   name: string;
   posterPath: string | null;
   subtitle: string | null;
+  /** The viewer's library status for a movie/series (the same local lookup
+   * poster cards use — never a live Sonarr/Radarr call). Absent for people. */
+  status?: LibraryStatus;
 };
 
 /** Type-ahead suggestions for the header search bar — shared by
  * /api/search/suggest (web) and GET /api/v1/search/suggest. Queries shorter
- * than two characters, and any TMDb failure, yield an empty list. */
-export async function getSearchSuggestions(rawQuery: string | null | undefined): Promise<SearchSuggestion[]> {
+ * than two characters, and any TMDb failure, yield an empty list.
+ * `libraryOwnerId` is whose library the viewer sees; without it titles get
+ * no `status`. */
+export async function getSearchSuggestions(
+  rawQuery: string | null | undefined,
+  libraryOwnerId?: string | null,
+): Promise<SearchSuggestion[]> {
   const query = rawQuery?.trim();
   if (!query || query.length < 2) return [];
 
   const multi = await searchMulti(query).catch(() => null);
   if (!multi) return [];
 
-  return multi.results
+  const suggestions: SearchSuggestion[] = multi.results
     .filter((r) => r.media_type === "person" || r.media_type === "movie" || r.media_type === "tv")
     .slice(0, 7)
     .map((r) => ({
@@ -31,4 +41,18 @@ export async function getSearchSuggestions(rawQuery: string | null | undefined):
           ? (r.known_for_department ?? null)
           : (r.release_date || r.first_air_date || "").slice(0, 4) || null,
     }));
+
+  const titles = suggestions.flatMap((s) =>
+    s.mediaType === "person" ? [] : [{ mediaType: s.mediaType, tmdbId: s.id }],
+  );
+  if (!libraryOwnerId || titles.length === 0) return suggestions;
+
+  // A status lookup failure shouldn't cost the viewer their suggestions —
+  // the pills just stay neutral.
+  const statusMap = await getLibraryStatusMap(libraryOwnerId, titles).catch(() => null);
+  if (!statusMap) return suggestions;
+
+  return suggestions.map((s) =>
+    s.mediaType === "person" ? s : { ...s, status: statusMap.get(`${s.mediaType}:${s.id}`) ?? "untracked" },
+  );
 }

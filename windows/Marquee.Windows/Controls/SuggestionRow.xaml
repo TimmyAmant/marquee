@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One row of the shell's search type-ahead (components/search-bar.tsx, the
+  Mac's SearchPanelRow): poster, the name over its subtitle, and the
+  Actor/Movie/TV pill, which wears the title's library status in the poster
+  badge's palette (TonePill: green in the library, blue downloading or
+  missing, neutral otherwise).
+
+  MainWindow's AutoSuggestBox uses this as its item template with no
+  bindings (that file stays binding-free), so the row fills itself from its
+  DataContext, a SuggestionItem, in code-behind.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.SuggestionRow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <Grid ColumnSpacing="12" Padding="0,6">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Border
+            Width="30"
+            Height="44"
+            CornerRadius="4"
+            Background="{ThemeResource NeutralBadgeBackgroundBrush}">
+            <Image x:Name="Poster" Stretch="UniformToFill" />
+        </Border>
+
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+            <TextBlock
+                x:Name="NameText"
+                FontSize="14"
+                FontWeight="Medium"
+                MaxLines="1"
+                TextTrimming="CharacterEllipsis" />
+            <TextBlock
+                x:Name="SubtitleText"
+                FontSize="12"
+                Foreground="{ThemeResource MarqueeNavTextSecondaryBrush}"
+                MaxLines="1"
+                TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <controls:TonePill x:Name="KindPill" Grid.Column="2" VerticalAlignment="Center" />
+    </Grid>
+</UserControl>

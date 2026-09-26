@@ -177,7 +177,7 @@ public sealed class MarqueeApiDiscoverRequestTests
 
         var suggestions = await api.Search.SuggestionsAsync("ma");
 
-        Assert.Equal(2, suggestions.Count);
+        Assert.Equal(4, suggestions.Count);
         Assert.Equal("The Matrix", suggestions[0].Name);
         Assert.Equal(SuggestionKind.Person, suggestions[1].MediaType);
     }

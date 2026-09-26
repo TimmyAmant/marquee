@@ -201,6 +201,11 @@ public sealed class SuggestionItem
         Name = suggestion.Name;
         Subtitle = suggestion.Subtitle.NonBlank();
         KindLabel = suggestion.MediaType.Label;
+        KindAccessibleLabel = suggestion.KindAccessibleLabel;
+        // The poster badge's palette: green in the library, blue downloading
+        // or missing; not in the library, a person or an unknown status stays
+        // neutral.
+        KindTone = suggestion.Status is { IsKnown: true } status ? PosterItem.ToneFor(status) : BadgeTone.Neutral;
         imageUrl = suggestion.PosterPath.Url(ImageSize.W92);
     }
 
@@ -211,10 +216,20 @@ public sealed class SuggestionItem
     /// <summary>"Actor", "Movie", "TV".</summary>
     public string KindLabel { get; }
 
+    /// <summary>"Movie · In your library", "TV · Downloading", or just "Actor".</summary>
+    public string KindAccessibleLabel { get; }
+
+    /// <summary>The kind pill's palette, from the title's library status.</summary>
+    public BadgeTone KindTone { get; }
+
     public bool HasImage => imageUrl != null;
     public ImageSource? Image => imageUrl == null ? null : image ??= new BitmapImage(imageUrl);
 
-    /// <summary>"The Matrix (1999) · Movie": what the shell's suggestion list shows, since it uses no template.</summary>
+    /// <summary>"The Matrix (1999) · Movie · In your library": what a screen reader calls the row.</summary>
+    public string AccessibleName =>
+        Subtitle == null ? $"{Name} · {KindAccessibleLabel}" : $"{Name} ({Subtitle}) · {KindAccessibleLabel}";
+
+    /// <summary>"The Matrix (1999) · Movie": what the search box shows while the arrow keys pick a suggestion.</summary>
     public override string ToString() =>
         Subtitle == null ? $"{Name} · {KindLabel}" : $"{Name} ({Subtitle}) · {KindLabel}";
 

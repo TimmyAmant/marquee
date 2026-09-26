@@ -420,6 +420,9 @@ extension API {
         let posterPath: ImageRef?
         /// The year for titles, the known-for department for people.
         let subtitle: String?
+        /// The viewer's library status for a movie/series; nil for a person,
+        /// and from a server that predates the field.
+        var status: LibraryStatus?
 
         /// `"movie-603"`, unique across kinds.
         var stableId: String { "\(mediaType.rawValue)-\(id)" }
