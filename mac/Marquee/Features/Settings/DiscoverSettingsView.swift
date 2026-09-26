@@ -1,0 +1,467 @@
+import SwiftUI
+
+/// app/settings/discover/page.tsx — Settings › Discover (0.49+, the admin
+/// only): every Discover row in order, hidden ones included. Move them with
+/// the arrows (or drag), show or hide each, rename or remove the admin's own
+/// rows, and add new ones. Everyone in the household sees this order.
+struct DiscoverSettingsView: View {
+    @Environment(AppModel.self) private var model
+    @State private var discover = DiscoverSettingsModel()
+    @State private var adding = false
+    @State private var confirmingReset = false
+    @State private var renamingId: String?
+    @State private var renameText = ""
+
+    var body: some View {
+        SettingsPane(
+            title: "Discover",
+            subtitle: "Choose which rows Discover shows, and in what order. Everyone in your household sees the same page.",
+            trailing: discover.settings == nil ? nil : AnyView(headerButtons)
+        ) {
+            if discover.isUnavailable {
+                Text("This server doesn't have Discover settings yet. Update it to Marquee 0.49 or later.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textMuted)
+            } else if let settings = discover.settings {
+                if let error = discover.error { InlineMessage(text: error) }
+                VStack(spacing: 0) {
+                    ForEach(Array(settings.shelves.enumerated()), id: \.element.id) { index, row in
+                        if index > 0 { Divider().overlay(Theme.border) }
+                        rowView(row, index: index, count: settings.shelves.count)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .cardSurface(padding: 0)
+
+                Text(footnote(settings))
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if let loadError = discover.loadError {
+                InlineMessage(text: loadError)
+            } else {
+                LoadingView()
+            }
+        }
+        .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: .settings))) {
+            await discover.load(model.api)
+        }
+        .sheet(isPresented: $adding) {
+            AddDiscoverRowSheet(traktConfigured: discover.settings?.traktConfigured ?? true) { row in
+                discover.added(row)
+            }
+            .environment(model)
+        }
+        .confirmationDialog("Reset Discover to the default rows?", isPresented: $confirmingReset) {
+            Button("Reset") {
+                let api = model.api
+                Task { await discover.reset(api) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The built-in rows go back to their usual order, all shown. Your own rows stay, after them.")
+        }
+        .confirmationDialog(
+            "Remove \(removingRow?.title ?? "this row")?",
+            isPresented: Binding(
+                get: { discover.confirmingRemoveId != nil },
+                set: { if !$0 { discover.confirmingRemoveId = nil } }
+            ),
+            presenting: removingRow
+        ) { row in
+            Button("Remove", role: .destructive) {
+                let api = model.api
+                Task { await discover.remove(row.id, api) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("It comes off Discover for everyone.")
+        }
+    }
+
+    private var removingRow: API.DiscoverRowSetting? {
+        discover.rows.first { $0.id == discover.confirmingRemoveId }
+    }
+
+    private var headerButtons: some View {
+        HStack(spacing: 8) {
+            Button("Reset to default") { confirmingReset = true }
+                .buttonStyle(OutlineButtonStyle(compact: true))
+                .disabled(discover.isSaving)
+            Button {
+                adding = true
+            } label: {
+                Label("Add row", systemImage: "plus")
+            }
+            .buttonStyle(AccentButtonStyle(compact: true))
+            .disabled(!discover.canAddRow)
+            .help(discover.canAddRow ? "Add a row of your own" : "Discover can have up to \(discover.settings?.maxCustomShelves ?? 30) rows of your own. Remove one first.")
+        }
+    }
+
+    private func footnote(_ settings: API.DiscoverSettings) -> String {
+        var text = "Your own rows: \(discover.customCount) of \(settings.maxCustomShelves). Drag a row, or use the arrows, to move it."
+        if !settings.traktConfigured, settings.shelves.contains(where: { $0.rowKind == .traktList }) {
+            text += " Trakt rows stay empty until Trakt is connected in Settings › Integrations."
+        }
+        return text
+    }
+
+    // MARK: Rows
+
+    private func rowView(_ row: API.DiscoverRowSetting, index: Int, count: Int) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textMuted)
+                .help("Drag to move")
+
+            VStack(alignment: .leading, spacing: 2) {
+                if renamingId == row.id {
+                    HStack(spacing: 8) {
+                        TextField("Name", text: $renameText)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 260)
+                            .onSubmit { commitRename(row) }
+                        Button("Save") { commitRename(row) }
+                            .buttonStyle(AccentButtonStyle(compact: true))
+                            .disabled(discover.isSaving)
+                        Button("Cancel") { renamingId = nil }
+                            .buttonStyle(QuietButtonStyle())
+                            .font(.system(size: 12))
+                    }
+                } else {
+                    Text(row.title)
+                        .font(.system(size: 13.5, weight: .medium))
+                        .foregroundStyle(row.hidden ? Theme.textMuted : Theme.textPrimary)
+                }
+                Text(row.sourceLine ?? "Built-in")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textMuted)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer(minLength: 8)
+
+            if row.custom, renamingId != row.id {
+                Button("Rename") {
+                    renameText = row.title
+                    renamingId = row.id
+                }
+                .buttonStyle(QuietButtonStyle())
+                .font(.system(size: 12))
+                Button("Remove") { discover.confirmingRemoveId = row.id }
+                    .buttonStyle(QuietButtonStyle(color: Theme.danger))
+                    .font(.system(size: 12))
+            }
+
+            Toggle("Show", isOn: Binding(
+                get: { !row.hidden },
+                set: { shown in
+                    let api = model.api
+                    Task { await discover.setHidden(row.id, !shown, api) }
+                }
+            ))
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .labelsHidden()
+            .help(row.hidden ? "Hidden — turn on to show it" : "Shown — turn off to hide it")
+
+            HStack(spacing: 2) {
+                moveButton("chevron.up", "Move up", row, by: -1, disabled: index == 0)
+                moveButton("chevron.down", "Move down", row, by: 1, disabled: index == count - 1)
+            }
+        }
+        .disabled(discover.isSaving && renamingId != row.id)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .draggable(row.id)
+        .dropDestination(for: String.self) { ids, _ in
+            drop(ids.first, onto: row)
+        }
+    }
+
+    private func moveButton(_ systemImage: String, _ label: String, _ row: API.DiscoverRowSetting, by offset: Int, disabled: Bool) -> some View {
+        Button {
+            let api = model.api
+            Task { await discover.move(row.id, by: offset, api) }
+        } label: {
+            Image(systemName: systemImage)
+                .font(.system(size: 11, weight: .semibold))
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(QuietButtonStyle())
+        .disabled(disabled)
+        .help(label)
+        .accessibilityLabel("\(label): \(row.title)")
+    }
+
+    /// A row dragged onto `target` takes its place.
+    private func drop(_ id: String?, onto target: API.DiscoverRowSetting) -> Bool {
+        let rows = discover.rows
+        guard let id, id != target.id,
+              let from = rows.firstIndex(where: { $0.id == id }),
+              let to = rows.firstIndex(where: { $0.id == target.id })
+        else { return false }
+        let api = model.api
+        Task { await discover.move(fromOffsets: [from], toOffset: to > from ? to + 1 : to, api) }
+        return true
+    }
+
+    private func commitRename(_ row: API.DiscoverRowSetting) {
+        let api = model.api
+        let title = renameText
+        Task {
+            if await discover.rename(row.id, to: title, api) { renamingId = nil }
+        }
+    }
+}
+
+// MARK: - Add row
+
+/// "Add row": what the row shows (a TMDb keyword, genre, studio, network or
+/// list, a Trakt list, or what was added to Plex/Jellyfin lately), and an
+/// optional name.
+struct AddDiscoverRowSheet: View {
+    let traktConfigured: Bool
+    let onAdded: (API.DiscoverRowSetting) -> Void
+
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft = DiscoverRowDraft()
+    @State private var results: [API.DiscoverLookupResult] = []
+    @State private var searching = false
+    @State private var lookupError: String?
+    @State private var adding = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Add a Discover row")
+                .font(.marqueeDisplay(22))
+
+            Picker("Shows", selection: Binding(get: { draft.kind }, set: { draft.setKind($0) })) {
+                ForEach(DiscoverRowDraft.kinds, id: \.self) { kind in
+                    Text(kind.label).tag(kind)
+                }
+            }
+            .pickerStyle(.menu)
+
+            if !draft.kind.mediaTypeChoices.isEmpty {
+                Picker("Titles", selection: $draft.mediaType) {
+                    ForEach(draft.kind.mediaTypeChoices, id: \.self) { choice in
+                        Text(choice.label).tag(choice)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 280)
+            }
+
+            source
+
+            SettingsField(label: "Name (optional)", text: $draft.title, placeholder: "Named after what it shows")
+                .onChange(of: draft.title) { _, value in
+                    if value.count > API.AddDiscoverRowRequest.maxTitleLength {
+                        draft.title = String(value.prefix(API.AddDiscoverRowRequest.maxTitleLength))
+                    }
+                }
+
+            if let error { InlineMessage(text: error) }
+
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .buttonStyle(OutlineButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+                Button(adding ? "Adding…" : "Add row") { add() }
+                    .buttonStyle(AccentButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(adding)
+            }
+        }
+        .font(.system(size: 12.5))
+        .padding(24)
+        .frame(width: 480)
+        .background(Theme.bg1)
+        .task(id: LookupKey(kind: draft.kind, query: draft.query, mediaType: draft.kind == .genre ? draft.genreMediaType : nil)) {
+            await lookUp()
+        }
+    }
+
+    // MARK: What it's built from
+
+    @ViewBuilder
+    private var source: some View {
+        switch draft.kind {
+        case .keyword, .company, .network, .genre:
+            VStack(alignment: .leading, spacing: 8) {
+                SettingsField(label: searchLabel, text: $draft.query, placeholder: searchPlaceholder)
+                lookupResults
+                if let picked = draft.picked {
+                    Text("Picked: \(picked.name)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+        case .tmdbList:
+            VStack(alignment: .leading, spacing: 5) {
+                SettingsField(label: "TMDb list", text: $draft.tmdbList, placeholder: "8136 or https://www.themoviedb.org/list/8136")
+                hint("The list's number, or its link on themoviedb.org. It has to be public.")
+            }
+        case .traktList:
+            VStack(alignment: .leading, spacing: 5) {
+                SettingsField(label: "Trakt link", text: $draft.traktURL, placeholder: "https://trakt.tv/users/someone/lists/favourites")
+                hint("A public list or watchlist on trakt.tv.")
+                if !traktConfigured {
+                    InlineMessage(text: "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › Integrations.")
+                }
+            }
+        case .library:
+            hint("The newest titles on your Plex or Jellyfin server.")
+        case .unknown:
+            EmptyView()
+        }
+    }
+
+    private var searchLabel: String {
+        switch draft.kind {
+        case .keyword: return "Search TMDb keywords"
+        case .company: return "Search studios"
+        case .network: return "Search networks"
+        default: return "Filter genres"
+        }
+    }
+
+    private var searchPlaceholder: String {
+        switch draft.kind {
+        case .keyword: return "e.g. anime, time travel"
+        case .company: return "e.g. A24"
+        case .network: return "e.g. HBO, or a TMDb network number"
+        default: return "e.g. Comedy"
+        }
+    }
+
+    @ViewBuilder
+    private var lookupResults: some View {
+        if let lookupError {
+            InlineMessage(text: lookupError)
+        } else if searching && results.isEmpty {
+            ProgressView().controlSize(.small)
+        } else if results.isEmpty {
+            if draft.kind == .genre || draft.query.nonBlank != nil {
+                Text("Nothing found.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textMuted)
+            }
+        } else {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(results) { result in
+                        resultRow(result)
+                    }
+                }
+            }
+            .frame(height: min(CGFloat(results.count) * 34, 204))
+            .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border))
+        }
+    }
+
+    private func resultRow(_ result: API.DiscoverLookupResult) -> some View {
+        let isPicked = draft.picked?.tmdbId == result.tmdbId
+        return Button {
+            draft.picked = result
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: isPicked ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isPicked ? Theme.accent : Theme.textMuted)
+                Text(result.name)
+                    .foregroundStyle(Theme.textPrimary)
+                if let detail = result.detail.nonBlank {
+                    Text(detail)
+                        .foregroundStyle(Theme.textMuted)
+                }
+                Spacer()
+            }
+            .font(.system(size: 12.5))
+            .padding(.horizontal, 10)
+            .frame(height: 34)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func hint(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11.5))
+            .foregroundStyle(Theme.textMuted)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    // MARK: Actions
+
+    /// Searches as you type (after a short pause); the genre list loads
+    /// straight away.
+    private func lookUp() async {
+        lookupError = nil
+        guard let type = draft.kind.lookupType else {
+            results = []
+            return
+        }
+        let query = draft.query
+        if type != .genre, type != .network, query.nonBlank == nil {
+            results = []
+            return
+        }
+        if query.nonBlank != nil {
+            try? await Task.sleep(for: .milliseconds(300))
+            if Task.isCancelled { return }
+        }
+        searching = true
+        defer { searching = false }
+        do {
+            let fresh = try await model.api.discoverSettings.lookup(type, query: query, mediaType: draft.genreMediaType)
+            if Task.isCancelled { return }
+            results = fresh
+            if let picked = draft.picked, !fresh.contains(where: { $0.tmdbId == picked.tmdbId }), draft.kind == .genre {
+                draft.picked = nil
+            }
+        } catch let failure as APIError where failure.isCancellation {
+            return
+        } catch {
+            if Task.isCancelled { return }
+            results = []
+            lookupError = error.localizedDescription
+        }
+    }
+
+    private func add() {
+        guard !adding else { return }
+        guard let request = draft.request else {
+            error = draft.missingMessage
+            return
+        }
+        error = nil
+        adding = true
+        let api = model.api
+        Task {
+            do {
+                let row = try await api.discoverSettings.add(request)
+                onAdded(row)
+                dismiss()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            adding = false
+        }
+    }
+}
+
+private struct LookupKey: Hashable {
+    let kind: API.DiscoverRowKind
+    let query: String
+    let mediaType: API.MediaType?
+}

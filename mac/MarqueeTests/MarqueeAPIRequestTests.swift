@@ -61,7 +61,20 @@ final class MarqueeAPIRequestTests: XCTestCase {
     nonisolated static let commentCreatedResponse = #"{"ok":true,"commentId":"7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b"}"#
     nonisolated static let commentId = "7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b"
 
+    /// A Settings › Discover row and a Trakt sync as `POST`/`PATCH` answer
+    /// them (the doc's prose: "the shape of one `shelves` entry", "the sync").
+    nonisolated static let discoverRowResponse = #"""
+    {"id":"5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01","kind":"keyword","title":"Anime","custom":true,"hidden":false,"source":{"mediaType":"all","tmdbId":210024,"name":"anime","url":null}}
+    """#
+    nonisolated static let traktSyncResponse = #"""
+    {"id":"0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c","kind":"list","url":"https://trakt.tv/users/someone/lists/best-of-2024","name":"Best of 2024","movies":true,"tv":false,"lastSyncedAt":null,"lastError":null,"requestedCount":0,"createdAt":"2026-09-20T09:12:44.000Z","owner":{"id":"83c55a49-6153-4cb9-ae22-4a42d48f4cf3","username":"anna","displayName":"Anna"}}
+    """#
+    nonisolated static let discoverRowId = "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01"
+    nonisolated static let traktSyncId = "0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c"
+
     private func fixture(_ name: String) throws -> Data {
+        if name == "discover-row" { return Data(Self.discoverRowResponse.utf8) }
+        if name == "trakt-sync" { return Data(Self.traktSyncResponse.utf8) }
         if name == "blocklist" { return Data(Self.blocklistResponse.utf8) }
         if name == "arr-server-saved" { return Data(Self.arrServerSavedResponse.utf8) }
         if name == "arr-server-webhook" { return Data(Self.arrServerWebhookResponse.utf8) }
@@ -372,13 +385,60 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 try await $0.apiKeys.revoke("6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10")
             },
             Case(method: "GET", path: "/stats/summary", response: "stats-summary") { _ = try await $0.stats.summary() },
+            // Settings › Discover (0.49+)
+            Case(method: "GET", path: "/settings/discover", response: "discover-settings") { _ = try await $0.discoverSettings.load() },
+            Case(
+                method: "PUT", path: "/settings/discover",
+                body: #"{"shelves":[{"id":"trending","hidden":false},{"id":"recentlyAdded","hidden":true}]}"#,
+                response: "discover-settings"
+            ) {
+                _ = try await $0.discoverSettings.arrange([
+                    API.DiscoverRowSetting(id: "trending", kind: "trending", title: "Trending"),
+                    API.DiscoverRowSetting(id: "recentlyAdded", kind: "recentlyAdded", title: "Recently Added", hidden: true),
+                ])
+            },
+            Case(
+                method: "POST", path: "/settings/discover/shelves",
+                body: #"{"kind":"keyword","tmdbId":210024,"mediaType":"all","name":"anime","title":"Anime"}"#,
+                response: "discover-row"
+            ) {
+                _ = try await $0.discoverSettings.add(API.AddDiscoverRowRequest(kind: "keyword", tmdbId: 210024, mediaType: "all", name: "anime", title: "Anime"))
+            },
+            Case(method: "PATCH", path: "/settings/discover/shelves/\(Self.discoverRowId)", body: #"{"title":"Anime & more"}"#, response: "discover-row") {
+                _ = try await $0.discoverSettings.update(Self.discoverRowId, API.UpdateDiscoverRowRequest(title: "Anime & more"))
+            },
+            Case(method: "DELETE", path: "/settings/discover/shelves/\(Self.discoverRowId)", response: "ok") {
+                try await $0.discoverSettings.remove(Self.discoverRowId)
+            },
+            Case(method: "POST", path: "/settings/discover/reset", response: "discover-settings") { _ = try await $0.discoverSettings.reset() },
+            Case(method: "GET", path: "/settings/discover/lookup", query: ["type": "genre", "mediaType": "tv", "q": "com"], response: "discover-lookup") {
+                _ = try await $0.discoverSettings.lookup(.genre, query: " com ", mediaType: .tv)
+            },
+            // Trakt list syncs (0.49+)
+            Case(method: "GET", path: "/trakt-syncs", query: ["all": "true"], response: "trakt-syncs") { _ = try await $0.traktSyncs.list(all: true) },
+            Case(
+                method: "POST", path: "/trakt-syncs",
+                body: #"{"url":"https://trakt.tv/users/someone/watchlist","movies":true,"tv":false,"requestExisting":false}"#,
+                response: "trakt-sync"
+            ) {
+                _ = try await $0.traktSyncs.add(API.CreateTraktSyncRequest(
+                    url: "https://trakt.tv/users/someone/watchlist", movies: true, tv: false, requestExisting: false
+                ))
+            },
+            Case(method: "PATCH", path: "/trakt-syncs/\(Self.traktSyncId)", body: #"{"tv":true}"#, response: "trakt-sync") {
+                _ = try await $0.traktSyncs.update(Self.traktSyncId, API.UpdateTraktSyncRequest(tv: true))
+            },
+            Case(method: "POST", path: "/trakt-syncs/\(Self.traktSyncId)/sync", response: "trakt-sync") {
+                _ = try await $0.traktSyncs.sync(Self.traktSyncId)
+            },
+            Case(method: "DELETE", path: "/trakt-syncs/\(Self.traktSyncId)", response: "ok") { try await $0.traktSyncs.remove(Self.traktSyncId) },
         ] + arr
     }
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 142, "docs/api-v1.md documents 142 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 142, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 154, "docs/api-v1.md documents 154 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 154, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

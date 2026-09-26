@@ -99,6 +99,10 @@ extension API {
         let networks: [NetworkCard]
         /// Where each shelf's "See all" goes (0.42.4+); nil from an older server.
         let seeAll: DiscoverSeeAll?
+        /// The rows in the admin's order, hidden ones left out, the admin's
+        /// own rows included (0.49+). nil from an older server: show the
+        /// fixed keys above in their usual order.
+        let shelves: [DiscoverRow]?
 
         /// Where `shelf`'s "See all" chevron goes, nil for none.
         func seeAllDestination(_ shelf: DiscoverShelf) -> SeeAllDestination? {
@@ -152,12 +156,19 @@ extension API {
         }
 
         /// Trending and Recently Added mix movies and series, so their cards
-        /// carry the MOVIE/SERIES pill.
+        /// carry the MOVIE/SERIES pill; so can an admin's own row (0.49+).
         var mixesMediaTypes: Bool {
             switch self {
-            case .recentlyAdded, .trending: return true
-            case .upcomingMovies, .upcomingSeries, .unknown: return false
+            case .recentlyAdded, .trending, .unknown: return true
+            case .upcomingMovies, .upcomingSeries: return false
             }
+        }
+
+        /// A custom Discover row's id (a uuid, 0.49+): its "See all" is
+        /// `GET /discover/lists/{id}` too.
+        var isCustomRow: Bool {
+            if case let .unknown(raw) = self { return UUID(uuidString: raw) != nil }
+            return false
         }
     }
 
@@ -257,10 +268,16 @@ extension API {
                 default: return nil
                 }
             }
-            guard let target = seeAll[shelf] else { return nil }
+            return resolve(seeAll[shelf])
+        }
+
+        /// One target as it came. With `customRows` (a `shelves` row) it opens
+        /// the admin's own rows too (a `list` that is the row's uuid, 0.49+).
+        static func resolve(_ target: SeeAllTarget?, customRows: Bool = false) -> SeeAllDestination? {
+            guard let target else { return nil }
             switch target.type {
             case .list:
-                guard let list = target.list, list.isKnown else { return nil }
+                guard let list = target.list, list.isKnown || (customRows && list.isCustomRow) else { return nil }
                 return .list(list)
             case .browse:
                 guard let mediaType = target.mediaType, mediaType.isKnown else { return nil }

@@ -69,9 +69,12 @@ struct DiscoverView: View {
         loading = false
     }
 
+    /// The rows in the admin's order (`shelves`, 0.49+), or the fixed keys
+    /// in their usual order from an older server; see `DiscoverLayout`.
     @ViewBuilder
     private func content(_ shelves: API.DiscoverShelves) -> some View {
-        if isEmpty(shelves) {
+        let layout = DiscoverLayout(shelves)
+        if layout.isEmpty {
             EmptyStateView(
                 title: "Nothing to show yet",
                 message: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (⌘R).",
@@ -80,42 +83,30 @@ struct DiscoverView: View {
             .padding(.trailing, Metrics.pagePadding)
         }
 
-        if !shelves.recentlyAdded.isEmpty {
-            posterShelf("Recently Added", shelves.recentlyAdded, seeAll: seeAll(.recentlyAdded, in: shelves), showsColorKey: keyShelf(shelves) == .recentlyAdded)
+        ForEach(layout.rows) { row in
+            self.row(row, showsColorKey: row.id == layout.colorKeyRowID)
         }
-        if !shelves.trending.isEmpty {
-            posterShelf("Trending", shelves.trending, seeAll: seeAll(.trending, in: shelves), showsColorKey: keyShelf(shelves) == .trending)
-        }
-        if !shelves.popularMovies.isEmpty {
-            posterShelf("Popular Movies", shelves.popularMovies, seeAll: seeAll(.popularMovies, in: shelves), showsColorKey: keyShelf(shelves) == .popularMovies)
-        }
-        if !shelves.movieGenres.isEmpty {
-            genreShelf("Movie Genres", shelves.movieGenres, mediaType: .movie, seeAll: seeAll(.movieGenres, in: shelves))
-        }
-        if !shelves.upcomingMovies.isEmpty {
-            posterShelf("Upcoming Movies", shelves.upcomingMovies, seeAll: seeAll(.upcomingMovies, in: shelves), showsColorKey: keyShelf(shelves) == .upcomingMovies)
-        }
-        if !shelves.studios.isEmpty {
-            Shelf(title: "Studios", seeAll: seeAll(.studios, in: shelves)) {
-                ForEach(shelves.studios) { studio in
+    }
+
+    @ViewBuilder
+    private func row(_ row: DiscoverLayout.Row, showsColorKey: Bool) -> some View {
+        let seeAll = seeAll(row.seeAll)
+        switch row.content {
+        case let .posters(cards):
+            posterShelf(row.title, cards, seeAll: seeAll, showsColorKey: showsColorKey)
+        case let .genres(tiles, mediaType):
+            genreShelf(row.title, tiles, mediaType: mediaType, seeAll: seeAll)
+        case let .studios(studios):
+            Shelf(title: row.title, seeAll: seeAll) {
+                ForEach(studios) { studio in
                     LogoCard(name: studio.name, logoPath: studio.logoPath) {
                         model.open(.company(studio.tmdbId))
                     }
                 }
             }
-        }
-        if !shelves.popularSeries.isEmpty {
-            posterShelf("Popular Series", shelves.popularSeries, seeAll: seeAll(.popularSeries, in: shelves), showsColorKey: keyShelf(shelves) == .popularSeries)
-        }
-        if !shelves.seriesGenres.isEmpty {
-            genreShelf("Series Genres", shelves.seriesGenres, mediaType: .tv, seeAll: seeAll(.seriesGenres, in: shelves))
-        }
-        if !shelves.upcomingSeries.isEmpty {
-            posterShelf("Upcoming Series", shelves.upcomingSeries, seeAll: seeAll(.upcomingSeries, in: shelves), showsColorKey: keyShelf(shelves) == .upcomingSeries)
-        }
-        if !shelves.networks.isEmpty {
-            Shelf(title: "Networks", seeAll: seeAll(.networks, in: shelves)) {
-                ForEach(shelves.networks) { network in
+        case let .networks(networks):
+            Shelf(title: row.title, seeAll: seeAll) {
+                ForEach(networks) { network in
                     LogoCard(name: network.name, logoPath: network.logoPath) {
                         model.browse(.tv, networkId: network.tmdbId)
                     }
@@ -124,35 +115,13 @@ struct DiscoverView: View {
         }
     }
 
-    private func isEmpty(_ shelves: API.DiscoverShelves) -> Bool {
-        shelves.recentlyAdded.isEmpty && shelves.trending.isEmpty && shelves.popularMovies.isEmpty
-            && shelves.movieGenres.isEmpty && shelves.upcomingMovies.isEmpty && shelves.studios.isEmpty
-            && shelves.popularSeries.isEmpty && shelves.seriesGenres.isEmpty && shelves.upcomingSeries.isEmpty
-            && shelves.networks.isEmpty
-    }
-
-    /// What `shelf`'s "See all" chevron does (`seeAll` in the response, or
-    /// the pre-0.42.4 defaults); nil hides it.
-    private func seeAll(_ shelf: API.DiscoverShelf, in shelves: API.DiscoverShelves) -> (() -> Void)? {
-        switch shelves.seeAllDestination(shelf) {
+    /// What a row's "See all" chevron does; nil hides it.
+    private func seeAll(_ destination: API.SeeAllDestination?) -> (() -> Void)? {
+        switch destination {
         case let .list(list): return { model.open(.discoverList(list)) }
         case let .browse(mediaType): return { model.browse(mediaType) }
         case nil: return nil
         }
-    }
-
-    /// The first poster shelf on the page, which carries the "Color key"
-    /// pill next to its header.
-    private func keyShelf(_ shelves: API.DiscoverShelves) -> API.DiscoverShelf? {
-        let posterShelves: [(API.DiscoverShelf, [API.TitleCard])] = [
-            (.recentlyAdded, shelves.recentlyAdded),
-            (.trending, shelves.trending),
-            (.popularMovies, shelves.popularMovies),
-            (.upcomingMovies, shelves.upcomingMovies),
-            (.popularSeries, shelves.popularSeries),
-            (.upcomingSeries, shelves.upcomingSeries),
-        ]
-        return posterShelves.first { !$0.1.isEmpty }?.0
     }
 
     /// Every Discover row carries the MOVIE/SERIES pill, like the web page.

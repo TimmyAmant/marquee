@@ -74,6 +74,9 @@ struct AccountSettingsView: View {
                     }
                 }
 
+                // 0.49+: keep public Trakt lists in sync (every account).
+                TraktSyncsSection()
+
                 SettingsSectionLabel(text: "Notifications")
                 NotificationSettingsCard()
                     .frame(maxWidth: .infinity, alignment: .leading)

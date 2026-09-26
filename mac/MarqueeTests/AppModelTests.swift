@@ -54,6 +54,11 @@ struct AppModelTests {
 
         model.handle(url: URL(string: "marquee://discover/top-secret")!)
         #expect(model.path == [.discoverList(.trending)], "An unknown list is ignored")
+
+        // An admin's own row (0.49+): its id is a uuid.
+        let custom = "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01"
+        model.handle(url: URL(string: "marquee://discover/\(custom)")!)
+        #expect(model.path.last == .discoverList(.unknown(custom)))
     }
 
     @Test func otherSchemesAreIgnored() {
