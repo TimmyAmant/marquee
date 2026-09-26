@@ -17,6 +17,7 @@ public sealed class DiscoverFixtureTests
         Fixtures.Decode<CompanyCard>("company-card");
         Fixtures.Decode<NetworkCard>("network-card");
         Fixtures.Decode<DiscoverShelves>("discover");
+        Fixtures.Decode<DiscoverListPage>("discover-list");
         Fixtures.Decode<Paginated<TitleCard>>("browse-page");
         Fixtures.Decode<BrowseExtras>("browse-extras");
         Fixtures.Decode<TitleId>("surprise");
@@ -119,6 +120,114 @@ public sealed class DiscoverFixtureTests
         Assert.Single(shelves.UpcomingMovies);
         Assert.Single(shelves.PopularSeries);
         Assert.Single(shelves.UpcomingSeries);
+    }
+
+    [Fact]
+    public void DiscoverSeeAllMap()
+    {
+        var shelves = Fixtures.Decode<DiscoverShelves>("discover");
+        Assert.NotNull(shelves.SeeAll);
+        Assert.Equal(10, shelves.SeeAll.Count);
+        var trending = shelves.SeeAll[DiscoverShelfKey.Trending];
+        Assert.NotNull(trending);
+        Assert.Equal(SeeAllKind.List, trending.Type);
+        Assert.Equal(DiscoverListKind.Trending, trending.List);
+        Assert.Null(trending.MediaType);
+        var studios = shelves.SeeAll[DiscoverShelfKey.Studios];
+        Assert.NotNull(studios);
+        Assert.Equal(SeeAllKind.Browse, studios.Type);
+        Assert.Null(studios.List);
+        Assert.Equal(MediaType.Movie, studios.MediaType);
+
+        // Every shelf has one: the four lists, the rest to a grid.
+        Assert.Equal(new SeeAllTarget.DiscoverList(DiscoverListKind.RecentlyAdded), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.RecentlyAdded));
+        Assert.Equal(new SeeAllTarget.DiscoverList(DiscoverListKind.Trending), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.Trending));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Movie), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.PopularMovies));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Movie), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.MovieGenres));
+        Assert.Equal(new SeeAllTarget.DiscoverList(DiscoverListKind.UpcomingMovies), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.UpcomingMovies));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Movie), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.Studios));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Tv), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.PopularSeries));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Tv), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.SeriesGenres));
+        Assert.Equal(new SeeAllTarget.DiscoverList(DiscoverListKind.UpcomingSeries), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.UpcomingSeries));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Tv), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.Networks));
+    }
+
+    [Fact]
+    public void DiscoverSeeAllFallsBackForAnOlderServer()
+    {
+        // An older server has no seeAll: only Popular Movies/Series and the
+        // genre shelves link to the grids, as before.
+        var shelves = Fixtures.Decode<DiscoverShelves>("discover") with { SeeAll = null };
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Movie), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.PopularMovies));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Movie), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.MovieGenres));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Tv), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.PopularSeries));
+        Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Tv), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.SeriesGenres));
+        foreach (var key in new[]
+        {
+            DiscoverShelfKey.RecentlyAdded, DiscoverShelfKey.Trending, DiscoverShelfKey.UpcomingMovies,
+            DiscoverShelfKey.Studios, DiscoverShelfKey.UpcomingSeries, DiscoverShelfKey.Networks,
+        })
+        {
+            Assert.Null(DiscoverSeeAll.Resolve(shelves, key));
+        }
+
+        // The same body without the key decodes to the same thing.
+        var json = System.Text.Json.Nodes.JsonNode.Parse(Fixtures.Read("discover"))!.AsObject();
+        json.Remove("seeAll");
+        Assert.Null(Json.Decode<DiscoverShelves>(json.ToJsonString()).SeeAll);
+    }
+
+    [Fact]
+    public void DiscoverSeeAllIgnoresWhatItDoesNotKnow()
+    {
+        var shelves = Json.Decode<DiscoverShelves>("""
+            {
+              "recentlyAdded": [], "trending": [], "popularMovies": [], "movieGenres": [], "upcomingMovies": [],
+              "studios": [], "popularSeries": [], "seriesGenres": [], "upcomingSeries": [], "networks": [],
+              "seeAll": {
+                "trending": { "type": "list", "list": "most-watched", "mediaType": null },
+                "recentlyAdded": { "type": "list", "list": null, "mediaType": null },
+                "popularMovies": { "type": "browse", "list": null, "mediaType": "music" },
+                "popularSeries": { "type": "browse", "list": null, "mediaType": null },
+                "movieGenres": { "type": "search", "list": "trending", "mediaType": "movie" },
+                "seriesGenres": null,
+                "upcomingMovies": { "type": "list", "list": "upcoming-movies", "mediaType": null }
+              }
+            }
+            """);
+
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.Trending));
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.RecentlyAdded));
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.PopularMovies));
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.PopularSeries));
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.MovieGenres));
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.SeriesGenres));
+        // With a map, a shelf it leaves out has none (no fallback).
+        Assert.Null(DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.Networks));
+        Assert.Equal(new SeeAllTarget.DiscoverList(DiscoverListKind.UpcomingMovies), DiscoverSeeAll.Resolve(shelves, DiscoverShelfKey.UpcomingMovies));
+    }
+
+    [Fact]
+    public void DiscoverListPageValues()
+    {
+        var page = Fixtures.Decode<DiscoverListPage>("discover-list");
+        Assert.Equal(DiscoverListKind.Trending, page.List);
+        Assert.Equal("Trending", page.Title);
+        Assert.Equal(1, page.Page);
+        Assert.Equal(250, page.TotalPages);
+        Assert.Equal(1000, page.TotalResults);
+        Assert.True(page.HasMorePages);
+        var card = Assert.Single(page.Results);
+        Assert.Equal(new TitleId(MediaType.Tv, 299939), card.Id);
+        Assert.False(card.Favorited);
+        Assert.True(card.CanQuickAdd);
+        Assert.False((page with { Page = 250 }).HasMorePages);
+
+        Assert.Equal(["trending", "recently-added", "upcoming-movies", "upcoming-series"], DiscoverListKind.Known.Select(kind => kind.Value));
+        Assert.Equal(["Trending", "Recently Added", "Upcoming Movies", "Upcoming Series"], DiscoverListKind.Known.Select(kind => kind.Title));
+        Assert.Equal([true, true, false, false], DiscoverListKind.Known.Select(kind => kind.MixesMediaTypes));
+        Assert.False(DiscoverListKind.FromValue("most-watched").IsKnown);
+        Assert.Equal("Most Watched", DiscoverListKind.FromValue("most-watched").Title);
     }
 
     [Fact]

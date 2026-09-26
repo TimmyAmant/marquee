@@ -117,19 +117,159 @@ public sealed record DiscoverShelves
 
     public required IReadOnlyList<TitleCard> Trending { get; init; }
 
-    /// <summary>"See all" opens the Movies grid.</summary>
     public required IReadOnlyList<TitleCard> PopularMovies { get; init; }
 
     public required IReadOnlyList<GenreTile> MovieGenres { get; init; }
     public required IReadOnlyList<TitleCard> UpcomingMovies { get; init; }
     public required IReadOnlyList<CompanyCard> Studios { get; init; }
-
-    /// <summary>"See all" opens the Series grid.</summary>
     public required IReadOnlyList<TitleCard> PopularSeries { get; init; }
-
     public required IReadOnlyList<GenreTile> SeriesGenres { get; init; }
     public required IReadOnlyList<TitleCard> UpcomingSeries { get; init; }
     public required IReadOnlyList<NetworkCard> Networks { get; init; }
+
+    /// <summary>
+    /// Where each shelf's "See all" goes, keyed like the shelves
+    /// (<see cref="DiscoverShelfKey"/>). 0.43+; an older server leaves it
+    /// out. Read it through <see cref="DiscoverSeeAll.Resolve"/>, which
+    /// supplies the older server's fallback.
+    /// </summary>
+    public IReadOnlyDictionary<string, DiscoverSeeAllLink?>? SeeAll { get; init; }
+}
+
+/// <summary>The wire keys of <c>GET /discover</c>'s shelves, as <see cref="DiscoverShelves.SeeAll"/> uses them.</summary>
+public static class DiscoverShelfKey
+{
+    public const string RecentlyAdded = "recentlyAdded";
+    public const string Trending = "trending";
+    public const string PopularMovies = "popularMovies";
+    public const string MovieGenres = "movieGenres";
+    public const string UpcomingMovies = "upcomingMovies";
+    public const string Studios = "studios";
+    public const string PopularSeries = "popularSeries";
+    public const string SeriesGenres = "seriesGenres";
+    public const string UpcomingSeries = "upcomingSeries";
+    public const string Networks = "networks";
+}
+
+/// <summary><c>seeAll</c>'s <c>type</c>: a Discover list page, or the unfiltered Movies/Series grid.</summary>
+public readonly record struct SeeAllKind(string Value) : IOpenEnum<SeeAllKind>
+{
+    public static readonly SeeAllKind List = new("list");
+    public static readonly SeeAllKind Browse = new("browse");
+
+    public static IReadOnlyList<SeeAllKind> Known { get; } = [List, Browse];
+    public static SeeAllKind FromValue(string value) => new(value);
+    public bool IsKnown => Known.Contains(this);
+    public override string ToString() => Value;
+}
+
+/// <summary>A Discover shelf's full list: <c>GET /discover/lists/{list}</c> (the website's <c>/discover/{list}</c>).</summary>
+public readonly record struct DiscoverListKind(string Value) : IOpenEnum<DiscoverListKind>
+{
+    public static readonly DiscoverListKind Trending = new("trending");
+    public static readonly DiscoverListKind RecentlyAdded = new("recently-added");
+    public static readonly DiscoverListKind UpcomingMovies = new("upcoming-movies");
+    public static readonly DiscoverListKind UpcomingSeries = new("upcoming-series");
+
+    public static IReadOnlyList<DiscoverListKind> Known { get; } = [Trending, RecentlyAdded, UpcomingMovies, UpcomingSeries];
+    public static DiscoverListKind FromValue(string value) => new(value);
+    public bool IsKnown => Known.Contains(this);
+    public override string ToString() => Value;
+
+    /// <summary>The heading until the server's own <see cref="DiscoverListPage.Title"/> arrives.</summary>
+    public string Title =>
+        this == Trending ? "Trending"
+        : this == RecentlyAdded ? "Recently Added"
+        : this == UpcomingMovies ? "Upcoming Movies"
+        : this == UpcomingSeries ? "Upcoming Series"
+        : OpenEnum.Capitalized(Value.Replace('-', ' '));
+
+    /// <summary>Trending and Recently Added mix movies and series, so their cards carry the MOVIE/SERIES pill.</summary>
+    public bool MixesMediaTypes => this != UpcomingMovies && this != UpcomingSeries;
+}
+
+/// <summary>One <c>seeAll</c> entry: <c>{"type", "list", "mediaType"}</c>.</summary>
+public sealed record DiscoverSeeAllLink
+{
+    public required SeeAllKind Type { get; init; }
+
+    /// <summary>For <see cref="SeeAllKind.List"/>; null otherwise.</summary>
+    public DiscoverListKind? List { get; init; }
+
+    /// <summary>For <see cref="SeeAllKind.Browse"/>: the Movies (<c>movie</c>) or Series (<c>tv</c>) grid; null otherwise.</summary>
+    public MediaType? MediaType { get; init; }
+}
+
+/// <summary>Where a shelf's "See all" chevron goes, once resolved.</summary>
+public abstract record SeeAllTarget
+{
+    private SeeAllTarget()
+    {
+    }
+
+    /// <summary>The shelf's own paged list (<c>GET /discover/lists/{list}</c>).</summary>
+    public sealed record DiscoverList(DiscoverListKind Kind) : SeeAllTarget;
+
+    /// <summary>The unfiltered Movies or Series grid.</summary>
+    public sealed record BrowseGrid(MediaType MediaType) : SeeAllTarget;
+}
+
+public static class DiscoverSeeAll
+{
+    /// <summary>
+    /// Where <paramref name="shelfKey"/>'s "See all" goes, or null for none.
+    /// With a <c>seeAll</c> map it is the map's word, and an unknown type,
+    /// list or media type means none; an older server without one gets the
+    /// links it always had: Popular Movies/Series and the genre shelves open
+    /// the Movies/Series grid, nothing else has one.
+    /// </summary>
+    public static SeeAllTarget? Resolve(DiscoverShelves shelves, string shelfKey)
+    {
+        if (shelves.SeeAll is not { } map)
+        {
+            return shelfKey switch
+            {
+                DiscoverShelfKey.PopularMovies or DiscoverShelfKey.MovieGenres => new SeeAllTarget.BrowseGrid(MediaType.Movie),
+                DiscoverShelfKey.PopularSeries or DiscoverShelfKey.SeriesGenres => new SeeAllTarget.BrowseGrid(MediaType.Tv),
+                _ => null,
+            };
+        }
+        if (!map.TryGetValue(shelfKey, out var link) || link == null)
+        {
+            return null;
+        }
+        if (link.Type == SeeAllKind.List)
+        {
+            return link.List is { IsKnown: true } list ? new SeeAllTarget.DiscoverList(list) : null;
+        }
+        if (link.Type == SeeAllKind.Browse)
+        {
+            return link.MediaType is { IsKnown: true } mediaType ? new SeeAllTarget.BrowseGrid(mediaType) : null;
+        }
+        return null;
+    }
+}
+
+/// <summary>
+/// <c>GET /discover/lists/{list}?page=</c>: one page of a shelf's full
+/// list, <see cref="Paginated{T}"/>'s fields plus the list and its title.
+/// Continue while <see cref="HasMorePages"/>, skipping titles already shown.
+/// </summary>
+public sealed record DiscoverListPage
+{
+    public required DiscoverListKind List { get; init; }
+
+    /// <summary>"Trending": the page heading.</summary>
+    public required string Title { get; init; }
+
+    public required int Page { get; init; }
+    public required int TotalPages { get; init; }
+    public required int TotalResults { get; init; }
+
+    /// <summary>With status, favorited and canQuickAdd.</summary>
+    public required IReadOnlyList<TitleCard> Results { get; init; }
+
+    public bool HasMorePages => Page < TotalPages;
 }
 
 /// <summary>

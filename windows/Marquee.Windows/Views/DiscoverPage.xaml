@@ -2,9 +2,11 @@
 <!--
   app/discover/page.tsx: the shelves from GET /discover as horizontal rails.
   The page's own vertical ScrollViewer holds one rail per shelf; each rail
-  is a horizontal ScrollViewer around an ItemsRepeater. WheelScroll.PassToPage
+  is a horizontal ScrollViewer around the shelf's ItemsRepeater. WheelScroll.PassToPage
   hands the mouse wheel to the page, so it keeps scrolling down with the pointer
-  over a rail; the rails scroll sideways with Shift+wheel or their bars.
+  over a rail; the rails scroll sideways with the ‹ › arrows in their header
+  (RailArrows), Shift+wheel or their bars. Every shelf's header also has the
+  server's "See all" chevron (DiscoverViewModel resolves where it goes).
   The shelves bleed off the right edge (no right padding), like the website.
 -->
 <Page
@@ -29,8 +31,16 @@
                     <ItemsRepeater.ItemTemplate>
                         <DataTemplate x:DataType="vm:ShelfViewModel">
                             <StackPanel Spacing="10">
-                                <Grid Margin="0,0,28,0">
+                                <!--
+                                  shelf.tsx's ShelfHead: the title, the round
+                                  "See all" chevron right after it, and the
+                                  ‹ › arrows at the right end, keeping the
+                                  28px gutter the rail itself bleeds past.
+                                -->
+                                <Grid Margin="0,0,28,0" MinHeight="28" ColumnSpacing="9">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
@@ -39,90 +49,90 @@
                                         Text="{x:Bind Title}"
                                         Style="{StaticResource SubtitleTextBlockStyle}"
                                         VerticalAlignment="Center" />
-                                    <HyperlinkButton
+                                    <Button
                                         Grid.Column="1"
-                                        Content="See all"
+                                        Style="{StaticResource MarqueeSeeAllButtonStyle}"
                                         Command="{x:Bind SeeAll}"
                                         Visibility="{x:Bind HasSeeAll, Converter={StaticResource BoolToVisibility}}"
+                                        AutomationProperties.Name="{x:Bind SeeAllLabel}"
+                                        ToolTipService.ToolTip="{x:Bind SeeAllLabel}"
+                                        VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE76C;" FontSize="9" />
+                                    </Button>
+                                    <controls:RailArrows
+                                        Grid.Column="3"
+                                        Target="{Binding ElementName=Rail}"
                                         VerticalAlignment="Center" />
                                 </Grid>
 
+                                <!--
+                                  One rail per shelf, so the arrows have one
+                                  target: its content holds the four
+                                  renderings, and only the shelf's own kind
+                                  shows.
+                                -->
                                 <ScrollViewer
+                                    x:Name="Rail"
                                     HorizontalScrollMode="Enabled"
                                     controls:WheelScroll.PassToPage="True"
                                     HorizontalScrollBarVisibility="Auto"
                                     VerticalScrollMode="Disabled"
-                                    VerticalScrollBarVisibility="Disabled"
-                                    Visibility="{x:Bind HasPosters, Converter={StaticResource BoolToVisibility}}">
-                                    <ItemsRepeater ItemsSource="{x:Bind Posters}" Margin="0,0,28,8">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Orientation="Horizontal" Spacing="14" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:PosterItem">
-                                                <controls:PosterCard Item="{x:Bind}" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </ScrollViewer>
+                                    VerticalScrollBarVisibility="Disabled">
+                                    <Grid Margin="0,0,28,8">
+                                        <ItemsRepeater
+                                            ItemsSource="{x:Bind Posters}"
+                                            Visibility="{x:Bind HasPosters, Converter={StaticResource BoolToVisibility}}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Orientation="Horizontal" Spacing="14" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:PosterItem">
+                                                    <controls:PosterCard Item="{x:Bind}" />
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
 
-                                <ScrollViewer
-                                    HorizontalScrollMode="Enabled"
-                                    controls:WheelScroll.PassToPage="True"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Disabled"
-                                    VerticalScrollBarVisibility="Disabled"
-                                    Visibility="{x:Bind HasChips, Converter={StaticResource BoolToVisibility}}">
-                                    <ItemsRepeater ItemsSource="{x:Bind Chips}" Margin="0,0,28,8">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Orientation="Horizontal" Spacing="8" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:ChipItem">
-                                                <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </ScrollViewer>
+                                        <ItemsRepeater
+                                            ItemsSource="{x:Bind Chips}"
+                                            Visibility="{x:Bind HasChips, Converter={StaticResource BoolToVisibility}}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Orientation="Horizontal" Spacing="8" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ChipItem">
+                                                    <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
 
-                                <!-- Studios / Networks: logo-card.tsx. -->
-                                <ScrollViewer
-                                    HorizontalScrollMode="Enabled"
-                                    controls:WheelScroll.PassToPage="True"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Disabled"
-                                    VerticalScrollBarVisibility="Disabled"
-                                    Visibility="{x:Bind HasLogoTiles, Converter={StaticResource BoolToVisibility}}">
-                                    <ItemsRepeater ItemsSource="{x:Bind Chips}" Margin="0,0,28,8">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Orientation="Horizontal" Spacing="14" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:ChipItem">
-                                                <controls:LogoTile Item="{x:Bind}" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </ScrollViewer>
+                                        <!-- Studios / Networks: logo-card.tsx. -->
+                                        <ItemsRepeater
+                                            ItemsSource="{x:Bind Chips}"
+                                            Visibility="{x:Bind HasLogoTiles, Converter={StaticResource BoolToVisibility}}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Orientation="Horizontal" Spacing="14" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ChipItem">
+                                                    <controls:LogoTile Item="{x:Bind}" />
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
 
-                                <!-- Movie / Series Genres: genre-card.tsx. -->
-                                <ScrollViewer
-                                    HorizontalScrollMode="Enabled"
-                                    controls:WheelScroll.PassToPage="True"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Disabled"
-                                    VerticalScrollBarVisibility="Disabled"
-                                    Visibility="{x:Bind HasGenreTiles, Converter={StaticResource BoolToVisibility}}">
-                                    <ItemsRepeater ItemsSource="{x:Bind Chips}" Margin="0,0,28,8">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Orientation="Horizontal" Spacing="12" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:ChipItem">
-                                                <controls:GenreTile Item="{x:Bind}" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
+                                        <!-- Movie / Series Genres: genre-card.tsx. -->
+                                        <ItemsRepeater
+                                            ItemsSource="{x:Bind Chips}"
+                                            Visibility="{x:Bind HasGenreTiles, Converter={StaticResource BoolToVisibility}}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Orientation="Horizontal" Spacing="12" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ChipItem">
+                                                    <controls:GenreTile Item="{x:Bind}" />
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
+                                    </Grid>
                                 </ScrollViewer>
                             </StackPanel>
                         </DataTemplate>

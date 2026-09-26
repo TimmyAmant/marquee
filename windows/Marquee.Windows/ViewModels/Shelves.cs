@@ -285,7 +285,8 @@ public sealed class ChipItem
 /// <summary>
 /// One horizontal rail on Discover: a title and either posters or chips.
 /// <c>DiscoverPage</c> shows whichever list is non-empty, and draws chips
-/// as the tiles their <see cref="ChipItem.Kind"/> names.
+/// as the tiles their <see cref="ChipItem.Kind"/> names. The same shape
+/// carries a Browse grid's "Because you watched" row (no See all).
 /// </summary>
 public sealed class ShelfViewModel
 {
@@ -301,8 +302,11 @@ public sealed class ShelfViewModel
     public IReadOnlyList<PosterItem> Posters { get; }
     public IReadOnlyList<ChipItem> Chips { get; }
 
-    /// <summary>"See all" in the rail header; null hides the link.</summary>
+    /// <summary>The round "See all" chevron after the title; null hides it.</summary>
     public ICommand? SeeAll { get; }
+
+    /// <summary>The chevron's tooltip and accessible name: "Browse all Trending".</summary>
+    public string SeeAllLabel => $"Browse all {Title}";
 
     public bool HasPosters => Posters.Count > 0;
 
