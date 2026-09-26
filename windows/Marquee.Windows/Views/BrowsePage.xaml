@@ -37,11 +37,7 @@
                     </Grid>
                     <ScrollViewer
                         x:Name="BecauseYouWatchedRail"
-                        HorizontalScrollMode="Enabled"
-                        controls:WheelScroll.PassToPage="True"
-                        HorizontalScrollBarVisibility="Auto"
-                        VerticalScrollMode="Disabled"
-                        VerticalScrollBarVisibility="Disabled">
+                        controls:RailScroll.IsRail="True">
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.BecauseYouWatched.Posters, Mode=OneWay}" Margin="0,0,28,8">
                             <ItemsRepeater.Layout>
                                 <StackLayout Orientation="Horizontal" Spacing="14" />
@@ -55,54 +51,60 @@
                     </ScrollViewer>
                 </StackPanel>
 
-                <!-- The filter bar keeps the 28px gutter; it scrolls sideways in a narrow window. -->
-                <ScrollViewer
-                    HorizontalScrollMode="Enabled"
-                    controls:WheelScroll.PassToPage="True"
-                    HorizontalScrollBarVisibility="Auto"
-                    VerticalScrollMode="Disabled"
-                    VerticalScrollBarVisibility="Disabled"
+                <!--
+                  The filter bar keeps the 28px gutter. In a narrow window it is a rail
+                  like the others: its arrows appear at the right end and page it sideways.
+                -->
+                <Grid
                     Margin="0,0,28,0"
+                    ColumnSpacing="8"
                     Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}">
-                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,6">
-                        <ComboBox
-                            ItemsSource="{x:Bind ViewModel.SortOptions}"
-                            SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}"
-                            AutomationProperties.Name="Sort"
-                            VerticalAlignment="Center" />
-                        <ComboBox
-                            ItemsSource="{x:Bind ViewModel.GenreOptions, Mode=OneWay}"
-                            SelectedIndex="{x:Bind ViewModel.GenreIndex, Mode=TwoWay}"
-                            AutomationProperties.Name="Genre"
-                            VerticalAlignment="Center" />
-                        <ComboBox
-                            ItemsSource="{x:Bind ViewModel.YearOptions}"
-                            SelectedIndex="{x:Bind ViewModel.YearIndex, Mode=TwoWay}"
-                            AutomationProperties.Name="Year"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Content="{x:Bind ViewModel.NetworkChipLabel, Mode=OneWay}"
-                            Command="{x:Bind ViewModel.ClearNetworkCommand}"
-                            Visibility="{x:Bind ViewModel.HasNetworkChip, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            ToolTipService.ToolTip="Clear the network filter"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Content="{x:Bind ViewModel.HideOwnedLabel, Mode=OneWay}"
-                            Command="{x:Bind ViewModel.ToggleHideOwnedCommand}"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Content="{x:Bind ViewModel.SurpriseLabel, Mode=OneWay}"
-                            Command="{x:Bind ViewModel.SurpriseCommand}"
-                            VerticalAlignment="Center" />
-                        <TextBlock
-                            Text="{x:Bind ViewModel.SurpriseError, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.HasSurpriseError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                            VerticalAlignment="Center" />
-                        <controls:StatusColorKey />
-                    </StackPanel>
-                </ScrollViewer>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ScrollViewer x:Name="FilterRail" controls:RailScroll.IsRail="True">
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,6">
+                            <ComboBox
+                                ItemsSource="{x:Bind ViewModel.SortOptions}"
+                                SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}"
+                                AutomationProperties.Name="Sort"
+                                VerticalAlignment="Center" />
+                            <ComboBox
+                                ItemsSource="{x:Bind ViewModel.GenreOptions, Mode=OneWay}"
+                                SelectedIndex="{x:Bind ViewModel.GenreIndex, Mode=TwoWay}"
+                                AutomationProperties.Name="Genre"
+                                VerticalAlignment="Center" />
+                            <ComboBox
+                                ItemsSource="{x:Bind ViewModel.YearOptions}"
+                                SelectedIndex="{x:Bind ViewModel.YearIndex, Mode=TwoWay}"
+                                AutomationProperties.Name="Year"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Content="{x:Bind ViewModel.NetworkChipLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.ClearNetworkCommand}"
+                                Visibility="{x:Bind ViewModel.HasNetworkChip, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                ToolTipService.ToolTip="Clear the network filter"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Content="{x:Bind ViewModel.HideOwnedLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.ToggleHideOwnedCommand}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Content="{x:Bind ViewModel.SurpriseLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.SurpriseCommand}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.SurpriseError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.HasSurpriseError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                VerticalAlignment="Center" />
+                            <controls:StatusColorKey />
+                        </StackPanel>
+                    </ScrollViewer>
+                    <controls:RailArrows Grid.Column="1" Target="{x:Bind FilterRail}" VerticalAlignment="Center" Margin="0,0,0,6" />
+                </Grid>
 
                 <!-- infinite-results-grid.tsx -->
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Cards}" Margin="0,0,28,0">

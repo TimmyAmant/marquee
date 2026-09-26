@@ -1,14 +1,19 @@
+using Marquee.Core.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Marquee.Windows.Controls;
 
 /// <summary>
-/// The ‹ › pair for a sideways rail. Set <see cref="Target"/> to the rail's
+/// The ‹ › pair for a sideways rail, and with a touch screen the only way
+/// to move it (see <see cref="RailScroll"/>: the wheel never moves a rail and
+/// it has no scroll bar). Set <see cref="Target"/> to the rail's
 /// horizontal ScrollViewer (<c>Target="{x:Bind CastRail}"</c> on a page,
 /// <c>Target="{Binding ElementName=Rail}"</c> inside a DataTemplate). A
-/// click pages by most of the visible width with the ScrollViewer's own
-/// animation, as shelf.tsx scrolls by 0.8 × clientWidth.
+/// click pages by most of the visible width (<see cref="RailOffsets.PageTarget"/>)
+/// with the ScrollViewer's own animation, as shelf.tsx scrolls by 0.8 × clientWidth.
+/// Both buttons show whenever the row overflows, not only on hover, and
+/// are tab stops; the one with nowhere to go is disabled.
 ///
 /// The buttons follow the rail: scrolling (<c>ViewChanged</c>), the window
 /// resizing (the rail's <c>SizeChanged</c>), and the row itself growing or
@@ -19,12 +24,6 @@ namespace Marquee.Windows.Controls;
 /// </summary>
 public sealed partial class RailArrows : UserControl
 {
-    /// <summary>How much of the visible width one click moves.</summary>
-    public const double PageFraction = 0.85;
-
-    /// <summary>Offsets within this of an end count as at it (shelf.tsx's 1px).</summary>
-    private const double EdgeTolerance = 1;
-
     public static readonly DependencyProperty TargetProperty = DependencyProperty.Register(
         nameof(Target),
         typeof(ScrollViewer),
@@ -115,15 +114,15 @@ public sealed partial class RailArrows : UserControl
     /// <summary>Both arrows go when the row fits; otherwise ‹ fades at the start and › at the end.</summary>
     private void Update()
     {
-        if (rail is not { } current || current.ScrollableWidth <= EdgeTolerance)
+        if (rail is not { } current || !RailOffsets.Overflows(current.ScrollableWidth))
         {
             Arrows.Visibility = Visibility.Collapsed;
             return;
         }
         Arrows.Visibility = Visibility.Visible;
         var offset = current.HorizontalOffset;
-        PreviousButton.IsEnabled = offset > EdgeTolerance;
-        NextButton.IsEnabled = offset < current.ScrollableWidth - EdgeTolerance;
+        PreviousButton.IsEnabled = RailOffsets.CanPageBack(offset, current.ScrollableWidth);
+        NextButton.IsEnabled = RailOffsets.CanPageForward(offset, current.ScrollableWidth);
     }
 
     // MARK: Paging
@@ -139,7 +138,7 @@ public sealed partial class RailArrows : UserControl
             return;
         }
         var from = pendingOffset ?? current.HorizontalOffset;
-        var target = Math.Clamp(from + direction * current.ViewportWidth * PageFraction, 0, current.ScrollableWidth);
+        var target = RailOffsets.PageTarget(from, direction, current.ViewportWidth, current.ScrollableWidth);
         pendingOffset = target;
         current.ChangeView(target, null, null, false);
     }

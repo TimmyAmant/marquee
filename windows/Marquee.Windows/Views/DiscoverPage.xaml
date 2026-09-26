@@ -2,10 +2,13 @@
 <!--
   app/discover/page.tsx: the shelves from GET /discover as horizontal rails.
   The page's own vertical ScrollViewer holds one rail per shelf; each rail
-  is a horizontal ScrollViewer around the shelf's ItemsRepeater. WheelScroll.PassToPage
-  hands the mouse wheel to the page, so it keeps scrolling down with the pointer
-  over a rail; the rails scroll sideways with the ‹ › arrows in their header
-  (RailArrows), Shift+wheel or their bars. Every shelf's header also has the
+  is a horizontal ScrollViewer around the shelf's ItemsRepeater, marked
+  RailScroll.IsRail. A rail only moves sideways with the ‹ › arrows in its
+  header (RailArrows: shown whenever the row overflows, the one at an end
+  disabled), a touch-screen swipe left or right, or Left/Right moving focus
+  along it. The mouse wheel (Shift+wheel too) and a touchpad always scroll
+  the page up and down, wherever the pointer is; a tilt wheel does nothing,
+  and there is no scroll bar to drag. Every shelf's header also has the
   server's "See all" chevron (DiscoverViewModel resolves where it goes).
   The shelves bleed off the right edge (no right padding), like the website.
 -->
@@ -73,11 +76,7 @@
                                 -->
                                 <ScrollViewer
                                     x:Name="Rail"
-                                    HorizontalScrollMode="Enabled"
-                                    controls:WheelScroll.PassToPage="True"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Disabled"
-                                    VerticalScrollBarVisibility="Disabled">
+                                    controls:RailScroll.IsRail="True">
                                     <Grid Margin="0,0,28,8">
                                         <ItemsRepeater
                                             ItemsSource="{x:Bind Posters}"

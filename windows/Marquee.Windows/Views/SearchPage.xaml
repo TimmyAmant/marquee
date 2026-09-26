@@ -63,11 +63,7 @@
                         </Grid>
                         <ScrollViewer
                             x:Name="StudiosRail"
-                            HorizontalScrollMode="Enabled"
-                            controls:WheelScroll.PassToPage="True"
-                            HorizontalScrollBarVisibility="Auto"
-                            VerticalScrollMode="Disabled"
-                            VerticalScrollBarVisibility="Disabled">
+                            controls:RailScroll.IsRail="True">
                             <ItemsRepeater ItemsSource="{x:Bind ViewModel.Studios, Mode=OneWay}" Margin="0,0,0,8">
                                 <ItemsRepeater.Layout>
                                     <StackLayout Orientation="Horizontal" Spacing="8" />
