@@ -14,6 +14,7 @@ import { RequestTitle } from "@/components/request-title";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import { CommentSection } from "@/components/comment-thread";
 import type { ReviewedRequest } from "@/lib/api/types";
+import { TONE_CLASS } from "@/lib/library/status-tone";
 
 function CouldntAddRow({ request, isAdmin }: { request: ReviewedRequest; isAdmin: boolean }) {
   const router = useRouter();
@@ -51,13 +52,19 @@ function CouldntAddRow({ request, isAdmin }: { request: ReviewedRequest; isAdmin
         {src && <Image src={src} alt="" fill sizes="40px" className="object-cover" />}
       </div>
       <div className="min-w-0 flex-1">
-        <RequestTitle
-          mediaType={request.mediaType}
-          tmdbId={request.tmdbId}
-          title={request.title}
-          seasons={request.seasons}
-          is4k={request.is4k}
-        />
+        <div className="flex flex-wrap items-start gap-2">
+          <RequestTitle
+            mediaType={request.mediaType}
+            tmdbId={request.tmdbId}
+            title={request.title}
+            seasons={request.seasons}
+            is4k={request.is4k}
+          />
+          {/* The Missing tone, like "Can't find": approved but not there yet. */}
+          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${TONE_CLASS.missing.pill}`}>
+            Couldn&apos;t add
+          </span>
+        </div>
         <p className="mt-0.5 text-xs text-text-muted">
           {request.requestedBy.label} · approved {new Date(request.reviewedAt ?? request.addFailed.since).toLocaleDateString()} ·
           last tried {new Date(request.addFailed.since).toLocaleString()}
@@ -171,7 +178,12 @@ export function CouldntAddSection({ requests, isAdmin }: { requests: ReviewedReq
   if (failed.length === 0) return null;
   return (
     <section id="couldnt-add" className="mt-12">
-      <h2 className="font-display text-xl text-text-primary">Couldn&apos;t add</h2>
+      <div className="flex flex-wrap items-baseline gap-x-3">
+        <h2 className="font-display text-xl text-text-primary">Couldn&apos;t add</h2>
+        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${TONE_CLASS.missing.pill}`}>
+          {failed.length}
+        </span>
+      </div>
       <p className="mt-1 text-sm text-text-secondary">
         Approved, but Sonarr/Radarr couldn&apos;t be reached or didn&apos;t take them. Retry once it&apos;s back.
       </p>

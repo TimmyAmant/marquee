@@ -93,7 +93,7 @@ export function NotFoundSection({ requests, afterHours }: { requests: NotFoundRe
     <section id="cant-find" className="mt-12 scroll-mt-6">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="font-display text-xl text-text-primary">Can&apos;t find</h2>
-        <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-500">{requests.length}</span>
+        <span className="rounded-full bg-missing-bg px-2 py-0.5 text-xs font-medium text-missing">{requests.length}</span>
       </div>
       <p className="mt-1 text-sm text-text-muted">
         Approved and released, but Sonarr/Radarr still has nothing {afterHours} hour{afterHours === 1 ? "" : "s"} or more

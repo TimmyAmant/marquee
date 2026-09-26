@@ -592,13 +592,14 @@
                             Padding="8,2"
                             CornerRadius="10"
                             BorderThickness="1"
-                            BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
+                            Background="{ThemeResource MissingBadgeBackgroundBrush}"
+                            BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
                             VerticalAlignment="Center">
                             <TextBlock
                                 Text="{x:Bind ViewModel.CouldntAddCountLabel, Mode=OneWay}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 FontWeight="SemiBold"
-                                Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
                         </Border>
                     </StackPanel>
                     <TextBlock
@@ -623,13 +624,14 @@
                             Padding="8,2"
                             CornerRadius="10"
                             BorderThickness="1"
-                            BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
+                            Background="{ThemeResource MissingBadgeBackgroundBrush}"
+                            BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
                             VerticalAlignment="Center">
                             <TextBlock
                                 Text="{x:Bind ViewModel.NotFoundCountLabel, Mode=OneWay}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 FontWeight="SemiBold"
-                                Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
                         </Border>
                     </StackPanel>
                     <TextBlock
@@ -720,13 +722,14 @@
                                                     Padding="10,2"
                                                     CornerRadius="12"
                                                     BorderThickness="1"
-                                                    BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
+                                                    Background="{ThemeResource MissingBadgeBackgroundBrush}"
+                                                    BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
                                                     VerticalAlignment="Center">
                                                     <TextBlock
                                                         Text="Can't find"
                                                         Style="{StaticResource CaptionTextBlockStyle}"
                                                         FontWeight="SemiBold"
-                                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                                        Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
                                                 </Border>
                                             </StackPanel>
                                             <TextBlock

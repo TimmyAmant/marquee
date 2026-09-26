@@ -417,13 +417,8 @@ public sealed record SearchSuggestion
     {
         get
         {
-            if (Status is not { } status) return null;
-            if (status == LibraryStatus.Owned) return "In your library";
-            if (status == LibraryStatus.TrackedDownloading) return "Downloading";
-            if (status == LibraryStatus.TrackedMonitored) return "Missing";
-            if (status == LibraryStatus.ComingSoon) return "Coming soon";
-            if (status == LibraryStatus.Untracked) return "Not in your library";
-            return null;
+            if (Status is not { IsKnown: true } status) return null;
+            return status.Name;
         }
     }
 

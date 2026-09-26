@@ -54,11 +54,13 @@ struct SearchResultsView: View {
                     }
 
                     if !results.titles.isEmpty {
-                        section("Titles") { titleGrid(results.titles) }
+                        section("Titles", showsColorKey: true) { titleGrid(results.titles) }
                     }
 
                     if let theme = results.theme, !theme.items.isEmpty {
-                        section("\(theme.label) movies & TV") { titleGrid(theme.items) }
+                        section("\(theme.label) movies & TV", showsColorKey: results.titles.isEmpty) {
+                            titleGrid(theme.items)
+                        }
                     }
                 } else if let error {
                     EmptyStateView(
@@ -101,9 +103,17 @@ struct SearchResultsView: View {
         }
     }
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(
+        _ title: String,
+        showsColorKey: Bool = false,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            SectionTitle(text: title)
+            HStack(spacing: 10) {
+                SectionTitle(text: title)
+                Spacer(minLength: 0)
+                if showsColorKey { StatusColorKey() }
+            }
             content()
         }
     }

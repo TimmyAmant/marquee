@@ -49,6 +49,7 @@
                     x:Name="OrderBox"
                     SelectionChanged="OnOrderChanged"
                     VerticalAlignment="Center" />
+                <controls:StatusColorKey />
             </StackPanel>
 
             <TextBlock

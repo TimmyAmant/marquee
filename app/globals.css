@@ -20,6 +20,13 @@
   --marquee-owned-bg: #14251c;
   --marquee-tracked: #4f8fd1;
   --marquee-tracked-bg: #10202f;
+  /* Missing (Sonarr/Radarr still looking) and Coming soon — the other two
+     library-status tones (lib/library/status-tone.ts). The orange is kept
+     well clear of the gold accent. */
+  --marquee-missing: #e8833a;
+  --marquee-missing-bg: #2a1a0e;
+  --marquee-soon: #a98be8;
+  --marquee-soon-bg: #1f1830;
   --marquee-untracked-bg: #201f26;
 
   /* The navigation menu's frosted panel (components/nav-menu.tsx). */
@@ -58,6 +65,10 @@
   --marquee-owned-bg: #e3f3ea;
   --marquee-tracked: #2f6fb0;
   --marquee-tracked-bg: #e5f0fa;
+  --marquee-missing: #b34d00;
+  --marquee-missing-bg: #fff0e5;
+  --marquee-soon: #7048b8;
+  --marquee-soon-bg: #f0e9fb;
   --marquee-untracked-bg: #efece3;
 
   --marquee-glass: rgb(255 255 255 / 0.74);
@@ -88,6 +99,10 @@
     --marquee-owned-bg: #e3f3ea;
     --marquee-tracked: #2f6fb0;
     --marquee-tracked-bg: #e5f0fa;
+    --marquee-missing: #b34d00;
+    --marquee-missing-bg: #fff0e5;
+    --marquee-soon: #7048b8;
+    --marquee-soon-bg: #f0e9fb;
     --marquee-untracked-bg: #efece3;
 
   --marquee-glass: rgb(255 255 255 / 0.74);
@@ -118,6 +133,10 @@
   --color-owned-bg: var(--marquee-owned-bg);
   --color-tracked: var(--marquee-tracked);
   --color-tracked-bg: var(--marquee-tracked-bg);
+  --color-missing: var(--marquee-missing);
+  --color-missing-bg: var(--marquee-missing-bg);
+  --color-soon: var(--marquee-soon);
+  --color-soon-bg: var(--marquee-soon-bg);
   --color-untracked-bg: var(--marquee-untracked-bg);
 
   --color-background: var(--background);

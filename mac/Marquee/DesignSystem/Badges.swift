@@ -1,21 +1,45 @@
 import SwiftUI
 
-/// Which palette a pill or badge draws itself in.
+/// Which palette a pill or badge draws itself in. The five library-status
+/// tones (owned, tracked = downloading, missing, soon, neutral) match
+/// lib/library/status-tone.ts on the website.
 enum BadgeTone: Hashable {
     case owned
     case tracked
+    case missing
+    case soon
     case neutral
     case accent
     case danger
+
+    /// (text, fill, border) for a tinted tone, or nil for the neutral grey.
+    var palette: (foreground: Color, background: Color, border: Color)? {
+        switch self {
+        case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.3))
+        case .tracked: return (Theme.tracked, Theme.trackedBg, Theme.tracked.opacity(0.3))
+        case .missing: return (Theme.missing, Theme.missingBg, Theme.missing.opacity(0.3))
+        case .soon: return (Theme.soon, Theme.soonBg, Theme.soon.opacity(0.3))
+        case .accent: return (Theme.accent, Theme.accent.opacity(0.12), Theme.accent.opacity(0.45))
+        case .danger: return (Theme.danger, Theme.danger.opacity(0.12), Theme.danger.opacity(0.4))
+        case .neutral: return nil
+        }
+    }
+
+    /// `palette`, falling back to the neutral grey pill.
+    var resolvedPalette: (foreground: Color, background: Color, border: Color) {
+        palette ?? (Theme.textSecondary, Theme.untrackedBg, Theme.border)
+    }
 }
 
 extension API.LibraryStatus {
-    /// components/status-badge.tsx's color groups.
+    /// lib/library/status-tone.ts `statusTone`: every status its own color.
     var tone: BadgeTone {
         switch self {
         case .owned: return .owned
-        case .trackedDownloading, .trackedMonitored: return .tracked
-        case .comingSoon, .untracked, .unknown: return .neutral
+        case .trackedDownloading: return .tracked
+        case .trackedMonitored: return .missing
+        case .comingSoon: return .soon
+        case .untracked, .unknown: return .neutral
         }
     }
 }
@@ -26,7 +50,8 @@ extension API.RequestTone {
         switch self {
         case .owned: return .owned
         case .pending, .downloading, .approved: return .tracked
-        case .declined, .comingSoon, .unknown: return .neutral
+        case .comingSoon: return .soon
+        case .declined, .unknown: return .neutral
         }
     }
 }
@@ -40,11 +65,7 @@ struct StatusBadge: View {
     var large = false
 
     private var colors: (foreground: Color, background: Color, border: Color) {
-        switch status.tone {
-        case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.34))
-        case .tracked: return (Theme.tracked, Theme.trackedBg, Theme.tracked.opacity(0.34))
-        case .neutral, .accent, .danger: return (Theme.textSecondary, Theme.untrackedBg, Theme.border)
-        }
+        status.tone.resolvedPalette
     }
 
     var body: some View {
@@ -82,7 +103,7 @@ struct TonePill: View {
     var small = false
 
     var body: some View {
-        let (foreground, background, border) = palette
+        let (foreground, background, border) = tone.resolvedPalette
         Text(text)
             .font(.system(size: small ? 10 : 11.5, weight: .medium))
             .foregroundStyle(foreground)
@@ -91,16 +112,6 @@ struct TonePill: View {
             .background(Capsule().fill(background))
             .overlay(Capsule().strokeBorder(border, lineWidth: 1))
             .fixedSize()
-    }
-
-    private var palette: (Color, Color, Color) {
-        switch tone {
-        case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.3))
-        case .tracked: return (Theme.tracked, Theme.trackedBg, Theme.tracked.opacity(0.3))
-        case .neutral: return (Theme.textSecondary, Theme.untrackedBg, Theme.border)
-        case .accent: return (Theme.accent, Theme.accent.opacity(0.12), Theme.accent.opacity(0.45))
-        case .danger: return (Theme.danger, Theme.danger.opacity(0.12), Theme.danger.opacity(0.4))
-        }
     }
 }
 

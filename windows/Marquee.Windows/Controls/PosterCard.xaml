@@ -5,9 +5,10 @@
   tile is one Button so keyboard users tab through a rail card by card and
   a screen reader reads each as one item (AutomationProperties.Name).
 
-  The status badge is three Borders with theme brushes rather than one whose
-  colors are computed in code: {ThemeResource} keeps following light/dark
-  switches at runtime, and nothing here touches resources from code.
+  The status badge (and the strip under the art) is one Border per palette,
+  with theme brushes, rather than one whose colors are computed in code:
+  {ThemeResource} keeps following light/dark switches at runtime, and
+  nothing here touches resources from code.
 
   The quick action ("+ Add to Radarr", "Request", the "Requested" pill)
   sits at the foot of the artwork like components/poster-card.tsx's hover
@@ -87,6 +88,36 @@
                             Foreground="White" />
                     </Border>
 
+                    <!--
+                      The status strip along the artwork's foot (poster-card.tsx):
+                      the badge's color, none for a title not in the library.
+                      Drawn before the badges so a badge sits on top of it.
+                    -->
+                    <Border
+                        Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        VerticalAlignment="Bottom"
+                        Height="3"
+                        CornerRadius="0,0,7,7"
+                        Background="{ThemeResource OwnedBadgeForegroundBrush}" />
+                    <Border
+                        Visibility="{x:Bind Item.IsTrackedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        VerticalAlignment="Bottom"
+                        Height="3"
+                        CornerRadius="0,0,7,7"
+                        Background="{ThemeResource TrackedBadgeForegroundBrush}" />
+                    <Border
+                        Visibility="{x:Bind Item.IsMissingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        VerticalAlignment="Bottom"
+                        Height="3"
+                        CornerRadius="0,0,7,7"
+                        Background="{ThemeResource MissingBadgeForegroundBrush}" />
+                    <Border
+                        Visibility="{x:Bind Item.IsSoonTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        VerticalAlignment="Bottom"
+                        Height="3"
+                        CornerRadius="0,0,7,7"
+                        Background="{ThemeResource SoonBadgeForegroundBrush}" />
+
                     <Border
                         Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Left"
@@ -124,6 +155,46 @@
                                 FontSize="10"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Visibility="{x:Bind Item.IsMissingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="6"
+                        Padding="7,2"
+                        CornerRadius="9"
+                        Background="{ThemeResource MissingBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
+                        BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Visibility="{x:Bind Item.IsSoonTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="6"
+                        Padding="7,2"
+                        CornerRadius="9"
+                        Background="{ThemeResource SoonBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource SoonBadgeForegroundBrush}"
+                        BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource SoonBadgeForegroundBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource SoonBadgeForegroundBrush}" />
                         </StackPanel>
                     </Border>
 

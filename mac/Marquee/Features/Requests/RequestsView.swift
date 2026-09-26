@@ -412,7 +412,7 @@ private struct PastRequestRow: View {
                         TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
                         // 0.46+: Sonarr/Radarr hasn't found it (listed under "Can't find").
                         if row.isNotFound, let since = row.notFoundSince {
-                            TonePill(text: "Can't find", tone: .danger)
+                            TonePill(text: "Can't find", tone: .missing)
                                 .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
                         }
                     }
@@ -458,7 +458,7 @@ private struct CouldntAddSection: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     SectionTitle(text: "Couldn't add")
-                    TonePill(text: "\(rows.count)", tone: .danger)
+                    TonePill(text: "\(rows.count)", tone: .missing)
                 }
                 Text("Approved, but Sonarr/Radarr couldn't be reached or didn't take them. Retry once it's back.")
                     .font(.system(size: 13))
@@ -857,7 +857,7 @@ private struct NotFoundSection: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         SectionTitle(text: "Can't find")
-                        TonePill(text: "\(rows.count)", tone: .danger)
+                        TonePill(text: "\(rows.count)", tone: .missing)
                     }
                     Text(list.blurb)
                         .font(.system(size: 13))
