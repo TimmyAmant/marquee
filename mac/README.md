@@ -21,7 +21,7 @@ Each [release](https://github.com/TimmyAmant/marquee/releases/latest) has a **Ma
 
 Marquee checks GitHub for a newer release ten seconds after it opens and then once a day, and **Marquee → Check for Updates…** asks straight away. When there is one, the navigation menu and **Settings → About** offer **Update**: the app downloads the zip, checks its size and SHA-256 against what GitHub lists, unpacks it, makes sure it's a correctly signed Marquee of the right version, then quits and reopens as the new version. It needs to be in a folder you can write to (Applications is fine), not opened straight from Downloads or a disk image.
 
-Because the app replaces itself, it runs outside the App Sandbox (from 0.29). The first launch of 0.29 brings the sandboxed version's settings across. After an update you sign in once more: the builds are ad-hoc signed, and macOS only lets the exact build that saved a login-Keychain item read it back (a Developer ID signature would carry the sign-in across updates).
+Because the app replaces itself, it runs outside the App Sandbox (from 0.29). The first launch of 0.29 brings the sandboxed version's settings across. Updates keep you signed in (see First run).
 
 ## Building
 
@@ -46,7 +46,7 @@ Signing is set to **Sign to Run Locally** (`CODE_SIGN_IDENTITY = "-"`), so no Ap
 2. **Sign in** with your Marquee username and password. The first account on a brand-new server is created here instead, as the admin.
 3. That's it. Everything else — TMDb, Plex, Jellyfin, Sonarr, Radarr, Trakt and the rest — is configured on the server, and **Settings (⌘,) → Integrations** edits it in place.
 
-Your session token is kept in the login Keychain, one item per server (and per build of the app; see Updating), so the app stays signed in across launches. **Marquee → Change Server…** moves to a different server; **Sign Out** revokes just this Mac's token.
+Your session token is kept in `~/Library/Application Support/Marquee/sessions.json` (readable only by you, left out of Time Machine), so the app stays signed in across launches and updates until you sign out or the server revokes this Mac. It isn't in the login Keychain: the builds are ad-hoc signed, so macOS treats every update as a different app and asked for your login password to read it. Older versions left "Marquee server session" items in the login Keychain; they're no longer used and can be deleted in Keychain Access. After **Sign Out** the sign-in card fills in the username you last used on that server (never the password). **Marquee → Change Server…** moves to a different server; **Sign Out** revokes just this Mac's token.
 
 ## What the app does
 
@@ -81,7 +81,7 @@ MarqueeMac/
 │   ├── App/                    @main app, scenes, menu commands, AppModel (session + navigation), Updates/ (the updater)
 │   ├── Connection/             finding a server, signing in, the bearer token, APIClient, APIError
 │   ├── API/                    the typed /api/v1 facade, its DTOs, ServerEvents, LiveUpdates
-│   ├── Core/                   Format/Quality/TitleMeta, the Keychain helper, URL building
+│   ├── Core/                   Format/Quality/TitleMeta, the old Keychain helper (migration only), URL building
 │   ├── DesignSystem/           Theme tokens, poster cards, badges, buttons, image loading
 │   ├── Features/               one folder per screen
 │   └── Resources/              Info.plist, asset catalog
@@ -109,7 +109,7 @@ Scripts/local-server.sh down
 
 ### Running the app against a throwaway server
 
-For manual or automated UI checks, pin the launch to one host so a stray click can't reach the server this Mac normally uses. A pinned launch ignores the saved server, keeps its token in memory instead of the Keychain, refuses to switch servers, and shows a **TEST RUN · host** badge:
+For manual or automated UI checks, pin the launch to one host so a stray click can't reach the server this Mac normally uses. A pinned launch ignores the saved server, keeps its token in memory instead of the sessions file, refuses to switch servers, and shows a **TEST RUN · host** badge:
 
 ```bash
 MARQUEE_PINNED_SERVER=http://127.0.0.1:3100 \

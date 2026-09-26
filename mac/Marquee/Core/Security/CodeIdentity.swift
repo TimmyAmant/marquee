@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 import Security
 
@@ -20,9 +19,4 @@ enum CodeIdentity {
         guard SecRequirementCopyString(requirement, SecCSFlags(), &text) == errSecSuccess else { return nil }
         return text as String?
     }()
-
-    /// A short, stable tag for an identity, for telling items apart by name.
-    static func tag(_ identity: String) -> String {
-        SHA256.hash(data: Data(identity.utf8)).prefix(4).map { String(format: "%02x", $0) }.joined()
-    }
 }
