@@ -12,11 +12,18 @@ namespace Marquee.Windows.Controls;
 /// seasons are already in your library or on their way.") shows inline and
 /// the viewer can change the selection. The caller sets <c>XamlRoot</c>
 /// before showing it, as every ContentDialog needs.
+///
+/// Built from a <see cref="RequestEditOptions"/> it is "Edit" on a pending
+/// request instead (0.46+): the request's seasons ticked, "The whole series"
+/// / "Just these seasons", "In 4K" where it's set up, and "Save changes",
+/// with Core's <see cref="RequestEditForm"/> deciding what's allowed and sent.
 /// </summary>
 public sealed partial class SeasonRequestDialog : ContentDialog
 {
     private readonly SeasonPickerSelection selection;
-    private readonly Func<IReadOnlyList<int>, Task> submit;
+    private readonly Func<IReadOnlyList<int>, Task>? submit;
+    private readonly RequestEditForm? form;
+    private readonly Func<RequestEdit, Task>? save;
     private readonly List<SeasonPickerRow> rows;
     private bool pending;
     private bool syncing;
@@ -33,6 +40,43 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         ExplanationText.Text =
             $"Pick the seasons of \"{title}\" you'd like added. Seasons already in the library or on their way can't be picked again.";
         SelectAllBox.Visibility = selection.Requestable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RowsRepeater.ItemsSource = rows;
+        Update();
+    }
+
+    /// <summary>"Edit" on a pending request.</summary>
+    /// <param name="options">What <c>GET /requests/{id}/edit-options</c> offered.</param>
+    /// <param name="save">Sends <c>PATCH /requests/{id}</c>; throws <see cref="ApiException"/> on a refusal, which stays in the dialog.</param>
+    public SeasonRequestDialog(RequestEditOptions options, Func<RequestEdit, Task> save)
+    {
+        this.save = save;
+        form = new RequestEditForm(options);
+        selection = form.Selection;
+        rows = options.SeasonRows.Select(row => new SeasonPickerRow(row, OnRowChanged)).ToList();
+        InitializeComponent();
+        Title = RequestEditForm.Heading;
+        ExplanationText.Text = options.Title;
+        EditOptionsPanel.Visibility = Visibility.Visible;
+        var scope = form.IsTv ? Visibility.Visible : Visibility.Collapsed;
+        WholeSeriesRadio.Visibility = scope;
+        JustTheseRadio.Visibility = scope;
+        FourKBox.Content = form.FourKLabel;
+        FourKBox.Visibility = form.OffersFourK ? Visibility.Visible : Visibility.Collapsed;
+        NothingToChangeText.Text = RequestEditForm.NothingToChangeMessage;
+        NothingToChangeText.Visibility = form.HasNothingToChange ? Visibility.Visible : Visibility.Collapsed;
+        RowsBorder.Visibility = rows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        SelectAllBox.Visibility = form.IsTv && selection.Requestable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        syncing = true;
+        foreach (var row in rows)
+        {
+            row.IsChecked = selection.IsSelected(row.SeasonNumber);
+        }
+        WholeSeriesRadio.IsChecked = form.WholeSeries;
+        JustTheseRadio.IsChecked = !form.WholeSeries;
+        FourKBox.IsChecked = form.Is4k;
+        syncing = false;
+
         RowsRepeater.ItemsSource = rows;
         Update();
     }
@@ -60,21 +104,69 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         Update();
     }
 
-    /// <summary>The Request button's text and state, and the select-all box, from the selection.</summary>
-    private void Update()
+    /// <summary>"The whole series" / "Just these seasons".</summary>
+    private void OnScopeChecked(object sender, RoutedEventArgs e)
     {
-        PrimaryButtonText = pending ? "Requesting…" : selection.SubmitTitle;
-        IsPrimaryButtonEnabled = !pending && selection.Seasons.Count > 0;
-        SelectAllBox.IsChecked = selection.AllSelected;
-        SelectAllBox.IsEnabled = !pending;
-        RowsScroller.IsEnabled = !pending;
+        if (syncing || form == null)
+        {
+            return;
+        }
+        form.WholeSeries = WholeSeriesRadio.IsChecked == true;
+        Update();
     }
 
-    /// <summary>Sends the request; a failure cancels the close and shows the server's message.</summary>
+    /// <summary>"In 4K": always the whole show, so the scope and the list give way while it's ticked.</summary>
+    private void OnFourKClick(object sender, RoutedEventArgs e)
+    {
+        if (form == null)
+        {
+            return;
+        }
+        form.Is4k = FourKBox.IsChecked == true;
+        Update();
+    }
+
+    /// <summary>The primary button's text and state, and the other controls, from the selection (and the edit's choices).</summary>
+    private void Update()
+    {
+        if (form != null)
+        {
+            PrimaryButtonText = RequestEditForm.SubmitTitle(pending);
+            IsPrimaryButtonEnabled = !pending && form.CanSave;
+            SelectAllBox.IsEnabled = !pending && form.ListEnabled;
+            RowsScroller.IsEnabled = !pending && form.ListEnabled;
+            WholeSeriesRadio.IsEnabled = !pending && form.ScopeEnabled;
+            JustTheseRadio.IsEnabled = !pending && form.ScopeEnabled;
+            FourKBox.IsEnabled = !pending;
+        }
+        else
+        {
+            PrimaryButtonText = pending ? "Requesting…" : selection.SubmitTitle;
+            IsPrimaryButtonEnabled = !pending && selection.Seasons.Count > 0;
+            SelectAllBox.IsEnabled = !pending;
+            RowsScroller.IsEnabled = !pending;
+        }
+        SelectAllBox.IsChecked = selection.AllSelected;
+    }
+
+    /// <summary>Sends the request (or the change); a failure cancels the close and shows the server's message.</summary>
     private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        var seasons = selection.Seasons;
-        if (pending || seasons.Count == 0)
+        Func<Task>? send = null;
+        if (!pending)
+        {
+            if (form != null && save != null && form.CanSave)
+            {
+                var edit = form.Edit;
+                send = () => save(edit);
+            }
+            else if (form == null && submit != null && selection.Seasons.Count > 0)
+            {
+                var seasons = selection.Seasons;
+                send = () => submit(seasons);
+            }
+        }
+        if (send == null)
         {
             args.Cancel = true;
             return;
@@ -85,7 +177,7 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         Update();
         try
         {
-            await submit(seasons);
+            await send();
         }
         catch (ApiException error)
         {

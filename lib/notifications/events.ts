@@ -15,9 +15,8 @@ export const notificationPreferenceEventValues = [
   // hasn't found yet (lib/requests/not-found.ts). Bell only by default.
   "request_still_looking",
   "issue_updated",
-  // Reserved for comments on requests, which don't exist yet. Never listed
-  // until they do; the apps take their rows (and labels) from the server,
-  // so they'll show it without an update.
+  // A new comment in a conversation you're part of: on your request or
+  // problem report, or (reviewers) one you've joined (lib/comments).
   "request_comment",
   // Someone in the household shared a title with you (lib/sharing).
   "title_shared",
@@ -39,7 +38,7 @@ type EventInfo = {
   householdLabel?: string;
   /** Who can get it at all. */
   audience: "everyone" | "reviewers" | "admin";
-  /** Sent today; `request_comment` isn't yet. */
+  /** Sent today. An event that isn't is never listed. */
   live: boolean;
   /** A newly added personal channel gets it unless turned off. "Started
    * downloading" is off: it's chatty, and the bell already has it. */
@@ -62,7 +61,8 @@ export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo>
   request_downloading: { label: "Started downloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
   request_still_looking: { label: "Still looking for something I asked for", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
   issue_updated: { label: "A problem I reported is fixed", householdLabel: "A reported problem is fixed", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
-  request_comment: { label: "Comments on my requests", audience: "everyone", live: false, channelDefault: true, householdDefault: false },
+  // Between the people in the conversation, so never the household channels.
+  request_comment: { label: "Comments on requests and problem reports", audience: "everyone", live: true, channelDefault: true, householdDefault: false, personalOnly: true },
   // In the bell and pushed to devices by default like everything else, but
   // off for a new personal channel: it's a nudge, not news.
   title_shared: { label: "Someone shares a title with me", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
@@ -112,6 +112,9 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
       return "request_not_found";
     case "title_shared":
       return "title_shared";
+    case "request_comment":
+    case "issue_comment":
+      return "request_comment";
   }
 }
 

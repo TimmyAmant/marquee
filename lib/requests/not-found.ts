@@ -205,6 +205,8 @@ export async function checkNotFoundRequests(now = new Date()): Promise<void> {
         eq(requests.status, "approved"),
         // Approved by hand: the admin is getting it outside Sonarr/Radarr.
         eq(requests.manuallyApproved, false),
+        // Never added ("Couldn't add"): nothing to look for yet.
+        isNull(requests.addFailedAt),
         isNull(requests.notFoundDismissedAt),
         isNotNull(requests.reviewedAt),
         lte(requests.reviewedAt, new Date(now.getTime() - wait)),
@@ -360,6 +362,7 @@ const LIST_COLUMNS = {
 
 const flagged = and(
   eq(requests.status, "approved"),
+  isNull(requests.addFailedAt),
   isNotNull(requests.notFoundSince),
   isNull(requests.notFoundDismissedAt),
 );

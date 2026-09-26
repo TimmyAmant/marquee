@@ -67,6 +67,8 @@ describe("myRequestBadge", () => {
     expect(myRequestBadge("approved", "untracked", true)).toEqual({ label: "Manually approved", tone: "approved" });
     expect(myRequestBadge("approved", "tracked_monitored", false)).toEqual({ label: "Approved", tone: "approved" });
     expect(myRequestBadge("approved", null, false).label).toBe("Approved");
+    expect(myRequestBadge("approved", "untracked", false, true)).toEqual({ label: "Approved — waiting to be added", tone: "approved" });
+    expect(myRequestBadge("approved", "owned", false, true).label).toBe("In your library");
   });
 });
 

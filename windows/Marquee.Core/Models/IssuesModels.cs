@@ -92,6 +92,23 @@ public sealed record Issue
     public required DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset? ResolvedAt { get; init; }
 
+    /// <summary>Comments in its conversation (0.46+; 0 from an older server).</summary>
+    public int CommentCount
+    {
+        get => commentCount;
+        init
+        {
+            commentCount = value;
+            HasConversation = true;
+        }
+    }
+
+    private readonly int commentCount;
+
+    /// <summary>The server sent <c>commentCount</c> (0.46+): "Comments (N)" shows on the report.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool HasConversation { get; private init; }
+
     public bool IsOpen => Status == IssueStatus.Open;
     public bool IsResolved => Status == IssueStatus.Resolved;
 

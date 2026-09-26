@@ -28,6 +28,7 @@ import {
   getActiveRequestStatusMap,
   getOtherPendingRequesters,
   getViewerTitleRequests,
+  getViewerRequestsForTitle,
 } from "@/lib/requests/query";
 import { canRequestSeasons, seasonRequestStates, summarizeViewerRequests } from "@/lib/requests/seasons";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
@@ -118,6 +119,8 @@ export async function loadTitleStatus(
   // "Can't find" (lib/requests/not-found.ts), for whoever reviews requests.
   const reviews = viewer.userId !== null && (viewer.isAdmin || canReviewRequests(await roleOf(viewer.userId).catch(() => null)));
   const notFoundSince = reviews ? await getTitleNotFoundSince(type, tmdbId).catch(() => null) : null;
+  // The viewer's own requests, for Cancel / Edit and their conversations.
+  const myRequests = viewer.userId ? await getViewerRequestsForTitle(viewer.userId, type, tmdbId) : [];
 
   const seasonRequests = {
     states: seasonStates,
@@ -143,6 +146,7 @@ export async function loadTitleStatus(
     openReports,
     blocked,
     notFoundSince,
+    myRequests,
   };
 }
 
@@ -270,6 +274,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     openReports,
     blocked,
     notFoundSince,
+    myRequests,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -434,6 +439,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     openReports,
     blocked,
     notFoundSince,
+    myRequests,
     // Blocked single titles, for the Request buttons on the franchise and
     // similar-titles rows. (A keyword block there is still refused by the
     // server when pressed.)

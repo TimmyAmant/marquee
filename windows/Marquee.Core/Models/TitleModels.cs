@@ -421,12 +421,20 @@ public sealed class SeasonPickerSelection
     private readonly HashSet<int> selected = [];
 
     public SeasonPickerSelection(IEnumerable<SeasonSummary> seasons)
-    {
-        Requestable = seasons
+        : this(seasons
             .Where(season => season.RequestState == SeasonRequestState.Requestable)
             .Select(season => season.SeasonNumber)
-            .ToList();
+            .ToList())
+    {
     }
+
+    private SeasonPickerSelection(IReadOnlyList<int> requestable)
+    {
+        Requestable = requestable;
+    }
+
+    /// <summary>A picker over the given requestable seasons, in the picker's order (the edit dialog's rows).</summary>
+    public static SeasonPickerSelection Of(IEnumerable<int> requestable) => new(requestable.Distinct().ToList());
 
     /// <summary>The seasons with a checkbox, in the picker's order.</summary>
     public IReadOnlyList<int> Requestable { get; }

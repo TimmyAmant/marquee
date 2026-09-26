@@ -29,6 +29,34 @@ export async function clearRequestAlerts(requestId: string): Promise<void> {
     .where(and(eq(notifications.requestId, requestId), eq(notifications.eventType, "request_created")));
 }
 
+/** A pending request was changed (other seasons, or 4K): its "new request"
+ * alerts nobody has read yet say what's asked for now. */
+export async function refreshRequestAlerts(request: {
+  id: string;
+  requestedByUserId: string;
+  title: string;
+  seasons: number[] | null;
+  is4k: boolean;
+}): Promise<void> {
+  const [requester] = await db
+    .select({ name: users.displayName, username: users.username })
+    .from(users)
+    .where(eq(users.id, request.requestedByUserId))
+    .limit(1);
+  const who = requester?.name || requester?.username || "Someone";
+  const what = quotedRequestTitle(request.title, request.seasons) + (request.is4k ? " in 4K" : "");
+  await db
+    .update(notifications)
+    .set({ message: `${who} requested ${what}`, is4k: request.is4k })
+    .where(
+      and(
+        eq(notifications.requestId, request.id),
+        eq(notifications.eventType, "request_created"),
+        eq(notifications.read, false),
+      ),
+    );
+}
+
 /**
  * One alert for everything a Plex Watchlist sync filed for a member that's
  * still waiting — not one per title, which a long watchlist would turn into

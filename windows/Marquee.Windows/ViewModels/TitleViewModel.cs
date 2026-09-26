@@ -218,6 +218,8 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(BlockedKeywordLine),
         nameof(CanBlock),
         nameof(CanUnblock),
+        nameof(MyRequests),
+        nameof(HasMyRequests),
     ];
 
     private readonly AppModel model;
@@ -242,6 +244,12 @@ public sealed partial class TitleViewModel : ObservableObject
     private IReadOnlyList<PersonItem> cast = [];
     private IReadOnlyList<PosterItem> franchiseItems = [];
     private IReadOnlyList<ChipItem> studios = [];
+
+    /// <summary>The viewer's own requests under the actions (0.46+), rebuilt with every status refresh.</summary>
+    private IReadOnlyList<TitleRequestItem> myRequests = [];
+
+    /// <summary>Each request's Edit / Cancel / conversation, kept across refreshes so an open thread stays open.</summary>
+    private readonly Dictionary<Guid, RequestActionsViewModel> myRequestActions = new();
     private IReadOnlyList<PosterItem> similar = [];
 
     [ObservableProperty]
@@ -536,6 +544,33 @@ public sealed partial class TitleViewModel : ObservableObject
         await RefreshStatusAsync();
     }
 
+    // MARK: Your requests (viewer.myRequests, 0.46+; components/my-title-requests.tsx)
+
+    /// <summary>"Your request (Season 2) is waiting for review", with Edit / Cancel while pending and "Comments (N)".</summary>
+    public IReadOnlyList<TitleRequestItem> MyRequests => myRequests;
+
+    public bool HasMyRequests => myRequests.Count > 0;
+
+    /// <summary>The lines for <paramref name="requests"/>, reusing each request's actions (and open thread) from before.</summary>
+    private IReadOnlyList<TitleRequestItem> BuildMyRequests(IReadOnlyList<TitleRequestSummary> requests)
+    {
+        var items = new List<TitleRequestItem>(requests.Count);
+        foreach (var request in requests)
+        {
+            if (!myRequestActions.TryGetValue(request.Id, out var actions))
+            {
+                var thread = new CommentThreadViewModel(() => model.Api, CommentSubject.Request, request.Id, request.CommentCount);
+                // An edit or a cancel changes what the status block says; re-read it.
+                actions = new RequestActionsViewModel(() => model.Api, request.Id, thread, () => _ = RefreshStatusAsync());
+                myRequestActions[request.Id] = actions;
+            }
+            actions.Update(request.CanEdit, request.CanCancel, request.ChangeHint);
+            actions.Thread?.UpdateCount(request.CommentCount);
+            items.Add(new TitleRequestItem(request, actions));
+        }
+        return items;
+    }
+
     // MARK: Can't find (viewer.notFoundSince, 0.46+, reviewers only; components/title-hero.tsx)
 
     /// <summary>The red "Can't find" badge next to the library status: Sonarr/Radarr hasn't found the approved request.</summary>
@@ -662,6 +697,8 @@ public sealed partial class TitleViewModel : ObservableObject
         franchiseItems = [];
         studios = [];
         similar = [];
+        myRequests = [];
+        myRequestActions.Clear();
         ErrorMessage = null;
         AddError = null;
         FourKError = null;
@@ -768,6 +805,7 @@ public sealed partial class TitleViewModel : ObservableObject
     private void SetDetail(TitleDetail fresh, bool rebuild)
     {
         detail = fresh;
+        myRequests = BuildMyRequests(fresh.Viewer.MyRequests);
         if (rebuild)
         {
             Build(fresh);

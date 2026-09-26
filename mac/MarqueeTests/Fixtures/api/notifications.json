@@ -12,7 +12,24 @@
       "alert": true,
       "createdAt": "2026-09-17T17:12:41.470Z",
       "sharedBy": null,
-      "note": null
+      "note": null,
+      "requestId": null,
+      "issueId": null
+    },
+    {
+      "id": "0f3a5c77-1d2e-4b8a-9c6f-3e2d1a0b9c88",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "title": "Severance",
+      "eventType": "request_comment",
+      "message": "Tess commented on \"Severance\" (Season 2): It's on the way, the indexer was slow",
+      "read": false,
+      "alert": true,
+      "createdAt": "2026-09-17T17:02:00.000Z",
+      "sharedBy": null,
+      "note": null,
+      "requestId": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+      "issueId": null
     },
     {
       "id": "5d1e0c37-2a4b-4f9e-9a51-7c3f0b6e8d21",
@@ -31,7 +48,9 @@
         "label": "Susan",
         "avatarUrl": "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar?v=1758220800000"
       },
-      "note": "You'd love this one"
+      "note": "You'd love this one",
+      "requestId": null,
+      "issueId": null
     }
   ]
 }

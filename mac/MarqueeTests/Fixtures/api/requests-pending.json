@@ -23,7 +23,9 @@
         "username": "member1",
         "label": "member1"
       },
-      "createdAt": "2026-09-17T17:12:41.415Z"
+      "createdAt": "2026-09-17T17:12:41.415Z",
+      "editedAt": null,
+      "commentCount": 1
     },
     {
       "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
@@ -42,7 +44,9 @@
         "username": "member1",
         "label": "member1"
       },
-      "createdAt": "2026-09-17T17:10:02.001Z"
+      "createdAt": "2026-09-17T17:10:02.001Z",
+      "editedAt": "2026-09-17T17:20:40.310Z",
+      "commentCount": 0
     }
   ]
 }

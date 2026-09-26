@@ -140,6 +140,15 @@ export function titleViewerState(input: {
   blocked?: { reason: string | null; keyword: string | null } | null;
   /** Reviewers only (loadTitleStatus): listed under "Can't find" since. */
   notFoundSince?: Date | null;
+  /** The viewer's own requests for the title (loadTitleStatus). */
+  myRequests?: {
+    id: string;
+    status: RequestStatus;
+    seasons: number[] | null;
+    is4k: boolean;
+    createdAt: Date;
+    commentCount: number;
+  }[];
 }): Dto.TitleViewerState {
   const blocked = input.blocked ?? null;
 
@@ -166,6 +175,16 @@ export function titleViewerState(input: {
     openReports: input.openReports ?? 0,
     blocked,
     notFoundSince: iso(input.notFoundSince ?? null),
+    myRequests: (input.myRequests ?? []).map((r) => ({
+      id: r.id,
+      status: r.status,
+      ...requestSeasons(r.seasons),
+      is4k: r.is4k,
+      canEdit: r.status === "pending",
+      canCancel: r.status === "pending",
+      commentCount: r.commentCount,
+      createdAt: isoRequired(r.createdAt),
+    })),
   };
 }
 
@@ -201,8 +220,10 @@ export function myRequest(row: {
   createdAt: Date;
   reviewedAt: Date | null;
   libraryStatus: LibraryStatus | null;
-}): Dto.MyRequest {
-  const badge = myRequestBadge(row.status, row.libraryStatus, row.manuallyApproved);
+  editedAt?: Date | null;
+  addFailedAt?: Date | null;
+}, commentCount = 0): Dto.MyRequest {
+  const badge = myRequestBadge(row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt));
   return {
     id: row.id,
     mediaType: row.mediaType,
@@ -219,6 +240,10 @@ export function myRequest(row: {
     statusTone: badge.tone,
     createdAt: isoRequired(row.createdAt),
     reviewedAt: iso(row.reviewedAt),
+    canEdit: row.status === "pending",
+    canCancel: row.status === "pending",
+    editedAt: iso(row.editedAt ?? null),
+    commentCount,
   };
 }
 
@@ -268,7 +293,9 @@ export function reviewedRequest(row: {
   arrTags?: number[] | null;
   arrSeriesType?: string | null;
   notFoundSince?: Date | null;
-}): Dto.ReviewedRequest {
+  addFailedAt?: Date | null;
+  addError?: string | null;
+}, commentCount = 0): Dto.ReviewedRequest {
   return {
     id: row.id,
     mediaType: row.mediaType,
@@ -284,8 +311,13 @@ export function reviewedRequest(row: {
     requestedBy: requestPerson({ displayName: row.requestedByName, username: row.requestedByUsername }),
     createdAt: isoRequired(row.createdAt),
     reviewedAt: iso(row.reviewedAt),
-    addedTo: addedTo(row),
+    addedTo: row.addFailedAt ? null : addedTo(row),
     notFoundSince: iso(row.notFoundSince ?? null),
+    addFailed:
+      row.status === "approved" && row.addFailedAt
+        ? { error: row.addError ?? "Sonarr/Radarr didn't take it.", since: row.addFailedAt.toISOString() }
+        : null,
+    commentCount,
   };
 }
 
@@ -351,6 +383,8 @@ export function notificationItem(n: {
   note?: string | null;
   /** title_shared: the account that shared it (lib/sharing), when known. */
   sender?: NotificationSender | null;
+  requestId?: string | null;
+  issueId?: string | null;
 }): Dto.NotificationItem {
   return {
     id: n.id,
@@ -364,6 +398,8 @@ export function notificationItem(n: {
     createdAt: isoRequired(n.createdAt),
     sharedBy: n.eventType === "title_shared" && n.sender ? shareableUser(n.sender) : null,
     note: n.eventType === "title_shared" ? (n.note ?? null) : null,
+    requestId: n.requestId ?? null,
+    issueId: n.issueId ?? null,
   };
 }
 
@@ -376,7 +412,7 @@ export function shareableUser(user: NotificationSender): Dto.ShareableUser {
   };
 }
 
-export function issueDto(row: IssueRow, viewerUserId: string): Dto.Issue {
+export function issueDto(row: IssueRow, viewerUserId: string, commentCount = 0): Dto.Issue {
   return {
     id: row.id,
     mediaType: row.mediaType,
@@ -399,6 +435,7 @@ export function issueDto(row: IssueRow, viewerUserId: string): Dto.Issue {
     isMine: row.reportedByUserId === viewerUserId,
     createdAt: isoRequired(row.createdAt),
     resolvedAt: iso(row.resolvedAt),
+    commentCount,
   };
 }
 

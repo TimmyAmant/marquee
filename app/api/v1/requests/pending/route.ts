@@ -1,9 +1,10 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiReviewer } from "@/lib/api/auth";
-import { isoRequired, requestPerson, requestSeasons } from "@/lib/api/mappers";
+import { iso, isoRequired, requestPerson, requestSeasons } from "@/lib/api/mappers";
 import { getPendingRequests } from "@/lib/requests/query";
 import { REJECTION_REASON_PRESETS } from "@/lib/requests/rejection-reasons";
 import { getArrCredential } from "@/lib/integrations/credentials";
+import { countComments } from "@/lib/comments";
 import type { PendingRequestsResponse } from "@/lib/api/types";
 
 /** The admin's review queue, newest first. Like the Requests page, this first
@@ -20,6 +21,7 @@ export const GET = withApi(async (request): Promise<PendingRequestsResponse> => 
     getPendingRequests(libraryOwnerId),
     getArrCredential(libraryOwnerId, "sonarr"),
   ]);
+  const comments = await countComments("request", pending.map((r) => r.id));
 
   return {
     sonarrUrl: sonarrCred?.baseUrl ?? null,
@@ -38,6 +40,8 @@ export const GET = withApi(async (request): Promise<PendingRequestsResponse> => 
         username: r.requestedByUsername,
       }),
       createdAt: isoRequired(r.createdAt),
+      editedAt: iso(r.editedAt),
+      commentCount: comments.get(r.id) ?? 0,
     })),
   };
 });

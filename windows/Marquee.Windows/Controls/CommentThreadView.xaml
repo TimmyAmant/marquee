@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/comment-thread.tsx's CommentSection (0.46+): a "Comments (2)"
+  link that opens the conversation under it. Each entry has the author's
+  photo, name, "Admin"/"Reviewer", "Reported" / "Marked fixed" / "Declined"
+  for the notes, the time and "edited", then the text with its line breaks
+  and "Edit" / "Delete" while allowed. Last, the "Write a comment" box and
+  Send for whoever is part of the conversation.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.CommentThreadView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="6">
+        <HyperlinkButton
+            Content="{x:Bind Thread.ToggleLabel, Mode=OneWay}"
+            Command="{x:Bind Thread.ToggleCommand, Mode=OneWay}"
+            Padding="4,2" />
+
+        <Border
+            Visibility="{x:Bind Thread.IsOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            Padding="12"
+            CornerRadius="10"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            MaxWidth="640"
+            HorizontalAlignment="Stretch">
+            <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind Thread.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ProgressRing IsActive="{x:Bind Thread.IsLoading, Mode=OneWay}" Width="16" Height="16" />
+                    <TextBlock Text="Loading…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Spacing="6" Visibility="{x:Bind Thread.HasLoadError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="{x:Bind Thread.LoadError, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                    <Button Content="Try again" Command="{x:Bind Thread.LoadCommand, Mode=OneWay}" />
+                </StackPanel>
+                <TextBlock
+                    Text="No comments yet."
+                    Visibility="{x:Bind Thread.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+
+                <ItemsRepeater ItemsSource="{x:Bind Thread.Comments, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Vertical" Spacing="12" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CommentItemViewModel">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <controls:AvatarView
+                                    Grid.Column="0"
+                                    Label="{x:Bind AuthorLabel}"
+                                    AvatarUrl="{x:Bind AvatarUrl}"
+                                    Diameter="28"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{x:Bind AuthorLabel}" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{x:Bind MetaLine}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Text="{x:Bind Body}"
+                                        Visibility="{x:Bind ShowsBody, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                        Style="{StaticResource BodyTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        IsTextSelectionEnabled="True"
+                                        TextWrapping="Wrap" />
+                                    <StackPanel Spacing="6" Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBox
+                                            Text="{x:Bind EditDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            MaxLength="{x:Bind MaxLength}"
+                                            AcceptsReturn="True"
+                                            TextWrapping="Wrap"
+                                            MinHeight="64" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button
+                                                Content="{x:Bind SaveLabel, Mode=OneWay}"
+                                                Command="{x:Bind SaveCommand}"
+                                                IsEnabled="{x:Bind CanSave, Mode=OneWay}"
+                                                Style="{StaticResource AccentButtonStyle}" />
+                                            <Button Content="Cancel" Command="{x:Bind CancelEditCommand}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Visibility="{x:Bind ShowsActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <HyperlinkButton
+                                            Content="Edit"
+                                            Command="{x:Bind StartEditCommand}"
+                                            Visibility="{x:Bind CanEdit, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="4,0" />
+                                        <HyperlinkButton
+                                            Content="Delete"
+                                            Command="{x:Bind DeleteCommand}"
+                                            IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                                            Visibility="{x:Bind CanDelete, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="4,0" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Text="{x:Bind Error, Mode=OneWay}"
+                                        Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+
+                <StackPanel Spacing="6" Visibility="{x:Bind Thread.CanComment, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBox
+                        Text="{x:Bind Thread.Draft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        MaxLength="{x:Bind Thread.MaxLength, Mode=OneWay}"
+                        PlaceholderText="Write a comment"
+                        AutomationProperties.Name="Write a comment"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap"
+                        MinHeight="56" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            Text="{x:Bind Thread.RemainingLabel, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            VerticalAlignment="Center" />
+                        <Button
+                            Grid.Column="1"
+                            Content="{x:Bind Thread.SendLabel, Mode=OneWay}"
+                            Command="{x:Bind Thread.SendCommand, Mode=OneWay}"
+                            IsEnabled="{x:Bind Thread.CanSend, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </Grid>
+                    <TextBlock
+                        Text="{x:Bind Thread.SendError, Mode=OneWay}"
+                        Visibility="{x:Bind Thread.HasSendError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

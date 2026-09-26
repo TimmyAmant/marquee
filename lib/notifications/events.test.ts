@@ -19,6 +19,7 @@ describe("notification events", () => {
       "request_downloading",
       "request_still_looking",
       "issue_updated",
+      "request_comment",
       "title_shared",
     ]);
     expect(eventsFor("trusted")).toEqual([...eventsFor("member"), "request_pending", "request_not_found", "watchlist_requests"]);
@@ -31,9 +32,12 @@ describe("notification events", () => {
     ]);
   });
 
-  it("never lists comments until they exist", () => {
-    expect(eventsFor("admin")).not.toContain("request_comment");
+  it("lists comments for everyone, never for the household channels", () => {
+    expect(eventsFor("member")).toContain("request_comment");
     expect(householdEvents).not.toContain("request_comment");
+    expect(householdWants(["request_comment"], "request_comment")).toBe(false);
+    expect(bellAndPushFor(undefined, "request_comment")).toEqual({ inApp: true, push: true });
+    expect(channelWants({}, "request_comment")).toBe(true);
   });
 
   it("maps every notification type onto an event", () => {
@@ -45,6 +49,8 @@ describe("notification events", () => {
     expect(preferenceEventFor("request_created")).toBe("request_pending");
     expect(preferenceEventFor("request_not_found")).toBe("request_not_found");
     expect(preferenceEventFor("title_shared")).toBe("title_shared");
+    expect(preferenceEventFor("request_comment")).toBe("request_comment");
+    expect(preferenceEventFor("issue_comment")).toBe("request_comment");
   });
 });
 

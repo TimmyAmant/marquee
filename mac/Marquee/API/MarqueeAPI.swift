@@ -67,6 +67,7 @@ struct MarqueeAPI: Sendable {
     var favorites: FavoritesEndpoints { FavoritesEndpoints(transport: transport) }
     var requests: RequestsEndpoints { RequestsEndpoints(transport: transport) }
     var issues: IssuesEndpoints { IssuesEndpoints(transport: transport) }
+    var comments: CommentsEndpoints { CommentsEndpoints(transport: transport) }
     var blocklist: BlocklistEndpoints { BlocklistEndpoints(transport: transport) }
     var notifications: NotificationsEndpoints { NotificationsEndpoints(transport: transport) }
     var calendar: CalendarEndpoints { CalendarEndpoints(transport: transport) }

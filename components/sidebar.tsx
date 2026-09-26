@@ -7,7 +7,7 @@ import { WhatsNew } from "@/components/whats-new";
 import { APP_VERSION } from "@/lib/api/version";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
-import { getPendingRequestCount } from "@/lib/requests/query";
+import { getFailedRequestCount, getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
 import { getNotFoundCount } from "@/lib/requests/not-found";
 import { canReviewRequests } from "@/lib/users/roles";
@@ -29,7 +29,8 @@ export async function Sidebar() {
   const pendingRequestCount = isAdmin
     ? (await getPendingRequestCount().catch(() => 0)) +
       (await getOpenIssueCount().catch(() => 0)) +
-      (await getNotFoundCount().catch(() => 0))
+      (await getNotFoundCount().catch(() => 0)) +
+      (await getFailedRequestCount().catch(() => 0))
     : 0;
   // Under the name: which Marquee server this is, matching the Mac app.
   const serverLabel = (await headers()).get("host");

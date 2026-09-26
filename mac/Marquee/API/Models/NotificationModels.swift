@@ -30,6 +30,11 @@ extension API {
         var sharedBy: ShareableUser? = nil
         /// Their note, if they wrote one; nil like `sharedBy`.
         var note: String? = nil
+        /// 0.46+: the request a `request_comment` or `request_created` is
+        /// about; nil on every other kind, and from an older server.
+        var requestId: UUID? = nil
+        /// 0.46+: the problem report an `issue_comment` is about; nil otherwise.
+        var issueId: UUID? = nil
 
         /// The system notification's title: "Shared with you" for a share
         /// (the message already names the title), else the title's name.
@@ -41,7 +46,8 @@ extension API {
         func markedRead() -> NotificationItem {
             NotificationItem(
                 id: id, mediaType: mediaType, tmdbId: tmdbId, title: title, eventType: eventType,
-                message: message, read: true, alert: alert, createdAt: createdAt, sharedBy: sharedBy, note: note
+                message: message, read: true, alert: alert, createdAt: createdAt, sharedBy: sharedBy, note: note,
+                requestId: requestId, issueId: issueId
             )
         }
 

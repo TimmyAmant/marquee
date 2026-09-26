@@ -38,7 +38,7 @@ describe("parsePreferenceChanges", () => {
     expect(parsePreferenceChanges({ events: [{ event: "request_pending", inApp: false }] }, eventsFor("member"), own).ok).toBe(false);
     expect(parsePreferenceChanges({ events: [{ event: "request_pending", inApp: false }] }, eventsFor("trusted"), own).ok).toBe(true);
     expect(parsePreferenceChanges({ events: [{ event: "issue_reported", inApp: false }] }, eventsFor("trusted"), own).ok).toBe(false);
-    expect(parsePreferenceChanges({ events: [{ event: "request_comment", inApp: false }] }, eventsFor("admin"), own).ok).toBe(false);
+    expect(parsePreferenceChanges({ events: [{ event: "request_comment", inApp: false }] }, eventsFor("member"), own).ok).toBe(true);
     expect(parsePreferenceChanges({ events: [{ event: "nope" }] }, eventsFor("admin"), own).ok).toBe(false);
   });
 

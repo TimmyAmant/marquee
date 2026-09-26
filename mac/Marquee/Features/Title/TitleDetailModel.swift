@@ -103,6 +103,13 @@ final class TitleDetailModel {
         }
     }
 
+    /// One of your requests was edited or cancelled (0.46+): the seasons
+    /// it asked for show in the season rows too, so refetch the whole page.
+    func requestChanged() async {
+        guard let api else { return }
+        await load(api)
+    }
+
     // MARK: Seasons
 
     func loadSeason(_ seasonNumber: Int) {
