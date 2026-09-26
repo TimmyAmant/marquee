@@ -15,7 +15,7 @@ import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { insertWithinQuota } from "@/lib/requests/quota";
-import { notifyReviewersOfRequest } from "@/lib/requests/alerts";
+import { clearRequestAlerts, notifyReviewersOfRequest } from "@/lib/requests/alerts";
 import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
@@ -37,6 +37,9 @@ export async function createRequest(
     /** Ask for it in 4K (lib/arr/fourk.ts): only once the admin has set up
      * the 4K Sonarr/Radarr for this type. Always the whole title. */
     is4k?: unknown;
+    /** Don't alert reviewers about this one: the Plex Watchlist sync sends
+     * one alert for its whole batch instead (lib/requests/alerts.ts). */
+    quiet?: boolean;
   },
 ): Promise<CoreResult<{ requestId: string }>> {
   const { mediaType, tmdbId } = input;
@@ -177,7 +180,7 @@ export async function createRequest(
       await approveRequest(inserted.id, adminUserId).catch(() => undefined);
     }
   }
-  await notifyReviewersOfRequest(inserted.id).catch(() => undefined);
+  if (!input.quiet) await notifyReviewersOfRequest(inserted.id).catch(() => undefined);
 
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
   revalidatePath("/requests");
@@ -297,6 +300,7 @@ export async function approveRequest(requestId: string, reviewerUserId: string):
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
+  await clearRequestAlerts(requestId).catch(() => undefined);
 
   await Promise.all([
     createNotification({
@@ -378,6 +382,7 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
+  await clearRequestAlerts(requestId).catch(() => undefined);
 
   await Promise.all([
     createNotification({
@@ -423,6 +428,7 @@ export async function rejectRequest(
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
+  await clearRequestAlerts(requestId).catch(() => undefined);
 
   await Promise.all([
     createNotification({

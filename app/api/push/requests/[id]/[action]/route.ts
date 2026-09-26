@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { canReviewRequests } from "@/lib/users/roles";
 import { approveRequest, rejectRequest } from "@/lib/requests/mutate";
@@ -11,9 +12,9 @@ import { approveRequest, rejectRequest } from "@/lib/requests/mutate";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string; action: string }> }) {
-  // Same guard as the other session-cookie routes (the push subscriptions,
-  // the photo routes): nothing from another site.
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  // Only Marquee's own service worker (same origin) — stricter than the
+  // other session-cookie routes, since this approves and declines.
+  if (request.headers.get("sec-fetch-site") !== "same-origin") {
     return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   }
   const session = await auth();
@@ -32,5 +33,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         : null;
   if (!result) return NextResponse.json({ error: "Unknown action." }, { status: 404 });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 409 });
+  revalidatePath("/requests");
   return NextResponse.json({ ok: true });
 }

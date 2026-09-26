@@ -9,6 +9,7 @@ import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import { fetchWatchlist, type WatchlistItem } from "@/lib/plex/watchlist-api";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getQuota } from "@/lib/requests/quota";
+import { notifyReviewersOfWatchlist } from "@/lib/requests/alerts";
 
 // "Request what's on my Plex Watchlist": a member turns it on with their own
 // Plex account (lib/auth/media-signin.ts startPlexWatchlist/pollPlexWatchlist
@@ -211,6 +212,7 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
   const [movieQuota, tvQuota] = await Promise.all([getQuota(userId, "movie"), getQuota(userId, "tv")]);
   const left = { movie: movieQuota?.remaining ?? Infinity, tv: tvQuota?.remaining ?? Infinity };
   let limited = false;
+  const newRequestIds: string[] = [];
 
   for (const item of pending.slice(0, MAX_NEW_REQUESTS_PER_SYNC)) {
     if (left[item.mediaType] <= 0) {
@@ -232,6 +234,8 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
       tmdbId: item.tmdbId,
       title: item.title,
       posterPath: null,
+      // Reviewers get one alert for the whole batch, below.
+      quiet: true,
     }).catch(() => null);
 
     let outcome: "requested" | "skipped" | null;
@@ -251,6 +255,7 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
     }
     if (outcome === "requested") {
       requested++;
+      if (result?.ok) newRequestIds.push(result.requestId);
       left[item.mediaType]--;
     }
     await db
@@ -272,6 +277,7 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
     .update(plexWatchlists)
     .set({ etag: complete ? fetched.etag : null, lastSyncedAt: new Date(), lastError: limited ? WATCHLIST_LIMITED : null })
     .where(eq(plexWatchlists.userId, userId));
+  await notifyReviewersOfWatchlist(userId, newRequestIds).catch(() => undefined);
   return { requested };
 }
 

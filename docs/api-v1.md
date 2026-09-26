@@ -1367,7 +1367,10 @@ admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
 reporter), and from 0.40 `request_created` (🙋, "Anna requested “Dune”
 (Season 2) in 4K"): a request waiting for review, to the admin and trusted
 members (not the requester, and not when it was auto-approved). Open the
-Requests screen for it. On the website's push notification it carries
+Requests screen for it. A Plex Watchlist sync sends one for its whole batch
+instead ("Anna's Plex Watchlist requested 3 titles: “Dune”, “Severance” and
+1 more"). Once the request is reviewed, by anyone, its alerts are marked
+read for every reviewer. On the website's push notification it carries
 "Approve" and "Decline" buttons where the browser supports them (Android,
 desktop Chrome/Edge). Tapping one opens
 `/titles/{mediaType}/{tmdbId}` and marks it read.
