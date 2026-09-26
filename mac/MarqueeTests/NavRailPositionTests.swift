@@ -39,8 +39,8 @@ final class NavRailPositionTests: XCTestCase {
         let reach = Metrics.contentLeading
         XCTAssertEqual(NavRailPosition.left.contentInsets, EdgeInsets(top: 0, leading: reach, bottom: 0, trailing: 0))
         XCTAssertEqual(NavRailPosition.right.contentInsets, EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: reach))
-        XCTAssertEqual(NavRailPosition.top.contentInsets, EdgeInsets(top: reach, leading: 0, bottom: 0, trailing: 0))
-        XCTAssertEqual(NavRailPosition.bottom.contentInsets, EdgeInsets(top: 0, leading: 0, bottom: reach, trailing: 0))
+        XCTAssertEqual(NavRailPosition.top.contentInsets, EdgeInsets(top: reach + NavRailPosition.bandGap, leading: 0, bottom: 0, trailing: 0))
+        XCTAssertEqual(NavRailPosition.bottom.contentInsets, EdgeInsets(top: 0, leading: 0, bottom: reach + NavRailPosition.bandGap, trailing: 0))
     }
 
     func testDefaultIsTodaysLeftRail() {
