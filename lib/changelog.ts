@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.45.0",
+    date: "2026-09-26",
+    changes: [
+      "Personal notifications: everyone can add their own Telegram, Pushover, email, Discord, ntfy or webhook in Settings › Account › Notifications, with Send a test. Email (and a typed-in Telegram chat ID) is confirmed with a code first.",
+      "Choose what you hear about, and where: a grid of events (approved, declined, ready to watch, started downloading, problem fixed — plus new requests and watchlist requests for reviewers) against the bell, your devices and each of your channels.",
+      "Your Discord, ntfy, Telegram, Pushover, email and webhook setups are now \"Household channels\", with their own event choices. Nothing changes after the upgrade: nobody gets messages they didn't get before.",
+      "On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.44.4",
     date: "2026-09-26",
     changes: [
