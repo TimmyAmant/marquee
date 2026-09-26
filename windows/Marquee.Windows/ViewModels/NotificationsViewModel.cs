@@ -19,6 +19,10 @@ public sealed class NotificationRow
         Emoji = item.EventType.Emoji;
         TimeAgo = item.TimeAgo();
         IsUnread = !item.Read;
+        SenderLabel = item.SharedBy?.Label ?? "";
+        SenderAvatarUrl = item.SharedBy?.AvatarUrl ?? "";
+        HasSender = item.SharedBy != null;
+        NoteLine = item.Note.NonBlank() is { } note ? $"“{note}”" : "";
         Open = open;
     }
 
@@ -30,6 +34,10 @@ public sealed class NotificationRow
         Emoji = source.Emoji;
         TimeAgo = source.TimeAgo;
         IsUnread = isUnread;
+        SenderLabel = source.SenderLabel;
+        SenderAvatarUrl = source.SenderAvatarUrl;
+        HasSender = source.HasSender;
+        NoteLine = source.NoteLine;
         Open = source.Open;
     }
 
@@ -39,8 +47,24 @@ public sealed class NotificationRow
     public TitleId TitleId { get; }
     public string Message { get; }
 
-    /// <summary>"⬇️", "✅", "👍", "👎", or the bell for a kind this app doesn't know.</summary>
+    /// <summary>"⬇️", "✅", "👍", "👎", "📨", or the bell for a kind this app doesn't know.</summary>
     public string Emoji { get; }
+
+    /// <summary>
+    /// A shared title's sender (0.45+): the row leads with their photo, else
+    /// initials, in place of the emoji. False for every other kind, and once
+    /// the sender's account is removed.
+    /// </summary>
+    public bool HasSender { get; }
+
+    /// <summary>The sender's name, for the initials; empty without one.</summary>
+    public string SenderLabel { get; }
+
+    /// <summary>The sender's photo path; empty for none.</summary>
+    public string SenderAvatarUrl { get; }
+
+    /// <summary>The sharer's note in quotes, under the message; empty without one.</summary>
+    public string NoteLine { get; }
 
     /// <summary>"5m ago", as of when the list was built.</summary>
     public string TimeAgo { get; }

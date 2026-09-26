@@ -22,7 +22,8 @@ public sealed record NotificationItem
 
     /// <summary>
     /// <c>grabbed</c> (started downloading), <c>downloaded</c> (finished),
-    /// <c>request_approved</c>, <c>request_rejected</c>; <c>Emoji</c> gives
+    /// <c>request_approved</c>, <c>request_rejected</c>, <c>issue_reported</c>,
+    /// <c>issue_resolved</c>, <c>title_shared</c>; <c>Emoji</c> gives
     /// the website's glyph for each.
     /// </summary>
     public required NotificationEventType EventType { get; init; }
@@ -32,6 +33,16 @@ public sealed record NotificationItem
 
     public required bool Read { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+
+    /// <summary>
+    /// Who shared the title, on a <c>title_shared</c> one (0.45+): the row
+    /// leads with their photo, else initials. Null on every other kind, once
+    /// that account is removed, and from an older server (no key).
+    /// </summary>
+    public ShareableUser? SharedBy { get; init; }
+
+    /// <summary>The sharer's note, shown in quotes under the message; null without one (and on other kinds).</summary>
+    public string? Note { get; init; }
 
     /// <summary>Clicking one opens this title and marks it read.</summary>
     public TitleId TitleId => new(MediaType, TmdbId);

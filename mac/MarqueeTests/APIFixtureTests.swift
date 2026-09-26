@@ -68,6 +68,8 @@ final class APIFixtureTests: XCTestCase {
         "issue-report-body": decodes(API.IssueReport.self),
         "issues": decodes(API.IssueList.self),
         "notifications": decodes(API.NotificationList.self),
+        "users-shareable": decodes(API.ShareableUsers.self),
+        "share-title-body": decodes(API.ShareTitleRequest.self),
         "notifications-unread-count": decodes(API.Count.self),
         "calendar": decodes(API.CalendarMonthResponse.self),
         "activity": decodes(API.ListResponse<API.ActivityItem>.self),
@@ -104,7 +106,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 72, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 74, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 

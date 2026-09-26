@@ -84,6 +84,20 @@ public sealed partial class TitlePage : Page
     }
 
     /// <summary>
+    /// "Share": the dialog sends to household members itself and stays open
+    /// ("Sent to Kid."), and hands links to the Share panel or the clipboard.
+    /// </summary>
+    private async void OnShareClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.CreateShare() is not { } share)
+        {
+            return;
+        }
+        var dialog = new ShareTitleDialog(share) { XamlRoot = XamlRoot };
+        await dialog.TryShowAsync();
+    }
+
+    /// <summary>
     /// "Block requests" (components/block-requests-button.tsx): an optional
     /// reason for whoever asks, then Block. A refusal stays in the dialog;
     /// once blocked, the status block is re-read and Unblock shows.

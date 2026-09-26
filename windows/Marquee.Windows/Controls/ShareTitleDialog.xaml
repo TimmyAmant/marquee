@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/share-button.tsx's dialog on a title (0.45+). "Send to someone
+  in the household": each other member with their photo (else initials)
+  and a checkbox, an optional note (a count once it's close to 280), and
+  Send; afterwards "Sent to Kid." (or "Sent to 3 people."), and "No one
+  else has an account here yet." when there's nobody. "Share a link": which
+  link (Marquee, TMDb, IMDb when there is one), then "Share…" (Windows'
+  Share panel) and "Copy link". Everything binds to ShareTitleViewModel;
+  the code-behind sets the title and loads the list when the dialog opens.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.ShareTitleDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d"
+    CloseButtonText="Done"
+    DefaultButton="None"
+    Opened="OnOpened"
+    Closing="OnClosing">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="560">
+        <StackPanel Spacing="20" MinWidth="400" MaxWidth="460">
+            <!-- Send to someone in the household. -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Send to someone in the household" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    Visibility="{x:Bind ViewModel.IsLoadingMembers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ProgressRing IsActive="{x:Bind ViewModel.IsLoadingMembers, Mode=OneWay}" Width="16" Height="16" />
+                    <TextBlock
+                        Text="Loading…"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <TextBlock
+                    Text="{x:Bind ViewModel.MembersMessage, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.MembersMessage, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <StackPanel
+                    Spacing="10"
+                    Visibility="{x:Bind ViewModel.HasMembers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ScrollViewer MaxHeight="224" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl
+                            ItemsSource="{x:Bind ViewModel.Members, Mode=OneWay}"
+                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ShareMemberRow">
+                                    <CheckBox IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Padding="8,0,0,0" Margin="0,2">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <controls:AvatarView
+                                                Label="{x:Bind Label}"
+                                                AvatarUrl="{x:Bind AvatarUrl}"
+                                                Diameter="28"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Text="{x:Bind Label}"
+                                                Style="{StaticResource BodyTextBlockStyle}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <Grid RowSpacing="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBox
+                            Grid.Row="0"
+                            Header="Add a note (optional)"
+                            PlaceholderText="e.g. You'd love this one"
+                            Text="{x:Bind ViewModel.Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
+                            AcceptsReturn="True"
+                            TextWrapping="Wrap"
+                            MinHeight="64"
+                            MaxLength="560" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Text="{x:Bind ViewModel.NoteCounter, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.NoteCounter, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            HorizontalAlignment="Right" />
+                    </Grid>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.SendError, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.SendError, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.SentMessage, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.SentMessage, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        TextWrapping="Wrap" />
+                    <Button
+                        Content="{x:Bind ViewModel.SendLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.SendCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Right" />
+                </StackPanel>
+            </StackPanel>
+
+            <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <!-- Share a link. -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Share a link" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <RadioButtons
+                    ItemsSource="{x:Bind ViewModel.LinkLabels, Mode=OneWay}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedLinkIndex, Mode=TwoWay}"
+                    AutomationProperties.Name="Which link" />
+                <Border
+                    Padding="10,6"
+                    CornerRadius="6"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderThickness="1"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.LinkText, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        FontFamily="Consolas"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextTrimming="CharacterEllipsis"
+                        IsTextSelectionEnabled="True"
+                        ToolTipService.ToolTip="{x:Bind ViewModel.LinkText, Mode=OneWay}" />
+                </Border>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        Content="Share…"
+                        Command="{x:Bind ViewModel.ShareLinkCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Visibility="{x:Bind ViewModel.CanUseShareSheet, Converter={StaticResource BoolToVisibility}}"
+                        ToolTipService.ToolTip="Mail, Teams, Nearby sharing and other apps on this PC." />
+                    <Button
+                        Content="{x:Bind ViewModel.CopyLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.CopyLinkCommand}" />
+                </StackPanel>
+                <TextBlock
+                    Text="{x:Bind ViewModel.LinkError, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.LinkError, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>
