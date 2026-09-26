@@ -8,6 +8,7 @@ import type { IssueRow } from "@/lib/issues";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
 import { avatarPath } from "@/lib/users/avatar-path";
+import type { NotificationSender } from "@/lib/sharing/parse";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
@@ -316,6 +317,9 @@ export function notificationItem(n: {
   read: boolean;
   alert?: boolean;
   createdAt: Date;
+  note?: string | null;
+  /** title_shared: the account that shared it (lib/sharing), when known. */
+  sender?: NotificationSender | null;
 }): Dto.NotificationItem {
   return {
     id: n.id,
@@ -327,6 +331,17 @@ export function notificationItem(n: {
     read: n.read,
     alert: n.alert ?? true,
     createdAt: isoRequired(n.createdAt),
+    sharedBy: n.eventType === "title_shared" && n.sender ? shareableUser(n.sender) : null,
+    note: n.eventType === "title_shared" ? (n.note ?? null) : null,
+  };
+}
+
+/** A household member in the share picker, or the sender of a shared title. */
+export function shareableUser(user: NotificationSender): Dto.ShareableUser {
+  return {
+    ...requestPerson({ userId: user.id, displayName: user.displayName, username: user.username }),
+    userId: user.id,
+    avatarUrl: avatarPath(user, "/api/v1"),
   };
 }
 

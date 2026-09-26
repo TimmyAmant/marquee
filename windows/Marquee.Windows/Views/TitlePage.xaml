@@ -329,6 +329,17 @@
                                             Click="OnReportProblemClick"
                                             Visibility="{x:Bind ViewModel.CanReport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             ToolTipService.ToolTip="Bad video or audio, missing subtitles, won't play: the admin is told." />
+                                        <!-- components/share-button.tsx (0.45.1+): send it to someone here, or share a link. -->
+                                        <Button
+                                            Click="OnShareClick"
+                                            Visibility="{x:Bind ViewModel.CanShare, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            ToolTipService.ToolTip="Send it to someone in the household, or share a link."
+                                            AutomationProperties.Name="Share">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon Glyph="&#xE72D;" FontSize="14" />
+                                                <TextBlock Text="Share" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
                                         <HyperlinkButton
                                             Content="{x:Bind ViewModel.ArrSetupLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.OpenSettingsCommand}"

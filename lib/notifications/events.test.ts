@@ -18,6 +18,7 @@ describe("notification events", () => {
       "request_available",
       "request_downloading",
       "issue_updated",
+      "title_shared",
     ]);
     expect(eventsFor("trusted")).toEqual([...eventsFor("member"), "request_pending", "watchlist_requests"]);
     expect(eventsFor("admin")).toEqual([...eventsFor("member"), "request_pending", "issue_reported", "watchlist_requests"]);
@@ -35,6 +36,22 @@ describe("notification events", () => {
     expect(preferenceEventFor("grabbed")).toBe("request_downloading");
     expect(preferenceEventFor("issue_resolved")).toBe("issue_updated");
     expect(preferenceEventFor("request_created")).toBe("request_pending");
+    expect(preferenceEventFor("title_shared")).toBe("title_shared");
+  });
+});
+
+describe("a shared title", () => {
+  it("goes to the bell and devices by default, a new personal channel only when chosen", () => {
+    expect(bellAndPushFor(undefined, "title_shared")).toEqual({ inApp: true, push: true });
+    expect(bellAndPushFor({ title_shared: { push: false } }, "title_shared")).toEqual({ inApp: true, push: false });
+    expect(channelWants({}, "title_shared")).toBe(false);
+    expect(channelWants({ title_shared: true }, "title_shared")).toBe(true);
+  });
+
+  it("never goes to the household channels, even if a saved list names it", () => {
+    expect(householdEvents).not.toContain("title_shared");
+    expect(householdWants(null, "title_shared")).toBe(false);
+    expect(householdWants(["title_shared"], "title_shared")).toBe(false);
   });
 });
 

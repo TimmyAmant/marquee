@@ -23,7 +23,9 @@ export type NotificationEventType =
   | "issue_reported"
   | "issue_resolved"
   /** 0.40+: a new request waiting for review (admin and trusted members). */
-  | "request_created";
+  | "request_created"
+  /** 0.45.1+: a household member shared a title with you (`sharedBy`, `note`). */
+  | "title_shared";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -647,6 +649,11 @@ export type NotificationItem = {
    * of notification — it's in the bell, but no banner. Absent: true. */
   alert: boolean;
   createdAt: string;
+  /** 0.45.1+: title_shared — who shared it; null for every other kind (and
+   * once that account is removed). Missing on older servers. */
+  sharedBy: ShareableUser | null;
+  /** 0.45.1+: title_shared — the sharer's note, plain text; else null. */
+  note: string | null;
 };
 
 /** GET /me/notification-channels (0.45+). */
@@ -691,6 +698,18 @@ export type NotificationPreferences = { events: NotificationPreferenceRow[] };
 
 /** GET/PUT /settings/notification-events (0.45+, admin). */
 export type HouseholdNotificationEvents = { events: { event: string; label: string; enabled: boolean }[] };
+
+/** 0.45.1+: a household member as the share picker shows them
+ * (GET /users/shareable) and as the sender of a shared title. */
+export type ShareableUser = RequestPerson & { userId: string; avatarUrl: string | null };
+
+/** GET /users/shareable. `publicUrl`: the address set as Marquee's public
+ * one, for links that leave the house (null when none is set — use the
+ * address the app is connected to). */
+export type ShareableUsersResponse = { results: ShareableUser[]; publicUrl: string | null };
+
+/** POST /titles/{type}/{tmdbId}/share. */
+export type ShareTitleResponse = { ok: true; sharedWith: number };
 
 export type CalendarEntry = {
   date: string;

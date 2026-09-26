@@ -9,6 +9,8 @@ import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
 import { FourKControls } from "@/components/fourk-controls";
 import { ReportProblemButton } from "@/components/report-problem-button";
+import { ShareButton } from "@/components/share-button";
+import { publicTitleLinks } from "@/lib/sharing/parse";
 import { BlockRequestsButton } from "@/components/block-requests-button";
 import type { FourKViewerState } from "@/lib/api/types";
 import { FileDetailsSection } from "@/components/file-details-section";
@@ -77,6 +79,7 @@ export function TitleHero({
   file,
   runtimeLabel,
   cast,
+  share,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -115,6 +118,8 @@ export function TitleHero({
    * the right rail's lower half exactly as the mockup has it, instead of
    * being pushed below the (much taller) rail. */
   cast?: React.ReactNode;
+  /** "Share" (signed in): Marquee's public address, null when none is set. */
+  share?: { publicBase: string | null } | null;
 }) {
   // Rating/status/network live in the sidebar instead — this line is just
   // the quick facts, matching the reference layout's short line under the
@@ -198,6 +203,16 @@ export function TitleHero({
                       tmdbId={tmdbId}
                       seasonNumbers={report.seasonNumbers}
                       openReports={report.openReports}
+                    />
+                  )}
+
+                  {share && (
+                    <ShareButton
+                      name={name}
+                      path={`/title/${mediaType}/${tmdbId}`}
+                      publicBase={share.publicBase}
+                      links={publicTitleLinks(mediaType, tmdbId, links.imdbId ?? null)}
+                      sendTo={{ mediaType, tmdbId }}
                     />
                   )}
 

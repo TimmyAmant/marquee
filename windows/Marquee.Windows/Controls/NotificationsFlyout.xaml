@@ -2,7 +2,9 @@
 <!--
   components/notifications-bell.tsx's dropdown, hosted in the Flyout on the
   shell's bell. Each row is a Button so keyboard users can walk the list;
-  clicking one opens its title and marks it read.
+  clicking one opens its title and marks it read. A shared title (0.45.1+)
+  leads with the sender's photo (else initials) in place of the emoji, and
+  shows their note in quotes under the message.
 -->
 <UserControl
     x:Class="Marquee.Windows.Controls.NotificationsFlyout"
@@ -11,6 +13,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d"
     Width="380">
 
@@ -92,11 +95,26 @@
                                 <TextBlock
                                     Grid.Column="1"
                                     Text="{x:Bind Emoji}"
+                                    Visibility="{x:Bind HasSender, Converter={StaticResource InvertedBoolToVisibility}}"
+                                    VerticalAlignment="Top" />
+                                <controls:AvatarView
+                                    Grid.Column="1"
+                                    Label="{x:Bind SenderLabel}"
+                                    AvatarUrl="{x:Bind SenderAvatarUrl}"
+                                    Diameter="28"
+                                    Visibility="{x:Bind HasSender, Converter={StaticResource BoolToVisibility}}"
                                     VerticalAlignment="Top" />
                                 <StackPanel Grid.Column="2" Spacing="2">
                                     <TextBlock
                                         Text="{x:Bind Message}"
                                         Style="{StaticResource BodyTextBlockStyle}"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Text="{x:Bind NoteLine}"
+                                        Visibility="{x:Bind NoteLine, Converter={StaticResource StringToVisibility}}"
+                                        Style="{StaticResource BodyTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        FontStyle="Italic"
                                         TextWrapping="Wrap" />
                                     <TextBlock
                                         Text="{x:Bind TimeAgo}"

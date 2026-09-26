@@ -258,7 +258,10 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
     /// <summary>The admin marked your problem report fixed (0.38+).</summary>
     public static readonly NotificationEventType IssueResolved = new("issue_resolved");
 
-    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved];
+    /// <summary>Someone in the household shared a title with you (0.45.1+); <c>SharedBy</c> says who.</summary>
+    public static readonly NotificationEventType TitleShared = new("title_shared");
+
+    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved, TitleShared];
     public static NotificationEventType FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -273,6 +276,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == RequestRejected) return "👎";
             if (this == IssueReported) return "⚠️";
             if (this == IssueResolved) return "🛠️";
+            if (this == TitleShared) return "📨";
             return "🔔";
         }
     }
@@ -292,6 +296,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == RequestRejected) return "Request declined";
             if (this == IssueReported) return "Problem reported";
             if (this == IssueResolved) return "Problem fixed";
+            if (this == TitleShared) return "Shared with you";
             return "Marquee";
         }
     }

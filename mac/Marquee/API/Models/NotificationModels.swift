@@ -24,6 +24,26 @@ extension API {
         /// counts as true.
         var alert: Bool?
         let createdAt: Date
+        /// 0.45.1+ `title_shared`: who shared it. Nil on every other kind, once
+        /// that account is removed, and from an older server (which leaves
+        /// the field out).
+        var sharedBy: ShareableUser? = nil
+        /// Their note, if they wrote one; nil like `sharedBy`.
+        var note: String? = nil
+
+        /// The system notification's title: "Shared with you" for a share
+        /// (the message already names the title), else the title's name.
+        var bannerTitle: String {
+            eventType == .titleShared ? "Shared with you" : title
+        }
+
+        /// A copy marked read (the bell's "Mark all read").
+        func markedRead() -> NotificationItem {
+            NotificationItem(
+                id: id, mediaType: mediaType, tmdbId: tmdbId, title: title, eventType: eventType,
+                message: message, read: true, alert: alert, createdAt: createdAt, sharedBy: sharedBy, note: note
+            )
+        }
 
         /// Whether this Mac may show a system banner for it.
         var showsBanner: Bool { alert ?? true }

@@ -8,6 +8,8 @@ import {
   markAllReadAction,
   markReadAction,
 } from "@/lib/notifications/actions";
+import { UserAvatar } from "@/components/user-avatar";
+import { avatarPath } from "@/lib/users/avatar-path";
 
 type NotificationRow = Awaited<ReturnType<typeof getRecentNotificationsAction>>[number];
 
@@ -40,6 +42,13 @@ function timeAgo(date: Date | string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+/** A shared title's message without its note, which shows on a line of its
+ * own ("Susan shared “Ice Age” with you: …" → "Susan shared “Ice Age” with you"). */
+function sharedHeadline(message: string, note: string): string {
+  const suffix = `: ${note}`;
+  return message.endsWith(suffix) ? message.slice(0, -suffix.length) : message;
 }
 
 /**
@@ -187,8 +196,21 @@ export function NotificationsBell({
                 >
                   <div className="flex items-start gap-2">
                     {!item.read && <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
-                    <div className={item.read ? "pl-3.5" : ""}>
-                      <p>{item.message}</p>
+                    {/* A shared title leads with who sent it. */}
+                    {item.eventType === "title_shared" && item.sender && (
+                      <span className={item.read ? "ml-3.5" : ""}>
+                        <UserAvatar
+                          label={item.sender.displayName || item.sender.username}
+                          src={avatarPath(item.sender, "/api")}
+                          size={24}
+                        />
+                      </span>
+                    )}
+                    <div className={item.read && !(item.eventType === "title_shared" && item.sender) ? "pl-3.5" : ""}>
+                      <p>{item.eventType === "title_shared" && item.note ? sharedHeadline(item.message, item.note) : item.message}</p>
+                      {item.eventType === "title_shared" && item.note && (
+                        <p className="mt-0.5 italic text-text-secondary">“{item.note}”</p>
+                      )}
                       <p className="mt-0.5 text-[10px] text-text-secondary">{timeAgo(item.createdAt)}</p>
                     </div>
                   </div>

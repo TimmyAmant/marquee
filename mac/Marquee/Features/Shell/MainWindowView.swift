@@ -195,12 +195,7 @@ struct NotificationsPopover: View {
 
     private func markAllRead() {
         let api = model.api
-        items = items.map {
-            API.NotificationItem(
-                id: $0.id, mediaType: $0.mediaType, tmdbId: $0.tmdbId, title: $0.title,
-                eventType: $0.eventType, message: $0.message, read: true, alert: $0.alert, createdAt: $0.createdAt
-            )
-        }
+        items = items.map { $0.markedRead() }
         Task {
             do {
                 try await api.notifications.markAllRead()
@@ -232,12 +227,26 @@ private struct NotificationRow: View {
                     .fill(item.read ? Color.clear : Theme.accent)
                     .frame(width: 6, height: 6)
                     .padding(.top, 5)
+                // A share leads with the sender's photo (initials without one).
+                if item.eventType == .titleShared, let sender = item.sharedBy {
+                    UserAvatarView(label: sender.label, avatarUrl: sender.avatarUrl, size: 28)
+                }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(item.message)
                         .font(.system(size: 12))
                         .foregroundStyle(item.read ? Theme.textSecondary : Theme.textPrimary)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
+                    // The message already ends with the note; the website
+                    // repeats it in quotes underneath, so it reads as theirs.
+                    if item.eventType == .titleShared, let note = item.note.nonBlank {
+                        Text("“\(note)”")
+                            .font(.system(size: 12))
+                            .italic()
+                            .foregroundStyle(Theme.textSecondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     Text(item.timeAgo())
                         .font(.system(size: 10.5))
                         .foregroundStyle(Theme.textMuted)

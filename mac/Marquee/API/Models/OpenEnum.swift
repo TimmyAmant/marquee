@@ -266,10 +266,12 @@ extension API {
         case issueReported
         /// 0.38+: the admin marked your problem report fixed.
         case issueResolved
+        /// 0.45.1+: someone in the household shared a title with you.
+        case titleShared
         case unknown(String)
 
         static let knownCases: [NotificationEventType] = [
-            .grabbed, .downloaded, .requestApproved, .requestRejected, .issueReported, .issueResolved,
+            .grabbed, .downloaded, .requestApproved, .requestRejected, .issueReported, .issueResolved, .titleShared,
         ]
 
         var rawValue: String {
@@ -280,6 +282,7 @@ extension API {
             case .requestRejected: return "request_rejected"
             case .issueReported: return "issue_reported"
             case .issueResolved: return "issue_resolved"
+            case .titleShared: return "title_shared"
             case let .unknown(raw): return raw
             }
         }
@@ -292,6 +295,7 @@ extension API {
             case .requestRejected: return "👎"
             case .issueReported: return "⚠️"
             case .issueResolved: return "🛠️"
+            case .titleShared: return "📨"
             case .unknown: return "🔔"
             }
         }

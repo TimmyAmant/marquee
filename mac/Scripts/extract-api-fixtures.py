@@ -47,6 +47,8 @@ BLOCKS = [
     ("`GET /titles/{type}/{tmdbId}`", ["title-detail"]),
     ("`GET /titles/{type}/{tmdbId}`", ["title-season"]),
     ("`GET /titles/tv/{tmdbId}/seasons/{seasonNumber}`", ["season-episodes"]),
+    ("`POST /titles/{type}/{tmdbId}/share`", ["share-title-body"]),
+    ("`GET /users/shareable`", ["users-shareable"]),
     ("`GET /titles/{type}/{tmdbId}/status`", ["title-status"]),
     ("`POST /titles/{type}/{tmdbId}/add`", ["title-add"]),
     ("`GET /titles/{type}/{tmdbId}/add-options`", ["add-options"]),

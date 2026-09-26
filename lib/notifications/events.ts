@@ -16,6 +16,8 @@ export const notificationPreferenceEventValues = [
   // until they do; the apps take their rows (and labels) from the server,
   // so they'll show it without an update.
   "request_comment",
+  // Someone in the household shared a title with you (lib/sharing).
+  "title_shared",
   "request_pending",
   "issue_reported",
   "watchlist_requests",
@@ -40,6 +42,9 @@ type EventInfo = {
   /** The household channels (Discord, ntfy, …) posted it before their
    * events could be chosen, so they still do by default. */
   householdDefault: boolean;
+  /** Only ever for the one account (a title shared with you): never posted
+   * to the household channels, and not in the admin's list of them. */
+  personalOnly?: boolean;
 };
 
 export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo> = {
@@ -49,6 +54,9 @@ export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo>
   request_downloading: { label: "Started downloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
   issue_updated: { label: "A problem I reported is fixed", householdLabel: "A reported problem is fixed", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
   request_comment: { label: "Comments on my requests", audience: "everyone", live: false, channelDefault: true, householdDefault: false },
+  // In the bell and pushed to devices by default like everything else, but
+  // off for a new personal channel: it's a nudge, not news.
+  title_shared: { label: "Someone shares a title with me", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
   request_pending: { label: "New request waiting for review", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
   issue_reported: { label: "New problem report", audience: "admin", live: true, channelDefault: true, householdDefault: true },
   watchlist_requests: { label: "Plex Watchlist requests", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
@@ -66,7 +74,9 @@ export function eventsFor(role: UserRole | string | null | undefined): Notificat
 }
 
 /** Everything the household channels can post, in order. */
-export const householdEvents = notificationPreferenceEventValues.filter((event) => NOTIFICATION_EVENTS[event].live);
+export const householdEvents = notificationPreferenceEventValues.filter(
+  (event) => NOTIFICATION_EVENTS[event].live && !NOTIFICATION_EVENTS[event].personalOnly,
+);
 
 export const defaultHouseholdEvents = householdEvents.filter((event) => NOTIFICATION_EVENTS[event].householdDefault);
 
@@ -88,6 +98,8 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
       return "issue_reported";
     case "request_created":
       return "request_pending";
+    case "title_shared":
+      return "title_shared";
   }
 }
 
@@ -110,5 +122,6 @@ export function channelWants(events: Record<string, boolean> | null | undefined,
 
 /** The household channels' events: the saved list, or the defaults. */
 export function householdWants(saved: readonly string[] | null | undefined, event: NotificationPreferenceEvent): boolean {
+  if (NOTIFICATION_EVENTS[event].personalOnly) return false;
   return saved ? saved.includes(event) : NOTIFICATION_EVENTS[event].householdDefault;
 }

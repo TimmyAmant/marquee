@@ -5,6 +5,7 @@ import { notificationItem } from "@/lib/api/mappers";
 import { parseBearerToken } from "@/lib/api/tokens";
 import { authenticateApiToken } from "@/lib/api/token-store";
 import { subscribeToNotifications } from "@/lib/notifications/bus";
+import { getNotificationSender } from "@/lib/sharing";
 
 /** Between keep-alive comments, and between re-checks that the token is
  * still good: under the idle timeouts of common reverse proxies (60s for
@@ -38,8 +39,10 @@ export const GET = withApi(async (request) => {
         }
       };
 
-      const unsubscribe = subscribeToNotifications(ctx.user.id, (row) => {
-        send(`event: notification\nid: ${row.id}\ndata: ${JSON.stringify(notificationItem(row))}\n\n`);
+      const unsubscribe = subscribeToNotifications(ctx.user.id, async (row) => {
+        // A shared title names its sender, which the row only has the id of.
+        const sender = row.senderUserId ? await getNotificationSender(row.senderUserId).catch(() => null) : null;
+        send(`event: notification\nid: ${row.id}\ndata: ${JSON.stringify(notificationItem({ ...row, sender }))}\n\n`);
       });
       const heartbeat = setInterval(async () => {
         const still = await authenticateApiToken(token).catch(() => undefined);

@@ -40,6 +40,29 @@ struct PersonDetailView: View {
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle(person?.name ?? "")
+        .toolbar {
+            // A person's page shares just a link (0.45.1+, as on the website):
+            // Marquee's page or TMDb's.
+            let links = ShareLinks.person(tmdbId, server: model.session.server?.baseURL)
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    ForEach(links.kinds) { kind in
+                        if let url = links.url(for: kind) {
+                            ShareLink(kind == .marquee ? "Share Marquee Link…" : "Share TMDb Link…", item: url)
+                        }
+                    }
+                    Divider()
+                    ForEach(links.kinds) { kind in
+                        if let url = links.url(for: kind) {
+                            Button(kind == .marquee ? "Copy Marquee Link" : "Copy TMDb Link") { model.copyLink(url) }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .help("Share this person")
+            }
+        }
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
             await load()
         }

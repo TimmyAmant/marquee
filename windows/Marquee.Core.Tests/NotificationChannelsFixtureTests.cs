@@ -297,16 +297,16 @@ public sealed class NotificationChannelsFixtureTests
     [Fact]
     public void AlertDecodesAndDefaultsToTrue()
     {
-        var item = Assert.Single(Fixtures.Decode<NotificationList>("notifications").Results);
+        var item = Fixtures.Decode<NotificationList>("notifications").Results[0];
         Assert.True(item.Alert);
 
         var off = Read("notifications").Replace("\"alert\": true", "\"alert\": false", StringComparison.Ordinal);
-        Assert.False(Assert.Single(Json.Decode<NotificationList>(off).Results).Alert);
+        Assert.False(Json.Decode<NotificationList>(off).Results[0].Alert);
 
         // An older server doesn't send it at all.
         var older = Read("notifications").Replace("\"alert\": true,", "", StringComparison.Ordinal);
         Assert.DoesNotContain("alert", older, StringComparison.Ordinal);
-        Assert.True(Assert.Single(Json.Decode<NotificationList>(older).Results).Alert);
+        Assert.True(Json.Decode<NotificationList>(older).Results[0].Alert);
     }
 
     [Fact]
@@ -323,7 +323,7 @@ public sealed class NotificationChannelsFixtureTests
     [Fact]
     public void NoBannerForAnItemThatIsNotAnAlert()
     {
-        var item = Assert.Single(Fixtures.Decode<NotificationList>("notifications").Results);
+        var item = Fixtures.Decode<NotificationList>("notifications").Results[0];
         var before = item.CreatedAt.AddMinutes(-1);
 
         Assert.True(NotificationBanners.ShowsLive(item, null));
@@ -337,7 +337,7 @@ public sealed class NotificationChannelsFixtureTests
     [Fact]
     public void CatchUpSkipsWhatIsNotAnAlert()
     {
-        var template = Assert.Single(Fixtures.Decode<NotificationList>("notifications").Results);
+        var template = Fixtures.Decode<NotificationList>("notifications").Results[0];
         var watermark = template.CreatedAt;
         NotificationItem At(int minutes, bool alert = true, bool read = false) =>
             template with { Id = Guid.NewGuid(), CreatedAt = watermark.AddMinutes(minutes), Alert = alert, Read = read };

@@ -5,6 +5,8 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { MediaList } from "@/components/media-list";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadPersonPage } from "@/lib/pages/entities";
+import { ShareButton } from "@/components/share-button";
+import { getPublicBaseUrl } from "@/lib/sharing";
 
 export default async function PersonPage({
   params,
@@ -17,7 +19,10 @@ export default async function PersonPage({
 
   const viewer = await getViewerContext();
   // Shared with GET /api/v1/people/[id].
-  const data = await loadPersonPage(viewer, tmdbId);
+  const [data, publicBase] = await Promise.all([
+    loadPersonPage(viewer, tmdbId),
+    viewer.session ? getPublicBaseUrl().catch(() => null) : null,
+  ]);
   if (!data) notFound();
 
   const { person, entries, favorited, favoritedKeys, arrConfigured } = data;
@@ -32,7 +37,16 @@ export default async function PersonPage({
         profilePath={person.profilePath}
         favoriteAction={
           viewer.session && (
-            <FavoriteButton entityType="person" tmdbId={tmdbId} initialFavorited={favorited} />
+            <>
+              <FavoriteButton entityType="person" tmdbId={tmdbId} initialFavorited={favorited} />
+              {/* Links only: a person can't be sent to a household member. */}
+              <ShareButton
+                name={person.name}
+                path={`/person/${tmdbId}`}
+                publicBase={publicBase}
+                links={{ tmdb: `https://www.themoviedb.org/person/${tmdbId}`, imdb: null }}
+              />
+            </>
           )
         }
       />
