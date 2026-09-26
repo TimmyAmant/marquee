@@ -1367,12 +1367,21 @@ member) and, for the admin, "Add a household member".
   "isCurrentUser": false,
   "avatarUrl": null,
   "linked": { "plex": false, "jellyfin": true },
-  "hasPassword": false
+  "hasPassword": false,
+  "lastActiveAt": "2026-09-25T18:42:10.000Z"
 }
 ```
 
 `linked` / `hasPassword`: as on `/me`. Website: a small "Plex" / "Jellyfin"
 tag on linked rows.
+
+`lastActiveAt`: the last time the account used the website or an app, kept
+to within 5 minutes; null when it never has (at first, it's when the
+account's app sign-ins were last used). Website, admin only, under each
+other member's name: "Active now" (under 10 minutes), "Active 25 minutes
+ago", "Active 5 hours ago", "Active yesterday", "Active 6 days ago", then
+"Last active Jul 4, 2026" past 30 days; "Never signed in" for null. An older
+server omits the field.
 
 `avatarUrl` (here, on `/me` and on the login/setup `user`) is the account's
 profile photo as a server-relative path, or null when there's none: fetch it

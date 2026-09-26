@@ -31,6 +31,9 @@ export type HouseholdMember = {
   /** False for an account made by Plex/Jellyfin sign-in or import that
    * hasn't set a password yet. */
   hasPassword: boolean;
+  /** Last time the account used the website or an app, to within a few
+   * minutes (lib/users/last-active.ts); null when it never has. */
+  lastActiveAt: Date | null;
 };
 
 export type Actor = { userId: string; isAdmin: boolean };
@@ -47,6 +50,7 @@ const memberColumns = {
   plexLinked: sql<boolean>`${users.plexUserId} is not null`,
   jellyfinLinked: sql<boolean>`${users.jellyfinUserId} is not null`,
   hasPassword: sql<boolean>`${users.passwordHash} is not null`,
+  lastActiveAt: users.lastActiveAt,
 };
 
 /** Admins see every account (they're the ones who can edit/remove others);

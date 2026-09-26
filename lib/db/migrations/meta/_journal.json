@@ -253,6 +253,13 @@
       "when": 1790380161702,
       "tag": "0035_add_plex_watchlists",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790386268692,
+      "tag": "0036_add_user_last_active",
+      "breakpoints": true
     }
   ]
 }

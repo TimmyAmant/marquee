@@ -7,6 +7,7 @@ import { users } from "@/lib/db/schema";
 import { getClientIp } from "@/lib/rate-limit";
 import { authenticateWithPassword } from "@/lib/auth/password-login";
 import { consumeLoginTicket } from "@/lib/auth/login-tickets";
+import { recordActivity } from "@/lib/users/last-active";
 
 const REMEMBER_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const DEFAULT_MAX_AGE = 60 * 60 * 24; // 1 day when "keep me signed in" is unchecked
@@ -97,7 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Role is read fresh here too, since it can change after sign-in
       // (promotion, demotion, the admin-pinning migration).
       const [row] = await db
-        .select({ role: users.role, passwordChangedAt: users.passwordChangedAt })
+        .select({ role: users.role, passwordChangedAt: users.passwordChangedAt, lastActiveAt: users.lastActiveAt })
         .from(users)
         .where(eq(users.id, token.userId as string))
         .limit(1);
@@ -108,6 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         typeof token.signedInAt === "number" ? token.signedInAt : (token.iat ?? 0) * 1000;
       if (row.passwordChangedAt && row.passwordChangedAt.getTime() > signedInAt) return null;
       token.role = row.role;
+      recordActivity(token.userId as string, row.lastActiveAt);
       return token;
     },
     session({ session, token }) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { updateHouseholdMemberAction, deleteUserAction, type HouseholdMember } from "./users-actions";
+import { lastActiveLabel } from "@/lib/users/last-active-label";
 
 /** Longest side of what the browser sends. The server crops to a 512px
  * square anyway; this just keeps a 12-megapixel phone photo from being a
@@ -295,6 +296,13 @@ export function HouseholdMembersList({
               <div className="min-w-0">
                 <p className="truncate text-text-primary">{member.displayName || member.username}</p>
                 {member.displayName && <p className="mt-0.5 truncate text-text-muted">{member.username}</p>}
+                {/* The admin's view of who still uses Marquee; relative to
+                    the viewer's clock, so the server's render may differ. */}
+                {isAdmin && member.id !== currentUserId && (
+                  <p className="mt-0.5 truncate text-xs text-text-muted" suppressHydrationWarning>
+                    {lastActiveLabel(member.lastActiveAt, new Date())}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">

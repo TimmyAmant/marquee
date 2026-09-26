@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text.Json.Serialization;
+
 namespace Marquee.Core.Models;
 
 // Settings > Account: household members (api-v1.md section 11). The two
@@ -35,10 +38,86 @@ public sealed record HouseholdMember
     /// <inheritdoc cref="User.HasPassword"/>
     public bool? HasPassword { get; init; }
 
+    private readonly DateTimeOffset? lastActiveAt;
+
+    /// <summary>
+    /// When the account last used the website or an app, to within 5
+    /// minutes; null when it never has ("Never signed in"). An older server
+    /// omits the key: see <see cref="ReportsLastActive"/>.
+    /// </summary>
+    public DateTimeOffset? LastActiveAt
+    {
+        get => lastActiveAt;
+        init
+        {
+            lastActiveAt = value;
+            ReportsLastActive = true;
+        }
+    }
+
+    /// <summary>
+    /// Whether the server sent <c>lastActiveAt</c> at all, null included.
+    /// The decoder only runs the setter for a key that is there, so an
+    /// older server (no key) leaves this false and the row shows no line,
+    /// where a present null means "Never signed in".
+    /// </summary>
+    [JsonIgnore]
+    public bool ReportsLastActive { get; private init; }
+
+    /// <summary>
+    /// The admin's muted line under a member's name ("Active 3 hours ago");
+    /// null when the server doesn't report it. <paramref name="zone"/> is
+    /// for the "Last active Jul 4, 2026" date, local time by default.
+    /// </summary>
+    public string? LastActiveLine(DateTimeOffset now, TimeZoneInfo? zone = null) =>
+        ReportsLastActive ? LastActiveLabel.Format(LastActiveAt, now, zone) : null;
+
     public bool IsAdmin => Role == UserRole.Admin;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
     public string Label => DisplayName.NonBlank() ?? Username;
+}
+
+/// <summary>
+/// lib/users/last-active-label.ts: "Active 3 hours ago" under each member in
+/// Settings, admin only and not on their own row. Kept to the server's
+/// 5-minute recording precision: anything in the last ten minutes (or a
+/// timestamp slightly ahead of this clock) is "Active now".
+/// </summary>
+public static class LastActiveLabel
+{
+    /// <summary>Pure. A null <paramref name="lastActiveAt"/> means the account has never been used.</summary>
+    public static string Format(DateTimeOffset? lastActiveAt, DateTimeOffset now, TimeZoneInfo? zone = null)
+    {
+        if (lastActiveAt is not { } at)
+        {
+            return "Never signed in";
+        }
+        var ago = now - at;
+        if (ago < TimeSpan.FromMinutes(10))
+        {
+            return "Active now";
+        }
+        if (ago < TimeSpan.FromHours(1))
+        {
+            return $"Active {(int)ago.TotalMinutes} minutes ago";
+        }
+        if (ago < TimeSpan.FromDays(1))
+        {
+            var hours = (int)ago.TotalHours;
+            return hours == 1 ? "Active 1 hour ago" : $"Active {hours} hours ago";
+        }
+        if (ago < TimeSpan.FromDays(2))
+        {
+            return "Active yesterday";
+        }
+        if (ago < TimeSpan.FromDays(30))
+        {
+            return $"Active {(int)ago.TotalDays} days ago";
+        }
+        var local = TimeZoneInfo.ConvertTime(at, zone ?? TimeZoneInfo.Local);
+        return $"Last active {local.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)}";
+    }
 }
 
 /// <summary><c>POST /users</c> body ("Add a household member").</summary>

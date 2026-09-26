@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { apiTokens, users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
+import { recordActivity } from "@/lib/users/last-active";
 import {
   computeExpiresAt,
   generateApiToken,
@@ -68,6 +69,7 @@ export async function authenticateApiToken(token: string): Promise<Authenticated
       autoApproveTv: users.autoApproveTv,
       avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
+      lastActiveAt: users.lastActiveAt,
     })
     .from(apiTokens)
     .innerJoin(users, eq(users.id, apiTokens.userId))
@@ -81,6 +83,8 @@ export async function authenticateApiToken(token: string): Promise<Authenticated
     await db.delete(apiTokens).where(eq(apiTokens.id, row.tokenId)).catch(() => undefined);
     return null;
   }
+
+  recordActivity(row.userId, row.lastActiveAt, now);
 
   let expiresAt = row.expiresAt;
   if (shouldSlideExpiry(row.lastUsedAt, now)) {

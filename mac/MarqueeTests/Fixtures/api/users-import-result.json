@@ -14,7 +14,8 @@
         "plex": false,
         "jellyfin": true
       },
-      "hasPassword": false
+      "hasPassword": false,
+      "lastActiveAt": "2026-09-25T18:42:10.000Z"
     }
   ],
   "skipped": 1

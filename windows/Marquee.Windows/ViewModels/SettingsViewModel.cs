@@ -13,7 +13,8 @@ namespace Marquee.Windows.ViewModels;
 
 /// <summary>
 /// A row of "Household members" (household-members-list.tsx): the name,
-/// the username under it when there is a name, the "Admin" and "You" tags,
+/// the username under it when there is a name, the admin's "Active 3 hours
+/// ago" line on other members' rows, the "Admin" and "You" tags,
 /// and the Edit and Remove buttons each viewer is offered. Immutable; the
 /// list is rebuilt from every <c>GET /users</c> answer.
 /// </summary>
@@ -25,6 +26,11 @@ public sealed class HouseholdMemberRow
         Label = member.Label;
         AvatarUrl = member.AvatarUrl ?? "";
         UsernameLine = member.DisplayName.NonBlank() != null ? member.Username : "";
+        // Relative to this PC's clock when the list arrives; the list is
+        // rebuilt from every GET /users answer.
+        LastActiveLine = viewerIsAdmin && !member.IsCurrentUser
+            ? member.LastActiveLine(DateTimeOffset.Now) ?? ""
+            : "";
         IsAdminRow = member.IsAdmin;
         IsCurrentUser = member.IsCurrentUser;
         PlexTag = member.Linked?.Plex == true ? "Plex" : "";
@@ -49,6 +55,13 @@ public sealed class HouseholdMemberRow
 
     /// <summary>The username, under a display name; empty when <see cref="Label"/> already is the username.</summary>
     public string UsernameLine { get; }
+
+    /// <summary>
+    /// "Active 3 hours ago" / "Never signed in", for the admin on every row
+    /// but their own; empty (collapsed) otherwise, and from an older server
+    /// that doesn't report it.
+    /// </summary>
+    public string LastActiveLine { get; }
 
     /// <summary>The "Admin" tag.</summary>
     public bool IsAdminRow { get; }
