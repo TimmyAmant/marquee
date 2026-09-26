@@ -23,7 +23,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource OwnedBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource OwnedBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource OwnedBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="OwnedText"
@@ -37,7 +37,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource DownloadingBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource DownloadingBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource DownloadingBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="DownloadingText"
@@ -51,7 +51,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource MissingBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource MissingBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="MissingText"
@@ -65,7 +65,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource UnmonitoredBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource UnmonitoredBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource UnmonitoredBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="UnmonitoredText"
@@ -79,7 +79,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource SoonBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource SoonBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource SoonBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="SoonText"
@@ -93,7 +93,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource InfoBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource InfoBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource InfoBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="InfoText"
@@ -107,7 +107,7 @@
             Padding="8,2"
             CornerRadius="10"
             Background="{ThemeResource NeutralBadgeBackgroundBrush}"
-            BorderBrush="{ThemeResource NeutralBadgeForegroundBrush}"
+            BorderBrush="{ThemeResource NeutralBadgeBorderBrush}"
             BorderThickness="1">
             <TextBlock
                 x:Name="NeutralText"
