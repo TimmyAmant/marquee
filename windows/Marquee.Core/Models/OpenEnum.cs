@@ -374,8 +374,11 @@ public readonly record struct IntegrationProvider(string Value) : IOpenEnum<Inte
     public static readonly IntegrationProvider Discord = new("discord");
     public static readonly IntegrationProvider Ntfy = new("ntfy");
     public static readonly IntegrationProvider Webhook = new("webhook");
+    public static readonly IntegrationProvider Telegram = new("telegram");
+    public static readonly IntegrationProvider Pushover = new("pushover");
+    public static readonly IntegrationProvider Email = new("email");
 
-    public static IReadOnlyList<IntegrationProvider> Known { get; } = [Plex, Jellyfin, Sonarr, Radarr, Tmdb, Trakt, Tvdb, Discord, Ntfy, Webhook];
+    public static IReadOnlyList<IntegrationProvider> Known { get; } = [Plex, Jellyfin, Sonarr, Radarr, Tmdb, Trakt, Tvdb, Discord, Ntfy, Webhook, Telegram, Pushover, Email];
     public static IntegrationProvider FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -394,6 +397,9 @@ public readonly record struct IntegrationProvider(string Value) : IOpenEnum<Inte
             if (this == Discord) return "Discord";
             if (this == Ntfy) return "ntfy";
             if (this == Webhook) return "Webhook";
+            if (this == Telegram) return "Telegram";
+            if (this == Pushover) return "Pushover";
+            if (this == Email) return "Email";
             return OpenEnum.Capitalized(Value);
         }
     }

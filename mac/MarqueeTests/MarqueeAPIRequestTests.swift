@@ -182,6 +182,25 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "DELETE", path: "/settings/integrations/discord", response: "ok") { try await $0.integrations.discord.remove() },
             Case(method: "PUT", path: "/settings/integrations/ntfy", body: #"{"topicUrl":"https://ntfy.sh/t"}"#, response: "ok") { try await $0.integrations.ntfy.save("https://ntfy.sh/t") },
             Case(method: "DELETE", path: "/settings/integrations/ntfy", response: "ok") { try await $0.integrations.ntfy.remove() },
+            Case(method: "PUT", path: "/settings/integrations/telegram", body: #"{"botToken":"","chatId":"-1001234567890"}"#, response: "ok") {
+                try await $0.integrations.telegram.save(botToken: "", chatId: "-1001234567890")
+            },
+            Case(method: "DELETE", path: "/settings/integrations/telegram", response: "ok") { try await $0.integrations.telegram.remove() },
+            Case(method: "PUT", path: "/settings/integrations/pushover", body: #"{"appToken":"a","userKey":"u"}"#, response: "ok") {
+                try await $0.integrations.pushover.save(appToken: "a", userKey: "u")
+            },
+            Case(method: "DELETE", path: "/settings/integrations/pushover", response: "ok") { try await $0.integrations.pushover.remove() },
+            Case(
+                method: "PUT", path: "/settings/integrations/email",
+                body: #"{"host":"smtp.gmail.com","port":587,"secure":false,"username":"me@gmail.com","password":"","from":"me@gmail.com","to":["me@gmail.com","partner@example.com"]}"#,
+                response: "ok"
+            ) {
+                try await $0.integrations.email.save(API.EmailRequest(
+                    host: "smtp.gmail.com", port: 587, secure: false, username: "me@gmail.com", password: "",
+                    from: "me@gmail.com", to: ["me@gmail.com", "partner@example.com"]
+                ))
+            },
+            Case(method: "DELETE", path: "/settings/integrations/email", response: "ok") { try await $0.integrations.email.remove() },
             Case(method: "PUT", path: "/settings/integrations/webhook", body: #"{"webhookUrl":"https://example.com/hook"}"#, response: "ok") {
                 try await $0.integrations.webhook.save("https://example.com/hook")
             },
@@ -197,8 +216,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 85, "docs/api-v1.md documents 85 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 85, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 91, "docs/api-v1.md documents 91 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 91, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

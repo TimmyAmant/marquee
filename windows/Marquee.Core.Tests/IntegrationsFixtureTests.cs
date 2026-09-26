@@ -51,10 +51,57 @@ public sealed class IntegrationsFixtureTests
         Assert.False(overview.Ntfy.Connected);
         Assert.False(overview.GenericWebhook.Connected);
 
+        Assert.True(overview.HasNotificationChannels);
+        Assert.True(overview.Telegram!.Connected);
+        Assert.Equal("-1001234567890", overview.Telegram.ChatId);
+        Assert.False(overview.Pushover!.Connected);
+        var email = overview.Email!;
+        Assert.True(email.Connected);
+        Assert.Equal("smtp.gmail.com", email.Host);
+        Assert.Equal(587, email.Port);
+        Assert.False(email.Secure);
+        Assert.Equal("me@gmail.com", email.Username);
+        Assert.Equal("me@gmail.com", email.From);
+        Assert.Equal(["me@gmail.com", "partner@example.com"], email.To);
+
         Assert.Equal("d8a989b4f0ad05fab2ab959bf0d5615adb0a25a9a3974674", overview.ArrWebhooks.Secret);
         Assert.StartsWith("http://marquee.local:3000/api/webhooks/radarr/", overview.ArrWebhooks.RadarrUrl, StringComparison.Ordinal);
         Assert.Equal(overview.ArrWebhooks.SonarrUrl, overview.ArrWebhooks.Url(ArrProvider.Sonarr));
         Assert.Equal(overview.ArrWebhooks.RadarrUrl, overview.ArrWebhooks.Url(ArrProvider.Radarr));
+    }
+
+    [Fact]
+    public void OlderServerWithoutTelegramPushoverOrEmailDecodes()
+    {
+        // A server older than 0.36 sends none of the three.
+        var json = System.Text.Json.Nodes.JsonNode.Parse(Fixtures.Read("integrations"))!.AsObject();
+        json.Remove("telegram");
+        json.Remove("pushover");
+        json.Remove("email");
+
+        var overview = Json.Decode<IntegrationsOverview>(json.ToJsonString());
+
+        Assert.Null(overview.Telegram);
+        Assert.Null(overview.Pushover);
+        Assert.Null(overview.Email);
+        Assert.False(overview.HasNotificationChannels);
+        Assert.False(overview.Ntfy.Connected);
+    }
+
+    [Fact]
+    public void DisconnectedChannelsDecodeWithoutTheirDetails()
+    {
+        var overview = Json.Decode<IntegrationsOverview>(
+            Fixtures.Read("integrations")
+                .Replace("\"chatId\": \"-1001234567890\"", "\"chatId\": null", StringComparison.Ordinal));
+        Assert.Null(overview.Telegram!.ChatId);
+
+        var email = Json.Decode<EmailSettings>("""{"connected":false}""");
+        Assert.False(email.Connected);
+        Assert.Null(email.Host);
+        Assert.Null(email.Port);
+        Assert.False(email.Secure);
+        Assert.Empty(email.To);
     }
 
     [Fact]
@@ -167,6 +214,11 @@ public sealed class IntegrationsFixtureTests
         Assert.Equal("""{"topicUrl":"https://ntfy.sh/t"}""", Json.EncodeBodyToString(new NtfySettingRequest("https://ntfy.sh/t")));
         Assert.Equal("""{"webhookUrl":"https://example.com/hook"}""", Json.EncodeBodyToString(new WebhookSettingRequest("https://example.com/hook")));
         Assert.Equal("""{"url":"https://trakt.tv/users/u/watchlist"}""", Json.EncodeBodyToString(new TraktImportRequest("https://trakt.tv/users/u/watchlist")));
+        Assert.Equal("""{"botToken":"","chatId":"-100123"}""", Json.EncodeBodyToString(new TelegramSettingRequest("", "-100123")));
+        Assert.Equal("""{"appToken":"a","userKey":"u"}""", Json.EncodeBodyToString(new PushoverSettingRequest("a", "u")));
+        Assert.Equal(
+            """{"host":"smtp.gmail.com","port":465,"secure":true,"username":"","password":"","from":"me@gmail.com","to":["me@gmail.com","b@example.com"]}""",
+            Json.EncodeBodyToString(new EmailSettingRequest("smtp.gmail.com", 465, true, "", "", "me@gmail.com", ["me@gmail.com", "b@example.com"])));
     }
 
     [Fact]
@@ -175,6 +227,9 @@ public sealed class IntegrationsFixtureTests
         Assert.Equal("sonarr", MarqueeApi.Segment(ArrProvider.Sonarr));
         Assert.Equal("radarr", MarqueeApi.Segment(ArrProvider.Radarr));
         Assert.Equal("tmdb", MarqueeApi.Segment(IntegrationProvider.Tmdb));
+        Assert.Equal("telegram", MarqueeApi.Segment(IntegrationProvider.Telegram));
+        Assert.Equal("pushover", MarqueeApi.Segment(IntegrationProvider.Pushover));
+        Assert.Equal("email", MarqueeApi.Segment(IntegrationProvider.Email));
         Assert.Equal(8989, ArrProvider.Sonarr.DefaultPort);
         Assert.Equal(MediaType.Movie, ArrProvider.Radarr.MediaType);
     }

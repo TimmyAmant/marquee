@@ -77,6 +77,18 @@ public sealed class MarqueeApiIntegrationsRequestTests
         new("PUT", "/settings/integrations/webhook", """{"webhookUrl":"https://example.com/hook"}""", "ok", ServerChange.Integrations,
             api => api.Integrations.Webhook.SaveAsync("https://example.com/hook")),
         new("DELETE", "/settings/integrations/webhook", null, "ok", ServerChange.Integrations, api => api.Integrations.Webhook.RemoveAsync()),
+        new("PUT", "/settings/integrations/telegram", """{"botToken":"123456789:AAx","chatId":"-1001234567890"}""", "ok", ServerChange.Integrations,
+            api => api.Integrations.Telegram.SaveAsync(new TelegramSettingRequest("123456789:AAx", "-1001234567890"))),
+        new("DELETE", "/settings/integrations/telegram", null, "ok", ServerChange.Integrations, api => api.Integrations.Telegram.RemoveAsync()),
+        new("PUT", "/settings/integrations/pushover", """{"appToken":"","userKey":"uQiRzpo4DXghDmr9QzzfQu27cmVRsG"}""", "ok", ServerChange.Integrations,
+            api => api.Integrations.Pushover.SaveAsync(new PushoverSettingRequest("", "uQiRzpo4DXghDmr9QzzfQu27cmVRsG"))),
+        new("DELETE", "/settings/integrations/pushover", null, "ok", ServerChange.Integrations, api => api.Integrations.Pushover.RemoveAsync()),
+        new("PUT", "/settings/integrations/email",
+            """{"host":"smtp.gmail.com","port":587,"secure":false,"username":"me@gmail.com","password":"","from":"me@gmail.com","to":["me@gmail.com","partner@example.com"]}""",
+            "ok", ServerChange.Integrations,
+            api => api.Integrations.Email.SaveAsync(new EmailSettingRequest(
+                "smtp.gmail.com", 587, false, "me@gmail.com", "", "me@gmail.com", ["me@gmail.com", "partner@example.com"]))),
+        new("DELETE", "/settings/integrations/email", null, "ok", ServerChange.Integrations, api => api.Integrations.Email.RemoveAsync()),
     ];
 
     public static TheoryData<string> CaseNames
@@ -95,8 +107,8 @@ public sealed class MarqueeApiIntegrationsRequestTests
     [Fact]
     public void EveryCaseCoversADifferentEndpoint()
     {
-        // Section 12 documents 29 endpoints (the Sonarr/Radarr four count twice).
-        Assert.Equal(29, Cases.Length);
+        // Section 12 documents 35 endpoints (the Sonarr/Radarr four count twice).
+        Assert.Equal(35, Cases.Length);
         Assert.Equal(Cases.Length, Cases.Select(testCase => testCase.Name).Distinct(StringComparer.Ordinal).Count());
     }
 
@@ -254,6 +266,25 @@ public sealed class MarqueeApiIntegrationsRequestTests
         Assert.Equal(ApiErrorKind.Invalid, error.Kind);
         Assert.Equal("Enter an access token.", error.Message);
         Assert.Equal(0, events.Revision(ServerChange.All));
+    }
+
+    [Fact]
+    public async Task RejectedChannelIsInvalidWithTheServersMessage()
+    {
+        var stub = new StubHttpMessageHandler();
+        stub.AnswerJson(400, """{"error":"Telegram didn't take the test message: chat not found","code":"invalid"}""");
+        var events = new ServerEvents();
+        var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub), events);
+
+        var error = await Assert.ThrowsAsync<ApiException>(
+            () => api.Integrations.Telegram.SaveAsync(new TelegramSettingRequest("", "-100")));
+
+        Assert.Equal(ApiErrorKind.Invalid, error.Kind);
+        Assert.Equal("Telegram didn't take the test message: chat not found", error.Message);
+        Assert.Equal(0, events.Revision(ServerChange.All));
+        Assert.Equal(IntegrationProvider.Telegram, api.Integrations.Telegram.Provider);
+        Assert.Equal(IntegrationProvider.Pushover, api.Integrations.Pushover.Provider);
+        Assert.Equal(IntegrationProvider.Email, api.Integrations.Email.Provider);
     }
 
     [Fact]

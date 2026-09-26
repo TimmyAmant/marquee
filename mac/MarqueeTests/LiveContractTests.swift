@@ -445,11 +445,24 @@ final class LiveContractTests: XCTestCase {
         await assertThrowsAPIError(.invalid("Enter a valid URL, starting with http:// or https://.")) {
             try await self.admin.integrations.webhook.save("nope")
         }
+        await assertThrowsAPIError(.invalid("Enter the chat ID to send to.")) {
+            try await self.admin.integrations.telegram.save(botToken: "123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", chatId: "")
+        }
+        await assertThrowsAPIError(nil, message: "pushover save") {
+            try await self.admin.integrations.pushover.save(appToken: "short", userKey: "short")
+        }
+        await assertThrowsAPIError(.invalid("Enter at least one address to send to.")) {
+            try await self.admin.integrations.email.save(API.EmailRequest(
+                host: "smtp.example.com", port: 587, secure: false, username: "", password: "", from: "me@example.com", to: []
+            ))
+        }
         await assertThrowsAPIError(.conflict("Connect Trakt in Settings first.")) {
             _ = try await self.admin.integrations.trakt.importList(url: "https://trakt.tv/users/someone/watchlist")
         }
         for setting in [admin.integrations.trakt.remove, admin.integrations.tvdb.remove,
                         admin.integrations.discord.remove, admin.integrations.ntfy.remove,
+                        admin.integrations.telegram.remove, admin.integrations.pushover.remove,
+                        admin.integrations.email.remove,
                         admin.integrations.webhook.remove] {
             try await setting()
         }
@@ -769,6 +782,9 @@ final class RecordingURLProtocol: URLProtocol {
         ("PUT", "/settings/integrations/tvdb"), ("DELETE", "/settings/integrations/tvdb"),
         ("PUT", "/settings/integrations/discord"), ("DELETE", "/settings/integrations/discord"),
         ("PUT", "/settings/integrations/ntfy"), ("DELETE", "/settings/integrations/ntfy"),
+        ("PUT", "/settings/integrations/telegram"), ("DELETE", "/settings/integrations/telegram"),
+        ("PUT", "/settings/integrations/pushover"), ("DELETE", "/settings/integrations/pushover"),
+        ("PUT", "/settings/integrations/email"), ("DELETE", "/settings/integrations/email"),
         ("PUT", "/settings/integrations/webhook"), ("DELETE", "/settings/integrations/webhook"),
         ("GET", "/settings/jobs"), ("POST", "/settings/jobs/{id}/run"),
         ("GET", "/settings/about"), ("GET", "/changelog"), ("GET", "/help/errors"),

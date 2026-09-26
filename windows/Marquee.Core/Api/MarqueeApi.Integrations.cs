@@ -77,6 +77,42 @@ public sealed class IntegrationsEndpoints(MarqueeApi.Transport transport)
     /// <summary>The generic JSON webhook. Body <c>{webhookUrl}</c>: posts a test request before saving.</summary>
     public IntegrationSettingEndpoints Webhook =>
         new(transport, IntegrationProvider.Webhook, value => new WebhookSettingRequest(value), ServerChange.Integrations);
+
+    /// <summary>Body <c>{botToken, chatId}</c> (0.36+): sends a test message before saving.</summary>
+    public NotificationChannelEndpoints<TelegramSettingRequest> Telegram => new(transport, IntegrationProvider.Telegram);
+
+    /// <summary>Body <c>{appToken, userKey}</c> (0.36+): sends a test notification before saving.</summary>
+    public NotificationChannelEndpoints<PushoverSettingRequest> Pushover => new(transport, IntegrationProvider.Pushover);
+
+    /// <summary>Body <c>{host, port, secure, username, password, from, to}</c> (0.36+): sends a test email before saving.</summary>
+    public NotificationChannelEndpoints<EmailSettingRequest> Email => new(transport, IntegrationProvider.Email);
+}
+
+/// <summary>
+/// A household-wide notification relay with several fields (Telegram,
+/// Pushover, email): <c>PUT</c> tests and saves, <c>DELETE</c> removes. A
+/// blank secret in the body keeps the saved one.
+/// </summary>
+public sealed class NotificationChannelEndpoints<TRequest>(MarqueeApi.Transport transport, IntegrationProvider provider)
+    where TRequest : class
+{
+    public IntegrationProvider Provider => provider;
+
+    private string Path => $"/settings/integrations/{MarqueeApi.Segment(provider)}";
+
+    /// <summary>
+    /// <c>PUT</c>: "Test &amp; save". Invalid with the server's message when
+    /// a field is wrong or the service didn't take the test ("Telegram didn't
+    /// take the test message: chat not found", ...).
+    /// </summary>
+    public Task SaveAsync(TRequest request, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Put, Path, body: request,
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Integrations, ct: ct);
+
+    /// <summary><c>DELETE</c>: stops relaying there and forgets the saved settings.</summary>
+    public Task RemoveAsync(CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(HttpMethod.Delete, Path, changes: ServerChange.Integrations, ct: ct);
 }
 
 /// <summary><c>/settings/integrations/{sonarr|radarr}</c> (default ports 8989 / 7878).</summary>
