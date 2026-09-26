@@ -310,16 +310,36 @@ function hashCode(channelId: string, code: string): string {
   return createHash("sha256").update(`${channelId}:${code}`).digest("hex");
 }
 
-async function sendVerificationCode(row: Pick<ChannelRow, "id">, address: string): Promise<CoreResult> {
+/** Email always, and a Telegram chat ID typed in by hand, have to prove
+ * they're yours: the chat could be anyone who ever pressed Start on the
+ * household bot. (The one-tap Telegram link proves it by itself.) */
+function needsCode(config: PersonalChannelConfig): config is Extract<PersonalChannelConfig, { kind: "email" | "telegram" }> {
+  return config.kind === "email" || config.kind === "telegram";
+}
+
+async function sendVerificationCode(
+  row: Pick<ChannelRow, "id">,
+  config: Extract<PersonalChannelConfig, { kind: "email" | "telegram" }>,
+): Promise<CoreResult> {
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  const household = await getChannelConfig("email");
-  if (!household) return fail("conflict", "Email isn't set up on this server. Ask the admin to add a mail server.");
-  const sent = await deliverEmail(
-    { ...household, to: [address] },
-    `Your Marquee confirmation code: ${code}`,
-    `Your code is ${code}\n\nEnter it in Marquee (Settings › Account › Notifications) to get notifications at this address. It works for 30 minutes.\n\nIf you didn't ask for this, ignore this email — nothing more will be sent.\n\n— Marquee`,
-  );
-  if (!sent.ok) return fail("invalid", `The confirmation email didn't go through: ${sent.error}`);
+  if (config.kind === "email") {
+    const household = await getChannelConfig("email");
+    if (!household) return fail("conflict", "Email isn't set up on this server. Ask the admin to add a mail server.");
+    const sent = await deliverEmail(
+      { ...household, to: [config.address] },
+      `Your Marquee confirmation code: ${code}`,
+      `Your code is ${code}\n\nEnter it in Marquee (Settings › Account › Notifications) to get notifications at this address. It works for 30 minutes.\n\nIf you didn't ask for this, ignore this email — nothing more will be sent.\n\n— Marquee`,
+    );
+    if (!sent.ok) return fail("invalid", `The confirmation email didn't go through: ${sent.error}`);
+  } else {
+    const household = await getChannelConfig("telegram");
+    if (!household) return fail("conflict", "Telegram isn't set up on this server. Ask the admin to add a Telegram bot.");
+    const sent = await deliverTelegram(
+      { botToken: household.botToken, chatId: config.chatId },
+      `Your Marquee confirmation code is ${code}. Enter it in Marquee (Settings › Account › Notifications) within 30 minutes. If you didn't ask for this, ignore it.`,
+    );
+    if (!sent.ok) return fail("invalid", `The code didn't reach that chat: ${sent.error}`);
+  }
   await db
     .update(userNotificationChannels)
     .set({ verifyCodeHash: hashCode(row.id, code), verifyExpiresAt: new Date(Date.now() + VERIFY_TTL_MS), verifyAttempts: 0 })
@@ -343,12 +363,14 @@ async function kindUnavailable(kind: UserNotificationChannelKind): Promise<strin
 
 /**
  * Adds a channel. A test message goes out first and it's saved only if that
- * arrives — except email, which instead gets a confirmation code and sends
- * nothing else until the code is entered.
+ * arrives — except email and a hand-typed Telegram chat, which instead get
+ * a confirmation code and nothing else until the code is entered.
  */
 export async function createChannel(
   actor: Actor,
   input: { kind?: unknown; name?: unknown; enabled?: unknown; config?: unknown },
+  /** The chat was found through the one-tap Telegram link: already proven. */
+  options: { proven?: boolean } = {},
 ): Promise<CoreResult<{ channel: PersonalChannel }>> {
   if (!isChannelKind(input.kind)) return fail("invalid", '"kind" must be telegram, pushover, email, discord, ntfy or webhook.');
   const kind = input.kind;
@@ -375,8 +397,9 @@ export async function createChannel(
   const parsed = parsePersonalConfig(kind, raw, null, await configContext(actor));
   if (!parsed.ok) return fail("invalid", parsed.error);
   const config = parsed.config;
+  const confirm = needsCode(config) && !options.proven;
 
-  if (kind !== "email") {
+  if (!confirm) {
     const test = await sendThrough(config, TEST_MESSAGE, actor);
     if (!test.ok) return fail("invalid", `The test message didn't arrive: ${test.error}`);
   }
@@ -390,13 +413,13 @@ export async function createChannel(
       target: maskedTarget(config),
       ...sealConfig(config),
       enabled: input.enabled === false ? false : true,
-      verified: kind !== "email",
-      lastSuccessAt: kind === "email" ? null : new Date(),
+      verified: !confirm,
+      lastSuccessAt: confirm ? null : new Date(),
     })
     .returning();
 
-  if (config.kind === "email") {
-    const sent = await sendVerificationCode(row, config.address);
+  if (confirm && needsCode(config)) {
+    const sent = await sendVerificationCode(row, config);
     if (!sent.ok) {
       await db.delete(userNotificationChannels).where(eq(userNotificationChannels.id, row.id));
       return sent;
@@ -427,7 +450,7 @@ export async function updateChannel(
     set.enabled = input.enabled;
   }
 
-  let newEmail: string | null = null;
+  let toConfirm: Extract<PersonalChannelConfig, { kind: "email" | "telegram" }> | null = null;
   if (input.config !== undefined) {
     const raw = input.config && typeof input.config === "object" && !Array.isArray(input.config) ? (input.config as Record<string, unknown>) : null;
     if (!raw) return fail("invalid", '"config" must be an object.');
@@ -439,8 +462,8 @@ export async function updateChannel(
     const before = readConfig(row);
     const changed = JSON.stringify(before) !== JSON.stringify(config);
     if (changed) {
-      if (config.kind === "email") {
-        newEmail = config.address;
+      if (needsCode(config)) {
+        toConfirm = config;
         set.verified = false;
       } else {
         if (!checkRateLimit(`personal-channel-add:${actor.id}`, 10, 10 * 60 * 1000)) {
@@ -456,11 +479,11 @@ export async function updateChannel(
     }
   }
 
-  if (newEmail) {
+  if (toConfirm) {
     if (!checkRateLimit(`personal-channel-code:${row.id}`, 3, 10 * 60 * 1000)) {
       return fail("rate_limited", "A code was sent a moment ago. Try again in a few minutes.");
     }
-    const sent = await sendVerificationCode(row, newEmail);
+    const sent = await sendVerificationCode(row, toConfirm);
     if (!sent.ok) return sent;
   }
 
@@ -485,7 +508,7 @@ export async function deleteChannel(userId: string, id: string): Promise<CoreRes
 export async function testChannel(actor: Actor, id: string): Promise<CoreResult<{ channel: PersonalChannel }>> {
   const row = await ownRow(actor.id, id);
   if (!row) return fail("not_found", NOT_FOUND);
-  if (!row.verified) return fail("conflict", "Enter the code we emailed first.");
+  if (!row.verified) return fail("conflict", "Enter the code we sent first.");
   const config = readConfig(row);
   if (!config) return fail("conflict", "This channel's details can't be read any more. Enter them again.");
   if (!checkRateLimit(`personal-channel-test:${actor.id}`, 5, 60 * 1000)) {
@@ -502,7 +525,7 @@ export async function verifyChannel(userId: string, id: string, rawCode: unknown
   if (!row) return fail("not_found", NOT_FOUND);
   if (row.verified) return { ok: true, channel: toChannel(row) };
   const code = typeof rawCode === "string" ? rawCode.replace(/\s+/g, "") : "";
-  if (!/^\d{6}$/.test(code)) return fail("invalid", "The code is the 6 digits in the email.");
+  if (!/^\d{6}$/.test(code)) return fail("invalid", "The code is the 6 digits we sent.");
   if (!row.verifyCodeHash || !row.verifyExpiresAt || row.verifyExpiresAt < new Date()) {
     return fail("expired", "That code has expired. Send a new one.");
   }
@@ -514,7 +537,7 @@ export async function verifyChannel(userId: string, id: string, rawCode: unknown
       .update(userNotificationChannels)
       .set({ verifyAttempts: row.verifyAttempts + 1 })
       .where(eq(userNotificationChannels.id, row.id));
-    return fail("invalid", "That code isn't right. Check the email and try again.");
+    return fail("invalid", "That code isn't right. Check it and try again.");
   }
   const [updated] = await db
     .update(userNotificationChannels)
@@ -527,13 +550,13 @@ export async function verifyChannel(userId: string, id: string, rawCode: unknown
 export async function resendVerification(userId: string, id: string): Promise<CoreResult<{ channel: PersonalChannel }>> {
   const row = await ownRow(userId, id);
   if (!row) return fail("not_found", NOT_FOUND);
-  if (row.verified) return fail("conflict", "This address is already confirmed.");
+  if (row.verified) return fail("conflict", "This channel is already confirmed.");
   const config = readConfig(row);
-  if (config?.kind !== "email") return fail("conflict", "Only email addresses need confirming.");
+  if (!config || !needsCode(config)) return fail("conflict", "This channel doesn't need confirming.");
   if (!checkRateLimit(`personal-channel-code:${row.id}`, 3, 10 * 60 * 1000)) {
     return fail("rate_limited", "A code was sent a moment ago. Try again in a few minutes.");
   }
-  const sent = await sendVerificationCode(row, config.address);
+  const sent = await sendVerificationCode(row, config);
   if (!sent.ok) return sent;
   return { ok: true, channel: toChannel((await ownRow(userId, id))!) };
 }
@@ -587,8 +610,9 @@ export async function pollTelegramLink(
     return fail("conflict", "The household bot can't be checked from here (it uses a webhook). Enter your chat ID instead.");
   }
   if (found.status === "pending") return { ok: true, status: "pending" };
-  telegramLinks.delete(code as string);
-  const created = await createChannel(actor, { kind: "telegram", name, config: { chatId: found.chatId } });
+  // Two polls can both see it; only the one that takes the code adds it.
+  if (!telegramLinks.delete(code as string)) return fail("expired", "That link has already been used.");
+  const created = await createChannel(actor, { kind: "telegram", name, config: { chatId: found.chatId } }, { proven: true });
   if (!created.ok) return created;
   return { ok: true, status: "connected", channel: created.channel };
 }

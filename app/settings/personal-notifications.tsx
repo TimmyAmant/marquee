@@ -195,7 +195,7 @@ function ChannelRow({
             run(() => verifyChannelAction(channel.id, code), "Confirmed. Notifications will go to this address.");
           }}
         >
-          <span className="text-xs text-text-secondary">We emailed a 6-digit code to {channel.target}.</span>
+          <span className="text-xs text-text-secondary">{channel.kind === "telegram" ? "The bot sent a 6-digit code to your Telegram chat." : `We emailed a 6-digit code to ${channel.target}.`}</span>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -304,7 +304,13 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
       return;
     }
     formRef.current?.reset();
-    setNotice(kind === "email" ? "Check your inbox for the code." : "Added. A test message is on its way.");
+    setNotice(
+      kind === "email"
+        ? "Check your inbox for the code."
+        : kind === "telegram"
+          ? "Check Telegram: the bot sent you a code to enter above."
+          : "Added. A test message is on its way.",
+    );
     onAdded();
   }
 
@@ -335,6 +341,8 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
   }
 
   if (kinds.length === 0) return null;
+  // Email and a typed-in Telegram chat are confirmed with a code first.
+  const sendsCode = kind === "email" || kind === "telegram";
   const fields = fieldsFor(kind, available, ntfyMode);
 
   return (
@@ -408,12 +416,12 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
         {error && <p className="text-xs text-red-400">{error}</p>}
         {notice && <p className="text-xs text-owned">{notice}</p>}
         <button type="submit" disabled={busy} className={`${primaryButton} self-start`}>
-          {busy ? (kind === "email" ? "Sending code…" : "Testing…") : kind === "email" ? "Send code" : "Test & add"}
+          {busy ? (sendsCode ? "Sending code…" : "Testing…") : sendsCode ? "Send code" : "Test & add"}
         </button>
       </form>
       {missing.length > 0 && (
         <p className="mt-4 text-xs text-text-muted">
-          {missing.map((k) => KIND_LABEL[k]).join(", ")} can be added once the admin sets {missing.length === 1 ? "it" : "them"} up
+          {missing.map((k) => KIND_LABEL[k]).join(", ").replace(/, ([^,]*)$/, " and $1")} can be added once the admin sets {missing.length === 1 ? "it" : "them"} up
           for the household.
         </p>
       )}

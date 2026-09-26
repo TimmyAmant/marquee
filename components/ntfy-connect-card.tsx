@@ -16,7 +16,7 @@ export function NtfyConnectCard({ connected }: { connected: boolean }) {
           <h3 className="font-display text-xl text-text-primary">ntfy notifications</h3>
           <p className="mt-1 text-xs text-text-muted">
             Sends a push notification to your phone or desktop via ntfy.sh (or a self-hosted ntfy
-            server) whenever something is grabbed, downloaded, or a request is approved/rejected.
+            server) for the events picked above. Members can pick their own topic on this server.
           </p>
         </div>
         {isConnected && (

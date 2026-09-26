@@ -1872,8 +1872,10 @@ Each channel: `kind` is `telegram`, `pushover`, `email`, `discord`, `ntfy`
 or `webhook` (treat any other as unknown and show it read-only). `target`:
 where it goes, **masked** — webhook URLs, ntfy topics and Pushover keys are
 secrets and the API never returns them (email addresses are shown whole).
-`enabled`: off, it gets nothing. `verified`: false for an email address
-until its code is entered; it gets nothing else until then. `lastError` /
+`enabled`: off, it gets nothing. `verified`: false for an email address,
+or a Telegram chat ID typed in by hand, until the 6-digit code sent there
+is entered; it gets nothing else until then (the chat could otherwise be
+anyone who ever pressed Start on the household bot). `lastError` /
 `lastErrorAt`: why the last delivery failed (the service's own words, e.g.
 "Forbidden: bot was blocked by the user", or "Some notifications were
 skipped: more than 30 in 10 minutes."), cleared by the next one that
@@ -1890,8 +1892,8 @@ account.
   household server or `{ "url": "https://ntfy.sh/…" }`; `webhook` `{ "url":
   "https://…" }`. A test message is sent first and the channel is saved only
   if it arrives: `201` with the channel, or `400 invalid` with the reason
-  ("The test message didn't arrive: HTTP 404"). Email instead gets a 6-digit
-  code (`201`, `verified: false`). Webhook and ntfy URLs must be on the
+  ("The test message didn't arrive: HTTP 404"). Email and Telegram instead
+  get a 6-digit code (`201`, `verified: false`; the bot sends Telegram's). Webhook and ntfy URLs must be on the
   internet, not the home network (unless `homeNetwork`): `400` "Marquee only
   sends to addresses on the internet, not the home network." — checked
   again on every connection, and redirects aren't followed. `409 conflict`
@@ -1900,16 +1902,17 @@ account.
 - **`PATCH /me/notification-channels/{id}`** — `{ "name"?, "enabled"?,
   "config"? }`. New details are tested the same way before they're kept; a
   secret left out or blank keeps the saved one. A new email address goes
-  back to `verified: false` with a new code. `200` channel.
+  (or Telegram chat) goes back to `verified: false` with a new code. `200`
+  channel.
 - **`DELETE /me/notification-channels/{id}`** — `{ "ok": true }`.
 - **`POST /me/notification-channels/{id}/test`** — "Send a test". `200`
   channel (with `lastSuccessAt` updated), or `400` with the reason (also
-  kept as `lastError`). `409` for an unconfirmed email; `429` after 5 a
-  minute.
+  kept as `lastError`). `409` for a channel not yet confirmed; `429` after
+  5 a minute.
 - **`POST /me/notification-channels/{id}/verify`** — `{ "code": "123456" }`.
   `200` channel, now `verified`. `400` wrong code, `410 expired` after 30
   minutes, `429` after 5 wrong tries — send a new one.
-- **`POST /me/notification-channels/{id}/resend-code`** — emails a new code.
+- **`POST /me/notification-channels/{id}/resend-code`** — sends a new code.
   `200` channel; `429` after 3 in 10 minutes.
 - **`POST /me/notification-channels/telegram-link`** — no body. One-tap
   Telegram: `{ "code": "…", "url": "https://t.me/MarqueeHomeBot?start=…",
@@ -1917,7 +1920,8 @@ account.
   bot `/start <code>`.
 - **`POST /me/notification-channels/telegram-link/poll`** — `{ "code": "…",
   "name"?: "…" }`. `202 { "status": "pending" }` until the bot has seen it,
-  then `201` with the new channel (after its test message). Poll every few
+  then `201` with the new channel (after its test message; no code needed,
+  since pressing Start proved the chat is yours). Poll every few
   seconds. `410 expired` after 10 minutes; `409` when the household bot
   hands its messages to a webhook of its own, so they can't be read — enter
   the chat ID instead.

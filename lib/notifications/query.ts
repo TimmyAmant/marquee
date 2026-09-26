@@ -76,7 +76,9 @@ export async function createNotification(input: {
   // defaults are what everyone had before there were choices.
   const overrides = await loadBellPushOverrides(input.userId).catch(() => ({}));
   const { inApp, push } = bellAndPushFor(overrides, event);
-  const values = { ...row, inBell: inApp, alert: push };
+  // One kept out of the bell starts out read, so the cleanup job
+  // (lib/jobs/cleanup.ts) clears it away like any other read one.
+  const values = { ...row, inBell: inApp, alert: push, ...(inApp ? {} : { read: true }) };
   // Saved even when it's neither in the bell nor pushed: that's how a
   // repeat (the next episode of a season pack) is recognised.
   const saved = dedupeSince ? await insertUnlessRecent(values, dedupeSince) : await insertNotification(values);

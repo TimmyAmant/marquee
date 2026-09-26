@@ -70,7 +70,7 @@ describe("createNotification", () => {
   it("still saves it (for repeats) but neither lists nor pushes it when both are off", async () => {
     overrides.value = { request_approved: { inApp: false, push: false } };
     await createNotification(base);
-    expect(inserted[0]).toMatchObject({ inBell: false, alert: false });
+    expect(inserted[0]).toMatchObject({ inBell: false, alert: false, read: true });
     expect(effects.published).toEqual([]);
     expect(effects.pushed).toEqual([]);
     // Personal channels are their own choice.

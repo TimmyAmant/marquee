@@ -18,9 +18,8 @@ export function WebhookConnectCard({ connected }: { connected: boolean }) {
         <div>
           <h3 className="font-display text-xl text-text-primary">Custom webhook</h3>
           <p className="mt-1 text-xs text-text-muted">
-            Posts a JSON payload ({"{ event, title, message }"}) to any URL whenever something is
-            grabbed, downloaded, or a request is approved/rejected — for your own automation or a
-            self-hosted notification gateway.
+            Posts a JSON payload ({"{ event, title, message }"}) to any URL for the events picked
+            above — for your own automation or a self-hosted notification gateway.
           </p>
         </div>
         {isConnected && (
