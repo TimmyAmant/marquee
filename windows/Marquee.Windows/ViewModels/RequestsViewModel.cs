@@ -233,6 +233,156 @@ public sealed partial class PendingRow : ObservableObject
 }
 
 /// <summary>
+/// components/issues-section.tsx's card: one problem report. Open ones have
+/// "Search again", "Mark fixed" (which opens a note field and its own "Mark
+/// fixed") and "Remove" for the admin, "Withdraw" for the member's own.
+/// </summary>
+public sealed partial class IssueRow : ObservableObject
+{
+    public const string SearchingMessage = "Searching for another copy…";
+
+    private readonly RequestsViewModel owner;
+    private readonly Uri? posterUrl;
+    private readonly bool isAdmin;
+    private readonly bool isMine;
+    private ImageSource? poster;
+
+    /// <summary>"search", "resolve" or "delete" while that call is in flight.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanAct))]
+    [NotifyPropertyChangedFor(nameof(SearchLabel))]
+    [NotifyPropertyChangedFor(nameof(ResolveLabel))]
+    private string? busy;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
+    private string? error;
+
+    /// <summary>"Searching for another copy…" after Search again.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInfo))]
+    private string? info;
+
+    /// <summary>The note field and its "Mark fixed" are open.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsAdminActions))]
+    private bool isResolving;
+
+    /// <summary>The note for the reporter (optional, up to 500 characters).</summary>
+    [ObservableProperty]
+    private string note = "";
+
+    public IssueRow(RequestsViewModel owner, Issue issue, bool isAdmin, System.Windows.Input.ICommand openTitle)
+    {
+        this.owner = owner;
+        this.isAdmin = isAdmin;
+        isMine = issue.IsMine;
+        Id = issue.Id;
+        Title = issue.Title;
+        TitleId = issue.TitleId;
+        IsOpen = issue.IsOpen;
+        EpisodeLabel = issue.EpisodeLabel.NonBlank() ?? "";
+        // "Audio problem · Member · Sep 26, 2026": the reporter only for the admin.
+        MetaLine = string.Join(" · ", new[]
+        {
+            issue.KindText,
+            isAdmin ? issue.ReportedBy.Label : null,
+            Format.ShortDate(issue.CreatedAt),
+        }.OfType<string>());
+        MessageLine = issue.Message.NonBlank() is { } message ? $"“{message}”" : "";
+        FixedLine = issue.FixedLine;
+        posterUrl = issue.PosterPath.Url(ImageSize.W92);
+        Open = openTitle;
+    }
+
+    public Guid Id { get; }
+    public string Title { get; }
+    public TitleId TitleId { get; }
+    public bool IsOpen { get; }
+
+    /// <summary>"S2 E5", "Season 2", "Specials", or empty.</summary>
+    public string EpisodeLabel { get; }
+
+    public string MetaLine { get; }
+
+    /// <summary>The reporter's note in quotes, or empty.</summary>
+    public string MessageLine { get; }
+
+    /// <summary>"Fixed: Replaced the file" once fixed, else empty.</summary>
+    public string FixedLine { get; }
+
+    public bool HasPoster => posterUrl != null;
+    public ImageSource? Poster => posterUrl == null ? null : poster ??= new BitmapImage(posterUrl);
+    public System.Windows.Input.ICommand Open { get; }
+
+    public bool CanAct => Busy == null;
+    public bool HasError => Error != null;
+    public bool HasInfo => Info != null;
+
+    /// <summary>"Search again" and "Mark fixed": the admin, on an open report, until the note field opens.</summary>
+    public bool ShowsAdminActions => isAdmin && IsOpen && !IsResolving;
+
+    /// <summary>"Withdraw" your own open report, or (admin) "Remove" any open one.</summary>
+    public bool ShowsRemove => IsOpen && (isMine || isAdmin);
+
+    public string RemoveLabel => isMine && !isAdmin ? "Withdraw" : "Remove";
+    public string SearchLabel => Busy == "search" ? "Searching…" : "Search again";
+    public string ResolveLabel => Busy == "resolve" ? "Saving…" : "Mark fixed";
+
+    /// <summary><c>POST /issues/{id}/search</c>: Radarr/Sonarr looks for another copy.</summary>
+    [RelayCommand]
+    private Task SearchAgainAsync() => RunAsync("search", api => api.Issues.SearchAgainAsync(Id), SearchingMessage);
+
+    /// <summary>The first "Mark fixed": opens the note field.</summary>
+    [RelayCommand]
+    private void StartResolving() => IsResolving = true;
+
+    /// <summary>The note field's "Mark fixed" (<c>POST /issues/{id}/resolve</c>): the reporter is told.</summary>
+    [RelayCommand]
+    private Task ResolveAsync() => RunAsync("resolve", api => api.Issues.ResolveAsync(Id, Note));
+
+    /// <summary><c>DELETE /issues/{id}</c>: Withdraw / Remove.</summary>
+    [RelayCommand]
+    private Task RemoveAsync() => RunAsync("delete", api => api.Issues.DeleteAsync(Id));
+
+    /// <summary>
+    /// Runs one action. Resolve and Remove reload the list (the mutation
+    /// does); a report that is already gone ("That report isn't open any
+    /// more.") reloads rather than showing an error.
+    /// </summary>
+    private async Task RunAsync(string label, Func<MarqueeApi, Task> action, string? after = null)
+    {
+        if (Busy != null)
+        {
+            return;
+        }
+        Busy = label;
+        Error = null;
+        Info = null;
+        try
+        {
+            await action(owner.Api);
+            Info = after;
+        }
+        catch (ApiException failure)
+        {
+            if (failure.Kind == ApiErrorKind.NotFound && label != "search")
+            {
+                owner.ReloadIssues();
+            }
+            else
+            {
+                Error = failure.Message;
+            }
+        }
+        finally
+        {
+            Busy = null;
+        }
+    }
+}
+
+/// <summary>
 /// app/requests/page.tsx: a member's own requests, or the admin's review
 /// queue plus "Past requests". Reloads on F5, after any request changed
 /// (this app's own approvals included, so a settled row's replacement
@@ -257,6 +407,7 @@ public sealed partial class RequestsViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMember))]
+    [NotifyPropertyChangedFor(nameof(IssuesHeading))]
     private bool isAdmin;
 
     // MARK: Member
@@ -326,6 +477,28 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>The server's preset reasons (empty on a server before 0.28.0; the dialog then uses its own list).</summary>
     public IReadOnlyList<string> RejectionReasons { get; private set; } = [];
 
+    // MARK: Problem reports (GET /issues, 0.38+; components/issues-section.tsx)
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsIssues))]
+    [NotifyPropertyChangedFor(nameof(HasOpenIssues))]
+    [NotifyPropertyChangedFor(nameof(IsOpenIssuesEmpty))]
+    private IReadOnlyList<IssueRow> openIssues = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsIssues))]
+    [NotifyPropertyChangedFor(nameof(IsOpenIssuesEmpty))]
+    [NotifyPropertyChangedFor(nameof(HasFixedIssues))]
+    [NotifyPropertyChangedFor(nameof(ShowsFixedIssues))]
+    [NotifyPropertyChangedFor(nameof(ShowFixedLabel))]
+    private IReadOnlyList<IssueRow> fixedIssues = [];
+
+    /// <summary>The fixed ones behind "Show fixed (N)" are open.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsFixedIssues))]
+    [NotifyPropertyChangedFor(nameof(ShowFixedLabel))]
+    private bool isShowingFixed;
+
     public RequestsViewModel(AppModel model)
     {
         this.model = model;
@@ -355,6 +528,22 @@ public sealed partial class RequestsViewModel : ObservableObject
 
     /// <summary>The "Past requests" heading: there are rows, or a failure to report.</summary>
     public bool ShowsHistorySection => HasHistory || ShowsHistoryError;
+
+    /// <summary>The section shows once there's any report, open or fixed; an older server has none.</summary>
+    public bool ShowsIssues => OpenIssues.Count > 0 || FixedIssues.Count > 0;
+
+    public string IssuesHeading => IsAdmin ? "Reported problems" : "Your problem reports";
+    public bool HasOpenIssues => OpenIssues.Count > 0;
+
+    /// <summary>"Nothing open right now." when only fixed ones are left.</summary>
+    public bool IsOpenIssuesEmpty => ShowsIssues && OpenIssues.Count == 0;
+
+    public bool HasFixedIssues => FixedIssues.Count > 0;
+    public bool ShowsFixedIssues => IsShowingFixed && HasFixedIssues;
+
+    public string ShowFixedLabel => IsShowingFixed
+        ? "Hide fixed"
+        : $"Show fixed ({FixedIssues.Count.ToString(CultureInfo.CurrentCulture)})";
 
     internal MarqueeApi Api => model.Api;
 
@@ -404,6 +593,62 @@ public sealed partial class RequestsViewModel : ObservableObject
         else
         {
             await LoadMineAsync(token);
+        }
+        if (!token.IsCancellationRequested)
+        {
+            await LoadIssuesAsync(token);
+        }
+    }
+
+    /// <summary>
+    /// "Reported problems" / "Your problem reports". An older server has no
+    /// <c>/issues</c> (404): the section stays hidden. Any other failure
+    /// keeps what's shown; the next reload tries again.
+    /// </summary>
+    private async Task LoadIssuesAsync(CancellationToken token)
+    {
+        try
+        {
+            var fresh = await model.Api.Issues.ListAsync(token);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            OpenIssues = fresh.Open.Select(issue => new IssueRow(this, issue, IsAdmin, OpenIssueTitleCommand)).ToList();
+            FixedIssues = fresh.Fixed.Select(issue => new IssueRow(this, issue, IsAdmin, OpenIssueTitleCommand)).ToList();
+        }
+        catch (ApiException error)
+        {
+            if (error.IsCancellation || token.IsCancellationRequested)
+            {
+                return;
+            }
+            if (error.Kind == ApiErrorKind.NotFound)
+            {
+                OpenIssues = [];
+                FixedIssues = [];
+            }
+        }
+    }
+
+    /// <summary>A row's report was already gone: the server's view replaces the list.</summary>
+    internal void ReloadIssues()
+    {
+        if (active)
+        {
+            _ = LoadAsync();
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleFixedIssues() => IsShowingFixed = !IsShowingFixed;
+
+    [RelayCommand]
+    private void OpenIssueTitle(IssueRow? row)
+    {
+        if (row != null)
+        {
+            model.OpenTitle(row.TitleId);
         }
     }
 

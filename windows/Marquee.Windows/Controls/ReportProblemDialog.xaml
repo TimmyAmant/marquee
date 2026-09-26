@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/report-problem-button.tsx's dialog: what's wrong (the six
+  kinds), for TV which season and episode, and a note. Send report sends the
+  report itself and keeps the dialog open with the message on a failure,
+  like the season picker.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.ReportProblemDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Report a problem"
+    PrimaryButtonText="Send report"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    Closing="OnClosing">
+
+    <StackPanel Spacing="14" MinWidth="380">
+        <TextBlock
+            Text="The admin is told, and you'll hear back when it's fixed."
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+        <RadioButtons
+            x:Name="KindButtons"
+            Header="What's wrong?"
+            SelectionChanged="OnKindChanged" />
+        <Grid x:Name="EpisodeRow" ColumnSpacing="12" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="112" />
+            </Grid.ColumnDefinitions>
+            <ComboBox
+                x:Name="SeasonBox"
+                Grid.Column="0"
+                Header="Season (optional)"
+                HorizontalAlignment="Stretch"
+                SelectionChanged="OnSeasonChanged" />
+            <TextBox
+                x:Name="EpisodeBox"
+                Grid.Column="1"
+                Header="Episode"
+                InputScope="Number"
+                MaxLength="4"
+                IsEnabled="False" />
+        </Grid>
+        <TextBox
+            x:Name="NoteBox"
+            Header="Anything else? (optional)"
+            PlaceholderText="e.g. The audio drifts out of sync after about 20 minutes."
+            AcceptsReturn="True"
+            TextWrapping="Wrap"
+            MinHeight="72"
+            MaxLength="1000" />
+        <TextBlock
+            x:Name="ErrorText"
+            Visibility="Collapsed"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="Wrap" />
+    </StackPanel>
+</ContentDialog>

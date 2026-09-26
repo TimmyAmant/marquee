@@ -241,7 +241,13 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
     public static readonly NotificationEventType RequestApproved = new("request_approved");
     public static readonly NotificationEventType RequestRejected = new("request_rejected");
 
-    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected];
+    /// <summary>A member reported a problem with a title (0.38+, to the admin).</summary>
+    public static readonly NotificationEventType IssueReported = new("issue_reported");
+
+    /// <summary>The admin marked your problem report fixed (0.38+).</summary>
+    public static readonly NotificationEventType IssueResolved = new("issue_resolved");
+
+    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved];
     public static NotificationEventType FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -254,6 +260,8 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == Downloaded) return "✅";
             if (this == RequestApproved) return "👍";
             if (this == RequestRejected) return "👎";
+            if (this == IssueReported) return "⚠️";
+            if (this == IssueResolved) return "🛠️";
             return "🔔";
         }
     }
@@ -271,6 +279,8 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == Downloaded) return "Ready to watch";
             if (this == RequestApproved) return "Request approved";
             if (this == RequestRejected) return "Request declined";
+            if (this == IssueReported) return "Problem reported";
+            if (this == IssueResolved) return "Problem fixed";
             return "Marquee";
         }
     }

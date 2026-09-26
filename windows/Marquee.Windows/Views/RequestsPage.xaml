@@ -30,6 +30,100 @@
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+
+        <!-- components/issues-section.tsx's IssueCard: poster, title and episode, the details, then the actions on the right. -->
+        <DataTemplate x:Key="IssueRowTemplate" x:DataType="vm:IssueRow">
+            <Grid Padding="16,10" ColumnSpacing="12" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="40" Height="56" CornerRadius="6" VerticalAlignment="Top" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                    <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
+                        <TextBlock
+                            Text="{x:Bind EpisodeLabel}"
+                            Visibility="{x:Bind EpisodeLabel, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{x:Bind MetaLine}" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="4,0,0,0" TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind MessageLine}"
+                        Visibility="{x:Bind MessageLine, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Margin="4,2,0,0"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind FixedLine}"
+                        Visibility="{x:Bind FixedLine, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource OwnedBadgeForegroundBrush}"
+                        Margin="4,2,0,0"
+                        TextWrapping="Wrap" />
+                    <Grid
+                        ColumnSpacing="8"
+                        Margin="4,6,0,0"
+                        Visibility="{x:Bind IsResolving, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox
+                            Grid.Column="0"
+                            Text="{x:Bind Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="Note for them (optional), e.g. Replaced the file"
+                            MaxLength="500" />
+                        <Button
+                            Grid.Column="1"
+                            Content="{x:Bind ResolveLabel, Mode=OneWay}"
+                            Command="{x:Bind ResolveCommand}"
+                            IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </Grid>
+                    <TextBlock
+                        Text="{x:Bind Error, Mode=OneWay}"
+                        Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        Margin="4,2,0,0"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind Info, Mode=OneWay}"
+                        Visibility="{x:Bind HasInfo, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource OwnedBadgeForegroundBrush}"
+                        Margin="4,2,0,0"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Top" HorizontalAlignment="Right">
+                    <Button
+                        Content="{x:Bind SearchLabel, Mode=OneWay}"
+                        Command="{x:Bind SearchAgainCommand}"
+                        IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                        Visibility="{x:Bind ShowsAdminActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch" />
+                    <Button
+                        Content="Mark fixed"
+                        Command="{x:Bind StartResolvingCommand}"
+                        Visibility="{x:Bind ShowsAdminActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch" />
+                    <HyperlinkButton
+                        Content="{x:Bind RemoveLabel}"
+                        Command="{x:Bind RemoveCommand}"
+                        IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                        Visibility="{x:Bind ShowsRemove, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Right"
+                        Padding="4,2" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
     </Page.Resources>
 
     <ScrollViewer>
@@ -297,6 +391,38 @@
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
                     </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- MARK: Problem reports (0.38+): the admin's "Reported problems" or a member's own; hidden when there are none. -->
+            <StackPanel Spacing="12" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsIssues, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{x:Bind ViewModel.IssuesHeading, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="Nothing open right now."
+                    Visibility="{x:Bind ViewModel.IsOpenIssuesEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                <Border Style="{StaticResource TableCard}" Visibility="{x:Bind ViewModel.HasOpenIssues, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.OpenIssues, Mode=OneWay}" ItemTemplate="{StaticResource IssueRowTemplate}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="0" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </Border>
+                <HyperlinkButton
+                    Content="{x:Bind ViewModel.ShowFixedLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.ToggleFixedIssuesCommand}"
+                    Visibility="{x:Bind ViewModel.HasFixedIssues, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Padding="0,2" />
+                <Border
+                    Style="{StaticResource TableCard}"
+                    Opacity="0.8"
+                    Visibility="{x:Bind ViewModel.ShowsFixedIssues, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.FixedIssues, Mode=OneWay}" ItemTemplate="{StaticResource IssueRowTemplate}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="0" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
                 </Border>
             </StackPanel>
         </StackPanel>
