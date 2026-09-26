@@ -103,6 +103,9 @@ BLOCKS = [
     ("`GET /settings/about`", ["about"]),
     ("`GET /changelog`", ["changelog"]),
     ("`GET /help/errors`", ["help-errors"]),
+    ("`GET /settings/api-keys`", ["api-keys"]),
+    ("`POST /settings/api-keys`", ["api-key-created"]),
+    ("`GET /stats/summary`", ["stats-summary"]),
 ]
 
 # Prose examples that aren't in a code block.

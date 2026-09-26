@@ -1,4 +1,5 @@
 import { apiJson, errorToApiError, jsonError } from "@/lib/api/errors";
+import { parseApiKeyCredential } from "@/lib/api/api-keys";
 
 type RouteParams = Record<string, string | string[]>;
 type RouteContextLike<P extends RouteParams> = { params: Promise<P> };
@@ -18,6 +19,14 @@ export type ApiHandler<P extends RouteParams = RouteParams> = (
 export function withApi<P extends RouteParams = RouteParams>(handler: ApiHandler<P>) {
   return async (request: Request, context: RouteContextLike<P>): Promise<Response> => {
     try {
+      // An API key is checked — including what its scope allows here
+      // (lib/api/key-policy.ts) — before any of the route's own code runs,
+      // whatever that code does first.
+      // (Loaded lazily: this module stays free of database imports.)
+      if (parseApiKeyCredential(request.headers).kind !== "none") {
+        const { requireApiUser } = await import("@/lib/api/auth");
+        await requireApiUser(request);
+      }
       const params = context?.params ? await context.params : ({} as P);
       const result = await handler(request, params);
       return result instanceof Response ? result : apiJson(result);

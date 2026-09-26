@@ -20,6 +20,9 @@ import { SsoSettingsCard } from "@/components/sso-settings-card";
 import { getSsoSettingsView } from "@/lib/auth/sso/config";
 import { HouseholdEventsCard } from "@/components/household-events-card";
 import { getHouseholdEvents } from "@/lib/notifications/preferences";
+import { ApiKeysCard } from "@/components/api-keys-card";
+import { listApiKeys } from "@/lib/api/api-key-store";
+import { listHouseholdMembersFor } from "@/lib/users/household";
 
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
@@ -44,7 +47,16 @@ export default async function IntegrationsSettingsPage() {
     headerList,
     sso,
     householdEvents,
-  ] = await Promise.all([loadIntegrationsPage(session.user.id), headers(), getSsoSettingsView(), getHouseholdEvents()]);
+    apiKeys,
+    household,
+  ] = await Promise.all([
+    loadIntegrationsPage(session.user.id),
+    headers(),
+    getSsoSettingsView(),
+    getHouseholdEvents(),
+    listApiKeys(),
+    listHouseholdMembersFor({ userId: session.user.id, isAdmin: true }),
+  ]);
 
   const baseUrl = webhookBaseUrl(headerList);
 
@@ -142,6 +154,18 @@ export default async function IntegrationsSettingsPage() {
             <NtfyConnectCard connected={ntfyConnected} />
             <NotificationChannelCards channels={channels} />
             <WebhookConnectCard connected={genericWebhookConnected} />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">API access</h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <ApiKeysCard
+              initialKeys={apiKeys}
+              members={household
+                .filter((member) => member.id !== session.user.id)
+                .map((member) => ({ id: member.id, label: member.displayName || member.username }))}
+            />
           </div>
         </section>
       </div>

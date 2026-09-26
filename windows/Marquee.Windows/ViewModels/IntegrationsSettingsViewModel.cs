@@ -13,10 +13,11 @@ namespace Marquee.Windows.ViewModels;
 /// or Emby), Sign-in (single sign-on, 0.44+), Download Clients (Sonarr,
 /// Radarr and the optional 4K ones), Metadata Sources (TMDb, Trakt with list
 /// import, TheTVDB) and Notifications (the Sonarr/Radarr webhooks, Discord,
-/// ntfy, Telegram, Pushover, email, a custom webhook), plus "Sync now". One
-/// <c>GET /settings/integrations</c> describes every card but single sign-on,
-/// which has its own <c>GET /settings/sso</c>; each card writes through its
-/// own endpoint and the overview reloads after any change.
+/// ntfy, Telegram, Pushover, email, a custom webhook) and API keys (0.47+),
+/// plus "Sync now". One <c>GET /settings/integrations</c> describes every
+/// card but single sign-on and API keys, which have their own
+/// <c>GET /settings/sso</c> and <c>GET /settings/api-keys</c>; each card
+/// writes through its own endpoint and the overview reloads after any change.
 /// </summary>
 public sealed partial class IntegrationsSettingsViewModel : ObservableObject
 {
@@ -32,6 +33,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         Plex = new PlexIntegrationViewModel(model);
         Jellyfin = new JellyfinIntegrationViewModel(model);
         Sso = new SsoSettingsViewModel(model);
+        ApiKeys = new ApiKeysSettingsViewModel(model);
         var sonarr =new ArrIntegrationViewModel(model, ArrProvider.Sonarr);
         var radarr = new ArrIntegrationViewModel(model, ArrProvider.Radarr);
         sonarr4k = new ArrIntegrationViewModel(
@@ -120,6 +122,9 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
 
     /// <summary>"Single sign-on" under Sign-in (0.44+; hidden on an older server).</summary>
     public SsoSettingsViewModel Sso { get; }
+
+    /// <summary>"API keys" (0.47+; hidden on an older server).</summary>
+    public ApiKeysSettingsViewModel ApiKeys { get; }
 
     /// <summary>Sonarr and Radarr, then the 4K ones when the server has them (0.37+).</summary>
     [ObservableProperty]
@@ -212,6 +217,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         Plex.RefreshTimes();
         _ = LoadAsync();
         _ = Sso.LoadAsync();
+        _ = ApiKeys.LoadAsync();
     }
 
     public void Deactivate()
@@ -225,6 +231,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         model.Events.Changed -= OnServerChanged;
         loadCancellation?.Cancel();
         Sso.Cancel();
+        ApiKeys.Cancel();
         Plex.Cancel();
     }
 
@@ -348,6 +355,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         {
             _ = LoadAsync();
             _ = Sso.LoadAsync();
+            _ = ApiKeys.LoadAsync();
         }
     }
 

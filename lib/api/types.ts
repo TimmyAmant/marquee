@@ -1035,3 +1035,40 @@ export type BlocklistEntry = {
   reason: string | null;
   createdAt: string;
 };
+
+// ── API keys & widgets (0.47+) ──────────────────────────────────────────────
+
+/** GET /settings/api-keys: one admin-issued key. The secret itself is never
+ * returned after creation — only `hint`, its first few characters. */
+export type ApiKey = {
+  id: string;
+  name: string;
+  /** "read": reading only; "full": anything the account it acts as may do. */
+  scope: "read" | "full";
+  /** The member the key acts as, or null for the admin who created it. */
+  actAs: RequestPerson | null;
+  hint: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  /** null: never expires. */
+  expiresAt: string | null;
+  expired: boolean;
+};
+
+/** POST /settings/api-keys: the new key's secret, shown this once. */
+export type ApiKeyCreated = { key: string; apiKey: ApiKey };
+
+/** GET /stats/summary: counts for dashboard widgets (Homepage, Homarr). */
+export type StatsSummary = {
+  /** Requests waiting for review (0 unless the account reviews requests). */
+  pendingRequests: number;
+  /** Open problem reports (0 unless the account reviews requests). */
+  openIssues: number;
+  /** Approved requests Sonarr/Radarr can't find (0 unless the account reviews requests). */
+  cantFind: number;
+  /** Movies and series in the household library. */
+  movies: number;
+  series: number;
+  /** Titles Sonarr/Radarr are downloading right now. */
+  downloading: number;
+};
