@@ -57,6 +57,10 @@ export const users = pgTable(
     // none. Kept on the user row so every place that shows an account can
     // build a cache-busting photo URL without touching the image bytes.
     avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
+    /** Last time this account used Marquee — the website or an app — kept
+     * to within a few minutes (lib/users/last-active.ts). Null: never, or
+     * not since this was added. */
+    lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
     // The Plex account (plex.tv numeric account id) and Jellyfin user (the
     // admin's Jellyfin server's user id) this account signs in with, if any
     // — see lib/auth/media-signin.ts. Set only by an explicit link, an admin

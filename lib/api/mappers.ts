@@ -217,6 +217,7 @@ export function householdMember(row: HouseholdMemberRow, currentUserId: string):
     avatarUrl: avatarPath(row, "/api/v1"),
     linked: { plex: row.plexLinked, jellyfin: row.jellyfinLinked },
     hasPassword: row.hasPassword,
+    lastActiveAt: iso(row.lastActiveAt),
   };
 }
 

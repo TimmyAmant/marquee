@@ -514,6 +514,9 @@ export type HouseholdMember = {
   avatarUrl: string | null;
   linked: LinkedAccounts;
   hasPassword: boolean;
+  /** Last time the account used the website or an app (to within a few
+   * minutes); null when it never has. */
+  lastActiveAt: string | null;
 };
 
 export type ImportResult = { created: HouseholdMember[]; skipped: number };
