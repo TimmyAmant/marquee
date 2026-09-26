@@ -16,6 +16,9 @@ final class LiveUpdatesTests: XCTestCase {
         /// server from before the stream (404).
         private var stream: [(id: UUID, createdAt: String)]? = []
         private var streamSignsOut = false
+        /// Notifications of a kind the account turned device push off for
+        /// (`"alert": false`, 0.45+).
+        private var quiet: Set<UUID> = []
         private(set) var meRequests = 0
 
         func set(unread: Int, pending: Int = 0) {
@@ -53,6 +56,11 @@ final class LiveUpdatesTests: XCTestCase {
             }
         }
 
+        /// Sends this one with `"alert": false`.
+        func silence(_ id: UUID) {
+            lock.withLock { _ = quiet.insert(id) }
+        }
+
         func removeStream() {
             lock.withLock { stream = nil }
         }
@@ -64,11 +72,13 @@ final class LiveUpdatesTests: XCTestCase {
             }
         }
 
-        private static func item(_ id: UUID, _ createdAt: String, read: Bool) -> String {
-            """
+        /// Without `alert` unless it's one of `quiet`, like a server before 0.45.
+        private func render(_ id: UUID, _ createdAt: String, read: Bool) -> String {
+            let alert = quiet.contains(id) ? #""alert":false,"# : ""
+            return """
             {"id":"\(id.uuidString.lowercased())","mediaType":"movie","tmdbId":603,"title":"The Matrix",\
             "eventType":"downloaded","message":"\\"The Matrix\\" finished downloading.","read":\(read),\
-            "createdAt":"\(createdAt)"}
+            \(alert)"createdAt":"\(createdAt)"}
             """
         }
 
@@ -78,7 +88,7 @@ final class LiveUpdatesTests: XCTestCase {
                 case "/api/v1/badges":
                     return StubURLProtocol.json(200, #"{"unreadNotifications":\#(unread),"pendingRequests":\#(pending)}"#)
                 case "/api/v1/notifications":
-                    let items = notifications.map { Self.item($0.id, $0.createdAt, read: $0.read) }
+                    let items = notifications.map { render($0.id, $0.createdAt, read: $0.read) }
                     return StubURLProtocol.json(200, #"{"unreadCount":\#(unread),"results":[\#(items.joined(separator: ","))]}"#)
                 case "/api/v1/notifications/stream":
                     guard let stream else {
@@ -86,7 +96,7 @@ final class LiveUpdatesTests: XCTestCase {
                     }
                     var body = "retry: 5000\n\nevent: ready\ndata: {}\n\n: keep-alive\n\n"
                     for item in stream {
-                        body += "event: notification\nid: \(item.id.uuidString.lowercased())\ndata: \(Self.item(item.id, item.createdAt, read: false))\n\n"
+                        body += "event: notification\nid: \(item.id.uuidString.lowercased())\ndata: \(render(item.id, item.createdAt, read: false))\n\n"
                     }
                     if streamSignsOut { body += "event: signed-out\ndata: {}\n\n" }
                     // Each connection delivers them once.
@@ -402,6 +412,37 @@ final class LiveUpdatesTests: XCTestCase {
 
         // The token was revoked: /me answers 401, which is what signs the app out.
         await waitUntil("/me is asked") { server.meRequests == 1 }
+    }
+
+    /// 0.45+: `"alert": false` (device push off for that kind) reaches the
+    /// bell but posts no banner, on the stream and on the poll alike.
+    func testNotificationsWithoutAlertPostNoBanner() async {
+        let live = makeLive(streams: true)
+        defer { live.stop() }
+        watermarks.values[identity] = APIClient.parseDate("2026-09-17T10:05:00.000Z")
+        let quietStreamed = UUID()
+        let loudStreamed = UUID()
+        server.silence(quietStreamed)
+        server.streamNext([(quietStreamed, "2026-09-17T10:30:00.000Z"), (loudStreamed, "2026-09-17T10:31:00.000Z")])
+        await start(live)
+
+        await waitUntil("the loud streamed notification is announced") { banners.posted.count == 1 }
+        await waitUntil("the watermark passes both") {
+            watermarks.values[identity] == APIClient.parseDate("2026-09-17T10:31:00.000Z")
+        }
+        XCTAssertEqual(banners.posted.map(\.id), [loudStreamed], "The quiet one only reaches the bell")
+
+        // The poll: a quiet one and a loud one.
+        let quietPolled = UUID()
+        let loudPolled = UUID()
+        server.silence(quietPolled)
+        server.add(quietPolled, at: "2026-09-17T10:40:00.000Z")
+        server.add(loudPolled, at: "2026-09-17T10:41:00.000Z")
+        live.refresh(.catchUp)
+        await live.settle()
+        XCTAssertEqual(banners.posted.map(\.id), [loudStreamed, loudPolled])
+        XCTAssertEqual(live.unreadCount, 2, "Both are in the bell")
+        XCTAssertEqual(watermarks.values[identity], APIClient.parseDate("2026-09-17T10:41:00.000Z"))
     }
 
     func testAServerWithoutTheStreamKeepsPolling() async {
