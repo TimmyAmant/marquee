@@ -134,6 +134,20 @@ where the real server needed something the core contract didn't spell out.
     the key's scope and `429 rate_limited` after too many wrong keys. A
     server older than this answers `404` on the new endpoints — hide the
     API keys card.
+18. **Customisable Discover rows and Trakt syncs (0.49+, additive).** The
+    admin arranges Discover for the household (`/settings/discover`, §2):
+    reorders and hides the built-in rows and adds their own (a TMDb keyword,
+    genre, studio, network or list, a public Trakt list, or recently added
+    to the library). `GET /discover` keeps every fixed key — a hidden
+    built-in row is an empty array there, so an older app simply doesn't
+    show it — and gains `shelves`, the rows in the admin's order with an
+    `id`, `kind` and `title` each. A custom row's "See all" is
+    `GET /discover/lists/{its id}`. Members can keep a public Trakt
+    watchlist or list in sync (`/trakt-syncs`, §11): new titles on it are
+    requested as them every few hours (the `trakt-sync` job). A server
+    older than this sends no `shelves` — render the fixed keys as before —
+    and answers `404` on the new endpoints: hide Settings › Discover and the
+    Trakt card.
 
 ---
 
@@ -699,9 +713,40 @@ network logos to `/series?network=`.
     "seriesGenres": { "type": "browse", "list": null, "mediaType": "tv" },
     "upcomingSeries": { "type": "list", "list": "upcoming-series", "mediaType": null },
     "networks": { "type": "browse", "list": null, "mediaType": "tv" }
-  }
+  },
+  "shelves": [
+    { "id": "trending", "kind": "trending", "title": "Trending", "custom": false,
+      "results": [ /* TitleCard */ ], "genres": null, "logos": null,
+      "seeAll": { "type": "list", "list": "trending", "mediaType": null } },
+    { "id": "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01", "kind": "keyword", "title": "Anime", "custom": true,
+      "results": [ /* TitleCard */ ], "genres": null, "logos": null,
+      "seeAll": { "type": "list", "list": "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01", "mediaType": null } },
+    { "id": "movieGenres", "kind": "movieGenres", "title": "Movie Genres", "custom": false,
+      "results": null, "genres": [ { "id": 28, "name": "Action", "backdropPath": "/qeQJ.jpg" } ], "logos": null,
+      "seeAll": { "type": "browse", "list": null, "mediaType": "movie" } },
+    { "id": "studios", "kind": "studios", "title": "Studios", "custom": false,
+      "results": null, "genres": null, "logos": [ { "tmdbId": 2, "name": "Walt Disney Pictures", "logoPath": "/wdrC.png" } ],
+      "seeAll": { "type": "browse", "list": null, "mediaType": "movie" } }
+  ]
 }
 ```
+
+`shelves` (0.49+; an older server omits it — then show the fixed keys in
+the order above): the rows to show, **in the admin's order** (Settings ›
+Discover), hidden ones left out, including the admin's own rows. Show them
+in this order, skipping empty ones as the website does. `id` is the
+built-in row's key or a custom row's uuid; `custom` says which. Exactly one
+of `results` (a poster row — every custom row and the built-in poster
+rows), `genres` (`movieGenres` → `/movies?genre=`, `seriesGenres` →
+`/series?genre=`) and `logos` (`studios` → `/companies/{id}`, `networks` →
+`/series?network=`) is non-null. Custom `kind`s: `keyword`, `genre`,
+`company`, `network`, `tmdbList`, `traktList`, `library` ("recently
+added"). **An app that doesn't know a `kind` shows `results` as a poster
+row, and skips the row when `results` is null.** Custom rows' cards carry
+`status` like the others; their `seeAll` is always
+`{ "type": "list", "list": "<the row's id>" }` → `GET /discover/lists/{id}`.
+The fixed keys stay for older apps: a hidden built-in row is an empty
+array there, and custom rows only appear in `shelves`.
 
 `seeAll` (0.42.4+; an older server omits it, and then only Popular Movies/Series
 and the genre shelves have a "See all", to the Movies/Series grid): where each
@@ -715,11 +760,19 @@ unknown `type` or `list` as no "See all".
 
 0.42.4+. A Discover shelf's full list, paged (the website's `/discover/{list}`,
 infinite scroll). `list` is one of `recently-added`, `trending`,
-`upcoming-movies`, `upcoming-series` (anything else: `404 not_found`).
+`upcoming-movies`, `upcoming-series`, or (0.49+) a custom row's `id` from
+`GET /discover`'s `shelves` (anything else: `404 not_found`). For a custom
+row, `list` in the answer is its id and `title` its name.
 
 | Query | Type | Default | |
 |---|---|---|---|
-| `page` | int ≥ 1 | 1 | at most 250 (25 for `recently-added`) |
+| `page` | int ≥ 1 | 1 | at most 250 (25 for `recently-added` and custom `library` rows, 500 for `tmdbList`, 100 for `traktList`) |
+
+Custom rows page like the built-in lists: keyword, genre, studio and
+network rows are 2 TMDb pages per page (movies and series mixed by
+popularity when the row has both); a TMDb list is 20 titles a page; a Trakt
+list 40; a `library` row 40, like `recently-added`. Trakt and TMDb answers
+are cached for an hour.
 
 `trending` and the two `upcoming-*` lists need TMDb (`502 upstream`
 otherwise) and are 2 TMDb pages per page, de-duplicated; `upcoming-movies`
@@ -746,6 +799,95 @@ series.
 ```
 
 Errors: `400 invalid` (bad `page`), `404 not_found` (unknown list).
+
+### `GET /settings/discover` — admin (0.49+)
+
+Settings › Discover (website, Mac, Windows; the admin only): every Discover
+row in order, hidden ones included. With nothing changed, it's the built-in
+rows in the order of `GET /discover`'s fixed keys, all shown.
+
+```json
+{
+  "shelves": [
+    { "id": "recentlyAdded", "kind": "recentlyAdded", "title": "Recently Added", "custom": false, "hidden": false, "source": null },
+    { "id": "trending", "kind": "trending", "title": "Trending", "custom": false, "hidden": true, "source": null },
+    { "id": "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01", "kind": "keyword", "title": "Anime", "custom": true, "hidden": false,
+      "source": { "mediaType": "all", "tmdbId": 210024, "name": "anime", "url": null } },
+    { "id": "8d1e2f3a-4b5c-4d6e-8f70-1a2b3c4d5e6f", "kind": "company", "title": "A24", "custom": true, "hidden": false,
+      "source": { "mediaType": "movie", "tmdbId": 41077, "name": "A24", "url": null } },
+    { "id": "c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f", "kind": "traktList", "title": "Best of 2024", "custom": true, "hidden": false,
+      "source": { "mediaType": "all", "tmdbId": null, "name": null, "url": "https://trakt.tv/users/someone/lists/best-of-2024" } }
+  ],
+  "traktConfigured": true,
+  "maxCustomShelves": 30
+}
+```
+
+`id`: a built-in row's key (`recentlyAdded`, `trending`, `popularMovies`,
+`movieGenres`, `upcomingMovies`, `studios`, `popularSeries`, `seriesGenres`,
+`upcomingSeries`, `networks`) or a custom row's uuid. `source` (custom rows
+only) is one flat shape for every `kind`:
+
+| `kind` | Website label | `source` |
+|---|---|---|
+| `keyword` | TMDb keyword | `tmdbId` (keyword), `name`, `mediaType` `movie`/`tv`/`all` |
+| `genre` | Genre | `tmdbId` (genre), `name`, `mediaType` `movie`/`tv` |
+| `company` | Studio | `tmdbId` (company), `name`, `mediaType` `movie`/`tv`/`all` |
+| `network` | Network | `tmdbId` (network), `name`; `mediaType` always `tv` |
+| `tmdbList` | TMDb list | `tmdbId` (list), `name` |
+| `traktList` | Trakt list | `url` (a public list or watchlist on trakt.tv) |
+| `library` | Recently added to Plex/Jellyfin | `mediaType` `movie`/`tv`/`all` |
+
+`traktConfigured`: Trakt rows need Trakt connected (Settings ›
+Integrations) — without it they're empty. `403` "Only the admin can arrange
+Discover." for anyone else, on every `/settings/discover` endpoint. API keys
+can't reach them.
+
+- **`PUT /settings/discover`** — `{ "shelves": [{ "id": "trending", "hidden":
+  false }, …] }`: the rows in their new order, each `hidden` or not (left
+  out: unchanged). Every `id` must exist, once; rows left out keep their
+  visibility and go after the ones sent, in their current order. Answers
+  as `GET`. `400` "There's no Discover row "…". Reload and try again." /
+  "The row "…" is in the list twice.".
+- **`POST /settings/discover/shelves`** — adds a row at the end, shown:
+  `{ "kind": "keyword", "tmdbId": 210024, "mediaType": "all", "title"?:
+  "Anime" }` (`name` optional — looked up from TMDb when left out); a TMDb
+  list takes `tmdbId` or `url` (its themoviedb.org/list link); a Trakt row
+  `url`; `library` just `mediaType`. `title` is optional (up to 60
+  characters; default from what it shows, e.g. "Anime", "A24", "Action
+  Movies", "Recently Added Movies"). `201` with the row (the shape of one
+  `shelves` entry). `400` for a bad field ("Pick a keyword.", "Paste a
+  public Trakt list or watchlist link, like
+  https://trakt.tv/users/someone/lists/favourites.", …); `409` "Discover can
+  have up to 30 rows of your own. Remove one first."; `502 upstream`
+  without TMDb (except `library`). Only trakt.tv links are accepted, and the
+  server only ever reads Trakt's own API with the username and list from it.
+- **`PATCH /settings/discover/shelves/{id}`** — `{ "hidden"?: bool,
+  "title"?: "…", "mediaType"?, "tmdbId"?, "name"?, "url"? }`: any row can be
+  shown or hidden; a custom row can also be renamed or pointed at another
+  keyword, list, etc. of its kind. Answers the row. `400` "A built-in row can
+  only be shown or hidden."; `404` for an unknown id.
+- **`DELETE /settings/discover/shelves/{id}`** — removes a custom row.
+  `{ "ok": true }`. `400` "A built-in row can't be removed. Hide it
+  instead."; `404`.
+- **`POST /settings/discover/reset`** — the built-in rows back in their
+  usual order, all shown; custom rows stay, after them. Answers as `GET`.
+- **`GET /settings/discover/lookup?type=keyword&q=anime`** — what a row can
+  be built from: `type` `keyword` or `company` (TMDb search; `q` required,
+  empty `q` gives no results), `network` (the networks Discover knows,
+  filtered by `q`, or a network's TMDb number as `q`), `genre` (with
+  `mediaType=movie|tv`; `q` filters). `502 upstream` without TMDb.
+
+```json
+{
+  "results": [
+    { "tmdbId": 41077, "name": "A24", "logoPath": "/1ZXsGaFPgrgS6ZZGS37AqD5uU12.png", "detail": "US" },
+    { "tmdbId": 210024, "name": "anime", "logoPath": null, "detail": null }
+  ]
+}
+```
+
+`detail` tells same-named ones apart (a company's country); null otherwise.
 
 ### `GET /movies` and `GET /series` — user
 
@@ -2993,6 +3135,78 @@ is unlinked.
 - **`DELETE /me/plex-watchlist`** — turns it off and deletes the stored
   Plex sign-in. `200` `PlexWatchlist` (also when it was off).
 
+### `GET /trakt-syncs` — user (0.49+)
+
+"Keep in sync" with a public Trakt watchlist or list. Website: a "Trakt
+lists" card on Settings › Account, for every account; the admin also sees
+everyone's there (`?all=true`).
+
+```json
+{
+  "results": [
+    {
+      "id": "0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c",
+      "kind": "list",
+      "url": "https://trakt.tv/users/someone/lists/best-of-2024",
+      "name": "Best of 2024",
+      "movies": true,
+      "tv": false,
+      "lastSyncedAt": "2026-09-25T18:40:05.000Z",
+      "lastError": null,
+      "requestedCount": 4,
+      "createdAt": "2026-09-20T09:12:44.000Z",
+      "owner": { "id": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "username": "anna", "displayName": "Anna" }
+    }
+  ],
+  "available": true,
+  "maxPerMember": 10
+}
+```
+
+Every 3 hours (the `trakt-sync` job) the server reads each list from Trakt
+and requests each movie/show on it not handled before, as its owner, the
+way `POST /titles/{type}/{tmdbId}/request` would (whole series for TV): the
+owner's permissions, request limits and auto-approve apply, and blocked
+titles are skipped. Reviewers get one alert per list per check. Each title
+is tried once per account, across all their lists — one the admin declined
+isn't asked for again, even after removing and re-adding the list. Titles
+already owned or requested are skipped. At most 25 new titles per list per
+check. A kind the account may not request isn't tried, and waits in case
+the admin allows it later; so do titles past a request limit
+(`lastError` says so). `name`: "someone's watchlist", or the list's name
+from its link. `movies` / `tv`: which kinds are requested. `lastSyncedAt`:
+last successful check. `lastError`: e.g. "Couldn't read that list from
+Trakt. Check the link, and that the list (or watchlist) is public on
+Trakt." `requestedCount`: titles requested from this list so far.
+`available`: Trakt is connected (Settings › Integrations) — without it
+syncs can't be added and existing ones pause. `owner`: whose it is. `403`
+for `?all=true` from anyone but the admin.
+
+- **`POST /trakt-syncs`** — `{ "url": "https://trakt.tv/users/someone/watchlist",
+  "movies"?: true, "tv"?: true, "requestExisting"?: false }`. Only trakt.tv
+  links to a public list (`/users/<name>/lists/<list>`) or watchlist
+  (`/users/<name>/watchlist`); the server reads it from Trakt's own API, never
+  the link itself. The list is read once straight away, so a private or
+  mistyped one is refused. With `requestExisting` false (the default) only
+  titles added to the list from now on are requested; true also requests
+  what's on it now (the first check then runs in the background). `201`
+  with the sync. `400` for a bad link or "Pick movies, TV shows or both.";
+  `403` "Your account can't request movies or series, so there's nothing to
+  sync."; `409` "Trakt isn't connected. The admin can connect it in Settings
+  → Integrations." / "You're already keeping that list in sync." / "You can
+  keep up to 10 Trakt lists in sync. Remove one first."; `502 upstream`
+  when Trakt can't read it.
+- **`PATCH /trakt-syncs/{id}`** — `{ "movies"?: bool, "tv"?: bool }` (at
+  least one, and not both off). Answers the sync.
+- **`POST /trakt-syncs/{id}/sync`** — "Check now": checks immediately and
+  answers the sync once done. `429` "Checked a moment ago. Try again in a
+  minute." after 5 in 5 minutes.
+- **`DELETE /trakt-syncs/{id}`** — stops syncing (its requests stay).
+  `{ "ok": true }`.
+
+Your own syncs only (the admin: anyone's); someone else's is `404`. API keys
+can read them but not change them.
+
 ### Import from Plex / Jellyfin — admin
 
 Website: "Import from your media server" under "Add a household member",
@@ -3554,6 +3768,7 @@ check the URL and that it's set to public.", `403` "Only the admin can import fr
     { "id": "jellyfin-sync", "name": "Jellyfin Library Sync", "schedule": "Every hour", "description": "Pulls the latest library state from every connected Jellyfin server." },
     { "id": "arr-sync", "name": "Sonarr/Radarr Sync", "schedule": "Every hour", "description": "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance." },
     { "id": "plex-watchlist", "name": "Plex Watchlist Requests", "schedule": "Every 10 minutes", "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each." },
+    { "id": "trakt-sync", "name": "Trakt List Requests", "schedule": "Every 3 hours", "description": "Requests the new movies and shows on the Trakt watchlists and public lists members keep in sync, like pressing Request for each." },
     { "id": "not-found-check", "name": "Can't Find Check", "schedule": "Every hour", "description": "Looks for approved requests that Sonarr/Radarr still hasn't found a copy of, and tells the admin and trusted members." },
     { "id": "disk-space-snapshot", "name": "Disk Space Snapshot", "schedule": "Daily at 3:00 AM", "description": "Records free/used disk space for the storage forecast shown elsewhere in the app." },
     { "id": "cleanup", "name": "Database Cleanup", "schedule": "Daily at 3:30 AM", "description": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever." }

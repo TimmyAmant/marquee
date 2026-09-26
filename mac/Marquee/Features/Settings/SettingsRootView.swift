@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum SettingsTab: String, Hashable, CaseIterable {
-    case account, integrations, activity, jobs, about
+    case account, integrations, discover, activity, jobs, about
 }
 
 extension SettingsTab {
@@ -9,6 +9,7 @@ extension SettingsTab {
         switch self {
         case .account: return "Account"
         case .integrations: return "Integrations"
+        case .discover: return "Discover"
         case .activity: return "Activity"
         case .jobs: return "Jobs"
         case .about: return "About"
@@ -19,16 +20,17 @@ extension SettingsTab {
         switch self {
         case .account: return "person.crop.circle"
         case .integrations: return "powerplug"
+        case .discover: return "safari"
         case .activity: return "clock"
         case .jobs: return "arrow.triangle.2.circlepath"
         case .about: return "info.circle"
         }
     }
 
-    /// Integrations, Activity and Jobs are the admin's.
+    /// Integrations, Discover, Activity and Jobs are the admin's.
     var isAdminOnly: Bool {
         switch self {
-        case .integrations, .activity, .jobs: return true
+        case .integrations, .discover, .activity, .jobs: return true
         case .account, .about: return false
         }
     }
@@ -45,10 +47,14 @@ enum SettingsLayout {
 /// the top and the chosen one below.
 struct SettingsRootView: View {
     @Environment(AppModel.self) private var model
+    /// A server older than 0.49 has no Settings › Discover (it answers 404).
+    @State private var discoverUnavailable = false
 
     var body: some View {
         let isAdmin = model.viewer?.isAdmin == true
-        let tabs = SettingsTab.allCases.filter { isAdmin || !$0.isAdminOnly }
+        let tabs = SettingsTab.allCases.filter {
+            (isAdmin || !$0.isAdminOnly) && !($0 == .discover && discoverUnavailable)
+        }
         // A member sent to an admin-only tab (an old link) lands on Account.
         let current = tabs.contains(model.settingsTab) ? model.settingsTab : .account
 
@@ -91,6 +97,7 @@ struct SettingsRootView: View {
                     switch current {
                     case .account: AccountSettingsView()
                     case .integrations: IntegrationsSettingsView()
+                    case .discover: DiscoverSettingsView()
                     case .activity: ActivitySettingsView()
                     case .jobs: JobsSettingsView()
                     case .about: AboutSettingsView()
@@ -102,6 +109,18 @@ struct SettingsRootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.bg0)
         .tint(Theme.accent)
+        .task(id: isAdmin) {
+            // Only the admin sees the tab; an older server has none.
+            guard isAdmin else { return }
+            do {
+                _ = try await model.api.discoverSettings.load()
+                discoverUnavailable = false
+            } catch APIError.notFound {
+                discoverUnavailable = true
+            } catch {
+                // Anything else: keep the tab; it shows the error itself.
+            }
+        }
     }
 }
 

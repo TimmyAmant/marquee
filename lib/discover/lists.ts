@@ -43,7 +43,7 @@ export type DiscoverShelfKey = (typeof DISCOVER_SHELF_KEYS)[number];
  * the website's /movies and /series). Uniform shape so typed clients can
  * decode it into one struct. */
 export type SeeAllTarget =
-  | { type: "list"; list: DiscoverList; mediaType: null }
+  | { type: "list"; list: DiscoverList | (string & {}); mediaType: null }
   | { type: "browse"; list: null; mediaType: "movie" | "tv" };
 
 const list = (name: DiscoverList): SeeAllTarget => ({ type: "list", list: name, mediaType: null });

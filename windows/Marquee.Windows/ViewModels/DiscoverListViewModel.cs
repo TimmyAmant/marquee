@@ -114,8 +114,12 @@ public sealed partial class DiscoverListViewModel : ObservableObject
 
     // MARK: Lifecycle
 
-    /// <summary>The page is on screen for <paramref name="list"/>: follow reloads and fetch from page 1.</summary>
-    public void Activate(DiscoverListKind list)
+    /// <summary>
+    /// The page is on screen for <paramref name="list"/> (a named list or,
+    /// 0.49+, a custom row's id): follow reloads and fetch from page 1.
+    /// <paramref name="title"/> is the row's name, until the server's arrives.
+    /// </summary>
+    public void Activate(DiscoverListKind list, string? title = null)
     {
         if (active && list == List)
         {
@@ -126,7 +130,7 @@ public sealed partial class DiscoverListViewModel : ObservableObject
             Deactivate();
         }
         List = list;
-        Title = list.Title;
+        Title = title.NonBlank() ?? list.Title;
         OnPropertyChanged(nameof(EmptyMessage));
         active = true;
         model.PropertyChanged += OnModelPropertyChanged;

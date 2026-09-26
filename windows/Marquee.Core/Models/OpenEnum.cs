@@ -577,13 +577,16 @@ public readonly record struct JobId(string Value) : IOpenEnum<JobId>
     public static readonly JobId ArrSync = new("arr-sync");
     public static readonly JobId PlexWatchlist = new("plex-watchlist");
 
+    /// <summary>"Trakt List Requests" (0.49+): requests what's new on the Trakt lists members keep in sync.</summary>
+    public static readonly JobId TraktSync = new("trakt-sync");
+
     /// <summary>"Can't Find Check" (0.46+): flags approved requests Sonarr/Radarr hasn't found.</summary>
     public static readonly JobId NotFoundCheck = new("not-found-check");
 
     public static readonly JobId DiskSpaceSnapshot = new("disk-space-snapshot");
     public static readonly JobId Cleanup = new("cleanup");
 
-    public static IReadOnlyList<JobId> Known { get; } = [PlexSync, JellyfinSync, ArrSync, PlexWatchlist, NotFoundCheck, DiskSpaceSnapshot, Cleanup];
+    public static IReadOnlyList<JobId> Known { get; } = [PlexSync, JellyfinSync, ArrSync, PlexWatchlist, TraktSync, NotFoundCheck, DiskSpaceSnapshot, Cleanup];
     public static JobId FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;

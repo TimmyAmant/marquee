@@ -4,6 +4,7 @@ import { syncAllConnectedArrUsers } from "@/lib/arr/sync";
 import { snapshotDiskSpaceForAllConnectedUsers } from "@/lib/integrations/disk-space";
 import { pruneOldRecords } from "@/lib/jobs/cleanup";
 import { syncAllPlexWatchlists } from "@/lib/plex/watchlist";
+import { syncAllTraktSyncs } from "@/lib/trakt/sync";
 import { checkNotFoundRequests } from "@/lib/requests/not-found";
 import { fail, type CoreResult } from "@/lib/core-result";
 
@@ -15,6 +16,7 @@ export const JOB_IDS = [
   "jellyfin-sync",
   "arr-sync",
   "plex-watchlist",
+  "trakt-sync",
   "not-found-check",
   "disk-space-snapshot",
   "cleanup",
@@ -50,6 +52,13 @@ export const JOBS: JobDefinition[] = [
       "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each.",
   },
   {
+    id: "trakt-sync",
+    name: "Trakt List Requests",
+    schedule: "Every 3 hours",
+    description:
+      "Requests the new movies and shows on the Trakt watchlists and public lists members keep in sync, like pressing Request for each.",
+  },
+  {
     id: "not-found-check",
     name: "Can't Find Check",
     schedule: "Every hour",
@@ -76,6 +85,7 @@ const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "jellyfin-sync": syncAllConnectedJellyfinUsers,
   "arr-sync": syncAllConnectedArrUsers,
   "plex-watchlist": syncAllPlexWatchlists,
+  "trakt-sync": syncAllTraktSyncs,
   "not-found-check": () => checkNotFoundRequests(),
   "disk-space-snapshot": snapshotDiskSpaceForAllConnectedUsers,
   cleanup: pruneOldRecords,

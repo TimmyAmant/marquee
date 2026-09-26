@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings › Discover (0.49+), the admin's: every Discover row in order,
+  hidden ones included. Each row has Move up and Move down, a Show switch,
+  and, for the admin's own rows, Rename and Remove. Reset to default puts
+  the built-in rows back. Below, the Add row form: what the row is built
+  from, a search for the keyword, genre, studio or network, movies or
+  series where it applies, a list's number or link, and an optional name.
+  The Rename dialog and the confirmations are shown by the code-behind.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Views.Settings.DiscoverSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="20">
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="Discover" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.DescriptionText}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.CustomCountLine, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.CustomCountLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            </StackPanel>
+            <Button
+                Grid.Column="1"
+                Content="Reset to default"
+                Command="{x:Bind ViewModel.ResetCommand}"
+                IsEnabled="{x:Bind ViewModel.CanReset, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.HasRows, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                VerticalAlignment="Top" />
+        </Grid>
+
+        <ProgressRing
+            IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            Width="20"
+            Height="20"
+            HorizontalAlignment="Left" />
+        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock
+                Text="{x:Bind ViewModel.LoadError, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                TextWrapping="Wrap" />
+            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+        </StackPanel>
+        <InfoBar
+            IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            Severity="Error"
+            Message="{x:Bind ViewModel.Error, Mode=OneWay}"
+            IsClosable="False" />
+
+        <!-- The rows, in Discover's order. -->
+        <Border
+            Style="{StaticResource SettingsCard}"
+            Padding="0"
+            Visibility="{x:Bind ViewModel.HasRows, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ItemsRepeater ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}">
+                <ItemsRepeater.Layout>
+                    <StackLayout Orientation="Vertical" Spacing="0" />
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DiscoverRowItem">
+                        <StackPanel>
+                            <Border
+                                Height="1"
+                                Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+                            <Grid Padding="12,8,20,8" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                    <Button
+                                        Command="{x:Bind MoveUpCommand}"
+                                        IsEnabled="{x:Bind CanMoveUp}"
+                                        ToolTipService.ToolTip="Move up"
+                                        AutomationProperties.Name="{x:Bind MoveUpLabel}"
+                                        Padding="8,6"
+                                        Background="Transparent"
+                                        BorderThickness="0">
+                                        <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                                    </Button>
+                                    <Button
+                                        Command="{x:Bind MoveDownCommand}"
+                                        IsEnabled="{x:Bind CanMoveDown}"
+                                        ToolTipService.ToolTip="Move down"
+                                        AutomationProperties.Name="{x:Bind MoveDownLabel}"
+                                        Padding="8,6"
+                                        Background="Transparent"
+                                        BorderThickness="0">
+                                        <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock
+                                        Text="{x:Bind Title}"
+                                        Style="{StaticResource BodyTextBlockStyle}"
+                                        TextWrapping="NoWrap"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Text="{x:Bind Subtitle}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        TextWrapping="NoWrap"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <StackPanel
+                                    Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="8"
+                                    VerticalAlignment="Center"
+                                    Visibility="{x:Bind IsCustom, Converter={StaticResource BoolToVisibility}}">
+                                    <Button Content="Rename" Command="{x:Bind RenameCommand}" />
+                                    <Button Content="Remove" Command="{x:Bind RemoveCommand}" />
+                                </StackPanel>
+                                <ToggleSwitch
+                                    Grid.Column="3"
+                                    IsOn="{x:Bind IsShown, Mode=TwoWay}"
+                                    OnContent="Shown"
+                                    OffContent="Hidden"
+                                    MinWidth="0"
+                                    AutomationProperties.Name="{x:Bind Title}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </Border>
+
+        <!-- Add a row of your own, at the end of Discover. -->
+        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasRows, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Add row" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <ComboBox
+                        Header="What it shows"
+                        MinWidth="280"
+                        ItemsSource="{x:Bind ViewModel.KindChoices}"
+                        SelectedIndex="{x:Bind ViewModel.KindIndex, Mode=TwoWay}" />
+
+                    <!-- A keyword, genre, studio or network, picked from a search. -->
+                    <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.ShowsSearch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                Grid.Column="0"
+                                Header="{x:Bind ViewModel.SearchHeader, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.SearchPlaceholder, Mode=OneWay}"
+                                Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <ProgressRing
+                                Grid.Column="1"
+                                IsActive="{x:Bind ViewModel.IsSearching, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.IsSearching, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Width="16"
+                                Height="16"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,0,8" />
+                        </Grid>
+                        <ListView
+                            ItemsSource="{x:Bind ViewModel.ResultLabels, Mode=OneWay}"
+                            SelectedIndex="{x:Bind ViewModel.ResultIndex, Mode=TwoWay}"
+                            Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            SelectionMode="Single"
+                            MaxHeight="220"
+                            BorderThickness="1"
+                            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                            CornerRadius="4" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.PickedLine, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.PickedLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.SearchError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasSearchError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <ComboBox
+                        Header="Movies or series"
+                        MinWidth="280"
+                        ItemsSource="{x:Bind ViewModel.MediaTypeChoices, Mode=OneWay}"
+                        SelectedIndex="{x:Bind ViewModel.MediaTypeIndex, Mode=TwoWay}"
+                        Visibility="{x:Bind ViewModel.ShowsMediaType, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+
+                    <!-- A TMDb list's number or link, or a Trakt link. -->
+                    <TextBox
+                        Header="{x:Bind ViewModel.LinkHeader, Mode=OneWay}"
+                        PlaceholderText="{x:Bind ViewModel.LinkPlaceholder, Mode=OneWay}"
+                        InputScope="Url"
+                        Text="{x:Bind ViewModel.Link, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Visibility="{x:Bind ViewModel.ShowsLink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.TraktNote}"
+                        Visibility="{x:Bind ViewModel.ShowsTraktNote, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        TextWrapping="Wrap" />
+
+                    <TextBox
+                        Header="Name (optional)"
+                        PlaceholderText="Named after what it shows"
+                        MaxLength="60"
+                        Text="{x:Bind ViewModel.NewTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock
+                        Text="{x:Bind ViewModel.AddError, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.HasAddError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.AddNotice, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.HasAddNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                        TextWrapping="Wrap" />
+                    <Button
+                        Content="{x:Bind ViewModel.AddLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.AddCommand}"
+                        IsEnabled="{x:Bind ViewModel.CanAdd, Mode=OneWay}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

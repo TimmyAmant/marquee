@@ -532,6 +532,53 @@ export function getNetworkDetails(id: number) {
   return tmdbFetch<TmdbNetworkDetails>(`/network/${id}`);
 }
 
+export function getKeywordDetails(id: number) {
+  return tmdbFetch<TmdbKeyword>(`/keyword/${id}`);
+}
+
+/** A custom Discover row's titles (lib/discover/custom-shelves.ts): one
+ * TMDb keyword, genre, company or network, most popular first, any
+ * language (an "anime" row is mostly Japanese). */
+export function discoverForShelf(
+  mediaType: "movie" | "tv",
+  filter: { keywordId?: number; genreId?: number; companyId?: number; networkId?: number },
+  page = 1,
+) {
+  return tmdbFetch<TmdbDiscoverResponse>(`/discover/${mediaType}`, {
+    with_keywords: filter.keywordId,
+    with_genres: filter.genreId,
+    with_companies: filter.companyId,
+    with_networks: mediaType === "tv" ? filter.networkId : undefined,
+    sort_by: "popularity.desc",
+    include_adult: "false",
+    page,
+  });
+}
+
+export interface TmdbListItem {
+  id: number;
+  media_type: "movie" | "tv" | string;
+  title?: string;
+  name?: string;
+  poster_path: string | null;
+  release_date?: string;
+  first_air_date?: string;
+}
+
+export interface TmdbListDetails {
+  id: number | string;
+  name: string;
+  page: number;
+  total_pages: number;
+  total_results: number;
+  items: TmdbListItem[];
+}
+
+/** A public TMDb list, 20 items a page. */
+export function getTmdbList(id: number, page = 1) {
+  return tmdbFetch<TmdbListDetails>(`/list/${id}`, { page });
+}
+
 export interface TmdbFindResult {
   id: number;
   name: string;

@@ -134,6 +134,13 @@ public sealed record DiscoverShelves
     /// supplies the older server's fallback.
     /// </summary>
     public IReadOnlyDictionary<string, DiscoverSeeAllLink?>? SeeAll { get; init; }
+
+    /// <summary>
+    /// The rows to show in the admin's order, their own rows included
+    /// (0.49+); null from an older server, which then shows the fixed keys
+    /// above. Read through <see cref="DiscoverRows.Resolve"/>.
+    /// </summary>
+    public IReadOnlyList<DiscoverShelf>? Shelves { get; init; }
 }
 
 /// <summary>The wire keys of <c>GET /discover</c>'s shelves, as <see cref="DiscoverShelves.SeeAll"/> uses them.</summary>
@@ -163,7 +170,11 @@ public readonly record struct SeeAllKind(string Value) : IOpenEnum<SeeAllKind>
     public override string ToString() => Value;
 }
 
-/// <summary>A Discover shelf's full list: <c>GET /discover/lists/{list}</c> (the website's <c>/discover/{list}</c>).</summary>
+/// <summary>
+/// A Discover shelf's full list: <c>GET /discover/lists/{list}</c> (the
+/// website's <c>/discover/{list}</c>). Besides the named lists, any custom
+/// row's id (0.49+), which is why this stays open.
+/// </summary>
 public readonly record struct DiscoverListKind(string Value) : IOpenEnum<DiscoverListKind>
 {
     public static readonly DiscoverListKind Trending = new("trending");
@@ -182,7 +193,11 @@ public readonly record struct DiscoverListKind(string Value) : IOpenEnum<Discove
         : this == RecentlyAdded ? "Recently Added"
         : this == UpcomingMovies ? "Upcoming Movies"
         : this == UpcomingSeries ? "Upcoming Series"
+        : IsCustomRow ? "Discover"
         : OpenEnum.Capitalized(Value.Replace('-', ' '));
+
+    /// <summary>A custom row's uuid rather than a named list (0.49+): no name of its own until the server's title arrives.</summary>
+    public bool IsCustomRow => Guid.TryParse(Value, out _);
 
     /// <summary>Trending and Recently Added mix movies and series, so their cards carry the MOVIE/SERIES pill.</summary>
     public bool MixesMediaTypes => this != UpcomingMovies && this != UpcomingSeries;
@@ -207,8 +222,12 @@ public abstract record SeeAllTarget
     {
     }
 
-    /// <summary>The shelf's own paged list (<c>GET /discover/lists/{list}</c>).</summary>
-    public sealed record DiscoverList(DiscoverListKind Kind) : SeeAllTarget;
+    /// <summary>
+    /// The shelf's own paged list (<c>GET /discover/lists/{list}</c>): a
+    /// built-in list, or (0.49+) a custom row's id. <paramref name="Title"/>
+    /// is the row's name, the heading until the list's own title arrives.
+    /// </summary>
+    public sealed record DiscoverList(DiscoverListKind Kind, string? Title = null) : SeeAllTarget;
 
     /// <summary>The unfiltered Movies or Series grid.</summary>
     public sealed record BrowseGrid(MediaType MediaType) : SeeAllTarget;

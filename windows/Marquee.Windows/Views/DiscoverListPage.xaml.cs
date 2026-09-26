@@ -28,13 +28,13 @@ public sealed partial class DiscoverListPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        var list = e.Parameter switch
+        var (list, title) = e.Parameter switch
         {
-            Route.DiscoverList route => route.List,
-            string value => DiscoverListKind.FromValue(value),
-            _ => DiscoverListKind.Trending,
+            Route.DiscoverList route => (route.List, route.Heading),
+            string value => (DiscoverListKind.FromValue(value), (string?)null),
+            _ => (DiscoverListKind.Trending, (string?)null),
         };
-        ViewModel.Activate(list);
+        ViewModel.Activate(list, title);
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)

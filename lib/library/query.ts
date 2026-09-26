@@ -336,7 +336,12 @@ export type RecentlyAddedItem = Pick<
  * whole library and slicing it — this runs on every Discover load. A title
  * on more than one server counts at its newest addedAt.
  */
-export async function getRecentlyAdded(userId: string, limit = 20): Promise<RecentlyAddedItem[]> {
+export async function getRecentlyAdded(
+  userId: string,
+  limit = 20,
+  /** Only movies or only series (a custom Discover row); both when left out. */
+  mediaType?: MediaType,
+): Promise<RecentlyAddedItem[]> {
   const [plexServerRows, jellyfinServerRows] = await Promise.all([
     db.select({ id: plexServers.id }).from(plexServers).where(eq(plexServers.userId, userId)),
     db.select({ id: jellyfinServers.id }).from(jellyfinServers).where(eq(jellyfinServers.userId, userId)),
@@ -356,7 +361,13 @@ export async function getRecentlyAdded(userId: string, limit = 20): Promise<Rece
             titles,
             and(eq(titles.mediaType, plexLibraryItems.mediaType), eq(titles.tmdbId, plexLibraryItems.tmdbId)),
           )
-          .where(and(inArray(plexLibraryItems.plexServerId, plexServerIds), isNotNull(plexLibraryItems.addedAt)))
+          .where(
+            and(
+              inArray(plexLibraryItems.plexServerId, plexServerIds),
+              isNotNull(plexLibraryItems.addedAt),
+              mediaType ? eq(plexLibraryItems.mediaType, mediaType) : undefined,
+            ),
+          )
           .groupBy(titles.id)
           .orderBy(desc(plexAddedAt))
           .limit(limit),
@@ -376,6 +387,7 @@ export async function getRecentlyAdded(userId: string, limit = 20): Promise<Rece
             and(
               inArray(jellyfinLibraryItems.jellyfinServerId, jellyfinServerIds),
               isNotNull(jellyfinLibraryItems.addedAt),
+              mediaType ? eq(jellyfinLibraryItems.mediaType, mediaType) : undefined,
             ),
           )
           .groupBy(titles.id)

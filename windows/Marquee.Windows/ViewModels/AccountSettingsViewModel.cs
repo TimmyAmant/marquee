@@ -106,7 +106,7 @@ public sealed class HouseholdMemberRow
 /// Settings › Account (app/settings/page.tsx, the Mac's
 /// AccountSettingsView), for this PC: your account (name, username, role)
 /// with the edit form (<c>PATCH /users/{id}</c>), linked Plex/Jellyfin
-/// accounts and the Plex Watchlist, this PC's notifications, the household
+/// accounts and the Plex Watchlist, Trakt lists (0.49+), this PC's notifications, the household
 /// members list (<c>GET /users</c>: every account for the admin, only your
 /// own for a member) with Edit, the admin's Add member (<c>POST /users</c>),
 /// Remove (<c>DELETE /users/{id}</c>), Plex/Jellyfin import and sign-in
@@ -368,8 +368,12 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         IsAdmin = model.Viewer?.IsAdmin == true;
         Blocklist = new BlocklistSettingsViewModel(model);
         Personal = new PersonalNotificationsViewModel(model);
+        Trakt = new TraktSyncsViewModel(model);
         SyncMenuPosition();
     }
+
+    /// <summary>"Trakt lists" (0.49+ servers): keep a public Trakt watchlist or list in sync, for every account.</summary>
+    public TraktSyncsViewModel Trakt { get; }
 
     /// <summary>Your own channels and "What you hear about" (0.45+ servers), under Notifications.</summary>
     public PersonalNotificationsViewModel Personal { get; }
@@ -525,6 +529,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         _ = LoadMembersAsync();
         _ = LoadSignInSettingsAsync();
         _ = LoadPlexWatchlistAsync();
+        _ = Trakt.LoadAsync();
         LoadBlocklist();
         _ = Personal.LoadAsync();
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
@@ -544,6 +549,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         model.Notifications.StateChanged -= OnNotificationsStateChanged;
         membersCancellation?.Cancel();
         plexWatchlistLoadCancellation?.Cancel();
+        Trakt.Cancel();
         Blocklist.Cancel();
         Personal.Cancel();
         CancelLinkPlex();

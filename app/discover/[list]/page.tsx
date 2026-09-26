@@ -4,26 +4,43 @@ import { notFound } from "next/navigation";
 import { InfiniteResultsGrid } from "@/components/infinite-results-grid";
 import { StatusLegend } from "@/components/status-legend";
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { DISCOVER_LIST_TITLES, parseDiscoverList } from "@/lib/discover/lists";
-import { fetchDiscoverListPage } from "@/lib/pages/discover-lists";
+import { DISCOVER_LIST_TITLES } from "@/lib/discover/lists";
+import { fetchResolvedListPage, resolveDiscoverList } from "@/lib/pages/discover-lists";
 
 export async function generateMetadata({ params }: { params: Promise<{ list: string }> }): Promise<Metadata> {
-  const list = parseDiscoverList((await params).list);
-  return { title: list ? `${DISCOVER_LIST_TITLES[list]} — Marquee` : "Marquee" };
+  const resolved = await resolveDiscoverList((await params).list);
+  if (!resolved) return { title: "Marquee" };
+  const title = resolved.type === "custom" ? resolved.shelf.title : DISCOVER_LIST_TITLES[resolved.list];
+  return { title: `${title} — Marquee` };
 }
 
 /**
  * A Discover shelf's "See all" (Recently Added, Trending, Upcoming Movies,
- * Upcoming Series): the whole list as a grid, first page server-rendered and
- * the rest by infinite scroll. Shared with GET /api/v1/discover/lists/{list}.
+ * Upcoming Series, and every row the admin added in Settings → Discover):
+ * the whole list as a grid, first page server-rendered and the rest by
+ * infinite scroll. Shared with GET /api/v1/discover/lists/{list}.
  */
 export default async function DiscoverListPage({ params }: { params: Promise<{ list: string }> }) {
-  const list = parseDiscoverList((await params).list);
-  if (!list) notFound();
+  const resolved = await resolveDiscoverList((await params).list);
+  if (!resolved) notFound();
 
   const viewer = await getViewerContext();
-  const first = await fetchDiscoverListPage(list, 1, viewer);
-  const mixed = list === "trending" || list === "recently-added";
+  const first = await fetchResolvedListPage(resolved, 1, viewer);
+  const mixed =
+    resolved.type === "builtIn"
+      ? resolved.list === "trending" || resolved.list === "recently-added"
+      : new Set(first.items.map((item) => item.mediaType)).size > 1 || resolved.shelf.source?.mediaType === "all";
+
+  const emptyMessage =
+    resolved.type === "builtIn"
+      ? resolved.list === "recently-added"
+        ? "Nothing added to your Plex or Jellyfin library yet."
+        : "Nothing here right now — TMDb didn't send anything back."
+      : resolved.shelf.kind === "library"
+        ? "Nothing added to your Plex or Jellyfin library yet."
+        : resolved.shelf.kind === "traktList"
+          ? "Nothing here right now — Trakt didn't send anything back. The list has to be public, and Trakt connected in Settings."
+          : "Nothing here right now — TMDb didn't send anything back.";
 
   return (
     <div className="rail-bleed relative overflow-hidden">
@@ -47,17 +64,13 @@ export default async function DiscoverListPage({ params }: { params: Promise<{ l
         </div>
 
         <InfiniteResultsGrid
-          key={list}
+          key={first.list}
           initialItems={first.items}
           initialHasNextPage={first.page < first.totalPages}
-          list={list}
+          list={first.list}
           signedIn={Boolean(viewer.session)}
           showTypeLabel={mixed}
-          emptyMessage={
-            list === "recently-added"
-              ? "Nothing added to your Plex or Jellyfin library yet."
-              : "Nothing here right now — TMDb didn't send anything back."
-          }
+          emptyMessage={emptyMessage}
         />
       </div>
     </div>

@@ -66,6 +66,16 @@ export async function notifyReviewersOfWatchlist(requesterId: string, requestIds
   );
 }
 
+/** Same for a member's Trakt list kept in sync (lib/trakt/sync.ts): one
+ * alert per list per check. */
+export async function notifyReviewersOfTraktSync(requesterId: string, requestIds: string[], listName: string): Promise<void> {
+  await notifyReviewersOfBatch(requesterId, requestIds, (who, count, list) =>
+    count === 1
+      ? `${who}'s Trakt list “${listName}” requested ${list}`
+      : `${who}'s Trakt list “${listName}” requested ${count} titles: ${list}`,
+  );
+}
+
 /** Same idea for a member's "Request all N missing" on a franchise row
  * (lib/requests/request-all.ts): one "Anna requested 3 titles from “Ice Age
  * Collection”" rather than three pushes. */

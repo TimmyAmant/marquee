@@ -21,6 +21,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { parseSsoErrorCode, ssoErrorMessage } from "@/lib/auth/sso/messages";
 import { can } from "@/lib/users/permissions";
+import { TraktSyncsCard } from "./trakt-syncs";
+import { loadTraktSyncs } from "@/lib/trakt/sync";
 
 export default async function AccountSettingsPage({
   searchParams,
@@ -33,12 +35,13 @@ export default async function AccountSettingsPage({
   const isAdmin = session.user.role === "admin";
   // The blocklist can be handed to a member (lib/users/permissions.ts).
   const managesBlocklist = can(session.user, "manageBlocklist");
-  const [members, methods, mediaServerSignup, watchlist, blocklistRows] = await Promise.all([
+  const [members, methods, mediaServerSignup, watchlist, blocklistRows, traktSyncs] = await Promise.all([
     listHouseholdMembers(),
     getSignInMethods(),
     isAdmin ? getMediaServerSignup() : Promise.resolve(true),
     getWatchlistState(session.user.id),
     managesBlocklist ? listBlocklist() : Promise.resolve([]),
+    loadTraktSyncs(session.user),
   ]);
   const blocklist = blocklistRows.map(blocklistEntryDto);
   const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
@@ -113,6 +116,14 @@ export default async function AccountSettingsPage({
           )}
         </>
       )}
+
+      <h2 className="mt-10 font-display text-xl text-text-primary">Trakt lists</h2>
+      <p className="mt-2 text-sm text-text-secondary">
+        Request what&apos;s added to your public Trakt watchlist or lists.
+      </p>
+      <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+        <TraktSyncsCard initial={traktSyncs} currentUserId={session.user.id} />
+      </div>
 
       <h2 className="mt-10 font-display text-xl text-text-primary">Notifications</h2>
       <p className="mt-2 text-sm text-text-secondary">

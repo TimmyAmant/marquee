@@ -589,7 +589,7 @@ final class AppModel {
         case "discover":
             if parts.count >= 2 {
                 let list = API.DiscoverList(rawValue: parts[1])
-                guard list.isKnown else { return }
+                guard list.isKnown || list.isCustomRow else { return }
                 select(.discover)
                 open(.discoverList(list))
             }

@@ -3,13 +3,15 @@ import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { titleCard, statusKey, yearOf } from "@/lib/api/mappers";
 import { loadDiscoverShelves } from "@/lib/pages/discover";
-import type { DiscoverShelves } from "@/lib/api/types";
+import type { DiscoverShelf, DiscoverShelves, GenreTile, NetworkCard, TitleCard } from "@/lib/api/types";
 import type { MediaType } from "@/lib/db/schema";
-import { DISCOVER_SEE_ALL } from "@/lib/discover/lists";
+import { DISCOVER_SEE_ALL, type DiscoverShelfKey } from "@/lib/discover/lists";
+import { isBuiltInShelf } from "@/lib/discover/shelves";
 
 /** The Discover landing page's shelves, in page order. Cards carry library
  * status only — the website shows no favorite/add buttons on these shelves.
- * `seeAll` says where each shelf's "See all" goes. */
+ * `seeAll` says where each shelf's "See all" goes; `shelves` (0.49+) is the
+ * admin's arrangement, their own rows included. */
 export const GET = withApi(async (request): Promise<DiscoverShelves> => {
   const ctx = await requireApiUser(request);
   await requireTmdbConfigured();
@@ -17,10 +19,8 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
   const data = await loadDiscoverShelves(await ctx.viewer());
   const status = (mediaType: MediaType, tmdbId: number) => data.statusMap.get(statusKey(mediaType, tmdbId)) ?? null;
 
-  return {
-    recentlyAdded: data.recentlyAdded.map((item) =>
-      titleCard(item, { status: item.status ?? null }),
-    ),
+  const fixed = {
+    recentlyAdded: data.recentlyAdded.map((item) => titleCard(item, { status: item.status ?? null })),
     trending: data.trendingItems.map((item) => {
       const mediaType = item.media_type as MediaType;
       return titleCard(
@@ -79,6 +79,34 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
       name: network.name,
       logoPath: network.logo_path,
     })),
-    seeAll: DISCOVER_SEE_ALL,
+  } satisfies Record<DiscoverShelfKey, unknown>;
+
+  const builtInShelf = (key: DiscoverShelfKey, title: string): DiscoverShelf => {
+    const base = { id: key, kind: key, title, custom: false, results: null, genres: null, logos: null, seeAll: DISCOVER_SEE_ALL[key] };
+    if (key === "movieGenres" || key === "seriesGenres") return { ...base, genres: fixed[key] as GenreTile[] };
+    if (key === "studios") {
+      return { ...base, logos: fixed.studios.map(({ tmdbId, name, logoPath }): NetworkCard => ({ tmdbId, name, logoPath })) };
+    }
+    if (key === "networks") return { ...base, logos: fixed.networks };
+    return { ...base, results: fixed[key] as TitleCard[] };
   };
+
+  const shelves: DiscoverShelf[] = data.layout.map((shelf) => {
+    if (!shelf.custom && isBuiltInShelf(shelf.id)) return builtInShelf(shelf.id, shelf.title);
+    const items = data.customItems.get(shelf.id) ?? [];
+    return {
+      id: shelf.id,
+      kind: shelf.kind,
+      title: shelf.title,
+      custom: true,
+      results: items.map((item) =>
+        titleCard(item, { status: item.status ?? status(item.mediaType, item.tmdbId) }),
+      ),
+      genres: null,
+      logos: null,
+      seeAll: { type: "list", list: shelf.id, mediaType: null },
+    };
+  });
+
+  return { ...fixed, seeAll: DISCOVER_SEE_ALL, shelves };
 });
