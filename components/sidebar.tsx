@@ -7,6 +7,7 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
+import { canReviewRequests } from "@/lib/users/roles";
 import { avatarPath } from "@/lib/users/avatar-path";
 
 /**
@@ -17,7 +18,9 @@ import { avatarPath } from "@/lib/users/avatar-path";
  */
 export async function Sidebar() {
   const session = await auth();
-  const isAdmin = session?.user?.role === "admin";
+  // The Requests badge is for whoever works the review queue: the admin or a
+  // trusted member.
+  const isAdmin = canReviewRequests(session?.user?.role);
   // Requests and problem reports both wait on the Requests page — the same
   // sum the badge's poll (getPendingRequestCountAction) returns.
   const pendingRequestCount = isAdmin

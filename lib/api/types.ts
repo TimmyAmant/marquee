@@ -95,6 +95,18 @@ export type Me = User & {
   /** False for an account made by Plex/Jellyfin sign-in that hasn't set a
    * password; it sets one without a current password. */
   hasPassword: boolean;
+  /** This account's request limits and how much is left (0.38+); each null
+   * when that type isn't limited. */
+  requestLimits: { movie: RequestQuota | null; tv: RequestQuota | null };
+};
+
+export type RequestQuota = {
+  limit: number;
+  days: number;
+  used: number;
+  remaining: number;
+  /** When the next request frees up, while none is left. */
+  nextSlotAt: string | null;
 };
 
 export type AuthResponse = { token: string; expiresAt: string; user: User };
@@ -586,6 +598,12 @@ export type HouseholdMember = {
   /** Last time the account used the website or an app (to within a few
    * minutes); null when it never has. */
   lastActiveAt: string | null;
+  /** Request limits (0.38+): at most `limit` of that type in any `days`
+   * days; a null limit is none. Admins and trusted members aren't limited. */
+  movieQuotaLimit: number | null;
+  movieQuotaDays: number;
+  tvQuotaLimit: number | null;
+  tvQuotaDays: number;
 };
 
 export type ImportResult = { created: HouseholdMember[]; skipped: number };

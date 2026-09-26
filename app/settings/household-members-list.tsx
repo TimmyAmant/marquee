@@ -240,6 +240,44 @@ function EditMemberForm({
             />
             Auto-approve TV requests
           </label>
+          <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
+            Role
+            <select
+              name="role"
+              defaultValue={member.role === "trusted" ? "trusted" : "member"}
+              className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
+            >
+              <option value="member">Member</option>
+              <option value="trusted">Trusted — can approve requests and handle problem reports</option>
+            </select>
+          </label>
+          <fieldset className="flex flex-col gap-2 text-sm text-text-secondary">
+            <legend className="mb-1">Request limits (blank for none; trusted members have none)</legend>
+            {(["movie", "tv"] as const).map((kind) => (
+              <div key={kind} className="flex flex-wrap items-center gap-2">
+                <span className="w-16">{kind === "movie" ? "Movies" : "TV"}</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={1000}
+                  name={`${kind}QuotaLimit`}
+                  defaultValue={(kind === "movie" ? member.movieQuotaLimit : member.tvQuotaLimit) ?? ""}
+                  placeholder="No limit"
+                  className="w-24 rounded-lg border border-border bg-bg-0 px-3 py-2 text-text-primary outline-none focus:border-accent"
+                />
+                <span>every</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  name={`${kind}QuotaDays`}
+                  defaultValue={kind === "movie" ? member.movieQuotaDays : member.tvQuotaDays}
+                  className="w-20 rounded-lg border border-border bg-bg-0 px-3 py-2 text-text-primary outline-none focus:border-accent"
+                />
+                <span>days</span>
+              </div>
+            ))}
+          </fieldset>
         </>
       )}
 
@@ -319,6 +357,11 @@ export function HouseholdMembersList({
               {member.role === "admin" && (
                 <span className="rounded-full border border-accent/50 px-2.5 py-0.5 text-xs text-accent">
                   Admin
+                </span>
+              )}
+              {member.role === "trusted" && (
+                <span className="rounded-full border border-accent/30 px-2.5 py-0.5 text-xs text-accent">
+                  Trusted
                 </span>
               )}
               {member.id === currentUserId && (

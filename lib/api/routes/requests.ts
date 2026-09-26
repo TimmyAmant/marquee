@@ -1,5 +1,5 @@
 import { withApi } from "@/lib/api/handler";
-import { requireApiAdmin } from "@/lib/api/auth";
+import { requireApiReviewer } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment } from "@/lib/api/request";
 import type { CoreResult } from "@/lib/core-result";
@@ -13,7 +13,7 @@ export function reviewRequestHandler(
   forbiddenMessage: string,
 ) {
   return withApi<{ id: string }>(async (request, params): Promise<Ok> => {
-    const ctx = await requireApiAdmin(request, forbiddenMessage);
+    const ctx = await requireApiReviewer(request, forbiddenMessage);
     const requestId = parseUuidSegment(params.id, "Request not found or already reviewed.");
     unwrap(await review(requestId, ctx.user.id));
     return { ok: true };

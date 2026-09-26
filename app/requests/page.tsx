@@ -11,6 +11,7 @@ import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
 import { RequestTitle } from "@/components/request-title";
 import { IssuesSection } from "@/components/issues-section";
+import { getQuotas, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
 import { issueDto } from "@/lib/api/mappers";
 
@@ -36,19 +37,36 @@ function myRequestBadge(
   return { label, className: BADGE_CLASS[tone] };
 }
 
+/** "Movies: 3 of 5 left for the next 7 days" — or when the next frees up. */
+function quotaLine(label: string, quota: QuotaState): string {
+  if (quota.remaining > 0) return `${label}: ${quota.remaining} of ${quota.limit} requests left (every ${quota.days} days)`;
+  const when = quota.nextSlotAt?.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${label}: none left${when ? ` until ${when}` : ""}`;
+}
+
 export default async function RequestsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session) redirect("/login");
 
-  const issues = (await listIssues({ userId: viewer.userId, isAdmin: viewer.isAdmin })).map((row) =>
+  // The review queue is the admin's and trusted members' (lib/users/roles.ts).
+  const reviews = viewer.isAdmin || viewer.session.user.role === "trusted";
+  const issues = (await listIssues({ userId: viewer.userId, isAdmin: reviews })).map((row) =>
     issueDto(row, viewer.userId),
   );
 
-  if (!viewer.isAdmin) {
-    const myRequests = await getMyRequests(viewer.userId, viewer.libraryOwnerId);
+  if (!reviews) {
+    const [myRequests, quotas] = await Promise.all([
+      getMyRequests(viewer.userId, viewer.libraryOwnerId),
+      getQuotas(viewer.userId),
+    ]);
+    const limits = [
+      quotas.movie ? quotaLine("Movies", quotas.movie) : null,
+      quotas.tv ? quotaLine("TV", quotas.tv) : null,
+    ].filter(Boolean);
 
     return (
       <div className="mx-auto max-w-4xl px-6 py-12">
+        {limits.length > 0 && <p className="mb-4 text-sm text-text-secondary">{limits.join(" · ")}</p>}
         {myRequests.length === 0 ? (
           <p className="text-sm text-text-muted">
             You haven&apos;t requested anything yet — find a title and hit Request.

@@ -1,5 +1,5 @@
 import { hash, verify } from "argon2";
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
@@ -34,6 +34,11 @@ export type HouseholdMember = {
   /** Last time the account used the website or an app, to within a few
    * minutes (lib/users/last-active.ts); null when it never has. */
   lastActiveAt: Date | null;
+  /** Request limits (lib/requests/quota.ts); a null limit is none. */
+  movieQuotaLimit: number | null;
+  movieQuotaDays: number;
+  tvQuotaLimit: number | null;
+  tvQuotaDays: number;
 };
 
 export type Actor = { userId: string; isAdmin: boolean };
@@ -51,6 +56,10 @@ const memberColumns = {
   jellyfinLinked: sql<boolean>`${users.jellyfinUserId} is not null`,
   hasPassword: sql<boolean>`${users.passwordHash} is not null`,
   lastActiveAt: users.lastActiveAt,
+  movieQuotaLimit: users.movieQuotaLimit,
+  movieQuotaDays: users.movieQuotaDays,
+  tvQuotaLimit: users.tvQuotaLimit,
+  tvQuotaDays: users.tvQuotaDays,
 };
 
 /** Admins see every account (they're the ones who can edit/remove others);
@@ -141,10 +150,27 @@ export async function updateHouseholdMember(
     /** Admin-only; ignored when the actor isn't the admin. Omit to leave unchanged. */
     autoApproveMovies?: boolean;
     autoApproveTv?: boolean;
+    /** Admin-only, for another member's account: "member" or "trusted". */
+    role?: unknown;
+    /** Admin-only request limits: a limit of null (or "") removes it. */
+    movieQuotaLimit?: unknown;
+    movieQuotaDays?: unknown;
+    tvQuotaLimit?: unknown;
+    tvQuotaDays?: unknown;
   },
 ): Promise<CoreResult<{ passwordChanged: boolean }>> {
   if (!actor.isAdmin && input.userId !== actor.userId) {
     return fail("forbidden", "You can only edit your own account.");
+  }
+
+  const adminFields = actor.isAdmin ? parseAdminFields(input) : { ok: true as const, set: {} };
+  if (!adminFields.ok) return fail("invalid", adminFields.error);
+  if ("role" in adminFields.set) {
+    if (input.userId === actor.userId) return fail("invalid", "You can't change your own role.");
+    if (typeof input.userId === "string") {
+      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId)).limit(1);
+      if (target?.role === "admin") return fail("invalid", "The admin's role can't be changed.");
+    }
   }
 
   const parsed = updateMemberSchema.safeParse({
@@ -183,8 +209,11 @@ export async function updateHouseholdMember(
         ? { autoApproveMovies: input.autoApproveMovies }
         : {}),
       ...(actor.isAdmin && input.autoApproveTv !== undefined ? { autoApproveTv: input.autoApproveTv } : {}),
+      ...adminFields.set,
     })
-    .where(eq(users.id, userId))
+    // The admin's role is never changed here (nor anyone made admin) — also
+    // guarded in the update itself.
+    .where("role" in adminFields.set ? and(eq(users.id, userId), ne(users.role, "admin")) : eq(users.id, userId))
     .returning({ id: users.id });
 
   if (updated.length > 0 && password) {
@@ -193,6 +222,57 @@ export async function updateHouseholdMember(
   }
 
   return { ok: true, passwordChanged: updated.length > 0 && Boolean(password) };
+}
+
+type AdminFieldsInput = {
+  role?: unknown;
+  movieQuotaLimit?: unknown;
+  movieQuotaDays?: unknown;
+  tvQuotaLimit?: unknown;
+  tvQuotaDays?: unknown;
+};
+
+/** The admin-only fields of a member edit: role and request limits.
+ * Omitted fields stay as they are. Pure; unit tested. */
+export function parseAdminFields(
+  input: AdminFieldsInput,
+): { ok: true; set: Partial<typeof users.$inferInsert> } | { ok: false; error: string } {
+  const set: Partial<typeof users.$inferInsert> = {};
+  if (input.role !== undefined) {
+    if (input.role !== "member" && input.role !== "trusted") return { ok: false, error: "Role is member or trusted." };
+    set.role = input.role;
+  }
+  const limit = (value: unknown, label: string): number | null | "skip" | { error: string } => {
+    if (value === undefined) return "skip";
+    if (value === null || value === "") return null;
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isInteger(n) && n >= 1 && n <= 1000 ? n : { error: `${label} is a number from 1 to 1000, or blank for no limit.` };
+  };
+  const days = (value: unknown): number | "skip" | { error: string } => {
+    if (value === undefined || value === null || value === "") return "skip";
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isInteger(n) && n >= 1 && n <= 365 ? n : { error: "The number of days is from 1 to 365." };
+  };
+  const pairs: [unknown, "movieQuotaLimit" | "tvQuotaLimit", string][] = [
+    [input.movieQuotaLimit, "movieQuotaLimit", "The movie limit"],
+    [input.tvQuotaLimit, "tvQuotaLimit", "The TV limit"],
+  ];
+  for (const [value, key, label] of pairs) {
+    const parsed = limit(value, label);
+    if (parsed === "skip") continue;
+    if (parsed !== null && typeof parsed === "object") return { ok: false, error: parsed.error };
+    set[key] = parsed;
+  }
+  for (const [value, key] of [
+    [input.movieQuotaDays, "movieQuotaDays"],
+    [input.tvQuotaDays, "tvQuotaDays"],
+  ] as const) {
+    const parsed = days(value);
+    if (parsed === "skip") continue;
+    if (typeof parsed === "object") return { ok: false, error: parsed.error };
+    set[key] = parsed;
+  }
+  return { ok: true, set };
 }
 
 const PASSWORD_CHANGE_LIMIT = 5;

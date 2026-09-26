@@ -255,6 +255,10 @@ export function householdMember(row: HouseholdMemberRow, currentUserId: string):
     linked: { plex: row.plexLinked, jellyfin: row.jellyfinLinked },
     hasPassword: row.hasPassword,
     lastActiveAt: iso(row.lastActiveAt),
+    movieQuotaLimit: row.movieQuotaLimit,
+    movieQuotaDays: row.movieQuotaDays,
+    tvQuotaLimit: row.tvQuotaLimit,
+    tvQuotaDays: row.tvQuotaDays,
   };
 }
 

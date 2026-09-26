@@ -72,6 +72,17 @@ export async function updateHouseholdMemberAction(
         ? {
             autoApproveMovies: formData.get("autoApproveMovies") === "on",
             autoApproveTv: formData.get("autoApproveTv") === "on",
+            // Only on another member's row (the form leaves them out on the
+            // admin's own).
+            ...(formData.has("role") ? { role: formData.get("role") } : {}),
+            ...(formData.has("movieQuotaLimit")
+              ? {
+                  movieQuotaLimit: formData.get("movieQuotaLimit"),
+                  movieQuotaDays: formData.get("movieQuotaDays"),
+                  tvQuotaLimit: formData.get("tvQuotaLimit"),
+                  tvQuotaDays: formData.get("tvQuotaDays"),
+                }
+              : {}),
           }
         : {}),
     },
