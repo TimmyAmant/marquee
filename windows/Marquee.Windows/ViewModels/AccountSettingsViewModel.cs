@@ -3,6 +3,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Connection;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -308,12 +309,39 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     /// <summary>Set while the switch is moved to match the model, so that isn't taken for the user flipping it.</summary>
     private bool syncingNotifications;
 
+    // MARK: Menu position
+
+    /// <summary>
+    /// "Menu position" (This PC): the index of <see cref="MenuPositionSetting.All"/>
+    /// the radio buttons show; picking one moves the bar at once.
+    /// </summary>
+    [ObservableProperty]
+    private int menuPositionIndex;
+
+    /// <summary>"Left", "Right", "Top", "Bottom", in <see cref="MenuPositionIndex"/>'s order.</summary>
+    public IReadOnlyList<string> MenuPositionLabels { get; } = MenuPositionSetting.All.Select(position => position.Label()).ToList();
+
+    partial void OnMenuPositionIndexChanged(int value)
+    {
+        if (value >= 0 && value < MenuPositionSetting.All.Count)
+        {
+            model.MenuPosition = MenuPositionSetting.All[value];
+        }
+    }
+
+    private void SyncMenuPosition()
+    {
+        var index = MenuPositionSetting.All.ToList().IndexOf(model.MenuPosition);
+        MenuPositionIndex = index >= 0 ? index : 0;
+    }
+
     public AccountSettingsViewModel(AppModel model)
     {
         this.model = model;
         DisplayName = model.Viewer?.DisplayName ?? "";
         IsAdmin = model.Viewer?.IsAdmin == true;
         Blocklist = new BlocklistSettingsViewModel(model);
+        SyncMenuPosition();
     }
 
     /// <summary>The admin's "Request blocklist" (0.41+ servers).</summary>
@@ -1160,6 +1188,10 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
             _ = LoadMembersAsync();
             _ = LoadPlexWatchlistAsync();
             _ = Blocklist.LoadAsync(IsAdmin);
+        }
+        else if (e.PropertyName == nameof(AppModel.MenuPosition))
+        {
+            SyncMenuPosition();
         }
     }
 

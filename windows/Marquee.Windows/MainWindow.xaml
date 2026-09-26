@@ -208,7 +208,13 @@
             </Grid>
         </Grid>
 
-        <!-- The signed-in shell: the pages, and the rail floating over their left edge. -->
+        <!--
+          The signed-in shell: the pages, and the rail floating beside them.
+          The rail sits at the left edge unless this PC picked another
+          (Settings › Account › Menu position): ApplyMenuPosition() in code
+          moves it, lays its items out in a row for Top and Bottom, and moves
+          the frame's 72 clearance to that edge.
+        -->
         <Grid x:Name="ShellContent" Grid.Row="1" Visibility="Collapsed">
             <!-- 72 clears the rail (16 from the edge, 56 wide). -->
             <Frame x:Name="ContentFrame" Margin="72,0,0,0" Navigated="OnContentNavigated" />
@@ -233,7 +239,7 @@
                 BorderThickness="1"
                 BorderBrush="{ThemeResource MarqueeGlassBorderBrush}"
                 Background="{ThemeResource MarqueeGlassBrush}">
-                <StackPanel Spacing="4" XYFocusKeyboardNavigation="Enabled">
+                <StackPanel x:Name="RailItems" Spacing="4" XYFocusKeyboardNavigation="Enabled">
                     <Button
                         x:Name="RailProfileButton"
                         Style="{StaticResource NavRailButtonStyle}"

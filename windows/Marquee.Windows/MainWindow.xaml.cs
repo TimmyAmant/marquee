@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Marquee.Core.Api;
+using Marquee.Core.Connection;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
@@ -107,6 +108,7 @@ public sealed partial class MainWindow : Window, INavigator
         UpdateAccount();
         UpdateBadges();
         UpdateUpdateButton();
+        ApplyMenuPosition();
     }
 
     // MARK: INavigator
@@ -187,6 +189,86 @@ public sealed partial class MainWindow : Window, INavigator
         {
             button.Style = button.Tag as string == tag ? railCurrentStyle : railStyle;
         }
+    }
+
+    // MARK: Menu position
+
+    /// <summary>The rail's distance from its edge, and how thick it is (40 buttons, 7 padding, 1 border).</summary>
+    private const double RailInset = 16;
+    private const double RailClearance = 72;
+
+    /// <summary>
+    /// Puts the rail on this PC's edge (Settings › Account › Menu position):
+    /// a column at the left or right, a row along the top or bottom (under
+    /// the top bar, which stays the drag region), with the page frame moved
+    /// clear of it, tooltips and the notifications list opening toward the
+    /// page.
+    /// </summary>
+    private void ApplyMenuPosition()
+    {
+        var position = model.MenuPosition;
+        var horizontal = position.IsHorizontal();
+
+        Rail.HorizontalAlignment = position switch
+        {
+            MenuPosition.Right => HorizontalAlignment.Right,
+            MenuPosition.Top or MenuPosition.Bottom => HorizontalAlignment.Center,
+            _ => HorizontalAlignment.Left,
+        };
+        Rail.VerticalAlignment = position switch
+        {
+            MenuPosition.Top => VerticalAlignment.Top,
+            MenuPosition.Bottom => VerticalAlignment.Bottom,
+            _ => VerticalAlignment.Center,
+        };
+        Rail.Margin = position switch
+        {
+            MenuPosition.Right => new Thickness(0, 0, RailInset, 0),
+            // Right under the top bar, which already sets it off the edge.
+            MenuPosition.Top => new Thickness(0, 0, 0, 0),
+            MenuPosition.Bottom => new Thickness(0, 0, 0, RailInset),
+            _ => new Thickness(RailInset, 0, 0, 0),
+        };
+        ContentFrame.Margin = position switch
+        {
+            MenuPosition.Right => new Thickness(0, 0, RailClearance, 0),
+            MenuPosition.Top => new Thickness(0, RailClearance - RailInset, 0, 0),
+            MenuPosition.Bottom => new Thickness(0, 0, 0, RailClearance),
+            _ => new Thickness(RailClearance, 0, 0, 0),
+        };
+
+        var orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
+        RailItems.Orientation = orientation;
+        RailUpdateGroup.Orientation = orientation;
+        foreach (var separator in RailItems.Children.Concat(RailUpdateGroup.Children).OfType<Microsoft.UI.Xaml.Shapes.Rectangle>())
+        {
+            separator.Width = horizontal ? 1 : 24;
+            separator.Height = horizontal ? 24 : 1;
+            separator.Margin = horizontal ? new Thickness(4, 0, 4, 0) : new Thickness(0, 4, 0, 4);
+            separator.HorizontalAlignment = HorizontalAlignment.Center;
+            separator.VerticalAlignment = VerticalAlignment.Center;
+        }
+        RailProfileButton.Margin = horizontal ? new Thickness(0, 0, 4, 0) : new Thickness(0, 0, 0, 4);
+
+        // Names show on the page's side of the rail.
+        var tooltip = position switch
+        {
+            MenuPosition.Right => Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Left,
+            MenuPosition.Top => Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Bottom,
+            MenuPosition.Bottom => Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Top,
+            _ => Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Right,
+        };
+        foreach (var button in railButtons.Append(RailProfileButton).Append(NotificationsButton).Append(RailUpdateButton))
+        {
+            ToolTipService.SetPlacement(button, tooltip);
+        }
+        NotificationsFlyoutHost.Placement = position switch
+        {
+            MenuPosition.Right => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.LeftEdgeAlignedTop,
+            MenuPosition.Top => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.BottomEdgeAlignedLeft,
+            MenuPosition.Bottom => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.TopEdgeAlignedLeft,
+            _ => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.RightEdgeAlignedTop,
+        };
     }
 
     // MARK: Shell state
@@ -473,6 +555,9 @@ public sealed partial class MainWindow : Window, INavigator
                 break;
             case nameof(AppModel.Badges):
                 UpdateBadges();
+                break;
+            case nameof(AppModel.MenuPosition):
+                ApplyMenuPosition();
                 break;
         }
     }

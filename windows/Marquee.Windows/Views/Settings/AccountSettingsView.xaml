@@ -278,6 +278,27 @@
             </StackPanel>
         </Border>
 
+        <!--
+          Menu position: which edge of the window the navigation bar sits on,
+          for this PC only (the app's local settings). The window moves it as
+          soon as one is picked.
+        -->
+        <TextBlock Text="Menu position" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <Border Style="{StaticResource SettingsCard}">
+            <StackPanel Spacing="8">
+                <RadioButtons
+                    Header="Where the navigation bar sits on this PC"
+                    MaxColumns="4"
+                    ItemsSource="{x:Bind ViewModel.MenuPositionLabels}"
+                    SelectedIndex="{x:Bind ViewModel.MenuPositionIndex, Mode=TwoWay}" />
+                <TextBlock
+                    Text="Left is the default. Top and Bottom lay the icons out in a row along that edge. Other devices keep their own choice."
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
         <!-- Household members: every account for the admin, only your own for a member -->
         <Grid ColumnSpacing="12">
             <Grid.ColumnDefinitions>
