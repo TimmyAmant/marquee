@@ -57,6 +57,10 @@ export type BecauseYouWatchedItem = {
  * that title's page/sync last fetched it, so this is usually a free read
  * rather than a fresh TMDb call). Only shown with no genre/year filter.
  */
+/** How many posters the "Because you watched" row holds: enough to run
+ * past the edge of a wide window, so it scrolls like the other rows. */
+export const BECAUSE_YOU_WATCHED_SIZE = 20;
+
 export async function loadBecauseYouWatched(
   viewer: ViewerIdentity,
   lockedType: MediaType,
@@ -70,15 +74,36 @@ export async function loadBecauseYouWatched(
     // rotation happens to land on a title of their own type, even when the
     // viewer has plenty of recently-watched movies (or shows) to draw on.
     const eligible = recentList.filter((r) => r.mediaType === lockedType);
-    const recent = eligible.length > 0 ? eligible[getDayIndex() % eligible.length] : undefined;
+    const pick = eligible.length > 0 ? getDayIndex() % eligible.length : -1;
+    const recent = pick >= 0 ? eligible[pick] : undefined;
     if (recent) {
       const watchedTitle = await getOrFetchTitle(recent.mediaType, recent.tmdbId).catch(() => null);
-      const raw = watchedTitle?.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
-      const recs = raw?.recommendations?.results ?? [];
-      if (watchedTitle && recs.length > 0) {
+      const recsOf = (title: typeof watchedTitle) =>
+        ((title?.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null)?.recommendations?.results ?? []);
+      const recs = [...recsOf(watchedTitle)];
+      // TMDb often has fewer than a full row for one title; top it up from
+      // the other recently watched titles of this type (cached reads), in
+      // rotation order, so the row fills the screen instead of stopping short.
+      if (recs.length < BECAUSE_YOU_WATCHED_SIZE) {
+        for (let step = 1; step < eligible.length && recs.length < BECAUSE_YOU_WATCHED_SIZE * 2; step++) {
+          const other = eligible[(pick + step) % eligible.length];
+          const otherTitle = await getOrFetchTitle(other.mediaType, other.tmdbId).catch(() => null);
+          recs.push(...recsOf(otherTitle));
+        }
+      }
+      // Without the titles you just watched, and each title once.
+      const skip = new Set(eligible.map((r) => r.tmdbId));
+      const items: typeof recs = [];
+      for (const r of recs) {
+        if (items.length >= BECAUSE_YOU_WATCHED_SIZE) break;
+        if (skip.has(r.id)) continue;
+        skip.add(r.id);
+        items.push(r);
+      }
+      if (watchedTitle && items.length > 0) {
         becauseYouWatched = {
           title: watchedTitle.name,
-          items: recs.slice(0, 12).map((r) => ({
+          items: items.map((r) => ({
             mediaType: recent.mediaType,
             tmdbId: r.id,
             name: r.title || r.name || "",
