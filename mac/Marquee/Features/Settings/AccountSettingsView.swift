@@ -169,6 +169,12 @@ struct AccountSettingsView: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textMuted)
                 }
+                // Admin only, not on their own row (like the website).
+                if isAdmin && !member.isCurrentUser, let lastActive = member.lastActiveLine() {
+                    Text(lastActive)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textMuted)
+                }
             }
             Spacer()
             if member.linked?.plex == true {
