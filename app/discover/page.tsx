@@ -6,6 +6,12 @@ import { GenreCard, genreColorClass } from "@/components/genre-card";
 import { LogoCard } from "@/components/logo-card";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadDiscoverShelves } from "@/lib/pages/discover";
+import { DISCOVER_SEE_ALL, DISCOVER_SHELF_KEYS, seeAllHref, type DiscoverShelfKey } from "@/lib/discover/lists";
+
+// Every shelf's "See all" — the same targets GET /api/v1/discover reports.
+const seeAll = Object.fromEntries(
+  DISCOVER_SHELF_KEYS.map((key) => [key, seeAllHref(DISCOVER_SEE_ALL[key])]),
+) as Record<DiscoverShelfKey, string>;
 
 export default async function DiscoverPage() {
   const viewer = await getViewerContext();
@@ -42,7 +48,7 @@ export default async function DiscoverPage() {
 
       <div className="flex flex-col gap-12 pl-4 pr-0 py-6 sm:pl-7 sm:py-7">
         {recentlyAdded.length > 0 && (
-          <Shelf title="Recently Added">
+          <Shelf title="Recently Added" seeAllHref={seeAll.recentlyAdded}>
             {recentlyAdded.map((item) => (
               <PosterRowItem key={item.titleId}>
                 <PosterCard
@@ -60,7 +66,7 @@ export default async function DiscoverPage() {
         )}
 
         {trendingItems.length > 0 && (
-          <Shelf title="Trending">
+          <Shelf title="Trending" seeAllHref={seeAll.trending}>
             {trendingItems.map((item) => {
               const status = statusMap.get(`${item.media_type}:${item.id}`);
               return (
@@ -81,7 +87,7 @@ export default async function DiscoverPage() {
         )}
 
         {popularMovieItems.length > 0 && (
-          <Shelf title="Popular Movies" seeAllHref="/movies">
+          <Shelf title="Popular Movies" seeAllHref={seeAll.popularMovies}>
             {popularMovieItems.map((item) => {
               const status = statusMap.get(`movie:${item.id}`);
               return (
@@ -102,7 +108,7 @@ export default async function DiscoverPage() {
         )}
 
         {movieGenreList.length > 0 && (
-          <Shelf title="Movie Genres" seeAllHref="/movies">
+          <Shelf title="Movie Genres" seeAllHref={seeAll.movieGenres}>
             {movieGenreList.map((genre, i) => (
               <GenreCard
                 key={genre.id}
@@ -116,7 +122,7 @@ export default async function DiscoverPage() {
         )}
 
         {upcomingMovieItems.length > 0 && (
-          <Shelf title="Upcoming Movies">
+          <Shelf title="Upcoming Movies" seeAllHref={seeAll.upcomingMovies}>
             {upcomingMovieItems.map((item) => {
               const status = statusMap.get(`movie:${item.id}`);
               return (
@@ -137,7 +143,7 @@ export default async function DiscoverPage() {
         )}
 
         {studioItems.length > 0 && (
-          <Shelf title="Studios">
+          <Shelf title="Studios" seeAllHref={seeAll.studios}>
             {studioItems.map((studio) => (
               <LogoCard
                 key={studio.id}
@@ -150,7 +156,7 @@ export default async function DiscoverPage() {
         )}
 
         {popularSeriesItems.length > 0 && (
-          <Shelf title="Popular Series" seeAllHref="/series">
+          <Shelf title="Popular Series" seeAllHref={seeAll.popularSeries}>
             {popularSeriesItems.map((item) => {
               const status = statusMap.get(`tv:${item.id}`);
               return (
@@ -171,7 +177,7 @@ export default async function DiscoverPage() {
         )}
 
         {tvGenreList.length > 0 && (
-          <Shelf title="Series Genres" seeAllHref="/series">
+          <Shelf title="Series Genres" seeAllHref={seeAll.seriesGenres}>
             {tvGenreList.map((genre, i) => (
               <GenreCard
                 key={genre.id}
@@ -185,7 +191,7 @@ export default async function DiscoverPage() {
         )}
 
         {upcomingSeriesItems.length > 0 && (
-          <Shelf title="Upcoming Series">
+          <Shelf title="Upcoming Series" seeAllHref={seeAll.upcomingSeries}>
             {upcomingSeriesItems.map((item) => {
               const status = statusMap.get(`tv:${item.id}`);
               return (
@@ -206,7 +212,7 @@ export default async function DiscoverPage() {
         )}
 
         {networkItems.length > 0 && (
-          <Shelf title="Networks">
+          <Shelf title="Networks" seeAllHref={seeAll.networks}>
             {networkItems.map((network) => (
               <LogoCard
                 key={network.id}

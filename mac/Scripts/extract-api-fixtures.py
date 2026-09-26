@@ -36,6 +36,7 @@ BLOCKS = [
     ("`GET /me`", ["me"]),
     ("`GET /badges`", ["badges"]),
     ("`GET /discover`", ["discover"]),
+    ("`GET /discover/lists/{list}`", ["discover-list"]),
     ("`GET /movies` and `GET /series`", ["browse-page"]),
     ("`GET /movies/extras` and `GET /series/extras`", ["browse-extras"]),
     ("`POST /surprise`", ["surprise"]),

@@ -1,0 +1,24 @@
+{
+  "list": "trending",
+  "title": "Trending",
+  "page": 1,
+  "totalPages": 250,
+  "totalResults": 1000,
+  "results": [
+    {
+      "mediaType": "tv",
+      "tmdbId": 299939,
+      "name": "Monster: The Lizzie Borden Story",
+      "posterPath": "/57XS.jpg",
+      "year": "2026",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": true,
+      "canRequest": false
+    }
+  ]
+}

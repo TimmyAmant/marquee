@@ -57,8 +57,12 @@
                     </StackPanel>
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="Studios" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Grid MinHeight="28">
+                            <TextBlock Text="Studios" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <controls:RailArrows Target="{x:Bind StudiosRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
                         <ScrollViewer
+                            x:Name="StudiosRail"
                             HorizontalScrollMode="Enabled"
                             controls:WheelScroll.PassToPage="True"
                             HorizontalScrollBarVisibility="Auto"

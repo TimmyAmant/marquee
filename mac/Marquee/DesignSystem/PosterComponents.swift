@@ -389,6 +389,8 @@ struct Shelf<Content: View>: View {
 
     @State private var position: Int?
     @State private var itemCount = 0
+    /// The row is scrolled as far right as it goes (or fits without scrolling).
+    @State private var atEnd = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.shelfHeadGap - ShelfMetrics.hoverPad) {
@@ -404,11 +406,12 @@ struct Shelf<Content: View>: View {
                     }
                     .buttonStyle(QuietButtonStyle())
                     .help("Browse all \(title)")
+                    .accessibilityLabel("Browse all \(title)")
                 }
                 if let trailing { trailing }
                 Spacer(minLength: 8)
-                chevron("chevron.left", dimmed: (position ?? 0) == 0) { page(-1) }
-                chevron("chevron.right", dimmed: false) { page(1) }
+                chevron("chevron.left", label: "Scroll left", dimmed: (position ?? 0) == 0) { page(-1) }
+                chevron("chevron.right", label: "Scroll right", dimmed: atEnd) { page(1) }
             }
             .frame(height: Metrics.shelfHeadHeight)
             .padding(.trailing, headInset)
@@ -426,12 +429,17 @@ struct Shelf<Content: View>: View {
                 .padding(.vertical, ShelfMetrics.hoverPad)
             }
             .scrollPosition(id: $position, anchor: .leading)
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.visibleRect.maxX >= geometry.contentSize.width - 1
+            } action: { _, isAtEnd in
+                atEnd = isAtEnd
+            }
         }
         .padding(.bottom, -ShelfMetrics.hoverPad)
     }
 
-    /// `.arrow` — 28pt circle; `.arrow.dis` when there's nothing to its left.
-    private func chevron(_ symbol: String, dimmed: Bool, action: @escaping () -> Void) -> some View {
+    /// `.arrow` — 28pt circle; `.arrow.dis` when there's nothing more that way.
+    private func chevron(_ symbol: String, label: String, dimmed: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 11, weight: .semibold))
@@ -441,6 +449,7 @@ struct Shelf<Content: View>: View {
                 .contentShape(Circle())
         }
         .buttonStyle(QuietButtonStyle())
+        .accessibilityLabel(label)
     }
 
     private func page(_ direction: Int) {

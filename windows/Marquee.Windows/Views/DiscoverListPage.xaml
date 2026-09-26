@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  app/discover/discover-view.tsx: the Movies and Series grids. A "Because
-  you watched" rail (bleeding off the right edge like Discover's, with the
-  same ‹ › arrows in its header), the
-  filter bar, then the poster grid with its Load more / Retry footer. The
-  page's ScrollViewer asks for the next page as it nears the bottom.
+  app/discover/[list]/page.tsx: a Discover shelf's "See all". The list's
+  title, then the poster grid (components/infinite-results-grid.tsx) with
+  its Load more / Retry footer; the page's ScrollViewer asks for the next
+  page as it nears the bottom, like BrowsePage.
 -->
 <Page
-    x:Class="Marquee.Windows.Views.BrowsePage"
+    x:Class="Marquee.Windows.Views.DiscoverListPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -18,93 +17,10 @@
 
     <Grid>
         <ScrollViewer x:Name="Scroller" ViewChanged="OnViewChanged">
-            <StackPanel Padding="28,20,0,28" Spacing="20">
+            <StackPanel Padding="28,20,28,28" Spacing="20">
                 <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
 
-                <!-- "Because you watched …" (no genre or year filter, Plex history only). -->
-                <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.HasBecauseYouWatched, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <Grid Margin="0,0,28,0" MinHeight="28" ColumnSpacing="9">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            Text="{x:Bind ViewModel.BecauseYouWatched.Title, Mode=OneWay}"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            TextTrimming="CharacterEllipsis"
-                            VerticalAlignment="Center" />
-                        <controls:RailArrows Grid.Column="1" Target="{x:Bind BecauseYouWatchedRail}" VerticalAlignment="Center" />
-                    </Grid>
-                    <ScrollViewer
-                        x:Name="BecauseYouWatchedRail"
-                        HorizontalScrollMode="Enabled"
-                        controls:WheelScroll.PassToPage="True"
-                        HorizontalScrollBarVisibility="Auto"
-                        VerticalScrollMode="Disabled"
-                        VerticalScrollBarVisibility="Disabled">
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.BecauseYouWatched.Posters, Mode=OneWay}" Margin="0,0,28,8">
-                            <ItemsRepeater.Layout>
-                                <StackLayout Orientation="Horizontal" Spacing="14" />
-                            </ItemsRepeater.Layout>
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PosterItem">
-                                    <controls:PosterCard Item="{x:Bind}" />
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
-                    </ScrollViewer>
-                </StackPanel>
-
-                <!-- The filter bar keeps the 28px gutter; it scrolls sideways in a narrow window. -->
-                <ScrollViewer
-                    HorizontalScrollMode="Enabled"
-                    controls:WheelScroll.PassToPage="True"
-                    HorizontalScrollBarVisibility="Auto"
-                    VerticalScrollMode="Disabled"
-                    VerticalScrollBarVisibility="Disabled"
-                    Margin="0,0,28,0"
-                    Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}">
-                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,6">
-                        <ComboBox
-                            ItemsSource="{x:Bind ViewModel.SortOptions}"
-                            SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}"
-                            AutomationProperties.Name="Sort"
-                            VerticalAlignment="Center" />
-                        <ComboBox
-                            ItemsSource="{x:Bind ViewModel.GenreOptions, Mode=OneWay}"
-                            SelectedIndex="{x:Bind ViewModel.GenreIndex, Mode=TwoWay}"
-                            AutomationProperties.Name="Genre"
-                            VerticalAlignment="Center" />
-                        <ComboBox
-                            ItemsSource="{x:Bind ViewModel.YearOptions}"
-                            SelectedIndex="{x:Bind ViewModel.YearIndex, Mode=TwoWay}"
-                            AutomationProperties.Name="Year"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Content="{x:Bind ViewModel.NetworkChipLabel, Mode=OneWay}"
-                            Command="{x:Bind ViewModel.ClearNetworkCommand}"
-                            Visibility="{x:Bind ViewModel.HasNetworkChip, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            ToolTipService.ToolTip="Clear the network filter"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Content="{x:Bind ViewModel.HideOwnedLabel, Mode=OneWay}"
-                            Command="{x:Bind ViewModel.ToggleHideOwnedCommand}"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Content="{x:Bind ViewModel.SurpriseLabel, Mode=OneWay}"
-                            Command="{x:Bind ViewModel.SurpriseCommand}"
-                            VerticalAlignment="Center" />
-                        <TextBlock
-                            Text="{x:Bind ViewModel.SurpriseError, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.HasSurpriseError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                            VerticalAlignment="Center" />
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- infinite-results-grid.tsx -->
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Cards}" Margin="0,0,28,0">
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Cards}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
                     </ItemsRepeater.Layout>
@@ -115,18 +31,9 @@
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
 
-                <TextBlock
-                    Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.ShowsInlineError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                    TextWrapping="Wrap"
-                    Margin="0,0,28,0" />
-
                 <!-- Load more / Loading more… / Couldn't load more + Retry. -->
                 <Grid
                     Height="60"
-                    Margin="0,0,28,0"
                     Visibility="{x:Bind ViewModel.ShowsLoadMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel
                         Orientation="Horizontal"
@@ -187,7 +94,12 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="{x:Bind ViewModel.ErrorTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock
+                Text="{x:Bind ViewModel.ErrorTitle, Mode=OneWay}"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                TextWrapping="Wrap"
+                TextAlignment="Center"
+                HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
@@ -227,9 +139,9 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Nothing left here" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock Text="Nothing here right now" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
-                Text="Try a different genre or year, or turn off &quot;Hide titles you already track&quot;."
+                Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"

@@ -490,7 +490,7 @@ export interface TmdbTrendingResult {
 }
 
 export function getTrendingAll(page = 1) {
-  return tmdbFetch<{ results: TmdbTrendingResult[] }>("/trending/all/week", { page });
+  return tmdbFetch<{ results: TmdbTrendingResult[]; total_pages?: number; total_results?: number }>("/trending/all/week", { page });
 }
 
 export interface TmdbUpcomingResult {
@@ -501,7 +501,7 @@ export interface TmdbUpcomingResult {
 }
 
 export function getUpcomingMovies(page = 1) {
-  return tmdbFetch<{ results: TmdbUpcomingResult[] }>("/movie/upcoming", {
+  return tmdbFetch<{ results: TmdbUpcomingResult[]; total_pages?: number; total_results?: number }>("/movie/upcoming", {
     page,
     region: "US",
   });

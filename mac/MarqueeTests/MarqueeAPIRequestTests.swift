@@ -101,6 +101,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "GET", path: "/badges", response: "badges") { _ = try await $0.badges() },
             // Discover / browse / search
             Case(method: "GET", path: "/discover", response: "discover") { _ = try await $0.discover.shelves() },
+            Case(method: "GET", path: "/discover/lists/trending", query: ["page": "3"], response: "discover-list") { _ = try await $0.discover.list(.trending, page: 3) },
             Case(method: "GET", path: "/movies", query: ["sort": "top_rated", "genre": "28", "year": "1999", "network": "213", "hideOwned": "false", "page": "2"], response: "browse-page") {
                 _ = try await $0.browse.page(.movie, browseQuery, page: 2)
             },
@@ -293,8 +294,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 117, "docs/api-v1.md documents 117 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 117, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 118, "docs/api-v1.md documents 118 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 118, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
@@ -555,6 +556,17 @@ final class MarqueeAPIRequestTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? APIError, .notFound)
         }
+    }
+
+    func testUnknownDiscoverListIsNotFoundWithoutSending() async {
+        StubURLProtocol.requests = []
+        do {
+            _ = try await MarqueeAPI(client: APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!)).discover.list(.unknown("top-secret"))
+            XCTFail("Expected notFound")
+        } catch {
+            XCTAssertEqual(error as? APIError, .notFound)
+        }
+        XCTAssertTrue(StubURLProtocol.requests.isEmpty)
     }
 
     func testFailedMutationRecordsNothing() async throws {

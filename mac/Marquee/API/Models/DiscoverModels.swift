@@ -89,16 +89,203 @@ extension API {
         /// From Plex/Jellyfin, newest first, max 20.
         let recentlyAdded: [TitleCard]
         let trending: [TitleCard]
-        /// "See all" → the Movies grid.
         let popularMovies: [TitleCard]
         let movieGenres: [GenreTile]
         let upcomingMovies: [TitleCard]
         let studios: [CompanyCard]
-        /// "See all" → the Series grid.
         let popularSeries: [TitleCard]
         let seriesGenres: [GenreTile]
         let upcomingSeries: [TitleCard]
         let networks: [NetworkCard]
+        /// Where each shelf's "See all" goes (0.42.4+); nil from an older server.
+        let seeAll: DiscoverSeeAll?
+
+        /// Where `shelf`'s "See all" chevron goes, nil for none.
+        func seeAllDestination(_ shelf: DiscoverShelf) -> SeeAllDestination? {
+            SeeAllDestination.resolve(shelf, in: seeAll)
+        }
+    }
+
+    /// A `GET /discover` shelf, by its key in the response.
+    enum DiscoverShelf: String, CaseIterable, Hashable, Sendable {
+        case recentlyAdded
+        case trending
+        case popularMovies
+        case movieGenres
+        case upcomingMovies
+        case studios
+        case popularSeries
+        case seriesGenres
+        case upcomingSeries
+        case networks
+    }
+
+    /// A Discover shelf's full list: `GET /discover/lists/{list}`.
+    enum DiscoverList: OpenEnum {
+        case recentlyAdded
+        case trending
+        case upcomingMovies
+        case upcomingSeries
+        case unknown(String)
+
+        static let knownCases: [DiscoverList] = [.recentlyAdded, .trending, .upcomingMovies, .upcomingSeries]
+
+        var rawValue: String {
+            switch self {
+            case .recentlyAdded: return "recently-added"
+            case .trending: return "trending"
+            case .upcomingMovies: return "upcoming-movies"
+            case .upcomingSeries: return "upcoming-series"
+            case let .unknown(raw): return raw
+            }
+        }
+
+        /// The heading until the server's own `title` arrives.
+        var label: String {
+            switch self {
+            case .recentlyAdded: return "Recently Added"
+            case .trending: return "Trending"
+            case .upcomingMovies: return "Upcoming Movies"
+            case .upcomingSeries: return "Upcoming Series"
+            case .unknown: return "Discover"
+            }
+        }
+
+        /// Trending and Recently Added mix movies and series, so their cards
+        /// carry the MOVIE/SERIES pill.
+        var mixesMediaTypes: Bool {
+            switch self {
+            case .recentlyAdded, .trending: return true
+            case .upcomingMovies, .upcomingSeries, .unknown: return false
+            }
+        }
+    }
+
+    /// One shelf's `seeAll` entry. Every field is optional and open, so a
+    /// value this app doesn't know only drops that shelf's "See all".
+    struct SeeAllTarget: Codable, Hashable, Sendable {
+        enum Kind: OpenEnum {
+            case list
+            case browse
+            case unknown(String)
+
+            static let knownCases: [Kind] = [.list, .browse]
+
+            var rawValue: String {
+                switch self {
+                case .list: return "list"
+                case .browse: return "browse"
+                case let .unknown(raw): return raw
+                }
+            }
+        }
+
+        let type: Kind?
+        /// With `type: "list"`.
+        let list: DiscoverList?
+        /// With `type: "browse"`: the Movies (`movie`) or Series (`tv`) grid.
+        let mediaType: MediaType?
+
+        init(type: Kind?, list: DiscoverList? = nil, mediaType: MediaType? = nil) {
+            self.type = type
+            self.list = list
+            self.mediaType = mediaType
+        }
+    }
+
+    /// `GET /discover`'s `seeAll`, keyed like the shelves. A missing or null
+    /// entry is no "See all" for that shelf.
+    struct DiscoverSeeAll: Codable, Hashable, Sendable {
+        var recentlyAdded: SeeAllTarget?
+        var trending: SeeAllTarget?
+        var popularMovies: SeeAllTarget?
+        var movieGenres: SeeAllTarget?
+        var upcomingMovies: SeeAllTarget?
+        var studios: SeeAllTarget?
+        var popularSeries: SeeAllTarget?
+        var seriesGenres: SeeAllTarget?
+        var upcomingSeries: SeeAllTarget?
+        var networks: SeeAllTarget?
+
+        subscript(shelf: DiscoverShelf) -> SeeAllTarget? {
+            get {
+                switch shelf {
+                case .recentlyAdded: return recentlyAdded
+                case .trending: return trending
+                case .popularMovies: return popularMovies
+                case .movieGenres: return movieGenres
+                case .upcomingMovies: return upcomingMovies
+                case .studios: return studios
+                case .popularSeries: return popularSeries
+                case .seriesGenres: return seriesGenres
+                case .upcomingSeries: return upcomingSeries
+                case .networks: return networks
+                }
+            }
+            set {
+                switch shelf {
+                case .recentlyAdded: recentlyAdded = newValue
+                case .trending: trending = newValue
+                case .popularMovies: popularMovies = newValue
+                case .movieGenres: movieGenres = newValue
+                case .upcomingMovies: upcomingMovies = newValue
+                case .studios: studios = newValue
+                case .popularSeries: popularSeries = newValue
+                case .seriesGenres: seriesGenres = newValue
+                case .upcomingSeries: upcomingSeries = newValue
+                case .networks: networks = newValue
+                }
+            }
+        }
+    }
+
+    /// Where a shelf's "See all" chevron goes.
+    enum SeeAllDestination: Hashable, Sendable {
+        /// `DiscoverListView`.
+        case list(DiscoverList)
+        /// The unfiltered Movies or Series grid.
+        case browse(MediaType)
+
+        /// `shelf`'s destination under `seeAll`. Without it (a server older
+        /// than 0.42.4) only Popular Movies/Series and the genre shelves have
+        /// one, to the grids; an unknown type, list or media type is none.
+        static func resolve(_ shelf: DiscoverShelf, in seeAll: DiscoverSeeAll?) -> SeeAllDestination? {
+            guard let seeAll else {
+                switch shelf {
+                case .popularMovies, .movieGenres: return .browse(.movie)
+                case .popularSeries, .seriesGenres: return .browse(.tv)
+                default: return nil
+                }
+            }
+            guard let target = seeAll[shelf] else { return nil }
+            switch target.type {
+            case .list:
+                guard let list = target.list, list.isKnown else { return nil }
+                return .list(list)
+            case .browse:
+                guard let mediaType = target.mediaType, mediaType.isKnown else { return nil }
+                return .browse(mediaType)
+            case .unknown, nil:
+                return nil
+            }
+        }
+    }
+
+    /// `GET /discover/lists/{list}`: one page of a shelf's full list. Like
+    /// the Movies grid, titles can reappear on later pages; skip ones
+    /// already shown.
+    struct DiscoverListPage: Codable, Hashable, Sendable {
+        let list: DiscoverList
+        /// "Trending".
+        let title: String
+        let page: Int
+        let totalPages: Int
+        let totalResults: Int
+        /// With status, favorited and canQuickAdd.
+        let results: [TitleCard]
+
+        /// Continue while `page < totalPages`.
+        var hasMorePages: Bool { page < totalPages }
     }
 
     /// `GET /movies` / `/series` sort.

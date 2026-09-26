@@ -1,3 +1,4 @@
+using System.Globalization;
 using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
@@ -19,6 +20,18 @@ public sealed class DiscoverEndpoints(MarqueeApi.Transport transport)
     /// <summary><c>GET /discover</c>: the landing page's shelves.</summary>
     public Task<DiscoverShelves> ShelvesAsync(CancellationToken ct = default) =>
         transport.GetAsync<DiscoverShelves>("/discover", timeout: MarqueeApi.Timeouts.Tmdb, ct: ct);
+
+    /// <summary>
+    /// <c>GET /discover/lists/{list}?page=</c>: one page of a shelf's full
+    /// list (0.42.4+). Continue while <see cref="DiscoverListResults.HasMorePages"/>.
+    /// An unknown list is NotFound.
+    /// </summary>
+    public Task<DiscoverListResults> ListPageAsync(DiscoverListKind list, int page = 1, CancellationToken ct = default) =>
+        transport.GetAsync<DiscoverListResults>(
+            $"/discover/lists/{MarqueeApi.Segment(list)}",
+            new Dictionary<string, string?> { ["page"] = page.ToString(CultureInfo.InvariantCulture) },
+            MarqueeApi.Timeouts.Tmdb,
+            ct);
 
     /// <summary>
     /// <c>POST /surprise</c>: "🎲 Surprise me". A read that happens to be a

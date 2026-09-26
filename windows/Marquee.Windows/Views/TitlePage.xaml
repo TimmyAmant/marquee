@@ -5,7 +5,8 @@
   status badge and actions, overview, credits, keywords, links) overlap its
   lower edge, with the facts and file-details cards in a rail on the right.
   Below: the Episodes accordion (TV), the Cast rail, the franchise grid,
-  the studio chips and "More like this".
+  the studio chips and "More like this"; each rail has shelf.tsx's ‹ ›
+  arrows at the right end of its header (flush, as the column is padded).
 
   Everything binds to TitleViewModel's derived properties; the whole body
   is collapsed until the detail has loaded, so nothing binds through a
@@ -600,8 +601,12 @@
 
                         <!-- Cast rail. -->
                         <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.HasCast, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="Cast" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <Grid MinHeight="28">
+                                <TextBlock Text="Cast" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                                <controls:RailArrows Target="{x:Bind CastRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
                             <ScrollViewer
+                                x:Name="CastRail"
                                 HorizontalScrollMode="Enabled"
                                 controls:WheelScroll.PassToPage="True"
                                 HorizontalScrollBarVisibility="Auto"
@@ -757,8 +762,12 @@
                     </StackPanel>
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="Studio" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Grid MinHeight="28">
+                            <TextBlock Text="Studio" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <controls:RailArrows Target="{x:Bind StudiosRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
                         <ScrollViewer
+                            x:Name="StudiosRail"
                             HorizontalScrollMode="Enabled"
                             controls:WheelScroll.PassToPage="True"
                             HorizontalScrollBarVisibility="Auto"
@@ -778,8 +787,12 @@
                     </StackPanel>
 
                     <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.HasSimilar, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="More like this" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Grid MinHeight="28">
+                            <TextBlock Text="More like this" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <controls:RailArrows Target="{x:Bind SimilarRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
                         <ScrollViewer
+                            x:Name="SimilarRail"
                             HorizontalScrollMode="Enabled"
                             controls:WheelScroll.PassToPage="True"
                             HorizontalScrollBarVisibility="Auto"

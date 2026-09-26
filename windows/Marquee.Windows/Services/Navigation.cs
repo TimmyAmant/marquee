@@ -103,6 +103,9 @@ public abstract record Route
 
     public sealed record Search(string Query) : Route;
 
+    /// <summary>A Discover shelf's "See all": <c>DiscoverListPage</c> receives this record.</summary>
+    public sealed record DiscoverList(DiscoverListKind List) : Route;
+
     /// <summary>
     /// The same page on the server's website, relative to its root, for
     /// "Open in browser" and "Copy link". Null for screens the website has no
@@ -113,6 +116,7 @@ public abstract record Route
         Title title => $"title/{Uri.EscapeDataString(title.Id.MediaType.Value)}/{title.Id.TmdbId}",
         Person person => $"person/{person.TmdbId}",
         Company company => $"company/{company.TmdbId}",
+        DiscoverList list => $"discover/{Uri.EscapeDataString(list.List.Value)}",
         _ => null,
     };
 
@@ -123,6 +127,7 @@ public abstract record Route
         Person person => $"Person {person.TmdbId}",
         Company company => $"Studio {company.TmdbId}",
         Search search => $"Search results for \"{search.Query}\"",
+        DiscoverList list => list.List.Title,
         _ => ToString(),
     };
 }
