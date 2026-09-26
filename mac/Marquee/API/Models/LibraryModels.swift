@@ -11,7 +11,8 @@ extension API {
         let provider: LibraryProvider?
         /// The library owner's Radarr (movies) / Sonarr (TV) has a root folder and quality profile.
         let configured: Bool
-        /// The "File details" card; non-nil only for `owned` titles.
+        /// The "File details" card; non-nil for `owned` titles and for a show
+        /// Sonarr has some episodes of.
         let file: FileDetails?
     }
 

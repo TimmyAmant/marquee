@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.34.1",
+    date: "2026-09-25",
+    changes: [
+      "A show that's still downloading now shows its File details too (folder, size on disk so far, quality profile) on the website and in the Mac and Windows apps. Before, the card only appeared once every episode was there.",
+    ],
+  },
+  {
     version: "0.34.0",
     date: "2026-09-25",
     changes: [
