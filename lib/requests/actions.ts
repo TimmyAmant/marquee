@@ -22,7 +22,6 @@ import { getT } from "@/lib/i18n/server";
 import type { Translator } from "@/lib/i18n/translator";
 import { hasOverrides, parseAddOverrides, parseAddOverridesForm, type AddOverrides } from "@/lib/arr/add-options";
 import { attentionCount } from "@/lib/requests/access";
-import { SONARR_UNRESOLVED } from "@/lib/requests/errors";
 import { requestAllMissing } from "@/lib/requests/request-all";
 import { getRequestEditOptions } from "@/lib/requests/edit-options";
 import type { RequestEditOptions } from "@/lib/api/types";
@@ -189,9 +188,7 @@ export async function approveRequestAction(
   // a Retry), so this row's job is done.
   if (!result.ok && "addFailed" in result) return { success: true };
   if (result.ok) return { success: true };
-  // Same request, same language: the text is exactly what title-actions gave.
-  const unresolved = result.error === (await getT())(SONARR_UNRESOLVED);
-  return unresolved ? { error: result.error, code: "sonarr_unresolved" } : { error: result.error };
+  return result.apiReason === "sonarr_unresolved" ? { error: result.error, code: "sonarr_unresolved" } : { error: result.error };
 }
 
 /** "Retry" under "Couldn't add", with the row's Advanced picks if opened. */

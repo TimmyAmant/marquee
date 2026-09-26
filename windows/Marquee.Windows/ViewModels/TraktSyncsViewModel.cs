@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -66,7 +67,7 @@ public sealed partial class TraktSyncRow : ObservableObject
 
     public bool HasError => Error != null;
     public bool CanChange => !IsChecking && !IsChanging;
-    public string CheckLabel => IsChecking ? "Checking…" : "Check now";
+    public string CheckLabel => IsChecking ? Loc.Get("Trakt_Checking") : Loc.Get("Trakt_CheckNow");
 
     /// <summary>Shows what the server has, moving the switches without sending anything.</summary>
     internal void Show(TraktSync fresh)
@@ -173,7 +174,7 @@ public sealed partial class TraktSyncsViewModel : ObservableObject
     private string? error;
 
     public bool HasError => Error != null;
-    public string AddLabel => IsAdding ? "Adding…" : "Keep in sync";
+    public string AddLabel => IsAdding ? Loc.Get("Trakt_Adding") : Loc.Get("Trakt_KeepInSync");
     public bool CanAdd => IsAvailable && !IsAdding;
 
     private Guid? ViewerId => model.Viewer?.Id;

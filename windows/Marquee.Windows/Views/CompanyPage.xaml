@@ -90,7 +90,7 @@
             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
             <TextBlock
-                Text="Loading the catalog…"
+                x:Uid="Company_Loading"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 HorizontalAlignment="Center" />
@@ -103,14 +103,14 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Couldn't load this studio" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Company_ErrorHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Company_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
         </StackPanel>
     </Grid>
 </Page>

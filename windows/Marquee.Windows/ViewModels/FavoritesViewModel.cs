@@ -14,10 +14,6 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class FavoritesViewModel : ObservableObject
 {
-    public const string ErrorTitle = "Couldn't load your favorites";
-    public const string EmptyTitle = "Nothing favorited yet";
-    public const string EmptyMessage = "Star anything from its page or card to see it here.";
-
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
     private bool active;

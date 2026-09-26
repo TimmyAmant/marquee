@@ -11,7 +11,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    CloseButtonText="OK"
     DefaultButton="Close">
 
     <Grid RowSpacing="8" MinWidth="420" MaxWidth="560">
@@ -26,7 +25,7 @@
             x:Name="SeeAllButton"
             Grid.Row="1"
             Padding="0"
-            Content="See all changes"
+            x:Uid="WhatsNew_SeeAll"
             Click="OnSeeAllClick" />
     </Grid>
 </ContentDialog>

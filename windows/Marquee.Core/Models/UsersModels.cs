@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -122,12 +123,12 @@ public sealed record HouseholdMember
             }
             if (Permissions is not { } permissions)
             {
-                return IsTrusted ? "Trusted" : "";
+                return IsTrusted ? Loc.Get("User_TagTrusted") : "";
             }
             return permissions.Preset switch
             {
-                PermissionPreset.Trusted => "Trusted",
-                PermissionPreset.Custom => "Custom",
+                PermissionPreset.Trusted => Loc.Get("User_TagTrusted"),
+                PermissionPreset.Custom => Loc.Get("User_TagCustom"),
                 _ => "",
             };
         }
@@ -150,32 +151,32 @@ public static class LastActiveLabel
     {
         if (lastActiveAt is not { } at)
         {
-            return "Never signed in";
+            return Loc.Get("User_NeverSignedIn");
         }
         var ago = now - at;
         if (ago < TimeSpan.FromMinutes(10))
         {
-            return "Active now";
+            return Loc.Get("User_ActiveNow");
         }
         if (ago < TimeSpan.FromHours(1))
         {
-            return $"Active {(int)ago.TotalMinutes} minutes ago";
+            return Loc.Plural("User_ActiveMinutesAgo", (int)ago.TotalMinutes);
         }
         if (ago < TimeSpan.FromDays(1))
         {
             var hours = (int)ago.TotalHours;
-            return hours == 1 ? "Active 1 hour ago" : $"Active {hours} hours ago";
+            return Loc.Plural("User_ActiveHoursAgo", hours);
         }
         if (ago < TimeSpan.FromDays(2))
         {
-            return "Active yesterday";
+            return Loc.Get("User_ActiveYesterday");
         }
         if (ago < TimeSpan.FromDays(30))
         {
-            return $"Active {(int)ago.TotalDays} days ago";
+            return Loc.Plural("User_ActiveDaysAgo", (int)ago.TotalDays);
         }
         var local = TimeZoneInfo.ConvertTime(at, zone ?? TimeZoneInfo.Local);
-        return $"Last active {local.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)}";
+        return Loc.Format("User_LastActiveOn", local);
     }
 }
 
@@ -269,11 +270,11 @@ internal sealed class QuotaLimitConverter : JsonConverter<QuotaLimit>
 public static class MemberAccessForm
 {
     /// <summary>"Trusted — can approve requests and handle problem reports".</summary>
-    public const string TrustedChoice = "Trusted — can approve requests and handle problem reports";
+    public static string TrustedChoice => Loc.Get("User_TrustedChoice");
 
-    public const string MemberChoice = "Member";
+    public static string MemberChoice => Loc.Get("User_MemberChoice");
 
-    public const string LimitsHeader = "Request limits (blank for none; trusted members have none)";
+    public static string LimitsHeader => Loc.Get("User_LimitsHeader");
 
     /// <summary>The window a new limit gets when the row has none yet.</summary>
     public const int DefaultDays = 7;
@@ -332,12 +333,12 @@ public static class MemberAccessForm
         string tvLimit,
         string tvDays)
     {
-        var (movieQuota, movieError) = ParseLimit(movieLimit, "The movie limit");
+        var (movieQuota, movieError) = ParseLimit(movieLimit, Loc.Get("User_MovieLimitInvalid"));
         if (movieError != null)
         {
             return (null, movieError);
         }
-        var (tvQuota, tvError) = ParseLimit(tvLimit, "The TV limit");
+        var (tvQuota, tvError) = ParseLimit(tvLimit, Loc.Get("User_TvLimitInvalid"));
         if (tvError != null)
         {
             return (null, tvError);
@@ -361,7 +362,7 @@ public static class MemberAccessForm
         }, null);
     }
 
-    private static (QuotaLimit Limit, string? Error) ParseLimit(string text, string label)
+    private static (QuotaLimit Limit, string? Error) ParseLimit(string text, string invalidMessage)
     {
         var trimmed = text.Trim();
         if (trimmed.Length == 0)
@@ -370,7 +371,7 @@ public static class MemberAccessForm
         }
         return int.TryParse(trimmed, NumberStyles.None, CultureInfo.InvariantCulture, out var value) && value is >= 1 and <= 1000
             ? (new QuotaLimit(value), null)
-            : (QuotaLimit.None, $"{label} is a number from 1 to 1000, or blank for no limit.");
+            : (QuotaLimit.None, invalidMessage);
     }
 
     private static (int? Days, string? Error) ParseDays(string text)
@@ -382,7 +383,7 @@ public static class MemberAccessForm
         }
         return int.TryParse(trimmed, NumberStyles.None, CultureInfo.InvariantCulture, out var value) && value is >= 1 and <= 365
             ? (value, null)
-            : (null, "The number of days is from 1 to 365.");
+            : (null, Loc.Get("User_DaysInvalid"));
     }
 }
 

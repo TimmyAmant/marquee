@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.ViewModels;
 using Microsoft.UI.Xaml;
@@ -38,7 +39,7 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         rows = seasons.Select(season => new SeasonPickerRow(season, OnRowChanged)).ToList();
         InitializeComponent();
         ExplanationText.Text =
-            $"Pick the seasons of \"{title}\" you'd like added. Seasons already in the library or on their way can't be picked again.";
+            Loc.Format("Season_Explanation", title);
         SelectAllBox.Visibility = selection.Requestable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         RowsRepeater.ItemsSource = rows;
         Update();
@@ -141,7 +142,7 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         }
         else
         {
-            PrimaryButtonText = pending ? "Requesting…" : selection.SubmitTitle;
+            PrimaryButtonText = pending ? Loc.Get("Season_Requesting") : selection.SubmitTitle;
             IsPrimaryButtonEnabled = !pending && selection.Seasons.Count > 0;
             SelectAllBox.IsEnabled = !pending;
             RowsScroller.IsEnabled = !pending;

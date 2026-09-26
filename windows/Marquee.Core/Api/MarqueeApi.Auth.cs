@@ -10,6 +10,15 @@ public sealed partial class MarqueeApi
     public Task<Me> MeAsync(CancellationToken ct = default) =>
         transport.GetAsync<Me>("/me", ct: ct);
 
+    /// <summary>
+    /// <c>PATCH /me</c> (0.50+): sets the account's language (a code, or
+    /// null to follow the device) and answers the whole <c>/me</c>. An older
+    /// server answers 405; the Language picker never gets there, since it
+    /// only shows when <c>/me</c> carries <c>language</c>.
+    /// </summary>
+    public Task<Me> SetLanguageAsync(string? language, CancellationToken ct = default) =>
+        transport.MutateAsync<Me>(HttpMethod.Patch, "/me", body: new UpdateMeRequest(language), changes: ServerChange.None, ct: ct);
+
     /// <summary><c>GET /badges</c>: unread notifications and (admin) pending requests in one cheap call.</summary>
     public Task<Badges> BadgesAsync(CancellationToken ct = default) =>
         transport.GetAsync<Badges>("/badges", ct: ct);

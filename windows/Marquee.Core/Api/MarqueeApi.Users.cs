@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
@@ -53,7 +54,7 @@ public sealed class UsersEndpoints(MarqueeApi.Transport transport)
     public const int MaxAvatarBytes = 15 * 1024 * 1024;
 
     /// <summary>The server's words for a photo over <see cref="MaxAvatarBytes"/>.</summary>
-    public const string AvatarTooBigMessage = "That photo is too big. Pick one under 15 MB.";
+    public static string AvatarTooBigMessage => Loc.Get("Api_AvatarTooBig");
 
     /// <summary>
     /// <c>PUT /users/{id}/avatar</c>: yourself, or anyone (admin). The body
@@ -95,7 +96,7 @@ public sealed class UsersEndpoints(MarqueeApi.Transport transport)
             }
             catch (Exception error) when (error is IOException or NotSupportedException or ObjectDisposedException)
             {
-                throw ApiException.Invalid($"Couldn't read the photo: {error.Message}");
+                throw ApiException.Invalid(Loc.Format("Api_PhotoUnreadable", error.Message));
             }
             if (read == 0)
             {

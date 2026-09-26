@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -72,6 +73,12 @@ public sealed class HouseholdMemberRow
     /// <summary>The "You" tag.</summary>
     public bool IsCurrentUser { get; }
 
+    /// <summary>"Admin", shown while <see cref="IsAdminRow"/>.</summary>
+    public string AdminTag { get; } = Loc.Get("Account_AdminTag");
+
+    /// <summary>"You", shown while <see cref="IsCurrentUser"/>.</summary>
+    public string YouTag { get; } = Loc.Get("Account_YouTag");
+
     public BadgeTone AdminTone { get; } = BadgeTone.Info;
     public BadgeTone YouTone { get; } = BadgeTone.Neutral;
 
@@ -114,12 +121,12 @@ public sealed class HouseholdMemberRow
 /// </summary>
 public sealed partial class AccountSettingsViewModel : ObservableObject
 {
-    public const string PasswordsDifferMessage = "The passwords don't match.";
-    public const string CurrentPasswordMissingMessage = "Enter your current password to set a new one.";
-    public const string SavedNotice = "Saved.";
-    public const string PasswordChangedNotice = "Your password was changed, which signed out every device. Sign in again with the new one.";
-    public const string PasswordWarning = "Setting a new password signs you out of every device, including this PC.";
-    public const string RemoveMemberConsequence = "Their favorites, requests and notifications are removed with the account.";
+    public static string PasswordsDifferMessage => Loc.Get("Account_PasswordsDiffer");
+    public static string CurrentPasswordMissingMessage => Loc.Get("Account_CurrentPasswordMissing");
+    public static string SavedNotice => Loc.Get("Account_Saved");
+    public static string PasswordChangedNotice => Loc.Get("Account_PasswordChanged");
+    public static string PasswordWarning => Loc.Get("Account_PasswordWarning");
+    public static string RemoveMemberConsequence => Loc.Get("Account_RemoveMemberConsequence");
 
     /// <summary>Everything read straight from the model, re-announced whenever it moves.</summary>
     private static readonly string[] DerivedProperties =
@@ -345,7 +352,15 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     private int menuPositionIndex;
 
     /// <summary>"Left", "Right", "Top", "Bottom", in <see cref="MenuPositionIndex"/>'s order.</summary>
-    public IReadOnlyList<string> MenuPositionLabels { get; } = MenuPositionSetting.All.Select(position => position.Label()).ToList();
+    public IReadOnlyList<string> MenuPositionLabels { get; } = MenuPositionSetting.All.Select(MenuPositionLabel).ToList();
+
+    private static string MenuPositionLabel(MenuPosition position) => position switch
+    {
+        MenuPosition.Right => Loc.Get("Account_MenuRight"),
+        MenuPosition.Top => Loc.Get("Account_MenuTop"),
+        MenuPosition.Bottom => Loc.Get("Account_MenuBottom"),
+        _ => Loc.Get("Account_MenuLeft"),
+    };
 
     partial void OnMenuPositionIndexChanged(int value)
     {
@@ -361,6 +376,85 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         MenuPositionIndex = index >= 0 ? index : 0;
     }
 
+    // MARK: Language
+
+    /// <summary>
+    /// The Language picker (0.50+ servers, whose <c>/me</c> carries
+    /// <c>language</c>; hidden for an older one, which can't store it).
+    /// </summary>
+    public bool ShowsLanguage => model.Viewer?.Language != null;
+
+    /// <summary>"Automatic (system language)", then each language written in itself.</summary>
+    public IReadOnlyList<string> LanguageLabels { get; } =
+        [Loc.Get("Language_Automatic"), .. AppLanguage.Supported.Select(AppLanguage.NativeName)];
+
+    /// <summary>0 for Automatic, else 1 + the index in <see cref="AppLanguage.Supported"/>.</summary>
+    [ObservableProperty]
+    private int languageIndex;
+
+    /// <summary>Why the choice couldn't be saved (the picker goes back to the saved one).</summary>
+    [ObservableProperty]
+    private string languageError = "";
+
+    /// <summary>The account's language isn't the one on screen: "Takes effect when Marquee restarts" and Restart.</summary>
+    public bool LanguageRestartPending => model.LanguageRestartPending;
+
+    /// <summary>Set while the picker is moved to match the account, so that isn't taken for a choice.</summary>
+    private bool syncingLanguage;
+
+    partial void OnLanguageIndexChanged(int value)
+    {
+        if (syncingLanguage || value < 0 || value > AppLanguage.Supported.Count)
+        {
+            return;
+        }
+        var code = value == 0 ? null : AppLanguage.Supported[value - 1];
+        if (AppLanguage.Normalize(model.Viewer?.Language?.Code) == code)
+        {
+            return;
+        }
+        _ = SaveLanguageAsync(code);
+    }
+
+    private async Task SaveLanguageAsync(string? code)
+    {
+        LanguageError = "";
+        try
+        {
+            await model.SetLanguageAsync(code);
+        }
+        catch (ApiException error)
+        {
+            LanguageError = error.Message;
+            SyncLanguage();
+        }
+    }
+
+    private void SyncLanguage()
+    {
+        syncingLanguage = true;
+        try
+        {
+            var code = AppLanguage.Normalize(model.Viewer?.Language?.Code);
+            LanguageIndex = code == null ? 0 : AppLanguage.Supported.ToList().IndexOf(code) + 1;
+        }
+        finally
+        {
+            syncingLanguage = false;
+        }
+        OnPropertyChanged(nameof(ShowsLanguage));
+    }
+
+    /// <summary>"Restart": Marquee starts again in the account's language.</summary>
+    [RelayCommand]
+    private void RestartForLanguage()
+    {
+        if (!AppLocalization.Restart())
+        {
+            LanguageError = Loc.Get("Language_RestartFailed");
+        }
+    }
+
     public AccountSettingsViewModel(AppModel model)
     {
         this.model = model;
@@ -370,6 +464,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         Personal = new PersonalNotificationsViewModel(model);
         Trakt = new TraktSyncsViewModel(model);
         SyncMenuPosition();
+        SyncLanguage();
     }
 
     /// <summary>"Trakt lists" (0.49+ servers): keep a public Trakt watchlist or list in sync, for every account.</summary>
@@ -413,13 +508,13 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     public string Username => model.Viewer?.Username ?? "";
     public string RoleLabel => model.Viewer?.Role.Label ?? "";
 
-    public string SaveLabel => IsSaving ? "Saving…" : "Save changes";
+    public string SaveLabel => IsSaving ? Loc.Get("Account_Saving") : Loc.Get("Account_SaveChanges");
     public bool HasSaveError => SaveError != null;
     public bool HasSaveNotice => SaveNotice != null;
 
     public string MembersCaption => IsAdmin
-        ? "Everyone with an account on this Marquee server. There's no public signup: add accounts for the rest of your household here."
-        : "Only the admin sees and manages every account. Yours is below.";
+        ? Loc.Get("Account_MembersCaptionAdmin")
+        : Loc.Get("Account_MembersCaptionMember");
 
     /// <summary>
     /// The form asks for your current password with a new one, unless your
@@ -450,14 +545,14 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     public bool ShowsSsoLink => OffersSso || SsoLinked;
 
     /// <summary>The identity provider's button name ("Authentik"), or "Single sign-on" once it's turned off.</summary>
-    public string SsoLinkName => model.Session.ServerInfo?.SsoName ?? "Single sign-on";
+    public string SsoLinkName => model.Session.ServerInfo?.SsoName ?? Loc.Get("Account_SingleSignOn");
 
     public string SsoLinkStatus => SsoLinked
-        ? $"Linked: you can sign in with your {SsoLinkName} account."
-        : OffersSso ? "Not linked." : "Single sign-on isn't set up on this server.";
+        ? Loc.Format("Account_LinkedStatus", SsoLinkName)
+        : OffersSso ? Loc.Get("Account_NotLinked") : Loc.Get("Account_SsoNotSetUp");
 
-    public string LinkSsoLabel => $"Link {SsoLinkName}";
-    public string SsoWaitingLine => $"Waiting for {SsoLinkName}… Finish signing in in the browser window that just opened.";
+    public string LinkSsoLabel => Loc.Format("Account_LinkServer", SsoLinkName);
+    public string SsoWaitingLine => Loc.Format("Account_SsoWaiting", SsoLinkName);
     public bool CanLinkSso => !SsoLinked && OffersSso && !IsLinkBusy;
     public bool CanUnlinkSso => SsoLinked && !IsLinkBusy;
     public bool HasLinksError => LinksError != null;
@@ -475,19 +570,17 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     /// <summary>The user-facing name of <paramref name="server"/>: Jellyfin reads "Emby" on an Emby server.</summary>
     internal string ServerName(MediaServerKind server) => server.Label(JellyfinName);
 
-    public string LinkJellyfinLabel => $"Link {JellyfinName}";
-    public string ImportFromJellyfinLabel => $"Import from {JellyfinName}";
-    public string MediaServerMembersTitle => $"Plex and {JellyfinName} members";
-    public string MediaServerSignupHeader => $"New accounts from Plex/{JellyfinName} sign-in";
-    public string MediaServerSignupExplanation =>
-        $"When someone who can use your Plex or {JellyfinName} server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. The sign-in screen tells newcomers to sign in that way. Off: only the people you import (or who link their account) can sign in that way.";
-    public string NoMediaServersExplanation =>
-        $"Connect Plex or {JellyfinName} on the Integrations tab to import household members from it and let them sign in with those accounts.";
+    public string LinkJellyfinLabel => Loc.Format("Account_LinkServer", JellyfinName);
+    public string ImportFromJellyfinLabel => Loc.Format("Account_ImportFrom", JellyfinName);
+    public string MediaServerMembersTitle => Loc.Format("Account_MediaServerMembersTitle", JellyfinName);
+    public string MediaServerSignupHeader => Loc.Format("Account_MediaServerSignupHeader", JellyfinName);
+    public string MediaServerSignupExplanation => Loc.Format("Account_MediaServerSignupExplanation", JellyfinName);
+    public string NoMediaServersExplanation => Loc.Format("Account_NoMediaServers", JellyfinName);
 
     private string LinkStatus(MediaServerKind server, bool linked, bool offered) =>
-        linked ? $"Linked: you can sign in with your {ServerName(server)} account."
-            : offered ? "Not linked."
-            : $"{ServerName(server)} isn't connected to this server.";
+        linked ? Loc.Format("Account_LinkedStatus", ServerName(server))
+            : offered ? Loc.Get("Account_NotLinked")
+            : Loc.Format("Account_ServerNotConnected", ServerName(server));
 
     // Request from my Plex Watchlist: shown while Plex is linked (the server says so).
     public bool ShowsPlexWatchlist => PlexWatchlistState?.Available == true;
@@ -496,12 +589,12 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     public bool CanChangePlexWatchlist => !IsChangingPlexWatchlist;
 
     /// <summary>"On" while it's on; empty (the pill collapses) otherwise.</summary>
-    public string PlexWatchlistBadge => IsPlexWatchlistOn ? "On" : "";
+    public string PlexWatchlistBadge => IsPlexWatchlistOn ? Loc.Get("Account_WatchlistOn") : "";
     public BadgeTone PlexWatchlistTone { get; } = BadgeTone.Owned;
 
     /// <summary>"Checked 5m ago · 3 titles requested so far", or "Checking your watchlist…" before the first check.</summary>
     public string PlexWatchlistSummary => PlexWatchlistState?.Summary(DateTimeOffset.UtcNow) ?? "";
-    public string CheckPlexWatchlistLabel => IsChangingPlexWatchlist ? "Checking…" : "Check now";
+    public string CheckPlexWatchlistLabel => IsChangingPlexWatchlist ? Loc.Get("Account_Checking") : Loc.Get("Account_CheckNow");
     public string PlexWatchlistLastError => PlexWatchlistState?.LastError ?? "";
     public bool HasPlexWatchlistLastError => PlexWatchlistLastError.Length > 0;
     public bool HasPlexWatchlistError => PlexWatchlistError != null;
@@ -584,13 +677,13 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
             syncingNotifications = false;
         }
         NotificationsNote = !notifications.IsSupported
-            ? "Windows notifications aren't available to this copy of Marquee."
+            ? Loc.Get("Account_NotificationsUnavailable")
             : !notifications.IsEnabled
                 ? ""
                 : notifications.ServerLacksStream
-                    ? "Your Marquee server is too old to send notifications. Update it to get them here."
+                    ? Loc.Get("Account_NotificationsServerTooOld")
                     : notifications.IsBlockedByWindows
-                        ? "Windows is set to hide notifications from Marquee. Turn them on in Windows Settings › System › Notifications."
+                        ? Loc.Get("Account_NotificationsBlocked")
                         : "";
     }
 
@@ -751,7 +844,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         ClearMembersMessages();
         if (await prompt() is { } created)
         {
-            MembersNotice = $"Account created. {created.Label} can now sign in.";
+            MembersNotice = Loc.Format("Account_MemberCreated", created.Label);
         }
     }
 
@@ -787,7 +880,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         }
         else if (result.TokensRevoked)
         {
-            MembersNotice = $"{result.User.Label}'s password was changed, which signed them out of every device.";
+            MembersNotice = Loc.Format("Account_MemberPasswordChanged", result.User.Label);
         }
     }
 
@@ -875,7 +968,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
                 return;
             }
             await PlexPoll.UntilAsync(start.ExpiresAt, token => api.Links.PlexPollAsync(start.Handle, token), ct: cancellation.Token);
-            LinksNotice = "Your Plex account is linked.";
+            LinksNotice = Loc.Format("Account_LinkedNotice", "Plex");
             await model.RefreshViewerAsync();
         }
         catch (ApiException error)
@@ -917,7 +1010,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         ClearLinksMessages();
         if (await prompt())
         {
-            LinksNotice = $"Your {JellyfinName} account is linked.";
+            LinksNotice = Loc.Format("Account_LinkedNotice", JellyfinName);
             await model.RefreshViewerAsync();
         }
     }
@@ -947,7 +1040,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         try
         {
             await unlink(model.Api);
-            LinksNotice = $"Your {name} account is unlinked.";
+            LinksNotice = Loc.Format("Account_UnlinkedNotice", name);
             await model.RefreshViewerAsync();
         }
         catch (ApiException error)
@@ -994,7 +1087,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
                 token => api.Links.SsoPollAsync(start.Handle, token),
                 ct: cancellation.Token,
                 expiredMessage: ApiException.SsoSignInExpiredMessage);
-            LinksNotice = $"Your {name} account is linked.";
+            LinksNotice = Loc.Format("Account_LinkedNotice", name);
             await model.RefreshViewerAsync();
         }
         catch (ApiException error)
@@ -1233,8 +1326,8 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
 
     public static string ImportSummary(int created, int skipped)
     {
-        var made = created == 1 ? "Imported 1 member." : $"Imported {created} members.";
-        return skipped > 0 ? $"{made} {skipped} skipped (already members, or couldn't be added)." : made;
+        var made = Loc.Plural("Account_Imported", created);
+        return skipped > 0 ? Loc.Plural("Account_ImportSkipped", skipped, made) : made;
     }
 
     /// <summary><c>GET /users/import/{server}</c>, for the import dialog.</summary>
@@ -1341,6 +1434,14 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         else if (e.PropertyName == nameof(AppModel.MenuPosition))
         {
             SyncMenuPosition();
+        }
+        else if (e.PropertyName == nameof(AppModel.LanguageRestartPending))
+        {
+            OnPropertyChanged(nameof(LanguageRestartPending));
+        }
+        if (e.PropertyName == nameof(AppModel.Viewer))
+        {
+            SyncLanguage();
         }
     }
 

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Marquee.Core.Localization;
 using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
 using Microsoft.UI.Xaml.Controls;
@@ -31,10 +32,10 @@ public sealed partial class IntegrationsSettingsView : UserControl, ISettingsTab
         var confirm = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = $"Revoke {row.Name}?",
-            Content = "Anything using this key stops working right away. This can't be undone.",
-            PrimaryButtonText = "Revoke",
-            CloseButtonText = "Cancel",
+            Title = Loc.Format("Integrations_RevokeKeyTitle", row.Name),
+            Content = Loc.Get("Integrations_RevokeKeyMessage"),
+            PrimaryButtonText = Loc.Get("Integrations_RevokeKeyConfirm"),
+            CloseButtonText = Loc.Get("Integrations_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         return await confirm.TryShowAsync() == ContentDialogResult.Primary;

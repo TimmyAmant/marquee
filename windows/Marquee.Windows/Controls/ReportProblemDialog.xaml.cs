@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -64,7 +65,7 @@ public sealed partial class ReportProblemDialog : ContentDialog
 
     private void Update()
     {
-        PrimaryButtonText = pending ? "Sending…" : "Send report";
+        PrimaryButtonText = pending ? Loc.Get("Report_Sending") : Loc.Get("Report_Send");
         IsPrimaryButtonEnabled = !pending;
         KindButtons.IsEnabled = !pending;
         SeasonBox.IsEnabled = !pending;
@@ -90,7 +91,7 @@ public sealed partial class ReportProblemDialog : ContentDialog
         if (body == null)
         {
             args.Cancel = true;
-            ShowError(error ?? "Pick what's wrong.");
+            ShowError(error ?? Loc.Get("Report_PickKind"));
             return;
         }
         var deferral = args.GetDeferral();

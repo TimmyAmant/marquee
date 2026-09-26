@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // Settings, Integrations (api-v1.md section 12). Mirrors
@@ -139,7 +141,7 @@ public static class LibrarySummary
     public static string Line(IReadOnlyList<SyncedServer> servers, int movieCount, int tvCount, long totalBytes)
     {
         var names = string.Join(", ", servers.Select(server => server.Name.NonBlank()).OfType<string>());
-        var counts = $"{movieCount} movies · {tvCount} TV shows";
+        var counts = $"{Loc.Plural("Model_LibraryMovies", movieCount)} · {Loc.Plural("Model_LibraryShows", tvCount)}";
         if (totalBytes > 0)
         {
             counts += $" · {FileDetails.FormatBytes(totalBytes)}";
@@ -152,8 +154,8 @@ public static class LibrarySummary
     {
         var synced = servers.Select(server => server.LastSyncedAt).OfType<DateTimeOffset>().ToList();
         return synced.Count == 0
-            ? "Your library is kept in sync automatically."
-            : $"Last synced {NotificationItem.TimeAgoLabel(synced.Max(), now)} · kept in sync automatically.";
+            ? Loc.Get("Model_LibraryAutoSync")
+            : Loc.Format("Model_LibraryLastSynced", NotificationItem.TimeAgoLabel(synced.Max(), now));
     }
 }
 
@@ -328,8 +330,9 @@ public sealed record TraktImportResult
     {
         get
         {
-            var skipped = SkippedCount > 0 ? $" ({SkippedCount} skipped — already owned or requested)." : ".";
-            return $"Imported {ImportedCount} title{(ImportedCount == 1 ? "" : "s")}{skipped}";
+            return SkippedCount > 0
+                ? Loc.Plural("Model_TraktImportedSkipped", ImportedCount, SkippedCount)
+                : Loc.Plural("Model_TraktImported", ImportedCount);
         }
     }
 }

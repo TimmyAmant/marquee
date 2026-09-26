@@ -15,7 +15,7 @@
     <StackPanel x:Name="Body" Padding="28" Spacing="8" Visibility="Collapsed">
         <TextBlock x:Name="HeadingText" Style="{StaticResource TitleTextBlockStyle}" />
         <TextBlock
-            Text="This part of Marquee for Windows is still being built."
+            x:Uid="Shell_PlaceholderBody"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />

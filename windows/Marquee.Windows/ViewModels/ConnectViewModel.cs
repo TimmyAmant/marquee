@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -193,7 +194,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     public bool CanRetryRestore => model.AuthNotice == AppModel.CredentialStoreUnreadableNotice;
 
     public bool IsRetrying => model.IsRetryingConnection;
-    public string RetryLabel => IsRetrying ? "Connecting…" : "Retry";
+    public string RetryLabel => IsRetrying ? Loc.Get("Connect_Connecting") : Loc.Get("Connect_Retry");
 
     // MARK: Plex / Jellyfin / single sign-on (server-info.signIn; an older server sends none, so no buttons)
 
@@ -213,9 +214,9 @@ public sealed partial class ConnectViewModel : ObservableObject
     public bool ShowsSsoButton => OffersSsoSignIn && !IsSigningInElsewhere;
 
     /// <summary>The single sign-on button's name, e.g. "Authentik".</summary>
-    private string SsoName => model.Session.ServerInfo?.SsoName ?? "single sign-on";
+    private string SsoName => model.Session.ServerInfo?.SsoName ?? Loc.Get("Connect_SsoFallbackName");
 
-    public string SsoSignInLabel => $"Sign in with {SsoName}";
+    public string SsoSignInLabel => Loc.Format("Connect_SignInWith", SsoName);
 
     /// <summary>Jellyfin (never Emby) with Quick Connect on the server (server-info.signIn.quickConnect, 0.44+).</summary>
     public bool OffersQuickConnect => model.Session.ServerInfo?.OffersQuickConnect == true;
@@ -224,7 +225,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     public bool ShowsQuickConnectButton => UsesJellyfin && OffersQuickConnect && !IsSigningInElsewhere;
 
     public bool HasQuickConnectCode => QuickConnectCode.Length > 0;
-    public string QuickConnectStatus => HasQuickConnectCode ? "Waiting for approval…" : "Getting a code…";
+    public string QuickConnectStatus => HasQuickConnectCode ? Loc.Get("Connect_QuickConnectWaiting") : Loc.Get("Connect_QuickConnectGettingCode");
 
     /// <summary>The form posts to <c>/auth/jellyfin</c>.</summary>
     public bool UsesJellyfin => IsJellyfinMode && OffersJellyfinSignIn;
@@ -240,18 +241,18 @@ public sealed partial class ConnectViewModel : ObservableObject
     public string SignupHint => model.Session.ServerInfo?.SignupHint ?? "";
     public bool ShowsSignupHint => model.Session.ServerInfo?.SignupHint is not null;
 
-    public string SignInSubtitle => UsesJellyfin ? $"Sign in with your {JellyfinName} account." : "Sign in to your Marquee account.";
-    public string UsernameHeader => UsesJellyfin ? $"{JellyfinName} username" : "Username";
-    public string PasswordHeader => UsesJellyfin ? $"{JellyfinName} password" : "Password";
-    public string JellyfinToggleLabel => UsesJellyfin ? "Sign in with a Marquee account" : $"Sign in with {JellyfinName}";
+    public string SignInSubtitle => UsesJellyfin ? Loc.Format("Connect_SubtitleJellyfin", JellyfinName) : Loc.Get("Connect_SubtitleMarquee");
+    public string UsernameHeader => UsesJellyfin ? Loc.Format("Connect_UsernameJellyfin", JellyfinName) : Loc.Get("Connect_Username");
+    public string PasswordHeader => UsesJellyfin ? Loc.Format("Connect_PasswordJellyfin", JellyfinName) : Loc.Get("Connect_Password");
+    public string JellyfinToggleLabel => UsesJellyfin ? Loc.Get("Connect_SignInWithMarquee") : Loc.Format("Connect_SignInWith", JellyfinName);
 
     // MARK: Labels
 
     public bool HasAddressError => AddressError != null;
     public bool HasFormError => FormError != null;
-    public string CheckLabel => IsChecking ? "Checking…" : "Check";
-    public string SignInLabel => IsSubmitting ? "Signing in…" : (UsesJellyfin ? $"Sign in with {JellyfinName}" : "Sign in");
-    public string SetupLabel => IsSubmitting ? "Creating account…" : "Create admin account";
+    public string CheckLabel => IsChecking ? Loc.Get("Connect_Checking") : Loc.Get("Connect_Check");
+    public string SignInLabel => IsSubmitting ? Loc.Get("Connect_SigningIn") : (UsesJellyfin ? Loc.Format("Connect_SignInWith", JellyfinName) : Loc.Get("Connect_SignIn"));
+    public string SetupLabel => IsSubmitting ? Loc.Get("Connect_CreatingAccount") : Loc.Get("Connect_CreateAdminAccount");
 
     // MARK: Can't-reach card
 
@@ -259,20 +260,20 @@ public sealed partial class ConnectViewModel : ObservableObject
 
     public string UnreachableTitle => Problem switch
     {
-        ProbeOutcome.Legacy or ProbeOutcome.Incompatible => "Update needed",
-        ProbeOutcome.NotMarquee => "That's not your Marquee server",
-        ProbeOutcome.Unreachable { Reason.Kind: UnreachableReasonKind.LocalNetworkDenied } => "Allow local network access",
-        _ => "Can't reach your server",
+        ProbeOutcome.Legacy or ProbeOutcome.Incompatible => Loc.Get("Connect_UpdateNeededTitle"),
+        ProbeOutcome.NotMarquee => Loc.Get("Connect_NotMarqueeTitle"),
+        ProbeOutcome.Unreachable { Reason.Kind: UnreachableReasonKind.LocalNetworkDenied } => Loc.Get("Connect_LocalNetworkTitle"),
+        _ => Loc.Get("Connect_UnreachableTitle"),
     };
 
     public string UnreachableExplanation => Problem switch
     {
-        ProbeOutcome.Legacy => "Your Marquee server is running an older version. Update it, then try again.",
-        ProbeOutcome.Incompatible => "Your Marquee server is newer than this app. Update Marquee for Windows, then try again.",
-        ProbeOutcome.NotMarquee => "Something else is answering at your server's address now. Its IP address may have changed.",
+        ProbeOutcome.Legacy => Loc.Get("Connect_LegacyExplanation"),
+        ProbeOutcome.Incompatible => Loc.Get("Connect_IncompatibleExplanation"),
+        ProbeOutcome.NotMarquee => Loc.Get("Connect_NotMarqueeExplanation"),
         ProbeOutcome.Unreachable { Reason.Kind: UnreachableReasonKind.LocalNetworkDenied } =>
-            "Windows is blocking Marquee from your home network. Allow it in the app's network settings, then try again.",
-        _ => "Make sure the computer running Marquee is on and connected to your network, then try again.",
+            Loc.Get("Connect_LocalNetworkExplanation"),
+        _ => Loc.Get("Connect_UnreachableExplanation"),
     };
 
     /// <summary>The specific inline message for this server, e.g. which port nothing answers on.</summary>
@@ -401,7 +402,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanSignInElsewhere))]
     private Task SignInWithPlexAsync() =>
-        SignInElsewhereAsync(quickConnect: false, "Waiting for Plex…", async token =>
+        SignInElsewhereAsync(quickConnect: false, Loc.Format("Connect_WaitingFor", "Plex"), async token =>
         {
             var start = await model.Session.StartPlexSignInAsync(token);
             if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
@@ -412,7 +413,7 @@ public sealed partial class ConnectViewModel : ObservableObject
             return await model.Session.FinishPlexSignInAsync(start, ct: token);
         });
 
-    public const string PlexPageUnopenedMessage = "Couldn't open the Plex sign-in page in your browser.";
+    public static string PlexPageUnopenedMessage => Loc.Format("Connect_SignInPageUnopened", "Plex");
 
     /// <summary>
     /// "Sign in with {name}" (0.44+): <c>POST /auth/sso/start</c>, Marquee's
@@ -425,7 +426,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     private Task SignInWithSsoAsync()
     {
         var name = SsoName;
-        return SignInElsewhereAsync(quickConnect: false, $"Waiting for {name}…", async token =>
+        return SignInElsewhereAsync(quickConnect: false, Loc.Format("Connect_WaitingFor", name), async token =>
         {
             var start = await model.Session.StartSsoSignInAsync(token);
             var server = model.Session.Server?.BaseUrl;
@@ -438,7 +439,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         });
     }
 
-    public static string SsoPageUnopenedMessage(string name) => $"Couldn't open the {name} sign-in page in your browser.";
+    public static string SsoPageUnopenedMessage(string name) => Loc.Format("Connect_SignInPageUnopened", name);
 
     /// <summary>
     /// "Use Quick Connect" (Jellyfin 10.8+, 0.44+): <c>POST

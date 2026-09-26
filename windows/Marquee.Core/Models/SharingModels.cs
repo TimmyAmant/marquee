@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -86,15 +87,15 @@ public static partial class TitleShareForm
     /// <summary>People one share can go to at once.</summary>
     public const int MaxRecipients = 20;
 
-    public const string PickSomeoneMessage = "Pick who to share it with.";
-    public const string NoteTooLongMessage = "Keep the note under 280 characters.";
-    public const string NoOneElseMessage = "No one else has an account here yet.";
+    public static string PickSomeoneMessage => Loc.Get("Model_SharePickSomeone");
+    public static string NoteTooLongMessage => Loc.Format("Model_ShareNoteTooLong", MaxNoteLength);
+    public static string NoOneElseMessage => Loc.Get("Model_ShareNoOneElse");
 
     /// <summary>A share's NotFound: an id that isn't an account any more (the transport keeps no server text for a 404).</summary>
-    public const string RecipientGoneMessage = "Someone you picked isn't in this household any more.";
+    public static string RecipientGoneMessage => Loc.Get("Model_ShareRecipientGone");
 
     /// <summary><c>GET /users/shareable</c>'s NotFound: a server from before 0.45.</summary>
-    public const string OlderServerMessage = "Sending to someone here needs a newer Marquee server.";
+    public static string OlderServerMessage => Loc.Get("Model_ShareOlderServer");
 
     [GeneratedRegex("^tt[0-9]+$")]
     private static partial Regex ImdbIdPattern();
@@ -142,12 +143,12 @@ public static partial class TitleShareForm
         var options = new List<ShareLinkOption>();
         if (MarqueeUrl(title, publicUrl, server) is { } marquee)
         {
-            options.Add(new ShareLinkOption(ShareLinkKind.Marquee, "Marquee — they'll need to sign in", marquee, $"{name} on Marquee"));
+            options.Add(new ShareLinkOption(ShareLinkKind.Marquee, Loc.Get("Model_ShareLinkMarquee"), marquee, Loc.Format("Model_ShareOnMarquee", name)));
         }
-        options.Add(new ShareLinkOption(ShareLinkKind.Tmdb, "TMDb — anyone can open it", TmdbUrl(title), name));
+        options.Add(new ShareLinkOption(ShareLinkKind.Tmdb, Loc.Get("Model_ShareLinkTmdb"), TmdbUrl(title), name));
         if (ImdbUrl(imdbId) is { } imdb)
         {
-            options.Add(new ShareLinkOption(ShareLinkKind.Imdb, "IMDb — anyone can open it", imdb, name));
+            options.Add(new ShareLinkOption(ShareLinkKind.Imdb, Loc.Get("Model_ShareLinkImdb"), imdb, name));
         }
         return options;
     }
@@ -180,7 +181,7 @@ public static partial class TitleShareForm
         }
         if (userIds.Count > MaxRecipients)
         {
-            return (null, $"Share with at most {MaxRecipients.ToString(CultureInfo.CurrentCulture)} people at a time.");
+            return (null, Loc.Format("Model_ShareTooMany", MaxRecipients));
         }
         var text = note.NonBlank()?.Trim();
         if (NoteLength(text) > MaxNoteLength)
@@ -196,6 +197,6 @@ public static partial class TitleShareForm
     /// </summary>
     public static string SentMessage(IReadOnlyList<string> pickedLabels, int sharedWith) =>
         pickedLabels.Count == 1
-            ? $"Sent to {pickedLabels[0]}."
-            : $"Sent to {sharedWith.ToString(CultureInfo.CurrentCulture)} people.";
+            ? Loc.Format("Model_ShareSentTo", pickedLabels[0])
+            : Loc.Plural("Model_ShareSentToPeople", sharedWith);
 }

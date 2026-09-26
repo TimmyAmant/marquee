@@ -28,7 +28,7 @@
             <StackPanel Padding="28,20,0,28">
                 <!-- The page title, with the Color key pill for the shelves' poster colors. -->
                 <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,0,0,16">
-                    <TextBlock Text="Discover" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                    <TextBlock x:Uid="Discover_Title" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
                     <controls:StatusColorKey />
                 </StackPanel>
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Shelves, Mode=OneWay}">
@@ -152,7 +152,7 @@
             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
             <TextBlock
-                Text="Loading Discover…"
+                x:Uid="Discover_Loading"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 HorizontalAlignment="Center" />
@@ -166,14 +166,14 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Couldn't load Discover" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Discover_ErrorHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Discover_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
         </StackPanel>
 
         <!-- TMDb isn't configured on the server (api-v1.md deviation 7). -->
@@ -184,7 +184,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Connect TMDb to start browsing" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Discover_TmdbMissingHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.TmdbMissingMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
@@ -192,7 +192,7 @@
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
             <Button
-                Content="Open Settings"
+                x:Uid="Discover_OpenSettings"
                 Command="{x:Bind ViewModel.OpenSettingsCommand}"
                 Visibility="{x:Bind ViewModel.CanOpenSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 HorizontalAlignment="Center" />
@@ -206,9 +206,9 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Nothing to show yet" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Discover_EmptyHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
-                Text="Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (F5)."
+                x:Uid="Discover_EmptyText"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"

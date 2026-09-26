@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Windows.ViewModels;
@@ -16,7 +17,7 @@ public sealed partial class ImportCandidateRow : ObservableObject
         Label = candidate.Label;
         UsernameLine = candidate.DisplayName.NonBlank() != null ? candidate.Username : "";
         CanSelect = !candidate.AlreadyMember;
-        MemberTag = candidate.AlreadyMember ? "Already a member" : "";
+        MemberTag = candidate.AlreadyMember ? Loc.Get("Member_AlreadyMember") : "";
         IsSelected = candidate.AlreadyMember;
     }
 

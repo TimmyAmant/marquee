@@ -10369,6 +10369,34 @@
         }
       }
     },
+    "Couldn't resolve this show for Sonarr." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Serie konnte für Sonarr nicht zugeordnet werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo identificar esta serie para Sonarr."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’identifier cette série pour Sonarr."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível identificar esta série para o Sonarr."
+          }
+        }
+      }
+    },
     "Couldn't search" : {
       "localizations" : {
         "de" : {
@@ -28545,6 +28573,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ID do TMDb"
+          }
+        }
+      }
+    },
+    "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TMDb ist auf diesem Server nicht eingerichtet. Ein Admin muss unter Einstellungen → Integrationen ein TMDb-Zugriffstoken hinzufügen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TMDb no está configurado en este servidor. Un administrador tiene que añadir un token de acceso de TMDb en Ajustes → Integraciones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TMDb n’est pas configuré sur ce serveur. Un administrateur doit ajouter un jeton d’accès TMDb dans Paramètres → Intégrations."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O TMDb não está configurado neste servidor. Um administrador precisa adicionar um token de acesso do TMDb em Configurações → Integrações."
           }
         }
       }

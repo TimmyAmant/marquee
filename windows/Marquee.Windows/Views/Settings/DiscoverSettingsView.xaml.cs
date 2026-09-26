@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
@@ -34,7 +35,7 @@ public sealed partial class DiscoverSettingsView : UserControl, ISettingsTabView
     {
         var box = new TextBox
         {
-            Header = "Name",
+            Header = Loc.Get("DiscoverSettings_RenameName"),
             Text = row.Title,
             MaxLength = DiscoverLayoutEditing.MaxTitleLength,
         };
@@ -42,10 +43,10 @@ public sealed partial class DiscoverSettingsView : UserControl, ISettingsTabView
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "Rename row",
+            Title = Loc.Get("DiscoverSettings_RenameTitle"),
             Content = box,
-            PrimaryButtonText = "Save",
-            CloseButtonText = "Cancel",
+            PrimaryButtonText = Loc.Get("DiscoverSettings_RenameSave"),
+            CloseButtonText = Loc.Get("DiscoverSettings_Cancel"),
             DefaultButton = ContentDialogButton.Primary,
         };
         return await dialog.TryShowAsync() == ContentDialogResult.Primary ? box.Text : null;
@@ -57,10 +58,10 @@ public sealed partial class DiscoverSettingsView : UserControl, ISettingsTabView
         var confirm = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = $"Remove {row.Title}?",
-            Content = "It leaves Discover for everyone. You can add it again later.",
-            PrimaryButtonText = "Remove",
-            CloseButtonText = "Cancel",
+            Title = Loc.Format("DiscoverSettings_RemoveTitle", row.Title),
+            Content = Loc.Get("DiscoverSettings_RemoveMessage"),
+            PrimaryButtonText = Loc.Get("DiscoverSettings_RemoveConfirm"),
+            CloseButtonText = Loc.Get("DiscoverSettings_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         return await confirm.TryShowAsync() == ContentDialogResult.Primary;
@@ -72,10 +73,10 @@ public sealed partial class DiscoverSettingsView : UserControl, ISettingsTabView
         var confirm = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "Reset Discover?",
-            Content = "The built-in rows go back to their usual order, all shown. Your own rows stay, after them.",
-            PrimaryButtonText = "Reset",
-            CloseButtonText = "Cancel",
+            Title = Loc.Get("DiscoverSettings_ResetTitle"),
+            Content = Loc.Get("DiscoverSettings_ResetMessage"),
+            PrimaryButtonText = Loc.Get("DiscoverSettings_ResetConfirm"),
+            CloseButtonText = Loc.Get("DiscoverSettings_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         return await confirm.TryShowAsync() == ContentDialogResult.Primary;

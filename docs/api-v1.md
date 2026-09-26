@@ -192,11 +192,17 @@ Non-2xx responses are `{"error": "<message safe to show>", "code": "<code>"}`.
 | 502 | `upstream` | A connected service (TMDb, Sonarr, Radarr, Plex, Jellyfin, Trakt…) failed, timed out, or TMDb isn't configured |
 
 Business-rule messages are exactly the website's strings, so they match the
-**Error reference** (`GET /help/errors`). One is significant for control flow:
-approving a TV request can fail with `409` and the message
-**`Couldn't resolve this show for Sonarr.`** — the website then offers
-"Manually approve" (`POST /requests/{id}/manual-approve`) and an "Add manually
-in Sonarr" link built as `{sonarrUrl}/add/new?term={url-encoded title}`.
+**Error reference** (`GET /help/errors`). Since 0.50 they're written in the
+reader's language (see `PATCH /me`), so never match on the text: the two
+failures a client acts on carry a stable `reason` beside `code` (0.50+; an
+older server sends none — fall back to comparing the English text), e.g.
+`{ "error": "No se pudo identificar esta serie para Sonarr.", "code": "conflict", "reason": "sonarr_unresolved" }`:
+
+- `"reason": "sonarr_unresolved"` — approving a TV request failed with `409`
+  **`Couldn't resolve this show for Sonarr.`** The website then offers
+  "Manually approve" (`POST /requests/{id}/manual-approve`) and an "Add
+  manually in Sonarr" link built as `{sonarrUrl}/add/new?term={url-encoded title}`.
+- `"reason": "tmdb_not_configured"` — the `502 upstream` of deviation 7.
 
 ### Auth levels
 

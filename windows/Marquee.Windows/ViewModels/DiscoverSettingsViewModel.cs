@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -45,8 +46,8 @@ public sealed partial class DiscoverRowItem : ObservableObject
     public bool CanMoveDown { get; }
 
     /// <summary>"Move {name} up", for a screen reader.</summary>
-    public string MoveUpLabel => $"Move {Title} up";
-    public string MoveDownLabel => $"Move {Title} down";
+    public string MoveUpLabel => Loc.Format("DiscoverSettings_MoveRowUp", Title);
+    public string MoveDownLabel => Loc.Format("DiscoverSettings_MoveRowDown", Title);
 
     /// <summary>The Show switch: on Discover, or hidden from everyone.</summary>
     [ObservableProperty]
@@ -85,8 +86,7 @@ public sealed partial class DiscoverRowItem : ObservableObject
 /// </summary>
 public sealed partial class DiscoverSettingsViewModel : ObservableObject
 {
-    public const string Description =
-        "Arrange Discover for everyone: move rows up or down, hide the ones you don't want, and add rows of your own.";
+    public static string Description => Loc.Get("DiscoverSettings_Description");
 
     private static readonly TimeSpan SearchDelay = TimeSpan.FromMilliseconds(300);
 
@@ -191,7 +191,7 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
             }
             if (fresh == null)
             {
-                LoadError = "This server doesn't have Discover settings yet. Update Marquee on the server to arrange Discover.";
+                LoadError = Loc.Get("DiscoverSettings_ServerTooOld");
                 return;
             }
             Apply(fresh);
@@ -220,7 +220,7 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
     {
         settings = fresh;
         Show(fresh.Shelves);
-        CustomCountLine = $"{fresh.CustomCount} of {fresh.MaxCustomShelves} rows of your own";
+        CustomCountLine = Loc.Plural("DiscoverSettings_CustomCount", fresh.MaxCustomShelves, fresh.CustomCount);
         OnPropertyChanged(nameof(ShowsTraktNote));
     }
 
@@ -381,10 +381,10 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
     public bool ShowsSearch => DiscoverLayoutEditing.LookupKind(SelectedKind) != null;
 
     public string SearchHeader =>
-        SelectedKind == DiscoverRowKind.Genre ? "Genre"
-        : SelectedKind == DiscoverRowKind.Company ? "Studio"
-        : SelectedKind == DiscoverRowKind.Network ? "Network"
-        : "Keyword";
+        SelectedKind == DiscoverRowKind.Genre ? Loc.Get("DiscoverSettings_SearchGenre")
+        : SelectedKind == DiscoverRowKind.Company ? Loc.Get("DiscoverSettings_SearchStudio")
+        : SelectedKind == DiscoverRowKind.Network ? Loc.Get("DiscoverSettings_SearchNetwork")
+        : Loc.Get("DiscoverSettings_SearchKeyword");
 
     public string SearchPlaceholder => DiscoverLayoutEditing.SearchPlaceholder(SelectedKind);
 
@@ -404,7 +404,7 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
     private int resultIndex = -1;
 
     /// <summary>"Picked: A24 (US)", or empty.</summary>
-    public string PickedLine => Picked is { } picked ? $"Picked: {picked.Label}" : "";
+    public string PickedLine => Picked is { } picked ? Loc.Format("DiscoverSettings_Picked", picked.Label) : "";
 
     private DiscoverLookupResult? Picked => ResultIndex >= 0 && ResultIndex < results.Count ? results[ResultIndex] : null;
 
@@ -432,16 +432,16 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
     /// <summary>A TMDb list's number or link, or a Trakt link.</summary>
     public bool ShowsLink => SelectedKind == DiscoverRowKind.TmdbList || SelectedKind == DiscoverRowKind.TraktList;
 
-    public string LinkHeader => SelectedKind == DiscoverRowKind.TraktList ? "Trakt list or watchlist link" : "TMDb list number or link";
+    public string LinkHeader => SelectedKind == DiscoverRowKind.TraktList ? Loc.Get("DiscoverSettings_TraktLinkHeader") : Loc.Get("DiscoverSettings_TmdbLinkHeader");
 
     public string LinkPlaceholder => SelectedKind == DiscoverRowKind.TraktList
         ? "https://trakt.tv/users/someone/lists/favourites"
-        : "8136, or https://www.themoviedb.org/list/8136";
+        : Loc.Get("DiscoverSettings_TmdbLinkPlaceholder");
 
     /// <summary>A Trakt row stays empty until Trakt is connected.</summary>
     public bool ShowsTraktNote => SelectedKind == DiscoverRowKind.TraktList && settings is { TraktConfigured: false };
 
-    public string TraktNote => "Trakt isn't connected, so this row will stay empty until the admin connects it in Settings → Integrations.";
+    public string TraktNote => Loc.Get("DiscoverSettings_TraktNote");
 
     [ObservableProperty]
     private string link = "";
@@ -465,7 +465,7 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
 
     public bool HasAddError => AddError != null;
     public bool HasAddNotice => AddNotice != null;
-    public string AddLabel => IsAdding ? "Adding…" : "Add row";
+    public string AddLabel => IsAdding ? Loc.Get("DiscoverSettings_Adding") : Loc.Get("DiscoverSettings_AddRow");
     public bool CanAdd => !IsAdding;
 
     partial void OnKindIndexChanged(int value)
@@ -595,7 +595,7 @@ public sealed partial class DiscoverSettingsViewModel : ObservableObject
         try
         {
             var added = await model.Api.DiscoverSettings.AddShelfAsync(request);
-            AddNotice = $"Added \"{added.Title}\" at the end of Discover.";
+            AddNotice = Loc.Format("DiscoverSettings_Added", added.Title);
             Link = "";
             NewTitle = "";
             SearchText = "";

@@ -1,5 +1,5 @@
-using System.Globalization;
 using System.Text.Json.Nodes;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -14,22 +14,22 @@ namespace Marquee.Core.Models;
 public static class RequestLifecycle
 {
     /// <summary>Under an approved request, which can't be edited or cancelled any more.</summary>
-    public const string AskInCommentsHint = "Need a change? Ask in its comments.";
+    public static string AskInCommentsHint => Loc.Get("Lifecycle_AskInCommentsHint");
 
     /// <summary>The note on a review-queue row whose seasons or 4K changed after it was asked.</summary>
-    public const string ChangedSinceAsking = "Changed since asking";
+    public static string ChangedSinceAsking => Loc.Get("Lifecycle_ChangedSinceAsking");
 
-    public const string EditLabel = "Edit";
-    public const string EditLoadingLabel = "Loading…";
-    public const string CancelLabel = "Cancel request";
-    public const string CancelQuestion = "Cancel it?";
-    public const string ConfirmCancelLabel = "Yes, cancel";
-    public const string CancellingLabel = "Cancelling…";
-    public const string KeepLabel = "Keep it";
-    public const string RetryLabel = "Retry";
-    public const string RetryingLabel = "Retrying…";
-    public const string AddedByHandLabel = "Added it by hand";
-    public const string AddedByHandTooltip = "Mark it approved without Sonarr/Radarr — once you've got it some other way.";
+    public static string EditLabel => Loc.Get("Lifecycle_Edit");
+    public static string EditLoadingLabel => Loc.Get("Lifecycle_Loading");
+    public static string CancelLabel => Loc.Get("Lifecycle_CancelRequest");
+    public static string CancelQuestion => Loc.Get("Lifecycle_CancelQuestion");
+    public static string ConfirmCancelLabel => Loc.Get("Lifecycle_ConfirmCancel");
+    public static string CancellingLabel => Loc.Get("Lifecycle_Cancelling");
+    public static string KeepLabel => Loc.Get("Lifecycle_Keep");
+    public static string RetryLabel => Loc.Get("Lifecycle_Retry");
+    public static string RetryingLabel => Loc.Get("Lifecycle_Retrying");
+    public static string AddedByHandLabel => Loc.Get("Lifecycle_AddedByHand");
+    public static string AddedByHandTooltip => Loc.Get("Lifecycle_AddedByHandTooltip");
 }
 
 /// <summary>
@@ -154,12 +154,12 @@ public sealed record RequestEditOptions
 /// </summary>
 public sealed class RequestEditForm
 {
-    public const string Heading = "Change request";
-    public const string WholeSeriesLabel = "The whole series";
-    public const string JustTheseLabel = "Just these seasons";
-    public const string SaveLabel = "Save changes";
-    public const string SavingLabel = "Saving…";
-    public const string NothingToChangeMessage = "There's nothing to change: 4K isn't set up on this server.";
+    public static string Heading => Loc.Get("Lifecycle_EditHeading");
+    public static string WholeSeriesLabel => Loc.Get("Lifecycle_WholeSeries");
+    public static string JustTheseLabel => Loc.Get("Lifecycle_JustTheseSeasons");
+    public static string SaveLabel => Loc.Get("Lifecycle_SaveChanges");
+    public static string SavingLabel => Loc.Get("Lifecycle_Saving");
+    public static string NothingToChangeMessage => Loc.Get("Lifecycle_NothingToChange");
 
     public RequestEditForm(RequestEditOptions options)
     {
@@ -192,7 +192,7 @@ public sealed class RequestEditForm
     public bool OffersFourK => Options.FourKAvailable;
 
     /// <summary>"In 4K (always the whole show)" for TV, "In 4K" for a movie.</summary>
-    public string FourKLabel => IsTv ? "In 4K (always the whole show)" : "In 4K";
+    public string FourKLabel => IsTv ? Loc.Get("Lifecycle_FourKWholeShow") : Loc.Get("Lifecycle_FourK");
 
     /// <summary>The whole-series / just-these choice: TV, and not while 4K (which is always the whole show) is ticked.</summary>
     public bool ScopeEnabled => IsTv && !Is4k;
@@ -254,17 +254,32 @@ public sealed record TitleRequestSummary
     {
         get
         {
-            if (Status == RequestStatus.Pending) return "waiting for review";
-            if (Status == RequestStatus.Approved) return "approved";
-            if (Status == RequestStatus.Rejected) return "declined";
+            if (Status == RequestStatus.Pending) return Loc.Get("Lifecycle_StatusWaiting");
+            if (Status == RequestStatus.Approved) return Loc.Get("Lifecycle_StatusApproved");
+            if (Status == RequestStatus.Rejected) return Loc.Get("Lifecycle_StatusDeclined");
             return Status.Value;
         }
     }
 
     /// <summary>"Your request (Season 2) is waiting for review", "Your request is approved".</summary>
-    public string Line => DetailText.Length > 0
-        ? $"Your request ({DetailText}) is {StatusWords}"
-        : $"Your request is {StatusWords}";
+    public string Line
+    {
+        get
+        {
+            var detail = DetailText;
+            if (detail.Length > 0)
+            {
+                if (Status == RequestStatus.Pending) return Loc.Format("Lifecycle_LineDetailWaiting", detail);
+                if (Status == RequestStatus.Approved) return Loc.Format("Lifecycle_LineDetailApproved", detail);
+                if (Status == RequestStatus.Rejected) return Loc.Format("Lifecycle_LineDetailDeclined", detail);
+                return Loc.Format("Lifecycle_LineDetailOther", detail, StatusWords);
+            }
+            if (Status == RequestStatus.Pending) return Loc.Get("Lifecycle_LineWaiting");
+            if (Status == RequestStatus.Approved) return Loc.Get("Lifecycle_LineApproved");
+            if (Status == RequestStatus.Rejected) return Loc.Get("Lifecycle_LineDeclined");
+            return Loc.Format("Lifecycle_LineOther", StatusWords);
+        }
+    }
 
     /// <summary>The "Approved" hint applies (it can't be changed now).</summary>
     public string? ChangeHint => Status == RequestStatus.Approved ? RequestLifecycle.AskInCommentsHint : null;
@@ -296,9 +311,9 @@ public readonly record struct CommentKind(string Value) : IOpenEnum<CommentKind>
     {
         get
         {
-            if (this == Report) return "Reported";
-            if (this == Resolution) return "Marked fixed";
-            if (this == Declined) return "Declined";
+            if (this == Report) return Loc.Get("Lifecycle_NoteReported");
+            if (this == Resolution) return Loc.Get("Lifecycle_NoteMarkedFixed");
+            if (this == Declined) return Loc.Get("Lifecycle_NoteDeclined");
             return null;
         }
     }
@@ -321,8 +336,8 @@ public readonly record struct CommentRole(string Value) : IOpenEnum<CommentRole>
     {
         get
         {
-            if (this == Admin) return "Admin";
-            if (this == Reviewer) return "Reviewer";
+            if (this == Admin) return Loc.Get("Lifecycle_TagAdmin");
+            if (this == Reviewer) return Loc.Get("Lifecycle_TagReviewer");
             return null;
         }
     }
@@ -376,7 +391,7 @@ public sealed record Comment
     /// <paramref name="time"/> is <see cref="CreatedAt"/> as the screen prints it.
     /// </summary>
     public string MetaLine(string time) =>
-        string.Join(" · ", new[] { Author.Role?.Tag, Kind.NoteLabel, time, WasEdited ? "edited" : null }.OfType<string>());
+        string.Join(" · ", new[] { Author.Role?.Tag, Kind.NoteLabel, time, WasEdited ? Loc.Get("Lifecycle_Edited") : null }.OfType<string>());
 
     /// <summary>The body with Windows line breaks as plain <c>\n</c>, as the server stores it.</summary>
     public string BodyText => Body.Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -425,29 +440,29 @@ public static class CommentSubjectExtensions
 public static class CommentText
 {
     public const int DefaultMaxLength = 2000;
-    public const string Placeholder = "Write a comment";
-    public const string Send = "Send";
-    public const string Sending = "Sending…";
-    public const string Save = "Save";
-    public const string Saving = "Saving…";
-    public const string Empty = "No comments yet.";
-    public const string Loading = "Loading…";
-    public const string LoadFailed = "Couldn't load the conversation.";
-    public const string WriteSomethingFirst = "Write something first.";
+    public static string Placeholder => Loc.Get("Lifecycle_CommentPlaceholder");
+    public static string Send => Loc.Get("Lifecycle_CommentSend");
+    public static string Sending => Loc.Get("Lifecycle_CommentSending");
+    public static string Save => Loc.Get("Lifecycle_CommentSave");
+    public static string Saving => Loc.Get("Lifecycle_Saving");
+    public static string Empty => Loc.Get("Lifecycle_NoComments");
+    public static string Loading => Loc.Get("Lifecycle_Loading");
+    public static string LoadFailed => Loc.Get("Lifecycle_CommentsLoadFailed");
+    public static string WriteSomethingFirst => Loc.Get("Lifecycle_WriteSomethingFirst");
 
     /// <summary>"Comment" with none yet, "Comments (2)", and "Hide comments" while open.</summary>
     public static string ToggleLabel(int count, bool open)
     {
         if (open)
         {
-            return "Hide comments";
+            return Loc.Get("Lifecycle_HideComments");
         }
-        return count == 0 ? "Comment" : $"Comments ({count.ToString(CultureInfo.CurrentCulture)})";
+        return count == 0 ? Loc.Get("Lifecycle_Comment") : Loc.Format("Lifecycle_CommentsCount", count);
     }
 
     /// <summary>"12 left" once fewer than 200 characters remain; empty before that.</summary>
     public static string RemainingLabel(int length, int maxLength) =>
-        length > maxLength - 200 ? $"{(maxLength - length).ToString(CultureInfo.CurrentCulture)} left" : "";
+        length > maxLength - 200 ? Loc.Plural("Lifecycle_CharactersLeft", maxLength - length) : "";
 
     /// <summary>
     /// What would be sent: the draft trimmed, with <c>\r\n</c> (and a lone
@@ -463,7 +478,7 @@ public static class CommentText
         }
         if (text.Length > maxLength)
         {
-            return (null, $"Keep it under {maxLength.ToString(CultureInfo.InvariantCulture)} characters.");
+            return (null, Loc.Format("Lifecycle_KeepUnderCharacters", maxLength));
         }
         return (text, null);
     }

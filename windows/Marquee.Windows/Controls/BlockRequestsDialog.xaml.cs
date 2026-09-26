@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -24,7 +25,7 @@ public sealed partial class BlockRequestsDialog : ContentDialog
 
     private void Update()
     {
-        PrimaryButtonText = pending ? "Blocking…" : "Block";
+        PrimaryButtonText = pending ? Loc.Get("Blocklist_Blocking") : Loc.Get("Blocklist_Block");
         IsPrimaryButtonEnabled = !pending;
         ReasonBox.IsEnabled = !pending;
     }

@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Controls;
@@ -43,7 +44,7 @@ public sealed partial class SeasonItem : ObservableObject
         CompletenessTone = season.IsComplete ? BadgeTone.Owned : BadgeTone.Info;
         DetailLine = string.Join(" · ", new[]
         {
-            Format.Count(season.EpisodeCount, "episode", "episodes"),
+            Loc.Plural("Title_EpisodeCount", season.EpisodeCount),
             season.AirDate is { } aired ? Format.MediumDate(aired) : null,
         }.OfType<string>());
     }
@@ -87,8 +88,8 @@ public sealed class EpisodeItem
         }.OfType<string>());
         FileLabel = episode.HasFile switch
         {
-            true => "Have it",
-            false => "Missing",
+            true => Loc.Get("Title_HaveIt"),
+            false => Loc.Get("Title_Missing"),
             null => "",
         };
         FileTone = episode.HasFile == true ? BadgeTone.Owned : BadgeTone.Neutral;
@@ -123,8 +124,8 @@ public sealed class EpisodeItem
 /// </summary>
 public sealed partial class TitleViewModel : ObservableObject
 {
-    public const string ErrorTitle = "Couldn't load this title";
-    public const string SearchQueuedMessage = "Search queued.";
+    public static string ErrorTitle => Loc.Get("Title_ErrorTitle");
+    public static string SearchQueuedMessage => Loc.Get("Title_SearchQueued");
 
     /// <summary>What changes after a full load.</summary>
     private static readonly string[] DetailProperties =
@@ -413,12 +414,12 @@ public sealed partial class TitleViewModel : ObservableObject
     public IReadOnlyList<PosterItem> FranchiseItems => franchiseItems;
     public bool HasFranchise => franchiseItems.Count > 0;
     public int MissingCount => detail?.Franchise?.AddAllMissing.Count ?? 0;
-    public string AddAllLabel => IsAddingAll ? "Adding…" : $"Add all {MissingCount.ToString(CultureInfo.CurrentCulture)} missing";
+    public string AddAllLabel => IsAddingAll ? Loc.Get("Title_Adding") : Loc.Plural("Title_AddAllMissing", MissingCount);
     public bool ShowsAddAll => MissingCount > 0 && AddAllResult == null;
     public bool HasAddAllResult => AddAllResult != null;
 
     public string AddAllConfirmation =>
-        $"Add all {MissingCount.ToString(CultureInfo.CurrentCulture)} missing {(MissingCount == 1 ? "title" : "titles")} to Sonarr/Radarr?";
+        Loc.Plural("Title_AddAllQuestion", MissingCount);
 
     /// <summary>A member's "Request all N missing" (franchise.requestAllMissing).</summary>
     public int RequestableCount => detail?.Franchise?.RequestAllCount ?? 0;
@@ -462,22 +463,22 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <summary>Every season TMDb lists, in the accordion's order, for the picker.</summary>
     public IReadOnlyList<SeasonSummary> PickerSeasons => detail?.Seasons ?? [];
 
-    public string RequestLabel => IsAdding ? "Requesting…" : "Request";
+    public string RequestLabel => IsAdding ? Loc.Get("Title_Requesting") : Loc.Get("Title_Request");
 
     /// <summary>Nothing in flight in the action area: the Request buttons (which use Click, not a command) can be pressed.</summary>
     public bool IsIdle => !IsAdding;
     public bool CanAdd => Viewer?.CanAdd == true;
-    public string AddLabel => IsAdding ? "Adding…" : $"Add to {Id.MediaType.ArrName}";
+    public string AddLabel => IsAdding ? Loc.Get("Title_Adding") : Loc.Format("Title_AddTo", Id.MediaType.ArrName);
     public bool HasTracking => Viewer?.ArrTracking != null;
-    public string SearchLabel => IsSearching ? "Searching…" : "Search now";
+    public string SearchLabel => IsSearching ? Loc.Get("Title_Searching") : Loc.Get("Title_SearchNow");
 
     public string MonitorLabel => IsTogglingMonitor
-        ? "Updating…"
-        : Viewer?.ArrTracking?.Monitored == true ? "Stop monitoring" : "Start monitoring";
+        ? Loc.Get("Title_Updating")
+        : Viewer?.ArrTracking?.Monitored == true ? Loc.Get("Title_StopMonitoring") : Loc.Get("Title_StartMonitoring");
 
     public bool CanRelink => Viewer?.CanRelink == true;
     public bool NeedsArrSetup => Viewer?.NeedsArrSetup == true;
-    public string ArrSetupLabel => $"Connect {Id.MediaType.ArrName} to add this title";
+    public string ArrSetupLabel => Loc.Format("Title_ConnectArr", Id.MediaType.ArrName);
     public string OtherRequestersLine => Viewer?.OtherRequestersLine ?? "";
     public bool HasOtherRequesters => OtherRequestersLine.Length > 0;
     public bool IsFavorited => Viewer?.Favorited == true;
@@ -512,8 +513,8 @@ public sealed partial class TitleViewModel : ObservableObject
 
     public bool CanRequestFourK => FourK?.CanRequest == true && !ShowsFourKRequested;
     public bool CanAddFourK => FourK?.CanAdd == true;
-    public string RequestFourKLabel => IsFourKBusy ? "Requesting…" : "Request in 4K";
-    public string AddFourKLabel => IsFourKBusy ? "Adding…" : $"Add to 4K {Id.MediaType.ArrName}";
+    public string RequestFourKLabel => IsFourKBusy ? Loc.Get("Title_Requesting") : Loc.Get("Title_RequestFourK");
+    public string AddFourKLabel => IsFourKBusy ? Loc.Get("Title_Adding") : Loc.Format("Title_AddToFourK", Id.MediaType.ArrName);
     public bool HasFourKError => FourKError != null;
 
     // MARK: Problem reports (viewer.canReport / openReports, 0.38+; components/report-problem-button.tsx)
@@ -528,7 +529,7 @@ public sealed partial class TitleViewModel : ObservableObject
     public bool ShowsProblemReported => CanReport && (reportSent || Viewer?.OpenReports > 0);
 
     /// <summary>Another episode can still be reported while one report is open.</summary>
-    public string ReportButtonLabel => ShowsProblemReported ? "Report another" : "Report a problem";
+    public string ReportButtonLabel => ShowsProblemReported ? Loc.Get("Title_ReportAnother") : Loc.Get("Title_ReportProblem");
 
     /// <summary>The show's seasons, for the Report dialog's picker; empty for a movie.</summary>
     public IReadOnlyList<int> ReportSeasonNumbers => detail?.Seasons.Select(season => season.SeasonNumber).ToList() ?? [];
@@ -581,7 +582,7 @@ public sealed partial class TitleViewModel : ObservableObject
 
     /// <summary>"Sonarr/Radarr hasn't found it since Sep 18, 2026".</summary>
     public string NotFoundTooltip => Viewer?.NotFoundSince is { } since
-        ? $"Sonarr/Radarr hasn't found it since {Format.ShortDate(since)}. See Can't find on the Requests page."
+        ? Loc.Format("Title_NotFoundTooltip", Format.ShortDate(since))
         : "";
 
     // MARK: Share (0.45.1+; components/share-button.tsx)
@@ -625,7 +626,7 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <summary>"Unblock requests" on a title blocked from its own page.</summary>
     public bool CanUnblock => ManagesBlocklist && Blocked != null && Blocked.KeywordLine == null;
 
-    public string UnblockLabel => IsUnblocking ? "Unblocking…" : "Unblock requests";
+    public string UnblockLabel => IsUnblocking ? Loc.Get("Title_Unblocking") : Loc.Get("Title_UnblockRequests");
 
     /// <summary>
     /// The Block dialog's submit (<c>POST …/block</c>, with the optional
@@ -845,7 +846,7 @@ public sealed partial class TitleViewModel : ObservableObject
         credits = fresh.Credits.Select(credit => new FactRow(credit.Role, credit.Name)).ToList();
 
         var linkItems = new List<LinkItem>();
-        if (LinkItem.Https("▶ Trailer", fresh.Links.TrailerUrl) is { } trailer)
+        if (LinkItem.Https(Loc.Get("Title_Trailer"), fresh.Links.TrailerUrl) is { } trailer)
         {
             linkItems.Add(trailer);
         }
@@ -879,12 +880,12 @@ public sealed partial class TitleViewModel : ObservableObject
         var country = facts.ProductionCountry is { } place ? $"{place.Flag} {place.Name}" : null;
         (string Label, string? Value)[] candidates =
         [
-            ("Status", facts.StatusLabel),
-            (fresh.MediaType == MediaType.Movie ? "Release Date" : "First Air Date", facts.ReleaseDateLabel),
-            ("Next Episode", facts.NextAirDateLabel),
-            ("Original Language", facts.OriginalLanguageLabel),
-            ("Production Country", country),
-            ("Network", facts.Network),
+            (Loc.Get("Title_FactStatus"), facts.StatusLabel),
+            (fresh.MediaType == MediaType.Movie ? Loc.Get("Title_FactReleaseDate") : Loc.Get("Title_FactFirstAirDate"), facts.ReleaseDateLabel),
+            (Loc.Get("Title_FactNextEpisode"), facts.NextAirDateLabel),
+            (Loc.Get("Title_FactOriginalLanguage"), facts.OriginalLanguageLabel),
+            (Loc.Get("Title_FactProductionCountry"), country),
+            (Loc.Get("Title_FactNetwork"), facts.Network),
         ];
         return candidates
             .Where(candidate => candidate.Value.NonBlank() != null)
@@ -895,7 +896,7 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <summary>components/file-details-section.tsx's pairs; anything the server didn't send is skipped.</summary>
     private static IReadOnlyList<FactRow> BuildFileCells(FileDetails file, string? runtimeLabel)
     {
-        var cells = new List<FactRow> { new("Size", file.SizeLabel) };
+        var cells = new List<FactRow> { new(Loc.Get("Title_FileSize"), file.SizeLabel) };
         void Add(string label, string? value)
         {
             if (value.NonBlank() is { } text)
@@ -904,17 +905,17 @@ public sealed partial class TitleViewModel : ObservableObject
             }
         }
 
-        Add("Runtime", runtimeLabel);
-        Add("Added", file.DateAdded is { } added ? Format.ShortDate(added) : null);
-        Add("Resolution", file.ResolutionLabel);
-        Add("Quality profile", file.Quality);
-        Add("Video", file.VideoCodec);
-        Add("Dynamic range", file.DynamicRangeLabel);
-        Add("Audio", file.AudioLabel);
-        Add("Container", file.Container);
-        Add("Bitrate", file.BitrateLabel);
-        Add("Edition", file.Edition);
-        Add("Release group", file.ReleaseGroup);
+        Add(Loc.Get("Title_FileRuntime"), runtimeLabel);
+        Add(Loc.Get("Title_FileAdded"), file.DateAdded is { } added ? Format.ShortDate(added) : null);
+        Add(Loc.Get("Title_FileResolution"), file.ResolutionLabel);
+        Add(Loc.Get("Title_FileQualityProfile"), file.Quality);
+        Add(Loc.Get("Title_FileVideo"), file.VideoCodec);
+        Add(Loc.Get("Title_FileDynamicRange"), file.DynamicRangeLabel);
+        Add(Loc.Get("Title_FileAudio"), file.AudioLabel);
+        Add(Loc.Get("Title_FileContainer"), file.Container);
+        Add(Loc.Get("Title_FileBitrate"), file.BitrateLabel);
+        Add(Loc.Get("Title_FileEdition"), file.Edition);
+        Add(Loc.Get("Title_FileReleaseGroup"), file.ReleaseGroup);
         return cells;
     }
 
@@ -1160,10 +1161,9 @@ public sealed partial class TitleViewModel : ObservableObject
                     failures++;
                 }
             }
-            var total = targets.Count.ToString(CultureInfo.CurrentCulture);
             AddAllResult = failures > 0
-                ? $"Added {(targets.Count - failures).ToString(CultureInfo.CurrentCulture)} of {total}, {failures.ToString(CultureInfo.CurrentCulture)} failed"
-                : $"Added all {total}";
+                ? Loc.Format("Title_AddAllPartial", targets.Count - failures, targets.Count, failures)
+                : Loc.Plural("Title_AddAllDone", targets.Count);
         }
         finally
         {

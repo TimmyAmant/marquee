@@ -403,7 +403,13 @@ extension APIError {
     /// Approving a TV request failed because Sonarr couldn't resolve the show:
     /// offer "Manually approve" and "Add manually in Sonarr".
     var isSonarrUnresolvable: Bool {
+        if case .sonarrUnresolvable = self { return true }
+        // A server older than 0.50 sends no reason, and always English.
         if case let .conflict(message) = self { return message == Self.sonarrUnresolvableMessage }
         return false
+    }
+
+    static var sonarrUnresolvableFallback: String {
+        String(localized: "Couldn't resolve this show for Sonarr.")
     }
 }

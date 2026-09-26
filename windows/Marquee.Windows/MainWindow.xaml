@@ -179,8 +179,7 @@
                 Visibility="Collapsed"
                 IsEnabled="False"
                 Click="OnBackClick"
-                AutomationProperties.Name="Back"
-                ToolTipService.ToolTip="Back (Alt+Left)">
+                x:Uid="Shell_BackButton">
                 <FontIcon Glyph="&#xE72B;" FontSize="16" />
             </Button>
 
@@ -245,8 +244,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Margin="0,0,0,4"
                         Click="OnProfileClick"
-                        AutomationProperties.Name="Account and settings"
-                        ToolTipService.ToolTip="Settings"
+                        x:Uid="Shell_ProfileButton"
                         ToolTipService.Placement="Right">
                         <!-- The 36 round photo (or initials on the accent gradient), inside a 2px white 15% ring. -->
                         <controls:AvatarView x:Name="RailAvatar" Diameter="40" RingThickness="2" />
@@ -257,8 +255,7 @@
                         <Button
                             x:Name="NotificationsButton"
                             Style="{StaticResource NavRailButtonStyle}"
-                            AutomationProperties.Name="Notifications"
-                            ToolTipService.ToolTip="Notifications"
+                            x:Uid="Shell_NotificationsButton"
                             ToolTipService.Placement="Right">
                             <FontIcon Glyph="&#xEA8F;" FontSize="19" />
                             <Button.Flyout>
@@ -287,8 +284,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Tag="search"
                         Click="OnSearchNavClick"
-                        AutomationProperties.Name="Search"
-                        ToolTipService.ToolTip="Search"
+                        x:Uid="Shell_RailSearchButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE721;" FontSize="19" />
                     </Button>
@@ -297,8 +293,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Tag="discover"
                         Click="OnSectionNavClick"
-                        AutomationProperties.Name="Discover"
-                        ToolTipService.ToolTip="Discover"
+                        x:Uid="Shell_RailDiscoverButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE909;" FontSize="19" />
                     </Button>
@@ -310,8 +305,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Tag="movies"
                         Click="OnSectionNavClick"
-                        AutomationProperties.Name="Movies"
-                        ToolTipService.ToolTip="Movies"
+                        x:Uid="Shell_RailMoviesButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE714;" FontSize="19" />
                     </Button>
@@ -320,8 +314,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Tag="series"
                         Click="OnSectionNavClick"
-                        AutomationProperties.Name="Series"
-                        ToolTipService.ToolTip="Series"
+                        x:Uid="Shell_RailSeriesButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE7F4;" FontSize="19" />
                     </Button>
@@ -333,8 +326,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Tag="favorites"
                         Click="OnSectionNavClick"
-                        AutomationProperties.Name="Favorites"
-                        ToolTipService.ToolTip="Favorites"
+                        x:Uid="Shell_RailFavoritesButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xEB51;" FontSize="19" />
                     </Button>
@@ -343,8 +335,7 @@
                         Style="{StaticResource NavRailButtonStyle}"
                         Tag="calendar"
                         Click="OnSectionNavClick"
-                        AutomationProperties.Name="Calendar"
-                        ToolTipService.ToolTip="Calendar"
+                        x:Uid="Shell_RailCalendarButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE787;" FontSize="19" />
                     </Button>
@@ -355,8 +346,7 @@
                         VerticalContentAlignment="Stretch"
                         Tag="requests"
                         Click="OnSectionNavClick"
-                        AutomationProperties.Name="Requests"
-                        ToolTipService.ToolTip="Requests"
+                        x:Uid="Shell_RailRequestsButton"
                         ToolTipService.Placement="Right">
                         <Grid>
                             <FontIcon Glyph="&#xE8FD;" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -384,8 +374,7 @@
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
                             Click="OnRailUpdateClick"
-                            AutomationProperties.Name="Update Marquee"
-                            ToolTipService.ToolTip="Update Marquee"
+                            x:Uid="Shell_RailUpdateButton"
                             ToolTipService.Placement="Right">
                             <Grid>
                                 <FontIcon Glyph="&#xE896;" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -423,7 +412,7 @@
             IsOpen="False"
             CloseButtonClick="OnAuthUpdateBarClosed">
             <InfoBar.ActionButton>
-                <Button x:Name="AuthUpdateButton" Content="Update" Click="OnAuthUpdateClick" />
+                <Button x:Name="AuthUpdateButton" x:Uid="Shell_AuthUpdateButton" Click="OnAuthUpdateClick" />
             </InfoBar.ActionButton>
         </InfoBar>
 
@@ -452,9 +441,8 @@
                 <AutoSuggestBox
                     x:Name="SearchBox"
                     FontSize="17"
-                    PlaceholderText="Search an actor, a studio, a title…"
+                    x:Uid="Shell_SearchBox"
                     QueryIcon="Find"
-                    AutomationProperties.Name="Search"
                     TextChanged="OnSearchTextChanged"
                     QuerySubmitted="OnSearchQuerySubmitted">
                     <AutoSuggestBox.ItemTemplate>

@@ -1,6 +1,7 @@
-using System.Globalization;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Core.Updates;
+using Marquee.Windows.Services;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -26,13 +27,14 @@ public sealed partial class WhatsNewDialog : ContentDialog
         this.seeAll = seeAll;
         InitializeComponent();
         Title = content.Title;
+        CloseButtonText = Loc.Get("WhatsNew_Ok");
 
         if (content.InstalledAppVersion is { } installed)
         {
             var installedPanel = new StackPanel { Spacing = 4 };
             installedPanel.Children.Add(new TextBlock
             {
-                Text = $"Marquee for Windows {installed} is installed.",
+                Text = Loc.Format("WhatsNew_Installed", installed),
                 Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
                 TextWrapping = TextWrapping.Wrap,
             });
@@ -40,7 +42,7 @@ public sealed partial class WhatsNewDialog : ContentDialog
             {
                 installedPanel.Children.Add(new HyperlinkButton
                 {
-                    Content = "Read the release notes on GitHub",
+                    Content = Loc.Get("WhatsNew_ReleaseNotes"),
                     NavigateUri = notes,
                     Padding = new Thickness(0),
                 });
@@ -57,7 +59,7 @@ public sealed partial class WhatsNewDialog : ContentDialog
         {
             Releases.Children.Add(new TextBlock
             {
-                Text = "And more in earlier releases.",
+                Text = Loc.Get("WhatsNew_AndMore"),
                 Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
                 Foreground = SecondaryText,
             });
@@ -73,7 +75,7 @@ public sealed partial class WhatsNewDialog : ContentDialog
         heading.Inlines.Add(new Run { Text = $"Marquee {entry.Version}" });
         heading.Inlines.Add(new Run
         {
-            Text = "   " + entry.Date.ToString("MMM d, yyyy", CultureInfo.CurrentCulture),
+            Text = "   " + Format.MediumDate(entry.Date),
             FontWeight = FontWeights.Normal,
             Foreground = SecondaryText,
         });

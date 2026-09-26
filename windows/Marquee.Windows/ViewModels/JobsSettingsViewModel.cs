@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -55,7 +56,7 @@ public sealed partial class JobRow : ObservableObject
     [ObservableProperty]
     private bool isDone;
 
-    public string RunLabel => IsRunning ? "Running…" : "Run now";
+    public string RunLabel => IsRunning ? Loc.Get("Jobs_Running") : Loc.Get("Jobs_RunNow");
     public bool CanRun => !IsRunning;
     public bool HasError => Error != null;
 
@@ -91,7 +92,7 @@ public sealed partial class JobRow : ObservableObject
 
     /// <summary>"5m ago" is relative to now.</summary>
     internal void RefreshTimes() =>
-        RanLine = finishedAt is { } moment ? $"Ran from this PC {NotificationItem.TimeAgoLabel(moment, DateTimeOffset.UtcNow)}" : "";
+        RanLine = finishedAt is { } moment ? Loc.Format("Jobs_RanFromThisPc", NotificationItem.TimeAgoLabel(moment, DateTimeOffset.UtcNow)) : "";
 }
 
 /// <summary>

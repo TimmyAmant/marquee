@@ -1,8 +1,10 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Media;
@@ -23,7 +25,7 @@ public sealed class CalendarEntryItem
         TitleId = entry.TitleId;
         posterUrl = entry.PosterPath.Url(ImageSize.W92);
         Open = open;
-        AccessibleName = $"{entry.Name}, {entry.Subtitle}";
+        AccessibleName = Loc.Format("Calendar_EntryAccessibleName", entry.Name, entry.Subtitle);
     }
 
     public string Name { get; }
@@ -50,12 +52,12 @@ public sealed class CalendarDayCell(DateOnly day, bool isToday, bool inMonth, IR
     /// <summary>A cell shows this many titles, then "+N more" (CalendarScreen.maxVisiblePerDay).</summary>
     public const int MaxVisible = 4;
 
-    public string DayNumber { get; } = day.Day.ToString(System.Globalization.CultureInfo.CurrentCulture);
+    public string DayNumber { get; } = day.Day.ToString(CultureInfo.CurrentCulture);
     public bool IsToday { get; } = isToday;
     public double CellOpacity { get; } = inMonth ? 1 : 0.4;
     public IReadOnlyList<CalendarEntryItem> Entries { get; } = entries.Take(MaxVisible).ToList();
     public bool HasMore { get; } = entries.Count > MaxVisible;
-    public string MoreText { get; } = entries.Count > MaxVisible ? $"+{entries.Count - MaxVisible} more" : "";
+    public string MoreText { get; } = entries.Count > MaxVisible ? Loc.Format("Calendar_More", entries.Count - MaxVisible) : "";
 }
 
 /// <summary>
@@ -65,9 +67,6 @@ public sealed class CalendarDayCell(DateOnly day, bool isToday, bool inMonth, IR
 /// </summary>
 public sealed partial class CalendarViewModel : ObservableObject
 {
-    public const string ErrorTitle = "Couldn't load the calendar";
-    public const string LoadingLabel = "Loading the calendar…";
-
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
     private bool active;
@@ -131,8 +130,20 @@ public sealed partial class CalendarViewModel : ObservableObject
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
     public string NotConfiguredMessage => IsAdmin
-        ? "Connect Sonarr or Radarr to see upcoming releases and air dates here."
-        : "The household admin hasn't connected Sonarr or Radarr yet.";
+        ? Loc.Get("Calendar_NotConfiguredAdmin")
+        : Loc.Get("Calendar_NotConfiguredMember");
+
+    // The weekday row over the grid (Sunday first, like the server's weeks), in the app's culture.
+    public static string SundayLabel => WeekdayLabel(DayOfWeek.Sunday);
+    public static string MondayLabel => WeekdayLabel(DayOfWeek.Monday);
+    public static string TuesdayLabel => WeekdayLabel(DayOfWeek.Tuesday);
+    public static string WednesdayLabel => WeekdayLabel(DayOfWeek.Wednesday);
+    public static string ThursdayLabel => WeekdayLabel(DayOfWeek.Thursday);
+    public static string FridayLabel => WeekdayLabel(DayOfWeek.Friday);
+    public static string SaturdayLabel => WeekdayLabel(DayOfWeek.Saturday);
+
+    private static string WeekdayLabel(DayOfWeek day) =>
+        CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedDayName(day);
 
     /// <summary>Only an admin can connect an integration.</summary>
     public bool CanOpenSettings => IsNotConfigured && IsAdmin;
@@ -208,7 +219,7 @@ public sealed partial class CalendarViewModel : ObservableObject
         page = fresh;
         MonthLabel = fresh.Month.Label;
         IsNotConfigured = !fresh.Configured;
-        EmptyMonthMessage = $"Nothing scheduled in {fresh.Month.Label}.";
+        EmptyMonthMessage = Loc.Format("Calendar_EmptyMonth", fresh.Month.Label);
         var byDay = fresh.EntriesByDay;
         Cells = fresh.GridDays
             .Select(day => new CalendarDayCell(

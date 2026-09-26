@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
@@ -320,6 +321,10 @@ public sealed class ApiClient
         var request = new HttpRequestMessage(method, url) { Content = content };
         request.Headers.TryAddWithoutValidation("Accept", accept);
         request.Headers.TryAddWithoutValidation("User-Agent", AppInfo.UserAgent);
+        // The language the app is showing, so the server's own texts (errors,
+        // labels) match it even before sign-in; a signed-in account's own
+        // choice wins on the server's side.
+        request.Headers.TryAddWithoutValidation("Accept-Language", AppLanguage.Current);
         if (Token != null)
         {
             if (!IsWellFormedToken(Token))

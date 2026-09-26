@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -220,8 +221,8 @@ internal sealed class ClearableStringConverter : JsonConverter<ClearableString>
 /// </summary>
 public sealed class ArrServerDraft
 {
-    public const string SavedKeyPlaceholder = "Saved — enter to replace";
-    public const string KeyAgainMessage = "Enter the API key again to change the URL.";
+    public static string SavedKeyPlaceholder => Loc.Get("Model_ArrSavedKeyPlaceholder");
+    public static string KeyAgainMessage => Loc.Get("Model_ArrKeyAgain");
 
     /// <summary>A new server of this kind.</summary>
     public ArrServerDraft(ArrProvider kind)
@@ -418,7 +419,7 @@ public sealed record AddServerOption
     public required AddDefaults Defaults { get; init; }
 
     /// <summary>"Radarr 2", or "Radarr 2 (not responding)".</summary>
-    public string DisplayName => Reachable ? Name : $"{Name} (not responding)";
+    public string DisplayName => Reachable ? Name : Loc.Format("Model_ArrNotResponding", Name);
 }
 
 /// <summary>What a server would use for this title if nothing is picked.</summary>

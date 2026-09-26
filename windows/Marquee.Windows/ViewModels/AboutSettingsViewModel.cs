@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Core.Updates;
 using Marquee.Windows.Services;
@@ -66,15 +67,15 @@ public sealed partial class AboutSettingsViewModel : ObservableObject
                 return "";
             }
             return server >= latest
-                ? $"Your server is up to date (Marquee {server})."
-                : $"Your server is on {server}; {latest} is out. Update it by pulling the new Docker image (on Unraid: the Docker tab › Check for Updates, then apply the update).";
+                ? Loc.Format("About_ServerUpToDate", server)
+                : Loc.Format("About_ServerOutdated", server, latest);
         }
     }
 
     public bool HasServerUpdateText => ServerUpdateText.Length > 0;
 
     /// <summary>"Marquee for Windows 0.30.0".</summary>
-    public string AppVersionLabel => $"Marquee for Windows {AppInfo.Version}";
+    public string AppVersionLabel => Loc.Format("About_AppVersion", AppInfo.Version);
 
     public bool HasAboutError => AboutError != null;
 
@@ -141,17 +142,17 @@ public sealed partial class AboutSettingsViewModel : ObservableObject
             OnPropertyChanged(nameof(HasServerUpdateText));
             AboutRows =
             [
-                new FactRow("Version", about.VersionLabel),
-                new FactRow("Movies", about.MovieCount.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("TV Shows", about.TvCount.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("Tracked (not yet owned)", about.TrackedCount.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("Total Requests", about.TotalRequests.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("Time Zone", about.TimeZone),
+                new FactRow(Loc.Get("About_FactVersion"), about.VersionLabel),
+                new FactRow(Loc.Get("About_FactMovies"), about.MovieCount.ToString("N0", CultureInfo.CurrentCulture)),
+                new FactRow(Loc.Get("About_FactTvShows"), about.TvCount.ToString("N0", CultureInfo.CurrentCulture)),
+                new FactRow(Loc.Get("About_FactTracked"), about.TrackedCount.ToString("N0", CultureInfo.CurrentCulture)),
+                new FactRow(Loc.Get("About_FactTotalRequests"), about.TotalRequests.ToString("N0", CultureInfo.CurrentCulture)),
+                new FactRow(Loc.Get("About_FactTimeZone"), about.TimeZone),
             ];
             AboutLinks = new[]
             {
                 LinkItem.Https("GitHub", about.RepoUri),
-                LinkItem.Https("Report an issue", about.IssuesUri),
+                LinkItem.Https(Loc.Get("About_ReportIssue"), about.IssuesUri),
             }.OfType<LinkItem>().ToList();
         }
         catch (ApiException error)

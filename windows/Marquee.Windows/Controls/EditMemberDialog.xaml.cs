@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
@@ -31,8 +32,8 @@ namespace Marquee.Windows.Controls;
 /// </summary>
 public sealed partial class EditMemberDialog : ContentDialog
 {
-    private const string SaveLabel = "Save";
-    private const string SavingLabel = "Saving…";
+    private static string SaveLabel => Loc.Get("Member_Save");
+    private static string SavingLabel => Loc.Get("Member_Saving");
 
     private readonly HouseholdMember member;
     private readonly bool showsAutoApproval;
@@ -76,7 +77,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         PhotoAvatar.Label = member.Label;
         ShowPhotoState();
 
-        Title = $"Edit {member.Username}";
+        Title = Loc.Format("Member_EditTitle", member.Username);
         DisplayNameBox.Text = member.DisplayName ?? "";
         UsernameBox.Text = member.Username;
         CurrentPasswordInput.Visibility = NeedsCurrentPassword ? Visibility.Visible : Visibility.Collapsed;
@@ -95,7 +96,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         TvDaysBox.Text = MemberAccessForm.DaysText(member.TvQuotaDays);
         PasswordNoteText.Text = member.IsCurrentUser
             ? AccountSettingsViewModel.PasswordWarning
-            : $"Setting a new password signs {member.Label} out of every device.";
+            : Loc.Format("Member_PasswordNoteOther", member.Label);
     }
 
     /// <summary>"What they can do" and the switches (0.48+); shown only for the admin editing another member.</summary>
@@ -159,7 +160,7 @@ public sealed partial class EditMemberDialog : ContentDialog
                     TvDaysBox.Text);
             if (withAccess == null)
             {
-                ShowError(accessError ?? "Check the request limits.");
+                ShowError(accessError ?? Loc.Get("Member_CheckLimits"));
                 args.Cancel = true;
                 return;
             }
@@ -230,7 +231,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         }
         catch (COMException error)
         {
-            ShowPhotoError($"Couldn't open the file picker: {error.Message}");
+            ShowPhotoError(Loc.Format("Member_PickerFailed", error.Message));
             return;
         }
         if (file == null)
@@ -250,7 +251,7 @@ public sealed partial class EditMemberDialog : ContentDialog
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or COMException)
         {
-            ShowPhotoError($"Couldn't read {file.Name}: {error.Message}");
+            ShowPhotoError(Loc.Format("Member_ReadFailed", file.Name, error.Message));
         }
         finally
         {
@@ -293,7 +294,7 @@ public sealed partial class EditMemberDialog : ContentDialog
     {
         var hasPhoto = avatarUrl.Length > 0;
         PhotoAvatar.AvatarUrl = avatarUrl;
-        ChoosePhotoButton.Content = hasPhoto ? "Change photo" : "Add photo";
+        ChoosePhotoButton.Content = hasPhoto ? Loc.Get("Member_ChangePhoto") : Loc.Get("Member_AddPhoto");
         RemovePhotoButton.Visibility = hasPhoto ? Visibility.Visible : Visibility.Collapsed;
         ChoosePhotoButton.IsEnabled = !isChangingPhoto;
         RemovePhotoButton.IsEnabled = !isChangingPhoto;

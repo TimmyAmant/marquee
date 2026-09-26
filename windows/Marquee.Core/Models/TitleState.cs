@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 /// <summary>
@@ -40,7 +42,7 @@ public static class PosterQuickActions
 
     /// <summary>"+ Add to Radarr" / "+ Add to Sonarr", like the website's QuickAddButton.</summary>
     public static string AddLabel(MediaType mediaType) =>
-        mediaType == MediaType.Tv ? "+ Add to Sonarr" : "+ Add to Radarr";
+        mediaType == MediaType.Tv ? Loc.Get("TitleModel_AddToSonarr") : Loc.Get("TitleModel_AddToRadarr");
 }
 
 /// <summary>

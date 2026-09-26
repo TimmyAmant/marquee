@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -13,8 +14,8 @@ namespace Marquee.Windows.Controls;
 /// </summary>
 public sealed partial class JellyfinLinkDialog : ContentDialog
 {
-    private const string LinkLabel = "Link";
-    private const string LinkingLabel = "Linking…";
+    private static string LinkLabel => Loc.Get("Member_Link");
+    private static string LinkingLabel => Loc.Get("Member_Linking");
 
     private readonly Func<string, string, Task> link;
     private bool isSaving;
@@ -24,10 +25,10 @@ public sealed partial class JellyfinLinkDialog : ContentDialog
     {
         this.link = link;
         InitializeComponent();
-        Title = $"Link {serverName}";
-        IntroText.Text = $"Sign in with your {serverName} account to use it for Marquee too.";
-        UsernameBox.Header = $"{serverName} username";
-        PasswordInput.Header = $"{serverName} password";
+        Title = Loc.Format("Member_LinkTitle", serverName);
+        IntroText.Text = Loc.Format("Member_LinkIntro", serverName);
+        UsernameBox.Header = Loc.Format("Member_LinkUsername", serverName);
+        PasswordInput.Header = Loc.Format("Member_LinkPassword", serverName);
     }
 
     private bool CanLink => UsernameBox.Text.Trim().Length > 0 && PasswordInput.Password.Length > 0;

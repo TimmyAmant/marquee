@@ -1,7 +1,7 @@
 // Response helpers and error mapping for /api/v1. Dependency-free apart from
 // the TMDb error classes (themselves dependency-free), so the mapping from
 // thrown errors to contract codes is unit testable.
-import type { CoreErrorCode, CoreFailure } from "@/lib/core-result";
+import type { CoreErrorCode, CoreFailure, ErrorReason } from "@/lib/core-result";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
 import { englishT } from "@/lib/i18n/catalog";
 import type { MessageKey, MessageValues, Translator } from "@/lib/i18n/translator";
@@ -55,14 +55,16 @@ export class ApiError extends Error {
     public status: number,
     public code: ApiErrorCode,
     message: ApiMessage,
+    /** Sent as `reason` beside `code` (0.50+): see ErrorReason. */
+    public reason?: ErrorReason,
   ) {
     super(typeof message === "string" ? message : englishT()(message.key, message.values));
     this.name = "ApiError";
     this.localized = typeof message === "string" ? null : message;
   }
 
-  static of(code: ApiErrorCode, message: ApiMessage): ApiError {
-    return new ApiError(statusForCode(code), code, message);
+  static of(code: ApiErrorCode, message: ApiMessage, reason?: ErrorReason): ApiError {
+    return new ApiError(statusForCode(code), code, message, reason);
   }
 
   /** The message in `t`'s language. */
@@ -71,7 +73,7 @@ export class ApiError extends Error {
   }
 
   static fromFailure(failure: CoreFailure): ApiError {
-    return ApiError.of(failure.code, failure.error);
+    return ApiError.of(failure.code, failure.error, failure.apiReason);
   }
 }
 
@@ -86,8 +88,8 @@ export function apiJson(data: unknown, init?: ResponseInit): Response {
   return Response.json(data, { ...init, headers: withVersionHeader(init) });
 }
 
-export function jsonError(status: number, code: ApiErrorCode, message: string): Response {
-  return apiJson({ error: message, code }, { status });
+export function jsonError(status: number, code: ApiErrorCode, message: string, reason?: ErrorReason): Response {
+  return apiJson(reason ? { error: message, code, reason } : { error: message, code }, { status });
 }
 
 export const TMDB_NOT_CONFIGURED_API_MESSAGE = msg("server.tmdbNotConfigured");
@@ -98,7 +100,7 @@ export const TMDB_NOT_CONFIGURED_API_MESSAGE = msg("server.tmdbNotConfigured");
 export function errorToApiError(err: unknown): { error: ApiError; unexpected: boolean } {
   if (err instanceof ApiError) return { error: err, unexpected: false };
   if (err instanceof TmdbNotConfiguredError) {
-    return { error: ApiError.of("upstream", TMDB_NOT_CONFIGURED_API_MESSAGE), unexpected: false };
+    return { error: ApiError.of("upstream", TMDB_NOT_CONFIGURED_API_MESSAGE, "tmdb_not_configured"), unexpected: false };
   }
   if (err instanceof TmdbError) {
     if (err.status === 404) {

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -227,8 +228,8 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
     /// <summary>How often the one-tap Telegram link asks whether the bot has seen the /start yet.</summary>
     public static readonly TimeSpan TelegramPollInterval = TimeSpan.FromSeconds(3);
 
-    public const string TelegramUnopenedMessage = "Couldn't open Telegram. Enter your chat ID instead.";
-    public const string TestSentNotice = "Test sent. It arrived.";
+    public static string TelegramUnopenedMessage => Loc.Get("Personal_TelegramUnopened");
+    public static string TestSentNotice => Loc.Get("Personal_TestSent");
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
@@ -353,26 +354,26 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
     public bool ShowsUrl => SelectedAddKind == NotificationChannelKind.Ntfy || SelectedAddKind == NotificationChannelKind.Webhook;
 
     public string UrlHeader => SelectedAddKind == NotificationChannelKind.Ntfy
-        ? NtfyHouseholdServer != null ? "Or a full topic URL on another server" : "Topic URL"
-        : "Webhook URL";
+        ? NtfyHouseholdServer != null ? Loc.Get("Personal_UrlHeaderOtherServer") : Loc.Get("Personal_UrlHeaderTopic")
+        : Loc.Get("Personal_UrlHeaderWebhook");
 
     public string UrlPlaceholder => SelectedAddKind == NotificationChannelKind.Ntfy ? "https://ntfy.sh/your-topic" : "https://";
 
     /// <summary>The one-tap Telegram button: Telegram picked, and the household bot can be reached.</summary>
     public bool ShowsTelegramConnect => SelectedAddKind == NotificationChannelKind.Telegram && TelegramBot != null;
 
-    public string ConnectTelegramLabel => "Connect with Telegram";
+    public string ConnectTelegramLabel => Loc.Get("Personal_ConnectTelegram");
 
     public string TelegramWaitingLine => TelegramBot is { } bot
-        ? $"Waiting for Telegram… Press Start in your chat with @{bot}."
-        : "Waiting for Telegram… Press Start in the chat that just opened.";
+        ? Loc.Format("Personal_TelegramWaitingBot", bot)
+        : Loc.Get("Personal_TelegramWaiting");
 
     public string AddHint => AddHintFor(SelectedAddKind, SelectedAvailability, TelegramBot, NtfyHouseholdServer);
 
     /// <summary>"Send code" for email and a typed Telegram chat ID (confirmed with a code), "Test &amp; add" for the rest.</summary>
     public string AddLabel => IsAdding
-        ? AddSendsCode ? "Sending…" : "Testing…"
-        : AddSendsCode ? "Send code" : "Test & add";
+        ? AddSendsCode ? Loc.Get("Personal_Sending") : Loc.Get("Personal_Testing")
+        : AddSendsCode ? Loc.Get("Personal_SendCode") : Loc.Get("Personal_TestAndAdd");
 
     private bool AddSendsCode => SelectedAddKind is { } kind && PersonalNotificationChannel.AddingSendsCode(kind);
 
@@ -595,7 +596,7 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         var code = row.Code.Trim();
         if (code.Length == 0)
         {
-            row.ShowError("Enter the 6-digit code.");
+            row.ShowError(Loc.Get("Personal_EnterCode"));
             return;
         }
         row.ClearMessages();
@@ -630,7 +631,7 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         {
             var channel = await model.Api.NotificationChannels.ResendCodeAsync(row.Channel.Id);
             row.Apply(channel);
-            row.ShowNotice($"New code sent. {channel.CodeSentLine}");
+            row.ShowNotice(Loc.Format("Personal_NewCodeSent", channel.CodeSentLine));
         }
         catch (ApiException error)
         {
@@ -669,8 +670,8 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
             var channel = await model.Api.NotificationChannels.CreateAsync(new CreateNotificationChannelRequest(kind, config, AddName.Trim().NonBlank()));
             ClearAddForm();
             AddNotice = channel.NeedsCode
-                ? $"{channel.CodeSentLine} Enter it under Your channels."
-                : $"{channel.Label} added. The test message arrived.";
+                ? Loc.Format("Personal_CodeSentEnterIt", channel.CodeSentLine)
+                : Loc.Format("Personal_AddedTestArrived", channel.Label);
             await LoadAsync();
         }
         catch (ApiException error)
@@ -718,7 +719,7 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
                 ct: cancellation.Token,
                 expiredMessage: NotificationChannelsEndpoints.TelegramLinkExpiredMessage);
             ClearAddForm();
-            AddNotice = $"{channel.Label} added. The test message arrived.";
+            AddNotice = Loc.Format("Personal_AddedTestArrived", channel.Label);
             await LoadAsync();
         }
         catch (ApiException error)
@@ -762,12 +763,12 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
 
     internal static string MissingFieldMessage(NotificationChannelKind kind)
     {
-        if (kind == NotificationChannelKind.Telegram) return "Enter your Telegram chat ID.";
-        if (kind == NotificationChannelKind.Pushover) return "Enter your Pushover user key.";
-        if (kind == NotificationChannelKind.Email) return "Enter an email address.";
-        if (kind == NotificationChannelKind.Discord) return "Enter the Discord webhook URL.";
-        if (kind == NotificationChannelKind.Ntfy) return "Enter a topic or a topic URL.";
-        return "Enter the webhook URL.";
+        if (kind == NotificationChannelKind.Telegram) return Loc.Get("Personal_MissingTelegram");
+        if (kind == NotificationChannelKind.Pushover) return Loc.Get("Personal_MissingPushover");
+        if (kind == NotificationChannelKind.Email) return Loc.Get("Personal_MissingEmail");
+        if (kind == NotificationChannelKind.Discord) return Loc.Get("Personal_MissingDiscord");
+        if (kind == NotificationChannelKind.Ntfy) return Loc.Get("Personal_MissingNtfy");
+        return Loc.Get("Personal_MissingWebhook");
     }
 
     internal static string AddHintFor(
@@ -776,32 +777,36 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         if (kind == NotificationChannelKind.Telegram)
         {
             return telegramBot is { } bot
-                ? $"Connect in one tap, or message @{bot} on Telegram, send /start, and enter your chat ID here: the bot then sends a 6-digit code to confirm it's yours."
-                : "Send the household's Telegram bot /start, then enter your chat ID here: the bot sends a 6-digit code to confirm it's yours.";
+                ? Loc.Format("Personal_HintTelegramBot", bot)
+                : Loc.Get("Personal_HintTelegram");
         }
         if (kind == NotificationChannelKind.Pushover)
         {
-            return "Your user key is at the top of your pushover.net dashboard.";
+            return Loc.Get("Personal_HintPushover");
         }
         if (kind == NotificationChannelKind.Email)
         {
-            return "We'll email a 6-digit code to confirm the address. Nothing else is sent until it's confirmed.";
+            return Loc.Get("Personal_HintEmail");
         }
         if (kind == NotificationChannelKind.Discord)
         {
-            return "In Discord: Server Settings › Integrations › Webhooks › New Webhook, then Copy Webhook URL.";
+            return Loc.Get("Personal_HintDiscord");
         }
+        // On a home network the server can reach local addresses; otherwise the hint says it must be on the internet.
         var homeNetwork = availability?.HomeNetwork == true;
-        var internetOnly = homeNetwork ? "" : " It must be on the internet, not your home network.";
         if (kind == NotificationChannelKind.Ntfy)
         {
-            return ntfyServer is { } server
-                ? $"Pick a topic on {server}, or give a full topic URL on another ntfy server.{internetOnly}"
-                : $"The full URL of your ntfy topic.{internetOnly}";
+            if (ntfyServer is { } server)
+            {
+                return homeNetwork
+                    ? Loc.Format("Personal_HintNtfyServer", server)
+                    : Loc.Format("Personal_HintNtfyServerInternet", server);
+            }
+            return homeNetwork ? Loc.Get("Personal_HintNtfy") : Loc.Get("Personal_HintNtfyInternet");
         }
         if (kind == NotificationChannelKind.Webhook)
         {
-            return $"Marquee sends each notification to this URL.{internetOnly}";
+            return homeNetwork ? Loc.Get("Personal_HintWebhook") : Loc.Get("Personal_HintWebhookInternet");
         }
         return "";
     }
@@ -811,16 +816,16 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
     {
         if (!channel.Kind.IsKnown)
         {
-            return "This version of Marquee for Windows can't change this kind of channel.";
+            return Loc.Get("Personal_StatusUnknownKind");
         }
         if (channel.NeedsCode)
         {
-            return "Waiting for the 6-digit code. Nothing else is sent here until it's confirmed.";
+            return Loc.Get("Personal_StatusWaitingCode");
         }
         var status = channel.LastSuccessAt is { } delivered
-            ? $"Last delivered {NotificationItem.TimeAgoLabel(delivered, now)}"
-            : "Nothing delivered yet";
-        return channel.Enabled ? status : $"Off · {status}";
+            ? Loc.Format("Personal_LastDelivered", NotificationItem.TimeAgoLabel(delivered, now))
+            : Loc.Get("Personal_NothingDelivered");
+        return channel.Enabled ? status : Loc.Format("Personal_OffStatus", status);
     }
 
     /// <summary>"Failed 2h ago: Forbidden: bot was blocked by the user"; empty when the last one arrived.</summary>
@@ -830,7 +835,7 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         {
             return "";
         }
-        return channel.LastErrorAt is { } at ? $"Failed {NotificationItem.TimeAgoLabel(at, now)}: {error}" : error;
+        return channel.LastErrorAt is { } at ? Loc.Format("Personal_FailedAt", NotificationItem.TimeAgoLabel(at, now), error) : error;
     }
 
     // MARK: What you hear about

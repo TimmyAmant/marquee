@@ -52,6 +52,14 @@ describe("ApiError.fromFailure", () => {
 });
 
 describe("errorToApiError", () => {
+  it("carries a shared core's reason onto the error body", async () => {
+    const error = ApiError.fromFailure({ ok: false, code: "conflict", error: "Sonarr no puede resolver esta serie.", apiReason: "sonarr_unresolved" });
+    expect(error.reason).toBe("sonarr_unresolved");
+    const response = jsonError(error.status, error.code, error.message, error.reason);
+    expect(await response.json()).toEqual({ error: "Sonarr no puede resolver esta serie.", code: "conflict", reason: "sonarr_unresolved" });
+    expect(await jsonError(404, "not_found", "Nope").json()).toEqual({ error: "Nope", code: "not_found" });
+  });
+
   it("passes ApiError through", () => {
     const original = ApiError.of("forbidden", "Only the admin can do this.");
     expect(errorToApiError(original)).toEqual({ error: original, unexpected: false });
@@ -65,6 +73,8 @@ describe("errorToApiError", () => {
       "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.",
     );
     expect(error.messageIn(translatorFor("de"))).toContain("TMDb ist auf diesem Server nicht eingerichtet");
+    // What an app checks for, since the message follows the reader's language.
+    expect(error.reason).toBe("tmdb_not_configured");
     expect(unexpected).toBe(false);
   });
 

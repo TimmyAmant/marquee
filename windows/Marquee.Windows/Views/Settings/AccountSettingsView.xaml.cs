@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Controls;
 using Marquee.Windows.Services;
@@ -34,10 +35,10 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
         var confirm = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = $"Stop syncing {row.Name}?",
-            Content = "New titles on it won't be requested any more. What it already requested stays.",
-            PrimaryButtonText = "Remove",
-            CloseButtonText = "Cancel",
+            Title = Loc.Format("Account_TraktRemoveTitle", row.Name),
+            Content = Loc.Get("Account_TraktRemoveBody"),
+            PrimaryButtonText = Loc.Get("Account_Remove"),
+            CloseButtonText = Loc.Get("Account_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         return await confirm.TryShowAsync() == ContentDialogResult.Primary;
@@ -92,10 +93,10 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
         var confirm = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = $"Remove {name}?",
-            Content = "It stops getting your notifications. You can add it again later.",
-            PrimaryButtonText = "Remove",
-            CloseButtonText = "Cancel",
+            Title = Loc.Format("Account_ChannelRemoveTitle", name),
+            Content = Loc.Get("Account_ChannelRemoveBody"),
+            PrimaryButtonText = Loc.Get("Account_Remove"),
+            CloseButtonText = Loc.Get("Account_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         return await confirm.TryShowAsync() == ContentDialogResult.Primary;
@@ -107,10 +108,10 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
         var confirm = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = $"Remove {member.Username}?",
+            Title = Loc.Format("Account_MemberRemoveTitle", member.Username),
             Content = AccountSettingsViewModel.RemoveMemberConsequence,
-            PrimaryButtonText = "Remove",
-            CloseButtonText = "Cancel",
+            PrimaryButtonText = Loc.Get("Account_Remove"),
+            CloseButtonText = Loc.Get("Account_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         return await confirm.TryShowAsync() == ContentDialogResult.Primary;

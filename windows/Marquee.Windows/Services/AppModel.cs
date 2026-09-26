@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Core.Updates;
 using Microsoft.UI.Dispatching;
@@ -57,11 +58,10 @@ public enum BadgeRefreshReason
 /// </summary>
 public sealed partial class AppModel : ObservableObject
 {
-    public const string SessionEndedNotice = "Your session has ended. Please sign in again.";
+    public static string SessionEndedNotice => Loc.Get("App_SessionEnded");
 
     /// <summary>Shown when the credential store refused to answer, so the saved sign-in is probably still there.</summary>
-    public const string CredentialStoreUnreadableNotice =
-        "Couldn't read your saved sign-in from the Windows credential store. Sign in again, or press Retry.";
+    public static string CredentialStoreUnreadableNotice => Loc.Get("App_CredentialStoreUnreadable");
 
     /// <summary>The server has no push; <c>GET /badges</c> is cheap enough to ask every minute.</summary>
     public static readonly TimeSpan BadgePollInterval = TimeSpan.FromSeconds(60);
@@ -103,6 +103,41 @@ public sealed partial class AppModel : ObservableObject
     /// <summary>The signed-in account, exactly as the server reports it.</summary>
     [ObservableProperty]
     private User? viewer;
+
+    /// <summary>
+    /// The account's language (<c>/me</c>'s <c>language</c>, 0.50+) is
+    /// remembered for the next launch, which is when the app switches to it;
+    /// a <c>/me</c> without the key (an older server, the login answer)
+    /// changes nothing.
+    /// </summary>
+    partial void OnViewerChanged(User? value)
+    {
+        if (value?.Language is { } language)
+        {
+            AppLanguage.WriteChoice(Settings, language.Code);
+            LanguageRestartPending = AppLocalization.NeedsRestart(Settings);
+        }
+    }
+
+    /// <summary>
+    /// The account's language isn't the one on screen (just changed, here or
+    /// on another device): Settings › Account offers to restart.
+    /// </summary>
+    [ObservableProperty]
+    private bool languageRestartPending;
+
+    /// <summary>
+    /// <c>PATCH /me</c>: the account's language, a code or null for
+    /// "Automatic (system language)". Throws <see cref="ApiException"/>.
+    /// </summary>
+    public async Task SetLanguageAsync(string? code)
+    {
+        var me = await Api.SetLanguageAsync(code);
+        if (Phase == AppPhase.Ready)
+        {
+            Viewer = me.User;
+        }
+    }
 
     [ObservableProperty]
     private AuthForm authForm = AuthForm.SignIn;
@@ -329,6 +364,11 @@ public sealed partial class AppModel : ObservableObject
         Phase = AppPhase.Ready;
         StartBadgePolling();
         OpenPendingNotification();
+        if (user.Language == null)
+        {
+            // The login answer doesn't carry the account's language; /me does.
+            _ = RefreshViewerAsync();
+        }
         // After the shell has drawn: the question comes over Discover, not over a blank window.
         // "What's new" waits for it: WinUI shows one dialog at a time.
         Dispatcher.TryEnqueue(DispatcherQueuePriority.Low, async () =>

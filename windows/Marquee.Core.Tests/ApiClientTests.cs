@@ -164,7 +164,7 @@ public sealed class ApiClientTests
     [InlineData(503, "", ApiErrorKind.Server, null)]
     [InlineData(400, """{"error":"Title is required"}""", ApiErrorKind.Invalid, "Title is required")]
     [InlineData(409, """{"error":"Taken","code":"something_new"}""", ApiErrorKind.Conflict, "Taken")]
-    [InlineData(400, """{"error":"  ","code":"invalid"}""", ApiErrorKind.Invalid, ApiException.InvalidRequestDefaultMessage)]
+    [InlineData(400, """{"error":"  ","code":"invalid"}""", ApiErrorKind.Invalid, "The request was invalid.")]
     public void UnknownCodesFallBackToTheStatus(int status, string body, ApiErrorKind kind, string? message)
     {
         var error = ApiException.FromResponse(status, body);

@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Windows.Services;
@@ -23,14 +24,14 @@ public static class SectionExtensions
     /// <summary>The label in the menu and the page heading.</summary>
     public static string Title(this Section section) => section switch
     {
-        Section.Discover => "Discover",
-        Section.Movies => "Movies",
-        Section.Series => "Series",
-        Section.Search => "Search",
-        Section.Requests => "Requests",
-        Section.Favorites => "Favorites",
-        Section.Calendar => "Calendar",
-        Section.Settings => "Settings",
+        Section.Discover => Loc.Get("Nav_Discover"),
+        Section.Movies => Loc.Get("Nav_Movies"),
+        Section.Series => Loc.Get("Nav_Series"),
+        Section.Search => Loc.Get("Nav_Search"),
+        Section.Requests => Loc.Get("Nav_Requests"),
+        Section.Favorites => Loc.Get("Nav_Favorites"),
+        Section.Calendar => Loc.Get("Nav_Calendar"),
+        Section.Settings => Loc.Get("Nav_Settings"),
         _ => section.ToString(),
     };
 
@@ -69,12 +70,12 @@ public static class SettingsTabExtensions
 {
     public static string Title(this SettingsTab tab) => tab switch
     {
-        SettingsTab.Account => "Account",
-        SettingsTab.Integrations => "Integrations",
-        SettingsTab.Discover => "Discover",
-        SettingsTab.Activity => "Activity",
-        SettingsTab.Jobs => "Jobs",
-        SettingsTab.About => "About",
+        SettingsTab.Account => Loc.Get("Nav_SettingsTabAccount"),
+        SettingsTab.Integrations => Loc.Get("Nav_SettingsTabIntegrations"),
+        SettingsTab.Discover => Loc.Get("Nav_SettingsTabDiscover"),
+        SettingsTab.Activity => Loc.Get("Nav_SettingsTabActivity"),
+        SettingsTab.Jobs => Loc.Get("Nav_SettingsTabJobs"),
+        SettingsTab.About => Loc.Get("Nav_SettingsTabAbout"),
         _ => tab.ToString(),
     };
 
@@ -133,9 +134,9 @@ public abstract record Route
     public string Description => this switch
     {
         Title title => $"{title.Id.MediaType.Label} {title.Id.TmdbId}",
-        Person person => $"Person {person.TmdbId}",
-        Company company => $"Studio {company.TmdbId}",
-        Search search => $"Search results for \"{search.Query}\"",
+        Person person => Loc.Format("Nav_PlaceholderPerson", person.TmdbId),
+        Company company => Loc.Format("Nav_PlaceholderStudio", company.TmdbId),
+        Search search => Loc.Format("Nav_PlaceholderSearch", search.Query),
         DiscoverList list => list.Heading ?? list.List.Title,
         _ => ToString(),
     };

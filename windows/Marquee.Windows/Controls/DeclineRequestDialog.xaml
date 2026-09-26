@@ -11,9 +11,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Decline request"
-    PrimaryButtonText="Decline"
-    CloseButtonText="Cancel"
+    x:Uid="Decline_Dialog"
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="False">
 
@@ -25,11 +23,11 @@
             TextWrapping="Wrap" />
         <RadioButtons
             x:Name="ReasonButtons"
-            Header="Reason"
+            x:Uid="Decline_ReasonButtons"
             SelectionChanged="OnReasonChanged" />
         <TextBox
             x:Name="CustomReasonBox"
-            PlaceholderText="Tell them why"
+            x:Uid="Decline_CustomReasonBox"
             MaxLength="200"
             Visibility="Collapsed"
             TextChanged="OnCustomReasonChanged" />

@@ -211,7 +211,7 @@ export async function addSeriesToSonarrForUser(
 
   const title = await getOrFetchTitle("tv", tmdbId).catch(() => undefined);
   if (!title?.tvdbId) {
-    return fail("conflict", t(SONARR_UNRESOLVED));
+    return fail("conflict", t(SONARR_UNRESOLVED), "sonarr_unresolved");
   }
 
   let added: { id: number };

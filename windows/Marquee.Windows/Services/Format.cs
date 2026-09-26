@@ -1,5 +1,5 @@
 using System.Globalization;
-using System.Text;
+using Marquee.Core.Localization;
 
 namespace Marquee.Windows.Services;
 
@@ -11,29 +11,40 @@ namespace Marquee.Windows.Services;
 /// </summary>
 public static class Format
 {
+    // The patterns are strings like any other (Format_* in Resources.resw):
+    // each language orders day, month and year its own way ("17 sept. 2026",
+    // "17. Sep. 2026"), and the culture AppLocalization set supplies the
+    // month names.
+
     /// <summary>"Sep 17, 2026": the request tables' Requested column.</summary>
     public static string ShortDate(DateTimeOffset moment) =>
-        moment.ToLocalTime().ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
+        moment.ToLocalTime().ToString(Loc.Get("Format_ShortDatePattern"), CultureInfo.CurrentCulture);
 
     /// <summary>"Sep 17, 2026 4:03 PM": Settings › Activity's timestamps (the Mac's <c>Format.dateTime</c>).</summary>
     public static string DateAndTime(DateTimeOffset moment)
     {
         var local = moment.ToLocalTime();
-        return $"{local.ToString("MMM d, yyyy", CultureInfo.CurrentCulture)} {local.ToString("t", CultureInfo.CurrentCulture)}";
+        return Loc.Format(
+            "Format_DateAndTime",
+            local.ToString(Loc.Get("Format_ShortDatePattern"), CultureInfo.CurrentCulture),
+            local.ToString("t", CultureInfo.CurrentCulture));
     }
 
     /// <summary>"Sep 26, 3:02 AM": when a comment was written (the website's thread).</summary>
     public static string MonthDayTime(DateTimeOffset moment)
     {
         var local = moment.ToLocalTime();
-        return $"{local.ToString("MMM d", CultureInfo.CurrentCulture)}, {local.ToString("t", CultureInfo.CurrentCulture)}";
+        return Loc.Format(
+            "Format_DayAndTime",
+            local.ToString(Loc.Get("Format_MonthDayPattern"), CultureInfo.CurrentCulture),
+            local.ToString("t", CultureInfo.CurrentCulture));
     }
 
     /// <summary>"September 2, 1964": a person's birthday.</summary>
-    public static string LongDate(DateOnly day) => day.ToString("MMMM d, yyyy", CultureInfo.CurrentCulture);
+    public static string LongDate(DateOnly day) => day.ToString(Loc.Get("Format_LongDatePattern"), CultureInfo.CurrentCulture);
 
     /// <summary>"Sep 2, 1964": an episode's air date.</summary>
-    public static string MediumDate(DateOnly day) => day.ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
+    public static string MediumDate(DateOnly day) => day.ToString(Loc.Get("Format_ShortDatePattern"), CultureInfo.CurrentCulture);
 
     /// <summary>
     /// The first <paramref name="limit"/> characters plus an ellipsis, the
@@ -48,15 +59,5 @@ public static class Format
             return text;
         }
         return info.SubstringByTextElements(0, limit).Trim() + "…";
-    }
-
-    /// <summary>"3 titles", "1 credit": a count with its noun, the website's list header.</summary>
-    public static string Count(int count, string singular, string plural)
-    {
-        var builder = new StringBuilder();
-        builder.Append(count.ToString(CultureInfo.CurrentCulture));
-        builder.Append(' ');
-        builder.Append(count == 1 ? singular : plural);
-        return builder.ToString();
     }
 }

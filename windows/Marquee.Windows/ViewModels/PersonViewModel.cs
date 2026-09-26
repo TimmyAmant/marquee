@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Media;
@@ -16,8 +17,7 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class PersonViewModel : ObservableObject
 {
-    public const string ErrorTitle = "Couldn't load this person";
-    public const string EmptyCredits = "No processed filmography found for this person yet.";
+    public static string EmptyCredits => Loc.Get("Person_EmptyCredits");
 
     /// <summary>Where the Mac cuts a long biography.</summary>
     public const int BiographyLimit = 600;
@@ -79,8 +79,8 @@ public sealed partial class PersonViewModel : ObservableObject
     public string LifeLine => Person is { } current
         ? string.Join(" · ", new[]
         {
-            current.Birthday is { } born ? $"Born {Format.LongDate(born)}" : null,
-            current.Deathday is { } died ? $"Died {Format.LongDate(died)}" : null,
+            current.Birthday is { } born ? Loc.Format("Person_Born", Format.LongDate(born)) : null,
+            current.Deathday is { } died ? Loc.Format("Person_Died", Format.LongDate(died)) : null,
             current.PlaceOfBirth.NonBlank(),
         }.OfType<string>())
         : "";
@@ -159,7 +159,7 @@ public sealed partial class PersonViewModel : ObservableObject
             photoUrl = fresh.ProfilePath.Url(ImageSize.W342);
             photo = null;
             IsFavorited = fresh.Favorited;
-            Credits = new MediaListViewModel(model, fresh.Credits, "credit", "credits", EmptyCredits);
+            Credits = new MediaListViewModel(model, fresh.Credits, MediaListNoun.Credit, EmptyCredits);
             Person = fresh;
         }
         catch (ApiException error)

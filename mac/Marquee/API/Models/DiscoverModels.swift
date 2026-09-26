@@ -466,7 +466,13 @@ extension APIError {
     /// TMDb isn't set up on the server: show the "Connect TMDb to start
     /// browsing" notice rather than the error text.
     var isTMDbUnconfigured: Bool {
+        if case .tmdbUnconfigured = self { return true }
+        // A server older than 0.50 sends no reason, and always English.
         if case let .upstream(message) = self { return message == Self.tmdbUnconfiguredMessage }
         return false
+    }
+
+    static var tmdbUnconfiguredFallback: String {
+        String(localized: "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.")
     }
 }

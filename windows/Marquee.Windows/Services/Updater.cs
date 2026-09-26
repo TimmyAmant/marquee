@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Marquee.Core;
+using Marquee.Core.Localization;
 using Marquee.Core.Updates;
 using Microsoft.UI.Dispatching;
 
@@ -124,20 +125,20 @@ public sealed partial class Updater : ObservableObject
     public double ProgressPercent => Progress * 100;
 
     /// <summary>"Update to Marquee 0.31.0".</summary>
-    public string UpdateLabel => Update is { } available ? $"Update to Marquee {available.Version}" : "Update Marquee";
+    public string UpdateLabel => Update is { } available ? Loc.Format("Updater_UpdateTo", available.Version) : Loc.Get("Updater_UpdateMarquee");
 
     /// <summary>The one line Settings › About shows under the version.</summary>
     public string StatusText => Phase switch
     {
-        UpdatePhase.Checking => "Checking for updates…",
-        UpdatePhase.UpToDate => "You're up to date.",
+        UpdatePhase.Checking => Loc.Get("Updater_Checking"),
+        UpdatePhase.UpToDate => Loc.Get("Updater_UpToDate"),
         UpdatePhase.Available when Update is { } available && !IsInstalledCopy =>
-            $"Marquee {available.Version} is available. This copy of Marquee isn't the installed one, so download the new version from GitHub.",
-        UpdatePhase.Available when Update is { } available => $"Marquee {available.Version} is available. You have {CurrentVersion}.",
-        UpdatePhase.Downloading => $"Downloading Marquee {Update?.Version}… {(int)Math.Round(Progress * 100)}%",
-        UpdatePhase.Installing => "Installing. Marquee will close and reopen by itself.",
-        UpdatePhase.Failed => ErrorMessage ?? "Marquee couldn't update.",
-        _ => "Marquee checks for updates once a day.",
+            Loc.Format("Updater_AvailableNotInstalled", available.Version),
+        UpdatePhase.Available when Update is { } available => Loc.Format("Updater_Available", available.Version, CurrentVersion),
+        UpdatePhase.Downloading => Loc.Format("Updater_Downloading", Update?.Version, (int)Math.Round(Progress * 100)),
+        UpdatePhase.Installing => Loc.Get("Updater_Installing"),
+        UpdatePhase.Failed => ErrorMessage ?? Loc.Get("Updater_Failed"),
+        _ => Loc.Get("Updater_Daily"),
     };
 
     /// <summary>The release to read about or download by hand.</summary>

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -133,13 +134,13 @@ public sealed partial class ArrServerRow : ObservableObject
     private bool isConfirmingRegenerate;
 
     [ObservableProperty]
-    private string copyLabel = "Copy";
+    private string copyLabel = Loc.Get("Arr_Copy");
 
-    public string DefaultBadge => IsDefault ? "Default" : "";
+    public string DefaultBadge => IsDefault ? Loc.Get("Arr_DefaultBadge") : "";
     public BadgeTone DefaultTone { get; } = BadgeTone.Owned;
     public string FourKBadge => Is4k ? "4K" : "";
     public BadgeTone FourKTone { get; } = BadgeTone.Info;
-    public string SetupBadge => NeedsSetup ? "Needs setup" : "";
+    public string SetupBadge => NeedsSetup ? Loc.Get("Arr_NeedsSetup") : "";
     public BadgeTone SetupTone { get; } = BadgeTone.Neutral;
 
     public bool CanAct => Busy == null;
@@ -147,15 +148,15 @@ public sealed partial class ArrServerRow : ObservableObject
     /// <summary>"Make default" on any server that isn't its kind's default already.</summary>
     public bool CanMakeDefault => !IsDefault && Busy == null;
 
-    public string MakeDefaultLabel => Busy == "default" ? "Saving…" : "Make default";
+    public string MakeDefaultLabel => Busy == "default" ? Loc.Get("Arr_Saving") : Loc.Get("Arr_MakeDefault");
 
     /// <summary>Edit / Make default / Remove, until Remove asks to confirm.</summary>
     public bool ShowsActions => !IsConfirmingRemove;
 
-    public string RemovePrompt => $"Remove {Name}?";
-    public string RemoveConfirmLabel => Busy == "remove" ? "Removing…" : "Remove";
+    public string RemovePrompt => Loc.Format("Arr_RemovePrompt", Name);
+    public string RemoveConfirmLabel => Busy == "remove" ? Loc.Get("Arr_Removing") : Loc.Get("Arr_Remove");
     public bool ShowsRegenerate => !IsConfirmingRegenerate;
-    public string RegenerateConfirmLabel => Busy == "webhook" ? "Regenerating…" : "Confirm";
+    public string RegenerateConfirmLabel => Busy == "webhook" ? Loc.Get("Arr_Regenerating") : Loc.Get("Arr_Confirm");
     public bool HasError => Error != null;
 
     internal void Apply(ArrServer server)
@@ -213,9 +214,9 @@ public sealed partial class ArrServerRow : ObservableObject
         {
             return;
         }
-        CopyLabel = "Copied";
+        CopyLabel = Loc.Get("Arr_Copied");
         await Task.Delay(TimeSpan.FromSeconds(1.5));
-        CopyLabel = "Copy";
+        CopyLabel = Loc.Get("Arr_Copy");
     }
 
     [RelayCommand]
@@ -276,7 +277,7 @@ public sealed partial class ArrServerRow : ObservableObject
 /// </summary>
 public sealed partial class ArrServerEditorViewModel : ObservableObject
 {
-    public const string SameAsAbove = "Same as above";
+    public static string SameAsAbove => Loc.Get("Arr_SameAsAbove");
 
     private readonly AppModel model;
     private ArrServerDraft draft = new(ArrProvider.Sonarr);
@@ -400,8 +401,8 @@ public sealed partial class ArrServerEditorViewModel : ObservableObject
     public bool NeedsKeyAgain => draft.NeedsKeyAgain;
 
     public string KeyAgainMessage => ArrServerDraft.KeyAgainMessage;
-    public string TestLabel => IsTesting ? "Testing…" : "Test";
-    public string SaveLabel => IsSaving ? "Saving…" : draft.IsEditing ? "Save" : "Add server";
+    public string TestLabel => IsTesting ? Loc.Get("Arr_Testing") : Loc.Get("Arr_Test");
+    public string SaveLabel => IsSaving ? Loc.Get("Arr_Saving") : draft.IsEditing ? Loc.Get("Arr_Save") : Loc.Get("Arr_AddServer");
     public bool CanAct => !IsTesting && !IsSaving;
     public bool HasError => Error != null;
     public bool HasNotice => Notice != null;
@@ -410,13 +411,13 @@ public sealed partial class ArrServerEditorViewModel : ObservableObject
 
     internal void OpenNew(ArrProvider kind)
     {
-        Load(new ArrServerDraft(kind), $"Add {kind.DisplayName} server");
+        Load(new ArrServerDraft(kind), Loc.Format("Arr_AddServerTitle", kind.DisplayName));
     }
 
     /// <summary>Edit: the saved settings, then the saved server's pickers (<c>GET …/{id}/options</c>).</summary>
     internal void OpenEdit(ArrServer server)
     {
-        Load(new ArrServerDraft(server), $"Edit {server.Name}");
+        Load(new ArrServerDraft(server), Loc.Format("Arr_EditServerTitle", server.Name));
         _ = LoadOptionsAsync(server.Id);
     }
 
@@ -610,8 +611,8 @@ public sealed partial class ArrServerEditorViewModel : ObservableObject
             draft.ApplyOptions(result.Options);
             ShowPickers();
             Notice = result.Version.NonBlank() is { } version
-                ? $"Connected to {draft.Kind.DisplayName} {version}."
-                : "Connected successfully.";
+                ? Loc.Format("Arr_ConnectedVersion", draft.Kind.DisplayName, version)
+                : Loc.Get("Arr_ConnectedSuccessfully");
         }
         catch (ApiException failure)
         {

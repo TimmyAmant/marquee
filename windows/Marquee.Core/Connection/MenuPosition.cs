@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Connection;
 
 /// <summary>
@@ -43,10 +45,10 @@ public static class MenuPositionSetting
     /// <summary>"Left", "Right", "Top", "Bottom".</summary>
     public static string Label(this MenuPosition position) => position switch
     {
-        MenuPosition.Right => "Right",
-        MenuPosition.Top => "Top",
-        MenuPosition.Bottom => "Bottom",
-        _ => "Left",
+        MenuPosition.Right => Loc.Get("Model_MenuPositionRight"),
+        MenuPosition.Top => Loc.Get("Model_MenuPositionTop"),
+        MenuPosition.Bottom => Loc.Get("Model_MenuPositionBottom"),
+        _ => Loc.Get("Model_MenuPositionLeft"),
     };
 
     /// <summary>Top and bottom lay the bar's items out in a row.</summary>

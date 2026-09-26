@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -19,9 +20,9 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class SsoSettingsViewModel : ObservableObject
 {
-    public const string SavedSecretPlaceholder = "(saved — enter to replace)";
-    public const string PublicClientPlaceholder = "Leave empty for a public client";
-    public const string SavedNotice = "Saved. The sign-in button is live.";
+    public static string SavedSecretPlaceholder => Loc.Get("Sso_SavedSecretPlaceholder");
+    public static string PublicClientPlaceholder => Loc.Get("Sso_PublicClientPlaceholder");
+    public static string SavedNotice => Loc.Get("Sso_SavedNotice");
 
     /// <summary>What the redirect URI reads while Marquee's address isn't an http(s) address yet.</summary>
     private static readonly string CallbackPlaceholder = "https://your-marquee-address" + SsoSettings.CallbackPath;
@@ -100,13 +101,13 @@ public sealed partial class SsoSettingsViewModel : ObservableObject
     public string ClientSecretPlaceholder => HasClientSecret ? SavedSecretPlaceholder : PublicClientPlaceholder;
 
     /// <summary>"On" while it's set up; empty (the pill collapses) otherwise.</summary>
-    public string OnBadge => IsConfigured ? "On" : "";
+    public string OnBadge => IsConfigured ? Loc.Get("Sso_On") : "";
     public BadgeTone OnTone { get; } = BadgeTone.Owned;
 
     // MARK: Copy
 
     [ObservableProperty]
-    private string copyLabel = "Copy";
+    private string copyLabel = Loc.Get("Sso_Copy");
 
     /// <summary>"Copy" for the redirect URI; reads "Copied" for a moment.</summary>
     [RelayCommand]
@@ -116,9 +117,9 @@ public sealed partial class SsoSettingsViewModel : ObservableObject
         {
             return;
         }
-        CopyLabel = "Copied";
+        CopyLabel = Loc.Get("Sso_Copied");
         await Task.Delay(TimeSpan.FromSeconds(1.5));
-        CopyLabel = "Copy";
+        CopyLabel = Loc.Get("Sso_Copy");
     }
 
     // MARK: Test
@@ -142,7 +143,7 @@ public sealed partial class SsoSettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasTestError))]
     private string? testError;
 
-    public string TestLabel => IsTesting ? "Testing…" : "Test";
+    public string TestLabel => IsTesting ? Loc.Get("Sso_Testing") : Loc.Get("Sso_Test");
     public bool CanTest => !IsTesting && !string.IsNullOrWhiteSpace(Issuer);
     public bool HasTestFound => TestFound != null;
     public bool HasTestWarnings => TestWarnings != null;
@@ -163,7 +164,7 @@ public sealed partial class SsoSettingsViewModel : ObservableObject
         try
         {
             var result = await model.Api.Sso.TestAsync(Issuer.Trim());
-            TestFound = $"Found {result.Issuer}";
+            TestFound = Loc.Format("Sso_Found", result.Issuer);
             TestWarnings = result.Warnings.Count > 0 ? string.Join("\n", result.Warnings) : null;
         }
         catch (ApiException failure)
@@ -198,8 +199,8 @@ public sealed partial class SsoSettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasNotice))]
     private string? notice;
 
-    public string SaveLabel => IsSaving ? "Checking…" : "Test & save";
-    public string RemoveLabel => IsRemoving ? "Turning off…" : "Turn off single sign-on";
+    public string SaveLabel => IsSaving ? Loc.Get("Sso_Checking") : Loc.Get("Sso_TestAndSave");
+    public string RemoveLabel => IsRemoving ? Loc.Get("Sso_TurningOff") : Loc.Get("Sso_TurnOff");
     public bool CanSave => !IsSaving && !IsRemoving;
     public bool CanRemove => IsConfigured && !IsSaving && !IsRemoving;
     public bool HasError => Error != null;

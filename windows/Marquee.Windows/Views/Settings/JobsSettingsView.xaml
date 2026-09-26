@@ -15,9 +15,9 @@
 
     <StackPanel Spacing="20">
         <StackPanel Spacing="4">
-            <TextBlock Text="Jobs" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock x:Uid="Jobs_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
             <TextBlock
-                Text="Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule."
+                x:Uid="Jobs_Subtitle"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap" />
@@ -35,10 +35,10 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                 TextWrapping="Wrap" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+            <Button x:Uid="Jobs_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
         </StackPanel>
         <TextBlock
-            Text="This server reports no scheduled jobs."
+            x:Uid="Jobs_Empty"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -88,7 +88,7 @@
                                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                         TextWrapping="Wrap" />
                                     <TextBlock
-                                        Text="Done."
+                                        x:Uid="Jobs_Done"
                                         Visibility="{x:Bind IsDone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource SystemFillColorSuccessBrush}" />

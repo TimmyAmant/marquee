@@ -55,37 +55,34 @@
 
     <StackPanel Spacing="20">
         <!-- Account -->
-        <TextBlock Text="Account" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock x:Uid="Account_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="14">
                 <StackPanel Spacing="2">
-                    <TextBlock Text="Username" Style="{StaticResource FieldLabel}" />
+                    <TextBlock x:Uid="Account_UsernameLabel" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{x:Bind ViewModel.Username, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" IsTextSelectionEnabled="True" />
                 </StackPanel>
                 <StackPanel Spacing="2">
-                    <TextBlock Text="Role" Style="{StaticResource FieldLabel}" />
+                    <TextBlock x:Uid="Account_RoleLabel" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{x:Bind ViewModel.RoleLabel, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" />
                 </StackPanel>
                 <TextBox
-                    Header="Name"
-                    PlaceholderText="How the household sees you"
+                    x:Uid="Account_NameBox"
                     Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     MaxLength="80" />
                 <PasswordBox
-                    Header="New password"
-                    PlaceholderText="Leave blank to keep the current password"
+                    x:Uid="Account_NewPassword"
                     Password="{x:Bind ViewModel.NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <PasswordBox
-                    Header="Confirm new password"
+                    x:Uid="Account_ConfirmPassword"
                     Password="{x:Bind ViewModel.ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <!-- An account made by Plex/Jellyfin sign-in has no password yet, so none to give. -->
                 <PasswordBox
-                    Header="Current password"
-                    PlaceholderText="Needed only when setting a new password"
+                    x:Uid="Account_CurrentPassword"
                     Password="{x:Bind ViewModel.CurrentPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     Visibility="{x:Bind ViewModel.NeedsCurrentPassword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock
-                    Text="Setting a new password signs you out of every device, including this PC."
+                    x:Uid="Account_PasswordWarningText"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
@@ -113,7 +110,7 @@
           Plex/Jellyfin sign-in send `linked`.
         -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsLinkedAccounts, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Linked accounts" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock x:Uid="Account_LinkedTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel Spacing="14">
                     <!-- Single sign-on: while the admin has it set up, or while this account is still linked to it. -->
@@ -137,7 +134,7 @@
                                     Command="{x:Bind ViewModel.LinkSsoCommand}"
                                     Visibility="{x:Bind ViewModel.CanLinkSso, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                 <Button
-                                    Content="Unlink"
+                                    x:Uid="Account_SsoUnlink"
                                     Command="{x:Bind ViewModel.UnlinkSsoCommand}"
                                     Visibility="{x:Bind ViewModel.CanUnlinkSso, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
@@ -155,7 +152,7 @@
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 TextWrapping="Wrap"
                                 VerticalAlignment="Center" />
-                            <Button Grid.Column="2" Content="Cancel" Command="{x:Bind ViewModel.CancelLinkSsoCommand}" />
+                            <Button x:Uid="Account_SsoCancel" Grid.Column="2" Command="{x:Bind ViewModel.CancelLinkSsoCommand}" />
                         </Grid>
                     </StackPanel>
                     <Grid ColumnSpacing="12">
@@ -173,11 +170,11 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <Button
-                                Content="Link Plex"
+                                x:Uid="Account_LinkPlex"
                                 Command="{x:Bind ViewModel.LinkPlexCommand}"
                                 Visibility="{x:Bind ViewModel.CanLinkPlex, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                             <Button
-                                Content="Unlink"
+                                x:Uid="Account_PlexUnlink"
                                 Command="{x:Bind ViewModel.UnlinkPlexCommand}"
                                 Visibility="{x:Bind ViewModel.CanUnlinkPlex, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
@@ -190,12 +187,12 @@
                         </Grid.ColumnDefinitions>
                         <ProgressRing Grid.Column="0" IsActive="{x:Bind ViewModel.IsLinkingPlex, Mode=OneWay}" Width="16" Height="16" VerticalAlignment="Center" />
                         <TextBlock
+                            x:Uid="Account_PlexWaiting"
                             Grid.Column="1"
-                            Text="Waiting for Plex… Finish signing in in the browser window that just opened."
                             Style="{StaticResource CaptionTextBlockStyle}"
                             TextWrapping="Wrap"
                             VerticalAlignment="Center" />
-                        <Button Grid.Column="2" Content="Cancel" Command="{x:Bind ViewModel.CancelLinkPlexCommand}" />
+                        <Button x:Uid="Account_PlexCancel" Grid.Column="2" Command="{x:Bind ViewModel.CancelLinkPlexCommand}" />
                     </Grid>
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
@@ -216,13 +213,13 @@
                                 Command="{x:Bind ViewModel.LinkJellyfinCommand}"
                                 Visibility="{x:Bind ViewModel.CanLinkJellyfin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                             <Button
-                                Content="Unlink"
+                                x:Uid="Account_JellyfinUnlink"
                                 Command="{x:Bind ViewModel.UnlinkJellyfinCommand}"
                                 Visibility="{x:Bind ViewModel.CanUnlinkJellyfin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Grid>
                     <TextBlock
-                        Text="Your account has no Marquee password, so it signs in only with a linked account. Set one above to sign in with a username and password too."
+                        x:Uid="Account_NoPasswordNote"
                         Visibility="{x:Bind ViewModel.HasNoPassword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -256,9 +253,9 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="Request from my Plex Watchlist" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Uid="Account_WatchlistTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBlock
-                                Text="New movies and shows you add to your Watchlist on Plex are requested for you, the same as pressing Request. Marquee keeps a Plex sign-in for this until you turn it off."
+                                x:Uid="Account_WatchlistBody"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap" />
@@ -266,7 +263,7 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <controls:TonePill Text="{x:Bind ViewModel.PlexWatchlistBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.PlexWatchlistTone}" VerticalAlignment="Center" />
                             <Button
-                                Content="Turn on"
+                                x:Uid="Account_WatchlistTurnOn"
                                 Command="{x:Bind ViewModel.TurnOnPlexWatchlistCommand}"
                                 Visibility="{x:Bind ViewModel.CanTurnOnPlexWatchlist, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
@@ -279,27 +276,23 @@
                         </Grid.ColumnDefinitions>
                         <ProgressRing Grid.Column="0" IsActive="{x:Bind ViewModel.IsTurningOnPlexWatchlist, Mode=OneWay}" Width="16" Height="16" VerticalAlignment="Center" />
                         <TextBlock
+                            x:Uid="Account_WatchlistWaiting"
                             Grid.Column="1"
-                            Text="Waiting for Plex… finish in the browser."
                             Style="{StaticResource CaptionTextBlockStyle}"
                             TextWrapping="Wrap"
                             VerticalAlignment="Center" />
-                        <Button Grid.Column="2" Content="Cancel" Command="{x:Bind ViewModel.CancelTurnOnPlexWatchlistCommand}" />
+                        <Button x:Uid="Account_WatchlistCancel" Grid.Column="2" Command="{x:Bind ViewModel.CancelTurnOnPlexWatchlistCommand}" />
                     </Grid>
                     <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.IsPlexWatchlistOn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="24">
                             <ToggleSwitch
-                                Header="Movies"
+                                x:Uid="Account_WatchlistMovies"
                                 IsOn="{x:Bind ViewModel.PlexWatchlistMovies, Mode=TwoWay}"
-                                IsEnabled="{x:Bind ViewModel.CanChangePlexWatchlist, Mode=OneWay}"
-                                OnContent="On"
-                                OffContent="Off" />
+                                IsEnabled="{x:Bind ViewModel.CanChangePlexWatchlist, Mode=OneWay}" />
                             <ToggleSwitch
-                                Header="TV shows"
+                                x:Uid="Account_WatchlistTv"
                                 IsOn="{x:Bind ViewModel.PlexWatchlistTv, Mode=TwoWay}"
-                                IsEnabled="{x:Bind ViewModel.CanChangePlexWatchlist, Mode=OneWay}"
-                                OnContent="On"
-                                OffContent="Off" />
+                                IsEnabled="{x:Bind ViewModel.CanChangePlexWatchlist, Mode=OneWay}" />
                         </StackPanel>
                         <TextBlock
                             Text="{x:Bind ViewModel.PlexWatchlistSummary, Mode=OneWay}"
@@ -308,7 +301,7 @@
                             TextWrapping="Wrap" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="{x:Bind ViewModel.CheckPlexWatchlistLabel, Mode=OneWay}" Command="{x:Bind ViewModel.CheckPlexWatchlistCommand}" />
-                            <Button Content="Turn off" Command="{x:Bind ViewModel.TurnOffPlexWatchlistCommand}" />
+                            <Button x:Uid="Account_WatchlistTurnOff" Command="{x:Bind ViewModel.TurnOffPlexWatchlistCommand}" />
                         </StackPanel>
                     </StackPanel>
                     <TextBlock
@@ -336,7 +329,7 @@
         -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Trakt.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="4">
-                <TextBlock Text="Trakt lists" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Account_TraktTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
                     Text="{x:Bind ViewModel.Trakt.Description}"
                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -394,24 +387,20 @@
                                                     Command="{x:Bind CheckCommand}"
                                                     IsEnabled="{x:Bind CanChange, Mode=OneWay}" />
                                                 <Button
-                                                    Content="Remove"
+                                                    x:Uid="Account_TraktRemove"
                                                     Command="{x:Bind RemoveCommand}"
                                                     IsEnabled="{x:Bind CanChange, Mode=OneWay}" />
                                             </StackPanel>
                                         </Grid>
                                         <StackPanel Orientation="Horizontal" Spacing="24">
                                             <ToggleSwitch
-                                                Header="Movies"
+                                                x:Uid="Account_TraktRowMovies"
                                                 IsOn="{x:Bind Movies, Mode=TwoWay}"
-                                                IsEnabled="{x:Bind CanChange, Mode=OneWay}"
-                                                OnContent="On"
-                                                OffContent="Off" />
+                                                IsEnabled="{x:Bind CanChange, Mode=OneWay}" />
                                             <ToggleSwitch
-                                                Header="TV shows"
+                                                x:Uid="Account_TraktRowTv"
                                                 IsOn="{x:Bind Tv, Mode=TwoWay}"
-                                                IsEnabled="{x:Bind CanChange, Mode=OneWay}"
-                                                OnContent="On"
-                                                OffContent="Off" />
+                                                IsEnabled="{x:Bind CanChange, Mode=OneWay}" />
                                         </StackPanel>
                                         <TextBlock
                                             Text="{x:Bind Summary, Mode=OneWay}"
@@ -452,21 +441,16 @@
                         Spacing="12"
                         Visibility="{x:Bind ViewModel.Trakt.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <TextBox
-                            Header="Trakt watchlist or list link"
-                            PlaceholderText="https://trakt.tv/users/someone/watchlist"
+                            x:Uid="Account_TraktLink"
                             InputScope="Url"
                             Text="{x:Bind ViewModel.Trakt.Link, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <StackPanel Orientation="Horizontal" Spacing="24">
                             <ToggleSwitch
-                                Header="Movies"
-                                IsOn="{x:Bind ViewModel.Trakt.NewMovies, Mode=TwoWay}"
-                                OnContent="On"
-                                OffContent="Off" />
+                                x:Uid="Account_TraktNewMovies"
+                                IsOn="{x:Bind ViewModel.Trakt.NewMovies, Mode=TwoWay}" />
                             <ToggleSwitch
-                                Header="TV shows"
-                                IsOn="{x:Bind ViewModel.Trakt.NewTv, Mode=TwoWay}"
-                                OnContent="On"
-                                OffContent="Off" />
+                                x:Uid="Account_TraktNewTv"
+                                IsOn="{x:Bind ViewModel.Trakt.NewTv, Mode=TwoWay}" />
                         </StackPanel>
                         <CheckBox
                             Content="{x:Bind ViewModel.Trakt.RequestExistingLabel}"
@@ -493,17 +477,15 @@
           stream while the app runs. Asked once after signing in; this
           switch changes the answer.
         -->
-        <TextBlock Text="Notifications" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock x:Uid="Account_NotificationsTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="8">
                 <ToggleSwitch
-                    Header="Show notifications on this PC"
+                    x:Uid="Account_NotificationsSwitch"
                     IsOn="{x:Bind ViewModel.NotificationsEnabled, Mode=TwoWay}"
-                    IsEnabled="{x:Bind ViewModel.NotificationsSupported, Mode=OneWay}"
-                    OnContent="On"
-                    OffContent="Off" />
+                    IsEnabled="{x:Bind ViewModel.NotificationsSupported, Mode=OneWay}" />
                 <TextBlock
-                    Text="When something starts downloading, is ready to watch, or a request is approved or declined, Windows shows it while Marquee is open. It comes straight from your Marquee server; nothing goes through an outside service."
+                    x:Uid="Account_NotificationsBody"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
@@ -525,9 +507,9 @@
         -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Personal.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="4">
-                <TextBlock Text="Your channels" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Uid="Account_ChannelsTitle" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock
-                    Text="Places only you get notifications: your own Telegram chat, inbox, Discord, ntfy topic, Pushover or webhook."
+                    x:Uid="Account_ChannelsBody"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
@@ -535,7 +517,7 @@
             <Border Style="{StaticResource SettingsCard}" Padding="0">
                 <StackPanel>
                     <TextBlock
-                        Text="No channels yet. Add one below."
+                        x:Uid="Account_ChannelsEmpty"
                         Visibility="{x:Bind ViewModel.Personal.HasNoChannels, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Margin="20,16"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -584,19 +566,18 @@
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                 <ToggleSwitch
+                                                    x:Uid="Account_ChannelSwitch"
                                                     MinWidth="0"
                                                     IsOn="{x:Bind IsOn, Mode=TwoWay}"
                                                     IsEnabled="{x:Bind CanChange, Mode=OneWay}"
                                                     Visibility="{x:Bind CanManage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                    AutomationProperties.Name="{x:Bind Title, Mode=OneWay}"
-                                                    OnContent="On"
-                                                    OffContent="Off" />
+                                                    AutomationProperties.Name="{x:Bind Title, Mode=OneWay}" />
                                                 <Button
-                                                    Content="Send a test"
+                                                    x:Uid="Account_ChannelTest"
                                                     Command="{x:Bind TestCommand}"
                                                     Visibility="{x:Bind CanTest, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                                 <Button
-                                                    Content="Remove"
+                                                    x:Uid="Account_ChannelRemove"
                                                     Command="{x:Bind RemoveCommand}"
                                                     Visibility="{x:Bind CanManage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                             </StackPanel>
@@ -610,14 +591,13 @@
                                                 TextWrapping="Wrap" />
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBox
+                                                    x:Uid="Account_ChannelCode"
                                                     Width="140"
                                                     MaxLength="6"
                                                     InputScope="Number"
-                                                    PlaceholderText="6-digit code"
-                                                    AutomationProperties.Name="6-digit code"
                                                     Text="{x:Bind Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                <Button Content="Confirm" Command="{x:Bind VerifyCommand}" Style="{StaticResource AccentButtonStyle}" />
-                                                <Button Content="Send a new code" Command="{x:Bind ResendCodeCommand}" />
+                                                <Button x:Uid="Account_ChannelConfirm" Command="{x:Bind VerifyCommand}" Style="{StaticResource AccentButtonStyle}" />
+                                                <Button x:Uid="Account_ChannelResend" Command="{x:Bind ResendCodeCommand}" />
                                             </StackPanel>
                                         </StackPanel>
                                         <TextBlock
@@ -643,9 +623,9 @@
             <!-- Add a channel: only the kinds this server has set up. -->
             <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.Personal.CanAddChannels, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="14">
-                    <TextBlock Text="Add a channel" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock x:Uid="Account_AddChannelTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                     <ComboBox
-                        Header="Kind"
+                        x:Uid="Account_AddChannelKind"
                         MinWidth="260"
                         ItemsSource="{x:Bind ViewModel.Personal.AddKindLabels, Mode=OneWay}"
                         SelectedIndex="{x:Bind ViewModel.Personal.SelectedAddKindIndex, Mode=TwoWay}" />
@@ -656,8 +636,7 @@
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap" />
                     <TextBox
-                        Header="Name (optional)"
-                        PlaceholderText="My phone"
+                        x:Uid="Account_AddChannelName"
                         MaxLength="60"
                         Text="{x:Bind ViewModel.Personal.AddName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <!-- One-tap Telegram: opens a chat with the household bot; pressing Start there adds the channel. -->
@@ -678,31 +657,28 @@
                             Style="{StaticResource CaptionTextBlockStyle}"
                             TextWrapping="Wrap"
                             VerticalAlignment="Center" />
-                        <Button Grid.Column="2" Content="Cancel" Command="{x:Bind ViewModel.Personal.CancelConnectTelegramCommand}" />
+                        <Button x:Uid="Account_TelegramCancel" Grid.Column="2" Command="{x:Bind ViewModel.Personal.CancelConnectTelegramCommand}" />
                     </Grid>
                     <TextBox
-                        Header="Telegram chat ID"
+                        x:Uid="Account_AddChatId"
                         PlaceholderText="123456789"
                         Text="{x:Bind ViewModel.Personal.AddChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{x:Bind ViewModel.Personal.ShowsChatId, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBox
-                        Header="Pushover user key"
+                        x:Uid="Account_AddUserKey"
                         Text="{x:Bind ViewModel.Personal.AddUserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{x:Bind ViewModel.Personal.ShowsUserKey, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBox
-                        Header="Email address"
-                        PlaceholderText="you@example.com"
+                        x:Uid="Account_AddAddress"
                         InputScope="EmailSmtpAddress"
                         Text="{x:Bind ViewModel.Personal.AddAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{x:Bind ViewModel.Personal.ShowsAddress, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBox
-                        Header="Discord webhook URL"
-                        PlaceholderText="https://discord.com/api/webhooks/…"
+                        x:Uid="Account_AddWebhook"
                         Text="{x:Bind ViewModel.Personal.AddWebhookUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{x:Bind ViewModel.Personal.ShowsWebhookUrl, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBox
-                        Header="Topic"
-                        PlaceholderText="marquee-yourname"
+                        x:Uid="Account_AddTopic"
                         Text="{x:Bind ViewModel.Personal.AddTopic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{x:Bind ViewModel.Personal.ShowsTopic, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBox
@@ -737,9 +713,9 @@
             -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Personal.ShowsPreferences, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="What you hear about" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Uid="Account_PreferencesTitle" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <TextBlock
-                        Text="Bell: the list under the bell. Devices: banners on this PC and your other devices. Each channel gets only what's ticked."
+                        x:Uid="Account_PreferencesBody"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap" />
@@ -781,7 +757,7 @@
                             </ItemsRepeater.Layout>
                         </ItemsRepeater>
                         <TextBlock
-                            Text="For reviewers"
+                            x:Uid="Account_ForReviewers"
                             Margin="0,12,0,0"
                             Visibility="{x:Bind ViewModel.Personal.HasReviewerRows, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                             Style="{StaticResource BodyStrongTextBlockStyle}" />
@@ -800,19 +776,54 @@
           for this PC only (the app's local settings). The window moves it as
           soon as one is picked.
         -->
-        <TextBlock Text="Menu position" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock x:Uid="Account_MenuTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="8">
                 <RadioButtons
-                    Header="Where the navigation bar sits on this PC"
+                    x:Uid="Account_MenuPicker"
                     MaxColumns="4"
                     ItemsSource="{x:Bind ViewModel.MenuPositionLabels}"
                     SelectedIndex="{x:Bind ViewModel.MenuPositionIndex, Mode=TwoWay}" />
                 <TextBlock
-                    Text="Left is the default. Top and Bottom lay the icons out in a row along that edge. Other devices keep their own choice."
+                    x:Uid="Account_MenuCaption"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
+                <!--
+                  Language (0.50+ servers): saved on the account (PATCH /me), so
+                  the website and the other apps follow it too. The pages already
+                  built can't switch, so a change asks for a restart.
+                -->
+                <StackPanel
+                    Spacing="8"
+                    Margin="0,8,0,0"
+                    Visibility="{x:Bind ViewModel.ShowsLanguage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ComboBox
+                        x:Uid="Language_Picker"
+                        MinWidth="260"
+                        ItemsSource="{x:Bind ViewModel.LanguageLabels}"
+                        SelectedIndex="{x:Bind ViewModel.LanguageIndex, Mode=TwoWay}" />
+                    <TextBlock
+                        x:Uid="Language_Caption"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="12"
+                        Visibility="{x:Bind ViewModel.LanguageRestartPending, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            x:Uid="Language_RestartNote"
+                            VerticalAlignment="Center"
+                            TextWrapping="Wrap" />
+                        <Button x:Uid="Language_Restart" Command="{x:Bind ViewModel.RestartForLanguageCommand}" />
+                    </StackPanel>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.LanguageError, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.LanguageError, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -823,7 +834,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock Text="Household members" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Account_MembersTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
                     Text="{x:Bind ViewModel.MembersCaption, Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -831,8 +842,8 @@
                     TextWrapping="Wrap" />
             </StackPanel>
             <Button
+                x:Uid="Account_AddMember"
                 Grid.Column="1"
-                Content="Add member"
                 Command="{x:Bind ViewModel.AddMemberCommand}"
                 Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 Style="{StaticResource AccentButtonStyle}"
@@ -865,7 +876,7 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                         TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind ViewModel.LoadMembersCommand}" />
+                    <Button x:Uid="Account_MembersRetry" Command="{x:Bind ViewModel.LoadMembersCommand}" />
                 </StackPanel>
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Members, Mode=OneWay}">
                     <ItemsRepeater.Layout>
@@ -917,21 +928,21 @@
                                         <controls:TonePill Text="{x:Bind JellyfinTag}" Tone="{x:Bind LinkTone}" />
                                         <controls:TonePill Text="{x:Bind SsoTag}" Tone="{x:Bind LinkTone}" />
                                         <controls:TonePill
-                                            Text="Admin"
+                                            Text="{x:Bind AdminTag}"
                                             Tone="{x:Bind AdminTone}"
                                             Visibility="{x:Bind IsAdminRow, Converter={StaticResource BoolToVisibility}}" />
                                         <controls:TonePill Text="{x:Bind TrustedTag}" Tone="{x:Bind AdminTone}" />
                                         <controls:TonePill
-                                            Text="You"
+                                            Text="{x:Bind YouTag}"
                                             Tone="{x:Bind YouTone}"
                                             Visibility="{x:Bind IsCurrentUser, Converter={StaticResource BoolToVisibility}}" />
                                         <Button
-                                            Content="Edit"
+                                            x:Uid="Account_MemberEdit"
                                             Command="{x:Bind Edit}"
                                             CommandParameter="{x:Bind}"
                                             Visibility="{x:Bind CanEdit, Converter={StaticResource BoolToVisibility}}" />
                                         <Button
-                                            Content="Remove"
+                                            x:Uid="Account_MemberRemove"
                                             Command="{x:Bind Remove}"
                                             CommandParameter="{x:Bind}"
                                             Visibility="{x:Bind CanRemove, Converter={StaticResource BoolToVisibility}}" />
@@ -961,7 +972,7 @@
                         TextWrapping="Wrap" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button
-                            Content="Import from Plex"
+                            x:Uid="Account_ImportPlex"
                             Command="{x:Bind ViewModel.ImportFromPlexCommand}"
                             Visibility="{x:Bind ViewModel.CanImportFromPlex, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <Button
@@ -971,10 +982,9 @@
                     </StackPanel>
                     <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasSignInSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <ToggleSwitch
+                            x:Uid="Account_SignupSwitch"
                             Header="{x:Bind ViewModel.MediaServerSignupHeader, Mode=OneWay}"
-                            IsOn="{x:Bind ViewModel.MediaServerSignup, Mode=TwoWay}"
-                            OnContent="On"
-                            OffContent="Off" />
+                            IsOn="{x:Bind ViewModel.MediaServerSignup, Mode=TwoWay}" />
                         <TextBlock
                             Text="{x:Bind ViewModel.MediaServerSignupExplanation, Mode=OneWay}"
                             Style="{StaticResource CaptionTextBlockStyle}"
@@ -994,9 +1004,9 @@
         -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Blocklist.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="4">
-                <TextBlock Text="Request blocklist" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Account_BlocklistTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Titles and keywords nobody can request. Block a single title from its page."
+                    x:Uid="Account_BlocklistBody"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
@@ -1010,7 +1020,7 @@
             <Border Style="{StaticResource SettingsCard}" Padding="0">
                 <StackPanel>
                     <TextBlock
-                        Text="Nothing blocked. Block a title from its page, or a keyword below."
+                        x:Uid="Account_BlocklistEmpty"
                         Visibility="{x:Bind ViewModel.Blocklist.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Margin="20,16"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -1054,8 +1064,8 @@
                                                 TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <Button
+                                            x:Uid="Account_BlocklistRemove"
                                             Grid.Column="1"
-                                            Content="Remove"
                                             Command="{x:Bind Remove}"
                                             CommandParameter="{x:Bind}"
                                             VerticalAlignment="Center" />
@@ -1068,17 +1078,16 @@
                     <StackPanel Padding="20,16" Spacing="12">
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Block a keyword or genre"
-                                PlaceholderText="e.g. anime, reality, horror"
+                                x:Uid="Account_BlockKeyword"
                                 Text="{x:Bind ViewModel.Blocklist.Keyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="Any title with this TMDb keyword or genre can’t be requested (you can still add it yourself)."
+                                x:Uid="Account_BlockKeywordNote"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <TextBox
-                            Header="Reason (optional, shown to whoever asks)"
+                            x:Uid="Account_BlockReason"
                             MaxLength="200"
                             Text="{x:Bind ViewModel.Blocklist.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <Button

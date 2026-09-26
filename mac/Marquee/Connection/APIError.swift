@@ -20,6 +20,12 @@ enum APIError: LocalizedError, Equatable, Sendable {
     case setupComplete
     /// 502 `upstream`: TMDb, Plex, Sonarr… failed; the message names which.
     case upstream(String?)
+    /// 409 `conflict` with `reason: "sonarr_unresolved"` (0.50+): approving
+    /// a show Sonarr can't resolve. The message is in the account's language,
+    /// so the reason, not the text, is what's matched on.
+    case sonarrUnresolvable(String?)
+    /// 502 `upstream` with `reason: "tmdb_not_configured"` (0.50+).
+    case tmdbUnconfigured(String?)
     /// 400 `invalid`: validation failed; the message is safe to show.
     case invalid(String)
     /// 500 `internal`, or a response this app couldn't read.
@@ -33,12 +39,20 @@ enum APIError: LocalizedError, Equatable, Sendable {
     struct Body: Decodable, Sendable {
         let error: String?
         let code: String?
+        /// A finer, stable code for the few failures the app acts on.
+        let reason: String?
     }
 
     static func from(statusCode: Int, body: Data) -> APIError {
         let decoded = try? JSONDecoder().decode(Body.self, from: body)
         let message = decoded?.error?.trimmingCharacters(in: .whitespacesAndNewlines)
         let nonEmptyMessage = message?.isEmpty == false ? message : nil
+
+        switch decoded?.reason {
+        case "sonarr_unresolved": return .sonarrUnresolvable(nonEmptyMessage)
+        case "tmdb_not_configured": return .tmdbUnconfigured(nonEmptyMessage)
+        default: break
+        }
 
         switch decoded?.code {
         case "unauthorized": return .unauthorized
@@ -104,6 +118,10 @@ enum APIError: LocalizedError, Equatable, Sendable {
             return String(localized: "Setup has already been completed on this server. Please sign in instead.")
         case let .upstream(message):
             return message ?? String(localized: "A service connected to your Marquee server didn't respond.")
+        case let .sonarrUnresolvable(message):
+            return message ?? APIError.sonarrUnresolvableFallback
+        case let .tmdbUnconfigured(message):
+            return message ?? APIError.tmdbUnconfiguredFallback
         case let .invalid(message):
             return message
         case let .server(message):

@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // Discovery, sign-in, /me and /badges (api-v1.md section 1), plus the shared
@@ -60,6 +62,15 @@ public sealed record User
     public bool? AutoApproveTv { get; init; }
 
     /// <summary>
+    /// <c>language</c> (0.50+): the language the account chose to read
+    /// Marquee in (<see cref="AccountLanguage.Code"/>, null to follow the
+    /// device). The property itself is null when the server didn't send the
+    /// key at all: an older server, or the login <c>user</c>, which never
+    /// carries it; only <c>/me</c> does.
+    /// </summary>
+    public AccountLanguage? Language { get; init; }
+
+    /// <summary>
     /// What the app offers this account: <see cref="Permissions"/> (with
     /// reviewing bringing seeing), everything for the admin, or, from an
     /// older server, what the role allowed. The server enforces it anyway.
@@ -108,6 +119,9 @@ public sealed record Me
     /// <inheritdoc cref="User.Permissions"/>
     public Permissions? Permissions { get; init; }
 
+    /// <inheritdoc cref="User.Language"/>
+    public AccountLanguage? Language { get; init; }
+
     /// <inheritdoc cref="User.Can"/>
     public Permissions Can => Models.Permissions.Effective(Role, Permissions, AutoApproveMovies, AutoApproveTv);
 
@@ -132,6 +146,7 @@ public sealed record Me
         Permissions = Permissions,
         AutoApproveMovies = AutoApproveMovies,
         AutoApproveTv = AutoApproveTv,
+        Language = Language,
     };
 }
 
@@ -195,8 +210,17 @@ public sealed record ServerInfo
             if (signIn.Signup && signIn.Plex) names.Add("Plex");
             if (signIn.Signup && signIn.Jellyfin) names.Add(JellyfinName);
             if (names.Count == 0) return null;
-            var named = names.Count == 1 ? names[0] : $"{names[0]} (or {string.Join(" or ", names.Skip(1))})";
-            return $"New here? Use Sign in with {named} — your account is made for you.";
+            var named = names[0];
+            if (names.Count > 1)
+            {
+                var others = names[1];
+                foreach (var name in names.Skip(2))
+                {
+                    others = Loc.Format("Model_SignupHintOr", others, name);
+                }
+                named = Loc.Format("Model_SignupHintAlternatives", named, others);
+            }
+            return Loc.Format("Model_SignupHint", named);
         }
     }
 

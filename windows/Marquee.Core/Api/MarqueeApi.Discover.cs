@@ -101,6 +101,14 @@ public static class TmdbErrors
     public const string UnconfiguredMessage =
         "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.";
 
+    /// <summary>The body's <c>reason</c> for it (0.50+).</summary>
+    public const string UnconfiguredReason = "tmdb_not_configured";
+
+    /// <summary>
+    /// By its <c>reason</c>; a server older than 0.50 sends none and always
+    /// writes the English <see cref="UnconfiguredMessage"/>.
+    /// </summary>
     public static bool IsTmdbUnconfigured(this ApiException error) =>
-        error.Kind == ApiErrorKind.Upstream && error.ServerMessage == UnconfiguredMessage;
+        error.Kind == ApiErrorKind.Upstream
+        && (error.Reason == UnconfiguredReason || (error.Reason == null && error.ServerMessage == UnconfiguredMessage));
 }

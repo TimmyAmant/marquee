@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -39,13 +40,13 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         sonarr4k = new ArrIntegrationViewModel(
             model,
             ArrProvider.Sonarr4k,
-            "4K Sonarr (optional)",
-            "A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr.");
+            Loc.Get("Integrations_Sonarr4kTitle"),
+            Loc.Get("Integrations_Sonarr4kBlurb"));
         radarr4k = new ArrIntegrationViewModel(
             model,
             ArrProvider.Radarr4k,
-            "4K Radarr (optional)",
-            "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr.");
+            Loc.Get("Integrations_Radarr4kTitle"),
+            Loc.Get("Integrations_Radarr4kBlurb"));
         mainArrCards = [sonarr, radarr];
         ArrCards = mainArrCards;
         ArrServers = new ArrServersViewModel(model);
@@ -53,64 +54,64 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         Tmdb = new SecretCardViewModel(
             model,
             "TMDb",
-            "Shared by everyone on this server — every poster, search, and title page comes from here.",
-            "API key or access token",
-            "v3 API key or v4 access token, from themoviedb.org/settings/api",
-            "Remove saved token",
+            Loc.Get("Integrations_TmdbBlurb"),
+            Loc.Get("Integrations_TmdbField"),
+            Loc.Get("Integrations_TmdbPlaceholder"),
+            Loc.Get("Integrations_RemoveSavedToken"),
             (api, value) => api.Integrations.Tmdb.SaveAsync(value),
             api => api.Integrations.Tmdb.RemoveAsync());
         Trakt = new SecretCardViewModel(
             model,
             "Trakt",
-            "Import a public Trakt list or watchlist as requests — doesn't require Trakt sign-in, just a free API app.",
-            "Client ID",
-            "From a Trakt API app at trakt.tv/oauth/applications",
-            "Remove saved client ID",
+            Loc.Get("Integrations_TraktBlurb"),
+            Loc.Get("Integrations_TraktField"),
+            Loc.Get("Integrations_TraktPlaceholder"),
+            Loc.Get("Integrations_RemoveSavedClientId"),
             (api, value) => api.Integrations.Trakt.SaveAsync(value),
             api => api.Integrations.Trakt.RemoveAsync());
         TraktImport = new TraktImportViewModel(model);
         Tvdb = new SecretCardViewModel(
             model,
             "TheTVDB",
-            "Fills in poster art and an overview for TV shows when TMDb doesn't have them yet — Sonarr's own metadata comes from here too.",
-            "API key",
-            "From thetvdb.com/dashboard/account/apikey",
-            "Remove saved key",
+            Loc.Get("Integrations_TvdbBlurb"),
+            Loc.Get("Integrations_TvdbField"),
+            Loc.Get("Integrations_TvdbPlaceholder"),
+            Loc.Get("Integrations_RemoveSavedKey"),
             (api, value) => api.Integrations.Tvdb.SaveAsync(value),
             api => api.Integrations.Tvdb.RemoveAsync());
 
         Webhooks = new ArrWebhooksViewModel(model);
         Discord = new SecretCardViewModel(
             model,
-            "Discord notifications",
-            "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected.",
-            "Webhook URL",
-            "From a channel's Integrations → Webhooks settings in Discord",
-            "Remove saved webhook",
+            Loc.Get("Integrations_DiscordTitle"),
+            Loc.Get("Integrations_DiscordBlurb"),
+            Loc.Get("Integrations_WebhookUrlField"),
+            Loc.Get("Integrations_DiscordPlaceholder"),
+            Loc.Get("Integrations_RemoveSavedWebhook"),
             (api, value) => api.Integrations.Discord.SaveAsync(value),
             api => api.Integrations.Discord.RemoveAsync(),
-            "Connected — check the channel for a test message.");
+            Loc.Get("Integrations_DiscordConnected"));
         Ntfy = new SecretCardViewModel(
             model,
-            "ntfy notifications",
-            "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events.",
-            "Topic URL",
+            Loc.Get("Integrations_NtfyTitle"),
+            Loc.Get("Integrations_NtfyBlurb"),
+            Loc.Get("Integrations_NtfyField"),
             "https://ntfy.sh/your-topic-name",
-            "Remove saved topic",
+            Loc.Get("Integrations_RemoveSavedTopic"),
             (api, value) => api.Integrations.Ntfy.SaveAsync(value),
             api => api.Integrations.Ntfy.RemoveAsync(),
-            "Connected — check the topic for a test message.");
+            Loc.Get("Integrations_NtfyConnected"));
         Channels = new NotificationChannelsViewModel(model);
         GenericWebhook = new SecretCardViewModel(
             model,
-            "Custom webhook",
-            "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway.",
-            "Webhook URL",
+            Loc.Get("Integrations_WebhookTitle"),
+            Loc.Format("Integrations_WebhookBlurb"),
+            Loc.Get("Integrations_WebhookUrlField"),
             "https://your-endpoint.example.com/hook",
-            "Remove saved webhook",
+            Loc.Get("Integrations_RemoveSavedWebhook"),
             (api, value) => api.Integrations.Webhook.SaveAsync(value),
             api => api.Integrations.Webhook.RemoveAsync(),
-            "Connected — check your endpoint for a test request.");
+            Loc.Get("Integrations_WebhookConnected"));
     }
 
     private readonly IReadOnlyList<ArrIntegrationViewModel> mainArrCards;
@@ -198,7 +199,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasSyncNotice))]
     private string? syncNotice;
 
-    public string SyncLabel => IsSyncing ? "Syncing…" : "Sync now";
+    public string SyncLabel => IsSyncing ? Loc.Get("Integrations_Syncing") : Loc.Get("Integrations_SyncNow");
     public bool CanSync => !IsSyncing;
     public bool HasSyncError => SyncError != null;
     public bool HasSyncNotice => SyncNotice != null;
@@ -335,7 +336,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         try
         {
             await model.Api.Integrations.SyncNowAsync();
-            SyncNotice = "Synced.";
+            SyncNotice = Loc.Get("Integrations_Synced");
         }
         catch (ApiException error)
         {

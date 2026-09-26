@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -30,7 +31,7 @@ public static class SeasonLabels
         var parts = new List<string>();
         if (sorted.Contains(0))
         {
-            parts.Add("Specials");
+            parts.Add(Loc.Get("RequestModel_Specials"));
         }
         var numbered = sorted.Where(season => season != 0).ToList();
         if (numbered.Count > 0)
@@ -55,7 +56,9 @@ public static class SeasonLabels
                 }
             }
             Close();
-            parts.Add((numbered.Count == 1 ? "Season " : "Seasons ") + string.Join(", ", runs));
+            parts.Add(numbered.Count == 1
+                ? Loc.Format("RequestModel_SeasonOne", string.Join(", ", runs))
+                : Loc.Format("RequestModel_SeasonsMany", string.Join(", ", runs)));
         }
         return string.Join(", ", parts);
     }
@@ -65,7 +68,7 @@ public static class SeasonLabels
     /// 4K" joined with " · ", each left out when absent; empty for neither.
     /// </summary>
     public static string RequestLine(string? seasonsText, bool is4k) =>
-        string.Join(" · ", new[] { seasonsText.NonBlank(), is4k ? "In 4K" : null }.OfType<string>());
+        string.Join(" · ", new[] { seasonsText.NonBlank(), is4k ? Loc.Get("RequestModel_In4k") : null }.OfType<string>());
 }
 
 /// <summary>Who requested (or acted on) something.</summary>
@@ -301,7 +304,7 @@ public sealed record ReviewedRequest
     public AddedTo? AddedTo { get; init; }
 
     /// <summary>"Added to Radarr 2" under the badge; null when unknown or that server was removed.</summary>
-    public string? AddedToLine => AddedTo?.ServerName.NonBlank() is { } name ? $"Added to {name}" : null;
+    public string? AddedToLine => AddedTo?.ServerName.NonBlank() is { } name ? Loc.Format("RequestModel_AddedTo", name) : null;
 
     /// <summary>
     /// When Sonarr/Radarr's failure to find it put it under "Can't find"
@@ -346,7 +349,7 @@ public sealed record ReviewedRequest
     /// <paramref name="lastTried"/> the failure's time, as the screen prints them.
     /// </summary>
     public string CouldntAddLine(string approvedDate, string lastTried) =>
-        $"{RequestedBy.Label} · approved {approvedDate} · last tried {lastTried}";
+        Loc.Format("RequestModel_CouldntAddLine", RequestedBy.Label, approvedDate, lastTried);
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }
@@ -368,8 +371,8 @@ public sealed record AddFailed
 /// </summary>
 public static class RequestHistory
 {
-    public const string CouldntAddHeading = "Couldn't add";
-    public const string CouldntAddExplanation = "Approved, but Sonarr/Radarr couldn't be reached or didn't take them. Retry once it's back.";
+    public static string CouldntAddHeading => Loc.Get("RequestModel_CouldntAddHeading");
+    public static string CouldntAddExplanation => Loc.Get("RequestModel_CouldntAddExplanation");
 
     /// <summary>The "Couldn't add" rows, in the server's order.</summary>
     public static IReadOnlyList<ReviewedRequest> CouldntAdd(IEnumerable<ReviewedRequest> history) =>
@@ -410,9 +413,9 @@ public sealed record EveryoneRequest
 /// </summary>
 public static class EveryonesRequests
 {
-    public const string Heading = "Everyone's requests";
-    public const string EmptyText = "Nobody else has asked for anything yet.";
-    public const string PendingLabel = "Waiting for review";
+    public static string Heading => Loc.Get("RequestModel_EveryoneHeading");
+    public static string EmptyText => Loc.Get("RequestModel_EveryoneEmpty");
+    public static string PendingLabel => Loc.Get("RequestModel_WaitingForReview");
 
     /// <summary>
     /// <c>/requests/pending</c> and <c>/requests/history</c> together, the
@@ -490,19 +493,19 @@ public static class NotFoundLabels
         var hours = (long)Math.Max(0, Math.Floor((now - since).TotalHours));
         if (hours < 1)
         {
-            return "under an hour";
+            return Loc.Get("RequestModel_AgeUnderHour");
         }
         if (hours < 48)
         {
-            return hours == 1 ? "1 hour" : $"{hours.ToString(CultureInfo.InvariantCulture)} hours";
+            return Loc.Plural("RequestModel_AgeHours", hours);
         }
-        return $"{(hours / 24).ToString(CultureInfo.InvariantCulture)} days";
+        return Loc.Plural("RequestModel_AgeDays", hours / 24);
     }
 
     /// <summary>notFoundHint: the tip under the actions, for a server that didn't send one.</summary>
     public static string Hint(MediaType mediaType) => mediaType == MediaType.Movie
-        ? "In Radarr, Interactive Search on the movie lists every release the indexers have, so you can pick one by hand."
-        : "In Sonarr, Interactive Search on a season or episode lists every release the indexers have, so you can pick one by hand.";
+        ? Loc.Get("RequestModel_NotFoundHintMovie")
+        : Loc.Get("RequestModel_NotFoundHintTv");
 }
 
 /// <summary>The Sonarr/Radarr a "Can't find" request was added to.</summary>
@@ -560,7 +563,7 @@ public sealed record NotFoundRequest
     public string ArrKindName => Server?.Kind is { IsKnown: true } kind ? kind.DisplayName : MediaType.ArrName;
 
     /// <summary>"Open in Radarr" / "Open in Sonarr".</summary>
-    public string OpenInArrLabel => $"Open in {ArrKindName}";
+    public string OpenInArrLabel => Loc.Format("RequestModel_OpenIn", ArrKindName);
 
     /// <summary>
     /// <see cref="ArrUrl"/> as a link to open: an absolute http or https
@@ -578,7 +581,7 @@ public sealed record NotFoundRequest
     public string HintText => Hint.NonBlank() ?? NotFoundLabels.Hint(MediaType);
 
     /// <summary>After "Search again": "Radarr is searching again…" (the server's name when known).</summary>
-    public string SearchingMessage => $"{Server?.Name.NonBlank() ?? ArrKindName} is searching again…";
+    public string SearchingMessage => Loc.Format("RequestModel_SearchingAgain", Server?.Name.NonBlank() ?? ArrKindName);
 
     /// <summary>
     /// "Susan · can't find for 3 days (since Sep 18, 2026) · Radarr": who
@@ -590,7 +593,7 @@ public sealed record NotFoundRequest
         string.Join(" · ", new[]
         {
             RequestedBy.Label,
-            $"can't find for {NotFoundLabels.AgeLabel(NotFoundSince, now)} (since {sinceDate})",
+            Loc.Format("RequestModel_CantFindFor", NotFoundLabels.AgeLabel(NotFoundSince, now), sinceDate),
             Server?.Name.NonBlank(),
         }.OfType<string>());
 
@@ -607,7 +610,7 @@ public sealed record NotFoundRequests
 
     /// <summary>The section's explanation under its heading.</summary>
     public string Explanation =>
-        $"Approved and released, but Sonarr/Radarr still has nothing {AfterHours.ToString(CultureInfo.InvariantCulture)} hour{(AfterHours == 1 ? "" : "s")} or more after approval. Most often no indexer has a copy yet.";
+        Loc.Plural("RequestModel_NotFoundExplanation", AfterHours);
 }
 
 /// <summary><c>GET</c>/<c>PUT /settings/not-found</c> (0.46+): the Can't Find Check's wait, 1 to 720 hours.</summary>
@@ -655,11 +658,11 @@ public sealed record RequestLimits
         var lines = new List<string>(2);
         if (Movie is { } movie)
         {
-            lines.Add(movie.Line("Movies", zone));
+            lines.Add(movie.Line(Loc.Get("RequestModel_LimitMovies"), zone));
         }
         if (Tv is { } tv)
         {
-            lines.Add(tv.Line("TV", zone));
+            lines.Add(tv.Line(Loc.Get("RequestModel_LimitTv"), zone));
         }
         return lines.Count > 0 ? string.Join(" · ", lines) : null;
     }
@@ -684,13 +687,13 @@ public sealed record RequestLimit
     {
         if (Remaining > 0)
         {
-            return string.Create(CultureInfo.InvariantCulture, $"{label}: {Remaining} of {Limit} requests left (every {Days} days)");
+            return Loc.Format("RequestModel_LimitLeft", label, Remaining, Limit, Days);
         }
         if (NextSlotAt is not { } next)
         {
-            return $"{label}: none left";
+            return Loc.Format("RequestModel_LimitNoneLeft", label);
         }
         var local = TimeZoneInfo.ConvertTime(next, zone ?? TimeZoneInfo.Local);
-        return $"{label}: none left until {local.ToString("MMM d", CultureInfo.InvariantCulture)}";
+        return Loc.Format("RequestModel_LimitNoneLeftUntil", label, local);
     }
 }

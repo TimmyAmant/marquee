@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -50,10 +51,10 @@ public sealed partial class ShareMemberRow : ObservableObject
 /// </summary>
 public sealed partial class ShareTitleViewModel : ObservableObject
 {
-    public const string SendLabelIdle = "Send";
-    public const string SendLabelBusy = "Sending…";
-    public const string CopyLabelIdle = "Copy link";
-    public const string CopyLabelDone = "Copied";
+    public static string SendLabelIdle => Loc.Get("Share_Send");
+    public static string SendLabelBusy => Loc.Get("Share_Sending");
+    public static string CopyLabelIdle => Loc.Get("Share_CopyLink");
+    public static string CopyLabelDone => Loc.Get("Share_Copied");
 
     private readonly AppModel model;
     private readonly TitleId title;
@@ -119,7 +120,7 @@ public sealed partial class ShareTitleViewModel : ObservableObject
     }
 
     /// <summary>"Share “Ice Age”".</summary>
-    public string Heading => $"Share “{name}”";
+    public string Heading => Loc.Format("Share_Heading", name);
 
     public bool HasMembers => Members.Count > 0;
     public bool IsIdle => !IsSending;
@@ -264,7 +265,7 @@ public sealed partial class ShareTitleViewModel : ObservableObject
         {
             return;
         }
-        LinkError = ShareSheet.Show(name, link.Text, link.Url) ? "" : "Couldn't open the Share panel. Copy the link instead.";
+        LinkError = ShareSheet.Show(name, link.Text, link.Url) ? "" : Loc.Get("Share_PanelFailed");
     }
 
     /// <summary>"Copy link", then "Copied" until another link is picked.</summary>
@@ -282,7 +283,7 @@ public sealed partial class ShareTitleViewModel : ObservableObject
         }
         else
         {
-            LinkError = "Another app is using the clipboard. Try again.";
+            LinkError = Loc.Get("Share_ClipboardBusy");
         }
     }
 }

@@ -22,10 +22,10 @@
     <Grid>
         <ScrollViewer>
             <StackPanel Padding="28,20,28,40" Spacing="32">
-                <TextBlock Text="Favorites" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock x:Uid="Favorites_Title" Style="{StaticResource TitleTextBlockStyle}" />
 
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasMovies, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Movies" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Favorites_Movies" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.Movies, Mode=OneWay}" ItemTemplate="{StaticResource PosterTemplate}">
                         <ItemsRepeater.Layout>
                             <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
@@ -34,7 +34,7 @@
                 </StackPanel>
 
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasTv, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="TV Shows" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Favorites_TvShows" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tv, Mode=OneWay}" ItemTemplate="{StaticResource PosterTemplate}">
                         <ItemsRepeater.Layout>
                             <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
@@ -44,7 +44,7 @@
 
                 <!-- A collection card opens its earliest movie. -->
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasCollections, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Collections" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Favorites_Collections" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.Collections, Mode=OneWay}">
                         <ItemsRepeater.Layout>
                             <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
@@ -89,7 +89,7 @@
                 </StackPanel>
 
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasPeople, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="People" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Favorites_People" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.People, Mode=OneWay}">
                         <ItemsRepeater.Layout>
                             <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
@@ -104,7 +104,7 @@
 
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <Grid MinHeight="28">
-                        <TextBlock Text="Studios" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="Favorites_Studios" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                         <controls:RailArrows Target="{x:Bind StudiosRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </Grid>
                     <ScrollViewer
@@ -132,7 +132,7 @@
             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
             <TextBlock
-                Text="Loading your favorites…"
+                x:Uid="Favorites_Loading"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 HorizontalAlignment="Center" />
@@ -145,14 +145,14 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Couldn't load your favorites" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Favorites_ErrorHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Favorites_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
         </StackPanel>
 
         <StackPanel
@@ -162,9 +162,9 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Nothing favorited yet" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Favorites_EmptyHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
-                Text="Star anything from its page or card to see it here."
+                x:Uid="Favorites_EmptyText"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"

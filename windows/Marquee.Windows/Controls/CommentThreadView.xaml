@@ -35,7 +35,7 @@
             <StackPanel Spacing="12">
                 <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind Thread.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind Thread.IsLoading, Mode=OneWay}" Width="16" Height="16" />
-                    <TextBlock Text="Loading…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock x:Uid="Comments_Loading" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Spacing="6" Visibility="{x:Bind Thread.HasLoadError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock
@@ -43,10 +43,10 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                         TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind Thread.LoadCommand, Mode=OneWay}" />
+                    <Button x:Uid="Comments_TryAgain" Command="{x:Bind Thread.LoadCommand, Mode=OneWay}" />
                 </StackPanel>
                 <TextBlock
-                    Text="No comments yet."
+                    x:Uid="Comments_Empty"
                     Visibility="{x:Bind Thread.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -94,17 +94,17 @@
                                                 Command="{x:Bind SaveCommand}"
                                                 IsEnabled="{x:Bind CanSave, Mode=OneWay}"
                                                 Style="{StaticResource AccentButtonStyle}" />
-                                            <Button Content="Cancel" Command="{x:Bind CancelEditCommand}" />
+                                            <Button x:Uid="Comments_CancelEdit" Command="{x:Bind CancelEditCommand}" />
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="4" Visibility="{x:Bind ShowsActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                         <HyperlinkButton
-                                            Content="Edit"
+                                            x:Uid="Comments_Edit"
                                             Command="{x:Bind StartEditCommand}"
                                             Visibility="{x:Bind CanEdit, Converter={StaticResource BoolToVisibility}}"
                                             Padding="4,0" />
                                         <HyperlinkButton
-                                            Content="Delete"
+                                            x:Uid="Comments_Delete"
                                             Command="{x:Bind DeleteCommand}"
                                             IsEnabled="{x:Bind CanAct, Mode=OneWay}"
                                             Visibility="{x:Bind CanDelete, Converter={StaticResource BoolToVisibility}}"
@@ -126,8 +126,7 @@
                     <TextBox
                         Text="{x:Bind Thread.Draft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         MaxLength="{x:Bind Thread.MaxLength, Mode=OneWay}"
-                        PlaceholderText="Write a comment"
-                        AutomationProperties.Name="Write a comment"
+                        x:Uid="Comments_DraftBox"
                         AcceptsReturn="True"
                         TextWrapping="Wrap"
                         MinHeight="56" />

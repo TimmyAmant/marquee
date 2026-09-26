@@ -34,7 +34,7 @@
                     MaxWidth="220"
                     VerticalAlignment="Center" />
                 <Button
-                    Content="Disconnect"
+                    x:Uid="Integrations_Disconnect"
                     Command="{x:Bind AskCommand}"
                     Visibility="{x:Bind IsAsking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <StackPanel
@@ -47,7 +47,7 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         VerticalAlignment="Center" />
                     <Button Content="{x:Bind ConfirmLabel, Mode=OneWay}" Command="{x:Bind ConfirmCommand}" />
-                    <Button Content="Cancel" Command="{x:Bind CancelCommand}" />
+                    <Button x:Uid="Integrations_DisconnectCancel" Command="{x:Bind CancelCommand}" />
                 </StackPanel>
             </StackPanel>
         </DataTemplate>
@@ -79,11 +79,11 @@
                         </StackPanel>
                     </Grid>
                     <TextBox
-                        Header="Server URL"
+                        x:Uid="Integrations_ArrServerUrl"
                         PlaceholderText="{x:Bind BaseUrlPlaceholder}"
                         Text="{x:Bind BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <PasswordBox
-                        Header="API key"
+                        x:Uid="Integrations_ArrApiKey"
                         PlaceholderText="{x:Bind ApiKeyPlaceholder, Mode=OneWay}"
                         Password="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <InfoBar
@@ -105,23 +105,23 @@
                     <StackPanel Spacing="12" Visibility="{x:Bind ShowsDefaults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                         <TextBlock
-                            Text="Defaults used when adding new titles:"
+                            x:Uid="Integrations_ArrDefaultsIntro"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <ComboBox
-                            Header="Root folder"
+                            x:Uid="Integrations_ArrRootFolder"
                             MinWidth="260"
                             ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
                             SelectedIndex="{x:Bind SelectedRootFolderIndex, Mode=TwoWay}" />
                         <ComboBox
-                            Header="Quality profile"
+                            x:Uid="Integrations_ArrQualityProfile"
                             MinWidth="260"
                             ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
                             SelectedIndex="{x:Bind SelectedQualityProfileIndex, Mode=TwoWay}" />
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <Button Content="{x:Bind SaveDefaultsLabel, Mode=OneWay}" Command="{x:Bind SaveDefaultsCommand}" />
                             <TextBlock
-                                Text="Saved."
+                                x:Uid="Integrations_ArrDefaultsSaved"
                                 Visibility="{x:Bind DefaultsSaved, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource SystemFillColorSuccessBrush}"
@@ -129,7 +129,7 @@
                         </StackPanel>
                     </StackPanel>
                     <TextBlock
-                        Text="Pick a root folder and quality profile before adding titles — test the connection to load them."
+                        x:Uid="Integrations_ArrNeedsDefaults"
                         Visibility="{x:Bind NeedsDefaults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
@@ -165,13 +165,13 @@
                                 Orientation="Horizontal"
                                 Spacing="8"
                                 Visibility="{x:Bind ShowsActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                <Button Content="Edit" Command="{x:Bind EditCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
+                                <Button x:Uid="Arr_RowEdit" Command="{x:Bind EditCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
                                 <Button
                                     Content="{x:Bind MakeDefaultLabel, Mode=OneWay}"
                                     Command="{x:Bind MakeDefaultCommand}"
                                     IsEnabled="{x:Bind CanAct, Mode=OneWay}"
                                     Visibility="{x:Bind IsDefault, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
-                                <Button Content="Remove" Command="{x:Bind AskRemoveCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
+                                <Button x:Uid="Arr_RowRemove" Command="{x:Bind AskRemoveCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
                             </StackPanel>
                             <StackPanel
                                 Orientation="Horizontal"
@@ -183,12 +183,12 @@
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     VerticalAlignment="Center" />
                                 <Button Content="{x:Bind RemoveConfirmLabel, Mode=OneWay}" Command="{x:Bind ConfirmRemoveCommand}" />
-                                <Button Content="Cancel" Command="{x:Bind CancelRemoveCommand}" />
+                                <Button x:Uid="Arr_RowCancelRemove" Command="{x:Bind CancelRemoveCommand}" />
                             </StackPanel>
                         </StackPanel>
                     </Grid>
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Webhook URL" Style="{StaticResource FieldLabel}" />
+                        <TextBlock x:Uid="Arr_RowWebhookLabel" Style="{StaticResource FieldLabel}" />
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -199,12 +199,12 @@
                             <Button Grid.Column="1" Content="{x:Bind CopyLabel, Mode=OneWay}" Command="{x:Bind CopyWebhookCommand}" />
                             <Button
                                 Grid.Column="2"
-                                Content="Regenerate"
+                                x:Uid="Arr_RowRegenerate"
                                 Command="{x:Bind AskRegenerateCommand}"
                                 Visibility="{x:Bind ShowsRegenerate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </Grid>
                         <TextBlock
-                            Text="Paste it into this server's Settings → Connect → Add → Webhook (method POST, on Grab and on Import/Download)."
+                            x:Uid="Arr_RowWebhookHelp"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             TextWrapping="Wrap" />
@@ -213,12 +213,12 @@
                             Spacing="8"
                             Visibility="{x:Bind IsConfirmingRegenerate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock
-                                Text="Regenerate? The URL above stops working immediately."
+                                x:Uid="Arr_RowRegeneratePrompt"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 VerticalAlignment="Center" />
                             <Button Content="{x:Bind RegenerateConfirmLabel, Mode=OneWay}" Command="{x:Bind ConfirmRegenerateCommand}" />
-                            <Button Content="Cancel" Command="{x:Bind CancelRegenerateCommand}" />
+                            <Button x:Uid="Arr_RowCancelRegenerate" Command="{x:Bind CancelRegenerateCommand}" />
                         </StackPanel>
                     </StackPanel>
                     <TextBlock
@@ -300,9 +300,9 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock Text="Integrations" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Integrations_Heading" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf."
+                    x:Uid="Integrations_Intro"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
@@ -333,7 +333,7 @@
         <StackPanel Orientation="Horizontal" Spacing="10" Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="20" Height="20" />
             <TextBlock
-                Text="Checking your integrations…"
+                x:Uid="Integrations_Checking"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 VerticalAlignment="Center" />
@@ -344,13 +344,13 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                 TextWrapping="Wrap" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+            <Button x:Uid="Integrations_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
         </StackPanel>
 
         <StackPanel Spacing="28" Visibility="{x:Bind ViewModel.HasOverview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <!-- Media Libraries -->
             <StackPanel Spacing="12">
-                <TextBlock Text="Media Libraries" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Uid="Integrations_MediaLibraries" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                 <!-- components/plex-connect-card.tsx -->
                 <Border Style="{StaticResource SettingsCard}">
@@ -379,7 +379,7 @@
                         </StackPanel>
                         <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Plex.IsDisconnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock
-                                Text="Sign in with your Plex account to see what's already in your library."
+                                x:Uid="Integrations_PlexIntro"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap" />
@@ -389,7 +389,7 @@
                                     Command="{x:Bind ViewModel.Plex.ConnectCommand}"
                                     Style="{StaticResource AccentButtonStyle}" />
                                 <TextBlock
-                                    Text="Finish signing in in the browser window that just opened."
+                                    x:Uid="Integrations_PlexFinishInBrowser"
                                     Visibility="{x:Bind ViewModel.Plex.IsWaiting, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -415,7 +415,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Jellyfin or Emby" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock x:Uid="Integrations_JellyfinTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock
                                     Text="{x:Bind ViewModel.Jellyfin.Description, Mode=OneWay}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -436,16 +436,15 @@
                             Style="{StaticResource BodyTextBlockStyle}"
                             TextWrapping="Wrap" />
                         <TextBlock
-                            Text="Generate an API key from the dashboard: Administration → API Keys in Jellyfin, or Advanced → API Keys in Emby."
+                            x:Uid="Integrations_JellyfinKeyHelp"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
                         <TextBox
-                            Header="Server URL"
-                            PlaceholderText="http://localhost:8096"
+                            x:Uid="Integrations_JellyfinUrl"
                             Text="{x:Bind ViewModel.Jellyfin.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <PasswordBox
-                            Header="API key"
+                            x:Uid="Integrations_JellyfinApiKey"
                             PlaceholderText="{x:Bind ViewModel.Jellyfin.ApiKeyPlaceholder, Mode=OneWay}"
                             Password="{x:Bind ViewModel.Jellyfin.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <InfoBar
@@ -475,7 +474,7 @@
               write-only: the card only knows whether one is saved.
             -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Sso.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Sign-in" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Uid="Integrations_SignInHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Border Style="{StaticResource SettingsCard}">
                     <StackPanel Spacing="14">
                         <Grid ColumnSpacing="12">
@@ -484,9 +483,9 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Single sign-on" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock x:Uid="Integrations_SsoTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock
-                                    Text="Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps."
+                                    x:Uid="Integrations_SsoIntro"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="Wrap" />
@@ -495,30 +494,28 @@
                         </Grid>
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Button name"
-                                PlaceholderText="Authentik"
+                                x:Uid="Integrations_SsoButtonName"
                                 MaxLength="40"
                                 Text="{x:Bind ViewModel.Sso.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="The sign-in button says “Sign in with &lt;name&gt;”."
+                                x:Uid="Integrations_SsoButtonNameHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Marquee's address"
-                                PlaceholderText="https://marquee.example.com"
+                                x:Uid="Integrations_SsoPublicUrl"
                                 IsSpellCheckEnabled="False"
                                 Text="{x:Bind ViewModel.Sso.PublicUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="The address people use to reach Marquee from outside."
+                                x:Uid="Integrations_SsoPublicUrlHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Redirect URI — add this to the provider exactly" Style="{StaticResource FieldLabel}" />
+                            <TextBlock x:Uid="Integrations_SsoRedirectUri" Style="{StaticResource FieldLabel}" />
                             <Grid ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -536,8 +533,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox
                                     Grid.Column="0"
-                                    Header="Issuer URL"
-                                    PlaceholderText="https://auth.example.com/application/o/marquee/"
+                                    x:Uid="Integrations_SsoIssuer"
                                     IsSpellCheckEnabled="False"
                                     Text="{x:Bind ViewModel.Sso.Issuer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <Button
@@ -548,7 +544,7 @@
                                     VerticalAlignment="Bottom" />
                             </Grid>
                             <TextBlock
-                                Text="The provider's issuer, or its …/.well-known/openid-configuration address."
+                                x:Uid="Integrations_SsoIssuerHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
@@ -573,78 +569,72 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <TextBox
-                            Header="Client ID"
+                            x:Uid="Integrations_SsoClientId"
                             IsSpellCheckEnabled="False"
                             Text="{x:Bind ViewModel.Sso.ClientId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <PasswordBox
-                            Header="Client secret"
+                            x:Uid="Integrations_SsoClientSecret"
                             PlaceholderText="{x:Bind ViewModel.Sso.ClientSecretPlaceholder, Mode=OneWay}"
                             Password="{x:Bind ViewModel.Sso.ClientSecret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <CheckBox
-                            Content="Remove the saved secret (a public client)"
+                            x:Uid="Integrations_SsoClearSecret"
                             IsChecked="{x:Bind ViewModel.Sso.ClearClientSecret, Mode=TwoWay}"
                             Visibility="{x:Bind ViewModel.Sso.HasClientSecret, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Scopes"
+                                x:Uid="Integrations_SsoScopes"
                                 IsSpellCheckEnabled="False"
                                 Text="{x:Bind ViewModel.Sso.Scopes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="Add “groups” for Authelia and Pocket ID if you use groups below."
+                                x:Uid="Integrations_SsoScopesHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
                             <ToggleSwitch
-                                Header="New accounts from single sign-on"
-                                IsOn="{x:Bind ViewModel.Sso.AllowSignup, Mode=TwoWay}"
-                                OnContent="On"
-                                OffContent="Off" />
+                                x:Uid="Integrations_SsoAllowSignup"
+                                IsOn="{x:Bind ViewModel.Sso.AllowSignup, Mode=TwoWay}" />
                             <TextBlock
-                                Text="Anyone your provider lets in gets a member account on first sign-in. Off: only accounts that linked it can use it."
+                                x:Uid="Integrations_SsoAllowSignupHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
                             <ToggleSwitch
-                                Header="Match existing accounts by verified email"
-                                IsOn="{x:Bind ViewModel.Sso.MatchEmail, Mode=TwoWay}"
-                                OnContent="On"
-                                OffContent="Off" />
+                                x:Uid="Integrations_SsoMatchEmail"
+                                IsOn="{x:Bind ViewModel.Sso.MatchEmail, Mode=TwoWay}" />
                             <TextBlock
-                                Text="First sign-in links an account whose username is the person's email — only when the provider says the email is verified, and never the admin account."
+                                x:Uid="Integrations_SsoMatchEmailHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Required group (optional)"
-                                PlaceholderText="marquee-users"
+                                x:Uid="Integrations_SsoRequiredGroup"
                                 IsSpellCheckEnabled="False"
                                 Text="{x:Bind ViewModel.Sso.RequiredGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="Only people in this group can sign in with it."
+                                x:Uid="Integrations_SsoRequiredGroupHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Trusted group (optional)"
-                                PlaceholderText="marquee-trusted"
+                                x:Uid="Integrations_SsoTrustedGroup"
                                 IsSpellCheckEnabled="False"
                                 Text="{x:Bind ViewModel.Sso.TrustedGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="Members in this group become Trusted when they sign in. Nobody is ever made an admin this way."
+                                x:Uid="Integrations_SsoTrustedGroupHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <TextBox
-                            Header="Groups claim"
+                            x:Uid="Integrations_SsoGroupsClaim"
                             IsSpellCheckEnabled="False"
                             Text="{x:Bind ViewModel.Sso.GroupsClaim, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <InfoBar
@@ -681,7 +671,7 @@
               that Sonarr, Radarr, then the 4K ones on a 0.37+ server.
             -->
             <StackPanel Spacing="12">
-                <TextBlock Text="Download Clients" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Uid="Integrations_DownloadClients" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ItemsRepeater
                     ItemsSource="{x:Bind ViewModel.ArrCards, Mode=OneWay}"
                     ItemTemplate="{StaticResource ArrCardTemplate}"
@@ -693,7 +683,7 @@
 
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsArrServers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock
-                        Text="Add as many Sonarr and Radarr servers as you like. Titles go to the default one unless a different server is picked under Advanced when approving or adding."
+                        x:Uid="Arr_ServersIntro"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap" />
@@ -705,10 +695,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Sonarr" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="Add Sonarr server" Command="{x:Bind ViewModel.ArrServers.AddSonarrCommand}" />
+                        <Button Grid.Column="1" x:Uid="Arr_AddSonarr" Command="{x:Bind ViewModel.ArrServers.AddSonarrCommand}" />
                     </Grid>
                     <TextBlock
-                        Text="No Sonarr servers yet."
+                        x:Uid="Arr_NoSonarr"
                         Visibility="{x:Bind ViewModel.ArrServers.HasNoSonarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -725,10 +715,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Radarr" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="Add Radarr server" Command="{x:Bind ViewModel.ArrServers.AddRadarrCommand}" />
+                        <Button Grid.Column="1" x:Uid="Arr_AddRadarr" Command="{x:Bind ViewModel.ArrServers.AddRadarrCommand}" />
                     </Grid>
                     <TextBlock
-                        Text="No Radarr servers yet."
+                        x:Uid="Arr_NoRadarr"
                         Visibility="{x:Bind ViewModel.ArrServers.HasNoRadarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -746,17 +736,16 @@
                         <StackPanel Spacing="14">
                             <TextBlock Text="{x:Bind ViewModel.ArrServers.Editor.Title, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBox
-                                Header="Name"
-                                PlaceholderText="Leave blank to name it after its kind, like “Radarr 2”"
+                                x:Uid="Arr_EditorName"
                                 MaxLength="60"
                                 Text="{x:Bind ViewModel.ArrServers.Editor.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBox
-                                Header="Server URL"
+                                x:Uid="Arr_EditorUrl"
                                 PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.BaseUrlPlaceholder, Mode=OneWay}"
                                 Text="{x:Bind ViewModel.ArrServers.Editor.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <StackPanel Spacing="4">
                                 <PasswordBox
-                                    Header="API key"
+                                    x:Uid="Arr_EditorApiKey"
                                     PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.ApiKeyPlaceholder, Mode=OneWay}"
                                     Password="{x:Bind ViewModel.ArrServers.Editor.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
@@ -768,25 +757,21 @@
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <ToggleSwitch
-                                    Header="4K server"
-                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.Is4k, Mode=TwoWay}"
-                                    OnContent="On"
-                                    OffContent="Off" />
+                                    x:Uid="Arr_Editor4k"
+                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.Is4k, Mode=TwoWay}" />
                                 <TextBlock
-                                    Text="4K requests and “Add in 4K” go to a 4K server, and it isn't counted as part of the library."
+                                    x:Uid="Arr_Editor4kHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <ToggleSwitch
-                                    Header="Default server"
+                                    x:Uid="Arr_EditorDefault"
                                     IsOn="{x:Bind ViewModel.ArrServers.Editor.IsDefault, Mode=TwoWay}"
-                                    IsEnabled="{x:Bind ViewModel.ArrServers.Editor.CanChangeDefault, Mode=OneWay}"
-                                    OnContent="On"
-                                    OffContent="Off" />
+                                    IsEnabled="{x:Bind ViewModel.ArrServers.Editor.CanChangeDefault, Mode=OneWay}" />
                                 <TextBlock
-                                    Text="Where titles go when nobody picks a server. To move the default, make another server the default."
+                                    x:Uid="Arr_EditorDefaultHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
@@ -802,7 +787,7 @@
                                     Width="16"
                                     Height="16" />
                                 <TextBlock
-                                    Text="Test the connection to pick a quality profile, root folder and tags."
+                                    x:Uid="Arr_EditorTestHelp"
                                     Visibility="{x:Bind ViewModel.ArrServers.Editor.HasOptions, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -814,21 +799,21 @@
                             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasOptions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                 <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                                 <TextBlock
-                                    Text="Used when adding titles:"
+                                    x:Uid="Arr_EditorUsedWhenAdding"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                 <ComboBox
-                                    Header="Quality profile"
+                                    x:Uid="Arr_EditorQualityProfile"
                                     MinWidth="260"
                                     ItemsSource="{x:Bind ViewModel.ArrServers.Editor.QualityProfiles, Mode=OneWay}"
                                     SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.QualityProfileIndex, Mode=TwoWay}" />
                                 <ComboBox
-                                    Header="Root folder"
+                                    x:Uid="Arr_EditorRootFolder"
                                     MinWidth="260"
                                     ItemsSource="{x:Bind ViewModel.ArrServers.Editor.RootFolders, Mode=OneWay}"
                                     SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.RootFolderIndex, Mode=TwoWay}" />
                                 <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                    <TextBlock Text="Tags" Style="{StaticResource FieldLabel}" />
+                                    <TextBlock x:Uid="Arr_EditorTags" Style="{StaticResource FieldLabel}" />
                                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.Editor.Tags, Mode=OneWay}" ItemTemplate="{StaticResource TagChoiceTemplate}">
                                         <ItemsRepeater.Layout>
                                             <UniformGridLayout MinItemWidth="160" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
@@ -840,33 +825,31 @@
                             <!-- Sonarr only: series type and season folders, then the anime overrides. -->
                             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.IsSonarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                 <ComboBox
-                                    Header="Series type"
+                                    x:Uid="Arr_EditorSeriesType"
                                     MinWidth="260"
                                     ItemsSource="{x:Bind ViewModel.ArrServers.Editor.SeriesTypes}"
                                     SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.SeriesTypeIndex, Mode=TwoWay}" />
                                 <ToggleSwitch
-                                    Header="Season folders"
-                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.SeasonFolders, Mode=TwoWay}"
-                                    OnContent="On"
-                                    OffContent="Off" />
+                                    x:Uid="Arr_EditorSeasonFolders"
+                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.SeasonFolders, Mode=TwoWay}" />
                                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasOptions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                     <TextBlock
-                                        Text="For anime shows (series type Anime is used for them automatically):"
+                                        x:Uid="Arr_EditorAnimeIntro"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         TextWrapping="Wrap" />
                                     <ComboBox
-                                        Header="Anime quality profile"
+                                        x:Uid="Arr_EditorAnimeQualityProfile"
                                         MinWidth="260"
                                         ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfiles, Mode=OneWay}"
                                         SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfileIndex, Mode=TwoWay}" />
                                     <ComboBox
-                                        Header="Anime root folder"
+                                        x:Uid="Arr_EditorAnimeRootFolder"
                                         MinWidth="260"
                                         ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolders, Mode=OneWay}"
                                         SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolderIndex, Mode=TwoWay}" />
                                     <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="Anime tags (none checked: the tags above)" Style="{StaticResource FieldLabel}" />
+                                        <TextBlock x:Uid="Arr_EditorAnimeTags" Style="{StaticResource FieldLabel}" />
                                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeTags, Mode=OneWay}" ItemTemplate="{StaticResource TagChoiceTemplate}">
                                             <ItemsRepeater.Layout>
                                                 <UniformGridLayout MinItemWidth="160" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
@@ -894,7 +877,7 @@
                                     Command="{x:Bind ViewModel.ArrServers.Editor.SaveCommand}"
                                     IsEnabled="{x:Bind ViewModel.ArrServers.Editor.CanAct, Mode=OneWay}"
                                     Style="{StaticResource AccentButtonStyle}" />
-                                <Button Content="Cancel" Command="{x:Bind ViewModel.ArrServers.Editor.CancelCommand}" />
+                                <Button x:Uid="Arr_EditorCancel" Command="{x:Bind ViewModel.ArrServers.Editor.CancelCommand}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -903,7 +886,7 @@
 
             <!-- Metadata Sources -->
             <StackPanel Spacing="12">
-                <TextBlock Text="Metadata Sources" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Uid="Integrations_MetadataSources" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ContentControl
                     Content="{x:Bind ViewModel.Tmdb}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
@@ -919,11 +902,10 @@
                     <StackPanel Spacing="12">
                         <StackPanel Spacing="4">
                             <TextBox
-                                Header="Import a list"
-                                PlaceholderText="https://trakt.tv/users/username/lists/best-of-2024"
+                                x:Uid="Integrations_TraktImportList"
                                 Text="{x:Bind ViewModel.TraktImport.ListUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
-                                Text="Also works with a watchlist URL (…/users/username/watchlist). The list must be public on Trakt's side. Matching titles not already owned or requested are added to your pending Requests queue."
+                                x:Uid="Integrations_TraktImportHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
@@ -956,7 +938,7 @@
               own under Settings > Account > Notifications.
             -->
             <StackPanel Spacing="12">
-                <TextBlock Text="Household channels" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Uid="Integrations_HouseholdChannels" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                 <!--
                   components/webhook-settings-card.tsx. On a 0.43+ server each
@@ -971,9 +953,9 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Sonarr / Radarr webhooks" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock x:Uid="Integrations_WebhooksTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock
-                                    Text="Your server listens for these so Radarr/Sonarr can tell it the moment something starts or finishes downloading. Paste them into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download)."
+                                    x:Uid="Integrations_WebhooksIntro"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="Wrap" />
@@ -1007,7 +989,7 @@
                             Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                             TextWrapping="Wrap" />
                         <Button
-                            Content="Regenerate secret"
+                            x:Uid="Integrations_WebhooksRegenerate"
                             Command="{x:Bind ViewModel.Webhooks.AskCommand}"
                             Visibility="{x:Bind ViewModel.Webhooks.IsAsking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <StackPanel
@@ -1015,12 +997,12 @@
                             Spacing="8"
                             Visibility="{x:Bind ViewModel.Webhooks.IsConfirming, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock
-                                Text="Regenerate? The URLs above stop working immediately."
+                                x:Uid="Integrations_WebhooksRegeneratePrompt"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 VerticalAlignment="Center" />
                             <Button Content="{x:Bind ViewModel.Webhooks.ConfirmLabel, Mode=OneWay}" Command="{x:Bind ViewModel.Webhooks.ConfirmCommand}" />
-                            <Button Content="Cancel" Command="{x:Bind ViewModel.Webhooks.CancelCommand}" />
+                            <Button x:Uid="Integrations_WebhooksCancel" Command="{x:Bind ViewModel.Webhooks.CancelCommand}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1052,9 +1034,9 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                    <TextBlock Text="Telegram notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock x:Uid="Integrations_TelegramTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                     <TextBlock
-                                        Text="Posts to a Telegram chat, group or channel through your own bot whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                        x:Uid="Integrations_TelegramIntro"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         TextWrapping="Wrap" />
@@ -1063,22 +1045,21 @@
                             </Grid>
                             <StackPanel Spacing="4">
                                 <PasswordBox
-                                    Header="Bot token"
+                                    x:Uid="Integrations_TelegramBotToken"
                                     PlaceholderText="{x:Bind ViewModel.Channels.Telegram.SecretPlaceholder, Mode=OneWay}"
                                     Password="{x:Bind ViewModel.Channels.Telegram.BotToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="Message @BotFather on Telegram, send /newbot, and paste the token it gives you."
+                                    x:Uid="Integrations_TelegramBotTokenHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <TextBox
-                                    Header="Chat ID"
-                                    PlaceholderText="123456789, -100…, or @channelname"
+                                    x:Uid="Integrations_TelegramChatId"
                                     Text="{x:Bind ViewModel.Channels.Telegram.ChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="Send your bot a message (or add it to the group), then open api.telegram.org/bot&lt;token&gt;/getUpdates to find the chat’s id."
+                                    x:Uid="Integrations_TelegramChatIdHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
@@ -1121,9 +1102,9 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                    <TextBlock Text="Pushover notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock x:Uid="Integrations_PushoverTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                     <TextBlock
-                                        Text="Sends a push notification through Pushover whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                        x:Uid="Integrations_PushoverIntro"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         TextWrapping="Wrap" />
@@ -1132,21 +1113,21 @@
                             </Grid>
                             <StackPanel Spacing="4">
                                 <PasswordBox
-                                    Header="Application token"
+                                    x:Uid="Integrations_PushoverAppToken"
                                     PlaceholderText="{x:Bind ViewModel.Channels.Pushover.SecretPlaceholder, Mode=OneWay}"
                                     Password="{x:Bind ViewModel.Channels.Pushover.AppToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="Create an application at pushover.net/apps/build and copy its API token."
+                                    x:Uid="Integrations_PushoverAppTokenHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <PasswordBox
-                                    Header="User or group key"
+                                    x:Uid="Integrations_PushoverUserKey"
                                     Password="{x:Bind ViewModel.Channels.Pushover.UserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="Your user key is at the top of your pushover.net dashboard."
+                                    x:Uid="Integrations_PushoverUserKeyHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
@@ -1189,9 +1170,9 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                    <TextBlock Text="Email notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock x:Uid="Integrations_EmailTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                     <TextBlock
-                                        Text="Emails one or more addresses through your own mail server (SMTP) whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                        x:Uid="Integrations_EmailIntro"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         TextWrapping="Wrap" />
@@ -1200,56 +1181,52 @@
                             </Grid>
                             <StackPanel Spacing="4">
                                 <TextBox
-                                    Header="SMTP server"
-                                    PlaceholderText="smtp.gmail.com"
+                                    x:Uid="Integrations_EmailHost"
                                     Text="{x:Bind ViewModel.Channels.Email.Host, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <TextBox
-                                    Header="Port"
+                                    x:Uid="Integrations_EmailPort"
                                     Text="{x:Bind ViewModel.Channels.Email.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="587 for most servers; 465 with &quot;Secure connection&quot; on."
+                                    x:Uid="Integrations_EmailPortHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <TextBox
-                                    Header="Username"
-                                    PlaceholderText="Leave blank if the server needs none"
+                                    x:Uid="Integrations_EmailUsername"
                                     Text="{x:Bind ViewModel.Channels.Email.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <PasswordBox
-                                    Header="Password"
+                                    x:Uid="Integrations_EmailPassword"
                                     PlaceholderText="{x:Bind ViewModel.Channels.Email.SecretPlaceholder, Mode=OneWay}"
                                     Password="{x:Bind ViewModel.Channels.Email.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one."
+                                    x:Uid="Integrations_EmailPasswordHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <TextBox
-                                    Header="From address"
-                                    PlaceholderText="marquee@example.com"
+                                    x:Uid="Integrations_EmailFrom"
                                     Text="{x:Bind ViewModel.Channels.Email.From, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                             <StackPanel Spacing="4">
                                 <TextBox
-                                    Header="Send to"
-                                    PlaceholderText="you@example.com, partner@example.com"
+                                    x:Uid="Integrations_EmailTo"
                                     Text="{x:Bind ViewModel.Channels.Email.To, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock
-                                    Text="One or more addresses, separated by commas."
+                                    x:Uid="Integrations_EmailToHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <CheckBox
-                                Content="Secure connection from the start (TLS, usually port 465)"
+                                x:Uid="Integrations_EmailSecure"
                                 IsChecked="{x:Bind ViewModel.Channels.Email.Secure, Mode=TwoWay}" />
                             <InfoBar
                                 IsOpen="{x:Bind ViewModel.Channels.Email.HasError, Mode=OneWay}"
@@ -1299,7 +1276,7 @@
             -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ApiKeys.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="API keys" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Uid="Integrations_ApiKeysHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <TextBlock
                         Text="{x:Bind ViewModel.ApiKeys.Description}"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -1315,7 +1292,7 @@
                 <Border Style="{StaticResource SettingsCard}" Padding="0">
                     <StackPanel>
                         <TextBlock
-                            Text="No keys yet."
+                            x:Uid="Integrations_ApiKeysEmpty"
                             Visibility="{x:Bind ViewModel.ApiKeys.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                             Margin="20,16"
                             Style="{StaticResource CaptionTextBlockStyle}"
@@ -1356,7 +1333,7 @@
                                             </StackPanel>
                                             <Button
                                                 Grid.Column="1"
-                                                Content="Revoke"
+                                                x:Uid="Integrations_ApiKeyRevoke"
                                                 Command="{x:Bind Revoke}"
                                                 CommandParameter="{x:Bind}"
                                                 VerticalAlignment="Center" />
@@ -1372,7 +1349,7 @@
                             Padding="20,16"
                             Spacing="8"
                             Visibility="{x:Bind ViewModel.ApiKeys.HasNewKey, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="Your new key" Style="{StaticResource FieldLabel}" />
+                            <TextBlock x:Uid="Integrations_ApiKeyNew" Style="{StaticResource FieldLabel}" />
                             <Grid ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -1386,7 +1363,7 @@
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource SystemFillColorCautionBrush}"
                                 TextWrapping="Wrap" />
-                            <Button Content="Done" Command="{x:Bind ViewModel.ApiKeys.DoneCommand}" Style="{StaticResource AccentButtonStyle}" />
+                            <Button x:Uid="Integrations_ApiKeyDone" Command="{x:Bind ViewModel.ApiKeys.DoneCommand}" Style="{StaticResource AccentButtonStyle}" />
                         </StackPanel>
 
                         <!-- Create a key. -->
@@ -1394,24 +1371,23 @@
                             Padding="20,16"
                             Spacing="12"
                             Visibility="{x:Bind ViewModel.ApiKeys.ShowsForm, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="Create a key" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Uid="Integrations_ApiKeyCreateTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBox
-                                Header="Name"
-                                PlaceholderText="Homepage"
+                                x:Uid="Integrations_ApiKeyName"
                                 MaxLength="80"
                                 Text="{x:Bind ViewModel.ApiKeys.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <ComboBox
-                                Header="Access"
+                                x:Uid="Integrations_ApiKeyAccess"
                                 MinWidth="260"
                                 ItemsSource="{x:Bind ViewModel.ApiKeys.ScopeChoices}"
                                 SelectedIndex="{x:Bind ViewModel.ApiKeys.ScopeIndex, Mode=TwoWay}" />
                             <ComboBox
-                                Header="Act as"
+                                x:Uid="Integrations_ApiKeyActAs"
                                 MinWidth="260"
                                 ItemsSource="{x:Bind ViewModel.ApiKeys.ActAsChoices, Mode=OneWay}"
                                 SelectedIndex="{x:Bind ViewModel.ApiKeys.ActAsIndex, Mode=TwoWay}" />
                             <ComboBox
-                                Header="Expires"
+                                x:Uid="Integrations_ApiKeyExpires"
                                 MinWidth="260"
                                 ItemsSource="{x:Bind ViewModel.ApiKeys.ExpiryChoices}"
                                 SelectedIndex="{x:Bind ViewModel.ApiKeys.ExpiryIndex, Mode=TwoWay}" />

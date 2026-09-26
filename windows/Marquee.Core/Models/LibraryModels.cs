@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -248,12 +249,12 @@ public sealed record TitleViewerState
     /// <summary>"Requested Seasons 1–3, waiting for approval", or without the seasons for a whole-series request.</summary>
     public string PendingRequestLine =>
         SeasonLabels.SeasonsLabel(RequestedSeasons) is { } label
-            ? $"Requested {label}, waiting for approval"
-            : "Requested, waiting for approval";
+            ? Loc.Format("Library_RequestedSeasonsWaiting", label)
+            : Loc.Get("Library_RequestedWaiting");
 
     /// <summary>"Also requested by A, B", or null when it shouldn't show.</summary>
     public string? OtherRequestersLine =>
-        OtherRequesters.Count == 0 || AlreadyRequested ? null : $"Also requested by {string.Join(", ", OtherRequesters)}";
+        OtherRequesters.Count == 0 || AlreadyRequested ? null : Loc.Format("Library_AlsoRequestedBy", string.Join(", ", OtherRequesters));
 }
 
 /// <summary>
@@ -279,11 +280,11 @@ public sealed record FourKViewerState
     {
         get
         {
-            if (Status == LibraryStatus.Owned) return "In 4K";
-            if (Status == LibraryStatus.TrackedDownloading) return "4K downloading";
-            if (Status == LibraryStatus.TrackedMonitored) return "4K missing";
-            if (Status == LibraryStatus.TrackedUnmonitored) return "4K not monitored";
-            if (Status == LibraryStatus.ComingSoon) return "4K coming soon";
+            if (Status == LibraryStatus.Owned) return Loc.Get("Library_FourKOwned");
+            if (Status == LibraryStatus.TrackedDownloading) return Loc.Get("Library_FourKDownloading");
+            if (Status == LibraryStatus.TrackedMonitored) return Loc.Get("Library_FourKMissing");
+            if (Status == LibraryStatus.TrackedUnmonitored) return Loc.Get("Library_FourKNotMonitored");
+            if (Status == LibraryStatus.ComingSoon) return Loc.Get("Library_FourKComingSoon");
             return null;
         }
     }

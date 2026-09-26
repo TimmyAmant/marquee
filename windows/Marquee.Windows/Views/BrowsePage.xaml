@@ -68,23 +68,23 @@
                             <ComboBox
                                 ItemsSource="{x:Bind ViewModel.SortOptions}"
                                 SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}"
-                                AutomationProperties.Name="Sort"
+                                x:Uid="Browse_SortBox"
                                 VerticalAlignment="Center" />
                             <ComboBox
                                 ItemsSource="{x:Bind ViewModel.GenreOptions, Mode=OneWay}"
                                 SelectedIndex="{x:Bind ViewModel.GenreIndex, Mode=TwoWay}"
-                                AutomationProperties.Name="Genre"
+                                x:Uid="Browse_GenreBox"
                                 VerticalAlignment="Center" />
                             <ComboBox
                                 ItemsSource="{x:Bind ViewModel.YearOptions}"
                                 SelectedIndex="{x:Bind ViewModel.YearIndex, Mode=TwoWay}"
-                                AutomationProperties.Name="Year"
+                                x:Uid="Browse_YearBox"
                                 VerticalAlignment="Center" />
                             <Button
                                 Content="{x:Bind ViewModel.NetworkChipLabel, Mode=OneWay}"
                                 Command="{x:Bind ViewModel.ClearNetworkCommand}"
                                 Visibility="{x:Bind ViewModel.HasNetworkChip, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                ToolTipService.ToolTip="Clear the network filter"
+                                x:Uid="Browse_ClearNetwork"
                                 VerticalAlignment="Center" />
                             <Button
                                 Content="{x:Bind ViewModel.HideOwnedLabel, Mode=OneWay}"
@@ -139,7 +139,7 @@
                         Visibility="{x:Bind ViewModel.IsLoadingPage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <ProgressRing IsActive="{x:Bind ViewModel.IsLoadingPage, Mode=OneWay}" Width="20" Height="20" />
                         <TextBlock
-                            Text="Loading more…"
+                            x:Uid="Browse_LoadingMore"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             VerticalAlignment="Center" />
@@ -151,15 +151,15 @@
                         VerticalAlignment="Center"
                         Visibility="{x:Bind ViewModel.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock
-                            Text="Couldn't load more"
+                            x:Uid="Browse_PageError"
                             ToolTipService.ToolTip="{x:Bind ViewModel.PageError, Mode=OneWay}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                             VerticalAlignment="Center" />
-                        <Button Content="Retry" Command="{x:Bind ViewModel.RetryPageCommand}" />
+                        <Button x:Uid="Browse_Retry" Command="{x:Bind ViewModel.RetryPageCommand}" />
                     </StackPanel>
                     <Button
-                        Content="Load more"
+                        x:Uid="Browse_LoadMore"
                         Command="{x:Bind ViewModel.LoadMoreCommand}"
                         Visibility="{x:Bind ViewModel.ShowsLoadMoreButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Center"
@@ -197,7 +197,7 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.ResetCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Browse_TryAgain" Command="{x:Bind ViewModel.ResetCommand}" HorizontalAlignment="Center" />
         </StackPanel>
 
         <!-- TMDb isn't configured on the server (api-v1.md deviation 7). -->
@@ -208,7 +208,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Connect TMDb to start browsing" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Browse_TmdbMissingHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.TmdbMissingMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
@@ -216,7 +216,7 @@
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
             <Button
-                Content="Open Settings"
+                x:Uid="Browse_OpenSettings"
                 Command="{x:Bind ViewModel.OpenSettingsCommand}"
                 Visibility="{x:Bind ViewModel.CanOpenSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 HorizontalAlignment="Center" />
@@ -230,9 +230,9 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Nothing left here" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Browse_EmptyHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
-                Text="Try a different genre or year, or turn off &quot;Hide titles you already track&quot;."
+                x:Uid="Browse_EmptyText"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"

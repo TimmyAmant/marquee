@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
@@ -40,11 +41,11 @@ public sealed class ServerAddressParseException : Exception
 
     public static string MessageFor(ServerAddressParseError error, string? scheme = null) => error switch
     {
-        ServerAddressParseError.Empty => "Enter your server's IP address or URL.",
-        ServerAddressParseError.Invalid => "That doesn't look like an address. Try something like 192.168.1.20:3000.",
-        ServerAddressParseError.UnsupportedScheme => $"Marquee servers use http or https, not {scheme}.",
-        ServerAddressParseError.InvalidPort => "The port must be a number between 1 and 65535.",
-        _ => "That doesn't look like an address.",
+        ServerAddressParseError.Empty => Loc.Get("Server_AddressEmpty"),
+        ServerAddressParseError.Invalid => Loc.Get("Server_AddressInvalidExample"),
+        ServerAddressParseError.UnsupportedScheme => Loc.Format("Server_AddressScheme", scheme),
+        ServerAddressParseError.InvalidPort => Loc.Get("Server_AddressPort"),
+        _ => Loc.Get("Server_AddressInvalid"),
     };
 }
 

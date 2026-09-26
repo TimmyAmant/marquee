@@ -46,7 +46,7 @@ export function withApi<P extends RouteParams = RouteParams>(handler: ApiHandler
         // Accept-Language (what getT() would say here, without its imports).
         const scope = apiScope();
         const t = translatorFor(resolveLocale(scope?.language, scope?.acceptLanguage));
-        return jsonError(error.status, error.code, error.messageIn(t));
+        return jsonError(error.status, error.code, error.messageIn(t), error.reason);
       }
     });
 }

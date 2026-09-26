@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // Problem reports (api-v1.md section 7, "Problem reports (0.38+)"). An
@@ -26,12 +28,12 @@ public readonly record struct IssueKind(string Value) : IOpenEnum<IssueKind>
     {
         get
         {
-            if (this == Video) return "Bad video quality";
-            if (this == Audio) return "Audio problem";
-            if (this == Subtitles) return "Subtitles missing or wrong";
-            if (this == WontPlay) return "Won't play";
-            if (this == WrongTitle) return "Wrong movie or episode";
-            if (this == Other) return "Something else";
+            if (this == Video) return Loc.Get("Issue_KindVideo");
+            if (this == Audio) return Loc.Get("Issue_KindAudio");
+            if (this == Subtitles) return Loc.Get("Issue_KindSubtitles");
+            if (this == WontPlay) return Loc.Get("Issue_KindWontPlay");
+            if (this == WrongTitle) return Loc.Get("Issue_KindWrongTitle");
+            if (this == Other) return Loc.Get("Issue_KindOther");
             return OpenEnum.Capitalized(Value);
         }
     }
@@ -116,7 +118,7 @@ public sealed record Issue
     public string KindText => KindLabel.NonBlank() ?? Kind.Label;
 
     /// <summary>"Fixed: Replaced the file", or "Fixed" without a note; empty while open.</summary>
-    public string FixedLine => IsResolved ? (Resolution.NonBlank() is { } note ? $"Fixed: {note}" : "Fixed") : "";
+    public string FixedLine => IsResolved ? (Resolution.NonBlank() is { } note ? Loc.Format("Issue_FixedWithNote", note) : Loc.Get("Issue_Fixed")) : "";
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }
@@ -168,13 +170,13 @@ public static class IssueReportForm
 
     /// <summary>"Whole show", then "Specials" / "Season N" for each season in the given order.</summary>
     public static IReadOnlyList<IssueSeasonChoice> SeasonChoices(IEnumerable<int> seasonNumbers) =>
-        new[] { new IssueSeasonChoice(null, "Whole show") }
+        new[] { new IssueSeasonChoice(null, Loc.Get("Issue_WholeShow")) }
             .Concat(seasonNumbers.Distinct().Select(number =>
-                new IssueSeasonChoice(number, number == 0 ? "Specials" : $"Season {number.ToString(System.Globalization.CultureInfo.CurrentCulture)}")))
+                new IssueSeasonChoice(number, number == 0 ? Loc.Get("Issue_Specials") : Loc.Format("Issue_Season", number))))
             .ToList();
 
     /// <summary>The note's label: "What's wrong?" for Something else, where it's required.</summary>
-    public static string MessageHeader(IssueKind? kind) => kind == IssueKind.Other ? "What's wrong?" : "Anything else? (optional)";
+    public static string MessageHeader(IssueKind? kind) => kind == IssueKind.Other ? Loc.Get("Issue_WhatsWrong") : Loc.Get("Issue_AnythingElse");
 
     /// <summary>
     /// The body to send, or the message to show instead: "Pick what's
@@ -187,16 +189,16 @@ public static class IssueReportForm
     {
         if (kind is not { } picked)
         {
-            return (null, "Pick what's wrong.");
+            return (null, Loc.Get("Issue_PickWhatsWrong"));
         }
         var note = message.NonBlank()?.Trim();
         if (picked == IssueKind.Other && note == null)
         {
-            return (null, "Say what's wrong.");
+            return (null, Loc.Get("Issue_SayWhatsWrong"));
         }
         if (note is { Length: > MaxMessageLength })
         {
-            return (null, "Keep it under 1000 characters.");
+            return (null, Loc.Format("Issue_KeepUnder", MaxMessageLength));
         }
         int? season = isTv ? seasonNumber : null;
         int? episode = null;
@@ -204,7 +206,7 @@ public static class IssueReportForm
         {
             if (!int.TryParse(text.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number) || number < 1)
             {
-                return (null, "Season and episode are whole numbers.");
+                return (null, Loc.Get("Issue_WholeNumbers"));
             }
             episode = number;
         }

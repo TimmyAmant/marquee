@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -15,8 +16,8 @@ namespace Marquee.Windows.Controls;
 /// </summary>
 public sealed partial class AddMemberDialog : ContentDialog
 {
-    private const string CreateLabel = "Create account";
-    private const string CreatingLabel = "Creating…";
+    private static string CreateLabel => Loc.Get("Member_CreateAccount");
+    private static string CreatingLabel => Loc.Get("Member_Creating");
 
     private readonly Func<CreateUserRequest, Task<HouseholdMember>> create;
     private bool isSaving;

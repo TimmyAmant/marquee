@@ -24,7 +24,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock Text="Discover" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="DiscoverSettings_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
                     Text="{x:Bind ViewModel.DescriptionText}"
                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -38,7 +38,7 @@
             </StackPanel>
             <Button
                 Grid.Column="1"
-                Content="Reset to default"
+                x:Uid="DiscoverSettings_Reset"
                 Command="{x:Bind ViewModel.ResetCommand}"
                 IsEnabled="{x:Bind ViewModel.CanReset, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.HasRows, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -57,7 +57,7 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                 TextWrapping="Wrap" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+            <Button x:Uid="DiscoverSettings_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
         </StackPanel>
         <InfoBar
             IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
@@ -93,7 +93,7 @@
                                     <Button
                                         Command="{x:Bind MoveUpCommand}"
                                         IsEnabled="{x:Bind CanMoveUp}"
-                                        ToolTipService.ToolTip="Move up"
+                                        x:Uid="DiscoverSettings_MoveUp"
                                         AutomationProperties.Name="{x:Bind MoveUpLabel}"
                                         Padding="8,6"
                                         Background="Transparent"
@@ -103,7 +103,7 @@
                                     <Button
                                         Command="{x:Bind MoveDownCommand}"
                                         IsEnabled="{x:Bind CanMoveDown}"
-                                        ToolTipService.ToolTip="Move down"
+                                        x:Uid="DiscoverSettings_MoveDown"
                                         AutomationProperties.Name="{x:Bind MoveDownLabel}"
                                         Padding="8,6"
                                         Background="Transparent"
@@ -130,14 +130,13 @@
                                     Spacing="8"
                                     VerticalAlignment="Center"
                                     Visibility="{x:Bind IsCustom, Converter={StaticResource BoolToVisibility}}">
-                                    <Button Content="Rename" Command="{x:Bind RenameCommand}" />
-                                    <Button Content="Remove" Command="{x:Bind RemoveCommand}" />
+                                    <Button x:Uid="DiscoverSettings_Rename" Command="{x:Bind RenameCommand}" />
+                                    <Button x:Uid="DiscoverSettings_Remove" Command="{x:Bind RemoveCommand}" />
                                 </StackPanel>
                                 <ToggleSwitch
                                     Grid.Column="3"
                                     IsOn="{x:Bind IsShown, Mode=TwoWay}"
-                                    OnContent="Shown"
-                                    OffContent="Hidden"
+                                    x:Uid="DiscoverSettings_ShowSwitch"
                                     MinWidth="0"
                                     AutomationProperties.Name="{x:Bind Title}"
                                     VerticalAlignment="Center" />
@@ -150,11 +149,11 @@
 
         <!-- Add a row of your own, at the end of Discover. -->
         <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasRows, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Add row" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock x:Uid="DiscoverSettings_AddRowHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel Spacing="12">
                     <ComboBox
-                        Header="What it shows"
+                        x:Uid="DiscoverSettings_Kind"
                         MinWidth="280"
                         ItemsSource="{x:Bind ViewModel.KindChoices}"
                         SelectedIndex="{x:Bind ViewModel.KindIndex, Mode=TwoWay}" />
@@ -203,7 +202,7 @@
                     </StackPanel>
 
                     <ComboBox
-                        Header="Movies or series"
+                        x:Uid="DiscoverSettings_MediaType"
                         MinWidth="280"
                         ItemsSource="{x:Bind ViewModel.MediaTypeChoices, Mode=OneWay}"
                         SelectedIndex="{x:Bind ViewModel.MediaTypeIndex, Mode=TwoWay}"
@@ -224,8 +223,7 @@
                         TextWrapping="Wrap" />
 
                     <TextBox
-                        Header="Name (optional)"
-                        PlaceholderText="Named after what it shows"
+                        x:Uid="DiscoverSettings_NewTitle"
                         MaxLength="60"
                         Text="{x:Bind ViewModel.NewTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 

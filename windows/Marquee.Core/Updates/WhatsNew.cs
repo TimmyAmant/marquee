@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -44,7 +45,7 @@ public sealed record WhatsNewContent
         InstalledAppVersion is { } version ? new Uri($"https://github.com/TimmyAmant/marquee/releases/tag/v{version}") : null;
 
     /// <summary>"What's new in Marquee 0.45.3".</summary>
-    public string Title => $"What's new in Marquee {Version}";
+    public string Title => Loc.Format("Update_WhatsNewTitle", Version);
 }
 
 public static class WhatsNew

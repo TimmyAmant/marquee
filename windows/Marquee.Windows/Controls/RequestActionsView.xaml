@@ -24,14 +24,14 @@
                 Visibility="{x:Bind Actions.CanEdit, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 Padding="4,2" />
             <HyperlinkButton
-                Content="Cancel request"
+                x:Uid="RequestActions_CancelRequest"
                 Command="{x:Bind Actions.StartCancelCommand, Mode=OneWay}"
                 IsEnabled="{x:Bind Actions.CanAct, Mode=OneWay}"
                 Visibility="{x:Bind Actions.ShowsCancel, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 Padding="4,2" />
             <StackPanel Orientation="Horizontal" Spacing="4" Visibility="{x:Bind Actions.IsConfirmingCancel, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock
-                    Text="Cancel it?"
+                    x:Uid="RequestActions_CancelIt"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     VerticalAlignment="Center"
@@ -43,7 +43,7 @@
                     Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                     Padding="4,2" />
                 <HyperlinkButton
-                    Content="Keep it"
+                    x:Uid="RequestActions_KeepIt"
                     Command="{x:Bind Actions.KeepItCommand, Mode=OneWay}"
                     IsEnabled="{x:Bind Actions.CanAct, Mode=OneWay}"
                     Padding="4,2" />

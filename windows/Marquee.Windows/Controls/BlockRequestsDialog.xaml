@@ -11,23 +11,20 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Block requests"
-    PrimaryButtonText="Block"
-    CloseButtonText="Cancel"
+    x:Uid="Blocklist_Dialog"
     DefaultButton="Primary"
     PrimaryButtonClick="OnPrimaryButtonClick"
     Closing="OnClosing">
 
     <StackPanel Spacing="14" MinWidth="380">
         <TextBlock
-            Text="Nobody can request this title (you can still add it yourself). Members see your reason in place of Request."
+            x:Uid="Blocklist_DialogText"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
         <TextBox
             x:Name="ReasonBox"
-            Header="Reason (optional)"
-            PlaceholderText="Why, for whoever asks"
+            x:Uid="Blocklist_Reason"
             MaxLength="200" />
         <TextBlock
             x:Name="ErrorText"

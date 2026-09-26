@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // "Trakt lists" on Settings › Account (api-v1.md section 11, 0.49+): keep a
@@ -62,10 +64,10 @@ public sealed record TraktSync
     public string Summary(DateTimeOffset now)
     {
         var checkedText = LastSyncedAt is { } synced
-            ? $"Checked {NotificationItem.TimeAgoLabel(synced, now)}"
-            : "Not checked yet";
+            ? Loc.Format("Model_SyncChecked", NotificationItem.TimeAgoLabel(synced, now))
+            : Loc.Get("Model_TraktNotChecked");
         return RequestedCount > 0
-            ? $"{checkedText} · {RequestedCount} {(RequestedCount == 1 ? "title" : "titles")} requested so far"
+            ? Loc.Plural("Model_SyncRequestedSoFar", RequestedCount, checkedText)
             : checkedText;
     }
 }
@@ -94,23 +96,20 @@ public sealed record TraktSyncTypesRequest(bool? Movies, bool? Tv);
 /// <summary>The Trakt lists card's words, the same on every app. Pure.</summary>
 public static class TraktSyncLabels
 {
-    public const string Description =
-        "Keep a public Trakt watchlist or list in sync: new movies and shows on it are requested for you every few hours.";
+    public static string Description => Loc.Get("Model_TraktDescription");
 
     /// <summary>Shown instead of the add form while <see cref="TraktSyncs.Available"/> is false.</summary>
-    public const string UnavailableMessage =
-        "Trakt isn't connected. The admin can connect it in Settings → Integrations.";
+    public static string UnavailableMessage => Loc.Get("Model_TraktUnavailable");
 
     /// <summary>The add form's blank-link message, shown without asking the server.</summary>
-    public const string BlankLinkMessage =
-        "Paste a public Trakt list or watchlist link, like https://trakt.tv/users/someone/watchlist.";
+    public static string BlankLinkMessage => Loc.Get("Model_TraktBlankLink");
 
     /// <summary>Both switches off: the server's own words for it.</summary>
-    public const string NoKindsMessage = "Pick movies, TV shows or both.";
+    public static string NoKindsMessage => Loc.Get("Model_TraktNoKinds");
 
-    public const string EmptyText = "No Trakt lists yet.";
+    public static string EmptyText => Loc.Get("Model_TraktEmpty");
 
-    public const string RequestExistingLabel = "Also request what's on it now";
+    public static string RequestExistingLabel => Loc.Get("Model_TraktRequestExisting");
 
     /// <summary>
     /// The add form's body, or the message to show instead: a blank link or
@@ -131,5 +130,5 @@ public static class TraktSyncLabels
 
     /// <summary>"Requests as Anna" for a list that isn't yours (the admin's view of everyone's); null for your own.</summary>
     public static string? OwnerLine(TraktSync sync, Guid? viewerId) =>
-        viewerId is { } me && sync.Owner.Id == me ? null : $"Requests as {sync.Owner.Label}";
+        viewerId is { } me && sync.Owner.Id == me ? null : Loc.Format("Model_TraktOwnerLine", sync.Owner.Label);
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -45,13 +46,13 @@ public readonly record struct DiscoverRowKind(string Value) : IOpenEnum<Discover
 
     /// <summary>The Add row picker's words (the doc's "Website label").</summary>
     public string Label =>
-        this == Keyword ? "TMDb keyword"
-        : this == Genre ? "Genre"
-        : this == Company ? "Studio"
-        : this == Network ? "Network"
-        : this == TmdbList ? "TMDb list"
-        : this == TraktList ? "Trakt list"
-        : this == Library ? "Recently added to Plex/Jellyfin"
+        this == Keyword ? Loc.Get("Rows_KindKeyword")
+        : this == Genre ? Loc.Get("Rows_KindGenre")
+        : this == Company ? Loc.Get("Rows_KindStudio")
+        : this == Network ? Loc.Get("Rows_KindNetwork")
+        : this == TmdbList ? Loc.Get("Rows_KindTmdbList")
+        : this == TraktList ? Loc.Get("Rows_KindTraktList")
+        : this == Library ? Loc.Get("Rows_KindLibrary")
         : OpenEnum.Capitalized(Value);
 }
 
@@ -69,9 +70,9 @@ public readonly record struct ShelfMediaType(string Value) : IOpenEnum<ShelfMedi
 
     /// <summary>"Movies and series", "Movies", "Series".</summary>
     public string Label =>
-        this == All ? "Movies and series"
-        : this == Movie ? "Movies"
-        : this == Tv ? "Series"
+        this == All ? Loc.Get("Rows_MediaAll")
+        : this == Movie ? Loc.Get("Rows_MediaMovies")
+        : this == Tv ? Loc.Get("Rows_MediaSeries")
         : OpenEnum.Capitalized(Value);
 }
 
@@ -141,18 +142,18 @@ public abstract record DiscoverRow(string Id, string Title, SeeAllTarget? SeeAll
 public static class DiscoverRows
 {
     /// <summary>Every built-in row's name, as the website has always shown it, in the fixed page order.</summary>
-    public static IReadOnlyList<(string Key, string Title)> BuiltIn { get; } =
+    public static IReadOnlyList<(string Key, string Title)> BuiltIn =>
     [
-        (DiscoverShelfKey.RecentlyAdded, "Recently Added"),
-        (DiscoverShelfKey.Trending, "Trending"),
-        (DiscoverShelfKey.PopularMovies, "Popular Movies"),
-        (DiscoverShelfKey.MovieGenres, "Movie Genres"),
-        (DiscoverShelfKey.UpcomingMovies, "Upcoming Movies"),
-        (DiscoverShelfKey.Studios, "Studios"),
-        (DiscoverShelfKey.PopularSeries, "Popular Series"),
-        (DiscoverShelfKey.SeriesGenres, "Series Genres"),
-        (DiscoverShelfKey.UpcomingSeries, "Upcoming Series"),
-        (DiscoverShelfKey.Networks, "Networks"),
+        (DiscoverShelfKey.RecentlyAdded, Loc.Get("Rows_RecentlyAdded")),
+        (DiscoverShelfKey.Trending, Loc.Get("Rows_Trending")),
+        (DiscoverShelfKey.PopularMovies, Loc.Get("Rows_PopularMovies")),
+        (DiscoverShelfKey.MovieGenres, Loc.Get("Rows_MovieGenres")),
+        (DiscoverShelfKey.UpcomingMovies, Loc.Get("Rows_UpcomingMovies")),
+        (DiscoverShelfKey.Studios, Loc.Get("Rows_Studios")),
+        (DiscoverShelfKey.PopularSeries, Loc.Get("Rows_PopularSeries")),
+        (DiscoverShelfKey.SeriesGenres, Loc.Get("Rows_SeriesGenres")),
+        (DiscoverShelfKey.UpcomingSeries, Loc.Get("Rows_UpcomingSeries")),
+        (DiscoverShelfKey.Networks, Loc.Get("Rows_Networks")),
     ];
 
     /// <summary>
@@ -316,7 +317,7 @@ public sealed record DiscoverShelfSetting
         {
             if (!Custom)
             {
-                return "Built-in row";
+                return Loc.Get("Rows_BuiltInRow");
             }
             var parts = new List<string> { Kind.Label };
             if (Source is { } source)
@@ -478,10 +479,10 @@ public static class DiscoverLayoutEditing
 
     /// <summary>The Add row search box's placeholder for a kind with a search.</summary>
     public static string SearchPlaceholder(DiscoverRowKind kind) =>
-        kind == DiscoverRowKind.Keyword ? "Search TMDb keywords, like anime"
-        : kind == DiscoverRowKind.Company ? "Search studios, like A24"
-        : kind == DiscoverRowKind.Network ? "Search networks, like Netflix"
-        : kind == DiscoverRowKind.Genre ? "Filter genres"
+        kind == DiscoverRowKind.Keyword ? Loc.Get("Rows_SearchKeywords")
+        : kind == DiscoverRowKind.Company ? Loc.Get("Rows_SearchStudios")
+        : kind == DiscoverRowKind.Network ? Loc.Get("Rows_SearchNetworks")
+        : kind == DiscoverRowKind.Genre ? Loc.Get("Rows_FilterGenres")
         : "";
 
     /// <summary>
@@ -501,7 +502,7 @@ public static class DiscoverLayoutEditing
         var name = title.NonBlank()?.Trim();
         if (name is { Length: > MaxTitleLength })
         {
-            return (null, $"Keep the row's name under {MaxTitleLength} characters.");
+            return (null, Loc.Format("Rows_NameTooLong", MaxTitleLength));
         }
         var choices = MediaTypeChoices(kind);
         ShelfMediaType? sentMediaType = choices.Count == 0 ? null
@@ -516,7 +517,7 @@ public static class DiscoverLayoutEditing
         {
             if (link.NonBlank() is not { } url)
             {
-                return (null, "Paste a public Trakt list or watchlist link, like https://trakt.tv/users/someone/lists/favourites.");
+                return (null, Loc.Get("Rows_NeedTraktLink"));
             }
             return (new NewDiscoverShelfRequest(kind, Url: url.Trim(), Title: name), null);
         }
@@ -524,7 +525,7 @@ public static class DiscoverLayoutEditing
         {
             if (link.NonBlank()?.Trim() is not { } text)
             {
-                return (null, "Give the TMDb list's number or its themoviedb.org/list link.");
+                return (null, Loc.Get("Rows_NeedTmdbList"));
             }
             return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number > 0
                 ? (new NewDiscoverShelfRequest(kind, TmdbId: number, Title: name), null)
@@ -532,16 +533,20 @@ public static class DiscoverLayoutEditing
         }
         if (LookupKind(kind) == null)
         {
-            return (null, "Pick what the row shows.");
+            return (null, Loc.Get("Rows_PickWhat"));
         }
         if (picked == null)
         {
-            return (null, $"Pick a {PickNoun(kind)}.");
+            return (null, PickMessage(kind));
         }
         return (new NewDiscoverShelfRequest(kind, TmdbId: picked.TmdbId, MediaType: sentMediaType, Name: picked.Name, Title: name), null);
     }
 
-    /// <summary>The server's word for what to pick: "keyword", "genre", "studio", "network".</summary>
-    private static string PickNoun(DiscoverRowKind kind) =>
-        kind == DiscoverRowKind.Company ? "studio" : kind.Value;
+    /// <summary>The server's message for nothing picked: "Pick a keyword.", "Pick a genre.", "Pick a studio.", "Pick a network.".</summary>
+    private static string PickMessage(DiscoverRowKind kind) =>
+        kind == DiscoverRowKind.Keyword ? Loc.Get("Rows_PickKeyword")
+        : kind == DiscoverRowKind.Genre ? Loc.Get("Rows_PickGenre")
+        : kind == DiscoverRowKind.Company ? Loc.Get("Rows_PickStudio")
+        : kind == DiscoverRowKind.Network ? Loc.Get("Rows_PickNetwork")
+        : Loc.Get("Rows_PickWhat");
 }

@@ -24,7 +24,7 @@ public sealed class IntegrationsSummaryTests
     {
         IReadOnlyList<SyncedServer> servers = [new SyncedServer { Name = "  " }, new SyncedServer { Name = "Attic" }, new SyncedServer { Name = "Den" }];
 
-        Assert.Equal("Attic, Den · 3 movies · 1 TV shows", LibrarySummary.Line(servers, 3, 1, 0));
+        Assert.Equal("Attic, Den · 3 movies · 1 TV show", LibrarySummary.Line(servers, 3, 1, 0));
         Assert.Equal("0 movies · 0 TV shows", LibrarySummary.Line([], 0, 0, 0));
     }
 

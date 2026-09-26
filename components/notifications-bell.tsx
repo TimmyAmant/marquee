@@ -40,7 +40,8 @@ function useRailShowing(): boolean {
  * The message is stored in its recipient's language, so the separator
  * before the note may be French's no-break space before the colon too. */
 function sharedHeadline(message: string, note: string): string {
-  for (const separator of [": ", " : ", " : "]) {
+  // French puts a no-break space before the colon; try it before ": ".
+  for (const separator of ["\u00a0: ", " : ", ": "]) {
     const suffix = `${separator}${note}`;
     if (message.endsWith(suffix)) return message.slice(0, -suffix.length);
   }

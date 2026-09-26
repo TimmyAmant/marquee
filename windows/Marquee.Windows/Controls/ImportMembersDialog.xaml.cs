@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.ViewModels;
 using Microsoft.UI.Xaml;
@@ -17,8 +18,8 @@ namespace Marquee.Windows.Controls;
 /// </summary>
 public sealed partial class ImportMembersDialog : ContentDialog
 {
-    private const string ImportLabel = "Import";
-    private const string ImportingLabel = "Importing…";
+    private static string ImportLabel => Loc.Get("Member_Import");
+    private static string ImportingLabel => Loc.Get("Member_Importing");
 
     private readonly MediaServerKind server;
     private readonly string serverName;
@@ -39,8 +40,8 @@ public sealed partial class ImportMembersDialog : ContentDialog
         this.load = load;
         this.import = import;
         InitializeComponent();
-        Title = $"Import from {serverName}";
-        IntroText.Text = $"Each person you pick gets a member account linked to their {serverName} account, so they can sign in with it.";
+        Title = Loc.Format("Member_ImportTitle", serverName);
+        IntroText.Text = Loc.Format("Member_ImportIntro", serverName);
     }
 
     /// <summary>What the server imported; null until Import succeeds.</summary>
@@ -63,7 +64,7 @@ public sealed partial class ImportMembersDialog : ContentDialog
             CandidateList.ItemsSource = rows;
             if (rows.Count == 0)
             {
-                EmptyText.Text = $"No {serverName} users to import.";
+                EmptyText.Text = Loc.Format("Member_ImportEmpty", serverName);
                 EmptyText.Visibility = Visibility.Visible;
             }
         }
@@ -88,7 +89,7 @@ public sealed partial class ImportMembersDialog : ContentDialog
         IsPrimaryButtonEnabled = !isSaving && count > 0;
         if (!isSaving)
         {
-            PrimaryButtonText = count > 0 ? $"{ImportLabel} {count}" : ImportLabel;
+            PrimaryButtonText = count > 0 ? Loc.Format("Member_ImportCount", count) : ImportLabel;
         }
     }
 
