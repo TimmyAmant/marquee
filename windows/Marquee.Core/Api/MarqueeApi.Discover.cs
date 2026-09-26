@@ -23,7 +23,7 @@ public sealed class DiscoverEndpoints(MarqueeApi.Transport transport)
 
     /// <summary>
     /// <c>GET /discover/lists/{list}?page=</c>: one page of a shelf's full
-    /// list (0.42.3+). Continue while <see cref="DiscoverListResults.HasMorePages"/>.
+    /// list (0.42.4+). Continue while <see cref="DiscoverListResults.HasMorePages"/>.
     /// An unknown list is NotFound.
     /// </summary>
     public Task<DiscoverListResults> ListPageAsync(DiscoverListKind list, int page = 1, CancellationToken ct = default) =>

@@ -129,7 +129,7 @@ public sealed record DiscoverShelves
 
     /// <summary>
     /// Where each shelf's "See all" goes, keyed like the shelves
-    /// (<see cref="DiscoverShelfKey"/>). 0.42.3+; an older server leaves it
+    /// (<see cref="DiscoverShelfKey"/>). 0.42.4+; an older server leaves it
     /// out. Read it through <see cref="DiscoverSeeAll.Resolve"/>, which
     /// supplies the older server's fallback.
     /// </summary>

@@ -226,7 +226,7 @@ export type DiscoverShelves = {
   seriesGenres: GenreTile[];
   upcomingSeries: TitleCard[];
   networks: NetworkCard[];
-  /** 0.42.3+ (an older server omits it): where each shelf's "See all" goes.
+  /** 0.42.4+ (an older server omits it): where each shelf's "See all" goes.
    * Every shelf has one. */
   seeAll: Record<DiscoverShelfKey, SeeAllTarget>;
 };

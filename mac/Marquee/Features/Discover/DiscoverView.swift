@@ -132,7 +132,7 @@ struct DiscoverView: View {
     }
 
     /// What `shelf`'s "See all" chevron does (`seeAll` in the response, or
-    /// the pre-0.42.3 defaults); nil hides it.
+    /// the pre-0.42.4 defaults); nil hides it.
     private func seeAll(_ shelf: API.DiscoverShelf, in shelves: API.DiscoverShelves) -> (() -> Void)? {
         switch shelves.seeAllDestination(shelf) {
         case let .list(list): return { model.open(.discoverList(list)) }

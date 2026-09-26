@@ -13,7 +13,7 @@ extension MarqueeAPI {
         }
 
         /// `GET /discover/lists/{list}` — one page of a shelf's full list
-        /// (0.42.3+). Continue while `hasMorePages`. `recently-added` needs no
+        /// (0.42.4+). Continue while `hasMorePages`. `recently-added` needs no
         /// TMDb; the others do.
         func list(_ list: API.DiscoverList, page: Int = 1) async throws -> API.DiscoverListPage {
             guard list.isKnown else { throw APIError.notFound }

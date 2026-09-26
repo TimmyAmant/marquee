@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.42.4",
+    date: "2026-09-26",
+    changes: [
+      "See all on every Discover shelf, on the website and in the Mac and Windows apps: Trending, Upcoming Movies, Upcoming Series and Recently Added open their full list (it keeps loading as you scroll); Popular, Genres, Studios and Networks open the Movies or Series grid.",
+      "Windows: ‹ › buttons on every sideways row (Discover, Because you watched, cast, More like this…) to page back and forth, like the Mac.",
+      "Shelf headers now match everywhere: the title, the See all button right after it, and the arrows at the right.",
+    ],
+  },
+  {
     version: "0.42.3",
     date: "2026-09-26",
     changes: [

@@ -97,7 +97,7 @@ extension API {
         let seriesGenres: [GenreTile]
         let upcomingSeries: [TitleCard]
         let networks: [NetworkCard]
-        /// Where each shelf's "See all" goes (0.42.3+); nil from an older server.
+        /// Where each shelf's "See all" goes (0.42.4+); nil from an older server.
         let seeAll: DiscoverSeeAll?
 
         /// Where `shelf`'s "See all" chevron goes, nil for none.
@@ -247,7 +247,7 @@ extension API {
         case browse(MediaType)
 
         /// `shelf`'s destination under `seeAll`. Without it (a server older
-        /// than 0.42.3) only Popular Movies/Series and the genre shelves have
+        /// than 0.42.4) only Popular Movies/Series and the genre shelves have
         /// one, to the grids; an unknown type, list or media type is none.
         static func resolve(_ shelf: DiscoverShelf, in seeAll: DiscoverSeeAll?) -> SeeAllDestination? {
             guard let seeAll else {
