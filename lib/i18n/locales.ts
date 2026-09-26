@@ -83,6 +83,17 @@ export function negotiateLocale(acceptLanguage: string | null | undefined): Loca
   return null;
 }
 
+/** A submitted language: null/"" to follow the browser, or exactly one of
+ * ours (any case). Anything else — including a regional variant we don't
+ * have, like "es-MX" — is refused rather than quietly saved as something
+ * other than what was asked for. */
+export function parseLanguageInput(value: unknown): { ok: true; language: Locale | null } | { ok: false } {
+  if (value === null || value === undefined || value === "") return { ok: true, language: null };
+  if (typeof value !== "string") return { ok: false };
+  const language = LOCALES.find((locale) => locale.toLowerCase() === value.trim().replace(/_/g, "-").toLowerCase());
+  return language ? { ok: true, language } : { ok: false };
+}
+
 /** The account's choice, else the browser's, else English. */
 export function resolveLocale(preferred: unknown, acceptLanguage: string | null | undefined): Locale {
   return parseLocale(preferred) ?? negotiateLocale(acceptLanguage) ?? DEFAULT_LOCALE;
