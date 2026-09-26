@@ -131,6 +131,21 @@ function resyncInBackground(ownerId: string, kind: ArrProvider) {
   });
 }
 
+/** After a standard server of this kind went away (removed, or moved to
+ * 4K): re-read the library from the ones left, or — with none left — drop
+ * its cached statuses at once, as disconnecting did before. */
+async function afterLibraryServerLeft(ownerId: string, kind: ArrProvider) {
+  const remaining = await listArrServers(ownerId, { kind, fourK: false });
+  if (remaining.length > 0) {
+    resyncInBackground(ownerId, kind);
+    return;
+  }
+  // A sync still running would write rows back after the delete below;
+  // with no server left it stops at its next check, so wait for that.
+  await waitForArrSync(ownerId, kind);
+  await db.delete(arrStatusCache).where(and(eq(arrStatusCache.userId, ownerId), eq(arrStatusCache.provider, kind)));
+}
+
 /** "Add server": tests the connection, then saves it. Quality profile and
  * root folder default to the server's first when not given. */
 export async function createArrServer(
@@ -250,7 +265,9 @@ export async function updateArrServer(
   });
 
   // In or out of the library, or pointed at another server: read it again.
-  if (movedGroup || urlChanged || input.apiKey) resyncInBackground(ownerId, current.kind);
+  // Moved out of it into 4K, it may have been the last standard one.
+  if (movedGroup && fourK) await afterLibraryServerLeft(ownerId, current.kind);
+  else if (movedGroup || ((urlChanged || input.apiKey) && !fourK)) resyncInBackground(ownerId, current.kind);
   revalidateServers();
   const server = await getArrServer(ownerId, serverId);
   if (!server) return fail("not_found", SERVER_NOT_FOUND);
@@ -269,19 +286,7 @@ export async function deleteArrServer(ownerId: string, serverId: string): Promis
     await ensureDefaults(tx, ownerId);
   });
 
-  if (!current.is4k) {
-    const remaining = await listArrServers(ownerId, { kind: current.kind, fourK: false });
-    if (remaining.length === 0) {
-      // A sync still running would write rows back after the delete below;
-      // with no server left it stops at its next check, so wait for that.
-      await waitForArrSync(ownerId, current.kind);
-      await db
-        .delete(arrStatusCache)
-        .where(and(eq(arrStatusCache.userId, ownerId), eq(arrStatusCache.provider, current.kind)));
-    } else {
-      resyncInBackground(ownerId, current.kind);
-    }
-  }
+  if (!current.is4k) await afterLibraryServerLeft(ownerId, current.kind);
   revalidateServers();
   return { ok: true };
 }

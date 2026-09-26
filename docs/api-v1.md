@@ -1348,7 +1348,7 @@ is the plain Approve it always was. Admins and trusted members may send them.
 | `qualityProfileId` | number | a quality profile of that server |
 | `rootFolderPath` | string | a root folder of that server |
 | `tags` | number[] | tag ids of that server (`[]` = no tags) |
-| `seriesType` | string | TV only: `"standard"`, `"daily"` or `"anime"` (ignored for movies) |
+| `seriesType` | string | TV only: `"standard"`, `"daily"` or `"anime"` (a movie ignores it, but a value sent must still be one of these) |
 
 Only used when the title is new to that server; one it already has keeps its
 own settings (Approve then just turns monitoring on, as before). What was
