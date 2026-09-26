@@ -11,6 +11,8 @@ enum NavRailPosition: String, CaseIterable, Identifiable {
     case bottom
 
     static let storageKey = "marquee-nav-position"
+    /// The space between a top or bottom bar and the page.
+    static let bandGap: CGFloat = 12
 
     /// What's stored, or Left for nothing or a value this build doesn't know.
     init(stored: String?) {
@@ -66,13 +68,16 @@ enum NavRailPosition: String, CaseIterable, Identifiable {
 
     /// How far pages keep clear of the rail: `Metrics.contentLeading` (its
     /// 16 inset plus its 56 thickness) on the rail's edge, nothing elsewhere.
+    /// A bar along the top or bottom gets its own band with the same 16 on
+    /// the page's side too, so it has room to breathe above the artwork.
     var contentInsets: EdgeInsets {
         let reach = Metrics.contentLeading
+        let band = reach + Self.bandGap
         switch self {
         case .left: return EdgeInsets(top: 0, leading: reach, bottom: 0, trailing: 0)
         case .right: return EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: reach)
-        case .top: return EdgeInsets(top: reach, leading: 0, bottom: 0, trailing: 0)
-        case .bottom: return EdgeInsets(top: 0, leading: 0, bottom: reach, trailing: 0)
+        case .top: return EdgeInsets(top: band, leading: 0, bottom: 0, trailing: 0)
+        case .bottom: return EdgeInsets(top: 0, leading: 0, bottom: band, trailing: 0)
         }
     }
 }

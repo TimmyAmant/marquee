@@ -23,12 +23,16 @@ struct MainWindowView: View {
         // clicks or VoiceOver, so Tab and Escape stay with the panel.
         .disabled(model.isSearchOpen)
         .accessibilityHidden(model.isSearchOpen)
-        // The rail floats over the page's left edge (or whichever edge
-        // Settings put it on), so pages lay out clear of it. Their scroll
-        // views run under it to the window edge (`scrollsUnderNavRail()`),
-        // as does the title page's backdrop.
-        .safeAreaPadding(railInsets)
-        .environment(\.navRailInsets, railInsets)
+        // A rail on the left or right floats over the page's edge, so pages
+        // lay out clear of it while their scroll views run under it to the
+        // window edge (`scrollsUnderNavRail()`), as does the title page's
+        // backdrop. A bar along the top or bottom gets a band of its own
+        // instead, so it never sits on posters or artwork (like Windows).
+        .safeAreaPadding(EdgeInsets(top: 0, leading: railInsets.leading, bottom: 0, trailing: railInsets.trailing))
+        .environment(\.navRailInsets, EdgeInsets(top: 0, leading: railInsets.leading, bottom: 0, trailing: railInsets.trailing))
+        .clipped()
+        .padding(.top, railInsets.top)
+        .padding(.bottom, railInsets.bottom)
         .background(Theme.bg0)
         .safeAreaInset(edge: .top, spacing: 0) {
             if model.live.isOffline {
