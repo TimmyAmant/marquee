@@ -408,7 +408,7 @@ async function runTraktSync(id: string): Promise<SyncOutcome> {
   }
 
   await setState({ lastSyncedAt: new Date(), lastError: limited ? storedError(LIMITED) : null });
-  await notifyReviewersOfTraktSync(row.userId, newRequestIds, traktListName(list)).catch(() => undefined);
+  await notifyReviewersOfTraktSync(row.userId, newRequestIds, (t) => traktListName(list, t)).catch(() => undefined);
   return { requested };
 }
 

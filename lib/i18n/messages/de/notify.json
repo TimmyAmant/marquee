@@ -288,5 +288,6 @@
   "arrUrlNotFull": "Gib die vollständige URL des Servers ein, beginnend mit http:// oder https://.",
   "fieldMustBeNumber": "„{field}“ muss eine Zahl sein.",
   "fieldMustBeNumberList": "„{field}“ muss eine Liste von Zahlen sein.",
-  "seriesTypeInvalid": "„seriesType“ muss standard, daily oder anime sein."
+  "seriesTypeInvalid": "„seriesType“ muss standard, daily oder anime sein.",
+  "fieldMustBeString": "„{field}“ muss eine Zeichenkette sein."
 }

@@ -38,6 +38,13 @@ vi.mock("@/lib/tmdb/cache", () => ({ getOrFetchTitle }));
 
 import { shareTitle } from "./index";
 import { attemptCount } from "@/lib/rate-limit";
+import { englishT, translatorFor } from "@/lib/i18n/catalog";
+
+/** A call's message, as someone reading English (or `locale`) gets it. */
+function messageOf(call: number, locale: "en" | "fr" = "en"): string {
+  const message = createNotification.mock.calls[call][0].message as string | ((t: unknown) => string);
+  return typeof message === "function" ? message(locale === "en" ? englishT() : translatorFor(locale)) : message;
+}
 
 // Each test shares as a fresh sender, so the hourly budget starts full.
 let sender = SUSAN;
@@ -59,18 +66,20 @@ describe("shareTitle", () => {
       tmdbId: 425,
       title: "Ice Age",
       eventType: "title_shared",
-      message: "Susan shared “Ice Age” with you: You'd love this",
+      // Written in each recipient's language when it's saved.
+      message: expect.any(Function),
       relay: false,
       senderUserId: sender,
       note: "You'd love this",
     });
+    expect(messageOf(0)).toBe("Susan shared “Ice Age” with you: You'd love this");
+    expect(messageOf(0, "fr")).toBe("Susan a partagé «\u00a0Ice Age\u00a0» avec vous\u00a0: You'd love this");
   });
 
   it("goes without a note", async () => {
     await shareTitle(sender, "tv", 1396, { userIds: [KID] });
-    expect(createNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Susan shared “Ice Age” with you", note: null }),
-    );
+    expect(createNotification).toHaveBeenCalledWith(expect.objectContaining({ note: null }));
+    expect(messageOf(0)).toBe("Susan shared “Ice Age” with you");
   });
 
   it("only goes to people in the household, never back to the sender", async () => {

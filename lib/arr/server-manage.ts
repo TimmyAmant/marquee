@@ -25,9 +25,8 @@ import * as radarr from "@/lib/radarr/client";
 // Integrations on the website and /api/v1/settings/arr-servers. Callers have
 // already checked the actor is the admin; `ownerId` is that admin.
 
-/** English, for callers outside a request's language (lib/api/routes). */
-export const SERVER_NOT_FOUND = "Server not found.";
-const NOT_FOUND_KEY = "notify.serverNotFound" as const;
+/** "Server not found.": a message key, for the API routes' msg(). */
+export const SERVER_NOT_FOUND = "notify.serverNotFound" as const;
 
 export function newWebhookSecret(): string {
   return randomBytes(24).toString("hex");
@@ -109,7 +108,7 @@ export async function testArrServerConnection(
 ): Promise<CoreResult<ArrConnectionCheck>> {
   if (typeof input.serverId === "string" && input.serverId) {
     const server = await getArrServer(ownerId, input.serverId);
-    if (!server) return fail("not_found", (await getT())(NOT_FOUND_KEY));
+    if (!server) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
     const baseUrl = input.baseUrl || server.baseUrl;
     const apiKey = input.apiKey || (baseUrl === server.baseUrl ? server.apiKey : "");
     if (!input.apiKey && baseUrl !== server.baseUrl) return fail("invalid", (await getT())("notify.arrUrlNeedsKey"));
@@ -205,7 +204,7 @@ export async function createArrServer(
   if (!fourK) resyncInBackground(ownerId, kind);
   revalidateServers();
   const server = await getArrServer(ownerId, id);
-  if (!server) return fail("internal", (await getT())(NOT_FOUND_KEY));
+  if (!server) return fail("internal", (await getT())(SERVER_NOT_FOUND));
   return { ok: true, server };
 }
 
@@ -217,7 +216,7 @@ export async function updateArrServer(
   input: ArrServerInput,
 ): Promise<CoreResult<{ server: ArrServer }>> {
   const current = await getArrServer(ownerId, serverId);
-  if (!current) return fail("not_found", (await getT())(NOT_FOUND_KEY));
+  if (!current) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
 
   const baseUrl = input.baseUrl || current.baseUrl;
   const urlChanged = baseUrl !== current.baseUrl;
@@ -272,7 +271,7 @@ export async function updateArrServer(
   else if (movedGroup || ((urlChanged || input.apiKey) && !fourK)) resyncInBackground(ownerId, current.kind);
   revalidateServers();
   const server = await getArrServer(ownerId, serverId);
-  if (!server) return fail("not_found", (await getT())(NOT_FOUND_KEY));
+  if (!server) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
   return { ok: true, server };
 }
 
@@ -281,7 +280,7 @@ export async function updateArrServer(
  * statuses go at once (as disconnecting did before). */
 export async function deleteArrServer(ownerId: string, serverId: string): Promise<CoreResult> {
   const current = await getArrServer(ownerId, serverId);
-  if (!current) return fail("not_found", (await getT())(NOT_FOUND_KEY));
+  if (!current) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
 
   await withServerLock(ownerId, async (tx) => {
     await tx.delete(arrServers).where(and(eq(arrServers.userId, ownerId), eq(arrServers.id, serverId)));
@@ -302,7 +301,7 @@ export async function regenerateArrServerSecret(
     .set({ webhookSecret: newWebhookSecret(), updatedAt: new Date() })
     .where(and(eq(arrServers.userId, ownerId), eq(arrServers.id, serverId)))
     .returning();
-  if (!row) return fail("not_found", (await getT())(NOT_FOUND_KEY));
+  if (!row) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
   revalidateServers();
   return { ok: true, server: toArrServer(row) };
 }
@@ -313,7 +312,7 @@ export async function getArrServerOptions(
   serverId: string,
 ): Promise<CoreResult<ArrPickerOptions>> {
   const server = await getArrServer(ownerId, serverId);
-  if (!server) return fail("not_found", (await getT())(NOT_FOUND_KEY));
+  if (!server) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
   try {
     return { ok: true, ...(await fetchPickerOptions(server)) };
   } catch {

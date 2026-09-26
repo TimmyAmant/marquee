@@ -43,7 +43,7 @@ export function parseArrServerInput(body: Record<string, unknown>, t: Translator
   for (const key of ["name", "baseUrl", "apiKey"] as const) {
     const value = body[key];
     if (value === undefined || value === null) continue;
-    if (typeof value !== "string") return { ok: false, error: t("notify.fieldMustBeText", { field: key }) };
+    if (typeof value !== "string") return { ok: false, error: t("notify.fieldMustBeString", { field: key }) };
     input[key] = key === "baseUrl" ? normalizeServerUrl(value) : value.trim();
   }
   if (input.name !== undefined && input.name.length > SERVER_NAME_MAX_LENGTH) {
@@ -80,7 +80,7 @@ export function parseArrServerInput(body: Record<string, unknown>, t: Translator
       input[key] = null;
       continue;
     }
-    if (typeof value !== "string") return { ok: false, error: t("notify.fieldMustBeText", { field: key }) };
+    if (typeof value !== "string") return { ok: false, error: t("notify.fieldMustBeString", { field: key }) };
     input[key] = value.trim() || null;
   }
 

@@ -8,9 +8,9 @@ import { can, type PermissionSubject } from "@/lib/users/permissions";
 // find and Couldn't add for whoever reviews requests, open problem reports
 // for whoever handles them.
 
-/** English, for callers without a reader's language; the website uses
- * the notify.advancedNotAllowed message. */
-export const ADVANCED_REFUSED = "Picking the server, quality or folder isn't turned on for your account.";
+/** "Picking the server, quality or folder isn't turned on for your
+ * account.": a message key (t(), or the API routes' msg()). */
+export const ADVANCED_REFUSED = "notify.advancedNotAllowed" as const;
 
 export type AttentionCounts = {
   pendingRequests: number;

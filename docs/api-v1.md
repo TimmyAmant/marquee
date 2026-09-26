@@ -685,7 +685,10 @@ chosen language, else the request's `Accept-Language` (for public
 endpoints like sign-in, and accounts that follow their device), else
 English. Codes (`code`, event and status names) never change with the
 language, so match on those, never on text. Notifications are written when
-they're created, in the recipient's language at that moment.
+they're created, in the recipient's language at that moment (an account
+that chose none reads the household's: the admin's language, else
+English); the household channels (Discord, ntfy, the webhook…) post in the
+household's language.
 
 ### `GET /badges` — user
 
