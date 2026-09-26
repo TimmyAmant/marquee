@@ -136,6 +136,20 @@ public sealed partial class AppModel : ObservableObject
     [ObservableProperty]
     private BrowseQuery seriesFilters = BrowseQuery.Default;
 
+    /// <summary>Settings' tab, remembered while the app runs; the avatar reopens Settings where it was left.</summary>
+    [ObservableProperty]
+    private SettingsTab settingsTab = SettingsTab.Account;
+
+    /// <summary>
+    /// Which edge the navigation bar sits on (Settings › Account › This PC):
+    /// this PC's choice, kept in <see cref="Settings"/>; the window follows
+    /// it as soon as it changes.
+    /// </summary>
+    [ObservableProperty]
+    private MenuPosition menuPosition;
+
+    partial void OnMenuPositionChanged(MenuPosition value) => MenuPositionSetting.Write(Settings, value);
+
     /// <summary>The session's server, token or user changed (already on the UI thread).</summary>
     public event EventHandler? SessionChanged;
 
@@ -156,6 +170,7 @@ public sealed partial class AppModel : ObservableObject
         Dispatcher = dispatcher;
         Settings = settings;
         Notifications = new NotificationCenter(this);
+        MenuPosition = MenuPositionSetting.Read(settings);
         session.StateChanged += OnSessionStateChanged;
         session.Unauthorized += OnSessionUnauthorized;
         Events.Changed += OnServerChanged;
@@ -445,6 +460,17 @@ public sealed partial class AppModel : ObservableObject
             }
         }
         Navigator?.ShowSection(section);
+    }
+
+    /// <summary>
+    /// Settings on <paramref name="tab"/> (the Mac's <c>openSettings</c>):
+    /// "Connect an integration" links open Integrations, the update button
+    /// About. Already on Settings, the page just switches tab.
+    /// </summary>
+    public void OpenSettings(SettingsTab tab)
+    {
+        SettingsTab = tab;
+        Select(Section.Settings);
     }
 
     public void Open(Route route) => Navigator?.Open(route);
