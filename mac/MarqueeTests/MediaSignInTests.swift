@@ -141,6 +141,8 @@ final class MediaSignInRequestTests: XCTestCase {
     private static let memberJSON = #"{"id":"6f1c2a4e-8b1d-4c3e-9f0a-2b7d5e8c1a90","username":"sam","displayName":null,"role":"member","autoApproveMovies":false,"autoApproveTv":false,"createdAt":"2026-09-01T12:00:00.000Z","isCurrentUser":false}"#
     private static let loginJSON = #"{"token":"mqt_fresh","expiresAt":"2026-12-16T12:00:00.000Z","user":{"id":"6f1c2a4e-8b1d-4c3e-9f0a-2b7d5e8c1a90","username":"timmy","displayName":"Timmy","role":"member","libraryOwnerId":"6f1c2a4e-8b1d-4c3e-9f0a-2b7d5e8c1a90"}}"#
     private static let startJSON = #"{"handle":"h_123","authUrl":"https://app.plex.tv/auth#?code=ABCD","expiresAt":"2099-01-01T00:00:00.000Z"}"#
+    private static let watchlistJSON = #"{"available":true,"enabled":true,"movies":true,"tv":false,"lastSyncedAt":"2026-09-25T18:40:05.000Z","lastError":null,"requestedCount":3}"#
+    private static let watchlistOffJSON = #"{"available":true,"enabled":false,"movies":true,"tv":true,"lastSyncedAt":null,"lastError":null,"requestedCount":0}"#
 
     private struct Case {
         let method: String
@@ -194,6 +196,36 @@ final class MediaSignInRequestTests: XCTestCase {
             },
             Case(method: "DELETE", path: "/me/links/jellyfin", response: (200, #"{"ok":true}"#), records: true) { api in
                 try await api.links.unlink(.jellyfin)
+            },
+            Case(method: "GET", path: "/me/plex-watchlist", response: (200, Self.watchlistJSON)) { api in
+                let state = try await api.plexWatchlist.state()
+                XCTAssertTrue(state.enabled)
+            },
+            Case(method: "POST", path: "/me/plex-watchlist/start", response: (200, Self.startJSON)) { api in
+                let start = try await api.plexWatchlist.start()
+                XCTAssertEqual(start.handle, "h_123")
+            },
+            Case(method: "POST", path: "/me/plex-watchlist/poll", body: #"{"handle":"h_123"}"#, response: (202, #"{"status":"pending"}"#)) { api in
+                let state = try await api.plexWatchlist.poll(handle: "h_123")
+                XCTAssertNil(state)
+            },
+            Case(method: "POST", path: "/me/plex-watchlist/poll", body: #"{"handle":"h_123"}"#, response: (200, Self.watchlistJSON)) { api in
+                let state = try await api.plexWatchlist.poll(handle: "h_123")
+                XCTAssertEqual(state?.enabled, true)
+            },
+            Case(method: "PATCH", path: "/me/plex-watchlist", body: #"{"movies":false}"#, response: (200, Self.watchlistJSON)) { api in
+                _ = try await api.plexWatchlist.setTypes(movies: false)
+            },
+            Case(method: "PATCH", path: "/me/plex-watchlist", body: #"{"movies":true,"tv":false}"#, response: (200, Self.watchlistJSON)) { api in
+                _ = try await api.plexWatchlist.setTypes(movies: true, tv: false)
+            },
+            Case(method: "POST", path: "/me/plex-watchlist/sync", response: (200, Self.watchlistJSON), records: true) { api in
+                let state = try await api.plexWatchlist.sync()
+                XCTAssertEqual(state.requestedCount, 3)
+            },
+            Case(method: "DELETE", path: "/me/plex-watchlist", response: (200, Self.watchlistOffJSON)) { api in
+                let state = try await api.plexWatchlist.disable()
+                XCTAssertFalse(state.enabled)
             },
             Case(method: "GET", path: "/users/import/plex", response: (200, #"{"results":[{"id":1,"username":"sam","displayName":"Sam","thumb":null,"alreadyMember":false}]}"#)) { api in
                 let list = try await api.users.importCandidates(from: .plex)
@@ -278,6 +310,64 @@ final class MediaSignInRequestTests: XCTestCase {
             XCTFail("Expected rate limited")
         } catch {
             XCTAssertEqual(error as? APIError, .rateLimited("Slow down."))
+        }
+    }
+
+    /// A server before the Plex Watchlist has no `/me/plex-watchlist`: the
+    /// card stays hidden and nothing is shown as an error.
+    func testOlderServerHasNoPlexWatchlist() async throws {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(404, #"{"error":"Not found","code":"not_found"}"#) }
+        let state = try await api.plexWatchlist.state()
+        XCTAssertEqual(state, .unavailable)
+        XCTAssertFalse(state.available)
+
+        // Other failures are still failures.
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(500, #"{"error":"Boom","code":"internal"}"#) }
+        do {
+            _ = try await api.plexWatchlist.state()
+            XCTFail("Expected an error")
+        } catch {
+            XCTAssertEqual(error as? APIError, .server("Boom"))
+        }
+    }
+
+    /// Turning it on and "Check now" end with the server's own words.
+    func testPlexWatchlistRefusalsCarryTheServersMessage() async {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(403, #"{"error":"That's a different Plex account from the one linked here. Sign in to plex.tv as that one.","code":"forbidden"}"#) }
+        do {
+            _ = try await api.plexWatchlist.poll(handle: "h")
+            XCTFail("Expected a refusal")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "That's a different Plex account from the one linked here. Sign in to plex.tv as that one.")
+        }
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(410, #"{"error":"Expired","code":"expired"}"#) }
+        do {
+            _ = try await api.plexWatchlist.poll(handle: "h")
+            XCTFail("Expected expiry")
+        } catch {
+            XCTAssertEqual(error as? MediaSignInError, .expired)
+        }
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(409, #"{"error":"Link your Plex account first.","code":"conflict"}"#) }
+        do {
+            _ = try await api.plexWatchlist.poll(handle: "h")
+            XCTFail("Expected a conflict")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "Link your Plex account first.")
+        }
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(429, #"{"error":"Checked a moment ago. Try again in a minute.","code":"rate_limited"}"#) }
+        do {
+            _ = try await api.plexWatchlist.sync()
+            XCTFail("Expected rate limited")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "Checked a moment ago. Try again in a minute.")
         }
     }
 

@@ -153,6 +153,163 @@ struct LinkedAccountsCard: View {
     }
 }
 
+/// plex-watchlist.tsx: "Request from my Plex Watchlist". Account settings
+/// loads `state` and shows this only while it's `available` (Plex linked).
+struct PlexWatchlistCard: View {
+    @Binding var state: API.PlexWatchlist?
+
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    @State private var approval: Task<Void, Never>?
+    @State private var followUp: Task<Void, Never>?
+    @State private var busy = false
+    @State private var error: String?
+
+    /// The first check runs in the background once it's on; fetch again
+    /// after this to show its result.
+    private static let firstCheckDelay: Duration = .seconds(8)
+
+    var body: some View {
+        card(state ?? .unavailable)
+            .onDisappear { stopWaiting() }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                stopWaiting()
+            }
+    }
+
+    private func card(_ state: API.PlexWatchlist) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Request from my Plex Watchlist")
+                        .font(.system(size: 13.5))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("New movies and shows you add to your Watchlist on Plex are requested for you, the same as pressing Request. Marquee keeps a Plex sign-in for this until you turn it off.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                if state.enabled {
+                    TonePill(text: "On", tone: .owned, small: true)
+                } else if approval == nil {
+                    Button("Turn on") { turnOn() }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
+                        .disabled(busy)
+                }
+            }
+
+            if approval != nil {
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text("Waiting for Plex… finish in the browser.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Cancel") { stopWaiting() }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
+                }
+            }
+
+            if state.enabled {
+                HStack(spacing: 16) {
+                    Toggle("Movies", isOn: Binding(
+                        get: { state.movies },
+                        set: { on in apply { api in try await api.plexWatchlist.setTypes(movies: on) } }
+                    ))
+                    Toggle("TV shows", isOn: Binding(
+                        get: { state.tv },
+                        set: { on in apply { api in try await api.plexWatchlist.setTypes(tv: on) } }
+                    ))
+                }
+                .toggleStyle(.checkbox)
+                .font(.system(size: 12.5))
+                .foregroundStyle(Theme.textSecondary)
+                .disabled(busy)
+
+                Text(state.statusLine())
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textMuted)
+
+                HStack(spacing: 12) {
+                    Button(busy ? "Checking…" : "Check now") {
+                        apply { api in try await api.plexWatchlist.sync() }
+                    }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    Button("Turn off") {
+                        apply { api in try await api.plexWatchlist.disable() }
+                    }
+                    .buttonStyle(QuietButtonStyle(color: Theme.danger))
+                    .font(.system(size: 12))
+                }
+                .disabled(busy)
+            }
+
+            if let lastError = state.lastError.nonBlank { InlineMessage(text: lastError) }
+            if let error { InlineMessage(text: error) }
+        }
+    }
+
+    /// Runs one change and shows the state it answers with.
+    private func apply(_ change: @escaping @MainActor (MarqueeAPI) async throws -> API.PlexWatchlist) {
+        busy = true
+        error = nil
+        let api = model.api
+        Task {
+            do {
+                state = try await change(api)
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = false
+        }
+    }
+
+    /// The same plex.tv approval as Link Plex, then the first check.
+    private func turnOn() {
+        approval?.cancel()
+        error = nil
+        let api = model.api
+        approval = Task {
+            do {
+                let start = try await api.plexWatchlist.start()
+                guard let url = start.url else {
+                    throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
+                }
+                openURL(url)
+                state = try await PlexPoll.run(expiresAt: start.expiresAt) {
+                    try await api.plexWatchlist.poll(handle: start.handle)
+                }
+                approval = nil
+                refetchAfterFirstCheck()
+            } catch where PlexPoll.isCancellation(error) {
+                return
+            } catch {
+                self.error = error.localizedDescription
+                approval = nil
+            }
+        }
+    }
+
+    private func refetchAfterFirstCheck() {
+        followUp?.cancel()
+        let api = model.api
+        followUp = Task {
+            try? await Task.sleep(for: Self.firstCheckDelay)
+            if Task.isCancelled { return }
+            if let fresh = try? await api.plexWatchlist.state(), !Task.isCancelled { state = fresh }
+        }
+    }
+
+    private func stopWaiting() {
+        approval?.cancel()
+        approval = nil
+        followUp?.cancel()
+        followUp = nil
+    }
+}
+
 /// Links the Jellyfin account a username and password sign in to.
 private struct JellyfinLinkSheet: View {
     let onDone: (Bool) -> Void

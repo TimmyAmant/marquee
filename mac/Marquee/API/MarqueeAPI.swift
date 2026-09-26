@@ -71,6 +71,7 @@ struct MarqueeAPI: Sendable {
     var activity: ActivityEndpoints { ActivityEndpoints(transport: transport) }
     var users: UsersEndpoints { UsersEndpoints(transport: transport) }
     var links: LinksEndpoints { LinksEndpoints(transport: transport) }
+    var plexWatchlist: PlexWatchlistEndpoints { PlexWatchlistEndpoints(transport: transport) }
     var integrations: IntegrationsEndpoints { IntegrationsEndpoints(transport: transport) }
     var jobs: JobsEndpoints { JobsEndpoints(transport: transport) }
     var about: AboutEndpoints { AboutEndpoints(transport: transport) }

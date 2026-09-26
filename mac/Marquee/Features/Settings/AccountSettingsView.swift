@@ -13,6 +13,7 @@ struct AccountSettingsView: View {
     @State private var editing: API.HouseholdMember?
     @State private var removing: API.HouseholdMember?
     @State private var removeError: String?
+    @State private var watchlist: API.PlexWatchlist?
 
     var body: some View {
         SettingsPane(title: "Account", subtitle: "Your Marquee account details.") {
@@ -45,6 +46,11 @@ struct AccountSettingsView: View {
                     LinkedAccountsCard(viewer: viewer)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .cardSurface()
+                    if watchlist?.available == true {
+                        PlexWatchlistCard(state: $watchlist)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .cardSurface()
+                    }
                 }
 
                 SettingsSectionLabel(text: "Notifications")
@@ -109,6 +115,19 @@ struct AccountSettingsView: View {
         .task {
             // Which of Plex/Jellyfin are connected now (server-info.signIn).
             await model.session.refreshInfo()
+        }
+        .task(id: model.viewer?.linked) {
+            // "Request from my Plex Watchlist" is on offer while Plex is
+            // linked; unlinking also turns it off on the server. An older
+            // server without it answers `.unavailable`.
+            guard model.viewer?.linked != nil else { return }
+            do {
+                let fresh = try await model.api.plexWatchlist.state()
+                if Task.isCancelled { return }
+                watchlist = fresh
+            } catch {
+                // The card stays as it was; nothing else here depends on it.
+            }
         }
         .sheet(item: $editing) { member in
             EditMemberSheet(member: member)
