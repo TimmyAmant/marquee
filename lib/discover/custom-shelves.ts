@@ -78,7 +78,7 @@ function fromDiscover(mediaType: MediaType, results: TmdbDiscoverResponse["resul
   }));
 }
 
-async function discoverPage(kind: string, source: ShelfSource, page: number): Promise<ShelfPage> {
+async function discoverPage(kind: string, source: ShelfSource, page: number, preview: boolean): Promise<ShelfPage> {
   const filter = tmdbFilter(kind, source);
   if (!filter || !source.tmdbId) return EMPTY;
   const types: MediaType[] =
@@ -87,7 +87,7 @@ async function discoverPage(kind: string, source: ShelfSource, page: number): Pr
   const perType = await Promise.all(
     types.map(async (type) => {
       const responses = await Promise.all(
-        listTmdbPages(page).map((p) => discoverForShelf(type, filter, p).catch(() => empty)),
+        (preview ? [1] : listTmdbPages(page)).map((p) => discoverForShelf(type, filter, p).catch(() => empty)),
       );
       return {
         items: fromDiscover(type, responses.flatMap((r) => r.results)),
@@ -185,12 +185,13 @@ async function libraryPage(source: ShelfSource, page: number, viewer: ViewerIden
 
 /** One page of a custom row: page 1 is also what Discover shows (its first
  * 20). Fails soft to an empty page, like the built-in rows. `pageSize` only
- * applies to Trakt (the Discover row asks for just 20). */
+ * applies to Trakt, and `preview` (the row on Discover itself) reads just
+ * the first TMDb page of a TMDb row — that's all 20 titles need. */
 export async function fetchCustomShelfPage(
   shelf: Pick<LayoutShelf, "kind" | "source">,
   page: number,
   viewer: ViewerIdentity,
-  options: { pageSize?: number } = {},
+  options: { pageSize?: number; preview?: boolean } = {},
 ): Promise<ShelfPage> {
   const source = shelf.source;
   if (!source) return EMPTY;
@@ -200,7 +201,7 @@ export async function fetchCustomShelfPage(
       case "genre":
       case "company":
       case "network":
-        return await discoverPage(shelf.kind, source, page);
+        return await discoverPage(shelf.kind, source, page, Boolean(options.preview));
       case "tmdbList":
         return await tmdbListPage(source, page);
       case "traktList":

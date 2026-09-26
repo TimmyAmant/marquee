@@ -100,7 +100,7 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
     ),
     Promise.all(
       customShelves.map((shelf) =>
-        fetchCustomShelfPage(shelf, 1, viewer, { pageSize: SHELF_LENGTH }).then((page) =>
+        fetchCustomShelfPage(shelf, 1, viewer, { pageSize: SHELF_LENGTH, preview: true }).then((page) =>
           page.items.slice(0, SHELF_LENGTH),
         ),
       ),
