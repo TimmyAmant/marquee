@@ -16,6 +16,11 @@ import { getAdminUserId } from "@/lib/auth/get-admin";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { createNotification } from "@/lib/notifications/query";
 import { searchTitle } from "@/lib/arr/title-actions";
+import { searchFourK } from "@/lib/arr/fourk";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+/** Reports one person may send in an hour. */
+const REPORTS_PER_HOUR = 10;
 import { revalidatePathSafely } from "@/lib/cache/revalidate";
 
 // "Report a problem" (the title page), and the admin's side of it on the
@@ -35,6 +40,11 @@ export async function reportIssue(
 ): Promise<CoreResult<{ issueId: string }>> {
   const parsed = parseReport(mediaType, input);
   if (!parsed.ok) return fail("invalid", parsed.error);
+  // Counted per report sent, not per report still open: withdrawing and
+  // re-sending would otherwise post to every notification channel without end.
+  if (!checkRateLimit(`issue-report:${userId}`, REPORTS_PER_HOUR, 60 * 60 * 1000)) {
+    return fail("rate_limited", "That's a lot of reports in a short time. Try again in a while.");
+  }
 
   const [open] = await db
     .select({ count: count() })
@@ -211,7 +221,14 @@ export async function searchAgainForIssue(adminUserId: string, issueId: string):
   const [issue] = await db.select().from(issues).where(eq(issues.id, issueId)).limit(1);
   if (!issue) return fail("not_found", "Report not found.");
   const title = await getOrFetchTitle(issue.mediaType, issue.tmdbId).catch(() => null);
-  return searchTitle(adminUserId, issue.mediaType, issue.tmdbId, title?.tvdbId ?? null);
+  const tvdbId = title?.tvdbId ?? null;
+  const main = await searchTitle(adminUserId, issue.mediaType, issue.tmdbId, tvdbId);
+  // A title only the 4K server has: the report is about that copy.
+  if (!main.ok && main.code === "conflict") {
+    const fourK = await searchFourK(adminUserId, issue.mediaType, issue.tmdbId, tvdbId);
+    if (fourK) return fourK;
+  }
+  return main;
 }
 
 /** A member may withdraw their own open report; the admin any. */

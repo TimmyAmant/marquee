@@ -1254,7 +1254,8 @@ optional (an episode needs its season), ignored for a movie. Answers
 wrong." / "Say what's wrong." / "Keep it under 1000 characters." / "Season
 and episode are whole numbers." / "Pick the season too.", `429 rate_limited`
 "You have a lot of open reports already. Wait until some are fixed." (20
-open per person), `502 upstream` (TMDb unreachable).
+open per person) / "That's a lot of reports in a short time. Try again in a
+while." (10 an hour per person), `502 upstream` (TMDb unreachable).
 
 The title's `viewer.canReport` is true once the title (or its 4K copy) is
 owned or downloading, and `viewer.openReports` counts the viewer's own open
@@ -1263,7 +1264,8 @@ action row (shown while `canReport`), opening a dialog with the six kinds as
 radio buttons, for TV a "Season (optional)" picker ("Whole show", "Specials",
 "Season N") and an "Episode" number, a note ("Anything else? (optional)", or
 "What's wrong?" for `other`), and "Send report"; afterwards (or while
-`openReports > 0`) a "Problem reported" pill instead.
+`openReports > 0`) a "Problem reported" pill before the button, which then
+reads "Report another".
 
 #### `GET /issues` — user
 
@@ -1313,7 +1315,8 @@ admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
 - **`POST /issues/{id}/resolve`** — admin. Body (optional) `{ "note": "…" }`
   (up to 500 characters). `404` "That report isn't open any more.".
 - **`POST /issues/{id}/search`** — admin. Asks Radarr/Sonarr to search for the
-  title again. `409` "Not tracked in Radarr/Sonarr.".
+  title again (the 4K instance when only it has the title). `409` "Not
+  tracked in Radarr/Sonarr.".
 - **`DELETE /issues/{id}`** — your own while it's open, or (admin) any. `404`
   "Report not found.".
 
