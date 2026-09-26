@@ -36,6 +36,22 @@
     "qualityProfileId": null,
     "fullyConfigured": false
   },
+  "sonarr4k": {
+    "connected": false,
+    "baseUrl": null,
+    "hasApiKey": false,
+    "rootFolderPath": null,
+    "qualityProfileId": null,
+    "fullyConfigured": false
+  },
+  "radarr4k": {
+    "connected": true,
+    "baseUrl": "http://192.168.1.10:7879",
+    "hasApiKey": true,
+    "rootFolderPath": "/movies-4k",
+    "qualityProfileId": 5,
+    "fullyConfigured": true
+  },
   "tmdb": {
     "connected": true,
     "savedInSettings": false,
@@ -78,6 +94,8 @@
   "arrWebhooks": {
     "secret": "d8a989b4f0ad05fab2ab959bf0d5615adb0a25a9a3974674",
     "radarrUrl": "http://marquee.local:3000/api/webhooks/radarr/54caac33-…?secret=d8a989…",
-    "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…"
+    "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…",
+    "radarr4kUrl": "http://marquee.local:3000/api/webhooks/radarr4k/54caac33-…?secret=d8a989…",
+    "sonarr4kUrl": "http://marquee.local:3000/api/webhooks/sonarr4k/54caac33-…?secret=d8a989…"
   }
 }

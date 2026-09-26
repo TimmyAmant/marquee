@@ -16,6 +16,7 @@
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "seasons": null,
       "seasonsLabel": null,
+      "is4k": false,
       "requestedBy": {
         "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
         "displayName": null,
@@ -34,6 +35,7 @@
         2
       ],
       "seasonsLabel": "Season 2",
+      "is4k": false,
       "requestedBy": {
         "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
         "displayName": null,

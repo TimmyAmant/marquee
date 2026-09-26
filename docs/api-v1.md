@@ -612,7 +612,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "canRequestSeasons": false,
     "requestedSeasons": null,
     "canRelink": true,
-    "arrTracking": { "arrId": 412, "monitored": true }
+    "arrTracking": { "arrId": 412, "monitored": true },
+    "fourK": { "status": "untracked", "requestStatus": null, "canRequest": false, "canAdd": true }
   },
   "seasons": [],
   "cast": [
@@ -649,6 +650,18 @@ Field notes:
 - `library.status`/`provider`: where ownership came from (`plex`, `jellyfin`,
   `sonarr`, `radarr`, or null). `configured`: the library owner's
   Radarr (movies) / Sonarr (TV) has a root folder and quality profile.
+- `viewer.fourK` (0.37+; an older server omits it): the 4K copy, when the
+  admin has set up a 4K Radarr (movies) / 4K Sonarr (TV); null otherwise.
+  `status` is how the 4K instance has the title (read live; "untracked" when
+  it doesn't), independent of `library.status`. `requestStatus` is the
+  viewer's own 4K request (`pending`/`approved`, null when none or declined).
+  `canRequest`: a member may press "Request in 4K" (`POST …/request` with
+  `{"is4k": true}`); `canAdd`: the admin may press "Add to 4K Radarr/Sonarr"
+  (`POST …/add` with `{"is4k": true}`). Website, in the hero's action row:
+  a gold outline chip "In 4K" / "4K downloading" / "4K missing" / "4K coming
+  soon" when `status` isn't untracked, a "4K requested" chip while the 4K
+  request is pending, and the outline buttons "Request in 4K" / "Add to 4K
+  Radarr".
 - `library.file` ("File details" card) is non-null for `owned` titles, and
   for a show Sonarr has some episodes of (`tracked_downloading`: its folder,
   size on disk so far and quality profile).
@@ -787,7 +800,8 @@ request / monitor / favorite.
     "isAdmin": true, "favorited": false, "requestStatus": null, "alreadyRequested": false, "otherRequesters": [],
     "canAdd": false, "needsArrSetup": false, "canRequest": false,
     "canRequestSeasons": false, "requestedSeasons": null, "canRelink": true,
-    "arrTracking": { "arrId": 412, "monitored": true }
+    "arrTracking": { "arrId": 412, "monitored": true },
+    "fourK": null
   }
 }
 ```
@@ -801,6 +815,9 @@ there unmonitored.
 ```json
 { "ok": true }
 ```
+
+Body (optional): `{ "is4k": true }` adds it to the 4K Radarr/Sonarr instead
+(0.37+) — errors then say "the 4K Radarr" / "the 4K Sonarr".
 
 Errors: `403 forbidden` "Only the admin can add titles.", `409 conflict`
 "Connect Radarr in Settings first." / "Connect Sonarr in Settings first." (not
@@ -977,6 +994,17 @@ Body (optional, TV only): `{ "seasons": [1, 2] }` — request just those seasons
 No body, `{}`, or `"seasons": null` requests the whole series, exactly as
 before; `seasons` is ignored for a movie.
 
+`{ "is4k": true }` (0.37+) asks for the 4K copy instead, once the admin has a
+4K Radarr/Sonarr (`viewer.fourK.canRequest`). It's always the whole title
+(`seasons` ignored) and separate from a regular request: either can exist
+alongside the other. It's blocked by your own pending or approved 4K request,
+or by the 4K instance already having the title (the main library doesn't
+count). Approving it adds the title to the 4K instance; the member's
+auto-approval applies as usual. Errors: `409 conflict` "4K requests aren't
+set up on this server." / "You've already requested this in 4K." / "It's
+already in the 4K library or on its way.", `502 upstream` "Couldn't look this
+title up with TMDb right now.".
+
 ```json
 { "ok": true, "requestId": "28713d50-27f2-4230-9c95-c1e6a000f6c0" }
 ```
@@ -1015,6 +1043,7 @@ Your own requests, newest first.
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "seasons": null,
       "seasonsLabel": null,
+      "is4k": false,
       "status": "approved",
       "manuallyApproved": false,
       "rejectionReason": null,
@@ -1044,6 +1073,11 @@ Every request DTO (here, `/requests/pending` and `/requests/history`) has
 `"Specials"`, `"Specials, Season 1"`, or null. The website shows the label
 as a small second line under the title.
 
+`is4k` (0.37+; an older server omits it, meaning false): asked for in 4K. The
+website adds "In 4K" to that second line ("Season 2 · In 4K" or just "In 4K").
+For an approved 4K request, `libraryStatus` is the 4K instance's status, not
+the main library's.
+
 ### `GET /requests/pending` — admin
 
 The review queue, newest first. Like the website, loading it first
@@ -1071,6 +1105,7 @@ in Sonarr — the show itself being in the library doesn't count.
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "seasons": null,
       "seasonsLabel": null,
+      "is4k": false,
       "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z"
     },
@@ -1082,6 +1117,7 @@ in Sonarr — the show itself being in the library doesn't count.
       "posterPath": "/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
       "seasons": [2],
       "seasonsLabel": "Season 2",
+      "is4k": false,
       "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:10:02.001Z"
     }
@@ -1111,6 +1147,7 @@ than one request is pending. Empty → "No pending requests."
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "seasons": null,
       "seasonsLabel": null,
+      "is4k": false,
       "status": "rejected",
       "manuallyApproved": false,
       "rejectionReason": "Not enough space on the server right now",
@@ -1654,6 +1691,14 @@ take a few seconds.
     "connected": false, "baseUrl": null, "hasApiKey": false,
     "rootFolderPath": null, "qualityProfileId": null, "fullyConfigured": false
   },
+  "sonarr4k": {
+    "connected": false, "baseUrl": null, "hasApiKey": false,
+    "rootFolderPath": null, "qualityProfileId": null, "fullyConfigured": false
+  },
+  "radarr4k": {
+    "connected": true, "baseUrl": "http://192.168.1.10:7879", "hasApiKey": true,
+    "rootFolderPath": "/movies-4k", "qualityProfileId": 5, "fullyConfigured": true
+  },
   "tmdb": { "connected": true, "savedInSettings": false, "configuredFromEnv": true },
   "trakt": { "connected": false },
   "tvdb": { "connected": true },
@@ -1669,10 +1714,26 @@ take a few seconds.
   "arrWebhooks": {
     "secret": "d8a989b4f0ad05fab2ab959bf0d5615adb0a25a9a3974674",
     "radarrUrl": "http://marquee.local:3000/api/webhooks/radarr/54caac33-…?secret=d8a989…",
-    "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…"
+    "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…",
+    "radarr4kUrl": "http://marquee.local:3000/api/webhooks/radarr4k/54caac33-…?secret=d8a989…",
+    "sonarr4kUrl": "http://marquee.local:3000/api/webhooks/sonarr4k/54caac33-…?secret=d8a989…"
   }
 }
 ```
+
+`sonarr4k` / `radarr4k` (0.37+; an older server omits them): the optional 4K
+Sonarr and Radarr — a second instance of each for 4K copies. Connected and
+configured exactly like the main ones, at `/settings/integrations/sonarr4k`
+and `/radarr4k` (PUT, DELETE, `…/options`, `…/defaults`, same bodies and
+answers; error messages say "4K Sonarr" / "4K Radarr"). Once one is
+`fullyConfigured`, members can request titles of that type in 4K, and
+approving such a request adds it there. They aren't synced into the library:
+"owned" everywhere still means the main library; a title's 4K status is read
+live (`viewer.fourK` on the title). Their webhooks
+(`arrWebhooks.radarr4kUrl` / `sonarr4kUrl`, the same secret) notify with
+"(4K)" and tell 4K requesters their title is ready. Website: two cards after
+Sonarr and Radarr, "4K Sonarr (optional)" and "4K Radarr (optional)", and
+their webhook URLs under Notifications once connected.
 
 Page sections: **Media Libraries** (Plex, Jellyfin), **Download Clients**
 (Sonarr, Radarr), **Metadata Sources** (TMDb, Trakt, TheTVDB), **Notifications**
@@ -1705,7 +1766,7 @@ member that's normally none — same as the web action). `{ "ok": true }`.
 "Regenerate secret" — the old webhook URLs stop working immediately.
 
 ```json
-{ "secret": "0f3c…", "radarrUrl": "http://…/api/webhooks/radarr/…?secret=0f3c…", "sonarrUrl": "http://…/api/webhooks/sonarr/…?secret=0f3c…" }
+{ "secret": "0f3c…", "radarrUrl": "http://…/api/webhooks/radarr/…?secret=0f3c…", "sonarrUrl": "http://…/api/webhooks/sonarr/…?secret=0f3c…", "radarr4kUrl": "http://…/api/webhooks/radarr4k/…?secret=0f3c…", "sonarr4kUrl": "http://…/api/webhooks/sonarr4k/…?secret=0f3c…" }
 ```
 
 ### Sonarr / Radarr
@@ -1995,6 +2056,8 @@ what to do, grouped by area.
 | | `PUT /settings/integrations/sonarr` · `DELETE` | admin |
 | | `GET /settings/integrations/sonarr/options` | admin |
 | | `PUT /settings/integrations/sonarr/defaults` | admin |
+| | `PUT /settings/integrations/sonarr4k` · `DELETE`, `…/options`, `…/defaults` | admin |
+| | `PUT /settings/integrations/radarr4k` · `DELETE`, `…/options`, `…/defaults` | admin |
 | | `PUT /settings/integrations/radarr` · `DELETE` | admin |
 | | `GET /settings/integrations/radarr/options` | admin |
 | | `PUT /settings/integrations/radarr/defaults` | admin |
