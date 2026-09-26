@@ -2,7 +2,7 @@ import { randomUUID, randomBytes } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { integrationCredentials, users } from "@/lib/db/schema";
-import type { ArrProvider, IntegrationProvider } from "@/lib/db/schema";
+import type { ArrInstance, IntegrationProvider } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
 
 export type ArrCredential = {
@@ -29,7 +29,7 @@ export function isArrFullyConfigured(
 
 export async function getArrCredential(
   userId: string,
-  provider: ArrProvider,
+  provider: ArrInstance,
 ): Promise<ArrCredential | null> {
   const [row] = await db
     .select()
@@ -57,7 +57,7 @@ export async function getArrCredential(
 
 export async function upsertArrCredential(
   userId: string,
-  provider: ArrProvider,
+  provider: ArrInstance,
   fields: {
     baseUrl: string;
     apiKey: string;
@@ -95,7 +95,7 @@ export async function upsertArrCredential(
 
 export async function updateArrDefaults(
   userId: string,
-  provider: ArrProvider,
+  provider: ArrInstance,
   fields: { qualityProfileId: number; rootFolderPath: string },
 ) {
   await db

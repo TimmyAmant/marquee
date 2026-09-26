@@ -12,7 +12,7 @@ import {
 } from "@/lib/integrations/manage";
 import type { CoreResult } from "@/lib/core-result";
 import type { ArrConnectionResult, ArrOptions, Ok } from "@/lib/api/types";
-import type { ArrProvider, IntegrationProvider } from "@/lib/db/schema";
+import type { ArrInstance, IntegrationProvider } from "@/lib/db/schema";
 
 // Handler factories for /api/v1/settings/integrations/* — every one of them
 // admin-only, exactly like Settings → Integrations and its server actions.
@@ -29,7 +29,7 @@ function formString(body: Record<string, unknown>, key: string): string {
 
 /** PUT: test a Sonarr/Radarr connection and save it (resets the add defaults
  * to the first root folder / quality profile, as the website does). */
-export function arrPutHandler(provider: ArrProvider) {
+export function arrPutHandler(provider: ArrInstance) {
   return withApi(async (request): Promise<ArrConnectionResult> => {
     const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
     const body = await readJsonBody(request);
@@ -51,7 +51,7 @@ export function arrPutHandler(provider: ArrProvider) {
 }
 
 /** GET …/options: root folders and quality profiles of the saved connection. */
-export function arrOptionsHandler(provider: ArrProvider) {
+export function arrOptionsHandler(provider: ArrInstance) {
   return withApi(async (request): Promise<ArrOptions> => {
     const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
     const { rootFolders, qualityProfiles } = unwrap(await getArrOptions(ctx.user.id, provider));
@@ -60,7 +60,7 @@ export function arrOptionsHandler(provider: ArrProvider) {
 }
 
 /** PUT …/defaults: { rootFolderPath, qualityProfileId } used when adding titles. */
-export function arrDefaultsHandler(provider: ArrProvider) {
+export function arrDefaultsHandler(provider: ArrInstance) {
   return withApi(async (request): Promise<Ok> => {
     const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
     const body = await readJsonBody(request);

@@ -36,12 +36,12 @@ async function isAdminUser(userId: string): Promise<boolean> {
  * add-to-library click or (with a different userId) an admin approving
  * someone else's request — the add always executes using whichever
  * userId's Radarr credential is passed in. */
-export async function addMovieToRadarrForUser(userId: string, tmdbId: number): Promise<CoreResult> {
+export async function addMovieToRadarrForUser(userId: string, tmdbId: number, fourK = false): Promise<CoreResult> {
   if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
 
-  const credential = await getArrCredential(userId, "radarr");
+  const credential = await getArrCredential(userId, fourK ? "radarr4k" : "radarr");
   if (!isArrFullyConfigured(credential)) {
-    return fail("conflict", "Connect Radarr in Settings first.");
+    return fail("conflict", `Connect ${fourK ? "the 4K Radarr" : "Radarr"} in Settings first.`);
   }
 
   let added: { id: number };
@@ -65,8 +65,12 @@ export async function addMovieToRadarrForUser(userId: string, tmdbId: number): P
       });
     }
   } catch {
-    return fail("upstream", "Couldn't add this movie to Radarr.");
+    return fail("upstream", `Couldn't add this movie to ${fourK ? "the 4K Radarr" : "Radarr"}.`);
   }
+
+  // The 4K instance isn't part of the library cache (lib/arr/fourk.ts reads
+  // it live), so there's nothing more to record.
+  if (fourK) return { ok: true };
 
   // Radarr already has it at this point — a failure below is just our local
   // cache being stale, not the add itself failing, so still report success
@@ -112,12 +116,14 @@ export async function addSeriesToSonarrForUser(
    * whole-series request then also turns on every season of a show Sonarr
    * already has only part of. */
   forRequest = false,
+  /** Into the 4K Sonarr instead of the main one. */
+  fourK = false,
 ): Promise<CoreResult> {
   if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
 
-  const credential = await getArrCredential(userId, "sonarr");
+  const credential = await getArrCredential(userId, fourK ? "sonarr4k" : "sonarr");
   if (!isArrFullyConfigured(credential)) {
-    return fail("conflict", "Connect Sonarr in Settings first.");
+    return fail("conflict", `Connect ${fourK ? "the 4K Sonarr" : "Sonarr"} in Settings first.`);
   }
 
   const title = await getOrFetchTitle("tv", tmdbId).catch(() => undefined);
@@ -173,6 +179,8 @@ export async function addSeriesToSonarrForUser(
   } catch {
     return fail("upstream", "Couldn't add this series to Sonarr.");
   }
+
+  if (fourK) return { ok: true };
 
   // Sonarr already has it at this point — a failure below is just our local
   // cache being stale, not the add itself failing, so still report success
