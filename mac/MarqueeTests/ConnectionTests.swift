@@ -665,6 +665,65 @@ final class ServerSessionTests: XCTestCase {
 
     // MARK: Helpers
 
+    /// Remember me: after Sign Out, the sign-in card fills in the username
+    /// last used on this server. The password is never kept.
+    @MainActor
+    func testSignInRemembersTheUsernameAcrossSignOut() async throws {
+        StubURLProtocol.handler = { request in
+            request.url?.path == "/api/v1/auth/logout"
+                ? StubURLProtocol.json(200, "{}")
+                : StubURLProtocol.json(200, Self.loginJSON)
+        }
+        let (session, _, defaults) = makeSession(token: nil)
+        XCTAssertNil(session.rememberedUsername())
+
+        _ = try await session.login(username: " timmy ", password: "hunter22")
+        await session.logout()
+        XCTAssertFalse(session.hasToken)
+        XCTAssertEqual(session.rememberedUsername(), "timmy", "Trimmed, and still there after Sign Out")
+        XCTAssertNil(session.rememberedUsername(jellyfin: true), "A Jellyfin username is kept apart")
+
+        // A fresh launch (a new session on the same settings) still has it.
+        let relaunched = ServerSession(defaults: defaults, tokenStore: InMemoryTokenStore(), pinned: nil)
+        XCTAssertEqual(relaunched.rememberedUsername(), "timmy")
+
+        let stored = try XCTUnwrap(defaults.dictionary(forKey: ServerSession.usernamesDefaultsKey))
+        XCTAssertEqual(stored as? [String: String], [Self.server.baseURLString: "timmy"])
+        XCTAssertFalse(
+            defaults.dictionaryRepresentation().values.contains { "\($0)".contains("hunter22") },
+            "The password is never stored"
+        )
+    }
+
+    @MainActor
+    func testJellyfinAndFailedSignInsAndOtherServers() async throws {
+        let (session, _, _) = makeSession(token: nil)
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(401, #"{"error":"Incorrect username or password","code":"invalid_credentials"}"#) }
+        _ = try? await session.login(username: "typo", password: "wrong")
+        XCTAssertNil(session.rememberedUsername(), "Only a username that signed in is remembered")
+
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(200, Self.loginJSON) }
+        _ = try await session.loginWithJellyfin(username: "tim-jf", password: "pw")
+        XCTAssertEqual(session.rememberedUsername(jellyfin: true), "tim-jf")
+        XCTAssertNil(session.rememberedUsername())
+
+        session.select(ServerAddress(host: "127.0.0.1", port: 10), info: nil)
+        XCTAssertNil(session.rememberedUsername(jellyfin: true), "Each server has its own")
+    }
+
+    @MainActor
+    func testAPinnedRunDoesNotRememberUsernames() async throws {
+        StubURLProtocol.handler = { _ in StubURLProtocol.json(200, Self.loginJSON) }
+        let defaults = UserDefaults(suiteName: "com.timmyamant.MarqueeTests.pinnedName.\(UUID().uuidString)")!
+        let session = ServerSession(
+            defaults: defaults, tokenStore: InMemoryTokenStore(), urlSession: StubURLProtocol.session(), deviceName: "Test Mac",
+            pinned: PinnedServer(address: Self.server, token: nil), probe: { _ in .unreachable(.noResponse) }
+        )
+        _ = try await session.login(username: "timmy", password: "hunter22")
+        XCTAssertNil(defaults.object(forKey: ServerSession.usernamesDefaultsKey))
+    }
+
     private static func body(of request: URLRequest) -> [String: Any] {
         var data = request.httpBody ?? Data()
         if data.isEmpty, let stream = request.httpBodyStream {
@@ -697,7 +756,7 @@ final class ServerSessionTests: XCTestCase {
 }
 
 /// A count the stub's handler (called off the main actor) can bump safely.
-private final class LockedCounter: @unchecked Sendable {
+final class LockedCounter: @unchecked Sendable {
     private let lock = NSLock()
     private var count = 0
 

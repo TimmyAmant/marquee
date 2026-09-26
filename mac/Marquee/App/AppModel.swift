@@ -269,13 +269,13 @@ final class AppModel {
                 showUnreachable(outcome)
             }
         } else if session.tokenUnavailable {
-            // The Keychain wouldn't answer. The saved session is probably
+            // The sessions file couldn't be read. The saved session is probably
             // still there, so say so instead of silently asking for a
             // password — "Retry" re-reads it.
-            await showSignIn(notice: Self.keychainUnreadableNotice, generation: generation)
+            await showSignIn(notice: Self.savedSignInUnreadableNotice, generation: generation)
         } else {
-            // After an update too (the new copy can't read the old copy's
-            // sign-in), the plain form: you just updated, so no explanation.
+            // Nothing saved (signed out, or the server revoked this Mac):
+            // the plain form, with the last username filled in.
             await showSignIn(generation: generation)
         }
     }
@@ -284,9 +284,9 @@ final class AppModel {
     /// whose number is no longer current drops its result.
     @ObservationIgnored private var connectGeneration = 0
 
-    /// Shown when the login Keychain refused to answer.
-    static let keychainUnreadableNotice =
-        "Couldn't read your saved sign-in from the login Keychain. Sign in again, or reload (⌘R) to retry."
+    /// Shown when the saved sign-in couldn't be read.
+    static let savedSignInUnreadableNotice =
+        "Couldn't read your saved sign-in. Sign in again, or reload (⌘R) to retry."
 
     private func showSignIn(notice: String? = nil, generation: Int) async {
         let outcome = await session.refreshInfo()

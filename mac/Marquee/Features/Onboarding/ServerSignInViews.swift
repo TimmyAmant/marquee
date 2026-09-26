@@ -10,7 +10,9 @@ struct ServerSignInView: View {
         case .setup:
             SetupForm()
         case .signIn:
-            SignInForm()
+            // The last username used on this server, so signing back in
+            // (after Sign Out, or a revoked session) is just the password.
+            SignInForm(username: model.session.rememberedUsername() ?? "")
         }
     }
 }
@@ -110,6 +112,10 @@ struct SignInForm: View {
     @State private var plexTask: Task<Void, Never>?
     @State private var waitingForPlex = false
 
+    init(username: String = "") {
+        _username = State(initialValue: username)
+    }
+
     var body: some View {
         let info = model.session.serverInfo
         let offersPlex = info?.offersPlexSignIn == true
@@ -132,8 +138,15 @@ struct SignInForm: View {
             if let notice = model.authNotice {
                 AuthNotice(text: notice)
             }
-            AuthField(label: jellyfin ? "\(name) username" : "Username", text: $username, contentType: .username, autofocus: true)
-            AuthField(label: jellyfin ? "\(name) password" : "Password", text: $password, secure: true, contentType: .password)
+            // A remembered username puts the cursor straight in the password.
+            AuthField(
+                label: jellyfin ? "\(name) username" : "Username", text: $username, contentType: .username,
+                autofocus: username.isEmpty
+            )
+            AuthField(
+                label: jellyfin ? "\(name) password" : "Password", text: $password, secure: true, contentType: .password,
+                autofocus: !username.isEmpty
+            )
             if info?.isDegraded == true {
                 InlineMessage(text: "Your server can't reach its database right now, so signing in may fail.")
             }
@@ -166,6 +179,9 @@ struct SignInForm: View {
                             method = jellyfin ? .password : .jellyfin
                             error = nil
                             password = ""
+                            if let remembered = model.session.rememberedUsername(jellyfin: method == .jellyfin) {
+                                username = remembered
+                            }
                         } label: {
                             Text(jellyfin ? "Sign in with a Marquee account" : "Sign in with \(name)").frame(maxWidth: .infinity)
                         }

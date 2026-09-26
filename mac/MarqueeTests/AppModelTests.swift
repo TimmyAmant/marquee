@@ -6,7 +6,7 @@ import Foundation
 /// behind Copy Link / Open in Browser.
 @MainActor
 struct AppModelTests {
-    /// A model with no saved server and no Keychain: nothing here touches the
+    /// A model with no saved server and no saved sessions: nothing here touches the
     /// real session on this Mac.
     private func makeModel(server: String? = nil) -> AppModel {
         let suite = UserDefaults(suiteName: "marquee.tests.appmodel.\(UUID().uuidString)")!
