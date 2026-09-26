@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.34.0",
+    date: "2026-09-25",
+    changes: [
+      "Request from your Plex Watchlist: with Plex linked, turn it on in Settings › Account (website, Mac and Windows). New movies and shows you add to your Watchlist on Plex are requested for you every 10 minutes, the same as pressing Request: the usual checks, your auto-approve setting, and the admin's approval queue.",
+      "Choose Movies and/or TV shows, press Check now, or turn it off. Titles you already have or already asked for are skipped, and each title is tried once, so something the admin declined isn't requested again.",
+      "Turning it on asks Plex once, and Marquee keeps that Plex sign-in (encrypted) only to read your watchlist; it's deleted when you turn it off or unlink Plex. If Plex stops accepting it, it switches itself off and says why.",
+      "Settings › Jobs lists the new Plex Watchlist Requests job, with Run now.",
+    ],
+  },
+  {
     version: "0.33.0",
     date: "2026-09-25",
     changes: [
