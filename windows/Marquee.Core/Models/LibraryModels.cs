@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace Marquee.Core.Models;
 
@@ -204,6 +205,29 @@ public sealed record TitleViewerState
 
     /// <summary>Your own open problem reports for this title (0.38+; 0 when left out): "Problem reported" instead of the button.</summary>
     public int OpenReports { get; init; }
+
+    /// <summary>
+    /// On the admin's request blocklist (0.41+): the can-request flags are
+    /// then already false. Null when it isn't, and from an older server.
+    /// </summary>
+    public TitleBlock? Blocked
+    {
+        get => blocked;
+        init
+        {
+            blocked = value;
+            HasBlocklist = true;
+        }
+    }
+
+    private readonly TitleBlock? blocked;
+
+    /// <summary>
+    /// The server sent <c>blocked</c> at all, even as null (0.41+): the
+    /// admin's "Block requests" shows. An older server leaves the key out.
+    /// </summary>
+    [JsonIgnore]
+    public bool HasBlocklist { get; private init; }
 
     /// <summary>"Requested Seasons 1–3, waiting for approval", or without the seasons for a whole-series request.</summary>
     public string PendingRequestLine =>

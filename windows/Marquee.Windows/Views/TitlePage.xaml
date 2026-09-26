@@ -176,6 +176,21 @@
                                             Click="OnRequestClick"
                                             IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.ShowsRequestMoreSeasons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                        <!-- components/add-to-library-button.tsx (0.41+): a member sees why Request is gone. -->
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsBlockedPill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="12,4"
+                                            CornerRadius="14"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            VerticalAlignment="Center">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.BlockedLine, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                TextWrapping="Wrap"
+                                                MaxWidth="420" />
+                                        </Border>
                                         <Button
                                             Content="{x:Bind ViewModel.AddLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.AddCommand}"
@@ -194,6 +209,29 @@
                                             Click="OnFixIdClick"
                                             Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             ToolTipService.ToolTip="Wrong match? Point this title at the right id." />
+                                        <!-- components/block-requests-button.tsx (0.41+): the admin's request blocklist. -->
+                                        <Button
+                                            Content="Block requests"
+                                            Click="OnBlockRequestsClick"
+                                            Visibility="{x:Bind ViewModel.CanBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            ToolTipService.ToolTip="Nobody can request this title; you can still add it yourself." />
+                                        <Button
+                                            Content="{x:Bind ViewModel.UnblockLabel, Mode=OneWay}"
+                                            Command="{x:Bind ViewModel.UnblockCommand}"
+                                            Visibility="{x:Bind ViewModel.CanUnblock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsBlockedByKeyword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="12,4"
+                                            CornerRadius="14"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.ToolTip="Remove the keyword under Settings › Request blocklist to allow requests again.">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.BlockedKeywordLine, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                        </Border>
                                         <!-- components/report-problem-button.tsx (0.38+): the pill once reported, then the button. -->
                                         <Border
                                             Visibility="{x:Bind ViewModel.ShowsProblemReported, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

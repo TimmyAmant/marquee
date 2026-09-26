@@ -337,10 +337,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         DisplayName = model.Viewer?.DisplayName ?? "";
         IsAdmin = model.Viewer?.IsAdmin == true;
         Channels = new NotificationChannelsViewModel(model);
+        Blocklist = new BlocklistSettingsViewModel(model);
     }
 
     /// <summary>The admin's Telegram, Pushover and email cards (0.36+ servers).</summary>
     public NotificationChannelsViewModel Channels { get; }
+
+    /// <summary>The admin's "Request blocklist" (0.41+ servers).</summary>
+    public BlocklistSettingsViewModel Blocklist { get; }
 
     /// <summary>
     /// Set by the page: "Add a household member", answering the new account
@@ -502,6 +506,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _ = LoadSignInSettingsAsync();
         _ = LoadPlexWatchlistAsync();
         _ = LoadNotificationChannelsAsync();
+        _ = Blocklist.LoadAsync(IsAdmin);
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
         _ = model.Session.RefreshInfoAsync();
     }
@@ -522,6 +527,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         membersCancellation?.Cancel();
         plexWatchlistLoadCancellation?.Cancel();
         channelsCancellation?.Cancel();
+        Blocklist.Cancel();
         CancelLinkPlex();
         CancelTurnOnPlexWatchlist();
     }
@@ -1313,6 +1319,7 @@ public sealed partial class SettingsViewModel : ObservableObject
                 _ = LoadMembersAsync();
                 _ = LoadSignInSettingsAsync();
                 _ = LoadNotificationChannelsAsync();
+                _ = Blocklist.LoadAsync(IsAdmin);
             }
         }
         else if (e.PropertyName == nameof(AppModel.ReloadToken))
@@ -1321,6 +1328,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             _ = LoadAboutAsync();
             _ = LoadPlexWatchlistAsync();
             _ = LoadNotificationChannelsAsync();
+            _ = Blocklist.LoadAsync(IsAdmin);
         }
     }
 

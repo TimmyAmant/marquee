@@ -83,6 +83,17 @@ public sealed partial class TitlePage : Page
         await dialog.TryShowAsync();
     }
 
+    /// <summary>
+    /// "Block requests" (components/block-requests-button.tsx): an optional
+    /// reason for whoever asks, then Block. A refusal stays in the dialog;
+    /// once blocked, the status block is re-read and Unblock shows.
+    /// </summary>
+    private async void OnBlockRequestsClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new BlockRequestsDialog(ViewModel.BlockAsync) { XamlRoot = XamlRoot };
+        await dialog.TryShowAsync();
+    }
+
     /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>
     private async void OnFixIdClick(object sender, RoutedEventArgs e)
     {
