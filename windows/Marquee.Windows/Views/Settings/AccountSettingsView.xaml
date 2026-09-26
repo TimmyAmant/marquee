@@ -73,13 +73,56 @@
         </Border>
 
         <!--
-          Linked accounts: the Plex and Jellyfin accounts that sign in to
-          yours. Only servers with Plex/Jellyfin sign-in send `linked`.
+          Linked accounts: the Plex and Jellyfin accounts (and, 0.44+, the
+          admin's single sign-on) that sign in to yours. Only servers with
+          Plex/Jellyfin sign-in send `linked`.
         -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsLinkedAccounts, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <TextBlock Text="Linked accounts" Style="{StaticResource SubtitleTextBlockStyle}" />
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel Spacing="14">
+                    <!-- Single sign-on: while the admin has it set up, or while this account is still linked to it. -->
+                    <StackPanel Spacing="14" Visibility="{x:Bind ViewModel.ShowsSsoLink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind ViewModel.SsoLinkName, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.SsoLinkStatus, Mode=OneWay}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button
+                                    Content="{x:Bind ViewModel.LinkSsoLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.LinkSsoCommand}"
+                                    Visibility="{x:Bind ViewModel.CanLinkSso, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <Button
+                                    Content="Unlink"
+                                    Command="{x:Bind ViewModel.UnlinkSsoCommand}"
+                                    Visibility="{x:Bind ViewModel.CanUnlinkSso, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.IsLinkingSso, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ProgressRing Grid.Column="0" IsActive="{x:Bind ViewModel.IsLinkingSso, Mode=OneWay}" Width="16" Height="16" VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{x:Bind ViewModel.SsoWaitingLine, Mode=OneWay}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                TextWrapping="Wrap"
+                                VerticalAlignment="Center" />
+                            <Button Grid.Column="2" Content="Cancel" Command="{x:Bind ViewModel.CancelLinkSsoCommand}" />
+                        </Grid>
+                    </StackPanel>
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -398,6 +441,7 @@
                                         <!-- An empty text collapses the pill. -->
                                         <controls:TonePill Text="{x:Bind PlexTag}" Tone="{x:Bind LinkTone}" />
                                         <controls:TonePill Text="{x:Bind JellyfinTag}" Tone="{x:Bind LinkTone}" />
+                                        <controls:TonePill Text="{x:Bind SsoTag}" Tone="{x:Bind LinkTone}" />
                                         <controls:TonePill
                                             Text="Admin"
                                             Tone="{x:Bind AdminTone}"

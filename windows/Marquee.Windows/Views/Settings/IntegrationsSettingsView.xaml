@@ -2,7 +2,7 @@
 <!--
   Settings › Integrations (app/settings/integrations/page.tsx, the Mac's
   IntegrationsSettingsView), the admin's: Media Libraries (Plex, Jellyfin or
-  Emby), Download Clients (any number of Sonarr and Radarr servers on a
+  Emby), Sign-in (single sign-on on a 0.44+ server), Download Clients (any number of Sonarr and Radarr servers on a
   0.43+ server; before that Sonarr, Radarr, and the 4K ones on a 0.37+
   server), Metadata Sources (TMDb, Trakt with list import, TheTVDB) and
   Notifications (the Sonarr/Radarr webhooks, Discord, ntfy, Telegram,
@@ -463,6 +463,213 @@
                             Content="{x:Bind ViewModel.Jellyfin.SaveLabel, Mode=OneWay}"
                             Command="{x:Bind ViewModel.Jellyfin.SaveCommand}"
                             Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!--
+              Sign-in: components/sso-settings-card.tsx, single sign-on with
+              any OpenID Connect provider. Only from a 0.44+ server (an older
+              one answers GET /settings/sso with 404). The client secret is
+              write-only: the card only knows whether one is saved.
+            -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Sso.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Sign-in" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Single sign-on" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Sso.OnBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Sso.OnTone}" VerticalAlignment="Center" />
+                        </Grid>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Button name"
+                                PlaceholderText="Authentik"
+                                MaxLength="40"
+                                Text="{x:Bind ViewModel.Sso.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="The sign-in button says “Sign in with &lt;name&gt;”."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Marquee's address"
+                                PlaceholderText="https://marquee.example.com"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.Sso.PublicUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="The address people use to reach Marquee from outside."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Redirect URI — add this to the provider exactly" Style="{StaticResource FieldLabel}" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{x:Bind ViewModel.Sso.CallbackUrl, Mode=OneWay}" IsReadOnly="True" />
+                                <Button Grid.Column="1" Content="{x:Bind ViewModel.Sso.CopyLabel, Mode=OneWay}" Command="{x:Bind ViewModel.Sso.CopyCallbackCommand}" />
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    Grid.Column="0"
+                                    Header="Issuer URL"
+                                    PlaceholderText="https://auth.example.com/application/o/marquee/"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.Sso.Issuer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button
+                                    Grid.Column="1"
+                                    Content="{x:Bind ViewModel.Sso.TestLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Sso.TestCommand}"
+                                    IsEnabled="{x:Bind ViewModel.Sso.CanTest, Mode=OneWay}"
+                                    VerticalAlignment="Bottom" />
+                            </Grid>
+                            <TextBlock
+                                Text="The provider's issuer, or its …/.well-known/openid-configuration address."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Sso.TestError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Sso.HasTestError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                        <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.Sso.HasTestFound, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Sso.TestFound, Mode=OneWay}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Sso.TestWarnings, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Sso.HasTestWarnings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <TextBox
+                            Header="Client ID"
+                            IsSpellCheckEnabled="False"
+                            Text="{x:Bind ViewModel.Sso.ClientId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <PasswordBox
+                            Header="Client secret"
+                            PlaceholderText="{x:Bind ViewModel.Sso.ClientSecretPlaceholder, Mode=OneWay}"
+                            Password="{x:Bind ViewModel.Sso.ClientSecret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox
+                            Content="Remove the saved secret (a public client)"
+                            IsChecked="{x:Bind ViewModel.Sso.ClearClientSecret, Mode=TwoWay}"
+                            Visibility="{x:Bind ViewModel.Sso.HasClientSecret, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Scopes"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.Sso.Scopes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Add “groups” for Authelia and Pocket ID if you use groups below."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch
+                                Header="New accounts from single sign-on"
+                                IsOn="{x:Bind ViewModel.Sso.AllowSignup, Mode=TwoWay}"
+                                OnContent="On"
+                                OffContent="Off" />
+                            <TextBlock
+                                Text="Anyone your provider lets in gets a member account on first sign-in. Off: only accounts that linked it can use it."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch
+                                Header="Match existing accounts by verified email"
+                                IsOn="{x:Bind ViewModel.Sso.MatchEmail, Mode=TwoWay}"
+                                OnContent="On"
+                                OffContent="Off" />
+                            <TextBlock
+                                Text="First sign-in links an account whose username is the person's email — only when the provider says the email is verified, and never the admin account."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Required group (optional)"
+                                PlaceholderText="marquee-users"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.Sso.RequiredGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Only people in this group can sign in with it."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Trusted group (optional)"
+                                PlaceholderText="marquee-trusted"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.Sso.TrustedGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Members in this group become Trusted when they sign in. Nobody is ever made an admin this way."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <TextBox
+                            Header="Groups claim"
+                            IsSpellCheckEnabled="False"
+                            Text="{x:Bind ViewModel.Sso.GroupsClaim, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Sso.HasError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Sso.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.Sso.Error, Mode=OneWay}"
+                            IsClosable="False" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Sso.HasNotice, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Sso.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Success"
+                            Message="{x:Bind ViewModel.Sso.Notice, Mode=OneWay}"
+                            IsClosable="False" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="{x:Bind ViewModel.Sso.SaveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Sso.SaveCommand}"
+                                IsEnabled="{x:Bind ViewModel.Sso.CanSave, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button
+                                Content="{x:Bind ViewModel.Sso.RemoveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Sso.RemoveCommand}"
+                                IsEnabled="{x:Bind ViewModel.Sso.CanRemove, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Sso.IsConfigured, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </StackPanel>

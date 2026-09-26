@@ -148,24 +148,33 @@ public sealed record ServerInfo
     /// <summary>
     /// The line under the Plex/Jellyfin buttons telling a newcomer how to
     /// get an account, when the admin has new accounts from sign-in on;
-    /// names only the methods offered. Null otherwise (and from servers
-    /// older than 0.43, which don't say).
+    /// names only the methods that make one, single sign-on first as on the
+    /// website ("Authentik (or Plex or Jellyfin)"). Null otherwise (and from
+    /// servers older than 0.43, which don't say).
     /// </summary>
     public string? SignupHint
     {
         get
         {
-            if (SignIn is not { Signup: true } signIn) return null;
-            var names = (signIn.Plex, signIn.Jellyfin) switch
-            {
-                (true, true) => $"Plex (or {JellyfinName})",
-                (true, false) => "Plex",
-                (false, true) => JellyfinName,
-                _ => null,
-            };
-            return names is null ? null : $"New here? Use Sign in with {names} — your account is made for you.";
+            if (SignIn is not { } signIn) return null;
+            var names = new List<string>();
+            if (signIn.Sso is { Signup: true } sso) names.Add(sso.Name);
+            if (signIn.Signup && signIn.Plex) names.Add("Plex");
+            if (signIn.Signup && signIn.Jellyfin) names.Add(JellyfinName);
+            if (names.Count == 0) return null;
+            var named = names.Count == 1 ? names[0] : $"{names[0]} (or {string.Join(" or ", names.Skip(1))})";
+            return $"New here? Use Sign in with {named} — your account is made for you.";
         }
     }
+
+    /// <summary>"Sign in with {name}" for the admin's single sign-on is offered (0.44+).</summary>
+    public bool OffersSsoSignIn => SignIn?.Sso != null;
+
+    /// <summary>The single sign-on button's name ("Authentik"); null while it isn't offered.</summary>
+    public string? SsoName => SignIn?.Sso?.Name;
+
+    /// <summary>"Use Quick Connect" is offered on the Jellyfin sign-in (0.44+; never for Emby).</summary>
+    public bool OffersQuickConnect => SignIn?.QuickConnect == true && OffersJellyfinSignIn;
 
     public bool IsMarquee => App == "marquee";
     public bool IsSupported => ApiVersion == SupportedApiVersion;
@@ -211,6 +220,18 @@ public sealed record SignInMethods
     /// (and one of them is offered). Missing (older servers) reads as false.
     /// </summary>
     public bool Signup { get; init; }
+
+    /// <summary>
+    /// <c>quickConnect</c> (0.44+): Jellyfin sign-in is on and the server is
+    /// Jellyfin, not Emby. Missing (older servers) reads as false.
+    /// </summary>
+    public bool QuickConnect { get; init; }
+
+    /// <summary>
+    /// <c>sso</c> (0.44+): single sign-on is set up. Null when it isn't, and
+    /// from older servers, which don't send it.
+    /// </summary>
+    public SsoSignIn? Sso { get; init; }
 }
 
 public sealed record SetupRequest(string Username, string Password, string DisplayName, string DeviceName);

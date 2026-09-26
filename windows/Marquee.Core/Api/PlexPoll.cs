@@ -5,6 +5,9 @@ namespace Marquee.Core.Api;
 /// (<c>/me/links/plex/poll</c>): 202 while the person is still in the
 /// browser, 200 once Plex said yes, 403 when the server refuses that Plex
 /// account, 410 once the PIN is gone. The Mac app's <c>PlexPoll</c>.
+/// Single sign-on (<c>/auth/sso/poll</c>, <c>/me/links/sso/poll</c>) and
+/// Quick Connect (<c>/auth/jellyfin/quick-connect/poll</c>) answer the same
+/// way and run through here too, with their own "expired" wording.
 /// </summary>
 public static class PlexPoll
 {
@@ -23,13 +26,14 @@ public static class PlexPoll
 
     /// <summary>
     /// One answer: null while pending (202), the answer itself once done;
-    /// throws Forbidden with the server's reason for 403 and Expired for 410.
+    /// throws Forbidden with the server's reason for 403 and Expired for 410
+    /// (saying <paramref name="expiredMessage"/>, the Plex wording by default).
     /// </summary>
-    public static ApiClient.RawResponse? Step(ApiClient.RawResponse raw) => raw.StatusCode switch
+    public static ApiClient.RawResponse? Step(ApiClient.RawResponse raw, string? expiredMessage = null) => raw.StatusCode switch
     {
         202 => null,
         403 => throw ApiException.RefusedFromResponse(raw.StatusCode, raw.BodyText, raw.HasApiHeader),
-        410 => throw ApiException.PlexSignInExpired(raw.StatusCode, raw.HasApiHeader),
+        410 => throw ApiException.SignInExpired(expiredMessage ?? ApiException.PlexSignInExpiredMessage, raw.StatusCode, raw.HasApiHeader),
         _ => raw,
     };
 
@@ -37,14 +41,15 @@ public static class PlexPoll
     /// Calls <paramref name="poll"/> every <paramref name="interval"/> until
     /// it returns a value, it throws, <paramref name="ct"/> is cancelled (a
     /// Network/Cancelled <see cref="ApiException"/>), or <paramref name="expiresAt"/>
-    /// passes (Expired).
+    /// passes (Expired, saying <paramref name="expiredMessage"/>).
     /// </summary>
     public static async Task<T> RunAsync<T>(
         DateTimeOffset expiresAt,
         Func<CancellationToken, Task<T?>> poll,
         TimeSpan? interval = null,
         Func<DateTimeOffset>? now = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? expiredMessage = null)
         where T : class
     {
         var clock = now ?? (() => DateTimeOffset.UtcNow);
@@ -66,7 +71,7 @@ public static class PlexPoll
             }
             if (clock() >= deadline)
             {
-                throw ApiException.PlexSignInExpired();
+                throw ApiException.SignInExpired(expiredMessage ?? ApiException.PlexSignInExpiredMessage);
             }
         }
     }
@@ -77,13 +82,15 @@ public static class PlexPoll
         Func<CancellationToken, Task<bool>> poll,
         TimeSpan? interval = null,
         Func<DateTimeOffset>? now = null,
-        CancellationToken ct = default) =>
+        CancellationToken ct = default,
+        string? expiredMessage = null) =>
         RunAsync<object>(
             expiresAt,
             async token => await poll(token).ConfigureAwait(false) ? Done : null,
             interval,
             now,
-            ct);
+            ct,
+            expiredMessage);
 
     private static readonly object Done = new();
 }

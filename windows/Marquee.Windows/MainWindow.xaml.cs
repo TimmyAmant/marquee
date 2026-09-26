@@ -612,8 +612,8 @@ public sealed partial class MainWindow : Window, INavigator
     private void OnClosed(object sender, WindowEventArgs args)
     {
         suggestCancellation?.Cancel();
-        // Quitting ends a Plex sign-in that's still polling.
-        (AuthFrame.Content as ConnectPage)?.ViewModel.CancelPlexSignIn();
+        // Quitting ends a Plex, single sign-on or Quick Connect sign-in that's still polling.
+        (AuthFrame.Content as ConnectPage)?.ViewModel.CancelExternalSignIn();
         model.PropertyChanged -= OnModelPropertyChanged;
         model.SessionChanged -= OnSessionChanged;
         updater.PropertyChanged -= OnUpdaterPropertyChanged;

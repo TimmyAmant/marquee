@@ -142,8 +142,17 @@ public sealed class ServerProbeTests
         var stub = new StubHttpMessageHandler();
         stub.AnswerFixture("server-info");
         var outcome = await ServerProbe.ProbeAsync(Address, stub);
-        // The doc's example offers Plex sign-in alongside passwords, with sign-up on.
-        var signIn = new SignInMethods { Password = true, Plex = true, Jellyfin = false, Signup = true };
+        // The doc's example offers Plex, Jellyfin (with Quick Connect) and
+        // single sign-on alongside passwords, with sign-up on.
+        var signIn = new SignInMethods
+        {
+            Password = true,
+            Plex = true,
+            Jellyfin = true,
+            Signup = true,
+            QuickConnect = true,
+            Sso = new SsoSignIn { Name = "Authentik", Signup = false },
+        };
         Assert.Equal(new ProbeOutcome.Marquee(Info("0.22.0", true) with { SignIn = signIn }), outcome);
 
         var request = Assert.Single(stub.Requests);

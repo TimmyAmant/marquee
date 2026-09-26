@@ -66,8 +66,9 @@ public sealed class MediaSignInDecodingTests
         var neither = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"signup":true}}""");
         Assert.Null(neither.SignupHint);
 
-        // The doc's example has it on, with Plex.
-        Assert.Equal("New here? Use Sign in with Plex — your account is made for you.", Fixtures.Decode<ServerInfo>("server-info").SignupHint);
+        // The doc's example has it on, with Plex and Jellyfin (its single
+        // sign-on doesn't make accounts).
+        Assert.Equal("New here? Use Sign in with Plex (or Jellyfin) — your account is made for you.", Fixtures.Decode<ServerInfo>("server-info").SignupHint);
     }
 
     [Fact]
