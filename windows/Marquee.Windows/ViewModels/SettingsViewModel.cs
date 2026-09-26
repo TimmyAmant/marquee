@@ -129,6 +129,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     private CancellationTokenSource? aboutCancellation;
     private CancellationTokenSource? membersCancellation;
     private CancellationTokenSource? plexLinkCancellation;
+    private CancellationTokenSource? plexWatchlistCancellation;
+    private CancellationTokenSource? plexWatchlistLoadCancellation;
+
+    /// <summary>Whether Plex was linked when the watchlist state was last asked for; linking or unlinking asks again.</summary>
+    private bool? plexLinkedForWatchlist;
     private bool active;
 
     // MARK: The edit form
@@ -223,6 +228,51 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>Set while the switch is moved to match the server, so that isn't taken for the admin flipping it.</summary>
     private bool syncingSignInSettings;
+
+    // MARK: Request from my Plex Watchlist
+
+    /// <summary>
+    /// <c>GET /me/plex-watchlist</c>'s last answer; null until it answers.
+    /// An older server's 404 is <see cref="PlexWatchlist.Unavailable"/>, so
+    /// the card stays hidden.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsPlexWatchlist))]
+    [NotifyPropertyChangedFor(nameof(IsPlexWatchlistOn))]
+    [NotifyPropertyChangedFor(nameof(CanTurnOnPlexWatchlist))]
+    [NotifyPropertyChangedFor(nameof(PlexWatchlistBadge))]
+    [NotifyPropertyChangedFor(nameof(PlexWatchlistSummary))]
+    [NotifyPropertyChangedFor(nameof(PlexWatchlistLastError))]
+    [NotifyPropertyChangedFor(nameof(HasPlexWatchlistLastError))]
+    private PlexWatchlist? plexWatchlistState;
+
+    /// <summary>Turning it on: the browser is open at plex.tv and the poll is running.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanTurnOnPlexWatchlist))]
+    private bool isTurningOnPlexWatchlist;
+
+    /// <summary>A switch, Check now or Turn off is in flight.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanTurnOnPlexWatchlist))]
+    [NotifyPropertyChangedFor(nameof(CanChangePlexWatchlist))]
+    [NotifyPropertyChangedFor(nameof(CheckPlexWatchlistLabel))]
+    private bool isChangingPlexWatchlist;
+
+    /// <summary>The Movies switch; follows the server, and flipping it sends <c>PATCH /me/plex-watchlist</c>.</summary>
+    [ObservableProperty]
+    private bool plexWatchlistMovies;
+
+    /// <summary>The TV shows switch.</summary>
+    [ObservableProperty]
+    private bool plexWatchlistTv;
+
+    /// <summary>Turning on, a switch, Check now or Turn off failed (Check now's "Checked a moment ago…" too).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPlexWatchlistError))]
+    private string? plexWatchlistError;
+
+    /// <summary>Set while the switches are moved to match the server, so that isn't taken for the user flipping them.</summary>
+    private bool syncingPlexWatchlist;
 
     // MARK: Notifications
 
@@ -365,6 +415,23 @@ public sealed partial class SettingsViewModel : ObservableObject
             : offered ? "Not linked."
             : $"{server.Label()} isn't connected to this server.";
 
+    // Request from my Plex Watchlist: shown while Plex is linked (the server says so).
+    public bool ShowsPlexWatchlist => PlexWatchlistState?.Available == true;
+    public bool IsPlexWatchlistOn => PlexWatchlistState?.Enabled == true;
+    public bool CanTurnOnPlexWatchlist => ShowsPlexWatchlist && !IsPlexWatchlistOn && !IsTurningOnPlexWatchlist && !IsChangingPlexWatchlist;
+    public bool CanChangePlexWatchlist => !IsChangingPlexWatchlist;
+
+    /// <summary>"On" while it's on; empty (the pill collapses) otherwise.</summary>
+    public string PlexWatchlistBadge => IsPlexWatchlistOn ? "On" : "";
+    public BadgeTone PlexWatchlistTone { get; } = BadgeTone.Owned;
+
+    /// <summary>"Checked 5m ago · 3 titles requested so far", or "Checking your watchlist…" before the first check.</summary>
+    public string PlexWatchlistSummary => PlexWatchlistState?.Summary(DateTimeOffset.UtcNow) ?? "";
+    public string CheckPlexWatchlistLabel => IsChangingPlexWatchlist ? "Checking…" : "Check now";
+    public string PlexWatchlistLastError => PlexWatchlistState?.LastError ?? "";
+    public bool HasPlexWatchlistLastError => PlexWatchlistLastError.Length > 0;
+    public bool HasPlexWatchlistError => PlexWatchlistError != null;
+
     public bool ShowsMembersError => MembersError != null && Members == null;
     public bool HasMembersActionError => MembersActionError != null;
     public bool HasMembersNotice => MembersNotice != null;
@@ -389,6 +456,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _ = LoadMembersAsync();
         _ = LoadAboutAsync();
         _ = LoadSignInSettingsAsync();
+        _ = LoadPlexWatchlistAsync();
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
         _ = model.Session.RefreshInfoAsync();
     }
@@ -407,7 +475,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         AppServices.Updater.PropertyChanged -= OnUpdaterPropertyChanged;
         aboutCancellation?.Cancel();
         membersCancellation?.Cancel();
+        plexWatchlistLoadCancellation?.Cancel();
         CancelLinkPlex();
+        CancelTurnOnPlexWatchlist();
     }
 
     // MARK: Notifications
@@ -822,6 +892,181 @@ public sealed partial class SettingsViewModel : ObservableObject
         LinksNotice = null;
     }
 
+    // MARK: Request from my Plex Watchlist
+
+    /// <summary>How long after turning it on to ask again: the server's first check runs in the background.</summary>
+    private static readonly TimeSpan PlexWatchlistFirstCheckDelay = TimeSpan.FromSeconds(8);
+
+    /// <summary>
+    /// <c>GET /me/plex-watchlist</c>. A failure keeps what's shown (nothing,
+    /// the first time): the card is an extra, not worth an error of its own.
+    /// </summary>
+    private async Task LoadPlexWatchlistAsync()
+    {
+        plexWatchlistLoadCancellation?.Cancel();
+        var cancellation = new CancellationTokenSource();
+        plexWatchlistLoadCancellation = cancellation;
+        var token = cancellation.Token;
+        plexLinkedForWatchlist = PlexLinked;
+        try
+        {
+            var state = await model.Api.PlexWatchlist.StatusAsync(token);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            ShowPlexWatchlist(state);
+        }
+        catch (ApiException)
+        {
+            // Cancelled by a newer load, or it failed: keep what's shown.
+        }
+    }
+
+    /// <summary>
+    /// "Turn on": <c>POST /me/plex-watchlist/start</c>, the plex.tv page in
+    /// the browser, then <c>POST /me/plex-watchlist/poll</c> every 2 seconds
+    /// until it's on, refused, expired or cancelled, like Link Plex.
+    /// </summary>
+    [RelayCommand]
+    private async Task TurnOnPlexWatchlistAsync()
+    {
+        if (!CanTurnOnPlexWatchlist)
+        {
+            return;
+        }
+        PlexWatchlistError = null;
+        plexWatchlistCancellation?.Cancel();
+        var cancellation = new CancellationTokenSource();
+        plexWatchlistCancellation = cancellation;
+        IsTurningOnPlexWatchlist = true;
+        var api = model.Api;
+        try
+        {
+            var start = await api.PlexWatchlist.StartAsync(cancellation.Token);
+            if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
+            {
+                PlexWatchlistError = ConnectViewModel.PlexPageUnopenedMessage;
+                return;
+            }
+            var state = await PlexPoll.RunAsync(start.ExpiresAt, token => api.PlexWatchlist.PollAsync(start.Handle, token), ct: cancellation.Token);
+            ShowPlexWatchlist(state);
+            _ = RefreshPlexWatchlistAfterFirstCheckAsync();
+        }
+        catch (ApiException error)
+        {
+            if (!error.IsCancellation && !cancellation.IsCancellationRequested)
+            {
+                PlexWatchlistError = error.Message;
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(plexWatchlistCancellation, cancellation))
+            {
+                plexWatchlistCancellation = null;
+                IsTurningOnPlexWatchlist = false;
+            }
+            cancellation.Dispose();
+        }
+    }
+
+    /// <summary>"Cancel" while waiting for Plex; also leaving the page.</summary>
+    [RelayCommand]
+    private void CancelTurnOnPlexWatchlist()
+    {
+        var cancellation = plexWatchlistCancellation;
+        plexWatchlistCancellation = null;
+        IsTurningOnPlexWatchlist = false;
+        cancellation?.Cancel();
+    }
+
+    /// <summary>The first check's result ("Checked just now", what it requested), shortly after turning it on.</summary>
+    private async Task RefreshPlexWatchlistAfterFirstCheckAsync()
+    {
+        await Task.Delay(PlexWatchlistFirstCheckDelay);
+        if (active && model.IsSignedIn)
+        {
+            await LoadPlexWatchlistAsync();
+        }
+    }
+
+    /// <summary>"Check now": <c>POST /me/plex-watchlist/sync</c>, answering once the check is done.</summary>
+    [RelayCommand]
+    private Task CheckPlexWatchlistAsync() => ChangePlexWatchlistAsync(api => api.PlexWatchlist.SyncAsync());
+
+    /// <summary>"Turn off": <c>DELETE /me/plex-watchlist</c>, which also deletes the stored Plex sign-in.</summary>
+    [RelayCommand]
+    private Task TurnOffPlexWatchlistAsync() => ChangePlexWatchlistAsync(api => api.PlexWatchlist.DisableAsync());
+
+    /// <summary>The user flipped Movies: <c>PATCH /me/plex-watchlist</c> with just that kind.</summary>
+    partial void OnPlexWatchlistMoviesChanged(bool value)
+    {
+        if (!syncingPlexWatchlist)
+        {
+            _ = ChangePlexWatchlistAsync(api => api.PlexWatchlist.SetTypesAsync(movies: value, tv: null));
+        }
+    }
+
+    /// <summary>The user flipped TV shows.</summary>
+    partial void OnPlexWatchlistTvChanged(bool value)
+    {
+        if (!syncingPlexWatchlist)
+        {
+            _ = ChangePlexWatchlistAsync(api => api.PlexWatchlist.SetTypesAsync(movies: null, tv: value));
+        }
+    }
+
+    /// <summary>
+    /// One change, each answering the new state. A failure says why and
+    /// puts the switches back where the server has them.
+    /// </summary>
+    private async Task ChangePlexWatchlistAsync(Func<MarqueeApi, Task<PlexWatchlist>> change)
+    {
+        if (IsChangingPlexWatchlist || IsTurningOnPlexWatchlist)
+        {
+            ShowPlexWatchlist(PlexWatchlistState);
+            return;
+        }
+        PlexWatchlistError = null;
+        IsChangingPlexWatchlist = true;
+        try
+        {
+            ShowPlexWatchlist(await change(model.Api));
+        }
+        catch (ApiException error)
+        {
+            PlexWatchlistError = error.Message;
+            ShowPlexWatchlist(PlexWatchlistState);
+        }
+        finally
+        {
+            IsChangingPlexWatchlist = false;
+        }
+    }
+
+    /// <summary>Shows a state from the server, moving the switches to match without sending anything.</summary>
+    private void ShowPlexWatchlist(PlexWatchlist? state)
+    {
+        PlexWatchlistState = state;
+        if (state == null)
+        {
+            return;
+        }
+        syncingPlexWatchlist = true;
+        try
+        {
+            PlexWatchlistMovies = state.Movies;
+            PlexWatchlistTv = state.Tv;
+        }
+        finally
+        {
+            syncingPlexWatchlist = false;
+        }
+        // "Checked 5m ago" is relative to now: re-read even when the state didn't change.
+        OnPropertyChanged(nameof(PlexWatchlistSummary));
+    }
+
     // MARK: Plex / Jellyfin members (admin)
 
     [RelayCommand]
@@ -975,6 +1220,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (e.PropertyName == nameof(AppModel.Viewer))
         {
             NotifyDerived();
+            // Linking or unlinking Plex decides whether the watchlist card shows.
+            if (model.Viewer != null && plexLinkedForWatchlist != PlexLinked)
+            {
+                _ = LoadPlexWatchlistAsync();
+            }
             // A promotion (or demotion) changes which accounts the list shows.
             if (model.Viewer is { } viewer && viewer.IsAdmin != IsAdmin)
             {
@@ -988,6 +1238,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             _ = LoadMembersAsync();
             _ = LoadAboutAsync();
+            _ = LoadPlexWatchlistAsync();
         }
     }
 

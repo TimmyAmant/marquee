@@ -420,10 +420,11 @@ public readonly record struct JobId(string Value) : IOpenEnum<JobId>
     public static readonly JobId PlexSync = new("plex-sync");
     public static readonly JobId JellyfinSync = new("jellyfin-sync");
     public static readonly JobId ArrSync = new("arr-sync");
+    public static readonly JobId PlexWatchlist = new("plex-watchlist");
     public static readonly JobId DiskSpaceSnapshot = new("disk-space-snapshot");
     public static readonly JobId Cleanup = new("cleanup");
 
-    public static IReadOnlyList<JobId> Known { get; } = [PlexSync, JellyfinSync, ArrSync, DiskSpaceSnapshot, Cleanup];
+    public static IReadOnlyList<JobId> Known { get; } = [PlexSync, JellyfinSync, ArrSync, PlexWatchlist, DiskSpaceSnapshot, Cleanup];
     public static JobId FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;

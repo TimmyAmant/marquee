@@ -13,16 +13,18 @@ public sealed class JobsFixtureTests
     {
         var jobs = Fixtures.Decode<ListResponse<Job>>("jobs").Results;
 
-        Assert.Equal(5, jobs.Count);
-        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.DiskSpaceSnapshot, JobId.Cleanup], jobs.Select(job => job.Id));
+        Assert.Equal(6, jobs.Count);
+        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.PlexWatchlist, JobId.DiskSpaceSnapshot, JobId.Cleanup], jobs.Select(job => job.Id));
         Assert.All(jobs, job => Assert.True(job.Id.IsKnown));
 
         var arrSync = jobs[2];
         Assert.Equal("Sonarr/Radarr Sync", arrSync.Name);
         Assert.Equal("Every hour", arrSync.Schedule);
         Assert.Equal("Refreshes tracked/monitored status from every connected Sonarr and Radarr instance.", arrSync.Description);
-        Assert.Equal("Daily at 3:00 AM", jobs[3].Schedule);
-        Assert.Equal("Daily at 3:30 AM", jobs[4].Schedule);
+        Assert.Equal("Plex Watchlist Requests", jobs[3].Name);
+        Assert.Equal("Every 10 minutes", jobs[3].Schedule);
+        Assert.Equal("Daily at 3:00 AM", jobs[4].Schedule);
+        Assert.Equal("Daily at 3:30 AM", jobs[5].Schedule);
     }
 
     [Fact]
@@ -42,7 +44,8 @@ public sealed class JobsFixtureTests
     {
         Assert.Equal("plex-sync", MarqueeApi.Segment(JobId.PlexSync));
         Assert.Equal("disk-space-snapshot", MarqueeApi.Segment(JobId.DiskSpaceSnapshot));
+        Assert.Equal("plex-watchlist", MarqueeApi.Segment(JobId.PlexWatchlist));
         Assert.Equal("cleanup", JobId.Cleanup.ToString());
-        Assert.Equal(5, JobId.Known.Count);
+        Assert.Equal(6, JobId.Known.Count);
     }
 }
