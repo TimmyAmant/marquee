@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.46.0",
+    date: "2026-09-26",
+    changes: [
+      "Members can cancel or edit their own pending requests (seasons, whole series, 4K). Cancelling frees up their request limit.",
+      "Reviewers can edit a request before approving it; the change is noted in the request's comments so the member knows.",
+      "Comments on requests and problem reports, between the person who asked and the reviewers. Everyone in the conversation is notified (bell, devices and their own channels — never the household channels).",
+      "Couldn't add: if Sonarr/Radarr can't be reached when a request is approved, it goes into a \"Couldn't add\" section with Retry, Decline and \"Added it by hand\" instead of failing quietly. The member sees \"Approved — waiting to be added\" and is only told it's approved once it's really added.",
+      "On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.45.3",
     date: "2026-09-26",
     changes: [
