@@ -1,22 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  components/poster-card.tsx: artwork with the library status badge and the
-  MOVIE/SERIES pill in the corners, then a name and a footer line. The whole
+  components/poster-card.tsx, drawn the way the Mac's PosterCard draws it:
+  artwork with the MOVIE/SERIES pill (or, on the Movies/Series grid, the
+  rating chip) top-left, the library status pill top-right and the status
+  strip along the artwork's foot, then a name and a footer line. The whole
   tile is one Button so keyboard users tab through a rail card by card and
   a screen reader reads each as one item (AutomationProperties.Name).
 
-  The status badge (and the strip under the art) is one Border per palette,
+  The status pill (and the strip under the art) is one element per palette,
   with theme brushes, rather than one whose colors are computed in code:
   {ThemeResource} keeps following light/dark switches at runtime, and
-  nothing here touches resources from code.
+  nothing here touches resources from code. The same goes for the type
+  pill's blue (MOVIE) and magenta (SERIES) fills.
 
-  The quick action ("+ Add to Radarr", "Request", the "Requested" pill)
-  sits at the foot of the artwork like components/poster-card.tsx's hover
-  slot. It is a sibling of the card button, not a child, so clicking it never
-  also opens the title (PersonCard's star does the same). The code-behind
+  The hover panel (the overview on the Movies/Series grid, then the quick
+  action: "+ Add to Radarr", "Request", the "Requested" pill) sits at the
+  foot of the artwork over a bg0 scrim, like the Mac's. It is a sibling of
+  the card button, not a child, so clicking the button in it never also
+  opens the title (PersonCard's star does the same); the scrim and the
+  overview take no clicks, so those still reach the card. The code-behind
   shows it while the pointer is over the card, while focus is anywhere in
   the card (so Tab reaches it), while it's working or showing an error, and
-  always on a PC with no mouse (the website's [@media(hover:hover)]).
+  the quick action always on a PC with no mouse (the website's
+  [@media(hover:hover)]).
+
+  Sizes are the Mac's points one for one: the type pill 9/bold white text,
+  padding 5,3,5,2.5, radius 4, 7 in from the corner; the status pill 17
+  high, 10/semibold, a 5 dot 4 from its text, 5 and 6 either side, 6 in
+  from the corner, its tone's background at 94% and its tone's color at 30%
+  for the ring; the strip 3 high.
 
   In a grid (FillsColumn) the card follows its column's width and the
   artwork keeps 2:3, so the columns stretch to the row's full width.
@@ -34,6 +46,56 @@
     PointerCanceled="OnPointerExited"
     GotFocus="OnGotFocus"
     LostFocus="OnLostFocus">
+
+    <UserControl.Resources>
+        <!-- The MOVIE / SERIES pill. -->
+        <Style x:Key="TypeBadgeStyle" TargetType="Border">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="7" />
+            <Setter Property="Padding" Value="5,3,5,2.5" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style x:Key="TypeBadgeTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="9" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="CharacterSpacing" Value="50" />
+        </Style>
+
+        <!-- The status pill: a fill at 94% under a ring holding the dot and the label. -->
+        <Style x:Key="StatusPillStyle" TargetType="Grid">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="6" />
+            <Setter Property="Height" Value="17" />
+        </Style>
+        <Style x:Key="StatusPillFillStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8.5" />
+            <Setter Property="Opacity" Value="0.94" />
+        </Style>
+        <Style x:Key="StatusPillRingStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8.5" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4,0,5,0" />
+        </Style>
+        <Style x:Key="StatusPillDotStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="5" />
+            <Setter Property="Height" Value="5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="StatusPillTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- The strip along the artwork's foot. -->
+        <Style x:Key="StatusStripStyle" TargetType="Border">
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Height" Value="3" />
+            <Setter Property="CornerRadius" Value="0,0,7,7" />
+        </Style>
+    </UserControl.Resources>
 
     <Grid>
         <Button
@@ -71,195 +133,176 @@
                         VerticalAlignment="Center"
                         Margin="12" />
 
-                    <!-- "MOVIE" / "SERIES" on rows that mix both. -->
-                    <Border
-                        Visibility="{x:Bind Item.TypeLabel, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Margin="6"
-                        Padding="6,2"
-                        CornerRadius="4"
-                        Background="#B3000000">
-                        <TextBlock
-                            Text="{x:Bind Item.TypeLabel, Mode=OneWay}"
-                            FontSize="9"
-                            FontWeight="SemiBold"
-                            CharacterSpacing="80"
-                            Foreground="White" />
-                    </Border>
-
                     <!--
-                      The status strip along the artwork's foot (poster-card.tsx):
-                      the badge's color, none for a title not in the library.
-                      Drawn before the badges so a badge sits on top of it. Hovering
-                      it (or the badge) names the status.
+                      The status strip (poster-card.tsx): the pill's color, none
+                      for a title not in the library. Hovering it names the status.
                     -->
                     <Border
                         Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        VerticalAlignment="Bottom"
-                        Height="3"
-                        CornerRadius="0,0,7,7"
+                        Style="{StaticResource StatusStripStyle}"
                         Background="{ThemeResource OwnedBadgeForegroundBrush}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
                         AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
                         Visibility="{x:Bind Item.IsDownloadingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        VerticalAlignment="Bottom"
-                        Height="3"
-                        CornerRadius="0,0,7,7"
+                        Style="{StaticResource StatusStripStyle}"
                         Background="{ThemeResource DownloadingBadgeForegroundBrush}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
                         AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
                         Visibility="{x:Bind Item.IsMissingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        VerticalAlignment="Bottom"
-                        Height="3"
-                        CornerRadius="0,0,7,7"
+                        Style="{StaticResource StatusStripStyle}"
                         Background="{ThemeResource MissingBadgeForegroundBrush}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
                         AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
                         Visibility="{x:Bind Item.IsUnmonitoredTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        VerticalAlignment="Bottom"
-                        Height="3"
-                        CornerRadius="0,0,7,7"
+                        Style="{StaticResource StatusStripStyle}"
                         Background="{ThemeResource UnmonitoredBadgeForegroundBrush}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
                         AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
                         Visibility="{x:Bind Item.IsSoonTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        VerticalAlignment="Bottom"
-                        Height="3"
-                        CornerRadius="0,0,7,7"
+                        Style="{StaticResource StatusStripStyle}"
                         Background="{ThemeResource SoonBadgeForegroundBrush}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
                         AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
 
+                    <!-- Top-left: "MOVIE" (blue) / "SERIES" (magenta) on rows that mix both. -->
                     <Border
+                        Visibility="{x:Bind Item.IsMovieTypeBadge, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource TypeBadgeStyle}"
+                        Background="{ThemeResource MovieTypeBadgeBrush}">
+                        <TextBlock
+                            Text="{x:Bind Item.TypeLabel, Mode=OneWay}"
+                            Style="{StaticResource TypeBadgeTextStyle}"
+                            Foreground="{ThemeResource TypeBadgeForegroundBrush}" />
+                    </Border>
+                    <Border
+                        Visibility="{x:Bind Item.IsSeriesTypeBadge, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource TypeBadgeStyle}"
+                        Background="{ThemeResource SeriesTypeBadgeBrush}">
+                        <TextBlock
+                            Text="{x:Bind Item.TypeLabel, Mode=OneWay}"
+                            Style="{StaticResource TypeBadgeTextStyle}"
+                            Foreground="{ThemeResource TypeBadgeForegroundBrush}" />
+                    </Border>
+
+                    <!-- Top-left instead, on the Movies/Series grid: the TMDb rating. -->
+                    <Border
+                        Visibility="{x:Bind Item.HasRating, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="6"
+                        Padding="7,2.5"
+                        CornerRadius="9"
+                        Background="{ThemeResource RatingChipBackgroundBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="3">
+                            <FontIcon
+                                Glyph="&#xE735;"
+                                FontSize="8"
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource MarqueeAccentBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.RatingLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="Medium"
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource MarqueeAccentBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Top-right: the library status pill ("Owned", "Coming soon"). -->
+                    <Grid
                         Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="6"
-                        Padding="7,2"
-                        CornerRadius="9"
-                        Background="{ThemeResource OwnedBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource OwnedBadgeForegroundBrush}"
-                        BorderThickness="1"
+                        Style="{StaticResource StatusPillStyle}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
-                            <TextBlock
-                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                                FontSize="10"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource OwnedBadgeForegroundBrush}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource OwnedBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource OwnedBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource OwnedBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid
                         Visibility="{x:Bind Item.IsDownloadingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="6"
-                        Padding="7,2"
-                        CornerRadius="9"
-                        Background="{ThemeResource DownloadingBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource DownloadingBadgeForegroundBrush}"
-                        BorderThickness="1"
+                        Style="{StaticResource StatusPillStyle}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource DownloadingBadgeForegroundBrush}" />
-                            <TextBlock
-                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                                FontSize="10"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource DownloadingBadgeForegroundBrush}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource DownloadingBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource DownloadingBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource DownloadingBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource DownloadingBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid
                         Visibility="{x:Bind Item.IsMissingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="6"
-                        Padding="7,2"
-                        CornerRadius="9"
-                        Background="{ThemeResource MissingBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
-                        BorderThickness="1"
+                        Style="{StaticResource StatusPillStyle}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
-                            <TextBlock
-                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                                FontSize="10"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource MissingBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource MissingBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid
                         Visibility="{x:Bind Item.IsUnmonitoredTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="6"
-                        Padding="7,2"
-                        CornerRadius="9"
-                        Background="{ThemeResource UnmonitoredBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource UnmonitoredBadgeForegroundBrush}"
-                        BorderThickness="1"
+                        Style="{StaticResource StatusPillStyle}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
-                            <TextBlock
-                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                                FontSize="10"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource UnmonitoredBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource UnmonitoredBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid
                         Visibility="{x:Bind Item.IsSoonTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="6"
-                        Padding="7,2"
-                        CornerRadius="9"
-                        Background="{ThemeResource SoonBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource SoonBadgeForegroundBrush}"
-                        BorderThickness="1"
+                        Style="{StaticResource StatusPillStyle}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource SoonBadgeForegroundBrush}" />
-                            <TextBlock
-                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                                FontSize="10"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource SoonBadgeForegroundBrush}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource SoonBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource SoonBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource SoonBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource SoonBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid
                         Visibility="{x:Bind Item.IsNeutralTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="6"
-                        Padding="7,2"
-                        CornerRadius="9"
-                        Background="{ThemeResource NeutralBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource NeutralBadgeForegroundBrush}"
-                        BorderThickness="1"
+                        Style="{StaticResource StatusPillStyle}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource NeutralBadgeForegroundBrush}" />
-                            <TextBlock
-                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
-                                FontSize="10"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource NeutralBadgeForegroundBrush}" />
-                        </StackPanel>
-                    </Border>
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource NeutralBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource NeutralBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource NeutralBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource NeutralBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
 
                 <TextBlock
@@ -287,80 +330,87 @@
             Height="225"
             VerticalAlignment="Top"
             Visibility="Collapsed">
-            <Border
-                VerticalAlignment="Bottom"
-                Height="72"
-                CornerRadius="0,0,8,8"
-                IsHitTestVisible="False">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                        <GradientStop Color="#00000000" Offset="0" />
-                        <GradientStop Color="#99000000" Offset="0.45" />
-                        <GradientStop Color="#D9000000" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-            </Border>
+            <Grid VerticalAlignment="Bottom" CornerRadius="0,0,8,8">
+                <Border Background="{ThemeResource PosterHoverScrimBrush}" CornerRadius="0,0,8,8" IsHitTestVisible="False" />
 
-            <StackPanel VerticalAlignment="Bottom" Margin="8" Spacing="4">
-                <Button
-                    Command="{x:Bind Item.QuickAddCommand, Mode=OneWay}"
-                    Visibility="{x:Bind Item.IsAddAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    Style="{StaticResource AccentButtonStyle}"
-                    HorizontalAlignment="Stretch"
-                    Height="26"
-                    Padding="8,0"
-                    CornerRadius="13"
-                    FontSize="11.5"
-                    FontWeight="SemiBold"
-                    AutomationProperties.Name="{x:Bind Item.AddLabel, Mode=OneWay}">
-                    <TextBlock Text="{x:Bind Item.AddButtonLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
-                </Button>
-
-                <Button
-                    Command="{x:Bind Item.RequestCommand, Mode=OneWay}"
-                    Visibility="{x:Bind Item.IsRequestAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    Style="{StaticResource AccentButtonStyle}"
-                    HorizontalAlignment="Stretch"
-                    Height="26"
-                    Padding="8,0"
-                    CornerRadius="13"
-                    FontSize="11"
-                    FontWeight="SemiBold"
-                    x:Uid="Poster_Request">
-                    <TextBlock Text="{x:Bind Item.RequestButtonLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
-                </Button>
-
-                <!-- request-button.tsx's compact "Requested": a pill, not a button. -->
-                <Border
-                    Visibility="{x:Bind Item.IsRequestedAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    Padding="8,4"
-                    CornerRadius="12"
-                    Background="{ThemeResource InfoBadgeBackgroundBrush}"
-                    BorderBrush="{ThemeResource InfoBadgeForegroundBrush}"
-                    BorderThickness="1">
+                <StackPanel Padding="9,10,9,9" Spacing="10">
+                    <!-- The Movies/Series grid's overview, clamped to 5 lines; clicks fall through to the card. -->
                     <TextBlock
-                        x:Uid="Poster_Requested"
-                        FontSize="10.5"
-                        FontWeight="SemiBold"
-                        HorizontalAlignment="Center"
-                        Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
-                </Border>
-
-                <Border
-                    Visibility="{x:Bind Item.HasQuickActionError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                    Padding="6,2"
-                    CornerRadius="4"
-                    Background="#E6000000">
-                    <TextBlock
-                        Text="{x:Bind Item.QuickActionError, Mode=OneWay}"
-                        FontSize="10"
+                        x:Name="OverviewText"
+                        Text="{x:Bind Item.Overview, Mode=OneWay}"
+                        Visibility="Collapsed"
+                        FontSize="11"
+                        LineHeight="16"
                         TextWrapping="Wrap"
-                        MaxLines="3"
+                        MaxLines="5"
                         TextTrimming="CharacterEllipsis"
-                        TextAlignment="Center"
-                        Foreground="#FFF87171" />
-                </Border>
-            </StackPanel>
+                        IsHitTestVisible="False"
+                        Foreground="{ThemeResource PosterOverviewForegroundBrush}" />
+
+                    <StackPanel
+                        Spacing="4"
+                        Visibility="{x:Bind Item.ShowsQuickActionSlot, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Button
+                            Command="{x:Bind Item.QuickAddCommand, Mode=OneWay}"
+                            Visibility="{x:Bind Item.IsAddAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource AccentButtonStyle}"
+                            HorizontalAlignment="Stretch"
+                            Height="26"
+                            Padding="8,0"
+                            CornerRadius="13"
+                            FontSize="11.5"
+                            FontWeight="SemiBold"
+                            AutomationProperties.Name="{x:Bind Item.AddLabel, Mode=OneWay}">
+                            <TextBlock Text="{x:Bind Item.AddButtonLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+
+                        <Button
+                            Command="{x:Bind Item.RequestCommand, Mode=OneWay}"
+                            Visibility="{x:Bind Item.IsRequestAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource AccentButtonStyle}"
+                            HorizontalAlignment="Stretch"
+                            Height="26"
+                            Padding="8,0"
+                            CornerRadius="13"
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            x:Uid="Poster_Request">
+                            <TextBlock Text="{x:Bind Item.RequestButtonLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+
+                        <!-- request-button.tsx's compact "Requested": a pill, not a button. -->
+                        <Border
+                            Visibility="{x:Bind Item.IsRequestedAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Padding="8,4"
+                            CornerRadius="12"
+                            Background="{ThemeResource InfoBadgeBackgroundBrush}"
+                            BorderBrush="{ThemeResource InfoBadgeBorderBrush}"
+                            BorderThickness="1">
+                            <TextBlock
+                                x:Uid="Poster_Requested"
+                                FontSize="10.5"
+                                FontWeight="SemiBold"
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
+                        </Border>
+
+                        <Border
+                            Visibility="{x:Bind Item.HasQuickActionError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Padding="6,2"
+                            CornerRadius="4"
+                            Background="#E6000000">
+                            <TextBlock
+                                Text="{x:Bind Item.QuickActionError, Mode=OneWay}"
+                                FontSize="10"
+                                TextWrapping="Wrap"
+                                MaxLines="3"
+                                TextTrimming="CharacterEllipsis"
+                                TextAlignment="Center"
+                                Foreground="#FFF87171" />
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

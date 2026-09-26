@@ -206,10 +206,10 @@ public sealed partial class SearchViewModel : ObservableObject
         Studios = results.Studios
             .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
             .ToList();
-        Titles = results.Titles.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+        Titles = results.Titles.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
         if (results.Theme is { Items.Count: > 0 } theme)
         {
-            ThemeItems = theme.Items.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+            ThemeItems = theme.Items.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
             ThemeTitle = Loc.Format("Search_ThemeTitle", theme.Label);
         }
         else

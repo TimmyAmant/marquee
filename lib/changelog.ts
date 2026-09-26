@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.49.1",
+    date: "2026-09-26",
+    changes: [
+      "Windows posters now look like the Mac's: a solid blue MOVIE or magenta SERIES label top-left, the status (Owned, Coming soon, Downloading…) top-right with the same colors, and the status strip along the bottom. Movies and Series pages also get the rating and a short overview on hover, like the Mac.",
+    ],
+  },
+  {
     version: "0.49.0",
     date: "2026-09-26",
     changes: [

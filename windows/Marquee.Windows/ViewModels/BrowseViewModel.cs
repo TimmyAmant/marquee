@@ -417,7 +417,7 @@ public sealed partial class BrowseViewModel : ObservableObject
                 {
                     if (seen.Add(card.Id))
                     {
-                        Cards.Add(new PosterItem(model, card, OpenTitleCommand));
+                        Cards.Add(new PosterItem(model, card, OpenTitleCommand, showsOverview: true, showsRating: true));
                         appended++;
                     }
                 }
