@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
-import { statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
+import { STATUS_TEXT, statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
 
 export function PosterCard({
   href,
@@ -51,11 +51,15 @@ export function PosterCard({
 }) {
   const src = tmdbImageUrl(posterPath, "w342");
   const stripClass = status ? statusClasses(status).strip : null;
+  // The strip's status in words, for its tooltip and screen readers — and
+  // the whole poster's tooltip leads with it, since 3px is hard to hover.
+  const stripName = stripClass && status ? (STATUS_TEXT[status]?.name ?? null) : null;
+  const posterTitle = [stripName, filePath].filter(Boolean).join(" — ") || undefined;
 
   return (
     <div className="group">
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-bg-2 ring-1 ring-border transition-all group-hover:-translate-y-1 group-hover:shadow-[0_16px_34px_rgba(0,0,0,0.6),0_4px_10px_rgba(0,0,0,0.4)] group-hover:ring-border-strong">
-        <Link href={href} className="absolute inset-0 z-0" title={filePath ?? undefined}>
+        <Link href={href} className="absolute inset-0 z-0" title={posterTitle}>
           {src ? (
             <MediaImage
               src={src}
@@ -93,7 +97,12 @@ export function PosterCard({
             readable at a glance across a whole grid. Same tone as the badge
             (lib/library/status-tone.ts); titles not in the library get none. */}
         {stripClass && (
-          <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[3px] ${stripClass}`} />
+          <div
+            role="img"
+            aria-label={stripName ?? undefined}
+            title={stripName ?? undefined}
+            className={`absolute inset-x-0 bottom-0 z-10 h-[3px] ${stripClass}`}
+          />
         )}
 
         {overview && (

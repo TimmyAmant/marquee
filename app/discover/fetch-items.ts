@@ -6,6 +6,7 @@ import {
   type DiscoverSort,
 } from "@/lib/tmdb/client";
 import { getLibraryStatusMap } from "@/lib/library/query";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
@@ -135,7 +136,7 @@ export async function fetchDiscoverItems(
       overview: item.overview,
       status,
       favorited: favoritedIds.has(item.tmdbId),
-      canQuickAdd: Boolean(viewer.userId) && arrConfigured && !status,
+      canQuickAdd: Boolean(viewer.userId) && arrConfigured && isUnwanted(status),
     };
   });
 

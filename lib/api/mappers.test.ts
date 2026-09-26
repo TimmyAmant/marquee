@@ -71,6 +71,19 @@ describe("titleViewerState", () => {
     expect(state).toMatchObject({ canAdd: false, arrTracking: { arrId: 12, monitored: false } });
   });
 
+  it("treats tracked_unmonitored like untracked: Start monitoring for the admin, Request for a member", () => {
+    const admin = titleViewerState({
+      ...base,
+      isAdmin: true,
+      status: "tracked_unmonitored",
+      configured: true,
+      arrTracking: { arrId: 12, monitored: false },
+    });
+    expect(admin).toMatchObject({ canAdd: false, canRelink: false, arrTracking: { arrId: 12, monitored: false } });
+    const member = titleViewerState({ ...base, isAdmin: false, status: "tracked_unmonitored", configured: true });
+    expect(member).toMatchObject({ canRequest: true, canAdd: false });
+  });
+
   it("points an admin at setup when *arr isn't configured", () => {
     const state = titleViewerState({ ...base, isAdmin: true, status: "untracked", configured: false });
     expect(state).toMatchObject({ canAdd: false, needsArrSetup: true });
@@ -254,6 +267,12 @@ describe("fourKViewerState", () => {
   it("offers a member Request in 4K and the admin Add, while the 4K instance doesn't have it", () => {
     expect(fourKViewerState(false, free, true)).toMatchObject({ canRequest: true, canAdd: false });
     expect(fourKViewerState(true, free, true)).toMatchObject({ canRequest: false, canAdd: true });
+  });
+
+  it("stays open while the 4K instance has it but isn't monitoring it", () => {
+    const unmonitored = { ...free, status: "tracked_unmonitored" as const };
+    expect(fourKViewerState(false, unmonitored, true)).toMatchObject({ canRequest: true, status: "tracked_unmonitored" });
+    expect(fourKViewerState(true, unmonitored, true)).toMatchObject({ canAdd: true });
   });
 
   it("offers neither once it's requested, in the 4K library, or the instance isn't set up", () => {

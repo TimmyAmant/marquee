@@ -529,10 +529,10 @@ private struct TitleActionRow: View {
                 if viewer.alreadyRequested {
                     Text(viewer.pendingRequestLine)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.tracked)
+                        .foregroundStyle(Theme.info)
                         .padding(.horizontal, 14)
                         .frame(height: 32)
-                        .background(Capsule().fill(Theme.trackedBg))
+                        .background(Capsule().fill(Theme.infoBg))
                 } else if let action = detail.requestAction {
                     switch action {
                     case .wholeSeries:
@@ -573,10 +573,10 @@ private struct TitleActionRow: View {
                     if fourK.isRequestPending {
                         Text("4K requested")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Theme.tracked)
+                            .foregroundStyle(Theme.info)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
-                            .background(Capsule().fill(Theme.trackedBg))
+                            .background(Capsule().fill(Theme.infoBg))
                     } else if fourK.canRequest {
                         Button(screen.isFourKBusy ? "Requesting…" : "Request in 4K") { screen.requestIn4K() }
                             .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))

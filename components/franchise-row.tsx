@@ -1,4 +1,5 @@
 import { PosterCard } from "@/components/poster-card";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { PosterGrid } from "@/components/poster-grid";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -87,9 +88,9 @@ export function FranchiseRow({
       <PosterGrid>
         {items.map((item) => {
           const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-          const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
+          const canQuickAdd = isUnwanted(status) && isAdmin === true && arrConfigured?.[item.mediaType];
           const canRequest =
-            !status &&
+            isUnwanted(status) &&
             isAdmin === false &&
             Boolean(mayRequest?.[item.mediaType]) &&
             !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);

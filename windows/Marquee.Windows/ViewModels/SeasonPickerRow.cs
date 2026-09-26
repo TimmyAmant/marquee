@@ -36,7 +36,7 @@ public sealed partial class SeasonPickerRow : ObservableObject
         EpisodeLine = Format.Count(episodeCount, "episode", "episodes");
         IsRequestable = state == SeasonRequestState.Requestable;
         Tag = state.Tag();
-        TagTone = state == SeasonRequestState.InLibrary ? BadgeTone.Owned : BadgeTone.Tracked;
+        TagTone = state == SeasonRequestState.InLibrary ? BadgeTone.Owned : BadgeTone.Info;
     }
 
     public int SeasonNumber { get; }

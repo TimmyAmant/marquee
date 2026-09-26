@@ -109,7 +109,7 @@ public sealed class EveryoneRow : RequestRowBase
         RequesterLabel = request.RequesterLabel;
         StatusLabel = request.StatusLabel;
         Tone = request.Status == RequestStatus.Pending
-            ? BadgeTone.Tracked
+            ? BadgeTone.Info
             : request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
         SeasonsLine = request.DetailText;
     }

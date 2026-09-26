@@ -81,19 +81,19 @@ struct DiscoverView: View {
         }
 
         if !shelves.recentlyAdded.isEmpty {
-            posterShelf("Recently Added", shelves.recentlyAdded, seeAll: seeAll(.recentlyAdded, in: shelves))
+            posterShelf("Recently Added", shelves.recentlyAdded, seeAll: seeAll(.recentlyAdded, in: shelves), showsColorKey: keyShelf(shelves) == .recentlyAdded)
         }
         if !shelves.trending.isEmpty {
-            posterShelf("Trending", shelves.trending, seeAll: seeAll(.trending, in: shelves))
+            posterShelf("Trending", shelves.trending, seeAll: seeAll(.trending, in: shelves), showsColorKey: keyShelf(shelves) == .trending)
         }
         if !shelves.popularMovies.isEmpty {
-            posterShelf("Popular Movies", shelves.popularMovies, seeAll: seeAll(.popularMovies, in: shelves))
+            posterShelf("Popular Movies", shelves.popularMovies, seeAll: seeAll(.popularMovies, in: shelves), showsColorKey: keyShelf(shelves) == .popularMovies)
         }
         if !shelves.movieGenres.isEmpty {
             genreShelf("Movie Genres", shelves.movieGenres, mediaType: .movie, seeAll: seeAll(.movieGenres, in: shelves))
         }
         if !shelves.upcomingMovies.isEmpty {
-            posterShelf("Upcoming Movies", shelves.upcomingMovies, seeAll: seeAll(.upcomingMovies, in: shelves))
+            posterShelf("Upcoming Movies", shelves.upcomingMovies, seeAll: seeAll(.upcomingMovies, in: shelves), showsColorKey: keyShelf(shelves) == .upcomingMovies)
         }
         if !shelves.studios.isEmpty {
             Shelf(title: "Studios", seeAll: seeAll(.studios, in: shelves)) {
@@ -105,13 +105,13 @@ struct DiscoverView: View {
             }
         }
         if !shelves.popularSeries.isEmpty {
-            posterShelf("Popular Series", shelves.popularSeries, seeAll: seeAll(.popularSeries, in: shelves))
+            posterShelf("Popular Series", shelves.popularSeries, seeAll: seeAll(.popularSeries, in: shelves), showsColorKey: keyShelf(shelves) == .popularSeries)
         }
         if !shelves.seriesGenres.isEmpty {
             genreShelf("Series Genres", shelves.seriesGenres, mediaType: .tv, seeAll: seeAll(.seriesGenres, in: shelves))
         }
         if !shelves.upcomingSeries.isEmpty {
-            posterShelf("Upcoming Series", shelves.upcomingSeries, seeAll: seeAll(.upcomingSeries, in: shelves))
+            posterShelf("Upcoming Series", shelves.upcomingSeries, seeAll: seeAll(.upcomingSeries, in: shelves), showsColorKey: keyShelf(shelves) == .upcomingSeries)
         }
         if !shelves.networks.isEmpty {
             Shelf(title: "Networks", seeAll: seeAll(.networks, in: shelves)) {
@@ -141,9 +141,28 @@ struct DiscoverView: View {
         }
     }
 
+    /// The first poster shelf on the page, which carries the "Color key"
+    /// pill next to its header.
+    private func keyShelf(_ shelves: API.DiscoverShelves) -> API.DiscoverShelf? {
+        let posterShelves: [(API.DiscoverShelf, [API.TitleCard])] = [
+            (.recentlyAdded, shelves.recentlyAdded),
+            (.trending, shelves.trending),
+            (.popularMovies, shelves.popularMovies),
+            (.upcomingMovies, shelves.upcomingMovies),
+            (.popularSeries, shelves.popularSeries),
+            (.upcomingSeries, shelves.upcomingSeries),
+        ]
+        return posterShelves.first { !$0.1.isEmpty }?.0
+    }
+
     /// Every Discover row carries the MOVIE/SERIES pill, like the web page.
-    private func posterShelf(_ title: String, _ cards: [API.TitleCard], seeAll: (() -> Void)? = nil) -> some View {
-        Shelf(title: title, seeAll: seeAll) {
+    private func posterShelf(
+        _ title: String,
+        _ cards: [API.TitleCard],
+        seeAll: (() -> Void)? = nil,
+        showsColorKey: Bool = false
+    ) -> some View {
+        Shelf(title: title, seeAll: seeAll, trailing: showsColorKey ? AnyView(StatusColorKey()) : nil) {
             ForEach(cards) { card in
                 ShelfItem {
                     PosterCard(card: card, showsTypeLabel: true) {

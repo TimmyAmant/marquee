@@ -1,4 +1,5 @@
 import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { and, eq, isNotNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users } from "@/lib/db/schema";
@@ -108,7 +109,7 @@ export async function createRequest(
       const status = await getTitleLibraryStatus(viewer.libraryOwnerId, mediaType, tmdbId, cachedTitle.tvdbId).catch(
         () => null,
       );
-      if (status && status.status !== "untracked") {
+      if (status && !isUnwanted(status.status)) {
         return fail("conflict", "You already have this in your library.");
       }
     }
@@ -135,7 +136,7 @@ export async function createRequest(
       tmdbId,
       cachedTitle?.tvdbId ?? null,
     ).catch(() => null);
-    if (currentStatus && currentStatus.status !== "untracked") {
+    if (currentStatus && !isUnwanted(currentStatus.status)) {
       return fail("conflict", "You already have this in your library.");
     }
   }
@@ -219,7 +220,7 @@ async function createFourKRequest(
   const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
   if (!cachedTitle) return fail("upstream", "Couldn't look this title up with TMDb right now.");
   const fourK = await getFourKStatus(adminUserId, mediaType, tmdbId, cachedTitle.tvdbId).catch(() => null);
-  if (fourK && fourK.status !== "untracked") {
+  if (fourK && !isUnwanted(fourK.status)) {
     return fail("conflict", "It's already in the 4K library or on its way.");
   }
 
@@ -811,7 +812,7 @@ async function checkFourKEdit(request: RequestRow): Promise<EditCheck> {
   const cachedTitle = await getOrFetchTitle(request.mediaType, request.tmdbId).catch(() => null);
   if (!cachedTitle) return fail("upstream", "Couldn't look this title up with TMDb right now.");
   const fourK = await getFourKStatus(adminUserId, request.mediaType, request.tmdbId, cachedTitle.tvdbId).catch(() => null);
-  if (fourK && fourK.status !== "untracked") return fail("conflict", "It's already in the 4K library or on its way.");
+  if (fourK && !isUnwanted(fourK.status)) return fail("conflict", "It's already in the 4K library or on its way.");
   return { ok: true, seasons: null };
 }
 
@@ -837,7 +838,7 @@ async function checkRegularEdit(request: RequestRow, seasons: number[] | null, l
     () => null,
   );
   // The same rule as asking for the whole title afresh.
-  if (status && status.status !== "untracked") {
+  if (status && !isUnwanted(status.status)) {
     return fail("conflict", "You already have this in your library.");
   }
   return { ok: true, seasons: null };

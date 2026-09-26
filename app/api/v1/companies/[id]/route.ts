@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { ApiError } from "@/lib/api/errors";
@@ -28,7 +29,7 @@ export const GET = withApi<{ id: string }>(async (request, params): Promise<Comp
       titleCard(entry, {
         status: entry.status ?? null,
         favorited: data.favoritedKeys.has(statusKey(entry.mediaType, entry.tmdbId)),
-        canQuickAdd: !entry.status && data.arrConfigured[entry.mediaType],
+        canQuickAdd: isUnwanted(entry.status) && data.arrConfigured[entry.mediaType],
       }),
     ),
   };

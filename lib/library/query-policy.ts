@@ -12,16 +12,34 @@ export function toYear(row: { releaseDate: string | null; firstAirDate: string |
  * in Sonarr/Radarr. Anything with a real file on disk (`owned` or partially
  * `tracked_downloading`) stays visible regardless of the monitored flag.
  *
- * `deriveRadarrStatus`/`deriveSonarrStatus` now write "untracked" directly
- * for this case going forward, but older cached rows synced before that fix
- * still have the pre-fix shape (`tracked_monitored` + `monitored: false`) —
- * treat both as dropped so already-cached rows self-heal without a re-sync.
+ * The sync writes "tracked_unmonitored" for this case now; older cached rows
+ * still say "untracked", or have the older shape (`tracked_monitored` /
+ * `coming_soon` + `monitored: false`, e.g. right after a Stop monitoring,
+ * which only flips the flag) — all of them are dropped.
  */
 export function isDroppedArrRow(status: string | null, monitored: boolean | null): boolean {
-  return (
-    status === "untracked" ||
-    ((status === "tracked_monitored" || status === "coming_soon") && monitored === false)
-  );
+  return arrRowStatus(status, monitored) === "tracked_unmonitored";
+}
+
+/**
+ * What a Sonarr/Radarr cache row means for the poster badges and strips
+ * (getLibraryStatusMap). A row only exists for a title the app has, so every
+ * unmonitored-and-nothing-on-disk shape above reads as "tracked_unmonitored"
+ * (orange, like Radarr's own "Missing (Unmonitored)") rather than "not in
+ * your library".
+ */
+export function arrRowStatus(
+  status: string | null,
+  monitored: boolean | null,
+): "owned" | "tracked_downloading" | "tracked_monitored" | "tracked_unmonitored" | "coming_soon" {
+  if (status === "owned" || status === "tracked_downloading") return status;
+  if (monitored === false) return "tracked_unmonitored";
+  if (status === "untracked" || status === "tracked_unmonitored") {
+    // Start monitoring flips only the flag until the next sync rewrites the
+    // status, so a monitored row here is wanted again.
+    return monitored === true ? "tracked_monitored" : "tracked_unmonitored";
+  }
+  return status === "coming_soon" ? "coming_soon" : "tracked_monitored";
 }
 
 /**

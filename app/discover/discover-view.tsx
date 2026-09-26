@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { InfiniteResultsGrid } from "@/components/infinite-results-grid";
 import { PosterCard } from "@/components/poster-card";
 import { PosterRowItem } from "@/components/poster-row";
@@ -104,7 +105,7 @@ export async function DiscoverView({
           <Shelf title={`Because you watched ${becauseYouWatched.title}`}>
             {becauseYouWatched.items.map((item) => {
               const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-              const canQuickAdd = Boolean(viewer.session) && arrConfigured && !status;
+              const canQuickAdd = Boolean(viewer.session) && arrConfigured && isUnwanted(status);
               return (
                 <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
                   <PosterCard

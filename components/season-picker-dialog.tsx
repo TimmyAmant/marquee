@@ -13,8 +13,8 @@ export type SeasonPickerRow = {
 
 const TAGS: Partial<Record<SeasonPickerState, { label: string; className: string }>> = {
   complete: { label: "In library", className: "bg-owned-bg text-owned" },
-  monitored: { label: "Monitored", className: "bg-tracked-bg text-tracked" },
-  requested: { label: "Requested", className: "bg-tracked-bg text-tracked" },
+  monitored: { label: "Monitored", className: "bg-info-bg text-info" },
+  requested: { label: "Requested", className: "bg-info-bg text-info" },
 };
 
 /**

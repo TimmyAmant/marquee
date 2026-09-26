@@ -1,4 +1,5 @@
 import { discoverMovies, discoverTv } from "@/lib/tmdb/client";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
@@ -50,7 +51,7 @@ export async function pickSurprise(
       const status = await getTitleLibraryStatus(viewer.libraryOwnerId, mediaType, pick.id, null).catch(
         () => null,
       );
-      if (status && status.status !== "untracked") continue;
+      if (status && !isUnwanted(status.status)) continue;
     }
 
     return { ok: true, mediaType, tmdbId: pick.id };

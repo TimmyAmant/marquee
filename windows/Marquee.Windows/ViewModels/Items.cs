@@ -35,9 +35,13 @@ public static class RequestToneExtensions
         {
             return BadgeTone.Owned;
         }
-        if (tone == RequestTone.Pending || tone == RequestTone.Downloading || tone == RequestTone.Approved)
+        if (tone == RequestTone.Downloading)
         {
-            return BadgeTone.Tracked;
+            return BadgeTone.Downloading;
+        }
+        if (tone == RequestTone.Pending || tone == RequestTone.Approved)
+        {
+            return BadgeTone.Info;
         }
         if (tone == RequestTone.ComingSoon)
         {
@@ -47,14 +51,15 @@ public static class RequestToneExtensions
     }
 }
 
-/// <summary>The badge palette for each of the five library-status colors.</summary>
+/// <summary>The badge palette for each library-status color.</summary>
 public static class StatusToneBadgeExtensions
 {
     public static BadgeTone ToBadgeTone(this StatusTone tone) => tone switch
     {
         StatusTone.Owned => BadgeTone.Owned,
-        StatusTone.Downloading => BadgeTone.Tracked,
+        StatusTone.Downloading => BadgeTone.Downloading,
         StatusTone.Missing => BadgeTone.Missing,
+        StatusTone.Unmonitored => BadgeTone.Unmonitored,
         StatusTone.Soon => BadgeTone.Soon,
         _ => BadgeTone.Neutral,
     };
@@ -219,9 +224,9 @@ public sealed class SuggestionItem
         Subtitle = suggestion.Subtitle.NonBlank();
         KindLabel = suggestion.MediaType.Label;
         KindAccessibleLabel = suggestion.KindAccessibleLabel;
-        // The poster badge's palette: green in the library, blue downloading,
-        // orange missing, purple coming soon; not in the library, a person or
-        // an unknown status stays neutral.
+        // The poster badge's palette: green in the library, purple
+        // downloading, red missing, orange not monitored, blue coming soon;
+        // not in the library, a person or an unknown status stays neutral.
         KindTone = suggestion.Status is { IsKnown: true } status ? PosterItem.ToneFor(status) : BadgeTone.Neutral;
         imageUrl = suggestion.PosterPath.Url(ImageSize.W92);
     }
@@ -264,7 +269,10 @@ public sealed class SuggestionItem
     }
 }
 
-/// <summary>One row of the color key (<c>StatusColorKey</c>): a library status's name, meaning and swatch.</summary>
+/// <summary>
+/// One row of the color key (<c>StatusColorLegend</c>, in <c>StatusColorKey</c>'s
+/// flyout and Settings › About): a library status's name, meaning and swatch.
+/// </summary>
 public sealed class StatusKeyEntry
 {
     /// <summary>Every known status, in the order the website's color key lists them.</summary>
@@ -282,9 +290,13 @@ public sealed class StatusKeyEntry
     public string Meaning { get; }
     public BadgeTone Tone { get; }
 
+    /// <summary>What a screen reader says for the row: "Missing: Monitored, but …".</summary>
+    public string AccessibleName => $"{Name}: {Meaning}";
+
     public bool IsOwnedTone => Tone == BadgeTone.Owned;
-    public bool IsTrackedTone => Tone == BadgeTone.Tracked;
+    public bool IsDownloadingTone => Tone == BadgeTone.Downloading;
     public bool IsMissingTone => Tone == BadgeTone.Missing;
+    public bool IsUnmonitoredTone => Tone == BadgeTone.Unmonitored;
     public bool IsSoonTone => Tone == BadgeTone.Soon;
     public bool IsNeutralTone => Tone == BadgeTone.Neutral;
 }

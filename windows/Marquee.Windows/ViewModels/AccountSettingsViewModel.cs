@@ -72,7 +72,7 @@ public sealed class HouseholdMemberRow
     /// <summary>The "You" tag.</summary>
     public bool IsCurrentUser { get; }
 
-    public BadgeTone AdminTone { get; } = BadgeTone.Tracked;
+    public BadgeTone AdminTone { get; } = BadgeTone.Info;
     public BadgeTone YouTone { get; } = BadgeTone.Neutral;
 
     /// <summary>"Plex" on an account linked to a Plex user; empty (the pill collapses) otherwise.</summary>

@@ -23,12 +23,12 @@ import { getNotFoundAfterHours, getNotFoundRequests } from "@/lib/requests/not-f
 import { can } from "@/lib/users/permissions";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
-  pending: "bg-tracked-bg text-tracked",
+  pending: "bg-info-bg text-info",
   declined: "bg-untracked-bg text-text-secondary",
   owned: "bg-owned-bg text-owned",
-  downloading: "bg-tracked-bg text-tracked",
+  downloading: "bg-downloading-bg text-downloading",
   coming_soon: "bg-soon-bg text-soon",
-  approved: "bg-tracked-bg text-tracked",
+  approved: "bg-info-bg text-info",
 };
 
 function myRequestBadge(
@@ -401,7 +401,7 @@ function EveryonesRequests({ requests }: { requests: EveryoneRow[] }) {
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${
                           r.status === "pending"
-                            ? "bg-tracked-bg text-tracked"
+                            ? "bg-info-bg text-info"
                             : r.status === "approved"
                               ? "bg-owned-bg text-owned"
                               : "bg-untracked-bg text-text-secondary"

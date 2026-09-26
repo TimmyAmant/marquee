@@ -8,6 +8,7 @@ import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
 import type { FranchiseItem } from "@/components/franchise-row";
 import type { LibraryStatus } from "@/components/status-badge";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { formatRuntime, formatDateLabel, languageLabel, countryCodeToFlagEmoji } from "@/lib/format";
 import { computeYearRange, relabelTvStatus, extractMovieCredits, extractTvCredits } from "@/lib/title-meta";
@@ -104,7 +105,7 @@ export async function loadTitleStatus(
     isMember,
     ownedOutsideSonarr:
       seasonLibrary === null &&
-      libraryStatus.status !== "untracked" &&
+      !isUnwanted(libraryStatus.status) &&
       (libraryStatus.provider === "plex" || libraryStatus.provider === "jellyfin"),
   });
   // The 4K copy (lib/arr/fourk.ts): what the 4K instance has, and this

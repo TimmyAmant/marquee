@@ -138,7 +138,7 @@ public sealed partial class ArrServerRow : ObservableObject
     public string DefaultBadge => IsDefault ? "Default" : "";
     public BadgeTone DefaultTone { get; } = BadgeTone.Owned;
     public string FourKBadge => Is4k ? "4K" : "";
-    public BadgeTone FourKTone { get; } = BadgeTone.Tracked;
+    public BadgeTone FourKTone { get; } = BadgeTone.Info;
     public string SetupBadge => NeedsSetup ? "Needs setup" : "";
     public BadgeTone SetupTone { get; } = BadgeTone.Neutral;
 

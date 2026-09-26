@@ -26,7 +26,7 @@ struct EveryoneRequestRow: Hashable, Sendable, Identifiable {
         requestedBy = request.requestedBy.label
         createdAt = request.createdAt
         statusLabel = "Waiting for review"
-        tone = .tracked
+        tone = .info
     }
 
     init(_ request: API.ReviewedRequest) {
@@ -38,7 +38,7 @@ struct EveryoneRequestRow: Hashable, Sendable, Identifiable {
         requestedBy = request.requestedBy.label
         createdAt = request.createdAt
         statusLabel = request.status == .pending ? "Waiting for review" : request.statusLabel
-        tone = request.status == .approved ? .owned : request.status == .pending ? .tracked : .neutral
+        tone = request.status == .approved ? .owned : request.status == .pending ? .info : .neutral
     }
 
     /// Everyone else's requests, pending and reviewed, newest first. Your

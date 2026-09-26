@@ -107,6 +107,9 @@ struct MarqueeCommands: Commands {
         }
 
         CommandGroup(replacing: .help) {
+            Button("What the Colors Mean") {
+                openWindow(id: "status-colors")
+            }
             Button("Error Reference") {
                 openWindow(id: "error-reference")
             }

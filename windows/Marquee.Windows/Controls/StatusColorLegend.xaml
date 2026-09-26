@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The list the color key explains itself with (components/status-legend.tsx):
+  every library status with its swatch (the poster strip's color; an
+  outline for "not in your library", which gets no strip), its name and a
+  one-line meaning, then the "Same colors as Radarr and Sonarr." footnote.
+  Shared by StatusColorKey's flyout and Settings › About's "What the colors
+  mean". The swatches are one Ellipse per palette with theme brushes, like
+  PosterCard's badge, so they follow light/dark switches.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.StatusColorLegend"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="2">
+        <ItemsControl ItemsSource="{x:Bind Entries}" IsTabStop="False">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:StatusKeyEntry">
+                    <Grid ColumnSpacing="10" Margin="0,0,0,10" AutomationProperties.Name="{x:Bind AccessibleName}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Width="12" Height="12" Margin="0,3,0,0" VerticalAlignment="Top">
+                            <Ellipse Visibility="{x:Bind IsOwnedTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
+                            <Ellipse Visibility="{x:Bind IsDownloadingTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource DownloadingBadgeForegroundBrush}" />
+                            <Ellipse Visibility="{x:Bind IsMissingTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
+                            <Ellipse Visibility="{x:Bind IsUnmonitoredTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
+                            <Ellipse Visibility="{x:Bind IsSoonTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource SoonBadgeForegroundBrush}" />
+                            <Ellipse
+                                Visibility="{x:Bind IsNeutralTone, Converter={StaticResource BoolToVisibility}}"
+                                Stroke="{ThemeResource TextFillColorTertiaryBrush}"
+                                StrokeThickness="1" />
+                        </Grid>
+                        <StackPanel Grid.Column="1" Spacing="1">
+                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="12" />
+                            <TextBlock
+                                Text="{x:Bind Meaning}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock
+            Text="{x:Bind Footnote}"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

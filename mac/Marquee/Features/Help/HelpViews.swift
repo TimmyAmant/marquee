@@ -76,6 +76,61 @@ struct ErrorReferenceView: View {
     }
 }
 
+/// Help › What the Colors Mean: the poster strips' and status badges' colors,
+/// always at hand — the same rows as the "Color key" popover beside a grid.
+struct StatusColorsHelpView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("What the colors mean")
+                        .font(.marqueeDisplay(30))
+                        .foregroundStyle(Theme.textPrimary)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Posters get a colored strip along the bottom, and title pages a badge, showing where each title stands in your library. They use the same colors as Radarr and Sonarr, so a title looks the same everywhere.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(API.LibraryStatus.knownCases.enumerated()), id: \.element.rawValue) { index, status in
+                        if index > 0 { Divider().overlay(Theme.border) }
+                        HStack(alignment: .center, spacing: 14) {
+                            StatusSwatch(status: status, size: 14)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(status.name)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundStyle(Theme.textPrimary)
+                                Text(status.meaning)
+                                    .font(.system(size: 12.5))
+                                    .foregroundStyle(Theme.textSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Spacer(minLength: 8)
+                            StatusBadge(status: status, compact: true)
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+                .cardSurface(padding: 0)
+
+                Text(StatusColorKeyList.footnote)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            .padding(32)
+            .frame(maxWidth: 680, alignment: .leading)
+            .frame(maxWidth: .infinity)
+        }
+        .scrollsUnderNavRail()
+        .background(Theme.bg0)
+        .navigationTitle("What the Colors Mean")
+    }
+}
+
 /// app/changelog/page.tsx + components/changelog-list.tsx.
 struct ChangelogView: View {
     @Environment(AppModel.self) private var model

@@ -161,13 +161,21 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     public static readonly LibraryStatus Owned = new("owned");
     public static readonly LibraryStatus TrackedDownloading = new("tracked_downloading");
     public static readonly LibraryStatus TrackedMonitored = new("tracked_monitored");
+
+    /// <summary>In Sonarr/Radarr but not monitored: it won't download on its own.</summary>
+    public static readonly LibraryStatus TrackedUnmonitored = new("tracked_unmonitored");
+
     public static readonly LibraryStatus ComingSoon = new("coming_soon");
     public static readonly LibraryStatus Untracked = new("untracked");
 
-    public static IReadOnlyList<LibraryStatus> Known { get; } = [Owned, TrackedDownloading, TrackedMonitored, ComingSoon, Untracked];
+    /// <summary>Every status, in the order the color key lists them.</summary>
+    public static IReadOnlyList<LibraryStatus> Known { get; } = [Owned, TrackedDownloading, TrackedMonitored, TrackedUnmonitored, ComingSoon, Untracked];
     public static LibraryStatus FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
+
+    /// <summary>The color key's footnote.</summary>
+    public const string ColorKeyFootnote = "Same colors as Radarr and Sonarr.";
 
     /// <summary>The title page badge.</summary>
     public string Label
@@ -177,6 +185,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
             if (this == Owned) return "Already in your library";
             if (this == TrackedDownloading) return "Downloading";
             if (this == TrackedMonitored) return "Missing";
+            if (this == TrackedUnmonitored) return "Not monitored";
             if (this == ComingSoon) return "Coming soon";
             if (this == Untracked) return "Not in your library";
             return Value;
@@ -191,6 +200,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
             if (this == Owned) return "Owned";
             if (this == TrackedDownloading) return "Downloading";
             if (this == TrackedMonitored) return "Missing";
+            if (this == TrackedUnmonitored) return "Not monitored";
             if (this == ComingSoon) return "Coming soon";
             if (this == Untracked) return "Not owned";
             return Value;
@@ -198,12 +208,13 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     }
 
     /// <summary>In the library in any form (owned or tracked by Sonarr/Radarr).</summary>
-    public bool IsInLibrary => this == Owned || this == TrackedDownloading || this == TrackedMonitored || this == ComingSoon;
+    public bool IsInLibrary => this == Owned || this == TrackedDownloading || this == TrackedMonitored || this == TrackedUnmonitored || this == ComingSoon;
 
     /// <summary>
     /// The color this status wears on a badge, a poster's strip and the
     /// search pill (lib/library/status-tone.ts <c>statusTone</c>): every
-    /// status its own, and one this app doesn't know stays neutral.
+    /// status its own, matching Radarr's and Sonarr's legends, and one this
+    /// app doesn't know stays neutral.
     /// </summary>
     public StatusTone Tone
     {
@@ -212,6 +223,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
             if (this == Owned) return StatusTone.Owned;
             if (this == TrackedDownloading) return StatusTone.Downloading;
             if (this == TrackedMonitored) return StatusTone.Missing;
+            if (this == TrackedUnmonitored) return StatusTone.Unmonitored;
             if (this == ComingSoon) return StatusTone.Soon;
             return StatusTone.Neutral;
         }
@@ -225,6 +237,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
             if (this == Owned) return "In your library";
             if (this == TrackedDownloading) return "Downloading";
             if (this == TrackedMonitored) return "Missing";
+            if (this == TrackedUnmonitored) return "Not monitored";
             if (this == ComingSoon) return "Coming soon";
             if (this == Untracked) return "Not in your library";
             return Value;
@@ -237,8 +250,9 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
         get
         {
             if (this == Owned) return "The file is in your library, ready to watch.";
-            if (this == TrackedDownloading) return "It's downloading right now.";
-            if (this == TrackedMonitored) return "Added, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.";
+            if (this == TrackedDownloading) return "It's downloading or queued right now.";
+            if (this == TrackedMonitored) return "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.";
+            if (this == TrackedUnmonitored) return "In Sonarr/Radarr but not monitored — it won't download on its own.";
             if (this == ComingSoon) return "Added, but it hasn't been released yet.";
             if (this == Untracked) return "Not added yet. Posters get no colored strip.";
             return "";
@@ -247,21 +261,25 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
 }
 
 /// <summary>
-/// The five library-status colors, the same on the website
-/// (lib/library/status-tone.ts), the Mac and here.
+/// The library-status colors, the same on the website
+/// (lib/library/status-tone.ts), the Mac and here, and the same as Radarr's
+/// and Sonarr's own legends. Named for what they mean, not their hue.
 /// </summary>
 public enum StatusTone
 {
     /// <summary>Green: in the library.</summary>
     Owned,
 
-    /// <summary>Blue: downloading.</summary>
+    /// <summary>Purple: downloading or queued.</summary>
     Downloading,
 
-    /// <summary>Orange: added, Sonarr/Radarr still looking.</summary>
+    /// <summary>Red: monitored, Sonarr/Radarr still looking.</summary>
     Missing,
 
-    /// <summary>Purple: added, not released yet.</summary>
+    /// <summary>Orange: in Sonarr/Radarr but not monitored.</summary>
+    Unmonitored,
+
+    /// <summary>Blue: added, not released yet.</summary>
     Soon,
 
     /// <summary>Grey: not in the library; posters draw no strip.</summary>

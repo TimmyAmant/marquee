@@ -25,10 +25,14 @@ struct DiscoverListView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                Text(heading)
-                    .font(.marqueeDisplay(30))
-                    .foregroundStyle(Theme.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
+                HStack(alignment: .center, spacing: 12) {
+                    Text(heading)
+                        .font(.marqueeDisplay(30))
+                        .foregroundStyle(Theme.textPrimary)
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer(minLength: 0)
+                    StatusColorKey()
+                }
 
                 if let error, error.isTMDbUnconfigured {
                     TMDbMissingNotice(isAdmin: model.viewer?.isAdmin == true) {

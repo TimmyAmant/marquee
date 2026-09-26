@@ -1,5 +1,6 @@
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
+import { StatusLegend } from "@/components/status-legend";
 import { PosterRowItem } from "@/components/poster-row";
 import { Shelf } from "@/components/shelf";
 import { GenreCard, genreColorClass } from "@/components/genre-card";
@@ -32,6 +33,9 @@ export default async function DiscoverPage() {
     networkItems,
     statusMap,
   } = await loadDiscoverShelves(viewer);
+  // The color key sits beside the first poster shelf's header, for anyone
+  // signed in (only they see status colors).
+  const colorKey = viewer.session ? <StatusLegend /> : null;
 
   return (
     // Reaches back under the nav rail's 72px margin (.rail-bleed) (and pads the shelves
@@ -48,7 +52,7 @@ export default async function DiscoverPage() {
 
       <div className="flex flex-col gap-12 pl-4 pr-0 py-6 sm:pl-7 sm:py-7">
         {recentlyAdded.length > 0 && (
-          <Shelf title="Recently Added" seeAllHref={seeAll.recentlyAdded}>
+          <Shelf title="Recently Added" seeAllHref={seeAll.recentlyAdded} headAction={colorKey}>
             {recentlyAdded.map((item) => (
               <PosterRowItem key={item.titleId}>
                 <PosterCard
@@ -66,7 +70,11 @@ export default async function DiscoverPage() {
         )}
 
         {trendingItems.length > 0 && (
-          <Shelf title="Trending" seeAllHref={seeAll.trending}>
+          <Shelf
+            title="Trending"
+            seeAllHref={seeAll.trending}
+            headAction={recentlyAdded.length === 0 ? colorKey : undefined}
+          >
             {trendingItems.map((item) => {
               const status = statusMap.get(`${item.media_type}:${item.id}`);
               return (

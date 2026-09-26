@@ -285,7 +285,7 @@ final class PermissionsTests: XCTestCase {
         XCTAssertEqual(all.map(\.createdAt), all.map(\.createdAt).sorted(by: >), "Newest first")
         let pendingRow = try XCTUnwrap(all.first { $0.id == pending.first?.id })
         XCTAssertEqual(pendingRow.statusLabel, "Waiting for review")
-        XCTAssertEqual(pendingRow.tone, .tracked)
+        XCTAssertEqual(pendingRow.tone, .info)
         if let approved = history.first(where: { $0.status == .approved }) {
             XCTAssertEqual(all.first { $0.id == approved.id }?.tone, .owned)
         }

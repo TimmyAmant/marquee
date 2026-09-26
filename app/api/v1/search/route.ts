@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { invalid } from "@/lib/api/request";
@@ -22,7 +23,7 @@ export const GET = withApi(async (request): Promise<SearchResults> => {
     return titleCard(base, {
       status,
       favorited: data.favoritedTitle(base.mediaType, base.tmdbId),
-      canQuickAdd: data.arrConfigured[base.mediaType] && !status,
+      canQuickAdd: data.arrConfigured[base.mediaType] && isUnwanted(status),
     });
   };
 

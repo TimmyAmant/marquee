@@ -1,11 +1,11 @@
-using Marquee.Windows.ViewModels;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Marquee.Windows.Controls;
 
 /// <summary>
-/// The "What do the colors mean?" button beside a poster grid; its flyout
-/// lists every library status with its swatch and meaning.
+/// The "Color key" pill beside a poster grid or a page title; its flyout
+/// lists every library status with its swatch and meaning
+/// (<see cref="StatusColorLegend"/>).
 /// </summary>
 public sealed partial class StatusColorKey : UserControl
 {
@@ -13,6 +13,4 @@ public sealed partial class StatusColorKey : UserControl
     {
         InitializeComponent();
     }
-
-    public IReadOnlyList<StatusKeyEntry> Entries => StatusKeyEntry.All;
 }

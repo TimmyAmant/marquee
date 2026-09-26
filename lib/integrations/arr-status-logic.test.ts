@@ -32,8 +32,9 @@ describe("deriveRadarrStatus", () => {
     ).toBe("owned");
   });
 
-  it("is untracked when unmonitored with nothing downloaded", () => {
-    expect(deriveRadarrStatus(movie({ monitored: false, hasFile: false }))).toBe("untracked");
+  it("is tracked_unmonitored when unmonitored with nothing downloaded", () => {
+    expect(deriveRadarrStatus(movie({ monitored: false, hasFile: false }))).toBe("tracked_unmonitored");
+    expect(deriveRadarrStatus(movie({ monitored: false, status: "announced" }))).toBe("tracked_unmonitored");
   });
 
   it("is coming_soon when monitored but not yet released", () => {
@@ -74,12 +75,12 @@ describe("deriveSonarrStatus", () => {
     ).toBe("tracked_downloading");
   });
 
-  it("is untracked when unmonitored with nothing downloaded", () => {
+  it("is tracked_unmonitored when unmonitored with nothing downloaded", () => {
     expect(
       deriveSonarrStatus(
         series({ monitored: false, statistics: { episodeFileCount: 0, episodeCount: 10, sizeOnDisk: 0 } }),
       ),
-    ).toBe("untracked");
+    ).toBe("tracked_unmonitored");
   });
 
   it("is coming_soon for an upcoming series with nothing downloaded", () => {

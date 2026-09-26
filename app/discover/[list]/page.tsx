@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InfiniteResultsGrid } from "@/components/infinite-results-grid";
+import { StatusLegend } from "@/components/status-legend";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { DISCOVER_LIST_TITLES, parseDiscoverList } from "@/lib/discover/lists";
 import { fetchDiscoverListPage } from "@/lib/pages/discover-lists";
@@ -39,7 +40,10 @@ export default async function DiscoverListPage({ params }: { params: Promise<{ l
           <Link href="/discover" className="text-xs text-text-muted transition-colors hover:text-accent">
             ← Discover
           </Link>
-          <h1 className="font-display text-3xl text-text-primary">{first.title}</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h1 className="font-display text-3xl text-text-primary">{first.title}</h1>
+            {viewer.session && <StatusLegend />}
+          </div>
         </div>
 
         <InfiniteResultsGrid

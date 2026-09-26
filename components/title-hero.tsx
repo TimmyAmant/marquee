@@ -3,6 +3,7 @@ import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { MediaImage } from "@/components/media-image";
 import type { LibraryStatus } from "@/components/status-badge";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { AddToLibraryButton } from "@/components/add-to-library-button";
 import { ExternalLinks, type ExternalLinksData } from "@/components/external-links";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -254,7 +255,7 @@ export function TitleHero({
                     />
                   )}
 
-                  {isAdmin && status !== "untracked" && (
+                  {isAdmin && !isUnwanted(status) && (
                     <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
                   )}
                 </div>

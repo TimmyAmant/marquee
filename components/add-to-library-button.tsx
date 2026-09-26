@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import { RequestButton } from "@/components/request-button";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
@@ -37,8 +38,8 @@ export function AddToLibraryButton({
   isAdmin?: boolean;
   alreadyRequested?: boolean;
   otherRequesters?: string[];
-  /** Sonarr/Radarr already has it (unmonitored, nothing on disk — so still
-   * "untracked"): its Start monitoring button does what Add would. */
+  /** Sonarr/Radarr already has it (unmonitored, nothing on disk —
+   * "tracked_unmonitored"): its Start monitoring button does what Add would. */
   inArr?: boolean;
   /** On the admin's blocklist: a member sees "Requests are closed" instead
    * of Request (lib/requests/blocklist.ts). */
@@ -57,13 +58,16 @@ export function AddToLibraryButton({
   };
 }) {
   const router = useRouter();
+  // Not in the library and not on its way (untracked, or in Sonarr/Radarr
+  // but not monitored): requests stay open.
+  const open = isUnwanted(status);
   const action =
     mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
 
   const [state, formAction, isPending] = useActionState(action, undefined);
   const pickSeasons = mediaType === "tv" && Boolean(seasonPicker?.canRequestSeasons);
   const showRequest =
-    status === "untracked" && !state?.success && isAdmin === false && canRequest && !alreadyRequested && !pickSeasons && !blocked;
+    open && !state?.success && isAdmin === false && canRequest && !alreadyRequested && !pickSeasons && !blocked;
   const requestedSeasonsLabel = seasonPicker?.requestedSeasonsLabel ?? null;
 
   useEffect(() => {
@@ -103,20 +107,20 @@ export function AddToLibraryButton({
             tmdbId={tmdbId}
             showName={name}
             rows={seasonPicker.rows}
-            triggerLabel={status === "untracked" ? "Request" : "Request more seasons"}
+            triggerLabel={open ? "Request" : "Request more seasons"}
             advanced={advanced}
           />
         )}
 
-        {isAdmin === false && alreadyRequested && (status === "untracked" || requestedSeasonsLabel) && (
-          <span className="flex h-8 items-center rounded-full bg-tracked-bg px-4 text-[13px] font-medium text-tracked">
+        {isAdmin === false && alreadyRequested && (open || requestedSeasonsLabel) && (
+          <span className="flex h-8 items-center rounded-full bg-info-bg px-4 text-[13px] font-medium text-info">
             {requestedSeasonsLabel
               ? `Requested ${requestedSeasonsLabel} — waiting for approval`
               : "Requested — waiting for approval"}
           </span>
         )}
 
-        {status === "untracked" && isAdmin !== false && configured && !inArr && !state?.success && (
+        {open && isAdmin !== false && configured && !inArr && !state?.success && (
           <form id={`add-${mediaType}-${tmdbId}`} action={formAction}>
             <button
               type="submit"
@@ -128,7 +132,7 @@ export function AddToLibraryButton({
           </form>
         )}
 
-        {status === "untracked" && isAdmin !== false && !configured && (
+        {open && isAdmin !== false && !configured && (
           <Link
             href="/settings/integrations"
             className="text-xs text-text-muted underline decoration-dotted hover:text-accent"
@@ -138,7 +142,7 @@ export function AddToLibraryButton({
         )}
       </div>
 
-      {status === "untracked" && isAdmin === true && configured && !inArr && !state?.success && (
+      {open && isAdmin === true && configured && !inArr && !state?.success && (
         <AddAdvancedOptions
           mediaType={mediaType}
           tmdbId={tmdbId}
@@ -151,7 +155,7 @@ export function AddToLibraryButton({
         <AddAdvancedOptions mediaType={mediaType} tmdbId={tmdbId} formId={`request-${mediaType}-${tmdbId}`} />
       )}
 
-      {status === "untracked" && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (
+      {open && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (
         <p className="text-xs text-text-muted">Also requested by {otherRequesters.join(", ")}</p>
       )}
 

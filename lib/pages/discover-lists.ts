@@ -1,4 +1,5 @@
 import { getTrendingAll, getUpcomingMovies, getUpcomingTv } from "@/lib/tmdb/client";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { getLibraryStatusMap, getRecentlyAdded } from "@/lib/library/query";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
@@ -143,7 +144,7 @@ async function enrich(viewer: ViewerIdentity, raw: RawItem[], knownStatus: boole
       overview: null,
       status,
       favorited,
-      canQuickAdd: Boolean(viewer.userId) && arrConfigured[item.mediaType] && !status,
+      canQuickAdd: Boolean(viewer.userId) && arrConfigured[item.mediaType] && isUnwanted(status),
     };
   });
 }

@@ -40,7 +40,7 @@ public sealed partial class SeasonItem : ObservableObject
         Name = season.Name;
         // "3/10", green once every episode has a file; nothing when Sonarr doesn't track the show.
         CompletenessLabel = season.CompletenessLabel ?? "";
-        CompletenessTone = season.IsComplete ? BadgeTone.Owned : BadgeTone.Tracked;
+        CompletenessTone = season.IsComplete ? BadgeTone.Owned : BadgeTone.Info;
         DetailLine = string.Join(" · ", new[]
         {
             Format.Count(season.EpisodeCount, "episode", "episodes"),

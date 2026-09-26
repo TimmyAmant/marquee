@@ -132,7 +132,7 @@ struct SeasonPickerList: View {
             }
             Spacer(minLength: 8)
             if let tag = state.tag {
-                TonePill(text: tag, tone: state == .inLibrary ? .owned : .tracked, small: true)
+                TonePill(text: tag, tone: state == .inLibrary ? .owned : .info, small: true)
             }
         }
         .padding(.horizontal, 12)

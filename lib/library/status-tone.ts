@@ -1,9 +1,12 @@
 // One place that decides what color each library status wears, so the poster
 // corner badge, the strip along a poster's bottom edge, the search
 // suggestion pill, the title page's status capsule and the color key all
-// agree. The colors themselves are the --marquee-{owned,tracked,missing,soon}
-// tokens in app/globals.css (dark + light); the Mac (Theme.swift) and Windows
-// (Theme.xaml) apps define the same five tones.
+// agree. The hues follow Radarr's and Sonarr's own legends (green on disk,
+// purple downloading, red missing, orange not monitored, blue unreleased),
+// so a title reads the same here as it does there. The colors themselves
+// are the --marquee-{owned,downloading,missing,unmonitored,soon} tokens in
+// app/globals.css (dark + light); the Mac (Theme.swift) and Windows
+// (App.xaml) apps define the same six tones.
 //
 // Every class below is a complete literal string so Tailwind's scanner
 // generates it.
@@ -12,20 +15,34 @@ export type LibraryStatus =
   | "owned"
   | "tracked_downloading"
   | "tracked_monitored"
+  /** In Sonarr/Radarr, but not monitored and nothing on disk — it won't
+   * download on its own. Newer than the other values: older apps read it as
+   * an unknown status (neutral). */
+  | "tracked_unmonitored"
   | "coming_soon"
   | "untracked";
 
-/** The five colors a status can wear. */
-export type StatusTone = "owned" | "downloading" | "missing" | "soon" | "neutral";
+/** The six colors a status can wear. */
+export type StatusTone = "owned" | "downloading" | "missing" | "unmonitored" | "soon" | "neutral";
 
 /** Display order everywhere the statuses are listed (the color key). */
 export const LIBRARY_STATUSES: readonly LibraryStatus[] = [
   "owned",
   "tracked_downloading",
   "tracked_monitored",
+  "tracked_unmonitored",
   "coming_soon",
   "untracked",
 ];
+
+/** Nothing on disk and nothing that will download on its own: no status at
+ * all (a poster grid's "not in the library"), not in Sonarr/Radarr, or in
+ * there but not monitored. Requests and Add (which turns monitoring back on
+ * for a title the app already has) stay open for these; anything else is
+ * already in the library or on its way. */
+export function isUnwanted(status: LibraryStatus | null | undefined): boolean {
+  return status == null || status === "untracked" || status === "tracked_unmonitored";
+}
 
 export function statusTone(status: LibraryStatus | null | undefined): StatusTone {
   switch (status) {
@@ -35,6 +52,8 @@ export function statusTone(status: LibraryStatus | null | undefined): StatusTone
       return "downloading";
     case "tracked_monitored":
       return "missing";
+    case "tracked_unmonitored":
+      return "unmonitored";
     case "coming_soon":
       return "soon";
     default:
@@ -57,13 +76,19 @@ export const STATUS_TEXT: Record<LibraryStatus, { label: string; compactLabel: s
     label: "Downloading",
     compactLabel: "Downloading",
     name: "Downloading",
-    meaning: "It's downloading right now.",
+    meaning: "It's downloading or queued right now.",
   },
   tracked_monitored: {
     label: "Missing",
     compactLabel: "Missing",
     name: "Missing",
-    meaning: "Added, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.",
+    meaning: "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.",
+  },
+  tracked_unmonitored: {
+    label: "Not monitored",
+    compactLabel: "Not monitored",
+    name: "Not monitored",
+    meaning: "In Sonarr/Radarr but not monitored — it won't download on its own.",
   },
   coming_soon: {
     label: "Coming soon",
@@ -92,12 +117,16 @@ export const TONE_CLASS: Record<StatusTone, ToneClasses> = {
     strip: "bg-owned",
   },
   downloading: {
-    pill: "bg-tracked-bg text-tracked border-tracked/30",
-    strip: "bg-tracked",
+    pill: "bg-downloading-bg text-downloading border-downloading/30",
+    strip: "bg-downloading",
   },
   missing: {
     pill: "bg-missing-bg text-missing border-missing/30",
     strip: "bg-missing",
+  },
+  unmonitored: {
+    pill: "bg-unmonitored-bg text-unmonitored border-unmonitored/30",
+    strip: "bg-unmonitored",
   },
   soon: {
     pill: "bg-soon-bg text-soon border-soon/30",
@@ -112,3 +141,6 @@ export const TONE_CLASS: Record<StatusTone, ToneClasses> = {
 export function statusClasses(status: LibraryStatus | null | undefined): ToneClasses {
   return TONE_CLASS[statusTone(status)];
 }
+
+/** The one-line note under every color key and on the help page. */
+export const STATUS_COLORS_NOTE = "Same colors as Radarr and Sonarr.";

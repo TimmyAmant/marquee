@@ -10,6 +10,13 @@ import { quotedRequestTitle } from "@/lib/requests/labels";
 import { seasonsStillNeeded, type ViewerTitleRequest } from "@/lib/requests/seasons";
 import { countComments } from "@/lib/comments";
 import type { LibraryStatus } from "@/components/status-badge";
+import { isUnwanted } from "@/lib/library/status-tone";
+
+/** Still waiting on someone: nothing in the library and nothing on its way
+ * (an unmonitored title in Sonarr/Radarr included). */
+function isOpen(status: LibraryStatus | "seasons_covered"): boolean {
+  return status !== "seasons_covered" && isUnwanted(status);
+}
 
 // Each row's library status can be a live Sonarr/Radarr lookup — a long
 // queue shouldn't fire them all at the admin's home server at once.
@@ -89,7 +96,7 @@ export async function getPendingRequests(viewerUserId: string) {
   );
 
   const alreadyOwnedIds = rows
-    .filter((_, i) => statuses[i].status !== "untracked")
+    .filter((_, i) => !isOpen(statuses[i].status))
     .map((r) => r.id);
 
   if (alreadyOwnedIds.length > 0) {
@@ -126,7 +133,7 @@ export async function getPendingRequests(viewerUserId: string) {
     );
   }
 
-  return rows.filter((_, i) => statuses[i].status === "untracked");
+  return rows.filter((_, i) => isOpen(statuses[i].status));
 }
 
 /** Already-reviewed requests (approved or rejected), most recent first — for

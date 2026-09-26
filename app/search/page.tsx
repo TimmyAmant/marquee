@@ -1,4 +1,5 @@
 import { SearchBar } from "@/components/search-bar";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { PosterGrid } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -117,7 +118,7 @@ export default async function SearchPage({
             {titleResults.map((title) => {
               const mediaType = title.media_type as MediaType;
               const status = statusMap.get(`${mediaType}:${title.id}`);
-              const canQuickAdd = Boolean(viewer.session) && arrConfigured[mediaType] && !status;
+              const canQuickAdd = Boolean(viewer.session) && arrConfigured[mediaType] && isUnwanted(status);
               return (
                 <PosterCard
                   key={`${mediaType}-${title.id}`}
@@ -156,7 +157,7 @@ export default async function SearchPage({
           <PosterGrid>
             {themeItems.map((item) => {
               const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-              const canQuickAdd = Boolean(viewer.session) && arrConfigured[item.mediaType] && !status;
+              const canQuickAdd = Boolean(viewer.session) && arrConfigured[item.mediaType] && isUnwanted(status);
               return (
                 <PosterCard
                   key={`${item.mediaType}-${item.tmdbId}`}

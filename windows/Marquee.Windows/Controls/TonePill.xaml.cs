@@ -49,17 +49,21 @@ public sealed partial class TonePill : UserControl
     {
         var text = Text ?? "";
         OwnedText.Text = text;
-        TrackedText.Text = text;
+        DownloadingText.Text = text;
         MissingText.Text = text;
+        UnmonitoredText.Text = text;
         SoonText.Text = text;
+        InfoText.Text = text;
         NeutralText.Text = text;
 
         var tone = Tone;
         var shown = text.Length > 0;
         OwnedBorder.Visibility = shown && tone == BadgeTone.Owned ? Visibility.Visible : Visibility.Collapsed;
-        TrackedBorder.Visibility = shown && tone == BadgeTone.Tracked ? Visibility.Visible : Visibility.Collapsed;
+        DownloadingBorder.Visibility = shown && tone == BadgeTone.Downloading ? Visibility.Visible : Visibility.Collapsed;
         MissingBorder.Visibility = shown && tone == BadgeTone.Missing ? Visibility.Visible : Visibility.Collapsed;
+        UnmonitoredBorder.Visibility = shown && tone == BadgeTone.Unmonitored ? Visibility.Visible : Visibility.Collapsed;
         SoonBorder.Visibility = shown && tone == BadgeTone.Soon ? Visibility.Visible : Visibility.Collapsed;
+        InfoBorder.Visibility = shown && tone == BadgeTone.Info ? Visibility.Visible : Visibility.Collapsed;
         NeutralBorder.Visibility = shown && tone == BadgeTone.Neutral ? Visibility.Visible : Visibility.Collapsed;
     }
 }

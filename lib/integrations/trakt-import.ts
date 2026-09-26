@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { db } from "@/lib/db/client";
 import { requests } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
@@ -64,7 +65,7 @@ export async function importTraktList(
       tmdbId,
       cachedTitle?.tvdbId ?? null,
     ).catch(() => null);
-    if (currentStatus && currentStatus.status !== "untracked") {
+    if (currentStatus && !isUnwanted(currentStatus.status)) {
       skippedCount++;
       continue;
     }
