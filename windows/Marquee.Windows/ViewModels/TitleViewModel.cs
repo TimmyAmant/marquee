@@ -304,7 +304,18 @@ public sealed partial class TitleViewModel : ObservableObject
     public TitleViewModel(AppModel model)
     {
         this.model = model;
+        AddAdvanced = new AddOverridesViewModel(() => model.Api, Id.MediaType, Id.TmdbId, is4k: false);
+        AddFourKAdvanced = new AddOverridesViewModel(() => model.Api, Id.MediaType, Id.TmdbId, is4k: true);
+        // An older server has no add options: neither section shows again.
+        AddAdvanced.Unsupported = () => AddFourKAdvanced.IsUnsupported = true;
+        AddFourKAdvanced.Unsupported = () => AddAdvanced.IsUnsupported = true;
     }
+
+    /// <summary>"Advanced" under the admin's Add (0.43+): which server, and its settings.</summary>
+    public AddOverridesViewModel AddAdvanced { get; }
+
+    /// <summary>"Advanced" under Add to 4K (0.43+): which 4K server, and its settings.</summary>
+    public AddOverridesViewModel AddFourKAdvanced { get; }
 
     /// <summary>The title this page shows; a placeholder until <see cref="Activate"/> says which.</summary>
     public TitleId Id { get; private set; } = new(MediaType.Movie, 0);
@@ -607,6 +618,8 @@ public sealed partial class TitleViewModel : ObservableObject
         FourKError = null;
         TrackingMessage = null;
         AddAllResult = null;
+        AddAdvanced.Reset(Id.MediaType, Id.TmdbId);
+        AddFourKAdvanced.Reset(Id.MediaType, Id.TmdbId);
         foreach (var name in DetailProperties)
         {
             OnPropertyChanged(name);
@@ -870,7 +883,10 @@ public sealed partial class TitleViewModel : ObservableObject
         _ = LoadAsync();
     }
 
-    /// <summary>"Add to Radarr/Sonarr" (<c>POST …/add</c>, admin).</summary>
+    /// <summary>
+    /// "Add to Radarr/Sonarr" (<c>POST …/add</c>, admin), with the
+    /// "Advanced" picks once that section was opened (0.43+).
+    /// </summary>
     [RelayCommand]
     private async Task AddAsync()
     {
@@ -882,7 +898,14 @@ public sealed partial class TitleViewModel : ObservableObject
         AddError = null;
         try
         {
-            await model.Api.Titles.AddAsync(Id.MediaType, Id.TmdbId);
+            if (AddAdvanced.Overrides is { } overrides)
+            {
+                await model.Api.Titles.AddAsync(Id.MediaType, Id.TmdbId, overrides);
+            }
+            else
+            {
+                await model.Api.Titles.AddAsync(Id.MediaType, Id.TmdbId);
+            }
             await RefreshStatusAsync();
         }
         catch (ApiException error)
@@ -901,9 +924,15 @@ public sealed partial class TitleViewModel : ObservableObject
         RunFourKAsync(() => model.Api.Titles.RequestFourKAsync(Id.MediaType, Id.TmdbId));
 
     /// <summary>"Add to 4K Radarr/Sonarr" (<c>POST …/add</c> with <c>{"is4k": true}</c>, admin).</summary>
+    /// <remarks>With the 4K "Advanced" picks once that section was opened (0.43+).</remarks>
     [RelayCommand]
-    private Task AddFourKAsync() =>
-        RunFourKAsync(() => model.Api.Titles.AddFourKAsync(Id.MediaType, Id.TmdbId));
+    private Task AddFourKAsync()
+    {
+        var overrides = AddFourKAdvanced.Overrides;
+        return RunFourKAsync(() => overrides is { } picked
+            ? model.Api.Titles.AddAsync(Id.MediaType, Id.TmdbId, picked, is4k: true)
+            : model.Api.Titles.AddFourKAsync(Id.MediaType, Id.TmdbId));
+    }
 
     private async Task RunFourKAsync(Func<Task> action)
     {

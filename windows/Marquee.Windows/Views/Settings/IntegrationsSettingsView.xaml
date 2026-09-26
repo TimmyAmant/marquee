@@ -2,7 +2,8 @@
 <!--
   Settings › Integrations (app/settings/integrations/page.tsx, the Mac's
   IntegrationsSettingsView), the admin's: Media Libraries (Plex, Jellyfin or
-  Emby), Download Clients (Sonarr, Radarr, and the 4K ones on a 0.37+
+  Emby), Download Clients (any number of Sonarr and Radarr servers on a
+  0.43+ server; before that Sonarr, Radarr, and the 4K ones on a 0.37+
   server), Metadata Sources (TMDb, Trakt with list import, TheTVDB) and
   Notifications (the Sonarr/Radarr webhooks, Discord, ntfy, Telegram,
   Pushover and email on a 0.36+ server, a custom webhook), with Sync now.
@@ -134,6 +135,104 @@
                         TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
+        </DataTemplate>
+
+        <!-- One Sonarr/Radarr server (0.43+): name, URL and badges, its actions, and its own webhook. -->
+        <DataTemplate x:Key="ArrServerRowTemplate" x:DataType="vm:ArrServerRow">
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                                <controls:TonePill Text="{x:Bind DefaultBadge, Mode=OneWay}" Tone="{x:Bind DefaultTone}" VerticalAlignment="Center" />
+                                <controls:TonePill Text="{x:Bind FourKBadge, Mode=OneWay}" Tone="{x:Bind FourKTone}" VerticalAlignment="Center" />
+                                <controls:TonePill Text="{x:Bind SetupBadge, Mode=OneWay}" Tone="{x:Bind SetupTone}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock
+                                Text="{x:Bind BaseUrl, Mode=OneWay}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                Visibility="{x:Bind ShowsActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                <Button Content="Edit" Command="{x:Bind EditCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
+                                <Button
+                                    Content="{x:Bind MakeDefaultLabel, Mode=OneWay}"
+                                    Command="{x:Bind MakeDefaultCommand}"
+                                    IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                                    Visibility="{x:Bind IsDefault, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
+                                <Button Content="Remove" Command="{x:Bind AskRemoveCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
+                            </StackPanel>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                Visibility="{x:Bind IsConfirmingRemove, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock
+                                    Text="{x:Bind RemovePrompt, Mode=OneWay}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    VerticalAlignment="Center" />
+                                <Button Content="{x:Bind RemoveConfirmLabel, Mode=OneWay}" Command="{x:Bind ConfirmRemoveCommand}" />
+                                <Button Content="Cancel" Command="{x:Bind CancelRemoveCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Webhook URL" Style="{StaticResource FieldLabel}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{x:Bind WebhookUrl, Mode=OneWay}" IsReadOnly="True" />
+                            <Button Grid.Column="1" Content="{x:Bind CopyLabel, Mode=OneWay}" Command="{x:Bind CopyWebhookCommand}" />
+                            <Button
+                                Grid.Column="2"
+                                Content="Regenerate"
+                                Command="{x:Bind AskRegenerateCommand}"
+                                Visibility="{x:Bind ShowsRegenerate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                        <TextBlock
+                            Text="Paste it into this server's Settings → Connect → Add → Webhook (method POST, on Grab and on Import/Download)."
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            TextWrapping="Wrap" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Visibility="{x:Bind IsConfirmingRegenerate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock
+                                Text="Regenerate? The URL above stops working immediately."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                VerticalAlignment="Center" />
+                            <Button Content="{x:Bind RegenerateConfirmLabel, Mode=OneWay}" Command="{x:Bind ConfirmRegenerateCommand}" />
+                            <Button Content="Cancel" Command="{x:Bind CancelRegenerateCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock
+                        Text="{x:Bind Error, Mode=OneWay}"
+                        Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- One Sonarr/Radarr tag in a tags picker. -->
+        <DataTemplate x:Key="TagChoiceTemplate" x:DataType="vm:TagChoice">
+            <CheckBox Content="{x:Bind Label}" IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
         </DataTemplate>
 
         <!-- A "Test & save" card with one secret: TMDb, Trakt, TheTVDB, Discord, ntfy, the custom webhook. -->
@@ -368,14 +467,230 @@
                 </Border>
             </StackPanel>
 
-            <!-- Download Clients: Sonarr, Radarr, then the 4K ones on a 0.37+ server. -->
+            <!--
+              Download Clients: on a 0.43+ server any number of Sonarr and
+              Radarr servers, with one Add/Edit form under the lists; before
+              that Sonarr, Radarr, then the 4K ones on a 0.37+ server.
+            -->
             <StackPanel Spacing="12">
                 <TextBlock Text="Download Clients" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrCards, Mode=OneWay}" ItemTemplate="{StaticResource ArrCardTemplate}">
+                <ItemsRepeater
+                    ItemsSource="{x:Bind ViewModel.ArrCards, Mode=OneWay}"
+                    ItemTemplate="{StaticResource ArrCardTemplate}"
+                    Visibility="{x:Bind ViewModel.ShowsArrCards, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ItemsRepeater.Layout>
                         <StackLayout Orientation="Vertical" Spacing="12" />
                     </ItemsRepeater.Layout>
                 </ItemsRepeater>
+
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsArrServers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="Add as many Sonarr and Radarr servers as you like. Titles go to the default one unless a different server is picked under Advanced when approving or adding."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+
+                    <!-- Sonarr servers -->
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Sonarr" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Add Sonarr server" Command="{x:Bind ViewModel.ArrServers.AddSonarrCommand}" />
+                    </Grid>
+                    <TextBlock
+                        Text="No Sonarr servers yet."
+                        Visibility="{x:Bind ViewModel.ArrServers.HasNoSonarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.SonarrServers, Mode=OneWay}" ItemTemplate="{StaticResource ArrServerRowTemplate}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="12" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+
+                    <!-- Radarr servers -->
+                    <Grid ColumnSpacing="12" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Radarr" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Add Radarr server" Command="{x:Bind ViewModel.ArrServers.AddRadarrCommand}" />
+                    </Grid>
+                    <TextBlock
+                        Text="No Radarr servers yet."
+                        Visibility="{x:Bind ViewModel.ArrServers.HasNoRadarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.RadarrServers, Mode=OneWay}" ItemTemplate="{StaticResource ArrServerRowTemplate}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="12" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+
+                    <!-- The Add/Edit form: one at a time, brought into view when it opens. -->
+                    <Border
+                        x:Name="ArrServerEditorCard"
+                        Style="{StaticResource SettingsCard}"
+                        Visibility="{x:Bind ViewModel.ArrServers.Editor.IsOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Spacing="14">
+                            <TextBlock Text="{x:Bind ViewModel.ArrServers.Editor.Title, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBox
+                                Header="Name"
+                                PlaceholderText="Leave blank to name it after its kind, like “Radarr 2”"
+                                MaxLength="60"
+                                Text="{x:Bind ViewModel.ArrServers.Editor.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox
+                                Header="Server URL"
+                                PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.BaseUrlPlaceholder, Mode=OneWay}"
+                                Text="{x:Bind ViewModel.ArrServers.Editor.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Spacing="4">
+                                <PasswordBox
+                                    Header="API key"
+                                    PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.ApiKeyPlaceholder, Mode=OneWay}"
+                                    Password="{x:Bind ViewModel.ArrServers.Editor.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.ArrServers.Editor.KeyAgainMessage}"
+                                    Visibility="{x:Bind ViewModel.ArrServers.Editor.NeedsKeyAgain, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <ToggleSwitch
+                                    Header="4K server"
+                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.Is4k, Mode=TwoWay}"
+                                    OnContent="On"
+                                    OffContent="Off" />
+                                <TextBlock
+                                    Text="4K requests and “Add in 4K” go to a 4K server, and it isn't counted as part of the library."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <ToggleSwitch
+                                    Header="Default server"
+                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.IsDefault, Mode=TwoWay}"
+                                    IsEnabled="{x:Bind ViewModel.ArrServers.Editor.CanChangeDefault, Mode=OneWay}"
+                                    OnContent="On"
+                                    OffContent="Off" />
+                                <TextBlock
+                                    Text="Where titles go when nobody picks a server. To move the default, make another server the default."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button
+                                    Content="{x:Bind ViewModel.ArrServers.Editor.TestLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.ArrServers.Editor.TestCommand}"
+                                    IsEnabled="{x:Bind ViewModel.ArrServers.Editor.CanAct, Mode=OneWay}" />
+                                <ProgressRing
+                                    IsActive="{x:Bind ViewModel.ArrServers.Editor.IsLoadingOptions, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.ArrServers.Editor.IsLoadingOptions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Width="16"
+                                    Height="16" />
+                                <TextBlock
+                                    Text="Test the connection to pick a quality profile, root folder and tags."
+                                    Visibility="{x:Bind ViewModel.ArrServers.Editor.HasOptions, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- What's used when adding titles, once Test (or the saved server) answered. -->
+                            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasOptions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                                <TextBlock
+                                    Text="Used when adding titles:"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <ComboBox
+                                    Header="Quality profile"
+                                    MinWidth="260"
+                                    ItemsSource="{x:Bind ViewModel.ArrServers.Editor.QualityProfiles, Mode=OneWay}"
+                                    SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.QualityProfileIndex, Mode=TwoWay}" />
+                                <ComboBox
+                                    Header="Root folder"
+                                    MinWidth="260"
+                                    ItemsSource="{x:Bind ViewModel.ArrServers.Editor.RootFolders, Mode=OneWay}"
+                                    SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.RootFolderIndex, Mode=TwoWay}" />
+                                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Tags" Style="{StaticResource FieldLabel}" />
+                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.Editor.Tags, Mode=OneWay}" ItemTemplate="{StaticResource TagChoiceTemplate}">
+                                        <ItemsRepeater.Layout>
+                                            <UniformGridLayout MinItemWidth="160" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
+                                        </ItemsRepeater.Layout>
+                                    </ItemsRepeater>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Sonarr only: series type and season folders, then the anime overrides. -->
+                            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.IsSonarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                <ComboBox
+                                    Header="Series type"
+                                    MinWidth="260"
+                                    ItemsSource="{x:Bind ViewModel.ArrServers.Editor.SeriesTypes}"
+                                    SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.SeriesTypeIndex, Mode=TwoWay}" />
+                                <ToggleSwitch
+                                    Header="Season folders"
+                                    IsOn="{x:Bind ViewModel.ArrServers.Editor.SeasonFolders, Mode=TwoWay}"
+                                    OnContent="On"
+                                    OffContent="Off" />
+                                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasOptions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock
+                                        Text="For anime shows (series type Anime is used for them automatically):"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="Wrap" />
+                                    <ComboBox
+                                        Header="Anime quality profile"
+                                        MinWidth="260"
+                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfiles, Mode=OneWay}"
+                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfileIndex, Mode=TwoWay}" />
+                                    <ComboBox
+                                        Header="Anime root folder"
+                                        MinWidth="260"
+                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolders, Mode=OneWay}"
+                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolderIndex, Mode=TwoWay}" />
+                                    <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="Anime tags (none checked: the tags above)" Style="{StaticResource FieldLabel}" />
+                                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeTags, Mode=OneWay}" ItemTemplate="{StaticResource TagChoiceTemplate}">
+                                            <ItemsRepeater.Layout>
+                                                <UniformGridLayout MinItemWidth="160" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
+                                            </ItemsRepeater.Layout>
+                                        </ItemsRepeater>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.ArrServers.Editor.HasError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.ArrServers.Editor.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Error"
+                                Message="{x:Bind ViewModel.ArrServers.Editor.Error, Mode=OneWay}"
+                                IsClosable="False" />
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.ArrServers.Editor.HasNotice, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.ArrServers.Editor.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Success"
+                                Message="{x:Bind ViewModel.ArrServers.Editor.Notice, Mode=OneWay}"
+                                IsClosable="False" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    Content="{x:Bind ViewModel.ArrServers.Editor.SaveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.ArrServers.Editor.SaveCommand}"
+                                    IsEnabled="{x:Bind ViewModel.ArrServers.Editor.CanAct, Mode=OneWay}"
+                                    Style="{StaticResource AccentButtonStyle}" />
+                                <Button Content="Cancel" Command="{x:Bind ViewModel.ArrServers.Editor.CancelCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </StackPanel>
 
             <!-- Metadata Sources -->
@@ -431,8 +746,12 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="Notifications" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
-                <!-- components/webhook-settings-card.tsx -->
-                <Border Style="{StaticResource SettingsCard}">
+                <!--
+                  components/webhook-settings-card.tsx. On a 0.43+ server each
+                  Sonarr/Radarr server shows its own webhook under Download
+                  Clients instead (the shared URLs keep working).
+                -->
+                <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsArrCards, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Spacing="14">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>

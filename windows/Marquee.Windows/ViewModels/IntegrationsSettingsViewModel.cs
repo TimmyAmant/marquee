@@ -44,6 +44,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
             "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr.");
         mainArrCards = [sonarr, radarr];
         ArrCards = mainArrCards;
+        ArrServers = new ArrServersViewModel(model);
 
         Tmdb = new SecretCardViewModel(
             model,
@@ -118,6 +119,21 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     /// <summary>Sonarr and Radarr, then the 4K ones when the server has them (0.37+).</summary>
     [ObservableProperty]
     private IReadOnlyList<ArrIntegrationViewModel> arrCards = [];
+
+    /// <summary>Any number of Sonarr and Radarr servers (0.43+), in place of <see cref="ArrCards"/>.</summary>
+    public ArrServersViewModel ArrServers { get; }
+
+    /// <summary>
+    /// The server sent <c>arrServers</c> (0.43+): the Download Clients list
+    /// shows instead of the fixed cards, and each server's own webhook
+    /// replaces the shared webhooks card.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsArrCards))]
+    private bool showsArrServers;
+
+    /// <summary>The four fixed Sonarr/Radarr cards and the shared webhooks card, from a server older than 0.43.</summary>
+    public bool ShowsArrCards => !ShowsArrServers;
 
     public SecretCardViewModel Tmdb { get; }
     public SecretCardViewModel Trakt { get; }
@@ -245,6 +261,28 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     {
         Plex.Apply(overview.Plex);
         Jellyfin.Apply(overview.Jellyfin);
+        ShowsArrServers = overview.ArrServers != null;
+        if (overview.ArrServers is { } servers)
+        {
+            ArrServers.Apply(servers);
+        }
+        else
+        {
+            ApplyArrCards(overview);
+        }
+        Tmdb.Apply(overview.Tmdb);
+        Trakt.Apply(overview.Trakt);
+        ShowsTraktImport = overview.Trakt.Connected;
+        Tvdb.Apply(overview.Tvdb);
+        Discord.Apply(overview.Discord);
+        Ntfy.Apply(overview.Ntfy);
+        Channels.Apply(overview);
+        GenericWebhook.Apply(overview.GenericWebhook);
+    }
+
+    /// <summary>Before 0.43: Sonarr and Radarr, the 4K ones when the server has them, and the shared webhooks.</summary>
+    private void ApplyArrCards(IntegrationsOverview overview)
+    {
         mainArrCards[0].Apply(overview.Sonarr);
         mainArrCards[1].Apply(overview.Radarr);
         var cards = new List<ArrIntegrationViewModel>(mainArrCards);
@@ -263,18 +301,10 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         {
             ArrCards = cards;
         }
-        Tmdb.Apply(overview.Tmdb);
-        Trakt.Apply(overview.Trakt);
-        ShowsTraktImport = overview.Trakt.Connected;
-        Tvdb.Apply(overview.Tvdb);
         Webhooks.Apply(
             overview.ArrWebhooks,
             radarr4k: overview.Radarr4k?.Connected == true,
             sonarr4k: overview.Sonarr4k?.Connected == true);
-        Discord.Apply(overview.Discord);
-        Ntfy.Apply(overview.Ntfy);
-        Channels.Apply(overview);
-        GenericWebhook.Apply(overview.GenericWebhook);
     }
 
     /// <summary><c>POST /settings/integrations/sync</c>: every connected library and download client, now.</summary>

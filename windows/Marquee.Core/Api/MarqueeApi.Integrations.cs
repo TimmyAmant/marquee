@@ -58,6 +58,9 @@ public sealed class IntegrationsEndpoints(MarqueeApi.Transport transport)
     /// <summary>Sonarr or Radarr (either 4K one too) by provider, for a view that manages both from one template.</summary>
     public ArrEndpoints Arr(ArrProvider provider) => new(transport, provider);
 
+    /// <summary>Any number of Sonarr and Radarr servers (0.43+): <c>/settings/arr-servers</c>.</summary>
+    public ArrServersEndpoints ArrServers => new(transport);
+
     public PlexEndpoints Plex => new(transport);
     public JellyfinEndpoints Jellyfin => new(transport);
 
@@ -171,7 +174,74 @@ public sealed class ArrEndpoints(MarqueeApi.Transport transport, ArrProvider pro
 }
 
 /// <summary>
-/// Plex sign-in is a PIN flow: <see cref="StartPinAsync"/>, open
+/// <c>/settings/arr-servers</c> (0.43+, admin): any number of Sonarr and
+/// Radarr servers. An older server answers 404 on all of them. Saving or
+/// removing one changes what the library counts, like the fixed cards.
+/// </summary>
+public sealed class ArrServersEndpoints(MarqueeApi.Transport transport)
+{
+    private const string Path = "/settings/arr-servers";
+
+    private static string ServerPath(string id) => $"{Path}/{MarqueeApi.Segment(id)}";
+
+    /// <summary><c>GET</c>: Sonarr first, then Radarr; standard before 4K, the default first.</summary>
+    public Task<IReadOnlyList<ArrServer>> ListAsync(CancellationToken ct = default) =>
+        transport.GetListAsync<ArrServer>(Path, ct: ct);
+
+    /// <summary>
+    /// <c>POST …/test</c>: "Test", without saving. Invalid("URL and API key
+    /// are required.") / ("Enter the API key again to change the URL."),
+    /// NotFound("Server not found."), Upstream("Couldn't connect. Check the
+    /// URL and API key and try again.").
+    /// </summary>
+    public Task<ArrServerTestResult> TestAsync(ArrServerTestRequest request, CancellationToken ct = default) =>
+        transport.PostAsync<ArrServerTestResult>(Path + "/test", body: request, timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
+    /// <summary><c>POST</c>: "Add server". Tests the connection, then saves it; errors as for <see cref="TestAsync"/>.</summary>
+    public async Task<ArrServer> AddAsync(ArrServerCreateRequest request, CancellationToken ct = default)
+    {
+        var saved = await transport.MutateAsync<ArrServerSaved>(
+            HttpMethod.Post, Path, body: request,
+            timeout: MarqueeApi.Timeouts.Integrations, changes: IntegrationsEndpoints.Reconnected, ct: ct).ConfigureAwait(false);
+        return saved.Server;
+    }
+
+    /// <summary>
+    /// <c>PATCH …/{id}</c>: "Save" (and "Make default" with just
+    /// <c>isDefault</c>). A new URL or key is tested first.
+    /// Conflict("Make another server the default instead.") for switching
+    /// the default off.
+    /// </summary>
+    public async Task<ArrServer> UpdateAsync(string id, ArrServerUpdateRequest request, CancellationToken ct = default)
+    {
+        var saved = await transport.MutateAsync<ArrServerSaved>(
+            HttpMethod.Patch, ServerPath(id), body: request,
+            timeout: MarqueeApi.Timeouts.Integrations, changes: IntegrationsEndpoints.Reconnected, ct: ct).ConfigureAwait(false);
+        return saved.Server;
+    }
+
+    /// <summary><c>DELETE …/{id}</c>: "Remove"; the library re-syncs right away. The website confirms first.</summary>
+    public Task RemoveAsync(string id, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Delete, ServerPath(id),
+            timeout: MarqueeApi.Timeouts.Integrations, changes: IntegrationsEndpoints.Reconnected, ct: ct);
+
+    /// <summary><c>GET …/{id}/options</c>: the saved server's pickers. Upstream("Couldn't reach Radarr 2. …") when it's down.</summary>
+    public Task<ArrServerOptions> OptionsAsync(string id, CancellationToken ct = default) =>
+        transport.GetAsync<ArrServerOptions>(ServerPath(id) + "/options", timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
+    /// <summary><c>POST …/{id}/webhook-secret</c>: "Regenerate"; the old URL stops working at once. Returns the new URL.</summary>
+    public async Task<string> RegenerateWebhookSecretAsync(string id, CancellationToken ct = default)
+    {
+        var result = await transport.MutateAsync<ArrServerWebhook>(
+            HttpMethod.Post, ServerPath(id) + "/webhook-secret",
+            changes: ServerChange.Integrations, ct: ct).ConfigureAwait(false);
+        return result.WebhookUrl;
+    }
+}
+
+/// <summary>
+/// Plex sign-in is a PIN flow:<see cref="StartPinAsync"/>, open
 /// <see cref="PlexPinStart.AuthUrl"/> in the browser, then
 /// <see cref="PollPinAsync"/> every 2.5 s for up to 2 minutes.
 /// </summary>

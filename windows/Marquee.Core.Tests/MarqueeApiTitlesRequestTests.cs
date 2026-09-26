@@ -39,6 +39,12 @@ public sealed class MarqueeApiTitlesRequestTests
             api => api.Titles.AddFourKAsync(MediaType.Tv, 1399)),
         new("POST", "/titles/movie/603/request", """{"is4k":true}""", "request-created", ServerChange.Requests | ServerChange.Library,
             api => api.Titles.RequestFourKAsync(MediaType.Movie, 603)),
+        new("POST", "/titles/movie/438631/add", """{"serverId":"b3e1f7a2","qualityProfileId":6,"rootFolderPath":"/movies-kids","tags":[2]}""", "title-add",
+            ServerChange.Library | ServerChange.Requests,
+            api => api.Titles.AddAsync(MediaType.Movie, 438631, new AddOverrides { ServerId = "b3e1f7a2", QualityProfileId = 6, RootFolderPath = "/movies-kids", Tags = [2] })),
+        new("POST", "/titles/tv/95396/add", """{"is4k":true,"serverId":"s4k","seriesType":"daily"}""", "title-add", ServerChange.Library | ServerChange.Requests,
+            api => api.Titles.AddAsync(MediaType.Tv, 95396, new AddOverrides { ServerId = "s4k", SeriesType = SeriesType.Daily }, is4k: true)),
+        new("GET", "/titles/tv/95396/add-options", null, "add-options", ServerChange.None, api => api.Titles.AddOptionsAsync(MediaType.Tv, 95396)),
     ];
 
     public static TheoryData<string> CaseNames

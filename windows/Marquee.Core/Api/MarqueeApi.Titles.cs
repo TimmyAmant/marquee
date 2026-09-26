@@ -48,6 +48,28 @@ public sealed class TitlesEndpoints(MarqueeApi.Transport transport)
         transport.MutateAsync<OK>(HttpMethod.Post, $"{Path(type, tmdbId)}/add", body: new FourKBody(true),
             timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library | ServerChange.Requests, ct: ct);
 
+    /// <summary>
+    /// <c>POST /titles/{type}/{tmdbId}/add</c> with the "Advanced" picks
+    /// (0.43+): a server, quality profile, root folder, tags and (TV) series
+    /// type; <paramref name="is4k"/> for "Add to 4K …". Errors name the
+    /// server ("Couldn't add this movie to Radarr 2.").
+    /// </summary>
+    public Task AddAsync(MediaType type, int tmdbId, AddOverrides overrides, bool is4k = false, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(HttpMethod.Post, $"{Path(type, tmdbId)}/add", body: TitleAddRequest.From(overrides, is4k),
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library | ServerChange.Requests, ct: ct);
+
+    /// <summary>
+    /// <c>GET /titles/{type}/{tmdbId}/add-options</c> (0.43+, admin or
+    /// trusted): the servers "Advanced" offers, with their pickers and
+    /// defaults; <paramref name="is4k"/> lists the 4K ones. NotFound from an
+    /// older server: hide Advanced.
+    /// </summary>
+    public Task<AddOptions> AddOptionsAsync(MediaType type, int tmdbId, bool is4k = false, CancellationToken ct = default) =>
+        transport.GetAsync<AddOptions>(
+            $"{Path(type, tmdbId)}/add-options",
+            query: is4k ? new Dictionary<string, string?> { ["is4k"] = "true" } : null,
+            timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
     /// <summary><c>POST /titles/{type}/{tmdbId}/search</c>: "Search now" (admin). Website text: "Search queued."</summary>
     public Task SearchNowAsync(MediaType type, int tmdbId, CancellationToken ct = default) =>
         transport.MutateAsync<OK>(HttpMethod.Post, $"{Path(type, tmdbId)}/search",

@@ -43,6 +43,16 @@ public sealed class MarqueeApiRequestsRequestTests
         new("GET", "/requests/pending-count", null, "requests-pending-count", ServerChange.None, api => api.Requests.PendingCountAsync()),
         new("POST", "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/approve", null, "ok", Added,
             api => api.Requests.ApproveAsync(RequestId)),
+        new("POST", "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/approve",
+            """{"serverId":"b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31","qualityProfileId":6,"rootFolderPath":"/movies-kids","tags":[2]}""", "ok", Added,
+            api => api.Requests.ApproveAsync(RequestId, new AddOverrides
+            {
+                ServerId = "b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31",
+                QualityProfileId = 6,
+                RootFolderPath = "/movies-kids",
+                Tags = [2],
+            }),
+            Label: "POST /requests/{id}/approve with add overrides"),
         new("POST", "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/manual-approve", null, "ok", Reviewed,
             api => api.Requests.ManuallyApproveAsync(RequestId)),
         new("POST", "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject", null, "ok", Reviewed,
@@ -163,7 +173,9 @@ public sealed class MarqueeApiRequestsRequestTests
         Assert.Equal(2, pending.Results.Count);
 
         var history = await api.Requests.HistoryAsync();
-        Assert.Equal(RequestStatus.Rejected, Assert.Single(history).Status);
+        Assert.Equal(2, history.Count);
+        Assert.Equal(RequestStatus.Rejected, history[0].Status);
+        Assert.Equal("Added to Radarr 2", history[1].AddedToLine);
 
         Assert.Equal(3, await api.Requests.PendingCountAsync());
 

@@ -48,6 +48,21 @@ public sealed record IntegrationsOverview
     public required ConnectionState GenericWebhook { get; init; }
     public required ArrWebhooks ArrWebhooks { get; init; }
 
+    /// <summary>
+    /// Every Sonarr and Radarr server (0.43+; null from an older server):
+    /// Sonarr first, then Radarr, standard before 4K, the default first.
+    /// When it's there, the "Download Clients" list replaces the four fixed
+    /// cards.
+    /// </summary>
+    public IReadOnlyList<ArrServer>? ArrServers { get; init; }
+
+    /// <summary>The server manages any number of Sonarr/Radarr servers (0.43+).</summary>
+    public bool HasArrServers => ArrServers != null;
+
+    /// <summary>The Sonarr or the Radarr servers, in the server's order; empty from an older server.</summary>
+    public IReadOnlyList<ArrServer> ArrServersOf(ArrProvider kind) =>
+        ArrServers?.Where(server => server.Kind == kind).ToList() ?? [];
+
     /// <summary>The Sonarr or Radarr section by provider, for a view that renders both from one template.</summary>
     public ArrSettings Arr(ArrProvider provider) => provider == ArrProvider.Sonarr ? Sonarr : Radarr;
 
