@@ -94,9 +94,16 @@ vi.mock("@/lib/db/client", () => {
 
 vi.mock("@/lib/crypto/encryption", () => ({
   encryptSecret: (text: string) => ({ ciphertext: `enc:${text}`, iv: "iv", tag: "tag" }),
-  decryptSecret: (field: { ciphertext: string }) => field.ciphertext.replace(/^enc:/, ""),
+  decryptSecret: (field: { ciphertext: string }) => {
+    if (!field.ciphertext.startsWith("enc:")) throw new Error("bad tag");
+    return field.ciphertext.slice(4);
+  },
 }));
 vi.mock("@/lib/integrations/library-owner", () => ({ getLibraryOwnerUserId: async () => "admin" }));
+const tmdb = vi.hoisted(() => ({ down: false }));
+vi.mock("@/lib/tmdb/cache", () => ({
+  getOrFetchTitle: async (_mediaType: string, tmdbId: number) => (tmdb.down ? null : { tmdbId }),
+}));
 
 const plexTv = vi.hoisted(() => ({ answer: null as WatchlistFetch | Error | null, seenEtag: undefined as string | null | undefined }));
 vi.mock("@/lib/plex/watchlist-api", () => ({
@@ -138,6 +145,7 @@ beforeEach(async () => {
   tables.plexWatchlistItems = [];
   plexTv.answer = { status: "ok", etag: "etag-1", items: [] };
   plexTv.seenEtag = undefined;
+  tmdb.down = false;
   createRequest.mockClear();
   createRequest.mockImplementation(async (_viewer, input) => ({ ok: true, requestId: `req-${input.tmdbId}` }));
   await enableWatchlist("m1", { plexUserId: "1111", authToken: "member-token", clientId: "client" });
@@ -190,6 +198,24 @@ describe("the watchlist sync", () => {
     await syncPlexWatchlist("m1");
     expect(outcomes()).toEqual([]);
     expect(tables.plexWatchlists[0].etag).toBeNull();
+  });
+
+  it("waits for TMDb rather than requesting a title it can't look up", async () => {
+    tmdb.down = true;
+    plexTv.answer = { status: "ok", etag: "etag-1", items: [movie(10)] };
+    await syncPlexWatchlist("m1");
+    expect(createRequest).not.toHaveBeenCalled();
+    expect(outcomes()).toEqual([]);
+    expect(tables.plexWatchlists[0].etag).toBeNull();
+    tmdb.down = false;
+    await syncPlexWatchlist("m1");
+    expect(outcomes()).toEqual(["movie:10:requested"]);
+  });
+
+  it("switches itself off when the stored token can't be decrypted", async () => {
+    tables.plexWatchlists[0].authTokenEnc = "garbage";
+    await syncPlexWatchlist("m1");
+    expect(await getWatchlistState("m1")).toMatchObject({ enabled: false, lastError: WATCHLIST_TOKEN_REJECTED });
   });
 
   it("requests at most a batch per sync, and picks up the rest next time", async () => {

@@ -19,7 +19,8 @@ export type WatchlistFetch =
   | { status: "ok"; etag: string | null; items: WatchlistItem[] }
   /** Same ETag as last time: nothing changed. */
   | { status: "unchanged" }
-  /** plex.tv refused the token (signed out everywhere, password changed…). */
+  /** plex.tv refused the token (signed out everywhere, password changed…):
+   * a 401, or a 403 for an account no longer allowed a watchlist. */
   | { status: "unauthorized" };
 
 function tmdbIdFrom(guids: unknown): number | null {
@@ -76,7 +77,7 @@ export async function fetchWatchlist(clientId: string, token: string, etag: stri
     redirect: "manual",
   });
   if (res.status === 304) return { status: "unchanged" };
-  if (res.status === 401) return { status: "unauthorized" };
+  if (res.status === 401 || res.status === 403) return { status: "unauthorized" };
   if (!res.ok) throw new Error(`Failed to read the Plex Watchlist (${res.status})`);
   // plex.tv answers some blocked networks with an HTML page and a 200.
   if (!(res.headers.get("content-type") ?? "").includes("json")) {

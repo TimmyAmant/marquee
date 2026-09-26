@@ -11,7 +11,7 @@ import {
   syncPlexWatchlistAction,
   type WatchlistActionResult,
 } from "./media-actions";
-import { runPlexApproval } from "./plex-approval";
+import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
 
 const smallButtonClass =
   "rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
@@ -33,13 +33,23 @@ export function PlexWatchlistCard({ initial }: { initial: WatchlistState }) {
   const [waiting, setWaiting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
+  const attempts = useRef<ApprovalAttempts>({ current: 0 });
+  const mounted = useRef(true);
 
   useEffect(() => {
+    const current = attempts.current;
+    mounted.current = true;
     return () => {
-      cancelled.current = true;
+      mounted.current = false;
+      current.current++;
     };
   }, []);
+
+  async function refresh() {
+    const result = await getPlexWatchlistAction();
+    if (mounted.current && result.state) setState(result.state);
+    return result.state;
+  }
 
   async function apply(action: Promise<WatchlistActionResult>) {
     setBusy(true);
@@ -53,20 +63,23 @@ export function PlexWatchlistCard({ initial }: { initial: WatchlistState }) {
   async function handleTurnOn() {
     setError(null);
     setWaiting(true);
-    cancelled.current = false;
-    const failure = await runPlexApproval(startPlexWatchlistAction, pollPlexWatchlistAction, cancelled);
-    if (cancelled.current) return;
-    setWaiting(false);
-    if (failure) {
-      setError(failure);
+    const outcome = await runPlexApproval(startPlexWatchlistAction, pollPlexWatchlistAction, attempts.current);
+    if (outcome.status === "cancelled") {
+      if (outcome.completed) await refresh();
       return;
     }
-    await apply(getPlexWatchlistAction());
-    // The first read runs in the background on the server; pick up its
-    // result shortly after.
-    setTimeout(() => {
-      if (!cancelled.current) getPlexWatchlistAction().then((r) => r.state && setState(r.state));
-    }, 8000);
+    setWaiting(false);
+    if (outcome.status === "error") {
+      setError(outcome.error);
+      return;
+    }
+    // The first read runs in the background on the server (a long list
+    // with auto-approve can take a while); check back until it's in.
+    for (let tries = 0; tries < 12 && mounted.current; tries++) {
+      const current = await refresh();
+      if (!current?.enabled || current.lastSyncedAt || current.lastError) return;
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   }
 
   const lastSynced = state.lastSyncedAt ? new Date(state.lastSyncedAt) : null;
@@ -89,7 +102,7 @@ export function PlexWatchlistCard({ initial }: { initial: WatchlistState }) {
           <button
             type="button"
             onClick={() => {
-              cancelled.current = true;
+              attempts.current.current++;
               setWaiting(false);
             }}
             className="shrink-0 text-xs text-text-secondary hover:text-accent"

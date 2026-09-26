@@ -7,6 +7,7 @@ import { singleFlight } from "@/lib/async/single-flight";
 import { createRequest } from "@/lib/requests/mutate";
 import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import { fetchWatchlist, type WatchlistItem } from "@/lib/plex/watchlist-api";
+import { getOrFetchTitle } from "@/lib/tmdb/cache";
 
 // "Request what's on my Plex Watchlist": a member turns it on with their own
 // Plex account (lib/auth/media-signin.ts startPlexWatchlist/pollPlexWatchlist
@@ -202,6 +203,15 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
   let complete = pending.length <= MAX_NEW_REQUESTS_PER_SYNC;
 
   for (const item of pending.slice(0, MAX_NEW_REQUESTS_PER_SYNC)) {
+    // createRequest carries on without TMDb (for the Request button, the
+    // browser supplied the name), but then it can't tell a show the library
+    // already has by its TVDB id. Nobody's waiting on a watchlist title, so
+    // it waits for TMDb instead.
+    const known = await getOrFetchTitle(item.mediaType, item.tmdbId).catch(() => null);
+    if (!known) {
+      complete = false;
+      continue;
+    }
     const result = await createRequest(viewer, {
       mediaType: item.mediaType,
       tmdbId: item.tmdbId,
@@ -211,8 +221,9 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
 
     let outcome: "requested" | "skipped" | null;
     if (result?.ok) outcome = "requested";
-    // Already owned, already requested (by them or, for a whole show, still
-    // open): nothing to do now or later.
+    // Already owned, or already asked for by this member (a request that's
+    // pending, approved, or — for a show — covers some seasons): the member
+    // is handling this title themselves, so it's left to them.
     else if (result && (result.code === "conflict" || result.code === "invalid")) outcome = "skipped";
     // TMDb or the database hiccuped: try again next sync.
     else outcome = null;
@@ -231,7 +242,10 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
         outcome,
         requestId: result?.ok ? result.requestId : null,
       })
-      .onConflictDoNothing();
+      .onConflictDoNothing()
+      // The request itself stands; next time the title just counts as
+      // already requested.
+      .catch((err) => console.error("[plex-watchlist] couldn't record a handled title:", err));
   }
 
   await db

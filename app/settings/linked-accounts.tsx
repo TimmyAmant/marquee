@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { linkJellyfinAction, pollPlexLinkAction, startPlexLinkAction, unlinkAction } from "./media-actions";
-import { runPlexApproval } from "./plex-approval";
+import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -42,22 +42,25 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
   const router = useRouter();
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
+  const attempts = useRef<ApprovalAttempts>({ current: 0 });
 
   useEffect(() => {
+    const current = attempts.current;
     return () => {
-      cancelled.current = true;
+      current.current++;
     };
   }, []);
 
   async function handleLink() {
     setError(null);
     setWaiting(true);
-    cancelled.current = false;
-    const failure = await runPlexApproval(startPlexLinkAction, pollPlexLinkAction, cancelled);
-    if (cancelled.current) return;
+    const outcome = await runPlexApproval(startPlexLinkAction, pollPlexLinkAction, attempts.current);
+    if (outcome.status === "cancelled") {
+      if (outcome.completed) router.refresh();
+      return;
+    }
     setWaiting(false);
-    if (failure) setError(failure);
+    if (outcome.status === "error") setError(outcome.error);
     else router.refresh();
   }
 
@@ -73,7 +76,7 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
             <button
               type="button"
               onClick={() => {
-                cancelled.current = true;
+                attempts.current.current++;
                 setWaiting(false);
               }}
               className="text-xs text-text-secondary hover:text-accent"

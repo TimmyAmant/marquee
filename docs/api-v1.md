@@ -1511,10 +1511,11 @@ Settings → Account, shown while Plex is linked.
 `available`: Plex is linked to this account, so it can be turned on.
 `enabled`: it's on. Every 10 minutes (the `plex-watchlist` job) the server
 reads the account's own Plex Watchlist — newest 100 titles — and requests
-each movie/show not handled before, as this account, exactly as
+each movie/show not handled before, as this account, the way
 `POST /titles/{type}/{tmdbId}/request` would (whole series for TV; the
-member's auto-approve applies). Titles already owned or requested are
-skipped. Each title is tried once, so one the admin declined isn't asked
+member's auto-approve applies). A title waits while TMDb can't be reached.
+Titles already owned, or that this account already requested (pending,
+approved, or some of a show's seasons), are skipped. Each title is tried once, so one the admin declined isn't asked
 for again, even after turning it off and on. At most 25 new titles per
 check; the rest follow on the next. `movies` / `tv`: which kinds are
 requested (both on by default). `lastSyncedAt`: last successful check,
