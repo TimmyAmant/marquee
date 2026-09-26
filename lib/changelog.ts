@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.47.2",
+    date: "2026-09-26",
+    changes: [
+      "Windows: sideways rows (Discover, Because you watched, cast, More like this…) no longer steal the mouse wheel — the wheel and touchpad always scroll the page. Move a row with its ‹ › buttons, or swipe it on a touch screen; tapping a poster still opens it. The draggable scrollbar is gone, and Left/Right keys move between posters in a row.",
+    ],
+  },
+  {
     version: "0.47.1",
     date: "2026-09-26",
     changes: [
