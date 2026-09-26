@@ -2,7 +2,7 @@ import Testing
 import Foundation
 @testable import Marquee
 
-/// Regression cover for the spontaneous sign-out: a Keychain that couldn't be
+/// Regression cover for the spontaneous sign-out: a token store that couldn't be
 /// read was indistinguishable from an account that had signed out, and the
 /// answer was cached, so one transient failure showed the sign-in card for the
 /// rest of the launch even though the saved token was still there and valid.
@@ -61,8 +61,8 @@ struct SessionRecoveryTests {
     }
 }
 
-/// Fails `lookup` the first `failuresBeforeSuccess` times, the way a locked or
-/// ACL-contested Keychain does right after the binary is rebuilt.
+/// Fails `lookup` the first `failuresBeforeSuccess` times, the way a
+/// store that can't be read (a permissions or disk error) does.
 private final class FlakyTokenStore: TokenStore {
     private let storedToken: String?
     private let failuresBeforeSuccess: Int

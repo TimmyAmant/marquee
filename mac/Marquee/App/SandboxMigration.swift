@@ -10,7 +10,7 @@ import OSLog
 /// Nothing else in the container needs to move: its Caches hold only
 /// artwork, which downloads again, and its Application Support holds the
 /// pre-server app's store, which this app doesn't use. The session token
-/// lives in the login Keychain, not the container (see `KeychainTokenStore`).
+/// lives outside the container too (see `FileTokenStore`).
 enum SandboxMigration {
     static let markerKey = "marquee.migratedFromSandbox"
 

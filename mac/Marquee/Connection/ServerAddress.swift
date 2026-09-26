@@ -2,7 +2,7 @@ import Foundation
 
 /// Where a Marquee server lives: scheme, host and port, normalized so the same
 /// server always produces the same base URL (the dedupe key for discovery and
-/// the Keychain account for its token).
+/// the key for its saved session token).
 ///
 /// Accepts what people actually type or paste: `192.168.1.20`,
 /// `192.168.1.20:3000`, `tower.local`, `http://host:port/`, or an `https://`
