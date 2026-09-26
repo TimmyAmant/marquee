@@ -49,7 +49,7 @@ export function RailPositionSetting({ initial }: { initial: RailPosition }) {
         Menu position
       </p>
       <p className="mt-1 text-sm text-text-secondary">
-        Where the menu sits on this device. On a phone-sized window it stays behind the menu button.
+        Where the menu sits on this device. On a phone-sized window it stays behind the menu button and slides in from the right when set to Right, otherwise from the left.
       </p>
       <div role="radiogroup" aria-labelledby="rail-position-label" className="mt-4 grid grid-cols-4 gap-2">
         {RAIL_POSITIONS.map((option) => {
