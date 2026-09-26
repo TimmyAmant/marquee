@@ -47,10 +47,10 @@ public sealed class MyRequestRow : RequestRowBase
         StatusLabel = request.StatusLabel;
         Tone = request.StatusTone.ToBadgeTone();
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
-        SeasonsLine = request.SeasonsText;
+        SeasonsLine = request.DetailText;
     }
 
-    /// <summary>"Seasons 1–3" under the title for a request of some seasons; empty for a whole series or a movie.</summary>
+    /// <summary>"Seasons 1–3", "Seasons 1–3 · In 4K" or "In 4K" under the title; empty for a regular whole series or movie.</summary>
     public string SeasonsLine { get; }
 
     public string StatusLabel { get; }
@@ -70,10 +70,10 @@ public sealed class ReviewedRow : RequestRowBase
         StatusLabel = request.StatusLabel;
         Tone = request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
-        SeasonsLine = request.SeasonsText;
+        SeasonsLine = request.DetailText;
     }
 
-    /// <summary>"Seasons 1–3" under the title; empty for a whole series or a movie.</summary>
+    /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie.</summary>
     public string SeasonsLine { get; }
 
     public string RequesterLabel { get; }
@@ -127,7 +127,7 @@ public sealed partial class PendingRow : ObservableObject
         TitleId = request.TitleId;
         RequesterLabel = request.RequestedBy.Label;
         DateLabel = Format.ShortDate(request.CreatedAt);
-        SeasonsLine = request.SeasonsText;
+        SeasonsLine = request.DetailText;
         posterUrl = request.PosterPath.Url(ImageSize.W92);
         // Only an https Sonarr can be opened from here (see ExternalLinks).
         this.manualSonarrUrl = ExternalLinks.CanOpen(manualSonarrUrl) ? manualSonarrUrl : null;
@@ -140,7 +140,7 @@ public sealed partial class PendingRow : ObservableObject
     public string RequesterLabel { get; }
     public string DateLabel { get; }
 
-    /// <summary>"Seasons 1–3" under the title; empty for a whole series or a movie.</summary>
+    /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie.</summary>
     public string SeasonsLine { get; }
 
     public bool HasPoster => posterUrl != null;

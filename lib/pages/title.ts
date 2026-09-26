@@ -1,4 +1,5 @@
 import type { TitleMeta, TitleSidebarData } from "@/components/title-hero";
+import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
 import type { FranchiseItem } from "@/components/franchise-row";
 import type { LibraryStatus } from "@/components/status-badge";
@@ -97,6 +98,17 @@ export async function loadTitleStatus(
       libraryStatus.status !== "untracked" &&
       (libraryStatus.provider === "plex" || libraryStatus.provider === "jellyfin"),
   });
+  // The 4K copy (lib/arr/fourk.ts): what the 4K instance has, and this
+  // viewer's 4K request. Null when there's no 4K instance for this type.
+  const [fourKLibrary, fourKRequestStatus] =
+    viewer.userId && viewer.libraryOwnerId
+      ? await Promise.all([
+          getFourKStatus(viewer.libraryOwnerId, type, tmdbId, tvdbId).catch(() => null),
+          getActiveRequestStatus(viewer.userId, type, tmdbId, true),
+        ])
+      : [null, null];
+  const fourK = fourKLibrary ? { ...fourKLibrary, requestStatus: fourKRequestStatus } : null;
+
   const seasonRequests = {
     states: seasonStates,
     canRequestSeasons: canRequestSeasons({
@@ -117,6 +129,7 @@ export async function loadTitleStatus(
     arrTracking,
     seasonLibrary,
     seasonRequests,
+    fourK,
   };
 }
 
@@ -150,6 +163,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     arrTracking,
     seasonLibrary,
     seasonRequests,
+    fourK,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -366,6 +380,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     seasons,
     seasonCompleteness,
     seasonRequests,
+    fourK,
     runtimeMinutes,
     runtimeLabel,
     titleMeta,

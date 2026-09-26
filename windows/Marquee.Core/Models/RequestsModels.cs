@@ -58,6 +58,13 @@ public static class SeasonLabels
         }
         return string.Join(", ", parts);
     }
+
+    /// <summary>
+    /// components/request-title.tsx's second line: the seasons label and "In
+    /// 4K" joined with " · ", each left out when absent; empty for neither.
+    /// </summary>
+    public static string RequestLine(string? seasonsText, bool is4k) =>
+        string.Join(" · ", new[] { seasonsText.NonBlank(), is4k ? "In 4K" : null }.OfType<string>());
 }
 
 /// <summary>Who requested (or acted on) something.</summary>
@@ -112,6 +119,12 @@ public sealed record MyRequest
 
     /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
     public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
+
+    /// <summary>Asked for in 4K (0.37+; an older server omits it, meaning false).</summary>
+    public bool Is4k { get; init; }
+
+    /// <summary>The second line under the title: "Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
+    public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }
@@ -174,6 +187,12 @@ public sealed record PendingRequest
     /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
     public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
 
+    /// <summary>Asked for in 4K (0.37+; an older server omits it, meaning false).</summary>
+    public bool Is4k { get; init; }
+
+    /// <summary>The second line under the title: "Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
+    public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
+
     public TitleId TitleId => new(MediaType, TmdbId);
 }
 
@@ -208,6 +227,12 @@ public sealed record ReviewedRequest
 
     /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
     public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
+
+    /// <summary>Asked for in 4K (0.37+; an older server omits it, meaning false).</summary>
+    public bool Is4k { get; init; }
+
+    /// <summary>The second line under the title: "Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
+    public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }

@@ -13,5 +13,7 @@ export function arrWebhookUrls(baseUrl: string, userId: string, secret: string) 
   return {
     radarr: `${baseUrl}/api/webhooks/radarr/${userId}?secret=${secret}`,
     sonarr: `${baseUrl}/api/webhooks/sonarr/${userId}?secret=${secret}`,
+    radarr4k: `${baseUrl}/api/webhooks/radarr4k/${userId}?secret=${secret}`,
+    sonarr4k: `${baseUrl}/api/webhooks/sonarr4k/${userId}?secret=${secret}`,
   };
 }

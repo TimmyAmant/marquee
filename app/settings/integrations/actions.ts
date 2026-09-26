@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { regenerateWebhookSecret } from "@/lib/integrations/credentials";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { saveArrDefaultsFor, testAndSaveArrConnection as testAndSaveArr } from "@/lib/integrations/manage";
-import { arrProviderValues, type ArrProvider } from "@/lib/db/schema";
+import { arrInstanceValues, type ArrInstance } from "@/lib/db/schema";
 
-function isArrProvider(value: unknown): value is ArrProvider {
-  return typeof value === "string" && (arrProviderValues as readonly string[]).includes(value);
+function isArrProvider(value: unknown): value is ArrInstance {
+  return typeof value === "string" && (arrInstanceValues as readonly string[]).includes(value);
 }
 
 export type ArrConnectionState = {
@@ -21,7 +21,7 @@ export type ArrConnectionState = {
 };
 
 export async function testAndSaveArrConnection(
-  provider: ArrProvider,
+  provider: ArrInstance,
   _prevState: ArrConnectionState | undefined,
   formData: FormData,
 ): Promise<ArrConnectionState> {
@@ -45,7 +45,7 @@ export async function testAndSaveArrConnection(
   };
 }
 
-export async function saveArrDefaults(provider: ArrProvider, formData: FormData) {
+export async function saveArrDefaults(provider: ArrInstance, formData: FormData) {
   const admin = await requireAdmin();
   if (!admin.ok) return;
   if (!isArrProvider(provider)) return;

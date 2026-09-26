@@ -47,6 +47,8 @@ public sealed class MarqueeApiIntegrationsRequestTests
     [
         .. ArrCases(ArrProvider.Sonarr),
         .. ArrCases(ArrProvider.Radarr),
+        .. ArrCases(ArrProvider.Sonarr4k),
+        .. ArrCases(ArrProvider.Radarr4k),
         new("GET", "/settings/integrations", null, "integrations", ServerChange.None, api => api.Integrations.OverviewAsync()),
         new("POST", "/settings/integrations/sync", null, "ok", Reconnected, api => api.Integrations.SyncNowAsync()),
         new("POST", "/settings/integrations/webhook-secret", null, "webhook-secret", ServerChange.Integrations,
@@ -107,8 +109,9 @@ public sealed class MarqueeApiIntegrationsRequestTests
     [Fact]
     public void EveryCaseCoversADifferentEndpoint()
     {
-        // Section 12 documents 35 endpoints (the Sonarr/Radarr four count twice).
-        Assert.Equal(35, Cases.Length);
+        // Section 12 documents 43 endpoints (the Sonarr/Radarr four count four
+        // times: Sonarr, Radarr, and their 4K instances from 0.37).
+        Assert.Equal(43, Cases.Length);
         Assert.Equal(Cases.Length, Cases.Select(testCase => testCase.Name).Distinct(StringComparer.Ordinal).Count());
     }
 
@@ -168,11 +171,18 @@ public sealed class MarqueeApiIntegrationsRequestTests
 
         Assert.Equal(ArrProvider.Sonarr, api.Integrations.Sonarr.Provider);
         Assert.Equal(ArrProvider.Radarr, api.Integrations.Radarr.Provider);
+        Assert.Equal(ArrProvider.Sonarr4k, api.Integrations.Sonarr4k.Provider);
+        Assert.Equal(ArrProvider.Radarr4k, api.Integrations.Radarr4k.Provider);
         await api.Integrations.Sonarr.OptionsAsync();
         await api.Integrations.Radarr.OptionsAsync();
+        await api.Integrations.Sonarr4k.OptionsAsync();
+        await api.Integrations.Radarr4k.OptionsAsync();
 
         Assert.Equal(
-            ["/api/v1/settings/integrations/sonarr/options", "/api/v1/settings/integrations/radarr/options"],
+            [
+                "/api/v1/settings/integrations/sonarr/options", "/api/v1/settings/integrations/radarr/options",
+                "/api/v1/settings/integrations/sonarr4k/options", "/api/v1/settings/integrations/radarr4k/options",
+            ],
             stub.Requests.Select(request => request.Path));
     }
 

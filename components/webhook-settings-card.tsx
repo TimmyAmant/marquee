@@ -40,10 +40,13 @@ export function WebhookSettingsCard({
   userId,
   initialSecret,
   baseUrl,
+  fourK = { radarr: false, sonarr: false },
 }: {
   userId: string;
   initialSecret: string;
   baseUrl: string;
+  /** Which 4K instances are connected, so their own webhook URLs show. */
+  fourK?: { radarr: boolean; sonarr: boolean };
 }) {
   const [secret, setSecret] = useState(initialSecret);
   const [isPending, startTransition] = useTransition();
@@ -55,7 +58,7 @@ export function WebhookSettingsCard({
     });
   }
 
-  const { radarr: radarrUrl, sonarr: sonarrUrl } = arrWebhookUrls(baseUrl, userId, secret);
+  const urls = arrWebhookUrls(baseUrl, userId, secret);
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
@@ -75,8 +78,10 @@ export function WebhookSettingsCard({
         Grab + Download) to get notified here as soon as something starts or finishes downloading.
       </p>
       <div className="mt-4 flex flex-col gap-3">
-        <WebhookUrlRow label="Radarr webhook URL" url={radarrUrl} />
-        <WebhookUrlRow label="Sonarr webhook URL" url={sonarrUrl} />
+        <WebhookUrlRow label="Radarr webhook URL" url={urls.radarr} />
+        <WebhookUrlRow label="Sonarr webhook URL" url={urls.sonarr} />
+        {fourK.radarr && <WebhookUrlRow label="4K Radarr webhook URL" url={urls.radarr4k} />}
+        {fourK.sonarr && <WebhookUrlRow label="4K Sonarr webhook URL" url={urls.sonarr4k} />}
       </div>
     </div>
   );

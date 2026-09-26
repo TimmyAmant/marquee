@@ -26,9 +26,19 @@ extension API {
         let email: EmailSettings?
         let genericWebhook: ConnectionState
         let arrWebhooks: ArrWebhooks
+        /// The optional 4K Sonarr / Radarr (0.37+); nil from an older server,
+        /// which hides their cards.
+        let sonarr4k: ArrSettings?
+        let radarr4k: ArrSettings?
 
-        func arr(_ provider: ArrProvider) -> ArrSettings {
-            provider == .sonarr ? sonarr : radarr
+        /// nil only for a 4K instance an older server doesn't know about.
+        func arr(_ provider: ArrProvider) -> ArrSettings? {
+            switch provider {
+            case .sonarr: sonarr
+            case .radarr: radarr
+            case .sonarr4k: sonarr4k
+            case .radarr4k: radarr4k
+            }
         }
     }
 
@@ -129,22 +139,44 @@ extension API {
         let secret: String
         let radarrUrl: String
         let sonarrUrl: String
+        /// The 4K instances' webhooks (0.37+, same secret); nil from an older server.
+        let radarr4kUrl: String?
+        let sonarr4kUrl: String?
 
-        func url(for provider: ArrProvider) -> String {
-            provider == .sonarr ? sonarrUrl : radarrUrl
+        /// nil only for a 4K instance an older server doesn't know about.
+        func url(for provider: ArrProvider) -> String? {
+            switch provider {
+            case .sonarr: sonarrUrl
+            case .radarr: radarrUrl
+            case .sonarr4k: sonarr4kUrl
+            case .radarr4k: radarr4kUrl
+            }
         }
     }
 
-    /// `{provider}` in `/settings/integrations/{sonarr|radarr}`.
+    /// `{provider}` in `/settings/integrations/{sonarr|radarr|sonarr4k|radarr4k}`.
+    /// The 4K ones (0.37+) are optional second instances for 4K copies,
+    /// configured exactly like the main ones.
     enum ArrProvider: String, Codable, CaseIterable, Hashable, Sendable, Identifiable {
         case sonarr
         case radarr
+        case sonarr4k
+        case radarr4k
 
         var id: String { rawValue }
-        var displayName: String { self == .sonarr ? "Sonarr" : "Radarr" }
-        var defaultPort: Int { self == .sonarr ? 8989 : 7878 }
+        /// "Sonarr", "4K Radarr" — as the server's own error messages say it.
+        var displayName: String {
+            switch self {
+            case .sonarr: "Sonarr"
+            case .radarr: "Radarr"
+            case .sonarr4k: "4K Sonarr"
+            case .radarr4k: "4K Radarr"
+            }
+        }
+        var defaultPort: Int { mediaType == .tv ? 8989 : 7878 }
         /// The media type this provider adds.
-        var mediaType: MediaType { self == .sonarr ? .tv : .movie }
+        var mediaType: MediaType { self == .sonarr || self == .sonarr4k ? .tv : .movie }
+        var is4k: Bool { self == .sonarr4k || self == .radarr4k }
     }
 
     struct RootFolder: Codable, Hashable, Sendable, Identifiable {

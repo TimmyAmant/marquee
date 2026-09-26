@@ -96,7 +96,9 @@ export const sessions = pgTable("sessions", {
   expires: timestamp("expires", { withTimezone: true }).notNull(),
 });
 
-export const integrationProviderValues = ["sonarr", "radarr", "plex", "jellyfin"] as const;
+// sonarr4k / radarr4k: the optional second Sonarr and Radarr for 4K copies
+// (lib/arr/fourk.ts) — requested "in 4K", kept apart from the main library.
+export const integrationProviderValues = ["sonarr", "radarr", "plex", "jellyfin", "sonarr4k", "radarr4k"] as const;
 export type IntegrationProvider = (typeof integrationProviderValues)[number];
 
 export const integrationCredentials = pgTable(
@@ -124,7 +126,7 @@ export const integrationCredentials = pgTable(
     unique().on(table.userId, table.provider),
     check(
       "integration_credentials_provider_check",
-      sql`${table.provider} in ('sonarr','radarr','plex','jellyfin')`,
+      sql`${table.provider} in ('sonarr','radarr','plex','jellyfin','sonarr4k','radarr4k')`,
     ),
   ],
 );
@@ -358,6 +360,10 @@ export const favorites = pgTable(
 export const arrProviderValues = ["sonarr", "radarr"] as const;
 export type ArrProvider = (typeof arrProviderValues)[number];
 
+/** A Sonarr or Radarr connection: the main one, or its 4K counterpart. */
+export const arrInstanceValues = ["sonarr", "radarr", "sonarr4k", "radarr4k"] as const;
+export type ArrInstance = (typeof arrInstanceValues)[number];
+
 export const arrStatusCache = pgTable(
   "arr_status_cache",
   {
@@ -411,6 +417,9 @@ export const notifications = pgTable(
     eventType: text("event_type").notNull().$type<NotificationEventType>(),
     message: text("message").notNull(),
     read: boolean("read").default(false).notNull(),
+    // About the 4K copy (lib/arr/fourk.ts): kept apart from the regular
+    // copy's notices when repeats are dropped, so one doesn't hide the other.
+    is4k: boolean("is_4k").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
@@ -459,6 +468,10 @@ export const requests = pgTable(
     // every request made before per-season requests existed, and any from
     // a client that doesn't send seasons.
     seasons: integer("seasons").array(),
+    // Asked for in 4K: approving adds it to the 4K Sonarr/Radarr instead of
+    // the main one. A 4K request and a regular one for the same title are
+    // separate requests.
+    is4k: boolean("is_4k").notNull().default(false),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),
@@ -471,7 +484,7 @@ export const requests = pgTable(
     // requests for the same title — createRequestAction's pre-insert check
     // can't fully guard against this on its own since it's read-then-write.
     uniqueIndex("requests_pending_unique_idx")
-      .on(table.requestedByUserId, table.mediaType, table.tmdbId)
+      .on(table.requestedByUserId, table.mediaType, table.tmdbId, table.is4k)
       .where(sql`${table.status} = 'pending'`),
   ],
 );

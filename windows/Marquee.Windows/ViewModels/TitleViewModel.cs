@@ -196,6 +196,12 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(IsFavorited),
         nameof(FavoriteGlyph),
         nameof(FavoriteLabel),
+        nameof(HasFourKRow),
+        nameof(FourKStatusLabel),
+        nameof(HasFourKStatus),
+        nameof(ShowsFourKRequested),
+        nameof(CanRequestFourK),
+        nameof(CanAddFourK),
     ];
 
     private readonly AppModel model;
@@ -268,6 +274,16 @@ public sealed partial class TitleViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isTogglingFavorite;
+
+    /// <summary>"Request in 4K" and "Add to 4K …" share one busy flag, as components/fourk-controls.tsx.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RequestFourKLabel))]
+    [NotifyPropertyChangedFor(nameof(AddFourKLabel))]
+    private bool isFourKBusy;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasFourKError))]
+    private string? fourKError;
 
     public TitleViewModel(AppModel model)
     {
@@ -416,6 +432,27 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <summary>"Add all N missing" is one click at a time.</summary>
     public bool CanAddAll => !IsAddingAll;
 
+    // MARK: 4K (viewer.fourK, 0.37+; components/fourk-controls.tsx)
+
+    private FourKViewerState? FourK => Viewer?.FourK;
+
+    /// <summary>The admin has a 4K Radarr/Sonarr for this type: the 4K row shows.</summary>
+    public bool HasFourKRow => FourK != null && (HasFourKStatus || ShowsFourKRequested || CanRequestFourK || CanAddFourK);
+
+    /// <summary>The gold outline chip: "In 4K", "4K downloading", "4K missing", "4K coming soon"; empty when untracked.</summary>
+    public string FourKStatusLabel => FourK?.StatusLabel ?? "";
+
+    public bool HasFourKStatus => FourKStatusLabel.Length > 0;
+
+    /// <summary>"4K requested" while your 4K request is pending.</summary>
+    public bool ShowsFourKRequested => FourK?.IsRequested == true;
+
+    public bool CanRequestFourK => FourK?.CanRequest == true && !ShowsFourKRequested;
+    public bool CanAddFourK => FourK?.CanAdd == true;
+    public string RequestFourKLabel => IsFourKBusy ? "Requesting…" : "Request in 4K";
+    public string AddFourKLabel => IsFourKBusy ? "Adding…" : $"Add to 4K {Id.MediaType.ArrName}";
+    public bool HasFourKError => FourKError != null;
+
     // MARK: Lifecycle
 
     /// <summary>The page is on screen for <paramref name="id"/>: follow reloads and fetch (once) the detail.</summary>
@@ -463,6 +500,7 @@ public sealed partial class TitleViewModel : ObservableObject
         similar = [];
         ErrorMessage = null;
         AddError = null;
+        FourKError = null;
         TrackingMessage = null;
         AddAllResult = null;
         foreach (var name in DetailProperties)
@@ -747,6 +785,39 @@ public sealed partial class TitleViewModel : ObservableObject
         finally
         {
             IsAdding = false;
+        }
+    }
+
+    /// <summary>"Request in 4K" (<c>POST …/request</c> with <c>{"is4k": true}</c>): always the whole title.</summary>
+    [RelayCommand]
+    private Task RequestFourKAsync() =>
+        RunFourKAsync(() => model.Api.Titles.RequestFourKAsync(Id.MediaType, Id.TmdbId));
+
+    /// <summary>"Add to 4K Radarr/Sonarr" (<c>POST …/add</c> with <c>{"is4k": true}</c>, admin).</summary>
+    [RelayCommand]
+    private Task AddFourKAsync() =>
+        RunFourKAsync(() => model.Api.Titles.AddFourKAsync(Id.MediaType, Id.TmdbId));
+
+    private async Task RunFourKAsync(Func<Task> action)
+    {
+        if (IsFourKBusy)
+        {
+            return;
+        }
+        IsFourKBusy = true;
+        FourKError = null;
+        try
+        {
+            await action();
+            await RefreshStatusAsync();
+        }
+        catch (ApiException error)
+        {
+            FourKError = error.Message;
+        }
+        finally
+        {
+            IsFourKBusy = false;
         }
     }
 

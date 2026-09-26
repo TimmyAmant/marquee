@@ -28,6 +28,9 @@ extension MarqueeAPI {
 
         var sonarr: ArrEndpoints { ArrEndpoints(transport: transport, provider: .sonarr) }
         var radarr: ArrEndpoints { ArrEndpoints(transport: transport, provider: .radarr) }
+        /// The optional 4K instances (0.37+): same bodies and answers.
+        var sonarr4k: ArrEndpoints { ArrEndpoints(transport: transport, provider: .sonarr4k) }
+        var radarr4k: ArrEndpoints { ArrEndpoints(transport: transport, provider: .radarr4k) }
         func arr(_ provider: API.ArrProvider) -> ArrEndpoints { ArrEndpoints(transport: transport, provider: provider) }
 
         var plex: PlexEndpoints { PlexEndpoints(transport: transport) }
@@ -53,7 +56,7 @@ extension MarqueeAPI {
         var webhook: SettingEndpoints { SettingEndpoints(transport: transport, name: "webhook", field: "webhookUrl", changes: .settings) }
     }
 
-    /// `/settings/integrations/{sonarr|radarr}` (default ports 8989 / 7878).
+    /// `/settings/integrations/{sonarr|radarr|sonarr4k|radarr4k}` (default ports 8989 / 7878).
     struct ArrEndpoints: Sendable {
         let transport: Transport
         let provider: API.ArrProvider

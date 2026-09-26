@@ -7,6 +7,8 @@ import { ExternalLinks, type ExternalLinksData } from "@/components/external-lin
 import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
+import { FourKControls } from "@/components/fourk-controls";
+import type { FourKViewerState } from "@/lib/api/types";
 import { FileDetailsSection } from "@/components/file-details-section";
 import { CapsLabel } from "@/components/caps-label";
 import type { ArrTrackingInfo, FileInfo } from "@/lib/integrations/status";
@@ -67,6 +69,7 @@ export function TitleHero({
   seasonPicker,
   tvdbId,
   arrTracking,
+  fourK,
   file,
   runtimeLabel,
   cast,
@@ -93,6 +96,8 @@ export function TitleHero({
   seasonPicker?: React.ComponentProps<typeof AddToLibraryButton>["seasonPicker"];
   tvdbId?: number | null;
   arrTracking?: ArrTrackingInfo | null;
+  /** The 4K row (components/fourk-controls.tsx); null without a 4K instance. */
+  fourK?: FourKViewerState | null;
   /** Renders a "File details" card in the sidebar below the rating/status
    * card — null when the title isn't in the library, same as the standalone
    * section this replaced. */
@@ -174,6 +179,8 @@ export function TitleHero({
                     seasonPicker={seasonPicker}
                     inArr={Boolean(arrTracking)}
                   />
+
+                  {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} />}
 
                   {isAdmin && arrTracking && (
                     <ArrTrackingControls

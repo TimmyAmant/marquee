@@ -89,6 +89,22 @@ export function libraryInfo(
  * The title hero's action area, as components/add-to-library-button.tsx and
  * title-hero.tsx decide it for a signed-in viewer.
  */
+/** The title page's 4K row (lib/arr/fourk.ts) for this viewer; null when
+ * there's no 4K instance for the type. */
+export function fourKViewerState(
+  isAdmin: boolean,
+  fourK: { configured: boolean; status: LibraryStatus; requestStatus: RequestStatus | null } | null,
+): Dto.FourKViewerState | null {
+  if (!fourK) return null;
+  const free = fourK.configured && fourK.status === "untracked";
+  return {
+    status: fourK.status,
+    requestStatus: fourK.requestStatus,
+    canRequest: free && !isAdmin && fourK.requestStatus === null,
+    canAdd: free && isAdmin,
+  };
+}
+
 export function titleViewerState(input: {
   isAdmin: boolean;
   status: LibraryStatus;
@@ -99,7 +115,10 @@ export function titleViewerState(input: {
   arrTracking: ArrTrackingInfo | null;
   /** From loadTitleStatus's seasonRequests; omitted for a movie. */
   seasonRequests?: { canRequestSeasons: boolean; requestedSeasons: number[] | null };
+  /** From loadTitleStatus: null without a 4K instance for this type. */
+  fourK?: { configured: boolean; status: LibraryStatus; requestStatus: RequestStatus | null } | null;
 }): Dto.TitleViewerState {
+
   const untracked = input.status === "untracked";
   const alreadyRequested = input.requestStatus === "pending";
   return {
@@ -118,6 +137,7 @@ export function titleViewerState(input: {
     requestedSeasons: input.seasonRequests?.requestedSeasons ?? null,
     canRelink: input.isAdmin && !untracked,
     arrTracking: input.isAdmin && input.arrTracking ? { arrId: input.arrTracking.arrId, monitored: input.arrTracking.monitored } : null,
+    fourK: fourKViewerState(input.isAdmin, input.fourK ?? null),
   };
 }
 
@@ -146,6 +166,7 @@ export function myRequest(row: {
   title: string;
   posterPath: string | null;
   seasons: number[] | null;
+  is4k?: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -161,6 +182,7 @@ export function myRequest(row: {
     title: row.title,
     posterPath: row.posterPath,
     ...requestSeasons(row.seasons),
+    is4k: row.is4k ?? false,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,
@@ -179,6 +201,7 @@ export function reviewedRequest(row: {
   title: string;
   posterPath: string | null;
   seasons: number[] | null;
+  is4k?: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -194,6 +217,7 @@ export function reviewedRequest(row: {
     title: row.title,
     posterPath: row.posterPath,
     ...requestSeasons(row.seasons),
+    is4k: row.is4k ?? false,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,

@@ -23,6 +23,7 @@ export function RequestReviewRow({
   requestedByName,
   requestedByUsername,
   seasons,
+  is4k = false,
   createdAt,
   sonarrUrl,
 }: {
@@ -35,6 +36,7 @@ export function RequestReviewRow({
   requestedByUsername: string;
   /** The seasons asked for; null for the whole series. */
   seasons: number[] | null;
+  is4k?: boolean;
   createdAt: string;
   /** Admin's connected Sonarr base URL (Settings > Integrations), if any —
    * used to link straight to Sonarr's own "add series" search when Marquee
@@ -101,7 +103,7 @@ export function RequestReviewRow({
           <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg bg-bg-2">
             {src && <Image src={src} alt="" fill sizes="44px" className="object-cover" />}
           </div>
-          <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} />
+          <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} is4k={is4k} />
         </div>
       </td>
       <td className="px-4 py-3 text-text-secondary">{requester}</td>

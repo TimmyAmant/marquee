@@ -14,6 +14,7 @@ import type { TmdbTvDetails } from "@/lib/tmdb/client";
 import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
+import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
 // Request lifecycle shared by the web's server actions (lib/requests/actions.ts)
@@ -30,9 +31,13 @@ export async function createRequest(
     /** TV only, as the client sent it (validated here): a list of season
      * numbers, or omitted/null for the whole series. Ignored for movies. */
     seasons?: unknown;
+    /** Ask for it in 4K (lib/arr/fourk.ts): only once the admin has set up
+     * the 4K Sonarr/Radarr for this type. Always the whole title. */
+    is4k?: unknown;
   },
 ): Promise<CoreResult<{ requestId: string }>> {
   const { mediaType, tmdbId } = input;
+  if (input.is4k === true) return createFourKRequest(viewer, input);
 
   const parsedSeasons = mediaType === "tv" ? parseSeasonsInput(input.seasons) : { ok: true as const, seasons: null };
   if (!parsedSeasons.ok) return fail("invalid", parsedSeasons.error);
@@ -166,6 +171,73 @@ export async function createRequest(
 /** Shared by the single-request Approve button and "Approve all" — takes an
  * already-verified admin userId so the bulk path doesn't re-check admin on
  * every iteration. */
+/** A 4K request: the whole title, checked against the 4K instance (not
+ * the main library — owning it in HD is exactly why someone asks for 4K). */
+async function createFourKRequest(
+  viewer: Extract<ViewerIdentity, { userId: string }>,
+  input: { mediaType: MediaType; tmdbId: number; title: string; posterPath: string | null },
+): Promise<CoreResult<{ requestId: string }>> {
+  const { mediaType, tmdbId } = input;
+  const adminUserId = await getAdminUserId();
+  if (!adminUserId || !(await isFourKReady(adminUserId, mediaType))) {
+    return fail("conflict", "4K requests aren't set up on this server.");
+  }
+  if (await getActiveRequestStatus(viewer.userId, mediaType, tmdbId, true)) {
+    return fail("conflict", "You've already requested this in 4K.");
+  }
+  const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+  if (!cachedTitle) return fail("upstream", "Couldn't look this title up with TMDb right now.");
+  const fourK = await getFourKStatus(adminUserId, mediaType, tmdbId, cachedTitle.tvdbId).catch(() => null);
+  if (fourK && fourK.status !== "untracked") {
+    return fail("conflict", "It's already in the 4K library or on its way.");
+  }
+
+  const inserted = await db
+    .insert(requests)
+    .values({
+      requestedByUserId: viewer.userId,
+      mediaType,
+      tmdbId,
+      title: cachedTitle.name,
+      posterPath: cachedTitle.posterPath,
+      seasons: null,
+      is4k: true,
+    })
+    .returning({ id: requests.id })
+    .then(([row]) => row)
+    .catch((err) => {
+      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+      throw err;
+    });
+  if (!inserted) return fail("conflict", "You've already requested this in 4K.");
+
+  await logActivityEvent({
+    actorUserId: viewer.userId,
+    eventType: "request_created",
+    mediaType,
+    tmdbId,
+    title: `${cachedTitle.name} in 4K`,
+  }).catch(() => undefined);
+
+  const [requester] = await db
+    .select({ autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
+    .from(users)
+    .where(eq(users.id, viewer.userId));
+  if (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv) {
+    await approveRequest(inserted.id, adminUserId).catch(() => undefined);
+  }
+
+  revalidatePath(`/title/${mediaType}/${tmdbId}`);
+  revalidatePath("/requests");
+  return { ok: true, requestId: inserted.id };
+}
+
+/** How a request is named in notifications and the activity feed. */
+function requestName(request: { title: string; seasons: number[] | null; is4k: boolean }, quoted: boolean): string {
+  const name = quoted ? quotedRequestTitle(request.title, request.seasons) : activityRequestTitle(request.title, request.seasons);
+  return request.is4k ? `${name} in 4K` : name;
+}
+
 export async function approveRequest(requestId: string, adminUserId: string): Promise<CoreResult> {
   const [request] = await db
     .select()
@@ -177,8 +249,8 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
   // there's no shared/instance-wide credential, only per-user ones.
   const result =
     request.mediaType === "movie"
-      ? await addMovieToRadarrForUser(adminUserId, request.tmdbId)
-      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true);
+      ? await addMovieToRadarrForUser(adminUserId, request.tmdbId, request.is4k)
+      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true, request.is4k);
 
   if (!result.ok) return result;
 
@@ -200,14 +272,15 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_approved",
-      message: `${quotedRequestTitle(request.title, request.seasons)} was approved — it's on its way to your library.`,
+      message: `${requestName(request, true)} was approved — it's on its way to your library.`,
+      is4k: request.is4k,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
       eventType: "request_approved",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,
-      title: activityRequestTitle(request.title, request.seasons),
+      title: requestName(request, false),
     }).catch(() => undefined),
   ]);
 
@@ -280,14 +353,14 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_approved",
-      message: `${quotedRequestTitle(request.title, request.seasons)} was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
+      message: `${requestName(request, true)} was manually approved — the admin is adding it outside of Sonarr/Radarr.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
       eventType: "request_manually_approved",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,
-      title: activityRequestTitle(request.title, request.seasons),
+      title: requestName(request, false),
     }).catch(() => undefined),
   ]);
 
@@ -328,15 +401,15 @@ export async function rejectRequest(
       // The reason rides along in the notification too, so the requester
       // hears why without having to open their Requests page.
       message: reason
-        ? `${quotedRequestTitle(request.title, request.seasons)} was declined: ${reason}`
-        : `${quotedRequestTitle(request.title, request.seasons)} was declined.`,
+        ? `${requestName(request, true)} was declined: ${reason}`
+        : `${requestName(request, true)} was declined.`,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
       eventType: "request_rejected",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,
-      title: activityRequestTitle(request.title, request.seasons),
+      title: requestName(request, false),
     }).catch(() => undefined),
   ]);
 

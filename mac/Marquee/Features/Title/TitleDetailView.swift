@@ -478,6 +478,36 @@ private struct TitleActionRow: View {
                         .disabled(screen.isAdding)
                 }
 
+                // components/fourk-controls.tsx (0.37+): the 4K copy, when
+                // the admin has a 4K Radarr/Sonarr for this type.
+                if let fourK = viewer.fourK {
+                    if let label = fourK.statusLabel {
+                        Text(label)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 14)
+                            .frame(height: 32)
+                            .overlay(Capsule().strokeBorder(Theme.accent.opacity(0.4)))
+                    }
+                    if fourK.isRequestPending {
+                        Text("4K requested")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Theme.tracked)
+                            .padding(.horizontal, 14)
+                            .frame(height: 32)
+                            .background(Capsule().fill(Theme.trackedBg))
+                    } else if fourK.canRequest {
+                        Button(screen.isFourKBusy ? "Requesting…" : "Request in 4K") { screen.requestIn4K() }
+                            .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))
+                            .disabled(screen.isFourKBusy)
+                    }
+                    if fourK.canAdd {
+                        Button(screen.isFourKBusy ? "Adding…" : "Add to 4K \(detail.mediaType.arrName)") { screen.addTo4K() }
+                            .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))
+                            .disabled(screen.isFourKBusy)
+                    }
+                }
+
                 if let tracking = viewer.arrTracking {
                     Button {
                         screen.searchNow()

@@ -11,7 +11,8 @@ import { createRequest } from "@/lib/requests/mutate";
  * the client. For a TV show the body may name `seasons` (a list of season
  * numbers); without it (or null, or no body at all, as older clients send)
  * the request is for the whole series. createRequest validates the seasons
- * and ignores them for a movie. */
+ * and ignores them for a movie. `is4k: true` makes it a 4K request (whole
+ * title only, `seasons` ignored). */
 export const POST = withApi<TitleParams>(async (request, params): Promise<{ ok: true; requestId: string }> => {
   const ctx = await requireApiUser(request);
   const { mediaType, tmdbId } = parseTitleParams(params);
@@ -26,6 +27,9 @@ export const POST = withApi<TitleParams>(async (request, params): Promise<{ ok: 
       title: title.name,
       posterPath: title.posterPath,
       seasons: body.seasons,
+      // `"is4k": true` asks for the 4K copy (0.37+); anything else, or no
+      // field, is a regular request.
+      is4k: body.is4k === true,
     }),
   );
   return { ok: true, requestId };

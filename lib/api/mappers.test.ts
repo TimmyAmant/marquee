@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fileDetails, iso, myRequest, requestPerson, reviewedRequest, titleCard, titleViewerState } from "./mappers";
+import { fileDetails, fourKViewerState, iso, myRequest, requestPerson, reviewedRequest, titleCard, titleViewerState } from "./mappers";
 
 describe("iso", () => {
   it("formats dates as ISO-8601 UTC with milliseconds", () => {
@@ -228,5 +228,24 @@ describe("request mapping", () => {
       requestedBy: { label: "member1" },
       reviewedAt: "2026-09-02T00:00:00.000Z",
     });
+  });
+});
+
+describe("fourKViewerState", () => {
+  const free = { configured: true, status: "untracked" as const, requestStatus: null };
+
+  it("is null without a 4K instance", () => {
+    expect(fourKViewerState(false, null)).toBeNull();
+  });
+
+  it("offers a member Request in 4K and the admin Add, while the 4K instance doesn't have it", () => {
+    expect(fourKViewerState(false, free)).toMatchObject({ canRequest: true, canAdd: false });
+    expect(fourKViewerState(true, free)).toMatchObject({ canRequest: false, canAdd: true });
+  });
+
+  it("offers neither once it's requested, in the 4K library, or the instance isn't set up", () => {
+    expect(fourKViewerState(false, { ...free, requestStatus: "pending" })).toMatchObject({ canRequest: false });
+    expect(fourKViewerState(false, { ...free, status: "owned" })).toMatchObject({ canRequest: false, status: "owned" });
+    expect(fourKViewerState(true, { ...free, configured: false })).toMatchObject({ canAdd: false });
   });
 });

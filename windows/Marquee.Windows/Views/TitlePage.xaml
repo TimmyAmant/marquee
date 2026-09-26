@@ -199,6 +199,51 @@
                                             Command="{x:Bind ViewModel.OpenSettingsCommand}"
                                             Visibility="{x:Bind ViewModel.NeedsArrSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                     </StackPanel>
+                                    <!-- components/fourk-controls.tsx: the 4K Radarr/Sonarr's copy (0.37+). -->
+                                    <StackPanel
+                                        Orientation="Horizontal"
+                                        Spacing="8"
+                                        Visibility="{x:Bind ViewModel.HasFourKRow, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.HasFourKStatus, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="12,4"
+                                            CornerRadius="14"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource MarqueeAccentBrush}"
+                                            VerticalAlignment="Center">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.FourKStatusLabel, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource MarqueeAccentBrush}" />
+                                        </Border>
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsFourKRequested, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="12,4"
+                                            CornerRadius="14"
+                                            Background="{ThemeResource TrackedBadgeBackgroundBrush}"
+                                            VerticalAlignment="Center">
+                                            <TextBlock
+                                                Text="4K requested"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                                        </Border>
+                                        <Button
+                                            Content="{x:Bind ViewModel.RequestFourKLabel, Mode=OneWay}"
+                                            Command="{x:Bind ViewModel.RequestFourKCommand}"
+                                            Visibility="{x:Bind ViewModel.CanRequestFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                        <Button
+                                            Content="{x:Bind ViewModel.AddFourKLabel, Mode=OneWay}"
+                                            Command="{x:Bind ViewModel.AddFourKCommand}"
+                                            Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.FourKError, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.HasFourKError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                        TextWrapping="Wrap" />
                                     <TextBlock
                                         Text="{x:Bind ViewModel.OtherRequestersLine, Mode=OneWay}"
                                         Visibility="{x:Bind ViewModel.HasOtherRequesters, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

@@ -8,6 +8,7 @@
       "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
       "seasons": null,
       "seasonsLabel": null,
+      "is4k": false,
       "status": "rejected",
       "manuallyApproved": false,
       "rejectionReason": "Not enough space on the server right now",

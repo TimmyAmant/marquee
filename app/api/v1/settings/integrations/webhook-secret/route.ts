@@ -13,5 +13,11 @@ export const POST = withApi(async (request): Promise<IntegrationsSettings["arrWe
   const secret = await regenerateWebhookSecret(ctx.user.id);
   revalidatePath("/settings/integrations");
   const urls = arrWebhookUrls(webhookBaseUrl(request.headers), ctx.user.id, secret);
-  return { secret, radarrUrl: urls.radarr, sonarrUrl: urls.sonarr };
+  return {
+    secret,
+    radarrUrl: urls.radarr,
+    sonarrUrl: urls.sonarr,
+    radarr4kUrl: urls.radarr4k,
+    sonarr4kUrl: urls.sonarr4k,
+  };
 });

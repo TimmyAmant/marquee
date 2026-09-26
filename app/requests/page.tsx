@@ -74,6 +74,7 @@ export default async function RequestsPage() {
                             tmdbId={r.tmdbId}
                             title={r.title}
                             seasons={r.seasons}
+                            is4k={r.is4k}
                           />
                         </div>
                       </td>
@@ -105,12 +106,15 @@ export default async function RequestsPage() {
   // holds the Sonarr/Radarr credentials — today that's always this admin,
   // but resolve properly rather than assuming session.user.id === owner, in
   // case a second admin account without its own integrations ever exists.
-  const [pending, reviewed, sonarrCred] = await Promise.all([
+  const [pending, reviewed, sonarrCred, sonarr4kCred] = await Promise.all([
     getPendingRequests(viewer.libraryOwnerId),
     getReviewedRequests(),
     getArrCredential(viewer.libraryOwnerId, "sonarr"),
+    getArrCredential(viewer.libraryOwnerId, "sonarr4k"),
   ]);
   const sonarrUrl = sonarrCred?.baseUrl ?? null;
+  // "Add manually in Sonarr" for a 4K request points at the 4K Sonarr.
+  const sonarr4kUrl = sonarr4kCred?.baseUrl ?? null;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -145,8 +149,9 @@ export default async function RequestsPage() {
                   requestedByName={r.requestedByName}
                   requestedByUsername={r.requestedByUsername}
                   seasons={r.seasons}
+                  is4k={r.is4k}
                   createdAt={r.createdAt.toISOString()}
-                  sonarrUrl={sonarrUrl}
+                  sonarrUrl={r.is4k ? sonarr4kUrl : sonarrUrl}
                 />
               ))}
             </tbody>
@@ -184,6 +189,7 @@ export default async function RequestsPage() {
                             tmdbId={r.tmdbId}
                             title={r.title}
                             seasons={r.seasons}
+                            is4k={r.is4k}
                           />
                         </div>
                       </td>

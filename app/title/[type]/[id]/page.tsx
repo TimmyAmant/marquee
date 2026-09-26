@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { fourKViewerState } from "@/lib/api/mappers";
 import { TitleHero } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
@@ -34,6 +35,7 @@ export default async function TitlePage({
     otherRequesters,
     arrConfigured,
     arrTracking,
+    fourK,
     trailer,
     externalIds,
     cast,
@@ -107,6 +109,7 @@ export default async function TitlePage({
         }
         tvdbId={title.tvdbId}
         arrTracking={arrTracking}
+        fourK={viewer.session ? fourKViewerState(viewer.isAdmin, fourK) : null}
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
         cast={

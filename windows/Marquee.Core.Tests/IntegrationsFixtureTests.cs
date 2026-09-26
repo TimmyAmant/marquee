@@ -112,6 +112,57 @@ public sealed class IntegrationsFixtureTests
         Assert.Equal("0f3c…", webhooks.Secret);
         Assert.Equal("http://…/api/webhooks/radarr/…?secret=0f3c…", webhooks.RadarrUrl);
         Assert.Equal("http://…/api/webhooks/sonarr/…?secret=0f3c…", webhooks.SonarrUrl);
+        Assert.Equal("http://…/api/webhooks/radarr4k/…?secret=0f3c…", webhooks.Radarr4kUrl);
+        Assert.Equal("http://…/api/webhooks/sonarr4k/…?secret=0f3c…", webhooks.UrlOrNull(ArrProvider.Sonarr4k));
+    }
+
+    [Fact]
+    public void FourKArrDecodes()
+    {
+        var overview = Fixtures.Decode<IntegrationsOverview>("integrations");
+
+        Assert.True(overview.HasFourKArr);
+        Assert.False(overview.Sonarr4k!.Connected);
+        Assert.False(overview.Sonarr4k.FullyConfigured);
+        var radarr4k = overview.ArrOrNull(ArrProvider.Radarr4k)!;
+        Assert.True(radarr4k.Connected);
+        Assert.Equal("http://192.168.1.10:7879", radarr4k.BaseUrl);
+        Assert.Equal("/movies-4k", radarr4k.RootFolderPath);
+        Assert.Equal(5, radarr4k.QualityProfileId);
+        Assert.True(radarr4k.FullyConfigured);
+        Assert.Same(overview.Sonarr, overview.ArrOrNull(ArrProvider.Sonarr));
+        Assert.StartsWith("http://marquee.local:3000/api/webhooks/radarr4k/", overview.ArrWebhooks.Radarr4kUrl, StringComparison.Ordinal);
+        Assert.StartsWith("http://marquee.local:3000/api/webhooks/sonarr4k/", overview.ArrWebhooks.Sonarr4kUrl, StringComparison.Ordinal);
+
+        Assert.Equal("sonarr4k", MarqueeApi.Segment(ArrProvider.Sonarr4k));
+        Assert.Equal("4K Radarr", ArrProvider.Radarr4k.DisplayName);
+        Assert.Equal(8989, ArrProvider.Sonarr4k.DefaultPort);
+        Assert.Equal(MediaType.Tv, ArrProvider.Sonarr4k.MediaType);
+        Assert.Equal(MediaType.Movie, ArrProvider.Radarr4k.MediaType);
+        Assert.True(ArrProvider.Radarr4k.IsFourK);
+        Assert.False(ArrProvider.Radarr.IsFourK);
+    }
+
+    [Fact]
+    public void OlderServerWithoutFourKArrDecodes()
+    {
+        // A server older than 0.37 sends neither 4K instance nor their webhooks.
+        var json = System.Text.Json.Nodes.JsonNode.Parse(Fixtures.Read("integrations"))!.AsObject();
+        json.Remove("sonarr4k");
+        json.Remove("radarr4k");
+        var webhooks = json["arrWebhooks"]!.AsObject();
+        webhooks.Remove("radarr4kUrl");
+        webhooks.Remove("sonarr4kUrl");
+
+        var overview = Json.Decode<IntegrationsOverview>(json.ToJsonString());
+
+        Assert.Null(overview.Sonarr4k);
+        Assert.Null(overview.Radarr4k);
+        Assert.False(overview.HasFourKArr);
+        Assert.Null(overview.ArrOrNull(ArrProvider.Radarr4k));
+        Assert.Null(overview.ArrWebhooks.Radarr4kUrl);
+        Assert.Null(overview.ArrWebhooks.UrlOrNull(ArrProvider.Sonarr4k));
+        Assert.NotNull(overview.ArrWebhooks.UrlOrNull(ArrProvider.Sonarr));
     }
 
     [Fact]

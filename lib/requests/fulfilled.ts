@@ -20,7 +20,11 @@ export async function notifyRequestersOfDownload(input: {
   title: string;
   /** Already notified by the webhook itself. */
   exceptUserId: string;
+  /** From the 4K Sonarr/Radarr: only 4K requests are fulfilled by it. */
+  fourK?: boolean;
 }): Promise<void> {
+  const fourK = input.fourK ?? false;
+  const shown = fourK ? `${input.title} in 4K` : input.title;
   const open = await db
     .select({ userId: requests.requestedByUserId, createdAt: requests.createdAt })
     .from(requests)
@@ -30,6 +34,7 @@ export async function notifyRequestersOfDownload(input: {
         eq(requests.tmdbId, input.tmdbId),
         inArray(requests.status, ["pending", "approved"]),
         ne(requests.requestedByUserId, input.exceptUserId),
+        eq(requests.is4k, fourK),
       ),
     );
 
@@ -52,10 +57,11 @@ export async function notifyRequestersOfDownload(input: {
       eventType: "downloaded",
       message:
         input.mediaType === "movie"
-          ? `${input.title}, which you requested, is ready to watch`
-          : `${input.title}, which you requested, has new episodes ready to watch`,
+          ? `${shown}, which you requested, is ready to watch`
+          : `${shown}, which you requested, has new episodes ready to watch`,
       relay: false,
       dedupeSince: since,
+      is4k: fourK,
     });
   }
 }

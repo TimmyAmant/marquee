@@ -66,6 +66,17 @@ export async function requestSeasonsAction(tmdbId: number, seasons: unknown): Pr
   return result.ok ? { success: true } : { error: result.error };
 }
 
+/** The title page's "Request in 4K". */
+export async function requestFourKAction(mediaType: MediaType, tmdbId: number): Promise<RequestState> {
+  const viewer = await getViewerContext();
+  if (!viewer.session) return { error: "Sign in to request titles." };
+  if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
+    return { error: "That title couldn't be requested." };
+  }
+  const result = await createRequest(viewer, { mediaType, tmdbId, title: "", posterPath: null, is4k: true });
+  return result.ok ? { success: true } : { error: result.error };
+}
+
 export type ReviewState = { error?: string; success?: boolean };
 
 export async function approveRequestAction(
