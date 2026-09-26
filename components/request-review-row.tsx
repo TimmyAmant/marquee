@@ -24,6 +24,7 @@ export function RequestReviewRow({
   requestedByUsername,
   seasons,
   is4k = false,
+  canManuallyApprove = true,
   createdAt,
   sonarrUrl,
 }: {
@@ -37,6 +38,7 @@ export function RequestReviewRow({
   /** The seasons asked for; null for the whole series. */
   seasons: number[] | null;
   is4k?: boolean;
+  canManuallyApprove?: boolean;
   createdAt: string;
   /** Admin's connected Sonarr base URL (Settings > Integrations), if any —
    * used to link straight to Sonarr's own "add series" search when Marquee
@@ -65,7 +67,8 @@ export function RequestReviewRow({
   const src = tmdbImageUrl(posterPath, "w92");
   const done = Boolean(approveState?.success || rejectState?.success || manualApproveState?.success);
   const anyPending = isApproving || isRejecting || isManuallyApproving;
-  const showManualApprove = approveState?.error === SONARR_UNRESOLVED_ERROR;
+  // Only the admin can promise to add it by hand (a trusted reviewer can't).
+  const showManualApprove = canManuallyApprove && approveState?.error === SONARR_UNRESOLVED_ERROR;
   const requester = requestedByName || requestedByUsername;
   const canDecline =
     reason === CUSTOM_REJECTION_REASON ? customReason.trim().length > 0 : reason.length > 0;

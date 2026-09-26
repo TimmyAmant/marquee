@@ -39,16 +39,22 @@ export function computeQuota(limit: number, days: number, createdAts: Date[], no
   };
 }
 
-/** "Oct 2" — when a limited member can ask again. */
-function shortDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+/** "in 3 days", "in 5 hours", "in a few minutes" — relative, so it reads
+ * right whatever time zone the server and the member are in. Pure. */
+export function untilLabel(when: Date, now: Date): string {
+  const ms = when.getTime() - now.getTime();
+  const hours = Math.ceil(ms / (60 * 60 * 1000));
+  if (hours <= 1) return "within the hour";
+  if (hours < 24) return `in ${hours} hours`;
+  const days = Math.ceil(ms / DAY_MS);
+  return days === 1 ? "tomorrow" : `in ${days} days`;
 }
 
 /** The refusal, in words. Pure; unit tested. */
-export function quotaExceededMessage(mediaType: MediaType, quota: QuotaState): string {
+export function quotaExceededMessage(mediaType: MediaType, quota: QuotaState, now = new Date()): string {
   const what = mediaType === "movie" ? (quota.limit === 1 ? "movie request" : "movie requests") : quota.limit === 1 ? "TV request" : "TV requests";
   const span = quota.days === 1 ? "a day" : quota.days === 7 ? "a week" : `${quota.days} days`;
-  const when = quota.nextSlotAt ? ` You can ask again on ${shortDate(quota.nextSlotAt)}.` : "";
+  const when = quota.nextSlotAt ? ` You can ask again ${untilLabel(quota.nextSlotAt, now)}.` : "";
   return `You've used your ${quota.limit} ${what} for ${span}.${when}`;
 }
 
@@ -105,4 +111,39 @@ export async function getQuotaFor(
 export async function getQuotas(userId: string, now = new Date()) {
   const [movie, tv] = await Promise.all([getQuota(userId, "movie", now), getQuota(userId, "tv", now)]);
   return { movie, tv };
+}
+
+declare global {
+  var __marqueeQuotaLocks: Map<string, Promise<unknown>> | undefined;
+}
+
+// On globalThis like the other in-process locks (lib/async/single-flight.ts):
+// Next.js can load this module more than once.
+const locks: Map<string, Promise<unknown>> = (globalThis.__marqueeQuotaLocks ??= new Map());
+
+/**
+ * Checks this member's limit for the type and runs `insert` only if a slot
+ * is free — one at a time per member and type, so two requests sent at once
+ * can't both take the last slot. Unlimited members skip straight to it.
+ */
+export async function insertWithinQuota<T>(
+  userId: string,
+  mediaType: MediaType,
+  insert: () => Promise<T>,
+): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
+  const key = `${userId}:${mediaType}`;
+  const previous = locks.get(key) ?? Promise.resolve();
+  const run = previous
+    .catch(() => undefined)
+    .then(async () => {
+      const quota = await getQuota(userId, mediaType);
+      if (quota && quota.remaining === 0) return { ok: false as const, error: quotaExceededMessage(mediaType, quota) };
+      return { ok: true as const, value: await insert() };
+    });
+  locks.set(key, run);
+  try {
+    return await run;
+  } finally {
+    if (locks.get(key) === run) locks.delete(key);
+  }
 }

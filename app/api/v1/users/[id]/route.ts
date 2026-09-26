@@ -39,7 +39,7 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Up
         displayName: optionalString(body, "displayName") || undefined,
         autoApproveMovies: optionalBoolean(body, "autoApproveMovies"),
         autoApproveTv: optionalBoolean(body, "autoApproveTv"),
-        // 0.38+, admin only: omitted = unchanged; a limit of null removes it.
+        // 0.39+, admin only: omitted = unchanged; a limit of null removes it.
         role: body.role,
         movieQuotaLimit: body.movieQuotaLimit,
         movieQuotaDays: body.movieQuotaDays,

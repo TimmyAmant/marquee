@@ -11,7 +11,7 @@ import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
 import { RequestTitle } from "@/components/request-title";
 import { IssuesSection } from "@/components/issues-section";
-import { getQuotas, type QuotaState } from "@/lib/requests/quota";
+import { getQuotas, untilLabel, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
 import { issueDto } from "@/lib/api/mappers";
 
@@ -40,8 +40,7 @@ function myRequestBadge(
 /** "Movies: 3 of 5 left for the next 7 days" — or when the next frees up. */
 function quotaLine(label: string, quota: QuotaState): string {
   if (quota.remaining > 0) return `${label}: ${quota.remaining} of ${quota.limit} requests left (every ${quota.days} days)`;
-  const when = quota.nextSlotAt?.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${label}: none left${when ? ` until ${when}` : ""}`;
+  return `${label}: none left${quota.nextSlotAt ? ` — more ${untilLabel(quota.nextSlotAt, new Date())}` : ""}`;
 }
 
 export default async function RequestsPage() {
@@ -176,6 +175,7 @@ export default async function RequestsPage() {
                   requestedByUsername={r.requestedByUsername}
                   seasons={r.seasons}
                   is4k={r.is4k}
+                  canManuallyApprove={viewer.isAdmin}
                   createdAt={r.createdAt.toISOString()}
                   sonarrUrl={r.is4k ? sonarr4kUrl : sonarrUrl}
                 />

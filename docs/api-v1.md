@@ -365,7 +365,7 @@ trusted members). Otherwise `{ "limit": 5, "days": 7, "used": 5,
 (while none is left) is when the oldest counted request ages out. Every
 request that wasn't declined counts, 4K and Watchlist ones included. The
 website shows members a line above their requests: "Movies: 3 of 5
-requests left (every 7 days)" or "Movies: none left until Oct 3".
+requests left (every 7 days)" or "Movies: none left — more in 3 days".
 
 `linked` says which media-server accounts this account signs in with (see
 "Linked accounts" in section 11). `hasPassword` is false for an account made
@@ -378,7 +378,8 @@ request, so a demotion takes effect immediately (`403`s).
 
 `role` is `admin`, `member`, or (0.39+) `trusted`: a member who also works
 the review queue — `/requests/pending`, `/pending-count`, `/history`,
-approve / manual-approve / reject / approve-all, and problem reports (`GET
+approve / reject / approve-all (not manual-approve, which promises the admin
+adds it by hand), and problem reports (`GET
 /issues` shows them everything, resolve, search again, remove). Approving
 adds the title with the admin's Sonarr/Radarr. Their own requests are
 approved straight away and they have no request limits. Everything else
@@ -1033,7 +1034,11 @@ title up with TMDb right now.".
 
 Request limits (0.39+): a member over their limit for the type gets `429
 rate_limited` "You've used your 5 movie requests for a week. You can ask
-again on Oct 3." (see `requestLimits` on `/me`). A trusted member's
+again in 3 days." ("within the hour" / "in 5 hours" / "tomorrow" / "in N
+days" — relative, so no time zone gets in the way; `requestLimits.nextSlotAt`
+on `/me` has the exact time). A Plex Watchlist sync stops at the limit and
+its `lastError` says "You've reached your request limit, so the rest of your
+watchlist waits until you have requests left.". A trusted member's
 requests are approved straight away.
 
 ```json

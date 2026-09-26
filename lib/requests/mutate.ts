@@ -14,7 +14,7 @@ import type { TmdbTvDetails } from "@/lib/tmdb/client";
 import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
-import { getQuota, quotaExceededMessage } from "@/lib/requests/quota";
+import { insertWithinQuota } from "@/lib/requests/quota";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
@@ -113,28 +113,31 @@ export async function createRequest(
     }
   }
 
-  const quota = await getQuota(viewer.userId, mediaType);
-  if (quota && quota.remaining === 0) return fail("rate_limited", quotaExceededMessage(mediaType, quota));
-
   // The read-then-write check above can't stop a second concurrent submit
   // (double-click, two tabs) from also passing it — requests_pending_unique_idx
   // is the actual guard; a 23505 here means we lost that race, not a real error.
-  const inserted = await db
-    .insert(requests)
-    .values({
-      requestedByUserId: viewer.userId,
-      mediaType,
-      tmdbId,
-      title,
-      posterPath,
-      seasons,
-    })
-    .returning({ id: requests.id })
-    .then(([row]) => row)
-    .catch((err) => {
-      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
-      throw err;
-    });
+  // The limit check and the insert happen under one lock per member and
+  // type, so parallel requests can't all squeeze into the last slot.
+  const within = await insertWithinQuota(viewer.userId, mediaType, () =>
+    db
+      .insert(requests)
+      .values({
+        requestedByUserId: viewer.userId,
+        mediaType,
+        tmdbId,
+        title,
+        posterPath,
+        seasons,
+      })
+      .returning({ id: requests.id })
+      .then(([row]) => row)
+      .catch((err) => {
+        if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+        throw err;
+      }),
+  );
+  if (!within.ok) return fail("rate_limited", within.error);
+  const inserted = within.value;
   if (!inserted) {
     return fail(
       "conflict",
@@ -195,26 +198,29 @@ async function createFourKRequest(
     return fail("conflict", "It's already in the 4K library or on its way.");
   }
 
-  const quota = await getQuota(viewer.userId, mediaType);
-  if (quota && quota.remaining === 0) return fail("rate_limited", quotaExceededMessage(mediaType, quota));
-
-  const inserted = await db
-    .insert(requests)
-    .values({
-      requestedByUserId: viewer.userId,
-      mediaType,
-      tmdbId,
-      title: cachedTitle.name,
-      posterPath: cachedTitle.posterPath,
-      seasons: null,
-      is4k: true,
-    })
-    .returning({ id: requests.id })
-    .then(([row]) => row)
-    .catch((err) => {
-      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
-      throw err;
-    });
+  // The limit check and the insert happen under one lock per member and
+  // type, so parallel requests can't all squeeze into the last slot.
+  const within = await insertWithinQuota(viewer.userId, mediaType, () =>
+    db
+      .insert(requests)
+      .values({
+        requestedByUserId: viewer.userId,
+        mediaType,
+        tmdbId,
+        title: cachedTitle.name,
+        posterPath: cachedTitle.posterPath,
+        seasons: null,
+        is4k: true,
+      })
+      .returning({ id: requests.id })
+      .then(([row]) => row)
+      .catch((err) => {
+        if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+        throw err;
+      }),
+  );
+  if (!within.ok) return fail("rate_limited", within.error);
+  const inserted = within.value;
   if (!inserted) return fail("conflict", "You've already requested this in 4K.");
 
   await logActivityEvent({

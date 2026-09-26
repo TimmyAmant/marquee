@@ -7,7 +7,7 @@ import { getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
 import { canReviewRequests } from "@/lib/users/roles";
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { requireReviewer } from "@/lib/auth/require-admin";
+import { requireAdmin, requireReviewer } from "@/lib/auth/require-admin";
 import {
   approveAllRequests,
   approveRequest,
@@ -123,7 +123,8 @@ export async function manuallyApproveRequestAction(
   _prevState: ReviewState | undefined,
   _formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requireReviewer("Only an admin can approve requests.");
+  // Admin only: it tells the requester the admin is adding it by hand.
+  const admin = await requireAdmin("Only the admin can mark a request as added by hand.");
   if (!admin.ok) return { error: admin.error };
 
   const result = await manuallyApproveRequest(requestId, admin.userId);

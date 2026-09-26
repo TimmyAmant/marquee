@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db/client", () => ({ db: {} }));
 
-import { computeQuota, quotaExceededMessage } from "./quota";
+import { computeQuota, quotaExceededMessage, untilLabel } from "./quota";
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = new Date("2026-09-26T12:00:00Z");
@@ -32,7 +32,15 @@ describe("computeQuota", () => {
 describe("quotaExceededMessage", () => {
   it("reads naturally", () => {
     const full = computeQuota(5, 7, [ago(6), ago(5), ago(4), ago(3), ago(2)], now);
-    expect(quotaExceededMessage("movie", full)).toBe("You've used your 5 movie requests for a week. You can ask again on Sep 27.");
-    expect(quotaExceededMessage("tv", computeQuota(1, 30, [ago(2)], now))).toMatch(/^You've used your 1 TV request for 30 days\./);
+    expect(quotaExceededMessage("movie", full, now)).toBe("You've used your 5 movie requests for a week. You can ask again tomorrow.");
+    expect(quotaExceededMessage("tv", computeQuota(1, 30, [ago(2)], now), now)).toBe(
+      "You've used your 1 TV request for 30 days. You can ask again in 28 days.",
+    );
+  });
+
+  it("says roughly when, whatever the time zone", () => {
+    expect(untilLabel(new Date(now.getTime() + 30 * 60 * 1000), now)).toBe("within the hour");
+    expect(untilLabel(new Date(now.getTime() + 5 * 60 * 60 * 1000), now)).toBe("in 5 hours");
+    expect(untilLabel(new Date(now.getTime() + 3 * DAY - 1000), now)).toBe("in 3 days");
   });
 });

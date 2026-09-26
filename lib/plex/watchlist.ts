@@ -8,6 +8,7 @@ import { createRequest } from "@/lib/requests/mutate";
 import { getLibraryOwnerUserId } from "@/lib/integrations/library-owner";
 import { fetchWatchlist, type WatchlistItem } from "@/lib/plex/watchlist-api";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { getQuota } from "@/lib/requests/quota";
 
 // "Request what's on my Plex Watchlist": a member turns it on with their own
 // Plex account (lib/auth/media-signin.ts startPlexWatchlist/pollPlexWatchlist
@@ -26,6 +27,8 @@ export const SYNC_NOW_WINDOW_MS = 5 * 60 * 1000;
 
 export const WATCHLIST_TOKEN_REJECTED =
   "Plex stopped accepting Marquee's access to your watchlist (for example after signing out of all devices). Turn it on again to reconnect.";
+const WATCHLIST_LIMITED =
+  "You've reached your request limit, so the rest of your watchlist waits until you have requests left.";
 const WATCHLIST_UNREACHABLE = "Couldn't reach Plex to read your watchlist. Marquee will try again shortly.";
 
 export type WatchlistState = {
@@ -202,7 +205,19 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
   // would answer 304 and the titles left over would never be tried.
   let complete = pending.length <= MAX_NEW_REQUESTS_PER_SYNC;
 
+  // The member's request limits (lib/requests/quota.ts): titles of a type
+  // that's used up wait — without being looked up or tried — until a slot
+  // frees, and the card says why.
+  const [movieQuota, tvQuota] = await Promise.all([getQuota(userId, "movie"), getQuota(userId, "tv")]);
+  const left = { movie: movieQuota?.remaining ?? Infinity, tv: tvQuota?.remaining ?? Infinity };
+  let limited = false;
+
   for (const item of pending.slice(0, MAX_NEW_REQUESTS_PER_SYNC)) {
+    if (left[item.mediaType] <= 0) {
+      limited = true;
+      complete = false;
+      continue;
+    }
     // createRequest carries on without TMDb (for the Request button, the
     // browser supplied the name), but then it can't tell a show the library
     // already has by its TVDB id. Nobody's waiting on a watchlist title, so
@@ -232,7 +247,10 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
       complete = false;
       continue;
     }
-    if (outcome === "requested") requested++;
+    if (outcome === "requested") {
+      requested++;
+      left[item.mediaType]--;
+    }
     await db
       .insert(plexWatchlistItems)
       .values({
@@ -250,7 +268,7 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
 
   await db
     .update(plexWatchlists)
-    .set({ etag: complete ? fetched.etag : null, lastSyncedAt: new Date(), lastError: null })
+    .set({ etag: complete ? fetched.etag : null, lastSyncedAt: new Date(), lastError: limited ? WATCHLIST_LIMITED : null })
     .where(eq(plexWatchlists.userId, userId));
   return { requested };
 }
