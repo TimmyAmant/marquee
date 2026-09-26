@@ -644,7 +644,7 @@ public sealed partial class AppModel : ObservableObject
         switch (target)
         {
             case SeeAllTarget.DiscoverList list:
-                Open(new Route.DiscoverList(list.Kind));
+                Open(new Route.DiscoverList(list.Kind, list.Title));
                 break;
             case SeeAllTarget.BrowseGrid grid:
                 Browse(grid.MediaType);

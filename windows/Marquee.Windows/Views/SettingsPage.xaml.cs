@@ -64,6 +64,7 @@ public sealed partial class SettingsPage : Page
         var tab = ViewModel.CurrentTab;
         AccountTabButton.Style = tab == SettingsTab.Account ? currentTabStyle : tabStyle;
         IntegrationsTabButton.Style = tab == SettingsTab.Integrations ? currentTabStyle : tabStyle;
+        DiscoverTabButton.Style = tab == SettingsTab.Discover ? currentTabStyle : tabStyle;
         ActivityTabButton.Style = tab == SettingsTab.Activity ? currentTabStyle : tabStyle;
         JobsTabButton.Style = tab == SettingsTab.Jobs ? currentTabStyle : tabStyle;
         AboutTabButton.Style = tab == SettingsTab.About ? currentTabStyle : tabStyle;
@@ -73,6 +74,7 @@ public sealed partial class SettingsPage : Page
             view = tab switch
             {
                 SettingsTab.Integrations => new IntegrationsSettingsView(),
+                SettingsTab.Discover => new DiscoverSettingsView(),
                 SettingsTab.Activity => new ActivitySettingsView(),
                 SettingsTab.Jobs => new JobsSettingsView(),
                 SettingsTab.About => new AboutSettingsView(),

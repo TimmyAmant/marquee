@@ -184,57 +184,46 @@ public sealed partial class DiscoverViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Shelves in page order; empty ones are left out, as the website hides
-    /// them. Each gets the "See all" the server's <c>seeAll</c> map names
+    /// The rows <see cref="DiscoverRows.Resolve"/> names: the admin's order
+    /// from <c>shelves</c> (0.49+), their own rows included, or an older
+    /// server's fixed keys in page order; empty ones are left out, as the
+    /// website hides them. Each gets the "See all" the server names
     /// (lib/discover/lists.ts), or an older server's two grid links.
     /// </summary>
     private List<ShelfViewModel> BuildShelves(DiscoverShelves response)
     {
         var list = new List<ShelfViewModel>();
-
-        ICommand? SeeAll(string key) =>
-            DiscoverSeeAll.Resolve(response, key) is { } target ? new RelayCommand(() => model.OpenSeeAll(target)) : null;
-
-        // Every Discover row carries the MOVIE/SERIES pill, like the web page.
-        void Posters(string title, string key, IReadOnlyList<TitleCard> cards)
+        foreach (var row in DiscoverRows.Resolve(response))
         {
-            if (cards.Count > 0)
+            ICommand? seeAll = row.SeeAll is { } target ? new RelayCommand(() => model.OpenSeeAll(target)) : null;
+            switch (row)
             {
-                var items = cards.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
-                list.Add(ShelfViewModel.OfPosters(title, items, SeeAll(key)));
+                case DiscoverRow.Posters posters:
+                    // Every Discover row carries the MOVIE/SERIES pill, like the web page.
+                    var items = posters.Cards.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
+                    list.Add(ShelfViewModel.OfPosters(row.Title, items, seeAll));
+                    break;
+                case DiscoverRow.Genres genres:
+                    var mediaType = genres.MediaType;
+                    list.Add(ShelfViewModel.OfChips(
+                        row.Title,
+                        genres.Tiles.Tiles().Select(tile => new ChipItem(tile, new RelayCommand(() => model.Browse(mediaType, genreId: tile.Id)))).ToList(),
+                        seeAll));
+                    break;
+                case DiscoverRow.Studios studios:
+                    list.Add(ShelfViewModel.OfChips(
+                        row.Title,
+                        studios.Logos.Select(studio => new ChipItem(studio.Tile(), new RelayCommand(() => model.OpenCompany(studio.TmdbId)))).ToList(),
+                        seeAll));
+                    break;
+                case DiscoverRow.Networks networks:
+                    list.Add(ShelfViewModel.OfChips(
+                        row.Title,
+                        networks.Logos.Select(network => new ChipItem(network.Tile(), new RelayCommand(() => model.Browse(MediaType.Tv, networkId: network.TmdbId)))).ToList(),
+                        seeAll));
+                    break;
             }
         }
-
-        void Chips(string title, string key, IReadOnlyList<ChipItem> chips)
-        {
-            if (chips.Count > 0)
-            {
-                list.Add(ShelfViewModel.OfChips(title, chips, SeeAll(key)));
-            }
-        }
-
-        Posters("Recently Added", DiscoverShelfKey.RecentlyAdded, response.RecentlyAdded);
-        Posters("Trending", DiscoverShelfKey.Trending, response.Trending);
-        Posters("Popular Movies", DiscoverShelfKey.PopularMovies, response.PopularMovies);
-        Chips(
-            "Movie Genres",
-            DiscoverShelfKey.MovieGenres,
-            response.MovieGenres.Tiles().Select(tile => new ChipItem(tile, new RelayCommand(() => model.Browse(MediaType.Movie, genreId: tile.Id)))).ToList());
-        Posters("Upcoming Movies", DiscoverShelfKey.UpcomingMovies, response.UpcomingMovies);
-        Chips(
-            "Studios",
-            DiscoverShelfKey.Studios,
-            response.Studios.Select(studio => new ChipItem(studio.Tile(), new RelayCommand(() => model.OpenCompany(studio.TmdbId)))).ToList());
-        Posters("Popular Series", DiscoverShelfKey.PopularSeries, response.PopularSeries);
-        Chips(
-            "Series Genres",
-            DiscoverShelfKey.SeriesGenres,
-            response.SeriesGenres.Tiles().Select(tile => new ChipItem(tile, new RelayCommand(() => model.Browse(MediaType.Tv, genreId: tile.Id)))).ToList());
-        Posters("Upcoming Series", DiscoverShelfKey.UpcomingSeries, response.UpcomingSeries);
-        Chips(
-            "Networks",
-            DiscoverShelfKey.Networks,
-            response.Networks.Select(network => new ChipItem(network.Tile(), new RelayCommand(() => model.Browse(MediaType.Tv, networkId: network.TmdbId)))).ToList());
         return list;
     }
 

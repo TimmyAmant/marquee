@@ -328,6 +328,166 @@
         </StackPanel>
 
         <!--
+          Trakt lists (0.49+): public Trakt watchlists and lists kept in
+          sync, for every account; the admin sees everyone's, each with
+          whose it is. Each with its switches, the last check, Check now
+          and Remove, then the add form, or a note while Trakt isn't
+          connected. Hidden on an older server.
+        -->
+        <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Trakt.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Trakt lists" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.Trakt.Description}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}" Padding="0">
+                <StackPanel>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.Trakt.EmptyText}"
+                        Visibility="{x:Bind ViewModel.Trakt.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Margin="20,16"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Trakt.Rows, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="0" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TraktSyncRow">
+                                <StackPanel>
+                                    <Border
+                                        Height="1"
+                                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                        Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+                                    <StackPanel Padding="20,14" Spacing="10">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock
+                                                    Text="{x:Bind Name, Mode=OneWay}"
+                                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                    TextWrapping="NoWrap"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Text="{x:Bind Url, Mode=OneWay}"
+                                                    IsTextSelectionEnabled="True"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    TextWrapping="NoWrap"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Text="{x:Bind OwnerLine, Mode=OneWay}"
+                                                    Visibility="{x:Bind OwnerLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <Button
+                                                    Content="{x:Bind CheckLabel, Mode=OneWay}"
+                                                    Command="{x:Bind CheckCommand}"
+                                                    IsEnabled="{x:Bind CanChange, Mode=OneWay}" />
+                                                <Button
+                                                    Content="Remove"
+                                                    Command="{x:Bind RemoveCommand}"
+                                                    IsEnabled="{x:Bind CanChange, Mode=OneWay}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Spacing="24">
+                                            <ToggleSwitch
+                                                Header="Movies"
+                                                IsOn="{x:Bind Movies, Mode=TwoWay}"
+                                                IsEnabled="{x:Bind CanChange, Mode=OneWay}"
+                                                OnContent="On"
+                                                OffContent="Off" />
+                                            <ToggleSwitch
+                                                Header="TV shows"
+                                                IsOn="{x:Bind Tv, Mode=TwoWay}"
+                                                IsEnabled="{x:Bind CanChange, Mode=OneWay}"
+                                                OnContent="On"
+                                                OffContent="Off" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            Text="{x:Bind Summary, Mode=OneWay}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Text="{x:Bind LastError, Mode=OneWay}"
+                                            Visibility="{x:Bind HasLastError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Text="{x:Bind Error, Mode=OneWay}"
+                                            Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <!-- Trakt isn't connected: syncs can't be added, and the ones there pause. -->
+                    <TextBlock
+                        Text="{x:Bind ViewModel.Trakt.UnavailableText}"
+                        Visibility="{x:Bind ViewModel.Trakt.IsUnavailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Margin="20,16"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        TextWrapping="Wrap" />
+
+                    <!-- Add a list. -->
+                    <StackPanel
+                        Padding="20,16"
+                        Spacing="12"
+                        Visibility="{x:Bind ViewModel.Trakt.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            Header="Trakt watchlist or list link"
+                            PlaceholderText="https://trakt.tv/users/someone/watchlist"
+                            InputScope="Url"
+                            Text="{x:Bind ViewModel.Trakt.Link, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel Orientation="Horizontal" Spacing="24">
+                            <ToggleSwitch
+                                Header="Movies"
+                                IsOn="{x:Bind ViewModel.Trakt.NewMovies, Mode=TwoWay}"
+                                OnContent="On"
+                                OffContent="Off" />
+                            <ToggleSwitch
+                                Header="TV shows"
+                                IsOn="{x:Bind ViewModel.Trakt.NewTv, Mode=TwoWay}"
+                                OnContent="On"
+                                OffContent="Off" />
+                        </StackPanel>
+                        <CheckBox
+                            Content="{x:Bind ViewModel.Trakt.RequestExistingLabel}"
+                            IsChecked="{x:Bind ViewModel.Trakt.RequestExisting, Mode=TwoWay}" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Trakt.Error, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Trakt.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                        <Button
+                            Content="{x:Bind ViewModel.Trakt.AddLabel, Mode=OneWay}"
+                            Command="{x:Bind ViewModel.Trakt.AddCommand}"
+                            IsEnabled="{x:Bind ViewModel.Trakt.CanAdd, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!--
           Notifications (Settings > Account > Notifications on the
           website): Windows notifications straight from the server's
           stream while the app runs. Asked once after signing in; this

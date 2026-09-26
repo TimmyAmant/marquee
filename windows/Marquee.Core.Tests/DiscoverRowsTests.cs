@@ -84,7 +84,11 @@ public sealed class DiscoverRowsTests
         Assert.Equal(new SeeAllTarget.BrowseGrid(MediaType.Movie), genres.SeeAll);
 
         var studios = Assert.IsType<DiscoverRow.Studios>(rows[3]);
-        Assert.Equal(2, Assert.Single(studios.Logos).TmdbId);
+        var tile = Assert.Single(studios.Logos).Tile();
+        Assert.Equal(ShelfTileKind.Logo, tile.Kind);
+        Assert.Equal(2, tile.Id);
+        Assert.Equal("Walt Disney Pictures", tile.Name);
+        Assert.Equal("https://image.tmdb.org/t/p/w500/wdrC.png", tile.ImageUrl?.AbsoluteUri);
     }
 
     [Fact]

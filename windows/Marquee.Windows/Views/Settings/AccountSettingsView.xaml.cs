@@ -24,7 +24,23 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
         ViewModel.LinkJellyfinPrompt = ShowLinkJellyfinDialogAsync;
         ViewModel.ImportMembersPrompt = ShowImportMembersDialogAsync;
         ViewModel.Personal.RemoveChannelPrompt = ConfirmRemoveChannelAsync;
+        ViewModel.Trakt.RemovePrompt = ConfirmRemoveTraktSyncAsync;
         InitializeComponent();
+    }
+
+    /// <summary>"Stop syncing {name}?" for a Trakt list, defaulting to Cancel.</summary>
+    private async Task<bool> ConfirmRemoveTraktSyncAsync(TraktSyncRow row)
+    {
+        var confirm = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = $"Stop syncing {row.Name}?",
+            Content = "New titles on it won't be requested any more. What it already requested stays.",
+            PrimaryButtonText = "Remove",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        return await confirm.TryShowAsync() == ContentDialogResult.Primary;
     }
 
     public void Activate() => ViewModel.Activate();

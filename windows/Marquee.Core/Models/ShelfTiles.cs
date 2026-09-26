@@ -93,6 +93,15 @@ public static class ShelfTiles
         ImageUrl = network.LogoPath.Url(ImageSize.W500),
     };
 
+    /// <summary>A studio or network of a Discover row (<c>shelves[].logos</c>, 0.49+).</summary>
+    public static ShelfTile Tile(this DiscoverLogo logo) => new()
+    {
+        Kind = ShelfTileKind.Logo,
+        Id = logo.TmdbId,
+        Name = logo.Name,
+        ImageUrl = logo.LogoPath.Url(ImageSize.W500),
+    };
+
     /// <param name="index">The tile's place in its rail, for the fallback color.</param>
     public static ShelfTile Tile(this GenreTile genre, int index) => new()
     {

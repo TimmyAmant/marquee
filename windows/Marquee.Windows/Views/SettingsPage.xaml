@@ -4,7 +4,7 @@
   SettingsRootView): "Settings", the tabs across the top as pills (solid for
   the current one, like the rail), and the chosen tab below, all in one
   centered column up to 760 wide. Account and About are everyone's;
-  Integrations, Activity and Jobs the admin's. Each tab is its own view
+  Integrations, Discover, Activity and Jobs the admin's. Each tab is its own view
   under Views/Settings, made the first time it's picked; the code-behind
   swaps them and styles the current pill.
 -->
@@ -159,6 +159,19 @@
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE71B;" FontSize="14" />
                             <TextBlock Text="Integrations" />
+                        </StackPanel>
+                    </Button>
+                    <!-- Discover (0.49+): the admin's, once the server answered GET /settings/discover. -->
+                    <Button
+                        x:Name="DiscoverTabButton"
+                        Style="{StaticResource SettingsTabStyle}"
+                        Tag="Discover"
+                        Click="OnTabClick"
+                        AutomationProperties.Name="Discover"
+                        Visibility="{x:Bind ViewModel.ShowsDiscoverTab, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <FontIcon Glyph="&#xE8FD;" FontSize="14" />
+                            <TextBlock Text="Discover" />
                         </StackPanel>
                     </Button>
                     <Button

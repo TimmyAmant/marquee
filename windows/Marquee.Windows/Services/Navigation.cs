@@ -49,13 +49,17 @@ public static class SectionExtensions
 
 /// <summary>
 /// Settings' tabs across the top (the Mac's <c>SettingsTab</c>, the
-/// website's components/settings-nav.tsx). Integrations, Activity and Jobs
-/// are the admin's.
+/// website's components/settings-nav.tsx). Integrations, Discover (0.49+),
+/// Activity and Jobs are the admin's.
 /// </summary>
 public enum SettingsTab
 {
     Account,
     Integrations,
+
+    /// <summary>Settings › Discover (0.49+): the household's Discover rows. Hidden on an older server.</summary>
+    Discover,
+
     Activity,
     Jobs,
     About,
@@ -67,15 +71,16 @@ public static class SettingsTabExtensions
     {
         SettingsTab.Account => "Account",
         SettingsTab.Integrations => "Integrations",
+        SettingsTab.Discover => "Discover",
         SettingsTab.Activity => "Activity",
         SettingsTab.Jobs => "Jobs",
         SettingsTab.About => "About",
         _ => tab.ToString(),
     };
 
-    /// <summary>Integrations, Activity and Jobs are the admin's; a member sees Account and About.</summary>
+    /// <summary>Integrations, Discover, Activity and Jobs are the admin's; a member sees Account and About.</summary>
     public static bool IsAdminOnly(this SettingsTab tab) =>
-        tab is SettingsTab.Integrations or SettingsTab.Activity or SettingsTab.Jobs;
+        tab is SettingsTab.Integrations or SettingsTab.Discover or SettingsTab.Activity or SettingsTab.Jobs;
 
     /// <summary>The tab to show: a member sent to an admin tab (an old link) lands on Account.</summary>
     public static SettingsTab Visible(this SettingsTab tab, bool isAdmin) =>
@@ -103,8 +108,12 @@ public abstract record Route
 
     public sealed record Search(string Query) : Route;
 
-    /// <summary>A Discover shelf's "See all": <c>DiscoverListPage</c> receives this record.</summary>
-    public sealed record DiscoverList(DiscoverListKind List) : Route;
+    /// <summary>
+    /// A Discover shelf's "See all": <c>DiscoverListPage</c> receives this
+    /// record. <paramref name="Heading"/> is the row's name (a custom row's
+    /// id has none of its own), shown until the list's title arrives.
+    /// </summary>
+    public sealed record DiscoverList(DiscoverListKind List, string? Heading = null) : Route;
 
     /// <summary>
     /// The same page on the server's website, relative to its root, for
@@ -127,7 +136,7 @@ public abstract record Route
         Person person => $"Person {person.TmdbId}",
         Company company => $"Studio {company.TmdbId}",
         Search search => $"Search results for \"{search.Query}\"",
-        DiscoverList list => list.List.Title,
+        DiscoverList list => list.Heading ?? list.List.Title,
         _ => ToString(),
     };
 }
