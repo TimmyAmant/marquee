@@ -74,6 +74,12 @@ public sealed record PlexSettings
     public required int MovieCount { get; init; }
     public required int TvCount { get; init; }
     public required long TotalBytes { get; init; }
+
+    /// <summary>"Basement · 812 movies · 143 TV shows · 8.3 TB", the connected card's first line.</summary>
+    public string SummaryLine => LibrarySummary.Line(Servers, MovieCount, TvCount, TotalBytes);
+
+    /// <summary>"Last synced 5m ago · kept in sync automatically.", against <paramref name="now"/>.</summary>
+    public string LastSyncedLine(DateTimeOffset now) => LibrarySummary.LastSynced(Servers, now);
 }
 
 public sealed record JellyfinSettings
@@ -97,6 +103,43 @@ public sealed record JellyfinSettings
     public required int MovieCount { get; init; }
     public required int TvCount { get; init; }
     public required long TotalBytes { get; init; }
+
+    /// <summary>
+    /// What it's connected to once connected and synced ("Emby" or
+    /// "Jellyfin"); null before, like the website's card.
+    /// </summary>
+    public string? ConnectedName => Connected && Servers.Count > 0 ? Name : null;
+
+    /// <summary>"Living room · 812 movies · 143 TV shows · 8.3 TB".</summary>
+    public string SummaryLine => LibrarySummary.Line(Servers, MovieCount, TvCount, TotalBytes);
+}
+
+/// <summary>
+/// The Plex and Jellyfin cards' lines about a synced library (the Mac's
+/// <c>summaryLine</c> and <c>lastSyncedLine</c> in IntegrationsSettingsView).
+/// </summary>
+public static class LibrarySummary
+{
+    /// <summary>"Basement, Attic · 812 movies · 143 TV shows · 8.3 TB"; no size when it's 0, no names when there are none.</summary>
+    public static string Line(IReadOnlyList<SyncedServer> servers, int movieCount, int tvCount, long totalBytes)
+    {
+        var names = string.Join(", ", servers.Select(server => server.Name.NonBlank()).OfType<string>());
+        var counts = $"{movieCount} movies · {tvCount} TV shows";
+        if (totalBytes > 0)
+        {
+            counts += $" · {FileDetails.FormatBytes(totalBytes)}";
+        }
+        return names.Length == 0 ? counts : $"{names} · {counts}";
+    }
+
+    /// <summary>"Last synced 5m ago · kept in sync automatically.", from the most recent server; a plainer line before any sync.</summary>
+    public static string LastSynced(IReadOnlyList<SyncedServer> servers, DateTimeOffset now)
+    {
+        var synced = servers.Select(server => server.LastSyncedAt).OfType<DateTimeOffset>().ToList();
+        return synced.Count == 0
+            ? "Your library is kept in sync automatically."
+            : $"Last synced {NotificationItem.TimeAgoLabel(synced.Max(), now)} · kept in sync automatically.";
+    }
 }
 
 public sealed record ArrSettings
@@ -264,6 +307,16 @@ public sealed record TraktImportResult
     public required bool Ok { get; init; }
     public required int ImportedCount { get; init; }
     public required int SkippedCount { get; init; }
+
+    /// <summary>"Imported 12 titles (3 skipped — already owned or requested).", the Trakt card's line.</summary>
+    public string Summary
+    {
+        get
+        {
+            var skipped = SkippedCount > 0 ? $" ({SkippedCount} skipped — already owned or requested)." : ".";
+            return $"Imported {ImportedCount} title{(ImportedCount == 1 ? "" : "s")}{skipped}";
+        }
+    }
 }
 
 // The instance-wide settings' PUT bodies: one field each, verified against
