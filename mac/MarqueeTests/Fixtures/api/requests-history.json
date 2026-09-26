@@ -20,7 +20,40 @@
         "label": "member1"
       },
       "createdAt": "2026-09-17T17:12:41.415Z",
-      "reviewedAt": "2026-09-17T17:12:41.468Z"
+      "reviewedAt": "2026-09-17T17:12:41.468Z",
+      "addedTo": null
+    },
+    {
+      "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
+      "mediaType": "movie",
+      "tmdbId": 438631,
+      "title": "Dune",
+      "posterPath": "/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
+      "is4k": false,
+      "status": "approved",
+      "manuallyApproved": false,
+      "rejectionReason": null,
+      "statusLabel": "Approved",
+      "requestedBy": {
+        "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "displayName": null,
+        "username": "member1",
+        "label": "member1"
+      },
+      "createdAt": "2026-09-17T17:02:11.100Z",
+      "reviewedAt": "2026-09-17T17:05:40.020Z",
+      "addedTo": {
+        "serverId": "b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31",
+        "serverName": "Radarr 2",
+        "qualityProfileId": 6,
+        "rootFolderPath": "/movies-kids",
+        "tags": [
+          2
+        ],
+        "seriesType": null
+      }
     }
   ]
 }

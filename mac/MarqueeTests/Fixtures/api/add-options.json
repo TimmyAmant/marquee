@@ -1,0 +1,51 @@
+{
+  "mediaType": "tv",
+  "tmdbId": 95396,
+  "is4k": false,
+  "isAnime": false,
+  "servers": [
+    {
+      "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "name": "Sonarr",
+      "isDefault": true,
+      "is4k": false,
+      "reachable": true,
+      "qualityProfiles": [
+        {
+          "id": 4,
+          "name": "HD-1080p"
+        },
+        {
+          "id": 7,
+          "name": "Anime"
+        }
+      ],
+      "rootFolders": [
+        {
+          "id": 1,
+          "path": "/tv"
+        },
+        {
+          "id": 2,
+          "path": "/anime"
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "label": "kids"
+        },
+        {
+          "id": 3,
+          "label": "anime"
+        }
+      ],
+      "defaults": {
+        "qualityProfileId": 4,
+        "rootFolderPath": "/tv",
+        "tags": [],
+        "seriesType": "standard"
+      }
+    }
+  ]
+}
