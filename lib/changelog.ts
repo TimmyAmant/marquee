@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.47.1",
+    date: "2026-09-26",
+    changes: [
+      "\"Because you watched\" on Movies and Series now shows up to 20 titles instead of 12, topped up from your other recent watches when one title has too few recommendations, so the row fills the screen. Titles you just watched are left out.",
+    ],
+  },
+  {
     version: "0.47.0",
     date: "2026-09-26",
     changes: [
