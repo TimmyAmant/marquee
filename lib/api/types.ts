@@ -393,6 +393,8 @@ export type MyRequest = {
   seasons: number[] | null;
   /** `seasons` in words, e.g. "Seasons 1–3, 5"; null when `seasons` is. */
   seasonsLabel: string | null;
+  /** Asked for in 4K (0.37+; an older server omits it, meaning false). */
+  is4k: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
   /** Why the admin declined it; null unless `status` is "rejected" and a
@@ -416,6 +418,8 @@ export type PendingRequest = {
   seasons: number[] | null;
   /** `seasons` in words, e.g. "Seasons 1–3, 5"; null when `seasons` is. */
   seasonsLabel: string | null;
+  /** Asked for in 4K (0.37+; an older server omits it, meaning false). */
+  is4k: boolean;
   requestedBy: RequestPerson;
   createdAt: string;
 };
@@ -437,6 +441,8 @@ export type ReviewedRequest = {
   seasons: number[] | null;
   /** `seasons` in words, e.g. "Seasons 1–3, 5"; null when `seasons` is. */
   seasonsLabel: string | null;
+  /** Asked for in 4K (0.37+; an older server omits it, meaning false). */
+  is4k: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -549,6 +555,9 @@ export type IntegrationsSettings = {
   };
   sonarr: ArrSettings;
   radarr: ArrSettings;
+  /** The optional 4K instances (0.37+). */
+  sonarr4k: ArrSettings;
+  radarr4k: ArrSettings;
   tmdb: { connected: boolean; savedInSettings: boolean; configuredFromEnv: boolean };
   trakt: { connected: boolean };
   tvdb: { connected: boolean };
@@ -568,7 +577,7 @@ export type IntegrationsSettings = {
     to: string[];
   };
   genericWebhook: { connected: boolean };
-  arrWebhooks: { secret: string; radarrUrl: string; sonarrUrl: string };
+  arrWebhooks: { secret: string; radarrUrl: string; sonarrUrl: string; radarr4kUrl: string; sonarr4kUrl: string };
 };
 
 export type ArrOptions = {

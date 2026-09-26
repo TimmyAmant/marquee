@@ -31,6 +31,7 @@ export const GET = withApi(async (request): Promise<PendingRequestsResponse> => 
       title: r.title,
       posterPath: r.posterPath,
       ...requestSeasons(r.seasons),
+      is4k: r.is4k,
       requestedBy: requestPerson({
         userId: r.requestedByUserId,
         displayName: r.requestedByName,

@@ -1,4 +1,5 @@
 import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
+import { getFourKStatus } from "@/lib/arr/fourk";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
@@ -30,6 +31,7 @@ export async function getPendingRequests(viewerUserId: string) {
       title: requests.title,
       posterPath: requests.posterPath,
       seasons: requests.seasons,
+      is4k: requests.is4k,
       createdAt: requests.createdAt,
       requestedByUserId: requests.requestedByUserId,
       requestedByName: users.displayName,
@@ -54,6 +56,12 @@ export async function getPendingRequests(viewerUserId: string) {
     rows,
     STATUS_LOOKUP_CONCURRENCY,
     async (r) => {
+      // A 4K request is covered by the 4K instance, never by the main
+      // library (owning it in HD is why someone asks for 4K).
+      if (r.is4k) {
+        const fourK = await getFourKStatus(viewerUserId, r.mediaType, r.tmdbId, r.tvdbId).catch(() => null);
+        return { status: fourK?.status ?? ("untracked" as const) };
+      }
       if (r.seasons) {
         const library = await getSonarrSeasonStates(viewerUserId, r.tvdbId).catch(() => null);
         const covered = library !== null && seasonsStillNeeded(r.seasons, library).length === 0;
@@ -97,8 +105,9 @@ export async function getPendingRequests(viewerUserId: string) {
     await Promise.all(
       rows.flatMap((r, i) => {
         if (!reconciledIds.has(r.id)) return [];
-        const message =
-          statuses[i].status === "seasons_covered"
+        const message = r.is4k
+          ? `"${r.title}" is already in the 4K library or on its way.`
+          : statuses[i].status === "seasons_covered"
             ? `${quotedRequestTitle(r.title, r.seasons)} is already in your library or on its way.`
             : statuses[i].status === "coming_soon"
               ? `"${r.title}" is already being tracked — it's not released yet.`
@@ -129,6 +138,7 @@ export async function getReviewedRequests(limit = 50) {
       title: requests.title,
       posterPath: requests.posterPath,
       seasons: requests.seasons,
+      is4k: requests.is4k,
       status: requests.status,
       manuallyApproved: requests.manuallyApproved,
       rejectionReason: requests.rejectionReason,
@@ -157,6 +167,7 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       title: requests.title,
       posterPath: requests.posterPath,
       seasons: requests.seasons,
+      is4k: requests.is4k,
       status: requests.status,
       manuallyApproved: requests.manuallyApproved,
       rejectionReason: requests.rejectionReason,
@@ -173,6 +184,11 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
 
   const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) => {
     if (r.status !== "approved") return Promise.resolve(null);
+    if (r.is4k) {
+      return getFourKStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
+        .then((s) => s?.status ?? null)
+        .catch(() => null);
+    }
     // An approved season request is "in your library" only once every
     // season it asked for is complete — the show as a whole being owned
     // (the seasons already there) says nothing about the new ones. Until
@@ -216,6 +232,8 @@ export async function getActiveRequestStatus(
   userId: string,
   mediaType: MediaType,
   tmdbId: number,
+  /** The 4K request instead of the regular one; they're separate. */
+  fourK = false,
 ): Promise<RequestStatus | null> {
   const [row] = await db
     .select({ status: requests.status })
@@ -225,6 +243,7 @@ export async function getActiveRequestStatus(
         eq(requests.requestedByUserId, userId),
         eq(requests.mediaType, mediaType),
         eq(requests.tmdbId, tmdbId),
+        eq(requests.is4k, fourK),
       ),
     )
     .orderBy(desc(requests.createdAt))
@@ -252,7 +271,7 @@ export async function getActiveRequestStatusMap(
   const rows = await db
     .select({ mediaType: requests.mediaType, tmdbId: requests.tmdbId, status: requests.status, createdAt: requests.createdAt })
     .from(requests)
-    .where(and(eq(requests.requestedByUserId, userId), inArray(requests.tmdbId, tmdbIds)))
+    .where(and(eq(requests.requestedByUserId, userId), inArray(requests.tmdbId, tmdbIds), eq(requests.is4k, false)))
     .orderBy(desc(requests.createdAt));
 
   for (const row of rows) {
@@ -280,6 +299,7 @@ export async function getViewerTitleRequests(
         eq(requests.mediaType, mediaType),
         eq(requests.tmdbId, tmdbId),
         ne(requests.status, "rejected"),
+        eq(requests.is4k, false),
       ),
     )
     .orderBy(desc(requests.createdAt));

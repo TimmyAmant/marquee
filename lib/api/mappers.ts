@@ -146,6 +146,7 @@ export function myRequest(row: {
   title: string;
   posterPath: string | null;
   seasons: number[] | null;
+  is4k?: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -161,6 +162,7 @@ export function myRequest(row: {
     title: row.title,
     posterPath: row.posterPath,
     ...requestSeasons(row.seasons),
+    is4k: row.is4k ?? false,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,
@@ -179,6 +181,7 @@ export function reviewedRequest(row: {
   title: string;
   posterPath: string | null;
   seasons: number[] | null;
+  is4k?: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
@@ -194,6 +197,7 @@ export function reviewedRequest(row: {
     title: row.title,
     posterPath: row.posterPath,
     ...requestSeasons(row.seasons),
+    is4k: row.is4k ?? false,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,

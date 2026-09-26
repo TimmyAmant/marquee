@@ -7,7 +7,8 @@ import { createNotification } from "@/lib/notifications/query";
 import { notifyRequestersOfDownload } from "@/lib/requests/fulfilled";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { getClientIp, isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
-import type { ArrProvider } from "@/lib/db/schema";
+import type { ArrInstance } from "@/lib/db/schema";
+import { arrKindOf, isFourK } from "@/lib/arr/fourk";
 
 // Only failed secrets count against this: Sonarr fires one event per episode,
 // so a season-pack import is a legitimate burst of dozens of requests, and
@@ -36,8 +37,8 @@ function secretsMatch(provided: string, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-function isArrProvider(value: string): value is ArrProvider {
-  return value === "sonarr" || value === "radarr";
+function isArrInstance(value: string): value is ArrInstance {
+  return value === "sonarr" || value === "radarr" || value === "sonarr4k" || value === "radarr4k";
 }
 
 type RadarrWebhookBody = {
@@ -55,10 +56,14 @@ export async function POST(
   { params }: { params: Promise<{ provider: string; userId: string }> },
 ) {
   const { provider: providerParam, userId } = await params;
-  if (!isArrProvider(providerParam)) {
+  if (!isArrInstance(providerParam)) {
     return NextResponse.json({ error: "Unknown provider" }, { status: 404 });
   }
-  const provider = providerParam;
+  const instance = providerParam;
+  // The 4K Sonarr/Radarr post to …/sonarr4k/… and …/radarr4k/…: the same
+  // payloads, and the same notifications with "in 4K" on them.
+  const provider = arrKindOf(instance);
+  const fourK = isFourK(instance);
 
   // The header keeps the secret out of proxy and access logs; the query
   // string still works so webhooks set up before the header existed keep
@@ -118,8 +123,9 @@ export async function POST(
   }
 
   if (title && tmdbId != null) {
+    const shown = fourK ? `${title} (4K)` : title;
     const message =
-      eventType === "Grab" ? `${title} started downloading` : `${title} finished downloading`;
+      eventType === "Grab" ? `${shown} started downloading` : `${shown} finished downloading`;
     await createNotification({
       userId,
       mediaType,
@@ -131,7 +137,7 @@ export async function POST(
     }).catch(() => undefined);
 
     if (eventType === "Download") {
-      await notifyRequestersOfDownload({ mediaType, tmdbId, title, exceptUserId: userId }).catch((err) => {
+      await notifyRequestersOfDownload({ mediaType, tmdbId, title, exceptUserId: userId, fourK }).catch((err) => {
         console.error("[webhook] notifying requesters failed:", err);
       });
     }
@@ -141,6 +147,8 @@ export async function POST(
   // refreshes hourly (cron) or on next page visit past the 15-min staleness
   // gate — re-sync so the Library page reflects this event. Debounced and in
   // the background, so a burst of events answers fast and syncs once.
+  // The 4K instance isn't synced into the library (lib/arr/fourk.ts).
+  if (fourK) return NextResponse.json({ ok: true });
   debounce(`webhook-sync:${provider}:${userId}`, SYNC_DEBOUNCE_MS, () => {
     syncArrLibrary(userId, provider).catch((err) => {
       console.error(`[webhook] ${provider} sync failed for user ${userId}:`, err);

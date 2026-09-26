@@ -75,6 +75,8 @@ export async function loadIntegrationsPage(adminUserId: string) {
     genericWebhookUrl,
     ntfyUrl,
     channels,
+    sonarr4kCred,
+    radarr4kCred,
   ] = await Promise.all([
     getArrCredential(adminUserId, "sonarr"),
     getArrCredential(adminUserId, "radarr"),
@@ -89,6 +91,8 @@ export async function loadIntegrationsPage(adminUserId: string) {
     getGenericWebhookUrl(),
     getNtfyUrl(),
     getChannelSummaries(),
+    getArrCredential(adminUserId, "sonarr4k"),
+    getArrCredential(adminUserId, "radarr4k"),
   ]);
 
   const arrExisting = (cred: typeof sonarrCred) =>
@@ -109,6 +113,8 @@ export async function loadIntegrationsPage(adminUserId: string) {
     },
     sonarr: arrExisting(sonarrCred),
     radarr: arrExisting(radarrCred),
+    sonarr4k: arrExisting(sonarr4kCred),
+    radarr4k: arrExisting(radarr4kCred),
     tmdb: {
       savedInSettings: tmdbSavedInSettings,
       configuredFromEnv: Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY),

@@ -48,6 +48,8 @@ export const GET = withApi(async (request): Promise<IntegrationsSettings> => {
     },
     sonarr: arrSettings(data.sonarr),
     radarr: arrSettings(data.radarr),
+    sonarr4k: arrSettings(data.sonarr4k),
+    radarr4k: arrSettings(data.radarr4k),
     tmdb: {
       connected: data.tmdb.savedInSettings || data.tmdb.configuredFromEnv,
       savedInSettings: data.tmdb.savedInSettings,
@@ -61,6 +63,12 @@ export const GET = withApi(async (request): Promise<IntegrationsSettings> => {
     pushover: data.channels.pushover,
     email: data.channels.email,
     genericWebhook: { connected: data.genericWebhookConnected },
-    arrWebhooks: { secret: data.webhookSecret, radarrUrl: urls.radarr, sonarrUrl: urls.sonarr },
+    arrWebhooks: {
+      secret: data.webhookSecret,
+      radarrUrl: urls.radarr,
+      sonarrUrl: urls.sonarr,
+      radarr4kUrl: urls.radarr4k,
+      sonarr4kUrl: urls.sonarr4k,
+    },
   };
 });
