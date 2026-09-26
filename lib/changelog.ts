@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.41.0",
+    date: "2026-09-26",
+    changes: [
+      "Request blocklist: block a title from its page (\"Block requests\", with an optional reason), or a TMDb keyword or genre in Settings (e.g. \"anime\"). Nobody can request those — members see \"Requests are closed for this title\" with your reason — and you can still add them yourself. On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.40.0",
     date: "2026-09-26",
     changes: [
