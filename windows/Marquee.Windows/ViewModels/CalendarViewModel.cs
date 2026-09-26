@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Marquee.Windows.ViewModels;
 
-/// <summary>One release or air date in the calendar's day list.</summary>
+/// <summary>One release or air date in a day of the calendar grid.</summary>
 public sealed class CalendarEntryItem
 {
     private readonly Uri? posterUrl;
@@ -40,20 +40,28 @@ public sealed class CalendarEntryItem
     public ICommand Open { get; }
 }
 
-/// <summary>A day of the month that has something on it.</summary>
-public sealed class CalendarDayGroup(DateOnly day, bool isToday, IReadOnlyList<CalendarEntryItem> entries)
+/// <summary>
+/// One cell of the month grid — a day of this month, or of the weeks either
+/// side that the grid's first and last rows reach into (dimmed, like the
+/// Mac's and the website's).
+/// </summary>
+public sealed class CalendarDayCell(DateOnly day, bool isToday, bool inMonth, IReadOnlyList<CalendarEntryItem> entries)
 {
-    /// <summary>"Thursday, September 17".</summary>
-    public string Heading { get; } = Format.DayHeading(day);
+    /// <summary>A cell shows this many titles, then "+N more" (CalendarScreen.maxVisiblePerDay).</summary>
+    public const int MaxVisible = 4;
 
+    public string DayNumber { get; } = day.Day.ToString(System.Globalization.CultureInfo.CurrentCulture);
     public bool IsToday { get; } = isToday;
-    public IReadOnlyList<CalendarEntryItem> Entries { get; } = entries;
+    public double CellOpacity { get; } = inMonth ? 1 : 0.4;
+    public IReadOnlyList<CalendarEntryItem> Entries { get; } = entries.Take(MaxVisible).ToList();
+    public bool HasMore { get; } = entries.Count > MaxVisible;
+    public string MoreText { get; } = entries.Count > MaxVisible ? $"+{entries.Count - MaxVisible} more" : "";
 }
 
 /// <summary>
-/// app/calendar/page.tsx as a list: the month's Radarr releases and Sonarr
-/// air dates grouped by day, in the server's time zone. Prev / Today / Next
-/// ask the server for another month; nothing is computed locally.
+/// app/calendar/page.tsx: the server's month grid of Radarr releases and
+/// Sonarr air dates, in the server's time zone. Prev / Today / Next ask the
+/// server for another month; nothing is computed locally.
 /// </summary>
 public sealed partial class CalendarViewModel : ObservableObject
 {
@@ -99,9 +107,13 @@ public sealed partial class CalendarViewModel : ObservableObject
     [ObservableProperty]
     private string monthLabel = "";
 
+    /// <summary>The grid, a whole number of Sunday-to-Saturday weeks.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<CalendarDayCell> cells = [];
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMonthEmpty))]
-    private IReadOnlyList<CalendarDayGroup> days = [];
+    private bool hasEntries;
 
     [ObservableProperty]
     private string emptyMonthMessage = "";
@@ -114,7 +126,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     public bool ShowsError => ErrorMessage != null && !HasPage;
     public bool ShowsInlineError => ErrorMessage != null && HasPage;
     public bool ShowsCalendar => HasPage && !IsNotConfigured;
-    public bool IsMonthEmpty => HasPage && !IsNotConfigured && Days.Count == 0;
+    public bool IsMonthEmpty => HasPage && !IsNotConfigured && !HasEntries;
 
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
@@ -198,13 +210,16 @@ public sealed partial class CalendarViewModel : ObservableObject
         IsNotConfigured = !fresh.Configured;
         EmptyMonthMessage = $"Nothing scheduled in {fresh.Month.Label}.";
         var byDay = fresh.EntriesByDay;
-        Days = fresh.GridDays
-            .Where(day => byDay.ContainsKey(day) && CalendarMonth.Of(day) == fresh.Month)
-            .Select(day => new CalendarDayGroup(
+        Cells = fresh.GridDays
+            .Select(day => new CalendarDayCell(
                 day,
                 day == fresh.Today,
-                byDay[day].Select(entry => new CalendarEntryItem(entry, OpenEntryCommand)).ToList()))
+                CalendarMonth.Of(day) == fresh.Month,
+                byDay.TryGetValue(day, out var entries)
+                    ? entries.Select(entry => new CalendarEntryItem(entry, OpenEntryCommand)).ToList()
+                    : []))
             .ToList();
+        HasEntries = fresh.GridDays.Any(day => byDay.ContainsKey(day) && CalendarMonth.Of(day) == fresh.Month);
         HasPage = true;
     }
 
