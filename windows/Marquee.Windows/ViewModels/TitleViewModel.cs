@@ -1036,7 +1036,28 @@ public sealed partial class TitleViewModel : ObservableObject
         {
             IsAddingAll = false;
         }
-        await RefreshStatusAsync();
+        // The whole page, not just this title's status: the collection's
+        // posters need their new badges, and "Add all" its new count.
+        await ReloadKeepingAddAllResultAsync();
+    }
+
+    /// <summary>A quiet full refetch after "Add all" that keeps its result line.</summary>
+    private async Task ReloadKeepingAddAllResultAsync()
+    {
+        try
+        {
+            var fresh = await model.Api.Titles.DetailAsync(Id.MediaType, Id.TmdbId);
+            if (detail is { } latest && latest.Id == fresh.Id)
+            {
+                var result = AddAllResult;
+                SetDetail(fresh, rebuild: true);
+                AddAllResult = result;
+            }
+        }
+        catch (ApiException)
+        {
+            await RefreshStatusAsync();
+        }
     }
 
     /// <summary>"Wrong match? Fix ID": repoints the title; the page navigates to the id it returns.</summary>
