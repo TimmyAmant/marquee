@@ -463,7 +463,7 @@ network logos to `/series?network=`.
 }
 ```
 
-`seeAll` (0.43+; an older server omits it, and then only Popular Movies/Series
+`seeAll` (0.42.3+; an older server omits it, and then only Popular Movies/Series
 and the genre shelves have a "See all", to the Movies/Series grid): where each
 shelf's "See all" chevron goes, keyed like the shelves. Every shelf has one.
 `type: "list"` → `GET /discover/lists/{list}` (the website's
@@ -473,7 +473,7 @@ unknown `type` or `list` as no "See all".
 
 ### `GET /discover/lists/{list}` — user
 
-0.43+. A Discover shelf's full list, paged (the website's `/discover/{list}`,
+0.42.3+. A Discover shelf's full list, paged (the website's `/discover/{list}`,
 infinite scroll). `list` is one of `recently-added`, `trending`,
 `upcoming-movies`, `upcoming-series` (anything else: `404 not_found`).
 
