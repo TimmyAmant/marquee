@@ -5,8 +5,9 @@ import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
+import { canReviewRequests } from "@/lib/users/roles";
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireAdmin, requireReviewer } from "@/lib/auth/require-admin";
 import {
   approveAllRequests,
   approveRequest,
@@ -26,7 +27,7 @@ export type RequestState = { error?: string; success?: boolean };
  * polling pattern. Both wait on the Requests page. */
 export async function getPendingRequestCountAction(): Promise<number> {
   const session = await auth();
-  if (session?.user?.role !== "admin") return 0;
+  if (!canReviewRequests(session?.user?.role)) return 0;
   const [requests, issues] = await Promise.all([getPendingRequestCount(), getOpenIssueCount()]);
   return requests + issues;
 }
@@ -87,7 +88,7 @@ export async function approveRequestAction(
   _prevState: ReviewState | undefined,
   _formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requireAdmin("Only an admin can approve requests.");
+  const admin = await requireReviewer("Only an admin can approve requests.");
   if (!admin.ok) return { error: admin.error };
 
   const result = await approveRequest(requestId, admin.userId);
@@ -102,7 +103,7 @@ export async function approveAllRequestsAction(
   _prevState: ApproveAllState | undefined,
   _formData: FormData,
 ): Promise<ApproveAllState> {
-  const admin = await requireAdmin("Only an admin can approve requests.");
+  const admin = await requireReviewer("Only an admin can approve requests.");
   if (!admin.ok) return { error: admin.error };
 
   const { approvedCount, failedCount, firstError } = await approveAllRequests(admin.userId);
@@ -122,7 +123,8 @@ export async function manuallyApproveRequestAction(
   _prevState: ReviewState | undefined,
   _formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requireAdmin("Only an admin can approve requests.");
+  // Admin only: it tells the requester the admin is adding it by hand.
+  const admin = await requireAdmin("Only the admin can mark a request as added by hand.");
   if (!admin.ok) return { error: admin.error };
 
   const result = await manuallyApproveRequest(requestId, admin.userId);
@@ -134,7 +136,7 @@ export async function rejectRequestAction(
   _prevState: ReviewState | undefined,
   formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requireAdmin("Only an admin can reject requests.");
+  const admin = await requireReviewer("Only an admin can reject requests.");
   if (!admin.ok) return { error: admin.error };
 
   // The row's chooser won't enable Decline until a reason is picked, but the

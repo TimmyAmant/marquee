@@ -12,5 +12,9 @@
     "plex": true,
     "jellyfin": false
   },
-  "hasPassword": true
+  "hasPassword": true,
+  "requestLimits": {
+    "movie": null,
+    "tv": null
+  }
 }

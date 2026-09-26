@@ -216,8 +216,12 @@ export async function resolveIssue(
 
 /** "Search again": asks Sonarr/Radarr for another copy of the title the
  * report is about — the usual first fix for a bad file. */
-export async function searchAgainForIssue(adminUserId: string, issueId: string): Promise<CoreResult> {
+export async function searchAgainForIssue(reviewerUserId: string, issueId: string): Promise<CoreResult> {
   if (!UUID.test(issueId)) return fail("not_found", "Report not found.");
+  // A trusted member has no Sonarr/Radarr of their own: search with the admin's.
+  const [reviewer] = await db.select({ role: users.role }).from(users).where(eq(users.id, reviewerUserId)).limit(1);
+  const adminUserId = reviewer?.role === "admin" ? reviewerUserId : await getAdminUserId();
+  if (!adminUserId) return fail("conflict", "There's no admin account to search with.");
   const [issue] = await db.select().from(issues).where(eq(issues.id, issueId)).limit(1);
   if (!issue) return fail("not_found", "Report not found.");
   const title = await getOrFetchTitle(issue.mediaType, issue.tmdbId).catch(() => null);

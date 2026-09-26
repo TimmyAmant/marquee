@@ -14,6 +14,7 @@ import type { TmdbTvDetails } from "@/lib/tmdb/client";
 import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
+import { insertWithinQuota } from "@/lib/requests/quota";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
@@ -115,22 +116,28 @@ export async function createRequest(
   // The read-then-write check above can't stop a second concurrent submit
   // (double-click, two tabs) from also passing it — requests_pending_unique_idx
   // is the actual guard; a 23505 here means we lost that race, not a real error.
-  const inserted = await db
-    .insert(requests)
-    .values({
-      requestedByUserId: viewer.userId,
-      mediaType,
-      tmdbId,
-      title,
-      posterPath,
-      seasons,
-    })
-    .returning({ id: requests.id })
-    .then(([row]) => row)
-    .catch((err) => {
-      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
-      throw err;
-    });
+  // The limit check and the insert happen under one lock per member and
+  // type, so parallel requests can't all squeeze into the last slot.
+  const within = await insertWithinQuota(viewer.userId, mediaType, () =>
+    db
+      .insert(requests)
+      .values({
+        requestedByUserId: viewer.userId,
+        mediaType,
+        tmdbId,
+        title,
+        posterPath,
+        seasons,
+      })
+      .returning({ id: requests.id })
+      .then(([row]) => row)
+      .catch((err) => {
+        if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+        throw err;
+      }),
+  );
+  if (!within.ok) return fail("rate_limited", within.error);
+  const inserted = within.value;
   if (!inserted) {
     return fail(
       "conflict",
@@ -152,10 +159,12 @@ export async function createRequest(
   // pending (like any failed manual approval) if it errors, e.g. Radarr
   // unreachable or the admin hasn't configured it yet.
   const [requester] = await db
-    .select({ autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
+    .select({ role: users.role, autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
     .from(users)
     .where(eq(users.id, viewer.userId));
-  const autoApprove = mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv;
+  // A trusted member's requests go straight through (lib/users/roles.ts).
+  const autoApprove =
+    requester?.role === "trusted" || (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv);
   if (autoApprove) {
     const adminUserId = await getAdminUserId();
     if (adminUserId) {
@@ -168,9 +177,6 @@ export async function createRequest(
   return { ok: true, requestId: inserted.id };
 }
 
-/** Shared by the single-request Approve button and "Approve all" — takes an
- * already-verified admin userId so the bulk path doesn't re-check admin on
- * every iteration. */
 /** A 4K request: the whole title, checked against the 4K instance (not
  * the main library — owning it in HD is exactly why someone asks for 4K). */
 async function createFourKRequest(
@@ -192,23 +198,29 @@ async function createFourKRequest(
     return fail("conflict", "It's already in the 4K library or on its way.");
   }
 
-  const inserted = await db
-    .insert(requests)
-    .values({
-      requestedByUserId: viewer.userId,
-      mediaType,
-      tmdbId,
-      title: cachedTitle.name,
-      posterPath: cachedTitle.posterPath,
-      seasons: null,
-      is4k: true,
-    })
-    .returning({ id: requests.id })
-    .then(([row]) => row)
-    .catch((err) => {
-      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
-      throw err;
-    });
+  // The limit check and the insert happen under one lock per member and
+  // type, so parallel requests can't all squeeze into the last slot.
+  const within = await insertWithinQuota(viewer.userId, mediaType, () =>
+    db
+      .insert(requests)
+      .values({
+        requestedByUserId: viewer.userId,
+        mediaType,
+        tmdbId,
+        title: cachedTitle.name,
+        posterPath: cachedTitle.posterPath,
+        seasons: null,
+        is4k: true,
+      })
+      .returning({ id: requests.id })
+      .then(([row]) => row)
+      .catch((err) => {
+        if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+        throw err;
+      }),
+  );
+  if (!within.ok) return fail("rate_limited", within.error);
+  const inserted = within.value;
   if (!inserted) return fail("conflict", "You've already requested this in 4K.");
 
   await logActivityEvent({
@@ -220,10 +232,10 @@ async function createFourKRequest(
   }).catch(() => undefined);
 
   const [requester] = await db
-    .select({ autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
+    .select({ role: users.role, autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
     .from(users)
     .where(eq(users.id, viewer.userId));
-  if (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv) {
+  if (requester?.role === "trusted" || (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv)) {
     await approveRequest(inserted.id, adminUserId).catch(() => undefined);
   }
 
@@ -232,13 +244,26 @@ async function createFourKRequest(
   return { ok: true, requestId: inserted.id };
 }
 
+/** Whose Sonarr/Radarr an approval uses: the reviewer's own when they're
+ * the admin, otherwise (a trusted member) the admin's. */
+async function credentialOwnerFor(reviewerUserId: string): Promise<string | null> {
+  const [reviewer] = await db.select({ role: users.role }).from(users).where(eq(users.id, reviewerUserId)).limit(1);
+  return reviewer?.role === "admin" ? reviewerUserId : getAdminUserId();
+}
+
 /** How a request is named in notifications and the activity feed. */
 function requestName(request: { title: string; seasons: number[] | null; is4k: boolean }, quoted: boolean): string {
   const name = quoted ? quotedRequestTitle(request.title, request.seasons) : activityRequestTitle(request.title, request.seasons);
   return request.is4k ? `${name} in 4K` : name;
 }
 
-export async function approveRequest(requestId: string, adminUserId: string): Promise<CoreResult> {
+/** Shared by the single-request Approve button and "Approve all" — takes an
+ * already-verified reviewer (the admin or a trusted member) so the bulk path
+ * doesn't re-check on every iteration. The title is added with the admin's
+ * Sonarr/Radarr either way. */
+export async function approveRequest(requestId: string, reviewerUserId: string): Promise<CoreResult> {
+  const adminUserId = await credentialOwnerFor(reviewerUserId);
+  if (!adminUserId) return fail("conflict", "There's no admin account to add titles with.");
   const [request] = await db
     .select()
     .from(requests)
@@ -260,7 +285,7 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
   // single UPDATE...WHERE had before this was split into select-then-update.
   const [updated] = await db
     .update(requests)
-    .set({ status: "approved", reviewedByUserId: adminUserId, reviewedAt: new Date() })
+    .set({ status: "approved", reviewedByUserId: reviewerUserId, reviewedAt: new Date() })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
@@ -276,7 +301,7 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
       is4k: request.is4k,
     }).catch(() => undefined),
     logActivityEvent({
-      actorUserId: adminUserId,
+      actorUserId: reviewerUserId,
       eventType: "request_approved",
       mediaType: request.mediaType,
       tmdbId: request.tmdbId,

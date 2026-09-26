@@ -15,7 +15,11 @@
         "jellyfin": true
       },
       "hasPassword": false,
-      "lastActiveAt": "2026-09-25T18:42:10.000Z"
+      "lastActiveAt": "2026-09-25T18:42:10.000Z",
+      "movieQuotaLimit": 5,
+      "movieQuotaDays": 7,
+      "tvQuotaLimit": null,
+      "tvQuotaDays": 7
     }
   ]
 }

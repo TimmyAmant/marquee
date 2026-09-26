@@ -1,5 +1,5 @@
 import { withApi } from "@/lib/api/handler";
-import { requireApiAdmin } from "@/lib/api/auth";
+import { requireApiReviewer } from "@/lib/api/auth";
 import { isoRequired, requestPerson, requestSeasons } from "@/lib/api/mappers";
 import { getPendingRequests } from "@/lib/requests/query";
 import { REJECTION_REASON_PRESETS } from "@/lib/requests/rejection-reasons";
@@ -13,7 +13,7 @@ import type { PendingRequestsResponse } from "@/lib/api/types";
  * Reject chooser offers, so a native client shows the same choices and just
  * posts the chosen text to /requests/{id}/reject. */
 export const GET = withApi(async (request): Promise<PendingRequestsResponse> => {
-  const ctx = await requireApiAdmin(request, "Only an admin can review requests.");
+  const ctx = await requireApiReviewer(request, "Only an admin can review requests.");
   const libraryOwnerId = await ctx.libraryOwnerId();
 
   const [pending, sonarrCred] = await Promise.all([

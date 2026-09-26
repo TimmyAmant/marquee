@@ -186,6 +186,9 @@ struct AccountSettingsView: View {
             if member.isAdmin {
                 TonePill(text: "Admin", tone: .accent, small: true)
             }
+            if member.isTrusted {
+                TonePill(text: "Trusted", tone: .accent, small: true)
+            }
             if member.isCurrentUser {
                 TonePill(text: "You", tone: .neutral, small: true)
             }
@@ -432,6 +435,11 @@ private struct EditMemberSheet: View {
     @State private var currentPassword = ""
     @State private var autoApproveMovies = false
     @State private var autoApproveTv = false
+    @State private var role: API.UserRole = .member
+    @State private var movieLimit = ""
+    @State private var movieDays = "7"
+    @State private var tvLimit = ""
+    @State private var tvDays = "7"
     @State private var pending = false
     @State private var error: String?
 
@@ -443,6 +451,12 @@ private struct EditMemberSheet: View {
     /// Auto-approval is an admin setting, and only for non-admin accounts.
     private var showsAutoApproval: Bool {
         model.viewer?.isAdmin == true && !member.isAdmin
+    }
+
+    /// The role and request limits (0.39+): the admin, on another
+    /// non-admin member of a server that has them.
+    private var showsRoleAndLimits: Bool {
+        showsAutoApproval && !member.isCurrentUser && member.reportsRequestLimits
     }
 
     var body: some View {
@@ -463,6 +477,26 @@ private struct EditMemberSheet: View {
             if showsAutoApproval {
                 Toggle("Auto-approve movie requests", isOn: $autoApproveMovies)
                 Toggle("Auto-approve TV requests", isOn: $autoApproveTv)
+            }
+
+            if showsRoleAndLimits {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Role")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                    Picker("Role", selection: $role) {
+                        Text("Member").tag(API.UserRole.member)
+                        Text("Trusted — can approve requests and handle problem reports").tag(API.UserRole.trusted)
+                    }
+                    .labelsHidden()
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Request limits (blank for none; trusted members have none)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                    limitRow("Movies", limit: $movieLimit, days: $movieDays)
+                    limitRow("TV", limit: $tvLimit, days: $tvDays)
+                }
             }
 
             if member.isCurrentUser {
@@ -494,10 +528,49 @@ private struct EditMemberSheet: View {
             username = member.username
             autoApproveMovies = member.autoApproveMovies
             autoApproveTv = member.autoApproveTv
+            role = member.isTrusted ? .trusted : .member
+            movieLimit = member.movieQuotaLimit.map(String.init) ?? ""
+            movieDays = String(member.movieQuotaDays ?? 7)
+            tvLimit = member.tvQuotaLimit.map(String.init) ?? ""
+            tvDays = String(member.tvQuotaDays ?? 7)
+        }
+    }
+
+    /// "Movies [  ] every [7] days"
+    private func limitRow(_ label: String, limit: Binding<String>, days: Binding<String>) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 56, alignment: .leading)
+            TextField(label, text: limit, prompt: Text("No limit"))
+                .labelsHidden()
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 80)
+            Text("every")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textSecondary)
+            TextField("\(label) days", text: days)
+                .labelsHidden()
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 56)
+            Text("days")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 
     private func save() {
+        var movieQuota: API.UpdateUserRequest.QuotaChange?
+        var tvQuota: API.UpdateUserRequest.QuotaChange?
+        if showsRoleAndLimits {
+            movieQuota = .init(limitText: movieLimit, daysText: movieDays)
+            tvQuota = .init(limitText: tvLimit, daysText: tvDays)
+            guard movieQuota != nil, tvQuota != nil else {
+                error = "Request limits are whole numbers."
+                return
+            }
+        }
         pending = true
         error = nil
         let request = API.UpdateUserRequest(
@@ -506,7 +579,10 @@ private struct EditMemberSheet: View {
             password: password.nonBlank,
             currentPassword: needsCurrentPassword ? currentPassword.nonBlank : nil,
             autoApproveMovies: showsAutoApproval ? autoApproveMovies : nil,
-            autoApproveTv: showsAutoApproval ? autoApproveTv : nil
+            autoApproveTv: showsAutoApproval ? autoApproveTv : nil,
+            role: showsRoleAndLimits ? role : nil,
+            movieQuota: movieQuota,
+            tvQuota: tvQuota
         )
         let api = model.api
         Task {

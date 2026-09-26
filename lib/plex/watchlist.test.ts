@@ -100,6 +100,10 @@ vi.mock("@/lib/crypto/encryption", () => ({
   },
 }));
 vi.mock("@/lib/integrations/library-owner", () => ({ getLibraryOwnerUserId: async () => "admin" }));
+const quota = vi.hoisted(() => ({ movie: null as { remaining: number } | null }));
+vi.mock("@/lib/requests/quota", () => ({
+  getQuota: async (_userId: string, mediaType: "movie" | "tv") => (mediaType === "movie" ? quota.movie : null),
+}));
 const tmdb = vi.hoisted(() => ({ down: false }));
 vi.mock("@/lib/tmdb/cache", () => ({
   getOrFetchTitle: async (_mediaType: string, tmdbId: number) => (tmdb.down ? null : { tmdbId }),
@@ -146,6 +150,7 @@ beforeEach(async () => {
   plexTv.answer = { status: "ok", etag: "etag-1", items: [] };
   plexTv.seenEtag = undefined;
   tmdb.down = false;
+  quota.movie = null;
   createRequest.mockClear();
   createRequest.mockImplementation(async (_viewer, input) => ({ ok: true, requestId: `req-${input.tmdbId}` }));
   await enableWatchlist("m1", { plexUserId: "1111", authToken: "member-token", clientId: "client" });
@@ -216,6 +221,15 @@ describe("the watchlist sync", () => {
     tables.plexWatchlists[0].authTokenEnc = "garbage";
     await syncPlexWatchlist("m1");
     expect(await getWatchlistState("m1")).toMatchObject({ enabled: false, lastError: WATCHLIST_TOKEN_REJECTED });
+  });
+
+  it("stops at the member's request limit, and says so", async () => {
+    quota.movie = { remaining: 1 };
+    plexTv.answer = { status: "ok", etag: "etag-1", items: [movie(10), movie(11), show(20)] };
+    await syncPlexWatchlist("m1");
+    expect(outcomes()).toEqual(["movie:10:requested", "tv:20:requested"]);
+    expect(tables.plexWatchlists[0].etag).toBeNull();
+    expect((await getWatchlistState("m1")).lastError).toMatch(/request limit/);
   });
 
   it("requests at most a batch per sync, and picks up the rest next time", async () => {

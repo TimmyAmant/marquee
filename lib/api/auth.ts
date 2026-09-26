@@ -1,4 +1,5 @@
 import { ApiError } from "@/lib/api/errors";
+import { canReviewRequests } from "@/lib/users/roles";
 import { parseBearerToken } from "@/lib/api/tokens";
 import { authenticateApiToken, type AuthenticatedToken } from "@/lib/api/token-store";
 import { getLibraryOwnerUserId, type ViewerIdentity } from "@/lib/integrations/library-owner";
@@ -43,6 +44,14 @@ export async function requireApiUser(request: Request): Promise<ApiContext> {
     libraryOwnerId,
     viewer: async () => ({ userId: user.id, isAdmin: user.isAdmin, libraryOwnerId: await libraryOwnerId() }),
   };
+}
+
+/** Same as requireApiUser, plus 403 unless the user works the review
+ * queue: the admin or a trusted member (lib/users/roles.ts). */
+export async function requireApiReviewer(request: Request, message = "Only an admin can review requests."): Promise<ApiContext> {
+  const ctx = await requireApiUser(request);
+  if (!canReviewRequests(ctx.user.role)) throw ApiError.of("forbidden", message);
+  return ctx;
 }
 
 /** Same as requireApiUser, plus 403 forbidden unless the user is an admin. */

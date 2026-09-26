@@ -353,9 +353,19 @@ curl -s -X POST "$SERVER/api/v1/auth/jellyfin" -H 'Content-Type: application/jso
   "autoApproveTv": false,
   "createdAt": "2026-09-17T17:10:57.821Z",
   "linked": { "plex": true, "jellyfin": false },
-  "hasPassword": true
+  "hasPassword": true,
+  "requestLimits": { "movie": null, "tv": null }
 }
 ```
+
+`requestLimits` (0.39+; an older server omits it): the account's request
+limits, each null when that type isn't limited (always for the admin and
+trusted members). Otherwise `{ "limit": 5, "days": 7, "used": 5,
+"remaining": 0, "nextSlotAt": "2026-10-03T02:53:36.305Z" }` — `nextSlotAt`
+(while none is left) is when the oldest counted request ages out. Every
+request that wasn't declined counts, 4K and Watchlist ones included. The
+website shows members a line above their requests: "Movies: 3 of 5
+requests left (every 7 days)" or "Movies: none left — more in 3 days".
 
 `linked` says which media-server accounts this account signs in with (see
 "Linked accounts" in section 11). `hasPassword` is false for an account made
@@ -365,6 +375,16 @@ set one with `PATCH /users/{id}` without `currentPassword`.
 Use `role` to decide which admin UI to show (Integrations/Activity/Jobs
 settings tabs, request review, Add buttons). The role is re-read on every
 request, so a demotion takes effect immediately (`403`s).
+
+`role` is `admin`, `member`, or (0.39+) `trusted`: a member who also works
+the review queue — `/requests/pending`, `/pending-count`, `/history`,
+approve / reject / approve-all (not manual-approve, which promises the admin
+adds it by hand), and problem reports (`GET
+/issues` shows them everything, resolve, search again, remove). Approving
+adds the title with the admin's Sonarr/Radarr. Their own requests are
+approved straight away and they have no request limits. Everything else
+(settings, integrations, accounts, Add buttons) stays admin-only. Treat an
+unknown role like `member`.
 
 ### `GET /badges` — user
 
@@ -1012,6 +1032,15 @@ set up on this server." / "You've already requested this in 4K." / "It's
 already in the 4K library or on its way.", `502 upstream` "Couldn't look this
 title up with TMDb right now.".
 
+Request limits (0.39+): a member over their limit for the type gets `429
+rate_limited` "You've used your 5 movie requests for a week. You can ask
+again in 3 days." ("within the hour" / "in 5 hours" / "tomorrow" / "in N
+days" — relative, so no time zone gets in the way; `requestLimits.nextSlotAt`
+on `/me` has the exact time). A Plex Watchlist sync stops at the limit and
+its `lastError` says "You've reached your request limit, so the rest of your
+watchlist waits until you have requests left.". A trusted member's
+requests are approved straight away.
+
 ```json
 { "ok": true, "requestId": "28713d50-27f2-4230-9c95-c1e6a000f6c0" }
 ```
@@ -1504,7 +1533,11 @@ member) and, for the admin, "Add a household member".
   "avatarUrl": null,
   "linked": { "plex": false, "jellyfin": true },
   "hasPassword": false,
-  "lastActiveAt": "2026-09-25T18:42:10.000Z"
+  "lastActiveAt": "2026-09-25T18:42:10.000Z",
+  "movieQuotaLimit": 5,
+  "movieQuotaDays": 7,
+  "tvQuotaLimit": null,
+  "tvQuotaDays": 7
 }
 ```
 
@@ -1564,6 +1597,9 @@ The edit form. All fields are sent the way the form sends them:
 | `currentPassword` | string | **required with `password` when editing your own account that has a password** (the admin resetting someone else's password doesn't send it, nor does an account with `hasPassword: false` setting its first one). Website: "Current password", shown only on your own row when it has a password |
 | `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. Website: "Auto-approve movie requests", shown only for non-admin rows |
 | `autoApproveTv` | bool | same, "Auto-approve TV requests" |
+| `role` | string | 0.39+, admin only, another member's account: `"member"` or `"trusted"`. Website: a "Role" select ("Member", "Trusted — can approve requests and handle problem reports"). Errors: "Role is member or trusted.", "You can't change your own role.", "The admin's role can't be changed." |
+| `movieQuotaLimit`, `tvQuotaLimit` | number \| null | 0.39+, admin only: at most this many requests of that type in any `…QuotaDays` days (1–1000); `null` or `""` removes the limit; omitted = unchanged. Website: "Request limits" rows "Movies [ ] every [7] days" |
+| `movieQuotaDays`, `tvQuotaDays` | number | 0.39+, admin only: 1–365 (default 7) |
 
 ```json
 { "ok": true, "user": { /* HouseholdMember */ }, "tokensRevoked": true }

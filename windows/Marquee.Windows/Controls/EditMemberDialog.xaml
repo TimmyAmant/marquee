@@ -4,7 +4,8 @@
   password for any row the viewer may edit. "Current password" shows only
   on your own account (the server wants it with a new password there; the
   admin resetting someone else's doesn't know theirs), and the two
-  auto-approve boxes only for the admin editing a non-admin account. The
+  auto-approve boxes only for the admin editing a non-admin account, with
+  (0.39+) its Role and request limits. The
   photo sits at the top with "Add photo" / "Change photo" and "Remove",
   saved as soon as a photo is picked (the website's form does the same;
   Save isn't involved). The code-behind picks which parts show and fills
@@ -72,6 +73,49 @@
         <StackPanel x:Name="AutoApprovePanel" Visibility="Collapsed">
             <CheckBox x:Name="AutoApproveMoviesBox" Content="Auto-approve movie requests" />
             <CheckBox x:Name="AutoApproveTvBox" Content="Auto-approve TV requests" />
+        </StackPanel>
+        <!-- 0.39+: Role and request limits, for the admin editing a non-admin account. -->
+        <StackPanel x:Name="AccessPanel" Spacing="12" Visibility="Collapsed">
+            <ComboBox x:Name="RoleBox" Header="Role" HorizontalAlignment="Stretch" />
+            <StackPanel Spacing="8">
+                <TextBlock x:Name="LimitsHeaderText" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Movies" Width="56" VerticalAlignment="Center" />
+                    <TextBox
+                        x:Name="MovieLimitBox"
+                        Width="96"
+                        InputScope="Number"
+                        MaxLength="4"
+                        PlaceholderText="No limit"
+                        AutomationProperties.Name="Movie request limit" />
+                    <TextBlock Text="every" VerticalAlignment="Center" />
+                    <TextBox
+                        x:Name="MovieDaysBox"
+                        Width="72"
+                        InputScope="Number"
+                        MaxLength="3"
+                        AutomationProperties.Name="Movie limit days" />
+                    <TextBlock Text="days" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="TV" Width="56" VerticalAlignment="Center" />
+                    <TextBox
+                        x:Name="TvLimitBox"
+                        Width="96"
+                        InputScope="Number"
+                        MaxLength="4"
+                        PlaceholderText="No limit"
+                        AutomationProperties.Name="TV request limit" />
+                    <TextBlock Text="every" VerticalAlignment="Center" />
+                    <TextBox
+                        x:Name="TvDaysBox"
+                        Width="72"
+                        InputScope="Number"
+                        MaxLength="3"
+                        AutomationProperties.Name="TV limit days" />
+                    <TextBlock Text="days" VerticalAlignment="Center" />
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
         <TextBlock
             x:Name="PasswordNoteText"

@@ -1,7 +1,8 @@
 "use server";
 
 import { auth } from "@/auth";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireReviewer } from "@/lib/auth/require-admin";
+import { canReviewRequests } from "@/lib/users/roles";
 import type { MediaType } from "@/lib/db/schema";
 import { deleteIssue, reportIssue, resolveIssue, searchAgainForIssue, type ReportInput } from "@/lib/issues";
 
@@ -25,14 +26,14 @@ export async function reportIssueAction(
 }
 
 export async function resolveIssueAction(issueId: string, note: string): Promise<IssueActionState> {
-  const admin = await requireAdmin("Only the admin can resolve problem reports.");
+  const admin = await requireReviewer("Only the admin can resolve problem reports.");
   if (!admin.ok) return { error: admin.error };
   const result = await resolveIssue(admin.userId, issueId, note);
   return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function searchAgainAction(issueId: string): Promise<IssueActionState> {
-  const admin = await requireAdmin("Only the admin can search for titles.");
+  const admin = await requireReviewer("Only the admin can search for titles.");
   if (!admin.ok) return { error: admin.error };
   const result = await searchAgainForIssue(admin.userId, issueId);
   return result.ok ? { success: true } : { error: result.error };
@@ -41,6 +42,6 @@ export async function searchAgainAction(issueId: string): Promise<IssueActionSta
 export async function deleteIssueAction(issueId: string): Promise<IssueActionState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in first." };
-  const result = await deleteIssue({ userId: session.user.id, isAdmin: session.user.role === "admin" }, issueId);
+  const result = await deleteIssue({ userId: session.user.id, isAdmin: canReviewRequests(session.user.role) }, issueId);
   return result.ok ? { success: true } : { error: result.error };
 }

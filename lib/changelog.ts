@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.39.0",
+    date: "2026-09-26",
+    changes: [
+      "Request limits: when you edit a household member you can now cap their requests, for example 5 movies every 7 days, separately for movies and TV. Past the limit they're told how long until they can ask again, and they see what they have left on their Requests page. Their Plex Watchlist waits too.",
+      "Trusted members: a new role between member and admin. A trusted member can approve or decline other people's requests and handle problem reports, their own requests go straight through, and they have no limits. Settings stay yours.",
+      "On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.38.0",
     date: "2026-09-26",
     changes: [

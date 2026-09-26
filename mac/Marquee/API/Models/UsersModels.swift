@@ -27,8 +27,20 @@ extension API {
         /// Whether the server sent `lastActiveAt` at all (even as null). An
         /// older server omits it, and then the row shows no "last active" line.
         var reportsLastActive: Bool = false
+        /// 0.39+: at most `movieQuotaLimit` movie requests in any
+        /// `movieQuotaDays` days; a nil limit is no limit. The days are nil
+        /// from older servers (see `reportsRequestLimits`).
+        var movieQuotaLimit: Int? = nil
+        var movieQuotaDays: Int? = nil
+        var tvQuotaLimit: Int? = nil
+        var tvQuotaDays: Int? = nil
 
         var isAdmin: Bool { role == .admin }
+        /// The "Trusted" tag.
+        var isTrusted: Bool { role == .trusted }
+        /// Whether the server has request limits and the trusted role
+        /// (0.39+), so the edit sheet can offer them.
+        var reportsRequestLimits: Bool { movieQuotaDays != nil || tvQuotaDays != nil }
         var label: String { displayName.nonBlank ?? username }
 
         /// The muted "Active 3 hours ago" line; nil from an older server.
@@ -39,6 +51,7 @@ extension API {
         private enum CodingKeys: String, CodingKey {
             case id, username, displayName, role, autoApproveMovies, autoApproveTv, createdAt
             case isCurrentUser, avatarUrl, linked, hasPassword, lastActiveAt
+            case movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays
         }
     }
 }
@@ -59,6 +72,10 @@ extension API.HouseholdMember {
         hasPassword = try c.decodeIfPresent(Bool.self, forKey: .hasPassword)
         lastActiveAt = try c.decodeIfPresent(Date.self, forKey: .lastActiveAt)
         reportsLastActive = c.contains(.lastActiveAt)
+        movieQuotaLimit = try c.decodeIfPresent(Int.self, forKey: .movieQuotaLimit)
+        movieQuotaDays = try c.decodeIfPresent(Int.self, forKey: .movieQuotaDays)
+        tvQuotaLimit = try c.decodeIfPresent(Int.self, forKey: .tvQuotaLimit)
+        tvQuotaDays = try c.decodeIfPresent(Int.self, forKey: .tvQuotaDays)
     }
 }
 
@@ -101,6 +118,13 @@ extension API {
         /// Admin only (ignored for members); nil leaves it unchanged. Shown only for non-admin rows.
         var autoApproveMovies: Bool?
         var autoApproveTv: Bool?
+        /// 0.39+, admin only, another member's account: `.member` or
+        /// `.trusted`; nil leaves it unchanged.
+        var role: UserRole?
+        /// 0.39+, admin only: each type's request limit; nil leaves both
+        /// the limit and its days unchanged.
+        var movieQuota: QuotaChange?
+        var tvQuota: QuotaChange?
 
         init(
             username: String,
@@ -108,7 +132,10 @@ extension API {
             password: String? = nil,
             currentPassword: String? = nil,
             autoApproveMovies: Bool? = nil,
-            autoApproveTv: Bool? = nil
+            autoApproveTv: Bool? = nil,
+            role: UserRole? = nil,
+            movieQuota: QuotaChange? = nil,
+            tvQuota: QuotaChange? = nil
         ) {
             self.username = username
             self.displayName = displayName
@@ -116,6 +143,62 @@ extension API {
             self.currentPassword = currentPassword
             self.autoApproveMovies = autoApproveMovies
             self.autoApproveTv = autoApproveTv
+            self.role = role
+            self.movieQuota = movieQuota
+            self.tvQuota = tvQuota
+        }
+
+        /// A new request limit for one type.
+        struct QuotaChange: Hashable, Sendable {
+            /// 1–1000; nil removes the limit (sent as `null`).
+            var limit: Int?
+            /// 1–365.
+            var days: Int
+
+            init(limit: Int?, days: Int) {
+                self.limit = limit
+                self.days = days
+            }
+
+            /// From the sheet's fields: a blank limit is no limit. nil when
+            /// either isn't a whole number.
+            init?(limitText: String, daysText: String) {
+                let limitText = limitText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let days = Int(daysText.trimmingCharacters(in: .whitespacesAndNewlines)) else { return nil }
+                if limitText.isEmpty {
+                    self.init(limit: nil, days: days)
+                } else if let limit = Int(limitText) {
+                    self.init(limit: limit, days: days)
+                } else {
+                    return nil
+                }
+            }
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case username, displayName, password, currentPassword, autoApproveMovies, autoApproveTv
+            case role, movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(username, forKey: .username)
+            try c.encodeIfPresent(displayName, forKey: .displayName)
+            try c.encodeIfPresent(password, forKey: .password)
+            try c.encodeIfPresent(currentPassword, forKey: .currentPassword)
+            try c.encodeIfPresent(autoApproveMovies, forKey: .autoApproveMovies)
+            try c.encodeIfPresent(autoApproveTv, forKey: .autoApproveTv)
+            try c.encodeIfPresent(role, forKey: .role)
+            // A limit that's being changed is always sent, `null` to remove
+            // it; an untouched one is omitted (unchanged).
+            if let movieQuota {
+                try c.encode(movieQuota.limit, forKey: .movieQuotaLimit)
+                try c.encode(movieQuota.days, forKey: .movieQuotaDays)
+            }
+            if let tvQuota {
+                try c.encode(tvQuota.limit, forKey: .tvQuotaLimit)
+                try c.encode(tvQuota.days, forKey: .tvQuotaDays)
+            }
         }
     }
 

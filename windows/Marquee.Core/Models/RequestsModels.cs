@@ -250,3 +250,65 @@ public sealed record ApproveAllResult
 
 /// <summary><c>POST /requests/{id}/reject</c> body (server 0.28.0 and later); the call sends no body without a reason.</summary>
 public sealed record RejectRequest(string Reason);
+
+// MARK: Request limits (0.39+)
+
+/// <summary>
+/// <c>requestLimits</c> on <c>/me</c>: each null when that type isn't
+/// limited (always for the admin and trusted members).
+/// </summary>
+public sealed record RequestLimits
+{
+    public RequestLimit? Movie { get; init; }
+    public RequestLimit? Tv { get; init; }
+
+    /// <summary>
+    /// app/requests/page.tsx: the member's line above their requests,
+    /// "Movies: 3 of 5 requests left (every 7 days) · TV: none left until
+    /// Oct 3"; null when neither type is limited. <paramref name="zone"/>
+    /// is for the date, local time by default.
+    /// </summary>
+    public string? Summary(TimeZoneInfo? zone = null)
+    {
+        var lines = new List<string>(2);
+        if (Movie is { } movie)
+        {
+            lines.Add(movie.Line("Movies", zone));
+        }
+        if (Tv is { } tv)
+        {
+            lines.Add(tv.Line("TV", zone));
+        }
+        return lines.Count > 0 ? string.Join(" · ", lines) : null;
+    }
+}
+
+/// <summary>One type's limit: at most <see cref="Limit"/> requests in any <see cref="Days"/> days.</summary>
+public sealed record RequestLimit
+{
+    public required int Limit { get; init; }
+    public required int Days { get; init; }
+
+    /// <summary>Requests counted in the window (every one that wasn't declined, 4K and Watchlist included).</summary>
+    public required int Used { get; init; }
+
+    public required int Remaining { get; init; }
+
+    /// <summary>While none is left: when the oldest counted request ages out.</summary>
+    public DateTimeOffset? NextSlotAt { get; init; }
+
+    /// <summary>quotaLine: "Movies: 3 of 5 requests left (every 7 days)" / "Movies: none left until Oct 3".</summary>
+    public string Line(string label, TimeZoneInfo? zone = null)
+    {
+        if (Remaining > 0)
+        {
+            return string.Create(CultureInfo.InvariantCulture, $"{label}: {Remaining} of {Limit} requests left (every {Days} days)");
+        }
+        if (NextSlotAt is not { } next)
+        {
+            return $"{label}: none left";
+        }
+        var local = TimeZoneInfo.ConvertTime(next, zone ?? TimeZoneInfo.Local);
+        return $"{label}: none left until {local.ToString("MMM d", CultureInfo.InvariantCulture)}";
+    }
+}

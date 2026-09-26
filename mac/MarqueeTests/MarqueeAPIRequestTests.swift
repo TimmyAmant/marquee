@@ -316,6 +316,27 @@ final class MarqueeAPIRequestTests: XCTestCase {
         XCTAssertTrue(Self.body(of: bare).isEmpty, "nil reason sends no body")
     }
 
+    /// `PATCH /users/{id}` (0.39+) with the role and request limits (the
+    /// table above covers the older shape): a blank limit is sent as `null`.
+    func testUpdateUserSendsRoleAndRequestLimits() async throws {
+        let response = try fixture("user-update")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, response) }
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        StubURLProtocol.requests = []
+        let result = try await MarqueeAPI(client: client).users.update(Self.userId, API.UpdateUserRequest(
+            username: "kid", role: .trusted,
+            movieQuota: .init(limit: 5, days: 7), tvQuota: .init(limitText: " ", daysText: "14")
+        ))
+        XCTAssertEqual(result.user.movieQuotaLimit, 5)
+        let sent = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(sent.httpMethod, "PATCH")
+        XCTAssertEqual(sent.url?.path, "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3")
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: sent)),
+            try Self.jsonObject(Data(#"{"username":"kid","role":"trusted","movieQuotaLimit":5,"movieQuotaDays":7,"tvQuotaLimit":null,"tvQuotaDays":14}"#.utf8))
+        )
+    }
+
     /// "Request in 4K" and "Add to 4K Radarr/Sonarr" (0.37+): the same two
     /// endpoints with `{"is4k": true}`; a 4K request ignores `seasons`.
     func testFourKRequestAndAddSendIs4k() async throws {
