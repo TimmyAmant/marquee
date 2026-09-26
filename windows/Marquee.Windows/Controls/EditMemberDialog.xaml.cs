@@ -15,7 +15,9 @@ namespace Marquee.Windows.Controls;
 /// function it was given, the way the website's form sends it: the username
 /// always, an empty name or password left out (unchanged), the current
 /// password only for your own account, the auto-approve flags only when
-/// the boxes show. A refusal shows the server's message and keeps the
+/// the boxes show, and (0.39+) the role and request limits only when the
+/// admin edits another non-admin account (a blank limit is sent as null:
+/// no limit). A refusal shows the server's message and keeps the
 /// dialog open. After <c>ShowAsync</c> returns
 /// <c>ContentDialogResult.Primary</c>, <see cref="Saved"/> is the server's
 /// answer; the caller signs out when it revoked this PC's token. The
@@ -33,6 +35,7 @@ public sealed partial class EditMemberDialog : ContentDialog
 
     private readonly HouseholdMember member;
     private readonly bool showsAutoApproval;
+    private readonly bool showsAccess;
     private readonly Func<Guid, UpdateUserRequest, Task<UpdateUserResult>> update;
     private readonly Func<Guid, byte[], string, Task<string?>> setPhoto;
     private readonly Func<Guid, Task> removePhoto;
@@ -60,6 +63,8 @@ public sealed partial class EditMemberDialog : ContentDialog
         this.removePhoto = removePhoto;
         avatarUrl = member.AvatarUrl ?? "";
         showsAutoApproval = viewerIsAdmin && !member.IsAdmin;
+        // Role and limits are the admin's, for another non-admin account on a 0.39+ server.
+        showsAccess = showsAutoApproval && !member.IsCurrentUser && member.SupportsRequestLimits;
         InitializeComponent();
 
         PhotoAvatar.Label = member.Label;
@@ -72,6 +77,14 @@ public sealed partial class EditMemberDialog : ContentDialog
         AutoApprovePanel.Visibility = showsAutoApproval ? Visibility.Visible : Visibility.Collapsed;
         AutoApproveMoviesBox.IsChecked = member.AutoApproveMovies;
         AutoApproveTvBox.IsChecked = member.AutoApproveTv;
+        AccessPanel.Visibility = showsAccess ? Visibility.Visible : Visibility.Collapsed;
+        RoleBox.ItemsSource = new[] { MemberAccessForm.MemberChoice, MemberAccessForm.TrustedChoice };
+        RoleBox.SelectedIndex = MemberAccessForm.InitialRole(member) == UserRole.Trusted ? 1 : 0;
+        LimitsHeaderText.Text = MemberAccessForm.LimitsHeader;
+        MovieLimitBox.Text = MemberAccessForm.LimitText(member.MovieQuotaLimit);
+        MovieDaysBox.Text = MemberAccessForm.DaysText(member.MovieQuotaDays);
+        TvLimitBox.Text = MemberAccessForm.LimitText(member.TvQuotaLimit);
+        TvDaysBox.Text = MemberAccessForm.DaysText(member.TvQuotaDays);
         PasswordNoteText.Text = member.IsCurrentUser
             ? SettingsViewModel.PasswordWarning
             : $"Setting a new password signs {member.Label} out of every device.";
@@ -118,6 +131,23 @@ public sealed partial class EditMemberDialog : ContentDialog
             AutoApproveMovies: showsAutoApproval ? AutoApproveMoviesBox.IsChecked == true : (bool?)null,
             AutoApproveTv: showsAutoApproval ? AutoApproveTvBox.IsChecked == true : (bool?)null,
             CurrentPassword: currentPassword);
+        if (showsAccess)
+        {
+            var (withAccess, accessError) = MemberAccessForm.Apply(
+                request,
+                trusted: RoleBox.SelectedIndex == 1,
+                MovieLimitBox.Text,
+                MovieDaysBox.Text,
+                TvLimitBox.Text,
+                TvDaysBox.Text);
+            if (withAccess == null)
+            {
+                ShowError(accessError ?? "Check the request limits.");
+                args.Cancel = true;
+                return;
+            }
+            request = withAccess;
+        }
 
         var deferral = args.GetDeferral();
         isSaving = true;
