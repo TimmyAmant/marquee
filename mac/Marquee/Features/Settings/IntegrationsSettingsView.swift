@@ -64,6 +64,10 @@ struct IntegrationsSettingsView: View {
                         save: { try await $0.integrations.ntfy.save($1) },
                         remove: { try await $0.integrations.ntfy.remove() }
                     )
+                    // 0.36+; an older server omits them.
+                    if let telegram = overview.telegram { TelegramCard(settings: telegram) }
+                    if let pushover = overview.pushover { PushoverCard(connected: pushover.connected) }
+                    if let email = overview.email { EmailCard(settings: email) }
                     SecretCard(
                         title: "Custom webhook",
                         description: "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway.",
@@ -621,6 +625,257 @@ private struct SecretCard: View {
             }
             removing = false
         }
+    }
+}
+
+// MARK: - Telegram / Pushover / email (components/notification-channel-cards.tsx)
+
+private let channelWhat = "whenever something is grabbed, downloaded, or a request is approved/rejected."
+private let keepSavedPlaceholder = "•••••••••••••••• (leave blank to keep)"
+
+/// A labelled field with the website's hint line under it.
+private struct ChannelField: View {
+    let label: String
+    @Binding var text: String
+    var placeholder = ""
+    var secure = false
+    var hint: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            SettingsField(label: label, text: $text, placeholder: placeholder, secure: secure)
+            if let hint {
+                Text(hint)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+/// The card around a channel's fields: "Test & save" (`PUT`) and
+/// "Remove {name}" (`DELETE`). Blank secrets keep the saved ones.
+private struct ChannelCard<Fields: View>: View {
+    let title: String
+    let description: String
+    let removeLabel: String
+    let successMessage: String
+    let connected: Bool
+    let save: @MainActor (MarqueeAPI) async throws -> Void
+    let remove: @MainActor (MarqueeAPI) async throws -> Void
+    /// Clears the secret fields after a save or removal.
+    let reset: @MainActor () -> Void
+    @ViewBuilder let fields: () -> Fields
+
+    @Environment(AppModel.self) private var model
+    @State private var pending = false
+    @State private var removing = false
+    @State private var message: (String, Bool)?
+
+    var body: some View {
+        IntegrationCard(title: title, description: description, connected: connected) {
+            fields()
+            if let message { InlineMessage(text: message.0, isError: message.1) }
+            HStack(spacing: 12) {
+                Button(pending ? "Testing…" : "Test & save") { submit() }
+                    .buttonStyle(AccentButtonStyle())
+                    .disabled(pending)
+                if connected {
+                    Button(removing ? "Removing…" : removeLabel) { removeSaved() }
+                        .buttonStyle(QuietButtonStyle())
+                        .font(.system(size: 12))
+                        .disabled(removing)
+                }
+            }
+        }
+    }
+
+    private func submit() {
+        pending = true
+        message = nil
+        let api = model.api
+        Task {
+            do {
+                try await save(api)
+                reset()
+                message = (successMessage, false)
+            } catch {
+                message = (error.localizedDescription, true)
+            }
+            pending = false
+        }
+    }
+
+    private func removeSaved() {
+        removing = true
+        message = nil
+        let api = model.api
+        Task {
+            do {
+                try await remove(api)
+                reset()
+            } catch {
+                message = (error.localizedDescription, true)
+            }
+            removing = false
+        }
+    }
+}
+
+private struct TelegramCard: View {
+    let settings: API.TelegramSettings
+
+    @State private var botToken = ""
+    @State private var chatId = ""
+
+    var body: some View {
+        ChannelCard(
+            title: "Telegram notifications",
+            description: "Posts to a Telegram chat, group or channel through your own bot \(channelWhat)",
+            removeLabel: "Remove Telegram",
+            successMessage: "Connected — check the chat for a test message.",
+            connected: settings.connected,
+            save: { [botToken, chatId] in try await $0.integrations.telegram.save(botToken: botToken, chatId: chatId) },
+            remove: { try await $0.integrations.telegram.remove() },
+            reset: { botToken = "" }
+        ) {
+            ChannelField(
+                label: "Bot token",
+                text: $botToken,
+                placeholder: settings.connected ? keepSavedPlaceholder : "123456789:AA…",
+                secure: true,
+                hint: "Message @BotFather on Telegram, send /newbot, and paste the token it gives you."
+            )
+            ChannelField(
+                label: "Chat ID",
+                text: $chatId,
+                placeholder: "123456789, -100…, or @channelname",
+                hint: "Send your bot a message (or add it to the group), then open api.telegram.org/bot<token>/getUpdates to find the chat's id."
+            )
+        }
+        .onAppear {
+            if chatId.isEmpty { chatId = settings.chatId ?? "" }
+        }
+        .onChange(of: settings) { _, fresh in
+            if let saved = fresh.chatId { chatId = saved }
+        }
+    }
+}
+
+private struct PushoverCard: View {
+    let connected: Bool
+
+    @State private var appToken = ""
+    @State private var userKey = ""
+
+    var body: some View {
+        ChannelCard(
+            title: "Pushover notifications",
+            description: "Sends a push notification through Pushover \(channelWhat)",
+            removeLabel: "Remove Pushover",
+            successMessage: "Connected — a test notification is on its way.",
+            connected: connected,
+            save: { [appToken, userKey] in try await $0.integrations.pushover.save(appToken: appToken, userKey: userKey) },
+            remove: { try await $0.integrations.pushover.remove() },
+            reset: {
+                appToken = ""
+                userKey = ""
+            }
+        ) {
+            ChannelField(
+                label: "Application token",
+                text: $appToken,
+                placeholder: connected ? keepSavedPlaceholder : "",
+                secure: true,
+                hint: "Create an application at pushover.net/apps/build and copy its API token."
+            )
+            ChannelField(
+                label: "User or group key",
+                text: $userKey,
+                secure: true,
+                hint: "Your user key is at the top of your pushover.net dashboard."
+            )
+        }
+    }
+}
+
+private struct EmailCard: View {
+    let settings: API.EmailSettings
+
+    @State private var host = ""
+    @State private var port = ""
+    @State private var secure = false
+    @State private var username = ""
+    @State private var password = ""
+    @State private var from = ""
+    @State private var to = ""
+    @State private var prefilled = false
+
+    var body: some View {
+        ChannelCard(
+            title: "Email notifications",
+            description: "Emails one or more addresses through your own mail server (SMTP) \(channelWhat)",
+            removeLabel: "Remove Email",
+            successMessage: "Connected — check the inbox for a test email.",
+            connected: settings.connected,
+            save: { [request] in try await $0.integrations.email.save(request) },
+            remove: { try await $0.integrations.email.remove() },
+            reset: { password = "" }
+        ) {
+            ChannelField(label: "SMTP server", text: $host, placeholder: "smtp.gmail.com")
+            ChannelField(label: "Port", text: $port, placeholder: "587", hint: "587 for most servers; 465 with \"Secure connection\" on.")
+            ChannelField(label: "Username", text: $username, placeholder: "Leave blank if the server needs none")
+            ChannelField(
+                label: "Password",
+                text: $password,
+                placeholder: settings.connected ? keepSavedPlaceholder : "",
+                secure: true,
+                hint: "For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one."
+            )
+            ChannelField(label: "From address", text: $from, placeholder: "marquee@example.com")
+            ChannelField(
+                label: "Send to",
+                text: $to,
+                placeholder: "you@example.com, partner@example.com",
+                hint: "One or more addresses, separated by commas."
+            )
+            Toggle("Secure connection from the start (TLS, usually port 465)", isOn: $secure)
+                .toggleStyle(.checkbox)
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .onAppear { prefill(settings) }
+        .onChange(of: settings) { _, fresh in
+            prefilled = false
+            prefill(fresh)
+        }
+    }
+
+    /// The form as the server expects it. An unreadable port goes as 0 so
+    /// the server answers with its own message.
+    private var request: API.EmailRequest {
+        API.EmailRequest(
+            host: host.trimmingCharacters(in: .whitespaces),
+            port: Int(port.trimmingCharacters(in: .whitespaces)) ?? 0,
+            secure: secure,
+            username: username.trimmingCharacters(in: .whitespaces),
+            password: password,
+            from: from.trimmingCharacters(in: .whitespaces),
+            // Like the server's parseRecipients: commas, semicolons or spaces.
+            to: to.split(whereSeparator: { $0 == "," || $0 == ";" || $0.isWhitespace }).map(String.init)
+        )
+    }
+
+    private func prefill(_ saved: API.EmailSettings) {
+        guard !prefilled else { return }
+        prefilled = true
+        host = saved.host ?? ""
+        port = String(saved.port ?? 587)
+        secure = saved.secure
+        username = saved.username ?? ""
+        from = saved.from ?? ""
+        to = saved.to.joined(separator: ", ")
     }
 }
 

@@ -187,6 +187,30 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertTrue(encoded.contains(#""rejectionReasons":[]"#), encoded)
     }
 
+    /// A server before 0.36 sends no `telegram`/`pushover`/`email`; the page
+    /// still decodes and hides those cards.
+    func testIntegrationsFromOlderServerDecodeWithoutNewChannels() throws {
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: fixture("integrations")) as? [String: Any])
+        for key in ["telegram", "pushover", "email"] { object.removeValue(forKey: key) }
+        let older = try APIClient.decoder.decode(
+            API.IntegrationsOverview.self, from: JSONSerialization.data(withJSONObject: object)
+        )
+        XCTAssertNil(older.telegram)
+        XCTAssertNil(older.pushover)
+        XCTAssertNil(older.email)
+        XCTAssertEqual(older.ntfy.connected, false)
+
+        // Not connected yet: nulls and an empty recipient list.
+        let blank = try APIClient.decoder.decode(API.EmailSettings.self, from: Data(#"""
+        {"connected":false,"host":null,"port":null,"secure":false,"username":null,"from":null,"to":[]}
+        """#.utf8))
+        XCTAssertFalse(blank.connected)
+        XCTAssertNil(blank.port)
+        XCTAssertEqual(blank.to, [])
+        let telegram = try APIClient.decoder.decode(API.TelegramSettings.self, from: Data(#"{"connected":false,"chatId":null}"#.utf8))
+        XCTAssertNil(telegram.chatId)
+    }
+
     func testPlexWatchlist() throws {
         let state = try decode(API.PlexWatchlist.self, "plex-watchlist")
         XCTAssertTrue(state.available)
@@ -225,6 +249,16 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertTrue(integrations.arr(.sonarr).fullyConfigured)
         XCTAssertNil(integrations.arr(.radarr).baseUrl)
         XCTAssertTrue(integrations.tmdb.configuredFromEnv)
+        XCTAssertEqual(integrations.telegram, API.TelegramSettings(connected: true, chatId: "-1001234567890"))
+        XCTAssertEqual(integrations.pushover?.connected, false)
+        let email = try XCTUnwrap(integrations.email)
+        XCTAssertTrue(email.connected)
+        XCTAssertEqual(email.host, "smtp.gmail.com")
+        XCTAssertEqual(email.port, 587)
+        XCTAssertFalse(email.secure)
+        XCTAssertEqual(email.username, "me@gmail.com")
+        XCTAssertEqual(email.from, "me@gmail.com")
+        XCTAssertEqual(email.to, ["me@gmail.com", "partner@example.com"])
 
         let pin = try decode(API.PlexPinStart.self, "plex-pin-start")
         XCTAssertEqual(pin.pinId, 123_456_789)

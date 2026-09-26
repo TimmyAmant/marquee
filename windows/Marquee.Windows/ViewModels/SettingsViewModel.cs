@@ -144,6 +144,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private CancellationTokenSource? plexLinkCancellation;
     private CancellationTokenSource? plexWatchlistCancellation;
     private CancellationTokenSource? plexWatchlistLoadCancellation;
+    private CancellationTokenSource? channelsCancellation;
 
     /// <summary>Whether Plex was linked when the watchlist state was last asked for; linking or unlinking asks again.</summary>
     private bool? plexLinkedForWatchlist;
@@ -324,7 +325,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         this.model = model;
         DisplayName = model.Viewer?.DisplayName ?? "";
         IsAdmin = model.Viewer?.IsAdmin == true;
+        Channels = new NotificationChannelsViewModel(model);
     }
+
+    /// <summary>The admin's Telegram, Pushover and email cards (0.36+ servers).</summary>
+    public NotificationChannelsViewModel Channels { get; }
 
     /// <summary>
     /// Set by the page: "Add a household member", answering the new account
@@ -470,6 +475,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _ = LoadAboutAsync();
         _ = LoadSignInSettingsAsync();
         _ = LoadPlexWatchlistAsync();
+        _ = LoadNotificationChannelsAsync();
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
         _ = model.Session.RefreshInfoAsync();
     }
@@ -489,6 +495,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         aboutCancellation?.Cancel();
         membersCancellation?.Cancel();
         plexWatchlistLoadCancellation?.Cancel();
+        channelsCancellation?.Cancel();
         CancelLinkPlex();
         CancelTurnOnPlexWatchlist();
     }
@@ -1226,6 +1233,39 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
+    // MARK: Notification channels
+
+    /// <summary>
+    /// <c>GET /settings/integrations</c> for the admin's Telegram, Pushover
+    /// and email cards. Admin-only; for a member, or from an older server
+    /// without the three, the section stays hidden. A failed load keeps
+    /// whatever showed before (hidden the first time).
+    /// </summary>
+    private async Task LoadNotificationChannelsAsync()
+    {
+        channelsCancellation?.Cancel();
+        if (!IsAdmin)
+        {
+            Channels.IsVisible = false;
+            return;
+        }
+        var cancellation = new CancellationTokenSource();
+        channelsCancellation = cancellation;
+        var token = cancellation.Token;
+        try
+        {
+            var overview = await model.Api.Integrations.OverviewAsync(token);
+            if (!token.IsCancellationRequested)
+            {
+                Channels.Apply(overview);
+            }
+        }
+        catch (ApiException)
+        {
+            // Cancelled, or the page couldn't load: nothing to change.
+        }
+    }
+
     // MARK: Following the model
 
     private void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -1245,6 +1285,7 @@ public sealed partial class SettingsViewModel : ObservableObject
                 OnPropertyChanged(nameof(ShowsMediaServerMembers));
                 _ = LoadMembersAsync();
                 _ = LoadSignInSettingsAsync();
+                _ = LoadNotificationChannelsAsync();
             }
         }
         else if (e.PropertyName == nameof(AppModel.ReloadToken))
@@ -1252,6 +1293,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             _ = LoadMembersAsync();
             _ = LoadAboutAsync();
             _ = LoadPlexWatchlistAsync();
+            _ = LoadNotificationChannelsAsync();
         }
     }
 

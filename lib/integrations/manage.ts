@@ -42,7 +42,7 @@ import { fail, type CoreResult } from "@/lib/core-result";
 // admin (except syncNowForUser, which only ever touches the caller's own
 // integrations) and does its own input validation with the web's messages.
 
-function revalidateIntegrations() {
+export function revalidateIntegrations() {
   revalidatePath("/settings/integrations");
 }
 

@@ -2,14 +2,15 @@ namespace Marquee.Core.Models;
 
 // Settings, Integrations (api-v1.md section 12). Mirrors
 // mac/Marquee/API/Models/IntegrationsModels.swift. Secrets (API keys, tokens,
-// the webhook URLs of Discord, ntfy and the generic webhook) are never
-// returned, only whether they're set.
+// the webhook URLs of Discord, ntfy and the generic webhook, the Telegram bot
+// token, the Pushover keys, the SMTP password) are never returned, only
+// whether they're set.
 
 /// <summary>
 /// <c>GET /settings/integrations</c>. Page sections: Media Libraries (Plex,
 /// Jellyfin), Download Clients (Sonarr, Radarr), Metadata Sources (TMDb,
 /// Trakt, TheTVDB), Notifications (Sonarr/Radarr webhooks, Discord, ntfy,
-/// generic webhook).
+/// Telegram, Pushover, email, generic webhook).
 /// </summary>
 public sealed record IntegrationsOverview
 {
@@ -22,6 +23,18 @@ public sealed record IntegrationsOverview
     public required ConnectionState Tvdb { get; init; }
     public required ConnectionState Discord { get; init; }
     public required ConnectionState Ntfy { get; init; }
+
+    /// <summary>Null from a server older than 0.36, which has no Telegram relay.</summary>
+    public TelegramSettings? Telegram { get; init; }
+
+    /// <summary>Null from a server older than 0.36.</summary>
+    public ConnectionState? Pushover { get; init; }
+
+    /// <summary>Null from a server older than 0.36.</summary>
+    public EmailSettings? Email { get; init; }
+
+    /// <summary>The server offers Telegram, Pushover and email (0.36+).</summary>
+    public bool HasNotificationChannels => Telegram != null && Pushover != null && Email != null;
     public required ConnectionState GenericWebhook { get; init; }
     public required ArrWebhooks ArrWebhooks { get; init; }
 
@@ -83,6 +96,34 @@ public sealed record TmdbSettings
 public sealed record ConnectionState
 {
     public required bool Connected { get; init; }
+}
+
+/// <summary>
+/// <c>telegram</c>: a household-wide relay through the admin's own bot. The
+/// token is never returned; the chat it posts to is, to prefill the form.
+/// </summary>
+public sealed record TelegramSettings
+{
+    public required bool Connected { get; init; }
+    public string? ChatId { get; init; }
+}
+
+/// <summary>
+/// <c>email</c>: a household-wide relay through the admin's SMTP server.
+/// Everything but the password comes back, to prefill the form.
+/// </summary>
+public sealed record EmailSettings
+{
+    public required bool Connected { get; init; }
+    public string? Host { get; init; }
+    public int? Port { get; init; }
+
+    /// <summary>TLS from the start (usually 465); otherwise STARTTLS when offered.</summary>
+    public bool Secure { get; init; }
+
+    public string? Username { get; init; }
+    public string? From { get; init; }
+    public IReadOnlyList<string> To { get; init; } = [];
 }
 
 /// <summary>
@@ -202,6 +243,33 @@ public sealed record NtfySettingRequest(string TopicUrl);
 
 /// <summary><c>PUT /settings/integrations/webhook</c>: the generic JSON webhook's URL.</summary>
 public sealed record WebhookSettingRequest(string WebhookUrl);
+
+/// <summary>
+/// <c>PUT /settings/integrations/telegram</c>: <c>123456789:AA…</c> from
+/// @BotFather and a chat id (a number, <c>-100…</c> for groups and channels,
+/// or <c>@channelname</c>). A blank <paramref name="BotToken"/> keeps the saved one.
+/// </summary>
+public sealed record TelegramSettingRequest(string BotToken, string ChatId);
+
+/// <summary>
+/// <c>PUT /settings/integrations/pushover</c>: both 30 characters. A blank
+/// <paramref name="AppToken"/> keeps the saved one.
+/// </summary>
+public sealed record PushoverSettingRequest(string AppToken, string UserKey);
+
+/// <summary>
+/// <c>PUT /settings/integrations/email</c>. <paramref name="Username"/> and
+/// <paramref name="Password"/> both or neither; a blank password keeps the
+/// saved one while host and username are unchanged. At most 20 recipients.
+/// </summary>
+public sealed record EmailSettingRequest(
+    string Host,
+    int Port,
+    bool Secure,
+    string Username,
+    string Password,
+    string From,
+    IReadOnlyList<string> To);
 
 /// <summary><c>POST /settings/integrations/trakt/import</c> body: a public list or watchlist URL.</summary>
 public sealed record TraktImportRequest(string Url);

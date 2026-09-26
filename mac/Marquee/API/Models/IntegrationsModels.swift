@@ -6,7 +6,8 @@ import Foundation
 extension API {
     /// `GET /settings/integrations`. Page sections: Media Libraries (Plex,
     /// Jellyfin), Download Clients (Sonarr, Radarr), Metadata Sources (TMDb,
-    /// Trakt, TheTVDB), Notifications (webhooks, Discord, ntfy, generic webhook).
+    /// Trakt, TheTVDB), Notifications (webhooks, Discord, ntfy, Telegram,
+    /// Pushover, email, generic webhook).
     struct IntegrationsOverview: Codable, Hashable, Sendable {
         let plex: PlexSettings
         let jellyfin: JellyfinSettings
@@ -17,6 +18,12 @@ extension API {
         let tvdb: ConnectionState
         let discord: ConnectionState
         let ntfy: ConnectionState
+        /// 0.36+; nil from an older server, which hides the card.
+        let telegram: TelegramSettings?
+        /// 0.36+; nil from an older server, which hides the card.
+        let pushover: ConnectionState?
+        /// 0.36+; nil from an older server, which hides the card.
+        let email: EmailSettings?
         let genericWebhook: ConnectionState
         let arrWebhooks: ArrWebhooks
 
@@ -70,6 +77,49 @@ extension API {
 
     struct ConnectionState: Codable, Hashable, Sendable {
         let connected: Bool
+    }
+
+    /// The bot token is never returned; the chat it posts to is, to prefill the form.
+    struct TelegramSettings: Codable, Hashable, Sendable {
+        let connected: Bool
+        let chatId: String?
+    }
+
+    /// Everything but the SMTP password, to prefill the form.
+    struct EmailSettings: Codable, Hashable, Sendable {
+        let connected: Bool
+        let host: String?
+        let port: Int?
+        /// TLS from the start (usually 465); otherwise STARTTLS when offered.
+        let secure: Bool
+        let username: String?
+        let from: String?
+        let to: [String]
+    }
+
+    /// `PUT …/telegram` body. `botToken` `""` keeps the saved one.
+    struct TelegramRequest: Encodable, Hashable, Sendable {
+        let botToken: String
+        let chatId: String
+    }
+
+    /// `PUT …/pushover` body (both 30 characters). `appToken` `""` keeps the saved one.
+    struct PushoverRequest: Encodable, Hashable, Sendable {
+        let appToken: String
+        let userKey: String
+    }
+
+    /// `PUT …/email` body. `username`/`password` both or neither; `password`
+    /// `""` keeps the saved one when `host` and `username` are unchanged.
+    struct EmailRequest: Encodable, Hashable, Sendable {
+        let host: String
+        let port: Int
+        let secure: Bool
+        let username: String
+        let password: String
+        let from: String
+        /// At most 20.
+        let to: [String]
     }
 
     /// Paste into Radarr/Sonarr → Settings → Connect → Add → Webhook (method

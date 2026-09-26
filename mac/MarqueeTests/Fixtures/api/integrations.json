@@ -53,6 +53,25 @@
   "ntfy": {
     "connected": false
   },
+  "telegram": {
+    "connected": true,
+    "chatId": "-1001234567890"
+  },
+  "pushover": {
+    "connected": false
+  },
+  "email": {
+    "connected": true,
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "secure": false,
+    "username": "me@gmail.com",
+    "from": "me@gmail.com",
+    "to": [
+      "me@gmail.com",
+      "partner@example.com"
+    ]
+  },
   "genericWebhook": {
     "connected": false
   },

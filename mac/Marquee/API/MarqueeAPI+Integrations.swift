@@ -43,6 +43,12 @@ extension MarqueeAPI {
         var discord: SettingEndpoints { SettingEndpoints(transport: transport, name: "discord", field: "webhookUrl", changes: .settings) }
         /// Body `{topicUrl}`, e.g. `https://ntfy.sh/my-topic`: posts a test message before saving.
         var ntfy: SettingEndpoints { SettingEndpoints(transport: transport, name: "ntfy", field: "topicUrl", changes: .settings) }
+        /// Body `{botToken, chatId}`: posts a test message before saving.
+        var telegram: TelegramEndpoints { TelegramEndpoints(transport: transport) }
+        /// Body `{appToken, userKey}`: sends a test notification before saving.
+        var pushover: PushoverEndpoints { PushoverEndpoints(transport: transport) }
+        /// Body `{host, port, secure, username, password, from, to}`: sends a test email before saving.
+        var email: EmailEndpoints { EmailEndpoints(transport: transport) }
         /// The generic JSON webhook. Body `{webhookUrl}`: posts a test request before saving.
         var webhook: SettingEndpoints { SettingEndpoints(transport: transport, name: "webhook", field: "webhookUrl", changes: .settings) }
     }
@@ -179,6 +185,76 @@ extension MarqueeAPI {
                 .post, "/settings/integrations/trakt/import", body: ["url": url],
                 timeout: Timeout.longRunning, changes: [.requests, .settings]
             )
+        }
+    }
+
+    /// A notification channel with a multi-field body (Telegram, Pushover,
+    /// email): `PUT` tests and saves, `DELETE` removes. Blank secrets keep the
+    /// saved one.
+    struct ChannelEndpoints: Sendable {
+        let transport: Transport
+        let name: String
+
+        private var path: String { "/settings/integrations/\(name)" }
+
+        /// `PUT` — `.invalid` with the server's message when the test fails.
+        func save(_ body: some Encodable & Sendable) async throws {
+            let _: API.OK = try await transport.mutate(
+                .put, path, body: body, timeout: Timeout.integrations, changes: .settings
+            )
+        }
+
+        /// `DELETE`.
+        func remove() async throws {
+            let _: API.OK = try await transport.mutate(.delete, path, changes: .settings)
+        }
+    }
+
+    struct TelegramEndpoints: Sendable {
+        let transport: Transport
+
+        private var channel: ChannelEndpoints { ChannelEndpoints(transport: transport, name: "telegram") }
+
+        /// `PUT /settings/integrations/telegram`.
+        func save(botToken: String, chatId: String) async throws {
+            try await channel.save(API.TelegramRequest(botToken: botToken, chatId: chatId))
+        }
+
+        /// `DELETE /settings/integrations/telegram`.
+        func remove() async throws {
+            try await channel.remove()
+        }
+    }
+
+    struct PushoverEndpoints: Sendable {
+        let transport: Transport
+
+        private var channel: ChannelEndpoints { ChannelEndpoints(transport: transport, name: "pushover") }
+
+        /// `PUT /settings/integrations/pushover`.
+        func save(appToken: String, userKey: String) async throws {
+            try await channel.save(API.PushoverRequest(appToken: appToken, userKey: userKey))
+        }
+
+        /// `DELETE /settings/integrations/pushover`.
+        func remove() async throws {
+            try await channel.remove()
+        }
+    }
+
+    struct EmailEndpoints: Sendable {
+        let transport: Transport
+
+        private var channel: ChannelEndpoints { ChannelEndpoints(transport: transport, name: "email") }
+
+        /// `PUT /settings/integrations/email`.
+        func save(_ request: API.EmailRequest) async throws {
+            try await channel.save(request)
+        }
+
+        /// `DELETE /settings/integrations/email`.
+        func remove() async throws {
+            try await channel.remove()
         }
     }
 }
