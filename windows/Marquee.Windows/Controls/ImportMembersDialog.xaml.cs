@@ -21,22 +21,26 @@ public sealed partial class ImportMembersDialog : ContentDialog
     private const string ImportingLabel = "Importing…";
 
     private readonly MediaServerKind server;
+    private readonly string serverName;
     private readonly Func<MediaServerKind, Task<IReadOnlyList<ImportCandidate>>> load;
     private readonly Func<MediaServerKind, IReadOnlyList<ExternalId>, Task<ImportUsersResult>> import;
     private List<ImportCandidateRow> rows = [];
     private bool isSaving;
 
+    /// <param name="serverName">What to call <paramref name="server"/>: "Emby" for Jellyfin on an Emby server.</param>
     public ImportMembersDialog(
         MediaServerKind server,
+        string serverName,
         Func<MediaServerKind, Task<IReadOnlyList<ImportCandidate>>> load,
         Func<MediaServerKind, IReadOnlyList<ExternalId>, Task<ImportUsersResult>> import)
     {
         this.server = server;
+        this.serverName = serverName;
         this.load = load;
         this.import = import;
         InitializeComponent();
-        Title = $"Import from {server.Label()}";
-        IntroText.Text = $"Each person you pick gets a member account linked to their {server.Label()} account, so they can sign in with it.";
+        Title = $"Import from {serverName}";
+        IntroText.Text = $"Each person you pick gets a member account linked to their {serverName} account, so they can sign in with it.";
     }
 
     /// <summary>What the server imported; null until Import succeeds.</summary>
@@ -59,7 +63,7 @@ public sealed partial class ImportMembersDialog : ContentDialog
             CandidateList.ItemsSource = rows;
             if (rows.Count == 0)
             {
-                EmptyText.Text = $"No {server.Label()} users to import.";
+                EmptyText.Text = $"No {serverName} users to import.";
                 EmptyText.Visibility = Visibility.Visible;
             }
         }

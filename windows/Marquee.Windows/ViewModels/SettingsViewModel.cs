@@ -20,7 +20,7 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed class HouseholdMemberRow
 {
-    public HouseholdMemberRow(HouseholdMember member, bool viewerIsAdmin, bool showsDivider, ICommand edit, ICommand remove)
+    public HouseholdMemberRow(HouseholdMember member, bool viewerIsAdmin, bool showsDivider, string jellyfinName, ICommand edit, ICommand remove)
     {
         Member = member;
         Label = member.Label;
@@ -35,7 +35,7 @@ public sealed class HouseholdMemberRow
         TrustedTag = member.IsTrusted ? "Trusted" : "";
         IsCurrentUser = member.IsCurrentUser;
         PlexTag = member.Linked?.Plex == true ? "Plex" : "";
-        JellyfinTag = member.Linked?.Jellyfin == true ? "Jellyfin" : "";
+        JellyfinTag = member.Linked?.Jellyfin == true ? jellyfinName : "";
         CanEdit = viewerIsAdmin || member.IsCurrentUser;
         CanRemove = viewerIsAdmin && !member.IsAdmin && !member.IsCurrentUser;
         ShowsDivider = showsDivider;
@@ -79,7 +79,7 @@ public sealed class HouseholdMemberRow
     /// <summary>"Plex" on an account linked to a Plex user; empty (the pill collapses) otherwise.</summary>
     public string PlexTag { get; }
 
-    /// <summary>"Jellyfin" on an account linked to a Jellyfin user; empty otherwise.</summary>
+    /// <summary>"Jellyfin" ("Emby" on an Emby server) on an account linked to a Jellyfin user; empty otherwise.</summary>
     public string JellyfinTag { get; }
 
     public BadgeTone LinkTone { get; } = BadgeTone.Owned;
@@ -140,6 +140,13 @@ public sealed partial class SettingsViewModel : ObservableObject
         nameof(CanImportFromPlex),
         nameof(CanImportFromJellyfin),
         nameof(HasNoMediaServers),
+        nameof(JellyfinName),
+        nameof(LinkJellyfinLabel),
+        nameof(ImportFromJellyfinLabel),
+        nameof(MediaServerMembersTitle),
+        nameof(MediaServerSignupHeader),
+        nameof(MediaServerSignupExplanation),
+        nameof(NoMediaServersExplanation),
     ];
 
     private readonly AppModel model;
@@ -432,10 +439,25 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool CanImportFromJellyfin => OffersJellyfin;
     public bool HasNoMediaServers => !OffersPlex && !OffersJellyfin;
 
-    private static string LinkStatus(MediaServerKind server, bool linked, bool offered) =>
-        linked ? $"Linked: you can sign in with your {server.Label()} account."
+    /// <summary>"Jellyfin", or "Emby" when that's the server connected (server-info.signIn.jellyfinName).</summary>
+    public string JellyfinName => model.Session.ServerInfo?.JellyfinName ?? MediaServerKindExtensions.DefaultJellyfinName;
+
+    /// <summary>The user-facing name of <paramref name="server"/>: Jellyfin reads "Emby" on an Emby server.</summary>
+    internal string ServerName(MediaServerKind server) => server.Label(JellyfinName);
+
+    public string LinkJellyfinLabel => $"Link {JellyfinName}";
+    public string ImportFromJellyfinLabel => $"Import from {JellyfinName}";
+    public string MediaServerMembersTitle => $"Plex and {JellyfinName} members";
+    public string MediaServerSignupHeader => $"New accounts from Plex/{JellyfinName} sign-in";
+    public string MediaServerSignupExplanation =>
+        $"When someone who can use your Plex or {JellyfinName} server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way.";
+    public string NoMediaServersExplanation =>
+        $"Connect Plex or {JellyfinName} in Settings › Integrations on the website to import household members from it and let them sign in with those accounts.";
+
+    private string LinkStatus(MediaServerKind server, bool linked, bool offered) =>
+        linked ? $"Linked: you can sign in with your {ServerName(server)} account."
             : offered ? "Not linked."
-            : $"{server.Label()} isn't connected to this server.";
+            : $"{ServerName(server)} isn't connected to this server.";
 
     // Request from my Plex Watchlist: shown while Plex is linked (the server says so).
     public bool ShowsPlexWatchlist => PlexWatchlistState?.Available == true;
@@ -789,8 +811,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void ShowMembers(IEnumerable<HouseholdMember> list)
     {
         var viewerIsAdmin = IsAdmin;
+        var jellyfinName = JellyfinName;
         Members = list
-            .Select((member, index) => new HouseholdMemberRow(member, viewerIsAdmin, index > 0, EditMemberCommand, RemoveMemberCommand))
+            .Select((member, index) => new HouseholdMemberRow(member, viewerIsAdmin, index > 0, jellyfinName, EditMemberCommand, RemoveMemberCommand))
             .ToList();
     }
 
@@ -871,7 +894,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         ClearLinksMessages();
         if (await prompt())
         {
-            LinksNotice = "Your Jellyfin account is linked.";
+            LinksNotice = $"Your {JellyfinName} account is linked.";
             await model.RefreshViewerAsync();
         }
     }
@@ -894,7 +917,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             await model.Api.Links.UnlinkAsync(server);
-            LinksNotice = $"Your {server.Label()} account is unlinked.";
+            LinksNotice = $"Your {ServerName(server)} account is unlinked.";
             await model.RefreshViewerAsync();
         }
         catch (ApiException error)

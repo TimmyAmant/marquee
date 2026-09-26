@@ -35,6 +35,40 @@ public sealed class MediaSignInDecodingTests
     }
 
     [Fact]
+    public void ServerInfoJellyfinName()
+    {
+        // 0.40+: an Emby server connected through the Jellyfin integration.
+        var emby = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.40.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":false,"jellyfin":true,"jellyfinName":"Emby"}}""");
+        Assert.Equal("Emby", emby.SignIn!.JellyfinName);
+        Assert.Equal("Emby", emby.JellyfinName);
+        Assert.Equal("Emby", emby.MediaServerName(MediaServerKind.Jellyfin));
+        Assert.Equal("Plex", emby.MediaServerName(MediaServerKind.Plex));
+
+        // Before 0.40 the field is missing: "Jellyfin". Blank or null reads the same.
+        var older = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.39.0","setupComplete":true,"status":"ok","signIn":{"jellyfin":true}}""");
+        Assert.Equal("Jellyfin", older.SignIn!.JellyfinName);
+        Assert.Equal("Jellyfin", older.JellyfinName);
+        Assert.Equal("Jellyfin", Decode<SignInMethods>("""{"jellyfinName":null}""").JellyfinName);
+        Assert.Equal("Jellyfin", Decode<SignInMethods>("""{"jellyfinName":" "}""").JellyfinName);
+
+        // No signIn at all (older still, or degraded).
+        var none = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.32.0","setupComplete":true,"status":"ok"}""");
+        Assert.Equal("Jellyfin", none.JellyfinName);
+        Assert.Equal("Jellyfin", none.MediaServerName(MediaServerKind.Jellyfin));
+    }
+
+    [Fact]
+    public void MediaServerLabels()
+    {
+        Assert.Equal("Jellyfin", MediaServerKind.Jellyfin.Label());
+        Assert.Equal("Emby", MediaServerKind.Jellyfin.Label("Emby"));
+        Assert.Equal("Jellyfin", MediaServerKind.Jellyfin.Label(null));
+        Assert.Equal("Plex", MediaServerKind.Plex.Label("Emby"));
+        // Internal identifiers stay "jellyfin".
+        Assert.Equal("jellyfin", MediaServerKind.Jellyfin.WireValue());
+    }
+
+    [Fact]
     public void OlderServerInfoOffersNoNewButtons()
     {
         var info = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.32.0","setupComplete":true,"status":"ok"}""");

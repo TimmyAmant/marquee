@@ -3,7 +3,8 @@
   Settings > Account > Linked accounts > "Link Jellyfin": the Jellyfin
   username and password of the account to link. Link stays disabled until
   both are filled in; the server checks them against its Jellyfin and its
-  refusal shows in the InfoBar, with the dialog kept open.
+  refusal shows in the InfoBar, with the dialog kept open. On an Emby
+  server the code-behind swaps "Jellyfin" for "Emby" in every label.
 -->
 <ContentDialog
     x:Class="Marquee.Windows.Controls.JellyfinLinkDialog"
@@ -22,6 +23,7 @@
 
     <StackPanel Spacing="12" MinWidth="380">
         <TextBlock
+            x:Name="IntroText"
             Text="Sign in with your Jellyfin account to use it for Marquee too."
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"

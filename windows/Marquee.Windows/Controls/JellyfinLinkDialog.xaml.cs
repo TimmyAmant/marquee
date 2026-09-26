@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 namespace Marquee.Windows.Controls;
 
 /// <summary>
-/// "Link Jellyfin". Link sends <c>POST /me/links/jellyfin</c> through the
+/// "Link Jellyfin" ("Link Emby" on an Emby server). Link sends <c>POST /me/links/jellyfin</c> through the
 /// function it was given and, when the server refuses (wrong password, an
 /// account linked to someone else), shows the server's message and stays
 /// open. <c>ShowAsync</c> returning <c>ContentDialogResult.Primary</c> means
@@ -19,10 +19,15 @@ public sealed partial class JellyfinLinkDialog : ContentDialog
     private readonly Func<string, string, Task> link;
     private bool isSaving;
 
-    public JellyfinLinkDialog(Func<string, string, Task> link)
+    /// <param name="serverName">"Jellyfin", or "Emby" when that's the server connected.</param>
+    public JellyfinLinkDialog(string serverName, Func<string, string, Task> link)
     {
         this.link = link;
         InitializeComponent();
+        Title = $"Link {serverName}";
+        IntroText.Text = $"Sign in with your {serverName} account to use it for Marquee too.";
+        UsernameBox.Header = $"{serverName} username";
+        PasswordInput.Header = $"{serverName} password";
     }
 
     private bool CanLink => UsernameBox.Text.Trim().Length > 0 && PasswordInput.Password.Length > 0;

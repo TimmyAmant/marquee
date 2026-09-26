@@ -135,6 +135,16 @@ public sealed record ServerInfo
     /// <summary>"Sign in with Jellyfin" is offered.</summary>
     public bool OffersJellyfinSignIn => SignIn?.Jellyfin == true;
 
+    /// <summary>
+    /// What to call the "jellyfin" server in the UI: "Emby" when that's what
+    /// is connected (it speaks the same API), otherwise "Jellyfin" — also for
+    /// servers before 0.40, which don't send it.
+    /// </summary>
+    public string JellyfinName => SignIn?.JellyfinName ?? MediaServerKindExtensions.DefaultJellyfinName;
+
+    /// <summary>The user-facing name of <paramref name="server"/> on this server.</summary>
+    public string MediaServerName(MediaServerKind server) => server.Label(JellyfinName);
+
     public bool IsMarquee => App == "marquee";
     public bool IsSupported => ApiVersion == SupportedApiVersion;
     public bool IsDegraded => Status == "degraded";
@@ -161,6 +171,18 @@ public sealed record SignInMethods
     public bool Password { get; init; } = true;
     public bool Plex { get; init; }
     public bool Jellyfin { get; init; }
+
+    private readonly string jellyfinName = MediaServerKindExtensions.DefaultJellyfinName;
+
+    /// <summary>
+    /// <c>jellyfinName</c> (0.40+): "Jellyfin" or "Emby". Missing or blank
+    /// (older servers) reads as "Jellyfin".
+    /// </summary>
+    public string JellyfinName
+    {
+        get => jellyfinName;
+        init => jellyfinName = MediaServerKindExtensions.NormalizedJellyfinName(value);
+    }
 }
 
 public sealed record SetupRequest(string Username, string Password, string DisplayName, string DeviceName);
