@@ -25,6 +25,10 @@
     },
     "fourK": null,
     "canReport": false,
-    "openReports": 0
+    "openReports": 0,
+    "blocked": {
+      "reason": "Already on Max.",
+      "keyword": null
+    }
   }
 }
