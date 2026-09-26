@@ -70,6 +70,26 @@ export async function sendEmail(config: EmailConfig, subject: string, text: stri
     .catch(() => false);
 }
 
+/** One address, loosely checked (the mail server is the real judge). Pure. */
+export function isEmailAddress(value: string): boolean {
+  return value.length <= 254 && ADDRESS.test(value);
+}
+
+/** Sends one email and says why when it didn't go. Never throws. */
+export async function deliverEmail(
+  config: EmailConfig,
+  subject: string,
+  text: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await send(config, subject, text);
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message.slice(0, 300) };
+  }
+}
+
 /** Sends a test email; the error is the SMTP server's own answer, which
  * usually says what's wrong (a rejected password, a refused sender). */
 export async function verifyEmail(config: EmailConfig): Promise<{ ok: true } | { ok: false; error: string }> {

@@ -18,6 +18,8 @@ import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
 import { SsoSettingsCard } from "@/components/sso-settings-card";
 import { getSsoSettingsView } from "@/lib/auth/sso/config";
+import { HouseholdEventsCard } from "@/components/household-events-card";
+import { getHouseholdEvents } from "@/lib/notifications/preferences";
 
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
@@ -41,7 +43,8 @@ export default async function IntegrationsSettingsPage() {
     },
     headerList,
     sso,
-  ] = await Promise.all([loadIntegrationsPage(session.user.id), headers(), getSsoSettingsView()]);
+    householdEvents,
+  ] = await Promise.all([loadIntegrationsPage(session.user.id), headers(), getSsoSettingsView(), getHouseholdEvents()]);
 
   const baseUrl = webhookBaseUrl(headerList);
 
@@ -122,9 +125,10 @@ export default async function IntegrationsSettingsPage() {
 
         <section>
           <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Notifications
+            Household channels
           </h3>
           <div className="mt-3 flex flex-col gap-6">
+            <HouseholdEventsCard initial={householdEvents} />
             <WebhookSettingsCard
               userId={session.user.id}
               initialSecret={webhookSecret}

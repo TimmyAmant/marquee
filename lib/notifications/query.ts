@@ -2,32 +2,17 @@ import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { notifications } from "@/lib/db/schema";
 import type { MediaType, NotificationEventType } from "@/lib/db/schema";
-import { getDiscordWebhookUrl, getGenericWebhookUrl, getNtfyUrl } from "@/lib/integrations/app-settings";
-import { sendDiscordMessage } from "@/lib/discord/client";
-import { sendWebhookNotification } from "@/lib/webhook/client";
-import { sendNtfyMessage } from "@/lib/ntfy/client";
-import { sendTelegramMessage } from "@/lib/telegram/client";
-import { sendPushoverMessage } from "@/lib/pushover/client";
-import { sendEmail } from "@/lib/email/client";
-import { getChannelConfig } from "@/lib/notifications/channels";
 import { publishNotification } from "@/lib/notifications/bus";
 import { pushMessageFor, pushToUser } from "@/lib/push/deliver";
-
-const EVENT_EMOJI: Record<NotificationEventType, string> = {
-  grabbed: "⬇️",
-  downloaded: "✅",
-  request_approved: "👍",
-  request_rejected: "👎",
-  issue_reported: "⚠️",
-  issue_resolved: "🛠️",
-  request_created: "🙋",
-};
+import { bellAndPushFor, preferenceEventFor, type NotificationPreferenceEvent } from "@/lib/notifications/events";
+import { loadBellPushOverrides } from "@/lib/notifications/preferences";
+import { fanOut } from "@/lib/notifications/fan-out";
 
 export async function getUnreadCount(userId: string): Promise<number> {
   const [row] = await db
     .select({ count: count() })
     .from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+    .where(and(eq(notifications.userId, userId), eq(notifications.read, false), eq(notifications.inBell, true)));
   return row?.count ?? 0;
 }
 
@@ -48,11 +33,12 @@ export async function markNotificationRead(userId: string, notificationId: strin
   return updated.length > 0;
 }
 
+/** The bell's list: what this account chose to see there. */
 export async function getRecentNotifications(userId: string, limit = 20) {
   return db
     .select()
     .from(notifications)
-    .where(eq(notifications.userId, userId))
+    .where(and(eq(notifications.userId, userId), eq(notifications.inBell, true)))
     .orderBy(desc(notifications.createdAt))
     .limit(limit);
 }
@@ -64,10 +50,12 @@ export async function createNotification(input: {
   title: string;
   eventType: NotificationEventType;
   message: string;
-  /** Also post to Discord / ntfy / Telegram / Pushover / email / the generic webhook. Those channels are
-   * household-wide, so a second notification about the same event (e.g. the
-   * requester's copy of a download the admin was already told about) passes
-   * false to avoid posting it twice. */
+  /** Also post to the household channels (Discord / ntfy / Telegram /
+   * Pushover / email / the generic webhook), for the events the admin
+   * picked. Those are household-wide, so a second notification about the
+   * same event (e.g. the requester's copy of a download the admin was
+   * already told about) passes false to avoid posting it twice. The
+   * account's own channels are separate and follow its own choices. */
   relay?: boolean;
   /** Skip it (and return false) if this user already has a notification for
    * the same title and event since this moment. Sonarr sends one webhook per
@@ -78,69 +66,42 @@ export async function createNotification(input: {
   is4k?: boolean;
   /** request_created: the request its Approve / Decline buttons act on. */
   requestId?: string;
+  /** Which of Settings' events this is, when it isn't the eventType's usual
+   * one (lib/notifications/events.ts) — a Plex Watchlist batch. */
+  topic?: NotificationPreferenceEvent;
 }): Promise<boolean> {
-  const { relay = true, dedupeSince, ...row } = input;
-  const saved = dedupeSince ? await insertUnlessRecent(row, dedupeSince) : await insertNotification(row);
+  const { relay = true, dedupeSince, topic, ...row } = input;
+  const event = topic ?? preferenceEventFor(input.eventType);
+  // Not being able to read the choices mustn't lose the notification: the
+  // defaults are what everyone had before there were choices.
+  const overrides = await loadBellPushOverrides(input.userId).catch(() => ({}));
+  const { inApp, push } = bellAndPushFor(overrides, event);
+  const values = { ...row, inBell: inApp, alert: push };
+  // Saved even when it's neither in the bell nor pushed: that's how a
+  // repeat (the next episode of a season pack) is recognised.
+  const saved = dedupeSince ? await insertUnlessRecent(values, dedupeSince) : await insertNotification(values);
   if (!saved) return false;
 
-  // Straight to the account's own devices: the apps' live streams and every
-  // browser that turned notifications on. Unlike the relays below these are
-  // personal, so they go out even for a copy that isn't relayed.
-  publishNotification(saved);
-  void pushToUser(saved.userId, pushMessageFor(saved));
+  // Straight to the account's own devices: the apps' live streams (which
+  // update the bell, and show a banner unless `alert` is false) and every
+  // browser that turned notifications on.
+  if (saved.inBell || saved.alert) publishNotification(saved);
+  if (saved.alert) void pushToUser(saved.userId, pushMessageFor(saved));
 
-  if (!relay) return true;
-
-  // Best-effort relay to every configured channel — a channel being down or
-  // unconfigured should never break the in-app notification (already saved
-  // above), which is why each of these is fire-and-forget with its own
-  // catch rather than awaited inline.
-  getDiscordWebhookUrl()
-    .then((webhookUrl) => {
-      if (!webhookUrl) return;
-      return sendDiscordMessage(webhookUrl, `${EVENT_EMOJI[input.eventType]} ${input.message}`);
-    })
-    .catch(() => undefined);
-
-  getNtfyUrl()
-    .then((topicUrl) => {
-      if (!topicUrl) return;
-      return sendNtfyMessage(topicUrl, input.title, input.message);
-    })
-    .catch(() => undefined);
-
-  getChannelConfig("telegram")
-    .then((config) => {
-      if (!config) return;
-      return sendTelegramMessage(config, `${EVENT_EMOJI[input.eventType]} ${input.message}`);
-    })
-    .catch(() => undefined);
-
-  getChannelConfig("pushover")
-    .then((config) => {
-      if (!config) return;
-      return sendPushoverMessage(config, input.title, input.message);
-    })
-    .catch(() => undefined);
-
-  getChannelConfig("email")
-    .then((config) => {
-      if (!config) return;
-      return sendEmail(config, `${EVENT_EMOJI[input.eventType]} ${input.message}`, `${input.message}\n\n— Marquee`);
-    })
-    .catch(() => undefined);
-
-  getGenericWebhookUrl()
-    .then((url) => {
-      if (!url) return;
-      return sendWebhookNotification(url, {
-        event: input.eventType,
-        title: input.title,
-        message: input.message,
-      });
-    })
-    .catch(() => undefined);
-
+  // Household and personal channels, in the background: the notification
+  // is already saved, and a slow or broken channel mustn't hold anything up.
+  void fanOut(
+    {
+      userId: saved.userId,
+      eventType: saved.eventType,
+      event,
+      title: saved.title,
+      message: saved.message,
+      mediaType: saved.mediaType,
+      tmdbId: saved.tmdbId,
+    },
+    relay,
+  );
   return true;
 }
 

@@ -629,8 +629,54 @@ export type NotificationItem = {
   eventType: NotificationEventType;
   message: string;
   read: boolean;
+  /** 0.45+: false when this account turned off device push for this kind
+   * of notification — it's in the bell, but no banner. Absent: true. */
+  alert: boolean;
   createdAt: string;
 };
+
+/** GET /me/notification-channels (0.45+). */
+export type PersonalNotificationChannel = {
+  id: string;
+  kind: "telegram" | "pushover" | "email" | "discord" | "ntfy" | "webhook";
+  name: string | null;
+  /** Masked: enough to tell channels apart, never the secret itself. */
+  target: string;
+  enabled: boolean;
+  /** Email: false until the code sent to the address is entered. */
+  verified: boolean;
+  lastSuccessAt: string | null;
+  lastError: string | null;
+  lastErrorAt: string | null;
+  createdAt: string;
+};
+
+export type PersonalNotificationChannels = {
+  available: {
+    telegram: { available: boolean; botUsername: string | null };
+    pushover: { available: boolean };
+    email: { available: boolean };
+    discord: { available: boolean };
+    ntfy: { available: boolean; householdServer: string | null };
+    webhook: { available: boolean; homeNetwork: boolean };
+  };
+  channels: PersonalNotificationChannel[];
+};
+
+export type NotificationPreferenceRow = {
+  event: string;
+  label: string;
+  reviewerOnly: boolean;
+  inApp: boolean;
+  push: boolean;
+  channels: Record<string, boolean>;
+};
+
+/** GET/PUT /me/notification-preferences (0.45+). */
+export type NotificationPreferences = { events: NotificationPreferenceRow[] };
+
+/** GET/PUT /settings/notification-events (0.45+, admin). */
+export type HouseholdNotificationEvents = { events: { event: string; label: string; enabled: boolean }[] };
 
 export type CalendarEntry = {
   date: string;

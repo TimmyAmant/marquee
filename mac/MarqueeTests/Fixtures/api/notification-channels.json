@@ -1,0 +1,51 @@
+{
+  "available": {
+    "telegram": {
+      "available": true,
+      "botUsername": "MarqueeHomeBot"
+    },
+    "pushover": {
+      "available": false
+    },
+    "email": {
+      "available": true
+    },
+    "discord": {
+      "available": true
+    },
+    "ntfy": {
+      "available": true,
+      "householdServer": "https://ntfy.sh"
+    },
+    "webhook": {
+      "available": true,
+      "homeNetwork": false
+    }
+  },
+  "channels": [
+    {
+      "id": "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44",
+      "kind": "telegram",
+      "name": "My phone",
+      "target": "Chat ••••6789",
+      "enabled": true,
+      "verified": true,
+      "lastSuccessAt": "2026-09-25T18:40:05.000Z",
+      "lastError": null,
+      "lastErrorAt": null,
+      "createdAt": "2026-09-20T09:12:00.000Z"
+    },
+    {
+      "id": "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61",
+      "kind": "email",
+      "name": null,
+      "target": "anna@example.com",
+      "enabled": true,
+      "verified": false,
+      "lastSuccessAt": null,
+      "lastError": null,
+      "lastErrorAt": null,
+      "createdAt": "2026-09-25T18:41:00.000Z"
+    }
+  ]
+}
