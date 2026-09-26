@@ -101,6 +101,13 @@ export const users = pgTable(
     // allows it) a verified-email match; both null otherwise.
     ssoIssuer: text("sso_issuer"),
     ssoSubject: text("sso_subject"),
+    // The language this account reads Marquee in (lib/i18n/locales.ts: "en",
+    // "es", "fr", "de", "pt-BR"), chosen in Settings › Account › Appearance
+    // or with PATCH /me. Null: follow the browser's (or the app's system)
+    // language. Also what their notifications are written in. Checked in
+    // code rather than by a constraint, so adding a language needs no
+    // migration.
+    language: text("language"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [

@@ -103,6 +103,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           permissions: users.permissions,
           passwordChangedAt: users.passwordChangedAt,
           lastActiveAt: users.lastActiveAt,
+          language: users.language,
         })
         .from(users)
         .where(eq(users.id, token.userId as string))
@@ -117,6 +118,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Permissions likewise (lib/users/permissions.ts): the admin changing
       // a member's switches applies on their very next page load.
       token.permissions = row.permissions;
+      // And the language they chose (lib/i18n): a change shows on the next
+      // page load, on every device.
+      token.language = row.language;
       recordActivity(token.userId as string, row.lastActiveAt);
       return token;
     },
@@ -126,6 +130,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.username = token.username as string;
         session.user.role = (token.role as typeof session.user.role) ?? "member";
         session.user.permissions = Array.isArray(token.permissions) ? token.permissions : [];
+        session.user.language = typeof token.language === "string" ? token.language : null;
       }
       return session;
     },

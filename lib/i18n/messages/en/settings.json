@@ -1,0 +1,6 @@
+{
+  "languageLabel": "Language",
+  "languageHelp": "The language Marquee is shown in for your account, on every device. Notifications you get are written in it too.",
+  "languageAutomatic": "Automatic (browser language)",
+  "languageInvalid": "Choose one of the languages in the list."
+}

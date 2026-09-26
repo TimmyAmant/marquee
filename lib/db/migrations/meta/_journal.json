@@ -372,6 +372,13 @@
       "when": 1790460132348,
       "tag": "0052_add_discover_shelves_and_trakt_syncs",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1790463150713,
+      "tag": "0053_add_user_language",
+      "breakpoints": true
     }
   ]
 }

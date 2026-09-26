@@ -1,0 +1,6 @@
+{
+  "languageLabel": "Sprache",
+  "languageHelp": "Die Sprache, in der Marquee für dein Konto angezeigt wird – auf allen Geräten. Auch deine Benachrichtigungen kommen in dieser Sprache.",
+  "languageAutomatic": "Automatisch (Browsersprache)",
+  "languageInvalid": "Wähle eine der Sprachen aus der Liste."
+}

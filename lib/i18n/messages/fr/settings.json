@@ -1,0 +1,6 @@
+{
+  "languageLabel": "Langue",
+  "languageHelp": "La langue dans laquelle Marquee s’affiche pour votre compte, sur tous vos appareils. Vos notifications sont aussi rédigées dans cette langue.",
+  "languageAutomatic": "Automatique (langue du navigateur)",
+  "languageInvalid": "Choisissez l’une des langues de la liste."
+}

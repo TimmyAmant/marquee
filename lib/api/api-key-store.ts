@@ -151,6 +151,7 @@ export async function authenticateApiKey(key: string, now = new Date()): Promise
       permissions: users.permissions,
       avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
+      language: users.language,
     })
     .from(apiKeys)
     .innerJoin(users, sql`${users.id} = coalesce(${apiKeys.actAsUserId}, ${apiKeys.createdByUserId})`)
@@ -185,6 +186,7 @@ export async function authenticateApiKey(key: string, now = new Date()): Promise
       permissions: row.permissions,
       avatarUpdatedAt: row.avatarUpdatedAt,
       createdAt: row.createdAt,
+      language: row.language,
     },
   };
 }

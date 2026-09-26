@@ -1,3 +1,4 @@
+import { setScopedLanguage } from "@/lib/i18n/request-scope";
 import { ApiError } from "@/lib/api/errors";
 import { can, type Permission } from "@/lib/users/permissions";
 import { parseBearerToken } from "@/lib/api/tokens";
@@ -41,6 +42,8 @@ const resolved = new WeakMap<Request, Promise<ApiContext>>();
 
 function contextFor(user: AuthenticatedToken["user"], credential: ApiCredentialInfo): ApiContext {
   const apiUser: ApiUser = { ...user, isAdmin: user.role === "admin" };
+  // Messages from here on are in the account's language (lib/i18n).
+  setScopedLanguage(user.language);
   let ownerPromise: Promise<string> | null = null;
   const libraryOwnerId = () => (ownerPromise ??= getLibraryOwnerUserId(apiUser.id));
   return {

@@ -5,6 +5,7 @@ import type { ApiContext } from "@/lib/api/auth";
 import type { Me, RequestQuota } from "@/lib/api/types";
 import { getQuotas, type QuotaState } from "@/lib/requests/quota";
 import { can } from "@/lib/users/permissions";
+import { storedLanguage } from "@/lib/users/language";
 
 export function quotaDto(quota: QuotaState | null): RequestQuota | null {
   return quota ? { ...quota, nextSlotAt: quota.nextSlotAt?.toISOString() ?? null } : null;
@@ -29,5 +30,6 @@ export async function meDto(ctx: ApiContext): Promise<Me> {
     linked: links.linked,
     hasPassword: links.hasPassword,
     requestLimits: { movie: quotaDto(quotas.movie), tv: quotaDto(quotas.tv) },
+    language: storedLanguage(user.language),
   };
 }

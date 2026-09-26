@@ -187,6 +187,10 @@ export type Me = User & {
   /** This account's request limits and how much is left (0.39+); each null
    * when that type isn't limited. */
   requestLimits: { movie: RequestQuota | null; tv: RequestQuota | null };
+  /** The language this account reads Marquee in — "en", "es", "fr", "de"
+   * or "pt-BR" — or null to follow the browser / the app's system language
+   * (0.50+). Set with PATCH /me. */
+  language: string | null;
 };
 
 export type RequestQuota = {

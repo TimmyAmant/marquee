@@ -1,0 +1,4 @@
+{
+  "signInAgain": "Vuelve a iniciar sesión: tu sesión ha terminado.",
+  "languageInvalid": "language debe ser null o uno de estos valores: en, es, fr, de, pt-BR."
+}

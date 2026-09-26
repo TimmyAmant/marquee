@@ -7,6 +7,8 @@ import { SignOutButton } from "./sign-out-button";
 import { PushSettings } from "./push-settings";
 import { PersonalNotifications } from "./personal-notifications";
 import { RailPositionSetting } from "./rail-position-setting";
+import { LanguageSetting } from "./language-setting";
+import { storedLanguage } from "@/lib/users/language";
 import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
@@ -136,6 +138,9 @@ export default async function AccountSettingsPage({
       <p className="mt-2 text-sm text-text-secondary">How Marquee looks on this device.</p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <RailPositionSetting initial={railPosition} />
+        <div className="border-t border-border">
+          <LanguageSetting initial={storedLanguage(session.user.language)} />
+        </div>
       </div>
 
       <h2 className="mt-10 font-display text-xl text-text-primary">
