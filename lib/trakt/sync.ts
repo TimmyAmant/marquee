@@ -207,26 +207,27 @@ export async function createTraktSync(
   if (items === "missing") return fail("upstream", UNREADABLE);
   if (items === "unreachable") return fail("upstream", "Couldn't reach Trakt just now. Try again in a minute.");
 
-  const [row] = await db
-    .insert(traktSyncs)
-    .values({
-      userId: actor.id,
-      kind: list.kind,
-      username: list.username.toLowerCase(),
-      slug: list.kind === "list" ? list.slug.toLowerCase() : "",
-      syncMovies: movies,
-      syncTv: tv,
-      lastSyncedAt: requestExisting ? null : new Date(),
-    })
-    .onConflictDoNothing()
-    .returning();
-  if (!row) return fail("conflict", "You're already keeping that list in sync.");
-
-  if (!requestExisting) {
+  // One transaction: a scheduled check can't see the new sync before what's
+  // on the list now is noted as already there.
+  const row = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(traktSyncs)
+      .values({
+        userId: actor.id,
+        kind: list.kind,
+        username: list.username.toLowerCase(),
+        slug: list.kind === "list" ? list.slug.toLowerCase() : "",
+        syncMovies: movies,
+        syncTv: tv,
+        lastSyncedAt: requestExisting ? null : new Date(),
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (!inserted || requestExisting) return inserted ?? null;
     // What's on it now counts as handled: only what's added later is asked for.
     const existing = pendingTraktItems(items, { movies: true, tv: true }, new Set());
     for (let i = 0; i < existing.length; i += 500) {
-      await db
+      await tx
         .insert(traktSyncItems)
         .values(
           existing.slice(i, i + 500).map((item) => ({
@@ -234,12 +235,14 @@ export async function createTraktSync(
             mediaType: item.mediaType,
             tmdbId: item.tmdbId,
             outcome: "existing" as const,
-            syncId: row.id,
+            syncId: inserted.id,
           })),
         )
         .onConflictDoNothing();
     }
-  }
+    return inserted;
+  });
+  if (!row) return fail("conflict", "You're already keeping that list in sync.");
 
   const sync = await getTraktSync(row.id);
   if (!sync) return fail("internal", "The sync was added but couldn't be read back.");

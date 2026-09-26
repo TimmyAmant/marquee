@@ -50,7 +50,7 @@ function SyncRow({
         </a>
         {!mine && <span className="ml-2 text-xs text-text-muted">{owner}&apos;s</span>}
         <p className="mt-0.5 text-xs text-text-muted">
-          {lastSynced ? `Checked ${timeAgo(lastSynced)}` : "Checking…"}
+          {lastSynced ? `Checked ${timeAgo(lastSynced)}` : sync.lastError ? "Not checked yet" : "Checking…"}
           {sync.requestedCount > 0 &&
             ` · ${sync.requestedCount} ${sync.requestedCount === 1 ? "title" : "titles"} requested so far`}
         </p>
