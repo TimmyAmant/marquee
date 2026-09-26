@@ -274,13 +274,6 @@
       "when": 1790387897129,
       "tag": "0038_add_4k_servers",
       "breakpoints": true
-    },
-    {
-      "idx": 39,
-      "version": "7",
-      "when": 1790389616261,
-      "tag": "0039_add_issues",
-      "breakpoints": true
     }
   ]
 }
