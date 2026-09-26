@@ -343,18 +343,37 @@ public readonly record struct ArrProvider(string Value) : IOpenEnum<ArrProvider>
     public static readonly ArrProvider Sonarr = new("sonarr");
     public static readonly ArrProvider Radarr = new("radarr");
 
-    public static IReadOnlyList<ArrProvider> Known { get; } = [Sonarr, Radarr];
+    /// <summary>The optional 4K Sonarr (0.37+).</summary>
+    public static readonly ArrProvider Sonarr4k = new("sonarr4k");
+
+    /// <summary>The optional 4K Radarr (0.37+).</summary>
+    public static readonly ArrProvider Radarr4k = new("radarr4k");
+
+    public static IReadOnlyList<ArrProvider> Known { get; } = [Sonarr, Radarr, Sonarr4k, Radarr4k];
     public static ArrProvider FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    public string DisplayName => this == Sonarr ? "Sonarr" : this == Radarr ? "Radarr" : OpenEnum.Capitalized(Value);
+    /// <summary>The 4K Sonarr or 4K Radarr.</summary>
+    public bool IsFourK => this == Sonarr4k || this == Radarr4k;
+
+    public string DisplayName
+    {
+        get
+        {
+            if (this == Sonarr) return "Sonarr";
+            if (this == Radarr) return "Radarr";
+            if (this == Sonarr4k) return "4K Sonarr";
+            if (this == Radarr4k) return "4K Radarr";
+            return OpenEnum.Capitalized(Value);
+        }
+    }
 
     /// <summary>The port the service listens on out of the box; null for a provider this app doesn't know.</summary>
-    public int? DefaultPort => this == Sonarr ? 8989 : this == Radarr ? 7878 : null;
+    public int? DefaultPort => this == Sonarr || this == Sonarr4k ? 8989 : this == Radarr || this == Radarr4k ? 7878 : null;
 
     /// <summary>The media type this provider adds.</summary>
-    public MediaType MediaType => this == Sonarr ? Models.MediaType.Tv : Models.MediaType.Movie;
+    public MediaType MediaType => this == Sonarr || this == Sonarr4k ? Models.MediaType.Tv : Models.MediaType.Movie;
 }
 
 /// <summary>

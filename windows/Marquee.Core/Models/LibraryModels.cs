@@ -190,6 +190,12 @@ public sealed record TitleViewerState
     /// <summary>The seasons of your pending request; null when there's none or it's for the whole series.</summary>
     public IReadOnlyList<int>? RequestedSeasons { get; init; }
 
+    /// <summary>
+    /// The 4K copy (0.37+), when the admin has set up a 4K Radarr (movies) /
+    /// 4K Sonarr (TV); null otherwise, and from an older server.
+    /// </summary>
+    public FourKViewerState? FourK { get; init; }
+
     /// <summary>"Requested Seasons 1–3, waiting for approval", or without the seasons for a whole-series request.</summary>
     public string PendingRequestLine =>
         SeasonLabels.SeasonsLabel(RequestedSeasons) is { } label
@@ -200,6 +206,44 @@ public sealed record TitleViewerState
     public string? OtherRequestersLine =>
         OtherRequesters.Count == 0 || AlreadyRequested ? null : $"Also requested by {string.Join(", ", OtherRequesters)}";
 }
+
+/// <summary>
+/// <c>viewer.fourK</c> (0.37+): the title in the 4K Radarr/Sonarr, read live
+/// and independent of <c>library.status</c>. components/fourk-controls.tsx.
+/// </summary>
+public sealed record FourKViewerState
+{
+    /// <summary>How the 4K instance has the title; <see cref="LibraryStatus.Untracked"/> when it doesn't.</summary>
+    public required LibraryStatus Status { get; init; }
+
+    /// <summary>Your own 4K request (pending/approved); null when none or declined.</summary>
+    public RequestStatus? RequestStatus { get; init; }
+
+    /// <summary>"Request in 4K" (<c>POST …/request</c> with <c>{"is4k": true}</c>).</summary>
+    public required bool CanRequest { get; init; }
+
+    /// <summary>"Add to 4K Radarr/Sonarr" (admin; <c>POST …/add</c> with <c>{"is4k": true}</c>).</summary>
+    public required bool CanAdd { get; init; }
+
+    /// <summary>The gold outline chip: "In 4K", "4K downloading", "4K missing", "4K coming soon"; null when untracked (or unknown).</summary>
+    public string? StatusLabel
+    {
+        get
+        {
+            if (Status == LibraryStatus.Owned) return "In 4K";
+            if (Status == LibraryStatus.TrackedDownloading) return "4K downloading";
+            if (Status == LibraryStatus.TrackedMonitored) return "4K missing";
+            if (Status == LibraryStatus.ComingSoon) return "4K coming soon";
+            return null;
+        }
+    }
+
+    /// <summary>The "4K requested" chip, while your 4K request is pending.</summary>
+    public bool IsRequested => RequestStatus == Models.RequestStatus.Pending;
+}
+
+/// <summary><c>POST …/request</c> and <c>POST …/add</c> body for the 4K copy (0.37+).</summary>
+public sealed record FourKBody(bool Is4k);
 
 /// <summary>
 /// <c>GET /titles/{type}/{tmdbId}/status</c>: just <c>library</c> +

@@ -46,7 +46,16 @@ public sealed class IntegrationsEndpoints(MarqueeApi.Transport transport)
     public ArrEndpoints Sonarr => new(transport, ArrProvider.Sonarr);
     public ArrEndpoints Radarr => new(transport, ArrProvider.Radarr);
 
-    /// <summary>Sonarr or Radarr by provider, for a view that manages both from one template.</summary>
+    /// <summary>
+    /// The optional 4K Sonarr (0.37+): <c>/settings/integrations/sonarr4k</c>,
+    /// same bodies and answers; error messages say "4K Sonarr".
+    /// </summary>
+    public ArrEndpoints Sonarr4k => new(transport, ArrProvider.Sonarr4k);
+
+    /// <summary>The optional 4K Radarr (0.37+): <c>/settings/integrations/radarr4k</c>.</summary>
+    public ArrEndpoints Radarr4k => new(transport, ArrProvider.Radarr4k);
+
+    /// <summary>Sonarr or Radarr (either 4K one too) by provider, for a view that manages both from one template.</summary>
     public ArrEndpoints Arr(ArrProvider provider) => new(transport, provider);
 
     public PlexEndpoints Plex => new(transport);
@@ -115,7 +124,7 @@ public sealed class NotificationChannelEndpoints<TRequest>(MarqueeApi.Transport 
         transport.MutateAsync<OK>(HttpMethod.Delete, Path, changes: ServerChange.Integrations, ct: ct);
 }
 
-/// <summary><c>/settings/integrations/{sonarr|radarr}</c> (default ports 8989 / 7878).</summary>
+/// <summary><c>/settings/integrations/{sonarr|radarr|sonarr4k|radarr4k}</c> (default ports 8989 / 7878).</summary>
 public sealed class ArrEndpoints(MarqueeApi.Transport transport, ArrProvider provider)
 {
     public ArrProvider Provider => provider;
