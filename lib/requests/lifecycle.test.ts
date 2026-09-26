@@ -229,6 +229,9 @@ describe("editing a pending request", () => {
     expect(await getRequestEditOptions({ userId: anna, role: "member" }, bens.id)).toMatchObject({ code: "not_found" });
     expect(await editRequest({ userId: trusted, role: "trusted" }, bens.id, { seasons: [2] })).toEqual({ ok: true });
     expect((await requestRow(bens.id)).seasons).toEqual([2]);
+    // Ben hears about it, through the request's conversation.
+    const [told] = await (await db()).select().from(notifications).where(eq(notifications.userId, ben));
+    expect(told).toMatchObject({ eventType: "request_comment", message: `trusted commented on "Severance" (Season 2): Changed this request to Season 2.` });
 
     const options = await getRequestEditOptions({ userId: admin, role: "admin" }, bens.id);
     expect(options.ok && options.options.seasonRows.map((r) => [r.seasonNumber, r.state])).toEqual([

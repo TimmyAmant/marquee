@@ -1924,7 +1924,10 @@ seasons TMDb lists, minus any Sonarr already monitors or has (dropped
 quietly; `409` if none are left); 4K only once the admin has a 4K
 Sonarr/Radarr, the 4K copy isn't already there, and you have no other 4K
 request for it. It keeps its place in the queue and in your request limit.
-Unread "new request" alerts for it are reworded to match. `{ "ok": true }`
+Unread "new request" alerts for it are reworded to match. When a reviewer
+changes someone else's, a comment in their name says so in its conversation
+("Changed this request to Season 2."), which notifies the requester.
+`{ "ok": true }`
 (also when nothing changed). Errors: `404` "Request not found." (someone
 else's, for a member), `409 conflict` "It's already been reviewed, so it
 can't be changed. Ask in its comments instead." / "4K requests aren't set up

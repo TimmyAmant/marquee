@@ -4,7 +4,8 @@ import { db } from "@/lib/db/client";
 import { requests, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getActiveRequestStatus, getViewerTitleRequests } from "@/lib/requests/query";
-import { activityRequestTitle, quotedRequestTitle } from "@/lib/requests/labels";
+import { activityRequestTitle, quotedRequestTitle, seasonsLabel } from "@/lib/requests/labels";
+import { addComment } from "@/lib/comments";
 import { parseSeasonsInput, seasonsStillNeeded, unlistedSeasonError } from "@/lib/requests/seasons";
 import { addMovieToRadarrForUser, addSeriesToSonarrForUser, type AddPlacement } from "@/lib/arr/title-actions";
 import { getLibraryOwnerUserId, type ViewerIdentity } from "@/lib/integrations/library-owner";
@@ -758,6 +759,15 @@ export async function editRequest(
   }
   // The reviewers' "new request" alerts still waiting name what's asked for.
   await refreshRequestAlerts(updated[0]).catch(() => undefined);
+  // A reviewer changed someone else's: say so in its conversation, which
+  // also tells the requester.
+  if (request.requestedByUserId !== actor.userId) {
+    const now = [seasonsLabel(updated[0].seasons), updated[0].is4k ? "in 4K" : null].filter(Boolean).join(", ");
+    const whole = request.mediaType === "tv" ? "the whole series" : "the regular copy";
+    await addComment(actor, { kind: "request", id: requestId }, `Changed this request to ${now || whole}.`, false).catch(
+      () => undefined,
+    );
+  }
   revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/requests");
   return { ok: true };

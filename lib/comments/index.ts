@@ -197,13 +197,16 @@ export async function addComment(
   viewer: CommentViewer,
   target: CommentTarget,
   rawBody: unknown,
+  /** False for a line the server writes on someone's behalf ("Changed this
+   * request to Season 2."), which their own typing shouldn't hold back. */
+  rateLimited = true,
 ): Promise<CoreResult<{ commentId: string }>> {
   const opened = await openThread(viewer, target);
   if (!opened.ok) return opened;
   const { parent } = opened;
   const parsed = sanitizeComment(rawBody);
   if (!parsed.ok) return fail("invalid", parsed.error);
-  if (!checkRateLimit(`comment:${viewer.userId}`, COMMENTS_PER_WINDOW, COMMENT_WINDOW_MS)) {
+  if (rateLimited && !checkRateLimit(`comment:${viewer.userId}`, COMMENTS_PER_WINDOW, COMMENT_WINDOW_MS)) {
     return fail("rate_limited", "That's a lot of comments in a short time. Try again in a few minutes.");
   }
   const [existing] = await db.select({ count: count() }).from(comments).where(parentColumn(target));
