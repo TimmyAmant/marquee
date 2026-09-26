@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { NavMenu } from "@/components/nav-menu";
 import { PushPrompt } from "@/components/push-prompt";
+import { WhatsNew } from "@/components/whats-new";
+import { APP_VERSION } from "@/lib/api/version";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { getFailedRequestCount, getPendingRequestCount } from "@/lib/requests/query";
@@ -55,6 +57,8 @@ export async function Sidebar() {
       />
       {/* Asks about notifications on this device after signing in. */}
       {session?.user && <PushPrompt />}
+      {/* "What's new" once after the server is upgraded (once per device). */}
+      {session?.user?.id && <WhatsNew userId={session.user.id} serverVersion={APP_VERSION} />}
     </>
   );
 }

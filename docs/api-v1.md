@@ -3500,7 +3500,13 @@ GitHub, Report an issue. Counts are the household library (owned titles;
 
 ### `GET /changelog` — user
 
-The Releases page, newest first.
+The Releases page, newest first. It is also where the "What's new in
+Marquee …" pop-up gets its text after the server is upgraded: a client keeps,
+per server, the last server version whose notes it showed, and lists the
+entries newer than that, up to the server's `version` (at most 10). On a
+device's first run it only records the version. The Mac and Windows apps
+also carry the `lib/changelog.ts` they were built from, for their own
+updates, which the server may not know about yet.
 
 ```json
 {

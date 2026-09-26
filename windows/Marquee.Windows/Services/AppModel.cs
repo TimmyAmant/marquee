@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
 using Marquee.Core.Models;
+using Marquee.Core.Updates;
 using Microsoft.UI.Dispatching;
 
 namespace Marquee.Windows.Services;
@@ -329,7 +330,84 @@ public sealed partial class AppModel : ObservableObject
         StartBadgePolling();
         OpenPendingNotification();
         // After the shell has drawn: the question comes over Discover, not over a blank window.
-        Dispatcher.TryEnqueue(DispatcherQueuePriority.Low, () => _ = Notifications.SignedInAsync(interactive));
+        // "What's new" waits for it: WinUI shows one dialog at a time.
+        Dispatcher.TryEnqueue(DispatcherQueuePriority.Low, async () =>
+        {
+            await Notifications.SignedInAsync(interactive);
+            await ShowWhatsNewIfNeededAsync();
+        });
+    }
+
+    /// <summary>
+    /// Set by the main window: shows "What's new in Marquee …" and answers
+    /// true once it's dismissed, or false when it couldn't be shown (another
+    /// dialog was open), so it's tried again at the next launch.
+    /// </summary>
+    internal Func<WhatsNewContent, Task<bool>>? ShowWhatsNew { get; set; }
+
+    /// <summary>
+    /// After an upgrade, once per server (Marquee.Core/Updates/WhatsNew.cs):
+    /// a newer server shows its changelog entries, a newer Windows app its own
+    /// (embedded at build time), both at once in one dialog. The first run on
+    /// this PC only remembers the versions.
+    /// </summary>
+    private async Task ShowWhatsNewIfNeededAsync()
+    {
+        if (Phase != AppPhase.Ready || Session.Server is not { } server || ShowWhatsNew is not { } show)
+        {
+            return;
+        }
+        var key = server.BaseUrlString;
+        var store = new WhatsNewStore(Settings);
+        var seen = store.Seen(key);
+        var app = AppVersion.Current;
+        var api = Api;
+        var serverVersion = AppVersion.Parse(Session.ServerInfo?.Version);
+        if (serverVersion is null)
+        {
+            // A saved sign-in restored at launch skips server-info; About has the version.
+            try
+            {
+                serverVersion = AppVersion.Parse((await api.About.InfoAsync()).Version);
+            }
+            catch (ApiException)
+            {
+                // Unknown: the server's side waits for the next launch.
+            }
+        }
+        var remember = WhatsNew.Remembered(seen, serverVersion, app);
+        if (WhatsNew.Pending(seen, serverVersion, app) is not { } pending)
+        {
+            store.Save(remember, key);
+            return;
+        }
+        IReadOnlyList<ChangelogEntry> serverChangelog = [];
+        if (pending.ServerSince is not null)
+        {
+            try
+            {
+                serverChangelog = await api.About.ChangelogAsync();
+            }
+            catch (ApiException)
+            {
+                // Try again next launch rather than lose the notes.
+                return;
+            }
+        }
+        if (Phase != AppPhase.Ready || Session.Server?.BaseUrlString != key)
+        {
+            return;
+        }
+        IReadOnlyList<ChangelogEntry> appChangelog = pending.AppSince is not null ? BundledChangelog.Load() : [];
+        if (WhatsNew.Content(pending, serverVersion, app, serverChangelog, appChangelog) is not { } content)
+        {
+            store.Save(remember, key);
+            return;
+        }
+        if (await show(content))
+        {
+            store.Save(remember, key);
+        }
     }
 
     /// <summary>Signs out of the server (revoking this PC's token) but stays on it.</summary>

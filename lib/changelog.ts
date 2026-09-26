@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.46.1",
+    date: "2026-09-26",
+    changes: [
+      "What's new: after an update, Marquee shows what changed once, with an OK button. When the server updates it shows on the website, phones and the Mac and Windows apps; when only the Mac or Windows app updates, it shows only in that app. New devices aren't shown a backlog.",
+    ],
+  },
+  {
     version: "0.46.0",
     date: "2026-09-26",
     changes: [

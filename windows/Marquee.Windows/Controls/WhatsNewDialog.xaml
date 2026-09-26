@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/whats-new.tsx: "What's new in Marquee 0.45.3" after an upgrade,
+  each release with its date and changes, and OK at the bottom. OK, Escape
+  and See all changes all dismiss it; the model remembers the versions.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.WhatsNewDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    CloseButtonText="OK"
+    DefaultButton="Close">
+
+    <Grid RowSpacing="8" MinWidth="420" MaxWidth="560">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollViewer MaxHeight="440" Padding="0,0,16,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="Releases" Spacing="18" />
+        </ScrollViewer>
+        <HyperlinkButton
+            x:Name="SeeAllButton"
+            Grid.Row="1"
+            Padding="0"
+            Content="See all changes"
+            Click="OnSeeAllClick" />
+    </Grid>
+</ContentDialog>

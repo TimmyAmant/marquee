@@ -131,6 +131,8 @@ final class AppModel {
     let notificationConsent: NotificationConsent
     /// Newer Marquee releases, and installing one.
     let updater = Updater()
+    /// "What's new" after the server or this app is upgraded.
+    let whatsNew = WhatsNewModel()
     /// Profile photos, by `avatarUrl`.
     let avatars = AvatarImageStore()
     /// What this Mac has changed about titles since the lists showing them
@@ -406,6 +408,10 @@ final class AppModel {
         Task {
             await consent.begin(identity: identity, freshSignIn: !restored)
         }
+        // Not while hosting the unit tests: they'd write the real defaults.
+        if !AppInfo.isRunningTests {
+            whatsNew.begin(server: session.server?.baseURLString ?? "", serverVersion: session.serverInfo?.version, api: api)
+        }
     }
 
     /// Signs out of the server (revoking this Mac's token) but stays on it.
@@ -444,6 +450,7 @@ final class AppModel {
         pendingURL = nil
         live.stop()
         notificationConsent.end()
+        whatsNew.end()
         avatars.clear()
         titleState.clear()
         viewer = nil
