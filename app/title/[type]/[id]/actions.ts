@@ -34,6 +34,17 @@ export async function addSeriesToSonarr(
   return result.ok ? { success: true } : { error: result.error };
 }
 
+/** "Add to 4K Radarr/Sonarr" (admin). */
+export async function addToFourK(mediaType: MediaType, tmdbId: number): Promise<AddToLibraryState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in to add titles." };
+  if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
+    return { error: "That title couldn't be added." };
+  }
+  const result = await addTitleToLibrary(session.user.id, mediaType, tmdbId, true);
+  return result.ok ? { success: true } : { error: result.error };
+}
+
 export type RelinkState = { error?: string; success?: boolean; newTmdbId?: number };
 
 /** Corrects a title that's owned via the wrong TMDb match — see relinkTitle. */

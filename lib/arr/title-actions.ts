@@ -211,11 +211,17 @@ export async function addSeriesToSonarrForUser(
 /** Adds a title with the acting user's own Sonarr/Radarr credential and
  * revalidates the pages showing it — the title page's Add button and the
  * poster cards' quick-add. */
-export async function addTitleToLibrary(userId: string, mediaType: MediaType, tmdbId: number): Promise<CoreResult> {
+export async function addTitleToLibrary(
+  userId: string,
+  mediaType: MediaType,
+  tmdbId: number,
+  /** Into the 4K Sonarr/Radarr (lib/arr/fourk.ts) instead. */
+  fourK = false,
+): Promise<CoreResult> {
   const result =
     mediaType === "movie"
-      ? await addMovieToRadarrForUser(userId, tmdbId)
-      : await addSeriesToSonarrForUser(userId, tmdbId);
+      ? await addMovieToRadarrForUser(userId, tmdbId, fourK)
+      : await addSeriesToSonarrForUser(userId, tmdbId, null, false, fourK);
   if (result.ok) {
     revalidatePath(`/title/${mediaType}/${tmdbId}`);
     revalidatePath("/discover");

@@ -74,6 +74,7 @@ export default async function RequestsPage() {
                             tmdbId={r.tmdbId}
                             title={r.title}
                             seasons={r.seasons}
+                            is4k={r.is4k}
                           />
                         </div>
                       </td>
@@ -145,6 +146,7 @@ export default async function RequestsPage() {
                   requestedByName={r.requestedByName}
                   requestedByUsername={r.requestedByUsername}
                   seasons={r.seasons}
+                  is4k={r.is4k}
                   createdAt={r.createdAt.toISOString()}
                   sonarrUrl={sonarrUrl}
                 />
@@ -184,6 +186,7 @@ export default async function RequestsPage() {
                             tmdbId={r.tmdbId}
                             title={r.title}
                             seasons={r.seasons}
+                            is4k={r.is4k}
                           />
                         </div>
                       </td>

@@ -101,6 +101,7 @@ export function titleDetailDto(
       otherRequesters: data.otherRequesters,
       arrTracking: data.arrTracking,
       seasonRequests: data.seasonRequests,
+      fourK: data.fourK,
     }),
     seasons: seasonsNewestFirst(data.seasons).map((season) => {
       const stats = seasonCompleteness.get(season.season_number);

@@ -233,6 +233,20 @@ export type TitleViewerState = {
   requestedSeasons: number[] | null;
   canRelink: boolean;
   arrTracking: ArrTracking | null;
+  /** The 4K copy, when the admin has a 4K Sonarr/Radarr for this type
+   * (0.37+; null otherwise, and omitted by an older server). */
+  fourK: FourKViewerState | null;
+};
+
+export type FourKViewerState = {
+  /** How the 4K instance has it; "untracked" when it doesn't. */
+  status: LibraryStatus;
+  /** The viewer's own 4K request, if any isn't declined. */
+  requestStatus: RequestStatus | null;
+  /** A member may press "Request in 4K". */
+  canRequest: boolean;
+  /** The admin may press "Add to 4K Radarr/Sonarr". */
+  canAdd: boolean;
 };
 
 export type TitleStatus = { mediaType: MediaType; tmdbId: number; library: TitleLibraryInfo; viewer: TitleViewerState };

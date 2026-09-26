@@ -7,15 +7,18 @@ import {
   type ArrConnectionState,
 } from "@/app/settings/integrations/actions";
 import { DisconnectButton } from "@/components/disconnect-button";
-import type { ArrProvider } from "@/lib/db/schema";
+import type { ArrInstance } from "@/lib/db/schema";
 
 export function ArrCredentialForm({
   provider,
   label,
+  description,
   existing,
 }: {
-  provider: ArrProvider;
+  provider: ArrInstance;
   label: string;
+  /** Under the heading — the 4K instances say what they're for. */
+  description?: string;
   existing: {
     baseUrl: string;
     hasApiKey: boolean;
@@ -38,7 +41,10 @@ export function ArrCredentialForm({
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl text-text-primary">{label}</h3>
+        <div>
+          <h3 className="font-display text-xl text-text-primary">{label}</h3>
+          {description && <p className="mt-1 text-xs text-text-muted">{description}</p>}
+        </div>
         <div className="flex items-center gap-3">
           {existing?.hasApiKey && (
             <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
@@ -57,7 +63,7 @@ export function ArrCredentialForm({
             name="baseUrl"
             required
             defaultValue={existing?.baseUrl ?? ""}
-            placeholder={`http://localhost:${provider === "sonarr" ? "8989" : "7878"}`}
+            placeholder={`http://localhost:${provider.startsWith("sonarr") ? "8989" : "7878"}`}
             className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
           />
         </label>

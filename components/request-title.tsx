@@ -9,13 +9,16 @@ export function RequestTitle({
   tmdbId,
   title,
   seasons,
+  is4k = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
   title: string;
   seasons: number[] | null;
+  /** Asked for in 4K (lib/arr/fourk.ts). */
+  is4k?: boolean;
 }) {
-  const label = seasonsLabel(seasons);
+  const label = [seasonsLabel(seasons), is4k ? "In 4K" : null].filter(Boolean).join(" · ");
   return (
     <div className="min-w-0">
       <Link

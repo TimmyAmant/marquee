@@ -28,6 +28,8 @@ export default async function IntegrationsSettingsPage() {
       jellyfin,
       sonarr,
       radarr,
+      sonarr4k,
+      radarr4k,
       tmdb,
       traktConnected,
       tvdbConnected,
@@ -92,6 +94,18 @@ export default async function IntegrationsSettingsPage() {
           <div className="mt-3 flex flex-col gap-6">
             <ArrCredentialForm provider="sonarr" label="Sonarr" existing={sonarr} />
             <ArrCredentialForm provider="radarr" label="Radarr" existing={radarr} />
+            <ArrCredentialForm
+              provider="sonarr4k"
+              label="4K Sonarr (optional)"
+              description="A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr."
+              existing={sonarr4k}
+            />
+            <ArrCredentialForm
+              provider="radarr4k"
+              label="4K Radarr (optional)"
+              description="A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr."
+              existing={radarr4k}
+            />
           </div>
         </section>
 
@@ -118,6 +132,7 @@ export default async function IntegrationsSettingsPage() {
               userId={session.user.id}
               initialSecret={webhookSecret}
               baseUrl={baseUrl}
+              fourK={{ radarr: Boolean(radarr4k), sonarr: Boolean(sonarr4k) }}
             />
             <DiscordConnectCard connected={discordConnected} />
             <NtfyConnectCard connected={ntfyConnected} />
