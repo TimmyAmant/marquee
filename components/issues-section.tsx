@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { deleteIssueAction, resolveIssueAction, searchAgainAction } from "@/lib/issues/actions";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { Issue } from "@/lib/api/types";
+import { CommentSection } from "@/components/comment-thread";
 
 const smallButton =
   "rounded-full border border-border-strong px-3 py-1 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
@@ -74,6 +75,7 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
         )}
         {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
         {info && <p className="mt-1 text-xs text-owned">{info}</p>}
+        <CommentSection kind="issue" id={issue.id} count={issue.commentCount} />
       </div>
       {issue.status === "open" && (
         <div className="flex shrink-0 flex-col items-end gap-1.5">

@@ -118,7 +118,8 @@
     "canReport": false,
     "openReports": 0,
     "blocked": null,
-    "notFoundSince": null
+    "notFoundSince": null,
+    "myRequests": []
   },
   "seasons": [],
   "cast": [

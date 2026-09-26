@@ -1,7 +1,7 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
 import { getUnreadCount } from "@/lib/notifications/query";
-import { getPendingRequestCount } from "@/lib/requests/query";
+import { getFailedRequestCount, getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
 import { getNotFoundCount } from "@/lib/requests/not-found";
 import { canReviewRequests } from "@/lib/users/roles";
@@ -13,11 +13,12 @@ import type { Badges } from "@/lib/api/types";
 export const GET = withApi(async (request): Promise<Badges> => {
   const ctx = await requireApiUser(request);
   const reviews = canReviewRequests(ctx.user.role);
-  const [unreadNotifications, pendingRequests, openIssues, notFoundRequests] = await Promise.all([
+  const [unreadNotifications, pendingRequests, openIssues, notFoundRequests, failedRequests] = await Promise.all([
     getUnreadCount(ctx.user.id),
     reviews ? getPendingRequestCount() : Promise.resolve(0),
     reviews ? getOpenIssueCount() : Promise.resolve(0),
     reviews ? getNotFoundCount() : Promise.resolve(0),
+    reviews ? getFailedRequestCount() : Promise.resolve(0),
   ]);
-  return { unreadNotifications, pendingRequests, openIssues, notFoundRequests };
+  return { unreadNotifications, pendingRequests, openIssues, notFoundRequests, failedRequests };
 });

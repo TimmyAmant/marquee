@@ -106,6 +106,8 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], string> = {
   request_created: "New request",
   request_not_found: "Can't find it",
   title_shared: "Shared with you",
+  request_comment: "New comment",
+  issue_comment: "New comment",
 };
 
 /** What the service worker (public/sw.js) shows. `requestId`: a new
@@ -117,10 +119,12 @@ export function pushMessageFor(
   row: Pick<NotificationRow, "id" | "eventType" | "message" | "mediaType" | "tmdbId" | "requestId">,
 ): PushMessage {
   const isNewRequest = row.eventType === "request_created" && row.requestId;
+  // A conversation lives on the Requests page.
+  const isComment = row.eventType === "request_comment" || row.eventType === "issue_comment";
   return {
     title: EVENT_TITLES[row.eventType] ?? "Marquee",
     body: row.message,
-    url: isNewRequest ? "/requests" : `/title/${row.mediaType}/${row.tmdbId}`,
+    url: isNewRequest || isComment ? "/requests" : `/title/${row.mediaType}/${row.tmdbId}`,
     tag: row.id,
     ...(isNewRequest ? { requestId: row.requestId! } : {}),
   };

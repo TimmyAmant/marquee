@@ -13,7 +13,11 @@ import { RequestTitle } from "@/components/request-title";
 import { IssuesSection } from "@/components/issues-section";
 import { getQuotas, untilLabel, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
-import { issueDto, notFoundRequest } from "@/lib/api/mappers";
+import { issueDto, notFoundRequest, reviewedRequest } from "@/lib/api/mappers";
+import { countComments } from "@/lib/comments";
+import { CommentToggle, ThreadRow } from "@/components/comment-thread";
+import { CancelRequestButton, EditRequestButton } from "@/components/request-lifecycle";
+import { CouldntAddSection } from "@/components/couldnt-add-section";
 import { NotFoundSection } from "@/components/not-found-section";
 import { getNotFoundAfterHours, getNotFoundRequests } from "@/lib/requests/not-found";
 
@@ -51,15 +55,22 @@ export default async function RequestsPage() {
 
   // The review queue is the admin's and trusted members' (lib/users/roles.ts).
   const reviews = viewer.isAdmin || viewer.session.user.role === "trusted";
-  const issues = (await listIssues({ userId: viewer.userId, isAdmin: reviews })).map((row) =>
-    issueDto(row, viewer.userId),
+  const issueRows = await listIssues({ userId: viewer.userId, isAdmin: reviews });
+  const issueComments = await countComments(
+    "issue",
+    issueRows.map((row) => row.id),
   );
+  const issues = issueRows.map((row) => issueDto(row, viewer.userId, issueComments.get(row.id) ?? 0));
 
   if (!reviews) {
     const [myRequests, quotas] = await Promise.all([
       getMyRequests(viewer.userId, viewer.libraryOwnerId),
       getQuotas(viewer.userId),
     ]);
+    const myComments = await countComments(
+      "request",
+      myRequests.map((r) => r.id),
+    );
     const limits = [
       quotas.movie ? quotaLine("Movies", quotas.movie) : null,
       quotas.tv ? quotaLine("TV", quotas.tv) : null,
@@ -87,7 +98,14 @@ export default async function RequestsPage() {
                   const src = tmdbImageUrl(r.posterPath, "w92");
                   const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved);
                   return (
-                    <tr key={r.id} className="hover:bg-bg-1/60">
+                    <ThreadRow
+                      key={r.id}
+                      kind="request"
+                      id={r.id}
+                      count={myComments.get(r.id) ?? 0}
+                      colSpan={3}
+                      className="hover:bg-bg-1/60"
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
@@ -95,13 +113,16 @@ export default async function RequestsPage() {
                               <Image src={src} alt="" fill sizes="40px" className="object-cover" />
                             )}
                           </div>
-                          <RequestTitle
-                            mediaType={r.mediaType}
-                            tmdbId={r.tmdbId}
-                            title={r.title}
-                            seasons={r.seasons}
-                            is4k={r.is4k}
-                          />
+                          <div className="min-w-0">
+                            <RequestTitle
+                              mediaType={r.mediaType}
+                              tmdbId={r.tmdbId}
+                              title={r.title}
+                              seasons={r.seasons}
+                              is4k={r.is4k}
+                            />
+                            <CommentToggle />
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-text-secondary">
@@ -116,8 +137,17 @@ export default async function RequestsPage() {
                         {r.status === "rejected" && r.rejectionReason && (
                           <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
                         )}
+                        {r.status === "pending" && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <EditRequestButton requestId={r.id} />
+                            <CancelRequestButton requestId={r.id} />
+                          </div>
+                        )}
+                        {r.status === "approved" && (
+                          <p className="mt-1.5 text-xs text-text-muted">Need a change? Ask in its comments.</p>
+                        )}
                       </td>
-                    </tr>
+                    </ThreadRow>
                   );
                 })}
               </tbody>
@@ -142,6 +172,9 @@ export default async function RequestsPage() {
     getNotFoundAfterHours().catch(() => 24),
   ]);
   const sonarrUrl = sonarrCred?.baseUrl ?? null;
+  const requestComments = await countComments("request", [...pending.map((r) => r.id), ...reviewed.map((r) => r.id)]);
+  const couldntAdd = reviewed.filter((r) => r.status === "approved" && r.addFailedAt);
+  const pastRequests = reviewed.filter((r) => !(r.status === "approved" && r.addFailedAt));
   // "Add manually in Sonarr" for a 4K request points at the 4K Sonarr.
   const sonarr4kUrl = sonarr4kCred?.baseUrl ?? null;
 
@@ -182,6 +215,8 @@ export default async function RequestsPage() {
                   canManuallyApprove={viewer.isAdmin}
                   createdAt={r.createdAt.toISOString()}
                   sonarrUrl={r.is4k ? sonarr4kUrl : sonarrUrl}
+                  commentCount={requestComments.get(r.id) ?? 0}
+                  edited={r.editedAt !== null}
                 />
               ))}
             </tbody>
@@ -189,11 +224,16 @@ export default async function RequestsPage() {
         </div>
       )}
 
+      <CouldntAddSection
+        requests={couldntAdd.map((r) => reviewedRequest(r, requestComments.get(r.id) ?? 0))}
+        isAdmin={viewer.isAdmin}
+      />
+
       <NotFoundSection requests={notFound.map(notFoundRequest)} afterHours={notFoundAfterHours} />
 
       <IssuesSection issues={issues} isAdmin />
 
-      {reviewed.length > 0 && (
+      {pastRequests.length > 0 && (
         <>
           <h2 className="mt-12 font-display text-xl text-text-primary">Past requests</h2>
           <div className="mt-4 overflow-x-auto rounded-xl border border-border">
@@ -207,10 +247,17 @@ export default async function RequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {reviewed.map((r) => {
+                {pastRequests.map((r) => {
                   const src = tmdbImageUrl(r.posterPath, "w92");
                   return (
-                    <tr key={r.id} className="hover:bg-bg-1/60">
+                    <ThreadRow
+                      key={r.id}
+                      kind="request"
+                      id={r.id}
+                      count={requestComments.get(r.id) ?? 0}
+                      colSpan={4}
+                      className="hover:bg-bg-1/60"
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
@@ -218,13 +265,16 @@ export default async function RequestsPage() {
                               <Image src={src} alt="" fill sizes="40px" className="object-cover" />
                             )}
                           </div>
-                          <RequestTitle
-                            mediaType={r.mediaType}
-                            tmdbId={r.tmdbId}
-                            title={r.title}
-                            seasons={r.seasons}
-                            is4k={r.is4k}
-                          />
+                          <div className="min-w-0">
+                            <RequestTitle
+                              mediaType={r.mediaType}
+                              tmdbId={r.tmdbId}
+                              title={r.title}
+                              seasons={r.seasons}
+                              is4k={r.is4k}
+                            />
+                            <CommentToggle />
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-text-secondary">
@@ -258,7 +308,7 @@ export default async function RequestsPage() {
                           <p className="mt-1.5 text-xs text-text-muted">Added to {r.arrServerName}</p>
                         )}
                       </td>
-                    </tr>
+                    </ThreadRow>
                   );
                 })}
               </tbody>

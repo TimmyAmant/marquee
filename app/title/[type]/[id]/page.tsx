@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { canReportProblem, fourKViewerState } from "@/lib/api/mappers";
+import { canReportProblem, fourKViewerState, titleViewerState } from "@/lib/api/mappers";
 import { TitleHero } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
@@ -53,6 +53,7 @@ export default async function TitlePage({
     openReports,
     blocked,
     notFoundSince,
+    myRequests,
     blockedKeys,
     trailer,
     externalIds,
@@ -136,6 +137,19 @@ export default async function TitlePage({
             : null
         }
         share={viewer.session ? { publicBase } : null}
+        myRequests={
+          // The same summaries the API's `viewer.myRequests` carries.
+          titleViewerState({
+            isAdmin: viewer.isAdmin,
+            status: libraryStatus.status,
+            configured: libraryStatus.configured,
+            favorited: false,
+            requestStatus: null,
+            otherRequesters: [],
+            arrTracking: null,
+            myRequests,
+          }).myRequests
+        }
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
         cast={

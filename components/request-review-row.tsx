@@ -14,6 +14,8 @@ import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { RequestTitle } from "@/components/request-title";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import type { MediaType } from "@/lib/db/schema";
+import { CommentToggle, ThreadRow } from "@/components/comment-thread";
+import { EditRequestButton } from "@/components/request-lifecycle";
 
 export function RequestReviewRow({
   id,
@@ -28,6 +30,8 @@ export function RequestReviewRow({
   canManuallyApprove = true,
   createdAt,
   sonarrUrl,
+  commentCount = 0,
+  edited = false,
 }: {
   id: string;
   mediaType: MediaType;
@@ -45,6 +49,10 @@ export function RequestReviewRow({
    * used to link straight to Sonarr's own "add series" search when Marquee
    * can't resolve this show's TVDB id itself. */
   sonarrUrl: string | null;
+  /** Comments in its conversation, for the "Comments (2)" toggle. */
+  commentCount?: number;
+  /** The requester (or a reviewer) changed it since asking. */
+  edited?: boolean;
 }) {
   const router = useRouter();
   const approveAction = approveRequestAction.bind(null, id);
@@ -101,13 +109,24 @@ export function RequestReviewRow({
   }
 
   return (
-    <tr className="hover:bg-bg-1/60">
+    <ThreadRow kind="request" id={id} count={commentCount} colSpan={4} className="hover:bg-bg-1/60">
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg bg-bg-2">
             {src && <Image src={src} alt="" fill sizes="44px" className="object-cover" />}
           </div>
-          <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} is4k={is4k} />
+          <div className="min-w-0">
+            <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} is4k={is4k} />
+            {edited && <p className="text-[11px] text-text-muted">Changed since asking</p>}
+            <div className="flex flex-wrap items-center gap-x-3">
+              <CommentToggle />
+              {!choosingReason && (
+                <span className="mt-1">
+                  <EditRequestButton requestId={id} />
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </td>
       <td className="px-4 py-3 text-text-secondary">{requester}</td>
@@ -225,6 +244,6 @@ export function RequestReviewRow({
           </p>
         )}
       </td>
-    </tr>
+    </ThreadRow>
   );
 }

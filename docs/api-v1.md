@@ -108,6 +108,22 @@ where the real server needed something the core contract didn't spell out.
     `GET`/`PUT /settings/not-found`. A server older than this sends none
     of these fields — treat missing as null/0 — and answers `404` on the
     new endpoints: hide the section.
+16. **Request lifecycle and conversations (0.46+, additive).** A member can
+    change (`PATCH /requests/{id}`) or cancel (`DELETE /requests/{id}`) their
+    own request while it's pending; reviewers can change anyone's before
+    approving (`GET /requests/{id}/edit-options` feeds the season picker).
+    Requests and problem reports have a comment thread
+    (`/requests/{id}/comments`, `/issues/{id}/comments`) between the
+    requester or reporter and the reviewers, with the `request_comment` and
+    `issue_comment` notification types. An approval Sonarr/Radarr couldn't
+    be reached for now stays approved under "Couldn't add" (`addFailed` on
+    `/requests/history`, `failedRequests` on `/badges`) with
+    `POST /requests/{id}/retry`. New fields: `canEdit`, `canCancel`,
+    `editedAt`, `commentCount` on request DTOs, `commentCount` on `Issue`,
+    `requestId`/`issueId` on `NotificationItem`, `viewer.myRequests` on the
+    title. A server older than this leaves them out — treat missing as
+    false/0/null/empty — and answers `404` on the new endpoints: hide
+    Edit, Cancel, Retry and the comments.
 
 ---
 
@@ -562,15 +578,17 @@ The header counters in one call, suitable for polling (website: bell every
 30 s, requests badge every 20 s).
 
 ```json
-{ "unreadNotifications": 2, "pendingRequests": 1, "openIssues": 1, "notFoundRequests": 1 }
+{ "unreadNotifications": 2, "pendingRequests": 1, "openIssues": 1, "notFoundRequests": 1, "failedRequests": 0 }
 ```
 
 `pendingRequests` is always `0` for members (as on the website).
 `openIssues` (0.38+; an older server omits it): open problem reports, also
 `0` for members. `notFoundRequests` (0.46+; an older server omits it):
-requests listed under "Can't find", `0` for members. The website's Requests
-badge shows `pendingRequests + openIssues + notFoundRequests`, since all of
-them wait on that page.
+requests listed under "Can't find", `0` for members. `failedRequests`
+(0.46+; an older server omits it): approved requests listed under "Couldn't
+add", `0` for members. The website's Requests badge shows `pendingRequests +
+openIssues + notFoundRequests + failedRequests`, since all of them wait on
+that page.
 
 ---
 
@@ -880,7 +898,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "canReport": false,
     "openReports": 0,
     "blocked": null,
-    "notFoundSince": null
+    "notFoundSince": null,
+    "myRequests": []
   },
   "seasons": [],
   "cast": [
@@ -1503,7 +1522,33 @@ Your own requests, newest first.
       "statusLabel": "Downloading",
       "statusTone": "downloading",
       "createdAt": "2026-09-17T17:12:41.415Z",
-      "reviewedAt": "2026-09-17T18:00:02.118Z"
+      "reviewedAt": "2026-09-17T18:00:02.118Z",
+      "canEdit": false,
+      "canCancel": false,
+      "editedAt": null,
+      "commentCount": 2
+    },
+    {
+      "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "title": "Severance",
+      "posterPath": "/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+      "seasons": [2],
+      "seasonsLabel": "Season 2",
+      "is4k": false,
+      "status": "pending",
+      "manuallyApproved": false,
+      "rejectionReason": null,
+      "libraryStatus": null,
+      "statusLabel": "Pending review",
+      "statusTone": "pending",
+      "createdAt": "2026-09-17T17:10:02.001Z",
+      "reviewedAt": null,
+      "canEdit": true,
+      "canCancel": true,
+      "editedAt": "2026-09-17T17:20:40.310Z",
+      "commentCount": 0
     }
   ]
 }
@@ -1517,6 +1562,14 @@ the admin declined it (e.g. `"Not enough space on the server right now"`),
 null unless `status` is `rejected` and a reason was given; the website shows
 it as a second line under the "Declined" badge ("Reason: …"). Empty → "You
 haven't requested anything yet — find a title and hit Request."
+
+0.46+ (an older server omits these — treat as false/null/0): `canEdit` and
+`canCancel` are true while it's pending — the website shows "Edit" and
+"Cancel request" under the badge (see `PATCH` / `DELETE /requests/{id}`);
+an approved one says "Need a change? Ask in its comments." `editedAt`: when
+its seasons or 4K last changed. `commentCount`: comments in its
+conversation — the website puts "Comments (2)" (or "Comment") under the
+title, opening the thread in a row below.
 
 Every request DTO (here, `/requests/pending` and `/requests/history`) has
 `seasons` — the TV seasons asked for, ascending, or null for the whole series
@@ -1559,7 +1612,9 @@ in Sonarr — the show itself being in the library doesn't count.
       "seasonsLabel": null,
       "is4k": false,
       "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
-      "createdAt": "2026-09-17T17:12:41.415Z"
+      "createdAt": "2026-09-17T17:12:41.415Z",
+      "editedAt": null,
+      "commentCount": 1
     },
     {
       "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
@@ -1571,7 +1626,9 @@ in Sonarr — the show itself being in the library doesn't count.
       "seasonsLabel": "Season 2",
       "is4k": false,
       "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
-      "createdAt": "2026-09-17T17:10:02.001Z"
+      "createdAt": "2026-09-17T17:10:02.001Z",
+      "editedAt": "2026-09-17T17:20:40.310Z",
+      "commentCount": 0
     }
   ]
 }
@@ -1584,13 +1641,41 @@ choice with a free-text field, and send the chosen text to
 `POST /requests/{id}/reject`. The website shows "Approve all" only when more
 than one request is pending. Empty → "No pending requests."
 
+0.46+: `editedAt` — when the requester (or a reviewer) last changed its
+seasons or 4K, null if never (the website notes "Changed since asking");
+`commentCount` as in `/requests/mine`. Each row also has "Edit" (a reviewer
+may change seasons and 4K before approving, `PATCH /requests/{id}`) and
+"Comments (N)".
+
 ### `GET /requests/history` — admin
 
-"Past requests": the 50 most recently reviewed.
+"Past requests": the 50 most recently reviewed — after every request
+under "Couldn't add" (0.46+), however old, which come first.
 
 ```json
 {
   "results": [
+    {
+      "id": "c4d8e2a1-7b3f-4e6a-9d0c-5f1b2a8e7c90",
+      "mediaType": "movie",
+      "tmdbId": 78,
+      "title": "Blade Runner",
+      "posterPath": "/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
+      "is4k": false,
+      "status": "approved",
+      "manuallyApproved": false,
+      "rejectionReason": null,
+      "statusLabel": "Approved",
+      "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
+      "createdAt": "2026-09-17T16:40:00.000Z",
+      "reviewedAt": "2026-09-17T16:45:10.000Z",
+      "addedTo": null,
+      "notFoundSince": null,
+      "addFailed": { "error": "Couldn't add this movie to Radarr.", "since": "2026-09-17T19:02:00.000Z" },
+      "commentCount": 0
+    },
     {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
       "mediaType": "movie",
@@ -1608,7 +1693,9 @@ than one request is pending. Empty → "No pending requests."
       "createdAt": "2026-09-17T17:12:41.415Z",
       "reviewedAt": "2026-09-17T17:12:41.468Z",
       "addedTo": null,
-      "notFoundSince": null
+      "notFoundSince": null,
+      "addFailed": null,
+      "commentCount": 1
     },
     {
       "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
@@ -1634,7 +1721,9 @@ than one request is pending. Empty → "No pending requests."
         "tags": [2],
         "seriesType": null
       },
-      "notFoundSince": "2026-09-18T18:20:00.412Z"
+      "notFoundSince": "2026-09-18T18:20:00.412Z",
+      "addFailed": null,
+      "commentCount": 0
     }
   ]
 }
@@ -1650,6 +1739,16 @@ website shows "Added to Radarr 2" under the badge. `notFoundSince` (0.46+;
 an older server omits it): when Sonarr/Radarr's failure to find it put it
 under "Can't find", null otherwise — the website shows a red "Can't find"
 badge next to "Approved" that jumps to that list.
+
+`addFailed` (0.46+; an older server omits it): approved, but Sonarr/Radarr
+couldn't be reached or errored when adding it — `{ error, since }` (when it
+was last tried), else null. The website lists these in a "Couldn't add"
+section above "Can't find" instead of under "Past requests": title, "who ·
+approved 9/17/2026 · last tried …", the error in red, the Advanced picks,
+**Retry** (`POST /requests/{id}/retry`), for the admin "Added it by hand"
+(`POST /requests/{id}/manual-approve`), and "Comments (N)". A reviewer may
+also decline one (`POST /requests/{id}/reject`). `addedTo` is null while
+it's there. `commentCount` as in `/requests/mine`.
 
 ### `GET /requests/not-found` — admin (0.46+)
 
@@ -1736,8 +1835,21 @@ was approved — it's on its way to your library.`
 Errors: `404` "Request not found or already reviewed.", `409` "Request was
 already reviewed." / "Connect Radarr in Settings first." / "Connect Sonarr in
 Settings first." / **"Couldn't resolve this show for Sonarr."** (offer manual
-approval) / "Sonarr doesn't list the requested seasons for this show.", `502`
-"Couldn't add this movie to Radarr." / "Couldn't add this series to Sonarr.".
+approval) / "Sonarr doesn't list the requested seasons for this show." — the
+request stays pending for all of these — and `502` "Couldn't add this movie
+to Radarr. It's approved and waiting under “Couldn't add” — retry once it's
+reachable." (or the series/Sonarr wording).
+
+**Couldn't add (0.46+).** When Sonarr/Radarr can't be reached or errors
+(the `502`), the request doesn't go back to the queue: it's approved, with
+the error, listed under "Couldn't add" (`addFailed` in `/requests/history`,
+`failedRequests` in `/badges`) until a reviewer's `POST /requests/{id}/retry`
+goes through. The requester is only told it's approved once it has been
+added. A request that was approved automatically (a trusted member's, or a
+member set to auto-approve) and couldn't be added alerts the reviewers
+(`request_created`, "Anna's request for "Dune" was approved, but couldn't be
+added: … Retry it on the Requests page."). While approving, the request
+can't be cancelled or changed.
 
 **Add overrides (0.43+).** An optional JSON body picks where and how the title
 is added — the website's "Advanced" section under Approve. Every field is
@@ -1785,7 +1897,8 @@ message stays `"The Matrix" was declined.`).
 
 ### `POST /requests/approve-all` — admin
 
-Approves every pending request one at a time; failures stay pending.
+Approves every pending request one at a time; failures stay pending, or
+(Sonarr/Radarr unreachable, 0.46+) go under "Couldn't add".
 
 ```json
 { "ok": true, "approvedCount": 4, "failedCount": 1, "message": "1 request(s) couldn't be approved." }
@@ -1794,6 +1907,177 @@ Approves every pending request one at a time; failures stay pending.
 `message` is null when nothing failed. If requests were pending and **none**
 could be approved, the first failure is returned as the error response instead
 (same codes as `approve`). No pending requests → `approvedCount: 0`.
+
+### `PATCH /requests/{id}` — user (0.46+)
+
+Changes a request that's still **pending**: your own, or (the admin and
+trusted members) anyone's — a reviewer can fix the seasons or 4K before
+approving. Body, every field optional:
+
+| Body field | Type | |
+|---|---|---|
+| `seasons` | number[] or null | TV only: the seasons to ask for, or null for the whole series. Absent: unchanged. |
+| `is4k` | boolean | Ask for the 4K copy instead (always the whole title — `seasons` then must be absent or null), or back to the regular one. Absent: unchanged. |
+
+The same rules as asking afresh (`POST /titles/{type}/{tmdbId}/request`):
+seasons TMDb lists, minus any Sonarr already monitors or has (dropped
+quietly; `409` if none are left); 4K only once the admin has a 4K
+Sonarr/Radarr, the 4K copy isn't already there, and you have no other 4K
+request for it. It keeps its place in the queue and in your request limit.
+Unread "new request" alerts for it are reworded to match. `{ "ok": true }`
+(also when nothing changed). Errors: `404` "Request not found." (someone
+else's, for a member), `409 conflict` "It's already been reviewed, so it
+can't be changed. Ask in its comments instead." / "4K requests aren't set up
+on this server." / "There's already a 4K request for this." / "There's
+already a request for this." / "Those seasons are already in your library or
+on their way." / "You already have this in your library.", `400 invalid`
+"A movie has no seasons." / "A 4K request is always the whole show." /
+`"is4k" must be true or false.` / the season errors of `…/request`.
+
+Website: "Edit" under a pending request (the member's Requests page, the
+title page, and each row of the review queue) opens the season picker — the
+request's seasons ticked, "The whole series" / "Just these seasons", and
+"In 4K" when 4K is set up — with "Save changes".
+
+### `GET /requests/{id}/edit-options` — user (0.46+)
+
+What "Edit" can offer, for the same people who may edit it (`404`
+otherwise, `409` once it's reviewed):
+
+```json
+{
+  "requestId": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+  "mediaType": "tv",
+  "title": "Severance",
+  "seasons": [2],
+  "is4k": false,
+  "seasonRows": [
+    { "seasonNumber": 2, "name": "Season 2", "episodeCount": 10, "state": "requestable" },
+    { "seasonNumber": 1, "name": "Season 1", "episodeCount": 9, "state": "complete" }
+  ],
+  "fourKAvailable": true
+}
+```
+
+`seasonRows`: the show's seasons newest first, as the season picker lists
+them — `requestable` ones get a checkbox (this request's own included,
+ticked), the rest say why not: `complete` "In library", `monitored`
+"Monitored", `requested` "Requested" (another of the requester's
+requests). Empty for a movie. `fourKAvailable`: "In 4K" can be offered. A
+movie without it has nothing to change — don't offer Edit then.
+
+### `DELETE /requests/{id}` — user (0.46+)
+
+Cancels **your own** request while it's pending: it's deleted (with its
+conversation), its slot in your request limit is free again, and the
+reviewers' alerts about it are marked read. `{ "ok": true }`. Errors: `404`
+"Request not found." (none, or someone else's), `403 forbidden` "Only
+whoever asked can cancel it — decline it instead." (a reviewer, on someone
+else's), `409 conflict` "It's already been reviewed, so it can't be
+cancelled. Ask in its comments instead.", `429 rate_limited` (more than 30
+in an hour). Website: "Cancel request" → "Cancel it? Yes, cancel / Keep it".
+
+### `POST /requests/{id}/retry` — admin or trusted member (0.46+)
+
+"Retry" on a request under "Couldn't add" (`addFailed`): adds it again with
+the Advanced picks it was approved with — or, with a body, the ones given
+(the same fields as `approve`). On success it's added, `addFailed` clears,
+and the requester is told it's approved. `{ "ok": true }`. Errors: `404`
+"That request isn't waiting to be added any more.", `409` "Someone's
+already retrying it.", `502` (still unreachable — the new error is kept on
+the request), and those of `approve`.
+
+### Conversations (0.46+)
+
+A request and a problem report each have a comment thread between whoever
+asked (or reported) and the reviewers — the admin and trusted members.
+Nobody else can read or write in it, or learn it exists: `404`. Plain text,
+up to 2000 characters, trimmed (control characters dropped, at most one
+blank line in a row). At most 12 comments per person in 10 minutes (`429`)
+and 300 per thread (`409` "This conversation is full."). An author can
+edit or delete their comment for 15 minutes; the admin can delete any.
+Participants are notified (`request_comment` / `issue_comment`, see §8).
+
+#### `GET /requests/{id}/comments` · `GET /issues/{id}/comments` — user
+
+```json
+{
+  "canComment": true,
+  "maxLength": 2000,
+  "results": [
+    {
+      "id": "report:83bedf64-c5d8-4f43-98a0-bb615c4b9897",
+      "kind": "report",
+      "author": { "userId": "2d0b6e1a-8f3c-4a5d-9e7b-1c2d3e4f5a6b", "label": "Member", "avatarUrl": null, "role": "member" },
+      "body": "Out of sync after 20 minutes",
+      "createdAt": "2026-09-26T02:40:11.000Z",
+      "editedAt": null,
+      "isMine": true,
+      "canEdit": false,
+      "canDelete": false,
+      "editableUntil": null
+    },
+    {
+      "id": "7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b",
+      "kind": "comment",
+      "author": { "userId": "11111111-2222-4333-8444-555555555555", "label": "Tess", "avatarUrl": "/api/v1/users/11111111-2222-4333-8444-555555555555/avatar?v=1758220800000", "role": "reviewer" },
+      "body": "Which episode?\nI'll swap the file tonight.",
+      "createdAt": "2026-09-26T03:02:40.000Z",
+      "editedAt": "2026-09-26T03:04:02.000Z",
+      "isMine": false,
+      "canEdit": false,
+      "canDelete": false,
+      "editableUntil": null
+    }
+  ]
+}
+```
+
+Oldest first. A thread starts with what was already said: a report's own
+note (`kind` "report", by the reporter), the note it was marked fixed with
+("resolution"), and why a request was declined ("declined", by whoever
+declined it) — each where it falls in time, with an id like
+`report:<issue id>`, and never editable. Real comments are `kind`
+"comment". `author.role`: "admin", "reviewer" (a trusted member) or
+"member"; null with `label` "Someone" once the account is gone. `canEdit`
+(yours, within 15 minutes; `editableUntil` says until when) and
+`canDelete` (that, or the admin). Website: "Comments (2)" under each
+request and report on the Requests page (and each of your own requests on
+the title page) opens it: photo, name, "Admin"/"Reviewer", "Reported" /
+"Marked fixed" / "Declined" for the notes, time, "edited"; the text with
+its line breaks; "Edit" / "Delete" while allowed; and a "Write a comment"
+box with "Send".
+
+#### `POST /requests/{id}/comments` · `POST /issues/{id}/comments` — user
+
+Body `{ "body": "Could it be the 4K one?" }` → `{ "ok": true, "commentId":
+"…" }`. Errors: `400 invalid` "Write something first." / "Keep it under
+2000 characters.", `404`, `409`, `429` (above).
+
+#### `PATCH /requests/{id}/comments/{commentId}` · `PATCH /issues/{id}/comments/{commentId}` — user
+
+Body `{ "body": "…" }`: your own comment, within 15 minutes of posting.
+`{ "ok": true }`. Errors: `403 forbidden` "You can only edit your own
+comments." / "Comments can only be changed for 15 minutes after
+posting.", `404` "Comment not found.", `400` as for posting.
+
+#### `DELETE /requests/{id}/comments/{commentId}` · `DELETE /issues/{id}/comments/{commentId}` — user
+
+Your own within 15 minutes, or (the admin) any. `{ "ok": true }`. Errors:
+`403`, `404` as above.
+
+### Your requests on the title page (0.46+)
+
+The title's `viewer.myRequests` lists the viewer's own requests for it,
+regular and 4K, newest first (at most five; empty when there are none):
+
+`{ "id": "5b0f…", "status": "pending", "seasons": [2], "seasonsLabel":
+"Season 2", "is4k": false, "canEdit": true, "canCancel": true,
+"commentCount": 0, "createdAt": "…" }`
+
+The website shows each under the hero's buttons: "Your request (Season 2)
+is waiting for review" (or "approved" / "declined"), "Edit" and "Cancel
+request" while `canEdit` / `canCancel`, and "Comments (N)".
 
 ### Request blocklist (0.41+)
 
@@ -1895,7 +2179,8 @@ reads "Report another".
       "reportedBy": { "userId": "2d0b…", "displayName": "Member", "username": "member", "label": "Member" },
       "isMine": false,
       "createdAt": "2026-09-26T02:40:11.000Z",
-      "resolvedAt": null
+      "resolvedAt": null,
+      "commentCount": 1
     }
   ],
   "kinds": [
@@ -1914,7 +2199,8 @@ recently fixed; a member only their own (up to 100). `episodeLabel`: "S2 E5",
 "Season 2", "Specials" or null. `resolution`: the admin's note, when fixed.
 Website rows: poster, title (link) and episode label, "Audio problem ·
 Member · 9/26/2026" (the reporter only for the admin), the note in quotes,
-"Fixed: <note>" once fixed; open ones have "Search again", "Mark fixed"
+"Fixed: <note>" once fixed, "Comments (N)" (`commentCount`, 0.46+) opening
+its conversation; open ones have "Search again", "Mark fixed"
 (which opens a note field and its own "Mark fixed") and "Remove" for the
 admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
 
@@ -1952,7 +2238,18 @@ Sonarr/Radarr hasn't found — "Couldn't find Ice Age (2002) — requested by
 Susan" to the admin and trusted members (a reminder "Still can't find …" at
 most once more, a week later), and "We're still looking for Ice Age (2002)"
 to the requester if they chose to hear it (in the bell only, by default).
-Once it's found or dismissed its alerts are marked read. Tapping one opens
+Once it's found or dismissed its alerts are marked read. From 0.46
+`request_comment` and `issue_comment` (💬, "New comment"): someone wrote in
+the conversation on a request (`requestId`) or problem report (`issueId`)
+you're part of — "Tess commented on "Severance" (Season 2): It's on the
+way…". The requester or reporter hears every comment but their own;
+reviewers hear them once they've taken part (commented, reviewed the request
+or fixed the report) — or, before any reviewer has, all of them hear the
+requester's. Both follow the "Comments on requests and problem reports"
+(`request_comment`) preference: in the bell, pushed and sent to personal
+channels by default, never to the household channels. Open the Requests
+screen for them. `requestId` (0.46+) is also set on `request_created`;
+null otherwise, and missing on older servers. Tapping one opens
 `/titles/{mediaType}/{tmdbId}` and marks it read.
 
 ### `GET /notifications` — user
@@ -1976,7 +2273,24 @@ Once it's found or dismissed its alerts are marked read. Tapping one opens
       "alert": true,
       "createdAt": "2026-09-17T17:12:41.470Z",
       "sharedBy": null,
-      "note": null
+      "note": null,
+      "requestId": null,
+      "issueId": null
+    },
+    {
+      "id": "0f3a5c77-1d2e-4b8a-9c6f-3e2d1a0b9c88",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "title": "Severance",
+      "eventType": "request_comment",
+      "message": "Tess commented on \"Severance\" (Season 2): It's on the way, the indexer was slow",
+      "read": false,
+      "alert": true,
+      "createdAt": "2026-09-17T17:02:00.000Z",
+      "sharedBy": null,
+      "note": null,
+      "requestId": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+      "issueId": null
     },
     {
       "id": "5d1e0c37-2a4b-4f9e-9a51-7c3f0b6e8d21",
@@ -1995,7 +2309,9 @@ Once it's found or dismissed its alerts are marked read. Tapping one opens
         "label": "Susan",
         "avatarUrl": "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar?v=1758220800000"
       },
-      "note": "You'd love this one"
+      "note": "You'd love this one",
+      "requestId": null,
+      "issueId": null
     }
   ]
 }

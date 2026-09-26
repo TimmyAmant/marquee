@@ -2,5 +2,6 @@
   "unreadNotifications": 2,
   "pendingRequests": 1,
   "openIssues": 1,
-  "notFoundRequests": 1
+  "notFoundRequests": 1,
+  "failedRequests": 0
 }

@@ -16,7 +16,35 @@
       "statusLabel": "Downloading",
       "statusTone": "downloading",
       "createdAt": "2026-09-17T17:12:41.415Z",
-      "reviewedAt": "2026-09-17T18:00:02.118Z"
+      "reviewedAt": "2026-09-17T18:00:02.118Z",
+      "canEdit": false,
+      "canCancel": false,
+      "editedAt": null,
+      "commentCount": 2
+    },
+    {
+      "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+      "mediaType": "tv",
+      "tmdbId": 95396,
+      "title": "Severance",
+      "posterPath": "/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+      "seasons": [
+        2
+      ],
+      "seasonsLabel": "Season 2",
+      "is4k": false,
+      "status": "pending",
+      "manuallyApproved": false,
+      "rejectionReason": null,
+      "libraryStatus": null,
+      "statusLabel": "Pending review",
+      "statusTone": "pending",
+      "createdAt": "2026-09-17T17:10:02.001Z",
+      "reviewedAt": null,
+      "canEdit": true,
+      "canCancel": true,
+      "editedAt": "2026-09-17T17:20:40.310Z",
+      "commentCount": 0
     }
   ]
 }

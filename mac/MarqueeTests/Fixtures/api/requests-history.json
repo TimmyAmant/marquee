@@ -1,6 +1,35 @@
 {
   "results": [
     {
+      "id": "c4d8e2a1-7b3f-4e6a-9d0c-5f1b2a8e7c90",
+      "mediaType": "movie",
+      "tmdbId": 78,
+      "title": "Blade Runner",
+      "posterPath": "/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
+      "is4k": false,
+      "status": "approved",
+      "manuallyApproved": false,
+      "rejectionReason": null,
+      "statusLabel": "Approved",
+      "requestedBy": {
+        "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "displayName": null,
+        "username": "member1",
+        "label": "member1"
+      },
+      "createdAt": "2026-09-17T16:40:00.000Z",
+      "reviewedAt": "2026-09-17T16:45:10.000Z",
+      "addedTo": null,
+      "notFoundSince": null,
+      "addFailed": {
+        "error": "Couldn't add this movie to Radarr.",
+        "since": "2026-09-17T19:02:00.000Z"
+      },
+      "commentCount": 0
+    },
+    {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
       "mediaType": "movie",
       "tmdbId": 603,
@@ -22,7 +51,9 @@
       "createdAt": "2026-09-17T17:12:41.415Z",
       "reviewedAt": "2026-09-17T17:12:41.468Z",
       "addedTo": null,
-      "notFoundSince": null
+      "notFoundSince": null,
+      "addFailed": null,
+      "commentCount": 1
     },
     {
       "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
@@ -55,7 +86,9 @@
         ],
         "seriesType": null
       },
-      "notFoundSince": "2026-09-18T18:20:00.412Z"
+      "notFoundSince": "2026-09-18T18:20:00.412Z",
+      "addFailed": null,
+      "commentCount": 0
     }
   ]
 }

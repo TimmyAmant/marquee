@@ -1,13 +1,13 @@
 import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getActiveRequestStatus, getViewerTitleRequests } from "@/lib/requests/query";
 import { activityRequestTitle, quotedRequestTitle } from "@/lib/requests/labels";
 import { parseSeasonsInput, seasonsStillNeeded, unlistedSeasonError } from "@/lib/requests/seasons";
-import { addMovieToRadarrForUser, addSeriesToSonarrForUser } from "@/lib/arr/title-actions";
-import type { ViewerIdentity } from "@/lib/integrations/library-owner";
+import { addMovieToRadarrForUser, addSeriesToSonarrForUser, type AddPlacement } from "@/lib/arr/title-actions";
+import { getLibraryOwnerUserId, type ViewerIdentity } from "@/lib/integrations/library-owner";
 import { getSonarrSeasonStates, getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import type { TmdbTvDetails } from "@/lib/tmdb/client";
@@ -15,10 +15,12 @@ import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { insertWithinQuota } from "@/lib/requests/quota";
-import { clearRequestAlerts, notifyReviewersOfRequest } from "@/lib/requests/alerts";
+import { clearRequestAlerts, notifyReviewersOfRequest, refreshRequestAlerts } from "@/lib/requests/alerts";
 import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
-import type { AddOverrides } from "@/lib/arr/add-options";
+import { hasOverrides, type AddOverrides } from "@/lib/arr/add-options";
+import { canReviewRequests } from "@/lib/users/roles";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
 // Request lifecycle shared by the web's server actions (lib/requests/actions.ts)
@@ -166,8 +168,8 @@ export async function createRequest(
   // Admin-set per member (Settings -> household member edit) — if this
   // media type is auto-approved for them, skip straight to the same
   // approval flow the admin's Approve button uses. Falls back to sitting
-  // pending (like any failed manual approval) if it errors, e.g. Radarr
-  // unreachable or the admin hasn't configured it yet.
+  // pending (like any failed manual approval) if it isn't set up, or under
+  // "Couldn't add" — with the reviewers told — if Radarr is unreachable.
   const [requester] = await db
     .select({ role: users.role, autoApproveMovies: users.autoApproveMovies, autoApproveTv: users.autoApproveTv })
     .from(users)
@@ -178,7 +180,8 @@ export async function createRequest(
   if (autoApprove) {
     const adminUserId = await getAdminUserId();
     if (adminUserId) {
-      await approveRequest(inserted.id, adminUserId).catch(() => undefined);
+      const approved = await approveRequest(inserted.id, adminUserId).catch(() => null);
+      if (approved && "addFailed" in approved) await notifyReviewersOfAddFailure(inserted.id).catch(() => undefined);
     }
   }
   if (!input.quiet) await notifyReviewersOfRequest(inserted.id).catch(() => undefined);
@@ -247,7 +250,8 @@ async function createFourKRequest(
     .from(users)
     .where(eq(users.id, viewer.userId));
   if (requester?.role === "trusted" || (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv)) {
-    await approveRequest(inserted.id, adminUserId).catch(() => undefined);
+    const approved = await approveRequest(inserted.id, adminUserId).catch(() => null);
+    if (approved && "addFailed" in approved) await notifyReviewersOfAddFailure(inserted.id).catch(() => undefined);
   }
   await notifyReviewersOfRequest(inserted.id).catch(() => undefined);
 
@@ -269,58 +273,28 @@ function requestName(request: { title: string; seasons: number[] | null; is4k: b
   return request.is4k ? `${name} in 4K` : name;
 }
 
-/** Shared by the single-request Approve button and "Approve all" — takes an
- * already-verified reviewer (the admin or a trusted member) so the bulk path
- * doesn't re-check on every iteration. The title is added with the admin's
- * Sonarr/Radarr either way. */
-export async function approveRequest(
-  requestId: string,
-  reviewerUserId: string,
-  /** The reviewer's "Advanced" picks (lib/arr/add-options.ts): which server
-   * and with what. None = the server's defaults, as it always was. */
-  overrides: AddOverrides = {},
-): Promise<CoreResult> {
-  const adminUserId = await credentialOwnerFor(reviewerUserId);
-  if (!adminUserId) return fail("conflict", "There's no admin account to add titles with.");
-  const [request] = await db
-    .select()
-    .from(requests)
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
-  if (!request) return fail("not_found", "Request not found or already reviewed.");
 
-  // Executes using the approving admin's own Sonarr/Radarr credential —
-  // there's no shared/instance-wide credential, only per-user ones.
-  const result =
-    request.mediaType === "movie"
-      ? await addMovieToRadarrForUser(adminUserId, request.tmdbId, request.is4k, overrides)
-      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true, request.is4k, overrides);
+type RequestRow = typeof requests.$inferSelect;
 
-  if (!result.ok) return result;
-  const { placement } = result;
+/** An approval whose add Sonarr/Radarr didn't take (unreachable, or it
+ * errored): the request is approved and listed under "Couldn't add". */
+export type AddFailure = CoreFailure & { addFailed: true };
 
-  // Re-guard on status='pending' here too — the initial select above can't
-  // stop a concurrent reject from landing between that read and this write,
-  // so keep the same atomic "only if still pending" condition the original
-  // single UPDATE...WHERE had before this was split into select-then-update.
-  const [updated] = await db
-    .update(requests)
-    .set({
-      status: "approved",
-      reviewedByUserId: reviewerUserId,
-      reviewedAt: new Date(),
-      // Where it went and with what (`addedTo` in /requests/history).
-      arrServerId: placement.serverId,
-      arrServerName: placement.serverName,
-      arrQualityProfileId: placement.qualityProfileId,
-      arrRootFolderPath: placement.rootFolderPath,
-      arrTags: placement.tags,
-      arrSeriesType: placement.seriesType,
-    })
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
-    .returning({ id: requests.id });
-  if (!updated) return fail("conflict", "Request was already reviewed.");
-  await clearRequestAlerts(requestId).catch(() => undefined);
+/** The line a reviewer sees when an approval ends under "Couldn't add". */
+function couldntAddMessage(error: string): string {
+  return `${error} It's approved and waiting under “Couldn't add” — retry once it's reachable.`;
+}
 
+/** Adds the request's title with the admin's Sonarr/Radarr. */
+function addForRequest(adminUserId: string, request: RequestRow, overrides: AddOverrides) {
+  return request.mediaType === "movie"
+    ? addMovieToRadarrForUser(adminUserId, request.tmdbId, request.is4k, overrides)
+    : addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true, request.is4k, overrides);
+}
+
+/** After the add went through: tell the requester, log it, refresh pages. */
+async function announceApproval(request: RequestRow, reviewerUserId: string): Promise<void> {
+  await clearRequestAlerts(request.id).catch(() => undefined);
   await Promise.all([
     createNotification({
       userId: request.requestedByUserId,
@@ -339,10 +313,186 @@ export async function approveRequest(
       title: requestName(request, false),
     }).catch(() => undefined),
   ]);
-
   revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/discover");
+  revalidatePath("/requests");
+}
+
+function placementColumns(placement: AddPlacement) {
+  return {
+    arrServerId: placement.serverId,
+    arrServerName: placement.serverName,
+    arrQualityProfileId: placement.qualityProfileId,
+    arrRootFolderPath: placement.rootFolderPath,
+    arrTags: placement.tags,
+    arrSeriesType: placement.seriesType,
+  };
+}
+
+/** Shared by the single-request Approve button and "Approve all" — takes an
+ * already-verified reviewer (the admin or a trusted member) so the bulk path
+ * doesn't re-check on every iteration. The title is added with the admin's
+ * Sonarr/Radarr either way.
+ *
+ * The request is claimed first (pending → approved in one guarded update),
+ * so the requester can't cancel or change it while it's being added. If
+ * Sonarr/Radarr can't be reached or errors, it stays approved under
+ * "Couldn't add" with the error, for a reviewer to retry. Anything else
+ * (not set up, a show Sonarr can't resolve, bad Advanced picks) puts it back
+ * in the queue, as it always was. */
+export async function approveRequest(
+  requestId: string,
+  reviewerUserId: string,
+  /** The reviewer's "Advanced" picks (lib/arr/add-options.ts): which server
+   * and with what. None = the server's defaults, as it always was. */
+  overrides: AddOverrides = {},
+): Promise<CoreResult | AddFailure> {
+  const adminUserId = await credentialOwnerFor(reviewerUserId);
+  if (!adminUserId) return fail("conflict", "There's no admin account to add titles with.");
+
+  const claimedAt = new Date();
+  const [request] = await db
+    .update(requests)
+    .set({
+      status: "approved",
+      reviewedByUserId: reviewerUserId,
+      reviewedAt: claimedAt,
+      addOverrides: hasOverrides(overrides) ? overrides : null,
+    })
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .returning();
+  if (!request) return fail("not_found", "Request not found or already reviewed.");
+
+  // Executes using the approving admin's own Sonarr/Radarr credential —
+  // there's no shared/instance-wide credential, only per-user ones.
+  const result = await addForRequest(adminUserId, request, overrides);
+  if (!result.ok) {
+    if (result.code === "upstream") {
+      await markAddFailed(request.id, result.error, claimedAt);
+      return { ...fail("upstream", couldntAddMessage(result.error)), addFailed: true };
+    }
+    const reverted = await db
+      .update(requests)
+      .set({ status: "pending", reviewedByUserId: null, reviewedAt: null, addOverrides: null })
+      .where(and(eq(requests.id, requestId), eq(requests.status, "approved"), eq(requests.reviewedAt, claimedAt)))
+      .returning({ id: requests.id })
+      .catch((err) => {
+        // A new request for more seasons went in meanwhile, and only one may
+        // wait at a time: keep this one where a reviewer will see it.
+        if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+        throw err;
+      });
+    if (reverted === null) await markAddFailed(request.id, result.error, claimedAt);
+    return result;
+  }
+
+  // Where it went and with what (`addedTo` in /requests/history).
+  await db
+    .update(requests)
+    .set(placementColumns(result.placement))
+    .where(eq(requests.id, requestId));
+  await announceApproval(request, reviewerUserId);
   return { ok: true };
+}
+
+async function markAddFailed(requestId: string, error: string, since: Date): Promise<void> {
+  await db
+    .update(requests)
+    .set({ addFailedAt: since, addError: error })
+    .where(and(eq(requests.id, requestId), eq(requests.status, "approved")));
+  // Its "new request" alerts have done their job either way.
+  await clearRequestAlerts(requestId).catch(() => undefined);
+  revalidatePath("/requests");
+}
+
+/** "Retry" on a request under "Couldn't add": the add again, with the
+ * Advanced picks it was approved with, or new ones when sent. Two retries
+ * at once can't both run: the first claims it. */
+export async function retryRequest(
+  requestId: string,
+  reviewerUserId: string,
+  overrides?: AddOverrides,
+): Promise<CoreResult> {
+  const adminUserId = await credentialOwnerFor(reviewerUserId);
+  if (!adminUserId) return fail("conflict", "There's no admin account to add titles with.");
+  const [request] = await db
+    .select()
+    .from(requests)
+    .where(and(eq(requests.id, requestId), eq(requests.status, "approved"), isNotNull(requests.addFailedAt)))
+    .limit(1);
+  if (!request || !request.addFailedAt) return fail("not_found", "That request isn't waiting to be added any more.");
+
+  const picks = overrides && hasOverrides(overrides) ? overrides : (request.addOverrides ?? {});
+  const claimedAt = new Date();
+  const [claimed] = await db
+    .update(requests)
+    .set({ addFailedAt: claimedAt, addOverrides: hasOverrides(picks) ? picks : null })
+    .where(
+      and(eq(requests.id, requestId), eq(requests.status, "approved"), eq(requests.addFailedAt, request.addFailedAt)),
+    )
+    .returning({ id: requests.id });
+  if (!claimed) return fail("conflict", "Someone's already retrying it.");
+
+  const result = await addForRequest(adminUserId, request, picks);
+  if (!result.ok) {
+    await db
+      .update(requests)
+      .set({ addError: result.error })
+      .where(and(eq(requests.id, requestId), eq(requests.addFailedAt, claimedAt)));
+    revalidatePath("/requests");
+    return result;
+  }
+  const [done] = await db
+    .update(requests)
+    .set({ ...placementColumns(result.placement), addFailedAt: null, addError: null, reviewedByUserId: reviewerUserId })
+    .where(and(eq(requests.id, requestId), eq(requests.status, "approved"), eq(requests.addFailedAt, claimedAt)))
+    .returning({ id: requests.id });
+  if (!done) return fail("conflict", "That request changed while it was being added.");
+  await announceApproval(request, reviewerUserId);
+  return { ok: true };
+}
+
+/** Tells the reviewers an automatic approval (a trusted member's, or a
+ * member set to auto-approve) couldn't be added — otherwise nobody would
+ * know it's sitting under "Couldn't add". */
+async function notifyReviewersOfAddFailure(requestId: string): Promise<void> {
+  const [request] = await db
+    .select({
+      addFailedAt: requests.addFailedAt,
+      addError: requests.addError,
+      mediaType: requests.mediaType,
+      tmdbId: requests.tmdbId,
+      title: requests.title,
+      seasons: requests.seasons,
+      is4k: requests.is4k,
+      requesterId: requests.requestedByUserId,
+      requesterName: users.displayName,
+      requesterUsername: users.username,
+    })
+    .from(requests)
+    .innerJoin(users, eq(users.id, requests.requestedByUserId))
+    .where(eq(requests.id, requestId))
+    .limit(1);
+  if (!request?.addFailedAt) return;
+  const reviewers = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(inArray(users.role, ["admin", "trusted"]));
+  reviewers.sort((a, b) => (a.role === "admin" ? -1 : b.role === "admin" ? 1 : 0));
+  const who = request.requesterName || request.requesterUsername;
+  const what = requestName(request, true);
+  for (const [index, reviewer] of reviewers.entries()) {
+    await createNotification({
+      userId: reviewer.id,
+      mediaType: request.mediaType,
+      tmdbId: request.tmdbId,
+      title: request.title,
+      eventType: "request_created",
+      message: `${who}'s request for ${what} was approved, but couldn't be added: ${request.addError ?? "the server didn't take it."} Retry it on the Requests page.`,
+      is4k: request.is4k,
+      relay: index === 0,
+    }).catch(() => undefined);
+  }
 }
 
 export type ApproveAllResult = {
@@ -354,8 +504,8 @@ export type ApproveAllResult = {
 
 /** Approves every currently pending request in one pass, sequentially (not
  * Promise.all) so a burst of requests doesn't hammer Radarr/Sonarr with
- * simultaneous add calls. Requests that fail (e.g. Radarr unreachable
- * partway through) are left pending rather than silently dropped. */
+ * simultaneous add calls. Requests that fail are left pending, or (Sonarr/
+ * Radarr unreachable partway through) under "Couldn't add" — never dropped. */
 export async function approveAllRequests(adminUserId: string): Promise<ApproveAllResult> {
   const pending = await db.select({ id: requests.id }).from(requests).where(eq(requests.status, "pending"));
 
@@ -366,7 +516,7 @@ export async function approveAllRequests(adminUserId: string): Promise<ApproveAl
     if (result.ok) {
       approvedCount++;
     } else {
-      failures.push(result);
+      failures.push({ ok: false, code: result.code, error: result.error });
     }
   }
 
@@ -379,6 +529,13 @@ export async function approveAllRequests(adminUserId: string): Promise<ApproveAl
   };
 }
 
+/** Still waiting for a review — or approved but never added ("Couldn't
+ * add"), which a reviewer may also decline or mark as added by hand. */
+const reviewable = or(
+  eq(requests.status, "pending"),
+  and(eq(requests.status, "approved"), isNotNull(requests.addFailedAt)),
+);
+
 /** For requests Sonarr/Radarr can't add automatically (e.g. no TVDB id to
  * resolve) but the admin is downloading by hand anyway. Marks the request
  * approved without touching Sonarr/Radarr, and flags it so the requester
@@ -387,7 +544,7 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
   const [request] = await db
     .select()
     .from(requests)
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
+    .where(and(eq(requests.id, requestId), reviewable));
   if (!request) return fail("not_found", "Request not found or already reviewed.");
 
   const [updated] = await db
@@ -397,8 +554,10 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
       manuallyApproved: true,
       reviewedByUserId: adminUserId,
       reviewedAt: new Date(),
+      addFailedAt: null,
+      addError: null,
     })
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .where(and(eq(requests.id, requestId), reviewable))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
   await clearRequestAlerts(requestId).catch(() => undefined);
@@ -437,14 +596,21 @@ export async function rejectRequest(
   const [request] = await db
     .select()
     .from(requests)
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")));
+    .where(and(eq(requests.id, requestId), reviewable));
   if (!request) return fail("not_found", "Request not found or already reviewed.");
 
   // Same atomic re-guard as approveRequest — see comment there.
   const [updated] = await db
     .update(requests)
-    .set({ status: "rejected", rejectionReason: reason, reviewedByUserId: adminUserId, reviewedAt: new Date() })
-    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .set({
+      status: "rejected",
+      rejectionReason: reason,
+      reviewedByUserId: adminUserId,
+      reviewedAt: new Date(),
+      addFailedAt: null,
+      addError: null,
+    })
+    .where(and(eq(requests.id, requestId), reviewable))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");
   await clearRequestAlerts(requestId).catch(() => undefined);
@@ -473,4 +639,171 @@ export async function rejectRequest(
 
   revalidatePath("/requests");
   return { ok: true };
+}
+
+// ── Changing your mind ───────────────────────────────────────────────────
+
+export type RequestActor = { userId: string; role: string | null | undefined };
+
+/** Cancels one of your own requests while it's still waiting for review:
+ * it's gone, its slot in your request limit is free again, and the
+ * reviewers' alerts about it are cleared. Once reviewed, it can't be
+ * cancelled here — ask in its comments instead. */
+export async function cancelRequest(actor: RequestActor, requestId: string): Promise<CoreResult> {
+  const [request] = await db
+    .select({
+      id: requests.id,
+      status: requests.status,
+      ownerId: requests.requestedByUserId,
+      mediaType: requests.mediaType,
+      tmdbId: requests.tmdbId,
+    })
+    .from(requests)
+    .where(eq(requests.id, requestId))
+    .limit(1);
+  // Someone else's request reads like one that isn't there, unless you
+  // review requests (then Decline is the way).
+  if (!request || (request.ownerId !== actor.userId && !canReviewRequests(actor.role))) {
+    return fail("not_found", "Request not found.");
+  }
+  if (request.ownerId !== actor.userId) return fail("forbidden", "Only whoever asked can cancel it — decline it instead.");
+  if (request.status !== "pending") {
+    return fail("conflict", "It's already been reviewed, so it can't be cancelled. Ask in its comments instead.");
+  }
+  if (!checkRateLimit(`request-cancel:${actor.userId}`, CANCELS_PER_HOUR, 60 * 60 * 1000)) {
+    return fail("rate_limited", "That's a lot of cancelled requests in a short time. Try again in a while.");
+  }
+
+  // The alerts first: once the row is gone they no longer point at it.
+  await clearRequestAlerts(requestId).catch(() => undefined);
+  const deleted = await db
+    .delete(requests)
+    .where(and(eq(requests.id, requestId), eq(requests.requestedByUserId, actor.userId), eq(requests.status, "pending")))
+    .returning({ id: requests.id });
+  if (deleted.length === 0) {
+    return fail("conflict", "It's already been reviewed, so it can't be cancelled. Ask in its comments instead.");
+  }
+  revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
+  revalidatePath("/requests");
+  return { ok: true };
+}
+
+/** Cancelled requests one person may make in an hour — each one clears and
+ * re-sends reviewer alerts when asked again. */
+const CANCELS_PER_HOUR = 30;
+
+/**
+ * Changes a request still waiting for review: which seasons (TV), and
+ * whether it's for the 4K copy. Its requester may change their own; a
+ * reviewer may change anyone's before approving. The same checks as asking
+ * afresh apply (seasons TMDb lists and Sonarr doesn't already have, 4K set
+ * up and free, no duplicate). It keeps its place in the queue and in the
+ * requester's request limit.
+ */
+export async function editRequest(
+  actor: RequestActor,
+  requestId: string,
+  input: { seasons?: unknown; is4k?: unknown },
+): Promise<CoreResult> {
+  const [request] = await db.select().from(requests).where(eq(requests.id, requestId)).limit(1);
+  const reviewer = canReviewRequests(actor.role);
+  if (!request || (request.requestedByUserId !== actor.userId && !reviewer)) {
+    return fail("not_found", "Request not found.");
+  }
+  if (request.status !== "pending") {
+    return fail("conflict", "It's already been reviewed, so it can't be changed. Ask in its comments instead.");
+  }
+  if (input.is4k !== undefined && typeof input.is4k !== "boolean") return fail("invalid", '"is4k" must be true or false.');
+  const is4k = input.is4k ?? request.is4k;
+
+  let seasons: number[] | null;
+  if (request.mediaType === "movie" || is4k) {
+    // A 4K request is always the whole title.
+    if (input.seasons !== undefined && input.seasons !== null) {
+      return fail("invalid", request.mediaType === "movie" ? "A movie has no seasons." : "A 4K request is always the whole show.");
+    }
+    seasons = null;
+  } else if (input.seasons === undefined) {
+    seasons = request.seasons;
+  } else {
+    const parsed = parseSeasonsInput(input.seasons);
+    if (!parsed.ok) return fail("invalid", parsed.error);
+    seasons = parsed.seasons;
+  }
+
+  const sameSeasons = JSON.stringify(seasons) === JSON.stringify(request.seasons);
+  if (is4k === request.is4k && sameSeasons) return { ok: true };
+
+  const libraryOwnerId = await getLibraryOwnerUserId(request.requestedByUserId);
+  const checked = is4k
+    ? await checkFourKEdit(request)
+    : await checkRegularEdit(request, seasons, libraryOwnerId);
+  if (!checked.ok) return checked;
+  seasons = checked.seasons;
+
+  const updated = await db
+    .update(requests)
+    .set({ is4k, seasons, editedAt: new Date() })
+    .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
+    .returning()
+    .catch((err) => {
+      if (err && typeof err === "object" && "code" in err && err.code === "23505") return null;
+      throw err;
+    });
+  if (updated === null) {
+    return fail("conflict", is4k ? "There's already a 4K request for this waiting." : "There's already a request for this waiting.");
+  }
+  if (updated.length === 0) {
+    return fail("conflict", "It's already been reviewed, so it can't be changed. Ask in its comments instead.");
+  }
+  // The reviewers' "new request" alerts still waiting name what's asked for.
+  await refreshRequestAlerts(updated[0]).catch(() => undefined);
+  revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
+  revalidatePath("/requests");
+  return { ok: true };
+}
+
+type EditCheck = { ok: true; seasons: number[] | null } | CoreFailure;
+
+async function checkFourKEdit(request: RequestRow): Promise<EditCheck> {
+  const adminUserId = await getAdminUserId();
+  if (!adminUserId || !(await isFourKReady(adminUserId, request.mediaType))) {
+    return fail("conflict", "4K requests aren't set up on this server.");
+  }
+  if (await getActiveRequestStatus(request.requestedByUserId, request.mediaType, request.tmdbId, true)) {
+    return fail("conflict", "There's already a 4K request for this.");
+  }
+  const cachedTitle = await getOrFetchTitle(request.mediaType, request.tmdbId).catch(() => null);
+  if (!cachedTitle) return fail("upstream", "Couldn't look this title up with TMDb right now.");
+  const fourK = await getFourKStatus(adminUserId, request.mediaType, request.tmdbId, cachedTitle.tvdbId).catch(() => null);
+  if (fourK && fourK.status !== "untracked") return fail("conflict", "It's already in the 4K library or on its way.");
+  return { ok: true, seasons: null };
+}
+
+async function checkRegularEdit(request: RequestRow, seasons: number[] | null, libraryOwnerId: string): Promise<EditCheck> {
+  const { mediaType, tmdbId } = request;
+  if (request.is4k) {
+    // Coming off 4K: the regular request mustn't already exist.
+    const existing = await getActiveRequestStatus(request.requestedByUserId, mediaType, tmdbId, false);
+    if (existing) return fail("conflict", "There's already a request for this.");
+  }
+  const cachedTitle = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+  if (seasons) {
+    if (!cachedTitle) return fail("upstream", "Couldn't check this show's seasons with TMDb right now.");
+    const listed = ((cachedTitle.rawTmdb as TmdbTvDetails | null)?.seasons ?? []).map((s) => s.season_number);
+    const unlisted = unlistedSeasonError(seasons, listed);
+    if (unlisted) return fail("invalid", unlisted);
+    const library = await getSonarrSeasonStates(libraryOwnerId, cachedTitle.tvdbId).catch(() => null);
+    const needed = seasonsStillNeeded(seasons, library);
+    if (needed.length === 0) return fail("conflict", "Those seasons are already in your library or on their way.");
+    return { ok: true, seasons: needed };
+  }
+  const status = await getTitleLibraryStatus(libraryOwnerId, mediaType, tmdbId, cachedTitle?.tvdbId ?? null).catch(
+    () => null,
+  );
+  // The same rule as asking for the whole title afresh.
+  if (status && status.status !== "untracked") {
+    return fail("conflict", "You already have this in your library.");
+  }
+  return { ok: true, seasons: null };
 }

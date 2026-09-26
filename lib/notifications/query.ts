@@ -83,8 +83,11 @@ export async function createNotification(input: {
   dedupeSince?: Date;
   /** About the 4K copy: repeats are only dropped among other 4K notices. */
   is4k?: boolean;
-  /** request_created: the request its Approve / Decline buttons act on. */
+  /** request_created: the request its Approve / Decline buttons act on;
+   * request_comment: the request the conversation is on. */
   requestId?: string;
+  /** issue_comment: the problem report the conversation is on. */
+  issueId?: string;
   /** Which of Settings' events this is, when it isn't the eventType's usual
    * one (lib/notifications/events.ts) — a Plex Watchlist batch. */
   topic?: NotificationPreferenceEvent;

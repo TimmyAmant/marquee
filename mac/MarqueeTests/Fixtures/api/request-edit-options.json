@@ -1,0 +1,24 @@
+{
+  "requestId": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
+  "mediaType": "tv",
+  "title": "Severance",
+  "seasons": [
+    2
+  ],
+  "is4k": false,
+  "seasonRows": [
+    {
+      "seasonNumber": 2,
+      "name": "Season 2",
+      "episodeCount": 10,
+      "state": "requestable"
+    },
+    {
+      "seasonNumber": 1,
+      "name": "Season 1",
+      "episodeCount": 9,
+      "state": "complete"
+    }
+  ],
+  "fourKAvailable": true
+}

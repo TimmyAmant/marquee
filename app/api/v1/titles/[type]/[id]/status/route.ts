@@ -39,6 +39,7 @@ export const GET = withApi<TitleParams>(async (request, params): Promise<TitleSt
       openReports: status.openReports,
       blocked: status.blocked,
       notFoundSince: status.notFoundSince,
+      myRequests: status.myRequests,
     }),
   };
 });

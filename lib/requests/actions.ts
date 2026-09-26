@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
-import { getPendingRequestCount } from "@/lib/requests/query";
+import { getFailedRequestCount, getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
 import { dismissNotFound, getNotFoundCount, searchNotFoundAgain } from "@/lib/requests/not-found";
 import { canReviewRequests } from "@/lib/users/roles";
@@ -12,13 +12,18 @@ import { requireAdmin, requireReviewer } from "@/lib/auth/require-admin";
 import {
   approveAllRequests,
   approveRequest,
+  cancelRequest,
   createRequest,
+  editRequest,
   manuallyApproveRequest,
   rejectRequest,
+  retryRequest,
 } from "@/lib/requests/mutate";
 import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
-import { parseAddOverridesForm } from "@/lib/arr/add-options";
+import { hasOverrides, parseAddOverridesForm } from "@/lib/arr/add-options";
 import { requestAllMissing } from "@/lib/requests/request-all";
+import { getRequestEditOptions } from "@/lib/requests/edit-options";
+import type { RequestEditOptions } from "@/lib/api/types";
 
 // Thin session/form wrappers — the request lifecycle lives in
 // lib/requests/mutate.ts, shared with /api/v1/requests/*.
@@ -32,12 +37,13 @@ export type RequestState = { error?: string; success?: boolean };
 export async function getPendingRequestCountAction(): Promise<number> {
   const session = await auth();
   if (!canReviewRequests(session?.user?.role)) return 0;
-  const [requests, issues, notFound] = await Promise.all([
+  const [requests, issues, notFound, failed] = await Promise.all([
     getPendingRequestCount(),
     getOpenIssueCount(),
     getNotFoundCount(),
+    getFailedRequestCount(),
   ]);
-  return requests + issues + notFound;
+  return requests + issues + notFound + failed;
 }
 
 /** "Can't find" → "Search again". */
@@ -136,6 +142,61 @@ export async function approveRequestAction(
   if (!parsed.ok) return { error: parsed.error };
   const result = await approveRequest(requestId, admin.userId, parsed.overrides);
   revalidatePath("/requests");
+  // Approved but not added: it moves to "Couldn't add" (with its error and
+  // a Retry), so this row's job is done.
+  if (!result.ok && "addFailed" in result) return { success: true };
+  return result.ok ? { success: true } : { error: result.error };
+}
+
+/** "Retry" under "Couldn't add", with the row's Advanced picks if opened. */
+export async function retryRequestAction(
+  requestId: string,
+  _prevState: ReviewState | undefined,
+  formData: FormData,
+): Promise<ReviewState> {
+  const admin = await requireReviewer("Only an admin can retry requests.");
+  if (!admin.ok) return { error: admin.error };
+  const parsed = parseAddOverridesForm(formData, "tv");
+  if (!parsed.ok) return { error: parsed.error };
+  const result = await retryRequest(requestId, admin.userId, hasOverrides(parsed.overrides) ? parsed.overrides : undefined);
+  revalidatePath("/requests");
+  return result.ok ? { success: true } : { error: result.error };
+}
+
+/** What "Edit" can offer for a pending request (lib/requests/edit-options.ts). */
+export async function requestEditOptionsAction(
+  requestId: string,
+): Promise<{ options?: RequestEditOptions; error?: string }> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in first." };
+  if (typeof requestId !== "string" || !/^[0-9a-f-]{36}$/i.test(requestId)) return { error: "Request not found." };
+  const result = await getRequestEditOptions({ userId: session.user.id, role: session.user.role }, requestId);
+  return result.ok ? { options: result.options } : { error: result.error };
+}
+
+/** "Cancel request" — the requester's own, while it's pending. */
+export async function cancelRequestAction(requestId: string): Promise<RequestState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in first." };
+  if (typeof requestId !== "string") return { error: "Request not found." };
+  const result = await cancelRequest({ userId: session.user.id, role: session.user.role }, requestId);
+  return result.ok ? { success: true } : { error: result.error };
+}
+
+/** "Edit" on a pending request: its seasons (TV) and/or 4K. The requester's
+ * own, or anyone's for a reviewer. Both values are whatever the browser
+ * sent; editRequest checks them. `seasons` undefined leaves them as they are. */
+export async function editRequestAction(
+  requestId: string,
+  change: { seasons?: unknown; is4k?: unknown },
+): Promise<RequestState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in first." };
+  if (typeof requestId !== "string" || !change || typeof change !== "object") return { error: "Request not found." };
+  const result = await editRequest({ userId: session.user.id, role: session.user.role }, requestId, {
+    seasons: "seasons" in change ? change.seasons : undefined,
+    is4k: "is4k" in change ? change.is4k : undefined,
+  });
   return result.ok ? { success: true } : { error: result.error };
 }
 

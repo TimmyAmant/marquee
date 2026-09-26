@@ -13,7 +13,8 @@ import { ReportProblemButton } from "@/components/report-problem-button";
 import { ShareButton } from "@/components/share-button";
 import { publicTitleLinks } from "@/lib/sharing/parse";
 import { BlockRequestsButton } from "@/components/block-requests-button";
-import type { FourKViewerState } from "@/lib/api/types";
+import type { FourKViewerState, TitleRequestSummary } from "@/lib/api/types";
+import { MyTitleRequests } from "@/components/my-title-requests";
 import { FileDetailsSection } from "@/components/file-details-section";
 import { CapsLabel } from "@/components/caps-label";
 import type { ArrTrackingInfo, FileInfo } from "@/lib/integrations/status";
@@ -82,6 +83,7 @@ export function TitleHero({
   runtimeLabel,
   cast,
   share,
+  myRequests = [],
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -125,6 +127,8 @@ export function TitleHero({
   cast?: React.ReactNode;
   /** "Share" (signed in): Marquee's public address, null when none is set. */
   share?: { publicBase: string | null } | null;
+  /** The viewer's own requests for this title: Edit / Cancel and comments. */
+  myRequests?: TitleRequestSummary[];
 }) {
   // Rating/status/network live in the sidebar instead — this line is just
   // the quick facts, matching the reference layout's short line under the
@@ -246,6 +250,8 @@ export function TitleHero({
                     <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
                   )}
                 </div>
+
+                <MyTitleRequests requests={myRequests} />
 
                 {tagline && <p className="mt-[26px] text-[14px] italic text-text-secondary">{tagline}</p>}
 

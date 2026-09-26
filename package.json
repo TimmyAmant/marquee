@@ -24,6 +24,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.4",
     "@types/nodemailer": "^8.0.2",

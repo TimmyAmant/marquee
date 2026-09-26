@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
@@ -8,6 +8,7 @@ import { createNotification } from "@/lib/notifications/query";
 import { mapWithLimit } from "@/lib/async/map-limit";
 import { quotedRequestTitle } from "@/lib/requests/labels";
 import { seasonsStillNeeded, type ViewerTitleRequest } from "@/lib/requests/seasons";
+import { countComments } from "@/lib/comments";
 import type { LibraryStatus } from "@/components/status-badge";
 
 // Each row's library status can be a live Sonarr/Radarr lookup — a long
@@ -33,6 +34,7 @@ export async function getPendingRequests(viewerUserId: string) {
       seasons: requests.seasons,
       is4k: requests.is4k,
       createdAt: requests.createdAt,
+      editedAt: requests.editedAt,
       requestedByUserId: requests.requestedByUserId,
       requestedByName: users.displayName,
       requestedByUsername: users.username,
@@ -128,8 +130,29 @@ export async function getPendingRequests(viewerUserId: string) {
 }
 
 /** Already-reviewed requests (approved or rejected), most recent first — for
- * the admin's Requests page history section below the pending queue. */
+ * the admin's Requests page history section below the pending queue. Every
+ * request under "Couldn't add" is included however old, first. */
 export async function getReviewedRequests(limit = 50) {
+  const [failed, recent] = await Promise.all([
+    reviewedQuery()
+      .where(and(eq(requests.status, "approved"), isNotNull(requests.addFailedAt)))
+      .orderBy(desc(requests.reviewedAt)),
+    reviewedQuery().where(ne(requests.status, "pending")).orderBy(desc(requests.reviewedAt)).limit(limit),
+  ]);
+  const failedIds = new Set(failed.map((r) => r.id));
+  return [...failed, ...recent.filter((r) => !failedIds.has(r.id))];
+}
+
+/** Approved, but Sonarr/Radarr couldn't be reached to add it. */
+export async function getFailedRequestCount(): Promise<number> {
+  const [row] = await db
+    .select({ count: count() })
+    .from(requests)
+    .where(and(eq(requests.status, "approved"), isNotNull(requests.addFailedAt)));
+  return row?.count ?? 0;
+}
+
+function reviewedQuery() {
   return db
     .select({
       id: requests.id,
@@ -153,12 +176,13 @@ export async function getReviewedRequests(limit = 50) {
       arrTags: requests.arrTags,
       arrSeriesType: requests.arrSeriesType,
       notFoundSince: requests.notFoundSince,
+      addFailedAt: requests.addFailedAt,
+      addError: requests.addError,
+      requestedByUserId: requests.requestedByUserId,
     })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))
-    .where(ne(requests.status, "pending"))
-    .orderBy(desc(requests.reviewedAt))
-    .limit(limit);
+    .$dynamic();
 }
 
 /** A member's own requests, most recent first, with a live library-status
@@ -180,6 +204,7 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       rejectionReason: requests.rejectionReason,
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
+      editedAt: requests.editedAt,
     })
     .from(requests)
     .leftJoin(
@@ -313,6 +338,29 @@ export async function getViewerTitleRequests(
   return rows.flatMap((r) =>
     r.status === "pending" || r.status === "approved" ? [{ status: r.status, seasons: r.seasons }] : [],
   );
+}
+
+/** This user's own requests for one title, regular and 4K, newest first
+ * (at most five), with how many comments each has — the title page's
+ * Cancel / Edit and conversations. */
+export async function getViewerRequestsForTitle(userId: string, mediaType: MediaType, tmdbId: number) {
+  const rows = await db
+    .select({
+      id: requests.id,
+      status: requests.status,
+      seasons: requests.seasons,
+      is4k: requests.is4k,
+      createdAt: requests.createdAt,
+    })
+    .from(requests)
+    .where(and(eq(requests.requestedByUserId, userId), eq(requests.mediaType, mediaType), eq(requests.tmdbId, tmdbId)))
+    .orderBy(desc(requests.createdAt))
+    .limit(5);
+  const counts = await countComments(
+    "request",
+    rows.map((r) => r.id),
+  );
+  return rows.map((r) => ({ ...r, commentCount: counts.get(r.id) ?? 0 }));
 }
 
 /** Other household members with a pending request for this same title —
