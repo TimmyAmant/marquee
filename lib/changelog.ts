@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.35.0",
+    date: "2026-09-25",
+    changes: [
+      "Household members now show when each person last used Marquee — \"Active 3 hours ago\", \"Active 6 days ago\", \"Never signed in\" — so you can see who's still using it. Admin only, on the website and in the Mac and Windows apps.",
+      "It counts the website and the apps alike, and starts from when each person's app sign-in was last used.",
+    ],
+  },
+  {
     version: "0.34.1",
     date: "2026-09-25",
     changes: [
