@@ -174,6 +174,7 @@ public sealed partial class MainWindow : Window, INavigator
         Route.Person => (typeof(PersonPage), route),
         Route.Company => (typeof(CompanyPage), route),
         Route.Search => (typeof(SearchPage), route),
+        Route.DiscoverList => (typeof(DiscoverListPage), route),
         _ => (typeof(PlaceholderPage), route.Description),
     };
 

@@ -40,6 +40,10 @@ public sealed class MarqueeApiDiscoverRequestTests
     private static readonly Case[] Cases =
     [
         new("GET", "/discover", NoQuery, null, "discover", api => api.Discover.ShelvesAsync()),
+        new("GET", "/discover/lists/trending", Query(("page", "3")), null, "discover-list",
+            api => api.Discover.ListPageAsync(DiscoverListKind.Trending, page: 3)),
+        new("GET", "/discover/lists/recently-added", Query(("page", "1")), null, "discover-list",
+            api => api.Discover.ListPageAsync(DiscoverListKind.RecentlyAdded)),
         new("GET", "/movies",
             Query(("sort", "top_rated"), ("genre", "28"), ("year", "1999"), ("network", "213"), ("hideOwned", "false"), ("page", "2")),
             null, "browse-page", api => api.Browse.PageAsync(MediaType.Movie, FilteredQuery, page: 2)),
@@ -115,6 +119,22 @@ public sealed class MarqueeApiDiscoverRequestTests
 
         // encodeURIComponent semantics: a literal "+" would read as a space.
         Assert.Equal("?q=Romeo%20%2B%20Juliet", Assert.Single(stub.Requests).Uri.Query);
+    }
+
+    [Fact]
+    public async Task DiscoverListNamesAreOnePathSegment()
+    {
+        var stub = new StubHttpMessageHandler();
+        stub.AnswerFixture("discover-list");
+        var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub));
+
+        var page = await api.Discover.ListPageAsync(DiscoverListKind.FromValue("new releases/2026"), page: 2);
+
+        // A list the server grows is sent as-is, but can't add a path segment.
+        var request = Assert.Single(stub.Requests);
+        Assert.Equal("/api/v1/discover/lists/new%20releases%2F2026", request.Path);
+        Assert.Equal("?page=2", request.Uri.Query);
+        Assert.Equal(DiscoverListKind.Trending, page.List);
     }
 
     [Fact]

@@ -129,5 +129,57 @@
       "name": "Netflix",
       "logoPath": "/wwem.png"
     }
-  ]
+  ],
+  "seeAll": {
+    "recentlyAdded": {
+      "type": "list",
+      "list": "recently-added",
+      "mediaType": null
+    },
+    "trending": {
+      "type": "list",
+      "list": "trending",
+      "mediaType": null
+    },
+    "popularMovies": {
+      "type": "browse",
+      "list": null,
+      "mediaType": "movie"
+    },
+    "movieGenres": {
+      "type": "browse",
+      "list": null,
+      "mediaType": "movie"
+    },
+    "upcomingMovies": {
+      "type": "list",
+      "list": "upcoming-movies",
+      "mediaType": null
+    },
+    "studios": {
+      "type": "browse",
+      "list": null,
+      "mediaType": "movie"
+    },
+    "popularSeries": {
+      "type": "browse",
+      "list": null,
+      "mediaType": "tv"
+    },
+    "seriesGenres": {
+      "type": "browse",
+      "list": null,
+      "mediaType": "tv"
+    },
+    "upcomingSeries": {
+      "type": "list",
+      "list": "upcoming-series",
+      "mediaType": null
+    },
+    "networks": {
+      "type": "browse",
+      "list": null,
+      "mediaType": "tv"
+    }
+  }
 }

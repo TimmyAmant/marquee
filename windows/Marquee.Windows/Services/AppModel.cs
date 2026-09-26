@@ -557,6 +557,23 @@ public sealed partial class AppModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// A Discover shelf's "See all": its own list page, or the unfiltered
+    /// Movies/Series grid (any filters a genre tile left behind are cleared).
+    /// </summary>
+    public void OpenSeeAll(SeeAllTarget target)
+    {
+        switch (target)
+        {
+            case SeeAllTarget.DiscoverList list:
+                Open(new Route.DiscoverList(list.Kind));
+                break;
+            case SeeAllTarget.BrowseGrid grid:
+                Browse(grid.MediaType);
+                break;
+        }
+    }
+
     public void Search(string query)
     {
         var trimmed = query.Trim();

@@ -5,9 +5,11 @@ import { titleCard, statusKey, yearOf } from "@/lib/api/mappers";
 import { loadDiscoverShelves } from "@/lib/pages/discover";
 import type { DiscoverShelves } from "@/lib/api/types";
 import type { MediaType } from "@/lib/db/schema";
+import { DISCOVER_SEE_ALL } from "@/lib/discover/lists";
 
 /** The Discover landing page's shelves, in page order. Cards carry library
- * status only — the website shows no favorite/add buttons on these shelves. */
+ * status only — the website shows no favorite/add buttons on these shelves.
+ * `seeAll` says where each shelf's "See all" goes. */
 export const GET = withApi(async (request): Promise<DiscoverShelves> => {
   const ctx = await requireApiUser(request);
   await requireTmdbConfigured();
@@ -77,5 +79,6 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
       name: network.name,
       logoPath: network.logo_path,
     })),
+    seeAll: DISCOVER_SEE_ALL,
   };
 });

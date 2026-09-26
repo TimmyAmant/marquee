@@ -68,19 +68,22 @@ enum Route: Hashable {
     case person(Int)
     case company(Int)
     case search(String)
+    /// A Discover shelf's full list (its "See all").
+    case discoverList(API.DiscoverList)
     case errorReference
     case changelog
 }
 
 extension Route {
     /// The same page on the server's website (app/title/[type]/[id],
-    /// app/person/[id], app/company/[id]), relative to its root. nil for the
-    /// screens the website has no standalone page for.
+    /// app/person/[id], app/company/[id], app/discover/[list]), relative to
+    /// its root. nil for the screens the website has no standalone page for.
     var webPath: String? {
         switch self {
         case let .title(id): return "title/\(id.mediaType.rawValue)/\(id.tmdbId)"
         case let .person(id): return "person/\(id)"
         case let .company(id): return "company/\(id)"
+        case let .discoverList(list): return "discover/\(list.rawValue)"
         case .search, .errorReference, .changelog: return nil
         }
     }
@@ -576,6 +579,13 @@ final class AppModel {
             if parts.count >= 2, let id = Int(parts[1]) { open(.person(id)) }
         case "company":
             if parts.count >= 2, let id = Int(parts[1]) { open(.company(id)) }
+        case "discover":
+            if parts.count >= 2 {
+                let list = API.DiscoverList(rawValue: parts[1])
+                guard list.isKnown else { return }
+                select(.discover)
+                open(.discoverList(list))
+            }
         case "search":
             if let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "q" })?.value {
                 search(query)

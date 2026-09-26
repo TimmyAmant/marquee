@@ -12,7 +12,15 @@ extension MarqueeAPI {
             try await transport.get("/discover", timeout: Timeout.tmdb)
         }
 
-        /// `POST /surprise` — "🎲 Surprise me". `.notFound` when nothing matches.
+        /// `GET /discover/lists/{list}` — one page of a shelf's full list
+        /// (0.42.4+). Continue while `hasMorePages`. `recently-added` needs no
+        /// TMDb; the others do.
+        func list(_ list: API.DiscoverList, page: Int = 1) async throws -> API.DiscoverListPage {
+            guard list.isKnown else { throw APIError.notFound }
+            return try await transport.get("/discover/lists/\(list.rawValue)", query: ["page": String(page)], timeout: Timeout.tmdb)
+        }
+
+        /// `POST /surprise` —"🎲 Surprise me". `.notFound` when nothing matches.
         func surprise(_ request: API.SurpriseRequest = API.SurpriseRequest()) async throws -> API.TitleID {
             try await transport.post("/surprise", body: request, timeout: Timeout.tmdb)
         }
