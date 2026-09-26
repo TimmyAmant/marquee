@@ -246,9 +246,15 @@ extension API {
         case downloaded
         case requestApproved
         case requestRejected
+        /// 0.38+: someone reported a problem with a title (to the admin).
+        case issueReported
+        /// 0.38+: the admin marked your problem report fixed.
+        case issueResolved
         case unknown(String)
 
-        static let knownCases: [NotificationEventType] = [.grabbed, .downloaded, .requestApproved, .requestRejected]
+        static let knownCases: [NotificationEventType] = [
+            .grabbed, .downloaded, .requestApproved, .requestRejected, .issueReported, .issueResolved,
+        ]
 
         var rawValue: String {
             switch self {
@@ -256,6 +262,8 @@ extension API {
             case .downloaded: return "downloaded"
             case .requestApproved: return "request_approved"
             case .requestRejected: return "request_rejected"
+            case .issueReported: return "issue_reported"
+            case .issueResolved: return "issue_resolved"
             case let .unknown(raw): return raw
             }
         }
@@ -266,6 +274,8 @@ extension API {
             case .downloaded: return "✅"
             case .requestApproved: return "👍"
             case .requestRejected: return "👎"
+            case .issueReported: return "⚠️"
+            case .issueResolved: return "🛠️"
             case .unknown: return "🔔"
             }
         }
@@ -350,6 +360,62 @@ extension API {
             case .movie: return .movie
             case .tv: return .tv
             case .person, .unknown: return nil
+            }
+        }
+    }
+
+    /// What's wrong with a title, in a problem report (0.38+). The labels are
+    /// lib/issues/labels.ts's; `GET /issues` also sends them as `kinds`.
+    enum IssueKind: OpenEnum {
+        case video
+        case audio
+        case subtitles
+        case wontPlay
+        case wrongTitle
+        case other
+        case unknown(String)
+
+        static let knownCases: [IssueKind] = [.video, .audio, .subtitles, .wontPlay, .wrongTitle, .other]
+
+        var rawValue: String {
+            switch self {
+            case .video: return "video"
+            case .audio: return "audio"
+            case .subtitles: return "subtitles"
+            case .wontPlay: return "wont_play"
+            case .wrongTitle: return "wrong_title"
+            case .other: return "other"
+            case let .unknown(raw): return raw
+            }
+        }
+
+        /// The report dialog's radio buttons and the Requests page rows.
+        var label: String {
+            switch self {
+            case .video: return "Bad video quality"
+            case .audio: return "Audio problem"
+            case .subtitles: return "Subtitles missing or wrong"
+            case .wontPlay: return "Won't play"
+            case .wrongTitle: return "Wrong movie or episode"
+            case .other: return "Something else"
+            case let .unknown(raw): return raw
+            }
+        }
+    }
+
+    /// A problem report's state: open until the admin marks it fixed.
+    enum IssueStatus: OpenEnum {
+        case open
+        case resolved
+        case unknown(String)
+
+        static let knownCases: [IssueStatus] = [.open, .resolved]
+
+        var rawValue: String {
+            switch self {
+            case .open: return "open"
+            case .resolved: return "resolved"
+            case let .unknown(raw): return raw
             }
         }
     }

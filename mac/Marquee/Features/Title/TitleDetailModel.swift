@@ -33,6 +33,9 @@ final class TitleDetailModel {
     /// "Add all N missing".
     private(set) var isAddingAll = false
     private(set) var addAllResult: String?
+    /// A problem report went through from this page (the "Problem reported"
+    /// pill shows even before `viewer.openReports` catches up).
+    private(set) var reportedProblem = false
 
     @ObservationIgnored private var api: MarqueeAPI?
 
@@ -215,6 +218,20 @@ final class TitleDetailModel {
             }
             isTogglingMonitor = false
         }
+    }
+
+    /// "Report a problem"'s Send report. Throws for the sheet to show inline;
+    /// on success the sheet closes and `viewer.openReports` is refreshed.
+    func reportProblem(_ report: API.IssueReport) async throws {
+        guard let api else { throw APIError.unauthorized }
+        try await api.issues.report(id.mediaType, id: id.tmdbId, report)
+        reportedProblem = true
+        Task { await refreshStatus() }
+    }
+
+    /// "Problem reported": sent from here, or the viewer already has one open.
+    var hasReportedProblem: Bool {
+        reportedProblem || (detail?.viewer.openReports ?? 0) > 0
     }
 
     func relink(_ target: API.RelinkTarget) async throws -> Int {

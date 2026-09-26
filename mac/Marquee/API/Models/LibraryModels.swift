@@ -102,6 +102,14 @@ extension API {
         /// The 4K copy (0.37+): non-nil when the admin has a 4K Radarr (movies)
         /// / 4K Sonarr (TV). nil from an older server or without one.
         let fourK: FourKViewerState?
+        /// "Report a problem" (0.38+): the title (or its 4K copy) is owned or
+        /// downloading. nil from an older server, which takes no reports.
+        let canReport: Bool?
+        /// Your own open problem reports for this title (0.38+).
+        let openReports: Int?
+
+        /// Show the "Report a problem" button.
+        var showsReportProblem: Bool { canReport == true }
 
         /// "Requested Seasons 1–3 — waiting for approval", or without the
         /// seasons for a whole-series request.
