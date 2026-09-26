@@ -26,8 +26,8 @@ async function send(
     body: new URLSearchParams({
       token: config.appToken,
       user: config.userKey,
-      title: title.slice(0, 250),
-      message: message.slice(0, 1024),
+      title: Array.from(title).slice(0, 250).join(""),
+      message: Array.from(message).slice(0, 1024).join(""),
     }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     redirect: "manual",

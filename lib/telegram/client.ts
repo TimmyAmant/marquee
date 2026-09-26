@@ -24,13 +24,20 @@ export function telegramConfigError(config: { botToken: string; chatId: string }
   return null;
 }
 
+/** Cut on whole characters, so an emoji is never split in half. */
+function truncate(text: string, max: number): string {
+  const chars = Array.from(text);
+  return chars.length > max ? `${chars.slice(0, max - 1).join("")}…` : text;
+}
+
 async function send(config: TelegramConfig, text: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const res = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     // Plain text: titles come from TMDb and requests, so no Markdown/HTML
     // parsing that a stray character could break.
-    body: JSON.stringify({ chat_id: config.chatId, text, disable_web_page_preview: true }),
+    // Telegram refuses anything over 4096 characters outright.
+    body: JSON.stringify({ chat_id: config.chatId, text: truncate(text, 4000), disable_web_page_preview: true }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     redirect: "manual",
   });

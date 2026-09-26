@@ -58,5 +58,7 @@ describe("email settings", () => {
     expect(emailConfigError({ ...base, from: "Marquee" })).toMatch(/come from/);
     expect(emailConfigError({ ...base, to: [] })).toMatch(/at least one/);
     expect(emailConfigError({ ...base, to: ["a@example.com", "bob"] })).toMatch(/"bob"/);
+    // One "address" holding several can't get past the limit of 20.
+    expect(emailConfigError({ ...base, to: ["a@example.com,b@example.com"] })).toMatch(/isn't an email/);
   });
 });

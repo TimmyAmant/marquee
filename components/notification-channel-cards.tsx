@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { removeChannelAction, saveChannelAction } from "@/app/settings/integrations/channel-actions";
 import type { ChannelSummaries } from "@/lib/notifications/channels";
 import type { NotificationChannelKind } from "@/lib/db/schema";
@@ -39,7 +39,11 @@ function ChannelCard({
 }) {
   const [state, formAction, isPending] = useActionState(saveChannelAction, undefined);
   const [removeState, removeAction, isRemoving] = useActionState(removeChannelAction, undefined);
-  const isConnected = removeState?.removed ? false : state?.success ? true : connected;
+  // The newer of the two outcomes wins: a save after a remove is connected.
+  const [lastAction, setLastAction] = useState<"save" | "remove" | null>(null);
+  const isConnected =
+    lastAction === "save" && state?.success ? true : lastAction === "remove" && removeState?.removed ? false : connected;
+  const typed = state?.error ? state.values : undefined;
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
@@ -55,7 +59,7 @@ function ChannelCard({
         )}
       </div>
 
-      <form action={formAction} className="mt-4 flex flex-col gap-3">
+      <form action={formAction} onSubmit={() => setLastAction("save")} className="mt-4 flex flex-col gap-3">
         <input type="hidden" name="kind" value={kind} />
         {fields.map((field) => (
           <label key={field.name} className="flex flex-col gap-1.5 text-sm text-text-secondary">
@@ -64,7 +68,7 @@ function ChannelCard({
               type={field.type ?? "text"}
               name={field.name}
               required={field.required && !(field.keepsSaved && isConnected)}
-              defaultValue={field.defaultValue}
+              defaultValue={typed?.[field.name] ?? field.defaultValue}
               autoComplete="off"
               placeholder={field.keepsSaved && isConnected ? "•••••••••••••••• (leave blank to keep)" : field.placeholder}
               className={inputClass}
@@ -87,7 +91,7 @@ function ChannelCard({
       </form>
 
       {isConnected && (
-        <form action={removeAction} className="mt-3">
+        <form action={removeAction} onSubmit={() => setLastAction("remove")} className="mt-3">
           <input type="hidden" name="kind" value={kind} />
           <button
             type="submit"

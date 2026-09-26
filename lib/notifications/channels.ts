@@ -113,6 +113,9 @@ export async function testAndSaveEmail(input: {
     from: text(input.from),
     to: Array.isArray(input.to) ? input.to.map(text).filter(Boolean) : parseRecipients(text(input.to)),
   };
+  if (config.username && !config.password && saved?.password && !keepPassword) {
+    return fail("invalid", "Enter the password again. It's only kept when the server and username stay the same.");
+  }
   const invalid = emailConfigError(config);
   if (invalid) return fail("invalid", invalid);
   const test = await verifyEmail(config);

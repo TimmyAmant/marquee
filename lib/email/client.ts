@@ -18,7 +18,7 @@ export type EmailConfig = {
 const TIMEOUT_MS = 10_000;
 // Loose on purpose — the SMTP server is the real judge — but enough to catch
 // a name typed into the wrong box.
-const ADDRESS = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+const ADDRESS = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
 
 /** Splits "a@x.com, b@y.com" into addresses. Pure. */
 export function parseRecipients(value: string): string[] {
@@ -46,6 +46,9 @@ function transport(config: EmailConfig) {
     port: config.port,
     secure: config.secure,
     auth: config.username && config.password ? { user: config.username, pass: config.password } : undefined,
+    // With a password to send, never fall back to plain text: without this a
+    // man in the middle could strip the server's STARTTLS offer and read it.
+    requireTLS: Boolean(config.username && config.password) && !config.secure,
     connectionTimeout: TIMEOUT_MS,
     greetingTimeout: TIMEOUT_MS,
     socketTimeout: TIMEOUT_MS,

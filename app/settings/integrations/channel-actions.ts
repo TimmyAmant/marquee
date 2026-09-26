@@ -13,7 +13,9 @@ import type { NotificationChannelKind } from "@/lib/db/schema";
 // Settings → Integrations → Notifications: Telegram, Pushover and email —
 // the same test-and-save as PUT /api/v1/settings/integrations/{kind}.
 
-export type ChannelState = { error?: string; success?: boolean; removed?: boolean };
+/** `values`: what was typed, handed back after a failed test so the form
+ * (which React resets after every submission) can show it again. */
+export type ChannelState = { error?: string; success?: boolean; removed?: boolean; values?: Record<string, string> };
 
 const SAVE = {
   telegram: testAndSaveTelegram,
@@ -30,9 +32,11 @@ export async function saveChannelAction(_prev: ChannelState | undefined, formDat
   if (!admin.ok) return { error: admin.error };
   const kind = formData.get("kind");
   if (!isKind(kind)) return { error: "Unknown channel." };
-  const fields = Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string"));
+  const fields = Object.fromEntries(
+    [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+  );
   const result = await SAVE[kind](fields);
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { error: result.error, values: fields };
   revalidateIntegrations();
   return { success: true };
 }

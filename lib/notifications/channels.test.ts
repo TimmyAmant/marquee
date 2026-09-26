@@ -82,7 +82,7 @@ describe("notification channel settings", () => {
     expect(await getChannelConfig("email")).toMatchObject({ password: "secret", secure: false, to: ["a@example.com", "b@example.com"] });
 
     const moved = await testAndSaveEmail({ ...setup, host: "smtp.other.com", password: "" });
-    expect(moved).toMatchObject({ ok: false, error: expect.stringMatching(/both/) });
+    expect(moved).toMatchObject({ ok: false, error: expect.stringMatching(/password again/) });
   });
 
   it("never shows a secret in the summary", async () => {
