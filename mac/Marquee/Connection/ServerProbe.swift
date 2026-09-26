@@ -99,7 +99,7 @@ struct SignInMethods: Codable, Equatable, Hashable, Sendable {
     /// 0.40+: "Jellyfin", or "Emby" when the connected server is Emby.
     /// Missing from older servers, which means "Jellyfin".
     var jellyfinName: String
-    /// 0.43+: new accounts from Plex/Jellyfin sign-in are on (and one of
+    /// 0.42.2+: new accounts from Plex/Jellyfin sign-in are on (and one of
     /// them is offered). Missing from older servers, which means false.
     var signup: Bool
 

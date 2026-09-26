@@ -207,7 +207,7 @@ public sealed record SignInMethods
     }
 
     /// <summary>
-    /// <c>signup</c> (0.43+): new accounts from Plex/Jellyfin sign-in are on
+    /// <c>signup</c> (0.42.2+): new accounts from Plex/Jellyfin sign-in are on
     /// (and one of them is offered). Missing (older servers) reads as false.
     /// </summary>
     public bool Signup { get; init; }

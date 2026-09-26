@@ -205,7 +205,7 @@ button ("Sign in with Emby"), its username/password fields, Linked accounts,
 "Import from Emby", member tags. The server's own messages already use it
 ("Incorrect Emby username or password").
 
-`signup` (0.43+; treat missing as false): the admin has "New accounts from
+`signup` (0.42.2+; treat missing as false): the admin has "New accounts from
 Plex/Jellyfin sign-in" on (`GET /settings/sign-in`) and at least one of
 `plex` / `jellyfin` is true — signing in with it makes a member account for
 anyone with access to the admin's server. Tell newcomers on the sign-in
