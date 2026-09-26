@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.45.1",
+    date: "2026-09-26",
+    changes: [
+      "Share: a Share button on movie and TV pages. Send a title to anyone in your household with a short note — they get \"Susan shared Ice Age with you\" in the bell and on their devices, and tapping it opens the title.",
+      "Or share it outside Marquee: your phone's share sheet (Messages, Messenger, WhatsApp…), or Copy link, text and email where that isn't available. Pick the Marquee link, or a TMDb/IMDb link for people who can't sign in. The Mac and Windows apps use their own share menus.",
+      "\"Someone shares a title with me\" is in everyone's notification choices.",
+    ],
+  },
+  {
     version: "0.45.0",
     date: "2026-09-26",
     changes: [
