@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { MediaImage } from "@/components/media-image";
@@ -74,6 +75,7 @@ export function TitleHero({
   fourK,
   report,
   blocked,
+  notFoundSince,
   file,
   runtimeLabel,
   cast,
@@ -106,6 +108,9 @@ export function TitleHero({
   report?: { seasonNumbers: number[]; openReports: number } | null;
   /** On the admin's blocklist (lib/requests/blocklist.ts); null otherwise. */
   blocked?: { reason: string | null; keyword: string | null } | null;
+  /** Reviewers only: Sonarr/Radarr hasn't found the approved request since
+   * then (lib/requests/not-found.ts); links to the Requests page's list. */
+  notFoundSince?: string | null;
   /** Renders a "File details" card in the sidebar below the rating/status
    * card — null when the title isn't in the library, same as the standalone
    * section this replaced. */
@@ -189,6 +194,16 @@ export function TitleHero({
                     inArr={Boolean(arrTracking)}
                     blocked={blocked ?? null}
                   />
+
+                  {notFoundSince && (
+                    <Link
+                      href="/requests#cant-find"
+                      title={`Sonarr/Radarr hasn't found it since ${new Date(notFoundSince).toLocaleDateString()}`}
+                      className="inline-flex h-8 items-center rounded-full border border-red-500/40 bg-red-500/10 px-3 text-xs font-medium text-red-500 hover:bg-red-500/20"
+                    >
+                      Can&apos;t find
+                    </Link>
+                  )}
 
                   {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} />}
 

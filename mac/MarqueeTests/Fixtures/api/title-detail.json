@@ -117,7 +117,8 @@
     },
     "canReport": false,
     "openReports": 0,
-    "blocked": null
+    "blocked": null,
+    "notFoundSince": null
   },
   "seasons": [],
   "cast": [

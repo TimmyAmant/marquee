@@ -38,6 +38,7 @@ export const GET = withApi<TitleParams>(async (request, params): Promise<TitleSt
       fourK: status.fourK,
       openReports: status.openReports,
       blocked: status.blocked,
+      notFoundSince: status.notFoundSince,
     }),
   };
 });

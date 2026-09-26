@@ -2,10 +2,13 @@ import { redirect } from "next/navigation";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { RunJobButton } from "@/components/run-job-button";
 import { JOBS } from "@/lib/jobs/registry";
+import { NotFoundHoursSetting } from "@/components/not-found-hours-setting";
+import { getNotFoundAfterHours } from "@/lib/requests/not-found";
 
 export default async function JobsSettingsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session || !viewer.isAdmin) redirect("/settings");
+  const notFoundAfterHours = await getNotFoundAfterHours();
 
   return (
     <div>
@@ -23,6 +26,7 @@ export default async function JobsSettingsPage() {
                 <p className="text-sm font-medium text-text-primary">{job.name}</p>
                 <p className="mt-0.5 text-xs text-text-muted">{job.description}</p>
                 <p className="mt-1 text-xs text-text-secondary">{job.schedule}</p>
+                {job.id === "not-found-check" && <NotFoundHoursSetting initial={notFoundAfterHours} />}
               </div>
               <RunJobButton jobId={job.id} />
             </div>

@@ -23,7 +23,11 @@ export type NotificationEventType =
   | "issue_reported"
   | "issue_resolved"
   /** 0.40+: a new request waiting for review (admin and trusted members). */
-  | "request_created";
+  | "request_created"
+  /** 0.46+: an approved request Sonarr/Radarr hasn't found a release for —
+   * to reviewers ("Couldn't find …") and, if they chose it, the requester
+   * ("We're still looking for …"). */
+  | "request_not_found";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -134,6 +138,9 @@ export type ImportCandidate = {
 
 export type SignInSettings = { mediaServerSignup: boolean };
 
+/** 0.46+: GET/PUT /settings/not-found. */
+export type NotFoundSettings = { afterHours: number };
+
 export type User = {
   id: string;
   username: string;
@@ -175,6 +182,9 @@ export type Badges = {
   /** Open problem reports, for the admin's Requests badge (0.38+; 0 for
    * members; an older server omits it). */
   openIssues: number;
+  /** 0.46+: approved requests Sonarr/Radarr can't find ("Can't find" on the
+   * Requests page); 0 for members, and an older server omits it. */
+  notFoundRequests: number;
 };
 
 /** A problem report (GET /issues). */
@@ -369,6 +379,10 @@ export type TitleViewerState = {
    * it too, with an Unblock button (`DELETE …/block`). Null when it isn't
    * blocked. */
   blocked: { reason: string | null; keyword: string | null } | null;
+  /** 0.46+: for the admin and trusted members, when an approved request for
+   * this title became "Can't find" (Sonarr/Radarr has found nothing); null
+   * otherwise, and omitted by an older server. */
+  notFoundSince: string | null;
 };
 
 export type FourKViewerState = {
@@ -611,6 +625,36 @@ export type ReviewedRequest = {
   /** 0.43+: where approving it added the title; null for rejected, manually
    * approved and older requests. */
   addedTo: RequestAddedTo | null;
+  /** 0.46+: listed under "Can't find" since then; null when it isn't (an
+   * older server omits it). */
+  notFoundSince: string | null;
+};
+
+/** 0.46+: an approved request Sonarr/Radarr hasn't found (GET /requests/not-found). */
+export type NotFoundRequest = {
+  id: string;
+  mediaType: MediaType;
+  tmdbId: number;
+  title: string;
+  posterPath: string | null;
+  seasons: number[] | null;
+  seasonsLabel: string | null;
+  is4k: boolean;
+  requestedBy: RequestPerson;
+  createdAt: string;
+  reviewedAt: string | null;
+  notFoundSince: string;
+  /** The Sonarr/Radarr it went to. `id`/`name` null when unknown. */
+  server: { id: string | null; name: string | null; kind: "sonarr" | "radarr" };
+  /** The title's page in that Sonarr/Radarr ("Open in Radarr"); null when unknown. */
+  arrUrl: string | null;
+  /** A tip for finding it by hand, shown under the actions. */
+  hint: string;
+};
+
+export type NotFoundRequestsResponse = ListResponse<NotFoundRequest> & {
+  /** How many hours after approval an unfound request is listed. */
+  afterHours: number;
 };
 
 export type RequestAddedTo = {

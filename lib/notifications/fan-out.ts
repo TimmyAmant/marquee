@@ -27,6 +27,7 @@ export const EVENT_EMOJI: Record<NotificationEventType, string> = {
   issue_reported: "⚠️",
   issue_resolved: "🛠️",
   request_created: "🙋",
+  request_not_found: "🔍",
 };
 
 export type OutgoingNotification = {

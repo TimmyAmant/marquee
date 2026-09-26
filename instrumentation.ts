@@ -14,6 +14,7 @@ export async function register() {
   const { snapshotDiskSpaceForAllConnectedUsers } = await import("@/lib/integrations/disk-space");
   const { pruneOldRecords } = await import("@/lib/jobs/cleanup");
   const { syncAllPlexWatchlists } = await import("@/lib/plex/watchlist");
+  const { checkNotFoundRequests } = await import("@/lib/requests/not-found");
 
   cron.schedule("0 * * * *", () => {
     syncAllConnectedPlexUsers().catch((err) => {
@@ -32,6 +33,14 @@ export async function register() {
   cron.schedule("5-59/10 * * * *", () => {
     syncAllPlexWatchlists().catch((err) => {
       console.error("[plex-watchlist] scheduled sync failed:", err);
+    });
+  });
+
+  // Approved requests Sonarr/Radarr still hasn't found (lib/requests/not-found.ts).
+  // Past the hour's library sync, so a title that turned up is already known.
+  cron.schedule("20 * * * *", () => {
+    checkNotFoundRequests().catch((err) => {
+      console.error("[not-found-check] scheduled check failed:", err);
     });
   });
 

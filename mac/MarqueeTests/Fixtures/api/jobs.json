@@ -25,6 +25,12 @@
       "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each."
     },
     {
+      "id": "not-found-check",
+      "name": "Can't Find Check",
+      "schedule": "Every hour",
+      "description": "Looks for approved requests that Sonarr/Radarr still hasn't found a copy of, and tells the admin and trusted members."
+    },
+    {
       "id": "disk-space-snapshot",
       "name": "Disk Space Snapshot",
       "schedule": "Daily at 3:00 AM",

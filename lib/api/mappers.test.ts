@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { fileDetails, fourKViewerState, iso, myRequest, requestPerson, reviewedRequest, titleCard, titleViewerState } from "./mappers";
+import {
+  fileDetails,
+  fourKViewerState,
+  iso,
+  myRequest,
+  notFoundRequest,
+  requestPerson,
+  reviewedRequest,
+  titleCard,
+  titleViewerState,
+} from "./mappers";
 
 describe("iso", () => {
   it("formats dates as ISO-8601 UTC with milliseconds", () => {
@@ -247,5 +257,65 @@ describe("fourKViewerState", () => {
     expect(fourKViewerState(false, { ...free, requestStatus: "pending" })).toMatchObject({ canRequest: false });
     expect(fourKViewerState(false, { ...free, status: "owned" })).toMatchObject({ canRequest: false, status: "owned" });
     expect(fourKViewerState(true, { ...free, configured: false })).toMatchObject({ canAdd: false });
+  });
+});
+
+describe("Can't find mapping", () => {
+  it("maps a flagged request with where it went and a tip", () => {
+    const dto = notFoundRequest({
+      id: "11111111-1111-1111-1111-111111111111",
+      mediaType: "movie",
+      tmdbId: 425,
+      title: "Ice Age",
+      posterPath: null,
+      seasons: null,
+      is4k: false,
+      createdAt: new Date("2026-09-01T00:00:00Z"),
+      reviewedAt: new Date("2026-09-01T01:00:00Z"),
+      notFoundSince: new Date("2026-09-02T01:20:00Z"),
+      requestedByUserId: "22222222-2222-2222-2222-222222222222",
+      requestedByName: "Susan",
+      requestedByUsername: "susan",
+      server: { id: "33333333-3333-3333-3333-333333333333", name: "Radarr", kind: "radarr" },
+      arrUrl: "http://radarr:7878/movie/425",
+    });
+    expect(dto).toMatchObject({
+      notFoundSince: "2026-09-02T01:20:00.000Z",
+      requestedBy: { userId: "22222222-2222-2222-2222-222222222222", label: "Susan" },
+      server: { name: "Radarr", kind: "radarr" },
+      arrUrl: "http://radarr:7878/movie/425",
+      seasonsLabel: null,
+    });
+    expect(dto.hint).toContain("Interactive Search");
+  });
+
+  it("adds notFoundSince to history rows and the title's viewer state", () => {
+    const row = reviewedRequest({
+      id: "11111111-1111-1111-1111-111111111111",
+      mediaType: "movie",
+      tmdbId: 425,
+      title: "Ice Age",
+      posterPath: null,
+      seasons: null,
+      status: "approved",
+      manuallyApproved: false,
+      rejectionReason: null,
+      createdAt: new Date("2026-09-01T00:00:00Z"),
+      reviewedAt: new Date("2026-09-01T01:00:00Z"),
+      requestedByName: null,
+      requestedByUsername: "susan",
+    });
+    expect(row.notFoundSince).toBeNull();
+    const viewer = titleViewerState({
+      isAdmin: true,
+      status: "tracked_monitored",
+      configured: true,
+      favorited: false,
+      requestStatus: null,
+      otherRequesters: [],
+      arrTracking: null,
+      notFoundSince: new Date("2026-09-02T01:20:00Z"),
+    });
+    expect(viewer.notFoundSince).toBe("2026-09-02T01:20:00.000Z");
   });
 });

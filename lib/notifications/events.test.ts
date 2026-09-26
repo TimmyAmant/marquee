@@ -17,10 +17,17 @@ describe("notification events", () => {
       "request_declined",
       "request_available",
       "request_downloading",
+      "request_still_looking",
       "issue_updated",
     ]);
-    expect(eventsFor("trusted")).toEqual([...eventsFor("member"), "request_pending", "watchlist_requests"]);
-    expect(eventsFor("admin")).toEqual([...eventsFor("member"), "request_pending", "issue_reported", "watchlist_requests"]);
+    expect(eventsFor("trusted")).toEqual([...eventsFor("member"), "request_pending", "request_not_found", "watchlist_requests"]);
+    expect(eventsFor("admin")).toEqual([
+      ...eventsFor("member"),
+      "request_pending",
+      "request_not_found",
+      "issue_reported",
+      "watchlist_requests",
+    ]);
   });
 
   it("never lists comments until they exist", () => {
@@ -35,12 +42,13 @@ describe("notification events", () => {
     expect(preferenceEventFor("grabbed")).toBe("request_downloading");
     expect(preferenceEventFor("issue_resolved")).toBe("issue_updated");
     expect(preferenceEventFor("request_created")).toBe("request_pending");
+    expect(preferenceEventFor("request_not_found")).toBe("request_not_found");
   });
 });
 
 describe("defaults keep today's behaviour", () => {
   it("puts everything in the bell and on devices when nothing was chosen", () => {
-    for (const event of eventsFor("admin")) {
+    for (const event of eventsFor("admin").filter((e) => e !== "request_still_looking")) {
       expect(bellAndPushFor(undefined, event)).toEqual({ inApp: true, push: true });
       expect(bellAndPushFor({}, event)).toEqual({ inApp: true, push: true });
     }
@@ -62,6 +70,7 @@ describe("defaults keep today's behaviour", () => {
       "request_available",
       "request_downloading",
       "request_pending",
+      "request_not_found",
       "issue_reported",
       "watchlist_requests",
     ]);
@@ -76,5 +85,21 @@ describe("defaults keep today's behaviour", () => {
     expect(channelWants({}, "request_downloading")).toBe(false);
     expect(channelWants({ request_downloading: true }, "request_downloading")).toBe(true);
     expect(channelWants({ request_available: false }, "request_available")).toBe(false);
+  });
+});
+
+describe("Can't find", () => {
+  it("reaches reviewers everywhere by default", () => {
+    expect(bellAndPushFor(undefined, "request_not_found")).toEqual({ inApp: true, push: true });
+    expect(channelWants({}, "request_not_found")).toBe(true);
+    expect(householdWants(null, "request_not_found")).toBe(true);
+  });
+
+  it("tells the requester in the bell only, unless they choose more", () => {
+    expect(bellAndPushFor(undefined, "request_still_looking")).toEqual({ inApp: true, push: false });
+    expect(bellAndPushFor({ request_still_looking: { push: true } }, "request_still_looking")).toEqual({ inApp: true, push: true });
+    expect(channelWants({}, "request_still_looking")).toBe(false);
+    // The reviewers' alert already went to the household channels.
+    expect(householdEvents).not.toContain("request_still_looking");
   });
 });
