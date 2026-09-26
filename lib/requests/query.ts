@@ -152,6 +152,7 @@ export async function getReviewedRequests(limit = 50) {
       arrRootFolderPath: requests.arrRootFolderPath,
       arrTags: requests.arrTags,
       arrSeriesType: requests.arrSeriesType,
+      notFoundSince: requests.notFoundSince,
     })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))

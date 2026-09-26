@@ -94,6 +94,8 @@ export interface SonarrSeasonStats {
 export interface SonarrSeries {
   id: number;
   tvdbId: number;
+  /** The show's page in Sonarr is /series/{titleSlug}. */
+  titleSlug?: string;
   status: string;
   monitored: boolean;
   path?: string;

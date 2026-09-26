@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
+import { dismissNotFound, getNotFoundCount, searchNotFoundAgain } from "@/lib/requests/not-found";
 import { canReviewRequests } from "@/lib/users/roles";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { requireAdmin, requireReviewer } from "@/lib/auth/require-admin";
@@ -25,13 +26,35 @@ import { requestAllMissing } from "@/lib/requests/request-all";
 export type RequestState = { error?: string; success?: boolean };
 
 /** Polled by the nav badge so the admin sees a new request (or problem
- * report) without a manual page refresh — mirrors the notification bell's
- * polling pattern. Both wait on the Requests page. */
+ * report, or a request Sonarr/Radarr can't find) without a manual page
+ * refresh — mirrors the notification bell's polling pattern. All of them
+ * wait on the Requests page. */
 export async function getPendingRequestCountAction(): Promise<number> {
   const session = await auth();
   if (!canReviewRequests(session?.user?.role)) return 0;
-  const [requests, issues] = await Promise.all([getPendingRequestCount(), getOpenIssueCount()]);
-  return requests + issues;
+  const [requests, issues, notFound] = await Promise.all([
+    getPendingRequestCount(),
+    getOpenIssueCount(),
+    getNotFoundCount(),
+  ]);
+  return requests + issues + notFound;
+}
+
+/** "Can't find" → "Search again". */
+export async function searchNotFoundAgainAction(requestId: string): Promise<RequestState> {
+  await requireReviewer();
+  const result = await searchNotFoundAgain(requestId);
+  if (!result.ok) return { error: result.error };
+  return { success: true };
+}
+
+/** "Can't find" → "Mark as found". */
+export async function dismissNotFoundAction(requestId: string): Promise<RequestState> {
+  await requireReviewer();
+  const result = await dismissNotFound(requestId);
+  if (!result.ok) return { error: result.error };
+  revalidatePath("/requests");
+  return { success: true };
 }
 
 export async function createRequestAction(

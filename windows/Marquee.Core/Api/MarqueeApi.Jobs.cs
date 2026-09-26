@@ -29,4 +29,30 @@ public sealed class JobsEndpoints(MarqueeApi.Transport transport)
         transport.MutateAsync<OK>(
             HttpMethod.Post, $"/settings/jobs/{MarqueeApi.Segment(id)}/run",
             timeout: MarqueeApi.Timeouts.LongRunning, changes: IntegrationsEndpoints.Reconnected | ServerChange.Jobs, ct: ct);
+
+    /// <summary>
+    /// <c>GET /settings/not-found</c> (0.46+): the Can't Find Check's wait,
+    /// "Flag a request after [24] hours without a find". Null from an older
+    /// server, which answers 404.
+    /// </summary>
+    public async Task<NotFoundSettings?> NotFoundSettingsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await transport.GetAsync<NotFoundSettings>("/settings/not-found", ct: ct).ConfigureAwait(false);
+        }
+        catch (ApiException error) when (error.Kind == ApiErrorKind.NotFound)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// <c>PUT /settings/not-found</c> (0.46+): a whole number of hours from
+    /// 1 to 720; Invalid otherwise. Answers the saved settings.
+    /// </summary>
+    public Task<NotFoundSettings> SaveNotFoundSettingsAsync(int afterHours, CancellationToken ct = default) =>
+        transport.MutateAsync<NotFoundSettings>(
+            HttpMethod.Put, "/settings/not-found", body: new NotFoundSettings { AfterHours = afterHours },
+            changes: ServerChange.Jobs, ct: ct);
 }

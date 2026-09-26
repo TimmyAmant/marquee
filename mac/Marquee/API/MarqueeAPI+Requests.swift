@@ -61,6 +61,31 @@ extension MarqueeAPI {
             return list.results
         }
 
+        /// `GET /requests/not-found` (reviewers, 0.46+) — "Can't find": approved,
+        /// released requests Sonarr/Radarr still has nothing for. `.notFound`
+        /// from an older server (hide the section), `.forbidden` for members.
+        func notFound() async throws -> API.NotFoundRequests {
+            try await transport.get("/requests/not-found")
+        }
+
+        /// `POST /requests/{id}/not-found/search` (reviewers, 0.46+) — "Search
+        /// again": its Sonarr/Radarr searches now; it stays listed until
+        /// something is grabbed. `.notFound("That request isn't in Can't find
+        /// any more.")`, `.conflict` (server gone or title missing), `.upstream`.
+        func searchNotFound(_ id: UUID) async throws {
+            let _: API.OK = try await transport.mutate(
+                .post, "/requests/\(MarqueeAPI.segment(id))/not-found/search", timeout: Timeout.integrations, changes: .library
+            )
+        }
+
+        /// `POST /requests/{id}/not-found/dismiss` (reviewers, 0.46+) — "Mark as
+        /// found": off the list for good, its alerts marked read for everyone.
+        func dismissNotFound(_ id: UUID) async throws {
+            let _: API.OK = try await transport.mutate(
+                .post, "/requests/\(MarqueeAPI.segment(id))/not-found/dismiss", changes: [.requests, .notifications]
+            )
+        }
+
         /// `GET /requests/pending-count` — always 0 for members (`badges()` has it too).
         func pendingCount() async throws -> Int {
             let count: API.Count = try await transport.get("/requests/pending-count")

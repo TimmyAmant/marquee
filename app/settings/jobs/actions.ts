@@ -2,6 +2,7 @@
 
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { runJob, type JobId as RegistryJobId } from "@/lib/jobs/registry";
+import { saveNotFoundAfterHours } from "@/lib/requests/not-found";
 
 export type JobId = RegistryJobId;
 
@@ -19,4 +20,12 @@ export async function runJobAction(jobId: JobId, _prevState: RunJobState): Promi
 
   const result = await runJob(jobId);
   return result.ok ? { success: true } : { error: result.error };
+}
+
+/** The Can't Find Check's wait: hours after approval (1–720). */
+export async function saveNotFoundAfterHoursAction(hours: number): Promise<{ afterHours?: number; error?: string }> {
+  const viewer = await getViewerContext();
+  if (!viewer.session || !viewer.isAdmin) return { error: "Only the admin can change this." };
+  const result = await saveNotFoundAfterHours(hours);
+  return result.ok ? { afterHours: result.afterHours } : { error: result.error };
 }

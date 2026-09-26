@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.45.2",
+    date: "2026-09-26",
+    changes: [
+      "Can't find: when an approved request is released but Sonarr/Radarr still hasn't found a download a day later, you (and trusted members) get \"Couldn't find Ice Age (2002) — requested by Susan\" in the bell, on your devices and on your channels. The wait is set in Settings › Jobs.",
+      "The Requests page has a \"Can't find\" section with Search again, Open in Sonarr/Radarr and Mark as found, and the Requests badge counts them. It clears itself as soon as a download starts. One reminder after 7 days, no more.",
+      "Members can turn on \"We're still looking for…\" in their notification choices. On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.45.1",
     date: "2026-09-26",
     changes: [

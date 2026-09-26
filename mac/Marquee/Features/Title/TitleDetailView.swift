@@ -482,6 +482,26 @@ private struct TitleActionRow: View {
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 StatusBadge(status: detail.library.status, large: true)
 
+                // components/title-hero.tsx (0.46+, reviewers): Sonarr/Radarr
+                // hasn't found the approved request; opens the Requests
+                // screen, where it's listed under "Can't find".
+                if let since = viewer.notFoundSince {
+                    Button {
+                        model.select(.requests)
+                    } label: {
+                        Text("Can't find")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Theme.danger)
+                            .padding(.horizontal, 14)
+                            .frame(height: 32)
+                            .background(Capsule().fill(Theme.danger.opacity(0.12)))
+                            .overlay(Capsule().strokeBorder(Theme.danger.opacity(0.4)))
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
+                }
+
                 // components/add-to-library-button.tsx (0.41+): on the
                 // admin's blocklist, a member sees why instead of Request.
                 if !viewer.isAdmin, let block = viewer.block {

@@ -5,6 +5,7 @@ import { syncArrLibrary } from "@/lib/arr/sync";
 import { debounce } from "@/lib/async/single-flight";
 import { createNotification } from "@/lib/notifications/query";
 import { notifyRequestersOfDownload } from "@/lib/requests/fulfilled";
+import { clearNotFoundForTitle } from "@/lib/requests/not-found";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { getClientIp, isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
 
@@ -125,6 +126,11 @@ export async function handleArrWebhookEvent(
       dedupeSince: new Date(Date.now() - NOTIFICATION_DEDUPE_WINDOW_MS),
       is4k: fourK,
     }).catch(() => undefined);
+
+    // Something was found: it's not "Can't find" any more.
+    await clearNotFoundForTitle(mediaType, tmdbId, fourK).catch((err) => {
+      console.error("[webhook] clearing Can't find failed:", err);
+    });
 
     if (eventType === "Download") {
       await notifyRequestersOfDownload({ mediaType, tmdbId, title, exceptUserId: userId, fourK }).catch((err) => {

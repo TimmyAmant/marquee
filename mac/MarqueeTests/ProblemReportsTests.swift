@@ -113,6 +113,7 @@ final class ProblemReportsTests: XCTestCase {
 
         var badges = try fixture("badges")
         badges.removeValue(forKey: "openIssues")
+        badges.removeValue(forKey: "notFoundRequests")
         let oldBadges = try decode(API.Badges.self, badges)
         XCTAssertNil(oldBadges.openIssues)
         XCTAssertEqual(oldBadges.requestsPageCount, oldBadges.pendingRequests)
@@ -122,7 +123,8 @@ final class ProblemReportsTests: XCTestCase {
         let badges = try decode(API.Badges.self, fixture("badges"))
         XCTAssertEqual(badges.pendingRequests, 1)
         XCTAssertEqual(badges.openIssues, 1)
-        XCTAssertEqual(badges.requestsPageCount, 2)
+        XCTAssertEqual(badges.notFoundRequests, 1)
+        XCTAssertEqual(badges.requestsPageCount, 3, "Pending, open problems and Can't find")
         XCTAssertEqual(API.Badges(unreadNotifications: 0, pendingRequests: 0, openIssues: 3).requestsPageCount, 3)
         XCTAssertEqual(API.Badges.zero.requestsPageCount, 0)
     }

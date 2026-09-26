@@ -13,8 +13,8 @@ public sealed class JobsFixtureTests
     {
         var jobs = Fixtures.Decode<ListResponse<Job>>("jobs").Results;
 
-        Assert.Equal(6, jobs.Count);
-        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.PlexWatchlist, JobId.DiskSpaceSnapshot, JobId.Cleanup], jobs.Select(job => job.Id));
+        Assert.Equal(7, jobs.Count);
+        Assert.Equal([JobId.PlexSync, JobId.JellyfinSync, JobId.ArrSync, JobId.PlexWatchlist, JobId.NotFoundCheck, JobId.DiskSpaceSnapshot, JobId.Cleanup], jobs.Select(job => job.Id));
         Assert.All(jobs, job => Assert.True(job.Id.IsKnown));
 
         var arrSync = jobs[2];
@@ -23,8 +23,19 @@ public sealed class JobsFixtureTests
         Assert.Equal("Refreshes tracked/monitored status from every connected Sonarr and Radarr instance.", arrSync.Description);
         Assert.Equal("Plex Watchlist Requests", jobs[3].Name);
         Assert.Equal("Every 10 minutes", jobs[3].Schedule);
-        Assert.Equal("Daily at 3:00 AM", jobs[4].Schedule);
-        Assert.Equal("Daily at 3:30 AM", jobs[5].Schedule);
+        Assert.Equal("Can't Find Check", jobs[4].Name);
+        Assert.Equal("Every hour", jobs[4].Schedule);
+        Assert.Equal("Daily at 3:00 AM", jobs[5].Schedule);
+        Assert.Equal("Daily at 3:30 AM", jobs[6].Schedule);
+    }
+
+    [Fact]
+    public void NotFoundSettingsDecode()
+    {
+        var settings = Fixtures.Decode<NotFoundSettings>("not-found-settings");
+        Assert.Equal(24, settings.AfterHours);
+        Assert.Equal(1, NotFoundSettings.MinAfterHours);
+        Assert.Equal(720, NotFoundSettings.MaxAfterHours);
     }
 
     [Fact]
@@ -46,6 +57,7 @@ public sealed class JobsFixtureTests
         Assert.Equal("disk-space-snapshot", MarqueeApi.Segment(JobId.DiskSpaceSnapshot));
         Assert.Equal("plex-watchlist", MarqueeApi.Segment(JobId.PlexWatchlist));
         Assert.Equal("cleanup", JobId.Cleanup.ToString());
-        Assert.Equal(6, JobId.Known.Count);
+        Assert.Equal("not-found-check", MarqueeApi.Segment(JobId.NotFoundCheck));
+        Assert.Equal(7, JobId.Known.Count);
     }
 }

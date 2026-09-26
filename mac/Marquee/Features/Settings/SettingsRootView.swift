@@ -376,6 +376,10 @@ struct JobsSettingsView: View {
                 }
                 .font(.system(size: 11.5))
                 .foregroundStyle(Theme.textSecondary)
+                // 0.46+: the Can't Find Check's wait (components/not-found-hours-setting.tsx).
+                if job.id == API.Job.notFoundCheckID {
+                    NotFoundHoursSetting()
+                }
                 if let error = run?.error {
                     InlineMessage(text: error)
                 } else if run?.finishedAt != nil {
@@ -404,6 +408,73 @@ struct JobsSettingsView: View {
                 runs[job.id] = Run(finishedAt: nil, error: error.localizedDescription)
             }
             running.remove(job.id)
+        }
+    }
+}
+
+/// Settings › Jobs, under the Can't Find Check: "Flag a request after [24]
+/// hours without a find". Nothing when the server doesn't have the setting.
+private struct NotFoundHoursSetting: View {
+    @Environment(AppModel.self) private var model
+    /// What the server has; nil until loaded (or on an older server).
+    @State private var saved: Int?
+    @State private var value = API.NotFoundSettings.defaultAfterHours
+    @State private var busy = false
+    @State private var message: (String, Bool)?
+
+    var body: some View {
+        Group {
+            if let saved {
+                HStack(spacing: 8) {
+                    Text("Flag a request after")
+                    TextField("", value: $value, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 56)
+                        .multilineTextAlignment(.trailing)
+                        .onSubmit { save() }
+                        .accessibilityLabel("Hours")
+                    Stepper("", value: $value, in: API.NotFoundSettings.allowedHours)
+                        .labelsHidden()
+                    Text("hours without a find")
+                    if value != saved {
+                        Button(busy ? "Saving…" : "Save") { save() }
+                            .buttonStyle(AccentButtonStyle(compact: true))
+                            .disabled(busy)
+                    }
+                    if let message, value == saved || message.1 {
+                        Text(message.0)
+                            .foregroundStyle(message.1 ? Theme.danger : Theme.owned)
+                    }
+                }
+                .font(.system(size: 11.5))
+                .foregroundStyle(Theme.textSecondary)
+                .padding(.top, 4)
+            }
+        }
+        .task(id: model.reloadToken) {
+            // An older server (404) or a failure: leave the row as it was.
+            guard let settings = try? await model.api.jobs.notFoundSettings(), !Task.isCancelled else { return }
+            saved = settings.afterHours
+            value = settings.afterHours
+        }
+    }
+
+    private func save() {
+        guard !busy, value != saved else { return }
+        busy = true
+        message = nil
+        let api = model.api
+        let hours = value
+        Task {
+            do {
+                let result = try await api.jobs.saveNotFoundSettings(API.NotFoundSettings(afterHours: hours))
+                saved = result.afterHours
+                value = result.afterHours
+                message = ("Saved", false)
+            } catch {
+                message = (error.localizedDescription, true)
+            }
+            busy = false
         }
     }
 }

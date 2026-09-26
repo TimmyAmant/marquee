@@ -20,6 +20,18 @@ extension MarqueeAPI {
                 changes: [.library, .settings, .catalog]
             )
         }
+
+        /// `GET /settings/not-found` (admin, 0.46+) — the Can't Find Check's
+        /// wait. `.notFound` from an older server.
+        func notFoundSettings() async throws -> API.NotFoundSettings {
+            try await transport.get("/settings/not-found")
+        }
+
+        /// `PUT /settings/not-found` (admin, 0.46+) — 1 to 720 hours
+        /// (`.invalid` otherwise); answers the saved value.
+        func saveNotFoundSettings(_ settings: API.NotFoundSettings) async throws -> API.NotFoundSettings {
+            try await transport.mutate(.put, "/settings/not-found", body: settings, changes: .settings)
+        }
     }
 
     struct AboutEndpoints: Sendable {

@@ -82,9 +82,13 @@ export interface RadarrMovie {
   id: number;
   tmdbId: number;
   title: string;
+  /** The movie's page in Radarr is /movie/{titleSlug}. */
+  titleSlug?: string;
   overview?: string;
   year?: number;
   status: string;
+  /** Released as far as the movie's minimum availability goes. */
+  isAvailable?: boolean;
   monitored: boolean;
   hasFile: boolean;
   path?: string;
