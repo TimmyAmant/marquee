@@ -322,7 +322,41 @@ export function applyLayoutOrder(
   return { ok: true, value: order };
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** The order after moving the row at `index` one place up (-1) or down
+ * (+1); unchanged at either end. For the editors' arrow buttons. */
+export function moveShelf<T>(shelves: readonly T[], index: number, delta: -1 | 1): T[] {
+  const target = index + delta;
+  if (index < 0 || index >= shelves.length || target < 0 || target >= shelves.length) return [...shelves];
+  const next = [...shelves];
+  [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
+/** "Keyword · anime · Movies & series" — what a row is built from, for the
+ * settings list. */
+export function describeShelf(shelf: Pick<LayoutShelf, "kind" | "custom" | "source">): string {
+  if (!shelf.custom) return "Built in";
+  const labels: Record<string, string> = {
+    keyword: "TMDb keyword",
+    genre: "Genre",
+    company: "Studio",
+    network: "Network",
+    tmdbList: "TMDb list",
+    traktList: "Trakt list",
+    library: "Recently added to your library",
+  };
+  const source = shelf.source;
+  const parts = [labels[shelf.kind] ?? "A kind of row this version doesn't know"];
+  if (source?.name) parts.push(source.name);
+  else if (shelf.kind === "tmdbList" && source?.tmdbId) parts.push(`#${source.tmdbId}`);
+  else if (shelf.kind === "traktList" && source?.url) parts.push(source.url.replace(/^https:\/\//, ""));
+  if (source?.mediaType && shelf.kind !== "network" && shelf.kind !== "tmdbList" && shelf.kind !== "traktList") {
+    parts.push(source.mediaType === "movie" ? "Movies" : source.mediaType === "tv" ? "Series" : "Movies & series");
+  }
+  return parts.join(" · ");
+}
+
+const UUID =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isShelfUuid(value: string): boolean {
   return UUID.test(value);

@@ -142,6 +142,19 @@ export async function listTraktSyncs(scope: { userId: string } | "all"): Promise
   });
 }
 
+export type TraktSyncsState = { syncs: TraktSync[]; available: boolean };
+
+/** What Settings → Account shows `user`: their own syncs, or everyone's for
+ * the admin, and whether Trakt is connected. Server-side only — callers pass
+ * the signed-in account. */
+export async function loadTraktSyncs(user: { id: string; role: string | null | undefined }): Promise<TraktSyncsState> {
+  const [syncs, clientId] = await Promise.all([
+    listTraktSyncs(user.role === "admin" ? "all" : { userId: user.id }),
+    getTraktClientId().catch(() => null),
+  ]);
+  return { syncs, available: Boolean(clientId) };
+}
+
 export async function getTraktSync(id: string): Promise<TraktSync | null> {
   const all = await listTraktSyncs("all");
   return all.find((sync) => sync.id === id) ?? null;

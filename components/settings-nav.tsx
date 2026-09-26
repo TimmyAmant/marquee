@@ -28,6 +28,9 @@ const TAB_ICONS = {
       strokeLinejoin="round"
     />
   ),
+  discover: (
+    <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" strokeLinejoin="round" />
+  ),
   jobs: (
     <path
       d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0 1 14.7-3.2M20 15a8 8 0 0 1-14.7 3.2"
@@ -48,6 +51,7 @@ function TabIcon({ name }: { name: keyof typeof TAB_ICONS }) {
 const ALL_TABS = [
   { href: "/settings", label: "Account", icon: "account" as const, adminOnly: false },
   { href: "/settings/integrations", label: "Integrations", icon: "integrations" as const, adminOnly: true },
+  { href: "/settings/discover", label: "Discover", icon: "discover" as const, adminOnly: true },
   { href: "/settings/activity", label: "Activity", icon: "activity" as const, adminOnly: true },
   { href: "/settings/jobs", label: "Jobs", icon: "jobs" as const, adminOnly: true },
   { href: "/settings/about", label: "About", icon: "about" as const, adminOnly: false },
