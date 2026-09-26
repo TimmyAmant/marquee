@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     state: params.get("state"),
     code: params.get("code"),
     error: params.get("error"),
+    iss: params.get("iss"),
     cookie: cookieStore.get(SSO_COOKIE)?.value ?? null,
     ip: getClientIp(request),
     sessionUserId: session?.user?.id ?? null,

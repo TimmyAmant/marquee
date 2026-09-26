@@ -293,6 +293,24 @@ describe("website sign-in", () => {
     expect(await webSignIn({ sub: "bob-sub" })).toMatchObject({ ok: false, code: "failed" });
   });
 
+  it("refuses a response naming another issuer (RFC 9207)", async () => {
+    const ip = freshIp();
+    const started = await startWebSsoSignIn(ip, false);
+    if (!started.ok) throw new Error(started.error);
+    const back = idp.authorize(started.flow.authUrl, { sub: "bob-sub" });
+    expect(
+      await completeSsoCallback({
+        state: back.state,
+        code: back.code,
+        error: null,
+        iss: "https://other-idp.test/",
+        cookie: started.binding,
+        ip,
+        sessionUserId: null,
+      }),
+    ).toMatchObject({ ok: false, code: "failed" });
+  });
+
   it("reports a cancel at the provider", async () => {
     expect(await webSignIn({ sub: "bob-sub" }, { error: "access_denied" })).toMatchObject({ ok: false, code: "cancelled" });
   });

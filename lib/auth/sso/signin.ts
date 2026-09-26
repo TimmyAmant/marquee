@@ -188,6 +188,8 @@ export async function completeSsoCallback(input: {
   state: string | null;
   code: string | null;
   error: string | null;
+  /** RFC 9207's `iss`, when the provider sends one: must be this provider. */
+  iss?: string | null;
   cookie: string | null;
   ip: string | null;
   sessionUserId: string | null;
@@ -215,6 +217,10 @@ export async function completeSsoCallback(input: {
   }
   const name = config.name;
 
+  if (input.iss && !sameIssuer(input.iss, flow.issuer)) {
+    console.warn("[sso] callback came back with another issuer:", input.iss);
+    return end(refuse("forbidden", "failed", name));
+  }
   if (input.error || !input.code) {
     const cancelled = input.error === "access_denied" || input.error === "login_required";
     return end(refuse("forbidden", cancelled ? "cancelled" : "failed", name));
