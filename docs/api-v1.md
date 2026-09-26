@@ -746,14 +746,26 @@ Header type-ahead: up to 7 people/movies/series. `q` shorter than 2 characters
 ```json
 {
   "results": [
-    { "id": 603, "mediaType": "movie", "name": "The Matrix", "posterPath": "/aOIu.jpg", "subtitle": "1999" },
-    { "id": 6384, "mediaType": "person", "name": "Keanu Reeves", "posterPath": "/8RZL.jpg", "subtitle": "Acting" }
+    { "id": 603, "mediaType": "movie", "name": "The Matrix", "posterPath": "/aOIu.jpg", "subtitle": "1999", "status": "owned" },
+    { "id": 6384, "mediaType": "person", "name": "Keanu Reeves", "posterPath": "/8RZL.jpg", "subtitle": "Acting" },
+    { "id": 604, "mediaType": "movie", "name": "The Matrix Reloaded", "posterPath": "/9TGH.jpg", "subtitle": "2003", "status": "tracked_downloading" },
+    { "id": 624860, "mediaType": "movie", "name": "The Matrix Resurrections", "posterPath": "/8c4a.jpg", "subtitle": "2021", "status": "untracked" }
   ]
 }
 ```
 
 `subtitle` is the year for titles and the known-for department for people.
 Website labels: person → "Actor", movie → "Movie", tv → "TV".
+
+`status` (movies and series only; absent for people) is the
+viewer's library status — the same `LibraryStatus` values as elsewhere
+(`owned`, `tracked_downloading`, `tracked_monitored`, `coming_soon`,
+`untracked`), from the locally synced Sonarr/Radarr/Plex/Jellyfin state, never
+a live Sonarr/Radarr call. Treat it as an open set, and a missing field (an
+older server) as unknown. The website tints the Movie/TV pill with it: green
+in the library, blue downloading, red missing, purple coming soon, grey
+otherwise. Active requests aren't reflected here (search result cards don't
+show them either).
 
 ---
 

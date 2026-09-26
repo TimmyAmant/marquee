@@ -11,6 +11,20 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.44.3",
+    date: "2026-09-26",
+    changes: [
+      "Search suggestions: the Movie/TV label is colored by where the title stands — green in your library, blue downloading, red missing, purple coming soon, grey not in your library — on the website (including the phone menu search) and in the Mac and Windows apps. Windows search suggestions now show a poster and the year too.",
+    ],
+  },
+  {
+    version: "0.44.2",
+    date: "2026-09-26",
+    changes: [
+      "Phones: a back button in the top bar on titles, people, studios and full lists, so you can walk back through title → actor → title, even in the Home Screen app, which has no browser back button. If there's no earlier Marquee page, it goes to Discover.",
+    ],
+  },
+  {
     version: "0.44.1",
     date: "2026-09-26",
     changes: [

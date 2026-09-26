@@ -81,12 +81,34 @@ public sealed class DiscoverFixtureTests
     public void CardsAndSuggestions()
     {
         var suggestions = Fixtures.Decode<ListResponse<SearchSuggestion>>("search-suggest").Results;
-        Assert.Equal(["movie-603", "person-6384"], suggestions.Select(suggestion => suggestion.StableId));
-        Assert.Equal(["Movie", "Actor"], suggestions.Select(suggestion => suggestion.MediaType.Label));
+        Assert.Equal(["movie-603", "person-6384", "movie-604", "movie-624860"], suggestions.Select(suggestion => suggestion.StableId));
+        Assert.Equal(["Movie", "Actor", "Movie", "Movie"], suggestions.Select(suggestion => suggestion.MediaType.Label));
         Assert.Equal(new TitleId(MediaType.Movie, 603), suggestions[0].TitleId);
-        Assert.Null(suggestions[^1].TitleId);
+        Assert.Null(suggestions[1].TitleId);
         Assert.Equal("1999", suggestions[0].Subtitle);
-        Assert.Equal("Acting", suggestions[^1].Subtitle);
+        Assert.Equal("Acting", suggestions[1].Subtitle);
+        Assert.Equal(
+            [LibraryStatus.Owned, null, LibraryStatus.TrackedDownloading, LibraryStatus.Untracked],
+            suggestions.Select(suggestion => suggestion.Status));
+        Assert.Equal("Movie · In your library", suggestions[0].KindAccessibleLabel);
+        Assert.Equal("Actor", suggestions[1].KindAccessibleLabel);
+        Assert.Equal("Movie · Downloading", suggestions[2].KindAccessibleLabel);
+
+        // A server from before suggestion statuses sends no status: neutral.
+        var older = Json.Decode<SearchSuggestion>("""{"id":603,"mediaType":"movie","name":"The Matrix","posterPath":null,"subtitle":"1999"}""");
+        Assert.Null(older.Status);
+        Assert.Null(older.StatusLabel);
+        Assert.Equal("Movie", older.KindAccessibleLabel);
+
+        var series = Json.Decode<SearchSuggestion>("""{"id":1399,"mediaType":"tv","name":"Game of Thrones","posterPath":null,"subtitle":"2011","status":"tracked_monitored"}""");
+        Assert.Equal(LibraryStatus.TrackedMonitored, series.Status);
+        Assert.Equal("TV · Missing", series.KindAccessibleLabel);
+
+        // A status this app doesn't know still decodes and reads as neutral.
+        var future = Json.Decode<SearchSuggestion>("""{"id":1,"mediaType":"movie","name":"X","posterPath":null,"subtitle":null,"status":"archived"}""");
+        Assert.Equal(LibraryStatus.FromValue("archived"), future.Status);
+        Assert.Null(future.StatusLabel);
+        Assert.Equal("Movie", future.KindAccessibleLabel);
 
         var page = Fixtures.Decode<Paginated<TitleCard>>("browse-page");
         Assert.True(page.HasMorePages);

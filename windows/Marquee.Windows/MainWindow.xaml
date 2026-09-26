@@ -431,9 +431,11 @@
           components/search-bar.tsx as a floating panel over the page, opened
           by the rail's Search and Ctrl+F: type-ahead from GET
           /search/suggest, Enter opens the results page, Escape or a click
-          outside closes it. Suggestions display through
-          SuggestionItem.ToString() rather than a template, keeping this
-          file free of bindings (see the note at the top).
+          outside closes it. Each suggestion is a SuggestionRow (poster, name,
+          and the kind pill tinted by library status), which fills itself from
+          its DataContext, keeping this file free of bindings (see the note at
+          the top). SuggestionItem.ToString() is still what the box shows
+          while the arrow keys move through the list.
         -->
         <Grid x:Name="SearchLayer" Grid.Row="1" Visibility="Collapsed" KeyDown="OnSearchLayerKeyDown">
             <Border Background="#47000000" PointerPressed="OnSearchDismissPressed" />
@@ -454,7 +456,13 @@
                     QueryIcon="Find"
                     AutomationProperties.Name="Search"
                     TextChanged="OnSearchTextChanged"
-                    QuerySubmitted="OnSearchQuerySubmitted" />
+                    QuerySubmitted="OnSearchQuerySubmitted">
+                    <AutoSuggestBox.ItemTemplate>
+                        <DataTemplate>
+                            <controls:SuggestionRow />
+                        </DataTemplate>
+                    </AutoSuggestBox.ItemTemplate>
+                </AutoSuggestBox>
             </Border>
         </Grid>
     </Grid>

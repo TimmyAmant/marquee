@@ -296,6 +296,9 @@ export type SearchSuggestion = {
   name: string;
   posterPath: string | null;
   subtitle: string | null;
+  /** Movies/series only (absent for people): the viewer's library status,
+   * from the same local lookup poster cards use. */
+  status?: LibraryStatus;
 };
 
 // ── Title ───────────────────────────────────────────────────────────────────

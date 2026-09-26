@@ -323,10 +323,11 @@ final class APIFixtureTests: XCTestCase {
 
     func testCardsAndSuggestions() throws {
         let suggestions = try decode(API.ListResponse<API.SearchSuggestion>.self, "search-suggest").results
-        XCTAssertEqual(suggestions.map(\.stableId), ["movie-603", "person-6384"])
-        XCTAssertEqual(suggestions.map(\.mediaType.label), ["Movie", "Actor"])
+        XCTAssertEqual(suggestions.map(\.stableId), ["movie-603", "person-6384", "movie-604", "movie-624860"])
+        XCTAssertEqual(suggestions.map(\.mediaType.label), ["Movie", "Actor", "Movie", "Movie"])
         XCTAssertEqual(suggestions.first?.titleID, API.TitleID(.movie, 603))
-        XCTAssertNil(suggestions.last?.titleID)
+        XCTAssertNil(suggestions[1].titleID)
+        XCTAssertEqual(suggestions.map(\.status), [.owned, nil, .trackedDownloading, .untracked])
 
         let page = try decode(API.BrowsePage.self, "browse-page")
         XCTAssertTrue(page.hasMorePages)
@@ -374,6 +375,27 @@ final class APIValueTypeTests: XCTestCase {
         for type in API.ActivityEventType.knownCases {
             XCTAssertEqual(API.ActivityEventType(rawValue: type.rawValue), type)
         }
+    }
+
+    func testSearchSuggestionStatusIsOptionalAndOpen() throws {
+        let older = #"{"id":603,"mediaType":"movie","name":"The Matrix","posterPath":null,"subtitle":"1999"}"#
+        let olderSuggestion = try APIClient.decoder.decode(API.SearchSuggestion.self, from: Data(older.utf8))
+        XCTAssertNil(olderSuggestion.status, "A server from before suggestion statuses sends no status")
+        XCTAssertNil(SuggestionKindPill.colors(for: olderSuggestion.status))
+        XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .movie, status: nil), "Movie")
+
+        let newer = #"{"id":1399,"mediaType":"tv","name":"Game of Thrones","posterPath":null,"subtitle":"2011","status":"tracked_downloading"}"#
+        let newerSuggestion = try APIClient.decoder.decode(API.SearchSuggestion.self, from: Data(newer.utf8))
+        XCTAssertEqual(newerSuggestion.status, .trackedDownloading)
+        XCTAssertNotNil(SuggestionKindPill.colors(for: newerSuggestion.status))
+        XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .tv, status: .trackedDownloading), "TV · Downloading")
+        XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .movie, status: .owned), "Movie · In your library")
+
+        let future = #"{"id":1,"mediaType":"movie","name":"X","posterPath":null,"subtitle":null,"status":"archived"}"#
+        let futureSuggestion = try APIClient.decoder.decode(API.SearchSuggestion.self, from: Data(future.utf8))
+        XCTAssertEqual(futureSuggestion.status, .unknown("archived"))
+        XCTAssertNil(SuggestionKindPill.colors(for: futureSuggestion.status), "An unknown status stays neutral")
+        XCTAssertNil(SuggestionKindPill.colors(for: .untracked))
     }
 
     func testUserWithUnknownRoleStillDecodes() throws {

@@ -402,6 +402,34 @@ public sealed record SearchSuggestion
     /// <summary>The year for titles, the known-for department for people.</summary>
     public string? Subtitle { get; init; }
 
+    /// <summary>
+    /// The viewer's library status for a movie/series; null for a person, and
+    /// from a server that predates the field.
+    /// </summary>
+    public LibraryStatus? Status { get; init; }
+
+    /// <summary>
+    /// What the kind pill's status means in words ("In your library",
+    /// "Downloading", …); null with no status or one this app doesn't know,
+    /// where the pill stays neutral.
+    /// </summary>
+    public string? StatusLabel
+    {
+        get
+        {
+            if (Status is not { } status) return null;
+            if (status == LibraryStatus.Owned) return "In your library";
+            if (status == LibraryStatus.TrackedDownloading) return "Downloading";
+            if (status == LibraryStatus.TrackedMonitored) return "Missing";
+            if (status == LibraryStatus.ComingSoon) return "Coming soon";
+            if (status == LibraryStatus.Untracked) return "Not in your library";
+            return null;
+        }
+    }
+
+    /// <summary>"Movie · In your library", or just "Movie" without a known status.</summary>
+    public string KindAccessibleLabel => StatusLabel is { } label ? $"{MediaType.Label} · {label}" : MediaType.Label;
+
     /// <summary><c>"movie-603"</c>, unique across kinds.</summary>
     public string StableId => $"{MediaType.Value}-{Id}";
 
