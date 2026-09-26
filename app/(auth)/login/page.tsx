@@ -14,6 +14,13 @@ export default async function LoginPage() {
   // admin's server connected in Settings → Integrations.
   const methods = await getSignInMethods();
   return (
-    <LoginForm methods={{ plex: methods.plex, jellyfin: methods.jellyfin, jellyfinName: methods.jellyfinName }} />
+    <LoginForm
+      methods={{
+        plex: methods.plex,
+        jellyfin: methods.jellyfin,
+        jellyfinName: methods.jellyfinName,
+        signup: methods.signup,
+      }}
+    />
   );
 }

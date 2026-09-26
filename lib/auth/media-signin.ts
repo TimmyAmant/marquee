@@ -17,6 +17,7 @@ import {
   decideSignIn,
   importedDisplayName,
   MEDIA_PROVIDER_LABEL,
+  noAccountMessage,
   PLEX_NO_ACCESS_MESSAGE,
   sanitizeUsername,
   uniqueUsername,
@@ -66,6 +67,9 @@ export type SignInMethods = {
   /** What to call the "jellyfin" server: "Jellyfin", or "Emby" when that's
    * what's connected (lib/jellyfin/product.ts). */
   jellyfinName: string;
+  /** New accounts from Plex/Jellyfin sign-in are on, and at least one of
+   * them is offered: the sign-in screens tell newcomers to use it. */
+  signup: boolean;
 };
 
 type PlexContext = { adminId: string; clientId: string; authToken: string; machineIds: string[] };
@@ -95,12 +99,17 @@ async function getJellyfinContext(): Promise<JellyfinContext | null> {
 
 /** Which sign-in methods the login page and apps should offer. */
 export async function getSignInMethods(): Promise<SignInMethods> {
-  const [plex, jellyfin] = await Promise.all([getPlexContext(), getJellyfinContext()]);
+  const [plex, jellyfin, signupAllowed] = await Promise.all([
+    getPlexContext(),
+    getJellyfinContext(),
+    getMediaServerSignup(),
+  ]);
   return {
     password: true,
     plex: Boolean(plex),
     jellyfin: Boolean(jellyfin),
     jellyfinName: jellyfin?.name ?? "Jellyfin",
+    signup: signupAllowed && Boolean(plex || jellyfin),
   };
 }
 
@@ -210,6 +219,8 @@ async function resolveSignIn(
   provider: MediaProvider,
   identity: { externalId: string; username: string; title: string | null; ownsServer: boolean },
   adminId: string,
+  /** "Plex", "Jellyfin" or "Emby", for the refusal. */
+  providerName: string,
 ): Promise<MediaSignInResult> {
   const [linked, admin, signupAllowed] = await Promise.all([
     findLinkedUser(provider, identity.externalId),
@@ -223,6 +234,7 @@ async function resolveSignIn(
     ownsServer: identity.ownsServer,
     admin: admin ? { id: admin.id, linked: admin.plexUserId !== null } : null,
     signupAllowed,
+    providerName,
   });
 
   switch (decision.action) {
@@ -242,7 +254,7 @@ async function resolveSignIn(
         });
       if (updated) return { ok: true, user: updated };
       const relinked = await findLinkedUser(provider, identity.externalId);
-      return relinked ? { ok: true, user: relinked } : fail("forbidden", "Ask the admin to add you first.");
+      return relinked ? { ok: true, user: relinked } : fail("forbidden", noAccountMessage(providerName));
     }
     case "create": {
       const { user } = await createLinkedMember(provider, identity.externalId, identity.username, identity.title);
@@ -404,6 +416,7 @@ export async function pollPlexSignIn(handle: unknown, ip: string | null): Promis
       ownsServer: poll.access.owner,
     },
     poll.plex.adminId,
+    "Plex",
   );
   return { status: "done", ...result };
 }
@@ -507,6 +520,7 @@ export async function signInWithJellyfin(username: string, password: string, ip:
       ownsServer: false,
     },
     verified.jellyfin.adminId,
+    verified.jellyfin.name,
   );
 }
 

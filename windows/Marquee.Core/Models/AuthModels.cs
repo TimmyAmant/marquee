@@ -145,6 +145,28 @@ public sealed record ServerInfo
     /// <summary>The user-facing name of <paramref name="server"/> on this server.</summary>
     public string MediaServerName(MediaServerKind server) => server.Label(JellyfinName);
 
+    /// <summary>
+    /// The line under the Plex/Jellyfin buttons telling a newcomer how to
+    /// get an account, when the admin has new accounts from sign-in on;
+    /// names only the methods offered. Null otherwise (and from servers
+    /// older than 0.43, which don't say).
+    /// </summary>
+    public string? SignupHint
+    {
+        get
+        {
+            if (SignIn is not { Signup: true } signIn) return null;
+            var names = (signIn.Plex, signIn.Jellyfin) switch
+            {
+                (true, true) => $"Plex (or {JellyfinName})",
+                (true, false) => "Plex",
+                (false, true) => JellyfinName,
+                _ => null,
+            };
+            return names is null ? null : $"New here? Use Sign in with {names} — your account is made for you.";
+        }
+    }
+
     public bool IsMarquee => App == "marquee";
     public bool IsSupported => ApiVersion == SupportedApiVersion;
     public bool IsDegraded => Status == "degraded";
@@ -183,6 +205,12 @@ public sealed record SignInMethods
         get => jellyfinName;
         init => jellyfinName = MediaServerKindExtensions.NormalizedJellyfinName(value);
     }
+
+    /// <summary>
+    /// <c>signup</c> (0.43+): new accounts from Plex/Jellyfin sign-in are on
+    /// (and one of them is offered). Missing (older servers) reads as false.
+    /// </summary>
+    public bool Signup { get; init; }
 }
 
 public sealed record SetupRequest(string Username, string Password, string DisplayName, string DeviceName);

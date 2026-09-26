@@ -137,6 +137,7 @@ vi.mock("@/lib/plex/accounts", async (importOriginal) => {
 });
 
 import {
+  getSignInMethods,
   pollPlexLink,
   pollPlexSignIn,
   pollPlexWatchlist,
@@ -225,7 +226,7 @@ describe("Plex sign-in", () => {
     const ip = freshIp();
     plexTv.authToken = "member-token";
     const result = await pollNow(await startedHandle(ip), ip);
-    expect(result).toMatchObject({ status: "done", ok: false, code: "forbidden", error: "Ask the admin to add you first." });
+    expect(result).toMatchObject({ status: "done", ok: false, code: "forbidden", error: "There's no Marquee account for this Plex account yet. Ask the admin to add you." });
     expect(tables.users).toHaveLength(1);
   });
 
@@ -286,7 +287,7 @@ describe("Plex sign-in", () => {
       status: "done",
       ok: false,
       code: "forbidden",
-      error: "Ask the admin to add you first.",
+      error: "There's no Marquee account for this Plex account yet. Ask the admin to add you.",
     });
   });
 
@@ -313,6 +314,25 @@ describe("Plex sign-in", () => {
     const result = await pollNow(await startedHandle(ip), ip);
     expect(result).toMatchObject({ status: "done", ok: true, user: { id: "admin", role: "admin" } });
     expect(tables.users.find((u) => u.id === "admin")?.plexUserId).toBe("7777");
+  });
+});
+
+describe("getSignInMethods", () => {
+  it("tells the sign-in screens about sign-up only while it's on and Plex or Jellyfin is offered", async () => {
+    expect(await getSignInMethods()).toEqual({
+      password: true,
+      plex: true,
+      jellyfin: false,
+      jellyfinName: "Jellyfin",
+      signup: false,
+    });
+
+    tables.appSettings = [{ id: "s", mediaServerSignup: true }];
+    expect(await getSignInMethods()).toMatchObject({ plex: true, signup: true });
+
+    // On, but nothing to sign up with.
+    tables.plexServers = [];
+    expect(await getSignInMethods()).toMatchObject({ plex: false, jellyfin: false, signup: false });
   });
 });
 

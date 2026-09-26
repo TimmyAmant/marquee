@@ -222,6 +222,8 @@ final class APIFixtureTests: XCTestCase {
 
         let server = try decode(ServerInfo.self, "server-info")
         XCTAssertEqual(server.signIn?.jellyfinName, "Jellyfin")
+        XCTAssertEqual(server.signIn?.signup, true)
+        XCTAssertEqual(server.signupHint, "New here? Use Sign in with Plex — your account is made for you.")
 
         let older = try APIClient.decoder.decode(API.JellyfinSettings.self, from: Data(#"""
         {"connected":true,"baseUrl":"http://tower:8096","hasApiKey":true,"servers":[{"name":"Tower","lastSyncedAt":null}],"movieCount":1,"tvCount":0,"totalBytes":0}

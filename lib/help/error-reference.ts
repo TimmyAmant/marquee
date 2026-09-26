@@ -153,7 +153,7 @@ export const ERROR_REFERENCE: ErrorReferenceCategory[] = [
         whatToDo: "Sign in to Plex with the account the admin shares their server with, or ask them to share it with you.",
       },
       {
-        message: "Ask the admin to add you first.",
+        message: "There's no Marquee account for this Plex account yet. Ask the admin to add you.",
         meaning:
           "Plex/Jellyfin checked out, but there's no Marquee account for you yet and the admin has turned off new accounts from Plex/Jellyfin sign-in.",
         whatToDo: "Ask the admin to import you (Settings → Account → Import from your media server) or turn new accounts back on.",

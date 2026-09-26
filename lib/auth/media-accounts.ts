@@ -7,7 +7,12 @@ export type MediaProvider = "plex" | "jellyfin";
 
 export const MEDIA_PROVIDER_LABEL: Record<MediaProvider, string> = { plex: "Plex", jellyfin: "Jellyfin" };
 
-export const NO_ACCOUNT_MESSAGE = "Ask the admin to add you first.";
+/** The refusal for someone Plex/Jellyfin let in who has no Marquee account
+ * while new accounts from sign-in are off. `name` is "Plex", "Jellyfin" or
+ * "Emby". */
+export function noAccountMessage(name: string): string {
+  return `There's no Marquee account for this ${name} account yet. Ask the admin to add you.`;
+}
 export const PLEX_NO_ACCESS_MESSAGE = "This Plex account doesn't have access to this server.";
 
 export type SignInDecision =
@@ -34,13 +39,16 @@ export function decideSignIn(input: {
   ownsServer: boolean;
   admin: { id: string; linked: boolean } | null;
   signupAllowed: boolean;
+  /** What to call the provider in the refusal ("Emby" for an Emby server);
+   * the provider's own label otherwise. */
+  providerName?: string;
 }): SignInDecision {
   if (input.linkedUserId) return { action: "sign_in", userId: input.linkedUserId };
   if (input.provider === "plex" && input.ownsServer && input.admin && !input.admin.linked) {
     return { action: "link_admin", userId: input.admin.id };
   }
   if (input.signupAllowed) return { action: "create" };
-  return { action: "refuse", message: NO_ACCOUNT_MESSAGE };
+  return { action: "refuse", message: noAccountMessage(input.providerName ?? MEDIA_PROVIDER_LABEL[input.provider]) };
 }
 
 /** Marquee's username rules (lib/users/household.ts): 3–32 characters of

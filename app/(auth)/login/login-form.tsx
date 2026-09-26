@@ -190,12 +190,26 @@ function PlexButton({ remember }: { remember: boolean }) {
   );
 }
 
-export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boolean; jellyfinName: string } }) {
+type Methods = { plex: boolean; jellyfin: boolean; jellyfinName: string; signup: boolean };
+
+/** "Plex", "Jellyfin", or "Plex (or Emby)" — the media-server sign-ins on
+ * offer, for the sign-up line. Null when there are none. */
+function signupMethodNames(methods: Methods): string | null {
+  if (methods.plex && methods.jellyfin) return `Plex (or ${methods.jellyfinName})`;
+  if (methods.plex) return "Plex";
+  if (methods.jellyfin) return methods.jellyfinName;
+  return null;
+}
+
+export function LoginForm({ methods }: { methods: Methods }) {
   const [mode, setMode] = useState<"password" | "jellyfin">("password");
   const [remember, setRemember] = useState(true);
   // The other ways in, under an "or": Plex always, Jellyfin unless its form
   // is the one showing (then "Use a Marquee password instead" is the way back).
   const hasOtherMethods = methods.plex || (methods.jellyfin && mode !== "jellyfin");
+  // With new accounts from Plex/Jellyfin sign-in on, that's how a newcomer
+  // gets in — there's no other sign-up.
+  const signupNames = methods.signup ? signupMethodNames(methods) : null;
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-8">
@@ -231,6 +245,12 @@ export function LoginForm({ methods }: { methods: { plex: boolean; jellyfin: boo
             )}
           </div>
         </>
+      )}
+
+      {signupNames && (
+        <p className="mt-4 text-center text-sm text-text-secondary">
+          New here? Use Sign in with {signupNames} — your account is made for you.
+        </p>
       )}
     </div>
   );

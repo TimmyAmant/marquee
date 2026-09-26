@@ -24,6 +24,35 @@ final class MediaSignInDecodingTests: XCTestCase {
         XCTAssertTrue(jellyfinOnly.offersJellyfinSignIn)
     }
 
+    func testSignupDefaultsToFalse() throws {
+        // Before 0.43 there's no `signup`: say nothing about signing up.
+        let older = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.42.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":true,"jellyfin":false,"jellyfinName":"Jellyfin"}}"#)
+        XCTAssertEqual(older.signIn?.signup, false)
+        XCTAssertNil(older.signupHint)
+
+        let off = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"plex":true,"signup":false}}"#)
+        XCTAssertNil(off.signupHint)
+
+        let noSignIn = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.32.0","setupComplete":true,"status":"ok"}"#)
+        XCTAssertNil(noSignIn.signupHint)
+    }
+
+    func testSignupHintNamesOnlyTheMethodsOffered() throws {
+        let plex = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":true,"jellyfin":false,"jellyfinName":"Jellyfin","signup":true}}"#)
+        XCTAssertEqual(plex.signIn, SignInMethods(password: true, plex: true, jellyfin: false, signup: true))
+        XCTAssertEqual(plex.signupHint, "New here? Use Sign in with Plex — your account is made for you.")
+
+        let emby = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"jellyfin":true,"jellyfinName":"Emby","signup":true}}"#)
+        XCTAssertEqual(emby.signupHint, "New here? Use Sign in with Emby — your account is made for you.")
+
+        let both = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"plex":true,"jellyfin":true,"jellyfinName":"Jellyfin","signup":true}}"#)
+        XCTAssertEqual(both.signupHint, "New here? Use Sign in with Plex (or Jellyfin) — your account is made for you.")
+
+        // Nothing to sign up with.
+        let neither = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"signup":true}}"#)
+        XCTAssertNil(neither.signupHint)
+    }
+
     func testJellyfinNameDefaultsToJellyfin() throws {
         // Before 0.40 there's no `jellyfinName`: it's Jellyfin.
         let older = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.39.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":false,"jellyfin":true}}"#)

@@ -8,6 +8,7 @@
     "password": true,
     "plex": true,
     "jellyfin": false,
-    "jellyfinName": "Jellyfin"
+    "jellyfinName": "Jellyfin",
+    "signup": true
   }
 }

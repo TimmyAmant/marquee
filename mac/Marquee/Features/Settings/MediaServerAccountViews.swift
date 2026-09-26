@@ -413,7 +413,7 @@ struct MediaServerMembersCard: View {
                         Text("New accounts from Plex/\(info.jellyfinName) sign-in")
                             .font(.system(size: 13.5))
                             .foregroundStyle(Theme.textPrimary)
-                        Text("When someone who can use your Plex or \(info.jellyfinName) server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way.")
+                        Text("When someone who can use your Plex or \(info.jellyfinName) server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. The sign-in screen tells newcomers to sign in that way. Off: only the people you import (or who link their account) can sign in that way.")
                             .font(.system(size: 12))
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
