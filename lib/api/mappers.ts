@@ -108,7 +108,10 @@ export function titleViewerState(input: {
     requestStatus: input.requestStatus,
     alreadyRequested,
     otherRequesters: input.otherRequesters,
-    canAdd: untracked && input.isAdmin && input.configured,
+    // A title Sonarr/Radarr already has, unmonitored with nothing on disk,
+    // reads as untracked — but it's "Start monitoring" (arrTracking) that
+    // turns it back on; an Add next to it would do the same thing twice.
+    canAdd: untracked && input.isAdmin && input.configured && !input.arrTracking,
     needsArrSetup: untracked && input.isAdmin && !input.configured,
     canRequest: untracked && !input.isAdmin && !alreadyRequested,
     canRequestSeasons: input.seasonRequests?.canRequestSeasons ?? false,

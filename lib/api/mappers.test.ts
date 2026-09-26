@@ -47,6 +47,17 @@ describe("titleViewerState", () => {
     expect(state).toMatchObject({ canAdd: true, needsArrSetup: false, canRequest: false, canRelink: false });
   });
 
+  it("leaves an unmonitored title Sonarr/Radarr already has to Start monitoring", () => {
+    const state = titleViewerState({
+      ...base,
+      isAdmin: true,
+      status: "untracked",
+      configured: true,
+      arrTracking: { arrId: 12, monitored: false },
+    });
+    expect(state).toMatchObject({ canAdd: false, arrTracking: { arrId: 12, monitored: false } });
+  });
+
   it("points an admin at setup when *arr isn't configured", () => {
     const state = titleViewerState({ ...base, isAdmin: true, status: "untracked", configured: false });
     expect(state).toMatchObject({ canAdd: false, needsArrSetup: true });

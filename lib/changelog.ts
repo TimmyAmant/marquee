@@ -18,6 +18,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Choose Movies and/or TV shows, press Check now, or turn it off. Titles you already have or already asked for are skipped, and each title is tried once, so something the admin declined isn't requested again.",
       "Turning it on asks Plex once, and Marquee keeps that Plex sign-in (encrypted) only to read your watchlist; it's deleted when you turn it off or unlink Plex. If Plex stops accepting it, it switches itself off and says why.",
       "Settings › Jobs lists the new Plex Watchlist Requests job, with Run now.",
+      "Fixed: the Windows app crashed when its window was dragged narrower than one poster; it now has a minimum size.",
+      "After Stop monitoring on a show or movie with nothing downloaded yet, the page offered both Add to Sonarr/Radarr and Start monitoring, which do the same thing. It now shows just Start monitoring (website, Mac and Windows).",
       "Windows: the Calendar is a month grid again, like the website and the Mac (it had become a plain list), and the Calendar and Requests pages sit centered instead of pushed to the left.",
     ],
   },

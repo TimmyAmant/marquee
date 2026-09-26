@@ -90,7 +90,7 @@
                                      the weekday row's seven star columns match. -->
                                 <UniformGridLayout
                                     MaximumRowsOrColumns="7"
-                                    MinItemWidth="90"
+                                    MinItemWidth="80"
                                     MinItemHeight="150"
                                     MinColumnSpacing="1"
                                     MinRowSpacing="1"
