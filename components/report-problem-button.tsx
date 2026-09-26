@@ -57,16 +57,16 @@ export function ReportProblemButton({
     dialogRef.current?.close();
   }
 
-  if (sent || openReports > 0) {
-    return (
-      <span className="flex h-8 items-center rounded-full border border-border px-3.5 text-[13px] text-text-secondary">
-        Problem reported
-      </span>
-    );
-  }
+  // Another episode can still be reported while one report is open.
+  const reported = sent || openReports > 0;
 
   return (
     <>
+      {reported && (
+        <span className="flex h-8 items-center rounded-full border border-border px-3.5 text-[13px] text-text-secondary">
+          Problem reported
+        </span>
+      )}
       <button
         type="button"
         onClick={() => {
@@ -75,7 +75,7 @@ export function ReportProblemButton({
         }}
         className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-secondary transition-colors hover:border-accent hover:text-accent"
       >
-        Report a problem
+        {reported ? "Report another" : "Report a problem"}
       </button>
       <dialog
         ref={dialogRef}

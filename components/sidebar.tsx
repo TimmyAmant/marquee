@@ -6,6 +6,7 @@ import { PushPrompt } from "@/components/push-prompt";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
+import { getOpenIssueCount } from "@/lib/issues";
 import { avatarPath } from "@/lib/users/avatar-path";
 
 /**
@@ -17,7 +18,11 @@ import { avatarPath } from "@/lib/users/avatar-path";
 export async function Sidebar() {
   const session = await auth();
   const isAdmin = session?.user?.role === "admin";
-  const pendingRequestCount = isAdmin ? await getPendingRequestCount().catch(() => 0) : 0;
+  // Requests and problem reports both wait on the Requests page — the same
+  // sum the badge's poll (getPendingRequestCountAction) returns.
+  const pendingRequestCount = isAdmin
+    ? (await getPendingRequestCount().catch(() => 0)) + (await getOpenIssueCount().catch(() => 0))
+    : 0;
   // Under the name: which Marquee server this is, matching the Mac app.
   const serverLabel = (await headers()).get("host");
   // Read fresh rather than from the session token, so a new photo shows on

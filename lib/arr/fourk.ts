@@ -62,6 +62,34 @@ function withinBudget<T>(promise: Promise<T>, fallback: T): Promise<T> {
   ]);
 }
 
+/** Asks the 4K instance to search for the title again; null when it
+ * doesn't have the title (or there's no 4K instance). */
+export async function searchFourK(
+  adminUserId: string,
+  mediaType: MediaType,
+  tmdbId: number,
+  tvdbId: number | null,
+): Promise<{ ok: true } | { ok: false; code: "upstream"; error: string } | null> {
+  const credential = await getArrCredential(adminUserId, arrInstanceFor(mediaType, true));
+  if (!credential) return null;
+  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
+  try {
+    if (mediaType === "movie") {
+      const movie = await radarr.getMovieByTmdbId(config, tmdbId);
+      if (!movie) return null;
+      await radarr.searchMovie(config, movie.id);
+    } else {
+      if (!tvdbId) return null;
+      const series = await sonarr.getSeriesByTvdbId(config, tvdbId);
+      if (!series) return null;
+      await sonarr.searchSeries(config, series.id);
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, code: "upstream", error: `Couldn't queue a search on the 4K ${mediaType === "movie" ? "Radarr" : "Sonarr"}.` };
+  }
+}
+
 export async function getFourKStatus(
   adminUserId: string,
   mediaType: MediaType,
