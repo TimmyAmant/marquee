@@ -13,6 +13,7 @@
   },
   "jellyfin": {
     "connected": false,
+    "name": "Jellyfin",
     "baseUrl": null,
     "hasApiKey": false,
     "servers": [],
