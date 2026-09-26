@@ -33,6 +33,15 @@
               Radarr's and Sonarr's legends: Owned green, Downloading
               purple, Missing red, Unmonitored orange, Soon blue, Neutral
               grey. Info is Soon's blue for pills that aren't a status.
+              Each has a foreground (text, dot, poster strip), a tinted
+              background, and a border at 30% of the foreground (the
+              Mac's BadgeTone palette; Neutral's border is the plain
+              border color).
+
+              The poster card's own: the solid MOVIE (blue) and SERIES
+              (magenta) type pills with white text, the rating chip's bg0
+              at 80%, the hover panel's overview text (text secondary) and
+              its bg0 scrim, fading from 97% at the foot to 18% at the top.
             -->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
@@ -50,6 +59,25 @@
                     <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="#E5F0FA" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#5C574C" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="#EFECE3" />
+                    <SolidColorBrush x:Key="OwnedBadgeBorderBrush" Color="#4D2F7A52" />
+                    <SolidColorBrush x:Key="DownloadingBadgeBorderBrush" Color="#4D7048B8" />
+                    <SolidColorBrush x:Key="MissingBadgeBorderBrush" Color="#4DC42B2B" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeBorderBrush" Color="#4DB34D00" />
+                    <SolidColorBrush x:Key="SoonBadgeBorderBrush" Color="#4D2F6FB0" />
+                    <SolidColorBrush x:Key="InfoBadgeBorderBrush" Color="#4D2F6FB0" />
+                    <SolidColorBrush x:Key="NeutralBadgeBorderBrush" Color="#E1DCCD" />
+
+                    <SolidColorBrush x:Key="MovieTypeBadgeBrush" Color="#2563EB" />
+                    <SolidColorBrush x:Key="SeriesTypeBadgeBrush" Color="#C026D3" />
+                    <SolidColorBrush x:Key="TypeBadgeForegroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="RatingChipBackgroundBrush" Color="#CCFAF8F4" />
+                    <SolidColorBrush x:Key="PosterOverviewForegroundBrush" Color="#5C574C" />
+                    <LinearGradientBrush x:Key="PosterHoverScrimBrush" StartPoint="0.5,1" EndPoint="0.5,0">
+                        <GradientStop Color="#F7FAF8F4" Offset="0" />
+                        <GradientStop Color="#EBFAF8F4" Offset="0.3333" />
+                        <GradientStop Color="#8CFAF8F4" Offset="0.6667" />
+                        <GradientStop Color="#2EFAF8F4" Offset="1" />
+                    </LinearGradientBrush>
 
                     <AcrylicBrush
                         x:Key="MarqueeGlassBrush"
@@ -92,6 +120,25 @@
                     <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="#10202F" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#A8A4B3" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="#201F26" />
+                    <SolidColorBrush x:Key="OwnedBadgeBorderBrush" Color="#4D4CAF7D" />
+                    <SolidColorBrush x:Key="DownloadingBadgeBorderBrush" Color="#4DA98BE8" />
+                    <SolidColorBrush x:Key="MissingBadgeBorderBrush" Color="#4DF25B5B" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeBorderBrush" Color="#4DE8833A" />
+                    <SolidColorBrush x:Key="SoonBadgeBorderBrush" Color="#4D5D9CEC" />
+                    <SolidColorBrush x:Key="InfoBadgeBorderBrush" Color="#4D5D9CEC" />
+                    <SolidColorBrush x:Key="NeutralBadgeBorderBrush" Color="#2C2A35" />
+
+                    <SolidColorBrush x:Key="MovieTypeBadgeBrush" Color="#2563EB" />
+                    <SolidColorBrush x:Key="SeriesTypeBadgeBrush" Color="#C026D3" />
+                    <SolidColorBrush x:Key="TypeBadgeForegroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="RatingChipBackgroundBrush" Color="#CC0A0A0C" />
+                    <SolidColorBrush x:Key="PosterOverviewForegroundBrush" Color="#A8A4B3" />
+                    <LinearGradientBrush x:Key="PosterHoverScrimBrush" StartPoint="0.5,1" EndPoint="0.5,0">
+                        <GradientStop Color="#F70A0A0C" Offset="0" />
+                        <GradientStop Color="#EB0A0A0C" Offset="0.3333" />
+                        <GradientStop Color="#8C0A0A0C" Offset="0.6667" />
+                        <GradientStop Color="#2E0A0A0C" Offset="1" />
+                    </LinearGradientBrush>
 
                     <AcrylicBrush
                         x:Key="MarqueeGlassBrush"
@@ -134,6 +181,20 @@
                     <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="OwnedBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="DownloadingBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MissingBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SoonBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="InfoBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="NeutralBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+
+                    <SolidColorBrush x:Key="MovieTypeBadgeBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="SeriesTypeBadgeBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="TypeBadgeForegroundBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                    <SolidColorBrush x:Key="RatingChipBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="PosterOverviewForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="PosterHoverScrimBrush" Color="{ThemeResource SystemColorWindowColor}" />
 
                     <!-- No translucency in high contrast: solid system colors, the current item in the highlight pair. -->
                     <SolidColorBrush x:Key="MarqueeGlassBrush" Color="{ThemeResource SystemColorWindowColor}" />

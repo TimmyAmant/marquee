@@ -62,7 +62,7 @@ public sealed partial class PosterItem : ObservableObject
     private LibraryStatus? status;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasQuickAction), nameof(IsAddAction), nameof(IsRequestAction), nameof(IsRequestedAction), nameof(AccessibleName))]
+    [NotifyPropertyChangedFor(nameof(HasQuickAction), nameof(ShowsQuickActionSlot), nameof(IsAddAction), nameof(IsRequestAction), nameof(IsRequestedAction), nameof(AccessibleName))]
     private PosterQuickAction quickAction;
 
     [ObservableProperty]
@@ -70,12 +70,14 @@ public sealed partial class PosterItem : ObservableObject
     private bool isQuickActionBusy;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasQuickActionError))]
+    [NotifyPropertyChangedFor(nameof(HasQuickActionError), nameof(ShowsQuickActionSlot))]
     private string? quickActionError;
 
     /// <param name="open">Runs with this item as its parameter when the card is clicked.</param>
     /// <param name="showsTypeLabel">The "MOVIE" / "SERIES" corner pill, for rows that mix both.</param>
-    public PosterItem(AppModel model, TitleCard card, ICommand? open, bool showsTypeLabel = false)
+    /// <param name="showsOverview">The overview in the hover panel (the Movies/Series grid).</param>
+    /// <param name="showsRating">The "★ 7.9" chip top-left when there's no type pill (the Movies/Series grid).</param>
+    public PosterItem(AppModel model, TitleCard card, ICommand? open, bool showsTypeLabel = false, bool showsOverview = false, bool showsRating = false)
     {
         this.model = model;
         sent = card;
@@ -84,7 +86,12 @@ public sealed partial class PosterItem : ObservableObject
         Year = card.Year.NonBlank();
         Subtitle = card.Subtitle.NonBlank();
         FooterLine = card.FooterLine;
-        TypeLabel = showsTypeLabel ? TypeLabelFor(card.MediaType) : null;
+        TypeLabel = showsTypeLabel ? PosterBadges.TypeLabel(card.MediaType) : null;
+        var typeStyle = PosterBadges.TypeBadgeStyle(card.MediaType);
+        IsMovieTypeBadge = TypeLabel != null && typeStyle == TypeBadgeStyle.Movie;
+        IsSeriesTypeBadge = TypeLabel != null && typeStyle == TypeBadgeStyle.Series;
+        Overview = showsOverview ? card.Overview.NonBlank() : null;
+        RatingLabel = showsRating && TypeLabel == null ? PosterBadges.RatingLabel(card.Rating) : null;
         AddLabel = PosterQuickActions.AddLabel(card.MediaType);
         posterUrl = card.PosterPath.Url(ImageSize.W342);
         Open = open;
@@ -103,6 +110,18 @@ public sealed partial class PosterItem : ObservableObject
 
     /// <summary>"MOVIE" / "SERIES", or null when the row is a single media type.</summary>
     public string? TypeLabel { get; }
+
+    /// <summary>The type pill's fill: blue for a movie, magenta for a series.</summary>
+    public bool IsMovieTypeBadge { get; }
+    public bool IsSeriesTypeBadge { get; }
+
+    /// <summary>"7.9" for the rating chip top-left, or null (no chip, and never alongside a type pill).</summary>
+    public string? RatingLabel { get; }
+    public bool HasRating => RatingLabel != null;
+
+    /// <summary>The hover panel's overview, or null where the card shows none.</summary>
+    public string? Overview { get; }
+    public bool HasOverview => Overview != null;
 
     public string? StatusLabel => Status?.CompactLabel;
 
@@ -142,6 +161,9 @@ public sealed partial class PosterItem : ObservableObject
     public bool IsRequestAction => QuickAction == PosterQuickAction.Request;
     public bool IsRequestedAction => QuickAction == PosterQuickAction.Requested;
     public bool HasQuickActionError => QuickActionError != null;
+
+    /// <summary>The button, the "Requested" pill or the error: something under the overview in the hover panel.</summary>
+    public bool ShowsQuickActionSlot => HasQuickAction || HasQuickActionError;
 
     /// <summary>"+ Add to Radarr" / "+ Add to Sonarr".</summary>
     public string AddLabel { get; }
@@ -208,19 +230,6 @@ public sealed partial class PosterItem : ObservableObject
         // rather than a raw wire value, like the Mac's StatusBadge.
         Status = card.Status is { IsKnown: true } known ? known : null;
         QuickAction = card.QuickAction();
-    }
-
-    public static string TypeLabelFor(MediaType mediaType)
-    {
-        if (mediaType == MediaType.Movie)
-        {
-            return "MOVIE";
-        }
-        if (mediaType == MediaType.Tv)
-        {
-            return "SERIES";
-        }
-        return mediaType.Value.ToUpperInvariant();
     }
 
     /// <summary>The badge palette for a library status (<see cref="LibraryStatus.Tone"/>).</summary>

@@ -232,10 +232,15 @@ public sealed partial class PosterCard : UserControl
     private void UpdateQuickAction()
     {
         var item = Item;
-        var shows = item is { HasQuickAction: true } || item is { HasQuickActionError: true };
-        var wanted = item != null
-            && shows
-            && (pointerInside || focusInside || CannotHover.Value || item.IsQuickActionBusy || item.HasQuickActionError);
+        // The overview is hover-only, like the Mac's; the quick action also
+        // stays up while it works, while it shows an error, and on a PC that
+        // can't hover.
+        var hovered = pointerInside || focusInside;
+        var showsOverview = item is { HasOverview: true } && hovered;
+        var showsAction = item is { ShowsQuickActionSlot: true }
+            && (hovered || CannotHover.Value || item.IsQuickActionBusy || item.HasQuickActionError);
+        var wanted = showsOverview || showsAction;
+        OverviewText.Visibility = showsOverview ? Visibility.Visible : Visibility.Collapsed;
         if (!wanted && QuickActionLayer.Visibility == Visibility.Visible && focusInside && XamlRoot != null
             && IsWithin(FocusManager.GetFocusedElement(XamlRoot) as DependencyObject, QuickActionLayer))
         {
