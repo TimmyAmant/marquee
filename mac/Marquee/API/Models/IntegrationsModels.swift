@@ -58,12 +58,22 @@ extension API {
 
     struct JellyfinSettings: Codable, Hashable, Sendable {
         let connected: Bool
+        /// 0.40+: "Jellyfin", or "Emby" when the connected server is Emby
+        /// (it speaks the same API). Nil from older servers.
+        var name: String? = nil
         let baseUrl: String?
         let hasApiKey: Bool
         let servers: [SyncedServer]
         let movieCount: Int
         let tvCount: Int
         let totalBytes: Int64
+
+        /// What it's connected to, once connected and synced ("Emby" or
+        /// "Jellyfin"); nil before, like the website's card.
+        var connectedName: String? {
+            guard connected, !servers.isEmpty else { return nil }
+            return name?.nonBlank ?? "Jellyfin"
+        }
     }
 
     struct ArrSettings: Codable, Hashable, Sendable {

@@ -24,6 +24,32 @@ final class MediaSignInDecodingTests: XCTestCase {
         XCTAssertTrue(jellyfinOnly.offersJellyfinSignIn)
     }
 
+    func testJellyfinNameDefaultsToJellyfin() throws {
+        // Before 0.40 there's no `jellyfinName`: it's Jellyfin.
+        let older = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.39.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":false,"jellyfin":true}}"#)
+        XCTAssertEqual(older.signIn?.jellyfinName, "Jellyfin")
+        XCTAssertEqual(older.jellyfinName, "Jellyfin")
+        XCTAssertEqual(older.label(for: .jellyfin), "Jellyfin")
+
+        let blank = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.40.0","setupComplete":true,"status":"ok","signIn":{"jellyfin":true,"jellyfinName":" "}}"#)
+        XCTAssertEqual(blank.jellyfinName, "Jellyfin")
+
+        let noSignIn = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.32.0","setupComplete":true,"status":"ok"}"#)
+        XCTAssertEqual(noSignIn.jellyfinName, "Jellyfin")
+        let none: ServerInfo? = nil
+        XCTAssertEqual(none.jellyfinName, "Jellyfin")
+        XCTAssertEqual(none.label(for: .plex), "Plex")
+    }
+
+    func testEmbyServerIsCalledEmby() throws {
+        let info = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.40.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":true,"jellyfin":true,"jellyfinName":"Emby"}}"#)
+        XCTAssertEqual(info.signIn, SignInMethods(password: true, plex: true, jellyfin: true, jellyfinName: "Emby"))
+        XCTAssertEqual(info.jellyfinName, "Emby")
+        XCTAssertEqual(info.label(for: .jellyfin), "Emby")
+        XCTAssertEqual(info.label(for: .plex), "Plex")
+        XCTAssertEqual(Optional(info).label(for: .jellyfin), "Emby")
+    }
+
     func testOlderServerInfoOffersNoNewButtons() throws {
         let info = try decode(ServerInfo.self, #"{"app":"marquee","apiVersion":1,"version":"0.32.0","setupComplete":true,"status":"ok"}"#)
         XCTAssertNil(info.signIn)

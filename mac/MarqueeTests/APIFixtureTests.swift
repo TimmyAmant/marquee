@@ -213,6 +213,33 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNil(telegram.chatId)
     }
 
+    /// `jellyfin.name` (0.40+): "Emby" when that's what's connected; missing
+    /// from older servers. Named in the card only once connected and synced.
+    func testJellyfinSettingsName() throws {
+        let integrations = try decode(API.IntegrationsOverview.self, "integrations")
+        XCTAssertEqual(integrations.jellyfin.name, "Jellyfin")
+        XCTAssertNil(integrations.jellyfin.connectedName, "Not connected yet")
+
+        let server = try decode(ServerInfo.self, "server-info")
+        XCTAssertEqual(server.signIn?.jellyfinName, "Jellyfin")
+
+        let older = try APIClient.decoder.decode(API.JellyfinSettings.self, from: Data(#"""
+        {"connected":true,"baseUrl":"http://tower:8096","hasApiKey":true,"servers":[{"name":"Tower","lastSyncedAt":null}],"movieCount":1,"tvCount":0,"totalBytes":0}
+        """#.utf8))
+        XCTAssertNil(older.name)
+        XCTAssertEqual(older.connectedName, "Jellyfin")
+
+        let emby = try APIClient.decoder.decode(API.JellyfinSettings.self, from: Data(#"""
+        {"connected":true,"name":"Emby","baseUrl":"http://tower:8096","hasApiKey":true,"servers":[{"name":"Tower","lastSyncedAt":null}],"movieCount":1,"tvCount":0,"totalBytes":0}
+        """#.utf8))
+        XCTAssertEqual(emby.connectedName, "Emby")
+
+        let unsynced = try APIClient.decoder.decode(API.JellyfinSettings.self, from: Data(#"""
+        {"connected":true,"name":"Jellyfin","baseUrl":"http://tower:8096","hasApiKey":true,"servers":[],"movieCount":0,"tvCount":0,"totalBytes":0}
+        """#.utf8))
+        XCTAssertNil(unsynced.connectedName)
+    }
+
     func testPlexWatchlist() throws {
         let state = try decode(API.PlexWatchlist.self, "plex-watchlist")
         XCTAssertTrue(state.available)
