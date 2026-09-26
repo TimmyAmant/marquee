@@ -1,6 +1,6 @@
 import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { notifications } from "@/lib/db/schema";
+import { notifications, users } from "@/lib/db/schema";
 import type { MediaType, NotificationEventType } from "@/lib/db/schema";
 import { getDiscordWebhookUrl, getGenericWebhookUrl, getNtfyUrl } from "@/lib/integrations/app-settings";
 import { sendDiscordMessage } from "@/lib/discord/client";
@@ -21,6 +21,7 @@ const EVENT_EMOJI: Record<NotificationEventType, string> = {
   issue_reported: "⚠️",
   issue_resolved: "🛠️",
   request_created: "🙋",
+  title_shared: "📨",
 };
 
 export async function getUnreadCount(userId: string): Promise<number> {
@@ -48,13 +49,33 @@ export async function markNotificationRead(userId: string, notificationId: strin
   return updated.length > 0;
 }
 
+/** Newest first, each with `sender`: the account that shared the title
+ * (title_shared), else null. */
 export async function getRecentNotifications(userId: string, limit = 20) {
-  return db
-    .select()
+  const rows = await db
+    .select({
+      notification: notifications,
+      senderUsername: users.username,
+      senderDisplayName: users.displayName,
+      senderAvatarUpdatedAt: users.avatarUpdatedAt,
+    })
     .from(notifications)
+    .leftJoin(users, eq(users.id, notifications.senderUserId))
     .where(eq(notifications.userId, userId))
     .orderBy(desc(notifications.createdAt))
     .limit(limit);
+  return rows.map(({ notification, senderUsername, senderDisplayName, senderAvatarUpdatedAt }) => ({
+    ...notification,
+    sender:
+      notification.senderUserId && senderUsername
+        ? {
+            id: notification.senderUserId,
+            username: senderUsername,
+            displayName: senderDisplayName,
+            avatarUpdatedAt: senderAvatarUpdatedAt,
+          }
+        : null,
+  }));
 }
 
 export async function createNotification(input: {
@@ -78,6 +99,9 @@ export async function createNotification(input: {
   is4k?: boolean;
   /** request_created: the request its Approve / Decline buttons act on. */
   requestId?: string;
+  /** title_shared: who shared it, and their note (lib/sharing). */
+  senderUserId?: string;
+  note?: string | null;
 }): Promise<boolean> {
   const { relay = true, dedupeSince, ...row } = input;
   const saved = dedupeSince ? await insertUnlessRecent(row, dedupeSince) : await insertNotification(row);

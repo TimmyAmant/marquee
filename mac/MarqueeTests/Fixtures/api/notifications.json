@@ -9,7 +9,27 @@
       "eventType": "request_rejected",
       "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
-      "createdAt": "2026-09-17T17:12:41.470Z"
+      "createdAt": "2026-09-17T17:12:41.470Z",
+      "sharedBy": null,
+      "note": null
+    },
+    {
+      "id": "5d1e0c37-2a4b-4f9e-9a51-7c3f0b6e8d21",
+      "mediaType": "movie",
+      "tmdbId": 425,
+      "title": "Ice Age",
+      "eventType": "title_shared",
+      "message": "Susan shared “Ice Age” with you: You'd love this one",
+      "read": true,
+      "createdAt": "2026-09-16T20:03:12.118Z",
+      "sharedBy": {
+        "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "displayName": "Susan",
+        "username": "susan",
+        "label": "Susan",
+        "avatarUrl": "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar?v=1758220800000"
+      },
+      "note": "You'd love this one"
     }
   ]
 }

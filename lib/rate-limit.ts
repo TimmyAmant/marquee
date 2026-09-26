@@ -51,6 +51,21 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): bo
   return true;
 }
 
+/** Like checkRateLimit, but one call spends `amount` of the budget at once
+ * (e.g. one share to three people is three). All or nothing: when the
+ * whole amount doesn't fit, nothing is spent and it returns false. */
+export function consumeRateLimit(key: string, amount: number, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  let bucket = buckets.get(key);
+  if (!bucket || now > bucket.resetAt) {
+    bucket = { count: 0, resetAt: now + windowMs };
+    buckets.set(key, bucket);
+  }
+  if (bucket.count + amount > limit) return false;
+  bucket.count += amount;
+  return true;
+}
+
 /** Read-only check — does not consume a slot. Use before doing expensive work
  * (like a password hash comparison) to reject early without penalizing a
  * legitimate request that hasn't failed yet. */

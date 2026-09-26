@@ -7,6 +7,7 @@ import { SimilarTitlesRow } from "@/components/similar-titles-row";
 import { FranchiseRow } from "@/components/franchise-row";
 import { SeasonAccordion } from "@/components/season-episode-list";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { getPublicBaseUrl } from "@/lib/sharing";
 import { loadTitlePage } from "@/lib/pages/title";
 import { seasonsNewestFirst } from "@/lib/title-meta";
 import { seasonPickerState } from "@/lib/requests/seasons";
@@ -33,7 +34,10 @@ export default async function TitlePage({
 
   const viewer = await getViewerContext();
   // Shared with GET /api/v1/titles/[type]/[id].
-  const data = await loadTitlePage(viewer, type, tmdbId);
+  const [data, publicBase] = await Promise.all([
+    loadTitlePage(viewer, type, tmdbId),
+    viewer.session ? getPublicBaseUrl().catch(() => null) : null,
+  ]);
   if (!data) notFound();
 
   const {
@@ -129,6 +133,7 @@ export default async function TitlePage({
             ? { seasonNumbers: seasons.map((s) => s.season_number), openReports }
             : null
         }
+        share={viewer.session ? { publicBase } : null}
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
         cast={

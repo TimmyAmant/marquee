@@ -1008,6 +1008,84 @@ characters. An empty `episodes` list → "No episode data for this season."
 
 Errors: `404 not_found` (movie, bad numbers, unknown show), `502 upstream`.
 
+### Share a title (0.45+)
+
+"Share" on a title page: send it to someone else in the household, who gets
+a `title_shared` notification (bell, Web Push, the apps' live stream) that
+opens the title, or share a link outside Marquee. Every member can share
+with every other one — not only the admin.
+
+#### `POST /titles/{type}/{tmdbId}/share` — user
+
+```json
+{ "userIds": ["83c55a49-6153-4cb9-ae22-4a42d48f4cf3"], "note": "You'd love this one" }
+```
+
+`userIds`: one to 20 account ids from `GET /users/shareable` (repeats are
+dropped). `note`: optional, plain text, up to 280 characters; tags
+(`<b>`) and invisible characters are removed and line breaks become spaces,
+so what arrives is one line (blank → no note). Answers
+`{ "ok": true, "sharedWith": 1 }`.
+
+Each recipient's notification reads `Susan shared “Ice Age” with you` (then
+`: <note>` when there is one), with `sharedBy` and `note` set (see
+Notifications). It isn't relayed to Discord, ntfy, Telegram, Pushover, email
+or the webhook: it's personal.
+
+Errors: `400 invalid` "Pick who to share it with." (missing, empty or not
+account ids) / "You can't share with yourself." / "Share with at most 20
+people at a time." / "Keep the note under 280 characters." / "The note has
+to be text.", `404 not_found` "Someone you picked isn't in this household
+any more." (an id that isn't an account), `429 rate_limited` "That's a lot
+of sharing in a short time. Try again in a while." (30 an hour per person,
+counting each recipient: a share to three people is three), `502 upstream`
+(TMDb unreachable).
+
+#### `GET /users/shareable` — user
+
+Who a share can go to: every account but your own, by name (case-insensitive).
+Any member may list these names for this; `GET /users` still shows a member
+only their own account.
+
+```json
+{
+  "results": [
+    {
+      "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+      "displayName": "Kid",
+      "username": "member1",
+      "label": "Kid",
+      "avatarUrl": null
+    }
+  ],
+  "publicUrl": "https://marquee.example.com"
+}
+```
+
+A `RequestPerson` plus `avatarUrl` (as on `HouseholdMember`) — the same shape
+as a notification's `sharedBy`. `publicUrl`: the address set as Marquee's
+public one (Settings › Integrations › Single sign-on's "Public address"), with
+no trailing slash; null when none is set — then build links on the address
+the app is connected to.
+
+**Sharing outside the household.** A Marquee link is
+`{publicUrl}/title/{type}/{tmdbId}` (people need to sign in to open it); for
+someone without an account offer the public pages instead,
+`https://www.themoviedb.org/{type}/{tmdbId}` and, when the title has an
+`imdbId`, `https://www.imdb.com/title/{imdbId}/`.
+
+Website: a "Share" outline pill in the hero's action row (signed in) opens a
+dialog "Share “Ice Age”": **Send to someone in the household** — each other
+member with their photo and a checkbox, "Add a note (optional)" (280
+characters, with a count once it's close), and "Send"; afterwards "Sent to
+Kid." (or "Sent to 3 people."); "No one else has an account here yet." when
+alone. **Share a link** — which link ("Marquee — they'll need to sign in",
+"TMDb — anyone can open it", "IMDb" when there is one), then "Share…" where
+the browser has Web Share (the phone's share sheet: Messages, Messenger,
+WhatsApp, Mail…), or else "Copy link" with "Text message", "Email",
+"WhatsApp" and, on touch devices, "Messenger". A person's page has the same
+button with just the link part (Marquee or TMDb).
+
 ---
 
 ## 4. Library status & Sonarr/Radarr actions
@@ -1709,8 +1787,14 @@ instead ("Anna's Plex Watchlist requested 3 titles: “Dune”, “Severance” 
 1 more"). Once the request is reviewed, by anyone, its alerts are marked
 read for every reviewer. On the website's push notification it carries
 "Approve" and "Decline" buttons where the browser supports them (Android,
-desktop Chrome/Edge). Tapping one opens
-`/titles/{mediaType}/{tmdbId}` and marks it read.
+desktop Chrome/Edge). From 0.45 `title_shared` (📨, "Shared with you"):
+someone in the household shared the title with you ("Susan shared “Ice Age”
+with you: You'd love this one"); `sharedBy` is who (a `RequestPerson` plus
+`avatarUrl`, null once that account is removed) and `note` their note, both
+null on every other kind (and missing on older servers — treat as null).
+Show the sender's photo (else initials) beside it. Never relayed to Discord
+and the rest. Tapping one opens `/titles/{mediaType}/{tmdbId}` and marks it
+read.
 
 ### `GET /notifications` — user
 
@@ -1730,13 +1814,35 @@ desktop Chrome/Edge). Tapping one opens
       "eventType": "request_rejected",
       "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
-      "createdAt": "2026-09-17T17:12:41.470Z"
+      "createdAt": "2026-09-17T17:12:41.470Z",
+      "sharedBy": null,
+      "note": null
+    },
+    {
+      "id": "5d1e0c37-2a4b-4f9e-9a51-7c3f0b6e8d21",
+      "mediaType": "movie",
+      "tmdbId": 425,
+      "title": "Ice Age",
+      "eventType": "title_shared",
+      "message": "Susan shared “Ice Age” with you: You'd love this one",
+      "read": true,
+      "createdAt": "2026-09-16T20:03:12.118Z",
+      "sharedBy": {
+        "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "displayName": "Susan",
+        "username": "susan",
+        "label": "Susan",
+        "avatarUrl": "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar?v=1758220800000"
+      },
+      "note": "You'd love this one"
     }
   ]
 }
 ```
 
-Newest first. Empty → "No notifications yet." The website shows relative
+Newest first. Empty → "No notifications yet." A `title_shared` row on the
+website leads with the sender's round photo (initials when there's none) and
+shows the note in quotes under the message. The website shows relative
 times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap. A
 `request_rejected` message carries the admin's reason after a colon when one
 was given; without one it's just `"The Matrix" was declined.`
@@ -2754,6 +2860,8 @@ what to do, grouped by area.
 | | `GET /search/suggest` | user |
 | Title | `GET /titles/{type}/{tmdbId}` | user |
 | | `GET /titles/tv/{tmdbId}/seasons/{season}` | user |
+| | `POST /titles/{type}/{tmdbId}/share` | user |
+| | `GET /users/shareable` | user |
 | Library status & Sonarr/Radarr | `GET /titles/{type}/{tmdbId}/status` | user |
 | | `POST /titles/{type}/{tmdbId}/add` | user (admin enforced) |
 | | `GET /titles/{type}/{tmdbId}/add-options` | admin or trusted |

@@ -489,6 +489,9 @@ export const notificationEventTypeValues = [
   // A new request waiting for review, to the admin and trusted members —
   // with Approve / Decline right on the push notification (public/sw.js).
   "request_created",
+  // A household member sent this title to you (lib/sharing) — the sender
+  // and their note are on the row (senderUserId, note).
+  "title_shared",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -511,13 +514,17 @@ export const notifications = pgTable(
     // The request a request_created notification is about — what its
     // Approve / Decline buttons act on.
     requestId: uuid("request_id").references(() => requests.id, { onDelete: "set null" }),
+    // title_shared: who sent it (null once that account is removed) and
+    // their optional note, plain text.
+    senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
+    note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared')`,
     ),
   ],
 );
