@@ -307,6 +307,11 @@ export type TitleViewerState = {
   canReport: boolean;
   /** The viewer's own open problem reports for this title. */
   openReports: number;
+  /** 0.41+: the admin's blocklist covers this title — no Request (nor 4K,
+   * nor seasons) for members; `reason` is the admin's note. The admin sees
+   * it too, with an Unblock button (`DELETE …/block`). Null when it isn't
+   * blocked. */
+  blocked: { reason: string | null; keyword: string | null } | null;
 };
 
 export type FourKViewerState = {
@@ -709,4 +714,18 @@ export type ChangelogEntry = { version: string; date: string; changes: string[] 
 export type ErrorReferenceCategory = {
   title: string;
   entries: { message: string; meaning: string; whatToDo: string }[];
+};
+
+/** GET /settings/blocklist (0.41+). */
+export type BlocklistEntry = {
+  id: string;
+  kind: "title" | "keyword";
+  /** A title: which one, and its name when blocked. */
+  mediaType: MediaType | null;
+  tmdbId: number | null;
+  title: string | null;
+  /** A TMDb keyword or genre, lower-case. */
+  keyword: string | null;
+  reason: string | null;
+  createdAt: string;
 };

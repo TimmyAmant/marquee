@@ -2,6 +2,7 @@
 // free of database and TMDb client imports (types only) so the mapping rules
 // stay cheap to reason about and test.
 import type * as Dto from "@/lib/api/types";
+import type { BlocklistEntry as BlocklistRow } from "@/lib/requests/blocklist";
 import { ISSUE_KIND_LABELS, issueEpisodeLabel } from "@/lib/issues/labels";
 import type { IssueRow } from "@/lib/issues";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
@@ -114,6 +115,10 @@ export function canReportProblem(status: LibraryStatus, fourKStatus: LibraryStat
   return has(status) || has(fourKStatus);
 }
 
+function noFourKRequest(state: Dto.FourKViewerState | null): Dto.FourKViewerState | null {
+  return state ? { ...state, canRequest: false } : null;
+}
+
 export function titleViewerState(input: {
   isAdmin: boolean;
   status: LibraryStatus;
@@ -128,7 +133,10 @@ export function titleViewerState(input: {
   fourK?: { configured: boolean; status: LibraryStatus; requestStatus: RequestStatus | null } | null;
   /** The viewer's open problem reports for the title (loadTitleStatus). */
   openReports?: number;
+  /** On the admin's blocklist (lib/requests/blocklist.ts). */
+  blocked?: { reason: string | null; keyword: string | null } | null;
 }): Dto.TitleViewerState {
+  const blocked = input.blocked ?? null;
 
   const untracked = input.status === "untracked";
   const alreadyRequested = input.requestStatus === "pending";
@@ -143,14 +151,15 @@ export function titleViewerState(input: {
     // turns it back on; an Add next to it would do the same thing twice.
     canAdd: untracked && input.isAdmin && input.configured && !input.arrTracking,
     needsArrSetup: untracked && input.isAdmin && !input.configured,
-    canRequest: untracked && !input.isAdmin && !alreadyRequested,
-    canRequestSeasons: input.seasonRequests?.canRequestSeasons ?? false,
+    canRequest: untracked && !input.isAdmin && !alreadyRequested && !blocked,
+    canRequestSeasons: !blocked && (input.seasonRequests?.canRequestSeasons ?? false),
     requestedSeasons: input.seasonRequests?.requestedSeasons ?? null,
     canRelink: input.isAdmin && !untracked,
     arrTracking: input.isAdmin && input.arrTracking ? { arrId: input.arrTracking.arrId, monitored: input.arrTracking.monitored } : null,
-    fourK: fourKViewerState(input.isAdmin, input.fourK ?? null),
+    fourK: blocked ? noFourKRequest(fourKViewerState(input.isAdmin, input.fourK ?? null)) : fourKViewerState(input.isAdmin, input.fourK ?? null),
     canReport: canReportProblem(input.status, input.fourK?.status ?? null),
     openReports: input.openReports ?? 0,
+    blocked,
   };
 }
 
@@ -312,5 +321,18 @@ export function issueDto(row: IssueRow, viewerUserId: string): Dto.Issue {
     isMine: row.reportedByUserId === viewerUserId,
     createdAt: isoRequired(row.createdAt),
     resolvedAt: iso(row.resolvedAt),
+  };
+}
+
+export function blocklistEntryDto(row: BlocklistRow): Dto.BlocklistEntry {
+  return {
+    id: row.id,
+    kind: row.kind,
+    mediaType: row.mediaType,
+    tmdbId: row.tmdbId,
+    title: row.title,
+    keyword: row.keyword,
+    reason: row.reason,
+    createdAt: isoRequired(row.createdAt),
   };
 }

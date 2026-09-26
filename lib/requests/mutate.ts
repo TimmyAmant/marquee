@@ -16,6 +16,7 @@ import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { insertWithinQuota } from "@/lib/requests/quota";
 import { notifyReviewersOfRequest } from "@/lib/requests/alerts";
+import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
@@ -39,6 +40,10 @@ export async function createRequest(
   },
 ): Promise<CoreResult<{ requestId: string }>> {
   const { mediaType, tmdbId } = input;
+  // The admin's blocklist (lib/requests/blocklist.ts) — before anything else,
+  // for 4K and Plex Watchlist requests alike.
+  const block = await findBlock(mediaType, tmdbId);
+  if (block) return fail("forbidden", blockedMessage(block));
   if (input.is4k === true) return createFourKRequest(viewer, input);
 
   const parsedSeasons = mediaType === "tv" ? parseSeasonsInput(input.seasons) : { ok: true as const, seasons: null };

@@ -239,7 +239,9 @@ async function runWatchlistSync(userId: string): Promise<SyncOutcome> {
     // Already owned, or already asked for by this member (a request that's
     // pending, approved, or — for a show — covers some seasons): the member
     // is handling this title themselves, so it's left to them.
-    else if (result && (result.code === "conflict" || result.code === "invalid")) outcome = "skipped";
+    // Blocked by the admin (lib/requests/blocklist.ts): not asked for again.
+    else if (result && (result.code === "conflict" || result.code === "invalid" || result.code === "forbidden"))
+      outcome = "skipped";
     // TMDb or the database hiccuped: try again next sync.
     else outcome = null;
 

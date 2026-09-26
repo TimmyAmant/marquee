@@ -820,3 +820,31 @@ export const issues = pgTable(
     ),
   ],
 );
+
+export const blocklistKindValues = ["title", "keyword"] as const;
+export type BlocklistKind = (typeof blocklistKindValues)[number];
+
+/** What nobody may request (lib/requests/blocklist.ts): one title, or every
+ * title with a TMDb keyword or genre of that name (e.g. "anime"). The admin
+ * can still add a blocked title themselves. */
+export const requestBlocklist = pgTable(
+  "request_blocklist",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull().$type<BlocklistKind>(),
+    mediaType: text("media_type").$type<MediaType>(),
+    tmdbId: integer("tmdb_id"),
+    /** A title's name as it was when blocked, for the list. */
+    title: text("title"),
+    /** For a keyword: lower-case, trimmed. */
+    keyword: text("keyword"),
+    /** Shown to whoever tries to request it. */
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check("request_blocklist_kind_check", sql`${table.kind} in ('title','keyword')`),
+    uniqueIndex("request_blocklist_title_idx").on(table.mediaType, table.tmdbId).where(sql`${table.kind} = 'title'`),
+    uniqueIndex("request_blocklist_keyword_idx").on(table.keyword).where(sql`${table.kind} = 'keyword'`),
+  ],
+);
