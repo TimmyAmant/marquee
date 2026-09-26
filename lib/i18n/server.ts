@@ -8,7 +8,7 @@ import { users } from "@/lib/db/schema";
 import { DEFAULT_LOCALE, parseLocale, resolveLocale, type Locale } from "@/lib/i18n/locales";
 import { translatorFor } from "@/lib/i18n/catalog";
 import type { Translator } from "@/lib/i18n/translator";
-import { inApiScope, scopedLanguage } from "@/lib/i18n/request-scope";
+import { apiScope } from "@/lib/i18n/request-scope";
 
 /**
  * The language of whoever this request is for: their account's choice
@@ -23,28 +23,27 @@ import { inApiScope, scopedLanguage } from "@/lib/i18n/request-scope";
  * they're shown in.
  */
 export const getLocale = cache(async (): Promise<Locale> => {
-  let preferred: unknown = null;
-  let acceptLanguage: string | null = null;
+  // An app's request (lib/i18n/request-scope.ts): its account's choice,
+  // else the Accept-Language it sent.
+  const api = apiScope();
+  if (api) return resolveLocale(api.language, api.acceptLanguage);
+
+  let acceptLanguage: string | null;
   try {
-    const requestHeaders = await headers();
-    acceptLanguage = requestHeaders.get("accept-language");
+    acceptLanguage = (await headers()).get("accept-language");
   } catch (error) {
+    // Not in a request at all: a job, a test.
     unstable_rethrow(error);
     return DEFAULT_LOCALE;
   }
-  if (inApiScope()) {
-    // An app's request (lib/i18n/request-scope.ts): its account's choice.
-    preferred = scopedLanguage() ?? null;
-  } else {
-    try {
-      // Loaded when needed: API requests never get here, and that keeps
-      // next-auth out of everything that only runs behind the API.
-      const { auth } = await import("@/auth");
-      const session = await auth();
-      preferred = session?.user?.language ?? null;
-    } catch (error) {
-      unstable_rethrow(error);
-    }
+  let preferred: unknown = null;
+  try {
+    // Loaded when needed, which keeps next-auth out of everything that
+    // only runs behind the API.
+    const { auth } = await import("@/auth");
+    preferred = (await auth())?.user?.language ?? null;
+  } catch (error) {
+    unstable_rethrow(error);
   }
   return resolveLocale(preferred, acceptLanguage);
 });

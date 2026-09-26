@@ -8,12 +8,14 @@ import { AsyncLocalStorage } from "node:async_hooks";
  * Accept-Language, exactly as the website prefers the session's.
  */
 
-type Scope = { language?: string | null };
+type Scope = { acceptLanguage: string | null; language?: string | null };
 
 const storage = new AsyncLocalStorage<Scope>();
 
-export function runInLanguageScope<T>(fn: () => Promise<T>): Promise<T> {
-  return storage.run({}, fn);
+/** `acceptLanguage`: the request's own header, for before (or without)
+ * a signed-in account. */
+export function runInLanguageScope<T>(acceptLanguage: string | null, fn: () => Promise<T>): Promise<T> {
+  return storage.run({ acceptLanguage }, fn);
 }
 
 /** Called once the request's account is known. */
@@ -22,13 +24,9 @@ export function setScopedLanguage(language: string | null): void {
   if (scope) scope.language = language;
 }
 
-/** The API request's account language: undefined when this isn't an API
- * request or its account isn't known (yet); null when it follows the app. */
-export function scopedLanguage(): string | null | undefined {
-  return storage.getStore()?.language;
-}
-
-/** True inside an API request, where the browser session doesn't apply. */
-export function inApiScope(): boolean {
-  return storage.getStore() !== undefined;
+/** Inside an API request: its account's language (undefined until
+ * known) and its Accept-Language. Null outside one. */
+export function apiScope(): { language: string | null | undefined; acceptLanguage: string | null } | null {
+  const scope = storage.getStore();
+  return scope ? { language: scope.language, acceptLanguage: scope.acceptLanguage } : null;
 }

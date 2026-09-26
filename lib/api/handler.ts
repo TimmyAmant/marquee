@@ -21,7 +21,7 @@ export function withApi<P extends RouteParams = RouteParams>(handler: ApiHandler
   // In a language scope (lib/i18n/request-scope.ts), so messages follow
   // the signed-in account's language once it's known.
   return (request: Request, context: RouteContextLike<P>): Promise<Response> =>
-    runInLanguageScope(async () => {
+    runInLanguageScope(request.headers.get("accept-language"), async () => {
       try {
         // An API key is checked — including what its scope allows here
         // (lib/api/key-policy.ts) — before any of the route's own code runs,

@@ -25,6 +25,7 @@ NAMESPACES = [
     "help",
     "server",
     "notify",
+    "admin",
 ]
 
 
