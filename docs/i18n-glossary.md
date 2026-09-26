@@ -100,3 +100,28 @@ translated by Marquee.
 | language / automatic | idioma / automático | langue / automatique | Sprache / automatisch | idioma / automático |
 | sync / synced | sincronizar / sincronizado | synchroniser / synchronisé | synchronisieren / synchronisiert | sincronizar / sincronizado |
 | retry | reintentar | réessayer | erneut versuchen | tentar de novo |
+| Discover row | fila | rangée | Reihe | fileira |
+| keyword | palabra clave | mot-clé | Schlagwort | palavra-chave |
+| credit (filmography entry) | crédito | crédit | Mitwirkung | crédito |
+| Browse (menu section) | Explorar | Parcourir | Stöbern | Navegar |
+| the bell (in-app notifications) | campana | cloche | Glocke | sino |
+| device / devices | dispositivo | appareil | Gerät | dispositivo |
+| unlink | desvincular | dissocier | trennen | desvincular |
+| presets: Member / Trusted / Custom | Miembro / De confianza / Personalizado | Membre / De confiance / Personnalisé | Mitglied / Vertrauenswürdig / Benutzerdefiniert | Membro / Confiável / Personalizado |
+| household channels | canales del hogar | canaux du foyer | Kanäle des Haushalts | canais da casa |
+| ntfy topic | tema | sujet | Topic | tópico |
+| email (channel) | correo | e-mail | E-Mail | e-mail |
+| Test & save | Probar y guardar | Tester et enregistrer | Testen & speichern | Testar e salvar |
+| default (server, profile) | predeterminado | par défaut | Standard | padrão |
+| download queue | cola de descargas | file de téléchargement | Download-Warteschlange | fila de downloads |
+| Color key | Leyenda de colores | Légende des couleurs | Farblegende | Legenda de cores |
+| Error reference | Referencia de errores | Référence des erreurs | Fehlerreferenz | Referência de erros |
+| overview (synopsis) | sinopsis | synopsis | Handlung | sinopse |
+| Specials (season 0) | Especiales | Épisodes spéciaux | Specials | Especiais |
+| Director / Screenplay / Creator | Dirección / Guion / Creación | Réalisation / Scénario / Création | Regie / Drehbuch / Idee | Direção / Roteiro / Criação |
+| S2 E5 (short episode label) | T2 E5 | S2 E5 | S2 F5 | T2 E5 |
+
+The words for a title's Sonarr/Radarr menus (Settings → Connect → Webhook),
+events (Grab, Import, Download) and "webhook" stay in English: they name
+what the reader sees in those apps, which are English-only. "Watchlist"
+(Plex's and Trakt's) is also kept as is.

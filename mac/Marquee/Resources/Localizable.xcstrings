@@ -11457,13 +11457,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Descobrir pode ter até %lld linha própria. Remova uma primeiro."
+                  "value" : "Descobrir pode ter até %lld fileira própria. Remova uma primeiro."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Descobrir pode ter até %lld linhas próprias. Remova uma primeiro."
+                  "value" : "Descobrir pode ter até %lld fileiras próprias. Remova uma primeiro."
                 }
               }
             }
@@ -13940,7 +13940,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dê um nome à linha."
+            "value" : "Dê um nome à fileira."
           }
         }
       }
