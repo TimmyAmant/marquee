@@ -105,7 +105,17 @@ public sealed class ApiException : Exception
         Refused(DecodeBody(body)?.Error?.Trim().NonBlank(), statusCode, hasApiHeader);
 
     public static ApiException PlexSignInExpired(int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.Expired, PlexSignInExpiredMessage, statusCode: statusCode, hasApiHeader: hasApiHeader);
+        SignInExpired(PlexSignInExpiredMessage, statusCode, hasApiHeader);
+
+    /// <summary>What a single sign-on sign-in or link that expired says (the server's own wording).</summary>
+    public const string SsoSignInExpiredMessage = "That sign-in expired. Try again.";
+
+    /// <summary>What a Quick Connect code that expired says (the server's own wording).</summary>
+    public const string QuickConnectExpiredMessage = "That Quick Connect code expired. Try again.";
+
+    /// <summary>A PIN-style sign-in (Plex, single sign-on, Quick Connect) that's gone: 410, or past its <c>expiresAt</c>.</summary>
+    public static ApiException SignInExpired(string message, int? statusCode = null, bool hasApiHeader = false) =>
+        new(ApiErrorKind.Expired, message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException Network(NetworkFailure failure, string? detail = null, Exception? inner = null) =>
         new(ApiErrorKind.Network, NetworkMessage(failure, detail), failure: failure, inner: inner);

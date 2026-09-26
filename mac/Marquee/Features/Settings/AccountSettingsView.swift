@@ -206,6 +206,9 @@ struct AccountSettingsView: View {
             if member.linked?.jellyfin == true {
                 TonePill(text: model.session.serverInfo.jellyfinName, tone: .tracked, small: true)
             }
+            if member.linked?.sso == true {
+                TonePill(text: "SSO", tone: .tracked, small: true)
+            }
             if member.isAdmin {
                 TonePill(text: "Admin", tone: .accent, small: true)
             }

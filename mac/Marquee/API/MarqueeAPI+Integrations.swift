@@ -37,6 +37,8 @@ extension MarqueeAPI {
 
         var plex: PlexEndpoints { PlexEndpoints(transport: transport) }
         var jellyfin: JellyfinEndpoints { JellyfinEndpoints(transport: transport) }
+        /// Single sign-on, under Sign-in (0.44+; `settings()` is nil from an older server).
+        var sso: SsoSettingsEndpoints { SsoSettingsEndpoints(transport: transport) }
 
         /// Body `{accessToken}`: a TMDb v4 read access token or v3 API key.
         /// Removing it falls back to the server's environment variables, if set.

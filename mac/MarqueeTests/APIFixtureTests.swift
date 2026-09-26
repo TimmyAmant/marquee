@@ -34,6 +34,8 @@ final class APIFixtureTests: XCTestCase {
         "server-info": decodes(API.ServerInfo.self),
         "auth-login": decodes(API.AuthResponse.self),
         "auth-plex-start": decodes(API.PlexSignInStart.self),
+        "auth-sso-start": decodes(API.SsoSignInStart.self),
+        "auth-quick-connect-start": decodes(API.QuickConnectStart.self),
         "ok": decodes(API.OK.self),
         "me": decodes(API.Me.self),
         "badges": decodes(API.Badges.self),
@@ -75,6 +77,8 @@ final class APIFixtureTests: XCTestCase {
         "users-import": decodes(API.ListResponse<API.ImportCandidate>.self),
         "users-import-result": decodes(API.ImportUsersResult.self),
         "sign-in-settings": decodes(API.SignInSettings.self),
+        "sso-settings": decodes(API.SsoSettings.self),
+        "sso-test": decodes(API.SsoTestResult.self),
         "plex-watchlist": decodes(API.PlexWatchlist.self),
         "avatar-set": decodes(API.AvatarResult.self),
         "avatar-removed": decodes(API.AvatarResult.self),
@@ -100,7 +104,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 68, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 72, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -227,7 +231,8 @@ final class APIFixtureTests: XCTestCase {
         let server = try decode(ServerInfo.self, "server-info")
         XCTAssertEqual(server.signIn?.jellyfinName, "Jellyfin")
         XCTAssertEqual(server.signIn?.signup, true)
-        XCTAssertEqual(server.signupHint, "New here? Use Sign in with Plex — your account is made for you.")
+        // New accounts from Plex/Jellyfin sign-in on; from single sign-on off.
+        XCTAssertEqual(server.signupHint, "New here? Use Sign in with Plex (or Jellyfin) — your account is made for you.")
 
         let older = try APIClient.decoder.decode(API.JellyfinSettings.self, from: Data(#"""
         {"connected":true,"baseUrl":"http://tower:8096","hasApiKey":true,"servers":[{"name":"Tower","lastSyncedAt":null}],"movieCount":1,"tvCount":0,"totalBytes":0}

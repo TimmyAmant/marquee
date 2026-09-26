@@ -10,7 +10,8 @@
   "avatarUrl": null,
   "linked": {
     "plex": false,
-    "jellyfin": true
+    "jellyfin": true,
+    "sso": false
   },
   "hasPassword": false,
   "lastActiveAt": "2026-09-25T18:42:10.000Z",

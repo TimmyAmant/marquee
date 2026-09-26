@@ -64,7 +64,7 @@ function quoted(value: string): string {
  * unauthenticated call. Sent as both `Authorization` (the only one
  * Jellyfin 12 accepts — checked against a 12.1 server) and
  * `X-Emby-Authorization` (older servers). */
-function clientAuthorization(deviceId: string, token?: string): string {
+export function clientAuthorization(deviceId: string, token?: string): string {
   const parts = [
     `Client=${quoted("Marquee")}`,
     `Device=${quoted("Marquee sign-in")}`,
@@ -117,18 +117,22 @@ export async function authenticateJellyfinUser(
   const parsed = parseJellyfinAuthResult(await res.json());
   if (!parsed) throw new Error("Jellyfin sign-in answered without a user");
 
-  if (parsed.accessToken) {
-    const signedIn = clientAuthorization(deviceId, parsed.accessToken);
-    await fetch(`${root}/Sessions/Logout`, {
-      method: "POST",
-      headers: { Authorization: signedIn, "X-Emby-Authorization": signedIn, "X-Emby-Token": parsed.accessToken },
-      redirect: "manual",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    }).catch(() => undefined);
-  }
+  if (parsed.accessToken) await endJellyfinSession(root, deviceId, parsed.accessToken);
 
   if (parsed.user.isDisabled) return { ok: false };
   return { ok: true, user: parsed.user };
+}
+
+/** Logs a session Marquee's check created out again (best effort), so
+ * sign-ins don't pile up as devices in the Jellyfin dashboard. */
+export async function endJellyfinSession(root: string, deviceId: string, accessToken: string): Promise<void> {
+  const signedIn = clientAuthorization(deviceId, accessToken);
+  await fetch(`${root}/Sessions/Logout`, {
+    method: "POST",
+    headers: { Authorization: signedIn, "X-Emby-Authorization": signedIn, "X-Emby-Token": accessToken },
+    redirect: "manual",
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  }).catch(() => undefined);
 }
 
 /** Every user on the admin's Jellyfin server (admin API key). */

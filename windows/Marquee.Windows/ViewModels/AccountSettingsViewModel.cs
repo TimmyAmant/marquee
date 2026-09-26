@@ -34,6 +34,7 @@ public sealed class HouseholdMemberRow
         IsCurrentUser = member.IsCurrentUser;
         PlexTag = member.Linked?.Plex == true ? "Plex" : "";
         JellyfinTag = member.Linked?.Jellyfin == true ? jellyfinName : "";
+        SsoTag = member.Linked?.Sso == true ? "SSO" : "";
         CanEdit = viewerIsAdmin || member.IsCurrentUser;
         CanRemove = viewerIsAdmin && !member.IsAdmin && !member.IsCurrentUser;
         ShowsDivider = showsDivider;
@@ -79,6 +80,9 @@ public sealed class HouseholdMemberRow
 
     /// <summary>"Jellyfin" ("Emby" on an Emby server) on an account linked to a Jellyfin user; empty otherwise.</summary>
     public string JellyfinTag { get; }
+
+    /// <summary>"SSO" on an account linked to the admin's single sign-on (0.44+); empty otherwise.</summary>
+    public string SsoTag { get; }
 
     public BadgeTone LinkTone { get; } = BadgeTone.Owned;
 
@@ -131,6 +135,13 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         nameof(CanUnlinkPlex),
         nameof(CanLinkJellyfin),
         nameof(CanUnlinkJellyfin),
+        nameof(ShowsSsoLink),
+        nameof(SsoLinkName),
+        nameof(SsoLinkStatus),
+        nameof(LinkSsoLabel),
+        nameof(SsoWaitingLine),
+        nameof(CanLinkSso),
+        nameof(CanUnlinkSso),
         nameof(ShowsMediaServerMembers),
         nameof(CanImportFromPlex),
         nameof(CanImportFromJellyfin),
@@ -147,6 +158,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     private readonly AppModel model;
     private CancellationTokenSource? membersCancellation;
     private CancellationTokenSource? plexLinkCancellation;
+    private CancellationTokenSource? ssoLinkCancellation;
     private CancellationTokenSource? plexWatchlistCancellation;
     private CancellationTokenSource? plexWatchlistLoadCancellation;
 
@@ -218,7 +230,19 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanUnlinkPlex))]
     [NotifyPropertyChangedFor(nameof(CanLinkJellyfin))]
     [NotifyPropertyChangedFor(nameof(CanUnlinkJellyfin))]
+    [NotifyPropertyChangedFor(nameof(CanLinkSso))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkSso))]
     private bool isLinkingPlex;
+
+    /// <summary>Linking single sign-on: the browser is open at the identity provider's page and the poll is running.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanLinkPlex))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkPlex))]
+    [NotifyPropertyChangedFor(nameof(CanLinkJellyfin))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkJellyfin))]
+    [NotifyPropertyChangedFor(nameof(CanLinkSso))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkSso))]
+    private bool isLinkingSso;
 
     /// <summary>An unlink (or the Jellyfin link) is in flight.</summary>
     [ObservableProperty]
@@ -226,6 +250,8 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanUnlinkPlex))]
     [NotifyPropertyChangedFor(nameof(CanLinkJellyfin))]
     [NotifyPropertyChangedFor(nameof(CanUnlinkJellyfin))]
+    [NotifyPropertyChangedFor(nameof(CanLinkSso))]
+    [NotifyPropertyChangedFor(nameof(CanUnlinkSso))]
     private bool isChangingLinks;
 
     [ObservableProperty]
@@ -393,10 +419,29 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
 
     public string PlexLinkStatus => LinkStatus(MediaServerKind.Plex, PlexLinked, OffersPlex);
     public string JellyfinLinkStatus => LinkStatus(MediaServerKind.Jellyfin, JellyfinLinked, OffersJellyfin);
-    public bool CanLinkPlex => !PlexLinked && OffersPlex && !IsLinkingPlex && !IsChangingLinks;
-    public bool CanUnlinkPlex => PlexLinked && !IsLinkingPlex && !IsChangingLinks;
-    public bool CanLinkJellyfin => !JellyfinLinked && OffersJellyfin && !IsLinkingPlex && !IsChangingLinks;
-    public bool CanUnlinkJellyfin => JellyfinLinked && !IsLinkingPlex && !IsChangingLinks;
+    private bool IsLinkBusy => IsLinkingPlex || IsLinkingSso || IsChangingLinks;
+    public bool CanLinkPlex => !PlexLinked && OffersPlex && !IsLinkBusy;
+    public bool CanUnlinkPlex => PlexLinked && !IsLinkBusy;
+    public bool CanLinkJellyfin => !JellyfinLinked && OffersJellyfin && !IsLinkBusy;
+    public bool CanUnlinkJellyfin => JellyfinLinked && !IsLinkBusy;
+
+    // Single sign-on (0.44+): shown while the admin has it set up, or while
+    // this account is still linked to it (so it can always be unlinked).
+    private bool SsoLinked => model.Viewer?.Linked?.Sso == true;
+    private bool OffersSso => model.Session.ServerInfo?.OffersSsoSignIn == true;
+    public bool ShowsSsoLink => OffersSso || SsoLinked;
+
+    /// <summary>The identity provider's button name ("Authentik"), or "Single sign-on" once it's turned off.</summary>
+    public string SsoLinkName => model.Session.ServerInfo?.SsoName ?? "Single sign-on";
+
+    public string SsoLinkStatus => SsoLinked
+        ? $"Linked: you can sign in with your {SsoLinkName} account."
+        : OffersSso ? "Not linked." : "Single sign-on isn't set up on this server.";
+
+    public string LinkSsoLabel => $"Link {SsoLinkName}";
+    public string SsoWaitingLine => $"Waiting for {SsoLinkName}… Finish signing in in the browser window that just opened.";
+    public bool CanLinkSso => !SsoLinked && OffersSso && !IsLinkBusy;
+    public bool CanUnlinkSso => SsoLinked && !IsLinkBusy;
     public bool HasLinksError => LinksError != null;
     public bool HasLinksNotice => LinksNotice != null;
 
@@ -486,6 +531,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         plexWatchlistLoadCancellation?.Cancel();
         Blocklist.Cancel();
         CancelLinkPlex();
+        CancelLinkSso();
         CancelTurnOnPlexWatchlist();
     }
 
@@ -861,9 +907,16 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     private Task UnlinkJellyfinAsync() => UnlinkAsync(MediaServerKind.Jellyfin);
 
     /// <summary><c>DELETE /me/links/{server}</c>; the server refuses when it would leave no way to sign in.</summary>
-    private async Task UnlinkAsync(MediaServerKind server)
+    private Task UnlinkAsync(MediaServerKind server) =>
+        UnlinkAsync(ServerName(server), api => api.Links.UnlinkAsync(server));
+
+    /// <summary><c>DELETE /me/links/sso</c> (0.44+); refused like the others when it would leave no way to sign in.</summary>
+    [RelayCommand]
+    private Task UnlinkSsoAsync() => UnlinkAsync(SsoLinkName, api => api.Links.UnlinkSsoAsync());
+
+    private async Task UnlinkAsync(string name, Func<MarqueeApi, Task> unlink)
     {
-        if (IsChangingLinks || IsLinkingPlex)
+        if (IsLinkBusy)
         {
             return;
         }
@@ -871,8 +924,8 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         IsChangingLinks = true;
         try
         {
-            await model.Api.Links.UnlinkAsync(server);
-            LinksNotice = $"Your {ServerName(server)} account is unlinked.";
+            await unlink(model.Api);
+            LinksNotice = $"Your {name} account is unlinked.";
             await model.RefreshViewerAsync();
         }
         catch (ApiException error)
@@ -883,6 +936,71 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         {
             IsChangingLinks = false;
         }
+    }
+
+    /// <summary>
+    /// "Link {name}" (0.44+): <c>POST /me/links/sso/start</c>, Marquee's own
+    /// page in the browser (only if it's https or on this server's address),
+    /// then <c>POST /me/links/sso/poll</c> every 2 seconds until it's linked,
+    /// refused, expired or cancelled, like Link Plex.
+    /// </summary>
+    [RelayCommand]
+    private async Task LinkSsoAsync()
+    {
+        if (!CanLinkSso)
+        {
+            return;
+        }
+        ClearLinksMessages();
+        ssoLinkCancellation?.Cancel();
+        var cancellation = new CancellationTokenSource();
+        ssoLinkCancellation = cancellation;
+        IsLinkingSso = true;
+        var api = model.Api;
+        var name = SsoLinkName;
+        try
+        {
+            var start = await api.Links.SsoStartAsync(cancellation.Token);
+            var server = model.Session.Server?.BaseUrl;
+            if (start.UrlOn(server) is not { } url || !await ExternalLinks.OpenSignInPageAsync(url, server))
+            {
+                LinksError = ConnectViewModel.SsoPageUnopenedMessage(name);
+                return;
+            }
+            await PlexPoll.UntilAsync(
+                start.ExpiresAt,
+                token => api.Links.SsoPollAsync(start.Handle, token),
+                ct: cancellation.Token,
+                expiredMessage: ApiException.SsoSignInExpiredMessage);
+            LinksNotice = $"Your {name} account is linked.";
+            await model.RefreshViewerAsync();
+        }
+        catch (ApiException error)
+        {
+            if (!error.IsCancellation && !cancellation.IsCancellationRequested)
+            {
+                LinksError = error.Message;
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(ssoLinkCancellation, cancellation))
+            {
+                ssoLinkCancellation = null;
+                IsLinkingSso = false;
+            }
+            cancellation.Dispose();
+        }
+    }
+
+    /// <summary>"Cancel" while waiting for the identity provider; also leaving the page.</summary>
+    [RelayCommand]
+    private void CancelLinkSso()
+    {
+        var cancellation = ssoLinkCancellation;
+        ssoLinkCancellation = null;
+        IsLinkingSso = false;
+        cancellation?.Cancel();
     }
 
     /// <summary><c>POST /me/links/jellyfin</c>, for the Link Jellyfin dialog.</summary>

@@ -28,6 +28,7 @@ export type HouseholdMember = {
    * whether — the linked ids themselves stay on the server. */
   plexLinked: boolean;
   jellyfinLinked: boolean;
+  ssoLinked: boolean;
   /** False for an account made by Plex/Jellyfin sign-in or import that
    * hasn't set a password yet. */
   hasPassword: boolean;
@@ -54,6 +55,7 @@ const memberColumns = {
   createdAt: users.createdAt,
   plexLinked: sql<boolean>`${users.plexUserId} is not null`,
   jellyfinLinked: sql<boolean>`${users.jellyfinUserId} is not null`,
+  ssoLinked: sql<boolean>`${users.ssoSubject} is not null`,
   hasPassword: sql<boolean>`${users.passwordHash} is not null`,
   lastActiveAt: users.lastActiveAt,
   movieQuotaLimit: users.movieQuotaLimit,

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { linkJellyfinAction, pollPlexLinkAction, startPlexLinkAction, unlinkAction } from "./media-actions";
+import { linkJellyfinAction, pollPlexLinkAction, startPlexLinkAction, startSsoLinkAction, unlinkAction } from "./media-actions";
 import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
 
 const inputClass =
@@ -16,7 +16,7 @@ function LinkedBadge() {
   );
 }
 
-function UnlinkButton({ provider, onError }: { provider: "plex" | "jellyfin"; onError: (e: string | null) => void }) {
+function UnlinkButton({ provider, onError }: { provider: "plex" | "jellyfin" | "sso"; onError: (e: string | null) => void }) {
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   return (
@@ -157,22 +157,75 @@ function JellyfinRow({ linked, available, name }: { linked: boolean; available: 
   );
 }
 
-/** Settings → Account's "Linked accounts": sign in with Plex or Jellyfin as
- * well as (or instead of) a password. A provider shows only while the
- * admin has it connected, or while this account is still linked to it (so
- * it can always be unlinked). */
+/** "Link <SSO>": off to the identity provider in this tab; the server
+ * brings the browser back to Settings with the outcome. */
+function SsoRow({ linked, name, message }: { linked: boolean; name: string | null; message: SsoMessage | null }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const label = name ?? "Single sign-on";
+
+  async function handleLink() {
+    setError(null);
+    setBusy(true);
+    const started = await startSsoLinkAction();
+    if (started.authUrl) {
+      window.location.href = started.authUrl;
+      return;
+    }
+    setBusy(false);
+    setError(started.error ?? "Couldn't start linking. Try again.");
+  }
+
+  return (
+    <li className="flex flex-col gap-2 px-6 py-4 text-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-text-primary">{label}</span>
+        <div className="flex items-center gap-3">
+          {linked && <LinkedBadge />}
+          {linked ? (
+            <UnlinkButton provider="sso" onError={setError} />
+          ) : (
+            name && (
+              <button type="button" disabled={busy} onClick={handleLink} className={smallButtonClass}>
+                {busy ? "Opening…" : `Link ${name}`}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+      {message && !error && (
+        <p className={`text-xs ${message.ok ? "text-owned" : "text-red-400"}`}>{message.text}</p>
+      )}
+      {error && <p className="text-xs text-red-400">{error}</p>}
+    </li>
+  );
+}
+
+export type SsoMessage = { ok: boolean; text: string };
+
+/** Settings → Account's "Linked accounts": sign in with Plex, Jellyfin or
+ * single sign-on as well as (or instead of) a password. A provider shows
+ * only while the admin has it set up, or while this account is still
+ * linked to it (so it can always be unlinked). */
 export function LinkedAccounts({
   linked,
   available,
   jellyfinName = "Jellyfin",
+  ssoName = null,
+  ssoMessage = null,
 }: {
-  linked: { plex: boolean; jellyfin: boolean };
+  linked: { plex: boolean; jellyfin: boolean; sso: boolean };
   available: { plex: boolean; jellyfin: boolean };
   /** "Emby" when that's the connected server. */
   jellyfinName?: string;
+  /** The SSO button's name, null when SSO isn't set up. */
+  ssoName?: string | null;
+  /** How a link that just came back from the identity provider went. */
+  ssoMessage?: SsoMessage | null;
 }) {
   return (
     <ul className="divide-y divide-border">
+      {(ssoName || linked.sso) && <SsoRow linked={linked.sso} name={ssoName} message={ssoMessage} />}
       {(available.plex || linked.plex) && <PlexRow linked={linked.plex} available={available.plex} />}
       {(available.jellyfin || linked.jellyfin) && (
         <JellyfinRow linked={linked.jellyfin} available={available.jellyfin} name={jellyfinName} />

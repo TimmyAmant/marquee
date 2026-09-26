@@ -3,7 +3,8 @@ import SwiftUI
 // Settings › Account, for servers with Plex/Jellyfin sign-in: your linked
 // accounts, and (admin) importing household members plus the sign-up switch.
 
-/// "Linked accounts": the Plex and Jellyfin accounts that sign in to yours.
+/// "Linked accounts": the single sign-on, Plex and Jellyfin accounts that
+/// sign in to yours.
 struct LinkedAccountsCard: View {
     let viewer: API.User
 
@@ -11,15 +12,38 @@ struct LinkedAccountsCard: View {
     @Environment(\.openURL) private var openURL
     @State private var busy: API.MediaServer?
     @State private var plexTask: Task<Void, Never>?
+    /// Linking or unlinking single sign-on (not a media server).
+    @State private var ssoBusy = false
+    @State private var ssoTask: Task<Void, Never>?
     @State private var linkingJellyfin = false
     @State private var error: String?
     @State private var notice: String?
 
+    private var isBusy: Bool { busy != nil || ssoBusy }
+
     var body: some View {
         let linked = viewer.linked ?? LinkedAccounts()
         let info = model.session.serverInfo
+        let sso = info?.singleSignOn
 
         VStack(alignment: .leading, spacing: 12) {
+            // Shown while it's set up, or while this account is still linked
+            // to it (so it can always be unlinked), like the website.
+            if sso != nil || linked.sso {
+                ssoRow(name: sso?.name, linked: linked.sso)
+            }
+            if ssoTask != nil, let name = sso?.name {
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text("Waiting for \(name)… Finish signing in in the browser window that just opened.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Cancel") { cancelSso() }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
+                }
+            }
             ForEach(API.MediaServer.allCases) { server in
                 row(server, label: info.label(for: server), linked: linked.isLinked(server), offered: offers(server, info))
             }
@@ -53,9 +77,96 @@ struct LinkedAccountsCard: View {
             }
             .environment(model)
         }
-        .onDisappear { cancelPlex() }
+        .onDisappear {
+            cancelPlex()
+            cancelSso()
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
             cancelPlex()
+            cancelSso()
+        }
+    }
+
+    /// Single sign-on's row: `name` is nil once it's been turned off (then
+    /// it can only be unlinked).
+    private func ssoRow(name: String?, linked: Bool) -> some View {
+        let label = name ?? "Single sign-on"
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(Theme.textPrimary)
+                Text(linked
+                     ? "Linked: you can sign in with your \(label) account."
+                     : (name != nil ? "Not linked." : "Single sign-on isn't set up on this server."))
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            Spacer()
+            if linked {
+                Button(ssoBusy && ssoTask == nil ? "Unlinking…" : "Unlink") { unlinkSso(label: label) }
+                    .buttonStyle(QuietButtonStyle(color: Theme.danger))
+                    .font(.system(size: 12))
+                    .disabled(isBusy)
+            } else if let name {
+                Button("Link \(name)") { linkSso(name: name) }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    .disabled(isBusy)
+            }
+        }
+    }
+
+    private func linkSso(name: String) {
+        error = nil
+        notice = nil
+        ssoTask?.cancel()
+        ssoBusy = true
+        let api = model.api
+        let server = model.session.server?.baseURL
+        ssoTask = Task {
+            do {
+                let start = try await api.links.ssoStart()
+                // Only https, or the server's own address — never anything else.
+                guard let url = start.url(server: server) else {
+                    throw APIError.server("Your Marquee server sent a sign-in link this app couldn't open.")
+                }
+                openURL(url)
+                _ = try await PlexPoll.run(expiresAt: start.expiresAt, expired: .ssoExpired) {
+                    try await api.links.ssoPoll(handle: start.handle) ? true : nil
+                }
+                notice = "\(name) is linked. You can sign in with it now."
+                model.refreshViewer()
+            } catch where PlexPoll.isCancellation(error) {
+                return
+            } catch {
+                self.error = error.localizedDescription
+            }
+            ssoBusy = false
+            ssoTask = nil
+        }
+    }
+
+    private func cancelSso() {
+        guard let ssoTask else { return }
+        ssoTask.cancel()
+        self.ssoTask = nil
+        ssoBusy = false
+    }
+
+    private func unlinkSso(label: String) {
+        error = nil
+        notice = nil
+        ssoBusy = true
+        let api = model.api
+        Task {
+            do {
+                try await api.links.unlinkSso()
+                notice = "\(label) is unlinked."
+                model.refreshViewer()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            ssoBusy = false
         }
     }
 
@@ -83,11 +194,11 @@ struct LinkedAccountsCard: View {
                 Button(busy == server ? "Unlinking…" : "Unlink") { unlink(server) }
                     .buttonStyle(QuietButtonStyle(color: Theme.danger))
                     .font(.system(size: 12))
-                    .disabled(busy != nil)
+                    .disabled(isBusy)
             } else if offered {
                 Button("Link \(label)") { link(server) }
                     .buttonStyle(OutlineButtonStyle(compact: true))
-                    .disabled(busy != nil)
+                    .disabled(isBusy)
             }
         }
     }

@@ -391,6 +391,47 @@ final class ServerSession {
         return try adopt(response, from: server)
     }
 
+    /// `POST /auth/sso/start`: the handle to poll with and Marquee's own
+    /// page to open in the browser (open it only through
+    /// `start.url(server:)` with `server?.baseURL`). Offered when
+    /// `serverInfo.signIn.sso` isn't null.
+    func startSsoSignIn() async throws -> API.SsoSignInStart {
+        guard let server else { throw APIError.notMarquee }
+        return try await unauthenticatedAPI(server).auth.ssoStart(deviceName: deviceName)
+    }
+
+    /// Polls `POST /auth/sso/poll` every `interval` (2 s) exactly like
+    /// `finishPlexSignIn`, and stores the token the same way.
+    func finishSsoSignIn(_ start: API.SsoSignInStart, interval: Duration = PlexPoll.interval) async throws -> User {
+        guard let server else { throw APIError.notMarquee }
+        let auth = unauthenticatedAPI(server).auth
+        let deviceName = self.deviceName
+        let response = try await PlexPoll.run(expiresAt: start.expiresAt, interval: interval, expired: .ssoExpired) {
+            try await auth.ssoPoll(handle: start.handle, deviceName: deviceName)
+        }
+        return try adopt(response, from: server)
+    }
+
+    /// `POST /auth/jellyfin/quick-connect/start`: the code to show and the
+    /// handle to poll with. Offered when `serverInfo.offersQuickConnect`.
+    func startQuickConnect() async throws -> API.QuickConnectStart {
+        guard let server else { throw APIError.notMarquee }
+        return try await unauthenticatedAPI(server).auth.quickConnectStart()
+    }
+
+    /// Polls `POST /auth/jellyfin/quick-connect/poll` every `interval` (2 s)
+    /// until the code is approved in a Jellyfin app, exactly like
+    /// `finishPlexSignIn`, and stores the token the same way.
+    func finishQuickConnect(_ start: API.QuickConnectStart, interval: Duration = PlexPoll.interval) async throws -> User {
+        guard let server else { throw APIError.notMarquee }
+        let auth = unauthenticatedAPI(server).auth
+        let deviceName = self.deviceName
+        let response = try await PlexPoll.run(expiresAt: start.expiresAt, interval: interval, expired: .quickConnectExpired) {
+            try await auth.quickConnectPoll(handle: start.handle, deviceName: deviceName)
+        }
+        return try adopt(response, from: server)
+    }
+
     /// `POST /auth/jellyfin`: a Jellyfin username and password, checked by
     /// the server against its Jellyfin; the token is stored as `login` does.
     /// Offered when `serverInfo.signIn.jellyfin`.

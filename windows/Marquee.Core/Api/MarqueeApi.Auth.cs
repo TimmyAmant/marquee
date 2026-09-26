@@ -77,6 +77,53 @@ public sealed class AuthEndpoints(MarqueeApi.Transport transport)
         return ApiClient.Decode<AuthResponse>(raw);
     }
 
+    /// <summary>
+    /// <c>POST /auth/jellyfin/quick-connect/start</c> (public, 0.44+): show
+    /// <c>Code</c>, then <see cref="QuickConnectPollAsync"/> with the handle.
+    /// Offered only when <c>server-info.signIn.quickConnect</c>. Conflict
+    /// when Quick Connect is off on the Jellyfin server (or it's Emby).
+    /// </summary>
+    public Task<QuickConnectStart> QuickConnectStartAsync(CancellationToken ct = default) =>
+        transport.PostAsync<QuickConnectStart>("/auth/jellyfin/quick-connect/start", timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
+    /// <summary>
+    /// <c>POST /auth/jellyfin/quick-connect/poll</c>: one poll, like
+    /// <see cref="PlexPollAsync"/>. Null while the code isn't approved yet
+    /// (202), the login response once it is (200). Throws Forbidden with the
+    /// server's reason (403) and Expired (410).
+    /// </summary>
+    public async Task<AuthResponse?> QuickConnectPollAsync(string handle, string deviceName, CancellationToken ct = default)
+    {
+        var raw = await transport.ExchangeAsync(
+            HttpMethod.Post, "/auth/jellyfin/quick-connect/poll", new HandlePollRequest(handle, deviceName),
+            PlexPoll.Answers, MarqueeApi.Timeouts.Integrations, ct).ConfigureAwait(false);
+        return PlexPoll.Step(raw, ApiException.QuickConnectExpiredMessage) is { } done ? ApiClient.Decode<AuthResponse>(done) : null;
+    }
+
+    /// <summary>
+    /// <c>POST /auth/sso/start</c> (public, rate-limited, 0.44+): open
+    /// <c>AuthUrl</c> in the browser (only if <see cref="SsoSignInStart.UrlOn"/>
+    /// allows it), then <see cref="SsoPollAsync"/> with the handle. Offered
+    /// only when <c>server-info.signIn.sso</c>; <paramref name="deviceName"/>
+    /// shows on the page the browser opens.
+    /// </summary>
+    public Task<SsoSignInStart> SsoStartAsync(string deviceName, CancellationToken ct = default) =>
+        transport.PostAsync<SsoSignInStart>("/auth/sso/start", new SsoStartRequest(deviceName), MarqueeApi.Timeouts.Integrations, ct);
+
+    /// <summary>
+    /// <c>POST /auth/sso/poll</c>: one poll, like <see cref="PlexPollAsync"/>.
+    /// Null until the sign-in is finished in the browser (202), the login
+    /// response once it is (200). Throws Forbidden with the server's reason
+    /// (403: not in the required group, no account, cancelled) and Expired (410).
+    /// </summary>
+    public async Task<AuthResponse?> SsoPollAsync(string handle, string deviceName, CancellationToken ct = default)
+    {
+        var raw = await transport.ExchangeAsync(
+            HttpMethod.Post, "/auth/sso/poll", new HandlePollRequest(handle, deviceName),
+            PlexPoll.Answers, MarqueeApi.Timeouts.Integrations, ct).ConfigureAwait(false);
+        return PlexPoll.Step(raw, ApiException.SsoSignInExpiredMessage) is { } done ? ApiClient.Decode<AuthResponse>(done) : null;
+    }
+
     /// <summary><c>POST /auth/logout</c>: revokes this token only. Nothing on screen changes, so nothing is recorded.</summary>
     public Task LogoutAsync(CancellationToken ct = default) =>
         transport.MutateAsync<OK>(HttpMethod.Post, "/auth/logout", ct: ct);

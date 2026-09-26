@@ -120,32 +120,72 @@
                     Command="{x:Bind ViewModel.SignInCommand}"
                     Style="{StaticResource AccentButtonStyle}"
                     HorizontalAlignment="Stretch" />
-                <!--
-                  Sign in with Plex / Jellyfin, when server-info.signIn offers
-                  them (an older server sends no signIn, so none of this shows).
-                -->
-                <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersMediaSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock
-                        Text="or"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        HorizontalAlignment="Center" />
-                    <Button
-                        Content="Sign in with Plex"
-                        Command="{x:Bind ViewModel.SignInWithPlexCommand}"
-                        Visibility="{x:Bind ViewModel.ShowsPlexButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Stretch" />
-                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.IsWaitingForPlex, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <!-- Jellyfin's Quick Connect (0.44+, never Emby): on the Jellyfin form, when server-info.signIn.quickConnect. -->
+                <Button
+                    Content="Use Quick Connect"
+                    Command="{x:Bind ViewModel.UseQuickConnectCommand}"
+                    Visibility="{x:Bind ViewModel.ShowsQuickConnectButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    HorizontalAlignment="Stretch" />
+                <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.IsQuickConnecting, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            Text="In a Jellyfin app you're signed in to, open your profile → Quick Connect and enter this code"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.QuickConnectCode, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasQuickConnectCode, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            FontFamily="Consolas"
+                            FontSize="36"
+                            CharacterSpacing="300"
+                            IsTextSelectionEnabled="True"
+                            HorizontalAlignment="Center" />
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <ProgressRing IsActive="{x:Bind ViewModel.IsWaitingForPlex, Mode=OneWay}" Width="16" Height="16" />
-                                <TextBlock Text="Waiting for Plex…" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
+                                <ProgressRing IsActive="{x:Bind ViewModel.IsQuickConnecting, Mode=OneWay}" Width="16" Height="16" />
+                                <TextBlock Text="{x:Bind ViewModel.QuickConnectStatus, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
                             </StackPanel>
-                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.CancelPlexCommand}" />
+                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.CancelSignInElsewhereCommand}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                <!--
+                  Sign in with single sign-on / Plex / Jellyfin, when
+                  server-info.signIn offers them (an older server sends no
+                  signIn, so none of this shows).
+                -->
+                <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersOtherSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="or"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        HorizontalAlignment="Center" />
+                    <Button
+                        Content="{x:Bind ViewModel.SsoSignInLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.SignInWithSsoCommand}"
+                        Visibility="{x:Bind ViewModel.ShowsSsoButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch" />
+                    <Button
+                        Content="Sign in with Plex"
+                        Command="{x:Bind ViewModel.SignInWithPlexCommand}"
+                        Visibility="{x:Bind ViewModel.ShowsPlexButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch" />
+                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.IsWaitingForBrowser, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <ProgressRing IsActive="{x:Bind ViewModel.IsWaitingForBrowser, Mode=OneWay}" Width="16" Height="16" />
+                                <TextBlock Text="{x:Bind ViewModel.WaitingLabel, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.CancelSignInElsewhereCommand}" />
                         </Grid>
                         <TextBlock
                             Text="Finish signing in in the browser window that just opened."
@@ -158,7 +198,7 @@
                         Command="{x:Bind ViewModel.ToggleJellyfinCommand}"
                         Visibility="{x:Bind ViewModel.OffersJellyfinSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
-                    <!-- New accounts from Plex/Jellyfin sign-in: how a newcomer gets in. -->
+                    <!-- New accounts from Plex/Jellyfin/single sign-on sign-in: how a newcomer gets in. -->
                     <TextBlock
                         Text="{x:Bind ViewModel.SignupHint, Mode=OneWay}"
                         Visibility="{x:Bind ViewModel.ShowsSignupHint, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

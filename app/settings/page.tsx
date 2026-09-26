@@ -18,8 +18,13 @@ import { getWatchlistState } from "@/lib/plex/watchlist";
 import { getMediaServerSignup, getSignInMethods } from "@/lib/auth/media-signin";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
+import { parseSsoErrorCode, ssoErrorMessage } from "@/lib/auth/sso/messages";
 
-export default async function AccountSettingsPage() {
+export default async function AccountSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sso?: string | string[] }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -34,6 +39,16 @@ export default async function AccountSettingsPage() {
   const blocklist = blocklistRows.map(blocklistEntryDto);
   const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
   const available = { plex: methods.plex, jellyfin: methods.jellyfin };
+  // Back from linking single sign-on: "linked", or a fixed error code.
+  const ssoParam = (await searchParams).sso;
+  const ssoName = methods.sso?.name ?? null;
+  const ssoError = parseSsoErrorCode(ssoParam);
+  const ssoMessage =
+    ssoParam === "linked"
+      ? { ok: true, text: `${ssoName ?? "Single sign-on"} is linked. You can sign in with it now.` }
+      : ssoError
+        ? { ok: false, text: ssoErrorMessage(ssoError, ssoName ?? "single sign-on") }
+        : null;
   // Your own row is always in the list (members see only theirs).
   const me = members.find((member) => member.id === session.user.id);
 
@@ -72,17 +87,19 @@ export default async function AccountSettingsPage() {
         </form>
       </div>
 
-      {me && (available.plex || available.jellyfin || me.plexLinked || me.jellyfinLinked) && (
+      {me && (available.plex || available.jellyfin || ssoName || me.plexLinked || me.jellyfinLinked || me.ssoLinked) && (
         <>
           <h2 className="mt-10 font-display text-xl text-text-primary">Linked accounts</h2>
           <p className="mt-2 text-sm text-text-secondary">
-            Sign in with the account you use for the household&apos;s media server.
+            Sign in with the account you use for the household&apos;s media server or single sign-on.
           </p>
           <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
             <LinkedAccounts
-              linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked }}
+              linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked, sso: me.ssoLinked }}
               available={available}
               jellyfinName={methods.jellyfinName}
+              ssoName={ssoName}
+              ssoMessage={ssoMessage}
             />
           </div>
           {watchlist.available && (

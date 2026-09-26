@@ -60,10 +60,50 @@ export type SignInMethods = {
    * Plex or Jellyfin sign-in is offered — say on the sign-in screen that
    * newcomers get an account by signing in with it. Treat missing as false. */
   signup: boolean;
+  /** 0.44+: offer "Use Quick Connect" on the Jellyfin sign-in (true only
+   * for Jellyfin, never Emby). Whether the Jellyfin server has it switched
+   * on shows when it's started (`409`). Treat missing as false. */
+  quickConnect: boolean;
+  /** 0.44+: single sign-on is set up — show "Sign in with {name}". `signup`:
+   * new accounts from SSO sign-in are on. Null (or missing) when it isn't. */
+  sso: { name: string; signup: boolean } | null;
 };
 
-/** Which media-server accounts an account signs in with. */
-export type LinkedAccounts = { plex: boolean; jellyfin: boolean };
+/** Which sign-ins an account has linked. `sso` is 0.44+ (missing = false). */
+export type LinkedAccounts = { plex: boolean; jellyfin: boolean; sso: boolean };
+
+/** POST /auth/sso/start and POST /me/links/sso/start: open `authUrl` in the
+ * browser, then poll with `handle`. */
+export type SsoStart = { handle: string; authUrl: string; expiresAt: string };
+
+/** POST /auth/jellyfin/quick-connect/start: show `code`, poll with `handle`. */
+export type QuickConnectStart = { handle: string; code: string; expiresAt: string };
+
+/** GET/PUT /settings/sso (admin). The client secret is never returned. */
+export type SsoSettings = {
+  configured: boolean;
+  name: string;
+  issuer: string;
+  clientId: string;
+  hasClientSecret: boolean;
+  scopes: string;
+  publicUrl: string;
+  callbackUrl: string;
+  allowSignup: boolean;
+  matchEmail: boolean;
+  requiredGroup: string | null;
+  trustedGroup: string | null;
+  groupsClaim: string;
+};
+
+/** POST /settings/sso/test (admin). */
+export type SsoTestResult = {
+  issuer: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  userinfoEndpoint: string | null;
+  warnings: string[];
+};
 
 /** POST /auth/plex/start and POST /me/links/plex/start. */
 export type PlexSignInStart = { handle: string; authUrl: string; expiresAt: string };

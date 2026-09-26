@@ -1,9 +1,9 @@
 import Foundation
 
-// Plex / Jellyfin accounts: linking your own (Settings › Account › Linked
-// accounts), requesting from your Plex Watchlist, importing household
-// members, and the admin's sign-up switch.
-// Sign-in itself is `AuthEndpoints.plexStart/plexPoll/jellyfin`.
+// Plex / Jellyfin / single sign-on accounts: linking your own (Settings ›
+// Account › Linked accounts), requesting from your Plex Watchlist, importing
+// household members, the admin's sign-up switch and single sign-on settings.
+// Sign-in itself is `AuthEndpoints.plexStart/plexPoll/jellyfin/sso…/quickConnect…`.
 
 extension MarqueeAPI {
     struct LinksEndpoints: Sendable {
@@ -49,6 +49,71 @@ extension MarqueeAPI {
             let _: EmptyResponse = try await transport.mutate(
                 .delete, "/me/links/\(MarqueeAPI.segment(server.rawValue))", changes: .users
             )
+        }
+
+        /// `POST /me/links/sso/start` (0.44+): open `authUrl` (through
+        /// `url(server:)`), then `ssoPoll`. `.conflict` when single sign-on
+        /// isn't set up.
+        func ssoStart() async throws -> API.SsoSignInStart {
+            try await transport.post("/me/links/sso/start", timeout: Timeout.integrations)
+        }
+
+        /// `POST /me/links/sso/poll` — one poll: false while pending (202),
+        /// true once linked (200). Throws `MediaSignInError.refused` (403, the
+        /// required group) and `.ssoExpired` (410); `.conflict` when that
+        /// identity is linked to another account.
+        func ssoPoll(handle: String) async throws -> Bool {
+            let (status, body) = try await transport.exchange(
+                .post, "/me/links/sso/poll",
+                body: API.PlexLinkPollRequest(handle: handle),
+                accepting: PlexPoll.answers,
+                timeout: Timeout.integrations
+            )
+            guard try PlexPoll.step(status: status, body: body, expired: .ssoExpired) != nil else { return false }
+            await transport.record(.users)
+            return true
+        }
+
+        /// `DELETE /me/links/sso` (0.44+). Refused (`.conflict`) when it
+        /// would leave the account with no way to sign in.
+        func unlinkSso() async throws {
+            let _: EmptyResponse = try await transport.mutate(.delete, "/me/links/sso", changes: .users)
+        }
+    }
+}
+
+extension MarqueeAPI {
+    /// `/settings/sso` (admin, 0.44+): single sign-on with the admin's own
+    /// OpenID Connect provider (Settings › Integrations › Sign-in).
+    struct SsoSettingsEndpoints: Sendable {
+        let transport: Transport
+
+        /// `GET /settings/sso`. nil from an older server without it (404),
+        /// so the card stays hidden.
+        func settings() async throws -> API.SsoSettings? {
+            do {
+                return try await transport.get("/settings/sso")
+            } catch APIError.notFound {
+                return nil
+            }
+        }
+
+        /// `PUT /settings/sso` — "Test & save": checks the provider's
+        /// discovery document, then saves. `.invalid` for a bad field,
+        /// `.upstream` with the reason discovery failed.
+        func save(_ request: API.SsoSettingsRequest) async throws -> API.SsoSettings {
+            try await transport.mutate(.put, "/settings/sso", body: request, timeout: Timeout.integrations, changes: [])
+        }
+
+        /// `DELETE /settings/sso` — turns single sign-on off; answers the defaults.
+        func remove() async throws -> API.SsoSettings {
+            try await transport.mutate(.delete, "/settings/sso", changes: [])
+        }
+
+        /// `POST /settings/sso/test` — checks an issuer (or its
+        /// `…/.well-known/openid-configuration` URL) without saving.
+        func test(issuer: String) async throws -> API.SsoTestResult {
+            try await transport.post("/settings/sso/test", body: API.SsoTestRequest(issuer: issuer), timeout: Timeout.integrations)
         }
     }
 }

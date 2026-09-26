@@ -78,9 +78,19 @@ export const users = pgTable(
     // matching username or email.
     plexUserId: text("plex_user_id").unique("users_plex_user_id_unique"),
     jellyfinUserId: text("jellyfin_user_id").unique("users_jellyfin_user_id_unique"),
+    // The single sign-on (OpenID Connect) identity this account signs in
+    // with: the identity provider's issuer and its `sub` for the person —
+    // together they're the one stable id OIDC guarantees (lib/auth/sso).
+    // Set by linking in Settings, a first SSO sign-in, or (when the admin
+    // allows it) a verified-email match; both null otherwise.
+    ssoIssuer: text("sso_issuer"),
+    ssoSubject: text("sso_subject"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [check("users_role_check", sql`${table.role} in ('admin','member','trusted')`)],
+  (table) => [
+    check("users_role_check", sql`${table.role} in ('admin','member','trusted')`),
+    uniqueIndex("users_sso_identity_idx").on(table.ssoIssuer, table.ssoSubject),
+  ],
 );
 
 // Profile photos, kept in the database itself (so they live in the same
@@ -704,6 +714,43 @@ export const appSettings = pgTable("app_settings", {
   mediaServerSignup: boolean("media_server_signup").default(false).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// "Sign in with <name>": the admin's OpenID Connect identity provider
+// (Authentik, Authelia, Pocket ID, Keycloak, Google…), set up in Settings →
+// Integrations — lib/auth/sso. Exactly zero or one row; no row means SSO is
+// off. The client secret is encrypted at rest like every other credential
+// and never leaves the server.
+export const ssoSettings = pgTable(
+  "sso_settings",
+  {
+    id: integer("id").primaryKey().default(1),
+    /** Shown on the button: "Sign in with <name>". */
+    name: text("name").notNull(),
+    /** The provider's issuer exactly as its discovery document states it. */
+    issuer: text("issuer").notNull(),
+    clientId: text("client_id").notNull(),
+    /** Null for a public client (PKCE only). */
+    clientSecretEnc: bytea("client_secret_enc"),
+    clientSecretIv: bytea("client_secret_iv"),
+    clientSecretTag: bytea("client_secret_tag"),
+    scopes: text("scopes").notNull().default("openid profile email"),
+    /** Marquee's own address as the identity provider sees it: the
+     * redirect URI is this plus /api/auth/sso/callback, exactly. */
+    publicUrl: text("public_url").notNull(),
+    /** New member accounts from SSO sign-in (off: only linked accounts). */
+    allowSignup: boolean("allow_signup").default(false).notNull(),
+    /** Link an unlinked account whose username is the person's verified
+     * email address on first SSO sign-in (never the admin's). */
+    matchEmail: boolean("match_email").default(false).notNull(),
+    /** Only people with this group (in `groupsClaim`) may sign in. */
+    requiredGroup: text("required_group"),
+    /** Members with this group become "trusted" — never admin. */
+    trustedGroup: text("trusted_group"),
+    groupsClaim: text("groups_claim").notNull().default("groups"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check("sso_settings_singleton", sql`${table.id} = 1`)],
+);
 
 // The server's own VAPID key pair for Web Push (lib/push/web-push.ts):
 // generated on first use and never shared with anyone. Browsers receive the

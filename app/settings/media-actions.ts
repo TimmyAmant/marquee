@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import {
@@ -18,6 +18,10 @@ import {
 } from "@/lib/auth/media-signin";
 import type { MediaProvider } from "@/lib/auth/media-accounts";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { getSsoConfig } from "@/lib/auth/sso/config";
+import { dropBrowserFlow, SSO_COOKIE } from "@/lib/auth/sso/flows";
+import { startWebSsoLink, unlinkSso } from "@/lib/auth/sso/signin";
+import { isPublicHost, ssoCookieOptions } from "@/lib/auth/sso/web";
 import {
   disableWatchlist,
   getWatchlistState,
@@ -77,9 +81,39 @@ export async function linkJellyfinAction(_prev: ActionResult | undefined, formDa
   return { success: true };
 }
 
+/**
+ * "Link <SSO>" for the signed-in account: starts a flow bound to this
+ * browser (cookie) and this account, and hands back the identity provider's
+ * URL to go to. The callback only links when the browser is still signed in
+ * as this same account. Has to happen on the address the provider sends
+ * people back to, since that's where the cookie must be.
+ */
+export async function startSsoLinkAction(): Promise<{ authUrl?: string; error?: string }> {
+  const session = await auth();
+  if (!session?.user) return { error: "Sign in required." };
+  const config = await getSsoConfig();
+  if (!config) return { error: "Single sign-on isn't set up on this server." };
+  const headerList = await headers();
+  if (!isPublicHost(config.publicUrl, headerList)) {
+    return { error: `Open Marquee at ${config.publicUrl} to link ${config.name} — that's the address ${config.name} sends you back to.` };
+  }
+  const cookieStore = await cookies();
+  dropBrowserFlow(cookieStore.get(SSO_COOKIE)?.value);
+  const started = await startWebSsoLink(session.user.id, getClientIp(headerList));
+  if (!started.ok) return { error: started.error };
+  cookieStore.set(SSO_COOKIE, started.binding!, ssoCookieOptions(config.publicUrl));
+  return { authUrl: started.flow.authUrl };
+}
+
 export async function unlinkAction(provider: string): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in required." };
+  if (provider === "sso") {
+    const result = await unlinkSso(session.user.id);
+    if (!result.ok) return { error: result.error };
+    revalidatePath("/settings");
+    return { success: true };
+  }
   const parsed = parseProvider(provider);
   if (!parsed) return { error: "Invalid request." };
   const result = await unlinkAccount(session.user.id, parsed);

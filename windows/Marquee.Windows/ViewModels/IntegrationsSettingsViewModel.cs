@@ -10,12 +10,13 @@ namespace Marquee.Windows.ViewModels;
 /// <summary>
 /// Settings › Integrations (app/settings/integrations/page.tsx, the Mac's
 /// IntegrationsSettingsView), the admin's: Media Libraries (Plex, Jellyfin
-/// or Emby), Download Clients (Sonarr, Radarr and the optional 4K ones),
-/// Metadata Sources (TMDb, Trakt with list import, TheTVDB) and
-/// Notifications (the Sonarr/Radarr webhooks, Discord, ntfy, Telegram,
-/// Pushover, email, a custom webhook), plus "Sync now". One
-/// <c>GET /settings/integrations</c> describes every card; each card writes
-/// through its own endpoint and the overview reloads after any change.
+/// or Emby), Sign-in (single sign-on, 0.44+), Download Clients (Sonarr,
+/// Radarr and the optional 4K ones), Metadata Sources (TMDb, Trakt with list
+/// import, TheTVDB) and Notifications (the Sonarr/Radarr webhooks, Discord,
+/// ntfy, Telegram, Pushover, email, a custom webhook), plus "Sync now". One
+/// <c>GET /settings/integrations</c> describes every card but single sign-on,
+/// which has its own <c>GET /settings/sso</c>; each card writes through its
+/// own endpoint and the overview reloads after any change.
 /// </summary>
 public sealed partial class IntegrationsSettingsViewModel : ObservableObject
 {
@@ -30,7 +31,8 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         this.model = model;
         Plex = new PlexIntegrationViewModel(model);
         Jellyfin = new JellyfinIntegrationViewModel(model);
-        var sonarr = new ArrIntegrationViewModel(model, ArrProvider.Sonarr);
+        Sso = new SsoSettingsViewModel(model);
+        var sonarr =new ArrIntegrationViewModel(model, ArrProvider.Sonarr);
         var radarr = new ArrIntegrationViewModel(model, ArrProvider.Radarr);
         sonarr4k = new ArrIntegrationViewModel(
             model,
@@ -115,6 +117,9 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
 
     public PlexIntegrationViewModel Plex { get; }
     public JellyfinIntegrationViewModel Jellyfin { get; }
+
+    /// <summary>"Single sign-on" under Sign-in (0.44+; hidden on an older server).</summary>
+    public SsoSettingsViewModel Sso { get; }
 
     /// <summary>Sonarr and Radarr, then the 4K ones when the server has them (0.37+).</summary>
     [ObservableProperty]
@@ -206,6 +211,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         model.Events.Changed += OnServerChanged;
         Plex.RefreshTimes();
         _ = LoadAsync();
+        _ = Sso.LoadAsync();
     }
 
     public void Deactivate()
@@ -218,6 +224,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         model.PropertyChanged -= OnModelPropertyChanged;
         model.Events.Changed -= OnServerChanged;
         loadCancellation?.Cancel();
+        Sso.Cancel();
         Plex.Cancel();
     }
 
@@ -340,6 +347,7 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         if (e.PropertyName == nameof(AppModel.ReloadToken))
         {
             _ = LoadAsync();
+            _ = Sso.LoadAsync();
         }
     }
 

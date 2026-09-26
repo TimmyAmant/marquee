@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 type Row = Record<string, unknown>;
 type Cond = { op: "eq"; col: string; val: unknown } | { op: "and"; conds: Cond[] } | { op: "isNull"; col: string };
 
-const tables: Record<string, Row[]> = { users: [], plexServers: [], appSettings: [] };
+const tables: Record<string, Row[]> = { users: [], plexServers: [], appSettings: [], ssoSettings: [] };
 let nextId = 1;
 
 vi.mock("drizzle-orm", () => ({
@@ -27,9 +27,10 @@ vi.mock("@/lib/db/schema", () => {
   const table = (name: string, cols: string[]) =>
     Object.assign(Object.fromEntries(cols.map((c) => [c, `${name}.${c}`])), { __name: name });
   return {
-    users: table("users", ["id", "username", "displayName", "passwordHash", "role", "plexUserId", "jellyfinUserId"]),
+    users: table("users", ["id", "username", "displayName", "passwordHash", "role", "plexUserId", "jellyfinUserId", "ssoSubject"]),
     plexServers: table("plexServers", ["userId", "machineIdentifier"]),
     appSettings: table("appSettings", ["id", "mediaServerSignup"]),
+    ssoSettings: table("ssoSettings", ["name", "allowSignup"]),
   };
 });
 
@@ -104,11 +105,43 @@ const watchlist = vi.hoisted(() => ({
   syncPlexWatchlist: vi.fn(async (_userId: string) => ({ requested: 0 })),
 }));
 vi.mock("@/lib/plex/watchlist", () => watchlist);
+const jellyfinConn = vi.hoisted(() => ({
+  credential: null as null | { baseUrl: string; apiKey: string },
+  name: "Jellyfin",
+}));
 vi.mock("@/lib/integrations/credentials", () => ({
   getPlexCredential: async (userId: string) =>
     userId === "admin" ? { authToken: "admin-token", clientId: "instance-client-id" } : null,
-  getJellyfinCredential: async () => null,
+  getJellyfinCredential: async () => jellyfinConn.credential,
 }));
+vi.mock("@/lib/jellyfin/product", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/jellyfin/product")>()),
+  getMediaServerName: async () => jellyfinConn.name,
+}));
+
+// What the Jellyfin server says about Quick Connect.
+const quickConnect = vi.hoisted(() => ({
+  enabled: true,
+  approved: false as boolean | null,
+  user: { id: "0123456789abcdef0123456789abcdef", name: "anna", isAdministrator: false, isDisabled: false, primaryImageTag: null } as
+    | null
+    | { id: string; name: string; isAdministrator: boolean; isDisabled: boolean; primaryImageTag: null },
+  secrets: [] as string[],
+}));
+vi.mock("@/lib/jellyfin/quick-connect", () => {
+  class QuickConnectUnavailable extends Error {}
+  return {
+    QuickConnectUnavailable,
+    initiateQuickConnect: async () => {
+      if (!quickConnect.enabled) throw new QuickConnectUnavailable();
+      const secret = `secret-${quickConnect.secrets.length}`;
+      quickConnect.secrets.push(secret);
+      return { secret, code: "482915" };
+    },
+    checkQuickConnect: async () => quickConnect.approved,
+    authenticateWithQuickConnect: async () => quickConnect.user,
+  };
+});
 
 // What plex.tv says about the PIN and about whoever approved it.
 const plexTv = {
@@ -138,6 +171,8 @@ vi.mock("@/lib/plex/accounts", async (importOriginal) => {
 
 import {
   getSignInMethods,
+  pollQuickConnect,
+  startQuickConnect,
   pollPlexLink,
   pollPlexSignIn,
   pollPlexWatchlist,
@@ -177,6 +212,11 @@ beforeEach(() => {
   plexTv.account = { id: 1111, username: "friendly", title: "Friend" };
   plexTv.resources = [{ clientIdentifier: "admin-server", provides: "server", owned: false }];
   checkPin.mockClear();
+  jellyfinConn.credential = null;
+  jellyfinConn.name = "Jellyfin";
+  quickConnect.enabled = true;
+  quickConnect.approved = false;
+  quickConnect.user = { id: "0123456789abcdef0123456789abcdef", name: "anna", isAdministrator: false, isDisabled: false, primaryImageTag: null };
 });
 
 describe("Plex sign-in", () => {
@@ -325,7 +365,13 @@ describe("getSignInMethods", () => {
       jellyfin: false,
       jellyfinName: "Jellyfin",
       signup: false,
+      quickConnect: false,
+      sso: null,
     });
+
+    tables.ssoSettings = [{ name: "Authentik", allowSignup: true }];
+    expect(await getSignInMethods()).toMatchObject({ sso: { name: "Authentik", signup: true } });
+    tables.ssoSettings = [];
 
     tables.appSettings = [{ id: "s", mediaServerSignup: true }];
     expect(await getSignInMethods()).toMatchObject({ plex: true, signup: true });
@@ -415,5 +461,77 @@ describe("Plex Watchlist", () => {
     tables.users.push({ id: "m1", username: "member", passwordHash: "hash", role: "member", plexUserId: "1111", jellyfinUserId: null });
     expect(await unlinkAccount("m1", "plex")).toEqual({ ok: true });
     expect(watchlist.disableWatchlist).toHaveBeenCalledWith("m1");
+  });
+});
+
+describe("Jellyfin Quick Connect", () => {
+  beforeEach(() => {
+    jellyfinConn.credential = { baseUrl: "http://jellyfin.lan:8096", apiKey: "k" };
+  });
+
+  async function approvedPoll(ip: string) {
+    const started = await startQuickConnect(ip);
+    if (!started.ok) throw new Error(started.error);
+    expect(started.code).toBe("482915");
+    // The Jellyfin secret itself never goes to the client.
+    expect(JSON.stringify(started)).not.toContain("secret-");
+    vi.setSystemTime(Date.now() + 2500);
+    expect(await pollQuickConnect(started.handle, ip)).toEqual({ status: "pending" });
+    quickConnect.approved = true;
+    vi.setSystemTime(Date.now() + 2500);
+    return { handle: started.handle, result: await pollQuickConnect(started.handle, ip) };
+  }
+
+  it("is offered for Jellyfin only", async () => {
+    expect(await getSignInMethods()).toMatchObject({ jellyfin: true, quickConnect: true });
+    jellyfinConn.name = "Emby";
+    expect(await getSignInMethods()).toMatchObject({ jellyfin: true, quickConnect: false });
+    expect(await startQuickConnect(freshIp())).toMatchObject({ ok: false, code: "conflict" });
+  });
+
+  it("says so when Jellyfin has it switched off", async () => {
+    quickConnect.enabled = false;
+    expect(await startQuickConnect(freshIp())).toMatchObject({ ok: false, code: "conflict", error: expect.stringContaining("turned off") });
+  });
+
+  it("signs in the linked account once approved, exactly once", async () => {
+    tables.users.push({
+      id: "m1",
+      username: "anna",
+      passwordHash: null,
+      role: "member",
+      plexUserId: null,
+      jellyfinUserId: "0123456789abcdef0123456789abcdef",
+    });
+    const ip = freshIp();
+    const { handle, result } = await approvedPoll(ip);
+    expect(result).toMatchObject({ status: "done", ok: true, user: { id: "m1" } });
+    vi.setSystemTime(Date.now() + 2500);
+    expect(await pollQuickConnect(handle, ip)).toEqual({ status: "expired" });
+  });
+
+  it("follows the sign-up setting like the password sign-in", async () => {
+    let { result } = await approvedPoll(freshIp());
+    expect(result).toMatchObject({ status: "done", ok: false, code: "forbidden" });
+    tables.appSettings = [{ id: "s", mediaServerSignup: true }];
+    quickConnect.approved = false;
+    ({ result } = await approvedPoll(freshIp()));
+    expect(result).toMatchObject({ status: "done", ok: true, user: { username: "anna", jellyfinUserId: "0123456789abcdef0123456789abcdef" } });
+  });
+
+  it("refuses when Jellyfin won't trade the approval (a disabled user)", async () => {
+    quickConnect.user = null;
+    const { result } = await approvedPoll(freshIp());
+    expect(result).toMatchObject({ status: "done", ok: false, code: "forbidden" });
+  });
+
+  it("answers expired for unknown handles and codes Jellyfin forgot", async () => {
+    expect(await pollQuickConnect("nope", freshIp())).toEqual({ status: "expired" });
+    const ip = freshIp();
+    const started = await startQuickConnect(ip);
+    if (!started.ok) throw new Error(started.error);
+    quickConnect.approved = null;
+    vi.setSystemTime(Date.now() + 2500);
+    expect(await pollQuickConnect(started.handle, ip)).toEqual({ status: "expired" });
   });
 });

@@ -100,14 +100,28 @@ export function importedDisplayName(title: string | null | undefined, username: 
 
 /**
  * Whether unlinking `provider` would leave the account with no way in: no
- * password and no other linked media-server account. Refused, since
- * nobody could sign in to it afterwards (the admin would have to reset a
- * password for it).
+ * password and no other linked sign-in (Plex, Jellyfin or single sign-on).
+ * Refused, since nobody could sign in to it afterwards (the admin would
+ * have to reset a password for it).
  */
 export function unlinkWouldLockOut(
-  provider: MediaProvider,
-  account: { hasPassword: boolean; plexLinked: boolean; jellyfinLinked: boolean },
+  provider: MediaProvider | "sso",
+  account: { hasPassword: boolean; plexLinked: boolean; jellyfinLinked: boolean; ssoLinked?: boolean },
 ): boolean {
   if (account.hasPassword) return false;
-  return provider === "plex" ? !account.jellyfinLinked : !account.plexLinked;
+  const remaining = {
+    plex: account.plexLinked,
+    jellyfin: account.jellyfinLinked,
+    sso: account.ssoLinked ?? false,
+  };
+  remaining[provider] = false;
+  return !remaining.plex && !remaining.jellyfin && !remaining.sso;
+}
+
+/** A Postgres unique-constraint violation (23505), as thrown by the driver
+ * directly or wrapped by drizzle. */
+export function isUniqueViolation(err: unknown): boolean {
+  const codeOf = (e: unknown) => (e && typeof e === "object" && "code" in e ? (e as { code: unknown }).code : null);
+  const cause = err && typeof err === "object" && "cause" in err ? (err as { cause: unknown }).cause : null;
+  return codeOf(err) === "23505" || codeOf(cause) === "23505";
 }

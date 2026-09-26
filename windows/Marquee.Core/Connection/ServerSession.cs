@@ -350,6 +350,79 @@ public sealed class ServerSession
         return Adopt(response, server);
     }
 
+    // MARK: Quick Connect / single sign-on (0.44+)
+
+    /// <summary>
+    /// <c>POST /auth/jellyfin/quick-connect/start</c>: the code to show and
+    /// the handle to poll with. Offered when <c>ServerInfo.OffersQuickConnect</c>.
+    /// </summary>
+    public Task<QuickConnectStart> StartQuickConnectAsync(CancellationToken ct = default)
+    {
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        return UnauthenticatedApi(server).Auth.QuickConnectStartAsync(ct);
+    }
+
+    /// <summary>
+    /// Polls <c>POST /auth/jellyfin/quick-connect/poll</c> every
+    /// <paramref name="interval"/> (2 s) until the code is approved in a
+    /// Jellyfin app, then stores the token exactly as <see cref="LoginAsync"/>
+    /// does. Ends early like <see cref="FinishPlexSignInAsync"/>.
+    /// </summary>
+    public async Task<User> FinishQuickConnectAsync(QuickConnectStart start, TimeSpan? interval = null, CancellationToken ct = default)
+    {
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        var auth = UnauthenticatedApi(server).Auth;
+        var response = await PlexPoll.RunAsync(
+            start.ExpiresAt,
+            token => auth.QuickConnectPollAsync(start.Handle, DeviceName, token),
+            interval,
+            ct: ct,
+            expiredMessage: ApiException.QuickConnectExpiredMessage).ConfigureAwait(false);
+        return Adopt(response, server);
+    }
+
+    /// <summary>
+    /// <c>POST /auth/sso/start</c>: the handle to poll with and the page to
+    /// open in the browser (check it with <see cref="SsoSignInStart.UrlOn"/>
+    /// against <see cref="Server"/>). Offered when <c>ServerInfo.OffersSsoSignIn</c>.
+    /// </summary>
+    public Task<SsoSignInStart> StartSsoSignInAsync(CancellationToken ct = default)
+    {
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        return UnauthenticatedApi(server).Auth.SsoStartAsync(DeviceName, ct);
+    }
+
+    /// <summary>
+    /// Polls <c>POST /auth/sso/poll</c> every <paramref name="interval"/>
+    /// (2 s) until the sign-in is finished in the browser, then stores the
+    /// token exactly as <see cref="LoginAsync"/> does. Ends early like
+    /// <see cref="FinishPlexSignInAsync"/>.
+    /// </summary>
+    public async Task<User> FinishSsoSignInAsync(SsoSignInStart start, TimeSpan? interval = null, CancellationToken ct = default)
+    {
+        if (Server is not { } server)
+        {
+            throw ApiException.NotMarquee();
+        }
+        var auth = UnauthenticatedApi(server).Auth;
+        var response = await PlexPoll.RunAsync(
+            start.ExpiresAt,
+            token => auth.SsoPollAsync(start.Handle, DeviceName, token),
+            interval,
+            ct: ct,
+            expiredMessage: ApiException.SsoSignInExpiredMessage).ConfigureAwait(false);
+        return Adopt(response, server);
+    }
+
     private MarqueeApi UnauthenticatedApi(ServerAddress server) => new(new ApiClient(server.BaseUrl, handler: handler));
 
     /// <summary>

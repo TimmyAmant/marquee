@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.44.0",
+    date: "2026-09-26",
+    changes: [
+      "Single sign-on: sign in with Authentik, Authelia, Pocket ID, Keycloak, Google or any other OpenID Connect provider, on the website and in the Mac and Windows apps (the apps open your browser). Set it up in Settings › Integrations › Single sign-on; the card shows the address to paste into your provider.",
+      "New accounts from single sign-on and matching existing accounts by verified email are both off until you turn them on. You can require a group to get in at all, and put people in a trusted group to make them Trusted — nobody is ever made admin this way.",
+      "Anyone can link or unlink their single sign-on login in Settings › Account › Linked accounts.",
+      "Jellyfin Quick Connect: \"Use Quick Connect\" on the Jellyfin sign-in shows a code you approve in any Jellyfin app you're signed in to.",
+    ],
+  },
+  {
     version: "0.43.1",
     date: "2026-09-26",
     changes: [

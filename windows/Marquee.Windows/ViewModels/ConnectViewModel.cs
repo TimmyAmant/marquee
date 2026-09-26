@@ -43,8 +43,13 @@ public sealed partial class ConnectViewModel : ObservableObject
         nameof(HasUnreachableDetail),
         nameof(OffersPlexSignIn),
         nameof(OffersJellyfinSignIn),
-        nameof(OffersMediaSignIn),
+        nameof(OffersSsoSignIn),
+        nameof(OffersOtherSignIn),
         nameof(ShowsPlexButton),
+        nameof(ShowsSsoButton),
+        nameof(SsoSignInLabel),
+        nameof(OffersQuickConnect),
+        nameof(ShowsQuickConnectButton),
         nameof(UsesJellyfin),
         nameof(SignInSubtitle),
         nameof(UsernameHeader),
@@ -58,8 +63,12 @@ public sealed partial class ConnectViewModel : ObservableObject
 
     private readonly AppModel model;
 
-    /// <summary>The Plex sign-in in progress; cancelled by Cancel, by leaving the sign-in card, and when the window closes.</summary>
-    private CancellationTokenSource? plexCancellation;
+    /// <summary>
+    /// The Plex, single sign-on or Quick Connect sign-in in progress (one at
+    /// a time); cancelled by Cancel, by leaving the sign-in card, and when
+    /// the window closes.
+    /// </summary>
+    private CancellationTokenSource? externalCancellation;
 
     // MARK: Server address
 
@@ -95,9 +104,11 @@ public sealed partial class ConnectViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SignInLabel))]
     [NotifyPropertyChangedFor(nameof(SetupLabel))]
     [NotifyCanExecuteChangedFor(nameof(SignInWithPlexCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SignInWithSsoCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UseQuickConnectCommand))]
     private bool isSubmitting;
 
-    // MARK: Plex / Jellyfin sign-in
+    // MARK: Plex / Jellyfin / single sign-on
 
     /// <summary>"Sign in with Jellyfin" was chosen: the same two fields, posted to <c>/auth/jellyfin</c>.</summary>
     [ObservableProperty]
@@ -107,15 +118,44 @@ public sealed partial class ConnectViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PasswordHeader))]
     [NotifyPropertyChangedFor(nameof(SignInLabel))]
     [NotifyPropertyChangedFor(nameof(JellyfinToggleLabel))]
+    [NotifyPropertyChangedFor(nameof(ShowsQuickConnectButton))]
     private bool isJellyfinMode;
 
-    /// <summary>The browser is open at plex.tv and the poll is running.</summary>
+    /// <summary>The browser is open at plex.tv or the single sign-on page, and the poll is running.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSigningInElsewhere))]
     [NotifyPropertyChangedFor(nameof(ShowsPlexButton))]
+    [NotifyPropertyChangedFor(nameof(ShowsSsoButton))]
+    [NotifyPropertyChangedFor(nameof(ShowsQuickConnectButton))]
     [NotifyCanExecuteChangedFor(nameof(SignInCommand))]
     [NotifyCanExecuteChangedFor(nameof(SignInWithPlexCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SignInWithSsoCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UseQuickConnectCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleJellyfinCommand))]
-    private bool isWaitingForPlex;
+    private bool isWaitingForBrowser;
+
+    /// <summary>"Waiting for Plex…" / "Waiting for Authentik…".</summary>
+    [ObservableProperty]
+    private string waitingLabel = "";
+
+    /// <summary>Quick Connect is running: getting a code, then waiting for it to be approved.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSigningInElsewhere))]
+    [NotifyPropertyChangedFor(nameof(ShowsPlexButton))]
+    [NotifyPropertyChangedFor(nameof(ShowsSsoButton))]
+    [NotifyPropertyChangedFor(nameof(ShowsQuickConnectButton))]
+    [NotifyCanExecuteChangedFor(nameof(SignInCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SignInWithPlexCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SignInWithSsoCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UseQuickConnectCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleJellyfinCommand))]
+    private bool isQuickConnecting;
+
+    /// <summary>The Quick Connect code to enter in a Jellyfin app; empty until the server hands one out.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasQuickConnectCode))]
+    [NotifyPropertyChangedFor(nameof(QuickConnectStatus))]
+    private string quickConnectCode = "";
 
     public ConnectViewModel(AppModel model)
     {
@@ -155,12 +195,36 @@ public sealed partial class ConnectViewModel : ObservableObject
     public bool IsRetrying => model.IsRetryingConnection;
     public string RetryLabel => IsRetrying ? "Connecting…" : "Retry";
 
-    // MARK: Plex / Jellyfin (server-info.signIn; an older server sends none, so no buttons)
+    // MARK: Plex / Jellyfin / single sign-on (server-info.signIn; an older server sends none, so no buttons)
 
     public bool OffersPlexSignIn => model.Session.ServerInfo?.OffersPlexSignIn == true;
     public bool OffersJellyfinSignIn => model.Session.ServerInfo?.OffersJellyfinSignIn == true;
-    public bool OffersMediaSignIn => OffersPlexSignIn || OffersJellyfinSignIn;
-    public bool ShowsPlexButton => OffersPlexSignIn && !IsWaitingForPlex;
+
+    /// <summary>"Sign in with {name}" for the admin's identity provider (0.44+).</summary>
+    public bool OffersSsoSignIn => model.Session.ServerInfo?.OffersSsoSignIn == true;
+
+    /// <summary>The "or" section under the password form shows.</summary>
+    public bool OffersOtherSignIn => OffersPlexSignIn || OffersJellyfinSignIn || OffersSsoSignIn;
+
+    /// <summary>A Plex, single sign-on or Quick Connect sign-in is running; the other ways in wait.</summary>
+    public bool IsSigningInElsewhere => IsWaitingForBrowser || IsQuickConnecting;
+
+    public bool ShowsPlexButton => OffersPlexSignIn && !IsSigningInElsewhere;
+    public bool ShowsSsoButton => OffersSsoSignIn && !IsSigningInElsewhere;
+
+    /// <summary>The single sign-on button's name, e.g. "Authentik".</summary>
+    private string SsoName => model.Session.ServerInfo?.SsoName ?? "single sign-on";
+
+    public string SsoSignInLabel => $"Sign in with {SsoName}";
+
+    /// <summary>Jellyfin (never Emby) with Quick Connect on the server (server-info.signIn.quickConnect, 0.44+).</summary>
+    public bool OffersQuickConnect => model.Session.ServerInfo?.OffersQuickConnect == true;
+
+    /// <summary>"Use Quick Connect" on the Jellyfin form.</summary>
+    public bool ShowsQuickConnectButton => UsesJellyfin && OffersQuickConnect && !IsSigningInElsewhere;
+
+    public bool HasQuickConnectCode => QuickConnectCode.Length > 0;
+    public string QuickConnectStatus => HasQuickConnectCode ? "Waiting for approval…" : "Getting a code…";
 
     /// <summary>The form posts to <c>/auth/jellyfin</c>.</summary>
     public bool UsesJellyfin => IsJellyfinMode && OffersJellyfinSignIn;
@@ -170,7 +234,8 @@ public sealed partial class ConnectViewModel : ObservableObject
 
     /// <summary>
     /// "New here? Use Sign in with Plex — …" when the admin has new accounts
-    /// from Plex/Jellyfin sign-in on: that's how a newcomer gets in.
+    /// from Plex/Jellyfin (or single sign-on) sign-in on: that's how a
+    /// newcomer gets in.
     /// </summary>
     public string SignupHint => model.Session.ServerInfo?.SignupHint ?? "";
     public bool ShowsSignupHint => model.Session.ServerInfo?.SignupHint is not null;
@@ -258,7 +323,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         }
     }
 
-    private bool CanSignIn => !IsWaitingForPlex;
+    private bool CanSignIn => !IsSigningInElsewhere;
 
     /// <summary>
     /// app/(auth)/login/login-form.tsx, against <c>POST /api/v1/auth/login</c>,
@@ -267,7 +332,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSignIn))]
     private async Task SignInAsync()
     {
-        if (IsSubmitting || IsWaitingForPlex)
+        if (IsSubmitting || IsSigningInElsewhere)
         {
             return;
         }
@@ -326,7 +391,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         }
     }
 
-    private bool CanSignInWithPlex => !IsWaitingForPlex && !IsSubmitting;
+    private bool CanSignInElsewhere => !IsSigningInElsewhere && !IsSubmitting;
 
     /// <summary>
     /// "Sign in with Plex": <c>POST /auth/plex/start</c>, the plex.tv page in
@@ -334,29 +399,96 @@ public sealed partial class ConnectViewModel : ObservableObject
     /// Plex says yes (the token is stored like a password sign-in's), the
     /// server refuses the account, the PIN expires, or Cancel.
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanSignInWithPlex))]
-    private async Task SignInWithPlexAsync()
+    [RelayCommand(CanExecute = nameof(CanSignInElsewhere))]
+    private Task SignInWithPlexAsync() =>
+        SignInElsewhereAsync(quickConnect: false, "Waiting for Plex…", async token =>
+        {
+            var start = await model.Session.StartPlexSignInAsync(token);
+            if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
+            {
+                FormError = PlexPageUnopenedMessage;
+                return null;
+            }
+            return await model.Session.FinishPlexSignInAsync(start, ct: token);
+        });
+
+    public const string PlexPageUnopenedMessage = "Couldn't open the Plex sign-in page in your browser.";
+
+    /// <summary>
+    /// "Sign in with {name}" (0.44+): <c>POST /auth/sso/start</c>, Marquee's
+    /// own "Continue with {name}?" page in the browser (only if it's https
+    /// or on this server's address), then <c>POST /auth/sso/poll</c> every 2
+    /// seconds until the sign-in is finished there (the token is stored like
+    /// a password sign-in's), refused, expired, or Cancel.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSignInElsewhere))]
+    private Task SignInWithSsoAsync()
     {
-        if (IsWaitingForPlex || IsSubmitting)
+        var name = SsoName;
+        return SignInElsewhereAsync(quickConnect: false, $"Waiting for {name}…", async token =>
+        {
+            var start = await model.Session.StartSsoSignInAsync(token);
+            var server = model.Session.Server?.BaseUrl;
+            if (start.UrlOn(server) is not { } url || !await ExternalLinks.OpenSignInPageAsync(url, server))
+            {
+                FormError = SsoPageUnopenedMessage(name);
+                return null;
+            }
+            return await model.Session.FinishSsoSignInAsync(start, ct: token);
+        });
+    }
+
+    public static string SsoPageUnopenedMessage(string name) => $"Couldn't open the {name} sign-in page in your browser.";
+
+    /// <summary>
+    /// "Use Quick Connect" (Jellyfin 10.8+, 0.44+): <c>POST
+    /// /auth/jellyfin/quick-connect/start</c>, the code on screen, then
+    /// <c>POST …/quick-connect/poll</c> every 2 seconds until it's approved
+    /// in a Jellyfin app, refused, expired, or Cancel.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSignInElsewhere))]
+    private Task UseQuickConnectAsync() =>
+        SignInElsewhereAsync(quickConnect: true, "", async token =>
+        {
+            var start = await model.Session.StartQuickConnectAsync(token);
+            QuickConnectCode = start.Code;
+            return await model.Session.FinishQuickConnectAsync(start, ct: token);
+        });
+
+    /// <summary>
+    /// Runs one Plex, single sign-on or Quick Connect sign-in: the waiting
+    /// state (or the Quick Connect panel) while <paramref name="signIn"/>
+    /// runs, the server's message when it fails, nothing when it was
+    /// cancelled. <paramref name="signIn"/> answers null after showing its
+    /// own error.
+    /// </summary>
+    private async Task SignInElsewhereAsync(bool quickConnect, string waiting, Func<CancellationToken, Task<User?>> signIn)
+    {
+        if (IsSigningInElsewhere || IsSubmitting)
         {
             return;
         }
         FormError = null;
-        plexCancellation?.Cancel();
+        externalCancellation?.Cancel();
         var cancellation = new CancellationTokenSource();
-        plexCancellation = cancellation;
-        IsWaitingForPlex = true;
+        externalCancellation = cancellation;
+        if (quickConnect)
+        {
+            QuickConnectCode = "";
+            IsQuickConnecting = true;
+        }
+        else
+        {
+            WaitingLabel = waiting;
+            IsWaitingForBrowser = true;
+        }
         try
         {
-            var start = await model.Session.StartPlexSignInAsync(cancellation.Token);
-            if (start.Url is not { } url || !await ExternalLinks.OpenAsync(url))
+            if (await signIn(cancellation.Token) is { } user)
             {
-                FormError = PlexPageUnopenedMessage;
-                return;
+                Password = "";
+                model.CompleteSignIn(user, interactive: true);
             }
-            var user = await model.Session.FinishPlexSignInAsync(start, ct: cancellation.Token);
-            Password = "";
-            model.CompleteSignIn(user, interactive: true);
         }
         catch (ApiException error)
         {
@@ -368,31 +500,33 @@ public sealed partial class ConnectViewModel : ObservableObject
         }
         finally
         {
-            if (ReferenceEquals(plexCancellation, cancellation))
+            if (ReferenceEquals(externalCancellation, cancellation))
             {
-                plexCancellation = null;
-                IsWaitingForPlex = false;
+                externalCancellation = null;
+                IsWaitingForBrowser = false;
+                IsQuickConnecting = false;
+                QuickConnectCode = "";
             }
             cancellation.Dispose();
         }
     }
 
-    public const string PlexPageUnopenedMessage = "Couldn't open the Plex sign-in page in your browser.";
-
-    /// <summary>"Cancel" while waiting for Plex.</summary>
+    /// <summary>"Cancel" while waiting for Plex, the identity provider or a Quick Connect approval.</summary>
     [RelayCommand]
-    private void CancelPlex() => CancelPlexSignIn();
+    private void CancelSignInElsewhere() => CancelExternalSignIn();
 
-    /// <summary>Stops a Plex sign-in in progress (Cancel, leaving the card, the window closing).</summary>
-    public void CancelPlexSignIn()
+    /// <summary>Stops a Plex, single sign-on or Quick Connect sign-in in progress (Cancel, leaving the card, the window closing).</summary>
+    public void CancelExternalSignIn()
     {
-        var cancellation = plexCancellation;
-        plexCancellation = null;
-        IsWaitingForPlex = false;
+        var cancellation = externalCancellation;
+        externalCancellation = null;
+        IsWaitingForBrowser = false;
+        IsQuickConnecting = false;
+        QuickConnectCode = "";
         cancellation?.Cancel();
     }
 
-    private bool CanToggleJellyfin => !IsWaitingForPlex;
+    private bool CanToggleJellyfin => !IsSigningInElsewhere;
 
     /// <summary>"Sign in with Jellyfin" / "Sign in with a Marquee account".</summary>
     [RelayCommand(CanExecute = nameof(CanToggleJellyfin))]
@@ -443,8 +577,9 @@ public sealed partial class ConnectViewModel : ObservableObject
             FormError = null;
             if (!IsSignInStep)
             {
-                // Leaving the sign-in card ends a Plex sign-in in progress.
-                CancelPlexSignIn();
+                // Leaving the sign-in card ends a Plex, single sign-on or
+                // Quick Connect sign-in in progress.
+                CancelExternalSignIn();
             }
         }
         NotifyDerived();

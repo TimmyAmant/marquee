@@ -64,11 +64,14 @@ public static class MediaServerKindExtensions
     };
 }
 
-/// <summary><c>linked</c> on <c>/me</c> and household members: which media-server accounts sign in to this Marquee account.</summary>
+/// <summary><c>linked</c> on <c>/me</c> and household members: which media-server accounts (and single sign-on) sign in to this Marquee account.</summary>
 public sealed record LinkedAccounts
 {
     public bool Plex { get; init; }
     public bool Jellyfin { get; init; }
+
+    /// <summary>0.44+: the admin's single sign-on is linked. Missing (older servers) reads as false.</summary>
+    public bool Sso { get; init; }
 
     public bool IsLinked(MediaServerKind server) => server == MediaServerKind.Plex ? Plex : Jellyfin;
 }
