@@ -148,6 +148,13 @@ where the real server needed something the core contract didn't spell out.
     older than this sends no `shelves` — render the fixed keys as before —
     and answers `404` on the new endpoints: hide Settings › Discover and the
     Trakt card.
+19. **Languages (0.50+, additive).** `GET /me` gains `language` (the
+    account's chosen language — `en`, `es`, `fr`, `de`, `pt-BR` — or null
+    to follow the device) and `PATCH /me` sets it. Every text the server
+    writes for people (errors, labels, notifications) is in that language,
+    else the request's `Accept-Language`, else English; codes never change.
+    A server older than this sends no `language` — follow the system
+    language — and answers `405` on `PATCH /me`: hide the picker.
 
 ---
 
@@ -594,9 +601,16 @@ the Marquee app" (or why not).
   "createdAt": "2026-09-17T17:10:57.821Z",
   "linked": { "plex": true, "jellyfin": false, "sso": false },
   "hasPassword": true,
-  "requestLimits": { "movie": null, "tv": null }
+  "requestLimits": { "movie": null, "tv": null },
+  "language": "fr"
 }
 ```
+
+`language` (0.50+; an older server omits it — treat that as null): the
+language this account chose to read Marquee in — `en`, `es`, `fr`, `de`
+or `pt-BR` — or null to follow the browser or the app's system language.
+Apps show themselves in it when it's set (and one of theirs), and send it
+as `Accept-Language`. Set it with `PATCH /me`.
 
 `requestLimits` (0.39+; an older server omits it): the account's request
 limits, each null when that type isn't limited (always for the admin and
@@ -652,6 +666,26 @@ the title with the admin's Sonarr/Radarr. Treat an unknown role like
 
 `autoApproveMovies` / `autoApproveTv` are the same as
 `permissions.autoApproveMovies` / `.autoApproveTv` (kept for older apps).
+
+### `PATCH /me` — user (0.50+)
+
+Changes the account's own preferences. Only what's sent changes; the
+answer is the whole of `GET /me`, already in the new language.
+
+Body: `{ "language": "de" }` — one of `en`, `es`, `fr`, `de`, `pt-BR`
+(any case), or `null` to follow the browser / system language again.
+Anything else is `400 invalid` "language must be null or one of en, es,
+fr, de, pt-BR." A full-access API key may change it for the account it acts
+as; a read-only key can't. The website's picker is Settings › Account ›
+Appearance › Language.
+
+**Languages everywhere else.** Since 0.50 every message the API writes for
+people — `error` texts, labels, notification texts — is in the account's
+chosen language, else the request's `Accept-Language` (for public
+endpoints like sign-in, and accounts that follow their device), else
+English. Codes (`code`, event and status names) never change with the
+language, so match on those, never on text. Notifications are written when
+they're created, in the recipient's language at that moment.
 
 ### `GET /badges` — user
 
@@ -4036,6 +4070,7 @@ reference. The website shows it at `/api-docs`.
 | | `POST /auth/jellyfin` | public |
 | | `POST /auth/logout` | user |
 | | `GET /me` | user |
+| | `PATCH /me` | user |
 | | `GET /badges` | user |
 | Discover / Browse / Search | `GET /discover` | user |
 | | `GET /discover/lists/{list}` | user |

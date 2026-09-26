@@ -34,5 +34,6 @@
   "requestLimits": {
     "movie": null,
     "tv": null
-  }
+  },
+  "language": "fr"
 }
