@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.43.1",
+    date: "2026-09-26",
+    changes: [
+      "The iPhone home-screen icon (and the browser tab icon) now use the same serif M as the apps, with the dot clear of the letter instead of touching it. Remove and re-add Marquee to your Home Screen to pick it up.",
+    ],
+  },
+  {
     version: "0.43.0",
     date: "2026-09-26",
     changes: [
