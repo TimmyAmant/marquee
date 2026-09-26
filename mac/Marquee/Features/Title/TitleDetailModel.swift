@@ -36,6 +36,9 @@ final class TitleDetailModel {
     /// A problem report went through from this page (the "Problem reported"
     /// pill shows even before `viewer.openReports` catches up).
     private(set) var reportedProblem = false
+    /// "Block" / "Unblock requests" in flight, and what went wrong.
+    private(set) var isBlockBusy = false
+    private(set) var blockError: String?
 
     @ObservationIgnored private var api: MarqueeAPI?
 
@@ -232,6 +235,33 @@ final class TitleDetailModel {
     /// "Problem reported": sent from here, or the viewer already has one open.
     var hasReportedProblem: Bool {
         reportedProblem || (detail?.viewer.openReports ?? 0) > 0
+    }
+
+    /// The admin's "Block" (from "Block requests", with an optional reason).
+    /// Returns whether it went through, so the reason field can close.
+    @discardableResult
+    func block(reason: String) async -> Bool {
+        await runBlock { api, id in try await api.titles.block(id.mediaType, id: id.tmdbId, reason: reason) }
+    }
+
+    /// The admin's "Unblock requests".
+    func unblock() {
+        Task { await runBlock { api, id in try await api.titles.unblock(id.mediaType, id: id.tmdbId) } }
+    }
+
+    private func runBlock(_ action: @MainActor (MarqueeAPI, API.TitleID) async throws -> Void) async -> Bool {
+        guard let api, !isBlockBusy else { return false }
+        isBlockBusy = true
+        blockError = nil
+        defer { isBlockBusy = false }
+        do {
+            try await action(api, id)
+            await refreshStatus()
+            return true
+        } catch {
+            blockError = error.localizedDescription
+            return false
+        }
     }
 
     func relink(_ target: API.RelinkTarget) async throws -> Int {
