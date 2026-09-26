@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.48.1",
+    date: "2026-09-26",
+    changes: [
+      "Status colors now match Radarr and Sonarr: green in your library, purple downloading or queued, red missing (monitored), orange not monitored, blue coming soon. Titles not in your library have no strip. Same on the website, Mac and Windows.",
+      "New \"Not monitored\" state for titles that are in Sonarr/Radarr but not monitored and have no file (they used to look like they weren't in your library at all). Admins get Start monitoring for them.",
+      "A \"Color key\" button on Discover, Movies, Series, search, and person and studio pages, and a \"What the colors mean\" help page (website footer and Settings › About, Mac Help menu, Windows Settings › About). Hover a poster's strip to see its status.",
+    ],
+  },
+  {
     version: "0.48.0",
     date: "2026-09-26",
     changes: [
