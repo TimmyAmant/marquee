@@ -315,6 +315,7 @@ export function notificationItem(n: {
   eventType: Dto.NotificationItem["eventType"];
   message: string;
   read: boolean;
+  alert?: boolean;
   createdAt: Date;
   note?: string | null;
   /** title_shared: the account that shared it (lib/sharing), when known. */
@@ -328,6 +329,7 @@ export function notificationItem(n: {
     eventType: n.eventType,
     message: n.message,
     read: n.read,
+    alert: n.alert ?? true,
     createdAt: isoRequired(n.createdAt),
     sharedBy: n.eventType === "title_shared" && n.sender ? shareableUser(n.sender) : null,
     note: n.eventType === "title_shared" ? (n.note ?? null) : null,

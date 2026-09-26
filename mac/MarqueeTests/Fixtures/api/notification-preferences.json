@@ -1,0 +1,37 @@
+{
+  "events": [
+    {
+      "event": "request_approved",
+      "label": "A request is approved",
+      "reviewerOnly": false,
+      "inApp": true,
+      "push": true,
+      "channels": {
+        "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44": true,
+        "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61": true
+      }
+    },
+    {
+      "event": "request_downloading",
+      "label": "Started downloading",
+      "reviewerOnly": false,
+      "inApp": true,
+      "push": false,
+      "channels": {
+        "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44": false,
+        "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61": false
+      }
+    },
+    {
+      "event": "request_pending",
+      "label": "New request waiting for review",
+      "reviewerOnly": true,
+      "inApp": true,
+      "push": true,
+      "channels": {
+        "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44": true,
+        "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61": true
+      }
+    }
+  ]
+}

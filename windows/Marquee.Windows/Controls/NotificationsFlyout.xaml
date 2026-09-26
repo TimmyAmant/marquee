@@ -2,7 +2,7 @@
 <!--
   components/notifications-bell.tsx's dropdown, hosted in the Flyout on the
   shell's bell. Each row is a Button so keyboard users can walk the list;
-  clicking one opens its title and marks it read. A shared title (0.45+)
+  clicking one opens its title and marks it read. A shared title (0.45.1+)
   leads with the sender's photo (else initials) in place of the emoji, and
   shows their note in quotes under the message.
 -->

@@ -1,7 +1,7 @@
 import XCTest
 @testable import Marquee
 
-// Sharing a title (0.45+): `GET /users/shareable`, the share body, the
+// Sharing a title (0.45.1+): `GET /users/shareable`, the share body, the
 // `title_shared` notification (and one from an older server without its
 // fields), the links handed out, and the Share dialog's model against a
 // stubbed server.

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { NavMenuButton } from "@/components/nav-menu-button";
+import { BackButton } from "@/components/back-button";
 
 /**
  * Slim top bar: the wordmark. Navigation, search and notifications are on
  * the floating rail (components/nav-menu.tsx); below md the rail is hidden,
  * so here the bell and the menu button (which opens the same menu as a
- * drawer, with search) stand in for it.
+ * drawer, with search) stand in for it, and a back button on pages below
+ * the top level, since a Home Screen app has no browser back button.
  */
 export async function SiteHeader() {
   const session = await auth();
@@ -29,6 +31,7 @@ export async function SiteHeader() {
         }}
       />
       <div className="relative flex h-[52px] items-center gap-4 px-4 sm:pl-[22px] sm:pr-4 md:rail-top:h-[72px]">
+        <BackButton />
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-text-primary"

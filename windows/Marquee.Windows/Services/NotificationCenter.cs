@@ -35,7 +35,8 @@ internal sealed record NotificationTarget(string Account, Guid NotificationId, T
 /// Per server and account (the choice and a watermark live in the settings
 /// file): after signing in, the app asks "Get notifications on this PC?";
 /// once on, it keeps the stream open, shows each <c>notification</c> event
-/// as a Windows notification, and on every (re)connection catches up with
+/// as a Windows notification (unless the account turned device banners off
+/// for its kind, <c>alert: false</c>), and on every (re)connection catches up with
 /// <c>GET /notifications</c>, showing only what is newer than the newest
 /// one already shown. So a relaunch shows what arrived meanwhile, not the
 /// whole history. A click opens the title through the model, and marks it read.
@@ -337,11 +338,14 @@ public sealed class NotificationCenter
             }
         });
 
-    /// <summary>A live one: new by definition, unless a catch-up got there first.</summary>
+    /// <summary>
+    /// A live one: new by definition, unless a catch-up got there first. One
+    /// the account turned device banners off for (<c>alert: false</c>) only
+    /// updates the bell.
+    /// </summary>
     private void Receive(string account, NotificationItem item)
     {
-        var watermark = WatermarkFor(account);
-        if (!item.Read && (watermark is not { } last || item.CreatedAt > last))
+        if (NotificationBanners.ShowsLive(item, WatermarkFor(account)))
         {
             Show(account, item);
         }
@@ -377,11 +381,7 @@ public sealed class NotificationCenter
             SaveWatermark(account, newest ?? DateTimeOffset.UnixEpoch);
             return;
         }
-        var missed = list.Results
-            .Where(item => !item.Read && item.CreatedAt > watermark && !shown.Contains(item.Id))
-            .OrderBy(item => item.CreatedAt)
-            .ToList();
-        foreach (var item in missed.TakeLast(MaxCatchUpNotifications))
+        foreach (var item in NotificationBanners.CatchUp(list.Results, watermark, shown, MaxCatchUpNotifications))
         {
             Show(account, item);
         }

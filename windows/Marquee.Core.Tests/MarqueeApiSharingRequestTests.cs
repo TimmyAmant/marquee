@@ -5,7 +5,7 @@ using Marquee.Core.Tests.Support;
 
 namespace Marquee.Core.Tests;
 
-// "Share a title" (0.45+): each call sends the method, path and body the doc
+// "Share a title" (0.45.1+): each call sends the method, path and body the doc
 // specifies. A share notifies other people only, so nothing is recorded.
 
 public sealed class MarqueeApiSharingRequestTests

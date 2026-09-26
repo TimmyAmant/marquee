@@ -329,7 +329,7 @@
                                             Click="OnReportProblemClick"
                                             Visibility="{x:Bind ViewModel.CanReport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             ToolTipService.ToolTip="Bad video or audio, missing subtitles, won't play: the admin is told." />
-                                        <!-- components/share-button.tsx (0.45+): send it to someone here, or share a link. -->
+                                        <!-- components/share-button.tsx (0.45.1+): send it to someone here, or share a link. -->
                                         <Button
                                             Click="OnShareClick"
                                             Visibility="{x:Bind ViewModel.CanShare, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -763,6 +763,20 @@
                                 Visibility="{x:Bind ViewModel.HasAddAllResult, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Content="{x:Bind ViewModel.RequestAllLabel, Mode=OneWay}"
+                                Click="OnRequestAllClick"
+                                Visibility="{x:Bind ViewModel.ShowsRequestAll, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                IsEnabled="{x:Bind ViewModel.CanRequestAll, Mode=OneWay}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.RequestAllResult, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.HasRequestAllResult, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap"
+                                MaxWidth="520"
                                 VerticalAlignment="Center" />
                         </StackPanel>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.FranchiseItems, Mode=OneWay}" ItemTemplate="{StaticResource PosterTemplate}">

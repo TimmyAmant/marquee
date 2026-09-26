@@ -258,7 +258,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
     /// <summary>The admin marked your problem report fixed (0.38+).</summary>
     public static readonly NotificationEventType IssueResolved = new("issue_resolved");
 
-    /// <summary>Someone in the household shared a title with you (0.45+); <c>SharedBy</c> says who.</summary>
+    /// <summary>Someone in the household shared a title with you (0.45.1+); <c>SharedBy</c> says who.</summary>
     public static readonly NotificationEventType TitleShared = new("title_shared");
 
     public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved, TitleShared];

@@ -61,3 +61,72 @@ export async function verifyTelegram(config: TelegramConfig): Promise<{ ok: true
     error: "Couldn't reach Telegram.",
   }));
 }
+
+/** Sends `text` and says why when it didn't go (a member's own chat, where
+ * the reason is shown under the channel). Never throws. */
+export async function deliverTelegram(
+  config: TelegramConfig,
+  text: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return send(config, text).catch(() => ({ ok: false as const, error: "Couldn't reach Telegram." }));
+}
+
+/** The bot's @username, for "Open Telegram" links (t.me/<username>?start=…). */
+export async function telegramBotUsername(botToken: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getMe`, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      redirect: "manual",
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { result?: { username?: unknown } };
+    return typeof body.result?.username === "string" ? body.result.username : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The private chat that sent the bot "/start <code>" lately, if any. Reads
+ * the bot's pending updates without confirming them, so nothing else that
+ * reads them misses one. `unavailable`: the bot hands its updates to a
+ * webhook instead, so they can't be read here. Pure apart from the fetch. */
+export async function findTelegramStart(
+  botToken: string,
+  code: string,
+): Promise<{ status: "found"; chatId: string } | { status: "pending" } | { status: "unavailable" }> {
+  try {
+    const res = await fetch(
+      `https://api.telegram.org/bot${botToken}/getUpdates?allowed_updates=%5B%22message%22%5D&limit=100`,
+      { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), redirect: "manual" },
+    );
+    if (res.status === 409) return { status: "unavailable" };
+    if (!res.ok) return { status: "pending" };
+    const body = (await res.json()) as {
+      result?: { message?: { text?: unknown; chat?: { id?: unknown; type?: unknown } } }[];
+    };
+    const chatId = chatThatSentStart(body.result ?? [], code);
+    return chatId ? { status: "found", chatId } : { status: "pending" };
+  } catch {
+    return { status: "pending" };
+  }
+}
+
+/** The newest private chat whose message is exactly "/start <code>". Pure;
+ * unit tested. */
+export function chatThatSentStart(
+  updates: { message?: { text?: unknown; chat?: { id?: unknown; type?: unknown } } }[],
+  code: string,
+): string | null {
+  for (const update of [...updates].reverse()) {
+    const message = update.message;
+    if (
+      message?.chat?.type === "private" &&
+      typeof message.chat.id === "number" &&
+      typeof message.text === "string" &&
+      message.text.trim() === `/start ${code}`
+    ) {
+      return String(message.chat.id);
+    }
+  }
+  return null;
+}

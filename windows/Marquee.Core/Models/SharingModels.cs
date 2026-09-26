@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Marquee.Core.Models;
 
-// "Share" on a title (api-v1.md "Share a title", 0.45+): send it to someone
+// "Share" on a title (api-v1.md "Share a title", 0.45.1+): send it to someone
 // else in the household, who gets a title_shared notification, or share a
 // link outside Marquee. The form's rules and the outside links follow
 // lib/sharing/parse.ts and components/share-button.tsx.

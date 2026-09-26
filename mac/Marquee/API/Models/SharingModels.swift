@@ -1,6 +1,6 @@
 import Foundation
 
-// Sharing a title (api-v1.md §3 "Share a title", 0.45+): send it to someone
+// Sharing a title (api-v1.md §3 "Share a title", 0.45.1+): send it to someone
 // else in the household, who gets a `title_shared` notification, or share a
 // link outside Marquee.
 

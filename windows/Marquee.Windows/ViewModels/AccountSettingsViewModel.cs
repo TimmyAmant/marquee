@@ -367,8 +367,12 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         DisplayName = model.Viewer?.DisplayName ?? "";
         IsAdmin = model.Viewer?.IsAdmin == true;
         Blocklist = new BlocklistSettingsViewModel(model);
+        Personal = new PersonalNotificationsViewModel(model);
         SyncMenuPosition();
     }
+
+    /// <summary>Your own channels and "What you hear about" (0.45+ servers), under Notifications.</summary>
+    public PersonalNotificationsViewModel Personal { get; }
 
     /// <summary>The admin's "Request blocklist" (0.41+ servers).</summary>
     public BlocklistSettingsViewModel Blocklist { get; }
@@ -512,6 +516,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         _ = LoadSignInSettingsAsync();
         _ = LoadPlexWatchlistAsync();
         _ = Blocklist.LoadAsync(IsAdmin);
+        _ = Personal.LoadAsync();
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
         _ = model.Session.RefreshInfoAsync();
     }
@@ -530,6 +535,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         membersCancellation?.Cancel();
         plexWatchlistLoadCancellation?.Cancel();
         Blocklist.Cancel();
+        Personal.Cancel();
         CancelLinkPlex();
         CancelLinkSso();
         CancelTurnOnPlexWatchlist();
@@ -1299,6 +1305,8 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
                 _ = LoadMembersAsync();
                 _ = LoadSignInSettingsAsync();
                 _ = Blocklist.LoadAsync(IsAdmin);
+                // Reviewers get more events to choose from.
+                _ = Personal.LoadAsync();
             }
         }
         else if (e.PropertyName == nameof(AppModel.ReloadToken))
@@ -1306,6 +1314,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
             _ = LoadMembersAsync();
             _ = LoadPlexWatchlistAsync();
             _ = Blocklist.LoadAsync(IsAdmin);
+            _ = Personal.LoadAsync();
         }
         else if (e.PropertyName == nameof(AppModel.MenuPosition))
         {

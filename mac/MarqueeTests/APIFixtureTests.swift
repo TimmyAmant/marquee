@@ -60,6 +60,7 @@ final class APIFixtureTests: XCTestCase {
         "favorite-state": decodes(API.FavoriteState.self),
         "favorite-toggle": decodes(API.FavoriteState.self),
         "request-created": decodes(API.RequestCreated.self),
+        "request-all-missing": decodes(API.RequestAllMissingResult.self),
         "requests-mine": decodes(API.ListResponse<API.MyRequest>.self),
         "requests-pending": decodes(API.PendingRequests.self),
         "requests-history": decodes(API.ListResponse<API.ReviewedRequest>.self),
@@ -71,6 +72,9 @@ final class APIFixtureTests: XCTestCase {
         "users-shareable": decodes(API.ShareableUsers.self),
         "share-title-body": decodes(API.ShareTitleRequest.self),
         "notifications-unread-count": decodes(API.Count.self),
+        "notification-channels": decodes(API.PersonalNotificationChannels.self),
+        "notification-preferences": decodes(API.NotificationPreferences.self),
+        "household-notification-events": decodes(API.HouseholdNotificationEvents.self),
         "calendar": decodes(API.CalendarMonthResponse.self),
         "activity": decodes(API.ListResponse<API.ActivityItem>.self),
         "household-member": decodes(API.HouseholdMember.self),
@@ -106,7 +110,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 74, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 78, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -142,6 +146,7 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNil(detail.viewer.otherRequestersLine)
         XCTAssertEqual(detail.franchise?.collectionId, 2344)
         XCTAssertEqual(detail.franchise?.addAllMissing, [API.TitleID(.movie, 604)])
+        XCTAssertEqual(detail.franchise?.requestAllMissing, [], "The admin's view: nothing to request")
         XCTAssertEqual(detail.cast.first?.character, "Neo")
 
         let status = try decode(API.TitleStatus.self, "title-status")
@@ -180,6 +185,8 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(item.eventType, .requestRejected)
         XCTAssertEqual(item.eventType.emoji, "👎")
         XCTAssertEqual(item.titleID.route.absoluteString, "marquee://title/movie/603")
+        XCTAssertEqual(item.alert, true)
+        XCTAssertTrue(item.showsBanner)
 
         let activity = try decode(API.ListResponse<API.ActivityItem>.self, "activity").results
         XCTAssertEqual(activity.first?.sentence, "Timmy declined The Matrix")
@@ -323,10 +330,11 @@ final class APIFixtureTests: XCTestCase {
 
     func testCardsAndSuggestions() throws {
         let suggestions = try decode(API.ListResponse<API.SearchSuggestion>.self, "search-suggest").results
-        XCTAssertEqual(suggestions.map(\.stableId), ["movie-603", "person-6384"])
-        XCTAssertEqual(suggestions.map(\.mediaType.label), ["Movie", "Actor"])
+        XCTAssertEqual(suggestions.map(\.stableId), ["movie-603", "person-6384", "movie-604", "movie-624860"])
+        XCTAssertEqual(suggestions.map(\.mediaType.label), ["Movie", "Actor", "Movie", "Movie"])
         XCTAssertEqual(suggestions.first?.titleID, API.TitleID(.movie, 603))
-        XCTAssertNil(suggestions.last?.titleID)
+        XCTAssertNil(suggestions[1].titleID)
+        XCTAssertEqual(suggestions.map(\.status), [.owned, nil, .trackedDownloading, .untracked])
 
         let page = try decode(API.BrowsePage.self, "browse-page")
         XCTAssertTrue(page.hasMorePages)
@@ -374,6 +382,27 @@ final class APIValueTypeTests: XCTestCase {
         for type in API.ActivityEventType.knownCases {
             XCTAssertEqual(API.ActivityEventType(rawValue: type.rawValue), type)
         }
+    }
+
+    func testSearchSuggestionStatusIsOptionalAndOpen() throws {
+        let older = #"{"id":603,"mediaType":"movie","name":"The Matrix","posterPath":null,"subtitle":"1999"}"#
+        let olderSuggestion = try APIClient.decoder.decode(API.SearchSuggestion.self, from: Data(older.utf8))
+        XCTAssertNil(olderSuggestion.status, "A server from before suggestion statuses sends no status")
+        XCTAssertNil(SuggestionKindPill.colors(for: olderSuggestion.status))
+        XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .movie, status: nil), "Movie")
+
+        let newer = #"{"id":1399,"mediaType":"tv","name":"Game of Thrones","posterPath":null,"subtitle":"2011","status":"tracked_downloading"}"#
+        let newerSuggestion = try APIClient.decoder.decode(API.SearchSuggestion.self, from: Data(newer.utf8))
+        XCTAssertEqual(newerSuggestion.status, .trackedDownloading)
+        XCTAssertNotNil(SuggestionKindPill.colors(for: newerSuggestion.status))
+        XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .tv, status: .trackedDownloading), "TV · Downloading")
+        XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .movie, status: .owned), "Movie · In your library")
+
+        let future = #"{"id":1,"mediaType":"movie","name":"X","posterPath":null,"subtitle":null,"status":"archived"}"#
+        let futureSuggestion = try APIClient.decoder.decode(API.SearchSuggestion.self, from: Data(future.utf8))
+        XCTAssertEqual(futureSuggestion.status, .unknown("archived"))
+        XCTAssertNil(SuggestionKindPill.colors(for: futureSuggestion.status), "An unknown status stays neutral")
+        XCTAssertNil(SuggestionKindPill.colors(for: .untracked))
     }
 
     func testUserWithUnknownRoleStillDecodes() throws {

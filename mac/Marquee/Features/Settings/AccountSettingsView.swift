@@ -78,6 +78,8 @@ struct AccountSettingsView: View {
                 NotificationSettingsCard()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardSurface()
+                // 0.45+: your own channels and what you hear about.
+                PersonalNotificationsSection()
 
                 SettingsSectionLabel(text: viewer.isAdmin ? "Household members" : "Your account")
                 Text(viewer.isAdmin

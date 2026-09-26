@@ -51,7 +51,7 @@ public sealed class NotificationRow
     public string Emoji { get; }
 
     /// <summary>
-    /// A shared title's sender (0.45+): the row leads with their photo, else
+    /// A shared title's sender (0.45.1+): the row leads with their photo, else
     /// initials, in place of the emoji. False for every other kind, and once
     /// the sender's account is removed.
     /// </summary>

@@ -107,7 +107,7 @@ function ChannelCard({
   );
 }
 
-const WHAT = "whenever something is grabbed, downloaded, or a request is approved/rejected.";
+const WHAT = "for the events picked above. Members can use it for their own notifications too.";
 
 export function NotificationChannelCards({ channels }: { channels: ChannelSummaries }) {
   const { telegram, pushover, email } = channels;

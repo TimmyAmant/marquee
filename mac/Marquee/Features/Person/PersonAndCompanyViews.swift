@@ -41,7 +41,7 @@ struct PersonDetailView: View {
         .background(Theme.bg0)
         .navigationTitle(person?.name ?? "")
         .toolbar {
-            // A person's page shares just a link (0.45+, as on the website):
+            // A person's page shares just a link (0.45.1+, as on the website):
             // Marquee's page or TMDb's.
             let links = ShareLinks.person(tmdbId, server: model.session.server?.baseURL)
             ToolbarItem(placement: .primaryAction) {

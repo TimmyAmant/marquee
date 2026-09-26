@@ -18,8 +18,7 @@ export function DiscordConnectCard({ connected }: { connected: boolean }) {
         <div>
           <h3 className="font-display text-xl text-text-primary">Discord notifications</h3>
           <p className="mt-1 text-xs text-text-muted">
-            Posts a message to a Discord channel whenever something is grabbed, downloaded, or a
-            request is approved/rejected — the same events shown in your in-app notifications.
+            Posts a message to a Discord channel for the events picked above.
           </p>
         </div>
         {isConnected && (

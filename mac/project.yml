@@ -13,7 +13,7 @@ settings:
   base:
     # CI stamps the release version (package.json) over these; see
     # .github/workflows/apps.yml. The updater compares it with the release tag.
-    MARKETING_VERSION: "0.44.1"
+    MARKETING_VERSION: "0.45.0"
     CURRENT_PROJECT_VERSION: "1"
     MACOSX_DEPLOYMENT_TARGET: "15.0"
     # Swift 6 language mode: complete data-race safety checking, plus the

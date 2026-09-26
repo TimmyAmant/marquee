@@ -1,6 +1,12 @@
 import type { TitleDetail } from "@/lib/api/types";
 import { libraryInfo, statusKey, titleCard, titleViewerState } from "@/lib/api/mappers";
-import { buildExternalLinks, franchiseMissingItems, seasonsNewestFirst, topBilledCast } from "@/lib/title-meta";
+import {
+  buildExternalLinks,
+  franchiseMissingItems,
+  franchiseRequestableItems,
+  seasonsNewestFirst,
+  topBilledCast,
+} from "@/lib/title-meta";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { loadTitlePage } from "@/lib/pages/title";
 import type { MediaType } from "@/lib/db/schema";
@@ -142,6 +148,13 @@ export function titleDetailDto(
             }),
           ),
           addAllMissing: franchiseMissingItems(data.franchiseItems, data.franchiseStatusMap, data.arrConfigured, isAdmin),
+          requestAllMissing: franchiseRequestableItems(
+            data.franchiseItems,
+            data.franchiseStatusMap,
+            data.franchiseRequestStatusMap,
+            data.blockedKeys,
+            isAdmin,
+          ),
         }
       : null,
     studios: dedupeCompanies(data.companies).map((company) => ({

@@ -514,6 +514,12 @@ export const notifications = pgTable(
     // The request a request_created notification is about — what its
     // Approve / Decline buttons act on.
     requestId: uuid("request_id").references(() => requests.id, { onDelete: "set null" }),
+    // The account's own choices for this kind of event (Settings › Account ›
+    // Notifications, lib/notifications/preferences.ts). `inBell` false: kept
+    // only so repeats are still recognised, never listed or counted.
+    // `alert` false: no Web Push, and the apps don't show a banner for it.
+    inBell: boolean("in_bell").default(true).notNull(),
+    alert: boolean("alert").default(true).notNull(),
     // title_shared: who sent it (null once that account is removed) and
     // their optional note, plain text.
     senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
@@ -719,6 +725,11 @@ export const appSettings = pgTable("app_settings", {
   // the admin's Plex/Jellyfin server but has no Marquee account yet gets a
   // member account on their first sign-in, or is told to ask the admin.
   mediaServerSignup: boolean("media_server_signup").default(false).notNull(),
+  // Which events the household channels above (Discord, ntfy, the generic
+  // webhook, and Telegram / Pushover / email in notification_channels) post
+  // — lib/notifications/preferences.ts. Null: the defaults, which are what
+  // they posted before this could be chosen.
+  householdNotificationEvents: text("household_notification_events").array(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -897,6 +908,64 @@ export const notificationChannels = pgTable(
   },
   (table) => [check("notification_channels_kind_check", sql`${table.kind} in ('telegram','pushover','email')`)],
 );
+
+export const userNotificationChannelKindValues = ["telegram", "pushover", "email", "discord", "ntfy", "webhook"] as const;
+export type UserNotificationChannelKind = (typeof userNotificationChannelKindValues)[number];
+
+/** A member's own notification channels (Settings › Account ›
+ * Notifications): their Telegram chat or Pushover key (through the admin's
+ * bot / app), their email address (through the admin's mail server, once
+ * confirmed), their own Discord webhook, ntfy topic or webhook URL —
+ * lib/notifications/personal.ts. `config` is the encrypted JSON of what they
+ * entered; `target` is the masked form Settings shows, never the secret. */
+export const userNotificationChannels = pgTable(
+  "user_notification_channels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull().$type<UserNotificationChannelKind>(),
+    name: text("name"),
+    target: text("target").notNull(),
+    configEnc: bytea("config_enc").notNull(),
+    configIv: bytea("config_iv").notNull(),
+    configTag: bytea("config_tag").notNull(),
+    enabled: boolean("enabled").default(true).notNull(),
+    /** Email only starts out false: nothing but the confirmation code goes
+     * to an address until its owner types that code in. */
+    verified: boolean("verified").default(true).notNull(),
+    verifyCodeHash: text("verify_code_hash"),
+    verifyExpiresAt: timestamp("verify_expires_at", { withTimezone: true }),
+    verifyAttempts: integer("verify_attempts").default(0).notNull(),
+    /** Which events go here, where they differ from the defaults
+     * (lib/notifications/preferences.ts): { "request_approved": false }. */
+    events: jsonb("events").$type<Record<string, boolean>>().default({}).notNull(),
+    lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    lastErrorAt: timestamp("last_error_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("user_notification_channels_user_idx").on(table.userId),
+    check(
+      "user_notification_channels_kind_check",
+      sql`${table.kind} in ('telegram','pushover','email','discord','ntfy','webhook')`,
+    ),
+  ],
+);
+
+/** Each account's in-app bell and device push choices per event, where they
+ * differ from the defaults: { "request_approved": { "push": false } }. No
+ * row: every default, which is how notifications worked before this. */
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  overrides: jsonb("overrides").$type<Record<string, { inApp?: boolean; push?: boolean }>>().default({}).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const issueKindValues = ["video", "audio", "subtitles", "wont_play", "wrong_title", "other"] as const;
 export type IssueKind = (typeof issueKindValues)[number];

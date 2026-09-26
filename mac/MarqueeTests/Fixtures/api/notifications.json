@@ -9,6 +9,7 @@
       "eventType": "request_rejected",
       "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
+      "alert": true,
       "createdAt": "2026-09-17T17:12:41.470Z",
       "sharedBy": null,
       "note": null
@@ -21,6 +22,7 @@
       "eventType": "title_shared",
       "message": "Susan shared “Ice Age” with you: You'd love this one",
       "read": true,
+      "alert": true,
       "createdAt": "2026-09-16T20:03:12.118Z",
       "sharedBy": {
         "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",

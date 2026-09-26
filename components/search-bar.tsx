@@ -5,12 +5,43 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { SearchSuggestion } from "@/app/api/search/suggest/route";
+import type { LibraryStatus } from "@/components/status-badge";
 
 const TYPE_LABELS: Record<SearchSuggestion["mediaType"], string> = {
   person: "Actor",
   movie: "Movie",
   tv: "TV",
 };
+
+const NEUTRAL_PILL_CLASS = "border-border text-text-muted";
+
+/** The Movie/TV pill wears the title's library status, in the colors a
+ * poster card uses for it: green when it's in the library (the Owned badge),
+ * blue while downloading (the Downloading badge), and the poster status bar's
+ * red for missing and purple for coming soon. Not in the library stays the
+ * plain grey pill. */
+const STATUS_PILL: Record<LibraryStatus, { label: string; className: string }> = {
+  owned: { label: "In your library", className: "border-owned/40 bg-owned-bg text-owned" },
+  tracked_downloading: { label: "Downloading", className: "border-tracked/40 bg-tracked-bg text-tracked" },
+  tracked_monitored: { label: "Missing", className: "border-red-500/40 bg-red-500/10 text-red-500" },
+  coming_soon: { label: "Coming soon", className: "border-purple-500/40 bg-purple-500/10 text-purple-500" },
+  untracked: { label: "Not in your library", className: NEUTRAL_PILL_CLASS },
+};
+
+function TypePill({ suggestion }: { suggestion: SearchSuggestion }) {
+  const typeLabel = TYPE_LABELS[suggestion.mediaType];
+  // A status this build doesn't know (a newer server) reads as neutral.
+  const status = suggestion.status ? STATUS_PILL[suggestion.status] : undefined;
+  return (
+    <span
+      title={status ? `${typeLabel} · ${status.label}` : undefined}
+      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${status?.className ?? NEUTRAL_PILL_CLASS}`}
+    >
+      {typeLabel}
+      {status && <span className="sr-only"> · {status.label}</span>}
+    </span>
+  );
+}
 
 function hrefFor(suggestion: SearchSuggestion): string {
   return suggestion.mediaType === "person"
@@ -177,9 +208,7 @@ export function SearchBar({
                     <p className="truncate text-xs text-text-muted">{suggestion.subtitle}</p>
                   )}
                 </div>
-                <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted">
-                  {TYPE_LABELS[suggestion.mediaType]}
-                </span>
+                <TypePill suggestion={suggestion} />
               </button>
             );
           })}

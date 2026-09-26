@@ -145,6 +145,9 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/favorites/company/420/toggle", response: "favorite-toggle") { try await $0.favorites.toggle(.company, id: 420) },
             // Requests
             Case(method: "POST", path: "/titles/tv/1399/request", response: "request-created") { try await $0.requests.create(.tv, id: 1399) },
+            Case(method: "POST", path: "/titles/movie/425/request-all-missing", response: "request-all-missing") {
+                _ = try await $0.requests.requestAllMissing(.movie, id: 425)
+            },
             Case(method: "GET", path: "/requests/mine", response: "requests-mine") { _ = try await $0.requests.mine() },
             Case(method: "GET", path: "/requests/pending", response: "requests-pending") { _ = try await $0.requests.pending() },
             Case(method: "GET", path: "/requests/history", response: "requests-history") { _ = try await $0.requests.history() },
@@ -166,7 +169,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
             },
             Case(method: "POST", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/search", response: "ok") { try await $0.issues.searchAgain(request) },
             Case(method: "DELETE", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0", response: "ok") { try await $0.issues.delete(request) },
-            // Sharing a title (0.45+): the doc's example body.
+            // Sharing a title (0.45.1+): the doc's example body.
             Case(
                 method: "POST", path: "/titles/movie/425/share",
                 body: #"{"userIds":["83c55a49-6153-4cb9-ae22-4a42d48f4cf3"],"note":"You'd love this one"}"#, response: "share-result"
@@ -307,8 +310,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 120, "docs/api-v1.md documents 120 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 120, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 121, "docs/api-v1.md documents 121 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 121, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

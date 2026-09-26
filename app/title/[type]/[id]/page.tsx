@@ -169,6 +169,7 @@ export default async function TitlePage({
             collectionId={collectionId}
             collectionFavorited={collectionFavorited}
             isAdmin={viewer.session ? viewer.isAdmin : undefined}
+            pageTitle={{ mediaType: type, tmdbId }}
           />
         )}
         <StudioRow companies={companies} favoritedIds={companyFavoritedIds} showFavorite={Boolean(viewer.session)} />

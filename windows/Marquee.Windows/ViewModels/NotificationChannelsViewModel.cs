@@ -9,7 +9,7 @@ namespace Marquee.Windows.ViewModels;
 
 /// <summary>
 /// The admin's household-wide notification relays that the website shows
-/// in Settings › Integrations › Notifications
+/// in Settings › Integrations › Household channels
 /// (components/notification-channel-cards.tsx): Telegram, Pushover and
 /// email. Every notification the admin gets is also sent to each one
 /// connected. Hidden for a member and on a server older than 0.36, whose

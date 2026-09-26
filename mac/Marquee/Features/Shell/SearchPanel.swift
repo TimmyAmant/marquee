@@ -169,12 +169,7 @@ private struct SearchPanelRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Text(suggestion.mediaType.label)
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
-                    .overlay(Capsule().strokeBorder(Theme.borderStrong))
+                SuggestionKindPill(kind: suggestion.mediaType, status: suggestion.status)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -185,5 +180,54 @@ private struct SearchPanelRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The Movie/TV/Actor pill, wearing a title's library status in the colors a
+/// poster card uses for it (the website's search-bar.tsx STATUS_PILL): green
+/// in the library, blue downloading, the status strip's red for missing and
+/// purple for coming soon. Not in the library, a person, or a status this
+/// app doesn't know stays the plain grey outline.
+struct SuggestionKindPill: View {
+    let kind: API.SuggestionKind
+    let status: API.LibraryStatus?
+
+    /// (text, fill, border), or nil for the neutral pill.
+    nonisolated static func colors(for status: API.LibraryStatus?) -> (foreground: Color, background: Color, border: Color)? {
+        switch status {
+        case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.4))
+        case .trackedDownloading: return (Theme.tracked, Theme.trackedBg, Theme.tracked.opacity(0.4))
+        case let .some(strip) where strip == .trackedMonitored || strip == .comingSoon:
+            let color = Theme.statusBar(strip)
+            return (color, color.opacity(0.12), color.opacity(0.4))
+        default: return nil
+        }
+    }
+
+    /// "Movie · In your library"; just "Movie" when there's no known status.
+    nonisolated static func accessibilityText(kind: API.SuggestionKind, status: API.LibraryStatus?) -> String {
+        let label: String? = switch status {
+        case .owned: "In your library"
+        case .trackedDownloading: "Downloading"
+        case .trackedMonitored: "Missing"
+        case .comingSoon: "Coming soon"
+        case .untracked: "Not in your library"
+        case .unknown, nil: nil
+        }
+        return label.map { "\(kind.label) · \($0)" } ?? kind.label
+    }
+
+    var body: some View {
+        let colors = Self.colors(for: status)
+        let text = Self.accessibilityText(kind: kind, status: status)
+        Text(kind.label)
+            .font(.system(size: 10.5, weight: .medium))
+            .foregroundStyle(colors?.foreground ?? Theme.textSecondary)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(colors?.background ?? .clear))
+            .overlay(Capsule().strokeBorder(colors?.border ?? Theme.borderStrong))
+            .help(text)
+            .accessibilityLabel(text)
     }
 }

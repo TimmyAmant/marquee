@@ -17,6 +17,7 @@ import {
 } from "@/lib/requests/mutate";
 import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
 import { parseAddOverridesForm } from "@/lib/arr/add-options";
+import { requestAllMissing } from "@/lib/requests/request-all";
 
 // Thin session/form wrappers — the request lifecycle lives in
 // lib/requests/mutate.ts, shared with /api/v1/requests/*.
@@ -69,6 +70,21 @@ export async function requestSeasonsAction(tmdbId: number, seasons: unknown): Pr
 
   const result = await createRequest(viewer, { mediaType: "tv", tmdbId, title: "", posterPath: null, seasons });
   return result.ok ? { success: true } : { error: result.error };
+}
+
+/** A franchise row's "Request all N missing", from the title page it sits
+ * on — the server works out the set itself (lib/requests/request-all.ts). */
+export async function requestAllMissingAction(
+  mediaType: MediaType,
+  tmdbId: number,
+): Promise<{ error?: string; message?: string; requested?: number }> {
+  const viewer = await getViewerContext();
+  if (!viewer.session) return { error: "Sign in to request titles." };
+  if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
+    return { error: "That title couldn't be requested." };
+  }
+  const result = await requestAllMissing(viewer, mediaType, tmdbId);
+  return result.ok ? { message: result.message, requested: result.requested } : { error: result.error };
 }
 
 /** The title page's "Request in 4K". */

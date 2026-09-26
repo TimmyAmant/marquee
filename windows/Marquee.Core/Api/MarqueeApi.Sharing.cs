@@ -2,7 +2,7 @@ using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
 
-// "Share" on a title (api-v1.md "Share a title", 0.45+). Sending lives here
+// "Share" on a title (api-v1.md "Share a title", 0.45.1+). Sending lives here
 // though its path is the title's, like reporting a problem. A share only
 // notifies the people it goes to, so nothing on this account changes and
 // nothing is recorded.

@@ -24,7 +24,7 @@ export type NotificationEventType =
   | "issue_resolved"
   /** 0.40+: a new request waiting for review (admin and trusted members). */
   | "request_created"
-  /** 0.45+: a household member shared a title with you (`sharedBy`, `note`). */
+  /** 0.45.1+: a household member shared a title with you (`sharedBy`, `note`). */
   | "title_shared";
 export type ActivityEventType =
   | "request_created"
@@ -298,6 +298,9 @@ export type SearchSuggestion = {
   name: string;
   posterPath: string | null;
   subtitle: string | null;
+  /** Movies/series only (absent for people): the viewer's library status,
+   * from the same local lookup poster cards use. */
+  status?: LibraryStatus;
 };
 
 // ── Title ───────────────────────────────────────────────────────────────────
@@ -461,6 +464,8 @@ export type TitleDetail = {
     collectionFavorited: boolean | null;
     items: TitleCard[];
     addAllMissing: { mediaType: MediaType; tmdbId: number }[];
+    /** A household member's "Request all N missing" set; empty for the admin. */
+    requestAllMissing: { mediaType: MediaType; tmdbId: number }[];
   } | null;
   studios: CompanyCard[];
   similar: TitleCard[];
@@ -479,6 +484,15 @@ export type Episode = {
 export type SeasonEpisodes = { tmdbId: number; seasonNumber: number; episodes: Episode[] };
 
 export type RelinkResult = { ok: true; newTmdbId: number };
+
+/** POST /titles/{type}/{tmdbId}/request-all-missing. */
+export type RequestAllMissingResult = {
+  ok: true;
+  total: number;
+  requested: number;
+  refused: { mediaType: MediaType; tmdbId: number; title: string; error: string }[];
+  message: string;
+};
 
 // ── People & companies ──────────────────────────────────────────────────────
 
@@ -631,15 +645,61 @@ export type NotificationItem = {
   eventType: NotificationEventType;
   message: string;
   read: boolean;
+  /** 0.45+: false when this account turned off device push for this kind
+   * of notification — it's in the bell, but no banner. Absent: true. */
+  alert: boolean;
   createdAt: string;
-  /** 0.45+: title_shared — who shared it; null for every other kind (and
+  /** 0.45.1+: title_shared — who shared it; null for every other kind (and
    * once that account is removed). Missing on older servers. */
   sharedBy: ShareableUser | null;
-  /** 0.45+: title_shared — the sharer's note, plain text; else null. */
+  /** 0.45.1+: title_shared — the sharer's note, plain text; else null. */
   note: string | null;
 };
 
-/** 0.45+: a household member as the share picker shows them
+/** GET /me/notification-channels (0.45+). */
+export type PersonalNotificationChannel = {
+  id: string;
+  kind: "telegram" | "pushover" | "email" | "discord" | "ntfy" | "webhook";
+  name: string | null;
+  /** Masked: enough to tell channels apart, never the secret itself. */
+  target: string;
+  enabled: boolean;
+  /** Email: false until the code sent to the address is entered. */
+  verified: boolean;
+  lastSuccessAt: string | null;
+  lastError: string | null;
+  lastErrorAt: string | null;
+  createdAt: string;
+};
+
+export type PersonalNotificationChannels = {
+  available: {
+    telegram: { available: boolean; botUsername: string | null };
+    pushover: { available: boolean };
+    email: { available: boolean };
+    discord: { available: boolean };
+    ntfy: { available: boolean; householdServer: string | null };
+    webhook: { available: boolean; homeNetwork: boolean };
+  };
+  channels: PersonalNotificationChannel[];
+};
+
+export type NotificationPreferenceRow = {
+  event: string;
+  label: string;
+  reviewerOnly: boolean;
+  inApp: boolean;
+  push: boolean;
+  channels: Record<string, boolean>;
+};
+
+/** GET/PUT /me/notification-preferences (0.45+). */
+export type NotificationPreferences = { events: NotificationPreferenceRow[] };
+
+/** GET/PUT /settings/notification-events (0.45+, admin). */
+export type HouseholdNotificationEvents = { events: { event: string; label: string; enabled: boolean }[] };
+
+/** 0.45.1+: a household member as the share picker shows them
  * (GET /users/shareable) and as the sender of a shared title. */
 export type ShareableUser = RequestPerson & { userId: string; avatarUrl: string | null };
 

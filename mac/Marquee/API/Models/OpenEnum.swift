@@ -266,7 +266,7 @@ extension API {
         case issueReported
         /// 0.38+: the admin marked your problem report fixed.
         case issueResolved
-        /// 0.45+: someone in the household shared a title with you.
+        /// 0.45.1+: someone in the household shared a title with you.
         case titleShared
         case unknown(String)
 

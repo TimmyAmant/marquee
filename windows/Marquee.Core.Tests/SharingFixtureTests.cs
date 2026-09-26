@@ -4,7 +4,7 @@ using Marquee.Core.Tests.Support;
 
 namespace Marquee.Core.Tests;
 
-// "Share a title" (0.45+): the doc's GET /users/shareable example decoded,
+// "Share a title" (0.45.1+): the doc's GET /users/shareable example decoded,
 // the request body matching the shared fixture, and the dialog's rules
 // (lib/sharing/parse.ts, components/share-button.tsx) in TitleShareForm.
 

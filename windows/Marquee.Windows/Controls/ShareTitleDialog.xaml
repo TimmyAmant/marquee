@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  components/share-button.tsx's dialog on a title (0.45+). "Send to someone
+  components/share-button.tsx's dialog on a title (0.45.1+). "Send to someone
   in the household": each other member with their photo (else initials)
   and a checkbox, an optional note (a count once it's close to 280), and
   Send; afterwards "Sent to Kid." (or "Sent to 3 people."), and "No one

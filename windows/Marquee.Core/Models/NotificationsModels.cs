@@ -32,10 +32,18 @@ public sealed record NotificationItem
     public required string Message { get; init; }
 
     public required bool Read { get; init; }
+
+    /// <summary>
+    /// 0.45+: false when the account turned device banners off for this
+    /// kind. It's still in the bell, but no Windows notification is shown
+    /// for it. Older servers don't send it: true.
+    /// </summary>
+    public bool Alert { get; init; } = true;
+
     public required DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>
-    /// Who shared the title, on a <c>title_shared</c> one (0.45+): the row
+    /// Who shared the title, on a <c>title_shared</c> one (0.45.1+): the row
     /// leads with their photo, else initials. Null on every other kind, once
     /// that account is removed, and from an older server (no key).
     /// </summary>

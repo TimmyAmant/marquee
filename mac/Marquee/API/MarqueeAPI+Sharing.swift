@@ -1,6 +1,6 @@
 import Foundation
 
-// Sharing a title with someone in the household (api-v1.md §3, 0.45+). Both
+// Sharing a title with someone in the household (api-v1.md §3, 0.45.1+). Both
 // calls 404 on an older server.
 
 extension MarqueeAPI.TitlesEndpoints {

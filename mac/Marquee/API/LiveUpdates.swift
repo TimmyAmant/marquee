@@ -34,7 +34,8 @@ protocol NotificationWatermarkStore: AnyObject {
 ///   newer than the stored watermark becomes a banner.
 ///
 /// A notification is announced once, whichever path saw it first: both check
-/// its id and the watermark. `stop()` on sign-out, server change or a 401
+/// its id and the watermark. One with `alert: false` (the account turned
+/// device push off for its kind) updates the bell but posts no banner. `stop()` on sign-out, server change or a 401
 /// clears everything.
 @MainActor
 @Observable
@@ -308,8 +309,11 @@ final class LiveUpdates {
     }
 
     private func announce(_ arrivals: [API.NotificationItem]) {
-        let arrivals = arrivals.filter { !announcedIDs.contains($0.id) }
-        announcedIDs.formUnion(arrivals.map(\.id))
+        let fresh = arrivals.filter { !announcedIDs.contains($0.id) }
+        announcedIDs.formUnion(fresh.map(\.id))
+        // The account turned device push off for these kinds (0.45+): the
+        // bell has them, but no banner.
+        let arrivals = fresh.filter(\.showsBanner)
         guard bannersEnabled, !arrivals.isEmpty else { return }
         if arrivals.count <= Self.maxBannersPerCheck {
             for notification in arrivals {
@@ -325,6 +329,7 @@ final class LiveUpdates {
                 eventType: newest.eventType,
                 message: "\(newest.message) (+\(arrivals.count - 1) more)",
                 read: newest.read,
+                alert: newest.alert,
                 createdAt: newest.createdAt,
                 sharedBy: newest.sharedBy,
                 note: newest.note
