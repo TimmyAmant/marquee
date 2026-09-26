@@ -1,5 +1,5 @@
 import type { TitleMeta, TitleSidebarData } from "@/components/title-hero";
-import { findBlock } from "@/lib/requests/blocklist";
+import { findBlock, getBlockedTitleKeys } from "@/lib/requests/blocklist";
 import { getOpenIssuesFor } from "@/lib/issues";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
@@ -391,6 +391,10 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     fourK,
     openReports,
     blocked,
+    // Blocked single titles, for the Request buttons on the franchise and
+    // similar-titles rows. (A keyword block there is still refused by the
+    // server when pressed.)
+    blockedKeys: viewer.userId ? await getBlockedTitleKeys().catch(() => new Set<string>()) : new Set<string>(),
     runtimeMinutes,
     runtimeLabel,
     titleMeta,

@@ -46,6 +46,17 @@ export async function findBlock(mediaType: MediaType, tmdbId: number, raw?: unkn
   return hit ? { reason: hit.reason, keyword: hit.keyword } : null;
 }
 
+/** Every blocked single title as "movie:603" — cheap enough for a page of
+ * poster cards (keyword blocks need each title's TMDb record, so they're
+ * left to the server's refusal there). */
+export async function getBlockedTitleKeys(): Promise<Set<string>> {
+  const rows = await db
+    .select({ mediaType: requestBlocklist.mediaType, tmdbId: requestBlocklist.tmdbId })
+    .from(requestBlocklist)
+    .where(eq(requestBlocklist.kind, "title"));
+  return new Set(rows.map((r) => `${r.mediaType}:${r.tmdbId}`));
+}
+
 /** The refusal createRequest gives. Pure. */
 export function blockedMessage(block: BlockMatch): string {
   const base = "The admin isn't taking requests for this title.";
@@ -66,10 +77,20 @@ function cleanReason(value: unknown): string | null {
 export async function blockTitle(mediaType: MediaType, tmdbId: number, reason: unknown): Promise<CoreResult> {
   const title = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
   if (!title) return fail("upstream", "Couldn't look this title up with TMDb right now.");
-  await db
-    .insert(requestBlocklist)
-    .values({ kind: "title", mediaType, tmdbId, title: title.name, reason: cleanReason(reason) })
-    .onConflictDoNothing();
+  // Already blocked: blocking again just updates the reason.
+  const updated = await db
+    .update(requestBlocklist)
+    .set({ reason: cleanReason(reason) })
+    .where(
+      and(eq(requestBlocklist.kind, "title"), eq(requestBlocklist.mediaType, mediaType), eq(requestBlocklist.tmdbId, tmdbId)),
+    )
+    .returning({ id: requestBlocklist.id });
+  if (updated.length === 0) {
+    await db
+      .insert(requestBlocklist)
+      .values({ kind: "title", mediaType, tmdbId, title: title.name, reason: cleanReason(reason) })
+      .onConflictDoNothing();
+  }
   revalidatePathSafely(`/title/${mediaType}/${tmdbId}`);
   return { ok: true };
 }
@@ -87,10 +108,17 @@ export async function unblockTitle(mediaType: MediaType, tmdbId: number): Promis
 export async function blockKeyword(keyword: unknown, reason: unknown): Promise<CoreResult> {
   const value = normalizeKeyword(keyword);
   if (!value) return fail("invalid", "Enter a keyword or genre, like anime.");
-  await db
-    .insert(requestBlocklist)
-    .values({ kind: "keyword", keyword: value, reason: cleanReason(reason) })
-    .onConflictDoNothing();
+  const updated = await db
+    .update(requestBlocklist)
+    .set({ reason: cleanReason(reason) })
+    .where(and(eq(requestBlocklist.kind, "keyword"), eq(requestBlocklist.keyword, value)))
+    .returning({ id: requestBlocklist.id });
+  if (updated.length === 0) {
+    await db
+      .insert(requestBlocklist)
+      .values({ kind: "keyword", keyword: value, reason: cleanReason(reason) })
+      .onConflictDoNothing();
+  }
   return { ok: true };
 }
 

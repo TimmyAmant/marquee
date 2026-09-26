@@ -452,12 +452,27 @@ private struct TitleActionRow: View {
     let onReportProblem: () -> Void
 
     @Environment(AppModel.self) private var model
+    /// "Block requests" opened its reason field.
+    @State private var askingBlockReason = false
+    @State private var blockReason = ""
 
     var body: some View {
         let viewer = detail.viewer
         VStack(alignment: .leading, spacing: 8) {
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 StatusBadge(status: detail.library.status, large: true)
+
+                // components/add-to-library-button.tsx (0.41+): on the
+                // admin's blocklist, a member sees why instead of Request.
+                if !viewer.isAdmin, let block = viewer.block {
+                    Text(block.closedLine)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textMuted)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 32)
+                        .overlay(Capsule().strokeBorder(Theme.border))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 if viewer.alreadyRequested {
                     Text(viewer.pendingRequestLine)
@@ -544,6 +559,11 @@ private struct TitleActionRow: View {
                     .buttonStyle(OutlineButtonStyle(pill: .large))
                 }
 
+                // components/block-requests-button.tsx (0.41+).
+                if viewer.offersBlocking {
+                    blockControl(viewer.block)
+                }
+
                 if let tracking = viewer.arrTracking {
                     Button {
                         screen.searchNow()
@@ -595,6 +615,78 @@ private struct TitleActionRow: View {
             }
             if let message = screen.trackingMessage {
                 InlineMessage(text: message.text, isError: message.isError)
+            }
+            if askingBlockReason && viewer.offersBlocking && viewer.block == nil {
+                blockReasonField
+            }
+            if let error = screen.blockError {
+                InlineMessage(text: error)
+            }
+        }
+    }
+
+    /// "Block requests", "Unblock requests", or — when a blocked keyword did
+    /// it — "Requests blocked by “anime”" (unblocked from Settings).
+    @ViewBuilder
+    private func blockControl(_ block: API.TitleBlock?) -> some View {
+        if let keyword = block?.keyword.nonBlank {
+            Text("Requests blocked by “\(keyword)”")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textMuted)
+                .padding(.horizontal, 14)
+                .frame(height: 32)
+                .overlay(Capsule().strokeBorder(Theme.border))
+                .help("Remove the keyword in Settings › Account to unblock it.")
+        } else if block != nil {
+            Button {
+                screen.unblock()
+            } label: {
+                pillLabel("hand.raised.slash", screen.isBlockBusy ? "Unblocking…" : "Unblock requests", size: 13)
+            }
+            .buttonStyle(OutlineButtonStyle(pill: .large))
+            .disabled(screen.isBlockBusy)
+        } else if !askingBlockReason {
+            Button {
+                askingBlockReason = true
+            } label: {
+                pillLabel("hand.raised", "Block requests", size: 13)
+            }
+            .buttonStyle(OutlineButtonStyle(pill: .large))
+        }
+    }
+
+    /// The reason field "Block requests" opens, with Block and Cancel.
+    private var blockReasonField: some View {
+        HStack(spacing: 8) {
+            TextField("Why, for whoever asks (optional)", text: $blockReason)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .padding(.horizontal, 14)
+                .frame(height: 32)
+                .background(Theme.bg0, in: Capsule())
+                .overlay(Capsule().strokeBorder(Theme.border))
+                .frame(maxWidth: 360)
+                .onChange(of: blockReason) { _, value in
+                    if value.count > API.BlockTitleRequest.maxReasonLength {
+                        blockReason = String(value.prefix(API.BlockTitleRequest.maxReasonLength))
+                    }
+                }
+                .onSubmit(submitBlock)
+            Button(screen.isBlockBusy ? "Blocking…" : "Block", action: submitBlock)
+                .buttonStyle(OutlineButtonStyle(pill: .large))
+                .disabled(screen.isBlockBusy)
+            Button("Cancel") { askingBlockReason = false }
+                .buttonStyle(QuietButtonStyle())
+                .font(.system(size: 12))
+        }
+    }
+
+    private func submitBlock() {
+        let reason = blockReason
+        Task {
+            if await screen.block(reason: reason) {
+                askingBlockReason = false
+                blockReason = ""
             }
         }
     }

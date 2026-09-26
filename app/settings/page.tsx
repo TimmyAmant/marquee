@@ -7,6 +7,9 @@ import { PushSettings } from "./push-settings";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
 import { ImportMembers } from "./import-members";
+import { BlocklistSettings } from "./blocklist-settings";
+import { listBlocklist } from "@/lib/requests/blocklist";
+import { blocklistEntryDto } from "@/lib/api/mappers";
 import { PlexWatchlistCard } from "./plex-watchlist";
 import { getWatchlistState } from "@/lib/plex/watchlist";
 import { getMediaServerSignup, getSignInMethods } from "@/lib/auth/media-signin";
@@ -18,12 +21,14 @@ export default async function AccountSettingsPage() {
   if (!session?.user) redirect("/login");
 
   const isAdmin = session.user.role === "admin";
-  const [members, methods, mediaServerSignup, watchlist] = await Promise.all([
+  const [members, methods, mediaServerSignup, watchlist, blocklistRows] = await Promise.all([
     listHouseholdMembers(),
     getSignInMethods(),
     isAdmin ? getMediaServerSignup() : Promise.resolve(true),
     getWatchlistState(session.user.id),
+    isAdmin ? listBlocklist() : Promise.resolve([]),
   ]);
+  const blocklist = blocklistRows.map(blocklistEntryDto);
   const available = { plex: methods.plex, jellyfin: methods.jellyfin };
   // Your own row is always in the list (members see only theirs).
   const me = members.find((member) => member.id === session.user.id);
@@ -129,6 +134,14 @@ export default async function AccountSettingsPage() {
               </div>
             </>
           )}
+
+          <h2 className="mt-10 font-display text-xl text-text-primary">Request blocklist</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            Titles and keywords nobody can request. Block a single title from its page.
+          </p>
+          <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+            <BlocklistSettings entries={blocklist} />
+          </div>
         </>
       )}
     </div>

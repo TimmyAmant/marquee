@@ -12,6 +12,16 @@ import { seasonsNewestFirst } from "@/lib/title-meta";
 import { seasonPickerState } from "@/lib/requests/seasons";
 import { seasonsLabel } from "@/lib/requests/labels";
 
+/** The 4K row, with no "Request in 4K" while the title is blocked. */
+function fourKFor(
+  isAdmin: boolean,
+  fourK: Parameters<typeof fourKViewerState>[1],
+  blocked: { reason: string | null } | null,
+) {
+  const state = fourKViewerState(isAdmin, fourK);
+  return state && blocked ? { ...state, canRequest: false } : state;
+}
+
 export default async function TitlePage({
   params,
 }: {
@@ -37,6 +47,8 @@ export default async function TitlePage({
     arrTracking,
     fourK,
     openReports,
+    blocked,
+    blockedKeys,
     trailer,
     externalIds,
     cast,
@@ -110,7 +122,8 @@ export default async function TitlePage({
         }
         tvdbId={title.tvdbId}
         arrTracking={arrTracking}
-        fourK={viewer.session ? fourKViewerState(viewer.isAdmin, fourK) : null}
+        fourK={viewer.session ? fourKFor(viewer.isAdmin, fourK, blocked) : null}
+        blocked={viewer.session ? blocked : null}
         report={
           viewer.session && canReportProblem(libraryStatus.status, fourK?.status ?? null)
             ? { seasonNumbers: seasons.map((s) => s.season_number), openReports }
@@ -144,6 +157,7 @@ export default async function TitlePage({
             items={franchiseItems}
             statusMap={franchiseStatusMap}
             requestStatusMap={franchiseRequestStatusMap}
+            blockedKeys={blockedKeys}
             favoritedIds={franchiseFavoritedIds}
             showFavorite={Boolean(viewer.session)}
             arrConfigured={viewer.session ? arrConfigured : undefined}
@@ -157,6 +171,7 @@ export default async function TitlePage({
           items={similarItems}
           statusMap={similarStatusMap}
           requestStatusMap={similarRequestStatusMap}
+          blockedKeys={blockedKeys}
           favoritedIds={similarFavoritedIds}
           showFavorite={Boolean(viewer.session)}
           arrConfigured={viewer.session ? arrConfigured : undefined}

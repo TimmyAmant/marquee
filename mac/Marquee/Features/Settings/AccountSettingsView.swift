@@ -97,6 +97,8 @@ struct AccountSettingsView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardSurface()
                     }
+
+                    BlocklistSettingsSection()
                 }
             }
         }

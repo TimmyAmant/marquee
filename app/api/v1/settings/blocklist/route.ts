@@ -8,7 +8,7 @@ import type { BlocklistEntry, ListResponse, Ok } from "@/lib/api/types";
 
 const FORBIDDEN = "Only the admin can manage the blocklist.";
 
-/** Everything nobody may request: titles first, then keywords. */
+/** Everything nobody may request: keywords first, then titles. */
 export const GET = withApi(async (request): Promise<ListResponse<BlocklistEntry>> => {
   await requireApiAdmin(request, FORBIDDEN);
   return { results: (await listBlocklist()).map(blocklistEntryDto) };

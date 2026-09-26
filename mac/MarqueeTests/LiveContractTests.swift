@@ -373,6 +373,43 @@ final class LiveContractTests: XCTestCase {
         await member.session.logout()
     }
 
+    // MARK: 3¾. Request blocklist (0.41+)
+
+    func test3RequestBlocklist() async throws {
+        let member = try await memberSession()
+        let memberAPI = MarqueeAPI(client: member.session.client)
+
+        try await admin.titles.block(.movie, id: 438631, reason: "Already on Max.")
+        let blocked = try await memberAPI.titles.status(.movie, id: 438631)
+        XCTAssertEqual(blocked.viewer.block?.reason, "Already on Max.")
+        XCTAssertFalse(blocked.viewer.canRequest)
+        await assertThrowsAPIError(.forbidden) {
+            try await memberAPI.requests.create(.movie, id: 438631)
+        }
+        await assertThrowsAPIError(.forbidden) {
+            _ = try await memberAPI.blocklist.list()
+        }
+
+        try await admin.blocklist.blockKeyword("Anime", reason: "Not for this house.")
+        await assertThrowsAPIError(.invalid("Enter a keyword or genre, like anime.")) {
+            try await self.admin.blocklist.blockKeyword(" ")
+        }
+        let entries = try await admin.blocklist.list()
+        let keyword = try XCTUnwrap(entries.first { $0.kind == .keyword && $0.keyword == "anime" })
+        let title = try XCTUnwrap(entries.first { $0.titleID == API.TitleID(.movie, 438631) })
+        XCTAssertEqual(title.reason, "Already on Max.")
+
+        try await admin.titles.unblock(.movie, id: 438631)
+        let unblocked = try await memberAPI.titles.status(.movie, id: 438631)
+        XCTAssertEqual(unblocked.viewer.blocked, .notBlocked)
+        try await admin.blocklist.remove(keyword.id)
+        await assertThrowsAPIError(.notFound) { try await self.admin.blocklist.remove(keyword.id) }
+        let after = try await admin.blocklist.list()
+        XCTAssertFalse(after.contains { $0.id == keyword.id || $0.id == title.id })
+
+        await member.session.logout()
+    }
+
     // MARK: 4. Member permissions
 
     func test4MemberPermissions() async throws {
@@ -629,6 +666,7 @@ final class LiveContractTests: XCTestCase {
         try await assertRoundTrips(raw, "/requests/pending-count", API.Count.self)
         try await assertRoundTrips(raw, "/notifications", API.NotificationList.self)
         try await assertRoundTrips(raw, "/issues", API.IssueList.self)
+        try await assertRoundTrips(raw, "/settings/blocklist", API.ListResponse<API.BlocklistEntry>.self)
         try await assertRoundTrips(raw, "/calendar", API.CalendarMonthResponse.self)
         try await assertRoundTrips(raw, "/settings/activity", API.ListResponse<API.ActivityItem>.self)
         try await assertRoundTrips(raw, "/users", API.ListResponse<API.HouseholdMember>.self)
@@ -804,7 +842,7 @@ final class LiveContractTests: XCTestCase {
 /// Passes requests through to the real server while recording which endpoint
 /// each one hit, so the suite can report its own coverage.
 final class RecordingURLProtocol: URLProtocol {
-    /// method + path template for all 89 endpoints in Docs/api-v1.md.
+    /// method + path template for all 94 endpoints in Docs/api-v1.md.
     private static let endpoints: [(String, String)] = [
         ("GET", "/server-info"), ("POST", "/auth/login"), ("POST", "/auth/setup"), ("POST", "/auth/logout"),
         ("GET", "/me"), ("GET", "/badges"),
@@ -821,6 +859,8 @@ final class RecordingURLProtocol: URLProtocol {
         ("POST", "/requests/{uuid}/reject"), ("POST", "/requests/approve-all"),
         ("POST", "/titles/{type}/{id}/issues"), ("GET", "/issues"), ("POST", "/issues/{uuid}/resolve"),
         ("POST", "/issues/{uuid}/search"), ("DELETE", "/issues/{uuid}"),
+        ("POST", "/titles/{type}/{id}/block"), ("DELETE", "/titles/{type}/{id}/block"),
+        ("GET", "/settings/blocklist"), ("POST", "/settings/blocklist"), ("DELETE", "/settings/blocklist/{id}"),
         ("GET", "/notifications"), ("GET", "/notifications/unread-count"), ("POST", "/notifications/read-all"),
         ("POST", "/notifications/{uuid}/read"),
         ("GET", "/calendar"), ("GET", "/settings/activity"),

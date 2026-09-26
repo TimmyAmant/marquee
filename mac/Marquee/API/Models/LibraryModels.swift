@@ -107,6 +107,17 @@ extension API {
         let canReport: Bool?
         /// Your own open problem reports for this title (0.38+).
         let openReports: Int?
+        /// The request blocklist (0.41+). When `.blocked`, `canRequest`,
+        /// `canRequestSeasons` and `fourK.canRequest` are already false. nil
+        /// from an older server, which can't block (no admin buttons then).
+        let blocked: BlockState?
+
+        /// On the admin's blocklist: the member's "Requests are closed" pill,
+        /// the admin's "Unblock requests".
+        var block: TitleBlock? { blocked?.block }
+
+        /// The admin's "Block requests" / "Unblock requests" is on offer.
+        var offersBlocking: Bool { isAdmin && blocked != nil }
 
         /// Show the "Report a problem" button.
         var showsReportProblem: Bool { canReport == true }

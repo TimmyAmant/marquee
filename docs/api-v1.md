@@ -646,7 +646,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "arrTracking": { "arrId": 412, "monitored": true },
     "fourK": { "status": "untracked", "requestStatus": null, "canRequest": false, "canAdd": true },
     "canReport": false,
-    "openReports": 0
+    "openReports": 0,
+    "blocked": null
   },
   "seasons": [],
   "cast": [
@@ -836,7 +837,8 @@ request / monitor / favorite.
     "arrTracking": { "arrId": 412, "monitored": true },
     "fourK": null,
     "canReport": false,
-    "openReports": 0
+    "openReports": 0,
+    "blocked": { "reason": "Already on Max.", "keyword": null }
   }
 }
 ```
@@ -1266,6 +1268,47 @@ Approves every pending request one at a time; failures stay pending.
 `message` is null when nothing failed. If requests were pending and **none**
 could be approved, the first failure is returned as the error response instead
 (same codes as `approve`). No pending requests → `approvedCount: 0`.
+
+### Request blocklist (0.41+)
+
+What nobody may request: single titles (blocked from their page) and TMDb
+keywords or genres ("anime", "reality", "animation" — matched against the
+title's TMDb keywords and genres, case-insensitively). A request for one —
+regular, seasons, 4K, or from a Plex Watchlist (then skipped for good) — is
+refused with `403 forbidden` "The admin isn't taking requests for this
+title." plus the admin's reason, if any. The admin can still add a blocked
+title themselves. Requests made before a title was blocked stay in the
+queue. Genre names differ between movies and TV on TMDb ("Science Fiction"
+vs "Sci-Fi & Fantasy"), so block both to cover both. Blocking something
+already on the list just updates its reason. A keyword block needs the
+title's TMDb record; if TMDb can't be reached for a title Marquee hasn't
+seen before, the keyword can't be checked and the request goes through.
+
+The title's `viewer.blocked` is `{ "reason": "Already on Max.", "keyword":
+null }` when it's blocked (`keyword` set when a keyword did it), else null;
+`canRequest`, `canRequestSeasons` and `fourK.canRequest` are then false.
+Website: members see a pill "Requests are closed for this title — Already on
+Max." instead of Request; the admin gets "Block requests" (opening a reason
+field and "Block") / "Unblock requests", or "Requests blocked by “anime”"
+when a keyword did it.
+
+- **`POST /titles/{type}/{tmdbId}/block`** — admin. Body (optional) `{
+  "reason": "…" }` (≤ 200 characters). `{ "ok": true }`.
+- **`DELETE /titles/{type}/{tmdbId}/block`** — admin. `{ "ok": true }`.
+- **`GET /settings/blocklist`** — admin. `{ "results": [ { "id": "…",
+  "kind": "title", "mediaType": "movie", "tmdbId": 438631, "title": "Dune",
+  "keyword": null, "reason": "Already on Max.", "createdAt": "…" }, { "id":
+  "…", "kind": "keyword", "mediaType": null, "tmdbId": null, "title": null,
+  "keyword": "anime", "reason": null, "createdAt": "…" } ] }` (keywords
+  first, then titles).
+- **`POST /settings/blocklist`** — admin. `{ "keyword": "anime", "reason":
+  "…" }`. `400` "Enter a keyword or genre, like anime.".
+- **`DELETE /settings/blocklist/{id}`** — admin. `404` "Not on the
+  blocklist.".
+
+Website: Settings → Account (admin), "Request blocklist": the list (titles
+link to their page, keywords read "Keyword: anime", each with Remove) and a
+form "Block a keyword or genre" with an optional reason.
 
 ### Problem reports (0.38+)
 

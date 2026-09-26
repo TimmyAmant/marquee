@@ -717,6 +717,110 @@
                 </Border>
             </StackPanel>
 
+            <!--
+              Request blocklist (app/settings/blocklist-settings.tsx, 0.41+):
+              titles blocked from their page and TMDb keywords/genres nobody
+              may request, each with Remove, and a form to block a keyword.
+              Admin-only, and hidden on an older server.
+            -->
+            <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Blocklist.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Request blocklist" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="What nobody can request. You can still add these yourself."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.Blocklist.HasError, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.Blocklist.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Severity="Error"
+                    Message="{x:Bind ViewModel.Blocklist.Error, Mode=OneWay}"
+                    IsClosable="False" />
+                <Border Style="{StaticResource SettingsCard}" Padding="0">
+                    <StackPanel>
+                        <TextBlock
+                            Text="Nothing blocked. Block a title from its page, or a keyword below."
+                            Visibility="{x:Bind ViewModel.Blocklist.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Margin="20,16"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            TextWrapping="Wrap" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Blocklist.Rows, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Vertical" Spacing="0" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:BlocklistRow">
+                                    <StackPanel>
+                                        <Border
+                                            Height="1"
+                                            Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                            Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+                                        <Grid Padding="20,10" ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <HyperlinkButton
+                                                    Content="{x:Bind Label}"
+                                                    Command="{x:Bind Open}"
+                                                    CommandParameter="{x:Bind}"
+                                                    Padding="0"
+                                                    Visibility="{x:Bind IsTitle, Converter={StaticResource BoolToVisibility}}" />
+                                                <TextBlock
+                                                    Text="{x:Bind Label}"
+                                                    Visibility="{x:Bind IsKeyword, Converter={StaticResource BoolToVisibility}}"
+                                                    Style="{StaticResource BodyTextBlockStyle}"
+                                                    TextWrapping="NoWrap"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Text="{x:Bind ReasonLine}"
+                                                    Visibility="{x:Bind ReasonLine, Converter={StaticResource StringToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    TextWrapping="NoWrap"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <Button
+                                                Grid.Column="1"
+                                                Content="Remove"
+                                                Command="{x:Bind Remove}"
+                                                CommandParameter="{x:Bind}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <StackPanel Padding="20,16" Spacing="12">
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="Block a keyword or genre"
+                                    PlaceholderText="e.g. anime, reality, horror"
+                                    Text="{x:Bind ViewModel.Blocklist.Keyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="Any title with this TMDb keyword or genre can’t be requested (you can still add it yourself)."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <TextBox
+                                Header="Reason (optional, shown to whoever asks)"
+                                MaxLength="200"
+                                Text="{x:Bind ViewModel.Blocklist.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button
+                                Content="{x:Bind ViewModel.Blocklist.BlockLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Blocklist.BlockCommand}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
             <!-- Server -->
             <TextBlock Text="Server" Style="{StaticResource SubtitleTextBlockStyle}" />
             <Border Style="{StaticResource SettingsCard}">
