@@ -23,11 +23,11 @@ public sealed class DiscoverEndpoints(MarqueeApi.Transport transport)
 
     /// <summary>
     /// <c>GET /discover/lists/{list}?page=</c>: one page of a shelf's full
-    /// list (0.43+). Continue while <see cref="DiscoverListPage.HasMorePages"/>.
+    /// list (0.42.3+). Continue while <see cref="DiscoverListResults.HasMorePages"/>.
     /// An unknown list is NotFound.
     /// </summary>
-    public Task<DiscoverListPage> ListPageAsync(DiscoverListKind list, int page = 1, CancellationToken ct = default) =>
-        transport.GetAsync<DiscoverListPage>(
+    public Task<DiscoverListResults> ListPageAsync(DiscoverListKind list, int page = 1, CancellationToken ct = default) =>
+        transport.GetAsync<DiscoverListResults>(
             $"/discover/lists/{MarqueeApi.Segment(list)}",
             new Dictionary<string, string?> { ["page"] = page.ToString(CultureInfo.InvariantCulture) },
             MarqueeApi.Timeouts.Tmdb,

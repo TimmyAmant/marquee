@@ -129,7 +129,7 @@ public sealed record DiscoverShelves
 
     /// <summary>
     /// Where each shelf's "See all" goes, keyed like the shelves
-    /// (<see cref="DiscoverShelfKey"/>). 0.43+; an older server leaves it
+    /// (<see cref="DiscoverShelfKey"/>). 0.42.3+; an older server leaves it
     /// out. Read it through <see cref="DiscoverSeeAll.Resolve"/>, which
     /// supplies the older server's fallback.
     /// </summary>
@@ -176,7 +176,7 @@ public readonly record struct DiscoverListKind(string Value) : IOpenEnum<Discove
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    /// <summary>The heading until the server's own <see cref="DiscoverListPage.Title"/> arrives.</summary>
+    /// <summary>The heading until the server's own <see cref="DiscoverListResults.Title"/> arrives.</summary>
     public string Title =>
         this == Trending ? "Trending"
         : this == RecentlyAdded ? "Recently Added"
@@ -255,7 +255,7 @@ public static class DiscoverSeeAll
 /// list, <see cref="Paginated{T}"/>'s fields plus the list and its title.
 /// Continue while <see cref="HasMorePages"/>, skipping titles already shown.
 /// </summary>
-public sealed record DiscoverListPage
+public sealed record DiscoverListResults
 {
     public required DiscoverListKind List { get; init; }
 

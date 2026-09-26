@@ -3,7 +3,7 @@ import Foundation
 @testable import Marquee
 
 /// Where each Discover shelf's "See all" chevron goes (`GET /discover`'s
-/// `seeAll`), including against a server older than 0.43 that omits it.
+/// `seeAll`), including against a server older than 0.42.3 that omits it.
 struct DiscoverSeeAllTests {
     private func fixture(_ name: String) throws -> Data {
         let url = Bundle(for: FixtureAnchor.self).resourceURL!.appendingPathComponent("Fixtures/api/\(name).json")

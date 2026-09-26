@@ -17,7 +17,7 @@ public sealed class DiscoverFixtureTests
         Fixtures.Decode<CompanyCard>("company-card");
         Fixtures.Decode<NetworkCard>("network-card");
         Fixtures.Decode<DiscoverShelves>("discover");
-        Fixtures.Decode<DiscoverListPage>("discover-list");
+        Fixtures.Decode<DiscoverListResults>("discover-list");
         Fixtures.Decode<Paginated<TitleCard>>("browse-page");
         Fixtures.Decode<BrowseExtras>("browse-extras");
         Fixtures.Decode<TitleId>("surprise");
@@ -210,7 +210,7 @@ public sealed class DiscoverFixtureTests
     [Fact]
     public void DiscoverListPageValues()
     {
-        var page = Fixtures.Decode<DiscoverListPage>("discover-list");
+        var page = Fixtures.Decode<DiscoverListResults>("discover-list");
         Assert.Equal(DiscoverListKind.Trending, page.List);
         Assert.Equal("Trending", page.Title);
         Assert.Equal(1, page.Page);

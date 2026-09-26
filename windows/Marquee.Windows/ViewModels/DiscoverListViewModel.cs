@@ -215,7 +215,7 @@ public sealed partial class DiscoverListViewModel : ObservableObject
             var appended = 0;
             do
             {
-                DiscoverListPage page;
+                DiscoverListResults page;
                 try
                 {
                     page = await model.Api.Discover.ListPageAsync(list, nextPage, token);
