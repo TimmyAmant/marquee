@@ -2,7 +2,7 @@
 <!--
   App-wide resources: the WinUI control styles, the converters every page
   uses, the status badge palette (the five library-status colors: the Mac
-  app's Theme.owned/tracked/missing/soon and the website's --marquee-* tokens)
+  app's Theme.owned/tracked/missing/soon and the website's marquee-missing/soon CSS tokens)
   and the navigation's glass and text colors (mac/Docs/DESIGN_TARGET.md,
   "Navigation"), in light, dark and high contrast. No RequestedTheme is
   set, so light/dark follows Windows.
