@@ -414,12 +414,15 @@ extension API {
         /// Open problem reports (0.38+, admin; always 0 for members). nil
         /// from an older server.
         var openIssues: Int? = nil
+        /// Requests listed under "Can't find" (0.46+, reviewers; always 0 for
+        /// members). nil from an older server.
+        var notFoundRequests: Int? = nil
 
         static let zero = Badges(unreadNotifications: 0, pendingRequests: 0)
 
-        /// The Requests rail badge: requests and problem reports both wait
-        /// on the Requests page (components/sidebar.tsx's sum).
-        var requestsPageCount: Int { pendingRequests + (openIssues ?? 0) }
+        /// The Requests rail badge: requests, problem reports and "Can't find"
+        /// all wait on the Requests page (components/sidebar.tsx's sum).
+        var requestsPageCount: Int { pendingRequests + (openIssues ?? 0) + (notFoundRequests ?? 0) }
 
         /// The bell's cap on the website: "9+".
         var bellLabel: String? {

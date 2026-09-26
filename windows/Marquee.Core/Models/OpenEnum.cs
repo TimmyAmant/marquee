@@ -258,7 +258,10 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
     /// <summary>The admin marked your problem report fixed (0.38+).</summary>
     public static readonly NotificationEventType IssueResolved = new("issue_resolved");
 
-    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved];
+    /// <summary>Sonarr/Radarr hasn't found an approved request (0.46+, to the admin and trusted members).</summary>
+    public static readonly NotificationEventType RequestNotFound = new("request_not_found");
+
+    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved, RequestNotFound];
     public static NotificationEventType FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -273,6 +276,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == RequestRejected) return "👎";
             if (this == IssueReported) return "⚠️";
             if (this == IssueResolved) return "🛠️";
+            if (this == RequestNotFound) return "🔍";
             return "🔔";
         }
     }
@@ -292,6 +296,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == RequestRejected) return "Request declined";
             if (this == IssueReported) return "Problem reported";
             if (this == IssueResolved) return "Problem fixed";
+            if (this == RequestNotFound) return "Can't find it";
             return "Marquee";
         }
     }
@@ -467,10 +472,14 @@ public readonly record struct JobId(string Value) : IOpenEnum<JobId>
     public static readonly JobId JellyfinSync = new("jellyfin-sync");
     public static readonly JobId ArrSync = new("arr-sync");
     public static readonly JobId PlexWatchlist = new("plex-watchlist");
+
+    /// <summary>"Can't Find Check" (0.46+): flags approved requests Sonarr/Radarr hasn't found.</summary>
+    public static readonly JobId NotFoundCheck = new("not-found-check");
+
     public static readonly JobId DiskSpaceSnapshot = new("disk-space-snapshot");
     public static readonly JobId Cleanup = new("cleanup");
 
-    public static IReadOnlyList<JobId> Known { get; } = [PlexSync, JellyfinSync, ArrSync, PlexWatchlist, DiskSpaceSnapshot, Cleanup];
+    public static IReadOnlyList<JobId> Known { get; } = [PlexSync, JellyfinSync, ArrSync, PlexWatchlist, NotFoundCheck, DiskSpaceSnapshot, Cleanup];
     public static JobId FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;

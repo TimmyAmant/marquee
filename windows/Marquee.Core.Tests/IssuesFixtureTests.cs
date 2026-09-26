@@ -122,7 +122,8 @@ public sealed class IssuesFixtureTests
         var badges = Fixtures.Decode<Badges>("badges");
         Assert.Equal(1, badges.PendingRequests);
         Assert.Equal(1, badges.OpenIssues);
-        Assert.Equal(2, badges.RequestsBadge);
+        // 0.46+ counts "Can't find" too.
+        Assert.Equal(3, badges.RequestsBadge);
 
         // Before 0.38 there is no openIssues: the badge is the pending count.
         var older = Json.Decode<Badges>("""{"unreadNotifications":2,"pendingRequests":3}""");

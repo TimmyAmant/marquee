@@ -72,6 +72,7 @@ public sealed class ReviewedRow : RequestRowBase
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
         SeasonsLine = request.DetailText;
         AddedToLine = request.AddedToLine ?? "";
+        ShowsNotFound = request.IsNotFound;
     }
 
     /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie.</summary>
@@ -84,6 +85,9 @@ public sealed class ReviewedRow : RequestRowBase
 
     /// <summary>"Added to Radarr 2" under an Approved badge (0.43+); empty when unknown.</summary>
     public string AddedToLine { get; }
+
+    /// <summary>The red "Can't find" badge next to "Approved" (0.46+).</summary>
+    public bool ShowsNotFound { get; }
 }
 
 /// <summary>
@@ -400,6 +404,155 @@ public sealed partial class IssueRow : ObservableObject
 }
 
 /// <summary>
+/// components/not-found-section.tsx's card (0.46+): an approved request
+/// Sonarr/Radarr hasn't found, with "Search again", "Open in Radarr" (when
+/// the server knows the page) and "Mark as found".
+/// </summary>
+public sealed partial class NotFoundRow : ObservableObject
+{
+    private readonly RequestsViewModel owner;
+    private readonly Uri? posterUrl;
+    private readonly Uri? arrLink;
+    private readonly string searchingMessage;
+    private readonly string arrKindName;
+    private ImageSource? poster;
+
+    /// <summary>"search" or "dismiss" while that call is in flight.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanAct))]
+    [NotifyPropertyChangedFor(nameof(SearchLabel))]
+    [NotifyPropertyChangedFor(nameof(DismissLabel))]
+    private string? busy;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
+    private string? error;
+
+    /// <summary>"Radarr is searching again…" after Search again.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInfo))]
+    private string? info;
+
+    public NotFoundRow(RequestsViewModel owner, NotFoundRequest request, System.Windows.Input.ICommand openTitle)
+    {
+        this.owner = owner;
+        Id = request.Id;
+        Title = request.Title;
+        TitleId = request.TitleId;
+        SeasonsLine = request.DetailText;
+        MetaLine = request.MetaLine(DateTimeOffset.Now, Format.ShortDate(request.NotFoundSince));
+        HintLine = request.HintText;
+        OpenInArrLabel = request.OpenInArrLabel;
+        arrLink = request.ArrLink;
+        searchingMessage = request.SearchingMessage;
+        arrKindName = request.ArrKindName;
+        posterUrl = request.PosterPath.Url(ImageSize.W92);
+        Open = openTitle;
+    }
+
+    public Guid Id { get; }
+    public string Title { get; }
+    public TitleId TitleId { get; }
+
+    /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") next to the title; empty for neither.</summary>
+    public string SeasonsLine { get; }
+
+    /// <summary>"Susan · can't find for 3 days (since Sep 18, 2026) · Radarr".</summary>
+    public string MetaLine { get; }
+
+    /// <summary>The server's tip under the details.</summary>
+    public string HintLine { get; }
+
+    /// <summary>"Open in Radarr" / "Open in Sonarr".</summary>
+    public string OpenInArrLabel { get; }
+
+    /// <summary>The server knows the title's page in Sonarr/Radarr.</summary>
+    public bool CanOpenInArr => arrLink != null;
+
+    public bool HasPoster => posterUrl != null;
+    public ImageSource? Poster => posterUrl == null ? null : poster ??= new BitmapImage(posterUrl);
+    public System.Windows.Input.ICommand Open { get; }
+
+    public bool CanAct => Busy == null;
+    public bool HasError => Error != null;
+    public bool HasInfo => Info != null;
+    public string SearchLabel => Busy == "search" ? "Searching…" : "Search again";
+    public string DismissLabel => Busy == "dismiss" ? "Saving…" : "Mark as found";
+
+    /// <summary><c>POST /requests/{id}/not-found/search</c>: stays listed until something is grabbed.</summary>
+    [RelayCommand]
+    private Task SearchAgainAsync() => RunAsync("search", api => api.Requests.SearchNotFoundAsync(Id), searchingMessage);
+
+    /// <summary><c>POST /requests/{id}/not-found/dismiss</c>: off the list for good.</summary>
+    [RelayCommand]
+    private Task DismissAsync() => RunAsync("dismiss", api => api.Requests.DismissNotFoundAsync(Id));
+
+    /// <summary>
+    /// The title's page in Sonarr/Radarr, in the browser. The link is the
+    /// admin's own Sonarr/Radarr address, which is usually plain http on the
+    /// home network, so http is let through here; no other scheme ever is
+    /// (see <see cref="NotFoundRequest.ArrLink"/>).
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenInArrAsync()
+    {
+        if (arrLink == null)
+        {
+            return;
+        }
+        try
+        {
+            await global::Windows.System.Launcher.LaunchUriAsync(arrLink);
+        }
+        catch (Exception failure) when (failure is ArgumentException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            Error = $"Couldn't open {arrKindName}.";
+        }
+    }
+
+    /// <summary>
+    /// Runs one action. Mark as found drops the row at once (the reload the
+    /// mutation triggers brings the server's view); a request that's already
+    /// off the list ("That request isn't in Can't find any more.") reloads
+    /// rather than showing an error.
+    /// </summary>
+    private async Task RunAsync(string label, Func<MarqueeApi, Task> action, string? after = null)
+    {
+        if (Busy != null)
+        {
+            return;
+        }
+        Busy = label;
+        Error = null;
+        Info = null;
+        try
+        {
+            await action(owner.Api);
+            Info = after;
+            if (label == "dismiss")
+            {
+                owner.Settle(this);
+            }
+        }
+        catch (ApiException failure)
+        {
+            if (failure.Kind == ApiErrorKind.NotFound)
+            {
+                owner.ReloadIssues();
+            }
+            else
+            {
+                Error = failure.Message;
+            }
+        }
+        finally
+        {
+            Busy = null;
+        }
+    }
+}
+
+/// <summary>
 /// app/requests/page.tsx: a member's own requests, or the admin's review
 /// queue plus "Past requests". Reloads on F5, after any request changed
 /// (this app's own approvals included, so a settled row's replacement
@@ -429,6 +582,7 @@ public sealed partial class RequestsViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMember))]
     [NotifyPropertyChangedFor(nameof(IssuesHeading))]
+    [NotifyPropertyChangedFor(nameof(ShowsNotFound))]
     private bool reviews;
 
     // MARK: Member
@@ -506,6 +660,17 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>The server's preset reasons (empty on a server before 0.28.0; the dialog then uses its own list).</summary>
     public IReadOnlyList<string> RejectionReasons { get; private set; } = [];
 
+    // MARK: Can't find (GET /requests/not-found, 0.46+; components/not-found-section.tsx)
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsNotFound))]
+    [NotifyPropertyChangedFor(nameof(NotFoundCountLabel))]
+    private IReadOnlyList<NotFoundRow> notFound = [];
+
+    /// <summary>"Approved and released, but Sonarr/Radarr still has nothing 24 hours or more after approval. …"</summary>
+    [ObservableProperty]
+    private string notFoundExplanation = "";
+
     // MARK: Problem reports (GET /issues, 0.38+; components/issues-section.tsx)
 
     [ObservableProperty]
@@ -557,6 +722,12 @@ public sealed partial class RequestsViewModel : ObservableObject
 
     /// <summary>The "Past requests" heading: there are rows, or a failure to report.</summary>
     public bool ShowsHistorySection => HasHistory || ShowsHistoryError;
+
+    /// <summary>"Can't find" shows for reviewers while anything is listed; an older server has none.</summary>
+    public bool ShowsNotFound => Reviews && NotFound.Count > 0;
+
+    /// <summary>The count next to the "Can't find" heading.</summary>
+    public string NotFoundCountLabel => NotFound.Count.ToString(CultureInfo.CurrentCulture);
 
     /// <summary>The section shows once there's any report, open or fixed; an older server has none.</summary>
     public bool ShowsIssues => OpenIssues.Count > 0 || FixedIssues.Count > 0;
@@ -616,11 +787,16 @@ public sealed partial class RequestsViewModel : ObservableObject
             await LoadQueueAsync(token);
             if (!token.IsCancellationRequested)
             {
+                await LoadNotFoundAsync(token);
+            }
+            if (!token.IsCancellationRequested)
+            {
                 await LoadHistoryAsync(token);
             }
         }
         else
         {
+            NotFound = [];
             await LoadMineAsync(token);
             if (!token.IsCancellationRequested)
             {
@@ -663,6 +839,54 @@ public sealed partial class RequestsViewModel : ObservableObject
             }
         }
     }
+
+    /// <summary>
+    /// "Can't find" (0.46+, reviewers). An older server has no
+    /// <c>/requests/not-found</c> (404): the section stays hidden. Any other
+    /// failure keeps what's shown; the next reload tries again. A row still
+    /// listed keeps its state ("Radarr is searching again…") across reloads.
+    /// </summary>
+    private async Task LoadNotFoundAsync(CancellationToken token)
+    {
+        try
+        {
+            var fresh = await model.Api.Requests.NotFoundAsync(token);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            var existing = NotFound.ToDictionary(row => row.Id);
+            NotFound = fresh.Results
+                .Select(request => existing.TryGetValue(request.Id, out var row)
+                    ? row
+                    : new NotFoundRow(this, request, OpenNotFoundTitleCommand))
+                .ToList();
+            NotFoundExplanation = fresh.Explanation;
+        }
+        catch (ApiException error)
+        {
+            if (error.IsCancellation || token.IsCancellationRequested)
+            {
+                return;
+            }
+            if (error.Kind is ApiErrorKind.NotFound or ApiErrorKind.Forbidden)
+            {
+                NotFound = [];
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void OpenNotFoundTitle(NotFoundRow? row)
+    {
+        if (row != null)
+        {
+            model.OpenTitle(row.TitleId);
+        }
+    }
+
+    /// <summary>"Mark as found" succeeded: drop the row now; the reload the mutation triggers brings the server's view.</summary>
+    internal void Settle(NotFoundRow row) => NotFound = NotFound.Where(candidate => candidate != row).ToList();
 
     /// <summary>A row's report was already gone: the server's view replaces the list.</summary>
     internal void ReloadIssues()

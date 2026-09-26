@@ -244,6 +244,15 @@ public sealed record ReviewedRequest
     /// <summary>"Added to Radarr 2" under the badge; null when unknown or that server was removed.</summary>
     public string? AddedToLine => AddedTo?.ServerName.NonBlank() is { } name ? $"Added to {name}" : null;
 
+    /// <summary>
+    /// When Sonarr/Radarr's failure to find it put it under "Can't find"
+    /// (0.46+); null otherwise, and from an older server.
+    /// </summary>
+    public DateTimeOffset? NotFoundSince { get; init; }
+
+    /// <summary>The red "Can't find" badge next to "Approved".</summary>
+    public bool IsNotFound => Status == RequestStatus.Approved && NotFoundSince != null;
+
     public TitleId TitleId => new(MediaType, TmdbId);
 }
 
@@ -259,6 +268,153 @@ public sealed record AddedTo
     public string? RootFolderPath { get; init; }
     public IReadOnlyList<int> Tags { get; init; } = [];
     public SeriesType? SeriesType { get; init; }
+}
+
+// MARK: Can't find (0.46+)
+
+/// <summary>
+/// lib/requests/not-found-rules.ts's words for a "Can't find" row, kept here
+/// so they can be tested without the UI.
+/// </summary>
+public static class NotFoundLabels
+{
+    /// <summary>
+    /// notFoundAgeLabel: how long it has been missing. "under an hour",
+    /// "1 hour", "N hours" below 48 hours, then "N days" (whole days, rounded
+    /// down). A <paramref name="since"/> in the future counts as now.
+    /// </summary>
+    public static string AgeLabel(DateTimeOffset since, DateTimeOffset now)
+    {
+        var hours = (long)Math.Max(0, Math.Floor((now - since).TotalHours));
+        if (hours < 1)
+        {
+            return "under an hour";
+        }
+        if (hours < 48)
+        {
+            return hours == 1 ? "1 hour" : $"{hours.ToString(CultureInfo.InvariantCulture)} hours";
+        }
+        return $"{(hours / 24).ToString(CultureInfo.InvariantCulture)} days";
+    }
+
+    /// <summary>notFoundHint: the tip under the actions, for a server that didn't send one.</summary>
+    public static string Hint(MediaType mediaType) => mediaType == MediaType.Movie
+        ? "In Radarr, Interactive Search on the movie lists every release the indexers have, so you can pick one by hand."
+        : "In Sonarr, Interactive Search on a season or episode lists every release the indexers have, so you can pick one by hand.";
+}
+
+/// <summary>The Sonarr/Radarr a "Can't find" request was added to.</summary>
+public sealed record NotFoundServer
+{
+    /// <summary>Null when unknown.</summary>
+    public string? Id { get; init; }
+
+    /// <summary>Null when unknown.</summary>
+    public string? Name { get; init; }
+
+    /// <summary>"sonarr" or "radarr".</summary>
+    public ArrProvider? Kind { get; init; }
+}
+
+/// <summary>
+/// One row of <c>GET /requests/not-found</c> (0.46+): an approved, released
+/// request Sonarr/Radarr still has nothing for. components/not-found-section.tsx.
+/// </summary>
+public sealed record NotFoundRequest
+{
+    public required Guid Id { get; init; }
+    public required MediaType MediaType { get; init; }
+    public required int TmdbId { get; init; }
+    public required string Title { get; init; }
+    public ImageRef? PosterPath { get; init; }
+
+    /// <summary>The requested seasons (TV); null for a whole series or a movie.</summary>
+    public IReadOnlyList<int>? Seasons { get; init; }
+
+    public string? SeasonsLabel { get; init; }
+    public bool Is4k { get; init; }
+    public required RequestPerson RequestedBy { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? ReviewedAt { get; init; }
+
+    /// <summary>When it was first flagged.</summary>
+    public required DateTimeOffset NotFoundSince { get; init; }
+
+    public NotFoundServer? Server { get; init; }
+
+    /// <summary>The title's page in Sonarr/Radarr, for "Open in Radarr"; null when unknown.</summary>
+    public string? ArrUrl { get; init; }
+
+    /// <summary>The tip to show under the actions.</summary>
+    public string? Hint { get; init; }
+
+    /// <summary>What the requests screens print under the title: the server's label, else one made here; empty for none.</summary>
+    public string SeasonsText => SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons) ?? "";
+
+    /// <summary>"Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
+    public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
+
+    /// <summary>"Radarr" or "Sonarr": the server's kind, else the one this media type goes to.</summary>
+    public string ArrKindName => Server?.Kind is { IsKnown: true } kind ? kind.DisplayName : MediaType.ArrName;
+
+    /// <summary>"Open in Radarr" / "Open in Sonarr".</summary>
+    public string OpenInArrLabel => $"Open in {ArrKindName}";
+
+    /// <summary>
+    /// <see cref="ArrUrl"/> as a link to open: an absolute http or https
+    /// address only (Sonarr and Radarr usually live on plain http at home),
+    /// never any other scheme. Null otherwise.
+    /// </summary>
+    public Uri? ArrLink =>
+        ArrUrl.NonBlank() is { } text
+        && Uri.TryCreate(text.Trim(), UriKind.Absolute, out var url)
+        && (url.Scheme == Uri.UriSchemeHttp || url.Scheme == Uri.UriSchemeHttps)
+            ? url
+            : null;
+
+    /// <summary>The server's tip, else the website's own.</summary>
+    public string HintText => Hint.NonBlank() ?? NotFoundLabels.Hint(MediaType);
+
+    /// <summary>After "Search again": "Radarr is searching again…" (the server's name when known).</summary>
+    public string SearchingMessage => $"{Server?.Name.NonBlank() ?? ArrKindName} is searching again…";
+
+    /// <summary>
+    /// "Susan · can't find for 3 days (since Sep 18, 2026) · Radarr": who
+    /// asked, how long it's been missing, and the server when known.
+    /// <paramref name="sinceDate"/> is <see cref="NotFoundSince"/> as the
+    /// screen prints dates.
+    /// </summary>
+    public string MetaLine(DateTimeOffset now, string sinceDate) =>
+        string.Join(" · ", new[]
+        {
+            RequestedBy.Label,
+            $"can't find for {NotFoundLabels.AgeLabel(NotFoundSince, now)} (since {sinceDate})",
+            Server?.Name.NonBlank(),
+        }.OfType<string>());
+
+    public TitleId TitleId => new(MediaType, TmdbId);
+}
+
+/// <summary><c>GET /requests/not-found</c> (0.46+): longest-missing first.</summary>
+public sealed record NotFoundRequests
+{
+    /// <summary>The wait after approval before a request is listed (default 24).</summary>
+    public int AfterHours { get; init; } = 24;
+
+    public required IReadOnlyList<NotFoundRequest> Results { get; init; }
+
+    /// <summary>The section's explanation under its heading.</summary>
+    public string Explanation =>
+        $"Approved and released, but Sonarr/Radarr still has nothing {AfterHours.ToString(CultureInfo.InvariantCulture)} hour{(AfterHours == 1 ? "" : "s")} or more after approval. Most often no indexer has a copy yet.";
+}
+
+/// <summary><c>GET</c>/<c>PUT /settings/not-found</c> (0.46+): the Can't Find Check's wait, 1 to 720 hours.</summary>
+public sealed record NotFoundSettings
+{
+    public const int MinAfterHours = 1;
+    public const int MaxAfterHours = 720;
+
+    public required int AfterHours { get; init; }
 }
 
 /// <summary><c>POST /requests/approve-all</c>.</summary>

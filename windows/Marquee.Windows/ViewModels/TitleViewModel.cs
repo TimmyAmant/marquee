@@ -210,6 +210,8 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(ShowsProblemReported),
         nameof(ReportButtonLabel),
         nameof(ShowsBlockedPill),
+        nameof(ShowsNotFound),
+        nameof(NotFoundTooltip),
         nameof(BlockedLine),
         nameof(ShowsBlockedByKeyword),
         nameof(BlockedKeywordLine),
@@ -532,6 +534,16 @@ public sealed partial class TitleViewModel : ObservableObject
         OnPropertyChanged(nameof(ReportButtonLabel));
         await RefreshStatusAsync();
     }
+
+    // MARK: Can't find (viewer.notFoundSince, 0.46+, reviewers only; components/title-hero.tsx)
+
+    /// <summary>The red "Can't find" badge next to the library status: Sonarr/Radarr hasn't found the approved request.</summary>
+    public bool ShowsNotFound => Viewer?.NotFoundSince != null;
+
+    /// <summary>"Sonarr/Radarr hasn't found it since Sep 18, 2026".</summary>
+    public string NotFoundTooltip => Viewer?.NotFoundSince is { } since
+        ? $"Sonarr/Radarr hasn't found it since {Format.ShortDate(since)}. See Can't find on the Requests page."
+        : "";
 
     // MARK: Request blocklist (viewer.blocked, 0.41+; components/block-requests-button.tsx)
 

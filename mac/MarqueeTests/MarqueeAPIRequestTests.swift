@@ -152,6 +152,14 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/manual-approve", response: "ok") { try await $0.requests.manuallyApprove(request) },
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject", response: "ok") { try await $0.requests.reject(request) },
             Case(method: "POST", path: "/requests/approve-all", response: "requests-approve-all") { _ = try await $0.requests.approveAll() },
+            // Can't find (0.46+)
+            Case(method: "GET", path: "/requests/not-found", response: "requests-not-found") { _ = try await $0.requests.notFound() },
+            Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/not-found/search", response: "ok") {
+                try await $0.requests.searchNotFound(request)
+            },
+            Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/not-found/dismiss", response: "ok") {
+                try await $0.requests.dismissNotFound(request)
+            },
             // Problem reports (0.38+)
             Case(
                 method: "POST", path: "/titles/tv/1396/issues",
@@ -289,6 +297,10 @@ final class MarqueeAPIRequestTests: XCTestCase {
             // Jobs, about, help
             Case(method: "GET", path: "/settings/jobs", response: "jobs") { _ = try await $0.jobs.list() },
             Case(method: "POST", path: "/settings/jobs/arr-sync/run", response: "ok") { try await $0.jobs.run("arr-sync") },
+            Case(method: "GET", path: "/settings/not-found", response: "not-found-settings") { _ = try await $0.jobs.notFoundSettings() },
+            Case(method: "PUT", path: "/settings/not-found", body: #"{"afterHours":48}"#, response: "not-found-settings") {
+                _ = try await $0.jobs.saveNotFoundSettings(API.NotFoundSettings(afterHours: 48))
+            },
             Case(method: "GET", path: "/settings/about", response: "about") { _ = try await $0.about.info() },
             Case(method: "GET", path: "/changelog", response: "changelog") { _ = try await $0.about.changelog() },
             Case(method: "GET", path: "/help/errors", response: "help-errors") { _ = try await $0.help.errors() },
@@ -297,8 +309,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 119, "docs/api-v1.md documents 119 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 119, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 124, "docs/api-v1.md documents 124 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 124, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

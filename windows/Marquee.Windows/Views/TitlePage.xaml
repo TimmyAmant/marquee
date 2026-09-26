@@ -232,6 +232,21 @@
                                 <StackPanel Spacing="8">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <controls:TonePill Text="{x:Bind ViewModel.StatusLabel, Mode=OneWay}" Tone="{x:Bind ViewModel.StatusTone, Mode=OneWay}" />
+                                        <!-- components/title-hero.tsx (0.46+, reviewers): Sonarr/Radarr hasn't found the approved request. -->
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsNotFound, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="12,4"
+                                            CornerRadius="14"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.ToolTip="{x:Bind ViewModel.NotFoundTooltip, Mode=OneWay}">
+                                            <TextBlock
+                                                Text="Can't find"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                        </Border>
                                         <Border
                                             Visibility="{x:Bind ViewModel.ShowsRequested, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             Padding="12,4"
