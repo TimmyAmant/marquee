@@ -45,6 +45,9 @@ public sealed record User
 
     public bool IsAdmin => Role == UserRole.Admin;
 
+    /// <inheritdoc cref="UserRole.ReviewsRequests"/>
+    public bool ReviewsRequests => Role.ReviewsRequests;
+
     /// <summary>What the website prints: the display name, else the username.</summary>
     public string Label => DisplayName.NonBlank() ?? Username;
 }
@@ -71,7 +74,17 @@ public sealed record Me
     /// <inheritdoc cref="User.HasPassword"/>
     public bool? HasPassword { get; init; }
 
+    /// <summary>
+    /// 0.39+: the account's request limits (each null when that type isn't
+    /// limited, always so for the admin and trusted members); null from an
+    /// older server, which has none.
+    /// </summary>
+    public RequestLimits? RequestLimits { get; init; }
+
     public bool IsAdmin => Role == UserRole.Admin;
+
+    /// <inheritdoc cref="UserRole.ReviewsRequests"/>
+    public bool ReviewsRequests => Role.ReviewsRequests;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
     public string Label => DisplayName.NonBlank() ?? Username;

@@ -84,14 +84,18 @@ extension API {
     enum UserRole: OpenEnum {
         case admin
         case member
+        /// 0.39+: a member who also works the review queue (requests and
+        /// problem reports). Everything else stays admin-only.
+        case trusted
         case unknown(String)
 
-        static let knownCases: [UserRole] = [.admin, .member]
+        static let knownCases: [UserRole] = [.admin, .member, .trusted]
 
         var rawValue: String {
             switch self {
             case .admin: return "admin"
             case .member: return "member"
+            case .trusted: return "trusted"
             case let .unknown(raw): return raw
             }
         }
@@ -100,7 +104,19 @@ extension API {
             switch self {
             case .admin: return "Admin"
             case .member: return "Member"
+            case .trusted: return "Trusted"
             case let .unknown(raw): return raw.capitalized
+            }
+        }
+
+        /// Whether the role reviews requests and problem reports (the queue,
+        /// history, approve/reject, "Reported problems"): the admin and
+        /// trusted members (lib/users/roles.ts `canReviewRequests`). An
+        /// unknown role acts as a member.
+        var canReviewRequests: Bool {
+            switch self {
+            case .admin, .trusted: return true
+            case .member, .unknown: return false
             }
         }
     }

@@ -652,6 +652,7 @@
                                                 Text="Admin"
                                                 Tone="{x:Bind AdminTone}"
                                                 Visibility="{x:Bind IsAdminRow, Converter={StaticResource BoolToVisibility}}" />
+                                            <controls:TonePill Text="{x:Bind TrustedTag}" Tone="{x:Bind AdminTone}" />
                                             <controls:TonePill
                                                 Text="You"
                                                 Tone="{x:Bind YouTone}"

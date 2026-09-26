@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// app/requests/page.tsx — admin review queue + history, or a member's own requests.
+/// app/requests/page.tsx — the review queue + history for whoever reviews
+/// requests (the admin or a trusted member), or a member's own requests.
 struct RequestsView: View {
     @Environment(AppModel.self) private var model
 
@@ -10,7 +11,8 @@ struct RequestsView: View {
                 Text("Requests")
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
-                if model.viewer?.isAdmin == true {
+                // The admin's and trusted members' (lib/users/roles.ts).
+                if model.viewer?.canReviewRequests == true {
                     AdminRequestsList()
                 } else {
                     MemberRequestsList()
@@ -91,8 +93,27 @@ private struct MemberRequestsList: View {
     @Environment(AppModel.self) private var model
     @State private var rows: [API.MyRequest]?
     @State private var error: String?
+    /// "Movies: 3 of 5 requests left (every 7 days)" from `/me` (0.39+).
+    @State private var limitsLine: String?
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let limitsLine {
+                Text(limitsLine)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            list
+        }
+        .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: .library), local: model.events.revision(of: .requests))) {
+            // Every request made counts, so re-read the limits with the list.
+            guard let me = try? await model.api.me(), !Task.isCancelled else { return }
+            limitsLine = me.requestLimits?.summaryLine()
+        }
+    }
+
+    @ViewBuilder
+    private var list: some View {
         Group {
             if let rows {
                 if rows.isEmpty {
@@ -292,8 +313,9 @@ private struct AdminRequestsList: View {
 
 // MARK: - Problem reports
 
-/// components/issues-section.tsx (0.38+): "Reported problems" for the admin,
-/// "Your problem reports" for a member. Nothing at all when there are none,
+/// components/issues-section.tsx (0.38+): "Reported problems" for the admin
+/// and trusted members (`isAdmin`: whoever reviews), "Your problem reports"
+/// for a member. Nothing at all when there are none,
 /// or when the server predates problem reports (`GET /issues` is a 404).
 private struct IssuesSection: View {
     let isAdmin: Bool

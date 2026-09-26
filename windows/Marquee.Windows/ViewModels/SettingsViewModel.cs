@@ -14,7 +14,7 @@ namespace Marquee.Windows.ViewModels;
 /// <summary>
 /// A row of "Household members" (household-members-list.tsx): the name,
 /// the username under it when there is a name, the admin's "Active 3 hours
-/// ago" line on other members' rows, the "Admin" and "You" tags,
+/// ago" line on other members' rows, the "Admin", "Trusted" and "You" tags,
 /// and the Edit and Remove buttons each viewer is offered. Immutable; the
 /// list is rebuilt from every <c>GET /users</c> answer.
 /// </summary>
@@ -32,6 +32,7 @@ public sealed class HouseholdMemberRow
             ? member.LastActiveLine(DateTimeOffset.Now) ?? ""
             : "";
         IsAdminRow = member.IsAdmin;
+        TrustedTag = member.IsTrusted ? "Trusted" : "";
         IsCurrentUser = member.IsCurrentUser;
         PlexTag = member.Linked?.Plex == true ? "Plex" : "";
         JellyfinTag = member.Linked?.Jellyfin == true ? "Jellyfin" : "";
@@ -65,6 +66,9 @@ public sealed class HouseholdMemberRow
 
     /// <summary>The "Admin" tag.</summary>
     public bool IsAdminRow { get; }
+
+    /// <summary>The "Trusted" tag (0.39+): can approve requests and handle problem reports. Empty collapses it.</summary>
+    public string TrustedTag { get; }
 
     /// <summary>The "You" tag.</summary>
     public bool IsCurrentUser { get; }

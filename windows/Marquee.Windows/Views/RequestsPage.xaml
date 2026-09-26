@@ -133,6 +133,13 @@
 
             <!-- MARK: Member -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsMember, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <!-- Request limits (0.39+): "Movies: 3 of 5 requests left (every 7 days)"; empty collapses it. -->
+                <TextBlock
+                    Text="{x:Bind ViewModel.LimitsLine, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.LimitsLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="12" Visibility="{x:Bind ViewModel.IsMineLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind ViewModel.IsMineLoading, Mode=OneWay}" Width="24" Height="24" />
                     <TextBlock Text="Loading your requests…" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
@@ -204,7 +211,7 @@
             </StackPanel>
 
             <!-- MARK: Admin -->
-            <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.Reviews, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.ShowsApproveAll, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

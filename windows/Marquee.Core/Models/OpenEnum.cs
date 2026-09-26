@@ -121,12 +121,23 @@ public readonly record struct UserRole(string Value) : IOpenEnum<UserRole>
     public static readonly UserRole Admin = new("admin");
     public static readonly UserRole Member = new("member");
 
-    public static IReadOnlyList<UserRole> Known { get; } = [Admin, Member];
+    /// <summary>0.39+: a member who also works the review queue (requests and problem reports).</summary>
+    public static readonly UserRole Trusted = new("trusted");
+
+    public static IReadOnlyList<UserRole> Known { get; } = [Admin, Member, Trusted];
     public static UserRole FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    public string Label => this == Admin ? "Admin" : this == Member ? "Member" : OpenEnum.Capitalized(Value);
+    public string Label => this == Admin ? "Admin" : this == Member ? "Member" : this == Trusted ? "Trusted" : OpenEnum.Capitalized(Value);
+
+    /// <summary>
+    /// lib/users/roles.ts canReviewRequests: the request-review queue, the
+    /// Requests badge and "Reported problems" are the admin's and trusted
+    /// members'. Everything else admin-only stays <c>== Admin</c>; an
+    /// unknown role acts as a member.
+    /// </summary>
+    public bool ReviewsRequests => this == Admin || this == Trusted;
 }
 
 public readonly record struct RequestStatus(string Value) : IOpenEnum<RequestStatus>

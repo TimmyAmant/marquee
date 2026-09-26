@@ -405,12 +405,24 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// </summary>
     public Func<PendingRow, Task<string?>>? ReasonChooser { get; set; }
 
+    /// <summary>
+    /// The review queue, history and "Reported problems": the admin's and
+    /// (0.39+) trusted members'. Everyone else sees their own requests.
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMember))]
     [NotifyPropertyChangedFor(nameof(IssuesHeading))]
-    private bool isAdmin;
+    private bool reviews;
 
     // MARK: Member
+
+    /// <summary>
+    /// "Movies: 3 of 5 requests left (every 7 days) · TV: none left until
+    /// Oct 3" above a member's requests; empty (collapsed) when nothing is
+    /// limited or the server predates limits.
+    /// </summary>
+    [ObservableProperty]
+    private string limitsLine = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasMine))]
@@ -502,11 +514,11 @@ public sealed partial class RequestsViewModel : ObservableObject
     public RequestsViewModel(AppModel model)
     {
         this.model = model;
-        IsAdmin = model.Viewer?.IsAdmin == true;
+        Reviews = model.Viewer?.ReviewsRequests == true;
         Pending.CollectionChanged += (_, _) => PendingCount = Pending.Count;
     }
 
-    public bool IsMember => !IsAdmin;
+    public bool IsMember => !Reviews;
     public bool HasMine => Mine is { Count: > 0 };
     public bool IsMineEmpty => Mine is { Count: 0 };
     public bool ShowsMineError => MineError != null && Mine == null;
@@ -532,7 +544,7 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>The section shows once there's any report, open or fixed; an older server has none.</summary>
     public bool ShowsIssues => OpenIssues.Count > 0 || FixedIssues.Count > 0;
 
-    public string IssuesHeading => IsAdmin ? "Reported problems" : "Your problem reports";
+    public string IssuesHeading => Reviews ? "Reported problems" : "Your problem reports";
     public bool HasOpenIssues => OpenIssues.Count > 0;
 
     /// <summary>"Nothing open right now." when only fixed ones are left.</summary>
@@ -582,7 +594,7 @@ public sealed partial class RequestsViewModel : ObservableObject
         var cancellation = new CancellationTokenSource();
         loadCancellation = cancellation;
         var token = cancellation.Token;
-        if (IsAdmin)
+        if (Reviews)
         {
             await LoadQueueAsync(token);
             if (!token.IsCancellationRequested)
@@ -593,6 +605,10 @@ public sealed partial class RequestsViewModel : ObservableObject
         else
         {
             await LoadMineAsync(token);
+            if (!token.IsCancellationRequested)
+            {
+                await LoadLimitsAsync(token);
+            }
         }
         if (!token.IsCancellationRequested)
         {
@@ -614,8 +630,8 @@ public sealed partial class RequestsViewModel : ObservableObject
             {
                 return;
             }
-            OpenIssues = fresh.Open.Select(issue => new IssueRow(this, issue, IsAdmin, OpenIssueTitleCommand)).ToList();
-            FixedIssues = fresh.Fixed.Select(issue => new IssueRow(this, issue, IsAdmin, OpenIssueTitleCommand)).ToList();
+            OpenIssues = fresh.Open.Select(issue => new IssueRow(this, issue, Reviews, OpenIssueTitleCommand)).ToList();
+            FixedIssues = fresh.Fixed.Select(issue => new IssueRow(this, issue, Reviews, OpenIssueTitleCommand)).ToList();
         }
         catch (ApiException error)
         {
@@ -649,6 +665,27 @@ public sealed partial class RequestsViewModel : ObservableObject
         if (row != null)
         {
             model.OpenTitle(row.TitleId);
+        }
+    }
+
+    /// <summary>
+    /// <c>requestLimits</c> from <c>/me</c> (0.39+; an older server omits
+    /// it, so the line stays hidden). A failure keeps what's shown.
+    /// </summary>
+    private async Task LoadLimitsAsync(CancellationToken token)
+    {
+        try
+        {
+            var me = await model.Api.MeAsync(token);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            LimitsLine = me.ReviewsRequests ? "" : me.RequestLimits?.Summary() ?? "";
+        }
+        catch (ApiException)
+        {
+            // The requests themselves are what matters; the next reload tries again.
         }
     }
 
@@ -814,10 +851,10 @@ public sealed partial class RequestsViewModel : ObservableObject
         else if (e.PropertyName == nameof(AppModel.Viewer))
         {
             // A promotion (or demotion) swaps which list this page is.
-            var admin = model.Viewer?.IsAdmin == true;
-            if (admin != IsAdmin)
+            var reviews = model.Viewer?.ReviewsRequests == true;
+            if (reviews != Reviews)
             {
-                IsAdmin = admin;
+                Reviews = reviews;
                 _ = LoadAsync();
             }
         }

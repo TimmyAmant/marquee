@@ -121,6 +121,27 @@ public sealed class MarqueeApiUsersRequestTests
     }
 
     [Fact]
+    public async Task UpdateSendsRoleAndRequestLimits()
+    {
+        var stub = new StubHttpMessageHandler();
+        stub.AnswerFixture("user-update");
+        var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub));
+
+        var result = await api.Users.UpdateAsync(MemberId, new UpdateUserRequest(
+            "kid", Role: UserRole.Trusted,
+            MovieQuotaLimit: QuotaLimit.None, MovieQuotaDays: 7,
+            TvQuotaLimit: new QuotaLimit(3), TvQuotaDays: 14));
+
+        var request = Assert.Single(stub.Requests);
+        Assert.Equal("PATCH", request.Method.Method);
+        // A blank limit is an explicit null (no limit), not a missing key (unchanged).
+        Assert.Equal(
+            """{"username":"kid","role":"trusted","movieQuotaLimit":null,"movieQuotaDays":7,"tvQuotaLimit":3,"tvQuotaDays":14}""",
+            request.Body);
+        Assert.Equal(5, result.User.MovieQuotaLimit);
+    }
+
+    [Fact]
     public async Task UpdateSendsEveryFieldTheFormFilled()
     {
         var stub = new StubHttpMessageHandler();
