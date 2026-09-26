@@ -60,9 +60,13 @@ The apps are optional: the website does everything they do, in any browser.
   movies a week), and a **blocklist** of titles or keywords nobody can request.
 - **Report a problem** with a file (bad video, wrong audio, missing
   subtitles…); the admin can have Sonarr/Radarr search again and mark it fixed.
-- **Sign in with Plex, Jellyfin or Emby**, link those accounts, import
-  household members from them, and optionally let people with access to your
-  server sign themselves up.
+- **Sign in with Plex, Jellyfin or Emby** (Jellyfin's Quick Connect too), link
+  those accounts, import household members from them, and optionally let
+  people with access to your server sign themselves up.
+- **Single sign-on** with your own identity provider — Authentik, Authelia,
+  Pocket ID, Keycloak, Google or any other OpenID Connect provider — on the
+  website and the Mac and Windows apps, with optional sign-up, group-based
+  access and a "trusted" group.
 - **Plex Watchlist** auto-requests, and **Trakt import** of public lists and
   watchlists.
 - **Notifications** when something starts or finishes downloading, a request

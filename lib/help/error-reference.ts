@@ -173,6 +173,35 @@ export const ERROR_REFERENCE: ErrorReferenceCategory[] = [
         meaning: "Each Plex (or Jellyfin) account can sign in to only one Marquee account.",
         whatToDo: "Unlink it from the other account first, or ask the admin.",
       },
+      {
+        message: "Your Authentik account isn't allowed to use Marquee. Ask the admin to add you to the right group.",
+        meaning:
+          "Single sign-on worked, but the admin only lets people in a certain group (in Authentik, Authelia, or whichever sign-in the household uses) into Marquee, and you're not in it.",
+        whatToDo: "Ask the admin to add you to that group in the identity provider, then sign in again.",
+      },
+      {
+        message: "There's no Marquee account for this Authentik account yet. Ask the admin to add you.",
+        meaning:
+          "Single sign-on worked, but no Marquee account is linked to that identity and the admin has new accounts from single sign-on turned off.",
+        whatToDo:
+          "Sign in with your Marquee password and link it under Settings → Account → Linked accounts, or ask the admin to turn new accounts on.",
+      },
+      {
+        message: "That Authentik sign-in expired or was already used. Try again.",
+        meaning:
+          "Single sign-on has to finish within 10 minutes, in the same browser it started in, and each attempt works once.",
+        whatToDo: "Start again with the Sign in with … button.",
+      },
+      {
+        message: "Quick Connect is turned off on this Jellyfin server. The admin can turn it on in Jellyfin's Dashboard → General.",
+        meaning: "Quick Connect lets you sign in by approving a code in a Jellyfin app, but the Jellyfin server has it switched off.",
+        whatToDo: "Sign in with your Jellyfin username and password instead, or ask the admin to turn Quick Connect on.",
+      },
+      {
+        message: "That Quick Connect code expired. Try again.",
+        meaning: "A Quick Connect code works for a few minutes and only once.",
+        whatToDo: "Choose Use Quick Connect again and enter the new code in your Jellyfin app.",
+      },
     ],
   },
   {
