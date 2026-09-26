@@ -25,9 +25,12 @@ extension MarqueeAPI {
 
         /// `POST /titles/{type}/{tmdbId}/add` — "Add to Radarr/Sonarr" and poster
         /// quick-add (admin). `.conflict("Connect Radarr in Settings first.")` etc.
-        func add(_ type: API.MediaType, id tmdbId: Int) async throws {
+        /// `is4k` (0.37+, `viewer.fourK.canAdd`) is "Add to 4K Radarr/Sonarr",
+        /// sent as `{"is4k": true}`; otherwise there's no body, as before.
+        func add(_ type: API.MediaType, id tmdbId: Int, is4k: Bool = false) async throws {
+            let body: (any Encodable & Sendable)? = is4k ? API.FourKBody() : nil
             let _: API.OK = try await transport.mutate(
-                .post, Self.path(type, tmdbId) + "/add", timeout: Timeout.integrations, changes: [.library, .requests]
+                .post, Self.path(type, tmdbId) + "/add", body: body, timeout: Timeout.integrations, changes: [.library, .requests]
             )
         }
 

@@ -44,6 +44,13 @@ extension API {
         return parts.joined(separator: ", ")
     }
 
+    /// components/request-title.tsx: the small line under a request's title,
+    /// the seasons and "In 4K" joined with " · "; nil when there's neither.
+    static func requestDetailLine(_ seasons: String?, is4k: Bool) -> String? {
+        let parts = [seasons.nonBlank, is4k ? "In 4K" : nil].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
     /// `POST /titles/{type}/{tmdbId}/request` response.
     struct RequestCreated: Codable, Hashable, Sendable {
         let ok: Bool
@@ -75,10 +82,15 @@ extension API {
         let seasons: [Int]?
         /// "Seasons 1–3", nil when `seasons` is.
         let seasonsLabel: String?
+        /// Asked for in 4K (0.37+); nil from an older server, meaning no.
+        let is4k: Bool?
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
-        /// What the requests screens print under the title.
+        /// The seasons in words, sent or computed locally.
         var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
+        /// What the requests screens print under the title: "Season 2 · In 4K",
+        /// "In 4K", "Seasons 1–3", or nil.
+        var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
     }
 
     /// `GET /requests/pending`: the admin's review queue.
@@ -155,10 +167,15 @@ extension API {
         let seasons: [Int]?
         /// "Seasons 1–3", nil when `seasons` is.
         let seasonsLabel: String?
+        /// Asked for in 4K (0.37+); nil from an older server, meaning no.
+        let is4k: Bool?
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
-        /// What the requests screens print under the title.
+        /// The seasons in words, sent or computed locally.
         var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
+        /// What the requests screens print under the title: "Season 2 · In 4K",
+        /// "In 4K", "Seasons 1–3", or nil.
+        var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
     }
 
     /// `GET /requests/history`: "Past requests", the 50 most recently reviewed.
@@ -184,10 +201,15 @@ extension API {
         let seasons: [Int]?
         /// "Seasons 1–3", nil when `seasons` is.
         let seasonsLabel: String?
+        /// Asked for in 4K (0.37+); nil from an older server, meaning no.
+        let is4k: Bool?
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
-        /// What the requests screens print under the title.
+        /// The seasons in words, sent or computed locally.
         var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
+        /// What the requests screens print under the title: "Season 2 · In 4K",
+        /// "In 4K", "Seasons 1–3", or nil.
+        var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
     }
 
     /// `POST /requests/approve-all`.
