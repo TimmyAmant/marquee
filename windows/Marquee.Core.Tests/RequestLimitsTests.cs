@@ -60,7 +60,8 @@ public sealed class RequestLimitsTests
     [Fact]
     public void OlderServerMeHasNoLimits()
     {
-        var json = Fixtures.Read("me");
+        // Windows checkouts can turn the fixture's line endings into \r\n.
+        var json = Fixtures.Read("me").Replace("\r\n", "\n", StringComparison.Ordinal);
         var start = json.IndexOf(",\n  \"requestLimits\"", StringComparison.Ordinal);
         Assert.True(start > 0);
         var older = json[..start] + "\n}";
@@ -163,7 +164,7 @@ public sealed class RequestLimitsTests
     [Fact]
     public void OlderServerMemberHasNoQuotaFields()
     {
-        var json = Fixtures.Read("household-member");
+        var json = Fixtures.Read("household-member").Replace("\r\n", "\n", StringComparison.Ordinal);
         var start = json.IndexOf(",\n  \"movieQuotaLimit\"", StringComparison.Ordinal);
         Assert.True(start > 0);
         var member = Json.Decode<HouseholdMember>(json[..start] + "\n}");
