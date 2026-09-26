@@ -194,6 +194,24 @@
                                             Click="OnFixIdClick"
                                             Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             ToolTipService.ToolTip="Wrong match? Point this title at the right id." />
+                                        <!-- components/report-problem-button.tsx (0.38+): the pill once reported, then the button. -->
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsProblemReported, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Padding="12,4"
+                                            CornerRadius="14"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            VerticalAlignment="Center">
+                                            <TextBlock
+                                                Text="Problem reported"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </Border>
+                                        <Button
+                                            Content="{x:Bind ViewModel.ReportButtonLabel, Mode=OneWay}"
+                                            Click="OnReportProblemClick"
+                                            Visibility="{x:Bind ViewModel.CanReport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            ToolTipService.ToolTip="Bad video or audio, missing subtitles, won't play: the admin is told." />
                                         <HyperlinkButton
                                             Content="{x:Bind ViewModel.ArrSetupLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.OpenSettingsCommand}"

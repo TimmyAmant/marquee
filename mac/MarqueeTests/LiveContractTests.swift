@@ -320,6 +320,59 @@ final class LiveContractTests: XCTestCase {
         await member.session.logout()
     }
 
+    // MARK: 3½. Problem reports (0.38+)
+
+    func test3ProblemReports() async throws {
+        let member = try await memberSession()
+        let memberAPI = MarqueeAPI(client: member.session.client)
+
+        // The server takes a report for any title; `canReport` only decides
+        // whether the website offers the button.
+        let report = API.IssueReport(kind: .audio, message: "Out of sync after 20 minutes", seasonNumber: 1, episodeNumber: 2)
+        try await memberAPI.issues.report(.tv, id: 1399, report)
+        try await memberAPI.issues.report(.movie, id: 603, API.IssueReport(kind: .wontPlay))
+        await assertThrowsAPIError(.invalid("Say what's wrong.")) {
+            try await memberAPI.issues.report(.movie, id: 603, API.IssueReport(kind: .other))
+        }
+
+        let mine = try await memberAPI.issues.list()
+        XCTAssertEqual(mine.kinds.map(\.id), API.IssueKind.knownCases)
+        let episode = try XCTUnwrap(mine.results.first { $0.tmdbId == 1399 && $0.status == .open })
+        XCTAssertTrue(episode.isMine)
+        XCTAssertEqual(episode.episodeLabel, "S1 E2")
+        XCTAssertEqual(episode.kindLabel, "Audio problem")
+        let movie = try XCTUnwrap(mine.results.first { $0.tmdbId == 603 && $0.status == .open })
+        let status = try await memberAPI.titles.status(.tv, id: 1399)
+        XCTAssertGreaterThanOrEqual(status.viewer.openReports ?? 0, 1)
+
+        let queue = try await admin.issues.list()
+        XCTAssertTrue(queue.results.contains { $0.id == episode.id && !$0.isMine })
+        let badges = try await admin.badges()
+        XCTAssertGreaterThanOrEqual(badges.openIssues ?? 0, 2)
+
+        // Search again needs Radarr/Sonarr tracking the title.
+        do {
+            try await admin.issues.searchAgain(episode.id)
+        } catch let error as APIError {
+            XCTAssertEqual(error, .conflict("Not tracked in Radarr/Sonarr."))
+        }
+        try await admin.issues.resolve(episode.id, note: "Replaced the file")
+        await assertThrowsAPIError(.notFound) { try await self.admin.issues.resolve(episode.id) }
+        try await memberAPI.issues.delete(movie.id)
+        await assertThrowsAPIError(.notFound) { try await memberAPI.issues.delete(movie.id) }
+
+        let after = try await memberAPI.issues.list()
+        let fixed = try XCTUnwrap(after.results.first { $0.id == episode.id })
+        XCTAssertEqual(fixed.status, .resolved)
+        XCTAssertEqual(fixed.resolution, "Replaced the file")
+        XCTAssertFalse(after.results.contains { $0.id == movie.id })
+        let notifications = try await memberAPI.notifications.list()
+        XCTAssertTrue(notifications.results.contains { $0.eventType == .issueResolved })
+        try await admin.issues.delete(episode.id)
+
+        await member.session.logout()
+    }
+
     // MARK: 4. Member permissions
 
     func test4MemberPermissions() async throws {
@@ -575,6 +628,7 @@ final class LiveContractTests: XCTestCase {
         try await assertRoundTrips(raw, "/requests/pending", API.PendingRequests.self)
         try await assertRoundTrips(raw, "/requests/pending-count", API.Count.self)
         try await assertRoundTrips(raw, "/notifications", API.NotificationList.self)
+        try await assertRoundTrips(raw, "/issues", API.IssueList.self)
         try await assertRoundTrips(raw, "/calendar", API.CalendarMonthResponse.self)
         try await assertRoundTrips(raw, "/settings/activity", API.ListResponse<API.ActivityItem>.self)
         try await assertRoundTrips(raw, "/users", API.ListResponse<API.HouseholdMember>.self)
@@ -703,6 +757,8 @@ final class LiveContractTests: XCTestCase {
             AdminOnlyCall(label: "requests.pending") { _ = try await api.requests.pending() },
             AdminOnlyCall(label: "requests.history") { _ = try await api.requests.history() },
             AdminOnlyCall(label: "requests.approveAll") { _ = try await api.requests.approveAll() },
+            AdminOnlyCall(label: "issues.resolve") { try await api.issues.resolve(UUID()) },
+            AdminOnlyCall(label: "issues.searchAgain") { try await api.issues.searchAgain(UUID()) },
             AdminOnlyCall(label: "activity.recent") { _ = try await api.activity.recent() },
             AdminOnlyCall(label: "integrations.overview") { _ = try await api.integrations.overview() },
             AdminOnlyCall(label: "integrations.webhookSecret") { _ = try await api.integrations.regenerateWebhookSecret() },
@@ -763,6 +819,8 @@ final class RecordingURLProtocol: URLProtocol {
         ("GET", "/requests/mine"), ("GET", "/requests/pending"), ("GET", "/requests/history"),
         ("GET", "/requests/pending-count"), ("POST", "/requests/{uuid}/approve"), ("POST", "/requests/{uuid}/manual-approve"),
         ("POST", "/requests/{uuid}/reject"), ("POST", "/requests/approve-all"),
+        ("POST", "/titles/{type}/{id}/issues"), ("GET", "/issues"), ("POST", "/issues/{uuid}/resolve"),
+        ("POST", "/issues/{uuid}/search"), ("DELETE", "/issues/{uuid}"),
         ("GET", "/notifications"), ("GET", "/notifications/unread-count"), ("POST", "/notifications/read-all"),
         ("POST", "/notifications/{uuid}/read"),
         ("GET", "/calendar"), ("GET", "/settings/activity"),

@@ -77,7 +77,8 @@ final class LiveUpdates {
     private(set) var streamUnsupported = false
 
     var unreadCount: Int { badges.unreadNotifications }
-    var pendingRequestCount: Int { badges.pendingRequests }
+    /// The Requests rail badge: pending requests plus open problem reports.
+    var pendingRequestCount: Int { badges.requestsPageCount }
 
     /// Whether new notifications become system banners: the account's choice
     /// in `NotificationConsent`. Off, they still reach the bell, and the
@@ -251,7 +252,9 @@ final class LiveUpdates {
         if let previous, reason != .localChange {
             var change: ServerEvents.Change = []
             if fresh.unreadNotifications != previous.unreadNotifications { change.insert(.notifications) }
-            if fresh.pendingRequests != previous.pendingRequests { change.insert(.requests) }
+            if fresh.pendingRequests != previous.pendingRequests || fresh.openIssues != previous.openIssues {
+                change.insert(.requests)
+            }
             if !change.isEmpty { events.record(change, source: .server) }
         }
 

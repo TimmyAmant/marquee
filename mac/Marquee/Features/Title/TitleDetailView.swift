@@ -11,6 +11,7 @@ struct TitleDetailView: View {
     @State private var showingTrailer = false
     @State private var showingRelink = false
     @State private var showingSeasonPicker = false
+    @State private var showingReportProblem = false
 
     init(id: API.TitleID) {
         self.id = id
@@ -80,6 +81,13 @@ struct TitleDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingReportProblem) {
+            if let detail = screen.detail {
+                ReportProblemSheet(mediaType: detail.mediaType, seasonNumbers: detail.seasons.map(\.seasonNumber)) { report in
+                    try await screen.reportProblem(report)
+                }
+            }
+        }
     }
 
     private func content(_ detail: API.TitleDetail) -> some View {
@@ -114,7 +122,8 @@ struct TitleDetailView: View {
                                     detail: detail,
                                     onTrailer: { showingTrailer = true },
                                     onRelink: { showingRelink = true },
-                                    onPickSeasons: { showingSeasonPicker = true }
+                                    onPickSeasons: { showingSeasonPicker = true },
+                                    onReportProblem: { showingReportProblem = true }
                                 )
                                 .frame(maxWidth: Metrics.titleTextWidth, alignment: .leading)
                                 .padding(.top, Metrics.titleColumnTop)
@@ -322,6 +331,7 @@ private struct TitleMainColumn: View {
     let onTrailer: () -> Void
     let onRelink: () -> Void
     let onPickSeasons: () -> Void
+    let onReportProblem: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -352,7 +362,10 @@ private struct TitleMainColumn: View {
             }
             .padding(.top, 10)
 
-            TitleActionRow(screen: screen, detail: detail, onRelink: onRelink, onPickSeasons: onPickSeasons)
+            TitleActionRow(
+                screen: screen, detail: detail, onRelink: onRelink, onPickSeasons: onPickSeasons,
+                onReportProblem: onReportProblem
+            )
                 .padding(.top, 16)
 
             if let tagline = detail.tagline.nonBlank {
@@ -436,6 +449,7 @@ private struct TitleActionRow: View {
     let detail: API.TitleDetail
     let onRelink: () -> Void
     let onPickSeasons: () -> Void
+    let onReportProblem: () -> Void
 
     @Environment(AppModel.self) private var model
 
@@ -506,6 +520,28 @@ private struct TitleActionRow: View {
                             .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))
                             .disabled(screen.isFourKBusy)
                     }
+                }
+
+                // components/report-problem-button.tsx (0.38+): once something
+                // is reported, a "Problem reported" pill and "Report another"
+                // (another episode can still be reported).
+                if viewer.showsReportProblem {
+                    if screen.hasReportedProblem {
+                        Text("Problem reported")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                            .padding(.horizontal, 14)
+                            .frame(height: 32)
+                            .overlay(Capsule().strokeBorder(Theme.border))
+                    }
+                    Button(action: onReportProblem) {
+                        pillLabel(
+                            "exclamationmark.bubble",
+                            screen.hasReportedProblem ? "Report another" : "Report a problem",
+                            size: 13
+                        )
+                    }
+                    .buttonStyle(OutlineButtonStyle(pill: .large))
                 }
 
                 if let tracking = viewer.arrTracking {

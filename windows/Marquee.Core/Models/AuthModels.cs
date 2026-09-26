@@ -196,6 +196,12 @@ public sealed record Badges
     /// <summary>Always 0 for members.</summary>
     public required int PendingRequests { get; init; }
 
+    /// <summary>Open problem reports (0.38+; an older server omits it, meaning 0). Always 0 for members.</summary>
+    public int OpenIssues { get; init; }
+
+    /// <summary>The Requests badge: pending requests plus open problem reports, since both wait on that page.</summary>
+    public int RequestsBadge => PendingRequests + OpenIssues;
+
     public static Badges Zero { get; } = new() { UnreadNotifications = 0, PendingRequests = 0 };
 
     /// <summary>The bell's cap on the website: "9+".</summary>

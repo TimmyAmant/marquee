@@ -14,6 +14,7 @@ struct RequestsView: View {
                     AdminRequestsList()
                 } else {
                     MemberRequestsList()
+                    IssuesSection(isAdmin: false)
                 }
             }
             .padding(.horizontal, 32)
@@ -200,6 +201,9 @@ private struct AdminRequestsList: View {
                 LoadingView(label: "Checking requests against your library…")
             }
 
+            // Between the queue and "Past requests", like app/requests/page.tsx.
+            IssuesSection(isAdmin: true, topPadding: 28)
+
             if reviewed.isEmpty, let historyError {
                 SectionTitle(text: "Past requests")
                     .padding(.top, 28)
@@ -283,6 +287,224 @@ private struct AdminRequestsList: View {
             }
             approvingAll = false
         }
+    }
+}
+
+// MARK: - Problem reports
+
+/// components/issues-section.tsx (0.38+): "Reported problems" for the admin,
+/// "Your problem reports" for a member. Nothing at all when there are none,
+/// or when the server predates problem reports (`GET /issues` is a 404).
+private struct IssuesSection: View {
+    let isAdmin: Bool
+    /// Space above the section, only while it shows anything.
+    var topPadding: CGFloat = 0
+
+    @Environment(AppModel.self) private var model
+    @State private var list: API.IssueList?
+    @State private var error: String?
+    @State private var showFixed = false
+    /// Rows hidden right after Mark fixed / Remove / Withdraw, until the reload lands.
+    @State private var settled: Set<UUID> = []
+
+    private var open: [API.Issue] { (list?.open ?? []).filter { !settled.contains($0.id) } }
+    private var fixed: [API.Issue] { list?.fixed ?? [] }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let list, !list.results.isEmpty {
+                SectionTitle(text: isAdmin ? "Reported problems" : "Your problem reports")
+                if open.isEmpty {
+                    Text("Nothing open right now.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textMuted)
+                } else {
+                    issueCard(open)
+                }
+                if !fixed.isEmpty {
+                    Button(showFixed ? "Hide fixed" : "Show fixed (\(fixed.count))") { showFixed.toggle() }
+                        .buttonStyle(QuietButtonStyle(color: Theme.textSecondary))
+                        .font(.system(size: 12))
+                    if showFixed {
+                        issueCard(fixed)
+                            .opacity(0.8)
+                    }
+                }
+            } else if list == nil, let error {
+                SectionTitle(text: isAdmin ? "Reported problems" : "Your problem reports")
+                InlineMessage(text: error)
+            }
+        }
+        .padding(.top, (list?.results.isEmpty == false || (list == nil && error != nil)) ? topPadding : 0)
+        .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: .requests), local: model.events.revision(of: .requests))) {
+            await load()
+        }
+    }
+
+    private func issueCard(_ issues: [API.Issue]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(issues.enumerated()), id: \.element.id) { index, issue in
+                if index > 0 { Divider().overlay(Theme.border) }
+                IssueRow(issue: issue, isAdmin: isAdmin, onSettled: { settled.insert(issue.id) })
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+    }
+
+    private func load() async {
+        do {
+            let fresh = try await model.api.issues.list()
+            if Task.isCancelled { return }
+            list = fresh
+            settled = []
+            error = nil
+        } catch let failure as APIError where failure.isCancellation {
+            return
+        } catch APIError.notFound {
+            // A server older than 0.38: no problem reports to show.
+            list = API.IssueList(results: [])
+            error = nil
+        } catch {
+            if list == nil { self.error = error.localizedDescription }
+        }
+    }
+}
+
+/// components/issues-section.tsx `IssueCard`.
+private struct IssueRow: View {
+    let issue: API.Issue
+    let isAdmin: Bool
+    let onSettled: () -> Void
+
+    @Environment(AppModel.self) private var model
+    @State private var busy: String?
+    @State private var error: String?
+    @State private var info: String?
+    /// "Mark fixed" opens a note field with its own "Mark fixed".
+    @State private var resolving = false
+    @State private var note = ""
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            RequestPoster(posterPath: issue.posterPath)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Button(issue.title) { model.openTitle(issue.titleID) }
+                        .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
+                        .font(.system(size: 13, weight: .medium))
+                    if let label = issue.episodeLabel.nonBlank {
+                        Text(label)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+                Text(issue.summaryLine(showingReporter: isAdmin))
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.textSecondary)
+                if let message = issue.message.nonBlank {
+                    Text("“\(message)”")
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                }
+                if let fixedLine = issue.fixedLine {
+                    Text(fixedLine)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(Theme.owned)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if resolving {
+                    HStack(spacing: 8) {
+                        TextField("Note for them (optional), e.g. Replaced the file", text: $note)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12.5))
+                            .onSubmit { resolve() }
+                            .onChange(of: note) { _, value in
+                                let scalars = value.unicodeScalars
+                                if scalars.count > API.IssueResolution.maxNoteLength {
+                                    note = String(scalars.prefix(API.IssueResolution.maxNoteLength))
+                                }
+                            }
+                        Button(busy == "resolve" ? "Saving…" : "Mark fixed") { resolve() }
+                            .buttonStyle(AccentButtonStyle(compact: true))
+                            .disabled(busy != nil)
+                    }
+                    .padding(.top, 4)
+                }
+                if let error {
+                    Text(error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let info {
+                    Text(info)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.owned)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if issue.status == .open {
+                VStack(alignment: .trailing, spacing: 6) {
+                    if isAdmin, !resolving {
+                        Button(busy == "search" ? "Searching…" : "Search again") { searchAgain() }
+                            .buttonStyle(OutlineButtonStyle(compact: true))
+                            .disabled(busy != nil)
+                        Button("Mark fixed") { resolving = true }
+                            .buttonStyle(OutlineButtonStyle(compact: true))
+                    }
+                    if issue.isMine || isAdmin {
+                        Button(issue.isMine && !isAdmin ? "Withdraw" : "Remove") { remove() }
+                            .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
+                            .font(.system(size: 11.5))
+                            .disabled(busy != nil)
+                    }
+                }
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    /// Runs one action; `after` is shown in place of reloading (Search again
+    /// leaves the report open).
+    private func run(_ label: String, after: String? = nil, _ action: @escaping @MainActor (MarqueeAPI) async throws -> Void) {
+        busy = label
+        error = nil
+        info = nil
+        let api = model.api
+        Task {
+            do {
+                try await action(api)
+                if let after {
+                    info = after
+                } else {
+                    resolving = false
+                    onSettled()
+                }
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = nil
+        }
+    }
+
+    private func searchAgain() {
+        run("search", after: "Searching for another copy…") { try await $0.issues.searchAgain(issue.id) }
+    }
+
+    private func resolve() {
+        guard busy == nil else { return }
+        let note = note
+        run("resolve") { try await $0.issues.resolve(issue.id, note: note) }
+    }
+
+    private func remove() {
+        run("delete") { try await $0.issues.delete(issue.id) }
     }
 }
 

@@ -66,6 +66,23 @@ public sealed partial class TitlePage : Page
         await dialog.TryShowAsync();
     }
 
+    /// <summary>
+    /// "Report a problem" / "Report another": the dialog sends the report
+    /// itself and keeps a refusal inline; the pill shows once it's sent.
+    /// </summary>
+    private async void OnReportProblemClick(object sender, RoutedEventArgs e)
+    {
+        if (Id is not { } title)
+        {
+            return;
+        }
+        var dialog = new ReportProblemDialog(title.MediaType == MediaType.Tv, ViewModel.ReportSeasonNumbers, ViewModel.ReportProblemAsync)
+        {
+            XamlRoot = XamlRoot,
+        };
+        await dialog.TryShowAsync();
+    }
+
     /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>
     private async void OnFixIdClick(object sender, RoutedEventArgs e)
     {

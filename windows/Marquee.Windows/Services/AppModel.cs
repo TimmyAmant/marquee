@@ -608,7 +608,7 @@ public sealed partial class AppModel : ObservableObject
                 {
                     moved |= ServerChange.Notifications;
                 }
-                if (fresh.PendingRequests != previous.PendingRequests)
+                if (fresh.PendingRequests != previous.PendingRequests || fresh.OpenIssues != previous.OpenIssues)
                 {
                     moved |= ServerChange.Requests;
                 }
