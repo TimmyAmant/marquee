@@ -32,6 +32,8 @@ extension MarqueeAPI {
         var sonarr4k: ArrEndpoints { ArrEndpoints(transport: transport, provider: .sonarr4k) }
         var radarr4k: ArrEndpoints { ArrEndpoints(transport: transport, provider: .radarr4k) }
         func arr(_ provider: API.ArrProvider) -> ArrEndpoints { ArrEndpoints(transport: transport, provider: provider) }
+        /// Any number of Sonarr / Radarr servers (0.43+; `.notFound` from an older server).
+        var arrServers: ArrServersEndpoints { ArrServersEndpoints(transport: transport) }
 
         var plex: PlexEndpoints { PlexEndpoints(transport: transport) }
         var jellyfin: JellyfinEndpoints { JellyfinEndpoints(transport: transport) }
@@ -89,6 +91,71 @@ extension MarqueeAPI {
         /// `DELETE` — removes the connection and its cached statuses. Confirm first.
         func disconnect() async throws {
             let _: API.OK = try await transport.mutate(.delete, path, timeout: Timeout.integrations, changes: [.settings, .library, .catalog])
+        }
+    }
+
+    /// `/settings/arr-servers` (0.43+): every Sonarr and Radarr server, each
+    /// with its own defaults and webhook URL.
+    struct ArrServersEndpoints: Sendable {
+        let transport: Transport
+
+        private static let path = "/settings/arr-servers"
+
+        private static func path(_ id: String) -> String {
+            "\(path)/\(MarqueeAPI.segment(id))"
+        }
+
+        /// `GET /settings/arr-servers` — Sonarr first, then Radarr; standard
+        /// before 4K, the default first.
+        func list() async throws -> [API.ArrServer] {
+            let list: API.ListResponse<API.ArrServer> = try await transport.get(Self.path)
+            return list.results
+        }
+
+        /// `POST /settings/arr-servers/test` — "Test": checks a connection
+        /// without saving and returns the pickers' lists. `.upstream` when it
+        /// can't connect.
+        func test(_ request: API.ArrServerTestRequest) async throws -> API.ArrServerTestResult {
+            try await transport.post(Self.path + "/test", body: request, timeout: Timeout.integrations)
+        }
+
+        /// `POST /settings/arr-servers` — "Add server": tests, then saves.
+        func add(_ request: API.ArrServerRequest) async throws -> API.ArrServer {
+            let saved: API.ArrServerSaved = try await transport.mutate(
+                .post, Self.path, body: request, timeout: Timeout.integrations, changes: [.settings, .library, .catalog]
+            )
+            return saved.server
+        }
+
+        /// `PATCH /settings/arr-servers/{id}` — "Save". A changed URL or key
+        /// is tested again first. `.conflict` when switching off the default.
+        func update(_ id: String, _ request: API.ArrServerRequest) async throws -> API.ArrServer {
+            let saved: API.ArrServerSaved = try await transport.mutate(
+                .patch, Self.path(id), body: request, timeout: Timeout.integrations, changes: [.settings, .library, .catalog]
+            )
+            return saved.server
+        }
+
+        /// `DELETE /settings/arr-servers/{id}` — "Remove". Confirm first.
+        func remove(_ id: String) async throws {
+            let _: API.OK = try await transport.mutate(
+                .delete, Self.path(id), timeout: Timeout.integrations, changes: [.settings, .library, .catalog]
+            )
+        }
+
+        /// `GET /settings/arr-servers/{id}/options` — the saved server's
+        /// quality profiles, root folders and tags.
+        func options(_ id: String) async throws -> API.ArrServerOptions {
+            try await transport.get(Self.path(id) + "/options", timeout: Timeout.integrations)
+        }
+
+        /// `POST /settings/arr-servers/{id}/webhook-secret` — "Regenerate";
+        /// the old URL stops working at once. Returns the new URL.
+        func regenerateWebhook(_ id: String) async throws -> String {
+            let result: API.ArrServerWebhook = try await transport.mutate(
+                .post, Self.path(id) + "/webhook-secret", changes: .settings
+            )
+            return result.webhookUrl
         }
     }
 

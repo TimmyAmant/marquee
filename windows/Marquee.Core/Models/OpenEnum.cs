@@ -475,3 +475,21 @@ public readonly record struct JobId(string Value) : IOpenEnum<JobId>
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 }
+
+/// <summary>
+/// How Sonarr numbers a show's episodes (0.43+): a server's setting for
+/// non-anime shows, and the "Series type" pick under Approve's Advanced.
+/// </summary>
+public readonly record struct SeriesType(string Value) : IOpenEnum<SeriesType>
+{
+    public static readonly SeriesType Standard = new("standard");
+    public static readonly SeriesType Daily = new("daily");
+    public static readonly SeriesType Anime = new("anime");
+
+    public static IReadOnlyList<SeriesType> Known { get; } = [Standard, Daily, Anime];
+    public static SeriesType FromValue(string value) => new(value);
+    public bool IsKnown => Known.Contains(this);
+    public override string ToString() => Value;
+
+    public string Label => this == Standard ? "Standard" : this == Daily ? "Daily" : this == Anime ? "Anime" : OpenEnum.Capitalized(Value);
+}

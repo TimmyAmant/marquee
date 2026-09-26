@@ -56,6 +56,15 @@ export function getQualityProfiles(config: ArrConfig) {
   return sonarrFetch<SonarrQualityProfile[]>(config, "/qualityprofile");
 }
 
+export interface SonarrTag {
+  id: number;
+  label: string;
+}
+
+export function getTags(config: ArrConfig) {
+  return sonarrFetch<SonarrTag[]>(config, "/tag");
+}
+
 export interface SonarrSeriesLookupResult {
   title: string;
   tvdbId: number;
@@ -264,6 +273,10 @@ export type AddSeriesInput = {
   /** A season request's seasons; null or omitted adds the whole series the
    * way Sonarr's lookup result describes it. */
   seasons?: readonly number[] | null;
+  /** Each omitted one keeps what Sonarr's lookup result has. */
+  tags?: readonly number[];
+  seriesType?: "standard" | "daily" | "anime";
+  seasonFolder?: boolean;
 };
 
 /** The POST /series body. With `seasons`, only those are monitored, and the
@@ -273,6 +286,9 @@ export function buildAddSeriesBody(input: AddSeriesInput) {
     ...input.lookupResult,
     qualityProfileId: input.qualityProfileId,
     rootFolderPath: input.rootFolderPath,
+    ...(input.tags ? { tags: [...input.tags] } : {}),
+    ...(input.seriesType ? { seriesType: input.seriesType } : {}),
+    ...(input.seasonFolder !== undefined ? { seasonFolder: input.seasonFolder } : {}),
     monitored: true,
     ...(input.seasons ? { seasons: seasonsForAdd(input.lookupResult.seasons ?? [], input.seasons) } : {}),
     addOptions: { searchForMissingEpisodes: true },

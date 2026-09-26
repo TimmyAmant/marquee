@@ -26,6 +26,84 @@
         <DataTemplate x:Key="PosterTemplate" x:DataType="vm:PosterItem">
             <controls:PosterCard Item="{x:Bind}" />
         </DataTemplate>
+        <!--
+          The admin's "Advanced" under Add / Add to 4K (0.43+): the server,
+          then its quality profile, root folder, tags and (TV) series type.
+          The same template as the review queue's (RequestsPage.xaml).
+        -->
+        <DataTemplate x:Key="AddOverridesTemplate" x:DataType="vm:AddOverridesViewModel">
+            <StackPanel Spacing="10" MaxWidth="560" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ProgressRing IsActive="{x:Bind IsLoading, Mode=OneWay}" Width="16" Height="16" />
+                    <TextBlock
+                        Text="Checking your Sonarr and Radarr servers…"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Spacing="6" Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="{x:Bind Error, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                    <Button Content="Try again" Command="{x:Bind LoadCommand}" />
+                </StackPanel>
+                <TextBlock
+                    Text="{x:Bind NoServersMessage, Mode=OneWay}"
+                    Visibility="{x:Bind ShowsNoServers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <StackPanel Spacing="10" Visibility="{x:Bind ShowsPickers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <ComboBox
+                        Header="Server"
+                        MinWidth="260"
+                        ItemsSource="{x:Bind ServerNames, Mode=OneWay}"
+                        SelectedIndex="{x:Bind ServerIndex, Mode=TwoWay}" />
+                    <TextBlock
+                        Text="This server isn't responding right now, so its lists can't be shown. Its saved settings will be used."
+                        Visibility="{x:Bind ServerIsDown, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        TextWrapping="Wrap" />
+                    <ComboBox
+                        Header="Quality profile"
+                        MinWidth="260"
+                        ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
+                        SelectedIndex="{x:Bind QualityProfileIndex, Mode=TwoWay}" />
+                    <ComboBox
+                        Header="Root folder"
+                        MinWidth="260"
+                        ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
+                        SelectedIndex="{x:Bind RootFolderIndex, Mode=TwoWay}" />
+                    <StackPanel Spacing="6" Visibility="{x:Bind HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Tags" Style="{StaticResource FieldLabel}" />
+                        <ItemsRepeater ItemsSource="{x:Bind Tags, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="140" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TagChoice">
+                                    <CheckBox Content="{x:Bind Label}" IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                    <ComboBox
+                        Header="Series type"
+                        MinWidth="260"
+                        ItemsSource="{x:Bind SeriesTypes}"
+                        SelectedIndex="{x:Bind SeriesTypeIndex, Mode=TwoWay}"
+                        Visibility="{x:Bind ShowsSeriesType, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock
+                        Text="Picking another server resets the rest to that server's defaults."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
         <DataTemplate x:Key="FactRowTemplate" x:DataType="vm:FactRow">
             <Grid ColumnSpacing="10" MinHeight="34" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
                 <Grid.ColumnDefinitions>
@@ -256,6 +334,22 @@
                                             Command="{x:Bind ViewModel.OpenSettingsCommand}"
                                             Visibility="{x:Bind ViewModel.NeedsArrSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                     </StackPanel>
+                                    <!-- 0.43+: which server and settings "Add to Radarr/Sonarr" uses; hidden on an older server. -->
+                                    <StackPanel Visibility="{x:Bind ViewModel.CanAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <Expander
+                                            Header="Advanced"
+                                            MaxWidth="600"
+                                            IsExpanded="{x:Bind ViewModel.AddAdvanced.IsExpanded, Mode=TwoWay}"
+                                            Visibility="{x:Bind ViewModel.AddAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch">
+                                            <ContentControl
+                                                Content="{x:Bind ViewModel.AddAdvanced}"
+                                                ContentTemplate="{StaticResource AddOverridesTemplate}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch" />
+                                        </Expander>
+                                    </StackPanel>
                                     <!-- components/fourk-controls.tsx: the 4K Radarr/Sonarr's copy (0.37+). -->
                                     <StackPanel
                                         Orientation="Horizontal"
@@ -294,6 +388,22 @@
                                             Content="{x:Bind ViewModel.AddFourKLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.AddFourKCommand}"
                                             Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                    <!-- 0.43+: which 4K server and settings "Add to 4K …" uses. -->
+                                    <StackPanel Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <Expander
+                                            Header="Advanced (4K)"
+                                            MaxWidth="600"
+                                            IsExpanded="{x:Bind ViewModel.AddFourKAdvanced.IsExpanded, Mode=TwoWay}"
+                                            Visibility="{x:Bind ViewModel.AddFourKAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch">
+                                            <ContentControl
+                                                Content="{x:Bind ViewModel.AddFourKAdvanced}"
+                                                ContentTemplate="{StaticResource AddOverridesTemplate}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch" />
+                                        </Expander>
                                     </StackPanel>
                                     <TextBlock
                                         Text="{x:Bind ViewModel.FourKError, Mode=OneWay}"

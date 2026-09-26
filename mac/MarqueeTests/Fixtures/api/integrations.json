@@ -98,5 +98,47 @@
     "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…",
     "radarr4kUrl": "http://marquee.local:3000/api/webhooks/radarr4k/54caac33-…?secret=d8a989…",
     "sonarr4kUrl": "http://marquee.local:3000/api/webhooks/sonarr4k/54caac33-…?secret=d8a989…"
-  }
+  },
+  "arrServers": [
+    {
+      "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "kind": "sonarr",
+      "name": "Sonarr",
+      "baseUrl": "http://192.168.1.10:8989",
+      "hasApiKey": true,
+      "is4k": false,
+      "isDefault": true,
+      "qualityProfileId": 4,
+      "rootFolderPath": "/tv",
+      "tags": [],
+      "seriesType": "standard",
+      "seasonFolders": true,
+      "animeQualityProfileId": 7,
+      "animeRootFolderPath": "/anime",
+      "animeTags": [
+        3
+      ],
+      "fullyConfigured": true,
+      "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e…"
+    },
+    {
+      "id": "7d2a9e40-3c1b-4f6e-8a2d-5b9c0e1f4a73",
+      "kind": "radarr",
+      "name": "4K Radarr",
+      "baseUrl": "http://192.168.1.10:7879",
+      "hasApiKey": true,
+      "is4k": true,
+      "isDefault": true,
+      "qualityProfileId": 5,
+      "rootFolderPath": "/movies-4k",
+      "tags": [],
+      "seriesType": null,
+      "seasonFolders": null,
+      "animeQualityProfileId": null,
+      "animeRootFolderPath": null,
+      "animeTags": [],
+      "fullyConfigured": true,
+      "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/7d2a9e40-3c1b-4f6e-8a2d-5b9c0e1f4a73?secret=51c0…"
+    }
+  ]
 }

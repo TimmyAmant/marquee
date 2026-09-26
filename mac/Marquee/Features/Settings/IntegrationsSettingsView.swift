@@ -23,24 +23,13 @@ struct IntegrationsSettingsView: View {
                     JellyfinCard(settings: overview.jellyfin)
                 }
                 section("Download Clients") {
-                    ArrCard(provider: .sonarr, settings: overview.sonarr)
-                    ArrCard(provider: .radarr, settings: overview.radarr)
-                    // 0.37+; an older server omits them.
-                    if let sonarr4k = overview.sonarr4k {
-                        ArrCard(
-                            provider: .sonarr4k,
-                            settings: sonarr4k,
-                            title: "4K Sonarr (optional)",
-                            description: "A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr."
-                        )
-                    }
-                    if let radarr4k = overview.radarr4k {
-                        ArrCard(
-                            provider: .radarr4k,
-                            settings: radarr4k,
-                            title: "4K Radarr (optional)",
-                            description: "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr."
-                        )
+                    // 0.43+: any number of servers. An older server omits
+                    // the list and keeps the four fixed cards.
+                    if overview.usesServerList {
+                        ArrServersCard(kind: .sonarr, servers: overview.arrServers(of: .sonarr))
+                        ArrServersCard(kind: .radarr, servers: overview.arrServers(of: .radarr))
+                    } else {
+                        fixedArrCards(overview)
                     }
                 }
                 section("Metadata Sources") {
@@ -61,7 +50,8 @@ struct IntegrationsSettingsView: View {
                     ArrWebhooksCard(
                         webhooks: overview.arrWebhooks,
                         radarr4kConnected: overview.radarr4k?.connected == true,
-                        sonarr4kConnected: overview.sonarr4k?.connected == true
+                        sonarr4kConnected: overview.sonarr4k?.connected == true,
+                        isLegacy: overview.usesServerList
                     )
                     SecretCard(
                         title: "Discord notifications",
@@ -150,6 +140,30 @@ struct IntegrationsSettingsView: View {
         }
     }
 
+    /// The fixed Sonarr / Radarr / 4K cards, for a server before 0.43.
+    @ViewBuilder
+    private func fixedArrCards(_ overview: API.IntegrationsOverview) -> some View {
+        ArrCard(provider: .sonarr, settings: overview.sonarr)
+        ArrCard(provider: .radarr, settings: overview.radarr)
+        // 0.37+; an older server omits them.
+        if let sonarr4k = overview.sonarr4k {
+            ArrCard(
+                provider: .sonarr4k,
+                settings: sonarr4k,
+                title: "4K Sonarr (optional)",
+                description: "A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr."
+            )
+        }
+        if let radarr4k = overview.radarr4k {
+            ArrCard(
+                provider: .radarr4k,
+                settings: radarr4k,
+                title: "4K Radarr (optional)",
+                description: "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr."
+            )
+        }
+    }
+
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             SettingsSectionLabel(text: title)
@@ -160,7 +174,7 @@ struct IntegrationsSettingsView: View {
 }
 
 /// Card chrome shared by every integration.
-private struct IntegrationCard<Content: View>: View {
+struct IntegrationCard<Content: View>: View {
     let title: String
     var description: String?
     var connected = false
@@ -970,6 +984,9 @@ private struct ArrWebhooksCard: View {
     /// A connected 4K instance shows its own URL too (0.37+).
     var radarr4kConnected = false
     var sonarr4kConnected = false
+    /// 0.43+: every server has its own URL under Download Clients, so these
+    /// are the older shared ones (they keep working).
+    var isLegacy = false
 
     @Environment(AppModel.self) private var model
     @State private var current: API.ArrWebhooks?
@@ -981,8 +998,10 @@ private struct ArrWebhooksCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: "Sonarr / Radarr webhooks",
-            description: "Your server listens for these so Radarr/Sonarr can tell it the moment something starts or finishes downloading. Paste them into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download).",
+            title: isLegacy ? "Older shared webhook URLs" : "Sonarr / Radarr webhooks",
+            description: isLegacy
+                ? "Each server under Download Clients now has its own webhook URL — use those for anything new. These shared URLs from before keep working for servers already set up with them."
+                : "Your server listens for these so Radarr/Sonarr can tell it the moment something starts or finishes downloading. Paste them into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download).",
             connected: true,
             connectedLabel: "Listening"
         ) {

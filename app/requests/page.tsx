@@ -240,6 +240,9 @@ export default async function RequestsPage() {
                         {r.status === "rejected" && r.rejectionReason && (
                           <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
                         )}
+                        {r.status === "approved" && !r.manuallyApproved && r.arrServerName && (
+                          <p className="mt-1.5 text-xs text-text-muted">Added to {r.arrServerName}</p>
+                        )}
                       </td>
                     </tr>
                   );

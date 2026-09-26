@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "version": "5.26.2.10099",
+  "qualityProfiles": [
+    {
+      "id": 4,
+      "name": "HD-1080p"
+    },
+    {
+      "id": 6,
+      "name": "HD - 720p/1080p"
+    }
+  ],
+  "rootFolders": [
+    {
+      "id": 1,
+      "path": "/movies"
+    },
+    {
+      "id": 3,
+      "path": "/movies-kids"
+    }
+  ],
+  "tags": [
+    {
+      "id": 2,
+      "label": "kids"
+    }
+  ]
+}

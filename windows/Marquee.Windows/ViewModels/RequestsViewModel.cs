@@ -71,6 +71,7 @@ public sealed class ReviewedRow : RequestRowBase
         Tone = request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
         SeasonsLine = request.DetailText;
+        AddedToLine = request.AddedToLine ?? "";
     }
 
     /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie.</summary>
@@ -80,6 +81,9 @@ public sealed class ReviewedRow : RequestRowBase
     public string StatusLabel { get; }
     public BadgeTone Tone { get; }
     public string ReasonLine { get; }
+
+    /// <summary>"Added to Radarr 2" under an Approved badge (0.43+); empty when unknown.</summary>
+    public string AddedToLine { get; }
 }
 
 /// <summary>
@@ -132,7 +136,15 @@ public sealed partial class PendingRow : ObservableObject
         // Only an https Sonarr can be opened from here (see ExternalLinks).
         this.manualSonarrUrl = ExternalLinks.CanOpen(manualSonarrUrl) ? manualSonarrUrl : null;
         Open = openTitle;
+        Advanced = new AddOverridesViewModel(() => owner.Api, request.MediaType, request.TmdbId, request.Is4k)
+        {
+            Unsupported = owner.AdvancedIsUnsupported,
+            IsUnsupported = owner.HasNoAddOptions,
+        };
     }
+
+    /// <summary>"Advanced" under the row (0.43+): which server and settings Approve adds it with.</summary>
+    public AddOverridesViewModel Advanced { get; }
 
     public Guid Id { get; }
     public string Title { get; }
@@ -163,8 +175,13 @@ public sealed partial class PendingRow : ObservableObject
     public bool CanAddManually => ShowManualApprove && manualSonarrUrl != null;
 
     /// <summary><c>POST /requests/{id}/approve</c>; "Couldn't resolve this show for Sonarr." offers the manual path.</summary>
+    /// <remarks>An unopened "Advanced" sends no body, exactly the plain Approve; an opened one sends its picks.</remarks>
     [RelayCommand]
-    private Task ApproveAsync() => RunAsync("approve", api => api.Requests.ApproveAsync(Id));
+    private Task ApproveAsync()
+    {
+        var overrides = Advanced.Overrides;
+        return RunAsync("approve", api => api.Requests.ApproveAsync(Id, overrides));
+    }
 
     /// <summary>Reject is a two-step, like the web row: the chooser first, and only its Decline sends anything.</summary>
     [RelayCommand]
@@ -733,10 +750,17 @@ public sealed partial class RequestsViewModel : ObservableObject
                 return;
             }
             RejectionReasons = fresh.RejectionReasons;
+            // A row still pending keeps its state (an open "Advanced" and its picks) across reloads.
+            var existing = Pending.ToDictionary(row => row.Id);
+            var rows = fresh.Results
+                .Select(request => existing.TryGetValue(request.Id, out var row)
+                    ? row
+                    : new PendingRow(this, request, fresh.ManualSonarrAddUrl(request), OpenPendingTitleCommand))
+                .ToList();
             Pending.Clear();
-            foreach (var request in fresh.Results)
+            foreach (var row in rows)
             {
-                Pending.Add(new PendingRow(this, request, fresh.ManualSonarrAddUrl(request), OpenPendingTitleCommand));
+                Pending.Add(row);
             }
             HasQueue = true;
             QueueError = null;
@@ -835,6 +859,19 @@ public sealed partial class RequestsViewModel : ObservableObject
 
     /// <summary>A row's action succeeded: drop it now; the reload the mutation triggers brings the server's view.</summary>
     internal void Settle(PendingRow row) => Pending.Remove(row);
+
+    /// <summary>The server has no add options (older than 0.43): no row offers "Advanced".</summary>
+    internal bool HasNoAddOptions { get; private set; }
+
+    /// <summary>One row found out the server has no add options: hide "Advanced" on every row.</summary>
+    internal void AdvancedIsUnsupported()
+    {
+        HasNoAddOptions = true;
+        foreach (var row in Pending)
+        {
+            row.Advanced.IsUnsupported = true;
+        }
+    }
 
     /// <summary>The page's dialog, or nothing (no reason, no reject) when the page hasn't wired one.</summary>
     internal Task<string?> ChooseReasonAsync(PendingRow row) =>

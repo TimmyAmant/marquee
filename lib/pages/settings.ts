@@ -8,6 +8,7 @@ import { getArrCredential, getOrCreateWebhookSecret, getJellyfinCredential } fro
 import { getPlexSummary, syncPlexLibraryIfStale } from "@/lib/plex/sync";
 import { getJellyfinSummary, syncJellyfinLibraryIfStale } from "@/lib/jellyfin/sync";
 import { syncArrLibraryIfStale } from "@/lib/arr/sync";
+import { listArrServers } from "@/lib/arr/servers";
 import {
   isTmdbAccessTokenSavedInSettings,
   getTraktClientId,
@@ -78,6 +79,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     channels,
     sonarr4kCred,
     radarr4kCred,
+    arrServers,
   ] = await Promise.all([
     getArrCredential(adminUserId, "sonarr"),
     getArrCredential(adminUserId, "radarr"),
@@ -94,6 +96,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     getChannelSummaries(),
     getArrCredential(adminUserId, "sonarr4k"),
     getArrCredential(adminUserId, "radarr4k"),
+    listArrServers(adminUserId),
   ]);
 
   const arrExisting = (cred: typeof sonarrCred) =>
@@ -118,6 +121,10 @@ export async function loadIntegrationsPage(adminUserId: string) {
     radarr: arrExisting(radarrCred),
     sonarr4k: arrExisting(sonarr4kCred),
     radarr4k: arrExisting(radarr4kCred),
+    /** Every Sonarr/Radarr server — the four above are the defaults of each
+     * kind and 4K-ness, kept for the older API shape. Carries decrypted
+     * keys: callers turn these into toArrServerDto before they leave. */
+    arrServers,
     tmdb: {
       savedInSettings: tmdbSavedInSettings,
       configuredFromEnv: Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY),

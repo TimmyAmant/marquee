@@ -16,6 +16,7 @@ import {
   rejectRequest,
 } from "@/lib/requests/mutate";
 import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
+import { parseAddOverridesForm } from "@/lib/arr/add-options";
 
 // Thin session/form wrappers — the request lifecycle lives in
 // lib/requests/mutate.ts, shared with /api/v1/requests/*.
@@ -86,12 +87,15 @@ export type ReviewState = { error?: string; success?: boolean };
 export async function approveRequestAction(
   requestId: string,
   _prevState: ReviewState | undefined,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<ReviewState> {
   const admin = await requireReviewer("Only an admin can approve requests.");
   if (!admin.ok) return { error: admin.error };
 
-  const result = await approveRequest(requestId, admin.userId);
+  // The row's "Advanced" picks, when it was opened (components/add-advanced-options.tsx).
+  const parsed = parseAddOverridesForm(formData, "tv");
+  if (!parsed.ok) return { error: parsed.error };
+  const result = await approveRequest(requestId, admin.userId, parsed.overrides);
   revalidatePath("/requests");
   return result.ok ? { success: true } : { error: result.error };
 }

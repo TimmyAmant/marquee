@@ -1,4 +1,3 @@
-import { getArrCredential } from "@/lib/integrations/credentials";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { getPlexFileInfo } from "@/lib/plex/sync";
@@ -7,6 +6,9 @@ import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-s
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaDetail } from "@/lib/media-info";
 import { isSeasonComplete, type SeasonLibraryState } from "@/lib/requests/seasons";
+import { arrConfig, isServerConfigured, listLibraryServers, type ArrServer } from "@/lib/arr/servers";
+import { askEachServer, bestByStatus } from "@/lib/arr/fan-out";
+import { mergeSeasonStates } from "@/lib/arr/merge";
 
 export type FileInfo = {
   /** For Plex-owned TV, this is the folder every episode's file has in
@@ -47,26 +49,61 @@ export type TitleLibraryStatus = {
   file: FileInfo | null;
 };
 
-/** One Radarr `/movie?tmdbId=X` lookup, shared by the ownership check below
- * and by the media-server branches of `getTitleLibraryStatus` — a movie Plex
- * owns is usually tracked in Radarr too, and Radarr is the authority on the
- * file it fetched, so both want this and neither should fetch it twice. */
+/** The movie as every standard Radarr has it — asked of all of them in
+ * parallel within the 2.5s budget — shared by the ownership check below and
+ * by the media-server branches of `getTitleLibraryStatus` (a movie Plex owns
+ * is usually tracked in Radarr too, and Radarr is the authority on the file
+ * it fetched). `movie` is the furthest-along copy, the default server
+ * winning a tie. */
 type RadarrLookup = {
   configured: boolean;
   connected: boolean;
   movie: radarr.RadarrMovie | null;
+  /** Every server's copy, for acting on all of them. */
+  copies: { server: ArrServer; movie: radarr.RadarrMovie }[];
 };
 
 async function lookUpRadarrMovie(userId: string, tmdbId: number): Promise<RadarrLookup> {
-  const credential = await getArrCredential(userId, "radarr");
-  const configured = Boolean(credential?.qualityProfileId && credential?.rootFolderPath);
-  if (!credential) return { configured: false, connected: false, movie: null };
+  const servers = await listLibraryServers(userId, "radarr");
+  if (servers.length === 0) return { configured: false, connected: false, movie: null, copies: [] };
+  const answers = await askEachServer(servers, (server) => radarr.getMovieByTmdbId(arrConfig(server), tmdbId), null);
+  const copies = answers.flatMap(({ server, value }) => (value ? [{ server, movie: value }] : []));
+  const best = bestByStatus(copies, (c) => deriveRadarrStatus(c.movie));
+  return { configured: isServerConfigured(servers[0]), connected: true, movie: best?.movie ?? null, copies };
+}
 
-  const movie = await radarr
-    .getMovieByTmdbId({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tmdbId)
-    .catch(() => null);
+/** The same for a show across every standard Sonarr, each server's quality
+ * profiles fetched alongside (for the File details card) rather than after. */
+type SonarrLookup = {
+  configured: boolean;
+  connected: boolean;
+  best: SonarrCopy | null;
+  copies: SonarrCopy[];
+};
 
-  return { configured, connected: true, movie };
+type SonarrCopy = { server: ArrServer; series: sonarr.SonarrSeries; profiles: sonarr.SonarrQualityProfile[] };
+
+async function lookUpSonarrSeries(userId: string, tvdbId: number | null): Promise<SonarrLookup> {
+  const servers = await listLibraryServers(userId, "sonarr");
+  if (servers.length === 0) return { configured: false, connected: false, best: null, copies: [] };
+  const configured = isServerConfigured(servers[0]);
+  if (!tvdbId) return { configured, connected: true, best: null, copies: [] };
+  const answers = await askEachServer(
+    servers,
+    async (server): Promise<SonarrCopy | null> => {
+      const config = arrConfig(server);
+      // Independent of each other: a small unused profile list costs far
+      // less than a second round-trip once the series turns out to exist.
+      const [series, profiles] = await Promise.all([
+        sonarr.getSeriesByTvdbId(config, tvdbId),
+        sonarr.getQualityProfiles(config).catch(() => []),
+      ]);
+      return series ? { server, series, profiles } : null;
+    },
+    null,
+  );
+  const copies = answers.flatMap(({ value }) => (value ? [value] : []));
+  return { configured, connected: true, best: bestByStatus(copies, (c) => deriveSonarrStatus(c.series)), copies };
 }
 
 async function getArrStatus(
@@ -75,6 +112,7 @@ async function getArrStatus(
   tmdbId: number,
   tvdbId: number | null,
   radarrLookup: RadarrLookup | null,
+  sonarrLookup: SonarrLookup | null,
 ): Promise<TitleLibraryStatus> {
   if (mediaType === "movie") {
     const lookup = radarrLookup ?? (await lookUpRadarrMovie(userId, tmdbId));
@@ -105,15 +143,10 @@ async function getArrStatus(
     return { status, provider: "radarr", configured, file };
   }
 
-  const credential = await getArrCredential(userId, "sonarr");
-  const configured = Boolean(credential?.qualityProfileId && credential?.rootFolderPath);
-  if (!credential) return { status: "untracked", provider: "sonarr", configured: false, file: null };
-  if (!tvdbId) return { status: "untracked", provider: "sonarr", configured, file: null };
-
-  const series = await sonarr
-    .getSeriesByTvdbId({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tvdbId)
-    .catch(() => null);
-
+  const lookup = sonarrLookup ?? (await lookUpSonarrSeries(userId, tvdbId));
+  if (!lookup.connected) return { status: "untracked", provider: "sonarr", configured: false, file: null };
+  const { configured } = lookup;
+  const series = lookup.best?.series ?? null;
   if (!series) return { status: "untracked", provider: "sonarr", configured, file: null };
 
   const status = deriveSonarrStatus(series);
@@ -196,31 +229,13 @@ function mediaServerFile(
  * Sonarr's series path + quality profile name to fill the gap rather than
  * leaving the File details section nearly empty for TV.
  */
-async function getSonarrFileExtras(
-  userId: string,
-  tvdbId: number | null,
-): Promise<ArrFileExtras | null> {
-  if (!tvdbId) return null;
-
-  const credential = await getArrCredential(userId, "sonarr");
-  if (!credential) return null;
-  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-
-  // These two don't depend on each other's result — fetching the quality
-  // profile list only after confirming the series exists would add a
-  // second round-trip to Sonarr for no reason, since a small unused list
-  // fetch costs far less than another full network round-trip.
-  const [series, profiles] = await Promise.all([
-    sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null),
-    sonarr.getQualityProfiles(config).catch(() => []),
-  ]);
-  if (!series) return null;
-
-  const quality = series.qualityProfileId
-    ? (profiles.find((p) => p.id === series.qualityProfileId)?.name ?? null)
+function sonarrFileExtras(lookup: SonarrLookup | null): ArrFileExtras | null {
+  const copy = lookup?.best;
+  if (!copy) return null;
+  const quality = copy.series.qualityProfileId
+    ? (copy.profiles.find((p) => p.id === copy.series.qualityProfileId)?.name ?? null)
     : null;
-
-  return { path: series.path ?? null, quality };
+  return { path: copy.series.path ?? null, quality };
 }
 
 export async function getTitleLibraryStatus(
@@ -235,14 +250,15 @@ export async function getTitleLibraryStatus(
   // Radarr — previously only fetched after Plex/Jellyfin ownership was
   // already confirmed, one after the other. The Radarr lookup is the same
   // one `getArrStatus` needs below, so it's handed down rather than repeated.
-  const [plexFile, jellyfinFile, sonarrExtra, radarrLookup] = await Promise.all([
+  const [plexFile, jellyfinFile, sonarrLookup, radarrLookup] = await Promise.all([
     getPlexFileInfo(userId, mediaType, tmdbId, tvdbId).catch(() => null),
     getJellyfinFileInfo(userId, mediaType, tmdbId, tvdbId).catch(() => null),
-    mediaType === "tv" ? getSonarrFileExtras(userId, tvdbId).catch(() => null) : Promise.resolve(null),
+    mediaType === "tv" ? lookUpSonarrSeries(userId, tvdbId).catch(() => null) : Promise.resolve(null),
     mediaType === "movie"
       ? lookUpRadarrMovie(userId, tmdbId).catch(() => null)
       : Promise.resolve(null),
   ]);
+  const sonarrExtra = sonarrFileExtras(sonarrLookup);
 
   const arrExtra = mediaType === "tv" ? sonarrExtra : radarrFileExtras(radarrLookup?.movie ?? null);
 
@@ -264,7 +280,7 @@ export async function getTitleLibraryStatus(
     };
   }
 
-  const arrStatus = await getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup);
+  const arrStatus = await getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup, sonarrLookup);
   // Sonarr's quality profile, already fetched above, for a show only Sonarr has.
   if (mediaType === "tv" && arrStatus.file && sonarrExtra?.quality && !arrStatus.file.quality) {
     return { ...arrStatus, file: { ...arrStatus.file, quality: sonarrExtra.quality } };
@@ -314,13 +330,14 @@ export async function getSonarrSeasonStates(
 ): Promise<SonarrSeasonState[] | null> {
   if (!tvdbId) return null;
 
-  const credential = await getArrCredential(userId, "sonarr");
-  if (!credential) return null;
+  // A show on more than one server: each season as the server that's
+  // furthest along with it has it (lib/arr/merge.ts).
+  const lookup = await lookUpSonarrSeries(userId, tvdbId);
+  if (lookup.copies.length === 0) return null;
+  return mergeSeasonStates(lookup.copies.map((c) => sonarrSeasonStates(c.series)));
+}
 
-  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
-  if (!series) return null;
-
+function sonarrSeasonStates(series: sonarr.SonarrSeries): SonarrSeasonState[] {
   return (series.seasons ?? []).map((s) => {
     const have = s.statistics?.episodeFileCount ?? 0;
     const total = s.statistics?.episodeCount ?? 0;
@@ -352,30 +369,53 @@ export async function getSonarrEpisodeHasFileMap(
   const episodeHasFile = new Map<number, boolean>();
   if (!tvdbId) return episodeHasFile;
 
-  const credential = await getArrCredential(userId, "sonarr");
-  if (!credential) return episodeHasFile;
-
-  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
-  if (!series) return episodeHasFile;
-
-  const episodes = await sonarr
-    .getEpisodesBySeriesId(config, series.id, seasonNumber)
-    .catch(() => []);
-  for (const episode of episodes) {
-    episodeHasFile.set(episode.episodeNumber, episode.hasFile);
+  const lookup = await lookUpSonarrSeries(userId, tvdbId);
+  // On any server counts as had.
+  const answers = await askEachServer(
+    lookup.copies,
+    (copy) => sonarr.getEpisodesBySeriesId(arrConfig(copy.server), copy.series.id, seasonNumber),
+    [] as sonarr.SonarrEpisode[],
+  );
+  for (const { value: episodes } of answers) {
+    for (const episode of episodes) {
+      episodeHasFile.set(episode.episodeNumber, episodeHasFile.get(episode.episodeNumber) || episode.hasFile);
+    }
   }
   return episodeHasFile;
 }
 
 export type ArrTrackingInfo = { arrId: number; monitored: boolean };
 
+/** A title's entry on one standard Sonarr/Radarr server. */
+export type LibraryCopy = { server: ArrServer; arrId: number; monitored: boolean };
+
+/** Every standard server's entry for this title — a title may be on more
+ * than one, and Search now / monitoring act on all of them. Best first. */
+export async function findLibraryCopies(
+  userId: string,
+  mediaType: "movie" | "tv",
+  tmdbId: number,
+  tvdbId: number | null,
+): Promise<LibraryCopy[]> {
+  if (mediaType === "movie") {
+    const lookup = await lookUpRadarrMovie(userId, tmdbId);
+    const best = lookup.copies.find((c) => c.movie === lookup.movie);
+    const ordered = best ? [best, ...lookup.copies.filter((c) => c !== best)] : lookup.copies;
+    return ordered.map((c) => ({ server: c.server, arrId: c.movie.id, monitored: c.movie.monitored }));
+  }
+  const lookup = await lookUpSonarrSeries(userId, tvdbId);
+  const best = lookup.best;
+  const ordered = best ? [best, ...lookup.copies.filter((c) => c !== best)] : lookup.copies;
+  return ordered.map((c) => ({ server: c.server, arrId: c.series.id, monitored: c.series.monitored }));
+}
+
 /**
  * Whether this title has an entry in Radarr/Sonarr at all, independent of
  * `getTitleLibraryStatus`'s provider — a title can be "owned" via Plex/
  * Jellyfin while still being separately tracked (and searchable/
  * monitorable) in Radarr/Sonarr, the common setup for most households, so
- * this can't just reuse the provider already resolved there.
+ * this can't just reuse the provider already resolved there. With the
+ * title on several servers: the best copy's id, and monitored if any is.
  */
 export async function getArrTrackingInfo(
   userId: string,
@@ -383,18 +423,8 @@ export async function getArrTrackingInfo(
   tmdbId: number,
   tvdbId: number | null,
 ): Promise<ArrTrackingInfo | null> {
-  if (mediaType === "movie") {
-    const credential = await getArrCredential(userId, "radarr");
-    if (!credential) return null;
-    const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-    const movie = await radarr.getMovieByTmdbId(config, tmdbId).catch(() => null);
-    return movie ? { arrId: movie.id, monitored: movie.monitored } : null;
-  }
-
-  if (!tvdbId) return null;
-  const credential = await getArrCredential(userId, "sonarr");
-  if (!credential) return null;
-  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
-  return series ? { arrId: series.id, monitored: series.monitored } : null;
+  if (mediaType === "tv" && !tvdbId) return null;
+  const copies = await findLibraryCopies(userId, mediaType, tmdbId, tvdbId);
+  if (copies.length === 0) return null;
+  return { arrId: copies[0].arrId, monitored: copies.some((c) => c.monitored) };
 }

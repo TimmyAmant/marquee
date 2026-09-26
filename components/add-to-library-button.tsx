@@ -7,6 +7,7 @@ import { useActionState } from "react";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import { RequestButton } from "@/components/request-button";
+import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import { SeasonRequestPicker, type SeasonPickerRow } from "@/components/season-request-picker";
 import type { MediaType } from "@/lib/db/schema";
 
@@ -101,7 +102,7 @@ export function AddToLibraryButton({
         )}
 
         {status === "untracked" && isAdmin !== false && configured && !inArr && !state?.success && (
-          <form action={formAction}>
+          <form id={`add-${mediaType}-${tmdbId}`} action={formAction}>
             <button
               type="submit"
               disabled={isPending}
@@ -121,6 +122,15 @@ export function AddToLibraryButton({
           </Link>
         )}
       </div>
+
+      {status === "untracked" && isAdmin === true && configured && !inArr && !state?.success && (
+        <AddAdvancedOptions
+          mediaType={mediaType}
+          tmdbId={tmdbId}
+          formId={`add-${mediaType}-${tmdbId}`}
+          disabled={isPending}
+        />
+      )}
 
       {status === "untracked" && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (
         <p className="text-xs text-text-muted">Also requested by {otherRequesters.join(", ")}</p>

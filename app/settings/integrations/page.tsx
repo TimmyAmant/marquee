@@ -3,7 +3,8 @@ import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { loadIntegrationsPage } from "@/lib/pages/settings";
 import { webhookBaseUrl } from "@/lib/integrations/webhook-urls";
-import { ArrCredentialForm } from "@/components/arr-credential-form";
+import { ArrServersCard } from "@/components/arr-servers-card";
+import { toArrServerDto } from "@/lib/arr/servers";
 import { PlexConnectCard } from "@/components/plex-connect-card";
 import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
 import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
@@ -26,10 +27,7 @@ export default async function IntegrationsSettingsPage() {
     {
       plexSummary,
       jellyfin,
-      sonarr,
-      radarr,
-      sonarr4k,
-      radarr4k,
+      arrServers,
       tmdb,
       traktConnected,
       tvdbConnected,
@@ -93,20 +91,8 @@ export default async function IntegrationsSettingsPage() {
             Download Clients
           </h3>
           <div className="mt-3 flex flex-col gap-6">
-            <ArrCredentialForm provider="sonarr" label="Sonarr" existing={sonarr} />
-            <ArrCredentialForm provider="radarr" label="Radarr" existing={radarr} />
-            <ArrCredentialForm
-              provider="sonarr4k"
-              label="4K Sonarr (optional)"
-              description="A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr."
-              existing={sonarr4k}
-            />
-            <ArrCredentialForm
-              provider="radarr4k"
-              label="4K Radarr (optional)"
-              description="A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr."
-              existing={radarr4k}
-            />
+            {/* Only what a client may see: toArrServerDto drops the API key. */}
+            <ArrServersCard servers={arrServers.map((server) => toArrServerDto(server, baseUrl))} />
           </div>
         </section>
 
@@ -133,7 +119,10 @@ export default async function IntegrationsSettingsPage() {
               userId={session.user.id}
               initialSecret={webhookSecret}
               baseUrl={baseUrl}
-              fourK={{ radarr: Boolean(radarr4k), sonarr: Boolean(sonarr4k) }}
+              fourK={{
+                radarr: arrServers.some((s) => s.kind === "radarr" && s.is4k),
+                sonarr: arrServers.some((s) => s.kind === "sonarr" && s.is4k),
+              }}
             />
             <DiscordConnectCard connected={discordConnected} />
             <NtfyConnectCard connected={ntfyConnected} />

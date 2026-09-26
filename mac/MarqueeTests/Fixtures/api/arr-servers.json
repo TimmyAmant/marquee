@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "kind": "sonarr",
+      "name": "Sonarr",
+      "baseUrl": "http://192.168.1.10:8989",
+      "hasApiKey": true,
+      "is4k": false,
+      "isDefault": true,
+      "qualityProfileId": 4,
+      "rootFolderPath": "/tv",
+      "tags": [],
+      "seriesType": "standard",
+      "seasonFolders": true,
+      "animeQualityProfileId": null,
+      "animeRootFolderPath": null,
+      "animeTags": [],
+      "fullyConfigured": true,
+      "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e…"
+    }
+  ]
+}

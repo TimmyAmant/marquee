@@ -64,6 +64,16 @@ where the real server needed something the core contract didn't spell out.
     or Jellyfin may have no password (`hasPassword: false`): they set their
     first one without `currentPassword`. New error code `410 expired` (a
     Plex poll whose handle is used, unknown or past its 10 minutes).
+11. **Any number of Sonarr / Radarr servers (0.43+, additive).** New
+    `/settings/arr-servers` endpoints manage them; `GET /settings/integrations`
+    gains `arrServers`. The fixed `sonarr` / `radarr` / `sonarr4k` /
+    `radarr4k` objects and endpoints keep working and now describe **the
+    default server** of each kind (standard or 4K). `POST /requests/{id}/approve`
+    and `POST /titles/{type}/{tmdbId}/add` take optional overrides (server,
+    quality profile, root folder, tags, series type), and the new
+    `GET /titles/{type}/{tmdbId}/add-options` lists what can be picked. A
+    server older than this answers `404 not_found` on the new endpoints —
+    hide the "Advanced" options and the server list there.
 
 ---
 
@@ -923,6 +933,56 @@ there unmonitored.
 Body (optional): `{ "is4k": true }` adds it to the 4K Radarr/Sonarr instead
 (0.37+) — errors then say "the 4K Radarr" / "the 4K Sonarr".
 
+0.43+: the body can also carry the same **add overrides** as approving a
+request (`serverId`, `qualityProfileId`, `rootFolderPath`, `tags`,
+`seriesType` — see `POST /requests/{id}/approve`); omitted fields use the
+server's defaults. Without `serverId` the title goes to the default server
+(the default 4K one with `is4k`). Errors name the server ("Couldn't add this
+movie to Radarr 2.").
+
+### `GET /titles/{type}/{tmdbId}/add-options` — admin or trusted member (0.43+)
+
+What the "Advanced" section of Approve (and the admin's Add) offers: every
+Sonarr (TV) or Radarr (movies) server that could take the title, default
+first, each with its quality profiles, root folders and tags, and the values
+it would use if nothing is changed. Query: `is4k=true` lists the 4K servers
+instead (a 4K request can only go to a 4K server, a regular one only to a
+regular one). `403` "Only an admin can approve requests." for members.
+
+```json
+{
+  "mediaType": "tv",
+  "tmdbId": 95396,
+  "is4k": false,
+  "isAnime": false,
+  "servers": [
+    {
+      "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "name": "Sonarr",
+      "isDefault": true,
+      "is4k": false,
+      "reachable": true,
+      "qualityProfiles": [ { "id": 4, "name": "HD-1080p" }, { "id": 7, "name": "Anime" } ],
+      "rootFolders": [ { "id": 1, "path": "/tv" }, { "id": 2, "path": "/anime" } ],
+      "tags": [ { "id": 1, "label": "kids" }, { "id": 3, "label": "anime" } ],
+      "defaults": { "qualityProfileId": 4, "rootFolderPath": "/tv", "tags": [], "seriesType": "standard" }
+    }
+  ]
+}
+```
+
+- `isAnime`: TMDb tags the title with the "anime" keyword, or it's Animation
+  from Japan (genre Animation plus Japanese origin country or language) —
+  the same test Seerr uses. For an anime show, `defaults` are the server's
+  anime profile, folder and tags (where set) and `seriesType` `"anime"`.
+- `defaults.seriesType` is `null` for movies; for TV one of `"standard"`,
+  `"daily"`, `"anime"`.
+- `reachable: false`: the server didn't answer within 2.5 seconds; its lists
+  are empty but `defaults` still hold its saved choices. Approving without
+  overrides still works if it comes back.
+- `servers` is empty when none is set up for this type (then Add/Approve fail
+  with "Connect Radarr in Settings first." as before).
+
 Errors: `403 forbidden` "Only the admin can add titles.", `409 conflict`
 "Connect Radarr in Settings first." / "Connect Sonarr in Settings first." (not
 connected or no defaults) / "Couldn't resolve this show for Sonarr." (no TVDB
@@ -1267,7 +1327,33 @@ than one request is pending. Empty → "No pending requests."
       "statusLabel": "Rejected",
       "requestedBy": { "userId": null, "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z",
-      "reviewedAt": "2026-09-17T17:12:41.468Z"
+      "reviewedAt": "2026-09-17T17:12:41.468Z",
+      "addedTo": null
+    },
+    {
+      "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
+      "mediaType": "movie",
+      "tmdbId": 438631,
+      "title": "Dune",
+      "posterPath": "/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
+      "is4k": false,
+      "status": "approved",
+      "manuallyApproved": false,
+      "rejectionReason": null,
+      "statusLabel": "Approved",
+      "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
+      "createdAt": "2026-09-17T17:02:11.100Z",
+      "reviewedAt": "2026-09-17T17:05:40.020Z",
+      "addedTo": {
+        "serverId": "b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31",
+        "serverName": "Radarr 2",
+        "qualityProfileId": 6,
+        "rootFolderPath": "/movies-kids",
+        "tags": [2],
+        "seriesType": null
+      }
     }
   ]
 }
@@ -1275,6 +1361,11 @@ than one request is pending. Empty → "No pending requests."
 
 `statusLabel`: "Approved", "Manually approved" or "Rejected". `rejectionReason`
 as in `/requests/mine`: the website shows it under the "Rejected" badge.
+`addedTo` (0.43+): where an approved request was added and with what —
+`serverId` is null once that server has been removed (`serverName` keeps
+the name it had). Null for rejected and
+manually approved requests, and for anything approved before 0.43. The
+website shows "Added to Radarr 2" under the badge.
 
 ### `GET /requests/pending-count` — user
 
@@ -1300,6 +1391,27 @@ already reviewed." / "Connect Radarr in Settings first." / "Connect Sonarr in
 Settings first." / **"Couldn't resolve this show for Sonarr."** (offer manual
 approval) / "Sonarr doesn't list the requested seasons for this show.", `502`
 "Couldn't add this movie to Radarr." / "Couldn't add this series to Sonarr.".
+
+**Add overrides (0.43+).** An optional JSON body picks where and how the title
+is added — the website's "Advanced" section under Approve. Every field is
+optional; an omitted one is the server's default (its anime defaults for an
+anime show — see `GET /titles/{type}/{tmdbId}/add-options`). No body at all
+is the plain Approve it always was. Admins and trusted members may send them.
+
+| Body field | Type | |
+|---|---|---|
+| `serverId` | string | a server id from `add-options`: same type (Sonarr for TV, Radarr for movies) and same 4K-ness as the request |
+| `qualityProfileId` | number | a quality profile of that server |
+| `rootFolderPath` | string | a root folder of that server |
+| `tags` | number[] | tag ids of that server (`[]` = no tags) |
+| `seriesType` | string | TV only: `"standard"`, `"daily"` or `"anime"` (a movie ignores it, but a value sent must still be one of these) |
+
+Only used when the title is new to that server; one it already has keeps its
+own settings (Approve then just turns monitoring on, as before). What was
+used is stored with the request (`addedTo` in `/requests/history`). Extra
+errors: `400 invalid` "That server can't take this request.", `"tags" must be
+a list of numbers.`, `"seriesType" must be standard, daily or anime.`, `"qualityProfileId" must be a number.`,
+`"rootFolderPath" must be a string.`, `"serverId" must be a string.`.
 
 ### `POST /requests/{id}/manual-approve` — admin
 
@@ -1978,9 +2090,56 @@ take a few seconds.
     "sonarrUrl": "http://marquee.local:3000/api/webhooks/sonarr/54caac33-…?secret=d8a989…",
     "radarr4kUrl": "http://marquee.local:3000/api/webhooks/radarr4k/54caac33-…?secret=d8a989…",
     "sonarr4kUrl": "http://marquee.local:3000/api/webhooks/sonarr4k/54caac33-…?secret=d8a989…"
-  }
+  },
+  "arrServers": [
+    {
+      "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "kind": "sonarr",
+      "name": "Sonarr",
+      "baseUrl": "http://192.168.1.10:8989",
+      "hasApiKey": true,
+      "is4k": false,
+      "isDefault": true,
+      "qualityProfileId": 4,
+      "rootFolderPath": "/tv",
+      "tags": [],
+      "seriesType": "standard",
+      "seasonFolders": true,
+      "animeQualityProfileId": 7,
+      "animeRootFolderPath": "/anime",
+      "animeTags": [3],
+      "fullyConfigured": true,
+      "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e…"
+    },
+    {
+      "id": "7d2a9e40-3c1b-4f6e-8a2d-5b9c0e1f4a73",
+      "kind": "radarr",
+      "name": "4K Radarr",
+      "baseUrl": "http://192.168.1.10:7879",
+      "hasApiKey": true,
+      "is4k": true,
+      "isDefault": true,
+      "qualityProfileId": 5,
+      "rootFolderPath": "/movies-4k",
+      "tags": [],
+      "seriesType": null,
+      "seasonFolders": null,
+      "animeQualityProfileId": null,
+      "animeRootFolderPath": null,
+      "animeTags": [],
+      "fullyConfigured": true,
+      "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/7d2a9e40-3c1b-4f6e-8a2d-5b9c0e1f4a73?secret=51c0…"
+    }
+  ]
 }
 ```
+
+`arrServers` (0.43+; an older server omits it): every Sonarr and Radarr
+server, the `ArrServer` shape of `GET /settings/arr-servers` — the website's
+"Download Clients" list. When it's present, show that list instead of the
+four fixed cards. `sonarr`, `radarr`, `sonarr4k` and `radarr4k` are still
+filled in for older clients, from the **default** server of each (the default
+standard Sonarr, the default 4K Radarr…).
 
 `jellyfin.name` (0.40+): "Jellyfin" or "Emby" — the same card connects
 either (website: "Jellyfin or Emby"). `sonarr4k` / `radarr4k` (0.37+; an older server omits them): the optional 4K
@@ -2031,9 +2190,131 @@ member that's normally none — same as the web action). `{ "ok": true }`.
 { "secret": "0f3c…", "radarrUrl": "http://…/api/webhooks/radarr/…?secret=0f3c…", "sonarrUrl": "http://…/api/webhooks/sonarr/…?secret=0f3c…", "radarr4kUrl": "http://…/api/webhooks/radarr4k/…?secret=0f3c…", "sonarr4kUrl": "http://…/api/webhooks/sonarr4k/…?secret=0f3c…" }
 ```
 
-### Sonarr / Radarr
+### Sonarr / Radarr servers (0.43+)
 
-`{provider}` is `sonarr` or `radarr` (default ports 8989 / 7878).
+Any number of each, managed here (the fixed per-provider endpoints below are
+the older way to do the same for one default server of each kind). Every
+server has its own settings, used when a title is added to it:
+
+#### `ArrServer`
+
+| Field | Type | |
+|---|---|---|
+| `id` | string | |
+| `kind` | string | `"sonarr"` or `"radarr"` |
+| `name` | string | shown everywhere a server is named ("Radarr 2") |
+| `baseUrl` | string | |
+| `hasApiKey` | bool | always true; the key itself is never returned |
+| `is4k` | bool | a 4K server: 4K requests and "Add in 4K" go here, and it isn't part of the library (see the 4K notes above) |
+| `isDefault` | bool | where titles go when nobody picks a server: there's always exactly one default standard and (once any exists) one default 4K server of each kind |
+| `qualityProfileId`, `rootFolderPath` | number / string, nullable | used when adding; both needed (`fullyConfigured`) |
+| `tags` | number[] | tag ids added with every title |
+| `seriesType` | string, nullable | Sonarr: `"standard"`, `"daily"` or `"anime"` — for non-anime shows. Radarr: null |
+| `seasonFolders` | bool, nullable | Sonarr: sort episodes into season folders. Radarr: null |
+| `animeQualityProfileId`, `animeRootFolderPath` | nullable | Sonarr: used instead for anime shows (null = the regular one) |
+| `animeTags` | number[] | Sonarr: tags for anime shows (used instead of `tags` when not empty) |
+| `fullyConfigured` | bool | |
+| `webhookUrl` | string | this server's own webhook URL, with its own secret (built from the request's `Host` / `X-Forwarded-Proto`) |
+
+Anime shows (TMDb "anime" keyword, or Animation from Japan) always get
+series type `"anime"` unless the reviewer picks another under Advanced.
+
+#### `GET /settings/arr-servers` — admin
+
+```json
+{ "results": [ { "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10", "kind": "sonarr", "name": "Sonarr", "baseUrl": "http://192.168.1.10:8989", "hasApiKey": true, "is4k": false, "isDefault": true, "qualityProfileId": 4, "rootFolderPath": "/tv", "tags": [], "seriesType": "standard", "seasonFolders": true, "animeQualityProfileId": null, "animeRootFolderPath": null, "animeTags": [], "fullyConfigured": true, "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e…" } ] }
+```
+
+Sonarr first, then Radarr; within each the standard servers before the 4K
+ones, the default first, then oldest first.
+
+#### `POST /settings/arr-servers/test` — admin
+
+"Test": checks a connection without saving it and returns what the pickers
+need. Body: `{ "kind": "radarr", "baseUrl": "http://192.168.1.10:7878", "apiKey": "…" }`.
+Editing a saved server, send `serverId` instead of `apiKey` to test with its
+saved key — only allowed while `baseUrl` is its saved one (or omitted):
+a changed URL needs the key typed again, so a saved key is never sent
+anywhere new.
+
+```json
+{
+  "ok": true,
+  "version": "5.26.2.10099",
+  "qualityProfiles": [ { "id": 4, "name": "HD-1080p" }, { "id": 6, "name": "HD - 720p/1080p" } ],
+  "rootFolders": [ { "id": 1, "path": "/movies" }, { "id": 3, "path": "/movies-kids" } ],
+  "tags": [ { "id": 2, "label": "kids" } ]
+}
+```
+
+Errors: `400` "URL and API key are required." / "Enter the API key again to
+change the URL." / `"kind" must be sonarr or radarr.`, `404` "Server not
+found." (unknown `serverId`), `502` "Couldn't connect. Check the URL and API
+key and try again.".
+
+#### `POST /settings/arr-servers` — admin
+
+"Add server". Tests the connection, then saves it. `201 Created` with
+`{ "ok": true, "server": ArrServer }`.
+
+| Body field | Type | |
+|---|---|---|
+| `kind` | string | **required**: `"sonarr"` or `"radarr"` |
+| `baseUrl`, `apiKey` | string | **required** (trailing slashes trimmed) |
+| `name` | string | optional, ≤ 60 chars; blank = "Sonarr" / "Radarr" / "4K Sonarr" / "4K Radarr" (numbered when taken: "Radarr 2") |
+| `is4k` | bool | optional, default false |
+| `isDefault` | bool | optional; the first server of its kind and 4K-ness is always the default. `true` takes the default from the current one |
+| `qualityProfileId`, `rootFolderPath` | | optional; omitted = the server's first |
+| `tags` | number[] | optional, default `[]` |
+| `seriesType` | string | Sonarr, optional, default `"standard"` |
+| `seasonFolders` | bool | Sonarr, optional, default true |
+| `animeQualityProfileId`, `animeRootFolderPath` | | Sonarr, optional, default null |
+| `animeTags` | number[] | Sonarr, optional, default `[]` |
+
+Errors: as for `test`, plus `400` with the field's message
+(`"tags" must be a list of numbers.`, "Name can be at most 60 characters.", …).
+
+#### `PATCH /settings/arr-servers/{id}` — admin
+
+"Save" on an edited server. Any of the `POST` fields except `kind`; omitted =
+unchanged, and `apiKey` omitted or blank keeps the saved key. Changing
+`baseUrl` or `apiKey` tests the connection again first (and a new `baseUrl`
+needs `apiKey` — "Enter the API key again to change the URL."). Sonarr-only
+fields are ignored for Radarr. Nullable fields take `null` to clear them.
+`{ "ok": true, "server": ArrServer }`.
+
+`isDefault: true` makes it the default of its kind and 4K-ness. The default
+can't be switched off directly: `isDefault: false` on it is `409` "Make
+another server the default instead." (removing it, or moving it between
+standard and 4K, hands the default to the oldest remaining server there).
+
+#### `GET /settings/arr-servers/{id}/options` — admin
+
+The saved server's pickers: `{ "qualityProfiles": […], "rootFolders": […], "tags": […] }`
+(the same lists as `test`). `404` "Server not found.", `502` "Couldn't reach
+Radarr 2. Check its connection in Settings.".
+
+#### `POST /settings/arr-servers/{id}/webhook-secret` — admin
+
+"Regenerate" this server's webhook secret; its old URL stops working at once.
+`{ "ok": true, "webhookUrl": "http://…/api/webhooks/servers/…?secret=…" }`.
+
+#### `DELETE /settings/arr-servers/{id}` — admin
+
+"Remove". Titles on that server stop counting as in the library (unless
+another server has them) once the library re-syncs, which starts right away.
+`{ "ok": true }`. The website confirms first. `404` "Server not found.".
+
+The webhook: in Sonarr/Radarr → Settings → Connect → Add → Webhook, paste the
+server's `webhookUrl` (method POST, on Grab and on Import/Download). Webhook
+URLs from before 0.43 (`arrWebhooks`) keep working.
+
+### Sonarr / Radarr (one default server each)
+
+`{provider}` is `sonarr` or `radarr` (default ports 8989 / 7878). Since 0.43
+these act on the **default** server of that kind (`sonarr4k` / `radarr4k`:
+the default 4K one): `PUT` updates it, or adds it as a new default server
+when there's none; `DELETE` removes it.
 
 #### `PUT /settings/integrations/{provider}` — admin
 
@@ -2276,6 +2557,7 @@ what to do, grouped by area.
 | | `GET /titles/tv/{tmdbId}/seasons/{season}` | user |
 | Library status & Sonarr/Radarr | `GET /titles/{type}/{tmdbId}/status` | user |
 | | `POST /titles/{type}/{tmdbId}/add` | user (admin enforced) |
+| | `GET /titles/{type}/{tmdbId}/add-options` | admin or trusted |
 | | `POST /titles/{type}/{tmdbId}/search` | admin |
 | | `PUT /titles/{type}/{tmdbId}/monitored` | admin |
 | | `POST /titles/{type}/{tmdbId}/relink` | admin |
@@ -2321,6 +2603,11 @@ what to do, grouped by area.
 | Settings: Integrations | `GET /settings/integrations` | admin |
 | | `POST /settings/integrations/sync` | user |
 | | `POST /settings/integrations/webhook-secret` | admin |
+| | `GET /settings/arr-servers` · `POST` | admin |
+| | `POST /settings/arr-servers/test` | admin |
+| | `PATCH /settings/arr-servers/{id}` · `DELETE` | admin |
+| | `GET /settings/arr-servers/{id}/options` | admin |
+| | `POST /settings/arr-servers/{id}/webhook-secret` | admin |
 | | `PUT /settings/integrations/sonarr` · `DELETE` | admin |
 | | `GET /settings/integrations/sonarr/options` | admin |
 | | `PUT /settings/integrations/sonarr/defaults` | admin |
@@ -2352,6 +2639,6 @@ what to do, grouped by area.
 ## Not exposed (and why)
 
 - **Theme (light/dark)** — a per-browser preference stored in `localStorage`; nothing server-side.
-- **`/api/webhooks/{provider}/{userId}`** — inbound Sonarr/Radarr webhooks, not a client API (their URLs are in `GET /settings/integrations`).
+- **`/api/webhooks/{provider}/{userId}`** and **`/api/webhooks/servers/{serverId}`** — inbound Sonarr/Radarr webhooks, not a client API (their URLs are in `GET /settings/integrations` and each `ArrServer`).
 - **Disk-space summary/forecast** — computed in `lib/integrations/disk-space.ts` but not shown on any page; only the daily snapshot job is exposed (`POST /settings/jobs/disk-space-snapshot/run`).
 - **Device/token management** — the website has no UI for it; `POST /auth/logout` revokes the current token and a password change revokes all of an account's tokens.

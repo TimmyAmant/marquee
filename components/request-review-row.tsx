@@ -12,6 +12,7 @@ import {
 } from "@/lib/requests/rejection-reasons";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { RequestTitle } from "@/components/request-title";
+import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import type { MediaType } from "@/lib/db/schema";
 
 export function RequestReviewRow({
@@ -133,7 +134,7 @@ export function RequestReviewRow({
               </button>
             </form>
           ) : (
-            <form action={approveFormAction}>
+            <form id={`approve-${id}`} action={approveFormAction}>
               <button
                 type="submit"
                 disabled={anyPending}
@@ -144,6 +145,17 @@ export function RequestReviewRow({
             </form>
           )}
         </div>
+        {!showManualApprove && !choosingReason && (
+          <div className="mt-1.5">
+            <AddAdvancedOptions
+              mediaType={mediaType}
+              tmdbId={tmdbId}
+              is4k={is4k}
+              formId={`approve-${id}`}
+              disabled={anyPending}
+            />
+          </div>
+        )}
         {choosingReason && (
           <form
             onSubmit={submitReject}

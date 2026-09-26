@@ -141,6 +141,59 @@ export const integrationCredentials = pgTable(
   ],
 );
 
+export const sonarrSeriesTypeValues = ["standard", "daily", "anime"] as const;
+export type SonarrSeriesType = (typeof sonarrSeriesTypeValues)[number];
+
+// Every Sonarr and Radarr the admin has connected (lib/arr/servers.ts) —
+// any number of each, standard or 4K, one of each kind and 4K-ness being the
+// default that titles go to when nobody picks. Before this the four fixed
+// providers sonarr/radarr/sonarr4k/radarr4k lived in integrationCredentials;
+// migration 0044 moved them here as the defaults.
+export const arrServers = pgTable(
+  "arr_servers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull().$type<ArrProvider>(),
+    name: text("name").notNull(),
+    baseUrl: text("base_url").notNull(),
+    apiKeyEnc: bytea("api_key_enc").notNull(),
+    apiKeyIv: bytea("api_key_iv").notNull(),
+    apiKeyTag: bytea("api_key_tag").notNull(),
+    is4k: boolean("is_4k").notNull().default(false),
+    isDefault: boolean("is_default").notNull().default(false),
+    qualityProfileId: integer("quality_profile_id"),
+    rootFolderPath: text("root_folder_path"),
+    tags: integer("tags").array().notNull().default(sql`'{}'::integer[]`),
+    // Sonarr only (null for Radarr): the series type for shows that aren't
+    // anime, whether to use season folders, and what anime shows get instead.
+    seriesType: text("series_type").$type<SonarrSeriesType>(),
+    seasonFolders: boolean("season_folders"),
+    animeQualityProfileId: integer("anime_quality_profile_id"),
+    animeRootFolderPath: text("anime_root_folder_path"),
+    animeTags: integer("anime_tags").array().notNull().default(sql`'{}'::integer[]`),
+    // In this server's own webhook URL (/api/webhooks/servers/{id}).
+    webhookSecret: text("webhook_secret").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("arr_servers_user_kind_idx").on(table.userId, table.kind),
+    // At most one default per kind and 4K-ness; lib/arr/servers.ts keeps it
+    // at exactly one whenever there's any server there.
+    uniqueIndex("arr_servers_one_default_idx")
+      .on(table.userId, table.kind, table.is4k)
+      .where(sql`${table.isDefault}`),
+    check("arr_servers_kind_check", sql`${table.kind} in ('sonarr','radarr')`),
+    check(
+      "arr_servers_series_type_check",
+      sql`${table.seriesType} is null or ${table.seriesType} in ('standard','daily','anime')`,
+    ),
+  ],
+);
+
 export const mediaTypeValues = ["movie", "tv"] as const;
 export type MediaType = (typeof mediaTypeValues)[number];
 
@@ -387,6 +440,10 @@ export const arrStatusCache = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     provider: text("provider").notNull().$type<ArrProvider>(),
     externalId: integer("external_id").notNull(),
+    // One row per title across every standard server of this kind: the
+    // server whose copy the row describes (the best one when several have
+    // it — lib/arr/sync.ts), and the title's id there.
+    serverId: uuid("server_id").references(() => arrServers.id, { onDelete: "set null" }),
     arrId: integer("arr_id"),
     status: text("status"),
     monitored: boolean("monitored"),
@@ -496,6 +553,16 @@ export const requests = pgTable(
     // the main one. A 4K request and a regular one for the same title are
     // separate requests.
     is4k: boolean("is_4k").notNull().default(false),
+    // Where approving it added the title, and with what (lib/arr/add-options.ts):
+    // the reviewer's "Advanced" picks, or the server's defaults. All null
+    // until approved through Sonarr/Radarr, and for requests approved before
+    // any number of servers existed. arrServerName outlives the server.
+    arrServerId: uuid("arr_server_id").references(() => arrServers.id, { onDelete: "set null" }),
+    arrServerName: text("arr_server_name"),
+    arrQualityProfileId: integer("arr_quality_profile_id"),
+    arrRootFolderPath: text("arr_root_folder_path"),
+    arrTags: integer("arr_tags").array(),
+    arrSeriesType: text("arr_series_type").$type<SonarrSeriesType>(),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),

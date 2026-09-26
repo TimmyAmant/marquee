@@ -93,7 +93,9 @@ public sealed class RequestsFixtureTests
     public void HistoryDecodes()
     {
         var history = Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results;
-        var request = Assert.Single(history);
+        // The rejected request, then (0.43+) one approved to a second Radarr.
+        Assert.Equal(2, history.Count);
+        var request = history[0];
 
         Assert.Equal(RequestId, request.Id);
         Assert.Equal(RequestStatus.Rejected, request.Status);
@@ -103,6 +105,42 @@ public sealed class RequestsFixtureTests
         Assert.Equal("member1", request.RequestedBy.Label);
         Assert.Equal(Json.ParseDate("2026-09-17T17:12:41.468Z"), request.ReviewedAt);
         Assert.Equal("Not enough space on the server right now", request.RejectionReason);
+        Assert.Null(request.AddedTo);
+        Assert.Null(request.AddedToLine);
+    }
+
+    [Fact]
+    public void AddedToDecodes()
+    {
+        var approved = Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results[1];
+
+        Assert.Equal("Dune", approved.Title);
+        Assert.Equal(RequestStatus.Approved, approved.Status);
+        var addedTo = approved.AddedTo!;
+        Assert.Equal("b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31", addedTo.ServerId);
+        Assert.Equal("Radarr 2", addedTo.ServerName);
+        Assert.Equal(6, addedTo.QualityProfileId);
+        Assert.Equal("/movies-kids", addedTo.RootFolderPath);
+        Assert.Equal([2], addedTo.Tags);
+        Assert.Null(addedTo.SeriesType);
+        Assert.Equal("Added to Radarr 2", approved.AddedToLine);
+
+        // The server was removed since: nothing to name.
+        Assert.Null((approved with { AddedTo = addedTo with { ServerName = null } }).AddedToLine);
+
+        // Older than 0.43: no key at all.
+        var older = Json.Decode<ReviewedRequest>("""
+            {"id":"9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77","mediaType":"movie","tmdbId":438631,"title":"Dune","posterPath":null,
+             "status":"approved","manuallyApproved":false,"statusLabel":"Approved",
+             "requestedBy":{"userId":null,"displayName":null,"username":"member1","label":"member1"},
+             "createdAt":"2026-09-17T17:02:11.100Z","reviewedAt":"2026-09-17T17:05:40.020Z"}
+            """);
+        Assert.Null(older.AddedTo);
+        Assert.Null(older.AddedToLine);
+
+        var tv = Json.Decode<AddedTo>("""{"serverId":"s","serverName":"Sonarr","qualityProfileId":4,"rootFolderPath":"/anime","tags":[],"seriesType":"anime"}""");
+        Assert.Equal(SeriesType.Anime, tv.SeriesType);
+        Assert.Empty(tv.Tags);
     }
 
     [Fact]
@@ -119,7 +157,7 @@ public sealed class RequestsFixtureTests
 
         var history = Fixtures.Read("requests-history")
             .Replace("\"statusLabel\": \"Rejected\",", "\"statusLabel\": \"Rejected\", \"rejectionReason\": \"Not a fit\",", StringComparison.Ordinal);
-        var reviewed = Assert.Single(Json.Decode<ListResponse<ReviewedRequest>>(history).Results);
+        var reviewed = Json.Decode<ListResponse<ReviewedRequest>>(history).Results[0];
         Assert.Equal("Not a fit", reviewed.RejectionReason);
 
         var mine = Fixtures.Read("requests-mine")

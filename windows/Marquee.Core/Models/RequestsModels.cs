@@ -234,7 +234,31 @@ public sealed record ReviewedRequest
     /// <summary>The second line under the title: "Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
     public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
 
+    /// <summary>
+    /// Where an approved request was added and with what (0.43+). Null for
+    /// rejected and manually approved requests, anything approved before
+    /// 0.43, and from an older server.
+    /// </summary>
+    public AddedTo? AddedTo { get; init; }
+
+    /// <summary>"Added to Radarr 2" under the badge; null when unknown or that server was removed.</summary>
+    public string? AddedToLine => AddedTo?.ServerName.NonBlank() is { } name ? $"Added to {name}" : null;
+
     public TitleId TitleId => new(MediaType, TmdbId);
+}
+
+/// <summary><c>addedTo</c> on a past request (0.43+): the server and the settings it was added with.</summary>
+public sealed record AddedTo
+{
+    public string? ServerId { get; init; }
+
+    /// <summary>Null once that server has been removed.</summary>
+    public string? ServerName { get; init; }
+
+    public int? QualityProfileId { get; init; }
+    public string? RootFolderPath { get; init; }
+    public IReadOnlyList<int> Tags { get; init; } = [];
+    public SeriesType? SeriesType { get; init; }
 }
 
 /// <summary><c>POST /requests/approve-all</c>.</summary>

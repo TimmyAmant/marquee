@@ -48,8 +48,19 @@ public sealed class RequestsEndpoints(MarqueeApi.Transport transport)
     /// <c>error.IsSonarrUnresolvable</c> means: offer <see cref="ManuallyApproveAsync"/>.
     /// </summary>
     public Task ApproveAsync(Guid id, CancellationToken ct = default) =>
+        ApproveAsync(id, null, ct);
+
+    /// <summary>
+    /// <c>POST /requests/{id}/approve</c> with the "Advanced" picks (0.43+,
+    /// admin or trusted): which server, quality profile, root folder, tags
+    /// and (TV) series type. Null <paramref name="overrides"/> sends no body
+    /// at all, the plain Approve every server version takes. Extra error:
+    /// Invalid("That server can't take this request.").
+    /// </summary>
+    public Task ApproveAsync(Guid id, AddOverrides? overrides, CancellationToken ct = default) =>
         transport.MutateAsync<OK>(
             HttpMethod.Post, $"/requests/{MarqueeApi.Segment(id)}/approve",
+            body: overrides,
             timeout: MarqueeApi.Timeouts.Integrations,
             changes: ServerChange.Requests | ServerChange.Library | ServerChange.Notifications, ct: ct);
 

@@ -17,7 +17,7 @@
       passes it as -p:Version when it publishes). The updater compares it
       with GitHub's latest release, so it has to be the real one.
     -->
-    <Version>0.42.4</Version>
+    <Version>0.43.0</Version>
     <Authors>Timmy Amant</Authors>
     <Product>Marquee</Product>
     <Copyright>Copyright (c) Timmy Amant</Copyright>

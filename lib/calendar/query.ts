@@ -1,4 +1,4 @@
-import { getArrCredential } from "@/lib/integrations/credentials";
+import { arrConfig, listLibraryServers } from "@/lib/arr/servers";
 import * as radarr from "@/lib/radarr/client";
 import * as sonarr from "@/lib/sonarr/client";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -40,16 +40,21 @@ export async function getUpcomingReleases(
   start: Date,
   end: Date,
 ): Promise<CalendarEntry[]> {
-  const [radarrCred, sonarrCred] = await Promise.all([
-    getArrCredential(userId, "radarr"),
-    getArrCredential(userId, "sonarr"),
+  // Every standard server's calendar, asked in parallel. A title on more
+  // than one server would show twice, so entries are de-duplicated below.
+  const [radarrServers, sonarrServers] = await Promise.all([
+    listLibraryServers(userId, "radarr"),
+    listLibraryServers(userId, "sonarr"),
+  ]);
+  const [movieLists, episodeLists] = await Promise.all([
+    Promise.all(radarrServers.map((s) => radarr.getCalendar(arrConfig(s), start, end).catch(() => []))),
+    Promise.all(sonarrServers.map((s) => sonarr.getCalendar(arrConfig(s), start, end).catch(() => []))),
   ]);
 
   const entries: CalendarEntry[] = [];
 
-  if (radarrCred) {
-    const config = { baseUrl: radarrCred.baseUrl, apiKey: radarrCred.apiKey };
-    const movies = await radarr.getCalendar(config, start, end).catch(() => []);
+  {
+    const movies = movieLists.flat();
     for (const movie of movies) {
       const title = await getOrFetchTitle("movie", movie.tmdbId).catch(() => null);
       for (const [field, label] of RADARR_DATE_LABELS) {
@@ -68,9 +73,8 @@ export async function getUpcomingReleases(
     }
   }
 
-  if (sonarrCred) {
-    const config = { baseUrl: sonarrCred.baseUrl, apiKey: sonarrCred.apiKey };
-    const episodes = await sonarr.getCalendar(config, start, end).catch(() => []);
+  {
+    const episodes = episodeLists.flat();
     // A week of a daily show is a handful of episodes of the same series —
     // resolve each series' TMDb id and poster once per render, not once per
     // episode. The promise is cached so later episodes share the lookup.
@@ -105,6 +109,13 @@ export async function getUpcomingReleases(
     }
   }
 
-  entries.sort((a, b) => a.date.localeCompare(b.date));
-  return entries;
+  const seen = new Set<string>();
+  const unique = entries.filter((e) => {
+    const key = `${e.date}|${e.mediaType}|${e.tmdbId}|${e.subtitle}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  unique.sort((a, b) => a.date.localeCompare(b.date));
+  return unique;
 }
