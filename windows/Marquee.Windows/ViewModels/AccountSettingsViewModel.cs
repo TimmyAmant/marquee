@@ -1,12 +1,9 @@
 using System.ComponentModel;
-using System.Globalization;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Marquee.Core;
 using Marquee.Core.Api;
 using Marquee.Core.Models;
-using Marquee.Core.Updates;
 using Marquee.Windows.Services;
 
 namespace Marquee.Windows.ViewModels;
@@ -101,15 +98,16 @@ public sealed class HouseholdMemberRow
 }
 
 /// <summary>
-/// app/settings/page.tsx's Account tab, for this PC: your account (name,
-/// username, role) with the edit form (<c>PATCH /users/{id}</c>), the
-/// household members list (<c>GET /users</c>: every account for the admin,
-/// only your own for a member) with Edit, the admin's Add member
-/// (<c>POST /users</c>) and Remove (<c>DELETE /users/{id}</c>), the server
-/// this PC talks to, Sign out, and About (<c>GET /settings/about</c> plus
-/// this app's own version).
+/// Settings › Account (app/settings/page.tsx, the Mac's
+/// AccountSettingsView), for this PC: your account (name, username, role)
+/// with the edit form (<c>PATCH /users/{id}</c>), linked Plex/Jellyfin
+/// accounts and the Plex Watchlist, this PC's notifications, the household
+/// members list (<c>GET /users</c>: every account for the admin, only your
+/// own for a member) with Edit, the admin's Add member (<c>POST /users</c>),
+/// Remove (<c>DELETE /users/{id}</c>), Plex/Jellyfin import and sign-in
+/// setting, and the request blocklist.
 /// </summary>
-public sealed partial class SettingsViewModel : ObservableObject
+public sealed partial class AccountSettingsViewModel : ObservableObject
 {
     public const string PasswordsDifferMessage = "The passwords don't match.";
     public const string CurrentPasswordMissingMessage = "Enter your current password to set a new one.";
@@ -123,10 +121,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     [
         nameof(Username),
         nameof(RoleLabel),
-        nameof(ServerLabel),
-        nameof(ServerVersionLabel),
-        nameof(ServerUpdateText),
-        nameof(HasServerUpdateText),
         nameof(NeedsCurrentPassword),
         nameof(ShowsLinkedAccounts),
         nameof(HasNoPassword),
@@ -150,12 +144,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     ];
 
     private readonly AppModel model;
-    private CancellationTokenSource? aboutCancellation;
     private CancellationTokenSource? membersCancellation;
     private CancellationTokenSource? plexLinkCancellation;
     private CancellationTokenSource? plexWatchlistCancellation;
     private CancellationTokenSource? plexWatchlistLoadCancellation;
-    private CancellationTokenSource? channelsCancellation;
 
     /// <summary>Whether Plex was linked when the watchlist state was last asked for; linking or unlinking asks again.</summary>
     private bool? plexLinkedForWatchlist;
@@ -316,32 +308,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Set while the switch is moved to match the model, so that isn't taken for the user flipping it.</summary>
     private bool syncingNotifications;
 
-    // MARK: About
-
-    [ObservableProperty]
-    private IReadOnlyList<FactRow> aboutRows = [];
-
-    [ObservableProperty]
-    private IReadOnlyList<LinkItem> aboutLinks = [];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasAboutError))]
-    private string? aboutError;
-
-    [ObservableProperty]
-    private bool isAboutLoading;
-
-    public SettingsViewModel(AppModel model)
+    public AccountSettingsViewModel(AppModel model)
     {
         this.model = model;
         DisplayName = model.Viewer?.DisplayName ?? "";
         IsAdmin = model.Viewer?.IsAdmin == true;
-        Channels = new NotificationChannelsViewModel(model);
         Blocklist = new BlocklistSettingsViewModel(model);
     }
-
-    /// <summary>The admin's Telegram, Pushover and email cards (0.36+ servers).</summary>
-    public NotificationChannelsViewModel Channels { get; }
 
     /// <summary>The admin's "Request blocklist" (0.41+ servers).</summary>
     public BlocklistSettingsViewModel Blocklist { get; }
@@ -368,47 +341,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string Username => model.Viewer?.Username ?? "";
     public string RoleLabel => model.Viewer?.Role.Label ?? "";
 
-    /// <summary>"192.168.1.20:3000", or the full URL for HTTPS.</summary>
-    public string ServerLabel => model.Session.Server?.DisplayName ?? "";
-
-    /// <summary>"Marquee 0.28.0", from the last server-info answer.</summary>
-    public string ServerVersionLabel => model.Session.ServerInfo is { } info ? $"Marquee {info.Version}" : "";
-
-    /// <summary>
-    /// Settings › About's line about the server: whether it runs the newest
-    /// release, and if not, how to get it (the server updates by pulling its
-    /// Docker image, which this app can't do). Empty until both versions are
-    /// known.
-    /// </summary>
-    public string ServerUpdateText
-    {
-        get
-        {
-            // About's own GET /settings/about first: a restored sign-in
-            // doesn't re-read server-info.
-            if (AppVersion.Parse(aboutServerVersion ?? model.Session.ServerInfo?.Version) is not { } server
-                || AppServices.Updater.LatestRelease is not { } latest)
-            {
-                return "";
-            }
-            return server >= latest
-                ? $"Your server is up to date (Marquee {server})."
-                : $"Your server is on {server}; {latest} is out. Update it by pulling the new Docker image (on Unraid: the Docker tab › Check for Updates, then apply the update).";
-        }
-    }
-
-    public bool HasServerUpdateText => ServerUpdateText.Length > 0;
-
-    /// <summary>The server's version from the last About answer.</summary>
-    private string? aboutServerVersion;
-
-    /// <summary>"Marquee for Windows 0.30.0".</summary>
-    public string AppVersionLabel => $"Marquee for Windows {AppInfo.Version}";
-
     public string SaveLabel => IsSaving ? "Saving…" : "Save changes";
     public bool HasSaveError => SaveError != null;
     public bool HasSaveNotice => SaveNotice != null;
-    public bool HasAboutError => AboutError != null;
 
     public string MembersCaption => IsAdmin
         ? "Everyone with an account on this Marquee server. There's no public signup: add accounts for the rest of your household here."
@@ -456,7 +391,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string MediaServerSignupExplanation =>
         $"When someone who can use your Plex or {JellyfinName} server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way.";
     public string NoMediaServersExplanation =>
-        $"Connect Plex or {JellyfinName} in Settings › Integrations on the website to import household members from it and let them sign in with those accounts.";
+        $"Connect Plex or {JellyfinName} on the Integrations tab to import household members from it and let them sign in with those accounts.";
 
     private string LinkStatus(MediaServerKind server, bool linked, bool offered) =>
         linked ? $"Linked: you can sign in with your {ServerName(server)} account."
@@ -498,14 +433,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.SessionChanged += OnSessionChanged;
         model.Events.Changed += OnServerChanged;
         model.Notifications.StateChanged += OnNotificationsStateChanged;
-        AppServices.Updater.PropertyChanged += OnUpdaterPropertyChanged;
         SyncNotifications();
         NotifyDerived();
         _ = LoadMembersAsync();
-        _ = LoadAboutAsync();
         _ = LoadSignInSettingsAsync();
         _ = LoadPlexWatchlistAsync();
-        _ = LoadNotificationChannelsAsync();
         _ = Blocklist.LoadAsync(IsAdmin);
         // Which of Plex/Jellyfin are connected now (server-info.signIn).
         _ = model.Session.RefreshInfoAsync();
@@ -522,11 +454,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         model.SessionChanged -= OnSessionChanged;
         model.Events.Changed -= OnServerChanged;
         model.Notifications.StateChanged -= OnNotificationsStateChanged;
-        AppServices.Updater.PropertyChanged -= OnUpdaterPropertyChanged;
-        aboutCancellation?.Cancel();
         membersCancellation?.Cancel();
         plexWatchlistLoadCancellation?.Cancel();
-        channelsCancellation?.Cancel();
         Blocklist.Cancel();
         CancelLinkPlex();
         CancelTurnOnPlexWatchlist();
@@ -658,14 +587,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             IsSaving = false;
         }
     }
-
-    /// <summary>Revokes this PC's token and returns to the sign-in card for the same server.</summary>
-    [RelayCommand]
-    private Task SignOutAsync() => model.SignOutAsync();
-
-    /// <summary>"Change server": signs out, forgets the server, and starts over at the connect screen.</summary>
-    [RelayCommand]
-    private void ChangeServer() => model.ChangeServer();
 
     /// <summary>Your own new password revoked every token, this PC's included: back to sign-in, saying why.</summary>
     private async Task SignOutAfterPasswordChangeAsync()
@@ -1212,93 +1133,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
-    // MARK: About
-
-    [RelayCommand]
-    private async Task LoadAboutAsync()
-    {
-        aboutCancellation?.Cancel();
-        var cancellation = new CancellationTokenSource();
-        aboutCancellation = cancellation;
-        var token = cancellation.Token;
-
-        IsAboutLoading = AboutRows.Count == 0;
-        AboutError = null;
-        try
-        {
-            var about = await model.Api.About.InfoAsync(token);
-            if (token.IsCancellationRequested)
-            {
-                return;
-            }
-            aboutServerVersion = about.Version;
-            OnPropertyChanged(nameof(ServerUpdateText));
-            OnPropertyChanged(nameof(HasServerUpdateText));
-            AboutRows =
-            [
-                new FactRow("Version", about.VersionLabel),
-                new FactRow("Movies", about.MovieCount.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("TV Shows", about.TvCount.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("Tracked (not yet owned)", about.TrackedCount.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("Total Requests", about.TotalRequests.ToString("N0", CultureInfo.CurrentCulture)),
-                new FactRow("Time Zone", about.TimeZone),
-            ];
-            AboutLinks = new[]
-            {
-                LinkItem.Https("GitHub", about.RepoUri),
-                LinkItem.Https("Report an issue", about.IssuesUri),
-            }.OfType<LinkItem>().ToList();
-        }
-        catch (ApiException error)
-        {
-            if (error.IsCancellation || token.IsCancellationRequested)
-            {
-                return;
-            }
-            AboutError = error.Message;
-        }
-        finally
-        {
-            if (!token.IsCancellationRequested)
-            {
-                IsAboutLoading = false;
-            }
-        }
-    }
-
-    // MARK: Notification channels
-
-    /// <summary>
-    /// <c>GET /settings/integrations</c> for the admin's Telegram, Pushover
-    /// and email cards. Admin-only; for a member, or from an older server
-    /// without the three, the section stays hidden. A failed load keeps
-    /// whatever showed before (hidden the first time).
-    /// </summary>
-    private async Task LoadNotificationChannelsAsync()
-    {
-        channelsCancellation?.Cancel();
-        if (!IsAdmin)
-        {
-            Channels.IsVisible = false;
-            return;
-        }
-        var cancellation = new CancellationTokenSource();
-        channelsCancellation = cancellation;
-        var token = cancellation.Token;
-        try
-        {
-            var overview = await model.Api.Integrations.OverviewAsync(token);
-            if (!token.IsCancellationRequested)
-            {
-                Channels.Apply(overview);
-            }
-        }
-        catch (ApiException)
-        {
-            // Cancelled, or the page couldn't load: nothing to change.
-        }
-    }
-
     // MARK: Following the model
 
     private void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -1318,31 +1152,18 @@ public sealed partial class SettingsViewModel : ObservableObject
                 OnPropertyChanged(nameof(ShowsMediaServerMembers));
                 _ = LoadMembersAsync();
                 _ = LoadSignInSettingsAsync();
-                _ = LoadNotificationChannelsAsync();
                 _ = Blocklist.LoadAsync(IsAdmin);
             }
         }
         else if (e.PropertyName == nameof(AppModel.ReloadToken))
         {
             _ = LoadMembersAsync();
-            _ = LoadAboutAsync();
             _ = LoadPlexWatchlistAsync();
-            _ = LoadNotificationChannelsAsync();
             _ = Blocklist.LoadAsync(IsAdmin);
         }
     }
 
     private void OnSessionChanged(object? sender, EventArgs e) => NotifyDerived();
-
-    /// <summary>A check answered with the newest release: the server line follows.</summary>
-    private void OnUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Updater.LatestRelease))
-        {
-            OnPropertyChanged(nameof(ServerUpdateText));
-            OnPropertyChanged(nameof(HasServerUpdateText));
-        }
-    }
 
     /// <summary>
     /// Any change to household accounts through this app (the dialogs, the

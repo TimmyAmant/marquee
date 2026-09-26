@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings › About (app/settings/about/page.tsx, the Mac's
+  AboutSettingsView): the server this PC is signed in to (Sign out, Change
+  server), then this app's version and updates, whether the server is up to
+  date, the server's facts and the support links.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Views.Settings.AboutSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="20">
+        <StackPanel Spacing="4">
+            <TextBlock Text="About Marquee" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock
+                Text="Version, library stats, and where to get help."
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Server -->
+        <TextBlock Text="Server" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <Border Style="{StaticResource SettingsCard}">
+            <StackPanel Spacing="14">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="This PC is signed in to" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" IsTextSelectionEnabled="True" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <TextBlock
+                    Text="Sign out revokes this PC's session only; other devices stay signed in. Change server forgets this server and starts over at the connect screen."
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Sign out" Command="{x:Bind ViewModel.SignOutCommand}" />
+                    <Button Content="Change server" Command="{x:Bind ViewModel.ChangeServerCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- About -->
+        <TextBlock Text="About" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <Border Style="{StaticResource SettingsCard}">
+            <StackPanel Spacing="12">
+                <TextBlock Text="{x:Bind ViewModel.AppVersionLabel}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <!-- Updates (Services/Updater.cs): the Mac's Settings › About, for this PC. -->
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        Text="{x:Bind Updater.StatusText, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
+                    <TextBlock
+                        Text="{x:Bind Updater.StatusText, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind Updater.HasFailed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <!-- The server: up to date, or how to update it. -->
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ServerUpdateText, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind ViewModel.HasServerUpdateText, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <ProgressBar
+                        MaxWidth="360"
+                        HorizontalAlignment="Stretch"
+                        Minimum="0"
+                        Maximum="100"
+                        Value="{x:Bind Updater.ProgressPercent, Mode=OneWay}"
+                        IsIndeterminate="{x:Bind Updater.IsProgressIndeterminate, Mode=OneWay}"
+                        Visibility="{x:Bind Updater.IsInstalling, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Content="Check for updates"
+                            Click="OnCheckForUpdatesClick"
+                            Visibility="{x:Bind Updater.CanCheck, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            Content="{x:Bind Updater.UpdateLabel, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Click="OnInstallUpdateClick"
+                            ToolTipService.ToolTip="Downloads the installer, checks it, then Marquee closes, updates and reopens"
+                            Visibility="{x:Bind Updater.CanInstall, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            Content="What's new"
+                            Click="OnReleaseNotesClick"
+                            Visibility="{x:Bind Updater.ShowsUpdate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            Content="Download manually"
+                            Click="OnReleaseNotesClick"
+                            Visibility="{x:Bind Updater.ShowsManualDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </StackPanel>
+                <ProgressRing
+                    IsActive="{x:Bind ViewModel.IsAboutLoading, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsAboutLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Width="20"
+                    Height="20"
+                    HorizontalAlignment="Left" />
+                <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.HasAboutError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.AboutError, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        TextWrapping="Wrap" />
+                    <Button Content="Try again" Command="{x:Bind ViewModel.LoadAboutCommand}" />
+                </StackPanel>
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.AboutRows, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Vertical" Spacing="0" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FactRow">
+                            <Grid ColumnSpacing="12" MinHeight="34" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Text="{x:Bind Label}"
+                                    Style="{StaticResource BodyTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    VerticalAlignment="Center" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{x:Bind Value}"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                    VerticalAlignment="Center"
+                                    IsTextSelectionEnabled="True" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.AboutLinks, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Horizontal" Spacing="8" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LinkItem">
+                            <HyperlinkButton Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

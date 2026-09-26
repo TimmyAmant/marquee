@@ -1,0 +1,763 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings › Integrations (app/settings/integrations/page.tsx, the Mac's
+  IntegrationsSettingsView), the admin's: Media Libraries (Plex, Jellyfin or
+  Emby), Download Clients (Sonarr, Radarr, and the 4K ones on a 0.37+
+  server), Metadata Sources (TMDb, Trakt with list import, TheTVDB) and
+  Notifications (the Sonarr/Radarr webhooks, Discord, ntfy, Telegram,
+  Pushover and email on a 0.36+ server, a custom webhook), with Sync now.
+  The cards that repeat a shape (Sonarr/Radarr, the one-secret cards, the
+  Disconnect confirmation) are DataTemplates below.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Views.Settings.IntegrationsSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!-- components/disconnect-button.tsx: "Disconnect", then "Disconnect Plex?" with Confirm and Cancel. -->
+        <DataTemplate x:Key="DisconnectTemplate" x:DataType="vm:DisconnectViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock
+                    Text="{x:Bind Error, Mode=OneWay}"
+                    Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                    TextWrapping="Wrap"
+                    MaxWidth="220"
+                    VerticalAlignment="Center" />
+                <Button
+                    Content="Disconnect"
+                    Command="{x:Bind AskCommand}"
+                    Visibility="{x:Bind IsAsking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    Visibility="{x:Bind IsConfirming, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Text="{x:Bind Prompt, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        VerticalAlignment="Center" />
+                    <Button Content="{x:Bind ConfirmLabel, Mode=OneWay}" Command="{x:Bind ConfirmCommand}" />
+                    <Button Content="Cancel" Command="{x:Bind CancelCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- components/arr-credential-form.tsx: Sonarr, Radarr, and the 4K ones. -->
+        <DataTemplate x:Key="ArrCardTemplate" x:DataType="vm:ArrIntegrationViewModel">
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="14">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Bind Title}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                Text="{x:Bind Description}"
+                                Visibility="{x:Bind HasDescription, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <controls:TonePill Text="{x:Bind ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ConnectedTone}" VerticalAlignment="Center" />
+                            <ContentControl
+                                Content="{x:Bind Disconnect}"
+                                ContentTemplate="{StaticResource DisconnectTemplate}"
+                                Visibility="{x:Bind IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBox
+                        Header="Server URL"
+                        PlaceholderText="{x:Bind BaseUrlPlaceholder}"
+                        Text="{x:Bind BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <PasswordBox
+                        Header="API key"
+                        PlaceholderText="{x:Bind ApiKeyPlaceholder, Mode=OneWay}"
+                        Password="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <InfoBar
+                        IsOpen="{x:Bind HasError, Mode=OneWay}"
+                        Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Severity="Error"
+                        Message="{x:Bind Error, Mode=OneWay}"
+                        IsClosable="False" />
+                    <InfoBar
+                        IsOpen="{x:Bind HasNotice, Mode=OneWay}"
+                        Visibility="{x:Bind HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Severity="Success"
+                        Message="{x:Bind Notice, Mode=OneWay}"
+                        IsClosable="False" />
+                    <Button
+                        Content="{x:Bind SaveLabel, Mode=OneWay}"
+                        Command="{x:Bind SaveCommand}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <StackPanel Spacing="12" Visibility="{x:Bind ShowsDefaults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <TextBlock
+                            Text="Defaults used when adding new titles:"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ComboBox
+                            Header="Root folder"
+                            MinWidth="260"
+                            ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
+                            SelectedIndex="{x:Bind SelectedRootFolderIndex, Mode=TwoWay}" />
+                        <ComboBox
+                            Header="Quality profile"
+                            MinWidth="260"
+                            ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
+                            SelectedIndex="{x:Bind SelectedQualityProfileIndex, Mode=TwoWay}" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="{x:Bind SaveDefaultsLabel, Mode=OneWay}" Command="{x:Bind SaveDefaultsCommand}" />
+                            <TextBlock
+                                Text="Saved."
+                                Visibility="{x:Bind DefaultsSaved, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock
+                        Text="Pick a root folder and quality profile before adding titles — test the connection to load them."
+                        Visibility="{x:Bind NeedsDefaults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- A "Test & save" card with one secret: TMDb, Trakt, TheTVDB, Discord, ntfy, the custom webhook. -->
+        <DataTemplate x:Key="SecretCardTemplate" x:DataType="vm:SecretCardViewModel">
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="14">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Bind Title}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                Text="{x:Bind Description}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <controls:TonePill Grid.Column="1" Text="{x:Bind ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ConnectedTone}" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBlock
+                        Text="{x:Bind Note, Mode=OneWay}"
+                        Visibility="{x:Bind Note, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <PasswordBox
+                        Header="{x:Bind FieldLabel}"
+                        PlaceholderText="{x:Bind Placeholder, Mode=OneWay}"
+                        Password="{x:Bind Secret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <InfoBar
+                        IsOpen="{x:Bind HasError, Mode=OneWay}"
+                        Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Severity="Error"
+                        Message="{x:Bind Error, Mode=OneWay}"
+                        IsClosable="False" />
+                    <InfoBar
+                        IsOpen="{x:Bind HasNotice, Mode=OneWay}"
+                        Visibility="{x:Bind HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Severity="Success"
+                        Message="{x:Bind Notice, Mode=OneWay}"
+                        IsClosable="False" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Content="{x:Bind SaveLabel, Mode=OneWay}"
+                            Command="{x:Bind SaveCommand}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Button
+                            Content="{x:Bind RemoveButtonLabel, Mode=OneWay}"
+                            Command="{x:Bind RemoveCommand}"
+                            Visibility="{x:Bind IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <StackPanel Spacing="20">
+        <!-- The pane's heading, with Sync now on the right. -->
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="Integrations" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    Text="Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf."
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right">
+                <Button
+                    Content="{x:Bind ViewModel.SyncLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.SyncNowCommand}"
+                    HorizontalAlignment="Right" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.SyncNotice, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.HasSyncNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                    HorizontalAlignment="Right" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.SyncError, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.HasSyncError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                    TextWrapping="Wrap"
+                    MaxWidth="240"
+                    HorizontalAlignment="Right" />
+            </StackPanel>
+        </Grid>
+
+        <!-- The first load: the server re-syncs anything older than 15 minutes first. -->
+        <StackPanel Orientation="Horizontal" Spacing="10" Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="20" Height="20" />
+            <TextBlock
+                Text="Checking your integrations…"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.ShowsLoadError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock
+                Text="{x:Bind ViewModel.LoadError, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                TextWrapping="Wrap" />
+            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+        </StackPanel>
+
+        <StackPanel Spacing="28" Visibility="{x:Bind ViewModel.HasOverview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <!-- Media Libraries -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Media Libraries" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                <!-- components/plex-connect-card.tsx -->
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Plex" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <controls:TonePill Text="{x:Bind ViewModel.Plex.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Plex.ConnectedTone}" VerticalAlignment="Center" />
+                                <ContentControl
+                                    Content="{x:Bind ViewModel.Plex.Disconnect}"
+                                    ContentTemplate="{StaticResource DisconnectTemplate}"
+                                    Visibility="{x:Bind ViewModel.Plex.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.Plex.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{x:Bind ViewModel.Plex.SummaryLine, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Plex.LastSyncedLine, Mode=OneWay}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Plex.IsDisconnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock
+                                Text="Sign in with your Plex account to see what's already in your library."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button
+                                    Content="{x:Bind ViewModel.Plex.ConnectLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Plex.ConnectCommand}"
+                                    Style="{StaticResource AccentButtonStyle}" />
+                                <TextBlock
+                                    Text="Finish signing in in the browser window that just opened."
+                                    Visibility="{x:Bind ViewModel.Plex.IsWaiting, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Plex.Error, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Plex.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- components/jellyfin-connect-card.tsx: Jellyfin or Emby. -->
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Jellyfin or Emby" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.Jellyfin.Description, Mode=OneWay}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <controls:TonePill Text="{x:Bind ViewModel.Jellyfin.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Jellyfin.ConnectedTone}" VerticalAlignment="Center" />
+                                <ContentControl
+                                    Content="{x:Bind ViewModel.Jellyfin.Disconnect}"
+                                    ContentTemplate="{StaticResource DisconnectTemplate}"
+                                    Visibility="{x:Bind ViewModel.Jellyfin.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Jellyfin.SummaryLine, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Jellyfin.SummaryLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Text="Generate an API key from the dashboard: Administration → API Keys in Jellyfin, or Advanced → API Keys in Emby."
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                        <TextBox
+                            Header="Server URL"
+                            PlaceholderText="http://localhost:8096"
+                            Text="{x:Bind ViewModel.Jellyfin.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <PasswordBox
+                            Header="API key"
+                            PlaceholderText="{x:Bind ViewModel.Jellyfin.ApiKeyPlaceholder, Mode=OneWay}"
+                            Password="{x:Bind ViewModel.Jellyfin.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Jellyfin.HasError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Jellyfin.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.Jellyfin.Error, Mode=OneWay}"
+                            IsClosable="False" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Jellyfin.HasNotice, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Jellyfin.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Success"
+                            Message="{x:Bind ViewModel.Jellyfin.Notice, Mode=OneWay}"
+                            IsClosable="False" />
+                        <Button
+                            Content="{x:Bind ViewModel.Jellyfin.SaveLabel, Mode=OneWay}"
+                            Command="{x:Bind ViewModel.Jellyfin.SaveCommand}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Download Clients: Sonarr, Radarr, then the 4K ones on a 0.37+ server. -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Download Clients" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrCards, Mode=OneWay}" ItemTemplate="{StaticResource ArrCardTemplate}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Vertical" Spacing="12" />
+                    </ItemsRepeater.Layout>
+                </ItemsRepeater>
+            </StackPanel>
+
+            <!-- Metadata Sources -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Metadata Sources" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <ContentControl
+                    Content="{x:Bind ViewModel.Tmdb}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
+                <ContentControl
+                    Content="{x:Bind ViewModel.Trakt}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
+                <!-- components/trakt-connect-card.tsx's list import, while Trakt is connected. -->
+                <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsTraktImport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Import a list"
+                                PlaceholderText="https://trakt.tv/users/username/lists/best-of-2024"
+                                Text="{x:Bind ViewModel.TraktImport.ListUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Also works with a watchlist URL (…/users/username/watchlist). The list must be public on Trakt's side. Matching titles not already owned or requested are added to your pending Requests queue."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.TraktImport.HasError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.TraktImport.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.TraktImport.Error, Mode=OneWay}"
+                            IsClosable="False" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.TraktImport.HasNotice, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.TraktImport.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Success"
+                            Message="{x:Bind ViewModel.TraktImport.Notice, Mode=OneWay}"
+                            IsClosable="False" />
+                        <Button Content="{x:Bind ViewModel.TraktImport.ImportLabel, Mode=OneWay}" Command="{x:Bind ViewModel.TraktImport.ImportCommand}" />
+                    </StackPanel>
+                </Border>
+                <ContentControl
+                    Content="{x:Bind ViewModel.Tvdb}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
+            </StackPanel>
+
+            <!-- Notifications -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Notifications" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                <!-- components/webhook-settings-card.tsx -->
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Sonarr / Radarr webhooks" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="Your server listens for these so Radarr/Sonarr can tell it the moment something starts or finishes downloading. Paste them into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download)."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Webhooks.ListeningBadge}" Tone="{x:Bind ViewModel.Webhooks.ListeningTone}" VerticalAlignment="Center" />
+                        </Grid>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Webhooks.Urls, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Vertical" Spacing="12" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:WebhookUrlRow">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{x:Bind Label}" Style="{StaticResource FieldLabel}" />
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{x:Bind Url}" IsReadOnly="True" />
+                                            <Button Grid.Column="1" Content="{x:Bind CopyLabel, Mode=OneWay}" Command="{x:Bind CopyCommand}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Webhooks.Error, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Webhooks.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                        <Button
+                            Content="Regenerate secret"
+                            Command="{x:Bind ViewModel.Webhooks.AskCommand}"
+                            Visibility="{x:Bind ViewModel.Webhooks.IsAsking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.Webhooks.IsConfirming, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock
+                                Text="Regenerate? The URLs above stop working immediately."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                VerticalAlignment="Center" />
+                            <Button Content="{x:Bind ViewModel.Webhooks.ConfirmLabel, Mode=OneWay}" Command="{x:Bind ViewModel.Webhooks.ConfirmCommand}" />
+                            <Button Content="Cancel" Command="{x:Bind ViewModel.Webhooks.CancelCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <ContentControl
+                    Content="{x:Bind ViewModel.Discord}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
+                <ContentControl
+                    Content="{x:Bind ViewModel.Ntfy}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
+
+                <!--
+                  Notification channels (components/notification-channel-cards.tsx,
+                  Settings › Integrations › Notifications on the website): the
+                  admin's household-wide Telegram, Pushover and email relays.
+                  Every notification the admin gets is also sent to each one
+                  connected. Admin-only, and only from a 0.36+ server.
+                -->
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Channels.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel Spacing="14">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="Telegram notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="Posts to a Telegram chat, group or channel through your own bot whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Telegram.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Telegram.ConnectedTone}" VerticalAlignment="Center" />
+                            </Grid>
+                            <StackPanel Spacing="4">
+                                <PasswordBox
+                                    Header="Bot token"
+                                    PlaceholderText="{x:Bind ViewModel.Channels.Telegram.SecretPlaceholder, Mode=OneWay}"
+                                    Password="{x:Bind ViewModel.Channels.Telegram.BotToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="Message @BotFather on Telegram, send /newbot, and paste the token it gives you."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="Chat ID"
+                                    PlaceholderText="123456789, -100…, or @channelname"
+                                    Text="{x:Bind ViewModel.Channels.Telegram.ChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="Send your bot a message (or add it to the group), then open api.telegram.org/bot&lt;token&gt;/getUpdates to find the chat’s id."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.Channels.Telegram.HasError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Telegram.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Error"
+                                Message="{x:Bind ViewModel.Channels.Telegram.Error, Mode=OneWay}"
+                                IsClosable="False" />
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.Channels.Telegram.HasNotice, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Telegram.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Success"
+                                Message="{x:Bind ViewModel.Channels.Telegram.Notice, Mode=OneWay}"
+                                IsClosable="False" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    Content="{x:Bind ViewModel.Channels.Telegram.SaveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Channels.Telegram.SaveCommand}"
+                                    Style="{StaticResource AccentButtonStyle}" />
+                                <Button
+                                    Content="{x:Bind ViewModel.Channels.Telegram.RemoveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Channels.Telegram.RemoveCommand}"
+                                    Visibility="{x:Bind ViewModel.Channels.Telegram.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Channels.Telegram.RemoveError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Telegram.HasRemoveError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel Spacing="14">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="Pushover notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="Sends a push notification through Pushover whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Pushover.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Pushover.ConnectedTone}" VerticalAlignment="Center" />
+                            </Grid>
+                            <StackPanel Spacing="4">
+                                <PasswordBox
+                                    Header="Application token"
+                                    PlaceholderText="{x:Bind ViewModel.Channels.Pushover.SecretPlaceholder, Mode=OneWay}"
+                                    Password="{x:Bind ViewModel.Channels.Pushover.AppToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="Create an application at pushover.net/apps/build and copy its API token."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <PasswordBox
+                                    Header="User or group key"
+                                    Password="{x:Bind ViewModel.Channels.Pushover.UserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="Your user key is at the top of your pushover.net dashboard."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.Channels.Pushover.HasError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Pushover.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Error"
+                                Message="{x:Bind ViewModel.Channels.Pushover.Error, Mode=OneWay}"
+                                IsClosable="False" />
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.Channels.Pushover.HasNotice, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Pushover.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Success"
+                                Message="{x:Bind ViewModel.Channels.Pushover.Notice, Mode=OneWay}"
+                                IsClosable="False" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    Content="{x:Bind ViewModel.Channels.Pushover.SaveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Channels.Pushover.SaveCommand}"
+                                    Style="{StaticResource AccentButtonStyle}" />
+                                <Button
+                                    Content="{x:Bind ViewModel.Channels.Pushover.RemoveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Channels.Pushover.RemoveCommand}"
+                                    Visibility="{x:Bind ViewModel.Channels.Pushover.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Channels.Pushover.RemoveError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Pushover.HasRemoveError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel Spacing="14">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="Email notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="Emails one or more addresses through your own mail server (SMTP) whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Email.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Email.ConnectedTone}" VerticalAlignment="Center" />
+                            </Grid>
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="SMTP server"
+                                    PlaceholderText="smtp.gmail.com"
+                                    Text="{x:Bind ViewModel.Channels.Email.Host, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="Port"
+                                    Text="{x:Bind ViewModel.Channels.Email.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="587 for most servers; 465 with &quot;Secure connection&quot; on."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="Username"
+                                    PlaceholderText="Leave blank if the server needs none"
+                                    Text="{x:Bind ViewModel.Channels.Email.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <PasswordBox
+                                    Header="Password"
+                                    PlaceholderText="{x:Bind ViewModel.Channels.Email.SecretPlaceholder, Mode=OneWay}"
+                                    Password="{x:Bind ViewModel.Channels.Email.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="From address"
+                                    PlaceholderText="marquee@example.com"
+                                    Text="{x:Bind ViewModel.Channels.Email.From, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBox
+                                    Header="Send to"
+                                    PlaceholderText="you@example.com, partner@example.com"
+                                    Text="{x:Bind ViewModel.Channels.Email.To, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Text="One or more addresses, separated by commas."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <CheckBox
+                                Content="Secure connection from the start (TLS, usually port 465)"
+                                IsChecked="{x:Bind ViewModel.Channels.Email.Secure, Mode=TwoWay}" />
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.Channels.Email.HasError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Email.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Error"
+                                Message="{x:Bind ViewModel.Channels.Email.Error, Mode=OneWay}"
+                                IsClosable="False" />
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.Channels.Email.HasNotice, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Email.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Severity="Success"
+                                Message="{x:Bind ViewModel.Channels.Email.Notice, Mode=OneWay}"
+                                IsClosable="False" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    Content="{x:Bind ViewModel.Channels.Email.SaveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Channels.Email.SaveCommand}"
+                                    Style="{StaticResource AccentButtonStyle}" />
+                                <Button
+                                    Content="{x:Bind ViewModel.Channels.Email.RemoveLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.Channels.Email.RemoveCommand}"
+                                    Visibility="{x:Bind ViewModel.Channels.Email.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Channels.Email.RemoveError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Channels.Email.HasRemoveError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <ContentControl
+                    Content="{x:Bind ViewModel.GenericWebhook}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

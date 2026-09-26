@@ -1,7 +1,6 @@
-using Marquee.Core.Models;
-using Marquee.Windows.Controls;
 using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
+using Marquee.Windows.Views.Settings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -10,112 +9,90 @@ namespace Marquee.Windows.Views;
 
 /// <summary>
 /// The Settings section, reached from the avatar on the rail (and its update
-/// button, while a newer Marquee is out). The page owns the household member dialogs (Add member,
-/// Edit, the Remove confirmation), because a ContentDialog needs its
-/// XamlRoot, and lends them to the view model.
+/// button, while a newer Marquee is out, which opens About). A host for the
+/// tabs: each tab's view is made the first time it's picked and kept while
+/// the page lives, and only the one on screen is active.
 /// </summary>
 public sealed partial class SettingsPage : Page
 {
     public SettingsViewModel ViewModel { get; }
 
-    /// <summary>About's update row.</summary>
-    public Updater Updater { get; } = AppServices.Updater;
+    private readonly Dictionary<SettingsTab, UIElement> views = [];
+    private readonly Style tabStyle;
+    private readonly Style currentTabStyle;
+    private ISettingsTabView? shown;
+    private bool onScreen;
 
     public SettingsPage()
     {
         ViewModel = new SettingsViewModel(AppServices.Model);
-        ViewModel.AddMemberPrompt = ShowAddMemberDialogAsync;
-        ViewModel.EditMemberPrompt = ShowEditMemberDialogAsync;
-        ViewModel.RemoveMemberPrompt = ConfirmRemoveMemberAsync;
-        ViewModel.LinkJellyfinPrompt = ShowLinkJellyfinDialogAsync;
-        ViewModel.ImportMembersPrompt = ShowImportMembersDialogAsync;
         InitializeComponent();
+        tabStyle = (Style)Resources["SettingsTabStyle"];
+        currentTabStyle = (Style)Resources["SettingsTabCurrentStyle"];
+        ViewModel.CurrentTabChanged += (_, _) => ShowCurrentTab();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         ViewModel.Activate();
-        if (stoppedTracking)
-        {
-            // Back to a page kept in the frame's cache: listen again.
-            stoppedTracking = false;
-            Bindings.Update();
-        }
+        ShowCurrentTab();
+        onScreen = true;
+        shown?.Activate();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        onScreen = false;
         ViewModel.Deactivate();
-        // The OneWay bindings to the app-long Updater subscribe to it; let
-        // them go with the page rather than pile up on it visit after visit.
-        Bindings.StopTracking();
-        stoppedTracking = true;
+        shown?.Deactivate();
     }
 
-    private bool stoppedTracking;
-
-    // MARK: Updates
-
-    private void OnCheckForUpdatesClick(object sender, RoutedEventArgs e) => _ = Updater.CheckAsync();
-
-    private void OnInstallUpdateClick(object sender, RoutedEventArgs e) => _ = Updater.InstallAsync();
-
-    /// <summary>"What's new" and "Download manually": the release's page on GitHub.</summary>
-    private void OnReleaseNotesClick(object sender, RoutedEventArgs e) => _ = ExternalLinks.OpenAsync(Updater.ReleasePage);
-
-    /// <summary>"Add a household member": the new account, or null when the admin cancelled.</summary>
-    private async Task<HouseholdMember?> ShowAddMemberDialogAsync()
+    /// <summary>A tab button; its <c>Tag</c> names the tab.</summary>
+    private void OnTabClick(object sender, RoutedEventArgs e)
     {
-        var dialog = new AddMemberDialog(ViewModel.CreateMemberAsync) { XamlRoot = XamlRoot };
-        var result = await dialog.TryShowAsync();
-        return result == ContentDialogResult.Primary ? dialog.Created : null;
-    }
-
-    /// <summary>The edit dialog for one account: what the server saved, or null when cancelled.</summary>
-    private async Task<UpdateUserResult?> ShowEditMemberDialogAsync(HouseholdMember member)
-    {
-        var dialog = new EditMemberDialog(
-            member,
-            ViewModel.IsAdmin,
-            ViewModel.UpdateMemberAsync,
-            ViewModel.SetMemberPhotoAsync,
-            ViewModel.RemoveMemberPhotoAsync)
+        if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<SettingsTab>(tag, out var tab))
         {
-            XamlRoot = XamlRoot,
-        };
-        var result = await dialog.TryShowAsync();
-        return result == ContentDialogResult.Primary ? dialog.Saved : null;
+            ViewModel.Select(tab);
+        }
     }
 
-    /// <summary>"Link Jellyfin": true once the dialog linked the account.</summary>
-    private async Task<bool> ShowLinkJellyfinDialogAsync()
+    /// <summary>Puts <see cref="SettingsViewModel.CurrentTab"/> on screen and marks its pill.</summary>
+    private void ShowCurrentTab()
     {
-        var dialog = new JellyfinLinkDialog(ViewModel.JellyfinName, ViewModel.LinkJellyfinAccountAsync) { XamlRoot = XamlRoot };
-        return await dialog.TryShowAsync() == ContentDialogResult.Primary;
-    }
+        var tab = ViewModel.CurrentTab;
+        AccountTabButton.Style = tab == SettingsTab.Account ? currentTabStyle : tabStyle;
+        IntegrationsTabButton.Style = tab == SettingsTab.Integrations ? currentTabStyle : tabStyle;
+        ActivityTabButton.Style = tab == SettingsTab.Activity ? currentTabStyle : tabStyle;
+        JobsTabButton.Style = tab == SettingsTab.Jobs ? currentTabStyle : tabStyle;
+        AboutTabButton.Style = tab == SettingsTab.About ? currentTabStyle : tabStyle;
 
-    /// <summary>"Import from Plex/Jellyfin": what was imported, or null when cancelled.</summary>
-    private async Task<ImportUsersResult?> ShowImportMembersDialogAsync(MediaServerKind server)
-    {
-        var dialog = new ImportMembersDialog(server, ViewModel.ServerName(server), ViewModel.LoadImportCandidatesAsync, ViewModel.RunImportAsync) { XamlRoot = XamlRoot };
-        var result = await dialog.TryShowAsync();
-        return result == ContentDialogResult.Primary ? dialog.Result : null;
-    }
-
-    /// <summary>"Remove {username}?", defaulting to Cancel since it can't be undone.</summary>
-    private async Task<bool> ConfirmRemoveMemberAsync(HouseholdMember member)
-    {
-        var confirm = new ContentDialog
+        if (!views.TryGetValue(tab, out var view))
         {
-            XamlRoot = XamlRoot,
-            Title = $"Remove {member.Username}?",
-            Content = SettingsViewModel.RemoveMemberConsequence,
-            PrimaryButtonText = "Remove",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Close,
-        };
-        return await confirm.TryShowAsync() == ContentDialogResult.Primary;
+            view = tab switch
+            {
+                SettingsTab.Integrations => new IntegrationsSettingsView(),
+                SettingsTab.Activity => new ActivitySettingsView(),
+                SettingsTab.Jobs => new JobsSettingsView(),
+                SettingsTab.About => new AboutSettingsView(),
+                _ => new AccountSettingsView(),
+            };
+            views[tab] = view;
+        }
+        if (ReferenceEquals(TabContent.Content, view))
+        {
+            return;
+        }
+        if (onScreen)
+        {
+            shown?.Deactivate();
+        }
+        TabContent.Content = view;
+        shown = view as ISettingsTabView;
+        if (onScreen)
+        {
+            shown?.Activate();
+        }
     }
 }
