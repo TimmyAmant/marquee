@@ -1364,7 +1364,12 @@ admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
 `eventType`: `grabbed` (⬇️ started downloading), `downloaded` (✅ finished),
 `request_approved` (👍), `request_rejected` (👎), and from 0.38
 `issue_reported` (⚠️, to the admin) and `issue_resolved` (🛠️, to the
-reporter). Tapping one opens
+reporter), and from 0.40 `request_created` (🙋, "Anna requested “Dune”
+(Season 2) in 4K"): a request waiting for review, to the admin and trusted
+members (not the requester, and not when it was auto-approved). Open the
+Requests screen for it. On the website's push notification it carries
+"Approve" and "Decline" buttons where the browser supports them (Android,
+desktop Chrome/Edge). Tapping one opens
 `/titles/{mediaType}/{tmdbId}` and marks it read.
 
 ### `GET /notifications` — user

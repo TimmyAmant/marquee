@@ -1,7 +1,8 @@
 // Marquee's service worker. It only does one thing: show the notifications
 // your own Marquee server pushes (lib/push/deliver.ts), and open the title
-// when one is clicked. It doesn't cache pages or intercept requests, so the
-// site behaves exactly as it does without it.
+// when one is clicked — or, on a new request, approve or decline it from the
+// notification's buttons. It doesn't cache pages or intercept requests, so
+// the site behaves exactly as it does without it.
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -24,13 +25,51 @@ self.addEventListener("push", (event) => {
       tag: data.tag,
       icon: "/marquee-icon.png",
       badge: "/marquee-icon.png",
-      data: { url: data.url || "/" },
+      data: { url: data.url || "/", requestId: data.requestId || null },
+      // Where the browser supports buttons (Android, desktop Chrome/Edge).
+      actions: data.requestId
+        ? [
+            { action: "approve", title: "Approve" },
+            { action: "decline", title: "Decline" },
+          ]
+        : [],
     }),
   );
 });
 
+async function reviewFromNotification(notification, action) {
+  const requestId = notification.data && notification.data.requestId;
+  let body = "";
+  try {
+    const res = await fetch(`/api/push/requests/${encodeURIComponent(requestId)}/${action}`, {
+      method: "POST",
+      credentials: "same-origin",
+      // Signed out, the site sends its sign-in page instead of an answer.
+      redirect: "manual",
+    });
+    const answer = await res.json().catch(() => ({}));
+    body =
+      res.ok && answer.ok
+        ? `${action === "approve" ? "Approved" : "Declined"}: ${notification.body}`
+        : answer.error || "Open Marquee and sign in, then try again.";
+  } catch {
+    body = "Couldn't reach your Marquee server.";
+  }
+  await self.registration.showNotification("Marquee", {
+    body,
+    tag: notification.tag,
+    icon: "/marquee-icon.png",
+    badge: "/marquee-icon.png",
+    data: { url: "/requests" },
+  });
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  if (event.action === "approve" || event.action === "decline") {
+    event.waitUntil(reviewFromNotification(event.notification, event.action));
+    return;
+  }
   const target = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;
   event.waitUntil(
     (async () => {

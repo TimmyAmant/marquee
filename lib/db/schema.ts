@@ -419,6 +419,9 @@ export const notificationEventTypeValues = [
   // whoever reported it once it's fixed.
   "issue_reported",
   "issue_resolved",
+  // A new request waiting for review, to the admin and trusted members —
+  // with Approve / Decline right on the push notification (public/sw.js).
+  "request_created",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -438,13 +441,16 @@ export const notifications = pgTable(
     // About the 4K copy (lib/arr/fourk.ts): kept apart from the regular
     // copy's notices when repeats are dropped, so one doesn't hide the other.
     is4k: boolean("is_4k").default(false).notNull(),
+    // The request a request_created notification is about — what its
+    // Approve / Decline buttons act on.
+    requestId: uuid("request_id").references(() => requests.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created')`,
     ),
   ],
 );

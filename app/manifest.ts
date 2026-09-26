@@ -13,6 +13,18 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#0a0a0c",
     theme_color: "#0a0a0c",
-    icons: [{ src: "/marquee-icon.png", sizes: "180x180", type: "image/png", purpose: "any" }],
+    // 192 and 512 are what Android's "Install app" needs; the maskable one
+    // fills its adaptive-icon shapes without a black border.
+    icons: [
+      { src: "/marquee-icon.png", sizes: "180x180", type: "image/png", purpose: "any" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    // Long-press the home-screen icon.
+    shortcuts: [
+      { name: "Requests", url: "/requests" },
+      { name: "Search", url: "/search" },
+    ],
   };
 }

@@ -15,6 +15,7 @@ import { createNotification } from "@/lib/notifications/query";
 import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { insertWithinQuota } from "@/lib/requests/quota";
+import { notifyReviewersOfRequest } from "@/lib/requests/alerts";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
@@ -171,6 +172,7 @@ export async function createRequest(
       await approveRequest(inserted.id, adminUserId).catch(() => undefined);
     }
   }
+  await notifyReviewersOfRequest(inserted.id).catch(() => undefined);
 
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
   revalidatePath("/requests");
@@ -238,6 +240,7 @@ async function createFourKRequest(
   if (requester?.role === "trusted" || (mediaType === "movie" ? requester?.autoApproveMovies : requester?.autoApproveTv)) {
     await approveRequest(inserted.id, adminUserId).catch(() => undefined);
   }
+  await notifyReviewersOfRequest(inserted.id).catch(() => undefined);
 
   revalidatePath(`/title/${mediaType}/${tmdbId}`);
   revalidatePath("/requests");

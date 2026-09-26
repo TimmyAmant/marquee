@@ -295,6 +295,13 @@
       "when": 1790392084931,
       "tag": "0041_add_media_server_product",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790392409730,
+      "tag": "0042_add_request_alerts",
+      "breakpoints": true
     }
   ]
 }

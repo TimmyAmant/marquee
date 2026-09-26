@@ -17,7 +17,9 @@ export type NotificationEventType =
   | "request_approved"
   | "request_rejected"
   | "issue_reported"
-  | "issue_resolved";
+  | "issue_resolved"
+  /** 0.40+: a new request waiting for review (admin and trusted members). */
+  | "request_created";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
