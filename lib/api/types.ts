@@ -52,6 +52,10 @@ export type SignInMethods = {
    * speaks the same API, so everything "jellyfin" works with it). Label
    * the Jellyfin sign-in, linking and import with this. */
   jellyfinName: string;
+  /** 0.43+: the admin has "New accounts from Plex/Jellyfin sign-in" on and
+   * Plex or Jellyfin sign-in is offered — say on the sign-in screen that
+   * newcomers get an account by signing in with it. Treat missing as false. */
+  signup: boolean;
 };
 
 /** Which media-server accounts an account signs in with. */

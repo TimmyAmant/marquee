@@ -417,7 +417,7 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     public string MediaServerMembersTitle => $"Plex and {JellyfinName} members";
     public string MediaServerSignupHeader => $"New accounts from Plex/{JellyfinName} sign-in";
     public string MediaServerSignupExplanation =>
-        $"When someone who can use your Plex or {JellyfinName} server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way.";
+        $"When someone who can use your Plex or {JellyfinName} server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. The sign-in screen tells newcomers to sign in that way. Off: only the people you import (or who link their account) can sign in that way.";
     public string NoMediaServersExplanation =>
         $"Connect Plex or {JellyfinName} on the Integrations tab to import household members from it and let them sign in with those accounts.";
 

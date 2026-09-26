@@ -174,6 +174,17 @@ struct SignInForm: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
+
+                // With new accounts from Plex/Jellyfin sign-in on, that's
+                // how a newcomer gets in — there's no other sign-up.
+                if let hint = info?.signupHint {
+                    Text(hint)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity)
+                }
             }
 
             // Setup is only offered while the server has no accounts; after

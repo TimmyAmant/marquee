@@ -35,6 +35,42 @@ public sealed class MediaSignInDecodingTests
     }
 
     [Fact]
+    public void ServerInfoSignupDefaultsToFalse()
+    {
+        // Before 0.43 there's no `signup`: say nothing about signing up.
+        var older = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.42.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":true,"jellyfin":false,"jellyfinName":"Jellyfin"}}""");
+        Assert.False(older.SignIn!.Signup);
+        Assert.Null(older.SignupHint);
+
+        var off = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"plex":true,"signup":false}}""");
+        Assert.Null(off.SignupHint);
+
+        var noSignIn = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.32.0","setupComplete":true,"status":"ok"}""");
+        Assert.Null(noSignIn.SignupHint);
+    }
+
+    [Fact]
+    public void ServerInfoSignupHintNamesOnlyTheMethodsOffered()
+    {
+        var plex = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"password":true,"plex":true,"jellyfin":false,"jellyfinName":"Jellyfin","signup":true}}""");
+        Assert.Equal(new SignInMethods { Password = true, Plex = true, Jellyfin = false, Signup = true }, plex.SignIn);
+        Assert.Equal("New here? Use Sign in with Plex — your account is made for you.", plex.SignupHint);
+
+        var emby = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"jellyfin":true,"jellyfinName":"Emby","signup":true}}""");
+        Assert.Equal("New here? Use Sign in with Emby — your account is made for you.", emby.SignupHint);
+
+        var both = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"plex":true,"jellyfin":true,"signup":true}}""");
+        Assert.Equal("New here? Use Sign in with Plex (or Jellyfin) — your account is made for you.", both.SignupHint);
+
+        // Nothing to sign up with.
+        var neither = Decode<ServerInfo>("""{"app":"marquee","apiVersion":1,"version":"0.43.0","setupComplete":true,"status":"ok","signIn":{"signup":true}}""");
+        Assert.Null(neither.SignupHint);
+
+        // The doc's example has it on, with Plex.
+        Assert.Equal("New here? Use Sign in with Plex — your account is made for you.", Fixtures.Decode<ServerInfo>("server-info").SignupHint);
+    }
+
+    [Fact]
     public void ServerInfoJellyfinName()
     {
         // 0.40+: an Emby server connected through the Jellyfin integration.

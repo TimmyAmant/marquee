@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   decideSignIn,
   importedDisplayName,
-  NO_ACCOUNT_MESSAGE,
+  noAccountMessage,
   sanitizeUsername,
   uniqueUsername,
   unlinkWouldLockOut,
@@ -35,7 +35,7 @@ describe("decideSignIn", () => {
         admin: { id: "admin-id", linked: true },
         signupAllowed: false,
       }),
-    ).toEqual({ action: "refuse", message: NO_ACCOUNT_MESSAGE });
+    ).toEqual({ action: "refuse", message: noAccountMessage("Plex") });
   });
 
   it("never links the admin for a Plex account that doesn't own the server", () => {
@@ -47,7 +47,7 @@ describe("decideSignIn", () => {
   it("has no owner shortcut for Jellyfin", () => {
     expect(
       decideSignIn({ provider: "jellyfin", linkedUserId: null, ownsServer: true, admin, signupAllowed: false }),
-    ).toEqual({ action: "refuse", message: NO_ACCOUNT_MESSAGE });
+    ).toEqual({ action: "refuse", message: noAccountMessage("Jellyfin") });
   });
 
   it("creates a member when allowed and refuses with the admin message when not", () => {
@@ -55,7 +55,11 @@ describe("decideSignIn", () => {
     expect(decideSignIn({ ...base, signupAllowed: true })).toEqual({ action: "create" });
     expect(decideSignIn({ ...base, signupAllowed: false })).toEqual({
       action: "refuse",
-      message: "Ask the admin to add you first.",
+      message: "There's no Marquee account for this Jellyfin account yet. Ask the admin to add you.",
+    });
+    expect(decideSignIn({ ...base, signupAllowed: false, providerName: "Emby" })).toEqual({
+      action: "refuse",
+      message: "There's no Marquee account for this Emby account yet. Ask the admin to add you.",
     });
   });
 

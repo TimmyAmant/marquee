@@ -158,6 +158,15 @@
                         Command="{x:Bind ViewModel.ToggleJellyfinCommand}"
                         Visibility="{x:Bind ViewModel.OffersJellyfinSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
+                    <!-- New accounts from Plex/Jellyfin sign-in: how a newcomer gets in. -->
+                    <TextBlock
+                        Text="{x:Bind ViewModel.SignupHint, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.ShowsSignupHint, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        TextAlignment="Center"
+                        HorizontalAlignment="Center" />
                 </StackPanel>
                 <!-- Setup is only offered while the server has no accounts. -->
                 <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
