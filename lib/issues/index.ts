@@ -1,6 +1,16 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { issues, users, issueKindValues, type IssueKind, type MediaType } from "@/lib/db/schema";
+import { issues, users, type IssueKind, type MediaType } from "@/lib/db/schema";
+import {
+  ISSUE_KIND_LABELS,
+  issueEpisodeLabel,
+  MAX_ISSUE_RESOLUTION,
+  MAX_OPEN_ISSUES_PER_USER,
+  parseReport,
+  type ReportInput,
+} from "@/lib/issues/labels";
+
+export { ISSUE_KIND_LABELS, issueEpisodeLabel, parseReport, type ReportInput };
 import { fail, type CoreResult } from "@/lib/core-result";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
@@ -11,63 +21,6 @@ import { revalidatePathSafely } from "@/lib/cache/revalidate";
 // "Report a problem" (the title page), and the admin's side of it on the
 // Requests page: see what's wrong, have Sonarr/Radarr look for a better
 // copy, and mark it fixed — the reporter is told either way.
-
-export const ISSUE_KIND_LABELS: Record<IssueKind, string> = {
-  video: "Bad video quality",
-  audio: "Audio problem",
-  subtitles: "Subtitles missing or wrong",
-  wont_play: "Won't play",
-  wrong_title: "Wrong movie or episode",
-  other: "Something else",
-};
-
-export const MAX_ISSUE_MESSAGE = 1000;
-export const MAX_ISSUE_RESOLUTION = 500;
-/** Open reports per person at once — plenty, and stops a flood. */
-export const MAX_OPEN_ISSUES_PER_USER = 20;
-
-export type ReportInput = { kind: unknown; message?: unknown; seasonNumber?: unknown; episodeNumber?: unknown };
-
-function wholeNumber(value: unknown): number | null | "invalid" {
-  if (value === undefined || value === null || value === "") return null;
-  const n = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
-  return Number.isInteger(n) && n >= 0 && n <= 10_000 ? n : "invalid";
-}
-
-/** Checks a report's fields. Pure; unit tested. */
-export function parseReport(
-  mediaType: MediaType,
-  input: ReportInput,
-):
-  | { ok: true; kind: IssueKind; message: string | null; seasonNumber: number | null; episodeNumber: number | null }
-  | { ok: false; error: string } {
-  if (typeof input.kind !== "string" || !(issueKindValues as readonly string[]).includes(input.kind)) {
-    return { ok: false, error: "Pick what's wrong." };
-  }
-  const kind = input.kind as IssueKind;
-  const message = typeof input.message === "string" ? input.message.trim() : "";
-  if (message.length > MAX_ISSUE_MESSAGE) return { ok: false, error: `Keep it under ${MAX_ISSUE_MESSAGE} characters.` };
-  if (kind === "other" && !message) return { ok: false, error: "Say what's wrong." };
-  let seasonNumber = wholeNumber(input.seasonNumber);
-  let episodeNumber = wholeNumber(input.episodeNumber);
-  if (seasonNumber === "invalid" || episodeNumber === "invalid") {
-    return { ok: false, error: "Season and episode are whole numbers." };
-  }
-  if (mediaType === "movie") {
-    seasonNumber = null;
-    episodeNumber = null;
-  } else if (episodeNumber !== null && seasonNumber === null) {
-    return { ok: false, error: "Pick the season too." };
-  }
-  return { ok: true, kind, message: message || null, seasonNumber, episodeNumber };
-}
-
-/** "S2 E5", "Season 2", or null. Pure. */
-export function issueEpisodeLabel(seasonNumber: number | null, episodeNumber: number | null): string | null {
-  if (seasonNumber === null) return null;
-  if (episodeNumber === null) return seasonNumber === 0 ? "Specials" : `Season ${seasonNumber}`;
-  return `S${seasonNumber} E${episodeNumber}`;
-}
 
 function describe(title: string, seasonNumber: number | null, episodeNumber: number | null): string {
   const episode = issueEpisodeLabel(seasonNumber, episodeNumber);
@@ -216,11 +169,14 @@ export async function getOpenIssuesFor(userId: string, mediaType: MediaType, tmd
 }
 
 /** Marks it fixed (admin) and tells the reporter, with the admin's note. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function resolveIssue(
   adminUserId: string,
   issueId: string,
   note: unknown,
 ): Promise<CoreResult> {
+  if (!UUID.test(issueId)) return fail("not_found", "That report isn't open any more.");
   const resolution = typeof note === "string" ? note.trim() : "";
   if (resolution.length > MAX_ISSUE_RESOLUTION) {
     return fail("invalid", `Keep the note under ${MAX_ISSUE_RESOLUTION} characters.`);
@@ -251,6 +207,7 @@ export async function resolveIssue(
 /** "Search again": asks Sonarr/Radarr for another copy of the title the
  * report is about — the usual first fix for a bad file. */
 export async function searchAgainForIssue(adminUserId: string, issueId: string): Promise<CoreResult> {
+  if (!UUID.test(issueId)) return fail("not_found", "Report not found.");
   const [issue] = await db.select().from(issues).where(eq(issues.id, issueId)).limit(1);
   if (!issue) return fail("not_found", "Report not found.");
   const title = await getOrFetchTitle(issue.mediaType, issue.tmdbId).catch(() => null);
@@ -259,6 +216,7 @@ export async function searchAgainForIssue(adminUserId: string, issueId: string):
 
 /** A member may withdraw their own open report; the admin any. */
 export async function deleteIssue(viewer: { userId: string; isAdmin: boolean }, issueId: string): Promise<CoreResult> {
+  if (!UUID.test(issueId)) return fail("not_found", "Report not found.");
   const deleted = await db
     .delete(issues)
     .where(

@@ -10,6 +10,9 @@ import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
 import { RequestTitle } from "@/components/request-title";
+import { IssuesSection } from "@/components/issues-section";
+import { listIssues } from "@/lib/issues";
+import { issueDto } from "@/lib/api/mappers";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   pending: "bg-tracked-bg text-tracked",
@@ -36,6 +39,10 @@ function myRequestBadge(
 export default async function RequestsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session) redirect("/login");
+
+  const issues = (await listIssues({ userId: viewer.userId, isAdmin: viewer.isAdmin })).map((row) =>
+    issueDto(row, viewer.userId),
+  );
 
   if (!viewer.isAdmin) {
     const myRequests = await getMyRequests(viewer.userId, viewer.libraryOwnerId);
@@ -98,6 +105,7 @@ export default async function RequestsPage() {
             </table>
           </div>
         )}
+        <IssuesSection issues={issues} isAdmin={false} />
       </div>
     );
   }
@@ -158,6 +166,8 @@ export default async function RequestsPage() {
           </table>
         </div>
       )}
+
+      <IssuesSection issues={issues} isAdmin />
 
       {reviewed.length > 0 && (
         <>

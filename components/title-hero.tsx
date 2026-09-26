@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
 import { FourKControls } from "@/components/fourk-controls";
+import { ReportProblemButton } from "@/components/report-problem-button";
 import type { FourKViewerState } from "@/lib/api/types";
 import { FileDetailsSection } from "@/components/file-details-section";
 import { CapsLabel } from "@/components/caps-label";
@@ -70,6 +71,7 @@ export function TitleHero({
   tvdbId,
   arrTracking,
   fourK,
+  report,
   file,
   runtimeLabel,
   cast,
@@ -98,6 +100,8 @@ export function TitleHero({
   arrTracking?: ArrTrackingInfo | null;
   /** The 4K row (components/fourk-controls.tsx); null without a 4K instance. */
   fourK?: FourKViewerState | null;
+  /** "Report a problem"; null when there's nothing to report (or signed out). */
+  report?: { seasonNumbers: number[]; openReports: number } | null;
   /** Renders a "File details" card in the sidebar below the rating/status
    * card — null when the title isn't in the library, same as the standalone
    * section this replaced. */
@@ -181,6 +185,15 @@ export function TitleHero({
                   />
 
                   {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} />}
+
+                  {report && (
+                    <ReportProblemButton
+                      mediaType={mediaType}
+                      tmdbId={tmdbId}
+                      seasonNumbers={report.seasonNumbers}
+                      openReports={report.openReports}
+                    />
+                  )}
 
                   {isAdmin && arrTracking && (
                     <ArrTrackingControls

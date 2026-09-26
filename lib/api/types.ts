@@ -279,6 +279,11 @@ export type TitleViewerState = {
   /** The 4K copy, when the admin has a 4K Sonarr/Radarr for this type
    * (0.37+; null otherwise, and omitted by an older server). */
   fourK: FourKViewerState | null;
+  /** "Report a problem" applies: the title (or its 4K copy) is in the
+   * library or on its way (0.38+; an older server omits it). */
+  canReport: boolean;
+  /** The viewer's own open problem reports for this title. */
+  openReports: number;
 };
 
 export type FourKViewerState = {

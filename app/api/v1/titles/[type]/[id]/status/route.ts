@@ -36,6 +36,7 @@ export const GET = withApi<TitleParams>(async (request, params): Promise<TitleSt
       arrTracking: status.arrTracking,
       seasonRequests: status.seasonRequests,
       fourK: status.fourK,
+      openReports: status.openReports,
     }),
   };
 });

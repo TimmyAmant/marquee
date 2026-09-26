@@ -2,7 +2,8 @@
 // free of database and TMDb client imports (types only) so the mapping rules
 // stay cheap to reason about and test.
 import type * as Dto from "@/lib/api/types";
-import { ISSUE_KIND_LABELS, issueEpisodeLabel, type IssueRow } from "@/lib/issues";
+import { ISSUE_KIND_LABELS, issueEpisodeLabel } from "@/lib/issues/labels";
+import type { IssueRow } from "@/lib/issues";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
 import { avatarPath } from "@/lib/users/avatar-path";
@@ -106,6 +107,13 @@ export function fourKViewerState(
   };
 }
 
+/** A problem can be reported once there's something to have a problem
+ * with: a copy in the library, or one downloading. */
+export function canReportProblem(status: LibraryStatus, fourKStatus: LibraryStatus | null): boolean {
+  const has = (s: LibraryStatus | null) => s === "owned" || s === "tracked_downloading";
+  return has(status) || has(fourKStatus);
+}
+
 export function titleViewerState(input: {
   isAdmin: boolean;
   status: LibraryStatus;
@@ -118,6 +126,8 @@ export function titleViewerState(input: {
   seasonRequests?: { canRequestSeasons: boolean; requestedSeasons: number[] | null };
   /** From loadTitleStatus: null without a 4K instance for this type. */
   fourK?: { configured: boolean; status: LibraryStatus; requestStatus: RequestStatus | null } | null;
+  /** The viewer's open problem reports for the title (loadTitleStatus). */
+  openReports?: number;
 }): Dto.TitleViewerState {
 
   const untracked = input.status === "untracked";
@@ -139,6 +149,8 @@ export function titleViewerState(input: {
     canRelink: input.isAdmin && !untracked,
     arrTracking: input.isAdmin && input.arrTracking ? { arrId: input.arrTracking.arrId, monitored: input.arrTracking.monitored } : null,
     fourK: fourKViewerState(input.isAdmin, input.fourK ?? null),
+    canReport: canReportProblem(input.status, input.fourK?.status ?? null),
+    openReports: input.openReports ?? 0,
   };
 }
 

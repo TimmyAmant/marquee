@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
 import { getPendingRequestCount } from "@/lib/requests/query";
+import { getOpenIssueCount } from "@/lib/issues";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import {
@@ -20,12 +21,14 @@ import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
 
 export type RequestState = { error?: string; success?: boolean };
 
-/** Polled by the nav badge so the admin sees a new request without a manual
- * page refresh — mirrors the notification bell's polling pattern. */
+/** Polled by the nav badge so the admin sees a new request (or problem
+ * report) without a manual page refresh — mirrors the notification bell's
+ * polling pattern. Both wait on the Requests page. */
 export async function getPendingRequestCountAction(): Promise<number> {
   const session = await auth();
   if (session?.user?.role !== "admin") return 0;
-  return getPendingRequestCount();
+  const [requests, issues] = await Promise.all([getPendingRequestCount(), getOpenIssueCount()]);
+  return requests + issues;
 }
 
 export async function createRequestAction(
