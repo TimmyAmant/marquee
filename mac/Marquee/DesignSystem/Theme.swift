@@ -138,8 +138,9 @@ enum Metrics {
     static let topBar: CGFloat = 52
     /// Where pages start: the navigation rail floats 16 in from the window's
     /// left edge and is 56 wide (app/layout.tsx `md:pl-[72px]`). The shell
-    /// gives pages this much leading safe area and publishes it as
-    /// `navRailInset`; see `scrollsUnderNavRail()`.
+    /// gives pages this much safe area on the rail's edge (left unless moved
+    /// in Settings) and publishes it as `navRailInsets`; see
+    /// `scrollsUnderNavRail()`.
     static let contentLeading: CGFloat = 72
 
     // Shelf pages (Discover, Movies, Series, search, person, studio).
@@ -255,7 +256,7 @@ extension View {
     }
 
     /// For a page's top-level scroll view: runs it under the floating
-    /// navigation rail to the window's left edge, so the toolbar's scroll
+    /// navigation rail to the window's edge, so the toolbar's scroll
     /// edge and the page's glow reach the edge too, while the content still
     /// starts clear of the rail. Outside the main window's shell (the
     /// standalone Help windows) there's no rail and this does nothing.
@@ -279,20 +280,24 @@ extension View {
 }
 
 extension EnvironmentValues {
-    /// How far the floating navigation rail reaches in from the window's left
-    /// edge: `Metrics.contentLeading` inside the main window's shell, else 0.
-    @Entry var navRailInset: CGFloat = 0
+    /// How far the floating navigation rail reaches in from the window's
+    /// edges: `Metrics.contentLeading` on the edge it sits on (Settings ›
+    /// Account › Menu position) inside the main window's shell, else 0.
+    @Entry var navRailInsets: EdgeInsets = EdgeInsets()
 }
 
-/// A scroll view keeps out of the leading safe area altogether, so it
-/// ignores the shell's and takes the rail's inset as a content margin.
+/// A scroll view keeps out of the leading and trailing safe areas
+/// altogether, so it ignores the shell's and takes the rail's insets as
+/// content margins. (At the top or bottom there's nothing to do: a vertical
+/// scroll view already runs under that safe area and insets its content.)
 private struct ScrollsUnderNavRail: ViewModifier {
-    @Environment(\.navRailInset) private var inset
+    @Environment(\.navRailInsets) private var insets
 
     func body(content: Content) -> some View {
         content
-            .contentMargins(.leading, inset, for: .scrollContent)
-            .ignoresSafeArea(.container, edges: .leading)
+            .contentMargins(.leading, insets.leading, for: .scrollContent)
+            .contentMargins(.trailing, insets.trailing, for: .scrollContent)
+            .ignoresSafeArea(.container, edges: .horizontal)
     }
 }
 
