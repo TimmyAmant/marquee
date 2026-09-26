@@ -1,0 +1,14 @@
+{
+  "key": "mq_Q2xpY2tpbmcgdGhpcyBpcyBub3QgYSByZWFsIGtleSE",
+  "apiKey": {
+    "id": "6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10",
+    "name": "Homepage",
+    "scope": "read",
+    "actAs": null,
+    "hint": "mq_Q2xp",
+    "createdAt": "2026-09-26T10:00:00.000Z",
+    "lastUsedAt": null,
+    "expiresAt": null,
+    "expired": false
+  }
+}

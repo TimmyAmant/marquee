@@ -124,6 +124,16 @@ where the real server needed something the core contract didn't spell out.
     title. A server older than this leaves them out — treat missing as
     false/0/null/empty — and answers `404` on the new endpoints: hide
     Edit, Cancel, Retry and the comments.
+17. **API keys, an OpenAPI description and a widget summary (0.47+,
+    additive).** The admin can issue API keys for tools and scripts
+    (`/settings/api-keys`, §16); any `/api/v1` endpoint accepts one as
+    `X-Api-Key: mq_…` or `Authorization: Bearer mq_…`, within its scope.
+    `GET /openapi.json` (public) describes every endpoint, and
+    `GET /stats/summary` gives dashboard widgets their counts. New error
+    answers only ever reach a caller using a key: `403 forbidden` outside
+    the key's scope and `429 rate_limited` after too many wrong keys. A
+    server older than this answers `404` on the new endpoints — hide the
+    API keys card.
 
 ---
 
@@ -131,9 +141,11 @@ where the real server needed something the core contract didn't spell out.
 
 - Base: `{server}/api/v1`. JSON bodies, `Content-Type: application/json`, camelCase keys.
 - Auth: `Authorization: Bearer mqt_<43 base64url chars>` on everything except
-  `server-info`, `auth/login`, `auth/setup`, `auth/plex/start`,
+  `server-info`, `openapi.json`, `auth/login`, `auth/setup`, `auth/plex/start`,
   `auth/plex/poll`, `auth/jellyfin`, `auth/jellyfin/quick-connect/start`,
   `auth/jellyfin/quick-connect/poll`, `auth/sso/start` and `auth/sso/poll`.
+  Tools use an admin-issued API key instead (0.47+): `X-Api-Key: mq_<43
+  base64url chars>` or `Authorization: Bearer mq_…` — see §16.
 - Timestamps: ISO-8601 UTC with milliseconds. Calendar dates: `"YYYY-MM-DD"`.
   `year` fields are 4-character strings (`"1999"`) or `null`.
 - Nullable fields are always present.
@@ -147,14 +159,14 @@ Non-2xx responses are `{"error": "<message safe to show>", "code": "<code>"}`.
 | Status | code | When |
 |---|---|---|
 | 400 | `invalid` | Bad input — the message is the website's own validation text |
-| 401 | `unauthorized` | Missing / malformed / unknown / expired / revoked token → return to sign-in |
+| 401 | `unauthorized` | Missing / malformed / unknown / expired / revoked token (or API key) → return to sign-in |
 | 401 | `invalid_credentials` | Wrong username or password at login |
-| 403 | `forbidden` | Admin-only endpoint called by a member, or an action the caller may not take |
+| 403 | `forbidden` | Admin-only endpoint called by a member, an action the caller may not take, or a call outside an API key's scope |
 | 404 | `not_found` | Unknown id, bad path segment (non-numeric id, unknown media type), unknown endpoint |
 | 409 | `conflict` | State conflict: already requested, already reviewed, integration not connected / not fully configured, not tracked in Sonarr/Radarr |
 | 409 | `setup_complete` | `auth/setup` once an account exists |
 | 410 | `expired` | Plex, SSO or Quick Connect sign-in/link poll with a handle that's used, unknown or older than 10 minutes — start again |
-| 429 | `rate_limited` | Login, setup, Plex/Jellyfin sign-in rate limit |
+| 429 | `rate_limited` | Login, setup, Plex/Jellyfin sign-in rate limit; too many wrong API keys |
 | 500 | `internal` | Server bug; details are only in the server log |
 | 502 | `upstream` | A connected service (TMDb, Sonarr, Radarr, Plex, Jellyfin, Trakt…) failed, timed out, or TMDb isn't configured |
 
@@ -170,6 +182,10 @@ in Sonarr" link built as `{sonarrUrl}/add/new?term={url-encoded title}`.
 - **public** — no token.
 - **user** — any signed-in account (admin or member).
 - **admin** — `403 forbidden` for members.
+
+An API key (§16) signs in as the admin who made it, or as the member it
+"acts as", and so gets exactly that account's level — narrowed further by
+its scope and by the endpoints no key may call.
 
 Members see the household library through the admin: every library status is
 computed against `libraryOwnerId` (from `/me`), exactly like the website.
@@ -3544,6 +3560,161 @@ what to do, grouped by area.
 
 ---
 
+## 16. API keys & integrations (0.47+)
+
+For dashboards (Homepage, Homarr), phone apps, scripts and other tools. Copy-
+paste widget configs are in `docs/integrations.md`.
+
+### API keys — how they work
+
+The admin creates keys under Settings › Integrations › API keys (website, Mac
+and Windows apps) or with `POST /settings/api-keys`. A key is `mq_` followed
+by 43 base64url characters; it's shown **once**, when it's made, and only a
+SHA-256 hash of it is kept (plus `hint`, its first 7 characters, to tell keys
+apart).
+
+Send it on any `/api/v1` endpoint as either header — never in the URL:
+
+```
+X-Api-Key: mq_…
+Authorization: Bearer mq_…
+```
+
+Sending an API key *and* a device token on one request is refused (`401`).
+
+- **Who it is.** A key signs in as the admin who created it, or — when made
+  to "act as" a household member — as that member, with that member's
+  permissions (right for request-only integrations). The account's role is
+  read fresh on every call.
+- **Scope.** `read`: `GET` (and `HEAD`) only, plus `POST /surprise`; every
+  other method answers `403 forbidden` "This API key is read-only.". `full`:
+  whatever the account may do.
+- **Never with a key, whatever its scope** (`403 forbidden` "API keys can't
+  manage API keys, sign-in, household accounts or admin settings."):
+  `/settings/api-keys`, everything under `/auth`, `/me/links`,
+  `/settings/integrations`, `/settings/arr-servers`, `/settings/sso`,
+  `/settings/sign-in` and `/users/import`; any change under `/settings`,
+  `/users` (accounts, roles, photos), `/me/notification-channels` and
+  `/me/plex-watchlist`. Of the admin settings, a key may only read
+  `/settings/activity`, `/settings/jobs`, `/settings/about`,
+  `/settings/not-found`, `/settings/notification-events` and
+  `/settings/blocklist`. `GET /openapi.json` reports this per operation as
+  `x-api-key-access` (`read`, `full` or `none`).
+- **Expiry and revocation.** A key never expires unless it was given a
+  number of days; an expired or revoked key answers `401 unauthorized`
+  "This API key is missing, expired or revoked.". `lastUsedAt` is recorded
+  at most once a minute. Using a key doesn't count as the member being
+  active.
+- **Wrong keys are rate limited:** after 30 failed attempts in 10 minutes
+  from one address, `429 rate_limited` "Too many attempts with a wrong API
+  key. Try again in a few minutes." until the window passes. The address is
+  only known behind a reverse proxy with `TRUSTED_PROXY_HOPS` set; without
+  it, every caller shares one budget.
+
+### `GET /settings/api-keys` — admin (0.47+)
+
+Every key, oldest first. Only a signed-in admin (a device token) — never an
+API key.
+
+```json
+{
+  "results": [
+    {
+      "id": "6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10",
+      "name": "Homepage",
+      "scope": "read",
+      "actAs": null,
+      "hint": "mq_Q2xp",
+      "createdAt": "2026-09-26T10:00:00.000Z",
+      "lastUsedAt": "2026-09-26T11:59:40.000Z",
+      "expiresAt": null,
+      "expired": false
+    },
+    {
+      "id": "b3a9e0d4-8c1f-4e2b-a7d6-5f0e9c8b7a61",
+      "name": "Kid's request app",
+      "scope": "full",
+      "actAs": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": "Kid", "username": "member1", "label": "Kid" },
+      "hint": "mq_x9Tb",
+      "createdAt": "2026-09-20T08:30:00.000Z",
+      "lastUsedAt": null,
+      "expiresAt": "2026-12-19T08:30:00.000Z",
+      "expired": false
+    }
+  ]
+}
+```
+
+`actAs`: a `RequestPerson`, or null for the admin. `expiresAt`: null for
+never. Website: each row shows the name, "Read-only" or "Full access", "as
+Kid" when it acts as someone, the hint, "Created Sep 20, 2026", "Last used 2
+minutes ago" / "Never used", "Expires Dec 19, 2026" / "Never expires" /
+"Expired", and "Revoke".
+
+### `POST /settings/api-keys` — admin (0.47+)
+
+| Body field | Type | Rules |
+|---|---|---|
+| `name` | string | required, 1–80 chars after trimming |
+| `scope` | `"read"` \| `"full"` | required |
+| `actAsUserId` | string \| null | optional: a household member's id; the admin's own id means no one |
+| `expiresInDays` | integer \| null | optional: 1–3650; null or missing = never expires |
+
+`201 Created` with the secret — the only time it's ever returned:
+
+```json
+{
+  "key": "mq_Q2xpY2tpbmcgdGhpcyBpcyBub3QgYSByZWFsIGtleSE",
+  "apiKey": {
+    "id": "6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10",
+    "name": "Homepage",
+    "scope": "read",
+    "actAs": null,
+    "hint": "mq_Q2xp",
+    "createdAt": "2026-09-26T10:00:00.000Z",
+    "lastUsedAt": null,
+    "expiresAt": null,
+    "expired": false
+  }
+}
+```
+
+Website: "Copy this key now — it won't be shown again." with a Copy button.
+Errors: `400 invalid` "Give the key a name, like Homepage." / "Keep the name
+under 80 characters." / "Choose read-only or full access." / "Choose a
+household member." / "Expiry must be between 1 and 3650 days, or never.";
+`404 not_found` "That household member doesn't exist any more."; `403`
+"Only the admin can manage API keys." (a member, or any API key).
+
+### `DELETE /settings/api-keys/{id}` — admin (0.47+)
+
+Revokes the key: its next call answers `401`. `{ "ok": true }`; `404
+not_found` "That API key doesn't exist any more.". A key is also removed with
+the account it signs in as.
+
+### `GET /stats/summary` — user (0.47+)
+
+A few counts for dashboard widgets. A read-only key is enough.
+
+```json
+{ "pendingRequests": 3, "openIssues": 1, "cantFind": 2, "movies": 812, "series": 164, "downloading": 4 }
+```
+
+`pendingRequests`, `openIssues` and `cantFind` (approved requests
+Sonarr/Radarr can't find) are 0 for an account that doesn't review requests,
+as on `/badges`. `movies` / `series`: titles in the household library.
+`downloading`: titles Sonarr/Radarr are downloading now.
+
+### `GET /openapi.json` — public (0.47+)
+
+This API as an OpenAPI 3.1 description: every endpoint with its auth level
+(`x-marquee-auth`: `public`, `user`, `reviewer`, `admin`) and what an API key
+may do there (`x-api-key-access`). It lists every operation but describes
+bodies only for the newer endpoints — this document stays the full
+reference. The website shows it at `/api-docs`.
+
+---
+
 ## Endpoint index
 
 | Group | Method & path | Auth |
@@ -3655,10 +3826,14 @@ what to do, grouped by area.
 | Settings: About & Changelog | `GET /settings/about` | user |
 | | `GET /changelog` | user |
 | Help | `GET /help/errors` | user |
+| API keys & integrations | `GET /settings/api-keys` · `POST` | admin (no API key) |
+| | `DELETE /settings/api-keys/{id}` | admin (no API key) |
+| | `GET /stats/summary` | user |
+| | `GET /openapi.json` | public |
 
 ## Not exposed (and why)
 
 - **Theme (light/dark)** — a per-browser preference stored in `localStorage`; nothing server-side.
 - **`/api/webhooks/{provider}/{userId}`** and **`/api/webhooks/servers/{serverId}`** — inbound Sonarr/Radarr webhooks, not a client API (their URLs are in `GET /settings/integrations` and each `ArrServer`).
 - **Disk-space summary/forecast** — computed in `lib/integrations/disk-space.ts` but not shown on any page; only the daily snapshot job is exposed (`POST /settings/jobs/disk-space-snapshot/run`).
-- **Device/token management** — the website has no UI for it; `POST /auth/logout` revokes the current token and a password change revokes all of an account's tokens.
+- **Device/token management** — the website has no UI for it; `POST /auth/logout` revokes the current token and a password change revokes all of an account's tokens. (Admin-issued API keys are managed under §16.)

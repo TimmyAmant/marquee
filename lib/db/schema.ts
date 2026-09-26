@@ -874,6 +874,36 @@ export const apiTokens = pgTable(
   (table) => [index("api_tokens_user_id_idx").on(table.userId)],
 );
 
+// Admin-issued API keys for tools (dashboard widgets, scripts, phone apps)
+// calling /api/v1 with `X-Api-Key: mq_…` or `Authorization: Bearer mq_…`.
+// Like api_tokens, only a SHA-256 hash of the key is stored; `hint` is its
+// first few characters, so a list can tell keys apart. A key acts as
+// `act_as_user_id` when set (a member, for request-only integrations), else
+// as the admin who created it; `scope` "read" refuses every mutating call
+// (lib/api/key-policy.ts). No expiry sliding: `expires_at` is fixed at
+// creation, or null for never. Revoking deletes the row.
+export const apiKeyScopeValues = ["read", "full"] as const;
+export type ApiKeyScope = (typeof apiKeyScopeValues)[number];
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    keyHash: text("key_hash").notNull().unique(),
+    hint: text("hint").notNull(),
+    scope: text("scope").notNull().$type<ApiKeyScope>(),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    actAsUserId: uuid("act_as_user_id").references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+  },
+  (table) => [check("api_keys_scope_check", sql`${table.scope} in ('read', 'full')`)],
+);
+
 /** A member's opt-in to "request what's on my Plex Watchlist". Plex only
  * lets an account read its own watchlist, so this holds that member's own
  * plex.tv token (encrypted like the integration tokens) — given for this and

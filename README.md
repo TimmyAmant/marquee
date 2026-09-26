@@ -157,6 +157,8 @@ npm run dev
 
 Schema changes: `npx drizzle-kit generate`, then `npx drizzle-kit migrate`.
 The JSON API the apps use is documented in [`docs/api-v1.md`](docs/api-v1.md).
+Dashboards (Homepage, Homarr), scripts and other tools can use it with an
+admin-issued API key: see [`docs/integrations.md`](docs/integrations.md).
 
 ## Locked out?
 

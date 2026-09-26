@@ -1,14 +1,12 @@
 import { withApi } from "@/lib/api/handler";
 import { API_VERSION, API_VERSION_HEADER } from "@/lib/api/errors";
-import { requireApiUser } from "@/lib/api/auth";
+import { credentialStillValid, requireApiUser } from "@/lib/api/auth";
 import { notificationItem } from "@/lib/api/mappers";
-import { parseBearerToken } from "@/lib/api/tokens";
-import { authenticateApiToken } from "@/lib/api/token-store";
 import { subscribeToNotifications } from "@/lib/notifications/bus";
 import { getNotificationSender } from "@/lib/sharing";
 
 /** Between keep-alive comments, and between re-checks that the token is
- * still good: under the idle timeouts of common reverse proxies (60s for
+ * (or API key) still good: under the idle timeouts of common reverse proxies (60s for
  * nginx), so a quiet stream isn't cut off. */
 const HEARTBEAT_MS = 25_000;
 
@@ -23,7 +21,6 @@ const HEARTBEAT_MS = 25_000;
  */
 export const GET = withApi(async (request) => {
   const ctx = await requireApiUser(request);
-  const token = parseBearerToken(request.headers.get("authorization"))!;
   const encoder = new TextEncoder();
   let stop = () => {};
 
@@ -45,8 +42,7 @@ export const GET = withApi(async (request) => {
         send(`event: notification\nid: ${row.id}\ndata: ${JSON.stringify(notificationItem({ ...row, sender }))}\n\n`);
       });
       const heartbeat = setInterval(async () => {
-        const still = await authenticateApiToken(token).catch(() => undefined);
-        if (still === null) {
+        if ((await credentialStillValid(request, ctx)) === false) {
           send("event: signed-out\ndata: {}\n\n");
           stop();
           return;

@@ -357,13 +357,28 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "GET", path: "/settings/about", response: "about") { _ = try await $0.about.info() },
             Case(method: "GET", path: "/changelog", response: "changelog") { _ = try await $0.about.changelog() },
             Case(method: "GET", path: "/help/errors", response: "help-errors") { _ = try await $0.help.errors() },
+            // API keys & dashboard counts (0.47+)
+            Case(method: "GET", path: "/settings/api-keys", response: "api-keys") { _ = try await $0.apiKeys.list() },
+            Case(
+                method: "POST", path: "/settings/api-keys",
+                body: #"{"name":"Kid's request app","scope":"full","actAsUserId":"83c55a49-6153-4cb9-ae22-4a42d48f4cf3","expiresInDays":90}"#,
+                response: "api-key-created"
+            ) {
+                _ = try await $0.apiKeys.create(API.CreateApiKeyRequest(
+                    name: "Kid's request app", scope: .full, actAsUserId: "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", expiresInDays: 90
+                ))
+            },
+            Case(method: "DELETE", path: "/settings/api-keys/6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10", response: "ok") {
+                try await $0.apiKeys.revoke("6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10")
+            },
+            Case(method: "GET", path: "/stats/summary", response: "stats-summary") { _ = try await $0.stats.summary() },
         ] + arr
     }
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 138, "docs/api-v1.md documents 138 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 138, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 142, "docs/api-v1.md documents 142 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 142, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

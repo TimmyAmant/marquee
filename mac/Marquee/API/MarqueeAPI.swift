@@ -79,6 +79,10 @@ struct MarqueeAPI: Sendable {
     var jobs: JobsEndpoints { JobsEndpoints(transport: transport) }
     var about: AboutEndpoints { AboutEndpoints(transport: transport) }
     var help: HelpEndpoints { HelpEndpoints(transport: transport) }
+    /// API keys (0.47+; `.notFound` from an older server).
+    var apiKeys: ApiKeysEndpoints { ApiKeysEndpoints(transport: transport) }
+    /// Dashboard counts (0.47+).
+    var stats: StatsEndpoints { StatsEndpoints(transport: transport) }
 
     // MARK: Transport
 

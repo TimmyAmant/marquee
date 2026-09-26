@@ -95,6 +95,9 @@ struct IntegrationsSettingsView: View {
                         remove: { try await $0.integrations.webhook.remove() }
                     )
                 }
+                // 0.47+: keys for dashboards and scripts; nothing at all
+                // from an older server.
+                ApiKeysSection()
             } else if let loadError {
                 InlineMessage(text: loadError)
             } else {

@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.47.0",
+    date: "2026-09-26",
+    changes: [
+      "API keys: create named keys in Settings › Integrations › API access (read-only or full, optionally acting as one member, with an optional expiry) for dashboards, phone apps and scripts. A key is shown once, stored only as a fingerprint, and can be revoked any time. No key can change settings, integrations or sign-in.",
+      "Marquee's API is now described at /api/v1/openapi.json, with a readable list at /api-docs.",
+      "A summary for dashboard widgets (pending requests, problem reports, can't find, movies, series, downloading), with copy-paste setup for Homepage and Homarr in docs/integrations.md.",
+    ],
+  },
+  {
     version: "0.46.1",
     date: "2026-09-26",
     changes: [

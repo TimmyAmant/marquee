@@ -21,12 +21,14 @@ export const config = {
     // itself via a per-user secret in the URL instead. /api/v1 is the
     // native-app JSON API: its routes authenticate bearer tokens themselves
     // and must answer 401 JSON, never a redirect to the HTML login page.
+    // /api-docs is the public, read-only table of those endpoints (the same
+    // as the public /api/v1/openapi.json).
     //
     // Each exclusion is anchored (a following "/" or the end of the path):
     // a bare prefix like "login" would also let "/login-history" through,
     // and the file-extension rule is limited to a single path segment so
     // "/title/tv/1399.js" can't slip past the gate and reach that page's
     // server actions.
-    "/((?!api/auth(?:/|$)|api/webhooks(?:/|$)|api/v1(?:/|$)|login(?:/|$)|setup(?:/|$)|_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$|icon$|apple-icon$|[^/]+\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|webmanifest|woff|woff2)$).*)",
+    "/((?!api/auth(?:/|$)|api/webhooks(?:/|$)|api/v1(?:/|$)|api-docs(?:/|$)|login(?:/|$)|setup(?:/|$)|_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$|icon$|apple-icon$|[^/]+\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml|json|webmanifest|woff|woff2)$).*)",
   ],
 };

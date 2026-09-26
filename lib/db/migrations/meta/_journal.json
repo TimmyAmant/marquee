@@ -351,6 +351,13 @@
       "when": 1790446489630,
       "tag": "0049_add_request_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1790452414797,
+      "tag": "0050_add_api_keys",
+      "breakpoints": true
     }
   ]
 }
