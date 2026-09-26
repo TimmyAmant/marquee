@@ -196,6 +196,15 @@ public sealed record TitleViewerState
     /// </summary>
     public FourKViewerState? FourK { get; init; }
 
+    /// <summary>
+    /// "Report a problem" shows (0.38+): the title, or its 4K copy, is owned
+    /// or downloading. An older server leaves it out, which hides it.
+    /// </summary>
+    public bool CanReport { get; init; }
+
+    /// <summary>Your own open problem reports for this title (0.38+; 0 when left out): "Problem reported" instead of the button.</summary>
+    public int OpenReports { get; init; }
+
     /// <summary>"Requested Seasons 1–3, waiting for approval", or without the seasons for a whole-series request.</summary>
     public string PendingRequestLine =>
         SeasonLabels.SeasonsLabel(RequestedSeasons) is { } label

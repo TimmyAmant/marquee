@@ -18,6 +18,8 @@ const EVENT_EMOJI: Record<NotificationEventType, string> = {
   downloaded: "✅",
   request_approved: "👍",
   request_rejected: "👎",
+  issue_reported: "⚠️",
+  issue_resolved: "🛠️",
 };
 
 export async function getUnreadCount(userId: string): Promise<number> {

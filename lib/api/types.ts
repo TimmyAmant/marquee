@@ -9,7 +9,14 @@ export type RequestStatus = "pending" | "approved" | "rejected";
 export type LibraryStatus = "owned" | "tracked_downloading" | "tracked_monitored" | "coming_soon" | "untracked";
 export type LibraryProvider = "plex" | "jellyfin" | "sonarr" | "radarr";
 export type FavoriteEntityType = "person" | "company" | "movie" | "tv" | "collection";
-export type NotificationEventType = "grabbed" | "downloaded" | "request_approved" | "request_rejected";
+/** issue_reported / issue_resolved: 0.38+ (problem reports). */
+export type NotificationEventType =
+  | "grabbed"
+  | "downloaded"
+  | "request_approved"
+  | "request_rejected"
+  | "issue_reported"
+  | "issue_resolved";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -91,7 +98,43 @@ export type Me = User & {
 
 export type AuthResponse = { token: string; expiresAt: string; user: User };
 
-export type Badges = { unreadNotifications: number; pendingRequests: number };
+export type Badges = {
+  unreadNotifications: number;
+  pendingRequests: number;
+  /** Open problem reports, for the admin's Requests badge (0.38+; 0 for
+   * members; an older server omits it). */
+  openIssues: number;
+};
+
+/** A problem report (GET /issues). */
+export type Issue = {
+  id: string;
+  mediaType: MediaType;
+  tmdbId: number;
+  title: string;
+  posterPath: string | null;
+  seasonNumber: number | null;
+  episodeNumber: number | null;
+  /** "S2 E5", "Season 2", "Specials", or null. */
+  episodeLabel: string | null;
+  kind: "video" | "audio" | "subtitles" | "wont_play" | "wrong_title" | "other";
+  /** The kind in words, e.g. "Audio problem". */
+  kindLabel: string;
+  message: string | null;
+  status: "open" | "resolved";
+  /** The admin's note when marking it fixed. */
+  resolution: string | null;
+  reportedBy: RequestPerson;
+  /** Reported by the viewer (who may withdraw it while it's open). */
+  isMine: boolean;
+  createdAt: string;
+  resolvedAt: string | null;
+};
+
+export type IssuesResponse = ListResponse<Issue> & {
+  /** The kinds the Report form offers, in order. */
+  kinds: { id: Issue["kind"]; label: string }[];
+};
 
 // ── Cards ───────────────────────────────────────────────────────────────────
 
@@ -236,6 +279,11 @@ export type TitleViewerState = {
   /** The 4K copy, when the admin has a 4K Sonarr/Radarr for this type
    * (0.37+; null otherwise, and omitted by an older server). */
   fourK: FourKViewerState | null;
+  /** "Report a problem" applies: the title (or its 4K copy) is in the
+   * library or on its way (0.38+; an older server omits it). */
+  canReport: boolean;
+  /** The viewer's own open problem reports for this title. */
+  openReports: number;
 };
 
 export type FourKViewerState = {

@@ -401,6 +401,10 @@ export const notificationEventTypeValues = [
   "downloaded",
   "request_approved",
   "request_rejected",
+  // Problem reports (lib/issues): to the admin when one comes in, and to
+  // whoever reported it once it's fixed.
+  "issue_reported",
+  "issue_resolved",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -426,7 +430,7 @@ export const notifications = pgTable(
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved')`,
     ),
   ],
 );
@@ -751,4 +755,48 @@ export const notificationChannels = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [check("notification_channels_kind_check", sql`${table.kind} in ('telegram','pushover','email')`)],
+);
+
+export const issueKindValues = ["video", "audio", "subtitles", "wont_play", "wrong_title", "other"] as const;
+export type IssueKind = (typeof issueKindValues)[number];
+
+export const issueStatusValues = ["open", "resolved"] as const;
+export type IssueStatus = (typeof issueStatusValues)[number];
+
+/** "Report a problem" on a title someone has: bad video or audio, missing
+ * subtitles, won't play, the wrong movie… The admin sees them on the
+ * Requests page, can search again in Sonarr/Radarr, and marks them fixed
+ * (lib/issues). */
+export const issues = pgTable(
+  "issues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reportedByUserId: uuid("reported_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    title: text("title").notNull(),
+    posterPath: text("poster_path"),
+    /** TV: which season and episode, when it's about one. */
+    seasonNumber: integer("season_number"),
+    episodeNumber: integer("episode_number"),
+    kind: text("kind").notNull().$type<IssueKind>(),
+    message: text("message"),
+    status: text("status").notNull().default("open").$type<IssueStatus>(),
+    /** What the admin said when marking it fixed, shown to the reporter. */
+    resolution: text("resolution"),
+    resolvedByUserId: uuid("resolved_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("issues_status_created_idx").on(table.status, table.createdAt),
+    index("issues_reported_by_idx").on(table.reportedByUserId),
+    check("issues_status_check", sql`${table.status} in ('open','resolved')`),
+    check(
+      "issues_kind_check",
+      sql`${table.kind} in ('video','audio','subtitles','wont_play','wrong_title','other')`,
+    ),
+  ],
 );

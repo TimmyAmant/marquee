@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { fourKViewerState } from "@/lib/api/mappers";
+import { canReportProblem, fourKViewerState } from "@/lib/api/mappers";
 import { TitleHero } from "@/components/title-hero";
 import { CastRow } from "@/components/cast-row";
 import { StudioRow } from "@/components/studio-row";
@@ -36,6 +36,7 @@ export default async function TitlePage({
     arrConfigured,
     arrTracking,
     fourK,
+    openReports,
     trailer,
     externalIds,
     cast,
@@ -110,6 +111,11 @@ export default async function TitlePage({
         tvdbId={title.tvdbId}
         arrTracking={arrTracking}
         fourK={viewer.session ? fourKViewerState(viewer.isAdmin, fourK) : null}
+        report={
+          viewer.session && canReportProblem(libraryStatus.status, fourK?.status ?? null)
+            ? { seasonNumbers: seasons.map((s) => s.season_number), openReports }
+            : null
+        }
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
         cast={

@@ -202,12 +202,18 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(ShowsFourKRequested),
         nameof(CanRequestFourK),
         nameof(CanAddFourK),
+        nameof(CanReport),
+        nameof(ShowsProblemReported),
+        nameof(ReportButtonLabel),
     ];
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
     private bool active;
     private TitleDetail? detail;
+
+    /// <summary>A report sent from this page: "Problem reported" shows even before <c>openReports</c> catches up.</summary>
+    private bool reportSent;
 
     // Built once per full load.
     private Uri? posterUrl;
@@ -453,6 +459,34 @@ public sealed partial class TitleViewModel : ObservableObject
     public string AddFourKLabel => IsFourKBusy ? "Adding…" : $"Add to 4K {Id.MediaType.ArrName}";
     public bool HasFourKError => FourKError != null;
 
+    // MARK: Problem reports (viewer.canReport / openReports, 0.38+; components/report-problem-button.tsx)
+
+    /// <summary>"Report a problem": the title (or its 4K copy) is owned or downloading. An older server never says so.</summary>
+    public bool CanReport => Viewer?.CanReport == true;
+
+    /// <summary>The "Problem reported" pill before the button: one sent from here, or one of yours still open.</summary>
+    public bool ShowsProblemReported => CanReport && (reportSent || Viewer?.OpenReports > 0);
+
+    /// <summary>Another episode can still be reported while one report is open.</summary>
+    public string ReportButtonLabel => ShowsProblemReported ? "Report another" : "Report a problem";
+
+    /// <summary>The show's seasons, for the Report dialog's picker; empty for a movie.</summary>
+    public IReadOnlyList<int> ReportSeasonNumbers => detail?.Seasons.Select(season => season.SeasonNumber).ToList() ?? [];
+
+    /// <summary>
+    /// The Report dialog's submit (<c>POST …/issues</c>). Throws
+    /// <see cref="ApiException"/> for the dialog to show inline; on success
+    /// the pill shows and the status block is re-read.
+    /// </summary>
+    public async Task ReportProblemAsync(ReportIssueBody body)
+    {
+        await model.Api.Issues.ReportAsync(Id.MediaType, Id.TmdbId, body);
+        reportSent = true;
+        OnPropertyChanged(nameof(ShowsProblemReported));
+        OnPropertyChanged(nameof(ReportButtonLabel));
+        await RefreshStatusAsync();
+    }
+
     // MARK: Lifecycle
 
     /// <summary>The page is on screen for <paramref name="id"/>: follow reloads and fetch (once) the detail.</summary>
@@ -484,6 +518,7 @@ public sealed partial class TitleViewModel : ObservableObject
     private void Clear()
     {
         detail = null;
+        reportSent = false;
         posterUrl = null;
         backdropUrl = null;
         poster = null;

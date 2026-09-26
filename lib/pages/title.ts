@@ -1,4 +1,5 @@
 import type { TitleMeta, TitleSidebarData } from "@/components/title-hero";
+import { getOpenIssuesFor } from "@/lib/issues";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
 import type { FranchiseItem } from "@/components/franchise-row";
@@ -108,6 +109,7 @@ export async function loadTitleStatus(
         ])
       : [null, null];
   const fourK = fourKLibrary ? { ...fourKLibrary, requestStatus: fourKRequestStatus } : null;
+  const openReports = viewer.userId ? await getOpenIssuesFor(viewer.userId, type, tmdbId) : 0;
 
   const seasonRequests = {
     states: seasonStates,
@@ -130,6 +132,7 @@ export async function loadTitleStatus(
     seasonLibrary,
     seasonRequests,
     fourK,
+    openReports,
   };
 }
 
@@ -164,6 +167,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     seasonLibrary,
     seasonRequests,
     fourK,
+    openReports,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -381,6 +385,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     seasonCompleteness,
     seasonRequests,
     fourK,
+    openReports,
     runtimeMinutes,
     runtimeLabel,
     titleMeta,

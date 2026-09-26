@@ -23,6 +23,8 @@
       "arrId": 412,
       "monitored": true
     },
-    "fourK": null
+    "fourK": null,
+    "canReport": false,
+    "openReports": 0
   }
 }

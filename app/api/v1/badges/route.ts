@@ -2,6 +2,7 @@ import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
 import { getUnreadCount } from "@/lib/notifications/query";
 import { getPendingRequestCount } from "@/lib/requests/query";
+import { getOpenIssueCount } from "@/lib/issues";
 import type { Badges } from "@/lib/api/types";
 
 /** The header/nav counters in one cheap call — the notification bell's unread
@@ -9,9 +10,10 @@ import type { Badges } from "@/lib/api/types";
  * the website). Suited to polling. */
 export const GET = withApi(async (request): Promise<Badges> => {
   const ctx = await requireApiUser(request);
-  const [unreadNotifications, pendingRequests] = await Promise.all([
+  const [unreadNotifications, pendingRequests, openIssues] = await Promise.all([
     getUnreadCount(ctx.user.id),
     ctx.user.isAdmin ? getPendingRequestCount() : Promise.resolve(0),
+    ctx.user.isAdmin ? getOpenIssueCount() : Promise.resolve(0),
   ]);
-  return { unreadNotifications, pendingRequests };
+  return { unreadNotifications, pendingRequests, openIssues };
 });

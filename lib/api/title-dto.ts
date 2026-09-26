@@ -102,6 +102,7 @@ export function titleDetailDto(
       arrTracking: data.arrTracking,
       seasonRequests: data.seasonRequests,
       fourK: data.fourK,
+      openReports: data.openReports,
     }),
     seasons: seasonsNewestFirst(data.seasons).map((season) => {
       const stats = seasonCompleteness.get(season.season_number);

@@ -114,7 +114,9 @@
       "requestStatus": null,
       "canRequest": false,
       "canAdd": true
-    }
+    },
+    "canReport": false,
+    "openReports": 0
   },
   "seasons": [],
   "cast": [

@@ -205,8 +205,15 @@ extension API {
         let unreadNotifications: Int
         /// Always 0 for members.
         let pendingRequests: Int
+        /// Open problem reports (0.38+, admin; always 0 for members). nil
+        /// from an older server.
+        var openIssues: Int? = nil
 
         static let zero = Badges(unreadNotifications: 0, pendingRequests: 0)
+
+        /// The Requests rail badge: requests and problem reports both wait
+        /// on the Requests page (components/sidebar.tsx's sum).
+        var requestsPageCount: Int { pendingRequests + (openIssues ?? 0) }
 
         /// The bell's cap on the website: "9+".
         var bellLabel: String? {

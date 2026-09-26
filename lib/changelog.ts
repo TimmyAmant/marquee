@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.38.0",
+    date: "2026-09-26",
+    changes: [
+      "Report a problem: on a title you have (or that's downloading), anyone can report bad video, an audio problem, missing subtitles, a file that won't play or the wrong movie/episode — for a show, down to the season and episode — with a note.",
+      "The admin is notified and sees open reports on the Requests page under \"Reported problems\": \"Search again\" has Sonarr/Radarr look for another copy, and \"Mark fixed\" (with an optional note) tells whoever reported it. Members see their own reports and can withdraw them.",
+      "The Requests badge counts open reports too. On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.37.0",
     date: "2026-09-26",
     changes: [

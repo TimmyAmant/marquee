@@ -101,6 +101,8 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], string> = {
   downloaded: "Ready to watch",
   request_approved: "Request approved",
   request_rejected: "Request declined",
+  issue_reported: "Problem reported",
+  issue_resolved: "Problem fixed",
 };
 
 /** What the service worker (public/sw.js) shows. */

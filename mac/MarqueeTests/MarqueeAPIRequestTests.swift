@@ -124,6 +124,19 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/manual-approve", response: "ok") { try await $0.requests.manuallyApprove(request) },
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject", response: "ok") { try await $0.requests.reject(request) },
             Case(method: "POST", path: "/requests/approve-all", response: "requests-approve-all") { _ = try await $0.requests.approveAll() },
+            // Problem reports (0.38+)
+            Case(
+                method: "POST", path: "/titles/tv/1396/issues",
+                body: #"{"kind":"audio","message":"Out of sync after 20 minutes","seasonNumber":2,"episodeNumber":5}"#, response: "ok"
+            ) {
+                try await $0.issues.report(.tv, id: 1396, API.IssueReport(kind: .audio, message: "Out of sync after 20 minutes", seasonNumber: 2, episodeNumber: 5))
+            },
+            Case(method: "GET", path: "/issues", response: "issues") { _ = try await $0.issues.list() },
+            Case(method: "POST", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/resolve", body: #"{"note":"Replaced the file"}"#, response: "ok") {
+                try await $0.issues.resolve(request, note: "Replaced the file")
+            },
+            Case(method: "POST", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/search", response: "ok") { try await $0.issues.searchAgain(request) },
+            Case(method: "DELETE", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0", response: "ok") { try await $0.issues.delete(request) },
             // Notifications
             Case(method: "GET", path: "/notifications", query: ["limit": "5"], response: "notifications") { _ = try await $0.notifications.list(limit: 5) },
             Case(method: "GET", path: "/notifications/unread-count", response: "notifications-unread-count") { _ = try await $0.notifications.unreadCount() },
@@ -216,8 +229,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 99, "docs/api-v1.md documents 99 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 99, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 104, "docs/api-v1.md documents 104 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 104, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "id": "83bedf64-c5d8-4f43-98a0-bb615c4b9897",
+      "mediaType": "tv",
+      "tmdbId": 1396,
+      "title": "Breaking Bad",
+      "posterPath": "/ggFHVNu6YYI5L9pCfOacjizRGt.jpg",
+      "seasonNumber": 2,
+      "episodeNumber": 5,
+      "episodeLabel": "S2 E5",
+      "kind": "audio",
+      "kindLabel": "Audio problem",
+      "message": "Out of sync after 20 minutes",
+      "status": "open",
+      "resolution": null,
+      "reportedBy": {
+        "userId": "2d0b…",
+        "displayName": "Member",
+        "username": "member",
+        "label": "Member"
+      },
+      "isMine": false,
+      "createdAt": "2026-09-26T02:40:11.000Z",
+      "resolvedAt": null
+    }
+  ],
+  "kinds": [
+    {
+      "id": "video",
+      "label": "Bad video quality"
+    },
+    {
+      "id": "audio",
+      "label": "Audio problem"
+    },
+    {
+      "id": "subtitles",
+      "label": "Subtitles missing or wrong"
+    },
+    {
+      "id": "wont_play",
+      "label": "Won't play"
+    },
+    {
+      "id": "wrong_title",
+      "label": "Wrong movie or episode"
+    },
+    {
+      "id": "other",
+      "label": "Something else"
+    }
+  ]
+}
