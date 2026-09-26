@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return done("expired");
   }
-  const continued = continueAppFlow(key);
+  const continued = continueAppFlow(key, request.cookies.get(SSO_COOKIE)?.value);
   if (!continued) return done("expired");
 
   const response = NextResponse.redirect(continued.authUrl, 303);

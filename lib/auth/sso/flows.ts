@@ -154,21 +154,33 @@ export function getAppFlow(appKey: unknown, now = Date.now()): SsoFlow | null {
   return flow && flow.status !== "done" ? flow : null;
 }
 
-/** Binds an app flow to the browser that continued it (a fresh binding
- * each time, so only the latest continue can finish). */
-export function bindAppFlow(appKey: unknown, now = Date.now()): { flow: SsoFlow; binding: string } | null {
-  const flow = getAppFlow(appKey, now);
-  if (!flow) return null;
-  const binding = secret();
-  flow.binding = binding;
-  flow.status = "authorizing";
-  return { flow, binding };
-}
-
 function sameSecret(a: string, b: string): boolean {
   const x = Buffer.from(a);
   const y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** Binds an app flow to the browser that continued it. Continuing again
+ * (another tab, or Back and Continue) only works from that same browser —
+ * `cookie` must be its current binding — and gets a fresh binding, so only
+ * the latest continue can finish. Once one browser has continued, the page
+ * link is no use to anyone else: someone who comes across it (history, a
+ * shared screen) can't take the flow over and finish it with their own
+ * identity-provider account, which would sign the app in as them. */
+export function bindAppFlow(
+  appKey: unknown,
+  cookie: unknown,
+  now = Date.now(),
+): { flow: SsoFlow; binding: string } | null {
+  const flow = getAppFlow(appKey, now);
+  if (!flow) return null;
+  if (flow.status === "authorizing" && (typeof cookie !== "string" || !flow.binding || !sameSecret(cookie, flow.binding))) {
+    return null;
+  }
+  const binding = secret();
+  flow.binding = binding;
+  flow.status = "authorizing";
+  return { flow, binding };
 }
 
 export type CallbackLookup =

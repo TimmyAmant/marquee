@@ -373,7 +373,7 @@ describe("app sign-in and linking", () => {
     expect(started.authUrl).not.toContain(started.handle);
 
     expect(await pollAppSsoSignIn(started.handle, ip)).toEqual({ status: "pending" });
-    const continued = continueAppFlow(pageUrl.searchParams.get("key"))!;
+    const continued = continueAppFlow(pageUrl.searchParams.get("key"), null)!;
     const back = idp.authorize(continued.authUrl, { sub: "bob-sub" });
     expect(
       await completeSsoCallback({ state: back.state, code: back.code, error: null, cookie: continued.binding, ip, sessionUserId: null }),
@@ -388,7 +388,7 @@ describe("app sign-in and linking", () => {
     const ip = freshIp();
     const started = await startAppSsoSignIn(ip, null);
     if (!started.ok) throw new Error(started.error);
-    const continued = continueAppFlow(new URL(started.authUrl).searchParams.get("key"))!;
+    const continued = continueAppFlow(new URL(started.authUrl).searchParams.get("key"), null)!;
     const back = idp.authorize(continued.authUrl, { sub: "nobody" });
     await completeSsoCallback({ state: back.state, code: back.code, error: null, cookie: continued.binding, ip, sessionUserId: null });
     expect(await pollAppSsoSignIn(started.handle, ip)).toMatchObject({
@@ -403,7 +403,7 @@ describe("app sign-in and linking", () => {
     const ip = freshIp();
     const started = await startAppSsoLink({ id: "anna", username: "anna@example.com" }, ip);
     if (!started.ok) throw new Error(started.error);
-    const continued = continueAppFlow(new URL(started.authUrl).searchParams.get("key"))!;
+    const continued = continueAppFlow(new URL(started.authUrl).searchParams.get("key"), null)!;
     const back = idp.authorize(continued.authUrl, { sub: "anna-sub" });
     await completeSsoCallback({ state: back.state, code: back.code, error: null, cookie: continued.binding, ip, sessionUserId: null });
     expect(await pollAppSsoLink("admin", started.handle, ip)).toEqual({ status: "expired" });

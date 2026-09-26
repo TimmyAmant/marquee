@@ -86,9 +86,10 @@ describe("app flows", () => {
     expect(pollFlowHandle(flow.handle, { kind: "app_sign_in" })).toEqual({ status: "pending" });
 
     expect(getAppFlow(flow.appKey)).toBe(flow);
-    const bound = bindAppFlow(flow.appKey)!;
-    // Continuing again (another tab) rebinds: only the newest browser can finish.
-    const rebound = bindAppFlow(flow.appKey)!;
+    const bound = bindAppFlow(flow.appKey, undefined)!;
+    // Continuing again (another tab of the same browser) rebinds: only the
+    // newest continue can finish.
+    const rebound = bindAppFlow(flow.appKey, bound.binding)!;
     expect(takeFlowForCallback(flow.state, bound.binding)).toEqual({ status: "wrong_browser" });
     const taken = takeFlowForCallback(flow.state, rebound.binding);
     expect(taken.status).toBe("ok");
@@ -99,6 +100,18 @@ describe("app flows", () => {
     finishFlow(flow, { ok: true, userId: "u1" });
     expect(pollFlowHandle(flow.handle, { kind: "app_sign_in" })).toMatchObject({ status: "done", result: { ok: true, userId: "u1" } });
     expect(pollFlowHandle(flow.handle, { kind: "app_sign_in" })).toEqual({ status: "expired" });
+  });
+
+  it("can't be taken over by another browser once continued", () => {
+    const { flow } = createSsoFlow(newFlow({ kind: "app_sign_in", deviceName: "Anna's Mac" }))!;
+    const anna = bindAppFlow(flow.appKey, null)!;
+    // Someone else who has the page link: no cookie, or another flow's.
+    expect(bindAppFlow(flow.appKey, undefined)).toBeNull();
+    expect(bindAppFlow(flow.appKey, "someone-elses-cookie")).toBeNull();
+    const other = createSsoFlow(newFlow({ kind: "web_sign_in", remember: false }))!;
+    expect(bindAppFlow(flow.appKey, other.binding)).toBeNull();
+    // Anna's browser still finishes it.
+    expect(takeFlowForCallback(flow.state, anna.binding).status).toBe("ok");
   });
 
   it("keep link handles to the account that started them", () => {

@@ -150,10 +150,11 @@ export async function startAppSsoLink(user: { id: string; username: string }, ip
   return appStart(await startFlow({ kind: "app_link", userId: user.id, username: user.username }, ip));
 }
 
-/** "Continue" on an app flow's page: binds this browser and hands back the
- * provider URL. Null when the link is unknown, used or expired. */
-export function continueAppFlow(appKey: unknown): { authUrl: string; binding: string } | null {
-  const bound = bindAppFlow(appKey);
+/** "Continue" on an app flow's page: binds this browser (`cookie` is its
+ * current SSO cookie, if any) and hands back the provider URL. Null when the
+ * link is unknown, used, expired, or already continued in another browser. */
+export function continueAppFlow(appKey: unknown, cookie: unknown): { authUrl: string; binding: string } | null {
+  const bound = bindAppFlow(appKey, cookie);
   return bound ? { authUrl: bound.flow.authUrl, binding: bound.binding } : null;
 }
 
