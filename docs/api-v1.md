@@ -372,10 +372,13 @@ The header counters in one call, suitable for polling (website: bell every
 30 s, requests badge every 20 s).
 
 ```json
-{ "unreadNotifications": 2, "pendingRequests": 1 }
+{ "unreadNotifications": 2, "pendingRequests": 1, "openIssues": 1 }
 ```
 
 `pendingRequests` is always `0` for members (as on the website).
+`openIssues` (0.38+; an older server omits it): open problem reports, also
+`0` for members. The website's Requests badge shows `pendingRequests +
+openIssues`, since both wait on that page.
 
 ---
 
@@ -613,7 +616,9 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "requestedSeasons": null,
     "canRelink": true,
     "arrTracking": { "arrId": 412, "monitored": true },
-    "fourK": { "status": "untracked", "requestStatus": null, "canRequest": false, "canAdd": true }
+    "fourK": { "status": "untracked", "requestStatus": null, "canRequest": false, "canAdd": true },
+    "canReport": false,
+    "openReports": 0
   },
   "seasons": [],
   "cast": [
@@ -801,7 +806,9 @@ request / monitor / favorite.
     "canAdd": false, "needsArrSetup": false, "canRequest": false,
     "canRequestSeasons": false, "requestedSeasons": null, "canRelink": true,
     "arrTracking": { "arrId": 412, "monitored": true },
-    "fourK": null
+    "fourK": null,
+    "canReport": false,
+    "openReports": 0
   }
 }
 ```
@@ -1223,12 +1230,101 @@ Approves every pending request one at a time; failures stay pending.
 could be approved, the first failure is returned as the error response instead
 (same codes as `approve`). No pending requests → `approvedCount: 0`.
 
+### Problem reports (0.38+)
+
+"Report a problem" on a title — bad video or audio, missing subtitles, won't
+play, the wrong movie or episode. The admin is notified (`issue_reported`),
+sees open reports on the Requests page under "Reported problems", can have
+Sonarr/Radarr look for another copy, and marks them fixed with an optional
+note; the reporter is then notified (`issue_resolved`, not relayed to
+Discord etc.). Members see their own under "Your problem reports".
+
+#### `POST /titles/{type}/{tmdbId}/issues` — user
+
+```json
+{ "kind": "audio", "message": "Out of sync after 20 minutes", "seasonNumber": 2, "episodeNumber": 5 }
+```
+
+`kind`: `video` "Bad video quality", `audio` "Audio problem", `subtitles`
+"Subtitles missing or wrong", `wont_play` "Won't play", `wrong_title` "Wrong
+movie or episode", `other` "Something else". `message`: up to 1000
+characters, required for `other`. `seasonNumber` / `episodeNumber`: TV only,
+optional (an episode needs its season), ignored for a movie. Answers
+`{ "ok": true, "issueId": "…" }`. Errors: `400 invalid` "Pick what's
+wrong." / "Say what's wrong." / "Keep it under 1000 characters." / "Season
+and episode are whole numbers." / "Pick the season too.", `429 rate_limited`
+"You have a lot of open reports already. Wait until some are fixed." (20
+open per person), `502 upstream` (TMDb unreachable).
+
+The title's `viewer.canReport` is true once the title (or its 4K copy) is
+owned or downloading, and `viewer.openReports` counts the viewer's own open
+reports for it. Website: a "Report a problem" outline pill in the hero's
+action row (shown while `canReport`), opening a dialog with the six kinds as
+radio buttons, for TV a "Season (optional)" picker ("Whole show", "Specials",
+"Season N") and an "Episode" number, a note ("Anything else? (optional)", or
+"What's wrong?" for `other`), and "Send report"; afterwards (or while
+`openReports > 0`) a "Problem reported" pill instead.
+
+#### `GET /issues` — user
+
+```json
+{
+  "results": [
+    {
+      "id": "83bedf64-c5d8-4f43-98a0-bb615c4b9897",
+      "mediaType": "tv",
+      "tmdbId": 1396,
+      "title": "Breaking Bad",
+      "posterPath": "/ggFHVNu6YYI5L9pCfOacjizRGt.jpg",
+      "seasonNumber": 2,
+      "episodeNumber": 5,
+      "episodeLabel": "S2 E5",
+      "kind": "audio",
+      "kindLabel": "Audio problem",
+      "message": "Out of sync after 20 minutes",
+      "status": "open",
+      "resolution": null,
+      "reportedBy": { "userId": "2d0b…", "displayName": "Member", "username": "member", "label": "Member" },
+      "isMine": false,
+      "createdAt": "2026-09-26T02:40:11.000Z",
+      "resolvedAt": null
+    }
+  ],
+  "kinds": [
+    { "id": "video", "label": "Bad video quality" },
+    { "id": "audio", "label": "Audio problem" },
+    { "id": "subtitles", "label": "Subtitles missing or wrong" },
+    { "id": "wont_play", "label": "Won't play" },
+    { "id": "wrong_title", "label": "Wrong movie or episode" },
+    { "id": "other", "label": "Something else" }
+  ]
+}
+```
+
+The admin gets every open report (newest first) followed by the 30 most
+recently fixed; a member only their own (up to 100). `episodeLabel`: "S2 E5",
+"Season 2", "Specials" or null. `resolution`: the admin's note, when fixed.
+Website rows: poster, title (link) and episode label, "Audio problem ·
+Member · 9/26/2026" (the reporter only for the admin), the note in quotes,
+"Fixed: <note>" once fixed; open ones have "Search again", "Mark fixed"
+(which opens a note field and its own "Mark fixed") and "Remove" for the
+admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
+
+- **`POST /issues/{id}/resolve`** — admin. Body (optional) `{ "note": "…" }`
+  (up to 500 characters). `404` "That report isn't open any more.".
+- **`POST /issues/{id}/search`** — admin. Asks Radarr/Sonarr to search for the
+  title again. `409` "Not tracked in Radarr/Sonarr.".
+- **`DELETE /issues/{id}`** — your own while it's open, or (admin) any. `404`
+  "Report not found.".
+
 ---
 
 ## 8. Notifications
 
 `eventType`: `grabbed` (⬇️ started downloading), `downloaded` (✅ finished),
-`request_approved` (👍), `request_rejected` (👎). Tapping one opens
+`request_approved` (👍), `request_rejected` (👎), and from 0.38
+`issue_reported` (⚠️, to the admin) and `issue_resolved` (🛠️, to the
+reporter). Tapping one opens
 `/titles/{mediaType}/{tmdbId}` and marks it read.
 
 ### `GET /notifications` — user
@@ -2032,6 +2128,11 @@ what to do, grouped by area.
 | | `POST /requests/{id}/manual-approve` | admin |
 | | `POST /requests/{id}/reject` | admin |
 | | `POST /requests/approve-all` | admin |
+| Problem reports | `POST /titles/{type}/{tmdbId}/issues` | user |
+| | `GET /issues` | user |
+| | `POST /issues/{id}/resolve` | admin |
+| | `POST /issues/{id}/search` | admin |
+| | `DELETE /issues/{id}` | user (own, open) / admin |
 | Notifications | `GET /notifications` | user |
 | | `GET /notifications/unread-count` | user |
 | | `POST /notifications/read-all` | user |

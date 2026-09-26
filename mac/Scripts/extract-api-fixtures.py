@@ -60,6 +60,8 @@ BLOCKS = [
     ("`GET /requests/history`", ["requests-history"]),
     ("`GET /requests/pending-count`", ["requests-pending-count"]),
     ("`POST /requests/approve-all`", ["requests-approve-all"]),
+    ("`POST /titles/{type}/{tmdbId}/issues`", ["issue-report-body"]),
+    ("`GET /issues`", ["issues"]),
     ("`GET /notifications`", ["notifications"]),
     ("`GET /notifications/unread-count`", ["notifications-unread-count"]),
     ("`GET /calendar`", ["calendar"]),
