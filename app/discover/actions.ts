@@ -3,6 +3,8 @@
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { fetchDiscoverItems, type DiscoverFetchParams, type DiscoverCardData } from "@/app/discover/fetch-items";
 import { pickSurprise, type SurpriseMeParams as SurpriseParams } from "@/lib/discover/surprise";
+import { discoverListMaxPage, parseDiscoverList } from "@/lib/discover/lists";
+import { fetchDiscoverListPage } from "@/lib/pages/discover-lists";
 
 export type SurpriseMeParams = SurpriseParams;
 
@@ -19,6 +21,21 @@ export async function loadMoreDiscoverItems(
   if (!viewer.session) return { items: [], hasNextPage: false };
   const { items, hasNextPage } = await fetchDiscoverItems(params, viewer);
   return { items, hasNextPage };
+}
+
+/** Infinite-scroll "load more" for a Discover shelf's full list
+ * (/discover/[list]) — see fetchDiscoverListPage. */
+export async function loadMoreDiscoverList(
+  listName: string,
+  page: number,
+): Promise<{ items: DiscoverCardData[]; hasNextPage: boolean }> {
+  const viewer = await getViewerContext();
+  const list = parseDiscoverList(listName);
+  if (!viewer.session || !list || !Number.isInteger(page) || page < 1 || page > discoverListMaxPage(list)) {
+    return { items: [], hasNextPage: false };
+  }
+  const result = await fetchDiscoverListPage(list, page, viewer);
+  return { items: result.items, hasNextPage: result.page < result.totalPages };
 }
 
 export type SurpriseMeResult = { href?: string; error?: string };

@@ -3,6 +3,10 @@
 // timestamps with milliseconds, "YYYY-MM-DD" calendar dates, and nullable
 // fields always present as null (never omitted).
 
+import type { DiscoverList, DiscoverShelfKey, SeeAllTarget } from "@/lib/discover/lists";
+
+export type { DiscoverList, SeeAllTarget };
+
 export type MediaType = "movie" | "tv";
 /** trusted (0.39+): may review requests and problem reports. */
 export type UserRole = "admin" | "member" | "trusted";
@@ -222,7 +226,13 @@ export type DiscoverShelves = {
   seriesGenres: GenreTile[];
   upcomingSeries: TitleCard[];
   networks: NetworkCard[];
+  /** 0.43+ (an older server omits it): where each shelf's "See all" goes.
+   * Every shelf has one. */
+  seeAll: Record<DiscoverShelfKey, SeeAllTarget>;
 };
+
+/** GET /discover/lists/{list}: a Discover shelf's full list, paged. */
+export type DiscoverListResults = Paginated<TitleCard> & { list: DiscoverList; title: string };
 
 export type BrowseExtras = {
   genres: Genre[];

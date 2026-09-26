@@ -6,7 +6,7 @@ import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
-import { loadMoreDiscoverItems } from "@/app/discover/actions";
+import { loadMoreDiscoverItems, loadMoreDiscoverList } from "@/app/discover/actions";
 import type { DiscoverCardData, DiscoverFetchParams } from "@/app/discover/fetch-items";
 
 /**
@@ -14,6 +14,9 @@ import type { DiscoverCardData, DiscoverFetchParams } from "@/app/discover/fetch
  * grows by itself as the user scrolls, fetching subsequent pages via
  * loadMoreDiscoverItems (the same fetchDiscoverItems logic the initial
  * render used) instead of a "Next" link that reloaded the whole page.
+ *
+ * Also the grid behind a Discover shelf's "See all" (app/discover/[list]),
+ * which passes `list` instead of `fetchParams`.
  *
  * The caller (discover-view.tsx) must render this with a `key` derived
  * from the current filter selection, so changing a filter mounts a fresh
@@ -24,13 +27,21 @@ export function InfiniteResultsGrid({
   initialItems,
   initialHasNextPage,
   fetchParams,
+  list,
   signedIn,
+  showTypeLabel = false,
+  emptyMessage,
 }: {
   initialItems: DiscoverCardData[];
   initialHasNextPage: boolean;
   /** Everything loadMoreDiscoverItems needs except which page. */
-  fetchParams: Omit<DiscoverFetchParams, "page">;
+  fetchParams?: Omit<DiscoverFetchParams, "page">;
+  /** A Discover list (lib/discover/lists.ts), paged by loadMoreDiscoverList. */
+  list?: string;
   signedIn: boolean;
+  /** The MOVIE/SERIES pill, for lists that mix the two. */
+  showTypeLabel?: boolean;
+  emptyMessage?: string;
 }) {
   const [items, setItems] = useState(initialItems);
   const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
@@ -47,7 +58,11 @@ export function InfiniteResultsGrid({
         if (!entries[0].isIntersecting || isPending) return;
         const page = nextPageRef.current;
         startTransition(async () => {
-          const result = await loadMoreDiscoverItems({ ...fetchParams, page });
+          const result = list
+            ? await loadMoreDiscoverList(list, page)
+            : fetchParams
+              ? await loadMoreDiscoverItems({ ...fetchParams, page })
+              : { items: [], hasNextPage: false };
           setItems((prev) => {
             // TMDb's popularity ranking shifts between separate requests, so
             // a title already shown in an earlier batch can reappear at the
@@ -68,13 +83,17 @@ export function InfiniteResultsGrid({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasNextPage, isPending, fetchParams]);
+  }, [hasNextPage, isPending, fetchParams, list]);
 
   if (items.length === 0) {
     return (
       <p className="text-sm text-text-muted">
-        Nothing left here — try a different genre or year, or turn off &ldquo;Hide titles you
-        already track&rdquo;.
+        {emptyMessage ?? (
+          <>
+            Nothing left here — try a different genre or year, or turn off &ldquo;Hide titles you
+            already track&rdquo;.
+          </>
+        )}
       </p>
     );
   }
@@ -92,6 +111,7 @@ export function InfiniteResultsGrid({
             meta={item.meta}
             rating={item.rating}
             overview={item.overview}
+            typeLabel={showTypeLabel ? (item.mediaType === "movie" ? "MOVIE" : "SERIES") : undefined}
             badge={item.status && <StatusBadge status={item.status} compact />}
             status={item.status}
             favoriteAction={

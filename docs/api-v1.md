@@ -440,16 +440,72 @@ network logos to `/series?network=`.
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
       "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": null, "canQuickAdd": false, "canRequest": false }
   ],
-  "popularMovies": [ /* TitleCard ×20 — "See all" → GET /movies */ ],
+  "popularMovies": [ /* TitleCard ×20 */ ],
   "movieGenres": [ { "id": 28, "name": "Action", "backdropPath": "/qeQJ.jpg" } ],
   "upcomingMovies": [ /* TitleCard, release date today or later */ ],
   "studios": [ { "tmdbId": 2, "name": "Walt Disney Pictures", "logoPath": "/wdrC.png", "favorited": null } ],
-  "popularSeries": [ /* TitleCard ×20 — "See all" → GET /series */ ],
+  "popularSeries": [ /* TitleCard ×20 */ ],
   "seriesGenres": [ { "id": 10759, "name": "Action & Adventure", "backdropPath": "/…jpg" } ],
   "upcomingSeries": [ /* TitleCard */ ],
-  "networks": [ { "tmdbId": 213, "name": "Netflix", "logoPath": "/wwem.png" } ]
+  "networks": [ { "tmdbId": 213, "name": "Netflix", "logoPath": "/wwem.png" } ],
+  "seeAll": {
+    "recentlyAdded": { "type": "list", "list": "recently-added", "mediaType": null },
+    "trending": { "type": "list", "list": "trending", "mediaType": null },
+    "popularMovies": { "type": "browse", "list": null, "mediaType": "movie" },
+    "movieGenres": { "type": "browse", "list": null, "mediaType": "movie" },
+    "upcomingMovies": { "type": "list", "list": "upcoming-movies", "mediaType": null },
+    "studios": { "type": "browse", "list": null, "mediaType": "movie" },
+    "popularSeries": { "type": "browse", "list": null, "mediaType": "tv" },
+    "seriesGenres": { "type": "browse", "list": null, "mediaType": "tv" },
+    "upcomingSeries": { "type": "list", "list": "upcoming-series", "mediaType": null },
+    "networks": { "type": "browse", "list": null, "mediaType": "tv" }
+  }
 }
 ```
+
+`seeAll` (0.43+; an older server omits it, and then only Popular Movies/Series
+and the genre shelves have a "See all", to the Movies/Series grid): where each
+shelf's "See all" chevron goes, keyed like the shelves. Every shelf has one.
+`type: "list"` → `GET /discover/lists/{list}` (the website's
+`/discover/{list}`); `type: "browse"` → the unfiltered Movies (`mediaType:
+"movie"`) or Series (`"tv"`) grid, `GET /movies` / `GET /series`. Treat an
+unknown `type` or `list` as no "See all".
+
+### `GET /discover/lists/{list}` — user
+
+0.43+. A Discover shelf's full list, paged (the website's `/discover/{list}`,
+infinite scroll). `list` is one of `recently-added`, `trending`,
+`upcoming-movies`, `upcoming-series` (anything else: `404 not_found`).
+
+| Query | Type | Default | |
+|---|---|---|---|
+| `page` | int ≥ 1 | 1 | at most 250 (25 for `recently-added`) |
+
+`trending` and the two `upcoming-*` lists need TMDb (`502 upstream`
+otherwise) and are 2 TMDb pages per page, de-duplicated; `upcoming-movies`
+drops re-releases whose release date has passed, so its pages can run short.
+`recently-added` is the library's newest Plex/Jellyfin titles, 40 per page;
+its `totalPages` / `totalResults` only look one page ahead (it is empty
+without a connected media server). Continue while `page < totalPages`, skip
+titles already shown, as on the Movies grid. Cards carry `status`,
+`favorited` and `canQuickAdd`; `trending` and `recently-added` mix movies and
+series.
+
+```json
+{
+  "list": "trending",
+  "title": "Trending",
+  "page": 1,
+  "totalPages": 250,
+  "totalResults": 1000,
+  "results": [
+    { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": null, "canQuickAdd": true, "canRequest": false }
+  ]
+}
+```
+
+Errors: `400 invalid` (bad `page`), `404 not_found` (unknown list).
 
 ### `GET /movies` and `GET /series` — user
 
@@ -2208,6 +2264,7 @@ what to do, grouped by area.
 | | `GET /me` | user |
 | | `GET /badges` | user |
 | Discover / Browse / Search | `GET /discover` | user |
+| | `GET /discover/lists/{list}` | user |
 | | `GET /movies` | user |
 | | `GET /movies/extras` | user |
 | | `GET /series` | user |

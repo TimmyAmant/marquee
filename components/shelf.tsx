@@ -105,8 +105,9 @@ export function Shelf({
 }: {
   title: string;
   /** When provided, renders a small circular arrow next to the title linking
-   * to a fuller browse page. Omitted for rows with no dedicated listing
-   * (Trending, Upcoming, Studios, Networks, Recently Added). */
+   * to the full list (every Discover shelf has one — lib/discover/lists.ts).
+   * Omitted for rows with no fuller listing (a title's cast, Because you
+   * watched). */
   seeAllHref?: string;
   flushRight?: boolean;
   /** 20px between poster cards, 16px between the wider genre tiles and the
