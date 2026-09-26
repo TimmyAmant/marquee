@@ -61,9 +61,9 @@ extension API {
 
         var label: String {
             switch self {
-            case .newestFirst: return "Newest first"
-            case .oldestFirst: return "Oldest first"
-            case .alphabetical: return "A–Z"
+            case .newestFirst: return String(localized: "Newest first")
+            case .oldestFirst: return String(localized: "Oldest first")
+            case .alphabetical: return String(localized: "A–Z")
             }
         }
     }

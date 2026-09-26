@@ -16,9 +16,9 @@ extension API {
         /// The member's pill: "Requests are closed for this title — Already on Max."
         var closedLine: String {
             if let reason = reason.nonBlank {
-                return "Requests are closed for this title — \(reason)"
+                return String(localized: "Requests are closed for this title — \(reason)")
             }
-            return "Requests are closed for this title"
+            return String(localized: "Requests are closed for this title")
         }
     }
 
@@ -90,7 +90,8 @@ extension API {
             if titleID != nil, let tmdbId {
                 return title.nonBlank ?? "#\(tmdbId)"
             }
-            return "Keyword: \(keyword ?? "")"
+            let word = keyword ?? ""
+            return String(localized: "Keyword: \(word)")
         }
     }
 

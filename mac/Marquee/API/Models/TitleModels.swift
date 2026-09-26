@@ -111,7 +111,7 @@ extension API {
 
             /// "1 episode" / "10 episodes".
             var episodeCountLabel: String {
-                "\(episodeCount) episode\(episodeCount == 1 ? "" : "s")"
+                String(localized: "\(episodeCount) episodes")
             }
 
             /// The "3/10" badge, nil when Sonarr doesn't track the show.
@@ -239,9 +239,9 @@ extension API {
         var tag: String? {
             switch self {
             case .requestable, .unavailable: nil
-            case .inLibrary: "In library"
-            case .monitored: "Monitored"
-            case .requested: "Requested"
+            case .inLibrary: String(localized: "In library")
+            case .monitored: String(localized: "Monitored")
+            case .requested: String(localized: "Requested")
             }
         }
     }
@@ -257,8 +257,8 @@ extension API {
 
         var buttonTitle: String {
             switch self {
-            case .wholeSeries, .pickSeasons(more: false): "Request"
-            case .pickSeasons(more: true): "Request more seasons"
+            case .wholeSeries, .pickSeasons(more: false): String(localized: "Request")
+            case .pickSeasons(more: true): String(localized: "Request more seasons")
             }
         }
     }

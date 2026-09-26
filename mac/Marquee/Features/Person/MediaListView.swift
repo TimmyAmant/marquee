@@ -6,10 +6,11 @@ struct MediaListView: View {
     let cards: [API.TitleCard]
     /// The table's second column header ("Role" on a person page).
     var subtitleLabel: String?
-    var itemLabel = "titles"
+    /// "12 titles": the count line over the list.
+    var countLabel: (Int) -> String = { String(localized: "\($0) titles") }
     var showTypeFilter = false
     var showSearch = false
-    var emptyMessage = "Nothing found."
+    var emptyMessage = String(localized: "Nothing found.")
 
     @Environment(AppModel.self) private var model
 
@@ -18,9 +19,9 @@ struct MediaListView: View {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .all: return "All"
-            case .movie: return "Movies"
-            case .tv: return "TV"
+            case .all: return String(localized: "All")
+            case .movie: return String(localized: "Movies")
+            case .tv: return String(localized: "TV")
             }
         }
 
@@ -78,7 +79,7 @@ struct MediaListView: View {
 
     private func controls(count: Int) -> some View {
         FlowLayout(spacing: 10, lineSpacing: 10) {
-            Text("\(count) \(itemLabel)")
+            Text(countLabel(count))
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.trailing, 8)
@@ -129,7 +130,7 @@ struct MediaListView: View {
                     .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
             }
             .width(min: 200, ideal: 320)
-            TableColumn(subtitleLabel ?? "Type") { card in
+            TableColumn(subtitleLabel ?? String(localized: "Type")) { card in
                 Text(subtitleLabel == nil ? card.mediaType.label : (card.subtitle ?? "—"))
                     .foregroundStyle(Theme.textSecondary)
             }

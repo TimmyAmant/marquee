@@ -27,9 +27,9 @@ extension API.MediaType {
     /// The "MOVIE" / "SERIES" corner pill on mixed-media poster rows.
     var typeLabel: String {
         switch self {
-        case .movie: return "MOVIE"
-        case .tv: return "SERIES"
-        case let .unknown(raw): return raw.uppercased()
+        case .movie: return String(localized: "MOVIE")
+        case .tv: return String(localized: "SERIES")
+        case let .unknown(raw): return raw.localizedUppercase
         }
     }
 }
@@ -206,9 +206,9 @@ struct PosterCard: View {
     private var cardActionItems: some View {
         switch effectiveQuickAction {
         case let .add(id):
-            Button("Add to \(id.mediaType.arrName)") { run("Added to \(id.mediaType.arrName).") { try await model.quickAdd(id) } }
+            Button("Add to \(id.mediaType.arrName)") { run(String(localized: "Added to \(id.mediaType.arrName).")) { try await model.quickAdd(id) } }
         case let .request(id, alreadyRequested) where !alreadyRequested:
-            Button("Request") { run("Requested.") { try await model.requestTitle(id) } }
+            Button("Request") { run(String(localized: "Requested.")) { try await model.requestTitle(id) } }
         default:
             EmptyView()
         }
@@ -225,8 +225,8 @@ struct PosterCard: View {
         if let year = year.nonBlank { parts.append(year) }
         if let subtitle = subtitle.nonBlank { parts.append(subtitle) }
         if let status = effectiveStatus, status.isKnown { parts.append(status.label) }
-        if case .request(_, alreadyRequested: true) = effectiveQuickAction { parts.append("Requested") }
-        if let favorite, model.isFavorited(favorite) { parts.append("Favorite") }
+        if case .request(_, alreadyRequested: true) = effectiveQuickAction { parts.append(String(localized: "Requested")) }
+        if let favorite, model.isFavorited(favorite) { parts.append(String(localized: "Favorite")) }
         return parts.joined(separator: ", ")
     }
 
@@ -301,14 +301,14 @@ struct PosterCard: View {
                         .padding(.bottom, 2.5)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(typeLabel == "MOVIE" ? Theme.hex(0x2563EB) : Theme.hex(0xC026D3))
+                                .fill(typeLabel == API.MediaType.movie.typeLabel ? Theme.hex(0x2563EB) : Theme.hex(0xC026D3))
                         )
                         .shadow(color: .black.opacity(0.35), radius: 1.5, y: 1)
                         .padding(7)
                 } else if let rating, rating > 0 {
                     HStack(spacing: 3) {
                         Image(systemName: "star.fill").font(.system(size: 8))
-                        Text(String(format: "%.1f", rating))
+                        Text(rating.formatted(.number.precision(.fractionLength(1))))
                     }
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Theme.accent)
@@ -413,8 +413,8 @@ struct Shelf<Content: View>: View {
                 }
                 if let trailing { trailing }
                 Spacer(minLength: 8)
-                chevron("chevron.left", label: "Scroll left", dimmed: (position ?? 0) == 0) { page(-1) }
-                chevron("chevron.right", label: "Scroll right", dimmed: atEnd) { page(1) }
+                chevron("chevron.left", label: String(localized: "Scroll left"), dimmed: (position ?? 0) == 0) { page(-1) }
+                chevron("chevron.right", label: String(localized: "Scroll right"), dimmed: atEnd) { page(1) }
             }
             .frame(height: Metrics.shelfHeadHeight)
             .padding(.trailing, headInset)
@@ -541,7 +541,7 @@ struct PersonCard: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel([name, character.nonBlank.map { "as \($0)" }].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityLabel(character.nonBlank.map { String(localized: "\(name), as \($0)") } ?? name)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { action() }
         .accessibilityActions { favoriteItem }

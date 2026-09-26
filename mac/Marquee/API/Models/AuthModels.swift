@@ -67,6 +67,9 @@ extension API {
         var requestLimits: RequestLimits? = nil
         /// 0.48+: what this account may do; nil from older servers.
         var permissions: Permissions? = nil
+        /// 0.50+: the account's language, or nil to follow the Mac (an
+        /// older server omits it — also nil). See `User.language`.
+        var language: String? = nil
 
         var isAdmin: Bool { role == .admin }
         /// What the website prints: the display name, else the username.
@@ -77,7 +80,8 @@ extension API {
                 id: id, username: username, displayName: displayName, role: role,
                 libraryOwnerId: libraryOwnerId, avatarUrl: avatarUrl,
                 linked: linked, hasPassword: hasPassword, permissions: permissions,
-                autoApproveMovies: autoApproveMovies, autoApproveTv: autoApproveTv
+                autoApproveMovies: autoApproveMovies, autoApproveTv: autoApproveTv,
+                language: language
             )
         }
     }
@@ -98,8 +102,8 @@ extension API {
         /// until Oct 3"; nil when neither type is limited.
         func summaryLine(calendar: Calendar = .current) -> String? {
             let parts = [
-                movie.map { $0.line(label: "Movies", calendar: calendar) },
-                tv.map { $0.line(label: "TV", calendar: calendar) },
+                movie.map { $0.line(label: String(localized: "Movies"), calendar: calendar) },
+                tv.map { $0.line(label: String(localized: "TV"), calendar: calendar) },
             ].compactMap { $0 }
             return parts.isEmpty ? nil : parts.joined(separator: " · ")
         }
@@ -117,13 +121,13 @@ extension API {
         /// The website's `quotaLine`.
         func line(label: String, calendar: Calendar = .current) -> String {
             if remaining > 0 {
-                return "\(label): \(remaining) of \(limit) requests left (every \(days) days)"
+                return String(localized: "\(label): \(remaining) of \(limit) requests left (every \(days) days)")
             }
-            guard let nextSlotAt else { return "\(label): none left" }
-            // "Oct 3", like the website's toLocaleDateString("en-US", …).
-            let style = Date.FormatStyle(locale: Locale(identifier: "en_US"), calendar: calendar, timeZone: calendar.timeZone)
+            guard let nextSlotAt else { return String(localized: "\(label): none left") }
+            // "Oct 3" (in the app's language), like the website's toLocaleDateString.
+            let style = Date.FormatStyle(locale: .current, calendar: calendar, timeZone: calendar.timeZone)
                 .month(.abbreviated).day()
-            return "\(label): none left until \(nextSlotAt.formatted(style))"
+            return String(localized: "\(label): none left until \(nextSlotAt.formatted(style))")
         }
     }
 
@@ -207,7 +211,7 @@ extension API {
         var trustedGroup: String?
         var groupsClaim: String
 
-        static let defaultScopes = "openid profile email"
+        static let defaultScopes = "openid profile email" // i18n-ignore
         static let defaultGroupsClaim = "groups"
         static let callbackPath = "/api/auth/sso/callback"
 
@@ -324,9 +328,9 @@ extension API {
         /// plex-watchlist.tsx's status line: "Checked 5m ago · 3 titles
         /// requested so far", or "Checking your watchlist…" before the first.
         func statusLine(now: Date = Date()) -> String {
-            var line = lastSyncedAt.map { "Checked \(Format.timeAgo($0, now: now))" } ?? "Checking your watchlist…"
+            var line = lastSyncedAt.map { String(localized: "Checked \(Format.timeAgo($0, now: now))") } ?? String(localized: "Checking your watchlist…")
             if requestedCount > 0 {
-                line += " · \(requestedCount) \(requestedCount == 1 ? "title" : "titles") requested so far"
+                line += " · " + String(localized: "\(requestedCount) titles requested so far")
             }
             return line
         }

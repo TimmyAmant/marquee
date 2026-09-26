@@ -65,15 +65,15 @@ struct DiscoverListView: View {
             LoadingView()
         } else if let error, cards.isEmpty {
             EmptyStateView(
-                title: "Couldn't load \(heading)",
+                title: String(localized: "Couldn't load \(heading)"),
                 message: error.localizedDescription,
                 systemImage: "exclamationmark.triangle",
-                actionTitle: "Try again",
+                actionTitle: String(localized: "Try again"),
                 action: { model.reload() }
             )
         } else if cards.isEmpty {
             EmptyStateView(
-                title: "Nothing here right now",
+                title: String(localized: "Nothing here right now"),
                 systemImage: "sparkle.magnifyingglass"
             )
         } else {
@@ -94,7 +94,7 @@ struct DiscoverListView: View {
                         ProgressView().controlSize(.small)
                         Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
                     } else if let pageError {
-                        InlineMessage(text: "Couldn't load more")
+                        InlineMessage(text: String(localized: "Couldn't load more"))
                             .help(pageError.localizedDescription)
                         Button("Retry") {
                             Task { await loadNextPage(retrying: true) }

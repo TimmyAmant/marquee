@@ -7,12 +7,12 @@ enum SettingsTab: String, Hashable, CaseIterable {
 extension SettingsTab {
     var title: String {
         switch self {
-        case .account: return "Account"
-        case .integrations: return "Integrations"
-        case .discover: return "Discover"
-        case .activity: return "Activity"
-        case .jobs: return "Jobs"
-        case .about: return "About"
+        case .account: return String(localized: "Account")
+        case .integrations: return String(localized: "Integrations")
+        case .discover: return String(localized: "Discover")
+        case .activity: return String(localized: "Activity")
+        case .jobs: return String(localized: "Jobs")
+        case .about: return String(localized: "About")
         }
     }
 
@@ -231,7 +231,7 @@ struct SettingsField: View {
 }
 
 struct ConnectedPill: View {
-    var text = "Connected"
+    var text = String(localized: "Connected")
 
     var body: some View {
         TonePill(text: text, tone: .owned, small: true)
@@ -270,7 +270,7 @@ struct ActivitySettingsView: View {
     @State private var error: String?
 
     var body: some View {
-        SettingsPane(title: "Activity", subtitle: "Who requested what, and who reviewed it — most recent first.") {
+        SettingsPane(title: String(localized: "Activity"), subtitle: String(localized: "Who requested what, and who reviewed it — most recent first.")) {
             if let events {
                 if events.isEmpty {
                     Text("Nothing yet.")
@@ -337,8 +337,8 @@ struct JobsSettingsView: View {
 
     var body: some View {
         SettingsPane(
-            title: "Jobs",
-            subtitle: "Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule."
+            title: String(localized: "Jobs"),
+            subtitle: String(localized: "Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule.")
         ) {
             if let jobs {
                 if jobs.isEmpty {
@@ -402,7 +402,7 @@ struct JobsSettingsView: View {
                 if let error = run?.error {
                     InlineMessage(text: error)
                 } else if run?.finishedAt != nil {
-                    InlineMessage(text: "Done.", isError: false)
+                    InlineMessage(text: String(localized: "Done."), isError: false)
                 }
             }
             Spacer()
@@ -489,7 +489,7 @@ private struct NotFoundHoursSetting: View {
                 let result = try await api.jobs.saveNotFoundSettings(API.NotFoundSettings(afterHours: hours))
                 saved = result.afterHours
                 value = result.afterHours
-                message = ("Saved", false)
+                message = (String(localized: "Saved"), false)
             } catch {
                 message = (error.localizedDescription, true)
             }
@@ -509,8 +509,8 @@ struct AboutSettingsView: View {
     @State private var error: String?
 
     var body: some View {
-        SettingsPane(title: "About Marquee", subtitle: "Version, library stats, and where to get help.") {
-            SettingsSectionLabel(text: "Updates")
+        SettingsPane(title: String(localized: "About Marquee"), subtitle: String(localized: "Version, library stats, and where to get help.")) {
+            SettingsSectionLabel(text: String(localized: "Updates"))
             VStack(alignment: .leading, spacing: 14) {
                 UpdateStatusView(style: .settings)
                 ServerUpdateLine(
@@ -524,27 +524,27 @@ struct AboutSettingsView: View {
 
             if let info {
                 VStack(spacing: 0) {
-                    SettingsStatRow(label: "Server Version", value: info.versionLabel)
-                    SettingsStatRow(label: "App Version", value: "v\(AppInfo.version) (\(AppInfo.build))")
-                    SettingsStatRow(label: "Movies", value: "\(info.movieCount)")
-                    SettingsStatRow(label: "TV Shows", value: "\(info.tvCount)")
-                    SettingsStatRow(label: "Tracked (not yet owned)", value: "\(info.trackedCount)")
-                    SettingsStatRow(label: "Total Requests", value: "\(info.totalRequests)")
-                    SettingsStatRow(label: "Server", value: model.session.server?.displayName ?? "—")
-                    SettingsStatRow(label: "Time Zone", value: info.timeZone, last: true)
+                    SettingsStatRow(label: String(localized: "Server Version"), value: info.versionLabel)
+                    SettingsStatRow(label: String(localized: "App Version"), value: "v\(AppInfo.version) (\(AppInfo.build))")
+                    SettingsStatRow(label: String(localized: "Movies"), value: "\(info.movieCount)")
+                    SettingsStatRow(label: String(localized: "TV Shows"), value: "\(info.tvCount)")
+                    SettingsStatRow(label: String(localized: "Tracked (not yet owned)"), value: "\(info.trackedCount)")
+                    SettingsStatRow(label: String(localized: "Total Requests"), value: "\(info.totalRequests)")
+                    SettingsStatRow(label: String(localized: "Server"), value: model.session.server?.displayName ?? "—")
+                    SettingsStatRow(label: String(localized: "Time Zone"), value: info.timeZone, last: true)
                 }
                 .cardSurface(padding: 0)
 
-                SettingsSectionLabel(text: "Getting Support")
+                SettingsSectionLabel(text: String(localized: "Getting Support"))
                 VStack(spacing: 0) {
-                    linkRow("Releases") { openWindow(id: "changelog") }
-                    linkRow("What the colors mean") { openWindow(id: "status-colors") }
-                    linkRow("Error reference") { openWindow(id: "error-reference") }
+                    linkRow(String(localized: "Releases")) { openWindow(id: "changelog") }
+                    linkRow(String(localized: "What the colors mean")) { openWindow(id: "status-colors") }
+                    linkRow(String(localized: "Error reference")) { openWindow(id: "error-reference") }
                     if let repo = info.repoURL {
                         linkRow("GitHub") { openURL(repo) }
                     }
                     if let issues = info.issuesURL {
-                        linkRow("Report an issue", last: true) { openURL(issues) }
+                        linkRow(String(localized: "Report an issue"), last: true) { openURL(issues) }
                     }
                 }
                 .cardSurface(padding: 0)

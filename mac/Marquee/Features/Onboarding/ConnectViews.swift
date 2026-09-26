@@ -27,19 +27,19 @@ private struct WelcomeStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
-                title: "Find your Marquee server",
-                message: "Marquee for Mac connects to the Marquee server running on your home network, like the one on your Unraid box."
+                title: String(localized: "Find your Marquee server"),
+                message: String(localized: "Marquee for Mac connects to the Marquee server running on your home network, like the one on your Unraid box.")
             )
             VStack(alignment: .leading, spacing: 14) {
                 ConnectPoint(
                     systemImage: "wifi",
-                    title: "Search your network",
-                    text: "Marquee checks the computers on your local network for a Marquee server."
+                    title: String(localized: "Search your network"),
+                    text: String(localized: "Marquee checks the computers on your local network for a Marquee server.")
                 )
                 ConnectPoint(
                     systemImage: "lock.shield",
-                    title: "Allow Local Network access",
-                    text: "macOS will ask for permission first. Click Allow so Marquee can reach your server."
+                    title: String(localized: "Allow Local Network access"),
+                    text: String(localized: "macOS will ask for permission first. Click Allow so Marquee can reach your server.")
                 )
             }
             .padding(.vertical, 2)
@@ -52,7 +52,7 @@ private struct WelcomeStep: View {
             .buttonStyle(AccentButtonStyle())
             .keyboardShortcut(.defaultAction)
 
-            AuthLink("Enter address manually") {
+            AuthLink(String(localized: "Enter address manually")) {
                 connect.enterManually()
             }
         }
@@ -112,14 +112,14 @@ private struct SearchingStep: View {
 
             if discovery.state == .checkingAccess {
                 AuthNotice(
-                    text: "If macOS asks to find devices on your local network, click Allow.",
+                    text: String(localized: "If macOS asks to find devices on your local network, click Allow."),
                     systemImage: "lock.shield"
                 )
             }
 
             if !discovery.found.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    SettingsSectionLabel(text: discovery.found.count == 1 ? "Found 1 server" : "Found \(discovery.found.count) servers")
+                    SettingsSectionLabel(text: String(localized: "Found \(discovery.found.count) servers"))
                     ForEach(discovery.found) { server in
                         FoundServerRow(server: server) {
                             connect.select(server)
@@ -145,7 +145,7 @@ private struct SearchingStep: View {
                 .buttonStyle(OutlineButtonStyle())
             }
 
-            AuthLink("Enter address manually") {
+            AuthLink(String(localized: "Enter address manually")) {
                 connect.enterManually()
             }
         }
@@ -157,34 +157,34 @@ private struct SearchingStep: View {
     }
 
     private var title: String {
-        if discovery.isRunning { return "Searching your network" }
-        if usableCount > 0 { return usableCount == 1 ? "Found your server" : "Choose your server" }
-        if !discovery.found.isEmpty { return "Your server needs an update" }
-        return "Search stopped"
+        if discovery.isRunning { return String(localized: "Searching your network") }
+        if usableCount > 0 { return usableCount == 1 ? String(localized: "Found your server") : String(localized: "Choose your server") }
+        if !discovery.found.isEmpty { return String(localized: "Your server needs an update") }
+        return String(localized: "Search stopped")
     }
 
     private var message: String {
         if discovery.isRunning {
             if let networks = discovery.networkSummary {
-                return "Looking for Marquee on \(networks). This usually takes under a minute."
+                return String(localized: "Looking for Marquee on \(networks). This usually takes under a minute.")
             }
-            return "Looking for Marquee on your local network."
+            return String(localized: "Looking for Marquee on your local network.")
         }
-        if usableCount > 0 { return "Select your Marquee server to sign in." }
+        if usableCount > 0 { return String(localized: "Select your Marquee server to sign in.") }
         if !discovery.found.isEmpty {
-            return "Marquee is running on your network, but the Mac app needs server version \(ServerInfo.minimumServerVersion) or later."
+            return String(localized: "Marquee is running on your network, but the Mac app needs server version \(ServerInfo.minimumServerVersion) or later.")
         }
-        return "No Marquee server turned up before the search was stopped."
+        return String(localized: "No Marquee server turned up before the search was stopped.")
     }
 
     private var progressLabel: String {
         switch discovery.state {
         case .checkingAccess:
-            return "Checking Local Network access…"
+            return String(localized: "Checking Local Network access…")
         case .scanning:
-            return "\(discovery.probed.formatted()) of \(discovery.total.formatted()) addresses checked"
+            return String(localized: "\(discovery.probed) of \(discovery.total) addresses checked")
         default:
-            return "Checked \(discovery.probed.formatted()) of \(discovery.total.formatted()) addresses"
+            return String(localized: "Checked \(discovery.probed) of \(discovery.total) addresses")
         }
     }
 }
@@ -233,9 +233,9 @@ private struct FoundServerRow: View {
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(hovering ? Theme.accent : Theme.textMuted)
                 case .legacy:
-                    TonePill(text: "Update required", tone: .accent, small: true)
+                    TonePill(text: String(localized: "Update required"), tone: .accent, small: true)
                 case .incompatible:
-                    TonePill(text: "Update app", tone: .accent, small: true)
+                    TonePill(text: String(localized: "Update app"), tone: .accent, small: true)
                 }
             }
             if let explanation {
@@ -260,13 +260,13 @@ private struct FoundServerRow: View {
         case let .current(info):
             var parts = ["Marquee \(info.version)"]
             if info.isDegraded {
-                parts.append("database offline")
+                parts.append(String(localized: "database offline"))
             } else if info.setupComplete == false {
-                parts.append("not set up yet")
+                parts.append(String(localized: "not set up yet"))
             }
             return parts.joined(separator: " · ")
         case .legacy:
-            return "Marquee (older version)"
+            return String(localized: "Marquee (older version)")
         case let .incompatible(info):
             return "Marquee \(info.version)"
         }
@@ -277,9 +277,9 @@ private struct FoundServerRow: View {
         case .current:
             return nil
         case .legacy:
-            return "Update this server to Marquee \(ServerInfo.minimumServerVersion) or later to use it with the Mac app."
+            return String(localized: "Update this server to Marquee \(ServerInfo.minimumServerVersion) or later to use it with the Mac app.")
         case .incompatible:
-            return "This server is newer than this app supports. Update Marquee for Mac to connect."
+            return String(localized: "This server is newer than this app supports. Update Marquee for Mac to connect.")
         }
     }
 }
@@ -292,14 +292,14 @@ private struct LocalNetworkDeniedStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
-                title: "Allow Local Network access",
-                message: "Marquee needs permission to look for your server on your home network. If macOS just asked, click Allow and the search continues on its own."
+                title: String(localized: "Allow Local Network access"),
+                message: String(localized: "Marquee needs permission to look for your server on your home network. If macOS just asked, click Allow and the search continues on its own.")
             )
 
             VStack(alignment: .leading, spacing: 10) {
-                SettingsStepRow(number: 1, text: "Open System Settings › Privacy & Security › Local Network.")
-                SettingsStepRow(number: 2, text: "Turn on Marquee.")
-                SettingsStepRow(number: 3, text: "Come back here. The search picks up again by itself.")
+                SettingsStepRow(number: 1, text: String(localized: "Open System Settings › Privacy & Security › Local Network."))
+                SettingsStepRow(number: 2, text: String(localized: "Turn on Marquee."))
+                SettingsStepRow(number: 3, text: String(localized: "Come back here. The search picks up again by itself."))
             }
 
             VStack(spacing: 10) {
@@ -319,7 +319,7 @@ private struct LocalNetworkDeniedStep: View {
                 .buttonStyle(OutlineButtonStyle())
             }
 
-            AuthLink("Enter address manually") {
+            AuthLink(String(localized: "Enter address manually")) {
                 connect.enterManually()
             }
         }
@@ -353,8 +353,8 @@ private struct ManualEntryStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
-                title: "Connect to your server",
-                message: "Enter the IP address or URL of the computer running Marquee. The port is usually 3000."
+                title: String(localized: "Connect to your server"),
+                message: String(localized: "Enter the IP address or URL of the computer running Marquee. The port is usually 3000.")
             )
 
             if let notice = connect.manualNotice {
@@ -362,7 +362,7 @@ private struct ManualEntryStep: View {
             }
 
             AuthField(
-                label: "IP address or URL",
+                label: String(localized: "IP address or URL"),
                 text: $connect.manualAddress,
                 placeholder: "192.168.1.20:3000",
                 autofocus: true
@@ -392,7 +392,7 @@ private struct ManualEntryStep: View {
             .keyboardShortcut(.defaultAction)
             .disabled(connect.isConnecting || connect.manualAddress.trimmingCharacters(in: .whitespaces).isEmpty)
 
-            AuthLink("Search my network") {
+            AuthLink(String(localized: "Search my network")) {
                 connect.searchNetwork()
             }
         }

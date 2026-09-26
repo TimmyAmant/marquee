@@ -25,10 +25,10 @@ struct TitleDetailView: View {
                 content(detail)
             } else if let loadError = screen.loadError {
                 EmptyStateView(
-                    title: "Couldn't load this title",
+                    title: String(localized: "Couldn't load this title"),
                     message: loadError,
                     systemImage: "exclamationmark.triangle",
-                    actionTitle: "Try again",
+                    actionTitle: String(localized: "Try again"),
                     action: { model.reload() }
                 )
             } else {
@@ -144,12 +144,12 @@ struct TitleDetailView: View {
 
                             if !detail.seasons.isEmpty {
                                 VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                                    SectionTitle(text: "Episodes")
+                                    SectionTitle(text: String(localized: "Episodes"))
                                     SeasonAccordion(screen: screen, seasons: detail.seasons)
                                 }
                             }
                             if !detail.cast.isEmpty {
-                                Shelf(title: "Cast", itemGap: Metrics.tileGap, headInset: 0) {
+                                Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
                                     ForEach(detail.cast) { member in
                                         PersonCard(
                                             profilePath: member.profilePath,
@@ -187,7 +187,7 @@ struct TitleDetailView: View {
                     }
                     if !detail.studios.isEmpty {
                         VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                            SectionTitle(text: "Studio")
+                            SectionTitle(text: String(localized: "Studio"))
                             FlowLayout(spacing: 10, lineSpacing: 10) {
                                 ForEach(detail.studios) { studio in
                                     StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
@@ -196,7 +196,7 @@ struct TitleDetailView: View {
                         }
                     }
                     if !detail.similar.isEmpty {
-                        Shelf(title: "More like this", headInset: 0) {
+                        Shelf(title: String(localized: "More like this"), headInset: 0) {
                             ForEach(detail.similar) { card in
                                 ShelfItem {
                                     PosterCard(card: card, showsTypeLabel: true) {
@@ -536,7 +536,7 @@ private struct TitleActionRow: View {
                 } else if let action = detail.requestAction {
                     switch action {
                     case .wholeSeries:
-                        Button(screen.isAdding ? "Requesting…" : action.buttonTitle) { screen.request() }
+                        Button(screen.isAdding ? String(localized: "Requesting…") : action.buttonTitle) { screen.request() }
                             .buttonStyle(AccentButtonStyle())
                             .disabled(screen.isAdding || screen.advancedAdd.isLoading)
                     case .pickSeasons(more: false):
@@ -613,7 +613,7 @@ private struct TitleActionRow: View {
                     Button(action: onReportProblem) {
                         pillLabel(
                             "exclamationmark.bubble",
-                            screen.hasReportedProblem ? "Report another" : "Report a problem",
+                            screen.hasReportedProblem ? String(localized: "Report another") : String(localized: "Report a problem"),
                             size: 13
                         )
                     }
@@ -623,7 +623,7 @@ private struct TitleActionRow: View {
                 // components/share-title-button.tsx (0.45.1+): send it to
                 // someone in the household, or share a link.
                 Button(action: onShare) {
-                    pillLabel("square.and.arrow.up", "Share", size: 13)
+                    pillLabel("square.and.arrow.up", String(localized: "Share"), size: 13)
                 }
                 .buttonStyle(OutlineButtonStyle(pill: .large))
 
@@ -636,7 +636,7 @@ private struct TitleActionRow: View {
                     Button {
                         screen.searchNow()
                     } label: {
-                        pillLabel("magnifyingglass", screen.isSearching ? "Searching…" : "Search now", size: 13)
+                        pillLabel("magnifyingglass", screen.isSearching ? String(localized: "Searching…") : String(localized: "Search now"), size: 13)
                     }
                     .buttonStyle(OutlineButtonStyle(pill: .large))
                     .disabled(screen.isSearching)
@@ -647,8 +647,8 @@ private struct TitleActionRow: View {
                         pillLabel(
                             tracking.monitored ? "eye.slash" : "eye",
                             screen.isTogglingMonitor
-                                ? "Updating…"
-                                : (tracking.monitored ? "Stop monitoring" : "Start monitoring"),
+                                ? String(localized: "Updating…")
+                                : (tracking.monitored ? String(localized: "Stop monitoring") : String(localized: "Start monitoring")),
                             size: 14
                         )
                     }
@@ -658,7 +658,7 @@ private struct TitleActionRow: View {
 
                 if viewer.canRelink {
                     Button(action: onRelink) {
-                        pillLabel("tag", "Fix ID", size: 13)
+                        pillLabel("tag", String(localized: "Fix ID"), size: 13)
                     }
                     .buttonStyle(OutlineButtonStyle(pill: .large))
                     .help("Wrong match? Point this title at the right id.")
@@ -735,14 +735,14 @@ private struct TitleActionRow: View {
             AddOptionsPanel(
                 advanced: Binding(get: { screen.advancedAdd }, set: { screen.advancedAdd = $0 }),
                 mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: false,
-                heading: both ? (viewer.canAdd ? "Add to \(arrName)" : "Request") : nil
+                heading: both ? (viewer.canAdd ? String(localized: "Add to \(arrName)") : String(localized: "Request")) : nil
             )
         }
         if targets.fourK && screen.advancedAdd4K.isExpanded {
             AddOptionsPanel(
                 advanced: Binding(get: { screen.advancedAdd4K }, set: { screen.advancedAdd4K = $0 }),
                 mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: true,
-                heading: both ? (viewer.fourK?.canAdd == true ? "Add to 4K \(arrName)" : "Request in 4K") : nil
+                heading: both ? (viewer.fourK?.canAdd == true ? String(localized: "Add to 4K \(arrName)") : String(localized: "Request in 4K")) : nil
             )
         }
     }
@@ -763,7 +763,7 @@ private struct TitleActionRow: View {
             Button {
                 screen.unblock()
             } label: {
-                pillLabel("hand.raised.slash", screen.isBlockBusy ? "Unblocking…" : "Unblock requests", size: 13)
+                pillLabel("hand.raised.slash", screen.isBlockBusy ? String(localized: "Unblocking…") : String(localized: "Unblock requests"), size: 13)
             }
             .buttonStyle(OutlineButtonStyle(pill: .large))
             .disabled(screen.isBlockBusy)
@@ -771,7 +771,7 @@ private struct TitleActionRow: View {
             Button {
                 askingBlockReason = true
             } label: {
-                pillLabel("hand.raised", "Block requests", size: 13)
+                pillLabel("hand.raised", String(localized: "Block requests"), size: 13)
             }
             .buttonStyle(OutlineButtonStyle(pill: .large))
         }
@@ -864,12 +864,12 @@ private struct TitleSidebarColumn: View {
     /// The `.frow` rows this title actually has, in the mockup's order.
     private var facts: [(label: String, value: String)] {
         let candidates: [(String, String?)] = [
-            ("Status", detail.facts.statusLabel),
-            (detail.mediaType == .movie ? "Release Date" : "First Air Date", detail.facts.releaseDateLabel),
-            ("Next Episode", detail.facts.nextAirDateLabel),
-            ("Original Language", detail.facts.originalLanguageLabel),
-            ("Production Country", detail.facts.productionCountry.map { "\($0.flag) \($0.name)" }),
-            ("Network", detail.facts.network),
+            (String(localized: "Status"), detail.facts.statusLabel),
+            (detail.mediaType == .movie ? String(localized: "Release Date") : String(localized: "First Air Date"), detail.facts.releaseDateLabel),
+            (String(localized: "Next Episode"), detail.facts.nextAirDateLabel),
+            (String(localized: "Original Language"), detail.facts.originalLanguageLabel),
+            (String(localized: "Production Country"), detail.facts.productionCountry.map { "\($0.flag) \($0.name)" }),
+            (String(localized: "Network"), detail.facts.network),
         ]
         return candidates.compactMap { label, value in
             value.nonBlank.map { (label: label, value: $0) }
@@ -911,7 +911,7 @@ private struct TitleSidebarColumn: View {
             if !detail.facts.watchProviders.isEmpty {
                 // .streaming — 1px top border, 14 above the caps label.
                 VStack(alignment: .leading, spacing: 10) {
-                    CapsLabel(text: "CURRENTLY STREAMING ON")
+                    CapsLabel(text: String(localized: "CURRENTLY STREAMING ON"))
                     FlowLayout(spacing: 8, lineSpacing: 8) {
                         ForEach(detail.facts.watchProviders, id: \.name) { provider in
                             RemoteImage(provider.logoPath, size: .w92, showsShimmer: false)
@@ -977,23 +977,23 @@ private struct FileDetailsCard: View {
     /// Quality profile/Video, Dynamic range/Audio. Anything the server didn't
     /// send is skipped and the rest closes up.
     private var cells: [(label: String, value: String)] {
-        var cells: [(label: String, value: String)] = [("Size", file.sizeLabel)]
-        if let runtimeLabel { cells.append(("Runtime", runtimeLabel)) }
-        if let added = file.dateAdded { cells.append(("Added", Format.shortDate(added))) }
-        if let resolution = file.resolutionLabel { cells.append(("Resolution", resolution)) }
-        if let quality = file.quality.nonBlank { cells.append(("Quality profile", quality)) }
+        var cells: [(label: String, value: String)] = [(String(localized: "Size"), file.sizeLabel)]
+        if let runtimeLabel { cells.append((String(localized: "Runtime"), runtimeLabel)) }
+        if let added = file.dateAdded { cells.append((String(localized: "Added"), Format.shortDate(added))) }
+        if let resolution = file.resolutionLabel { cells.append((String(localized: "Resolution"), resolution)) }
+        if let quality = file.quality.nonBlank { cells.append((String(localized: "Quality profile"), quality)) }
         // No media-type gate: Plex reports codecs and audio for shows too,
         // aggregated across their episodes, and a cell with nothing in it is
         // skipped anyway.
-        if let video = file.videoCodec.nonBlank { cells.append(("Video", video)) }
-        if let range = file.dynamicRangeLabel { cells.append(("Dynamic range", range)) }
-        if let audio = file.audioLabel { cells.append(("Audio", audio)) }
-        if let container = file.container.nonBlank { cells.append(("Container", container)) }
-        if let bitrate = file.bitrateLabel { cells.append(("Bitrate", bitrate)) }
+        if let video = file.videoCodec.nonBlank { cells.append((String(localized: "Video"), video)) }
+        if let range = file.dynamicRangeLabel { cells.append((String(localized: "Dynamic range"), range)) }
+        if let audio = file.audioLabel { cells.append((String(localized: "Audio"), audio)) }
+        if let container = file.container.nonBlank { cells.append((String(localized: "Container"), container)) }
+        if let bitrate = file.bitrateLabel { cells.append((String(localized: "Bitrate"), bitrate)) }
         // Not in the mockup (its file has neither), but real files do —
         // they carry on in the same grid.
-        if let edition = file.edition.nonBlank { cells.append(("Edition", edition)) }
-        if let group = file.releaseGroup.nonBlank { cells.append(("Release group", group)) }
+        if let edition = file.edition.nonBlank { cells.append((String(localized: "Edition"), edition)) }
+        if let group = file.releaseGroup.nonBlank { cells.append((String(localized: "Release group"), group)) }
         return cells
     }
 
@@ -1005,7 +1005,7 @@ private struct FileDetailsCard: View {
                 .padding(.bottom, 12)
 
             if let path = file.path.nonBlank {
-                CapsLabel(text: "LOCATION")
+                CapsLabel(text: String(localized: "LOCATION"))
                 CopyField(value: path, variant: .path)
                     .padding(.top, 6)
             }
@@ -1092,14 +1092,14 @@ private struct FranchiseSection: View {
             }
         }
         .confirmationDialog(
-            "Add all \(missingCount) missing title\(missingCount == 1 ? "" : "s") to Sonarr/Radarr?",
+            "Add all \(missingCount) missing titles to Sonarr/Radarr?",
             isPresented: $confirmingAddAll
         ) {
             Button("Add All") { screen.addAllMissing() }
             Button("Cancel", role: .cancel) {}
         }
         .confirmationDialog(
-            "Request all \(requestableCount) missing title\(requestableCount == 1 ? "" : "s")?",
+            "Request all \(requestableCount) missing titles?",
             isPresented: $confirmingRequestAll
         ) {
             Button("Request All") { Task { await screen.requestAllMissing() } }

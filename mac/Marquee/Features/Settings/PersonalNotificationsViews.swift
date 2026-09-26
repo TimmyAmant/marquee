@@ -47,7 +47,7 @@ struct PersonalNotificationsSection: View {
     @ViewBuilder
     private func channelsSection(_ channels: API.PersonalNotificationChannels) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            SettingsSectionLabel(text: "Your channels")
+            SettingsSectionLabel(text: String(localized: "Your channels"))
             Text("Get your notifications on Telegram, Pushover, email, Discord, ntfy or a webhook. Only you can see these.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
@@ -98,7 +98,7 @@ struct PersonalNotificationsSection: View {
     @ViewBuilder
     private func matrixSection(_ matrix: PreferenceMatrix, channels: API.PersonalNotificationChannels) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            SettingsSectionLabel(text: "What you hear about")
+            SettingsSectionLabel(text: String(localized: "What you hear about"))
             Text("Choose where each kind of notification goes. The bell is the list at the top of every page; devices are the browsers, Macs and PCs you turned notifications on for.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
@@ -109,7 +109,7 @@ struct PersonalNotificationsSection: View {
             ScrollView(.horizontal) {
                 Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 10) {
                     GridRow {
-                        header("Event")
+                        header(String(localized: "Event"))
                         ForEach(columns, id: \.self) { column in
                             header(title(of: column, in: channels))
                                 .gridColumnAlignment(.center)
@@ -120,7 +120,7 @@ struct PersonalNotificationsSection: View {
                     }
                     if !matrix.reviewers.isEmpty {
                         GridRow {
-                            SettingsSectionLabel(text: "For reviewers")
+                            SettingsSectionLabel(text: String(localized: "For reviewers"))
                                 .padding(.top, 6)
                                 .gridCellColumns(columns.count + 1)
                         }
@@ -153,9 +153,9 @@ struct PersonalNotificationsSection: View {
 
     private func title(of column: PreferenceMatrix.Column, in channels: API.PersonalNotificationChannels) -> String {
         switch column {
-        case .bell: return "Bell"
-        case .devices: return "Devices"
-        case let .channel(id): return channels.channels.first { $0.id == id }?.label ?? "Channel"
+        case .bell: return String(localized: "Bell")
+        case .devices: return String(localized: "Devices")
+        case let .channel(id): return channels.channels.first { $0.id == id }?.label ?? String(localized: "Channel")
         }
     }
 
@@ -257,7 +257,7 @@ private struct NotificationChannelRow: View {
                         Text(channel.label)
                             .foregroundStyle(Theme.textPrimary)
                         if channel.name.nonBlank != nil {
-                            Text(" · \(channel.kind.label)")
+                            Text(verbatim: " · \(channel.kind.label)")
                                 .foregroundStyle(Theme.textMuted)
                         }
                     }
@@ -280,13 +280,13 @@ private struct NotificationChannelRow: View {
                     .controlSize(.small)
                     .font(.system(size: 12))
                     Button("Send a test") {
-                        run(ok: "Sent. It should arrive in a moment.") { api in
+                        run(ok: String(localized: "Sent. It should arrive in a moment.")) { api in
                             try await api.notificationChannels.test(channel.id)
                         }
                     }
                     .buttonStyle(OutlineButtonStyle(compact: true))
                 } else if !channel.verified {
-                    TonePill(text: "Waiting for the code", tone: .neutral, small: true)
+                    TonePill(text: String(localized: "Waiting for the code"), tone: .neutral, small: true)
                 }
                 Button("Remove") { confirmingRemove = true }
                     .buttonStyle(QuietButtonStyle(color: Theme.danger))
@@ -328,7 +328,7 @@ private struct NotificationChannelRow: View {
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {
-                TextField("Confirmation code", text: $code, prompt: Text("123456"))
+                TextField("Confirmation code", text: $code, prompt: Text(verbatim: "123456"))
                     .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 110)
@@ -337,7 +337,7 @@ private struct NotificationChannelRow: View {
                     .buttonStyle(OutlineButtonStyle(compact: true))
                     .disabled(code.trimmingCharacters(in: .whitespacesAndNewlines).count < 6)
                 Button("Send a new code") {
-                    run(ok: "A new code is on its way.") { api in
+                    run(ok: String(localized: "A new code is on its way.")) { api in
                         try await api.notificationChannels.resendCode(channel.id)
                     }
                 }
@@ -350,7 +350,7 @@ private struct NotificationChannelRow: View {
     private func confirm() {
         let code = self.code
         guard code.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6 else { return }
-        run(ok: "Confirmed. Notifications will go here now.", reloads: true) { api in
+        run(ok: String(localized: "Confirmed. Notifications will go here now."), reloads: true) { api in
             try await api.notificationChannels.verify(channel.id, code: code)
         }
     }
@@ -468,7 +468,7 @@ private struct AddNotificationChannelSheet: View {
                 }
             }
 
-            SettingsField(label: "Name (optional)", text: $form.name, placeholder: "My phone")
+            SettingsField(label: String(localized: "Name (optional)"), text: $form.name, placeholder: String(localized: "My phone"))
 
             if let error { InlineMessage(text: error) }
 
@@ -556,7 +556,7 @@ private struct AddNotificationChannelSheet: View {
                     try await api.notificationChannels.pollTelegramLink(code: start.code, name: name)
                 }
                 link = nil
-                onAdded("Telegram connected. A test message is on its way.")
+                onAdded(String(localized: "Telegram connected. A test message is on its way."))
                 dismiss()
             } catch {
                 link = nil
@@ -587,8 +587,8 @@ struct HouseholdEventsCard: View {
         VStack(spacing: 0) {
             if let events {
                 IntegrationCard(
-                    title: "What the household channels post",
-                    description: "The channels below are the household's: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Account › Notifications, using the bot, app and mail server set up here."
+                    title: String(localized: "What the household channels post"),
+                    description: String(localized: "The channels below are the household's: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Account › Notifications, using the bot, app and mail server set up here.")
                 ) {
                     LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], alignment: .leading, spacing: 8) {
                         ForEach(events) { event in

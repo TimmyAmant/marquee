@@ -71,7 +71,7 @@ struct MarqueeCommands: Commands {
                 Task {
                     do {
                         try await api.integrations.syncNow()
-                        model.flash("Synced.")
+                        model.flash(String(localized: "Synced."))
                     } catch {
                         model.flash(error: error)
                     }

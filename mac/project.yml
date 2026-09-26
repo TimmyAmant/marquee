@@ -24,6 +24,11 @@ settings:
     SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     DEAD_CODE_STRIPPING: YES
+    # Localization (Resources/Localizable.xcstrings, docs/i18n-glossary.md):
+    # the compiler extracts every localizable literal into .stringsdata, which
+    # Scripts/check-strings.sh compares with the catalog in CI.
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
   configs:
     Debug:
       SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -55,6 +60,9 @@ targets:
         CFBundleExecutable: $(EXECUTABLE_NAME)
         CFBundlePackageType: APPL
         CFBundleDevelopmentRegion: en
+        # The languages Marquee ships (Resources/*.xcstrings); macOS offers
+        # them in System Settings › General › Language & Region › Applications.
+        CFBundleLocalizations: [en, es, fr, de, pt-BR]
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSApplicationCategoryType: public.app-category.entertainment
         NSHumanReadableCopyright: "Marquee — self-hosted media dashboard. MIT License."
@@ -122,6 +130,10 @@ schemes:
     test:
       config: Debug
       gatherCoverageData: true
+      # The tests check English text: run the host app in English whatever
+      # this Mac's language or Marquee's saved account language.
+      commandLineArguments:
+        "-AppleLanguages (en)": true
       targets:
         - MarqueeTests
     profile:

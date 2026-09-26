@@ -13,18 +13,18 @@ struct IntegrationsSettingsView: View {
 
     var body: some View {
         SettingsPane(
-            title: "Integrations",
-            subtitle: "Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf.",
+            title: String(localized: "Integrations"),
+            subtitle: String(localized: "Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf."),
             trailing: AnyView(syncButton)
         ) {
             if let overview {
-                section("Media Libraries") {
+                section(String(localized: "Media Libraries")) {
                     PlexCard(settings: overview.plex)
                     JellyfinCard(settings: overview.jellyfin)
                 }
                 // 0.44+: single sign-on; nothing at all from an older server.
                 SsoSettingsSection()
-                section("Download Clients") {
+                section(String(localized: "Download Clients")) {
                     // 0.43+: any number of servers. An older server omits
                     // the list and keeps the four fixed cards.
                     if overview.usesServerList {
@@ -34,21 +34,21 @@ struct IntegrationsSettingsView: View {
                         fixedArrCards(overview)
                     }
                 }
-                section("Metadata Sources") {
+                section(String(localized: "Metadata Sources")) {
                     TMDbCard(settings: overview.tmdb)
                     TraktCard(connected: overview.trakt.connected)
                     SecretCard(
                         title: "TheTVDB",
-                        description: "Fills in poster art and an overview for TV shows when TMDb doesn't have them yet — Sonarr's own metadata comes from here too.",
-                        fieldLabel: "API key",
-                        placeholder: "From thetvdb.com/dashboard/account/apikey",
-                        removeLabel: "Remove saved key",
+                        description: String(localized: "Fills in poster art and an overview for TV shows when TMDb doesn't have them yet — Sonarr's own metadata comes from here too."),
+                        fieldLabel: String(localized: "API key"),
+                        placeholder: String(localized: "From thetvdb.com/dashboard/account/apikey"),
+                        removeLabel: String(localized: "Remove saved key"),
                         connected: overview.tvdb.connected,
                         save: { try await $0.integrations.tvdb.save($1) },
                         remove: { try await $0.integrations.tvdb.remove() }
                     )
                 }
-                section("Household channels") {
+                section(String(localized: "Household channels")) {
                     // 0.45+: what these channels post.
                     HouseholdEventsCard()
                     ArrWebhooksCard(
@@ -58,23 +58,23 @@ struct IntegrationsSettingsView: View {
                         isLegacy: overview.usesServerList
                     )
                     SecretCard(
-                        title: "Discord notifications",
-                        description: "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected.",
-                        fieldLabel: "Webhook URL",
-                        placeholder: "From a channel's Integrations → Webhooks settings in Discord",
-                        successMessage: "Connected — check the channel for a test message.",
-                        removeLabel: "Remove saved webhook",
+                        title: String(localized: "Discord notifications"),
+                        description: String(localized: "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected."),
+                        fieldLabel: String(localized: "Webhook URL"),
+                        placeholder: String(localized: "From a channel's Integrations → Webhooks settings in Discord"),
+                        successMessage: String(localized: "Connected — check the channel for a test message."),
+                        removeLabel: String(localized: "Remove saved webhook"),
                         connected: overview.discord.connected,
                         save: { try await $0.integrations.discord.save($1) },
                         remove: { try await $0.integrations.discord.remove() }
                     )
                     SecretCard(
-                        title: "ntfy notifications",
-                        description: "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events.",
-                        fieldLabel: "Topic URL",
+                        title: String(localized: "ntfy notifications"),
+                        description: String(localized: "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events."),
+                        fieldLabel: String(localized: "Topic URL"),
                         placeholder: "https://ntfy.sh/your-topic-name",
-                        successMessage: "Connected — check the topic for a test message.",
-                        removeLabel: "Remove saved topic",
+                        successMessage: String(localized: "Connected — check the topic for a test message."),
+                        removeLabel: String(localized: "Remove saved topic"),
                         connected: overview.ntfy.connected,
                         save: { try await $0.integrations.ntfy.save($1) },
                         remove: { try await $0.integrations.ntfy.remove() }
@@ -84,12 +84,12 @@ struct IntegrationsSettingsView: View {
                     if let pushover = overview.pushover { PushoverCard(connected: pushover.connected) }
                     if let email = overview.email { EmailCard(settings: email) }
                     SecretCard(
-                        title: "Custom webhook",
-                        description: "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway.",
-                        fieldLabel: "Webhook URL",
+                        title: String(localized: "Custom webhook"),
+                        description: String(localized: "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway."),
+                        fieldLabel: String(localized: "Webhook URL"),
                         placeholder: "https://your-endpoint.example.com/hook",
-                        successMessage: "Connected — check your endpoint for a test request.",
-                        removeLabel: "Remove saved webhook",
+                        successMessage: String(localized: "Connected — check your endpoint for a test request."),
+                        removeLabel: String(localized: "Remove saved webhook"),
                         connected: overview.genericWebhook.connected,
                         save: { try await $0.integrations.webhook.save($1) },
                         remove: { try await $0.integrations.webhook.remove() }
@@ -101,7 +101,7 @@ struct IntegrationsSettingsView: View {
             } else if let loadError {
                 InlineMessage(text: loadError)
             } else {
-                LoadingView(label: "Checking your integrations…")
+                LoadingView(label: String(localized: "Checking your integrations…"))
             }
         }
         .task(id: ReloadKey(token: model.reloadToken, local: model.events.revision(of: .settings))) {
@@ -139,7 +139,7 @@ struct IntegrationsSettingsView: View {
         Task {
             do {
                 try await api.integrations.syncNow()
-                syncMessage = ("Synced.", false)
+                syncMessage = (String(localized: "Synced."), false)
             } catch {
                 syncMessage = (error.localizedDescription, true)
             }
@@ -157,16 +157,16 @@ struct IntegrationsSettingsView: View {
             ArrCard(
                 provider: .sonarr4k,
                 settings: sonarr4k,
-                title: "4K Sonarr (optional)",
-                description: "A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr."
+                title: String(localized: "4K Sonarr (optional)"),
+                description: String(localized: "A second Sonarr for 4K copies. Once it's set up, members can request shows in 4K, and approving those adds them here instead of to the main Sonarr.")
             )
         }
         if let radarr4k = overview.radarr4k {
             ArrCard(
                 provider: .radarr4k,
                 settings: radarr4k,
-                title: "4K Radarr (optional)",
-                description: "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr."
+                title: String(localized: "4K Radarr (optional)"),
+                description: String(localized: "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr.")
             )
         }
     }
@@ -185,7 +185,7 @@ struct IntegrationCard<Content: View>: View {
     let title: String
     var description: String?
     var connected = false
-    var connectedLabel = "Connected"
+    var connectedLabel = String(localized: "Connected")
     var headerAccessory: AnyView?
     @ViewBuilder let content: () -> Content
 
@@ -337,7 +337,7 @@ private struct PlexCard: View {
                         return
                     }
                 }
-                error = "Timed out waiting for Plex sign-in. Try again."
+                error = String(localized: "Timed out waiting for Plex sign-in. Try again.")
             } catch is CancellationError {
                 // Settings closed mid-sign-in; nothing to report.
             } catch {
@@ -350,16 +350,18 @@ private struct PlexCard: View {
 
 private func summaryLine(_ servers: [API.SyncedServer], movieCount: Int, tvCount: Int, totalBytes: Int64) -> String {
     let names = servers.compactMap(\.name).joined(separator: ", ")
-    var counts = "\(movieCount) movies · \(tvCount) TV shows"
-    if totalBytes > 0 { counts += " · \(Format.bytes(totalBytes))" }
-    return names.isEmpty ? counts : "\(names) · \(counts)"
+    var parts = [String(localized: "\(movieCount) movies"), String(localized: "\(tvCount) TV shows")]
+    if totalBytes > 0 { parts.append(Format.bytes(totalBytes)) }
+    if !names.isEmpty { parts.insert(names, at: 0) }
+    return parts.joined(separator: " · ")
 }
 
 private func lastSyncedLine(_ servers: [API.SyncedServer]) -> String {
     guard let last = servers.compactMap(\.lastSyncedAt).max() else {
-        return "Your library is kept in sync automatically."
+        return String(localized: "Your library is kept in sync automatically.")
     }
-    return "Last synced \(Format.timeAgo(last)) · kept in sync automatically."
+    let when = Format.timeAgo(last)
+    return String(localized: "Last synced \(when) · kept in sync automatically.")
 }
 
 // MARK: - Jellyfin (components/jellyfin-connect-card.tsx)
@@ -375,9 +377,10 @@ private struct JellyfinCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: "Jellyfin or Emby",
-            description: "Emby speaks the same language as Jellyfin, so either works here"
-                + (settings.connectedName.map { " — connected to \($0)" } ?? "") + ".",
+            title: String(localized: "Jellyfin or Emby"),
+            description: settings.connectedName.map { name in
+                String(localized: "Emby speaks the same language as Jellyfin, so either works here — connected to \(name).")
+            } ?? String(localized: "Emby speaks the same language as Jellyfin, so either works here."),
             connected: settings.connected,
             headerAccessory: settings.connected
                 ? AnyView(DisconnectButton(name: settings.connectedName ?? "Jellyfin") { try await $0.integrations.jellyfin.disconnect() })
@@ -391,11 +394,11 @@ private struct JellyfinCard: View {
             Text("Generate an API key from the dashboard: Administration → API Keys in Jellyfin, or Advanced → API Keys in Emby.")
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textSecondary)
-            SettingsField(label: "Server URL", text: $baseUrl, placeholder: "http://localhost:8096")
+            SettingsField(label: String(localized: "Server URL"), text: $baseUrl, placeholder: "http://localhost:8096")
             SettingsField(
-                label: "API key",
+                label: String(localized: "API key"),
                 text: $apiKey,
-                placeholder: settings.hasApiKey ? "•••••••••••••••• (enter to replace)" : "",
+                placeholder: settings.hasApiKey ? String(localized: "•••••••••••••••• (enter to replace)") : "",
                 secure: true
             )
             if let message { InlineMessage(text: message.0, isError: message.1) }
@@ -418,7 +421,7 @@ private struct JellyfinCard: View {
             do {
                 try await api.integrations.jellyfin.connect(baseUrl: url, apiKey: key)
                 apiKey = ""
-                message = ("Connected successfully.", false)
+                message = (String(localized: "Connected successfully."), false)
             } catch {
                 message = (error.localizedDescription, true)
             }
@@ -456,11 +459,11 @@ private struct ArrCard: View {
                 ? AnyView(DisconnectButton(name: provider.displayName) { try await $0.integrations.arr(provider).disconnect() })
                 : nil
         ) {
-            SettingsField(label: "Server URL", text: $baseUrl, placeholder: "http://localhost:\(provider.defaultPort)")
+            SettingsField(label: String(localized: "Server URL"), text: $baseUrl, placeholder: "http://localhost:\(provider.defaultPort)")
             SettingsField(
-                label: "API key",
+                label: String(localized: "API key"),
                 text: $apiKey,
-                placeholder: settings.hasApiKey ? "•••••••••••••••• (enter to replace)" : "",
+                placeholder: settings.hasApiKey ? String(localized: "•••••••••••••••• (enter to replace)") : "",
                 secure: true
             )
             if let message { InlineMessage(text: message.0, isError: message.1) }
@@ -488,11 +491,11 @@ private struct ArrCard: View {
                         .buttonStyle(OutlineButtonStyle())
                         .disabled(savingDefaults)
                     if savedDefaults {
-                        InlineMessage(text: "Saved.", isError: false)
+                        InlineMessage(text: String(localized: "Saved."), isError: false)
                     }
                 }
             } else if settings.connected && !settings.fullyConfigured {
-                InlineMessage(text: "Pick a root folder and quality profile before adding titles — test the connection to load them.")
+                InlineMessage(text: String(localized: "Pick a root folder and quality profile before adding titles — test the connection to load them."))
             }
         }
         .task(id: settings) {
@@ -529,7 +532,7 @@ private struct ArrCard: View {
                 apiKey = ""
                 baseUrl = result.baseUrl
                 apply(result.options, selectedRootFolder: result.selectedRootFolder, selectedQualityProfileId: result.selectedQualityProfileId)
-                message = ("Connected successfully.", false)
+                message = (String(localized: "Connected successfully."), false)
             } catch {
                 message = (error.localizedDescription, true)
             }
@@ -563,18 +566,18 @@ private struct TMDbCard: View {
     var body: some View {
         SecretCard(
             title: "TMDb",
-            description: "Shared by everyone on this server — every poster, search, and title page comes from here.",
-            fieldLabel: "API key or access token",
-            placeholder: "v3 API key or v4 access token, from themoviedb.org/settings/api",
-            removeLabel: "Remove saved token",
+            description: String(localized: "Shared by everyone on this server — every poster, search, and title page comes from here."),
+            fieldLabel: String(localized: "API key or access token"),
+            placeholder: String(localized: "v3 API key or v4 access token, from themoviedb.org/settings/api"),
+            removeLabel: String(localized: "Remove saved token"),
             connected: settings.savedInSettings,
             connectedLabel: settings.savedInSettings
-                ? "Connected"
-                : (settings.configuredFromEnv ? "Using environment variable" : "Connected"),
+                ? String(localized: "Connected")
+                : (settings.configuredFromEnv ? String(localized: "Using environment variable") : String(localized: "Connected")),
             note: settings.savedInSettings
                 ? nil
                 : (settings.configuredFromEnv
-                    ? "Using the TMDB_ACCESS_TOKEN environment variable set on your server. Saving a token here overrides it."
+                    ? String(localized: "Using the TMDB_ACCESS_TOKEN environment variable set on your server. Saving a token here overrides it.")
                     : nil),
             save: { try await $0.integrations.tmdb.save($1) },
             remove: { try await $0.integrations.tmdb.remove() }
@@ -589,10 +592,10 @@ private struct SecretCard: View {
     let description: String
     let fieldLabel: String
     let placeholder: String
-    var successMessage = "Connected successfully."
+    var successMessage = String(localized: "Connected successfully.")
     let removeLabel: String
     let connected: Bool
-    var connectedLabel = "Connected"
+    var connectedLabel = String(localized: "Connected")
     /// An extra line under the field (TMDb's "using environment variable").
     var note: String?
     /// The setting's `PUT` ("Test & save") and `DELETE` (remove).
@@ -606,7 +609,7 @@ private struct SecretCard: View {
     @State private var message: (String, Bool)?
 
     /// The chip shows for a saved secret *or* a server-side environment value.
-    private var showsChip: Bool { connected || connectedLabel != "Connected" }
+    private var showsChip: Bool { connected || connectedLabel != String(localized: "Connected") }
 
     var body: some View {
         IntegrationCard(
@@ -624,7 +627,7 @@ private struct SecretCard: View {
             SettingsField(
                 label: fieldLabel,
                 text: $value,
-                placeholder: connected ? "•••••••••••••••• (enter to replace)" : placeholder,
+                placeholder: connected ? String(localized: "•••••••••••••••• (enter to replace)") : placeholder,
                 secure: true
             )
             if let message { InlineMessage(text: message.0, isError: message.1) }
@@ -678,8 +681,7 @@ private struct SecretCard: View {
 
 // MARK: - Telegram / Pushover / email (components/notification-channel-cards.tsx)
 
-private let channelWhat = "whenever something is grabbed, downloaded, or a request is approved/rejected."
-private let keepSavedPlaceholder = "•••••••••••••••• (leave blank to keep)"
+private let keepSavedPlaceholder = String(localized: "•••••••••••••••• (leave blank to keep)")
 
 /// A labelled field with the website's hint line under it.
 private struct ChannelField: View {
@@ -779,27 +781,27 @@ private struct TelegramCard: View {
 
     var body: some View {
         ChannelCard(
-            title: "Telegram notifications",
-            description: "Posts to a Telegram chat, group or channel through your own bot \(channelWhat)",
-            removeLabel: "Remove Telegram",
-            successMessage: "Connected — check the chat for a test message.",
+            title: String(localized: "Telegram notifications"),
+            description: String(localized: "Posts to a Telegram chat, group or channel through your own bot whenever something is grabbed, downloaded, or a request is approved/rejected."),
+            removeLabel: String(localized: "Remove Telegram"),
+            successMessage: String(localized: "Connected — check the chat for a test message."),
             connected: settings.connected,
             save: { [botToken, chatId] in try await $0.integrations.telegram.save(botToken: botToken, chatId: chatId) },
             remove: { try await $0.integrations.telegram.remove() },
             reset: { botToken = "" }
         ) {
             ChannelField(
-                label: "Bot token",
+                label: String(localized: "Bot token"),
                 text: $botToken,
                 placeholder: settings.connected ? keepSavedPlaceholder : "123456789:AA…",
                 secure: true,
-                hint: "Message @BotFather on Telegram, send /newbot, and paste the token it gives you."
+                hint: String(localized: "Message @BotFather on Telegram, send /newbot, and paste the token it gives you.")
             )
             ChannelField(
-                label: "Chat ID",
+                label: String(localized: "Chat ID"),
                 text: $chatId,
-                placeholder: "123456789, -100…, or @channelname",
-                hint: "Send your bot a message (or add it to the group), then open api.telegram.org/bot<token>/getUpdates to find the chat's id."
+                placeholder: String(localized: "123456789, -100…, or @channelname"),
+                hint: String(localized: "Send your bot a message (or add it to the group), then open api.telegram.org/bot<token>/getUpdates to find the chat's id.")
             )
         }
         .onAppear {
@@ -819,10 +821,10 @@ private struct PushoverCard: View {
 
     var body: some View {
         ChannelCard(
-            title: "Pushover notifications",
-            description: "Sends a push notification through Pushover \(channelWhat)",
-            removeLabel: "Remove Pushover",
-            successMessage: "Connected — a test notification is on its way.",
+            title: String(localized: "Pushover notifications"),
+            description: String(localized: "Sends a push notification through Pushover whenever something is grabbed, downloaded, or a request is approved/rejected."),
+            removeLabel: String(localized: "Remove Pushover"),
+            successMessage: String(localized: "Connected — a test notification is on its way."),
             connected: connected,
             save: { [appToken, userKey] in try await $0.integrations.pushover.save(appToken: appToken, userKey: userKey) },
             remove: { try await $0.integrations.pushover.remove() },
@@ -832,17 +834,17 @@ private struct PushoverCard: View {
             }
         ) {
             ChannelField(
-                label: "Application token",
+                label: String(localized: "Application token"),
                 text: $appToken,
                 placeholder: connected ? keepSavedPlaceholder : "",
                 secure: true,
-                hint: "Create an application at pushover.net/apps/build and copy its API token."
+                hint: String(localized: "Create an application at pushover.net/apps/build and copy its API token.")
             )
             ChannelField(
-                label: "User or group key",
+                label: String(localized: "User or group key"),
                 text: $userKey,
                 secure: true,
-                hint: "Your user key is at the top of your pushover.net dashboard."
+                hint: String(localized: "Your user key is at the top of your pushover.net dashboard.")
             )
         }
     }
@@ -862,31 +864,31 @@ private struct EmailCard: View {
 
     var body: some View {
         ChannelCard(
-            title: "Email notifications",
-            description: "Emails one or more addresses through your own mail server (SMTP) \(channelWhat)",
-            removeLabel: "Remove Email",
-            successMessage: "Connected — check the inbox for a test email.",
+            title: String(localized: "Email notifications"),
+            description: String(localized: "Emails one or more addresses through your own mail server (SMTP) whenever something is grabbed, downloaded, or a request is approved/rejected."),
+            removeLabel: String(localized: "Remove Email"),
+            successMessage: String(localized: "Connected — check the inbox for a test email."),
             connected: settings.connected,
             save: { [request] in try await $0.integrations.email.save(request) },
             remove: { try await $0.integrations.email.remove() },
             reset: { password = "" }
         ) {
-            ChannelField(label: "SMTP server", text: $host, placeholder: "smtp.gmail.com")
-            ChannelField(label: "Port", text: $port, placeholder: "587", hint: "587 for most servers; 465 with \"Secure connection\" on.")
-            ChannelField(label: "Username", text: $username, placeholder: "Leave blank if the server needs none")
+            ChannelField(label: String(localized: "SMTP server"), text: $host, placeholder: "smtp.gmail.com")
+            ChannelField(label: String(localized: "Port"), text: $port, placeholder: "587", hint: String(localized: "587 for most servers; 465 with \"Secure connection\" on."))
+            ChannelField(label: String(localized: "Username"), text: $username, placeholder: String(localized: "Leave blank if the server needs none"))
             ChannelField(
-                label: "Password",
+                label: String(localized: "Password"),
                 text: $password,
                 placeholder: settings.connected ? keepSavedPlaceholder : "",
                 secure: true,
-                hint: "For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one."
+                hint: String(localized: "For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one.")
             )
-            ChannelField(label: "From address", text: $from, placeholder: "marquee@example.com")
+            ChannelField(label: String(localized: "From address"), text: $from, placeholder: "marquee@example.com")
             ChannelField(
-                label: "Send to",
+                label: String(localized: "Send to"),
                 text: $to,
-                placeholder: "you@example.com, partner@example.com",
-                hint: "One or more addresses, separated by commas."
+                placeholder: "you@example.com, partner@example.com", // i18n-ignore
+                hint: String(localized: "One or more addresses, separated by commas.")
             )
             Toggle("Secure connection from the start (TLS, usually port 465)", isOn: $secure)
                 .toggleStyle(.checkbox)
@@ -941,17 +943,17 @@ private struct TraktCard: View {
         VStack(alignment: .leading, spacing: 12) {
             SecretCard(
                 title: "Trakt",
-                description: "Import a public Trakt list or watchlist as requests — doesn't require Trakt sign-in, just a free API app.",
-                fieldLabel: "Client ID",
-                placeholder: "From a Trakt API app at trakt.tv/oauth/applications",
-                removeLabel: "Remove saved client ID",
+                description: String(localized: "Import a public Trakt list or watchlist as requests — doesn't require Trakt sign-in, just a free API app."),
+                fieldLabel: String(localized: "Client ID"),
+                placeholder: String(localized: "From a Trakt API app at trakt.tv/oauth/applications"),
+                removeLabel: String(localized: "Remove saved client ID"),
                 connected: connected,
                 save: { try await $0.integrations.trakt.save($1) },
                 remove: { try await $0.integrations.trakt.remove() }
             )
             if connected {
                 VStack(alignment: .leading, spacing: 10) {
-                    SettingsField(label: "Import a list", text: $listURL, placeholder: "https://trakt.tv/users/username/lists/best-of-2024")
+                    SettingsField(label: String(localized: "Import a list"), text: $listURL, placeholder: "https://trakt.tv/users/username/lists/best-of-2024")
                     Text("Also works with a watchlist URL (…/users/username/watchlist). The list must be public on Trakt's side. Matching titles not already owned or requested are added to your pending Requests queue.")
                         .font(.system(size: 11.5))
                         .foregroundStyle(Theme.textMuted)
@@ -974,8 +976,12 @@ private struct TraktCard: View {
         Task {
             do {
                 let result = try await api.integrations.trakt.importList(url: url)
-                let skipped = result.skippedCount > 0 ? " (\(result.skippedCount) skipped — already owned or requested)." : "."
-                importMessage = ("Imported \(result.importedCount) title\(result.importedCount == 1 ? "" : "s")\(skipped)", false)
+                let imported = result.importedCount
+                let skipped = result.skippedCount
+                let text = skipped > 0
+                    ? String(localized: "Imported \(imported) titles (\(skipped) skipped — already owned or requested).")
+                    : String(localized: "Imported \(imported) titles.")
+                importMessage = (text, false)
             } catch {
                 importMessage = (error.localizedDescription, true)
             }
@@ -1005,20 +1011,20 @@ private struct ArrWebhooksCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: isLegacy ? "Older shared webhook URLs" : "Sonarr / Radarr webhooks",
+            title: isLegacy ? String(localized: "Older shared webhook URLs") : String(localized: "Sonarr / Radarr webhooks"),
             description: isLegacy
-                ? "Each server under Download Clients now has its own webhook URL — use those for anything new. These shared URLs from before keep working for servers already set up with them."
-                : "Your server listens for these so Radarr/Sonarr can tell it the moment something starts or finishes downloading. Paste them into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download).",
+                ? String(localized: "Each server under Download Clients now has its own webhook URL — use those for anything new. These shared URLs from before keep working for servers already set up with them.")
+                : String(localized: "Your server listens for these so Radarr/Sonarr can tell it the moment something starts or finishes downloading. Paste them into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download)."),
             connected: true,
-            connectedLabel: "Listening"
+            connectedLabel: String(localized: "Listening")
         ) {
-            CopyField(value: live.radarrUrl, label: "Radarr webhook URL")
-            CopyField(value: live.sonarrUrl, label: "Sonarr webhook URL")
+            CopyField(value: live.radarrUrl, label: String(localized: "Radarr webhook URL"))
+            CopyField(value: live.sonarrUrl, label: String(localized: "Sonarr webhook URL"))
             if radarr4kConnected, let url = live.radarr4kUrl {
-                CopyField(value: url, label: "4K Radarr webhook URL")
+                CopyField(value: url, label: String(localized: "4K Radarr webhook URL"))
             }
             if sonarr4kConnected, let url = live.sonarr4kUrl {
-                CopyField(value: url, label: "4K Sonarr webhook URL")
+                CopyField(value: url, label: String(localized: "4K Sonarr webhook URL"))
             }
             if let error { InlineMessage(text: error) }
             if confirming {

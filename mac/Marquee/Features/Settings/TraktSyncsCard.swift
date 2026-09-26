@@ -10,8 +10,8 @@ import Observation
 @MainActor
 @Observable
 final class TraktSyncsModel {
-    static let bothOffMessage = "Pick movies, TV shows or both."
-    static let blankLinkMessage = "Paste a Trakt list or watchlist link, like https://trakt.tv/users/someone/watchlist."
+    static let bothOffMessage = String(localized: "Pick movies, TV shows or both.")
+    static let blankLinkMessage = String(localized: "Paste a Trakt list or watchlist link, like https://trakt.tv/users/someone/watchlist.")
 
     /// nil until the first load answers.
     private(set) var syncs: [API.TraktSync]?
@@ -158,17 +158,23 @@ final class TraktSyncsModel {
 
     /// "Checked 2 hours ago · 4 titles requested so far", or "Not checked yet".
     static func statusLine(_ sync: API.TraktSync, now: Date = Date()) -> String {
-        var line = sync.lastSyncedAt.map { "Checked \(Format.timeAgo($0, now: now))" } ?? "Not checked yet"
+        var parts = [
+            sync.lastSyncedAt.map { date in
+                let when = Format.timeAgo(date, now: now)
+                return String(localized: "Checked \(when)")
+            } ?? String(localized: "Not checked yet")
+        ]
         if sync.requestedCount > 0 {
-            line += " · \(sync.requestedCount) \(sync.requestedCount == 1 ? "title" : "titles") requested so far"
+            let count = sync.requestedCount
+            parts.append(String(localized: "\(count) titles requested so far"))
         }
-        return line
+        return parts.joined(separator: " · ")
     }
 
     /// "Anna's" when it isn't yours; nil for your own.
     static func ownerLabel(_ sync: API.TraktSync, viewerId: UUID?) -> String? {
         guard let owner = sync.owner, owner.id != viewerId else { return nil }
-        return "\(owner.label)'s"
+        return String(localized: "\(owner.label)'s")
     }
 }
 
@@ -181,7 +187,7 @@ struct TraktSyncsSection: View {
     var body: some View {
         Group {
             if trakt.isVisible {
-                SettingsSectionLabel(text: "Trakt lists")
+                SettingsSectionLabel(text: String(localized: "Trakt lists"))
                 TraktSyncsCard(trakt: trakt)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardSurface()
@@ -325,9 +331,9 @@ struct TraktSyncsCard: View {
     private var addForm: some View {
         VStack(alignment: .leading, spacing: 10) {
             if !trakt.available {
-                InlineMessage(text: "Trakt isn't connected. The admin can connect it in Settings → Integrations.")
+                InlineMessage(text: String(localized: "Trakt isn't connected. The admin can connect it in Settings → Integrations."))
             }
-            SettingsField(label: "Trakt link", text: $trakt.url, placeholder: "https://trakt.tv/users/someone/watchlist")
+            SettingsField(label: String(localized: "Trakt link"), text: $trakt.url, placeholder: "https://trakt.tv/users/someone/watchlist")
             HStack(spacing: 16) {
                 Toggle("Movies", isOn: $trakt.movies)
                 Toggle("TV shows", isOn: $trakt.tv)

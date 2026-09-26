@@ -228,7 +228,7 @@ final class TitleDetailModel {
         Task {
             do {
                 try await api.titles.searchNow(id.mediaType, id: id.tmdbId)
-                trackingMessage = ("Search queued.", false)
+                trackingMessage = (String(localized: "Search queued."), false)
             } catch {
                 trackingMessage = (error.localizedDescription, true)
             }
@@ -312,8 +312,8 @@ final class TitleDetailModel {
                 }
             }
             addAllResult = failures > 0
-                ? "Added \(targets.count - failures) of \(targets.count) — \(failures) failed"
-                : "Added all \(targets.count)"
+                ? String(localized: "Added \(targets.count - failures) of \(targets.count) — \(failures) failed")
+                : String(localized: "Added all \(targets.count)")
             isAddingAll = false
             // The whole page, not just this title's status: the collection's
             // posters need their new badges, and "Add all" its new count.

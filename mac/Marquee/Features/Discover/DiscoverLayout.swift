@@ -98,16 +98,16 @@ extension API.DiscoverShelf {
     /// The heading the page shows for a fixed-key shelf.
     var title: String {
         switch self {
-        case .recentlyAdded: return "Recently Added"
-        case .trending: return "Trending"
-        case .popularMovies: return "Popular Movies"
-        case .movieGenres: return "Movie Genres"
-        case .upcomingMovies: return "Upcoming Movies"
-        case .studios: return "Studios"
-        case .popularSeries: return "Popular Series"
-        case .seriesGenres: return "Series Genres"
-        case .upcomingSeries: return "Upcoming Series"
-        case .networks: return "Networks"
+        case .recentlyAdded: return String(localized: "Recently Added")
+        case .trending: return String(localized: "Trending")
+        case .popularMovies: return String(localized: "Popular Movies")
+        case .movieGenres: return String(localized: "Movie Genres")
+        case .upcomingMovies: return String(localized: "Upcoming Movies")
+        case .studios: return String(localized: "Studios")
+        case .popularSeries: return String(localized: "Popular Series")
+        case .seriesGenres: return String(localized: "Series Genres")
+        case .upcomingSeries: return String(localized: "Upcoming Series")
+        case .networks: return String(localized: "Networks")
         }
     }
 }

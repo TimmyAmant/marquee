@@ -211,7 +211,7 @@ struct APIClient: Sendable {
             return try decoder.decode(Response.self, from: data)
         } catch {
             logger.error("Decoding \(path, privacy: .public) failed: \(String(describing: error), privacy: .public)")
-            throw APIError.server("Your Marquee server sent a response this version of the app couldn't read.")
+            throw APIError.server(String(localized: "Your Marquee server sent a response this version of the app couldn't read."))
         }
     }
 
@@ -220,7 +220,7 @@ struct APIClient: Sendable {
     /// sent with the bearer token. Only ever this server: a full URL is refused.
     func data(atServerPath path: String, timeout: TimeInterval = requestTimeout) async throws -> Data {
         guard path.hasPrefix("/"), !path.hasPrefix("//") else {
-            throw APIError.invalid("Invalid request path: \(path)")
+            throw APIError.invalid(String(localized: "Invalid request path: \(path)"))
         }
         let request = try makeRequest(.get, path, accept: "image/*", timeout: timeout)
         let data: Data
@@ -308,11 +308,14 @@ struct APIClient: Sendable {
         timeout: TimeInterval
     ) throws -> URLRequest {
         guard let url = HTTPRequest.url(base: baseURL.absoluteString, path: path, query: query) else {
-            throw APIError.invalid("Invalid request path: \(path)")
+            throw APIError.invalid(String(localized: "Invalid request path: \(path)"))
         }
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = method.rawValue
         request.setValue(accept, forHTTPHeaderField: "Accept")
+        // Server-written text (errors, labels) in the language the app is
+        // showing — the account's own choice outranks it once signed in.
+        request.setValue(AppLanguage.acceptLanguageHeader, forHTTPHeaderField: "Accept-Language")
         if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -337,7 +340,7 @@ struct APIClient: Sendable {
             let container = try decoder.singleValueContainer()
             let string = try container.decode(String.self)
             guard let date = parseDate(string) else {
-                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected an ISO-8601 date, got \(string)")
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected an ISO-8601 date, got \(string)") // i18n-ignore
             }
             return date
         }
@@ -370,7 +373,7 @@ struct APIClient: Sendable {
         do {
             return try encoder.encode(body)
         } catch {
-            throw APIError.invalid("Couldn't encode the request: \(error.localizedDescription)")
+            throw APIError.invalid(String(localized: "Couldn't encode the request: \(error.localizedDescription)"))
         }
     }
 }

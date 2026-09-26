@@ -51,7 +51,7 @@ struct StatusColorKey: View {
 /// name and meaning, then the Radarr/Sonarr footnote.
 struct StatusColorKeyList: View {
     /// Shown under the rows (status-legend.tsx's footnote).
-    nonisolated static let footnote = "Same colors as Radarr and Sonarr."
+    nonisolated static var footnote: String { String(localized: "Same colors as Radarr and Sonarr.") }
 
     var showsHeading = true
     var rowSpacing: CGFloat = 10

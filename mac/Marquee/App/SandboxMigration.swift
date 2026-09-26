@@ -20,7 +20,7 @@ enum SandboxMigration {
     static var containerPreferences: URL {
         let identifier = Bundle.main.bundleIdentifier ?? "com.timmyamant.Marquee"
         return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Containers/\(identifier)/Data/Library/Preferences/\(identifier).plist")
+            .appendingPathComponent("Library/Containers/\(identifier)/Data/Library/Preferences/\(identifier).plist") // i18n-ignore
     }
 
     /// Copies every setting from `containerPreferences` that `defaults`

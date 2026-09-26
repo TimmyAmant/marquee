@@ -34,9 +34,9 @@ extension API {
 
         var label: String {
             switch self {
-            case .member: return "Member"
-            case .trusted: return "Trusted"
-            case .custom: return "Custom"
+            case .member: return String(localized: "Member")
+            case .trusted: return String(localized: "Trusted")
+            case .custom: return String(localized: "Custom")
             }
         }
 
@@ -171,39 +171,39 @@ extension API {
         var id: String { title }
 
         static let all: [PermissionGroup] = [
-            PermissionGroup(title: "Requests", items: [
-                Item(permission: .requestMovies, label: "Request movies", description: "Ask for movies to be added."),
-                Item(permission: .requestTv, label: "Request TV", description: "Ask for shows, or some of their seasons, to be added."),
-                Item(permission: .request4kMovies, label: "Request 4K movies", description: "Ask for the 4K copy of a movie, once there's a 4K Radarr."),
-                Item(permission: .request4kTv, label: "Request 4K TV", description: "Ask for the 4K copy of a show, once there's a 4K Sonarr."),
+            PermissionGroup(title: String(localized: "Requests"), items: [
+                Item(permission: .requestMovies, label: String(localized: "Request movies"), description: String(localized: "Ask for movies to be added.")),
+                Item(permission: .requestTv, label: String(localized: "Request TV"), description: String(localized: "Ask for shows, or some of their seasons, to be added.")),
+                Item(permission: .request4kMovies, label: String(localized: "Request 4K movies"), description: String(localized: "Ask for the 4K copy of a movie, once there's a 4K Radarr.")),
+                Item(permission: .request4kTv, label: String(localized: "Request 4K TV"), description: String(localized: "Ask for the 4K copy of a show, once there's a 4K Sonarr.")),
                 Item(
-                    permission: .advancedRequests, label: "Advanced request options",
-                    description: "Pick the server, quality profile, folder and tags when asking for or approving a title."
+                    permission: .advancedRequests, label: String(localized: "Advanced request options"),
+                    description: String(localized: "Pick the server, quality profile, folder and tags when asking for or approving a title.")
                 ),
-                Item(permission: .bypassLimits, label: "No request limits", description: "Request limits don't apply to them."),
+                Item(permission: .bypassLimits, label: String(localized: "No request limits"), description: String(localized: "Request limits don't apply to them.")),
             ]),
-            PermissionGroup(title: "Approved straight away", items: [
-                Item(permission: .autoApproveMovies, label: "Movies", description: "Their movie requests skip the review queue."),
-                Item(permission: .autoApproveTv, label: "TV", description: "Their TV requests skip the review queue."),
-                Item(permission: .autoApprove4kMovies, label: "4K movies", description: "Their 4K movie requests skip the review queue."),
-                Item(permission: .autoApprove4kTv, label: "4K TV", description: "Their 4K TV requests skip the review queue."),
+            PermissionGroup(title: String(localized: "Approved straight away"), items: [
+                Item(permission: .autoApproveMovies, label: String(localized: "Movies"), description: String(localized: "Their movie requests skip the review queue.")),
+                Item(permission: .autoApproveTv, label: String(localized: "TV"), description: String(localized: "Their TV requests skip the review queue.")),
+                Item(permission: .autoApprove4kMovies, label: String(localized: "4K movies"), description: String(localized: "Their 4K movie requests skip the review queue.")),
+                Item(permission: .autoApprove4kTv, label: String(localized: "4K TV"), description: String(localized: "Their 4K TV requests skip the review queue.")),
             ]),
-            PermissionGroup(title: "Helping run things", items: [
-                Item(permission: .viewRequests, label: "See everyone's requests", description: "The Requests page lists what everyone has asked for."),
+            PermissionGroup(title: String(localized: "Helping run things"), items: [
+                Item(permission: .viewRequests, label: String(localized: "See everyone's requests"), description: String(localized: "The Requests page lists what everyone has asked for.")),
                 Item(
-                    permission: .reviewRequests, label: "Review requests",
-                    description: "Approve, decline and change other people's requests, and handle Can't find and Couldn't add."
+                    permission: .reviewRequests, label: String(localized: "Review requests"),
+                    description: String(localized: "Approve, decline and change other people's requests, and handle Can't find and Couldn't add.")
                 ),
-                Item(permission: .manageIssues, label: "Handle problem reports", description: "See everyone's problem reports and mark them fixed."),
-                Item(permission: .reportIssues, label: "Report problems", description: "Tell you when something's wrong with a title."),
-                Item(permission: .manageBlocklist, label: "Manage the blocklist", description: "Choose titles nobody can request."),
+                Item(permission: .manageIssues, label: String(localized: "Handle problem reports"), description: String(localized: "See everyone's problem reports and mark them fixed.")),
+                Item(permission: .reportIssues, label: String(localized: "Report problems"), description: String(localized: "Tell you when something's wrong with a title.")),
+                Item(permission: .manageBlocklist, label: String(localized: "Manage the blocklist"), description: String(localized: "Choose titles nobody can request.")),
             ]),
         ]
 
         /// The line under "See everyone's requests" while it's locked on.
-        static let lockedViewRequestsLine = "Comes with reviewing requests."
+        static let lockedViewRequestsLine = String(localized: "Comes with reviewing requests.")
         /// Under the switches.
-        static let footer = "Settings, integrations, household accounts, API keys and sign-in stay yours alone."
+        static let footer = String(localized: "Settings, integrations, household accounts, API keys and sign-in stay yours alone.")
     }
 }
 

@@ -120,6 +120,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
             },
             Case(method: "POST", path: "/auth/logout", response: "ok") { try await $0.auth.logout() },
             Case(method: "GET", path: "/me", response: "me") { _ = try await $0.me() },
+            Case(method: "PATCH", path: "/me", body: #"{"language":"fr"}"#, response: "me") { _ = try await $0.setLanguage("fr") },
             Case(method: "GET", path: "/badges", response: "badges") { _ = try await $0.badges() },
             // Discover / browse / search
             Case(method: "GET", path: "/discover", response: "discover") { _ = try await $0.discover.shelves() },
@@ -437,8 +438,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 154, "docs/api-v1.md documents 154 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 154, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 155, "docs/api-v1.md documents 155 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 155, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

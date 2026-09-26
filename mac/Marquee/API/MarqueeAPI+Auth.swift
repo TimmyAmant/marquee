@@ -8,6 +8,13 @@ extension MarqueeAPI {
         try await transport.get("/me")
     }
 
+    /// `PATCH /me` (0.50+): the language this account reads Marquee in
+    /// (an `AppLanguage` code), or nil to follow the device. Answers the
+    /// whole `/me`, already in the new language.
+    func setLanguage(_ code: String?) async throws -> API.User {
+        try await transport.mutate(.patch, "/me", body: MeLanguageUpdate(language: code), changes: .users)
+    }
+
     /// `GET /badges` — unread notifications and (admin) pending requests in one cheap call.
     func badges() async throws -> API.Badges {
         try await transport.get("/badges")

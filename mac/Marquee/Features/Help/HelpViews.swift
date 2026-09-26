@@ -168,7 +168,7 @@ struct ChangelogView: View {
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundStyle(Theme.textPrimary)
                                     if index == 0 {
-                                        TonePill(text: "Latest", tone: .accent, small: true)
+                                        TonePill(text: String(localized: "Latest"), tone: .accent, small: true)
                                     }
                                     Spacer()
                                     Button {

@@ -22,11 +22,11 @@ struct SearchResultsView: View {
                     }
                 } else if let results {
                     if results.isEmpty {
-                        EmptyStateView(title: "No results for “\(query)”.", systemImage: "magnifyingglass")
+                        EmptyStateView(title: String(localized: "No results for “\(query)”."), systemImage: "magnifyingglass")
                     }
 
                     if !results.people.isEmpty {
-                        section("People") {
+                        section(String(localized: "People")) {
                             PosterGrid {
                                 ForEach(results.people) { person in
                                     PosterCard(
@@ -44,7 +44,7 @@ struct SearchResultsView: View {
                     }
 
                     if !results.studios.isEmpty {
-                        section("Studios") {
+                        section(String(localized: "Studios")) {
                             FlowLayout(spacing: 10, lineSpacing: 10) {
                                 ForEach(results.studios) { studio in
                                     StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
@@ -54,24 +54,24 @@ struct SearchResultsView: View {
                     }
 
                     if !results.titles.isEmpty {
-                        section("Titles", showsColorKey: true) { titleGrid(results.titles) }
+                        section(String(localized: "Titles"), showsColorKey: true) { titleGrid(results.titles) }
                     }
 
                     if let theme = results.theme, !theme.items.isEmpty {
-                        section("\(theme.label) movies & TV", showsColorKey: results.titles.isEmpty) {
+                        section(String(localized: "\(theme.label) movies & TV"), showsColorKey: results.titles.isEmpty) {
                             titleGrid(theme.items)
                         }
                     }
                 } else if let error {
                     EmptyStateView(
-                        title: "Couldn't search",
+                        title: String(localized: "Couldn't search"),
                         message: error.localizedDescription,
                         systemImage: "exclamationmark.triangle",
-                        actionTitle: "Try again",
+                        actionTitle: String(localized: "Try again"),
                         action: { model.reload() }
                     )
                 } else {
-                    LoadingView(label: "Searching…")
+                    LoadingView(label: String(localized: "Searching…"))
                 }
             }
             // Left-aligned with the shelf pages' 28pt gutter, not centred,

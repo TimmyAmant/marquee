@@ -56,8 +56,8 @@ extension API {
         /// "Movie" / "TV" (the search suggestion pill wording).
         var label: String {
             switch self {
-            case .movie: return "Movie"
-            case .tv: return "TV"
+            case .movie: return String(localized: "Movie")
+            case .tv: return String(localized: "TV")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -65,8 +65,8 @@ extension API {
         /// "Movies" / "Series" (navigation menu and page titles).
         var pluralLabel: String {
             switch self {
-            case .movie: return "Movies"
-            case .tv: return "Series"
+            case .movie: return String(localized: "Movies")
+            case .tv: return String(localized: "Series")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -102,9 +102,9 @@ extension API {
 
         var label: String {
             switch self {
-            case .admin: return "Admin"
-            case .member: return "Member"
-            case .trusted: return "Trusted"
+            case .admin: return String(localized: "Admin")
+            case .member: return String(localized: "Member")
+            case .trusted: return String(localized: "Trusted")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -169,12 +169,12 @@ extension API {
         /// The title page badge.
         var label: String {
             switch self {
-            case .owned: return "Already in your library"
-            case .trackedDownloading: return "Downloading"
-            case .trackedMonitored: return "Missing"
-            case .trackedUnmonitored: return "Not monitored"
-            case .comingSoon: return "Coming soon"
-            case .untracked: return "Not in your library"
+            case .owned: return String(localized: "Already in your library")
+            case .trackedDownloading: return String(localized: "Downloading")
+            case .trackedMonitored: return String(localized: "Missing")
+            case .trackedUnmonitored: return String(localized: "Not monitored")
+            case .comingSoon: return String(localized: "Coming soon")
+            case .untracked: return String(localized: "Not in your library")
             case let .unknown(raw): return raw
             }
         }
@@ -182,12 +182,12 @@ extension API {
         /// The poster card badge.
         var compactLabel: String {
             switch self {
-            case .owned: return "Owned"
-            case .trackedDownloading: return "Downloading"
-            case .trackedMonitored: return "Missing"
-            case .trackedUnmonitored: return "Not monitored"
-            case .comingSoon: return "Coming soon"
-            case .untracked: return "Not owned"
+            case .owned: return String(localized: "Owned")
+            case .trackedDownloading: return String(localized: "Downloading")
+            case .trackedMonitored: return String(localized: "Missing")
+            case .trackedUnmonitored: return String(localized: "Not monitored")
+            case .comingSoon: return String(localized: "Coming soon")
+            case .untracked: return String(localized: "Not owned")
             case let .unknown(raw): return raw
             }
         }
@@ -195,12 +195,12 @@ extension API {
         /// The short name lists and the color key use (status-tone.ts `name`).
         var name: String {
             switch self {
-            case .owned: return "In your library"
-            case .trackedDownloading: return "Downloading"
-            case .trackedMonitored: return "Missing"
-            case .trackedUnmonitored: return "Not monitored"
-            case .comingSoon: return "Coming soon"
-            case .untracked: return "Not in your library"
+            case .owned: return String(localized: "In your library")
+            case .trackedDownloading: return String(localized: "Downloading")
+            case .trackedMonitored: return String(localized: "Missing")
+            case .trackedUnmonitored: return String(localized: "Not monitored")
+            case .comingSoon: return String(localized: "Coming soon")
+            case .untracked: return String(localized: "Not in your library")
             case let .unknown(raw): return raw
             }
         }
@@ -208,12 +208,12 @@ extension API {
         /// One line for the color key (status-tone.ts `meaning`).
         var meaning: String {
             switch self {
-            case .owned: return "The file is in your library, ready to watch."
-            case .trackedDownloading: return "It's downloading or queued right now."
-            case .trackedMonitored: return "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking."
-            case .trackedUnmonitored: return "In Sonarr/Radarr but not monitored — it won't download on its own."
-            case .comingSoon: return "Added, but it hasn't been released yet."
-            case .untracked: return "Not added yet. Posters get no colored strip."
+            case .owned: return String(localized: "The file is in your library, ready to watch.")
+            case .trackedDownloading: return String(localized: "It's downloading or queued right now.")
+            case .trackedMonitored: return String(localized: "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.")
+            case .trackedUnmonitored: return String(localized: "In Sonarr/Radarr but not monitored — it won't download on its own.")
+            case .comingSoon: return String(localized: "Added, but it hasn't been released yet.")
+            case .untracked: return String(localized: "Not added yet. Posters get no colored strip.")
             case .unknown: return ""
             }
         }
@@ -412,9 +412,9 @@ extension API {
         /// The website's pill: "Actor", "Movie", "TV".
         var label: String {
             switch self {
-            case .person: return "Actor"
-            case .movie: return "Movie"
-            case .tv: return "TV"
+            case .person: return String(localized: "Actor")
+            case .movie: return String(localized: "Movie")
+            case .tv: return String(localized: "TV")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -457,12 +457,12 @@ extension API {
         /// The report dialog's radio buttons and the Requests page rows.
         var label: String {
             switch self {
-            case .video: return "Bad video quality"
-            case .audio: return "Audio problem"
-            case .subtitles: return "Subtitles missing or wrong"
-            case .wontPlay: return "Won't play"
-            case .wrongTitle: return "Wrong movie or episode"
-            case .other: return "Something else"
+            case .video: return String(localized: "Bad video quality")
+            case .audio: return String(localized: "Audio problem")
+            case .subtitles: return String(localized: "Subtitles missing or wrong")
+            case .wontPlay: return String(localized: "Won't play")
+            case .wrongTitle: return String(localized: "Wrong movie or episode")
+            case .other: return String(localized: "Something else")
             case let .unknown(raw): return raw
             }
         }

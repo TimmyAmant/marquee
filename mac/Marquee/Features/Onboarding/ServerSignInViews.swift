@@ -29,17 +29,17 @@ struct SetupForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
-                title: "Set up Marquee",
-                message: "Create the first account on this server. It becomes the admin, and accounts for other household members can be added later from Settings."
+                title: String(localized: "Set up Marquee"),
+                message: String(localized: "Create the first account on this server. It becomes the admin, and accounts for other household members can be added later from Settings.")
             )
             if let server = model.session.server {
                 ServerChip(address: server, version: model.session.serverInfo?.version) {
                     model.changeServer()
                 }
             }
-            AuthField(label: "Name", text: $displayName, contentType: .name, autofocus: true)
-            AuthField(label: "Username", text: $username, contentType: .username)
-            AuthField(label: "Password", text: $password, secure: true, contentType: .newPassword)
+            AuthField(label: String(localized: "Name"), text: $displayName, contentType: .name, autofocus: true)
+            AuthField(label: String(localized: "Username"), text: $username, contentType: .username)
+            AuthField(label: String(localized: "Password"), text: $password, secure: true, contentType: .newPassword)
             if let error { InlineMessage(text: error) }
             Button {
                 submit()
@@ -141,8 +141,8 @@ struct SignInForm: View {
 
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
-                title: "Welcome back",
-                message: jellyfin ? "Use the username and password you use for \(name)." : "Sign in to your Marquee account."
+                title: String(localized: "Welcome back"),
+                message: jellyfin ? String(localized: "Use the username and password you use for \(name).") : String(localized: "Sign in to your Marquee account.")
             )
             if let server = model.session.server {
                 ServerChip(address: server, version: info?.version) {
@@ -158,21 +158,21 @@ struct SignInForm: View {
             } else {
                 // A remembered username puts the cursor straight in the password.
                 AuthField(
-                    label: jellyfin ? "\(name) username" : "Username", text: $username, contentType: .username,
+                    label: jellyfin ? String(localized: "\(name) username") : String(localized: "Username"), text: $username, contentType: .username,
                     autofocus: username.isEmpty
                 )
                 AuthField(
-                    label: jellyfin ? "\(name) password" : "Password", text: $password, secure: true, contentType: .password,
+                    label: jellyfin ? String(localized: "\(name) password") : String(localized: "Password"), text: $password, secure: true, contentType: .password,
                     autofocus: !username.isEmpty
                 )
                 if info?.isDegraded == true {
-                    InlineMessage(text: "Your server can't reach its database right now, so signing in may fail.")
+                    InlineMessage(text: String(localized: "Your server can't reach its database right now, so signing in may fail."))
                 }
                 if let error { InlineMessage(text: error) }
                 Button {
                     submit(jellyfin: jellyfin)
                 } label: {
-                    Text(pending ? "Signing in…" : (jellyfin ? "Sign in with \(name)" : "Sign in")).frame(maxWidth: .infinity)
+                    Text(pending ? String(localized: "Signing in…") : (jellyfin ? String(localized: "Sign in with \(name)") : String(localized: "Sign in"))).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(AccentButtonStyle())
                 .keyboardShortcut(.defaultAction)
@@ -352,7 +352,7 @@ struct SignInForm: View {
         wait(for: .plex) {
             let start = try await session.startPlexSignIn()
             guard let url = start.url else {
-                throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
+                throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
             }
             openURL(url)
             return try await session.finishPlexSignIn(start)
@@ -365,7 +365,7 @@ struct SignInForm: View {
             let start = try await session.startSsoSignIn()
             // Only https, or the server's own address — never anything else.
             guard let url = start.url(server: session.server?.baseURL) else {
-                throw APIError.server("Your Marquee server sent a sign-in link this app couldn't open.")
+                throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
             }
             openURL(url)
             return try await session.finishSsoSignIn(start)
@@ -459,25 +459,25 @@ struct ServerUnreachableView: View {
 
     private func title(_ problem: ProbeOutcome) -> String {
         switch problem {
-        case .legacy, .incompatible: return "Update needed"
-        case .notMarquee: return "That's not your Marquee server"
-        case .unreachable(.localNetworkDenied): return "Allow Local Network access"
-        default: return "Can't reach your server"
+        case .legacy, .incompatible: return String(localized: "Update needed")
+        case .notMarquee: return String(localized: "That's not your Marquee server")
+        case .unreachable(.localNetworkDenied): return String(localized: "Allow Local Network access")
+        default: return String(localized: "Can't reach your server")
         }
     }
 
     private func explanation(_ problem: ProbeOutcome) -> String {
         switch problem {
         case .legacy:
-            return "Your Marquee server is running an older version. Update it, then try again."
+            return String(localized: "Your Marquee server is running an older version. Update it, then try again.")
         case .incompatible:
-            return "Your Marquee server is newer than this app. Update Marquee for Mac, then try again."
+            return String(localized: "Your Marquee server is newer than this app. Update Marquee for Mac, then try again.")
         case .notMarquee:
-            return "Something else is answering at your server's address now. Its IP address may have changed."
+            return String(localized: "Something else is answering at your server's address now. Its IP address may have changed.")
         case .unreachable(.localNetworkDenied):
-            return "macOS is blocking Marquee from your home network. Turn it on in System Settings, then try again."
+            return String(localized: "macOS is blocking Marquee from your home network. Turn it on in System Settings, then try again.")
         default:
-            return "Make sure the computer running Marquee is on and connected to your network, then try again."
+            return String(localized: "Make sure the computer running Marquee is on and connected to your network, then try again.")
         }
     }
 }

@@ -25,7 +25,7 @@ struct EveryoneRequestRow: Hashable, Sendable, Identifiable {
         detailLine = request.detailLine
         requestedBy = request.requestedBy.label
         createdAt = request.createdAt
-        statusLabel = "Waiting for review"
+        statusLabel = String(localized: "Waiting for review")
         tone = .info
     }
 
@@ -37,7 +37,7 @@ struct EveryoneRequestRow: Hashable, Sendable, Identifiable {
         detailLine = request.detailLine
         requestedBy = request.requestedBy.label
         createdAt = request.createdAt
-        statusLabel = request.status == .pending ? "Waiting for review" : request.statusLabel
+        statusLabel = request.status == .pending ? String(localized: "Waiting for review") : request.statusLabel
         tone = request.status == .approved ? .owned : request.status == .pending ? .info : .neutral
     }
 

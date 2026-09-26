@@ -43,7 +43,7 @@ struct ShareTitleSheet: View {
     @ViewBuilder
     private var household: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Send to someone in the household")
+            sectionTitle(String(localized: "Send to someone in the household"))
             switch share.members {
             case .loading:
                 ProgressView().controlSize(.small)
@@ -117,7 +117,7 @@ struct ShareTitleSheet: View {
 
     private var linkSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Share a link")
+            sectionTitle(String(localized: "Share a link"))
             let kinds = share.linkKinds
             if kinds.count > 1 {
                 Picker("Link", selection: $share.linkKind) {

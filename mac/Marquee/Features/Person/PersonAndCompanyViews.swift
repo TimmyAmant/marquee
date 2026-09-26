@@ -15,18 +15,18 @@ struct PersonDetailView: View {
                     header(person)
                     MediaListView(
                         cards: person.credits,
-                        subtitleLabel: "Role",
-                        itemLabel: "credits",
+                        subtitleLabel: String(localized: "Role"),
+                        countLabel: { String(localized: "\($0) credits") },
                         showTypeFilter: true,
                         showSearch: true,
-                        emptyMessage: "No processed filmography found for this person yet."
+                        emptyMessage: String(localized: "No processed filmography found for this person yet.")
                     )
                 } else if let error {
                     EmptyStateView(
-                        title: "Couldn't load this person",
+                        title: String(localized: "Couldn't load this person"),
                         message: error,
                         systemImage: "person.crop.circle.badge.exclamationmark",
-                        actionTitle: "Try again",
+                        actionTitle: String(localized: "Try again"),
                         action: { model.reload() }
                     )
                 } else {
@@ -94,10 +94,12 @@ struct PersonDetailView: View {
                 }
                 HStack(spacing: 18) {
                     if let born = person.birthday {
-                        (Text("Born ").foregroundStyle(Theme.textMuted) + Text(born.longLabel))
+                        Text("Born \(Text(born.longLabel).foregroundStyle(Theme.textSecondary))")
+                            .foregroundStyle(Theme.textMuted)
                     }
                     if let died = person.deathday {
-                        (Text("Died ").foregroundStyle(Theme.textMuted) + Text(died.longLabel))
+                        Text("Died \(Text(died.longLabel).foregroundStyle(Theme.textSecondary))")
+                            .foregroundStyle(Theme.textMuted)
                     }
                     if let place = person.placeOfBirth.nonBlank {
                         Text(place)
@@ -147,21 +149,20 @@ struct CompanyDetailView: View {
                     header(company)
                     MediaListView(
                         cards: company.titles,
-                        itemLabel: "titles",
                         showTypeFilter: true,
                         showSearch: true,
-                        emptyMessage: "No titles found for this studio yet."
+                        emptyMessage: String(localized: "No titles found for this studio yet.")
                     )
                 } else if let error {
                     EmptyStateView(
-                        title: "Couldn't load this studio",
+                        title: String(localized: "Couldn't load this studio"),
                         message: error,
                         systemImage: "building.2",
-                        actionTitle: "Try again",
+                        actionTitle: String(localized: "Try again"),
                         action: { model.reload() }
                     )
                 } else {
-                    LoadingView(label: "Loading the catalog…")
+                    LoadingView(label: String(localized: "Loading the catalog…"))
                 }
             }
             .padding(.horizontal, Metrics.pagePadding)

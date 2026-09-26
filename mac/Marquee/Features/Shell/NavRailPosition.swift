@@ -23,10 +23,10 @@ enum NavRailPosition: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .left: return "Left"
-        case .right: return "Right"
-        case .top: return "Top"
-        case .bottom: return "Bottom"
+        case .left: return String(localized: "Left")
+        case .right: return String(localized: "Right")
+        case .top: return String(localized: "Top")
+        case .bottom: return String(localized: "Bottom")
         }
     }
 

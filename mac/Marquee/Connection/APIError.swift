@@ -49,13 +49,13 @@ enum APIError: LocalizedError, Equatable, Sendable {
         case "conflict": return .conflict(nonEmptyMessage)
         case "setup_complete": return .setupComplete
         case "upstream": return .upstream(nonEmptyMessage)
-        case "invalid": return .invalid(nonEmptyMessage ?? "The request was invalid.")
+        case "invalid": return .invalid(nonEmptyMessage ?? String(localized: "The request was invalid."))
         case "internal": return .server(nonEmptyMessage)
         default: break
         }
 
         switch statusCode {
-        case 400: return .invalid(nonEmptyMessage ?? "The request was invalid.")
+        case 400: return .invalid(nonEmptyMessage ?? String(localized: "The request was invalid."))
         case 401: return .unauthorized
         case 403: return .forbidden
         case 404: return .notFound
@@ -89,38 +89,38 @@ enum APIError: LocalizedError, Equatable, Sendable {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "Your session has ended. Please sign in again."
+            return String(localized: "Your session has ended. Please sign in again.")
         case .invalidCredentials:
-            return "Incorrect username or password."
+            return String(localized: "Incorrect username or password.")
         case let .rateLimited(message):
-            return message ?? "Too many attempts. Try again in a few minutes."
+            return message ?? String(localized: "Too many attempts. Try again in a few minutes.")
         case .forbidden:
-            return "Only an admin can do that."
+            return String(localized: "Only an admin can do that.")
         case .notFound:
-            return "That couldn't be found on your Marquee server."
+            return String(localized: "That couldn't be found on your Marquee server.")
         case let .conflict(message):
-            return message ?? "That conflicts with something already on your server."
+            return message ?? String(localized: "That conflicts with something already on your server.")
         case .setupComplete:
-            return "Setup has already been completed on this server. Please sign in instead."
+            return String(localized: "Setup has already been completed on this server. Please sign in instead.")
         case let .upstream(message):
-            return message ?? "A service connected to your Marquee server didn't respond."
+            return message ?? String(localized: "A service connected to your Marquee server didn't respond.")
         case let .invalid(message):
             return message
         case let .server(message):
-            return message ?? "Your Marquee server ran into a problem. Try again in a moment."
+            return message ?? String(localized: "Your Marquee server ran into a problem. Try again in a moment.")
         case let .network(error):
             switch error.code {
             case .timedOut:
-                return "Your Marquee server took too long to respond."
+                return String(localized: "Your Marquee server took too long to respond.")
             case .cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet, .dnsLookupFailed:
-                return "Couldn't reach your Marquee server. Check that it's running and on your network."
+                return String(localized: "Couldn't reach your Marquee server. Check that it's running and on your network.")
             case .cancelled:
-                return "The request was cancelled."
+                return String(localized: "The request was cancelled.")
             default:
-                return "Couldn't reach your Marquee server: \(error.localizedDescription)"
+                return String(localized: "Couldn't reach your Marquee server: \(error.localizedDescription)")
             }
         case .notMarquee:
-            return "The server didn't answer like a Marquee server. It may need updating to \(ServerInfo.minimumServerVersion) or later."
+            return String(localized: "The server didn't answer like a Marquee server. It may need updating to \(ServerInfo.minimumServerVersion) or later.")
         }
     }
 }

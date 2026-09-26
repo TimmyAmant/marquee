@@ -14,7 +14,7 @@ final class ConnectModel {
         case manual
     }
 
-    static let nothingFoundMessage = "We couldn't find a Marquee server on your network."
+    static let nothingFoundMessage = String(localized: "We couldn't find a Marquee server on your network.")
 
     var step: Step = .welcome
     let discovery = ServerDiscovery()

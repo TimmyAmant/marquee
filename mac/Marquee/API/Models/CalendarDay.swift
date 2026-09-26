@@ -37,7 +37,7 @@ extension API {
             let container = try decoder.singleValueContainer()
             let string = try container.decode(String.self)
             guard let value = CalendarDay(string) else {
-                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected a YYYY-MM-DD date, got \(string)")
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected a YYYY-MM-DD date, got \(string)") // i18n-ignore
             }
             self = value
         }
@@ -126,7 +126,7 @@ extension API {
             let container = try decoder.singleValueContainer()
             let string = try container.decode(String.self)
             guard let value = CalendarMonth(string) else {
-                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected a YYYY-MM month, got \(string)")
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected a YYYY-MM month, got \(string)") // i18n-ignore
             }
             self = value
         }

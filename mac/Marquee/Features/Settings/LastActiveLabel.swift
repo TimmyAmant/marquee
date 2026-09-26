@@ -9,24 +9,32 @@ import Foundation
 func lastActiveLabel(
     _ lastActiveAt: Date?,
     now: Date,
-    timeZone: TimeZone = .current
+    timeZone: TimeZone = .current,
+    locale: Locale = .current
 ) -> String {
-    guard let lastActiveAt else { return "Never signed in" }
+    guard let lastActiveAt else { return String(localized: "Never signed in") }
     let minute: TimeInterval = 60
     let hour = 60 * minute
     let day = 24 * hour
     let ago = now.timeIntervalSince(lastActiveAt)
-    if ago < 10 * minute { return "Active now" }
-    if ago < hour { return "Active \(Int((ago / minute).rounded(.down))) minutes ago" }
+    if ago < 10 * minute { return String(localized: "Active now") }
+    if ago < hour {
+        let minutes = Int((ago / minute).rounded(.down))
+        return String(localized: "Active \(minutes) minutes ago")
+    }
     if ago < day {
         let hours = Int((ago / hour).rounded(.down))
-        return "Active \(hours) \(hours == 1 ? "hour" : "hours") ago"
+        return String(localized: "Active \(hours) hours ago")
     }
-    if ago < 2 * day { return "Active yesterday" }
-    if ago < 30 * day { return "Active \(Int((ago / day).rounded(.down))) days ago" }
+    if ago < 2 * day { return String(localized: "Active yesterday") }
+    if ago < 30 * day {
+        let days = Int((ago / day).rounded(.down))
+        return String(localized: "Active \(days) days ago")
+    }
     let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.locale = locale
     formatter.timeZone = timeZone
-    formatter.dateFormat = "MMM d, yyyy"
-    return "Last active \(formatter.string(from: lastActiveAt))"
+    formatter.setLocalizedDateFormatFromTemplate("MMMdyyyy")
+    let date = formatter.string(from: lastActiveAt)
+    return String(localized: "Last active \(date)")
 }

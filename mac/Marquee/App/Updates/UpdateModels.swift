@@ -64,8 +64,8 @@ struct GitHubRelease: Decodable, Sendable {
 /// A release newer than this app, with a Mac download
 /// (.github/workflows/apps.yml attaches `Marquee-mac.zip` and its `.sha256`).
 struct AvailableUpdate: Equatable, Sendable {
-    static let assetName = "Marquee-mac.zip"
-    static let checksumAssetName = "Marquee-mac.zip.sha256"
+    static let assetName = "Marquee-mac.zip" // i18n-ignore
+    static let checksumAssetName = "Marquee-mac.zip.sha256" // i18n-ignore
 
     let version: AppVersion
     let releasePage: URL
@@ -135,25 +135,25 @@ enum UpdateError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .unreachable:
-            return "Couldn't reach GitHub to check for updates. Check your internet connection and try again."
+            return String(localized: "Couldn't reach GitHub to check for updates. Check your internet connection and try again.")
         case .unreadableRelease:
-            return "GitHub's answer about the latest release couldn't be read. Try again later."
+            return String(localized: "GitHub's answer about the latest release couldn't be read. Try again later.")
         case .noDownload:
-            return "The newest release doesn't have a Mac download yet. Try again in a few minutes."
+            return String(localized: "The newest release doesn't have a Mac download yet. Try again in a few minutes.")
         case .downloadFailed:
-            return "The download didn't finish. Check your internet connection and try again."
+            return String(localized: "The download didn't finish. Check your internet connection and try again.")
         case let .untrustedHost(host):
-            return "The download was sent somewhere unexpected (\(host)), so Marquee stopped it."
+            return String(localized: "The download was sent somewhere unexpected (\(host)), so Marquee stopped it.")
         case .sizeMismatch, .checksumMismatch:
-            return "The download didn't match what GitHub says it should be, so Marquee didn't install it."
+            return String(localized: "The download didn't match what GitHub says it should be, so Marquee didn't install it.")
         case .unzipFailed:
-            return "Marquee couldn't unpack the download."
+            return String(localized: "Marquee couldn't unpack the download.")
         case let .invalidApp(reason):
-            return "The download isn't a Marquee app this Mac can trust (\(reason)), so it wasn't installed."
+            return String(localized: "The download isn't a Marquee app this Mac can trust (\(reason)), so it wasn't installed.")
         case .cannotReplace:
-            return "Move Marquee to your Applications folder (or another folder you can write to), then try again."
+            return String(localized: "Move Marquee to your Applications folder (or another folder you can write to), then try again.")
         case .launchFailed:
-            return "Marquee couldn't start its installer."
+            return String(localized: "Marquee couldn't start its installer.")
         }
     }
 }

@@ -109,7 +109,7 @@ private struct EpisodeList: View {
                                     .foregroundStyle(Theme.textPrimary)
                                 Spacer(minLength: 8)
                                 if let hasFile = episode.hasFile {
-                                    TonePill(text: hasFile ? "Have it" : "Missing", tone: hasFile ? .owned : .neutral, small: true)
+                                    TonePill(text: hasFile ? String(localized: "Have it") : String(localized: "Missing"), tone: hasFile ? .owned : .neutral, small: true)
                                 }
                             }
                             HStack(spacing: 8) {
@@ -259,7 +259,9 @@ struct RelinkTitleSheet: View {
 
     private func save() {
         guard let target else {
-            error = "Enter a TMDb, IMDb\(mediaType == .tv ? " or TheTVDB" : "") id."
+            error = mediaType == .tv
+                ? String(localized: "Enter a TMDb, IMDb or TheTVDB id.")
+                : String(localized: "Enter a TMDb or IMDb id.")
             return
         }
         pending = true
