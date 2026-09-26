@@ -2,9 +2,6 @@ import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
-import { eq, inArray } from "drizzle-orm";
-import { db } from "@/lib/db/client";
-import { users } from "@/lib/db/schema";
 import { DEFAULT_LOCALE, parseLocale, resolveLocale, type Locale } from "@/lib/i18n/locales";
 import { translatorFor } from "@/lib/i18n/catalog";
 import type { Translator } from "@/lib/i18n/translator";
@@ -53,8 +50,20 @@ export async function getT(): Promise<Translator> {
   return translatorFor(await getLocale());
 }
 
+/** The database, loaded on first use: plenty of code that translates (and
+ * its tests) never needs it — only a recipient's language does. */
+async function database() {
+  const [{ db }, { users }, { eq, inArray }] = await Promise.all([
+    import("@/lib/db/client"),
+    import("@/lib/db/schema"),
+    import("drizzle-orm"),
+  ]);
+  return { db, users, eq, inArray };
+}
+
 /** An account's own language, or null when it follows its browser. */
 export async function languageOfUser(userId: string): Promise<Locale | null> {
+  const { db, users, eq } = await database();
   const [row] = await db.select({ language: users.language }).from(users).where(eq(users.id, userId)).limit(1);
   return parseLocale(row?.language);
 }
@@ -74,6 +83,7 @@ export async function translatorForUser(userId: string | null | undefined): Prom
 export async function translatorsForUsers(userIds: readonly string[]): Promise<Map<string, Translator>> {
   const result = new Map<string, Translator>();
   if (userIds.length === 0) return result;
+  const { db, users, inArray } = await database();
   const rows = await db
     .select({ id: users.id, language: users.language })
     .from(users)
@@ -89,6 +99,7 @@ export async function translatorsForUsers(userIds: readonly string[]): Promise<M
  * are written in: the admin's language, else English.
  */
 export async function householdLocale(): Promise<Locale> {
+  const { db, users, eq } = await database();
   const [row] = await db
     .select({ language: users.language })
     .from(users)
