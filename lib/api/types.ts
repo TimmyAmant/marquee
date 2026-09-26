@@ -554,6 +554,19 @@ export type IntegrationsSettings = {
   tvdb: { connected: boolean };
   discord: { connected: boolean };
   ntfy: { connected: boolean };
+  /** No token is ever returned; chatId shows where messages go. */
+  telegram: { connected: boolean; chatId: string | null };
+  pushover: { connected: boolean };
+  /** Everything but the SMTP password. */
+  email: {
+    connected: boolean;
+    host: string | null;
+    port: number | null;
+    secure: boolean;
+    username: string | null;
+    from: string | null;
+    to: string[];
+  };
   genericWebhook: { connected: boolean };
   arrWebhooks: { secret: string; radarrUrl: string; sonarrUrl: string };
 };

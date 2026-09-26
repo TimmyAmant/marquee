@@ -57,6 +57,9 @@ export const GET = withApi(async (request): Promise<IntegrationsSettings> => {
     tvdb: { connected: data.tvdbConnected },
     discord: { connected: data.discordConnected },
     ntfy: { connected: data.ntfyConnected },
+    telegram: data.channels.telegram,
+    pushover: data.channels.pushover,
+    email: data.channels.email,
     genericWebhook: { connected: data.genericWebhookConnected },
     arrWebhooks: { secret: data.webhookSecret, radarrUrl: urls.radarr, sonarrUrl: urls.sonarr },
   };

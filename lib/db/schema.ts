@@ -719,3 +719,23 @@ export const plexWatchlistItems = pgTable(
     check("plex_watchlist_items_outcome_check", sql`${table.outcome} in ('requested','skipped')`),
   ],
 );
+
+export const notificationChannelKindValues = ["telegram", "pushover", "email"] as const;
+export type NotificationChannelKind = (typeof notificationChannelKindValues)[number];
+
+/** Telegram, Pushover and email: household-wide relays like Discord and
+ * ntfy (every notification the admin gets goes to each one that's set up).
+ * Each keeps its settings as one encrypted JSON document, since each has
+ * several fields and most of them are secrets (a bot token, an app token,
+ * an SMTP password) — lib/notifications/channels.ts. */
+export const notificationChannels = pgTable(
+  "notification_channels",
+  {
+    kind: text("kind").primaryKey().$type<NotificationChannelKind>(),
+    configEnc: bytea("config_enc").notNull(),
+    configIv: bytea("config_iv").notNull(),
+    configTag: bytea("config_tag").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check("notification_channels_kind_check", sql`${table.kind} in ('telegram','pushover','email')`)],
+);

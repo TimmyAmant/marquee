@@ -1,4 +1,5 @@
 import { APP_VERSION } from "@/lib/api/version";
+import { getChannelSummaries } from "@/lib/notifications/channels";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import { getUserLibrary, summarizeLibrary } from "@/lib/library/query";
 import { getTotalRequestCount } from "@/lib/requests/query";
@@ -73,6 +74,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     discordWebhookUrl,
     genericWebhookUrl,
     ntfyUrl,
+    channels,
   ] = await Promise.all([
     getArrCredential(adminUserId, "sonarr"),
     getArrCredential(adminUserId, "radarr"),
@@ -86,6 +88,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     getDiscordWebhookUrl(),
     getGenericWebhookUrl(),
     getNtfyUrl(),
+    getChannelSummaries(),
   ]);
 
   const arrExisting = (cred: typeof sonarrCred) =>
@@ -116,5 +119,6 @@ export async function loadIntegrationsPage(adminUserId: string) {
     discordConnected: Boolean(discordWebhookUrl),
     genericWebhookConnected: Boolean(genericWebhookUrl),
     ntfyConnected: Boolean(ntfyUrl),
+    channels,
   };
 }

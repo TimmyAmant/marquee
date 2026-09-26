@@ -6,6 +6,10 @@ import { getDiscordWebhookUrl, getGenericWebhookUrl, getNtfyUrl } from "@/lib/in
 import { sendDiscordMessage } from "@/lib/discord/client";
 import { sendWebhookNotification } from "@/lib/webhook/client";
 import { sendNtfyMessage } from "@/lib/ntfy/client";
+import { sendTelegramMessage } from "@/lib/telegram/client";
+import { sendPushoverMessage } from "@/lib/pushover/client";
+import { sendEmail } from "@/lib/email/client";
+import { getChannelConfig } from "@/lib/notifications/channels";
 import { publishNotification } from "@/lib/notifications/bus";
 import { pushMessageFor, pushToUser } from "@/lib/push/deliver";
 
@@ -57,7 +61,7 @@ export async function createNotification(input: {
   title: string;
   eventType: NotificationEventType;
   message: string;
-  /** Also post to Discord / ntfy / the generic webhook. Those channels are
+  /** Also post to Discord / ntfy / Telegram / Pushover / email / the generic webhook. Those channels are
    * household-wide, so a second notification about the same event (e.g. the
    * requester's copy of a download the admin was already told about) passes
    * false to avoid posting it twice. */
@@ -95,6 +99,27 @@ export async function createNotification(input: {
     .then((topicUrl) => {
       if (!topicUrl) return;
       return sendNtfyMessage(topicUrl, input.title, input.message);
+    })
+    .catch(() => undefined);
+
+  getChannelConfig("telegram")
+    .then((config) => {
+      if (!config) return;
+      return sendTelegramMessage(config, `${EVENT_EMOJI[input.eventType]} ${input.message}`);
+    })
+    .catch(() => undefined);
+
+  getChannelConfig("pushover")
+    .then((config) => {
+      if (!config) return;
+      return sendPushoverMessage(config, input.title, input.message);
+    })
+    .catch(() => undefined);
+
+  getChannelConfig("email")
+    .then((config) => {
+      if (!config) return;
+      return sendEmail(config, `${EVENT_EMOJI[input.eventType]} ${input.message}`, `${input.message}\n\n— Marquee`);
     })
     .catch(() => undefined);
 

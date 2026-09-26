@@ -6,6 +6,7 @@ import {
   clearIntegrationSetting,
   disconnectIntegration,
   getArrOptions,
+  revalidateIntegrations,
   saveArrDefaultsFor,
   testAndSaveArrConnection,
 } from "@/lib/integrations/manage";
@@ -101,6 +102,17 @@ export function settingDeleteHandler(clear: () => Promise<void>) {
   return withApi(async (request): Promise<Ok> => {
     await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
     await clearIntegrationSetting(clear);
+    return { ok: true };
+  });
+}
+
+/** PUT for Telegram / Pushover / email: the whole JSON body goes to the
+ * test-and-save, which reads the fields it needs. */
+export function channelPutHandler(testAndSave: (body: Record<string, unknown>) => Promise<CoreResult>) {
+  return withApi(async (request): Promise<Ok> => {
+    await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
+    unwrap(await testAndSave(await readJsonBody(request)));
+    revalidateIntegrations();
     return { ok: true };
   });
 }
