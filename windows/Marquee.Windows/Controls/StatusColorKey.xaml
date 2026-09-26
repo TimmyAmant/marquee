@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/status-legend.tsx (the Mac's StatusColorKey): a small "?"
+  beside a poster grid whose flyout lists the five library states, each with
+  its swatch (the poster strip's color; an outline for "not in your
+  library", which gets no strip) and a one-line meaning. The swatches are
+  one Ellipse per palette with theme brushes, like PosterCard's badge, so
+  they follow light/dark switches.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.StatusColorKey"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
+    mc:Ignorable="d"
+    VerticalAlignment="Center">
+
+    <Button
+        Width="28"
+        Height="28"
+        Padding="0"
+        CornerRadius="14"
+        FontSize="12"
+        FontWeight="SemiBold"
+        Content="?"
+        ToolTipService.ToolTip="What do the colors mean?"
+        AutomationProperties.Name="What do the colors mean?">
+        <Button.Flyout>
+            <Flyout Placement="BottomEdgeAlignedRight">
+                <StackPanel Width="280" Spacing="10">
+                    <TextBlock Text="What do the colors mean?" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <ItemsControl ItemsSource="{x:Bind Entries}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:StatusKeyEntry">
+                                <Grid ColumnSpacing="10" Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="12" Height="12" Margin="0,3,0,0" VerticalAlignment="Top">
+                                        <Ellipse Visibility="{x:Bind IsOwnedTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
+                                        <Ellipse Visibility="{x:Bind IsTrackedTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource TrackedBadgeForegroundBrush}" />
+                                        <Ellipse Visibility="{x:Bind IsMissingTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
+                                        <Ellipse Visibility="{x:Bind IsSoonTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource SoonBadgeForegroundBrush}" />
+                                        <Ellipse
+                                            Visibility="{x:Bind IsNeutralTone, Converter={StaticResource BoolToVisibility}}"
+                                            Stroke="{ThemeResource TextFillColorTertiaryBrush}"
+                                            StrokeThickness="1" />
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Spacing="1">
+                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="12" />
+                                        <TextBlock
+                                            Text="{x:Bind Meaning}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Flyout>
+        </Button.Flyout>
+    </Button>
+</UserControl>

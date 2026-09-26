@@ -22,7 +22,7 @@ const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   declined: "bg-untracked-bg text-text-secondary",
   owned: "bg-owned-bg text-owned",
   downloading: "bg-tracked-bg text-tracked",
-  coming_soon: "bg-untracked-bg text-text-secondary",
+  coming_soon: "bg-soon-bg text-soon",
   approved: "bg-tracked-bg text-tracked",
 };
 
@@ -249,7 +249,7 @@ export default async function RequestsPage() {
                         {r.status === "approved" && r.notFoundSince && (
                           <a
                             href="#cant-find"
-                            className="ml-1.5 rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-500"
+                            className="ml-1.5 rounded-full bg-missing-bg px-3 py-1 text-xs font-medium text-missing"
                           >
                             Can&apos;t find
                           </a>

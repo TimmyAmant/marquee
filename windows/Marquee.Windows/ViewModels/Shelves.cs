@@ -10,11 +10,17 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Marquee.Windows.ViewModels;
 
-/// <summary>Which palette a status badge draws itself in (components/status-badge.tsx's color groups).</summary>
+/// <summary>
+/// Which palette a pill or badge draws itself in. Owned, Tracked (blue:
+/// downloading), Missing, Soon and Neutral are the five library-status
+/// colors (<see cref="StatusTone"/>); Tracked also serves other blue pills.
+/// </summary>
 public enum BadgeTone
 {
     Owned,
     Tracked,
+    Missing,
+    Soon,
     Neutral,
 }
 
@@ -47,7 +53,7 @@ public sealed partial class PosterItem : ObservableObject
     private int errorGeneration;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(StatusLabel), nameof(Tone), nameof(IsOwnedTone), nameof(IsTrackedTone), nameof(IsNeutralTone), nameof(AccessibleName))]
+    [NotifyPropertyChangedFor(nameof(StatusLabel), nameof(Tone), nameof(IsOwnedTone), nameof(IsTrackedTone), nameof(IsMissingTone), nameof(IsSoonTone), nameof(IsNeutralTone), nameof(AccessibleName))]
     private LibraryStatus? status;
 
     [ObservableProperty]
@@ -99,6 +105,8 @@ public sealed partial class PosterItem : ObservableObject
 
     public bool IsOwnedTone => Tone == BadgeTone.Owned;
     public bool IsTrackedTone => Tone == BadgeTone.Tracked;
+    public bool IsMissingTone => Tone == BadgeTone.Missing;
+    public bool IsSoonTone => Tone == BadgeTone.Soon;
     public bool IsNeutralTone => Tone == BadgeTone.Neutral;
 
     public bool HasPoster => posterUrl != null;
@@ -206,18 +214,8 @@ public sealed partial class PosterItem : ObservableObject
         return mediaType.Value.ToUpperInvariant();
     }
 
-    public static BadgeTone ToneFor(LibraryStatus status)
-    {
-        if (status == LibraryStatus.Owned)
-        {
-            return BadgeTone.Owned;
-        }
-        if (status == LibraryStatus.TrackedDownloading || status == LibraryStatus.TrackedMonitored)
-        {
-            return BadgeTone.Tracked;
-        }
-        return BadgeTone.Neutral;
-    }
+    /// <summary>The badge palette for a library status (<see cref="LibraryStatus.Tone"/>).</summary>
+    public static BadgeTone ToneFor(LibraryStatus status) => status.Tone.ToBadgeTone();
 }
 
 /// <summary>How a <see cref="ChipItem"/> draws itself.</summary>

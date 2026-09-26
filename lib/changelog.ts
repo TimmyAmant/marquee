@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.45.3",
+    date: "2026-09-26",
+    changes: [
+      "One set of status colors everywhere — the poster corner label, the strip under posters, search, the title page and request rows, on the website, Mac and Windows: green in your library, blue downloading, orange missing (still looking), purple coming soon. Titles not in your library get no strip (it used to be yellow).",
+      "A \"?\" color key on Movies, Series, search results and person/studio grids explains what each color means.",
+      "Windows now shows all five colors and the strip under posters, and small colored text is easier to read in light mode. \"Can't find\" uses the orange.",
+    ],
+  },
+  {
     version: "0.45.2",
     date: "2026-09-26",
     changes: [

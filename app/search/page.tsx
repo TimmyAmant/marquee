@@ -2,6 +2,7 @@ import { SearchBar } from "@/components/search-bar";
 import { PosterGrid } from "@/components/poster-grid";
 import { PosterCard } from "@/components/poster-card";
 import { StatusBadge } from "@/components/status-badge";
+import { StatusLegend } from "@/components/status-legend";
 import { StudioChip } from "@/components/studio-chip";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
@@ -108,7 +109,10 @@ export default async function SearchPage({
 
       {titleResults.length > 0 && (
         <section className="mb-12">
-          <h2 className="mb-4 font-display text-xl text-text-primary">Titles</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="font-display text-xl text-text-primary">Titles</h2>
+            {viewer.session && <StatusLegend />}
+          </div>
           <PosterGrid>
             {titleResults.map((title) => {
               const mediaType = title.media_type as MediaType;
@@ -145,9 +149,10 @@ export default async function SearchPage({
 
       {themeItems.length > 0 && (
         <section>
-          <h2 className="mb-4 font-display text-xl text-text-primary">
-            {`${themeLabel} movies & TV`}
-          </h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="font-display text-xl text-text-primary">{`${themeLabel} movies & TV`}</h2>
+            {viewer.session && titleResults.length === 0 && <StatusLegend />}
+          </div>
           <PosterGrid>
             {themeItems.map((item) => {
               const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);

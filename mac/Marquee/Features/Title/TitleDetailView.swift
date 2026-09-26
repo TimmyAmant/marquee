@@ -491,11 +491,11 @@ private struct TitleActionRow: View {
                     } label: {
                         Text("Can't find")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Theme.danger)
+                            .foregroundStyle(Theme.missing)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
-                            .background(Capsule().fill(Theme.danger.opacity(0.12)))
-                            .overlay(Capsule().strokeBorder(Theme.danger.opacity(0.4)))
+                            .background(Capsule().fill(Theme.missingBg))
+                            .overlay(Capsule().strokeBorder(Theme.missing.opacity(0.4)))
                             .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)

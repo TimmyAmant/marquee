@@ -199,6 +199,79 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
 
     /// <summary>In the library in any form (owned or tracked by Sonarr/Radarr).</summary>
     public bool IsInLibrary => this == Owned || this == TrackedDownloading || this == TrackedMonitored || this == ComingSoon;
+
+    /// <summary>
+    /// The color this status wears on a badge, a poster's strip and the
+    /// search pill (lib/library/status-tone.ts <c>statusTone</c>): every
+    /// status its own, and one this app doesn't know stays neutral.
+    /// </summary>
+    public StatusTone Tone
+    {
+        get
+        {
+            if (this == Owned) return StatusTone.Owned;
+            if (this == TrackedDownloading) return StatusTone.Downloading;
+            if (this == TrackedMonitored) return StatusTone.Missing;
+            if (this == ComingSoon) return StatusTone.Soon;
+            return StatusTone.Neutral;
+        }
+    }
+
+    /// <summary>The short name lists and the color key use (status-tone.ts <c>name</c>).</summary>
+    public string Name
+    {
+        get
+        {
+            if (this == Owned) return "In your library";
+            if (this == TrackedDownloading) return "Downloading";
+            if (this == TrackedMonitored) return "Missing";
+            if (this == ComingSoon) return "Coming soon";
+            if (this == Untracked) return "Not in your library";
+            return Value;
+        }
+    }
+
+    /// <summary>One line for the color key (status-tone.ts <c>meaning</c>).</summary>
+    public string Meaning
+    {
+        get
+        {
+            if (this == Owned) return "The file is in your library, ready to watch.";
+            if (this == TrackedDownloading) return "It's downloading right now.";
+            if (this == TrackedMonitored) return "Added, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.";
+            if (this == ComingSoon) return "Added, but it hasn't been released yet.";
+            if (this == Untracked) return "Not added yet. Posters get no colored strip.";
+            return "";
+        }
+    }
+}
+
+/// <summary>
+/// The five library-status colors, the same on the website
+/// (lib/library/status-tone.ts), the Mac and here.
+/// </summary>
+public enum StatusTone
+{
+    /// <summary>Green: in the library.</summary>
+    Owned,
+
+    /// <summary>Blue: downloading.</summary>
+    Downloading,
+
+    /// <summary>Orange: added, Sonarr/Radarr still looking.</summary>
+    Missing,
+
+    /// <summary>Purple: added, not released yet.</summary>
+    Soon,
+
+    /// <summary>Grey: not in the library; posters draw no strip.</summary>
+    Neutral,
+}
+
+public static class StatusToneExtensions
+{
+    /// <summary>Whether a poster draws the colored strip along its bottom edge.</summary>
+    public static bool HasPosterStrip(this StatusTone tone) => tone != StatusTone.Neutral;
 }
 
 /// <summary>Where a title's library status came from (<c>library.provider</c>).</summary>

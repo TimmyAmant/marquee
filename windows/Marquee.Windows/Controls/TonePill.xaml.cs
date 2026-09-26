@@ -50,12 +50,16 @@ public sealed partial class TonePill : UserControl
         var text = Text ?? "";
         OwnedText.Text = text;
         TrackedText.Text = text;
+        MissingText.Text = text;
+        SoonText.Text = text;
         NeutralText.Text = text;
 
         var tone = Tone;
         var shown = text.Length > 0;
         OwnedBorder.Visibility = shown && tone == BadgeTone.Owned ? Visibility.Visible : Visibility.Collapsed;
         TrackedBorder.Visibility = shown && tone == BadgeTone.Tracked ? Visibility.Visible : Visibility.Collapsed;
+        MissingBorder.Visibility = shown && tone == BadgeTone.Missing ? Visibility.Visible : Visibility.Collapsed;
+        SoonBorder.Visibility = shown && tone == BadgeTone.Soon ? Visibility.Visible : Visibility.Collapsed;
         NeutralBorder.Visibility = shown && tone == BadgeTone.Neutral ? Visibility.Visible : Visibility.Collapsed;
     }
 }

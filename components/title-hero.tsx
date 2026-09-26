@@ -204,7 +204,7 @@ export function TitleHero({
                     <Link
                       href="/requests#cant-find"
                       title={`Sonarr/Radarr hasn't found it since ${new Date(notFoundSince).toLocaleDateString()}`}
-                      className="inline-flex h-8 items-center rounded-full border border-red-500/40 bg-red-500/10 px-3 text-xs font-medium text-red-500 hover:bg-red-500/20"
+                      className="inline-flex h-8 items-center rounded-full border border-missing/40 bg-missing-bg px-3 text-xs font-medium text-missing hover:bg-missing/20"
                     >
                       Can&apos;t find
                     </Link>
