@@ -324,8 +324,8 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>Settings, where "Update", its progress and "What's new" are.</summary>
-    private void OnRailUpdateClick(object sender, RoutedEventArgs e) => SelectSection(Section.Settings);
+    /// <summary>Settings › About, where "Update", its progress and "What's new" are.</summary>
+    private void OnRailUpdateClick(object sender, RoutedEventArgs e) => model.OpenSettings(SettingsTab.About);
 
     /// <summary>Every section button on the rail (Search aside): its <c>Tag</c> names the section.</summary>
     private void OnSectionNavClick(object sender, RoutedEventArgs e)
@@ -336,7 +336,7 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>The avatar: the account, i.e. Settings.</summary>
+    /// <summary>The avatar: the account, i.e. Settings, on the tab it was left on.</summary>
     private void OnProfileClick(object sender, RoutedEventArgs e) => SelectSection(Section.Settings);
 
     /// <summary>Search on the rail opens the search panel over the page.</summary>

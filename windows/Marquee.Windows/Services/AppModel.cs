@@ -125,6 +125,10 @@ public sealed partial class AppModel : ObservableObject
     [ObservableProperty]
     private BrowseQuery seriesFilters = BrowseQuery.Default;
 
+    /// <summary>Settings' tab, remembered while the app runs; the avatar reopens Settings where it was left.</summary>
+    [ObservableProperty]
+    private SettingsTab settingsTab = SettingsTab.Account;
+
     /// <summary>The session's server, token or user changed (already on the UI thread).</summary>
     public event EventHandler? SessionChanged;
 
@@ -429,6 +433,17 @@ public sealed partial class AppModel : ObservableObject
             }
         }
         Navigator?.ShowSection(section);
+    }
+
+    /// <summary>
+    /// Settings on <paramref name="tab"/> (the Mac's <c>openSettings</c>):
+    /// "Connect an integration" links open Integrations, the update button
+    /// About. Already on Settings, the page just switches tab.
+    /// </summary>
+    public void OpenSettings(SettingsTab tab)
+    {
+        SettingsTab = tab;
+        Select(Section.Settings);
     }
 
     public void Open(Route route) => Navigator?.Open(route);
