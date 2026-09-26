@@ -23,6 +23,7 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
         ViewModel.RemoveMemberPrompt = ConfirmRemoveMemberAsync;
         ViewModel.LinkJellyfinPrompt = ShowLinkJellyfinDialogAsync;
         ViewModel.ImportMembersPrompt = ShowImportMembersDialogAsync;
+        ViewModel.Personal.RemoveChannelPrompt = ConfirmRemoveChannelAsync;
         InitializeComponent();
     }
 
@@ -67,6 +68,21 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
         var dialog = new ImportMembersDialog(server, ViewModel.ServerName(server), ViewModel.LoadImportCandidatesAsync, ViewModel.RunImportAsync) { XamlRoot = XamlRoot };
         var result = await dialog.TryShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Result : null;
+    }
+
+    /// <summary>"Remove {name}?" for one of your own notification channels, defaulting to Cancel.</summary>
+    private async Task<bool> ConfirmRemoveChannelAsync(string name)
+    {
+        var confirm = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = $"Remove {name}?",
+            Content = "It stops getting your notifications. You can add it again later.",
+            PrimaryButtonText = "Remove",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        return await confirm.TryShowAsync() == ContentDialogResult.Primary;
     }
 
     /// <summary>"Remove {username}?", defaulting to Cancel since it can't be undone.</summary>
