@@ -19,6 +19,7 @@ public sealed partial class MediaListViewModel : ObservableObject
     public static IReadOnlyList<string> OrderOptions { get; } =
         TitleListOrderExtensions.All.Select(order => order.Label()).ToList();
 
+    private readonly AppModel model;
     private readonly IReadOnlyList<TitleCard> cards;
     private readonly ICommand openTitle;
     private readonly string singular;
@@ -44,6 +45,7 @@ public sealed partial class MediaListViewModel : ObservableObject
     /// <param name="emptyMessage">What to say when the server sent no cards at all.</param>
     public MediaListViewModel(AppModel model, IReadOnlyList<TitleCard> cards, string singular, string plural, string emptyMessage)
     {
+        this.model = model;
         this.cards = cards;
         this.singular = singular;
         this.plural = plural;
@@ -91,6 +93,6 @@ public sealed partial class MediaListViewModel : ObservableObject
         var matching = cards.Where(card =>
             (wanted == null || card.MediaType == wanted)
             && (needle.Length == 0 || card.Name.Contains(needle, StringComparison.CurrentCultureIgnoreCase)));
-        Visible = matching.SortedBy(order).Select(card => new PosterItem(card, openTitle)).ToList();
+        Visible = matching.SortedBy(order).Select(card => new PosterItem(model, card, openTitle)).ToList();
     }
 }
