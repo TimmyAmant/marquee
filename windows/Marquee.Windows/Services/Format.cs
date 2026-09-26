@@ -21,9 +21,6 @@ public static class Format
     /// <summary>"Sep 2, 1964": an episode's air date.</summary>
     public static string MediumDate(DateOnly day) => day.ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
 
-    /// <summary>"Thursday, September 17": a calendar day's heading.</summary>
-    public static string DayHeading(DateOnly day) => day.ToString("dddd, MMMM d", CultureInfo.CurrentCulture);
-
     /// <summary>
     /// The first <paramref name="limit"/> characters plus an ellipsis, the
     /// Mac's <c>String.truncated(to:)</c>. Counted in text elements so a cut

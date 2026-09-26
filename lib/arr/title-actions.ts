@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, tmdbIdOverrides, users } from "@/lib/db/schema";

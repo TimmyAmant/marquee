@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { linkJellyfinAction, pollPlexLinkAction, startPlexLinkAction, unlinkAction } from "./media-actions";
+import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -41,46 +42,26 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
   const router = useRouter();
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
+  const attempts = useRef<ApprovalAttempts>({ current: 0 });
 
   useEffect(() => {
+    const current = attempts.current;
     return () => {
-      cancelled.current = true;
+      current.current++;
     };
   }, []);
 
   async function handleLink() {
     setError(null);
     setWaiting(true);
-    cancelled.current = false;
-    // Opened inside the click, before any await, so it isn't blocked as a pop-up.
-    const tab = window.open("", "_blank");
-    if (tab) tab.opener = null;
-    const started = await startPlexLinkAction();
-    if (!started.handle || !started.authUrl) {
-      tab?.close();
-      setError(started.error ?? "Couldn't start Plex sign-in. Try again.");
-      setWaiting(false);
+    const outcome = await runPlexApproval(startPlexLinkAction, pollPlexLinkAction, attempts.current);
+    if (outcome.status === "cancelled") {
+      if (outcome.completed) router.refresh();
       return;
     }
-    if (tab) tab.location.href = started.authUrl;
-    else window.open(started.authUrl, "_blank", "noopener,noreferrer");
-
-    const deadline = Date.now() + 10 * 60 * 1000;
-    while (!cancelled.current && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      if (cancelled.current) return;
-      const poll = await pollPlexLinkAction(started.handle);
-      if (poll.status === "pending") continue;
-      setWaiting(false);
-      if (poll.status === "error") setError(poll.error);
-      else router.refresh();
-      return;
-    }
-    if (!cancelled.current) {
-      setError("Timed out waiting for Plex sign-in. Try again.");
-      setWaiting(false);
-    }
+    setWaiting(false);
+    if (outcome.status === "error") setError(outcome.error);
+    else router.refresh();
   }
 
   return (
@@ -95,7 +76,7 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
             <button
               type="button"
               onClick={() => {
-                cancelled.current = true;
+                attempts.current.current++;
                 setWaiting(false);
               }}
               className="text-xs text-text-secondary hover:text-accent"

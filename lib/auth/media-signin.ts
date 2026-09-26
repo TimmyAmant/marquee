@@ -25,6 +25,7 @@ import {
 } from "@/lib/auth/media-accounts";
 import { getJellyfinCredential, getPlexCredential } from "@/lib/integrations/credentials";
 import { buildPlexAuthUrl, checkPin, createPin } from "@/lib/plex/client";
+import { disableWatchlist, enableWatchlist, syncPlexWatchlist } from "@/lib/plex/watchlist";
 import {
   getPlexAccount,
   getPlexSharedUsers,
@@ -291,14 +292,23 @@ export type PlexPinPoll<T extends object> = { status: "pending" } | { status: "e
 /**
  * One poll of a PIN: "pending" until the person approves on plex.tv, then —
  * exactly once per handle — the verified Plex account and whether it can
- * use the admin's server. The Plex token plex.tv hands back is used for
- * those two lookups right here and then dropped.
+ * use the admin's server. Sign-in and linking use the Plex token plex.tv
+ * hands back for those two lookups and then drop it; only turning on the
+ * Plex Watchlist (pollPlexWatchlist) keeps it, since reading a watchlist
+ * needs its owner's own token.
  */
 async function pollPlexPin(
   handle: unknown,
   purpose: PlexPinEntry["purpose"],
   ip: string | null,
-): Promise<PlexPinPoll<{ account: PlexAccount; access: { access: boolean; owner: boolean }; plex: PlexContext }>> {
+): Promise<
+  PlexPinPoll<{
+    account: PlexAccount;
+    access: { access: boolean; owner: boolean };
+    plex: PlexContext;
+    grant: { authToken: string; clientId: string };
+  }>
+> {
   // Polls need no shared bucket: a handle is only good for its own PIN,
   // plex.tv is asked at most every 2 s per handle, and at most
   // MAX_LIVE_PLEX_PINS handles exist at once.
@@ -334,7 +344,14 @@ async function pollPlexPin(
     // keep pointing at a server the admin has since moved away from.
     const { access } = plexServerAccess(resources, plex.machineIds);
     const owner = adminAccount !== null && account.id === adminAccount.id;
-    return { status: "done", ok: true, account, access: { access, owner }, plex };
+    return {
+      status: "done",
+      ok: true,
+      account,
+      access: { access, owner },
+      plex,
+      grant: { authToken: pin.authToken, clientId: entry.clientId },
+    };
   } catch {
     return { status: "done", ...fail("upstream", "Couldn't reach Plex. Try again.") };
   }
@@ -395,6 +412,45 @@ export async function pollPlexLink(
   // worked.
   if (!poll.access.access) return { status: "done", ...fail("forbidden", PLEX_NO_ACCESS_MESSAGE) };
   return { status: "done", ...(await linkAccount(userId, "plex", poll.account.id)) };
+}
+
+// ── Plex Watchlist ─────────────────────────────────────────────────────────
+
+const WATCHLIST_NEEDS_LINK = "Link your Plex account first.";
+
+/** Starts the plex.tv approval that turns on "request what's on my Plex
+ * Watchlist" for the signed-in account, which must have Plex linked. */
+export async function startPlexWatchlist(userId: string, ip: string | null) {
+  const state = await getLinkState(userId);
+  if (!state) return fail("not_found", "Account not found.");
+  if (!state.linked.plex) return fail("conflict", WATCHLIST_NEEDS_LINK);
+  return startPlexPin({ kind: "watchlist", userId }, ip);
+}
+
+/** A watchlist poll: pending/expired, or turned on. The approving Plex
+ * account must be the one linked here — its token reads only its own
+ * watchlist, and requests are filed as this account. */
+export async function pollPlexWatchlist(
+  userId: string,
+  handle: unknown,
+  ip: string | null,
+): Promise<PlexPinPoll<object>> {
+  const poll = await pollPlexPin(handle, { kind: "watchlist", userId }, ip);
+  if (poll.status !== "done") return poll;
+  if (!poll.ok) return poll;
+  const [user] = await db.select({ plexUserId: users.plexUserId }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user?.plexUserId) return { status: "done", ...fail("conflict", WATCHLIST_NEEDS_LINK) };
+  if (user.plexUserId !== poll.account.id) {
+    return {
+      status: "done",
+      ...fail("forbidden", "That's a different Plex account from the one linked here. Sign in to plex.tv as that one."),
+    };
+  }
+  await enableWatchlist(userId, { plexUserId: poll.account.id, ...poll.grant });
+  // The first read happens in the background: a long watchlist shouldn't
+  // hold up the answer.
+  void syncPlexWatchlist(userId).catch(() => undefined);
+  return { status: "done", ok: true };
 }
 
 // ── Jellyfin ───────────────────────────────────────────────────────────────
@@ -496,6 +552,8 @@ export async function unlinkAccount(userId: string, provider: MediaProvider): Pr
     .update(users)
     .set({ [provider === "plex" ? "plexUserId" : "jellyfinUserId"]: null })
     .where(eq(users.id, userId));
+  // The watchlist token belongs to the Plex account just unlinked.
+  if (provider === "plex") await disableWatchlist(userId);
   return { ok: true };
 }
 

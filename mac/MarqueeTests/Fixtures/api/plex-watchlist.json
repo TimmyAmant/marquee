@@ -1,0 +1,9 @@
+{
+  "available": true,
+  "enabled": true,
+  "movies": true,
+  "tv": false,
+  "lastSyncedAt": "2026-09-25T18:40:05.000Z",
+  "lastError": null,
+  "requestedCount": 3
+}

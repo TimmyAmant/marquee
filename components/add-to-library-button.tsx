@@ -21,6 +21,7 @@ export function AddToLibraryButton({
   alreadyRequested,
   otherRequesters,
   seasonPicker,
+  inArr = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -32,6 +33,9 @@ export function AddToLibraryButton({
   isAdmin?: boolean;
   alreadyRequested?: boolean;
   otherRequesters?: string[];
+  /** Sonarr/Radarr already has it (unmonitored, nothing on disk — so still
+   * "untracked"): its Start monitoring button does what Add would. */
+  inArr?: boolean;
   /** A TV show's seasons for a member's season picker; omitted for movies
    * and admins, who keep the whole-title Request/Add buttons. */
   seasonPicker?: {
@@ -86,7 +90,7 @@ export function AddToLibraryButton({
           </span>
         )}
 
-        {status === "untracked" && isAdmin !== false && configured && !state?.success && (
+        {status === "untracked" && isAdmin !== false && configured && !inArr && !state?.success && (
           <form action={formAction}>
             <button
               type="submit"

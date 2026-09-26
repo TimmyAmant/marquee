@@ -19,6 +19,12 @@
       "description": "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance."
     },
     {
+      "id": "plex-watchlist",
+      "name": "Plex Watchlist Requests",
+      "schedule": "Every 10 minutes",
+      "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each."
+    },
+    {
       "id": "disk-space-snapshot",
       "name": "Disk Space Snapshot",
       "schedule": "Daily at 3:00 AM",

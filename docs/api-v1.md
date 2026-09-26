@@ -1489,7 +1489,62 @@ these answers the updated **`Me`** (as `GET /me`).
   no password and no other link.
 
 Linking and unlinking never sign anything out. Removing a member removes
-their links with them.
+their links with them. Unlinking Plex also turns off the Plex Watchlist.
+
+### `GET /me/plex-watchlist` — user (your own account)
+
+"Request from my Plex Watchlist". Website: a card under "Linked accounts" on
+Settings → Account, shown while Plex is linked.
+
+```json
+{
+  "available": true,
+  "enabled": true,
+  "movies": true,
+  "tv": false,
+  "lastSyncedAt": "2026-09-25T18:40:05.000Z",
+  "lastError": null,
+  "requestedCount": 3
+}
+```
+
+`available`: Plex is linked to this account, so it can be turned on.
+`enabled`: it's on. Every 10 minutes (the `plex-watchlist` job) the server
+reads the account's own Plex Watchlist — newest 100 titles — and requests
+each movie/show not handled before, as this account, the way
+`POST /titles/{type}/{tmdbId}/request` would (whole series for TV; the
+member's auto-approve applies). A title waits while TMDb can't be reached.
+Titles already owned, or that this account already requested (pending,
+approved, or some of a show's seasons), are skipped. Each title is tried once, so one the admin declined isn't asked
+for again, even after turning it off and on. At most 25 new titles per
+check; the rest follow on the next. `movies` / `tv`: which kinds are
+requested (both on by default). `lastSyncedAt`: last successful check,
+null before the first. `lastError`: why the last check failed, or why it
+switched itself off — e.g. "Plex stopped accepting Marquee's access to your
+watchlist (for example after signing out of all devices). Turn it on again
+to reconnect." (then `enabled` is false). `requestedCount`: titles requested
+from the watchlist so far.
+
+Turning it on stores this account's own Plex sign-in (encrypted) — reading a
+watchlist needs its owner's token. It's deleted when turned off or when Plex
+is unlinked.
+
+- **`POST /me/plex-watchlist/start`** — no body. Same answer as
+  `POST /auth/plex/start`; open `authUrl` in the browser. `409` "Link your
+  Plex account first.".
+- **`POST /me/plex-watchlist/poll`** — `{ "handle": "…" }`. `202 { "status":
+  "pending" }` until approved on plex.tv, then `200` `PlexWatchlist` (the
+  first check then runs in the background; `lastSyncedAt` fills in shortly).
+  `410 expired`; `403` "That's a different Plex account from the one linked
+  here. Sign in to plex.tv as that one."; `409` "Link your Plex account
+  first.".
+- **`PATCH /me/plex-watchlist`** — `{ "movies"?: bool, "tv"?: bool }` (at
+  least one). `200` `PlexWatchlist`.
+- **`POST /me/plex-watchlist/sync`** — "Check now": checks immediately and
+  answers `PlexWatchlist` once done. `429` "Checked a moment ago. Try again
+  in a minute." after 5 in 5 minutes.
+- **`DELETE /me/plex-watchlist`** — turns it off and deletes the stored
+  Plex sign-in. `200` `PlexWatchlist` (also when it was off).
 
 ### Import from Plex / Jellyfin — admin
 
@@ -1766,6 +1821,7 @@ check the URL and that it's set to public.", `403` "Only the admin can import fr
     { "id": "plex-sync", "name": "Plex Library Sync", "schedule": "Every hour", "description": "Pulls the latest library state from every connected Plex server." },
     { "id": "jellyfin-sync", "name": "Jellyfin Library Sync", "schedule": "Every hour", "description": "Pulls the latest library state from every connected Jellyfin server." },
     { "id": "arr-sync", "name": "Sonarr/Radarr Sync", "schedule": "Every hour", "description": "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance." },
+    { "id": "plex-watchlist", "name": "Plex Watchlist Requests", "schedule": "Every 10 minutes", "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each." },
     { "id": "disk-space-snapshot", "name": "Disk Space Snapshot", "schedule": "Daily at 3:00 AM", "description": "Records free/used disk space for the storage forecast shown elsewhere in the app." },
     { "id": "cleanup", "name": "Database Cleanup", "schedule": "Daily at 3:30 AM", "description": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever." }
   ]

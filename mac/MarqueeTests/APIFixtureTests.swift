@@ -72,6 +72,7 @@ final class APIFixtureTests: XCTestCase {
         "users-import": decodes(API.ListResponse<API.ImportCandidate>.self),
         "users-import-result": decodes(API.ImportUsersResult.self),
         "sign-in-settings": decodes(API.SignInSettings.self),
+        "plex-watchlist": decodes(API.PlexWatchlist.self),
         "avatar-set": decodes(API.AvatarResult.self),
         "avatar-removed": decodes(API.AvatarResult.self),
         "integrations": decodes(API.IntegrationsOverview.self),
@@ -93,7 +94,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 61, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 62, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -184,6 +185,25 @@ final class APIFixtureTests: XCTestCase {
         // Re-encoding keeps the key the current doc specifies.
         let encoded = String(decoding: try APIClient.encoder.encode(queue), as: UTF8.self)
         XCTAssertTrue(encoded.contains(#""rejectionReasons":[]"#), encoded)
+    }
+
+    func testPlexWatchlist() throws {
+        let state = try decode(API.PlexWatchlist.self, "plex-watchlist")
+        XCTAssertTrue(state.available)
+        XCTAssertTrue(state.enabled)
+        XCTAssertEqual([state.movies, state.tv], [true, false])
+        let synced = try XCTUnwrap(APIClient.parseDate("2026-09-25T18:40:05.000Z"))
+        XCTAssertEqual(state.lastSyncedAt, synced)
+        XCTAssertNil(state.lastError)
+        XCTAssertEqual(state.statusLine(now: synced.addingTimeInterval(300)), "Checked 5m ago · 3 titles requested so far")
+
+        let fresh = try APIClient.decoder.decode(API.PlexWatchlist.self, from: Data(#"""
+        {"available":true,"enabled":true,"movies":true,"tv":true,"lastSyncedAt":null,"lastError":"Plex didn't answer.","requestedCount":1}
+        """#.utf8))
+        XCTAssertNil(fresh.lastSyncedAt)
+        XCTAssertEqual(fresh.lastError, "Plex didn't answer.")
+        XCTAssertEqual(fresh.statusLine(), "Checking your watchlist… · 1 title requested so far")
+        XCTAssertEqual(API.PlexWatchlist.unavailable.statusLine(), "Checking your watchlist…")
     }
 
     func testCalendarGrid() throws {

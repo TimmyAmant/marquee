@@ -15,7 +15,12 @@ vi.mock("drizzle-orm", () => ({
   eq: (col: string, val: unknown) => ({ op: "eq", col, val }),
   and: (...conds: Cond[]) => ({ op: "and", conds }),
   isNull: (col: string) => ({ op: "isNull", col }),
-  sql: () => ({ op: "sql" }),
+  // Only `${column} is not null` (getLinkState) is ever read back.
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    op: "sql",
+    col: values[0],
+    isNotNull: strings.join("").includes("is not null"),
+  }),
 }));
 
 vi.mock("@/lib/db/schema", () => {
@@ -36,13 +41,19 @@ function matches(row: Row, cond: Cond | undefined): boolean {
   return cond.conds.every((c) => matches(row, c));
 }
 
-function project(row: Row, fields?: Record<string, string>): Row {
+type Field = string | { op: "sql"; col: string; isNotNull: boolean };
+
+function project(row: Row, fields?: Record<string, Field>): Row {
   if (!fields) return { ...row };
-  return Object.fromEntries(Object.entries(fields).map(([alias, col]) => [alias, row[col.split(".")[1]]]));
+  return Object.fromEntries(
+    Object.entries(fields).map(([alias, col]) =>
+      typeof col === "string" ? [alias, row[col.split(".")[1]]] : [alias, row[col.col.split(".")[1]] != null],
+    ),
+  );
 }
 
 vi.mock("@/lib/db/client", () => {
-  const select = (fields?: Record<string, string>) => ({
+  const select = (fields?: Record<string, Field>) => ({
     from: (table: { __name: string }) => {
       let cond: Cond | undefined;
       const run = () => tables[table.__name].filter((r) => matches(r, cond)).map((r) => project(r, fields));
@@ -87,6 +98,12 @@ vi.mock("@/lib/db/client", () => {
 });
 
 vi.mock("@/lib/auth/get-admin", () => ({ getAdminUserId: async () => "admin" }));
+const watchlist = vi.hoisted(() => ({
+  enableWatchlist: vi.fn(async (_userId: string, _grant: { plexUserId: string; authToken: string; clientId: string }) => undefined),
+  disableWatchlist: vi.fn(async (_userId: string) => undefined),
+  syncPlexWatchlist: vi.fn(async (_userId: string) => ({ requested: 0 })),
+}));
+vi.mock("@/lib/plex/watchlist", () => watchlist);
 vi.mock("@/lib/integrations/credentials", () => ({
   getPlexCredential: async (userId: string) =>
     userId === "admin" ? { authToken: "admin-token", clientId: "instance-client-id" } : null,
@@ -119,7 +136,15 @@ vi.mock("@/lib/plex/accounts", async (importOriginal) => {
   };
 });
 
-import { pollPlexLink, pollPlexSignIn, startPlexLink, startPlexSignIn } from "./media-signin";
+import {
+  pollPlexLink,
+  pollPlexSignIn,
+  pollPlexWatchlist,
+  startPlexLink,
+  startPlexSignIn,
+  startPlexWatchlist,
+  unlinkAccount,
+} from "./media-signin";
 
 let ipCounter = 0;
 /** A fresh client address per test, so rate-limit buckets never carry over. */
@@ -321,5 +346,54 @@ describe("Plex linking", () => {
     vi.setSystemTime(Date.now() + 2500);
     expect(await pollPlexLink("m2", started.handle, ip)).toMatchObject({ status: "done", ok: false, code: "conflict" });
     expect(tables.users.find((u) => u.id === "m2")?.plexUserId).toBeNull();
+  });
+});
+
+describe("Plex Watchlist", () => {
+  beforeEach(() => {
+    watchlist.enableWatchlist.mockClear();
+    watchlist.disableWatchlist.mockClear();
+    watchlist.syncPlexWatchlist.mockClear();
+  });
+
+  it("needs Plex linked first", async () => {
+    tables.users.push({ id: "m1", username: "member", passwordHash: "hash", role: "member", plexUserId: null, jellyfinUserId: null });
+    expect(await startPlexWatchlist("m1", freshIp())).toMatchObject({ ok: false, code: "conflict" });
+  });
+
+  it("keeps the linked account's own token, and only for the account that started it", async () => {
+    const ip = freshIp();
+    tables.users.push({ id: "m1", username: "member", passwordHash: "hash", role: "member", plexUserId: "1111", jellyfinUserId: null });
+    const started = await startPlexWatchlist("m1", ip);
+    if (!started.ok) throw new Error(started.error);
+    plexTv.authToken = "member-token";
+    vi.setSystemTime(Date.now() + 2500);
+
+    expect(await pollPlexWatchlist("admin", started.handle, ip)).toEqual({ status: "expired" });
+    expect(await pollPlexLink("m1", started.handle, ip)).toEqual({ status: "expired" });
+    expect(await pollPlexWatchlist("m1", started.handle, ip)).toMatchObject({ status: "done", ok: true });
+    expect(watchlist.enableWatchlist).toHaveBeenCalledWith("m1", {
+      plexUserId: "1111",
+      authToken: "member-token",
+      clientId: "instance-client-id",
+    });
+    expect(watchlist.syncPlexWatchlist).toHaveBeenCalledWith("m1");
+  });
+
+  it("refuses a different Plex account from the linked one", async () => {
+    const ip = freshIp();
+    tables.users.push({ id: "m1", username: "member", passwordHash: "hash", role: "member", plexUserId: "2222", jellyfinUserId: null });
+    const started = await startPlexWatchlist("m1", ip);
+    if (!started.ok) throw new Error(started.error);
+    plexTv.authToken = "someone-elses-token";
+    vi.setSystemTime(Date.now() + 2500);
+    expect(await pollPlexWatchlist("m1", started.handle, ip)).toMatchObject({ status: "done", ok: false, code: "forbidden" });
+    expect(watchlist.enableWatchlist).not.toHaveBeenCalled();
+  });
+
+  it("is turned off when Plex is unlinked", async () => {
+    tables.users.push({ id: "m1", username: "member", passwordHash: "hash", role: "member", plexUserId: "1111", jellyfinUserId: null });
+    expect(await unlinkAccount("m1", "plex")).toEqual({ ok: true });
+    expect(watchlist.disableWatchlist).toHaveBeenCalledWith("m1");
   });
 });

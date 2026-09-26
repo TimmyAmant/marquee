@@ -13,6 +13,7 @@ export async function register() {
   const { syncAllConnectedArrUsers } = await import("@/lib/arr/sync");
   const { snapshotDiskSpaceForAllConnectedUsers } = await import("@/lib/integrations/disk-space");
   const { pruneOldRecords } = await import("@/lib/jobs/cleanup");
+  const { syncAllPlexWatchlists } = await import("@/lib/plex/watchlist");
 
   cron.schedule("0 * * * *", () => {
     syncAllConnectedPlexUsers().catch((err) => {
@@ -23,6 +24,14 @@ export async function register() {
     });
     syncAllConnectedArrUsers().catch((err) => {
       console.error("[arr-sync] scheduled sync failed:", err);
+    });
+  });
+
+  // Often enough that adding something to a Plex Watchlist feels like
+  // requesting it; an unchanged watchlist costs one 304 from plex.tv.
+  cron.schedule("5-59/10 * * * *", () => {
+    syncAllPlexWatchlists().catch((err) => {
+      console.error("[plex-watchlist] scheduled sync failed:", err);
     });
   });
 

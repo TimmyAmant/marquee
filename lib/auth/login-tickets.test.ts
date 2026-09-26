@@ -141,3 +141,15 @@ describe("the live Plex PIN caps", () => {
     expect(start("203.0.113.9", now + 11 * 60 * 1000)).not.toBeNull();
   });
 });
+
+describe("Plex Watchlist handles", () => {
+  it("only work for the watchlist of the account that started them", () => {
+    const { handle } = makeHandle({ pinId: 9, clientId: "c", purpose: { kind: "watchlist", userId: "u1" } });
+    expect(getPlexPin(handle, { kind: "watchlist", userId: "u1" }).status).toBe("ok");
+    expect(getPlexPin(handle, { kind: "watchlist", userId: "u2" }).status).toBe("expired");
+    expect(getPlexPin(handle, { kind: "link", userId: "u1" }).status).toBe("expired");
+    expect(getPlexPin(handle, { kind: "sign_in" }).status).toBe("expired");
+    const link = makeHandle({ pinId: 10, clientId: "c", purpose: { kind: "link", userId: "u1" } }).handle;
+    expect(getPlexPin(link, { kind: "watchlist", userId: "u1" }).status).toBe("expired");
+  });
+});

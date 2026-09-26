@@ -178,6 +178,90 @@
                             IsClosable="False" />
                     </StackPanel>
                 </Border>
+
+                <!--
+                  Request from my Plex Watchlist (plex-watchlist.tsx): shown
+                  while Plex is linked. Turning it on is a plex.tv approval
+                  like Link Plex; once on, the switches, the last check,
+                  Check now and Turn off.
+                -->
+                <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsPlexWatchlist, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Request from my Plex Watchlist" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="New movies and shows you add to your Watchlist on Plex are requested for you, the same as pressing Request. Marquee keeps a Plex sign-in for this until you turn it off."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <controls:TonePill Text="{x:Bind ViewModel.PlexWatchlistBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.PlexWatchlistTone}" VerticalAlignment="Center" />
+                                <Button
+                                    Content="Turn on"
+                                    Command="{x:Bind ViewModel.TurnOnPlexWatchlistCommand}"
+                                    Visibility="{x:Bind ViewModel.CanTurnOnPlexWatchlist, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.IsTurningOnPlexWatchlist, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ProgressRing Grid.Column="0" IsActive="{x:Bind ViewModel.IsTurningOnPlexWatchlist, Mode=OneWay}" Width="16" Height="16" VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="Waiting for Plex… finish in the browser."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                TextWrapping="Wrap"
+                                VerticalAlignment="Center" />
+                            <Button Grid.Column="2" Content="Cancel" Command="{x:Bind ViewModel.CancelTurnOnPlexWatchlistCommand}" />
+                        </Grid>
+                        <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.IsPlexWatchlistOn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal" Spacing="24">
+                                <ToggleSwitch
+                                    Header="Movies"
+                                    IsOn="{x:Bind ViewModel.PlexWatchlistMovies, Mode=TwoWay}"
+                                    IsEnabled="{x:Bind ViewModel.CanChangePlexWatchlist, Mode=OneWay}"
+                                    OnContent="On"
+                                    OffContent="Off" />
+                                <ToggleSwitch
+                                    Header="TV shows"
+                                    IsOn="{x:Bind ViewModel.PlexWatchlistTv, Mode=TwoWay}"
+                                    IsEnabled="{x:Bind ViewModel.CanChangePlexWatchlist, Mode=OneWay}"
+                                    OnContent="On"
+                                    OffContent="Off" />
+                            </StackPanel>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.PlexWatchlistSummary, Mode=OneWay}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="{x:Bind ViewModel.CheckPlexWatchlistLabel, Mode=OneWay}" Command="{x:Bind ViewModel.CheckPlexWatchlistCommand}" />
+                                <Button Content="Turn off" Command="{x:Bind ViewModel.TurnOffPlexWatchlistCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.PlexWatchlistLastError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasPlexWatchlistLastError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.PlexWatchlistError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasPlexWatchlistError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <!--

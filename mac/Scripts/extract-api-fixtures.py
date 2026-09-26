@@ -67,6 +67,7 @@ BLOCKS = [
     ("Settings — Account & household members", ["household-member"]),
     ("`GET /users`", ["users"]),
     ("`PATCH /users/{id}`", ["user-update"]),
+    ("`GET /me/plex-watchlist`", ["plex-watchlist"]),
     ("`GET /users/import/{provider}`", ["users-import"]),
     ("`POST /users/import/{provider}`", ["users-import-result"]),
     ("`GET /settings/sign-in`", ["sign-in-settings"]),

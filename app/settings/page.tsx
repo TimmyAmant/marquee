@@ -7,6 +7,8 @@ import { PushSettings } from "./push-settings";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
 import { ImportMembers } from "./import-members";
+import { PlexWatchlistCard } from "./plex-watchlist";
+import { getWatchlistState } from "@/lib/plex/watchlist";
 import { getMediaServerSignup, getSignInMethods } from "@/lib/auth/media-signin";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
@@ -16,10 +18,11 @@ export default async function AccountSettingsPage() {
   if (!session?.user) redirect("/login");
 
   const isAdmin = session.user.role === "admin";
-  const [members, methods, mediaServerSignup] = await Promise.all([
+  const [members, methods, mediaServerSignup, watchlist] = await Promise.all([
     listHouseholdMembers(),
     getSignInMethods(),
     isAdmin ? getMediaServerSignup() : Promise.resolve(true),
+    getWatchlistState(session.user.id),
   ]);
   const available = { plex: methods.plex, jellyfin: methods.jellyfin };
   // Your own row is always in the list (members see only theirs).
@@ -69,6 +72,11 @@ export default async function AccountSettingsPage() {
           <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
             <LinkedAccounts linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked }} available={available} />
           </div>
+          {watchlist.available && (
+            <div className="mt-4 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+              <PlexWatchlistCard initial={watchlist} />
+            </div>
+          )}
         </>
       )}
 

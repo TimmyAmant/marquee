@@ -172,6 +172,7 @@ export function TitleHero({
                     alreadyRequested={alreadyRequested}
                     otherRequesters={otherRequesters}
                     seasonPicker={seasonPicker}
+                    inArr={Boolean(arrTracking)}
                   />
 
                   {isAdmin && arrTracking && (

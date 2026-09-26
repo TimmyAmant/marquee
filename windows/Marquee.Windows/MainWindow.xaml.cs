@@ -37,6 +37,15 @@ public sealed partial class MainWindow : Window, INavigator
     /// <summary>The website's type-ahead waits this long after the last keystroke (components/search-bar.tsx).</summary>
     private static readonly TimeSpan SuggestDelay = TimeSpan.FromMilliseconds(250);
 
+    /// <summary>
+    /// The smallest the window may be, in effective pixels. WinUI's
+    /// UniformGridLayout (the poster grids, the calendar) divides by its
+    /// column count, and a window narrower than one column made that zero
+    /// and crashed the app with a DivideByZeroException.
+    /// </summary>
+    private const double MinimumWidth = 760;
+    private const double MinimumHeight = 520;
+
     private readonly AppModel model;
     private readonly Updater updater;
     private readonly Style railStyle;
@@ -65,6 +74,13 @@ public sealed partial class MainWindow : Window, INavigator
             // Windows 11; on Windows 10 the plain window background stays.
             SystemBackdrop = new MicaBackdrop();
         }
+
+        Root.Loaded += (_, _) =>
+        {
+            ApplyMinimumSize();
+            // Moving to a screen with another scale changes what those pixels are.
+            Root.XamlRoot.Changed += (_, _) => ApplyMinimumSize();
+        };
 
         railStyle = (Style)Root.Resources["NavRailButtonStyle"];
         railCurrentStyle = (Style)Root.Resources["NavRailButtonCurrentStyle"];
@@ -523,5 +539,16 @@ public sealed partial class MainWindow : Window, INavigator
         {
             model.Navigator = null;
         }
+    }
+
+    /// <summary>Sets <see cref="MinimumWidth"/> × <see cref="MinimumHeight"/>, which the presenter takes in physical pixels.</summary>
+    private void ApplyMinimumSize()
+    {
+        if (AppWindow.Presenter is not OverlappedPresenter overlapped || Root.XamlRoot is not { } root)
+        {
+            return;
+        }
+        overlapped.PreferredMinimumWidth = (int)Math.Ceiling(MinimumWidth * root.RasterizationScale);
+        overlapped.PreferredMinimumHeight = (int)Math.Ceiling(MinimumHeight * root.RasterizationScale);
     }
 }
