@@ -184,8 +184,8 @@ export function ImportMembers({
           New accounts from {providers.map((p) => labels[p]).join("/")} sign-in
           <span className="mt-0.5 block text-xs text-text-muted">
             Anyone who can use your server gets a member account the first time they sign in, including anyone you
-            remove here, who can come straight back. Off: only the people you import (or who link their account)
-            can sign in that way.
+            remove here, who can come straight back. The sign-in screen tells newcomers to sign in that way. Off:
+            only the people you import (or who link their account) can sign in that way.
           </span>
         </span>
       </label>

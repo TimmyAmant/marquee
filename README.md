@@ -52,21 +52,26 @@ The apps are optional: the website does everything they do, in any browser.
   synced under the wrong match.
 - **People and studios**: full filmographies and catalogs, cross-referenced
   with your library, and favorites.
-- **My Library**: everything in Plex, Jellyfin, Sonarr and Radarr in one view,
-  with filters, grid or table, resolution badges, collections you've only
-  partly got, and a free-space forecast.
 - **Calendar** of upcoming releases and air dates from Sonarr and Radarr.
-- **Notifications** when something starts or finishes downloading, or a
-  request is approved or declined: in the app, and pushed to your devices by
-  your own server (Web Push, and live in the Mac and Windows apps). Also
-  Discord, ntfy and webhooks.
-- **Household accounts**: the admin adds everyone else. Members browse and
-  **Request**; the admin approves or declines (with a reason) on the
-  **Requests** page.
-- **Trakt import** of public lists and watchlists into the request queue.
-- **Settings** for integrations (TMDb, TheTVDB, Plex, Jellyfin, Sonarr,
-  Radarr), household members and an activity feed. Credentials are
-  encrypted at rest.
+- **Requests**: members request whole titles or single seasons, in 4K too if
+  you run a 4K Sonarr/Radarr. The admin (or a **trusted member**) approves or
+  declines with a reason, from the **Requests** page or right from the push
+  notification. Per-member auto-approve and request limits (for example 5
+  movies a week), and a **blocklist** of titles or keywords nobody can request.
+- **Report a problem** with a file (bad video, wrong audio, missing
+  subtitles…); the admin can have Sonarr/Radarr search again and mark it fixed.
+- **Sign in with Plex, Jellyfin or Emby**, link those accounts, import
+  household members from them, and optionally let people with access to your
+  server sign themselves up.
+- **Plex Watchlist** auto-requests, and **Trakt import** of public lists and
+  watchlists.
+- **Notifications** when something starts or finishes downloading, a request
+  is approved or declined, or a new request needs review: in the app, and
+  pushed to your devices by your own server (Web Push, and live in the Mac and
+  Windows apps). Also Discord, ntfy, webhooks, Telegram, Pushover and email.
+- **Settings** for integrations (TMDb, TheTVDB, Plex, Jellyfin/Emby, Sonarr,
+  Radarr and their 4K copies), household members with last-active times, an
+  activity feed and background jobs. Credentials are encrypted at rest.
 - One **Docker image** with Postgres inside and migrations on every start.
   It works on a phone too.
 

@@ -52,6 +52,8 @@ public sealed partial class ConnectViewModel : ObservableObject
         nameof(SignInLabel),
         nameof(JellyfinToggleLabel),
         nameof(JellyfinName),
+        nameof(SignupHint),
+        nameof(ShowsSignupHint),
     ];
 
     private readonly AppModel model;
@@ -165,6 +167,13 @@ public sealed partial class ConnectViewModel : ObservableObject
 
     /// <summary>"Jellyfin", or "Emby" when that's the server connected (server-info.signIn.jellyfinName).</summary>
     public string JellyfinName => model.Session.ServerInfo?.JellyfinName ?? MediaServerKindExtensions.DefaultJellyfinName;
+
+    /// <summary>
+    /// "New here? Use Sign in with Plex — …" when the admin has new accounts
+    /// from Plex/Jellyfin sign-in on: that's how a newcomer gets in.
+    /// </summary>
+    public string SignupHint => model.Session.ServerInfo?.SignupHint ?? "";
+    public bool ShowsSignupHint => model.Session.ServerInfo?.SignupHint is not null;
 
     public string SignInSubtitle => UsesJellyfin ? $"Sign in with your {JellyfinName} account." : "Sign in to your Marquee account.";
     public string UsernameHeader => UsesJellyfin ? $"{JellyfinName} username" : "Username";

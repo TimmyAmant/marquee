@@ -188,7 +188,7 @@ Cheap: a few small queries (3 s timeout together), no calls to integrations.
   "version": "0.22.0",
   "setupComplete": true,
   "status": "ok",
-  "signIn": { "password": true, "plex": true, "jellyfin": false, "jellyfinName": "Jellyfin" }
+  "signIn": { "password": true, "plex": true, "jellyfin": false, "jellyfinName": "Jellyfin", "signup": true }
 }
 ```
 
@@ -204,6 +204,15 @@ is `"Emby"`. Label everything about that server with it — the sign-in
 button ("Sign in with Emby"), its username/password fields, Linked accounts,
 "Import from Emby", member tags. The server's own messages already use it
 ("Incorrect Emby username or password").
+
+`signup` (0.42.2+; treat missing as false): the admin has "New accounts from
+Plex/Jellyfin sign-in" on (`GET /settings/sign-in`) and at least one of
+`plex` / `jellyfin` is true — signing in with it makes a member account for
+anyone with access to the admin's server. Tell newcomers on the sign-in
+screen, under the Plex/Jellyfin buttons, naming only the methods offered
+(e.g. "New here? Use Sign in with Plex — your account is made for you.").
+False: say nothing; someone without an account gets `403` "There's no
+Marquee account for this Plex account yet. Ask the admin to add you.".
 
 Database unreachable → still `200` with `"setupComplete": null, "status": "degraded"`
 and `signIn` password-only.
@@ -277,7 +286,8 @@ of the admin's Jellyfin server. The first sign-in of someone with no linked
 Marquee account creates a **member** account for them (username from
 Plex/Jellyfin, made unique with a number; no password) — unless the admin
 turned "New accounts from Plex/Jellyfin sign-in" off (`GET /settings/sign-in`),
-then it's `403` "Ask the admin to add you first.". Accounts are matched only
+then it's `403` "There's no Marquee account for this Plex account yet. Ask the
+admin to add you." (with "Jellyfin"/"Emby" for those). Accounts are matched only
 by a link to that Plex/Jellyfin user, never by username or email; the Plex
 account that owns the server signs in as the admin (and is linked to it) if
 the admin has no Plex link yet.
@@ -312,7 +322,7 @@ tell addresses apart).
 - **`202`** `{ "status": "pending" }` — not approved on plex.tv yet; poll again.
 - **`200`** — signed in; exactly the body of `POST /auth/login` (`{ token, expiresAt, user }`). The handle is used up.
 - **`410 expired`** "That Plex sign-in expired. Try again." — handle unknown, already used, or older than 10 minutes.
-- **`403 forbidden`** "This Plex account doesn't have access to this server." or "Ask the admin to add you first.".
+- **`403 forbidden`** "This Plex account doesn't have access to this server." or "There's no Marquee account for this Plex account yet. Ask the admin to add you.".
 - `502 upstream` "Couldn't reach Plex. Try again." (the handle is used up; start again), `429 rate_limited`.
 
 ```bash
@@ -337,7 +347,8 @@ password is sent there and nowhere else, and never stored. Response: same as
 
 Errors: `400 invalid` "Enter your Jellyfin username and password.", `401
 invalid_credentials` "Incorrect Jellyfin username or password", `403
-forbidden` "Ask the admin to add you first.", `409 conflict` "Jellyfin
+forbidden` "There's no Marquee account for this Jellyfin account yet. Ask
+the admin to add you.", `409 conflict` "Jellyfin
 sign-in isn't set up on this server.", `502 upstream` "Couldn't reach
 Jellyfin. Try again.", `429 rate_limited` — the same limits as `POST
 /auth/login`, in buckets of their own.
