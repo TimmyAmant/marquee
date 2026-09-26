@@ -221,8 +221,9 @@ export function myRequest(row: {
   reviewedAt: Date | null;
   libraryStatus: LibraryStatus | null;
   editedAt?: Date | null;
+  addFailedAt?: Date | null;
 }, commentCount = 0): Dto.MyRequest {
-  const badge = myRequestBadge(row.status, row.libraryStatus, row.manuallyApproved);
+  const badge = myRequestBadge(row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt));
   return {
     id: row.id,
     mediaType: row.mediaType,

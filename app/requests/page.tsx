@@ -34,12 +34,13 @@ function myRequestBadge(
   status: RequestStatus,
   libraryStatus: LibraryStatus | null,
   manuallyApproved: boolean,
+  waitingToBeAdded: boolean,
 ): {
   label: string;
   className: string;
 } {
   // Label wording shared with GET /api/v1/requests/mine.
-  const { label, tone } = badgeFor(status, libraryStatus, manuallyApproved);
+  const { label, tone } = badgeFor(status, libraryStatus, manuallyApproved, waitingToBeAdded);
   return { label, className: BADGE_CLASS[tone] };
 }
 
@@ -96,7 +97,7 @@ export default async function RequestsPage() {
               <tbody className="divide-y divide-border">
                 {myRequests.map((r) => {
                   const src = tmdbImageUrl(r.posterPath, "w92");
-                  const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved);
+                  const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null);
                   return (
                     <ThreadRow
                       key={r.id}

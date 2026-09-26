@@ -1557,7 +1557,7 @@ Your own requests, newest first.
 `libraryStatus` is live for approved requests only (null otherwise).
 `statusLabel`/`statusTone`: `pending` "Pending review", `declined` "Declined",
 `owned` "In your library", `downloading` "Downloading", `coming_soon` "Coming
-soon", `approved` "Manually approved" or "Approved". `rejectionReason` is why
+soon", `approved` "Manually approved", "Approved — waiting to be added" (0.46+: approved but Sonarr/Radarr couldn't be reached to add it yet, under the reviewers' "Couldn't add") or "Approved". `rejectionReason` is why
 the admin declined it (e.g. `"Not enough space on the server right now"`),
 null unless `status` is `rejected` and a reason was given; the website shows
 it as a second line under the "Declined" badge ("Reason: …"). Empty → "You
@@ -1746,8 +1746,8 @@ was last tried), else null. The website lists these in a "Couldn't add"
 section above "Can't find" instead of under "Past requests": title, "who ·
 approved 9/17/2026 · last tried …", the error in red, the Advanced picks,
 **Retry** (`POST /requests/{id}/retry`), for the admin "Added it by hand"
-(`POST /requests/{id}/manual-approve`), and "Comments (N)". A reviewer may
-also decline one (`POST /requests/{id}/reject`). `addedTo` is null while
+(`POST /requests/{id}/manual-approve`), **Decline** (the same reason chooser as the queue, `POST
+/requests/{id}/reject`) and "Comments (N)". `addedTo` is null while
 it's there. `commentCount` as in `/requests/mine`.
 
 ### `GET /requests/not-found` — admin (0.46+)

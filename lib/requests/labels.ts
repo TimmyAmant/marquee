@@ -12,6 +12,9 @@ export function myRequestBadge(
   status: RequestStatus,
   libraryStatus: LibraryStatus | null,
   manuallyApproved: boolean,
+  /** Approved, but Sonarr/Radarr couldn't be reached to add it yet
+   * ("Couldn't add" on the reviewers' side, waiting for a Retry). */
+  waitingToBeAdded = false,
 ): { label: string; tone: MyRequestBadgeTone } {
   if (status === "pending") return { label: "Pending review", tone: "pending" };
   if (status === "rejected") return { label: "Declined", tone: "declined" };
@@ -22,6 +25,7 @@ export function myRequestBadge(
   // Sonarr/Radarr never actually took this one — the admin is adding it by
   // hand, so it'll never resolve to a real libraryStatus on its own.
   if (manuallyApproved) return { label: "Manually approved", tone: "approved" };
+  if (waitingToBeAdded) return { label: "Approved — waiting to be added", tone: "approved" };
   return { label: "Approved", tone: "approved" };
 }
 

@@ -205,6 +205,7 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
       editedAt: requests.editedAt,
+      addFailedAt: requests.addFailedAt,
     })
     .from(requests)
     .leftJoin(
