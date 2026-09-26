@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   attemptCount,
+  consumeRateLimit,
   getClientIp,
   isRateLimited,
   recordFailedAttempt,
@@ -28,6 +29,18 @@ describe("recordFailedAttempt / refundAttempt", () => {
     refundAttempt(key);
     refundAttempt(key);
     expect(isRateLimited(key, 1)).toBe(false);
+  });
+});
+
+describe("consumeRateLimit", () => {
+  it("spends several at once, all or nothing", () => {
+    const key = `test:consume:${Math.random()}`;
+    expect(consumeRateLimit(key, 3, 5, 60_000)).toBe(true);
+    expect(attemptCount(key)).toBe(3);
+    expect(consumeRateLimit(key, 3, 5, 60_000)).toBe(false);
+    expect(attemptCount(key)).toBe(3);
+    expect(consumeRateLimit(key, 2, 5, 60_000)).toBe(true);
+    expect(consumeRateLimit(key, 1, 5, 60_000)).toBe(false);
   });
 });
 

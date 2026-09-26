@@ -130,6 +130,7 @@ public sealed partial class TitleViewModel : ObservableObject
     private static readonly string[] DetailProperties =
     [
         nameof(HasDetail),
+        nameof(CanShare),
         nameof(Name),
         nameof(MetaLine),
         nameof(HasMetaLine),
@@ -544,6 +545,17 @@ public sealed partial class TitleViewModel : ObservableObject
     public string NotFoundTooltip => Viewer?.NotFoundSince is { } since
         ? $"Sonarr/Radarr hasn't found it since {Format.ShortDate(since)}. See Can't find on the Requests page."
         : "";
+
+    // MARK: Share (0.45.1+; components/share-button.tsx)
+
+    /// <summary>"Share": every member may, once the title has loaded (the dialog needs its name).</summary>
+    public bool CanShare => detail != null;
+
+    /// <summary>The Share dialog's state for this title; null before it has loaded.</summary>
+    public ShareTitleViewModel? CreateShare() =>
+        detail is { } current
+            ? new ShareTitleViewModel(model, Id, current.Name, current.ImdbId ?? current.Links.ImdbId)
+            : null;
 
     // MARK: Request blocklist (viewer.blocked, 0.41+; components/block-requests-button.tsx)
 

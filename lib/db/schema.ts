@@ -493,6 +493,9 @@ export const notificationEventTypeValues = [
   // (lib/requests/not-found.ts): to the reviewers, and — if they chose to
   // hear it — to whoever asked for it.
   "request_not_found",
+  // A household member sent this title to you (lib/sharing) — the sender
+  // and their note are on the row (senderUserId, note).
+  "title_shared",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -521,13 +524,17 @@ export const notifications = pgTable(
     // `alert` false: no Web Push, and the apps don't show a banner for it.
     inBell: boolean("in_bell").default(true).notNull(),
     alert: boolean("alert").default(true).notNull(),
+    // title_shared: who sent it (null once that account is removed) and
+    // their optional note, plain text.
+    senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
+    note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','request_not_found')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found')`,
     ),
   ],
 );

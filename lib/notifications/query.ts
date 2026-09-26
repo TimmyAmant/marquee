@@ -1,6 +1,6 @@
 import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { notifications } from "@/lib/db/schema";
+import { notifications, users } from "@/lib/db/schema";
 import type { MediaType, NotificationEventType } from "@/lib/db/schema";
 import { publishNotification } from "@/lib/notifications/bus";
 import { pushMessageFor, pushToUser } from "@/lib/push/deliver";
@@ -33,14 +33,33 @@ export async function markNotificationRead(userId: string, notificationId: strin
   return updated.length > 0;
 }
 
-/** The bell's list: what this account chose to see there. */
+/** The bell's list: what this account chose to see there. Each has
+ * `sender`: the account that shared the title (title_shared), else null. */
 export async function getRecentNotifications(userId: string, limit = 20) {
-  return db
-    .select()
+  const rows = await db
+    .select({
+      notification: notifications,
+      senderUsername: users.username,
+      senderDisplayName: users.displayName,
+      senderAvatarUpdatedAt: users.avatarUpdatedAt,
+    })
     .from(notifications)
+    .leftJoin(users, eq(users.id, notifications.senderUserId))
     .where(and(eq(notifications.userId, userId), eq(notifications.inBell, true)))
     .orderBy(desc(notifications.createdAt))
     .limit(limit);
+  return rows.map(({ notification, senderUsername, senderDisplayName, senderAvatarUpdatedAt }) => ({
+    ...notification,
+    sender:
+      notification.senderUserId && senderUsername
+        ? {
+            id: notification.senderUserId,
+            username: senderUsername,
+            displayName: senderDisplayName,
+            avatarUpdatedAt: senderAvatarUpdatedAt,
+          }
+        : null,
+  }));
 }
 
 export async function createNotification(input: {
@@ -69,6 +88,9 @@ export async function createNotification(input: {
   /** Which of Settings' events this is, when it isn't the eventType's usual
    * one (lib/notifications/events.ts) — a Plex Watchlist batch. */
   topic?: NotificationPreferenceEvent;
+  /** title_shared: who shared it, and their note (lib/sharing). */
+  senderUserId?: string;
+  note?: string | null;
 }): Promise<boolean> {
   const { relay = true, dedupeSince, topic, ...row } = input;
   const event = topic ?? preferenceEventFor(input.eventType);

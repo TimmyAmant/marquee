@@ -19,6 +19,8 @@ export const notificationPreferenceEventValues = [
   // until they do; the apps take their rows (and labels) from the server,
   // so they'll show it without an update.
   "request_comment",
+  // Someone in the household shared a title with you (lib/sharing).
+  "title_shared",
   "request_pending",
   // "Couldn't find …": an approved request Sonarr/Radarr hasn't found.
   "request_not_found",
@@ -48,9 +50,9 @@ type EventInfo = {
   /** Pushed to devices unless turned off. Everything but "still looking"
    * was pushed before these could be chosen. */
   pushDefault?: boolean;
-  /** The household channels can post it. Not "still looking": that's the
-   * requester's own copy of what the reviewers were already told. */
-  household?: boolean;
+  /** Only ever for the one account (a title shared with you): never posted
+   * to the household channels, and not in the admin's list of them. */
+  personalOnly?: boolean;
 };
 
 export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo> = {
@@ -58,9 +60,12 @@ export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo>
   request_declined: { label: "A request is declined", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
   request_available: { label: "Ready to watch", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
   request_downloading: { label: "Started downloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
-  request_still_looking: { label: "Still looking for something I asked for", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, household: false },
+  request_still_looking: { label: "Still looking for something I asked for", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
   issue_updated: { label: "A problem I reported is fixed", householdLabel: "A reported problem is fixed", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
   request_comment: { label: "Comments on my requests", audience: "everyone", live: false, channelDefault: true, householdDefault: false },
+  // In the bell and pushed to devices by default like everything else, but
+  // off for a new personal channel: it's a nudge, not news.
+  title_shared: { label: "Someone shares a title with me", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
   request_pending: { label: "New request waiting for review", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
   request_not_found: { label: "Sonarr/Radarr can't find a request", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
   issue_reported: { label: "New problem report", audience: "admin", live: true, channelDefault: true, householdDefault: true },
@@ -80,7 +85,7 @@ export function eventsFor(role: UserRole | string | null | undefined): Notificat
 
 /** Everything the household channels can post, in order. */
 export const householdEvents = notificationPreferenceEventValues.filter(
-  (event) => NOTIFICATION_EVENTS[event].live && NOTIFICATION_EVENTS[event].household !== false,
+  (event) => NOTIFICATION_EVENTS[event].live && !NOTIFICATION_EVENTS[event].personalOnly,
 );
 
 export const defaultHouseholdEvents = householdEvents.filter((event) => NOTIFICATION_EVENTS[event].householdDefault);
@@ -105,6 +110,8 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
       return "request_pending";
     case "request_not_found":
       return "request_not_found";
+    case "title_shared":
+      return "title_shared";
   }
 }
 
@@ -128,5 +135,6 @@ export function channelWants(events: Record<string, boolean> | null | undefined,
 
 /** The household channels' events: the saved list, or the defaults. */
 export function householdWants(saved: readonly string[] | null | undefined, event: NotificationPreferenceEvent): boolean {
+  if (NOTIFICATION_EVENTS[event].personalOnly) return false;
   return saved ? saved.includes(event) : NOTIFICATION_EVENTS[event].householdDefault;
 }

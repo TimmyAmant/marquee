@@ -105,6 +105,7 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], string> = {
   issue_resolved: "Problem fixed",
   request_created: "New request",
   request_not_found: "Can't find it",
+  title_shared: "Shared with you",
 };
 
 /** What the service worker (public/sw.js) shows. `requestId`: a new

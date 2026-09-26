@@ -1,5 +1,5 @@
 {
-  "id": "03b5c908-0d94-4bec-8424-261718b05027",
+  "id": "e9971e90-7a98-4955-b422-1ef5a9ce8368",
   "prevId": "2c4158f3-1180-402e-b8e0-974b5fef49bd",
   "version": "7",
   "dialect": "postgresql",
@@ -321,12 +321,6 @@
         "household_notification_events": {
           "name": "household_notification_events",
           "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "not_found_after_hours": {
-          "name": "not_found_after_hours",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -1832,6 +1826,18 @@
           "notNull": true,
           "default": true
         },
+        "sender_user_id": {
+          "name": "sender_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1895,6 +1901,19 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
+        },
+        "notifications_sender_user_id_users_id_fk": {
+          "name": "notifications_sender_user_id_users_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "users",
+          "columnsFrom": [
+            "sender_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1903,7 +1922,7 @@
       "checkConstraints": {
         "notifications_event_type_check": {
           "name": "notifications_event_type_check",
-          "value": "\"notifications\".\"event_type\" in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','request_not_found')"
+          "value": "\"notifications\".\"event_type\" in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared')"
         }
       },
       "isRLSEnabled": false
@@ -2846,37 +2865,6 @@
         },
         "arr_series_type": {
           "name": "arr_series_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "not_found_since": {
-          "name": "not_found_since",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "not_found_alerts": {
-          "name": "not_found_alerts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "not_found_alerted_at": {
-          "name": "not_found_alerted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "not_found_dismissed_at": {
-          "name": "not_found_dismissed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "not_found_arr_path": {
-          "name": "not_found_arr_path",
           "type": "text",
           "primaryKey": false,
           "notNull": false

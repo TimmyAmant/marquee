@@ -54,10 +54,14 @@ final class MarqueeAPIRequestTests: XCTestCase {
     """#
     nonisolated static let arrServerId = "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10"
 
+    /// `POST /titles/{type}/{tmdbId}/share`'s answer, from the doc's prose.
+    nonisolated static let shareResponse = #"{"ok":true,"sharedWith":1}"#
+
     private func fixture(_ name: String) throws -> Data {
         if name == "blocklist" { return Data(Self.blocklistResponse.utf8) }
         if name == "arr-server-saved" { return Data(Self.arrServerSavedResponse.utf8) }
         if name == "arr-server-webhook" { return Data(Self.arrServerWebhookResponse.utf8) }
+        if name == "share-result" { return Data(Self.shareResponse.utf8) }
         let file = name.contains(".") ? name : name + ".json"
         let url = Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/api/\(file)")
         return try Data(contentsOf: url)
@@ -66,7 +70,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
     /// POSTs that change nothing the screens show (or that the session owns).
     private static let readOnlyPosts = [
         "/surprise", "/auth/login", "/auth/setup", "/auth/logout", "/settings/integrations/plex/pin",
-        "/settings/arr-servers/test",
+        "/settings/arr-servers/test", "/titles/movie/425/share",
     ]
 
     private var cases: [Case] {
@@ -173,6 +177,15 @@ final class MarqueeAPIRequestTests: XCTestCase {
             },
             Case(method: "POST", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/search", response: "ok") { try await $0.issues.searchAgain(request) },
             Case(method: "DELETE", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0", response: "ok") { try await $0.issues.delete(request) },
+            // Sharing a title (0.45.1+): the doc's example body.
+            Case(
+                method: "POST", path: "/titles/movie/425/share",
+                body: #"{"userIds":["83c55a49-6153-4cb9-ae22-4a42d48f4cf3"],"note":"You'd love this one"}"#, response: "share-result"
+            ) {
+                let result = try await $0.titles.share(.movie, id: 425, API.ShareTitleRequest(userIds: [user], note: "You'd love this one"))
+                XCTAssertEqual(result.sharedWith, 1)
+            },
+            Case(method: "GET", path: "/users/shareable", response: "users-shareable") { _ = try await $0.users.shareable() },
             // Request blocklist (0.41+)
             Case(method: "POST", path: "/titles/movie/438631/block", body: #"{"reason":"Already on Max."}"#, response: "ok") {
                 try await $0.titles.block(.movie, id: 438631, reason: "Already on Max.")
@@ -309,8 +322,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 124, "docs/api-v1.md documents 124 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 124, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 126, "docs/api-v1.md documents 126 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 126, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

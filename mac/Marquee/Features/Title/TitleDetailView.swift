@@ -12,6 +12,7 @@ struct TitleDetailView: View {
     @State private var showingRelink = false
     @State private var showingSeasonPicker = false
     @State private var showingReportProblem = false
+    @State private var showingShare = false
 
     init(id: API.TitleID) {
         self.id = id
@@ -40,6 +41,9 @@ struct TitleDetailView: View {
             if let webURL = model.webURL(for: .title(id)) {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
+                        Button("Share…") { showingShare = true }
+                            .disabled(screen.detail == nil)
+                        Divider()
                         Button("Open in Browser") { openURL(webURL) }
                         Button("Copy Link") { model.copyLink(webURL) }
                     } label: {
@@ -79,6 +83,14 @@ struct TitleDetailView: View {
                 SeasonRequestSheet(title: detail.name, seasons: detail.seasons) { seasons in
                     try await screen.requestSeasons(seasons)
                 }
+            }
+        }
+        .sheet(isPresented: $showingShare) {
+            if let detail = screen.detail {
+                ShareTitleSheet(
+                    titleID: id, titleName: detail.name, imdbId: detail.links.imdbId,
+                    serverURL: model.session.server?.baseURL
+                )
             }
         }
         .sheet(isPresented: $showingReportProblem) {
@@ -123,7 +135,8 @@ struct TitleDetailView: View {
                                     onTrailer: { showingTrailer = true },
                                     onRelink: { showingRelink = true },
                                     onPickSeasons: { showingSeasonPicker = true },
-                                    onReportProblem: { showingReportProblem = true }
+                                    onReportProblem: { showingReportProblem = true },
+                                    onShare: { showingShare = true }
                                 )
                                 .frame(maxWidth: Metrics.titleTextWidth, alignment: .leading)
                                 .padding(.top, Metrics.titleColumnTop)
@@ -337,6 +350,7 @@ private struct TitleMainColumn: View {
     let onRelink: () -> Void
     let onPickSeasons: () -> Void
     let onReportProblem: () -> Void
+    let onShare: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -369,7 +383,7 @@ private struct TitleMainColumn: View {
 
             TitleActionRow(
                 screen: screen, detail: detail, onRelink: onRelink, onPickSeasons: onPickSeasons,
-                onReportProblem: onReportProblem
+                onReportProblem: onReportProblem, onShare: onShare
             )
                 .padding(.top, 16)
 
@@ -455,6 +469,7 @@ private struct TitleActionRow: View {
     let onRelink: () -> Void
     let onPickSeasons: () -> Void
     let onReportProblem: () -> Void
+    let onShare: () -> Void
 
     @Environment(AppModel.self) private var model
     /// "Block requests" opened its reason field.
@@ -592,6 +607,13 @@ private struct TitleActionRow: View {
                     }
                     .buttonStyle(OutlineButtonStyle(pill: .large))
                 }
+
+                // components/share-title-button.tsx (0.45.1+): send it to
+                // someone in the household, or share a link.
+                Button(action: onShare) {
+                    pillLabel("square.and.arrow.up", "Share", size: 13)
+                }
+                .buttonStyle(OutlineButtonStyle(pill: .large))
 
                 // components/block-requests-button.tsx (0.41+).
                 if viewer.offersBlocking {

@@ -124,9 +124,11 @@ public sealed class MarqueeApiNotificationsRequestTests
 
         var list = await api.Notifications.ListAsync();
         Assert.Equal(1, list.UnreadCount);
-        var item = Assert.Single(list.Results);
+        Assert.Equal(2, list.Results.Count);
+        var item = list.Results[0];
         Assert.Equal(NotificationId, item.Id);
         Assert.Equal(NotificationEventType.RequestRejected, item.EventType);
+        Assert.Equal(NotificationEventType.TitleShared, list.Results[1].EventType);
         Assert.False(item.Read);
 
         Assert.Equal(1, await api.Notifications.UnreadCountAsync());

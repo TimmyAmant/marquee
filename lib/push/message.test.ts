@@ -16,6 +16,16 @@ describe("pushMessageFor", () => {
     });
   });
 
+  it("opens a shared title under its own heading", () => {
+    const message = "Susan shared “Ice Age” with you: Watch it";
+    expect(pushMessageFor({ ...base, message, tmdbId: 425, eventType: "title_shared" })).toEqual({
+      title: "Shared with you",
+      body: message,
+      url: "/title/movie/425",
+      tag: "n1",
+    });
+  });
+
   it("carries the request, for Approve / Decline, and opens Requests", () => {
     expect(pushMessageFor({ ...base, eventType: "request_created", requestId: "r1" })).toEqual({
       title: "New request",

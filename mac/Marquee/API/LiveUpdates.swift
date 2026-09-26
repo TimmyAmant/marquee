@@ -331,7 +331,9 @@ final class LiveUpdates {
                 message: "\(newest.message) (+\(arrivals.count - 1) more)",
                 read: newest.read,
                 alert: newest.alert,
-                createdAt: newest.createdAt
+                createdAt: newest.createdAt,
+                sharedBy: newest.sharedBy,
+                note: newest.note
             ))
         }
     }
@@ -469,7 +471,7 @@ extension LiveUpdates {
 final class SystemNotificationBanners: NotificationBannerPosting {
     func post(_ notification: API.NotificationItem) {
         let content = UNMutableNotificationContent()
-        content.title = notification.title
+        content.title = notification.bannerTitle
         content.body = notification.message
         content.sound = .default
         content.threadIdentifier = "marquee.notifications"
