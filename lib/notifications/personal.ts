@@ -37,7 +37,9 @@ const VERIFY_MAX_ATTEMPTS = 5;
  * past that they're dropped (the bell still has them) until it passes. */
 export const CHANNEL_RATE_LIMIT = { count: 30, windowMs: 10 * 60 * 1000 };
 
-export type Actor = { id: string; role: string };
+/** Delivery only looks at the role; the permissions ride along for the
+ * notification preferences (lib/notifications/preferences.ts). */
+export type Actor = { id: string; role: string; permissions?: readonly string[] };
 
 export function isChannelKind(value: unknown): value is UserNotificationChannelKind {
   return typeof value === "string" && (userNotificationChannelKindValues as readonly string[]).includes(value);

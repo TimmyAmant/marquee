@@ -4,6 +4,7 @@
 // fields always present as null (never omitted).
 
 import type { DiscoverList, DiscoverShelfKey, SeeAllTarget } from "@/lib/discover/lists";
+import type { PermissionMap } from "@/lib/users/permissions";
 
 export type { DiscoverList, SeeAllTarget };
 
@@ -147,11 +148,20 @@ export type SignInSettings = { mediaServerSignup: boolean };
 /** 0.46+: GET/PUT /settings/not-found. */
 export type NotFoundSettings = { afterHours: number };
 
+/** What an account may do (0.48+) — every switch, on or off; always all on
+ * for the admin. See lib/users/permissions.ts for what each one covers. */
+export type Permissions = PermissionMap;
+
 export type User = {
   id: string;
   username: string;
   displayName: string | null;
+  /** "admin", or the preset nearest their permissions: "trusted" exactly
+   * when they're the Trusted preset, "member" otherwise. Use `permissions`
+   * to decide what to show. */
   role: UserRole;
+  /** What this account may do (0.48+). */
+  permissions: Permissions;
   libraryOwnerId: string;
   /** Server-relative path of the profile photo (GET, bearer token), or null
    * for none. Changes whenever the photo does. */
@@ -905,6 +915,9 @@ export type HouseholdMember = {
   role: UserRole;
   autoApproveMovies: boolean;
   autoApproveTv: boolean;
+  /** What this account may do (0.48+); all on for the admin. The admin
+   * changes them with PATCH /users/{id} `permissions`. */
+  permissions: Permissions;
   createdAt: string;
   isCurrentUser: boolean;
   /** Same as User.avatarUrl. */

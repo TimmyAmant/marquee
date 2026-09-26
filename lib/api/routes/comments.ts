@@ -19,13 +19,13 @@ export function threadRoutes(kind: CommentTarget["kind"]) {
     GET: withApi<{ id: string }>(async (request, params): Promise<CommentThread> => {
       const ctx = await requireApiUser(request);
       const id = parseUuidSegment(params.id, NOT_FOUND[kind]);
-      return unwrap(await listComments({ userId: ctx.user.id, role: ctx.user.role }, { kind, id })).thread;
+      return unwrap(await listComments({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, { kind, id })).thread;
     }),
     POST: withApi<{ id: string }>(async (request, params): Promise<Ok & { commentId: string }> => {
       const ctx = await requireApiUser(request);
       const id = parseUuidSegment(params.id, NOT_FOUND[kind]);
       const body = await readJsonBody(request);
-      const { commentId } = unwrap(await addComment({ userId: ctx.user.id, role: ctx.user.role }, { kind, id }, body.body));
+      const { commentId } = unwrap(await addComment({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, { kind, id }, body.body));
       return { ok: true, commentId };
     }),
   };
@@ -38,14 +38,14 @@ export function commentRoutes(kind: CommentTarget["kind"]) {
       const id = parseUuidSegment(params.id, NOT_FOUND[kind]);
       const commentId = parseUuidSegment(params.commentId, "Comment not found.");
       const body = await readJsonBody(request);
-      unwrap(await editComment({ userId: ctx.user.id, role: ctx.user.role }, { kind, id }, commentId, body.body));
+      unwrap(await editComment({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, { kind, id }, commentId, body.body));
       return { ok: true };
     }),
     DELETE: withApi<{ id: string; commentId: string }>(async (request, params): Promise<Ok> => {
       const ctx = await requireApiUser(request);
       const id = parseUuidSegment(params.id, NOT_FOUND[kind]);
       const commentId = parseUuidSegment(params.commentId, "Comment not found.");
-      unwrap(await deleteComment({ userId: ctx.user.id, role: ctx.user.role }, { kind, id }, commentId));
+      unwrap(await deleteComment({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, { kind, id }, commentId));
       return { ok: true };
     }),
   };

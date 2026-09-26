@@ -16,7 +16,7 @@ import { CommentSection } from "@/components/comment-thread";
 import type { ReviewedRequest } from "@/lib/api/types";
 import { TONE_CLASS } from "@/lib/library/status-tone";
 
-function CouldntAddRow({ request, isAdmin }: { request: ReviewedRequest; isAdmin: boolean }) {
+function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedRequest; isAdmin: boolean; advanced: boolean }) {
   const router = useRouter();
   const [retryState, retryAction, retrying] = useActionState(retryRequestAction.bind(null, request.id), undefined);
   const [manualState, manualAction, markingManual] = useActionState(
@@ -70,6 +70,7 @@ function CouldntAddRow({ request, isAdmin }: { request: ReviewedRequest; isAdmin
           last tried {new Date(request.addFailed.since).toLocaleString()}
         </p>
         <p className="mt-1 text-xs text-red-400">{error}</p>
+        {advanced && (
         <div className="mt-1.5">
           <AddAdvancedOptions
             mediaType={request.mediaType}
@@ -79,6 +80,7 @@ function CouldntAddRow({ request, isAdmin }: { request: ReviewedRequest; isAdmin
             disabled={busy}
           />
         </div>
+        )}
         {choosingReason && (
           <form
             onSubmit={submitReject}
@@ -173,7 +175,16 @@ function CouldntAddRow({ request, isAdmin }: { request: ReviewedRequest; isAdmin
 /** "Couldn't add" on the Requests page: approved requests Sonarr/Radarr
  * couldn't be reached (or errored) to add, each with its error and Retry.
  * Hidden when there are none. */
-export function CouldntAddSection({ requests, isAdmin }: { requests: ReviewedRequest[]; isAdmin: boolean }) {
+export function CouldntAddSection({
+  requests,
+  isAdmin,
+  advanced,
+}: {
+  requests: ReviewedRequest[];
+  isAdmin: boolean;
+  /** The reviewer may pick the server, quality and folder (advancedRequests). */
+  advanced: boolean;
+}) {
   const failed = requests.filter((r) => r.addFailed);
   if (failed.length === 0) return null;
   return (
@@ -189,7 +200,7 @@ export function CouldntAddSection({ requests, isAdmin }: { requests: ReviewedReq
       </p>
       <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
         {failed.map((request) => (
-          <CouldntAddRow key={request.id} request={request} isAdmin={isAdmin} />
+          <CouldntAddRow key={request.id} request={request} isAdmin={isAdmin} advanced={advanced} />
         ))}
       </ul>
     </section>

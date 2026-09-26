@@ -1,5 +1,5 @@
 import { withApi } from "@/lib/api/handler";
-import { requireApiAdmin, requireApiReviewer } from "@/lib/api/auth";
+import { requireApiAdmin, requireApiPermission } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment } from "@/lib/api/request";
 import type { CoreResult } from "@/lib/core-result";
@@ -18,7 +18,7 @@ export function reviewRequestHandler(
   return withApi<{ id: string }>(async (request, params): Promise<Ok> => {
     const ctx = adminOnly
       ? await requireApiAdmin(request, forbiddenMessage)
-      : await requireApiReviewer(request, forbiddenMessage);
+      : await requireApiPermission(request, "reviewRequests", forbiddenMessage);
     const requestId = parseUuidSegment(params.id, "Request not found or already reviewed.");
     unwrap(await review(requestId, ctx.user.id));
     return { ok: true };

@@ -105,14 +105,15 @@ function isCurrent(pathname: string, href: string): boolean {
  */
 export function NavMenu({
   isSignedIn,
-  isAdmin,
+  showRequestsBadge,
   pendingRequestCount,
   userLabel,
   avatarSrc,
   serverLabel,
 }: {
   isSignedIn: boolean;
-  isAdmin: boolean;
+  /** Whoever reviews requests or handles problem reports. */
+  showRequestsBadge: boolean;
   pendingRequestCount: number;
   userLabel: string | null;
   /** The signed-in account's photo URL (lib/users/avatar-path.ts), if any. */
@@ -172,7 +173,7 @@ export function NavMenu({
   const railGroups = [[SEARCH, DISCOVER], BROWSE, library].filter((group) => group.length > 0);
 
   function badgeFor(item: Destination) {
-    return item.href === "/requests" && isAdmin ? <RequestsBadge initialCount={pendingRequestCount} /> : null;
+    return item.href === "/requests" && showRequestsBadge ? <RequestsBadge initialCount={pendingRequestCount} /> : null;
   }
 
   return (
@@ -234,7 +235,7 @@ export function NavMenu({
                   }`}
                 >
                   <Icon name={item.icon} className="h-[19px] w-[19px]" />
-                  {item.href === "/requests" && isAdmin && pendingRequestCount > 0 && (
+                  {item.href === "/requests" && showRequestsBadge && pendingRequestCount > 0 && (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />
                   )}
                   <RailLabel>{item.label}</RailLabel>

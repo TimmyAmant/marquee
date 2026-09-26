@@ -27,8 +27,10 @@ const bytea = customType<{ data: Buffer }>({
 });
 
 // trusted: a member who may also review other people's requests and
-// problem reports (lib/users/roles.ts), with their own requests approved
-// straight away and no request limits. Settings stay the admin's.
+// problem reports, with their own requests approved straight away and no
+// request limits. Since 0.48 a role is a preset of permissions
+// (lib/users/permissions.ts), which are what count: "trusted" means exactly
+// the Trusted preset. Settings stay the admin's.
 export const userRoleValues = ["admin", "member", "trusted"] as const;
 export type UserRole = (typeof userRoleValues)[number];
 
@@ -53,8 +55,20 @@ export const users = pgTable(
     // Admin-set per member: skip the manual review queue and add straight to
     // Radarr/Sonarr on request, scoped separately per media type so e.g.
     // movies can be trusted while TV still gets reviewed.
+    //
+    // Since permissions (below) these are kept only in step with the
+    // autoApproveMovies / autoApproveTv permissions, for anything that still
+    // reads them; the permissions are what count.
     autoApproveMovies: boolean("auto_approve_movies").default(false).notNull(),
     autoApproveTv: boolean("auto_approve_tv").default(false).notNull(),
+    // What this account may do (lib/users/permissions.ts): the names of the
+    // switches that are on. The default is the Member preset; migration 0051
+    // filled it in for every existing account from its role and auto-approve
+    // flags. The admin's are ignored — they can do everything.
+    permissions: text("permissions")
+      .array()
+      .default(sql`ARRAY['requestMovies','requestTv','request4kMovies','request4kTv','reportIssues']::text[]`)
+      .notNull(),
     // Request limits (lib/requests/quota.ts): at most `limit` requests of
     // that type in any `days`-day stretch. Null limit = no limit. Admins and
     // trusted members are never limited.

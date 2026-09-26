@@ -127,11 +127,15 @@ extension API {
         /// the admin's "Unblock requests".
         var block: TitleBlock? { blocked?.block }
 
-        /// The admin's "Block requests" / "Unblock requests" is on offer.
-        var offersBlocking: Bool { isAdmin && blocked != nil }
+        /// "Block requests" / "Unblock requests" is on offer: to whoever
+        /// manages the blocklist (the admin, or 0.48+ a member given it),
+        /// on a server that can block.
+        func offersBlocking(managesBlocklist: Bool) -> Bool { managesBlocklist && blocked != nil }
 
-        /// Show the "Report a problem" button.
-        var showsReportProblem: Bool { canReport == true }
+        /// Show the "Report a problem" button: the server says the title
+        /// can be reported (which, 0.48+, already needs Report problems), and
+        /// the viewer may report problems.
+        func showsReportProblem(reportsIssues: Bool = true) -> Bool { canReport == true && reportsIssues }
 
         /// "Requested Seasons 1–3 — waiting for approval", or without the
         /// seasons for a whole-series request.

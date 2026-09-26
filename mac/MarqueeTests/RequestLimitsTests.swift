@@ -47,7 +47,7 @@ final class RequestLimitsTests: XCTestCase {
         XCTAssertNil(limits.movie)
         XCTAssertNil(limits.tv)
         XCTAssertNil(limits.summaryLine(), "No line when nothing is limited")
-        XCTAssertTrue(me.canReviewRequests)
+        XCTAssertTrue(me.user.can(.reviewRequests))
     }
 
     func testMeWithLimitsDecodes() throws {
@@ -65,7 +65,7 @@ final class RequestLimitsTests: XCTestCase {
             limits.summaryLine(calendar: Self.utc),
             "Movies: 3 of 5 requests left (every 7 days) · TV: none left until Oct 3"
         )
-        XCTAssertFalse(me.canReviewRequests)
+        XCTAssertFalse(me.user.can(.reviewRequests))
     }
 
     func testQuotaLines() {
@@ -127,7 +127,7 @@ final class RequestLimitsTests: XCTestCase {
         XCTAssertEqual(API.UserRole(rawValue: "trusted"), .trusted)
 
         let user = User(id: UUID(), username: "kid", displayName: nil, role: .trusted, libraryOwnerId: UUID())
-        XCTAssertTrue(user.canReviewRequests)
+        XCTAssertTrue(user.can(.reviewRequests))
         XCTAssertFalse(user.isAdmin, "Trusted doesn't get settings, integrations or Add buttons")
     }
 

@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// app/requests/page.tsx — the review queue + history for whoever reviews
-/// requests (the admin or a trusted member), or a member's own requests.
+/// requests, or your own requests (plus, with See everyone's requests, the
+/// rest of the household's to look at). Which is the viewer's permissions
+/// (0.48+; the role on an older server).
 struct RequestsView: View {
     @Environment(AppModel.self) private var model
 
@@ -11,12 +13,14 @@ struct RequestsView: View {
                 Text("Requests")
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
-                // The admin's and trusted members' (lib/users/roles.ts).
-                if model.viewer?.canReviewRequests == true {
+                if model.viewer?.can(.reviewRequests) == true {
                     AdminRequestsList()
                 } else {
                     MemberRequestsList()
-                    IssuesSection(isAdmin: false)
+                    if model.viewer?.can(.viewRequests) == true {
+                        EveryonesRequestsList()
+                    }
+                    IssuesSection(isAdmin: model.viewer?.can(.manageIssues) == true)
                 }
             }
             .padding(.horizontal, 32)
@@ -310,7 +314,7 @@ private struct AdminRequestsList: View {
                 .padding(.top, 28)
             }
             NotFoundSection(topPadding: 28)
-            IssuesSection(isAdmin: true, topPadding: 28)
+            IssuesSection(isAdmin: model.viewer?.can(.manageIssues) == true, topPadding: 28)
 
             if past.isEmpty, let historyError {
                 SectionTitle(text: "Past requests")
@@ -440,6 +444,77 @@ private struct PastRequestRow: View {
     }
 }
 
+// MARK: - Everyone's requests
+
+/// "Everyone's requests" (0.48+): the rest of the household's requests for
+/// someone who may see them but not review them. To look at, no buttons.
+private struct EveryonesRequestsList: View {
+    @Environment(AppModel.self) private var model
+    @State private var rows: [EveryoneRequestRow]?
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionTitle(text: "Everyone's requests")
+            if let rows {
+                if rows.isEmpty {
+                    Text("Nobody else has asked for anything yet.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textMuted)
+                } else {
+                    TableCard(columns: ["Title", "Requested by", "Requested", "Status"]) {
+                        ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                            if index > 0 { Divider().overlay(Theme.border) }
+                            HStack(alignment: .top, spacing: 0) {
+                                titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) })
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(row.requestedBy)
+                                    .foregroundStyle(Theme.textSecondary)
+                                    .frame(width: 170, alignment: .leading)
+                                    .padding(.top, 18)
+                                Text(Format.shortDate(row.createdAt))
+                                    .foregroundStyle(Theme.textSecondary)
+                                    .frame(width: 170, alignment: .leading)
+                                    .padding(.top, 18)
+                                TonePill(text: row.statusLabel, tone: row.tone)
+                                    .frame(width: 170, alignment: .leading)
+                                    .padding(.top, 16)
+                            }
+                            .font(.system(size: 13))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                        }
+                    }
+                }
+            } else if let error {
+                InlineMessage(text: error)
+            } else {
+                LoadingView()
+            }
+        }
+        .padding(.top, 12)
+        .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: .library), local: model.events.revision(of: .requests))) {
+            await load()
+        }
+    }
+
+    private func load() async {
+        let api = model.api
+        let viewerId = model.viewer?.id
+        do {
+            let queue = try await api.requests.pending()
+            let reviewed = try await api.requests.history()
+            if Task.isCancelled { return }
+            rows = EveryoneRequestRow.rows(pending: queue.results, reviewed: reviewed, excluding: viewerId)
+            error = nil
+        } catch let failure as APIError where failure.isCancellation {
+            return
+        } catch {
+            if rows == nil { self.error = error.localizedDescription }
+        }
+    }
+}
+
 // MARK: - Couldn't add
 
 /// components/couldnt-add-section.tsx (0.46+): approved requests Sonarr/Radarr
@@ -522,7 +597,7 @@ private struct CouldntAddRow: View {
                             .textSelection(.enabled)
                     }
                     HStack(spacing: 14) {
-                        if advanced.isOffered {
+                        if offersAdvanced {
                             AdvancedAddToggle(advanced: $advanced)
                                 .disabled(busy != nil)
                         }
@@ -551,7 +626,7 @@ private struct CouldntAddRow: View {
                         .disabled(busy != nil)
                 }
             }
-            if advanced.isExpanded {
+            if advanced.isExpanded && offersAdvanced {
                 AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
                     .padding(.leading, 52)
             }
@@ -586,8 +661,13 @@ private struct CouldntAddRow: View {
         }
     }
 
+    /// "Advanced" needs Advanced request options (0.48+).
+    private var offersAdvanced: Bool {
+        advanced.isOffered && model.viewer?.can(.advancedRequests) == true
+    }
+
     private func retry() {
-        let overrides = advanced.overrides
+        let overrides = offersAdvanced ? advanced.overrides : nil
         run("retry") { try await $0.requests.retry(row.id, overrides: overrides) }
     }
 
@@ -1040,7 +1120,9 @@ private struct RequestReviewRow: View {
     // Reject error doesn't hide the manual-approve path.
     @State private var approveError: String?
     @State private var otherError: String?
-    @State private var showManualApprove = false
+    /// Approve failed because Sonarr can't resolve the show: "Add manually
+    /// in Sonarr", and (the admin's alone) "Manually approve".
+    @State private var sonarrUnresolved = false
     /// Reject is a two-step, like the web row: the button opens the reason
     /// chooser, and only its Decline actually sends anything.
     @State private var choosingReason = false
@@ -1053,7 +1135,7 @@ private struct RequestReviewRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             mainRow
-            if advanced.isExpanded && !showManualApprove {
+            if advanced.isExpanded && offersAdvanced && !showManualApprove {
                 AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
                     .padding(.leading, 52)
             }
@@ -1120,7 +1202,7 @@ private struct RequestReviewRow: View {
                     }
                 }
                 .disabled(busy != nil)
-                if advanced.isOffered && !showManualApprove {
+                if offersAdvanced && !showManualApprove {
                     AdvancedAddToggle(advanced: $advanced)
                         .disabled(busy != nil)
                 }
@@ -1130,7 +1212,7 @@ private struct RequestReviewRow: View {
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.danger)
                             .fixedSize(horizontal: false, vertical: true)
-                        if showManualApprove, let manualSonarrURL {
+                        if sonarrUnresolved, let manualSonarrURL {
                             Button("Add manually in Sonarr") { openURL(manualSonarrURL) }
                                 .buttonStyle(QuietButtonStyle(color: Theme.accent))
                                 .font(.system(size: 11))
@@ -1158,7 +1240,7 @@ private struct RequestReviewRow: View {
                 if label == "approve" {
                     approveError = error.localizedDescription
                     if let failure = error as? APIError, failure.isSonarrUnresolvable {
-                        showManualApprove = true
+                        sonarrUnresolved = true
                     }
                 } else {
                     otherError = error.localizedDescription
@@ -1168,8 +1250,18 @@ private struct RequestReviewRow: View {
         }
     }
 
+    /// "Advanced" needs Advanced request options (0.48+).
+    private var offersAdvanced: Bool {
+        advanced.isOffered && model.viewer?.can(.advancedRequests) == true
+    }
+
+    /// Manual approval stays the admin's (`canManuallyApprove` on the web).
+    private var showManualApprove: Bool {
+        sonarrUnresolved && model.viewer?.isAdmin == true
+    }
+
     private func approve() {
-        let overrides = advanced.overrides
+        let overrides = offersAdvanced ? advanced.overrides : nil
         run("approve") { try await $0.requests.approve(row.id, overrides: overrides) }
     }
 

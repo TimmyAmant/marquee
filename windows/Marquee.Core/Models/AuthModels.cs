@@ -43,10 +43,34 @@ public sealed record User
     /// </summary>
     public bool? HasPassword { get; init; }
 
+    /// <summary>
+    /// What this account may do (0.48+): every switch, all on for the admin.
+    /// Null from an older server; <see cref="Can"/> then falls back to the role.
+    /// </summary>
+    public Permissions? Permissions { get; init; }
+
+    /// <summary>
+    /// <c>autoApproveMovies</c> / <c>autoApproveTv</c>: sent on <c>/me</c>
+    /// (not on the login <c>user</c>), for <see cref="Can"/>'s fallback on an
+    /// older server.
+    /// </summary>
+    public bool? AutoApproveMovies { get; init; }
+
+    /// <inheritdoc cref="AutoApproveMovies"/>
+    public bool? AutoApproveTv { get; init; }
+
+    /// <summary>
+    /// What the app offers this account: <see cref="Permissions"/> (with
+    /// reviewing bringing seeing), everything for the admin, or, from an
+    /// older server, what the role allowed. The server enforces it anyway.
+    /// </summary>
+    public Permissions Can => Models.Permissions.Effective(Role, Permissions, AutoApproveMovies, AutoApproveTv);
+
+    /// <summary>The admin's own UI (settings tabs, household accounts, Add, relink, ...) stays on this.</summary>
     public bool IsAdmin => Role == UserRole.Admin;
 
-    /// <inheritdoc cref="UserRole.ReviewsRequests"/>
-    public bool ReviewsRequests => Role.ReviewsRequests;
+    /// <summary>The review queue: <see cref="Models.Permissions.ReviewRequests"/>.</summary>
+    public bool ReviewsRequests => Can.ReviewRequests;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
     public string Label => DisplayName.NonBlank() ?? Username;
@@ -81,10 +105,16 @@ public sealed record Me
     /// </summary>
     public RequestLimits? RequestLimits { get; init; }
 
+    /// <inheritdoc cref="User.Permissions"/>
+    public Permissions? Permissions { get; init; }
+
+    /// <inheritdoc cref="User.Can"/>
+    public Permissions Can => Models.Permissions.Effective(Role, Permissions, AutoApproveMovies, AutoApproveTv);
+
     public bool IsAdmin => Role == UserRole.Admin;
 
-    /// <inheritdoc cref="UserRole.ReviewsRequests"/>
-    public bool ReviewsRequests => Role.ReviewsRequests;
+    /// <inheritdoc cref="User.ReviewsRequests"/>
+    public bool ReviewsRequests => Can.ReviewRequests;
 
     /// <summary>What the website prints: the display name, else the username.</summary>
     public string Label => DisplayName.NonBlank() ?? Username;
@@ -99,6 +129,9 @@ public sealed record Me
         AvatarUrl = AvatarUrl,
         Linked = Linked,
         HasPassword = HasPassword,
+        Permissions = Permissions,
+        AutoApproveMovies = AutoApproveMovies,
+        AutoApproveTv = AutoApproveTv,
     };
 }
 

@@ -1,5 +1,5 @@
-import type { NotificationEventType, UserRole } from "@/lib/db/schema";
-import { canReviewRequests } from "@/lib/users/roles";
+import type { NotificationEventType } from "@/lib/db/schema";
+import { can, type PermissionSubject } from "@/lib/users/permissions";
 
 // The events someone can choose to hear about, and where (Settings ›
 // Account › Notifications). Finer than the notification's own eventType:
@@ -72,13 +72,14 @@ export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo>
   watchlist_requests: { label: "Plex Watchlist requests", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
 };
 
-/** The events this role gets, in the order Settings lists them. */
-export function eventsFor(role: UserRole | string | null | undefined): NotificationPreferenceEvent[] {
+/** The events this account gets, in the order Settings lists them:
+ * reviewers' events for whoever may review requests. */
+export function eventsFor(account: PermissionSubject): NotificationPreferenceEvent[] {
   return notificationPreferenceEventValues.filter((event) => {
     const info = NOTIFICATION_EVENTS[event];
     if (!info.live) return false;
-    if (info.audience === "admin") return role === "admin";
-    if (info.audience === "reviewers") return canReviewRequests(role);
+    if (info.audience === "admin") return account.role === "admin";
+    if (info.audience === "reviewers") return can(account, "reviewRequests");
     return true;
   });
 }

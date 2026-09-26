@@ -157,9 +157,12 @@ final class TitleDetailModel {
         guard let api, !isAdding else { return }
         isAdding = true
         addError = nil
+        // 0.48+: "Advanced" picks, for someone with Advanced request options.
+        let overrides = advancedAdd.overrides
         Task {
             do {
-                try await api.requests.create(id.mediaType, id: id.tmdbId)
+                try await api.requests.create(id.mediaType, id: id.tmdbId, overrides: overrides)
+                advancedAdd.reset()
                 await refreshStatus()
             } catch {
                 addError = error.localizedDescription
@@ -170,7 +173,11 @@ final class TitleDetailModel {
 
     /// "Request in 4K" (`viewer.fourK.canRequest`): always the whole title.
     func requestIn4K() {
-        runFourK { api, id in _ = try await api.requests.create(id.mediaType, id: id.tmdbId, is4k: true) }
+        let overrides = advancedAdd4K.overrides
+        runFourK { [weak self] api, id in
+            _ = try await api.requests.create(id.mediaType, id: id.tmdbId, is4k: true, overrides: overrides)
+            self?.advancedAdd4K.reset()
+        }
     }
 
     /// "Add to 4K Radarr/Sonarr" (`viewer.fourK.canAdd`, admin).

@@ -100,6 +100,31 @@ public sealed class ReviewedRow : RequestRowBase
     public CommentThreadViewModel? Thread { get; }
 }
 
+/// <summary>A row of "Everyone's requests" (0.48+): someone else's request, to look at.</summary>
+public sealed class EveryoneRow : RequestRowBase
+{
+    public EveryoneRow(EveryoneRequest request, ICommand openTitle)
+        : base(request.Title, request.PosterPath, request.CreatedAt, request.TitleId, openTitle)
+    {
+        RequesterLabel = request.RequesterLabel;
+        StatusLabel = request.StatusLabel;
+        Tone = request.Status == RequestStatus.Pending
+            ? BadgeTone.Tracked
+            : request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
+        SeasonsLine = request.DetailText;
+    }
+
+    /// <summary>"Seasons 1–3" and/or "In 4K" under the title; empty for a regular whole series or movie.</summary>
+    public string SeasonsLine { get; }
+
+    public string RequesterLabel { get; }
+
+    /// <summary>"Waiting for review", "Approved", "Manually approved" or "Rejected".</summary>
+    public string StatusLabel { get; }
+
+    public BadgeTone Tone { get; }
+}
+
 /// <summary>
 /// components/request-review-row.tsx: one pending request with Approve,
 /// Reject and, after Sonarr couldn't resolve the show, Manually approve.
@@ -165,7 +190,7 @@ public sealed partial class PendingRow : ObservableObject
         Advanced = new AddOverridesViewModel(() => owner.Api, request.MediaType, request.TmdbId, request.Is4k)
         {
             Unsupported = owner.AdvancedIsUnsupported,
-            IsUnsupported = owner.HasNoAddOptions,
+            IsUnsupported = owner.HidesAdvanced,
         };
     }
 
@@ -269,7 +294,8 @@ public sealed partial class PendingRow : ObservableObject
             if (label == "approve")
             {
                 ApproveError = error.Message;
-                if (error.IsSonarrUnresolvable)
+                // Manual approval stays the admin's (a reviewer would get a 403).
+                if (error.IsSonarrUnresolvable && owner.ViewerIsAdmin)
                 {
                     ShowManualApprove = true;
                 }
@@ -633,7 +659,7 @@ public sealed partial class CouldntAddRow : ObservableObject
         Advanced = new AddOverridesViewModel(() => owner.Api, request.MediaType, request.TmdbId, request.Is4k)
         {
             Unsupported = owner.AdvancedIsUnsupported,
-            IsUnsupported = owner.HasNoAddOptions,
+            IsUnsupported = owner.HidesAdvanced,
         };
     }
 
@@ -736,15 +762,47 @@ public sealed partial class RequestsViewModel : ObservableObject
     public Func<PendingRow, Task<string?>>? ReasonChooser { get; set; }
 
     /// <summary>
-    /// The review queue, history and "Reported problems": the admin's and
-    /// (0.39+) trusted members'. Everyone else sees their own requests.
+    /// The review queue, "Can't find", "Couldn't add" and history: whoever
+    /// may review requests (0.48+ <c>reviewRequests</c>; the admin and
+    /// trusted members before). Everyone else sees their own requests.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMember))]
-    [NotifyPropertyChangedFor(nameof(IssuesHeading))]
     [NotifyPropertyChangedFor(nameof(ShowsNotFound))]
     [NotifyPropertyChangedFor(nameof(ShowsCouldntAdd))]
+    [NotifyPropertyChangedFor(nameof(ShowsEveryone))]
     private bool reviews;
+
+    /// <summary>
+    /// 0.48+ <c>viewRequests</c> without <c>reviewRequests</c>: "Everyone's
+    /// requests" under their own, to look at, with no buttons.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsEveryone))]
+    private bool seesEveryone;
+
+    /// <summary>
+    /// Every problem report, with "Search again", "Mark fixed" and "Remove":
+    /// 0.48+ <c>manageIssues</c> (the admin and trusted members before).
+    /// Everyone else sees their own reports.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IssuesHeading))]
+    private bool managesIssues;
+
+    /// <summary>"Advanced" under Approve and Retry: 0.48+ <c>advancedRequests</c> (reviewers before).</summary>
+    private bool offersAdvanced;
+
+    // MARK: Everyone's requests (0.48+)
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEveryone))]
+    [NotifyPropertyChangedFor(nameof(IsEveryoneEmpty))]
+    private IReadOnlyList<EveryoneRow>? everyone;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsEveryoneError))]
+    private string? everyoneError;
 
     // MARK: Member
 
@@ -876,11 +934,24 @@ public sealed partial class RequestsViewModel : ObservableObject
     public RequestsViewModel(AppModel model)
     {
         this.model = model;
-        Reviews = model.Viewer?.ReviewsRequests == true;
+        SyncPermissions();
         Pending.CollectionChanged += (_, _) => PendingCount = Pending.Count;
     }
 
     public bool IsMember => !Reviews;
+
+    /// <summary>The "Everyone's requests" section shows.</summary>
+    public bool ShowsEveryone => SeesEveryone && !Reviews;
+
+    public bool HasEveryone => Everyone is { Count: > 0 };
+
+    /// <summary>"Nobody else has asked for anything yet."</summary>
+    public bool IsEveryoneEmpty => Everyone is { Count: 0 };
+
+    public bool ShowsEveryoneError => EveryoneError != null && Everyone == null;
+
+    public string EveryoneHeading => EveryonesRequests.Heading;
+    public string EveryoneEmptyText => EveryonesRequests.EmptyText;
     public bool HasMine => Mine is { Count: > 0 };
     public bool IsMineEmpty => Mine is { Count: 0 };
     public bool ShowsMineError => MineError != null && Mine == null;
@@ -920,7 +991,7 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>The section shows once there's any report, open or fixed; an older server has none.</summary>
     public bool ShowsIssues => OpenIssues.Count > 0 || FixedIssues.Count > 0;
 
-    public string IssuesHeading => Reviews ? "Reported problems" : "Your problem reports";
+    public string IssuesHeading => ManagesIssues ? "Reported problems" : "Your problem reports";
     public bool HasOpenIssues => OpenIssues.Count > 0;
 
     /// <summary>"Nothing open right now." when only fixed ones are left.</summary>
@@ -990,6 +1061,10 @@ public sealed partial class RequestsViewModel : ObservableObject
             if (!token.IsCancellationRequested)
             {
                 await LoadLimitsAsync(token);
+            }
+            if (!token.IsCancellationRequested)
+            {
+                await LoadEveryoneAsync(token);
             }
         }
         if (!token.IsCancellationRequested)
@@ -1111,11 +1186,48 @@ public sealed partial class RequestsViewModel : ObservableObject
             {
                 return;
             }
-            LimitsLine = me.ReviewsRequests ? "" : me.RequestLimits?.Summary() ?? "";
+            LimitsLine = me.Can.BypassLimits ? "" : me.RequestLimits?.Summary() ?? "";
         }
         catch (ApiException)
         {
             // The requests themselves are what matters; the next reload tries again.
+        }
+    }
+
+    /// <summary>
+    /// "Everyone's requests" (0.48+, <c>viewRequests</c> without reviewing):
+    /// <c>/requests/pending</c> and <c>/requests/history</c> together, the
+    /// viewer's own left out. Cleared for anyone else. A failure keeps
+    /// what's shown, and says so only when there's nothing to show.
+    /// </summary>
+    private async Task LoadEveryoneAsync(CancellationToken token)
+    {
+        if (!ShowsEveryone || model.Viewer is not { } viewer)
+        {
+            Everyone = null;
+            EveryoneError = null;
+            return;
+        }
+        try
+        {
+            var pending = await model.Api.Requests.PendingAsync(token);
+            var history = await model.Api.Requests.HistoryAsync(token);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            Everyone = EveryonesRequests.Rows(pending.Results, history, viewer.Username)
+                .Select(request => new EveryoneRow(request, OpenTitleCommand))
+                .ToList();
+            EveryoneError = null;
+        }
+        catch (ApiException error)
+        {
+            if (error.IsCancellation || token.IsCancellationRequested)
+            {
+                return;
+            }
+            EveryoneError = error.Message;
         }
     }
 
@@ -1345,23 +1457,56 @@ public sealed partial class RequestsViewModel : ObservableObject
     }
 
     private IssueRow IssueRowFor(Issue issue) =>
-        new(this, issue, Reviews, OpenIssueTitleCommand, ThreadFor(CommentSubject.Issue, issue.Id, issue.HasConversation, issue.CommentCount));
+        new(this, issue, ManagesIssues, OpenIssueTitleCommand, ThreadFor(CommentSubject.Issue, issue.Id, issue.HasConversation, issue.CommentCount));
 
     /// <summary>The server has no add options (older than 0.43): no row offers "Advanced".</summary>
     internal bool HasNoAddOptions { get; private set; }
+
+    /// <summary>The admin: "Manually approve" and "Added it by hand" are theirs alone.</summary>
+    internal bool ViewerIsAdmin => model.Viewer?.IsAdmin == true;
+
+    /// <summary>No row offers "Advanced": the server has no add options, or the account may not pick them.</summary>
+    internal bool HidesAdvanced => HasNoAddOptions || !offersAdvanced;
 
     /// <summary>One row found out the server has no add options: hide "Advanced" on every row.</summary>
     internal void AdvancedIsUnsupported()
     {
         HasNoAddOptions = true;
+        ApplyAdvanced();
+    }
+
+    private void ApplyAdvanced()
+    {
         foreach (var row in Pending)
         {
-            row.Advanced.IsUnsupported = true;
+            row.Advanced.IsUnsupported = HidesAdvanced;
         }
         foreach (var row in CouldntAdd)
         {
-            row.Advanced.IsUnsupported = true;
+            row.Advanced.IsUnsupported = HidesAdvanced;
         }
+    }
+
+    /// <summary>
+    /// Which parts of the page this account gets, from what it may do
+    /// (<c>/me</c>'s permissions, 0.48+; the role before). True when any of
+    /// the lists changed, so the page reloads.
+    /// </summary>
+    private bool SyncPermissions()
+    {
+        var can = model.Viewer?.Can ?? Permissions.None;
+        var changed = Reviews != can.ReviewRequests
+            || SeesEveryone != can.SeesEveryonesRequests
+            || ManagesIssues != can.ManageIssues;
+        Reviews = can.ReviewRequests;
+        SeesEveryone = can.SeesEveryonesRequests;
+        ManagesIssues = can.ManageIssues;
+        if (offersAdvanced != can.AdvancedRequests)
+        {
+            offersAdvanced = can.AdvancedRequests;
+            ApplyAdvanced();
+        }
+        return changed;
     }
 
     /// <summary>The page's dialog, or nothing (no reason, no reject) when the page hasn't wired one.</summary>
@@ -1378,11 +1523,9 @@ public sealed partial class RequestsViewModel : ObservableObject
         }
         else if (e.PropertyName == nameof(AppModel.Viewer))
         {
-            // A promotion (or demotion) swaps which list this page is.
-            var reviews = model.Viewer?.ReviewsRequests == true;
-            if (reviews != Reviews)
+            // A change in what the account may do swaps which lists this page shows.
+            if (SyncPermissions())
             {
-                Reviews = reviews;
                 _ = LoadAsync();
             }
         }

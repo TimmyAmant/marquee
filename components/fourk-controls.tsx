@@ -26,10 +26,13 @@ export function FourKControls({
   mediaType,
   tmdbId,
   fourK,
+  advanced = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
   fourK: FourKViewerState;
+  /** A member may pick the server, quality and folder (advancedRequests). */
+  advanced?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -70,7 +73,7 @@ export function FourKControls({
         <button
           type="button"
           disabled={busy}
-          onClick={() => run(() => requestFourKAction(mediaType, tmdbId), () => setRequestedNow(true))}
+          onClick={() => run(() => requestFourKAction(mediaType, tmdbId, overrides ?? undefined), () => setRequestedNow(true))}
           className="flex h-8 items-center rounded-full border border-accent px-4 text-[13px] font-semibold text-accent transition-colors hover:bg-accent hover:text-bg-0 disabled:opacity-60"
         >
           {busy ? "Requesting…" : "Request in 4K"}
@@ -85,6 +88,11 @@ export function FourKControls({
         >
           {busy ? "Adding…" : `Add to 4K ${arrName}`}
         </button>
+      )}
+      {!requested && fourK.canRequest && advanced && (
+        <div className="basis-full">
+          <AddAdvancedOptions mediaType={mediaType} tmdbId={tmdbId} is4k onChange={setOverrides} disabled={busy} />
+        </div>
       )}
       {!addedNow && fourK.canAdd && (
         <div className="basis-full">

@@ -92,10 +92,46 @@ public sealed record HouseholdMember
     /// </summary>
     public bool SupportsRequestLimits => MovieQuotaDays != null && TvQuotaDays != null;
 
+    /// <inheritdoc cref="User.Permissions"/>
+    public Permissions? Permissions { get; init; }
+
+    /// <summary>The server has per-member permissions (0.48+): the edit form offers the switches instead of Role and auto-approval.</summary>
+    public bool SupportsPermissions => Permissions != null;
+
+    /// <inheritdoc cref="User.Can"/>
+    public Permissions Can => Models.Permissions.Effective(Role, Permissions, AutoApproveMovies, AutoApproveTv);
+
     public bool IsAdmin => Role == UserRole.Admin;
 
-    /// <summary>The "Trusted" tag.</summary>
+    /// <summary>The role says trusted (from 0.48, exactly the Trusted preset).</summary>
     public bool IsTrusted => Role == UserRole.Trusted;
+
+    /// <summary>
+    /// The tag after the name: "Trusted" for the Trusted preset, "Custom"
+    /// for switches matching neither preset (0.48+), empty for a plain
+    /// member and the admin. An older server has no custom mix, so there
+    /// the role alone decides.
+    /// </summary>
+    public string PresetTag
+    {
+        get
+        {
+            if (IsAdmin)
+            {
+                return "";
+            }
+            if (Permissions is not { } permissions)
+            {
+                return IsTrusted ? "Trusted" : "";
+            }
+            return permissions.Preset switch
+            {
+                PermissionPreset.Trusted => "Trusted",
+                PermissionPreset.Custom => "Custom",
+                _ => "",
+            };
+        }
+    }
 
     /// <summary>What the website prints: the display name, else the username.</summary>
     public string Label => DisplayName.NonBlank() ?? Username;
@@ -171,6 +207,12 @@ public sealed record CreateUserRequest(string Username, string Password, string?
 /// <param name="MovieQuotaDays">0.39+, admin only: 1 to 365; null leaves it unchanged.</param>
 /// <param name="TvQuotaLimit">Same as <paramref name="MovieQuotaLimit"/>, for TV.</param>
 /// <param name="TvQuotaDays">Same as <paramref name="MovieQuotaDays"/>, for TV.</param>
+/// <param name="Permissions">
+/// 0.48+, admin only, another member's account: every switch, sent whole
+/// (the server takes any subset). The server applies it after
+/// <paramref name="Role"/>, so the two aren't sent together; null leaves
+/// them unchanged.
+/// </param>
 public sealed record UpdateUserRequest(
     string Username,
     string? DisplayName = null,
@@ -182,7 +224,8 @@ public sealed record UpdateUserRequest(
     QuotaLimit? MovieQuotaLimit = null,
     int? MovieQuotaDays = null,
     QuotaLimit? TvQuotaLimit = null,
-    int? TvQuotaDays = null);
+    int? TvQuotaDays = null,
+    Permissions? Permissions = null);
 
 /// <summary>
 /// A request limit as <c>PATCH /users/{id}</c> sends it: a number, or an
@@ -259,6 +302,36 @@ public static class MemberAccessForm
         string tvLimit,
         string tvDays)
     {
+        var (withLimits, error) = ApplyLimits(request, movieLimit, movieDays, tvLimit, tvDays);
+        return withLimits == null
+            ? (null, error)
+            : (withLimits with { Role = trusted ? UserRole.Trusted : UserRole.Member }, null);
+    }
+
+    /// <summary>
+    /// 0.48+: the switches from <paramref name="permissions"/> (sent whole,
+    /// without the role or the auto-approve flags) and both limits, checked
+    /// as the role overload checks them.
+    /// </summary>
+    public static (UpdateUserRequest? Request, string? Error) Apply(
+        UpdateUserRequest request,
+        MemberPermissionsEditor permissions,
+        string movieLimit,
+        string movieDays,
+        string tvLimit,
+        string tvDays)
+    {
+        var (withLimits, error) = ApplyLimits(request, movieLimit, movieDays, tvLimit, tvDays);
+        return withLimits == null ? (null, error) : (permissions.Apply(withLimits), null);
+    }
+
+    private static (UpdateUserRequest? Request, string? Error) ApplyLimits(
+        UpdateUserRequest request,
+        string movieLimit,
+        string movieDays,
+        string tvLimit,
+        string tvDays)
+    {
         var (movieQuota, movieError) = ParseLimit(movieLimit, "The movie limit");
         if (movieError != null)
         {
@@ -281,7 +354,6 @@ public static class MemberAccessForm
         }
         return (request with
         {
-            Role = trusted ? UserRole.Trusted : UserRole.Member,
             MovieQuotaLimit = movieQuota,
             MovieQuotaDays = movieWindow,
             TvQuotaLimit = tvQuota,

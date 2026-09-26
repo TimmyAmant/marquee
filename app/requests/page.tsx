@@ -20,6 +20,7 @@ import { CancelRequestButton, EditRequestButton } from "@/components/request-lif
 import { CouldntAddSection } from "@/components/couldnt-add-section";
 import { NotFoundSection } from "@/components/not-found-section";
 import { getNotFoundAfterHours, getNotFoundRequests } from "@/lib/requests/not-found";
+import { can } from "@/lib/users/permissions";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   pending: "bg-tracked-bg text-tracked",
@@ -54,9 +55,16 @@ export default async function RequestsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session) redirect("/login");
 
-  // The review queue is the admin's and trusted members' (lib/users/roles.ts).
-  const reviews = viewer.isAdmin || viewer.session.user.role === "trusted";
-  const issueRows = await listIssues({ userId: viewer.userId, isAdmin: reviews });
+  // Who sees what here is their permissions (lib/users/permissions.ts): the
+  // review queue (with Can't find and Couldn't add) for whoever reviews
+  // requests, everyone's requests to look at for whoever may see them, and
+  // every problem report for whoever handles them.
+  const user = viewer.session.user;
+  const reviews = can(user, "reviewRequests");
+  const seesEveryone = can(user, "viewRequests");
+  const managesIssues = can(user, "manageIssues");
+  const advanced = can(user, "advancedRequests");
+  const issueRows = await listIssues({ userId: viewer.userId, managesIssues });
   const issueComments = await countComments(
     "issue",
     issueRows.map((row) => row.id),
@@ -64,10 +72,20 @@ export default async function RequestsPage() {
   const issues = issueRows.map((row) => issueDto(row, viewer.userId, issueComments.get(row.id) ?? 0));
 
   if (!reviews) {
-    const [myRequests, quotas] = await Promise.all([
+    const [myRequests, quotas, everyonePending, everyoneReviewed] = await Promise.all([
       getMyRequests(viewer.userId, viewer.libraryOwnerId),
       getQuotas(viewer.userId),
+      seesEveryone ? getPendingRequests(viewer.libraryOwnerId) : Promise.resolve([]),
+      seesEveryone ? getReviewedRequests() : Promise.resolve([]),
     ]);
+    // Everyone else's, newest first, for someone who may see them but not
+    // review them: to look at, no buttons.
+    const othersRequests = [
+      ...everyonePending.map((r) => ({ ...r, status: "pending" as const, manuallyApproved: false })),
+      ...everyoneReviewed,
+    ]
+      .filter((r) => r.requestedByUserId !== viewer.userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     const myComments = await countComments(
       "request",
       myRequests.map((r) => r.id),
@@ -155,7 +173,8 @@ export default async function RequestsPage() {
             </table>
           </div>
         )}
-        <IssuesSection issues={issues} isAdmin={false} />
+        {seesEveryone && <EveryonesRequests requests={othersRequests} />}
+        <IssuesSection issues={issues} isAdmin={managesIssues} />
       </div>
     );
   }
@@ -181,7 +200,7 @@ export default async function RequestsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
-      {pending.length > 1 && (
+      {pending.length > 1 && reviews && (
         <div className="flex justify-end">
           <ApproveAllRequestsButton />
         </div>
@@ -214,6 +233,7 @@ export default async function RequestsPage() {
                   seasons={r.seasons}
                   is4k={r.is4k}
                   canManuallyApprove={viewer.isAdmin}
+                  advanced={advanced}
                   createdAt={r.createdAt.toISOString()}
                   sonarrUrl={r.is4k ? sonarr4kUrl : sonarrUrl}
                   commentCount={requestComments.get(r.id) ?? 0}
@@ -228,11 +248,12 @@ export default async function RequestsPage() {
       <CouldntAddSection
         requests={couldntAdd.map((r) => reviewedRequest(r, requestComments.get(r.id) ?? 0))}
         isAdmin={viewer.isAdmin}
+        advanced={advanced}
       />
 
       <NotFoundSection requests={notFound.map(notFoundRequest)} afterHours={notFoundAfterHours} />
 
-      <IssuesSection issues={issues} isAdmin />
+      <IssuesSection issues={issues} isAdmin={managesIssues} />
 
       {pastRequests.length > 0 && (
         <>
@@ -318,5 +339,84 @@ export default async function RequestsPage() {
         </>
       )}
     </div>
+  );
+}
+
+type EveryoneRow = {
+  id: string;
+  mediaType: "movie" | "tv";
+  tmdbId: number;
+  title: string;
+  posterPath: string | null;
+  seasons: number[] | null;
+  is4k: boolean;
+  status: RequestStatus;
+  manuallyApproved: boolean;
+  createdAt: Date;
+  requestedByName: string | null;
+  requestedByUsername: string;
+};
+
+/** "Everyone's requests" — what the rest of the household has asked for,
+ * for someone with "See everyone's requests" who doesn't review them. */
+function EveryonesRequests({ requests }: { requests: EveryoneRow[] }) {
+  return (
+    <>
+      <h2 className="mt-12 font-display text-xl text-text-primary">Everyone&apos;s requests</h2>
+      {requests.length === 0 ? (
+        <p className="mt-4 text-sm text-text-muted">Nobody else has asked for anything yet.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <thead className="bg-bg-1 text-text-muted">
+              <tr>
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">Requested by</th>
+                <th className="px-4 py-3 font-medium">Requested</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {requests.map((r) => {
+                const src = tmdbImageUrl(r.posterPath, "w92");
+                return (
+                  <tr key={r.id} className="hover:bg-bg-1/60">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
+                          {src && <Image src={src} alt="" fill sizes="40px" className="object-cover" />}
+                        </div>
+                        <RequestTitle
+                          mediaType={r.mediaType}
+                          tmdbId={r.tmdbId}
+                          title={r.title}
+                          seasons={r.seasons}
+                          is4k={r.is4k}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary">{r.requestedByName || r.requestedByUsername}</td>
+                    <td className="px-4 py-3 text-text-secondary">{new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          r.status === "pending"
+                            ? "bg-tracked-bg text-tracked"
+                            : r.status === "approved"
+                              ? "bg-owned-bg text-owned"
+                              : "bg-untracked-bg text-text-secondary"
+                        }`}
+                      >
+                        {r.status === "pending" ? "Waiting for review" : reviewedRequestLabel(r.status, r.manuallyApproved)}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }

@@ -32,6 +32,7 @@ export function RequestReviewRow({
   sonarrUrl,
   commentCount = 0,
   edited = false,
+  advanced = true,
 }: {
   id: string;
   mediaType: MediaType;
@@ -53,6 +54,8 @@ export function RequestReviewRow({
   commentCount?: number;
   /** The requester (or a reviewer) changed it since asking. */
   edited?: boolean;
+  /** The reviewer may pick the server, quality and folder (advancedRequests). */
+  advanced?: boolean;
 }) {
   const router = useRouter();
   const approveAction = approveRequestAction.bind(null, id);
@@ -164,7 +167,7 @@ export function RequestReviewRow({
             </form>
           )}
         </div>
-        {!showManualApprove && !choosingReason && (
+        {advanced && !showManualApprove && !choosingReason && (
           <div className="mt-1.5">
             <AddAdvancedOptions
               mediaType={mediaType}

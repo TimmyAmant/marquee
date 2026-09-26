@@ -1,5 +1,6 @@
 import { API_OPERATIONS, type ApiAuthLevel, type ApiOperation } from "@/lib/api/openapi/registry";
 import { keyAccessFor } from "@/lib/api/key-policy";
+import { permissionLabel } from "@/lib/users/permissions";
 
 export const metadata = { title: "API reference — Marquee" };
 
@@ -7,12 +8,16 @@ export const metadata = { title: "API reference — Marquee" };
 // describes the endpoints and holds nothing secret. A plain table rather than
 // a hosted viewer, so there's no outside script to load.
 
-const AUTH_LABELS: Record<ApiAuthLevel, string> = {
+const AUTH_LABELS: Record<"public" | "user" | "admin", string> = {
   public: "Public",
   user: "Any account",
-  reviewer: "Admin or trusted",
   admin: "Admin",
 };
+
+/** A permission's label ("Review requests") for the rest (lib/users/permissions.ts). */
+function authLabel(auth: ApiAuthLevel): string {
+  return auth === "public" || auth === "user" || auth === "admin" ? AUTH_LABELS[auth] : permissionLabel(auth);
+}
 
 const KEY_LABELS = {
   read: "Any key",
@@ -87,7 +92,7 @@ export default function ApiDocsPage() {
                         <span className="text-text-primary">{op.path}</span>
                       </td>
                       <td className="px-4 py-2.5 text-text-secondary">{op.summary}</td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-text-secondary">{AUTH_LABELS[op.auth]}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-text-secondary">{authLabel(op.auth)}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-text-secondary">
                         {op.auth === "public" ? "—" : KEY_LABELS[keyAccessFor(op.method, op.path)]}
                       </td>

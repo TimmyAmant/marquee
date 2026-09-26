@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { requestSeasonsAction } from "@/lib/requests/actions";
 import { SeasonPickerDialog, type SeasonPickerRow } from "@/components/season-picker-dialog";
+import { AddAdvancedOptions } from "@/components/add-advanced-options";
+import type { AddOverrides } from "@/lib/arr/add-options";
 
 export type { SeasonPickerRow };
 
@@ -19,15 +21,19 @@ export function SeasonRequestPicker({
   showName,
   rows,
   triggerLabel,
+  advanced = false,
 }: {
   tmdbId: number;
   showName: string;
   rows: SeasonPickerRow[];
   /** "Request" for a show not in the library yet, "Request more seasons" once it is. */
   triggerLabel: string;
+  /** Offer the Advanced picks (the advancedRequests permission). */
+  advanced?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [overrides, setOverrides] = useState<AddOverrides | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   function close() {
@@ -36,7 +42,7 @@ export function SeasonRequestPicker({
   }
 
   async function submit(seasons: number[]): Promise<string | null> {
-    const result = await requestSeasonsAction(tmdbId, seasons);
+    const result = await requestSeasonsAction(tmdbId, seasons, overrides ?? undefined);
     if (result.error) return result.error;
     setOpen(false);
     // The pending state comes from the server render, same as the
@@ -56,6 +62,12 @@ export function SeasonRequestPicker({
       >
         {triggerLabel}
       </button>
+
+      {advanced && (
+        <div className="basis-full">
+          <AddAdvancedOptions mediaType="tv" tmdbId={tmdbId} onChange={setOverrides} />
+        </div>
+      )}
 
       {open && (
         <SeasonPickerDialog

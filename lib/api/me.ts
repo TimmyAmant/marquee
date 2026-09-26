@@ -4,6 +4,7 @@ import { getLinkState } from "@/lib/auth/media-signin";
 import type { ApiContext } from "@/lib/api/auth";
 import type { Me, RequestQuota } from "@/lib/api/types";
 import { getQuotas, type QuotaState } from "@/lib/requests/quota";
+import { can } from "@/lib/users/permissions";
 
 export function quotaDto(quota: QuotaState | null): RequestQuota | null {
   return quota ? { ...quota, nextSlotAt: quota.nextSlotAt?.toISOString() ?? null } : null;
@@ -21,8 +22,9 @@ export async function meDto(ctx: ApiContext): Promise<Me> {
   if (!links) throw ApiError.of("unauthorized", "Sign in again — this session is missing, expired or revoked.");
   return {
     ...userDto(user, libraryOwnerId),
-    autoApproveMovies: user.autoApproveMovies,
-    autoApproveTv: user.autoApproveTv,
+    // From before permissions: the same as `permissions.autoApproveMovies` / `…Tv`.
+    autoApproveMovies: can(user, "autoApproveMovies"),
+    autoApproveTv: can(user, "autoApproveTv"),
     createdAt: user.createdAt.toISOString(),
     linked: links.linked,
     hasPassword: links.hasPassword,

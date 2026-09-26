@@ -10,13 +10,13 @@ import type { PersonalNotificationChannels } from "@/lib/api/types";
 /** The signed-in account's own channels, and which kinds this server offers. */
 export const GET = withApi(async (request): Promise<PersonalNotificationChannels> => {
   const ctx = await requireApiUser(request);
-  return personalChannelsDto({ id: ctx.user.id, role: ctx.user.role });
+  return personalChannelsDto({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions });
 });
 
 /** `{ kind, name?, enabled?, config }`: tests, then adds one (201). */
 export const POST = withApi(async (request) => {
   const ctx = await requireApiUser(request);
   const body = await readJsonBody(request);
-  const { channel } = unwrap(await createChannel({ id: ctx.user.id, role: ctx.user.role }, body));
+  const { channel } = unwrap(await createChannel({ id: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, body));
   return apiJson(personalChannelDto(channel), { status: 201 });
 });

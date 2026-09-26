@@ -829,13 +829,14 @@
           Request blocklist (app/settings/blocklist-settings.tsx, 0.41+):
           titles blocked from their page and TMDb keywords/genres nobody
           may request, each with Remove, and a form to block a keyword.
-          Admin-only, and hidden on an older server.
+          The admin's, and (0.48+) anyone's who may manage the blocklist;
+          hidden on an older server.
         -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Blocklist.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="4">
                 <TextBlock Text="Request blocklist" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="What nobody can request. You can still add these yourself."
+                    Text="Titles and keywords nobody can request. Block a single title from its page."
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />

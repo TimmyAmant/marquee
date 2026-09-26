@@ -320,13 +320,15 @@ public sealed partial class MainWindow : Window, INavigator
     }
 
     /// <summary>
-    /// The bell's unread count; for the admin and trusted members, the accent dot on the rail's
-    /// Requests button: pending requests plus open problem reports, since
-    /// both wait on that page (members' counts are always 0).
+    /// The bell's unread count; for whoever reviews requests or handles
+    /// problem reports, the accent dot on the rail's Requests button:
+    /// pending requests plus open problem reports, since both wait on that
+    /// page (the server counts only what the account may act on).
     /// </summary>
     private void UpdateBadges()
     {
-        var pending = model.Viewer?.ReviewsRequests == true ? model.Badges.RequestsBadge : 0;
+        var can = model.Viewer?.Can;
+        var pending = can is { ReviewRequests: true } or { ManageIssues: true } ? model.Badges.RequestsBadge : 0;
         AutomationProperties.SetName(RailRequestsButton, pending > 0 ? $"Requests, {pending} waiting" : "Requests");
         RailRequestsDot.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
 

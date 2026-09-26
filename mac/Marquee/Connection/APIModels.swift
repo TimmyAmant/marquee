@@ -23,10 +23,15 @@ struct User: Codable, Equatable, Hashable, Sendable {
     /// False for an account made by Plex/Jellyfin sign-in or import that
     /// hasn't set a password; nil from older servers (which always have one).
     var hasPassword: Bool? = nil
+    /// 0.48+: what this account may do (see `can(_:)`); nil from older
+    /// servers, which go by the role instead.
+    var permissions: API.Permissions? = nil
+    /// `/me` only (login's `user` has none): the pre-permissions
+    /// auto-approval, for the fallback when `permissions` is missing.
+    var autoApproveMovies: Bool? = nil
+    var autoApproveTv: Bool? = nil
 
     var isAdmin: Bool { role == .admin }
-    /// Request and problem-report review: the admin or a trusted member.
-    var canReviewRequests: Bool { role.canReviewRequests }
 }
 
 /// `linked` on `/me` and household members: which media-server accounts

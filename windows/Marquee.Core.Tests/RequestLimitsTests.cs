@@ -41,6 +41,8 @@ public sealed class RequestLimitsTests
     {
         var json = Fixtures.Read("me")
             .Replace("\"role\": \"admin\"", "\"role\": \"member\"", StringComparison.Ordinal)
+            .Replace("\"reviewRequests\": true", "\"reviewRequests\": false", StringComparison.Ordinal)
+            .Replace("\"viewRequests\": true", "\"viewRequests\": false", StringComparison.Ordinal)
             .Replace("\"movie\": null", """
                 "movie": { "limit": 5, "days": 7, "used": 5, "remaining": 0, "nextSlotAt": "2026-10-03T02:53:36.305Z" }
                 """, StringComparison.Ordinal);

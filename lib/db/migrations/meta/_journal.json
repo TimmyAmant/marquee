@@ -358,6 +358,13 @@
       "when": 1790452414797,
       "tag": "0050_add_api_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1790454804394,
+      "tag": "0051_add_user_permissions",
+      "breakpoints": true
     }
   ]
 }

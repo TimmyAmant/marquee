@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import type { PermissionSubject } from "@/lib/users/permissions";
 import { db } from "@/lib/db/client";
 import { appSettings, notificationPreferences, userNotificationChannels, users } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
@@ -40,7 +41,7 @@ export async function loadBellPushOverrides(userId: string): Promise<BellPushOve
   return row?.overrides ?? {};
 }
 
-export async function getPreferences(userId: string, role: string): Promise<PreferenceRow[]> {
+export async function getPreferences(userId: string, account: PermissionSubject): Promise<PreferenceRow[]> {
   const [overrides, channels] = await Promise.all([
     loadBellPushOverrides(userId),
     db
@@ -49,7 +50,7 @@ export async function getPreferences(userId: string, role: string): Promise<Pref
       .where(eq(userNotificationChannels.userId, userId))
       .orderBy(userNotificationChannels.createdAt),
   ]);
-  return eventsFor(role).map((event) => ({
+  return eventsFor(account).map((event) => ({
     event,
     label: NOTIFICATION_EVENTS[event].label,
     reviewerOnly: NOTIFICATION_EVENTS[event].audience !== "everyone",
@@ -102,12 +103,12 @@ export function parsePreferenceChanges(
   return { ok: true, changes };
 }
 
-export async function savePreferences(userId: string, role: string, body: unknown): Promise<CoreResult> {
+export async function savePreferences(userId: string, account: PermissionSubject, body: unknown): Promise<CoreResult> {
   const channels = await db
     .select({ id: userNotificationChannels.id, events: userNotificationChannels.events })
     .from(userNotificationChannels)
     .where(eq(userNotificationChannels.userId, userId));
-  const parsed = parsePreferenceChanges(body, eventsFor(role), new Set(channels.map((c) => c.id)));
+  const parsed = parsePreferenceChanges(body, eventsFor(account), new Set(channels.map((c) => c.id)));
   if (!parsed.ok) return fail("invalid", parsed.error);
 
   const overrides: Record<string, { inApp?: boolean; push?: boolean }> = {};

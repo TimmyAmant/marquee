@@ -6,6 +6,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { updateHouseholdMemberAction, deleteUserAction, type HouseholdMember } from "./users-actions";
 import { lastActiveLabel } from "@/lib/users/last-active-label";
+import { presetFor } from "@/lib/users/permissions";
+import { PermissionsEditor } from "./permissions-editor";
 
 /** Longest side of what the browser sends. The server crops to a 512px
  * square anyway; this just keeps a 12-megapixel phone photo from being a
@@ -220,39 +222,11 @@ function EditMemberForm({
         </label>
       )}
 
-      {isAdmin && member.role !== "admin" && (
+      {isAdmin && member.role !== "admin" && !isSelf && (
         <>
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input
-              type="checkbox"
-              name="autoApproveMovies"
-              defaultChecked={member.autoApproveMovies}
-              className="h-4 w-4 rounded border-border accent-accent"
-            />
-            Auto-approve movie requests
-          </label>
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input
-              type="checkbox"
-              name="autoApproveTv"
-              defaultChecked={member.autoApproveTv}
-              className="h-4 w-4 rounded border-border accent-accent"
-            />
-            Auto-approve TV requests
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            Role
-            <select
-              name="role"
-              defaultValue={member.role === "trusted" ? "trusted" : "member"}
-              className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
-            >
-              <option value="member">Member</option>
-              <option value="trusted">Trusted — can approve requests and handle problem reports</option>
-            </select>
-          </label>
+          <PermissionsEditor initial={member.permissions} />
           <fieldset className="flex flex-col gap-2 text-sm text-text-secondary">
-            <legend className="mb-1">Request limits (blank for none; trusted members have none)</legend>
+            <legend className="mb-1">Request limits (blank for none; not for someone with No request limits)</legend>
             {(["movie", "tv"] as const).map((kind) => (
               <div key={kind} className="flex flex-wrap items-center gap-2">
                 <span className="w-16">{kind === "movie" ? "Movies" : "TV"}</span>
@@ -367,9 +341,9 @@ export function HouseholdMembersList({
                   Admin
                 </span>
               )}
-              {member.role === "trusted" && (
+              {member.role !== "admin" && presetFor(member) !== "member" && (
                 <span className="rounded-full border border-accent/30 px-2.5 py-0.5 text-xs text-accent">
-                  Trusted
+                  {presetFor(member) === "trusted" ? "Trusted" : "Custom"}
                 </span>
               )}
               {member.id === currentUserId && (

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requirePermission } from "@/lib/auth/require-admin";
 import type { MediaType } from "@/lib/db/schema";
 import { blockKeyword, blockTitle, removeBlocklistEntry, unblockTitle } from "@/lib/requests/blocklist";
 
@@ -17,7 +17,7 @@ function validTitle(mediaType: unknown, tmdbId: unknown): mediaType is MediaType
 }
 
 export async function blockTitleAction(mediaType: MediaType, tmdbId: number, reason: string): Promise<BlocklistActionState> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requirePermission("manageBlocklist", FORBIDDEN);
   if (!admin.ok) return { error: admin.error };
   if (!validTitle(mediaType, tmdbId)) return { error: "That title couldn't be found." };
   const result = await blockTitle(mediaType, tmdbId, reason);
@@ -25,7 +25,7 @@ export async function blockTitleAction(mediaType: MediaType, tmdbId: number, rea
 }
 
 export async function unblockTitleAction(mediaType: MediaType, tmdbId: number): Promise<BlocklistActionState> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requirePermission("manageBlocklist", FORBIDDEN);
   if (!admin.ok) return { error: admin.error };
   if (!validTitle(mediaType, tmdbId)) return { error: "That title couldn't be found." };
   const result = await unblockTitle(mediaType, tmdbId);
@@ -33,7 +33,7 @@ export async function unblockTitleAction(mediaType: MediaType, tmdbId: number): 
 }
 
 export async function blockKeywordAction(_prev: BlocklistActionState | undefined, formData: FormData): Promise<BlocklistActionState> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requirePermission("manageBlocklist", FORBIDDEN);
   if (!admin.ok) return { error: admin.error };
   const result = await blockKeyword(formData.get("keyword"), formData.get("reason"));
   if (!result.ok) return { error: result.error };
@@ -42,7 +42,7 @@ export async function blockKeywordAction(_prev: BlocklistActionState | undefined
 }
 
 export async function removeBlocklistEntryAction(id: string): Promise<BlocklistActionState> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requirePermission("manageBlocklist", FORBIDDEN);
   if (!admin.ok) return { error: admin.error };
   const result = await removeBlocklistEntry(id);
   if (!result.ok) return { error: result.error };

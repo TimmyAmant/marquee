@@ -3,9 +3,10 @@
   household-members-list.tsx's edit form: name, username and a new
   password for any row the viewer may edit. "Current password" shows only
   on your own account (the server wants it with a new password there; the
-  admin resetting someone else's doesn't know theirs), and the two
-  auto-approve boxes only for the admin editing a non-admin account, with
-  (0.39+) its Role and request limits. The
+  admin resetting someone else's doesn't know theirs), and for the admin
+  editing a non-admin account what they can do (0.48+: a preset and the
+  switches; before that the two auto-approve boxes and, 0.39+, the Role)
+  with (0.39+) the request limits. The
   photo sits at the top with "Add photo" / "Change photo" and "Remove",
   saved as soon as a photo is picked (the website's form does the same;
   Save isn't involved). The code-behind picks which parts show and fills
@@ -18,6 +19,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Marquee.Windows.Controls"
+    xmlns:models="using:Marquee.Core.Models"
     mc:Ignorable="d"
     PrimaryButtonText="Save"
     CloseButtonText="Cancel"
@@ -70,11 +72,68 @@
             Header="Current password"
             PlaceholderText="Needed only when setting a new password"
             Visibility="Collapsed" />
+        <!-- Before 0.48: the two auto-approve boxes. -->
         <StackPanel x:Name="AutoApprovePanel" Visibility="Collapsed">
             <CheckBox x:Name="AutoApproveMoviesBox" Content="Auto-approve movie requests" />
             <CheckBox x:Name="AutoApproveTvBox" Content="Auto-approve TV requests" />
         </StackPanel>
-        <!-- 0.39+: Role and request limits, for the admin editing a non-admin account. -->
+        <!--
+          0.48+: app/settings/permissions-editor.tsx, for the admin editing
+          another member. The preset picker fills the switches in and reads
+          Custom (never picked by hand) once they match neither preset.
+          MemberPermissionsEditor holds the logic; this only binds to it.
+        -->
+        <StackPanel x:Name="PermissionsPanel" Spacing="12" Visibility="Collapsed">
+            <ComboBox
+                x:Name="PresetBox"
+                Header="What they can do"
+                HorizontalAlignment="Stretch"
+                SelectedIndex="{x:Bind Access.PresetIndex, Mode=TwoWay}">
+                <ComboBoxItem Content="Member — requests, and reports problems" />
+                <ComboBoxItem Content="Trusted — also reviews requests and problem reports" />
+                <ComboBoxItem Content="Custom" IsEnabled="False" />
+            </ComboBox>
+            <ItemsControl ItemsSource="{x:Bind Access.Groups}" IsTabStop="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:PermissionGroup">
+                        <StackPanel Spacing="4" Margin="0,0,0,12">
+                            <TextBlock
+                                Text="{x:Bind Title}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <ItemsControl ItemsSource="{x:Bind Items}" IsTabStop="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:PermissionToggle">
+                                        <CheckBox
+                                            IsChecked="{x:Bind IsChecked, Mode=TwoWay}"
+                                            IsEnabled="{x:Bind IsEnabled, Mode=OneWay}"
+                                            AutomationProperties.Name="{x:Bind Label}"
+                                            Padding="8,0,0,0"
+                                            Margin="0,2">
+                                            <StackPanel Spacing="1">
+                                                <TextBlock Text="{x:Bind Label}" Style="{StaticResource BodyTextBlockStyle}" />
+                                                <TextBlock
+                                                    Text="{x:Bind Note, Mode=OneWay}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock
+                Text="Settings, integrations, household accounts, API keys and sign-in stay yours alone."
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+        <!-- 0.39+: Role (before 0.48) and request limits, for the admin editing a non-admin account. -->
         <StackPanel x:Name="AccessPanel" Spacing="12" Visibility="Collapsed">
             <ComboBox x:Name="RoleBox" Header="Role" HorizontalAlignment="Stretch" />
             <StackPanel Spacing="8">

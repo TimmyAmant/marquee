@@ -36,6 +36,11 @@ vi.mock("@/lib/api/token-store", () => ({
         role: user.role,
         autoApproveMovies: false,
         autoApproveTv: false,
+        // lib/users/permissions.ts: a trusted member has the Trusted preset.
+        permissions:
+          user.role === "trusted"
+            ? ["requestMovies", "requestTv", "reviewRequests", "viewRequests", "advancedRequests", "manageIssues", "bypassLimits"]
+            : ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "reportIssues"],
         avatarUpdatedAt: null,
         createdAt: new Date(),
       },
