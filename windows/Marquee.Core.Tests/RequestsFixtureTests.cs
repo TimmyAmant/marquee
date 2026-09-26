@@ -179,4 +179,41 @@ public sealed class RequestsFixtureTests
         Assert.False(ApiException.Upstream("Couldn't resolve this show for Sonarr.").IsSonarrUnresolvable);
         Assert.Equal("Couldn't resolve this show for Sonarr.", ApiException.SonarrUnresolvableMessage);
     }
+
+    [Fact]
+    public void Is4kDecodesOnEveryList()
+    {
+        var mine = Assert.Single(Fixtures.Decode<ListResponse<MyRequest>>("requests-mine").Results);
+        Assert.False(mine.Is4k);
+        Assert.Equal("", mine.DetailText);
+        Assert.All(Fixtures.Decode<PendingRequests>("requests-pending").Results, request => Assert.False(request.Is4k));
+        Assert.All(Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results, request => Assert.False(request.Is4k));
+
+        var fourK = Json.Decode<ListResponse<MyRequest>>(
+            Fixtures.Read("requests-mine").Replace("\"is4k\": false", "\"is4k\": true", StringComparison.Ordinal)).Results[0];
+        Assert.True(fourK.Is4k);
+        Assert.Equal("In 4K", fourK.DetailText);
+    }
+
+    [Fact]
+    public void OlderServerWithoutIs4kMeansFalse()
+    {
+        var mine = Json.Decode<ListResponse<MyRequest>>(
+            Fixtures.Read("requests-mine").Replace("\"is4k\": false,", "", StringComparison.Ordinal)).Results[0];
+        Assert.False(mine.Is4k);
+        var history = Json.Decode<ListResponse<ReviewedRequest>>(
+            Fixtures.Read("requests-history").Replace("\"is4k\": false,", "", StringComparison.Ordinal)).Results;
+        Assert.All(history, request => Assert.False(request.Is4k));
+    }
+
+    [Theory]
+    [InlineData("Season 2", true, "Season 2 · In 4K")]
+    [InlineData("", true, "In 4K")]
+    [InlineData(null, true, "In 4K")]
+    [InlineData("Seasons 1–3", false, "Seasons 1–3")]
+    [InlineData("", false, "")]
+    public void RequestLineMatchesTheWebsite(string? seasons, bool is4k, string expected)
+    {
+        Assert.Equal(expected, SeasonLabels.RequestLine(seasons, is4k));
+    }
 }

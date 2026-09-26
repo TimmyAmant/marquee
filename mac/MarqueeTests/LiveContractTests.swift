@@ -473,7 +473,7 @@ final class LiveContractTests: XCTestCase {
         let before = try await admin.integrations.overview().arrWebhooks
         let regenerated = try await admin.integrations.regenerateWebhookSecret()
         XCTAssertNotEqual(regenerated.secret, before.secret)
-        XCTAssertTrue(regenerated.url(for: .sonarr).contains(regenerated.secret))
+        XCTAssertEqual(regenerated.url(for: .sonarr)?.contains(regenerated.secret), true)
         try await admin.integrations.syncNow()
         try await admin.jobs.run("disk-space-snapshot")
         await assertThrowsAPIError(.notFound) { try await self.admin.jobs.run("not-a-job") }
@@ -748,7 +748,7 @@ final class LiveContractTests: XCTestCase {
 /// Passes requests through to the real server while recording which endpoint
 /// each one hit, so the suite can report its own coverage.
 final class RecordingURLProtocol: URLProtocol {
-    /// method + path template for all 81 endpoints in Docs/api-v1.md.
+    /// method + path template for all 89 endpoints in Docs/api-v1.md.
     private static let endpoints: [(String, String)] = [
         ("GET", "/server-info"), ("POST", "/auth/login"), ("POST", "/auth/setup"), ("POST", "/auth/logout"),
         ("GET", "/me"), ("GET", "/badges"),
@@ -773,6 +773,10 @@ final class RecordingURLProtocol: URLProtocol {
         ("GET", "/settings/integrations/sonarr/options"), ("PUT", "/settings/integrations/sonarr/defaults"),
         ("PUT", "/settings/integrations/radarr"), ("DELETE", "/settings/integrations/radarr"),
         ("GET", "/settings/integrations/radarr/options"), ("PUT", "/settings/integrations/radarr/defaults"),
+        ("PUT", "/settings/integrations/sonarr4k"), ("DELETE", "/settings/integrations/sonarr4k"),
+        ("GET", "/settings/integrations/sonarr4k/options"), ("PUT", "/settings/integrations/sonarr4k/defaults"),
+        ("PUT", "/settings/integrations/radarr4k"), ("DELETE", "/settings/integrations/radarr4k"),
+        ("GET", "/settings/integrations/radarr4k/options"), ("PUT", "/settings/integrations/radarr4k/defaults"),
         ("POST", "/settings/integrations/plex/pin"), ("GET", "/settings/integrations/plex/pin/{id}"),
         ("DELETE", "/settings/integrations/plex"),
         ("PUT", "/settings/integrations/jellyfin"), ("DELETE", "/settings/integrations/jellyfin"),

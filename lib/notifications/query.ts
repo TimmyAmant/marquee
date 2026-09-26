@@ -73,6 +73,8 @@ export async function createNotification(input: {
    * episode, so a season pack would otherwise notify (and relay) once per
    * episode. */
   dedupeSince?: Date;
+  /** About the 4K copy: repeats are only dropped among other 4K notices. */
+  is4k?: boolean;
 }): Promise<boolean> {
   const { relay = true, dedupeSince, ...row } = input;
   const saved = dedupeSince ? await insertUnlessRecent(row, dedupeSince) : await insertNotification(row);
@@ -151,7 +153,8 @@ async function insertNotification(row: NewNotification) {
  * plain check-then-insert lets several of them see "nothing yet" at once. A
  * unique index can't express "since this moment", so a lock it is. */
 async function insertUnlessRecent(row: NewNotification, since: Date) {
-  const lockKey = `marquee-notification:${row.userId}:${row.mediaType}:${row.tmdbId}:${row.eventType}`;
+  const is4k = row.is4k ?? false;
+  const lockKey = `marquee-notification:${row.userId}:${row.mediaType}:${row.tmdbId}:${row.eventType}:${is4k}`;
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${lockKey}))`);
     const [existing] = await tx
@@ -163,6 +166,7 @@ async function insertUnlessRecent(row: NewNotification, since: Date) {
           eq(notifications.mediaType, row.mediaType),
           eq(notifications.tmdbId, row.tmdbId),
           eq(notifications.eventType, row.eventType),
+          eq(notifications.is4k, is4k),
           gte(notifications.createdAt, since),
         ),
       )

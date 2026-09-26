@@ -273,6 +273,7 @@ export async function approveRequest(requestId: string, adminUserId: string): Pr
       title: request.title,
       eventType: "request_approved",
       message: `${requestName(request, true)} was approved — it's on its way to your library.`,
+      is4k: request.is4k,
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,

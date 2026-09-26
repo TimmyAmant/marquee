@@ -1,5 +1,5 @@
 {
-  "id": "3b96edc9-9497-4110-9396-b2cf293af8b7",
+  "id": "42ecf8be-9d2e-4bf9-b721-20addba8ae3e",
   "prevId": "841fe78d-0490-444a-b0f9-bdc0a2a84d8f",
   "version": "7",
   "dialect": "postgresql",
@@ -1318,6 +1318,13 @@
         },
         "read": {
           "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_4k": {
+          "name": "is_4k",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

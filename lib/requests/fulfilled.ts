@@ -61,6 +61,7 @@ export async function notifyRequestersOfDownload(input: {
           : `${shown}, which you requested, has new episodes ready to watch`,
       relay: false,
       dedupeSince: since,
+      is4k: fourK,
     });
   }
 }

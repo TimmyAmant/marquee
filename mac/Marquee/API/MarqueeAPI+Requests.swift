@@ -15,10 +15,16 @@ extension MarqueeAPI {
         /// `.conflict` when nothing is left, `.invalid` for a season TMDb doesn't
         /// list. nil sends no body at all: the whole series, which is also all
         /// a server older than season requests understands.
+        ///
+        /// `is4k` (0.37+, `viewer.fourK.canRequest`) is "Request in 4K": sends
+        /// `{"is4k": true}` and always asks for the whole title, so `seasons`
+        /// is ignored. `.conflict("You've already requested this in 4K.")` etc.
         @discardableResult
-        func create(_ type: API.MediaType, id tmdbId: Int, seasons: [Int]? = nil) async throws -> UUID {
+        func create(_ type: API.MediaType, id tmdbId: Int, seasons: [Int]? = nil, is4k: Bool = false) async throws -> UUID {
             struct Body: Encodable, Sendable { let seasons: [Int] }
-            let body: (any Encodable & Sendable)? = seasons.map { Body(seasons: Array(Set($0)).sorted()) }
+            let body: (any Encodable & Sendable)? = is4k
+                ? API.FourKBody()
+                : seasons.map { Body(seasons: Array(Set($0)).sorted()) }
             let result: API.RequestCreated = try await transport.mutate(
                 .post, TitlesEndpoints.path(type, tmdbId) + "/request", body: body, timeout: Timeout.integrations,
                 changes: [.requests, .library]
