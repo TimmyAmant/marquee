@@ -750,7 +750,7 @@ public sealed partial class TitleViewModel : ObservableObject
             .ToList();
         franchiseItems = fresh.Franchise?.Items.Select(card => new PosterItem(card, OpenTitleCommand)).ToList() ?? [];
         studios = fresh.Studios
-            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId))))
+            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
             .ToList();
         similar = fresh.Similar.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
     }

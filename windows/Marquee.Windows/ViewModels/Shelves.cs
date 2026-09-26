@@ -104,16 +104,72 @@ public sealed class PosterItem
     }
 }
 
-/// <summary>A labelled button in a rail: a genre, a studio, a network.</summary>
-public sealed class ChipItem(string label, ICommand open)
+/// <summary>How a <see cref="ChipItem"/> draws itself.</summary>
+public enum ChipKind
 {
-    public string Label { get; } = label;
-    public ICommand Open { get; } = open;
+    /// <summary>A pill with the name, and a small logo first when there is one (studio-chip.tsx).</summary>
+    Chip,
+
+    /// <summary>Discover's Studios/Networks tile: the logo on white (logo-card.tsx, <c>LogoTile</c>).</summary>
+    Logo,
+
+    /// <summary>Discover's genre tile: the name over a tinted backdrop (genre-card.tsx, <c>GenreTile</c>).</summary>
+    Genre,
+}
+
+/// <summary>
+/// A labelled button in a rail: a genre, a studio, a network. On Discover
+/// it is a picture tile (<see cref="ChipKind.Logo"/>, <see cref="ChipKind.Genre"/>);
+/// elsewhere a chip, with the studio's logo when it has one.
+///
+/// Like <see cref="PosterItem"/>, the image and the tint brush are created
+/// lazily, on the UI thread, by the binding that asks for them.
+/// </summary>
+public sealed class ChipItem
+{
+    private readonly Uri? imageUrl;
+    private readonly uint? tint;
+    private ImageSource? image;
+    private Brush? tintBrush;
+
+    /// <param name="imageUrl">A studio chip's small logo (<c>CompanyCard.ChipLogoUrl()</c>).</param>
+    public ChipItem(string label, ICommand open, Uri? imageUrl = null)
+    {
+        Label = label;
+        Open = open;
+        Kind = ChipKind.Chip;
+        this.imageUrl = imageUrl;
+    }
+
+    /// <summary>A Discover tile, from Core's <see cref="ShelfTiles"/> mapping.</summary>
+    public ChipItem(ShelfTile tile, ICommand open)
+    {
+        Label = tile.Name;
+        Open = open;
+        Kind = tile.Kind == ShelfTileKind.Genre ? ChipKind.Genre : ChipKind.Logo;
+        imageUrl = tile.ImageUrl;
+        tint = tile.Tint;
+    }
+
+    public string Label { get; }
+    public ICommand Open { get; }
+    public ChipKind Kind { get; }
+
+    public bool HasImage => imageUrl != null;
+
+    /// <summary>The logo or backdrop, created on first use (UI thread only).</summary>
+    public ImageSource? Image => imageUrl == null ? null : image ??= new BitmapImage(imageUrl);
+
+    /// <summary>A genre tile's color, under the backdrop; transparent for anything else.</summary>
+    public Brush TintBrush => tintBrush ??= new SolidColorBrush(tint is { } rgb
+        ? global::Windows.UI.Color.FromArgb(0xFF, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb)
+        : global::Microsoft.UI.Colors.Transparent);
 }
 
 /// <summary>
 /// One horizontal rail on Discover: a title and either posters or chips.
-/// <c>DiscoverPage</c> shows whichever list is non-empty.
+/// <c>DiscoverPage</c> shows whichever list is non-empty, and draws chips
+/// as the tiles their <see cref="ChipItem.Kind"/> names.
 /// </summary>
 public sealed class ShelfViewModel
 {
@@ -133,7 +189,16 @@ public sealed class ShelfViewModel
     public ICommand? SeeAll { get; }
 
     public bool HasPosters => Posters.Count > 0;
-    public bool HasChips => Chips.Count > 0;
+
+    /// <summary>Plain chips: a rail whose first chip is neither a logo nor a genre tile.</summary>
+    public bool HasChips => Chips.Count > 0 && Chips[0].Kind == ChipKind.Chip;
+
+    /// <summary>Studios / Networks: white logo tiles.</summary>
+    public bool HasLogoTiles => Chips.Count > 0 && Chips[0].Kind == ChipKind.Logo;
+
+    /// <summary>Movie / Series Genres: backdrop tiles.</summary>
+    public bool HasGenreTiles => Chips.Count > 0 && Chips[0].Kind == ChipKind.Genre;
+
     public bool HasSeeAll => SeeAll != null;
 
     public static ShelfViewModel OfPosters(string title, IReadOnlyList<PosterItem> posters, ICommand? seeAll = null) =>

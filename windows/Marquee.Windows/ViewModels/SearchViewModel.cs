@@ -205,7 +205,7 @@ public sealed partial class SearchViewModel : ObservableObject
             .Select(person => new PersonItem(model, person.TmdbId, person.Name, person.KnownForDepartment, person.ProfilePath, person.Favorited))
             .ToList();
         Studios = results.Studios
-            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId))))
+            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
             .ToList();
         Titles = results.Titles.Select(card => new PosterItem(card, OpenTitleCommand, showsTypeLabel: true)).ToList();
         if (results.Theme is { Items.Count: > 0 } theme)
