@@ -58,6 +58,15 @@ export function getQualityProfiles(config: ArrConfig) {
   return radarrFetch<RadarrQualityProfile[]>(config, "/qualityprofile");
 }
 
+export interface RadarrTag {
+  id: number;
+  label: string;
+}
+
+export function getTags(config: ArrConfig) {
+  return radarrFetch<RadarrTag[]>(config, "/tag");
+}
+
 export interface RadarrMovieLookupResult {
   title: string;
   tmdbId: number;
@@ -168,6 +177,8 @@ export function addMovie(
     lookupResult: RadarrMovieLookupResult;
     qualityProfileId: number;
     rootFolderPath: string;
+    /** Tag ids; omitted keeps whatever the lookup result has (none). */
+    tags?: readonly number[];
   },
 ) {
   return radarrFetch<RadarrMovie>(config, "/movie", {
@@ -176,6 +187,7 @@ export function addMovie(
       ...input.lookupResult,
       qualityProfileId: input.qualityProfileId,
       rootFolderPath: input.rootFolderPath,
+      ...(input.tags ? { tags: [...input.tags] } : {}),
       monitored: true,
       addOptions: { searchForMovie: true },
     },

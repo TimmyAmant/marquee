@@ -18,6 +18,7 @@ import { insertWithinQuota } from "@/lib/requests/quota";
 import { clearRequestAlerts, notifyReviewersOfRequest } from "@/lib/requests/alerts";
 import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
+import type { AddOverrides } from "@/lib/arr/add-options";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 
 // Request lifecycle shared by the web's server actions (lib/requests/actions.ts)
@@ -272,7 +273,13 @@ function requestName(request: { title: string; seasons: number[] | null; is4k: b
  * already-verified reviewer (the admin or a trusted member) so the bulk path
  * doesn't re-check on every iteration. The title is added with the admin's
  * Sonarr/Radarr either way. */
-export async function approveRequest(requestId: string, reviewerUserId: string): Promise<CoreResult> {
+export async function approveRequest(
+  requestId: string,
+  reviewerUserId: string,
+  /** The reviewer's "Advanced" picks (lib/arr/add-options.ts): which server
+   * and with what. None = the server's defaults, as it always was. */
+  overrides: AddOverrides = {},
+): Promise<CoreResult> {
   const adminUserId = await credentialOwnerFor(reviewerUserId);
   if (!adminUserId) return fail("conflict", "There's no admin account to add titles with.");
   const [request] = await db
@@ -285,10 +292,11 @@ export async function approveRequest(requestId: string, reviewerUserId: string):
   // there's no shared/instance-wide credential, only per-user ones.
   const result =
     request.mediaType === "movie"
-      ? await addMovieToRadarrForUser(adminUserId, request.tmdbId, request.is4k)
-      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true, request.is4k);
+      ? await addMovieToRadarrForUser(adminUserId, request.tmdbId, request.is4k, overrides)
+      : await addSeriesToSonarrForUser(adminUserId, request.tmdbId, request.seasons, true, request.is4k, overrides);
 
   if (!result.ok) return result;
+  const { placement } = result;
 
   // Re-guard on status='pending' here too — the initial select above can't
   // stop a concurrent reject from landing between that read and this write,
@@ -296,7 +304,18 @@ export async function approveRequest(requestId: string, reviewerUserId: string):
   // single UPDATE...WHERE had before this was split into select-then-update.
   const [updated] = await db
     .update(requests)
-    .set({ status: "approved", reviewedByUserId: reviewerUserId, reviewedAt: new Date() })
+    .set({
+      status: "approved",
+      reviewedByUserId: reviewerUserId,
+      reviewedAt: new Date(),
+      // Where it went and with what (`addedTo` in /requests/history).
+      arrServerId: placement.serverId,
+      arrServerName: placement.serverName,
+      arrQualityProfileId: placement.qualityProfileId,
+      arrRootFolderPath: placement.rootFolderPath,
+      arrTags: placement.tags,
+      arrSeriesType: placement.seriesType,
+    })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", "Request was already reviewed.");

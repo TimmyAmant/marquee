@@ -1,16 +1,21 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { integrationCredentials, plexServers, jellyfinServers, arrStatusCache } from "@/lib/db/schema";
+import { integrationCredentials, plexServers, jellyfinServers } from "@/lib/db/schema";
 import type { ArrInstance, IntegrationProvider } from "@/lib/db/schema";
-import { arrInstanceLabel, arrKindOf } from "@/lib/arr/fourk";
+import { arrInstanceLabel, arrKindOf, isFourK } from "@/lib/arr/instances";
+import { hasArrServer, listArrServers } from "@/lib/arr/servers";
 import {
-  getArrCredential,
+  deleteDefaultServer,
+  getArrServerOptions,
+  saveDefaultServerConnection,
+  saveDefaultServerDefaults,
+} from "@/lib/arr/server-manage";
+import { normalizeServerUrl } from "@/lib/arr/server-input";
+import {
   getOrCreatePlexClientId,
   getPlexCredential,
   getJellyfinCredential,
-  updateArrDefaults,
-  upsertArrCredential,
   upsertJellyfinCredential,
   upsertPlexCredential,
 } from "@/lib/integrations/credentials";
@@ -22,13 +27,11 @@ import {
   setGenericWebhookUrl,
   setNtfyUrl,
 } from "@/lib/integrations/app-settings";
-import * as sonarr from "@/lib/sonarr/client";
-import * as radarr from "@/lib/radarr/client";
 import * as jellyfin from "@/lib/jellyfin/client";
 import * as plex from "@/lib/plex/client";
 import { syncPlexLibrary, getPlexSummary, resyncPlexLibraryFromScratch, waitForPlexSync } from "@/lib/plex/sync";
 import { syncJellyfinLibrary, waitForJellyfinSync } from "@/lib/jellyfin/sync";
-import { syncArrLibrary, waitForArrSync } from "@/lib/arr/sync";
+import { syncArrLibrary } from "@/lib/arr/sync";
 import { verifyTmdbAccessToken } from "@/lib/tmdb/client";
 import { verifyTraktClientId } from "@/lib/trakt/client";
 import { verifyTvdbApiKey } from "@/lib/tvdb/client";
@@ -43,17 +46,15 @@ import { fail, type CoreResult } from "@/lib/core-result";
 // admin (except syncNowForUser, which only ever touches the caller's own
 // integrations) and does its own input validation with the web's messages.
 
+function isArrInstance(provider: IntegrationProvider): provider is ArrInstance {
+  return provider === "sonarr" || provider === "radarr" || provider === "sonarr4k" || provider === "radarr4k";
+}
+
 export function revalidateIntegrations() {
   revalidatePath("/settings/integrations");
 }
 
-function arrClientFor(instance: ArrInstance) {
-  return arrKindOf(instance) === "sonarr" ? sonarr : radarr;
-}
-
-export function normalizeServerUrl(value: string): string {
-  return value.trim().replace(/\/+$/, "");
-}
+export { normalizeServerUrl } from "@/lib/arr/server-input";
 
 export type ArrOptions = {
   rootFolders: { id: number; path: string }[];
@@ -66,6 +67,10 @@ export type ArrConnectionResult = ArrOptions & {
   selectedQualityProfileId: number | null;
 };
 
+// The one-server-per-provider settings of 0.37 (the website's older cards
+// and PUT /api/v1/settings/integrations/{provider}): each now acts on the
+// default server of that kind and 4K-ness (lib/arr/server-manage.ts).
+
 export async function testAndSaveArrConnection(
   adminUserId: string,
   provider: ArrInstance,
@@ -76,60 +81,31 @@ export async function testAndSaveArrConnection(
   if (!baseUrl || !apiKey) {
     return fail("invalid", "URL and API key are required.");
   }
-
-  const client = arrClientFor(provider);
-
-  try {
-    await client.testConnection({ baseUrl, apiKey });
-  } catch {
-    return fail("upstream", "Couldn't connect. Check the URL and API key and try again.");
-  }
-
-  const [rootFolders, qualityProfiles] = await Promise.all([
-    client.getRootFolders({ baseUrl, apiKey }),
-    client.getQualityProfiles({ baseUrl, apiKey }),
-  ]);
-
-  const selectedRootFolder = rootFolders[0]?.path ?? null;
-  const selectedQualityProfileId = qualityProfiles[0]?.id ?? null;
-
-  await upsertArrCredential(adminUserId, provider, {
+  const result = await saveDefaultServerConnection(adminUserId, arrKindOf(provider), isFourK(provider), {
     baseUrl,
     apiKey,
-    qualityProfileId: selectedQualityProfileId,
-    rootFolderPath: selectedRootFolder,
   });
-
+  if (!result.ok) return result;
   revalidateIntegrations();
-
   return {
     ok: true,
     baseUrl,
-    rootFolders,
-    qualityProfiles,
-    selectedRootFolder,
-    selectedQualityProfileId,
+    rootFolders: result.check.rootFolders,
+    qualityProfiles: result.check.qualityProfiles,
+    selectedRootFolder: result.server.rootFolderPath,
+    selectedQualityProfileId: result.server.qualityProfileId,
   };
 }
 
-/** Root folders + quality profiles from an already-saved Sonarr/Radarr
- * connection — what the "defaults" pickers are populated with. */
+/** Root folders + quality profiles of the default server — what the older
+ * "defaults" pickers are populated with. */
 export async function getArrOptions(adminUserId: string, provider: ArrInstance): Promise<CoreResult<ArrOptions>> {
-  const credential = await getArrCredential(adminUserId, provider);
+  const [server] = await listArrServers(adminUserId, { kind: arrKindOf(provider), fourK: isFourK(provider) });
   const label = arrInstanceLabel(provider);
-  if (!credential) return fail("conflict", `Connect ${label} in Settings first.`);
-
-  const client = arrClientFor(provider);
-  const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
-  try {
-    const [rootFolders, qualityProfiles] = await Promise.all([
-      client.getRootFolders(config),
-      client.getQualityProfiles(config),
-    ]);
-    return { ok: true, rootFolders, qualityProfiles };
-  } catch {
-    return fail("upstream", `Couldn't reach ${label}. Check its connection in Settings.`);
-  }
+  if (!server) return fail("conflict", `Connect ${label} in Settings first.`);
+  const options = await getArrServerOptions(adminUserId, server.id);
+  if (!options.ok) return fail("upstream", `Couldn't reach ${label}. Check its connection in Settings.`);
+  return { ok: true, rootFolders: options.rootFolders, qualityProfiles: options.qualityProfiles };
 }
 
 export async function saveArrDefaultsFor(
@@ -140,11 +116,8 @@ export async function saveArrDefaultsFor(
   if (!input.rootFolderPath || !Number.isFinite(input.qualityProfileId)) {
     return fail("invalid", "Pick a root folder and a quality profile.");
   }
-
-  await updateArrDefaults(adminUserId, provider, {
-    rootFolderPath: input.rootFolderPath,
-    qualityProfileId: input.qualityProfileId,
-  });
+  const result = await saveDefaultServerDefaults(adminUserId, arrKindOf(provider), isFourK(provider), input);
+  if (!result.ok) return result;
   revalidateIntegrations();
   return { ok: true };
 }
@@ -153,6 +126,13 @@ export async function saveArrDefaultsFor(
  * synced data that provider owns, so a disconnected integration doesn't
  * leave stale "owned"/"tracked" statuses lingering around afterward. */
 export async function disconnectIntegration(adminUserId: string, provider: IntegrationProvider): Promise<void> {
+  if (isArrInstance(provider)) {
+    // The older per-provider Disconnect: removes that default server.
+    await deleteDefaultServer(adminUserId, arrKindOf(provider), isFourK(provider));
+    revalidateIntegrations();
+    return;
+  }
+
   await db
     .delete(integrationCredentials)
     .where(and(eq(integrationCredentials.userId, adminUserId), eq(integrationCredentials.provider, provider)));
@@ -163,19 +143,13 @@ export async function disconnectIntegration(adminUserId: string, provider: Integ
   // whatever it wrote in the meantime gets deleted along with the rest.
   if (provider === "plex") await waitForPlexSync(adminUserId);
   else if (provider === "jellyfin") await waitForJellyfinSync(adminUserId);
-  else if (provider === "sonarr" || provider === "radarr") await waitForArrSync(adminUserId, provider);
 
   if (provider === "plex") {
     // Cascades to plex_library_items via its own FK.
     await db.delete(plexServers).where(eq(plexServers.userId, adminUserId));
   } else if (provider === "jellyfin") {
     await db.delete(jellyfinServers).where(eq(jellyfinServers.userId, adminUserId));
-  } else if (provider === "sonarr" || provider === "radarr") {
-    await db
-      .delete(arrStatusCache)
-      .where(and(eq(arrStatusCache.userId, adminUserId), eq(arrStatusCache.provider, provider)));
   }
-  // A 4K instance has no synced data: it's read live (lib/arr/fourk.ts).
 
   revalidateIntegrations();
   revalidatePath("/discover");
@@ -243,8 +217,8 @@ export async function syncNowForUser(userId: string): Promise<CoreResult> {
   const [plexCred, jellyfinCred, sonarrCred, radarrCred] = await Promise.all([
     getPlexCredential(userId),
     getJellyfinCredential(userId),
-    getArrCredential(userId, "sonarr"),
-    getArrCredential(userId, "radarr"),
+    hasArrServer(userId, "sonarr", false),
+    hasArrServer(userId, "radarr", false),
   ]);
 
   const results = await Promise.allSettled([

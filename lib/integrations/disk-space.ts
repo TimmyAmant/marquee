@@ -1,7 +1,7 @@
 import { and, eq, gte } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { diskSpaceSnapshots, integrationCredentials } from "@/lib/db/schema";
-import { getArrCredential } from "@/lib/integrations/credentials";
+import { arrServers, diskSpaceSnapshots } from "@/lib/db/schema";
+import { arrConfig, listArrServers } from "@/lib/arr/servers";
 import { forecastDiskSpace, type DiskSpaceForecast } from "@/lib/integrations/disk-space-logic";
 import * as radarr from "@/lib/radarr/client";
 import * as sonarr from "@/lib/sonarr/client";
@@ -13,26 +13,19 @@ export type DiskSpaceInfo = { path: string; freeSpace: number };
  * root folder, so dedupe by path rather than summing every root folder
  * from every provider — that would double-count shared disks. */
 export async function getDiskSpaceSummary(userId: string): Promise<DiskSpaceInfo[]> {
-  const [radarrCred, sonarrCred] = await Promise.all([
-    getArrCredential(userId, "radarr"),
-    getArrCredential(userId, "sonarr"),
-  ]);
+  // Every server, 4K ones included — they fill disks too. Two servers on
+  // the same machine report the same folders, so a path counts once.
+  const servers = await listArrServers(userId);
+  const folderLists = await Promise.all(
+    servers.map((server) =>
+      (server.kind === "radarr" ? radarr.getRootFolders(arrConfig(server)) : sonarr.getRootFolders(arrConfig(server))).catch(
+        () => [],
+      ),
+    ),
+  );
 
   const byPath = new Map<string, number>();
-
-  if (radarrCred) {
-    const folders = await radarr
-      .getRootFolders({ baseUrl: radarrCred.baseUrl, apiKey: radarrCred.apiKey })
-      .catch(() => []);
-    for (const folder of folders) {
-      if (typeof folder.freeSpace === "number") byPath.set(folder.path, folder.freeSpace);
-    }
-  }
-
-  if (sonarrCred) {
-    const folders = await sonarr
-      .getRootFolders({ baseUrl: sonarrCred.baseUrl, apiKey: sonarrCred.apiKey })
-      .catch(() => []);
+  for (const folders of folderLists) {
     for (const folder of folders) {
       if (typeof folder.freeSpace === "number") byPath.set(folder.path, folder.freeSpace);
     }
@@ -54,17 +47,8 @@ export async function snapshotDiskSpace(userId: string): Promise<void> {
 }
 
 export async function snapshotDiskSpaceForAllConnectedUsers(): Promise<void> {
-  const rows = await db
-    .selectDistinct({ userId: integrationCredentials.userId })
-    .from(integrationCredentials)
-    .where(eq(integrationCredentials.provider, "radarr"));
-  const sonarrRows = await db
-    .selectDistinct({ userId: integrationCredentials.userId })
-    .from(integrationCredentials)
-    .where(eq(integrationCredentials.provider, "sonarr"));
-
-  const userIds = new Set([...rows.map((r) => r.userId), ...sonarrRows.map((r) => r.userId)]);
-  for (const userId of userIds) {
+  const rows = await db.selectDistinct({ userId: arrServers.userId }).from(arrServers);
+  for (const { userId } of rows) {
     await snapshotDiskSpace(userId).catch((err) => {
       console.error(`[disk-space-snapshot] failed for user ${userId}:`, err);
     });

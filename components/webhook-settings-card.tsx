@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { regenerateWebhookSecretAction } from "@/app/settings/integrations/actions";
 import { arrWebhookUrls } from "@/lib/integrations/webhook-urls";
 
-function WebhookUrlRow({ label, url }: { label: string; url: string }) {
+export function WebhookUrlRow({ label, url }: { label: string; url: string }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -63,7 +63,7 @@ export function WebhookSettingsCard({
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl text-text-primary">Notifications</h3>
+        <h3 className="font-display text-xl text-text-primary">Shared webhook URLs</h3>
         <button
           type="button"
           onClick={handleRegenerate}
@@ -74,8 +74,10 @@ export function WebhookSettingsCard({
         </button>
       </div>
       <p className="mt-2 text-sm text-text-secondary">
-        Paste these into Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on
-        Grab + Download) to get notified here as soon as something starts or finishes downloading.
+        Each Sonarr and Radarr server above has its own webhook URL now (under Edit) — use that for new
+        servers. These older shared URLs keep working for servers already set up with them: pasted into
+        Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download), they
+        tell you here as soon as something starts or finishes downloading.
       </p>
       <div className="mt-4 flex flex-col gap-3">
         <WebhookUrlRow label="Radarr webhook URL" url={urls.radarr} />

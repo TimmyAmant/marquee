@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/integrations/credentials", () => ({ getArrCredential: async () => null, isArrFullyConfigured: () => false }));
+vi.mock("@/lib/arr/servers", () => ({
+  listArrServers: async () => [],
+  isServerConfigured: () => false,
+  arrConfig: () => ({}),
+}));
 vi.mock("@/lib/radarr/client", () => ({}));
 vi.mock("@/lib/sonarr/client", () => ({}));
 
@@ -22,7 +26,7 @@ describe("4K instances", () => {
     expect(arrInstanceLabel("sonarr")).toBe("Sonarr");
   });
 
-  it("have no 4K status without a 4K instance", async () => {
+  it("have no 4K status without a 4K server", async () => {
     expect(await getFourKStatus("admin", "movie", 603, null)).toBeNull();
   });
 });

@@ -231,6 +231,12 @@ export function reviewedRequest(row: {
   reviewedAt: Date | null;
   requestedByName: string | null;
   requestedByUsername: string;
+  arrServerId?: string | null;
+  arrServerName?: string | null;
+  arrQualityProfileId?: number | null;
+  arrRootFolderPath?: string | null;
+  arrTags?: number[] | null;
+  arrSeriesType?: string | null;
 }): Dto.ReviewedRequest {
   return {
     id: row.id,
@@ -247,6 +253,30 @@ export function reviewedRequest(row: {
     requestedBy: requestPerson({ displayName: row.requestedByName, username: row.requestedByUsername }),
     createdAt: isoRequired(row.createdAt),
     reviewedAt: iso(row.reviewedAt),
+    addedTo: addedTo(row),
+  };
+}
+
+/** Where an approved request was added (0.43+): null unless it went through
+ * Sonarr/Radarr since servers were recorded. */
+export function addedTo(row: {
+  status: RequestStatus;
+  manuallyApproved: boolean;
+  arrServerId?: string | null;
+  arrServerName?: string | null;
+  arrQualityProfileId?: number | null;
+  arrRootFolderPath?: string | null;
+  arrTags?: number[] | null;
+  arrSeriesType?: string | null;
+}): Dto.RequestAddedTo | null {
+  if (row.status !== "approved" || row.manuallyApproved || !row.arrServerName) return null;
+  return {
+    serverId: row.arrServerId ?? null,
+    serverName: row.arrServerName,
+    qualityProfileId: row.arrQualityProfileId ?? null,
+    rootFolderPath: row.arrRootFolderPath ?? null,
+    tags: row.arrTags ?? null,
+    seriesType: (row.arrSeriesType as Dto.RequestAddedTo["seriesType"]) ?? null,
   };
 }
 

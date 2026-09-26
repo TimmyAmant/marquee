@@ -4,6 +4,7 @@ import { syncedServers } from "@/lib/api/mappers";
 import { INTEGRATIONS_FORBIDDEN } from "@/lib/api/routes/integrations";
 import { loadIntegrationsPage } from "@/lib/pages/settings";
 import { arrWebhookUrls, webhookBaseUrl } from "@/lib/integrations/webhook-urls";
+import { toArrServerDto } from "@/lib/arr/servers";
 import type { ArrSettings, IntegrationsSettings } from "@/lib/api/types";
 
 function arrSettings(
@@ -71,5 +72,6 @@ export const GET = withApi(async (request): Promise<IntegrationsSettings> => {
       radarr4kUrl: urls.radarr4k,
       sonarr4kUrl: urls.sonarr4k,
     },
+    arrServers: data.arrServers.map((server) => toArrServerDto(server, webhookBaseUrl(request.headers))),
   };
 });

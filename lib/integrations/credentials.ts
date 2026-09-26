@@ -4,6 +4,8 @@ import { db } from "@/lib/db/client";
 import { integrationCredentials, users } from "@/lib/db/schema";
 import type { ArrInstance, IntegrationProvider } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
+import { getDefaultArrServer } from "@/lib/arr/servers";
+import { arrKindOf, isFourK } from "@/lib/arr/instances";
 
 export type ArrCredential = {
   baseUrl: string;
@@ -27,87 +29,23 @@ export function isArrFullyConfigured(
   return Boolean(credential?.qualityProfileId && credential?.rootFolderPath);
 }
 
+/** The default Sonarr/Radarr server of this kind (the 4K one for
+ * sonarr4k/radarr4k) in the shape the one-server-per-provider code used —
+ * what "is Sonarr set up", the old settings endpoints and the pre-0.43
+ * callers still ask. Anything that should consider every server uses
+ * lib/arr/servers.ts instead. */
 export async function getArrCredential(
   userId: string,
   provider: ArrInstance,
 ): Promise<ArrCredential | null> {
-  const [row] = await db
-    .select()
-    .from(integrationCredentials)
-    .where(
-      and(eq(integrationCredentials.userId, userId), eq(integrationCredentials.provider, provider)),
-    )
-    .limit(1);
-
-  if (!row || !row.baseUrl || !row.apiKeyEnc || !row.apiKeyIv || !row.apiKeyTag) return null;
-
-  const apiKey = decryptSecret({
-    ciphertext: row.apiKeyEnc,
-    iv: row.apiKeyIv,
-    tag: row.apiKeyTag,
-  });
-
+  const server = await getDefaultArrServer(userId, arrKindOf(provider), isFourK(provider));
+  if (!server) return null;
   return {
-    baseUrl: row.baseUrl,
-    apiKey,
-    qualityProfileId: row.qualityProfileId,
-    rootFolderPath: row.rootFolderPath,
+    baseUrl: server.baseUrl,
+    apiKey: server.apiKey,
+    qualityProfileId: server.qualityProfileId,
+    rootFolderPath: server.rootFolderPath,
   };
-}
-
-export async function upsertArrCredential(
-  userId: string,
-  provider: ArrInstance,
-  fields: {
-    baseUrl: string;
-    apiKey: string;
-    qualityProfileId?: number | null;
-    rootFolderPath?: string | null;
-  },
-) {
-  const encrypted = encryptSecret(fields.apiKey);
-
-  await db
-    .insert(integrationCredentials)
-    .values({
-      userId,
-      provider,
-      baseUrl: fields.baseUrl,
-      apiKeyEnc: encrypted.ciphertext,
-      apiKeyIv: encrypted.iv,
-      apiKeyTag: encrypted.tag,
-      qualityProfileId: fields.qualityProfileId ?? null,
-      rootFolderPath: fields.rootFolderPath ?? null,
-    })
-    .onConflictDoUpdate({
-      target: [integrationCredentials.userId, integrationCredentials.provider],
-      set: {
-        baseUrl: fields.baseUrl,
-        apiKeyEnc: encrypted.ciphertext,
-        apiKeyIv: encrypted.iv,
-        apiKeyTag: encrypted.tag,
-        qualityProfileId: fields.qualityProfileId ?? null,
-        rootFolderPath: fields.rootFolderPath ?? null,
-        updatedAt: new Date(),
-      },
-    });
-}
-
-export async function updateArrDefaults(
-  userId: string,
-  provider: ArrInstance,
-  fields: { qualityProfileId: number; rootFolderPath: string },
-) {
-  await db
-    .update(integrationCredentials)
-    .set({
-      qualityProfileId: fields.qualityProfileId,
-      rootFolderPath: fields.rootFolderPath,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(eq(integrationCredentials.userId, userId), eq(integrationCredentials.provider, provider)),
-    );
 }
 
 /** Whether the user still has this integration saved — cheap enough for a

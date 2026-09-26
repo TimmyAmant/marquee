@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { addTitleToLibrary, relinkTitle, searchTitle, setTitleMonitored } from "@/lib/arr/title-actions";
+import { parseAddOverrides, parseAddOverridesForm } from "@/lib/arr/add-options";
 
 // Thin form/session wrappers — the logic lives in lib/arr/title-actions.ts,
 // shared with /api/v1/titles/*.
@@ -13,35 +14,46 @@ export type AddToLibraryState = { error?: string; success?: boolean };
 export async function addMovieToRadarr(
   tmdbId: number,
   _prevState: AddToLibraryState | undefined,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<AddToLibraryState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in to add titles." };
 
-  const result = await addTitleToLibrary(session.user.id, "movie", tmdbId);
+  // The "Advanced" picks, when opened (components/add-advanced-options.tsx).
+  const parsed = parseAddOverridesForm(formData, "movie");
+  if (!parsed.ok) return { error: parsed.error };
+  const result = await addTitleToLibrary(session.user.id, "movie", tmdbId, false, parsed.overrides);
   return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function addSeriesToSonarr(
   tmdbId: number,
   _prevState: AddToLibraryState | undefined,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<AddToLibraryState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in to add titles." };
 
-  const result = await addTitleToLibrary(session.user.id, "tv", tmdbId);
+  const parsed = parseAddOverridesForm(formData, "tv");
+  if (!parsed.ok) return { error: parsed.error };
+  const result = await addTitleToLibrary(session.user.id, "tv", tmdbId, false, parsed.overrides);
   return result.ok ? { success: true } : { error: result.error };
 }
 
-/** "Add to 4K Radarr/Sonarr" (admin). */
-export async function addToFourK(mediaType: MediaType, tmdbId: number): Promise<AddToLibraryState> {
+/** "Add to 4K Radarr/Sonarr" (admin), with the Advanced picks if any —
+ * whatever the browser sends, checked by the same parser as the API. */
+export async function addToFourK(mediaType: MediaType, tmdbId: number, overrides?: unknown): Promise<AddToLibraryState> {
   const session = await auth();
   if (!session?.user) return { error: "Sign in to add titles." };
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
     return { error: "That title couldn't be added." };
   }
-  const result = await addTitleToLibrary(session.user.id, mediaType, tmdbId, true);
+  const parsed =
+    overrides && typeof overrides === "object"
+      ? parseAddOverrides(overrides as Record<string, unknown>, mediaType)
+      : { ok: true as const, overrides: {} };
+  if (!parsed.ok) return { error: parsed.error };
+  const result = await addTitleToLibrary(session.user.id, mediaType, tmdbId, true, parsed.overrides);
   return result.ok ? { success: true } : { error: result.error };
 }
 

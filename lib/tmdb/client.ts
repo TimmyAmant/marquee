@@ -462,6 +462,7 @@ export interface TmdbTvDetails {
   genres?: { id: number; name: string }[];
   vote_average?: number;
   original_language?: string;
+  origin_country?: string[];
   keywords?: { results: TmdbKeywordRef[] };
   "watch/providers"?: TmdbWatchProviders;
 }

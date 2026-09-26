@@ -544,6 +544,21 @@ export type ReviewedRequest = {
   requestedBy: RequestPerson;
   createdAt: string;
   reviewedAt: string | null;
+  /** 0.43+: where approving it added the title; null for rejected, manually
+   * approved and older requests. */
+  addedTo: RequestAddedTo | null;
+};
+
+export type RequestAddedTo = {
+  /** Null once that server has been removed. */
+  serverId: string | null;
+  serverName: string;
+  /** What a title new to the server was added with; null when the server
+   * already had it (it keeps its own). */
+  qualityProfileId: number | null;
+  rootFolderPath: string | null;
+  tags: number[] | null;
+  seriesType: "standard" | "daily" | "anime" | null;
 };
 
 export type ApproveAllResponse = {
@@ -633,6 +648,9 @@ export type AvatarResponse = { ok: true; avatarUrl: string | null };
 
 export type SyncedServer = { name: string | null; lastSyncedAt: string | null };
 
+export type { ArrServerDto } from "@/lib/arr/servers";
+import type { ArrServerDto } from "@/lib/arr/servers";
+
 export type ArrSettings = {
   connected: boolean;
   baseUrl: string | null;
@@ -680,6 +698,8 @@ export type IntegrationsSettings = {
   };
   genericWebhook: { connected: boolean };
   arrWebhooks: { secret: string; radarrUrl: string; sonarrUrl: string; radarr4kUrl: string; sonarr4kUrl: string };
+  /** 0.43+: every Sonarr and Radarr server (the four above are the defaults). */
+  arrServers: ArrServerDto[];
 };
 
 export type ArrOptions = {

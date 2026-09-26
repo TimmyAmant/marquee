@@ -1306,7 +1306,8 @@ than one request is pending. Empty → "No pending requests."
 `statusLabel`: "Approved", "Manually approved" or "Rejected". `rejectionReason`
 as in `/requests/mine`: the website shows it under the "Rejected" badge.
 `addedTo` (0.43+): where an approved request was added and with what —
-`serverName` is null once that server has been removed. Null for rejected and
+`serverId` is null once that server has been removed (`serverName` keeps
+the name it had). Null for rejected and
 manually approved requests, and for anything approved before 0.43. The
 website shows "Added to Radarr 2" under the badge.
 

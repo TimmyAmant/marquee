@@ -146,6 +146,12 @@ export async function getReviewedRequests(limit = 50) {
       reviewedAt: requests.reviewedAt,
       requestedByName: users.displayName,
       requestedByUsername: users.username,
+      arrServerId: requests.arrServerId,
+      arrServerName: requests.arrServerName,
+      arrQualityProfileId: requests.arrQualityProfileId,
+      arrRootFolderPath: requests.arrRootFolderPath,
+      arrTags: requests.arrTags,
+      arrSeriesType: requests.arrSeriesType,
     })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))

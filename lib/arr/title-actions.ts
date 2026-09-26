@@ -2,9 +2,12 @@ import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, tmdbIdOverrides, users } from "@/lib/db/schema";
-import type { MediaType } from "@/lib/db/schema";
-import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
-import { getArrTrackingInfo } from "@/lib/integrations/status";
+import type { MediaType, SonarrSeriesType } from "@/lib/db/schema";
+import { findLibraryCopies } from "@/lib/integrations/status";
+import { arrConfig, type ArrServer } from "@/lib/arr/servers";
+import { hasOverrides, resolveAdd, type AddDefaults, type AddOverrides } from "@/lib/arr/add-options";
+import { pickServer, titleIsAnime } from "@/lib/arr/add-options-server";
+import { statusRank } from "@/lib/arr/fan-out";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { findByImdbId } from "@/lib/tmdb/client";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -32,21 +35,118 @@ async function isAdminUser(userId: string): Promise<boolean> {
   return row?.role === "admin";
 }
 
+/** Where an add went and with what — stored on an approved request. The
+ * profile, folder, tags and series type are what a new title was added
+ * with; a title the server already had keeps its own (they're null then). */
+export type AddPlacement = {
+  serverId: string;
+  serverName: string;
+  qualityProfileId: number | null;
+  rootFolderPath: string | null;
+  tags: number[] | null;
+  seriesType: SonarrSeriesType | null;
+};
+
+type AddTarget = { server: ArrServer; resolved: AddDefaults };
+
+/** The server a title goes to (the picked one or the default) and what it's
+ * added with — the server's defaults (anime ones for an anime show) under
+ * the reviewer's overrides. */
+async function resolveAddTarget(
+  ownerId: string,
+  mediaType: MediaType,
+  tmdbId: number,
+  fourK: boolean,
+  overrides: AddOverrides,
+): Promise<CoreResult<AddTarget>> {
+  const picked = await pickServer(ownerId, mediaType, fourK, overrides.serverId);
+  if (!picked.ok) return picked;
+  const kind = mediaType === "movie" ? "Radarr" : "Sonarr";
+  const server = picked.server;
+  if (!server) return fail("conflict", `Connect ${fourK ? `the 4K ${kind}` : kind} in Settings first.`);
+  const anime = mediaType === "tv" && (await titleIsAnime(mediaType, tmdbId));
+  const resolved = resolveAdd(server, anime, overrides);
+  if (!resolved.qualityProfileId || !resolved.rootFolderPath) {
+    // The old message while nothing was picked, as clients have always seen.
+    return fail(
+      "conflict",
+      hasOverrides(overrides)
+        ? `Pick a quality profile and root folder for ${server.name}.`
+        : `Connect ${fourK ? `the 4K ${kind}` : kind} in Settings first.`,
+    );
+  }
+  return { ok: true, server, resolved };
+}
+
+/** Reflect an add in the library cache right away — the scheduled sync
+ * won't pick it up for up to 15 minutes otherwise, leaving the title looking
+ * untracked everywhere in the meantime. Only standard servers are the
+ * library (lib/arr/fourk.ts reads the 4K ones live). A failure here is just
+ * the cache being stale, not the add failing — the next sync reconciles it. */
+async function recordAdd(userId: string, server: ArrServer, mediaType: MediaType, tmdbId: number, arrId: number) {
+  if (server.is4k) return;
+  try {
+    const provider = mediaType === "movie" ? "radarr" : "sonarr";
+    // The Library page joins against the titles cache, so make sure it has it.
+    await getOrFetchTitle(mediaType, tmdbId).catch(() => undefined);
+    // An owned copy on another server stays what the row shows.
+    const [existing] = await db
+      .select({ status: arrStatusCache.status })
+      .from(arrStatusCache)
+      .where(
+        and(
+          eq(arrStatusCache.userId, userId),
+          eq(arrStatusCache.provider, provider),
+          eq(arrStatusCache.externalId, tmdbId),
+        ),
+      )
+      .limit(1);
+    if (existing && statusRank(existing.status) > statusRank("tracked_monitored")) return;
+    const values = { serverId: server.id, arrId, status: "tracked_monitored", monitored: true, checkedAt: new Date() };
+    await db
+      .insert(arrStatusCache)
+      .values({ userId, provider, externalId: tmdbId, ...values })
+      .onConflictDoUpdate({
+        target: [arrStatusCache.userId, arrStatusCache.provider, arrStatusCache.externalId],
+        set: values,
+      });
+  } catch (err) {
+    console.error(`[add-to-library] ${server.kind} cache write failed after successful add:`, err);
+  }
+}
+
+function placement(target: AddTarget, addedNew: boolean): AddPlacement {
+  return {
+    serverId: target.server.id,
+    serverName: target.server.name,
+    qualityProfileId: addedNew ? target.resolved.qualityProfileId : null,
+    rootFolderPath: addedNew ? target.resolved.rootFolderPath : null,
+    tags: addedNew ? target.resolved.tags : null,
+    seriesType: addedNew ? target.resolved.seriesType : null,
+  };
+}
+
 /** Core "add this movie to Radarr" logic, usable for the acting user's own
  * add-to-library click or (with a different userId) an admin approving
  * someone else's request — the add always executes using whichever
- * userId's Radarr credential is passed in. */
-export async function addMovieToRadarrForUser(userId: string, tmdbId: number, fourK = false): Promise<CoreResult> {
+ * userId's Radarr servers are passed in: the default (4K) one, or the one
+ * `overrides.serverId` picks, with the overrides' profile, folder and tags. */
+export async function addMovieToRadarrForUser(
+  userId: string,
+  tmdbId: number,
+  fourK = false,
+  overrides: AddOverrides = {},
+): Promise<CoreResult<{ placement: AddPlacement }>> {
   if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
 
-  const credential = await getArrCredential(userId, fourK ? "radarr4k" : "radarr");
-  if (!isArrFullyConfigured(credential)) {
-    return fail("conflict", `Connect ${fourK ? "the 4K Radarr" : "Radarr"} in Settings first.`);
-  }
+  const target = await resolveAddTarget(userId, "movie", tmdbId, fourK, overrides);
+  if (!target.ok) return target;
+  const { server, resolved } = target;
 
   let added: { id: number };
+  let addedNew = false;
   try {
-    const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
+    const config = arrConfig(server);
 
     // A movie can already exist in Radarr but unmonitored — e.g. it was
     // added before, then "Stop monitoring" was used. Radarr's add endpoint
@@ -60,47 +160,26 @@ export async function addMovieToRadarrForUser(userId: string, tmdbId: number, fo
       const lookupResult = await radarr.lookupByTmdbId(config, tmdbId);
       added = await radarr.addMovie(config, {
         lookupResult,
-        qualityProfileId: credential.qualityProfileId,
-        rootFolderPath: credential.rootFolderPath,
+        qualityProfileId: resolved.qualityProfileId!,
+        rootFolderPath: resolved.rootFolderPath!,
+        tags: resolved.tags,
       });
+      addedNew = true;
     }
   } catch {
-    return fail("upstream", `Couldn't add this movie to ${fourK ? "the 4K Radarr" : "Radarr"}.`);
+    return fail("upstream", `Couldn't add this movie to ${serverLabel(server)}.`);
   }
 
-  // The 4K instance isn't part of the library cache (lib/arr/fourk.ts reads
-  // it live), so there's nothing more to record.
-  if (fourK) return { ok: true };
+  await recordAdd(userId, server, "movie", tmdbId, added.id);
+  return { ok: true, placement: placement(target, addedNew) };
+}
 
-  // Radarr already has it at this point — a failure below is just our local
-  // cache being stale, not the add itself failing, so still report success
-  // (the 15-minute scheduled sync will reconcile the cache either way).
-  try {
-    // Reflect the add in our local cache immediately — the scheduled sync
-    // won't pick this up for up to 15 minutes otherwise, leaving the title
-    // looking untracked everywhere in the meantime. Also make sure the
-    // titles cache has this row, since the Library page joins against it.
-    await getOrFetchTitle("movie", tmdbId).catch(() => undefined);
-    await db
-      .insert(arrStatusCache)
-      .values({
-        userId,
-        provider: "radarr",
-        externalId: tmdbId,
-        arrId: added.id,
-        status: "tracked_monitored",
-        monitored: true,
-        checkedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [arrStatusCache.userId, arrStatusCache.provider, arrStatusCache.externalId],
-        set: { arrId: added.id, status: "tracked_monitored", monitored: true, checkedAt: new Date() },
-      });
-  } catch (err) {
-    console.error("[add-to-library] radarr cache write failed after successful add:", err);
-  }
-
-  return { ok: true };
+/** How errors name a server: the old wording ("Radarr", "the 4K Radarr")
+ * for a server still called what it was called before servers had names. */
+function serverLabel(server: ArrServer): string {
+  const kind = server.kind === "sonarr" ? "Sonarr" : "Radarr";
+  if (server.is4k && server.name === `4K ${kind}`) return `the 4K ${kind}`;
+  return server.name;
 }
 
 /** Core "add this series to Sonarr" logic — see addMovieToRadarrForUser.
@@ -116,15 +195,15 @@ export async function addSeriesToSonarrForUser(
    * whole-series request then also turns on every season of a show Sonarr
    * already has only part of. */
   forRequest = false,
-  /** Into the 4K Sonarr instead of the main one. */
+  /** Into a 4K Sonarr instead of a standard one. */
   fourK = false,
-): Promise<CoreResult> {
+  overrides: AddOverrides = {},
+): Promise<CoreResult<{ placement: AddPlacement }>> {
   if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
 
-  const credential = await getArrCredential(userId, fourK ? "sonarr4k" : "sonarr");
-  if (!isArrFullyConfigured(credential)) {
-    return fail("conflict", `Connect ${fourK ? "the 4K Sonarr" : "Sonarr"} in Settings first.`);
-  }
+  const target = await resolveAddTarget(userId, "tv", tmdbId, fourK, overrides);
+  if (!target.ok) return target;
+  const { server, resolved } = target;
 
   const title = await getOrFetchTitle("tv", tmdbId).catch(() => undefined);
   if (!title?.tvdbId) {
@@ -132,8 +211,9 @@ export async function addSeriesToSonarrForUser(
   }
 
   let added: { id: number };
+  let addedNew = false;
   try {
-    const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
+    const config = arrConfig(server);
 
     // A series can already exist in Sonarr but unmonitored — e.g. it was
     // added before, then "Stop monitoring" was used. Sonarr's add endpoint
@@ -171,62 +251,43 @@ export async function addSeriesToSonarrForUser(
       }
       added = await sonarr.addSeries(config, {
         lookupResult,
-        qualityProfileId: credential.qualityProfileId,
-        rootFolderPath: credential.rootFolderPath,
+        qualityProfileId: resolved.qualityProfileId!,
+        rootFolderPath: resolved.rootFolderPath!,
         seasons,
+        tags: resolved.tags,
+        seriesType: resolved.seriesType ?? undefined,
+        seasonFolder: server.seasonFolders ?? undefined,
       });
+      addedNew = true;
     }
   } catch {
-    return fail("upstream", `Couldn't add this series to ${fourK ? "the 4K Sonarr" : "Sonarr"}.`);
+    return fail("upstream", `Couldn't add this series to ${serverLabel(server)}.`);
   }
 
-  if (fourK) return { ok: true };
-
-  // Sonarr already has it at this point — a failure below is just our local
-  // cache being stale, not the add itself failing, so still report success
-  // (the 15-minute scheduled sync will reconcile the cache either way).
-  try {
-    await db
-      .insert(arrStatusCache)
-      .values({
-        userId,
-        provider: "sonarr",
-        externalId: tmdbId,
-        arrId: added.id,
-        status: "tracked_monitored",
-        monitored: true,
-        checkedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [arrStatusCache.userId, arrStatusCache.provider, arrStatusCache.externalId],
-        set: { arrId: added.id, status: "tracked_monitored", monitored: true, checkedAt: new Date() },
-      });
-  } catch (err) {
-    console.error("[add-to-library] sonarr cache write failed after successful add:", err);
-  }
-
-  return { ok: true };
+  await recordAdd(userId, server, "tv", tmdbId, added.id);
+  return { ok: true, placement: placement(target, addedNew) };
 }
 
-/** Adds a title with the acting user's own Sonarr/Radarr credential and
+/** Adds a title with the acting user's own Sonarr/Radarr servers and
  * revalidates the pages showing it — the title page's Add button and the
  * poster cards' quick-add. */
 export async function addTitleToLibrary(
   userId: string,
   mediaType: MediaType,
   tmdbId: number,
-  /** Into the 4K Sonarr/Radarr (lib/arr/fourk.ts) instead. */
+  /** Into a 4K Sonarr/Radarr (lib/arr/fourk.ts) instead. */
   fourK = false,
+  /** The Advanced picks (admin only, as is adding at all). */
+  overrides: AddOverrides = {},
 ): Promise<CoreResult> {
   const result =
     mediaType === "movie"
-      ? await addMovieToRadarrForUser(userId, tmdbId, fourK)
-      : await addSeriesToSonarrForUser(userId, tmdbId, null, false, fourK);
-  if (result.ok) {
-    revalidatePath(`/title/${mediaType}/${tmdbId}`);
-    revalidatePath("/discover");
-  }
-  return result;
+      ? await addMovieToRadarrForUser(userId, tmdbId, fourK, overrides)
+      : await addSeriesToSonarrForUser(userId, tmdbId, null, false, fourK, overrides);
+  if (!result.ok) return result;
+  revalidatePath(`/title/${mediaType}/${tmdbId}`);
+  revalidatePath("/discover");
+  return { ok: true };
 }
 
 export type RelinkInput = { tmdbId?: string; imdbId?: string; tvdbId?: string };
@@ -332,36 +393,35 @@ export async function relinkTitle(
 /** Queues an immediate Radarr/Sonarr search, mirroring the *arr apps' own
  * "Search Monitored" button — a one-off nudge for a title that's stuck, not
  * a substitute for the regular search/indexer schedule those apps already
- * run on their own. Caller must have verified the actor is the admin. */
+ * run on their own. On every standard server that has the title. Caller
+ * must have verified the actor is the admin. */
 export async function searchTitle(
   adminUserId: string,
   mediaType: MediaType,
   tmdbId: number,
   tvdbId: number | null,
 ): Promise<CoreResult> {
-  const tracking = await getArrTrackingInfo(adminUserId, mediaType, tmdbId, tvdbId).catch(() => null);
-  if (!tracking) return fail("conflict", "Not tracked in Radarr/Sonarr.");
+  const copies = await findLibraryCopies(adminUserId, mediaType, tmdbId, tvdbId).catch(() => []);
+  if (copies.length === 0) return fail("conflict", "Not tracked in Radarr/Sonarr.");
 
-  try {
-    if (mediaType === "movie") {
-      const credential = await getArrCredential(adminUserId, "radarr");
-      if (!credential) return fail("conflict", "Connect Radarr in Settings first.");
-      await radarr.searchMovie({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tracking.arrId);
-    } else {
-      const credential = await getArrCredential(adminUserId, "sonarr");
-      if (!credential) return fail("conflict", "Connect Sonarr in Settings first.");
-      await sonarr.searchSeries({ baseUrl: credential.baseUrl, apiKey: credential.apiKey }, tracking.arrId);
-    }
-  } catch {
+  const results = await Promise.allSettled(
+    copies.map((copy) =>
+      mediaType === "movie"
+        ? radarr.searchMovie(arrConfig(copy.server), copy.arrId)
+        : sonarr.searchSeries(arrConfig(copy.server), copy.arrId),
+    ),
+  );
+  // One server taking it is a search queued; only all of them refusing fails.
+  if (results.every((r) => r.status === "rejected")) {
     return fail("upstream", "Couldn't queue a search — the *arr app didn't accept the request.");
   }
-
   return { ok: true };
 }
 
 /** Toggles monitored on/off directly from the title page, same effect as
- * the equivalent toggle inside Radarr/Sonarr itself. Caller must have
- * verified the actor is the admin. */
+ * the equivalent toggle inside Radarr/Sonarr itself — on every standard
+ * server that has the title. Caller must have verified the actor is the
+ * admin. */
 export async function setTitleMonitored(
   adminUserId: string,
   mediaType: MediaType,
@@ -369,28 +429,17 @@ export async function setTitleMonitored(
   tvdbId: number | null,
   monitored: boolean,
 ): Promise<CoreResult> {
-  const tracking = await getArrTrackingInfo(adminUserId, mediaType, tmdbId, tvdbId).catch(() => null);
-  if (!tracking) return fail("conflict", "Not tracked in Radarr/Sonarr.");
+  const copies = await findLibraryCopies(adminUserId, mediaType, tmdbId, tvdbId).catch(() => []);
+  if (copies.length === 0) return fail("conflict", "Not tracked in Radarr/Sonarr.");
 
-  try {
-    if (mediaType === "movie") {
-      const credential = await getArrCredential(adminUserId, "radarr");
-      if (!credential) return fail("conflict", "Connect Radarr in Settings first.");
-      await radarr.setMovieMonitored(
-        { baseUrl: credential.baseUrl, apiKey: credential.apiKey },
-        tracking.arrId,
-        monitored,
-      );
-    } else {
-      const credential = await getArrCredential(adminUserId, "sonarr");
-      if (!credential) return fail("conflict", "Connect Sonarr in Settings first.");
-      await sonarr.setSeriesMonitored(
-        { baseUrl: credential.baseUrl, apiKey: credential.apiKey },
-        tracking.arrId,
-        monitored,
-      );
-    }
-  } catch {
+  const results = await Promise.allSettled(
+    copies.map((copy) =>
+      mediaType === "movie"
+        ? radarr.setMovieMonitored(arrConfig(copy.server), copy.arrId, monitored)
+        : sonarr.setSeriesMonitored(arrConfig(copy.server), copy.arrId, monitored),
+    ),
+  );
+  if (results.some((r) => r.status === "rejected")) {
     return fail("upstream", "Couldn't update monitoring — the *arr app didn't accept the request.");
   }
 
