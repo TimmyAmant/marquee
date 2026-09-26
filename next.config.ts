@@ -34,6 +34,17 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      // The pages the Mac and Windows apps open for single sign-on: "Continue"
+      // there hands an app a session, so it's never shown inside someone
+      // else's frame (clickjacking). They're opened in the browser directly,
+      // never embedded, so this costs the Organizr/Homarr case nothing.
+      {
+        source: "/login/sso/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        ],
+      },
       // The push service worker (public/sw.js): never cached, so a fix to
       // it reaches every browser on its next visit, and scripts only from
       // this site.

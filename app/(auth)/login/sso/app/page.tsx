@@ -46,13 +46,19 @@ export default async function SsoAppPage({ searchParams }: { searchParams: Promi
           </>
         ) : (
           <>
-            The Marquee app{device ? <> on <span className="text-text-primary">{device}</span></> : null} wants to
-            sign in with your {sso.name} account.
+            A Marquee app wants to sign in with your {sso.name} account
+            {device ? (
+              <>
+                {" "}(it calls itself “<span className="text-text-primary">{device}</span>”)
+              </>
+            ) : null}
+            .
           </>
         )}
       </p>
       <p className="mt-3 text-sm text-text-secondary">
-        Only continue if you started this yourself, just now, in the Marquee app.
+        Only continue if you started this yourself, just now, in the Marquee app. If someone sent you this
+        link, don&apos;t — continuing would {linking ? "tie your account to theirs" : "sign their app in as you"}.
       </p>
       <form method="post" action="/api/auth/sso/app" className="mt-6">
         <input type="hidden" name="key" value={key as string} />
