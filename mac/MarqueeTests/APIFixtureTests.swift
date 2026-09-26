@@ -81,6 +81,9 @@ final class APIFixtureTests: XCTestCase {
         "webhook-secret": decodes(API.ArrWebhooks.self),
         "arr-connect": decodes(API.ArrConnectionResult.self),
         "arr-options": decodes(API.ArrOptions.self),
+        "arr-servers": decodes(API.ListResponse<API.ArrServer>.self),
+        "arr-server-test": decodes(API.ArrServerTestResult.self),
+        "add-options": decodes(API.AddOptions.self),
         "plex-pin-start": decodes(API.PlexPinStart.self),
         "plex-pin-waiting": decodes(API.PlexPinStatus.self),
         "plex-pin-connected": decodes(API.PlexPinStatus.self),
@@ -96,7 +99,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 64,"docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 67,"docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 

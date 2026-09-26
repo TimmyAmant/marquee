@@ -59,9 +59,11 @@ extension MarqueeAPI {
         /// `POST /requests/{id}/approve` (admin) — adds with the admin's
         /// Radarr/Sonarr and notifies the requester. On a TV request,
         /// `error.isSonarrUnresolvable` means: offer `manuallyApprove`.
-        func approve(_ id: UUID) async throws {
+        /// `overrides` (0.43+, "Advanced") pick where and how it's added; nil
+        /// sends no body at all, the plain Approve it always was.
+        func approve(_ id: UUID, overrides: API.AddOverrides? = nil) async throws {
             let _: API.OK = try await transport.mutate(
-                .post, "/requests/\(MarqueeAPI.segment(id))/approve", timeout: Timeout.integrations,
+                .post, "/requests/\(MarqueeAPI.segment(id))/approve", body: overrides, timeout: Timeout.integrations,
                 changes: [.requests, .library, .notifications]
             )
         }

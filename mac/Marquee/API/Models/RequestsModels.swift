@@ -203,6 +203,9 @@ extension API {
         let seasonsLabel: String?
         /// Asked for in 4K (0.37+); nil from an older server, meaning no.
         let is4k: Bool?
+        /// Where an approved request was added (0.43+); nil for rejected and
+        /// manually approved ones, anything approved earlier, and older servers.
+        var addedTo: AddedTo? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
         /// The seasons in words, sent or computed locally.
@@ -210,6 +213,9 @@ extension API {
         /// What the requests screens print under the title: "Season 2 · In 4K",
         /// "In 4K", "Seasons 1–3", or nil.
         var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
+        /// "Added to Radarr 2", under the Approved badge; nil when the server
+        /// wasn't recorded or has since been removed.
+        var addedToLine: String? { addedTo?.serverName.nonBlank.map { "Added to \($0)" } }
     }
 
     /// `POST /requests/approve-all`.

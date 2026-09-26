@@ -26,11 +26,25 @@ extension MarqueeAPI {
         /// `POST /titles/{type}/{tmdbId}/add` — "Add to Radarr/Sonarr" and poster
         /// quick-add (admin). `.conflict("Connect Radarr in Settings first.")` etc.
         /// `is4k` (0.37+, `viewer.fourK.canAdd`) is "Add to 4K Radarr/Sonarr",
-        /// sent as `{"is4k": true}`; otherwise there's no body, as before.
-        func add(_ type: API.MediaType, id tmdbId: Int, is4k: Bool = false) async throws {
-            let body: (any Encodable & Sendable)? = is4k ? API.FourKBody() : nil
+        /// sent as `{"is4k": true}`. `overrides` (0.43+, "Advanced") pick the
+        /// server, profile, folder, tags and series type, in the same body.
+        /// With neither there's no body, as before.
+        func add(_ type: API.MediaType, id tmdbId: Int, is4k: Bool = false, overrides: API.AddOverrides? = nil) async throws {
+            let body: (any Encodable & Sendable)? = is4k || overrides != nil
+                ? API.TitleAddBody(is4k: is4k ? true : nil, overrides: overrides)
+                : nil
             let _: API.OK = try await transport.mutate(
                 .post, Self.path(type, tmdbId) + "/add", body: body, timeout: Timeout.integrations, changes: [.library, .requests]
+            )
+        }
+
+        /// `GET /titles/{type}/{tmdbId}/add-options` (admin or trusted, 0.43+)
+        /// — the servers "Advanced" can pick, default first, with their lists
+        /// and defaults. `is4k` lists the 4K servers instead. `.notFound` from
+        /// an older server: hide "Advanced".
+        func addOptions(_ type: API.MediaType, id tmdbId: Int, is4k: Bool = false) async throws -> API.AddOptions {
+            try await transport.get(
+                Self.path(type, tmdbId) + "/add-options", query: ["is4k": is4k ? "true" : nil], timeout: Timeout.integrations
             )
         }
 

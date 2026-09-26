@@ -251,6 +251,12 @@ private struct AdminRequestsList: View {
                                 if let reason = row.rejectionReason {
                                     RejectionReasonLine(reason: reason)
                                 }
+                                // 0.43+: "Added to Radarr 2", like the web page.
+                                if let addedTo = row.addedToLine {
+                                    Text(addedTo)
+                                        .font(.system(size: 11.5))
+                                        .foregroundStyle(Theme.textMuted)
+                                }
                             }
                             .frame(width: 170, alignment: .leading)
                         }
@@ -562,8 +568,29 @@ private struct RequestReviewRow: View {
     /// Reject is a two-step, like the web row: the button opens the reason
     /// chooser, and only its Decline actually sends anything.
     @State private var choosingReason = false
+    /// "Advanced" (0.43+): where and how Approve adds it. Untouched, Approve
+    /// sends no body, as before.
+    @State private var advanced = AdvancedAddOptions()
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            mainRow
+            if advanced.isExpanded && !showManualApprove {
+                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
+                    .padding(.leading, 52)
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .sheet(isPresented: $choosingReason) {
+            DeclineRequestSheet(title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) { reason in
+                reject(reason: reason)
+            }
+        }
+    }
+
+    private var mainRow: some View {
         HStack(alignment: .top, spacing: 0) {
             titleCell(row.title, row.posterPath, detail: row.detailLine) { model.openTitle(row.titleID) }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -586,9 +613,14 @@ private struct RequestReviewRow: View {
                     } else {
                         Button(busy == "approve" ? "Approving…" : "Approve") { approve() }
                             .buttonStyle(AccentButtonStyle(compact: true))
+                            .disabled(advanced.isLoading)
                     }
                 }
                 .disabled(busy != nil)
+                if advanced.isOffered && !showManualApprove {
+                    AdvancedAddToggle(advanced: $advanced)
+                        .disabled(busy != nil)
+                }
                 if let error = approveError ?? otherError {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(error)
@@ -605,14 +637,6 @@ private struct RequestReviewRow: View {
             }
             .frame(width: 170, alignment: .leading)
             .padding(.top, 12)
-        }
-        .font(.system(size: 13))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .sheet(isPresented: $choosingReason) {
-            DeclineRequestSheet(title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) { reason in
-                reject(reason: reason)
-            }
         }
     }
 
@@ -642,7 +666,8 @@ private struct RequestReviewRow: View {
     }
 
     private func approve() {
-        run("approve") { try await $0.requests.approve(row.id) }
+        let overrides = advanced.overrides
+        run("approve") { try await $0.requests.approve(row.id, overrides: overrides) }
     }
 
     private func reject(reason: String) {

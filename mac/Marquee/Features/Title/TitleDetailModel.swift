@@ -26,6 +26,10 @@ final class TitleDetailModel {
     /// "Request in 4K" / "Add to 4K Radarr/Sonarr" in flight (their errors
     /// land in `addError` too).
     private(set) var isFourKBusy = false
+    /// "Advanced" under the admin's Add and Add to 4K (0.43+). Untouched,
+    /// Add sends exactly what it did before.
+    var advancedAdd = AdvancedAddOptions()
+    var advancedAdd4K = AdvancedAddOptions()
     /// The Sonarr/Radarr tracking row.
     private(set) var isSearching = false
     private(set) var isTogglingMonitor = false
@@ -125,9 +129,11 @@ final class TitleDetailModel {
         guard let api, !isAdding else { return }
         isAdding = true
         addError = nil
+        let overrides = advancedAdd.overrides
         Task {
             do {
-                try await api.titles.add(id.mediaType, id: id.tmdbId)
+                try await api.titles.add(id.mediaType, id: id.tmdbId, overrides: overrides)
+                advancedAdd.reset()
                 await refreshStatus()
             } catch {
                 addError = error.localizedDescription
@@ -158,7 +164,11 @@ final class TitleDetailModel {
 
     /// "Add to 4K Radarr/Sonarr" (`viewer.fourK.canAdd`, admin).
     func addTo4K() {
-        runFourK { api, id in _ = try await api.titles.add(id.mediaType, id: id.tmdbId, is4k: true) }
+        let overrides = advancedAdd4K.overrides
+        runFourK { [weak self] api, id in
+            try await api.titles.add(id.mediaType, id: id.tmdbId, is4k: true, overrides: overrides)
+            self?.advancedAdd4K.reset()
+        }
     }
 
     private func runFourK(_ action: @escaping @MainActor (MarqueeAPI, API.TitleID) async throws -> Void) {

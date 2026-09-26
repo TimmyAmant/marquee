@@ -30,6 +30,10 @@ extension API {
         /// which hides their cards.
         let sonarr4k: ArrSettings?
         let radarr4k: ArrSettings?
+        /// Every Sonarr and Radarr server (0.43+); nil from an older server,
+        /// which keeps the fixed cards above. When present, `sonarr` … `radarr4k`
+        /// describe the default server of each kind.
+        var arrServers: [ArrServer]? = nil
 
         /// nil only for a 4K instance an older server doesn't know about.
         func arr(_ provider: ArrProvider) -> ArrSettings? {

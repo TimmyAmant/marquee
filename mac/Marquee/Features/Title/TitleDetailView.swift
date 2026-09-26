@@ -509,7 +509,7 @@ private struct TitleActionRow: View {
                 if viewer.canAdd {
                     Button(screen.isAdding ? "Adding…" : "Add to \(detail.mediaType.arrName)") { screen.add() }
                         .buttonStyle(AccentButtonStyle())
-                        .disabled(screen.isAdding)
+                        .disabled(screen.isAdding || screen.advancedAdd.isLoading)
                 }
 
                 // components/fourk-controls.tsx (0.37+): the 4K copy, when
@@ -538,8 +538,17 @@ private struct TitleActionRow: View {
                     if fourK.canAdd {
                         Button(screen.isFourKBusy ? "Adding…" : "Add to 4K \(detail.mediaType.arrName)") { screen.addTo4K() }
                             .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))
-                            .disabled(screen.isFourKBusy)
+                            .disabled(screen.isFourKBusy || screen.advancedAdd4K.isLoading)
                     }
+                }
+
+                // 0.43+: pick the server, profile, folder and tags for Add.
+                if offersAdvancedAdd(viewer) {
+                    AdvancedAddToggle(advanced: Binding(
+                        get: { advancedToggleState(viewer) },
+                        set: { setAdvancedExpanded($0.isExpanded, viewer) }
+                    ))
+                    .frame(height: 32)
                 }
 
                 // components/report-problem-button.tsx (0.38+): once something
@@ -610,6 +619,8 @@ private struct TitleActionRow: View {
                 }
             }
 
+            advancedAddPanels(viewer)
+
             if let line = viewer.otherRequestersLine {
                 Text(line)
                     .font(.system(size: 12))
@@ -627,6 +638,51 @@ private struct TitleActionRow: View {
             if let error = screen.blockError {
                 InlineMessage(text: error)
             }
+        }
+    }
+
+    // MARK: Advanced (add overrides)
+
+    /// Which Add actions "Advanced" applies to: Add, Add to 4K, or both.
+    private func advancedTargets(_ viewer: API.TitleViewerState) -> (standard: Bool, fourK: Bool) {
+        (viewer.canAdd, viewer.fourK?.canAdd == true)
+    }
+
+    private func offersAdvancedAdd(_ viewer: API.TitleViewerState) -> Bool {
+        let targets = advancedTargets(viewer)
+        guard targets.standard || targets.fourK else { return false }
+        return screen.advancedAdd.isOffered && screen.advancedAdd4K.isOffered
+    }
+
+    /// The toggle shows one open/closed state for both panels.
+    private func advancedToggleState(_ viewer: API.TitleViewerState) -> AdvancedAddOptions {
+        advancedTargets(viewer).standard ? screen.advancedAdd : screen.advancedAdd4K
+    }
+
+    private func setAdvancedExpanded(_ expanded: Bool, _ viewer: API.TitleViewerState) {
+        let targets = advancedTargets(viewer)
+        if targets.standard, screen.advancedAdd.isExpanded != expanded { screen.advancedAdd.toggle() }
+        if targets.fourK, screen.advancedAdd4K.isExpanded != expanded { screen.advancedAdd4K.toggle() }
+    }
+
+    @ViewBuilder
+    private func advancedAddPanels(_ viewer: API.TitleViewerState) -> some View {
+        let targets = advancedTargets(viewer)
+        let both = targets.standard && targets.fourK
+        let arrName = detail.mediaType.arrName
+        if targets.standard && screen.advancedAdd.isExpanded {
+            AddOptionsPanel(
+                advanced: Binding(get: { screen.advancedAdd }, set: { screen.advancedAdd = $0 }),
+                mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: false,
+                heading: both ? "Add to \(arrName)" : nil
+            )
+        }
+        if targets.fourK && screen.advancedAdd4K.isExpanded {
+            AddOptionsPanel(
+                advanced: Binding(get: { screen.advancedAdd4K }, set: { screen.advancedAdd4K = $0 }),
+                mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: true,
+                heading: both ? "Add to 4K \(arrName)" : nil
+            )
         }
     }
 

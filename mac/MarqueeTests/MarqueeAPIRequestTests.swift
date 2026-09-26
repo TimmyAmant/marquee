@@ -44,8 +44,20 @@ final class MarqueeAPIRequestTests: XCTestCase {
     ]}
     """#
 
+    /// `POST /settings/arr-servers` / `PATCH …/{id}` and `POST …/{id}/webhook-secret`,
+    /// from the doc's prose (it shows no example block for them).
+    nonisolated static let arrServerSavedResponse = #"""
+    {"ok":true,"server":{"id":"4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10","kind":"sonarr","name":"Sonarr","baseUrl":"http://192.168.1.10:8989","hasApiKey":true,"is4k":false,"isDefault":true,"qualityProfileId":4,"rootFolderPath":"/tv","tags":[],"seriesType":"standard","seasonFolders":true,"animeQualityProfileId":null,"animeRootFolderPath":null,"animeTags":[],"fullyConfigured":true,"webhookUrl":"http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e"}}
+    """#
+    nonisolated static let arrServerWebhookResponse = #"""
+    {"ok":true,"webhookUrl":"http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=0f3c"}
+    """#
+    nonisolated static let arrServerId = "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10"
+
     private func fixture(_ name: String) throws -> Data {
         if name == "blocklist" { return Data(Self.blocklistResponse.utf8) }
+        if name == "arr-server-saved" { return Data(Self.arrServerSavedResponse.utf8) }
+        if name == "arr-server-webhook" { return Data(Self.arrServerWebhookResponse.utf8) }
         let file = name.contains(".") ? name : name + ".json"
         let url = Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/api/\(file)")
         return try Data(contentsOf: url)
@@ -54,6 +66,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
     /// POSTs that change nothing the screens show (or that the session owns).
     private static let readOnlyPosts = [
         "/surprise", "/auth/login", "/auth/setup", "/auth/logout", "/settings/integrations/plex/pin",
+        "/settings/arr-servers/test",
     ]
 
     private var cases: [Case] {
@@ -108,6 +121,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "GET", path: "/titles/tv/1399/seasons/1", response: "season-episodes") { _ = try await $0.titles.season(1, ofShow: 1399) },
             Case(method: "GET", path: "/titles/tv/1399/status", response: "title-status") { _ = try await $0.titles.status(.tv, id: 1399) },
             Case(method: "POST", path: "/titles/movie/603/add", response: "title-add") { try await $0.titles.add(.movie, id: 603) },
+            Case(method: "GET", path: "/titles/tv/95396/add-options", response: "add-options") { _ = try await $0.titles.addOptions(.tv, id: 95396) },
             Case(method: "POST", path: "/titles/tv/1399/search", response: "title-search") { try await $0.titles.searchNow(.tv, id: 1399) },
             Case(method: "PUT", path: "/titles/movie/603/monitored", body: #"{"monitored":false}"#, response: "title-monitored") {
                 try await $0.titles.setMonitored(false, .movie, id: 603)
@@ -195,6 +209,34 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "GET", path: "/settings/integrations", response: "integrations") { _ = try await $0.integrations.overview() },
             Case(method: "POST", path: "/settings/integrations/sync", response: "ok") { try await $0.integrations.syncNow() },
             Case(method: "POST", path: "/settings/integrations/webhook-secret", response: "webhook-secret") { _ = try await $0.integrations.regenerateWebhookSecret() },
+            // Sonarr / Radarr servers (0.43+)
+            Case(method: "GET", path: "/settings/arr-servers", response: "arr-servers") { _ = try await $0.integrations.arrServers.list() },
+            Case(
+                method: "POST", path: "/settings/arr-servers/test",
+                body: #"{"kind":"radarr","baseUrl":"http://192.168.1.10:7878","apiKey":"k"}"#, response: "arr-server-test"
+            ) {
+                _ = try await $0.integrations.arrServers.test(API.ArrServerTestRequest(kind: .radarr, baseUrl: "http://192.168.1.10:7878", apiKey: "k"))
+            },
+            Case(
+                method: "POST", path: "/settings/arr-servers",
+                body: #"{"kind":"radarr","baseUrl":"http://192.168.1.10:7878","apiKey":"k","is4k":true,"tags":[2]}"#, response: "arr-server-saved"
+            ) {
+                _ = try await $0.integrations.arrServers.add(API.ArrServerRequest(
+                    kind: .radarr, baseUrl: "http://192.168.1.10:7878", apiKey: "k", is4k: true, tags: [2]
+                ))
+            },
+            Case(method: "PATCH", path: "/settings/arr-servers/\(Self.arrServerId)", body: #"{"isDefault":true}"#, response: "arr-server-saved") {
+                _ = try await $0.integrations.arrServers.update(Self.arrServerId, API.ArrServerRequest(isDefault: true))
+            },
+            Case(method: "DELETE", path: "/settings/arr-servers/\(Self.arrServerId)", response: "ok") {
+                try await $0.integrations.arrServers.remove(Self.arrServerId)
+            },
+            Case(method: "GET", path: "/settings/arr-servers/\(Self.arrServerId)/options", response: "arr-server-test") {
+                _ = try await $0.integrations.arrServers.options(Self.arrServerId)
+            },
+            Case(method: "POST", path: "/settings/arr-servers/\(Self.arrServerId)/webhook-secret", response: "arr-server-webhook") {
+                _ = try await $0.integrations.arrServers.regenerateWebhook(Self.arrServerId)
+            },
             Case(method: "POST", path: "/settings/integrations/plex/pin", response: "plex-pin-start") { _ = try await $0.integrations.plex.startPin() },
             Case(method: "GET", path: "/settings/integrations/plex/pin/123456789", response: "plex-pin-connected") { _ = try await $0.integrations.plex.pollPin(123_456_789) },
             Case(method: "DELETE", path: "/settings/integrations/plex", response: "ok") { try await $0.integrations.plex.disconnect() },
@@ -251,8 +293,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 109, "docs/api-v1.md documents 109 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 109, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 117, "docs/api-v1.md documents 117 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 117, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
@@ -381,6 +423,99 @@ final class MarqueeAPIRequestTests: XCTestCase {
             XCTAssertEqual(sent.value(forHTTPHeaderField: "Content-Type"), "application/json", path)
             XCTAssertEqual(try Self.jsonObject(Self.body(of: sent)), ["is4k": true] as NSDictionary, path)
         }
+    }
+
+    /// Approve and Add with "Advanced" picks (0.43+): the overrides as the
+    /// body (Add's flat beside `is4k`); without them, exactly the old calls.
+    func testApproveAndAddSendAddOverrides() async throws {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+        let data = try fixture("ok")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, data) }
+        let overrides = API.AddOverrides(
+            serverId: "b3e1f7a2", qualityProfileId: 6, rootFolderPath: "/movies-kids", tags: [], seriesType: nil
+        )
+
+        StubURLProtocol.requests = []
+        try await api.requests.approve(Self.requestId, overrides: overrides)
+        let approve = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(approve.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/approve")
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: approve)),
+            try Self.jsonObject(Data(#"{"serverId":"b3e1f7a2","qualityProfileId":6,"rootFolderPath":"/movies-kids","tags":[]}"#.utf8))
+        )
+
+        StubURLProtocol.requests = []
+        try await api.requests.approve(Self.requestId)
+        XCTAssertTrue(Self.body(of: try XCTUnwrap(StubURLProtocol.requests.first)).isEmpty, "No overrides: no body")
+
+        StubURLProtocol.requests = []
+        let tv = API.AddOverrides(serverId: "s1", qualityProfileId: 7, rootFolderPath: "/anime", tags: [3], seriesType: .anime)
+        try await api.titles.add(.tv, id: 1399, is4k: true, overrides: tv)
+        let add4K = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(add4K.url?.path, "/api/v1/titles/tv/1399/add")
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: add4K)),
+            try Self.jsonObject(Data(#"{"is4k":true,"serverId":"s1","qualityProfileId":7,"rootFolderPath":"/anime","tags":[3],"seriesType":"anime"}"#.utf8))
+        )
+
+        StubURLProtocol.requests = []
+        try await api.titles.add(.tv, id: 1399, overrides: tv)
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: try XCTUnwrap(StubURLProtocol.requests.first))),
+            try Self.jsonObject(Data(#"{"serverId":"s1","qualityProfileId":7,"rootFolderPath":"/anime","tags":[3],"seriesType":"anime"}"#.utf8)),
+            "Standard Add leaves is4k out"
+        )
+
+        StubURLProtocol.requests = []
+        try await api.titles.add(.movie, id: 603)
+        XCTAssertTrue(Self.body(of: try XCTUnwrap(StubURLProtocol.requests.first)).isEmpty, "Plain Add: no body")
+    }
+
+    /// `add-options?is4k=true` lists the 4K servers; without it, no query.
+    func testAddOptionsAsksForFourKServers() async throws {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let data = try fixture("add-options")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, data) }
+        StubURLProtocol.requests = []
+        let options = try await MarqueeAPI(client: client).titles.addOptions(.movie, id: 438631, is4k: true)
+        XCTAssertEqual(options.servers.first?.name, "Sonarr")
+        let sent = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(sent.url?.path, "/api/v1/titles/movie/438631/add-options")
+        XCTAssertEqual(sent.url?.query, "is4k=true")
+    }
+
+    /// Saving an edited Sonarr server: the anime profile and folder go as
+    /// `null` ("Same as above"), and a test without a new key sends `serverId`.
+    func testArrServerFormBodies() async throws {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+        let saved = try APIClient.decoder.decode(API.ArrServerSaved.self, from: fixture("arr-server-saved")).server
+        var form = ArrServerForm(editing: saved)
+        form.name = "Sonarr 2"
+
+        let savedData = try fixture("arr-server-saved")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, savedData) }
+        StubURLProtocol.requests = []
+        _ = try await api.integrations.arrServers.update(saved.id, form.saveRequest)
+        let patch = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(patch.httpMethod, "PATCH")
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: patch)),
+            try Self.jsonObject(Data(#"""
+            {"name":"Sonarr 2","is4k":false,"qualityProfileId":4,"rootFolderPath":"/tv","tags":[],
+             "seriesType":"standard","seasonFolders":true,"animeQualityProfileId":null,"animeRootFolderPath":null,"animeTags":[]}
+            """#.utf8))
+        )
+
+        let testData = try fixture("arr-server-test")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, testData) }
+        StubURLProtocol.requests = []
+        _ = try await api.integrations.arrServers.test(form.testRequest)
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: try XCTUnwrap(StubURLProtocol.requests.first))),
+            try Self.jsonObject(Data(#"{"kind":"sonarr","baseUrl":"http://192.168.1.10:8989","serverId":"4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10"}"#.utf8))
+        )
     }
 
     /// A blank reason sends no reason: no body for a title, just the keyword.
