@@ -151,6 +151,12 @@ final class LiveContractTests: XCTestCase {
         _ = try await admin.requests.pending()
         _ = try await admin.requests.history()
         _ = try await admin.requests.pendingCount()
+        // "Can't find" (0.46+): nothing is listed without Radarr/Sonarr, and
+        // a request that isn't listed can't be searched or dismissed.
+        let notFound = try await admin.requests.notFound()
+        XCTAssertTrue(API.NotFoundSettings.allowedHours.contains(notFound.afterHours))
+        await assertThrowsAPIError(.notFound) { try await self.admin.requests.searchNotFound(UUID()) }
+        await assertThrowsAPIError(.notFound) { try await self.admin.requests.dismissNotFound(UUID()) }
         _ = try await admin.notifications.list(limit: 5)
         _ = try await admin.notifications.unreadCount()
 
@@ -166,7 +172,7 @@ final class LiveContractTests: XCTestCase {
         XCTAssertTrue(integrations.tmdb.connected)
         XCTAssertFalse(integrations.arrWebhooks.secret.isEmpty)
         let jobs = try await admin.jobs.list()
-        XCTAssertEqual(jobs.map(\.id).sorted(), ["arr-sync", "cleanup", "disk-space-snapshot", "jellyfin-sync", "plex-sync", "plex-watchlist"])
+        XCTAssertEqual(jobs.map(\.id).sorted(), ["arr-sync", "cleanup", "disk-space-snapshot", "jellyfin-sync", "not-found-check", "plex-sync", "plex-watchlist"])
         let about = try await admin.about.info()
         XCTAssertEqual(about.version, info.version)
         let changelog = try await admin.about.changelog()
@@ -568,6 +574,15 @@ final class LiveContractTests: XCTestCase {
         try await admin.jobs.run("disk-space-snapshot")
         await assertThrowsAPIError(.notFound) { try await self.admin.jobs.run("not-a-job") }
 
+        // The Can't Find Check's wait (0.46+): saved as it was, and a value
+        // outside 1…720 is refused.
+        let wait = try await admin.jobs.notFoundSettings()
+        let saved = try await admin.jobs.saveNotFoundSettings(wait)
+        XCTAssertEqual(saved, wait)
+        await assertThrowsAPIError(nil, message: "not-found afterHours 0") {
+            _ = try await self.admin.jobs.saveNotFoundSettings(API.NotFoundSettings(afterHours: 0))
+        }
+
         // Plex sign-in: starting a PIN only talks to plex.tv, and polling it
         // reports "not yet". A plex.tv outage shouldn't fail the suite.
         do {
@@ -672,6 +687,8 @@ final class LiveContractTests: XCTestCase {
         try await assertRoundTrips(raw, "/users", API.ListResponse<API.HouseholdMember>.self)
         try await assertRoundTrips(raw, "/settings/integrations", API.IntegrationsOverview.self)
         try await assertRoundTrips(raw, "/settings/jobs", API.ListResponse<API.Job>.self)
+        try await assertRoundTrips(raw, "/settings/not-found", API.NotFoundSettings.self)
+        try await assertRoundTrips(raw, "/requests/not-found", API.NotFoundRequests.self)
         try await assertRoundTrips(raw, "/settings/about", API.AboutInfo.self)
         try await assertRoundTrips(raw, "/changelog", API.ListResponse<API.ChangelogEntry>.self)
         try await assertRoundTrips(raw, "/help/errors", API.ListResponse<API.ErrorReferenceCategory>.self)
@@ -804,6 +821,9 @@ final class LiveContractTests: XCTestCase {
             AdminOnlyCall(label: "integrations.plex.pollPin") { _ = try await api.integrations.plex.pollPin(1) },
             AdminOnlyCall(label: "jobs.list") { _ = try await api.jobs.list() },
             AdminOnlyCall(label: "jobs.run") { try await api.jobs.run("plex-sync") },
+            AdminOnlyCall(label: "requests.notFound") { _ = try await api.requests.notFound() },
+            AdminOnlyCall(label: "requests.dismissNotFound") { try await api.requests.dismissNotFound(UUID()) },
+            AdminOnlyCall(label: "jobs.notFoundSettings") { _ = try await api.jobs.notFoundSettings() },
             AdminOnlyCall(label: "titles.searchNow") { try await api.titles.searchNow(.movie, id: 603) },
             AdminOnlyCall(label: "titles.monitored") { _ = try await api.titles.setMonitored(true, .movie, id: 603) },
             AdminOnlyCall(label: "titles.relink") { _ = try await api.titles.relink(.movie, id: 603, to: .tmdb(604)) },
@@ -857,6 +877,8 @@ final class RecordingURLProtocol: URLProtocol {
         ("GET", "/requests/mine"), ("GET", "/requests/pending"), ("GET", "/requests/history"),
         ("GET", "/requests/pending-count"), ("POST", "/requests/{uuid}/approve"), ("POST", "/requests/{uuid}/manual-approve"),
         ("POST", "/requests/{uuid}/reject"), ("POST", "/requests/approve-all"),
+        ("GET", "/requests/not-found"), ("POST", "/requests/{uuid}/not-found/search"),
+        ("POST", "/requests/{uuid}/not-found/dismiss"),
         ("POST", "/titles/{type}/{id}/issues"), ("GET", "/issues"), ("POST", "/issues/{uuid}/resolve"),
         ("POST", "/issues/{uuid}/search"), ("DELETE", "/issues/{uuid}"),
         ("POST", "/titles/{type}/{id}/block"), ("DELETE", "/titles/{type}/{id}/block"),
@@ -889,6 +911,7 @@ final class RecordingURLProtocol: URLProtocol {
         ("PUT", "/settings/integrations/email"), ("DELETE", "/settings/integrations/email"),
         ("PUT", "/settings/integrations/webhook"), ("DELETE", "/settings/integrations/webhook"),
         ("GET", "/settings/jobs"), ("POST", "/settings/jobs/{id}/run"),
+        ("GET", "/settings/not-found"), ("PUT", "/settings/not-found"),
         ("GET", "/settings/about"), ("GET", "/changelog"), ("GET", "/help/errors"),
     ]
 

@@ -52,6 +52,7 @@ export default async function TitlePage({
     fourK,
     openReports,
     blocked,
+    notFoundSince,
     blockedKeys,
     trailer,
     externalIds,
@@ -128,6 +129,7 @@ export default async function TitlePage({
         arrTracking={arrTracking}
         fourK={viewer.session ? fourKFor(viewer.isAdmin, fourK, blocked) : null}
         blocked={viewer.session ? blocked : null}
+        notFoundSince={notFoundSince?.toISOString() ?? null}
         report={
           viewer.session && canReportProblem(libraryStatus.status, fourK?.status ?? null)
             ? { seasonNumbers: seasons.map((s) => s.season_number), openReports }

@@ -110,6 +110,7 @@ export function titleDetailDto(
       fourK: data.fourK,
       openReports: data.openReports,
       blocked: data.blocked,
+      notFoundSince: data.notFoundSince,
     }),
     seasons: seasonsNewestFirst(data.seasons).map((season) => {
       const stats = seasonCompleteness.get(season.season_number);

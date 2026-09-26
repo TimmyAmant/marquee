@@ -4,6 +4,7 @@ import { syncAllConnectedArrUsers } from "@/lib/arr/sync";
 import { snapshotDiskSpaceForAllConnectedUsers } from "@/lib/integrations/disk-space";
 import { pruneOldRecords } from "@/lib/jobs/cleanup";
 import { syncAllPlexWatchlists } from "@/lib/plex/watchlist";
+import { checkNotFoundRequests } from "@/lib/requests/not-found";
 import { fail, type CoreResult } from "@/lib/core-result";
 
 // The scheduled maintenance jobs (see instrumentation.ts) as listed on
@@ -14,6 +15,7 @@ export const JOB_IDS = [
   "jellyfin-sync",
   "arr-sync",
   "plex-watchlist",
+  "not-found-check",
   "disk-space-snapshot",
   "cleanup",
 ] as const;
@@ -48,6 +50,13 @@ export const JOBS: JobDefinition[] = [
       "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each.",
   },
   {
+    id: "not-found-check",
+    name: "Can't Find Check",
+    schedule: "Every hour",
+    description:
+      "Looks for approved requests that Sonarr/Radarr still hasn't found a copy of, and tells the admin and trusted members.",
+  },
+  {
     id: "disk-space-snapshot",
     name: "Disk Space Snapshot",
     schedule: "Daily at 3:00 AM",
@@ -67,6 +76,7 @@ const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "jellyfin-sync": syncAllConnectedJellyfinUsers,
   "arr-sync": syncAllConnectedArrUsers,
   "plex-watchlist": syncAllPlexWatchlists,
+  "not-found-check": () => checkNotFoundRequests(),
   "disk-space-snapshot": snapshotDiskSpaceForAllConnectedUsers,
   cleanup: pruneOldRecords,
 };

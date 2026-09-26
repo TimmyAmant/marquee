@@ -222,7 +222,9 @@ private struct AdminRequestsList: View {
                 LoadingView(label: "Checking requests against your library…")
             }
 
-            // Between the queue and "Past requests", like app/requests/page.tsx.
+            // "Can't find" (0.46+), then problem reports, between the queue
+            // and "Past requests", like app/requests/page.tsx.
+            NotFoundSection(topPadding: 28)
             IssuesSection(isAdmin: true, topPadding: 28)
 
             if reviewed.isEmpty, let historyError {
@@ -247,7 +249,14 @@ private struct AdminRequestsList: View {
                                 .foregroundStyle(Theme.textSecondary)
                                 .frame(width: 170, alignment: .leading)
                             VStack(alignment: .leading, spacing: 4) {
-                                TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                                HStack(spacing: 6) {
+                                    TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                                    // 0.46+: Sonarr/Radarr hasn't found it (listed under "Can't find").
+                                    if row.isNotFound, let since = row.notFoundSince {
+                                        TonePill(text: "Can't find", tone: .danger)
+                                            .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
+                                    }
+                                }
                                 if let reason = row.rejectionReason {
                                     RejectionReasonLine(reason: reason)
                                 }
@@ -533,6 +542,185 @@ private struct IssueRow: View {
 
     private func remove() {
         run("delete") { try await $0.issues.delete(issue.id) }
+    }
+}
+
+// MARK: - Can't find
+
+/// components/not-found-section.tsx (0.46+): approved, released requests
+/// Sonarr/Radarr still has nothing for, for whoever reviews. Nothing at all
+/// when none are listed, or when the server predates it (a 404).
+private struct NotFoundSection: View {
+    /// Space above the section, only while it shows anything.
+    var topPadding: CGFloat = 0
+
+    @Environment(AppModel.self) private var model
+    @State private var list: API.NotFoundRequests?
+    @State private var error: String?
+    /// Rows hidden right after Mark as found, until the reload lands.
+    @State private var settled: Set<UUID> = []
+
+    private var rows: [API.NotFoundRequest] { (list?.results ?? []).filter { !settled.contains($0.id) } }
+    private var showsAnything: Bool { !rows.isEmpty || (list == nil && error != nil) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let list, !rows.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        SectionTitle(text: "Can't find")
+                        TonePill(text: "\(rows.count)", tone: .danger)
+                    }
+                    Text(list.blurb)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                        if index > 0 { Divider().overlay(Theme.border) }
+                        NotFoundRow(row: row, onSettled: { settled.insert(row.id) })
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+            } else if list == nil, let error {
+                SectionTitle(text: "Can't find")
+                InlineMessage(text: error)
+            }
+        }
+        .padding(.top, showsAnything ? topPadding : 0)
+        .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: .requests), local: model.events.revision(of: .requests))) {
+            await load()
+        }
+    }
+
+    private func load() async {
+        do {
+            let fresh = try await model.api.requests.notFound()
+            if Task.isCancelled { return }
+            list = fresh
+            settled = []
+            error = nil
+        } catch let failure as APIError where failure.isCancellation {
+            return
+        } catch APIError.notFound {
+            // A server older than 0.46: nothing to show.
+            list = .empty
+            error = nil
+        } catch {
+            if list == nil { self.error = error.localizedDescription }
+        }
+    }
+}
+
+/// components/not-found-section.tsx `NotFoundCard`.
+private struct NotFoundRow: View {
+    let row: API.NotFoundRequest
+    let onSettled: () -> Void
+
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    @State private var busy: String?
+    @State private var error: String?
+    @State private var info: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            RequestPoster(posterPath: row.posterPath)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Button(row.title) { model.openTitle(row.titleID) }
+                        .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
+                        .font(.system(size: 13, weight: .medium))
+                    if let detail = row.detailLine {
+                        Text(detail)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+                // Re-render each minute so "can't find for 3 hours" stays current.
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    Text(row.summaryLine(now: context.date))
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Theme.textSecondary)
+                        .help("Since \(Format.dateTime(row.notFoundSince))")
+                }
+                if let hint = row.hint.nonBlank {
+                    Text(hint)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(Theme.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 2)
+                }
+                if let error {
+                    Text(error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let info {
+                    Text(info)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.owned)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Button(busy == "search" ? "Searching…" : "Search again") { searchAgain() }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    .disabled(busy != nil)
+                if let url = row.arrURL {
+                    Button(row.openInArrTitle) { openURL(url) }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
+                        .help(url.absoluteString)
+                }
+                Button(busy == "dismiss" ? "Saving…" : "Mark as found") { dismiss() }
+                    .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
+                    .font(.system(size: 11.5))
+                    .disabled(busy != nil)
+                    .help("Take it off this list for good. The request stays approved.")
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func searchAgain() {
+        busy = "search"
+        error = nil
+        info = nil
+        let api = model.api
+        let id = row.id
+        let done = row.searchingAgainLine
+        Task {
+            do {
+                try await api.requests.searchNotFound(id)
+                info = done
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = nil
+        }
+    }
+
+    private func dismiss() {
+        busy = "dismiss"
+        error = nil
+        info = nil
+        let api = model.api
+        let id = row.id
+        Task {
+            do {
+                try await api.requests.dismissNotFound(id)
+                onSettled()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = nil
+        }
     }
 }
 

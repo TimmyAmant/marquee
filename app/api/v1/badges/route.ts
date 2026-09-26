@@ -3,6 +3,7 @@ import { requireApiUser } from "@/lib/api/auth";
 import { getUnreadCount } from "@/lib/notifications/query";
 import { getPendingRequestCount } from "@/lib/requests/query";
 import { getOpenIssueCount } from "@/lib/issues";
+import { getNotFoundCount } from "@/lib/requests/not-found";
 import { canReviewRequests } from "@/lib/users/roles";
 import type { Badges } from "@/lib/api/types";
 
@@ -11,10 +12,12 @@ import type { Badges } from "@/lib/api/types";
  * the website). Suited to polling. */
 export const GET = withApi(async (request): Promise<Badges> => {
   const ctx = await requireApiUser(request);
-  const [unreadNotifications, pendingRequests, openIssues] = await Promise.all([
+  const reviews = canReviewRequests(ctx.user.role);
+  const [unreadNotifications, pendingRequests, openIssues, notFoundRequests] = await Promise.all([
     getUnreadCount(ctx.user.id),
-    canReviewRequests(ctx.user.role) ? getPendingRequestCount() : Promise.resolve(0),
-    canReviewRequests(ctx.user.role) ? getOpenIssueCount() : Promise.resolve(0),
+    reviews ? getPendingRequestCount() : Promise.resolve(0),
+    reviews ? getOpenIssueCount() : Promise.resolve(0),
+    reviews ? getNotFoundCount() : Promise.resolve(0),
   ]);
-  return { unreadNotifications, pendingRequests, openIssues };
+  return { unreadNotifications, pendingRequests, openIssues, notFoundRequests };
 });

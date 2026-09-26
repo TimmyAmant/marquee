@@ -489,6 +489,10 @@ export const notificationEventTypeValues = [
   // A new request waiting for review, to the admin and trusted members —
   // with Approve / Decline right on the push notification (public/sw.js).
   "request_created",
+  // An approved request Sonarr/Radarr still hasn't found a release for
+  // (lib/requests/not-found.ts): to the reviewers, and — if they chose to
+  // hear it — to whoever asked for it.
+  "request_not_found",
   // A household member sent this title to you (lib/sharing) — the sender
   // and their note are on the row (senderUserId, note).
   "title_shared",
@@ -530,7 +534,7 @@ export const notifications = pgTable(
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found')`,
     ),
   ],
 );
@@ -586,6 +590,18 @@ export const requests = pgTable(
     arrRootFolderPath: text("arr_root_folder_path"),
     arrTags: integer("arr_tags").array(),
     arrSeriesType: text("arr_series_type").$type<SonarrSeriesType>(),
+    // "Can't find" (lib/requests/not-found.ts): approved and released, but
+    // Sonarr/Radarr has nothing on disk and nothing downloading a while
+    // after approval. `notFoundSince` is set while that's so and cleared
+    // once something is grabbed; the alert count and last alert survive a
+    // clear so a flapping title can't alert more than twice. Dismissing it
+    // stops the checks for good. `notFoundArrPath`: the title's page in
+    // Sonarr/Radarr, relative to the server's address ("/movie/603").
+    notFoundSince: timestamp("not_found_since", { withTimezone: true }),
+    notFoundAlerts: integer("not_found_alerts").notNull().default(0),
+    notFoundAlertedAt: timestamp("not_found_alerted_at", { withTimezone: true }),
+    notFoundDismissedAt: timestamp("not_found_dismissed_at", { withTimezone: true }),
+    notFoundArrPath: text("not_found_arr_path"),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),
@@ -730,6 +746,9 @@ export const appSettings = pgTable("app_settings", {
   // — lib/notifications/preferences.ts. Null: the defaults, which are what
   // they posted before this could be chosen.
   householdNotificationEvents: text("household_notification_events").array(),
+  // How long after approval a released title Sonarr/Radarr hasn't found
+  // counts as "Can't find" (lib/requests/not-found.ts). Null: 24 hours.
+  notFoundAfterHours: integer("not_found_after_hours"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

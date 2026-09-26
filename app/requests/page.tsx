@@ -13,7 +13,9 @@ import { RequestTitle } from "@/components/request-title";
 import { IssuesSection } from "@/components/issues-section";
 import { getQuotas, untilLabel, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
-import { issueDto } from "@/lib/api/mappers";
+import { issueDto, notFoundRequest } from "@/lib/api/mappers";
+import { NotFoundSection } from "@/components/not-found-section";
+import { getNotFoundAfterHours, getNotFoundRequests } from "@/lib/requests/not-found";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   pending: "bg-tracked-bg text-tracked",
@@ -131,11 +133,13 @@ export default async function RequestsPage() {
   // holds the Sonarr/Radarr credentials — today that's always this admin,
   // but resolve properly rather than assuming session.user.id === owner, in
   // case a second admin account without its own integrations ever exists.
-  const [pending, reviewed, sonarrCred, sonarr4kCred] = await Promise.all([
+  const [pending, reviewed, sonarrCred, sonarr4kCred, notFound, notFoundAfterHours] = await Promise.all([
     getPendingRequests(viewer.libraryOwnerId),
     getReviewedRequests(),
     getArrCredential(viewer.libraryOwnerId, "sonarr"),
     getArrCredential(viewer.libraryOwnerId, "sonarr4k"),
+    getNotFoundRequests().catch(() => []),
+    getNotFoundAfterHours().catch(() => 24),
   ]);
   const sonarrUrl = sonarrCred?.baseUrl ?? null;
   // "Add manually in Sonarr" for a 4K request points at the 4K Sonarr.
@@ -184,6 +188,8 @@ export default async function RequestsPage() {
           </table>
         </div>
       )}
+
+      <NotFoundSection requests={notFound.map(notFoundRequest)} afterHours={notFoundAfterHours} />
 
       <IssuesSection issues={issues} isAdmin />
 
@@ -239,6 +245,14 @@ export default async function RequestsPage() {
                         </span>
                         {r.status === "rejected" && r.rejectionReason && (
                           <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
+                        )}
+                        {r.status === "approved" && r.notFoundSince && (
+                          <a
+                            href="#cant-find"
+                            className="ml-1.5 rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-500"
+                          >
+                            Can&apos;t find
+                          </a>
                         )}
                         {r.status === "approved" && !r.manuallyApproved && r.arrServerName && (
                           <p className="mt-1.5 text-xs text-text-muted">Added to {r.arrServerName}</p>

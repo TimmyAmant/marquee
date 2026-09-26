@@ -11,6 +11,8 @@ final class LiveUpdatesTests: XCTestCase {
         private let lock = NSLock()
         private var unread = 0
         private var pending = 0
+        /// `notFoundRequests` (0.46+); nil leaves the key out, like an older server.
+        private var notFound: Int?
         private var notifications: [(id: UUID, createdAt: String, read: Bool)] = []
         /// What `GET /notifications/stream` sends before closing; nil is a
         /// server from before the stream (404).
@@ -21,10 +23,11 @@ final class LiveUpdatesTests: XCTestCase {
         private var quiet: Set<UUID> = []
         private(set) var meRequests = 0
 
-        func set(unread: Int, pending: Int = 0) {
+        func set(unread: Int, pending: Int = 0, notFound: Int? = nil) {
             lock.withLock {
                 self.unread = unread
                 self.pending = pending
+                self.notFound = notFound
             }
         }
 
@@ -86,7 +89,8 @@ final class LiveUpdatesTests: XCTestCase {
             lock.withLock {
                 switch request.url?.path {
                 case "/api/v1/badges":
-                    return StubURLProtocol.json(200, #"{"unreadNotifications":\#(unread),"pendingRequests":\#(pending)}"#)
+                    let cantFind = notFound.map { #","notFoundRequests":\#($0)"# } ?? ""
+                    return StubURLProtocol.json(200, #"{"unreadNotifications":\#(unread),"pendingRequests":\#(pending)\#(cantFind)}"#)
                 case "/api/v1/notifications":
                     let items = notifications.map { render($0.id, $0.createdAt, read: $0.read) }
                     return StubURLProtocol.json(200, #"{"unreadCount":\#(unread),"results":[\#(items.joined(separator: ","))]}"#)
@@ -269,6 +273,27 @@ final class LiveUpdatesTests: XCTestCase {
 
         XCTAssertEqual(live.pendingRequestCount, 3)
         XCTAssertEqual(events.requests, 1)
+        XCTAssertEqual(events.notifications, 0)
+    }
+
+    func testCantFindCountBumpsRequests() async {
+        let live = makeLive()
+        await start(live)
+
+        server.set(unread: 0, pending: 1, notFound: 2)
+        live.refresh(.activation)
+        await live.settle()
+
+        XCTAssertEqual(live.pendingRequestCount, 3, "Pending plus Can't find, like the website's badge")
+        XCTAssertEqual(events.requests, 1)
+
+        // Only the Can't find count moves (Mark as found elsewhere).
+        server.set(unread: 0, pending: 1, notFound: 1)
+        live.refresh(.activation)
+        await live.settle()
+
+        XCTAssertEqual(live.pendingRequestCount, 2)
+        XCTAssertEqual(events.requests, 2, "A change in Can't find alone reloads the Requests screen")
         XCTAssertEqual(events.notifications, 0)
     }
 

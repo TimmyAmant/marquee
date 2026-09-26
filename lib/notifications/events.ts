@@ -11,6 +11,9 @@ export const notificationPreferenceEventValues = [
   "request_declined",
   "request_available",
   "request_downloading",
+  // "We're still looking for …": your approved request that Sonarr/Radarr
+  // hasn't found yet (lib/requests/not-found.ts). Bell only by default.
+  "request_still_looking",
   "issue_updated",
   // Reserved for comments on requests, which don't exist yet. Never listed
   // until they do; the apps take their rows (and labels) from the server,
@@ -19,6 +22,8 @@ export const notificationPreferenceEventValues = [
   // Someone in the household shared a title with you (lib/sharing).
   "title_shared",
   "request_pending",
+  // "Couldn't find …": an approved request Sonarr/Radarr hasn't found.
+  "request_not_found",
   "issue_reported",
   "watchlist_requests",
 ] as const;
@@ -42,6 +47,9 @@ type EventInfo = {
   /** The household channels (Discord, ntfy, …) posted it before their
    * events could be chosen, so they still do by default. */
   householdDefault: boolean;
+  /** Pushed to devices unless turned off. Everything but "still looking"
+   * was pushed before these could be chosen. */
+  pushDefault?: boolean;
   /** Only ever for the one account (a title shared with you): never posted
    * to the household channels, and not in the admin's list of them. */
   personalOnly?: boolean;
@@ -52,12 +60,14 @@ export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo>
   request_declined: { label: "A request is declined", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
   request_available: { label: "Ready to watch", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
   request_downloading: { label: "Started downloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
+  request_still_looking: { label: "Still looking for something I asked for", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
   issue_updated: { label: "A problem I reported is fixed", householdLabel: "A reported problem is fixed", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
   request_comment: { label: "Comments on my requests", audience: "everyone", live: false, channelDefault: true, householdDefault: false },
   // In the bell and pushed to devices by default like everything else, but
   // off for a new personal channel: it's a nudge, not news.
   title_shared: { label: "Someone shares a title with me", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
   request_pending: { label: "New request waiting for review", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
+  request_not_found: { label: "Sonarr/Radarr can't find a request", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
   issue_reported: { label: "New problem report", audience: "admin", live: true, channelDefault: true, householdDefault: true },
   watchlist_requests: { label: "Plex Watchlist requests", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
 };
@@ -98,6 +108,8 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
       return "issue_reported";
     case "request_created":
       return "request_pending";
+    case "request_not_found":
+      return "request_not_found";
     case "title_shared":
       return "title_shared";
   }
@@ -105,14 +117,15 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
 
 export type BellPushOverrides = Record<string, { inApp?: boolean; push?: boolean } | undefined>;
 
-/** In the bell, and pushed to devices? Both default to on: every
- * notification did both before these could be chosen. */
+/** In the bell, and pushed to devices? Both default to on — every
+ * notification did both before these could be chosen — except push for an
+ * event that says otherwise ("still looking"). */
 export function bellAndPushFor(
   overrides: BellPushOverrides | null | undefined,
   event: NotificationPreferenceEvent,
 ): { inApp: boolean; push: boolean } {
   const chosen = overrides?.[event];
-  return { inApp: chosen?.inApp ?? true, push: chosen?.push ?? true };
+  return { inApp: chosen?.inApp ?? true, push: chosen?.push ?? NOTIFICATION_EVENTS[event].pushDefault ?? true };
 }
 
 export function channelWants(events: Record<string, boolean> | null | undefined, event: NotificationPreferenceEvent): boolean {

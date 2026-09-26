@@ -111,6 +111,10 @@ extension API {
         /// `canRequestSeasons` and `fourK.canRequest` are already false. nil
         /// from an older server, which can't block (no admin buttons then).
         let blocked: BlockState?
+        /// Reviewers only (0.46+): Sonarr/Radarr hasn't found the approved
+        /// request since then, the "Can't find" pill. nil otherwise, and
+        /// from an older server.
+        var notFoundSince: Date? = nil
 
         /// On the admin's blocklist: the member's "Requests are closed" pill,
         /// the admin's "Unblock requests".

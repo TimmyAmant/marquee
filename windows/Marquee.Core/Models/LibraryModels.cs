@@ -207,6 +207,14 @@ public sealed record TitleViewerState
     public int OpenReports { get; init; }
 
     /// <summary>
+    /// When Sonarr/Radarr's failure to find the viewer-visible approved
+    /// request put it under "Can't find" (0.46+, admin and trusted members
+    /// only); null otherwise, and from an older server. The title page shows
+    /// a red "Can't find" badge next to the library status.
+    /// </summary>
+    public DateTimeOffset? NotFoundSince { get; init; }
+
+    /// <summary>
     /// On the admin's request blocklist (0.41+): the can-request flags are
     /// then already false. Null when it isn't, and from an older server.
     /// </summary>

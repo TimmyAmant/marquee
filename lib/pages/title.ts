@@ -1,6 +1,9 @@
 import type { TitleMeta, TitleSidebarData } from "@/components/title-hero";
 import { findBlock, getBlockedTitleKeys } from "@/lib/requests/blocklist";
 import { getOpenIssuesFor } from "@/lib/issues";
+import { getTitleNotFoundSince } from "@/lib/requests/not-found";
+import { roleOf } from "@/lib/notifications/preferences";
+import { canReviewRequests } from "@/lib/users/roles";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
 import type { FranchiseItem } from "@/components/franchise-row";
@@ -112,6 +115,9 @@ export async function loadTitleStatus(
   const fourK = fourKLibrary ? { ...fourKLibrary, requestStatus: fourKRequestStatus } : null;
   const openReports = viewer.userId ? await getOpenIssuesFor(viewer.userId, type, tmdbId) : 0;
   const blocked = viewer.userId ? await findBlock(type, tmdbId).catch(() => null) : null;
+  // "Can't find" (lib/requests/not-found.ts), for whoever reviews requests.
+  const reviews = viewer.userId !== null && (viewer.isAdmin || canReviewRequests(await roleOf(viewer.userId).catch(() => null)));
+  const notFoundSince = reviews ? await getTitleNotFoundSince(type, tmdbId).catch(() => null) : null;
 
   const seasonRequests = {
     states: seasonStates,
@@ -136,6 +142,7 @@ export async function loadTitleStatus(
     fourK,
     openReports,
     blocked,
+    notFoundSince,
   };
 }
 
@@ -262,6 +269,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     fourK,
     openReports,
     blocked,
+    notFoundSince,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -425,6 +433,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     fourK,
     openReports,
     blocked,
+    notFoundSince,
     // Blocked single titles, for the Request buttons on the franchise and
     // similar-titles rows. (A keyword block there is still refused by the
     // server when pressed.)

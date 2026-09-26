@@ -96,6 +96,18 @@ where the real server needed something the core contract didn't spell out.
     shows no banner (it's still in the bell). A server older than this
     answers `404 not_found` on the new endpoints and sends no `alert` —
     treat missing as true and hide the new screens.
+15. **"Can't find" (0.46+, additive).** An approved, released request
+    Sonarr/Radarr still has nothing for (no file, nothing downloading) a
+    while after approval is flagged: `GET /requests/not-found` lists them
+    for reviewers, with `POST /requests/{id}/not-found/search` ("Search
+    again") and `…/not-found/dismiss` ("Mark as found"). `notFoundSince`
+    appears on `/requests/history` rows and the title's `viewer` (reviewers
+    only), `GET /badges` gains `notFoundRequests`, notifications gain the
+    `request_not_found` event type, and the preferences gain the
+    `request_not_found` and `request_still_looking` events. The wait is
+    `GET`/`PUT /settings/not-found`. A server older than this sends none
+    of these fields — treat missing as null/0 — and answers `404` on the
+    new endpoints: hide the section.
 
 ---
 
@@ -550,13 +562,15 @@ The header counters in one call, suitable for polling (website: bell every
 30 s, requests badge every 20 s).
 
 ```json
-{ "unreadNotifications": 2, "pendingRequests": 1, "openIssues": 1 }
+{ "unreadNotifications": 2, "pendingRequests": 1, "openIssues": 1, "notFoundRequests": 1 }
 ```
 
 `pendingRequests` is always `0` for members (as on the website).
 `openIssues` (0.38+; an older server omits it): open problem reports, also
-`0` for members. The website's Requests badge shows `pendingRequests +
-openIssues`, since both wait on that page.
+`0` for members. `notFoundRequests` (0.46+; an older server omits it):
+requests listed under "Can't find", `0` for members. The website's Requests
+badge shows `pendingRequests + openIssues + notFoundRequests`, since all of
+them wait on that page.
 
 ---
 
@@ -865,7 +879,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "fourK": { "status": "untracked", "requestStatus": null, "canRequest": false, "canAdd": true },
     "canReport": false,
     "openReports": 0,
-    "blocked": null
+    "blocked": null,
+    "notFoundSince": null
   },
   "seasons": [],
   "cast": [
@@ -1144,7 +1159,8 @@ request / monitor / favorite.
     "fourK": null,
     "canReport": false,
     "openReports": 0,
-    "blocked": { "reason": "Already on Max.", "keyword": null }
+    "blocked": { "reason": "Already on Max.", "keyword": null },
+    "notFoundSince": "2026-09-18T18:20:00.412Z"
   }
 }
 ```
@@ -1591,7 +1607,8 @@ than one request is pending. Empty → "No pending requests."
       "requestedBy": { "userId": null, "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z",
       "reviewedAt": "2026-09-17T17:12:41.468Z",
-      "addedTo": null
+      "addedTo": null,
+      "notFoundSince": null
     },
     {
       "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
@@ -1616,7 +1633,8 @@ than one request is pending. Empty → "No pending requests."
         "rootFolderPath": "/movies-kids",
         "tags": [2],
         "seriesType": null
-      }
+      },
+      "notFoundSince": "2026-09-18T18:20:00.412Z"
     }
   ]
 }
@@ -1628,7 +1646,73 @@ as in `/requests/mine`: the website shows it under the "Rejected" badge.
 `serverId` is null once that server has been removed (`serverName` keeps
 the name it had). Null for rejected and
 manually approved requests, and for anything approved before 0.43. The
-website shows "Added to Radarr 2" under the badge.
+website shows "Added to Radarr 2" under the badge. `notFoundSince` (0.46+;
+an older server omits it): when Sonarr/Radarr's failure to find it put it
+under "Can't find", null otherwise — the website shows a red "Can't find"
+badge next to "Approved" that jumps to that list.
+
+### `GET /requests/not-found` — admin (0.46+)
+
+"Can't find": approved requests whose title is released and monitored in
+Sonarr/Radarr, with nothing on disk and nothing downloading, `afterHours`
+or more after approval — usually no indexer has a copy. A show counts once
+a season it asked for (every monitored season but specials, for the whole
+series) has aired episodes and not one file. Unreleased titles are never
+listed ("Coming soon" covers them), nor manually approved requests. The
+hourly "Can't Find Check" job (`GET /settings/jobs`) adds them; a Grab or
+Download from Sonarr/Radarr's webhook, or the next check finding a file or
+a download, takes them off. Longest-missing first.
+
+```json
+{
+  "afterHours": 24,
+  "results": [
+    {
+      "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
+      "mediaType": "movie",
+      "tmdbId": 425,
+      "title": "Ice Age",
+      "posterPath": "/gLhHHZUzeseRXShoDyC4VqLgsNv.jpg",
+      "seasons": null,
+      "seasonsLabel": null,
+      "is4k": false,
+      "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": "Susan", "username": "susan", "label": "Susan" },
+      "createdAt": "2026-09-17T17:02:11.100Z",
+      "reviewedAt": "2026-09-17T17:05:40.020Z",
+      "notFoundSince": "2026-09-18T18:20:00.412Z",
+      "server": { "id": "b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31", "name": "Radarr", "kind": "radarr" },
+      "arrUrl": "http://192.168.1.10:7878/movie/425",
+      "hint": "In Radarr, Interactive Search on the movie lists every release the indexers have, so you can pick one by hand."
+    }
+  ]
+}
+```
+
+`server`: the Sonarr/Radarr approving it added the title to (the default
+one for requests approved before 0.43); `id`/`name` null when unknown.
+`arrUrl`: the title's page there, for "Open in Radarr"/"Open in Sonarr" —
+null when the server or the page isn't known. `hint`: a tip to show under
+the actions. The website lists these in a "Can't find" section on the
+Requests page, between the review queue and the problem reports: title
+(linking to the title page) with `seasonsLabel`/"In 4K", "who · can't find
+for 3 days (since 9/18/2026) · server", the hint, and **Search again**,
+**Open in Radarr** and **Mark as found**. Nothing listed → the section is
+hidden. `403` for members.
+
+### `POST /requests/{id}/not-found/search` — admin (0.46+)
+
+"Search again": that request's Sonarr/Radarr searches for it now — the
+requested seasons of a show one by one, or the whole of it; a movie as
+Radarr's own search button does. It stays listed until something is
+grabbed. `{ "ok": true }` → show "Radarr is searching again…". Errors:
+`404` "That request isn't in Can't find any more.", `409` when the server
+is gone or no longer has the title, `502` when it can't be reached.
+
+### `POST /requests/{id}/not-found/dismiss` — admin (0.46+)
+
+"Mark as found": off the list for good (it's never checked again), and its
+alerts are marked read for everyone. The request stays approved.
+`{ "ok": true }`, or `404` "That request isn't in Can't find any more."
 
 ### `GET /requests/pending-count` — user
 
@@ -1863,8 +1947,13 @@ with you: You'd love this one"); `sharedBy` is who (a `RequestPerson` plus
 `avatarUrl`, null once that account is removed) and `note` their note, both
 null on every other kind (and missing on older servers — treat as null).
 Show the sender's photo (else initials) beside it. Never relayed to Discord
-and the rest. Tapping one opens `/titles/{mediaType}/{tmdbId}` and marks it
-read.
+and the rest. From 0.46 `request_not_found` (🔍): an approved request
+Sonarr/Radarr hasn't found — "Couldn't find Ice Age (2002) — requested by
+Susan" to the admin and trusted members (a reminder "Still can't find …" at
+most once more, a week later), and "We're still looking for Ice Age (2002)"
+to the requester if they chose to hear it (in the bell only, by default).
+Once it's found or dismissed its alerts are marked read. Tapping one opens
+`/titles/{mediaType}/{tmdbId}` and marks it read.
 
 ### `GET /notifications` — user
 
@@ -2133,19 +2222,23 @@ Mac and Windows apps) and to each of the account's channels (by id).
 
 `event`, in the order to show them: `request_approved`, `request_declined`,
 `request_available` ("Ready to watch"), `request_downloading`,
-`issue_updated` ("A problem I reported is fixed"), from 0.45.1
+`request_still_looking` (0.46+, "Still looking for something I asked
+for"), `issue_updated` ("A problem I reported is fixed"), from 0.45.1
 `title_shared` ("Someone shares a title with me"); for the admin and
-trusted members also `request_pending` and `watchlist_requests` (a Plex
+trusted members also `request_pending`, `request_not_found` (0.46+,
+"Sonarr/Radarr can't find a request") and `watchlist_requests` (a Plex
 Watchlist batch); for the admin `issue_reported`. `request_comment` is
 reserved for comments on requests and not sent yet. Clients show `label`
 as it comes and keep any `event` they don't know, so a new one needs no
 app update. `reviewerOnly`: group these under "For reviewers".
 
 Defaults, until the account changes something: `inApp` and `push` on for
-everything (what every account got before 0.45); a new channel gets every
-event except `request_downloading` and `title_shared`. The household
-channels are separate — see below; `title_shared` is only ever the
-recipient's, so it never goes to them.
+everything (what every account got before 0.45) except `push` for
+`request_still_looking`; a new channel gets every event except
+`request_downloading`, `request_still_looking` and `title_shared`. The
+household channels are separate — see below; `title_shared` and
+`request_still_looking` are only ever the recipient's, so they never go to
+them.
 
 **`PUT /me/notification-preferences`** — `{ "events": [ { "event":
 "request_downloading", "push": false, "channels": { "<id>": true } } ] }`:
@@ -2169,8 +2262,11 @@ say, not once per reviewer).
 ```
 
 The defaults are what those channels posted before 0.45: everything except
-`issue_updated`. `title_shared` is never listed here: a shared title is only
-ever sent to the person it was shared with. **`PUT`** — `{ "events": { "issue_updated": true } }`: only
+`issue_updated` (and `request_not_found` is on unless the admin already
+saved a choice before 0.46). `title_shared` is never listed here: a shared
+title is only ever sent to the person it was shared with; nor is
+`request_still_looking`: the household hears the reviewers' "Couldn't find"
+instead. **`PUT`** — `{ "events": { "issue_updated": true } }`: only
 what's sent changes; answers as `GET`. `403` for anyone but the admin.
 
 ---
@@ -3030,6 +3126,7 @@ check the URL and that it's set to public.", `403` "Only the admin can import fr
     { "id": "jellyfin-sync", "name": "Jellyfin Library Sync", "schedule": "Every hour", "description": "Pulls the latest library state from every connected Jellyfin server." },
     { "id": "arr-sync", "name": "Sonarr/Radarr Sync", "schedule": "Every hour", "description": "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance." },
     { "id": "plex-watchlist", "name": "Plex Watchlist Requests", "schedule": "Every 10 minutes", "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each." },
+    { "id": "not-found-check", "name": "Can't Find Check", "schedule": "Every hour", "description": "Looks for approved requests that Sonarr/Radarr still hasn't found a copy of, and tells the admin and trusted members." },
     { "id": "disk-space-snapshot", "name": "Disk Space Snapshot", "schedule": "Daily at 3:00 AM", "description": "Records free/used disk space for the storage forecast shown elsewhere in the app." },
     { "id": "cleanup", "name": "Database Cleanup", "schedule": "Daily at 3:30 AM", "description": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever." }
   ]
@@ -3037,6 +3134,20 @@ check the URL and that it's set to public.", `403` "Only the admin can import fr
 ```
 
 `403` "Only the admin can run jobs." for members.
+
+### `GET /settings/not-found` · `PUT` — admin (0.46+)
+
+The Can't Find Check's wait: how many hours after approval a request
+Sonarr/Radarr hasn't found is listed and alerted (default 24). The website
+shows it under that job on Settings › Jobs: "Flag a request after [24]
+hours without a find".
+
+```json
+{ "afterHours": 24 }
+```
+
+**`PUT`** — `{ "afterHours": 48 }`, a whole number from 1 to 720; answers
+as `GET`. `400` otherwise, `403` for anyone but the admin.
 
 ### `POST /settings/jobs/{id}/run` — admin
 
@@ -3157,6 +3268,9 @@ what to do, grouped by area.
 | | `POST /requests/{id}/manual-approve` | admin |
 | | `POST /requests/{id}/reject` | admin |
 | | `POST /requests/approve-all` | admin |
+| | `GET /requests/not-found` | admin |
+| | `POST /requests/{id}/not-found/search` | admin |
+| | `POST /requests/{id}/not-found/dismiss` | admin |
 | Problem reports | `POST /titles/{type}/{tmdbId}/issues` | user |
 | | `GET /issues` | user |
 | | `POST /issues/{id}/resolve` | admin |
@@ -3212,6 +3326,7 @@ what to do, grouped by area.
 | | `PUT /settings/integrations/email` · `DELETE` | admin |
 | Settings: Jobs | `GET /settings/jobs` | admin |
 | | `POST /settings/jobs/{id}/run` | admin |
+| | `GET /settings/not-found` · `PUT` | admin |
 | Settings: About & Changelog | `GET /settings/about` | user |
 | | `GET /changelog` | user |
 | Help | `GET /help/errors` | user |

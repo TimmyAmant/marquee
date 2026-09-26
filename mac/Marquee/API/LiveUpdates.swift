@@ -253,7 +253,8 @@ final class LiveUpdates {
         if let previous, reason != .localChange {
             var change: ServerEvents.Change = []
             if fresh.unreadNotifications != previous.unreadNotifications { change.insert(.notifications) }
-            if fresh.pendingRequests != previous.pendingRequests || fresh.openIssues != previous.openIssues {
+            if fresh.pendingRequests != previous.pendingRequests || fresh.openIssues != previous.openIssues
+                || fresh.notFoundRequests != previous.notFoundRequests {
                 change.insert(.requests)
             }
             if !change.isEmpty { events.record(change, source: .server) }

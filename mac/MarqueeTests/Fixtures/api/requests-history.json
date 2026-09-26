@@ -21,7 +21,8 @@
       },
       "createdAt": "2026-09-17T17:12:41.415Z",
       "reviewedAt": "2026-09-17T17:12:41.468Z",
-      "addedTo": null
+      "addedTo": null,
+      "notFoundSince": null
     },
     {
       "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77",
@@ -53,7 +54,8 @@
           2
         ],
         "seriesType": null
-      }
+      },
+      "notFoundSince": "2026-09-18T18:20:00.412Z"
     }
   ]
 }

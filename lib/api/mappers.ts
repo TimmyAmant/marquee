@@ -13,6 +13,8 @@ import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
 import { myRequestBadge, reviewedRequestLabel, seasonsLabel } from "@/lib/requests/labels";
+import type { NotFoundRow } from "@/lib/requests/not-found";
+import { notFoundHint } from "@/lib/requests/not-found-rules";
 
 export function iso(date: Date | string | null | undefined): string | null {
   if (!date) return null;
@@ -136,6 +138,8 @@ export function titleViewerState(input: {
   openReports?: number;
   /** On the admin's blocklist (lib/requests/blocklist.ts). */
   blocked?: { reason: string | null; keyword: string | null } | null;
+  /** Reviewers only (loadTitleStatus): listed under "Can't find" since. */
+  notFoundSince?: Date | null;
 }): Dto.TitleViewerState {
   const blocked = input.blocked ?? null;
 
@@ -161,6 +165,7 @@ export function titleViewerState(input: {
     canReport: canReportProblem(input.status, input.fourK?.status ?? null),
     openReports: input.openReports ?? 0,
     blocked,
+    notFoundSince: iso(input.notFoundSince ?? null),
   };
 }
 
@@ -217,6 +222,30 @@ export function myRequest(row: {
   };
 }
 
+/** "Can't find" rows (GET /requests/not-found). */
+export function notFoundRequest(row: NotFoundRow): Dto.NotFoundRequest {
+  return {
+    id: row.id,
+    mediaType: row.mediaType,
+    tmdbId: row.tmdbId,
+    title: row.title,
+    posterPath: row.posterPath,
+    ...requestSeasons(row.seasons),
+    is4k: row.is4k,
+    requestedBy: requestPerson({
+      userId: row.requestedByUserId,
+      displayName: row.requestedByName,
+      username: row.requestedByUsername,
+    }),
+    createdAt: isoRequired(row.createdAt),
+    reviewedAt: iso(row.reviewedAt),
+    notFoundSince: isoRequired(row.notFoundSince),
+    server: row.server,
+    arrUrl: row.arrUrl,
+    hint: notFoundHint(row.mediaType),
+  };
+}
+
 export function reviewedRequest(row: {
   id: string;
   mediaType: MediaType;
@@ -238,6 +267,7 @@ export function reviewedRequest(row: {
   arrRootFolderPath?: string | null;
   arrTags?: number[] | null;
   arrSeriesType?: string | null;
+  notFoundSince?: Date | null;
 }): Dto.ReviewedRequest {
   return {
     id: row.id,
@@ -255,6 +285,7 @@ export function reviewedRequest(row: {
     createdAt: isoRequired(row.createdAt),
     reviewedAt: iso(row.reviewedAt),
     addedTo: addedTo(row),
+    notFoundSince: iso(row.notFoundSince ?? null),
   };
 }
 

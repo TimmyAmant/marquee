@@ -226,8 +226,14 @@ extension API {
         /// Where an approved request was added (0.43+); nil for rejected and
         /// manually approved ones, anything approved earlier, and older servers.
         var addedTo: AddedTo? = nil
+        /// When Sonarr/Radarr's failure to find it put it under "Can't find"
+        /// (0.46+); nil otherwise, and from an older server. A red "Can't
+        /// find" pill next to "Approved".
+        var notFoundSince: Date? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
+        /// Show the "Can't find" pill.
+        var isNotFound: Bool { status == .approved && notFoundSince != nil }
         /// The seasons in words, sent or computed locally.
         var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
         /// What the requests screens print under the title: "Season 2 · In 4K",
@@ -236,6 +242,91 @@ extension API {
         /// "Added to Radarr 2", under the Approved badge; nil when the server
         /// wasn't recorded or has since been removed.
         var addedToLine: String? { addedTo?.serverName.nonBlank.map { "Added to \($0)" } }
+    }
+
+    /// `GET /requests/not-found` (reviewers, 0.46+): "Can't find", approved
+    /// and released requests Sonarr/Radarr still has nothing for.
+    struct NotFoundRequests: Codable, Hashable, Sendable {
+        /// The Can't Find Check's wait, for the section's blurb.
+        let afterHours: Int
+        /// Longest-missing first. Empty → the section is hidden.
+        let results: [NotFoundRequest]
+
+        static let empty = NotFoundRequests(afterHours: NotFoundSettings.defaultAfterHours, results: [])
+
+        /// The section's blurb, as on the website.
+        var blurb: String {
+            "Approved and released, but Sonarr/Radarr still has nothing \(afterHours) hour\(afterHours == 1 ? "" : "s") or more after approval. Most often no indexer has a copy yet."
+        }
+    }
+
+    /// One "Can't find" row (components/not-found-section.tsx `NotFoundCard`).
+    struct NotFoundRequest: Codable, Hashable, Sendable, Identifiable {
+        /// The Sonarr/Radarr the approval added it to; `id`/`name` nil when
+        /// unknown. `kind` is kept as the server's string.
+        struct Server: Codable, Hashable, Sendable {
+            let id: String?
+            let name: String?
+            /// "sonarr" or "radarr".
+            let kind: String
+
+            /// "Radarr" or "Sonarr", for "Open in Radarr" and "Radarr is searching again…".
+            var kindName: String { kind.lowercased() == "radarr" ? "Radarr" : "Sonarr" }
+        }
+
+        let id: UUID
+        let mediaType: MediaType
+        let tmdbId: Int
+        let title: String
+        let posterPath: ImageRef?
+        let seasons: [Int]?
+        let seasonsLabel: String?
+        let is4k: Bool?
+        let requestedBy: RequestPerson
+        let createdAt: Date
+        let reviewedAt: Date?
+        let notFoundSince: Date
+        let server: Server
+        /// The title's page in Sonarr/Radarr, for "Open in Radarr"; nil when unknown.
+        let arrUrl: String?
+        /// The tip under the actions.
+        let hint: String?
+
+        var titleID: TitleID { TitleID(mediaType, tmdbId) }
+        /// The seasons in words, sent or computed locally.
+        var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
+        /// "Season 2 · In 4K", "In 4K", "Seasons 1–3", or nil.
+        var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
+        /// "Open in Radarr"'s address, when the server sent one a browser can open.
+        var arrURL: URL? {
+            guard let raw = arrUrl.nonBlank, let url = URL(string: raw),
+                  let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return nil }
+            return url
+        }
+        /// "Open in Radarr" / "Open in Sonarr".
+        var openInArrTitle: String { "Open in \(server.kindName)" }
+        /// "Radarr is searching again…" after Search again, with the server's
+        /// own name when it has one ("Radarr 4K is searching again…").
+        var searchingAgainLine: String { "\(server.name.nonBlank ?? server.kindName) is searching again…" }
+
+        /// "Susan · can't find for 3 days (since 9/18/2026) · Radarr".
+        func summaryLine(now: Date = Date()) -> String {
+            var parts = [
+                requestedBy.label,
+                "can't find for \(API.notFoundAgeLabel(since: notFoundSince, now: now)) (since \(Format.shortDate(notFoundSince)))",
+            ]
+            if let name = server.name.nonBlank { parts.append(name) }
+            return parts.joined(separator: " · ")
+        }
+    }
+
+    /// lib/requests/not-found-rules.ts `notFoundAgeLabel`: "under an hour",
+    /// "1 hour", "30 hours" (under 48), then whole days: "3 days".
+    static func notFoundAgeLabel(since: Date, now: Date) -> String {
+        let hours = max(0, Int((now.timeIntervalSince(since) / 3600).rounded(.down)))
+        if hours < 1 { return "under an hour" }
+        if hours < 48 { return hours == 1 ? "1 hour" : "\(hours) hours" }
+        return "\(hours / 24) days"
     }
 
     /// `POST /requests/approve-all`.

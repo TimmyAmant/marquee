@@ -35,6 +35,37 @@ public sealed class RequestsEndpoints(MarqueeApi.Transport transport)
     public Task<IReadOnlyList<ReviewedRequest>> HistoryAsync(CancellationToken ct = default) =>
         transport.GetListAsync<ReviewedRequest>("/requests/history", ct: ct);
 
+    /// <summary>
+    /// <c>GET /requests/not-found</c> (0.46+, admin or trusted): "Can't
+    /// find", approved requests Sonarr/Radarr has found nothing for,
+    /// longest-missing first. An older server answers 404: hide the section.
+    /// </summary>
+    public Task<NotFoundRequests> NotFoundAsync(CancellationToken ct = default) =>
+        transport.GetAsync<NotFoundRequests>("/requests/not-found", ct: ct);
+
+    /// <summary>
+    /// <c>POST /requests/{id}/not-found/search</c> (0.46+): "Search again",
+    /// the request's Sonarr/Radarr searches for it now; it stays listed until
+    /// something is grabbed. NotFound "That request isn't in Can't find any
+    /// more.", Conflict when the server is gone or no longer has the title,
+    /// Upstream when it can't be reached.
+    /// </summary>
+    public Task SearchNotFoundAsync(Guid id, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Post, $"/requests/{MarqueeApi.Segment(id)}/not-found/search",
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library, ct: ct);
+
+    /// <summary>
+    /// <c>POST /requests/{id}/not-found/dismiss</c> (0.46+): "Mark as
+    /// found", off the list for good, and its alerts marked read for
+    /// everyone. The request stays approved. NotFound "That request isn't in
+    /// Can't find any more."
+    /// </summary>
+    public Task DismissNotFoundAsync(Guid id, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Post, $"/requests/{MarqueeApi.Segment(id)}/not-found/dismiss",
+            changes: ServerChange.Requests | ServerChange.Notifications, ct: ct);
+
     /// <summary><c>GET /requests/pending-count</c>: always 0 for members (<c>BadgesAsync</c> has it too).</summary>
     public async Task<int> PendingCountAsync(CancellationToken ct = default)
     {
