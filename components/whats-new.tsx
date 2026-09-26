@@ -41,6 +41,7 @@ function formatDay(day: string): string {
  */
 export function WhatsNew({ userId, serverVersion }: { userId: string; serverVersion: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const okRef = useRef<HTMLButtonElement>(null);
   const [shown, setShown] = useState<Shown | null>(null);
   const key = useRef<string | null>(null);
 
@@ -74,7 +75,11 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (shown && dialog && !dialog.open) dialog.showModal();
+    if (!shown || !dialog || dialog.open) return;
+    dialog.showModal();
+    // React doesn't put autoFocus in the DOM, so showModal would focus the
+    // scrolling list; OK is where Return should go.
+    okRef.current?.focus();
   }, [shown]);
 
   if (!shown) return null;
@@ -129,8 +134,8 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
             See all changes
           </Link>
           <button
+            ref={okRef}
             type="button"
-            autoFocus
             onClick={() => dialogRef.current?.close()}
             className="rounded-full bg-accent px-8 py-2.5 text-sm font-semibold text-bg-0 transition-colors hover:bg-accent-hover sm:py-2"
           >
