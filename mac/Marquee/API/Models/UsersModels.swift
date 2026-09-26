@@ -21,11 +21,48 @@ extension API {
         var linked: LinkedAccounts? = nil
         /// See `User.hasPassword`; nil from older servers.
         var hasPassword: Bool? = nil
+        /// When the account last used the website or an app (to within
+        /// 5 minutes); nil when it never has, or from an older server.
+        var lastActiveAt: Date? = nil
+        /// Whether the server sent `lastActiveAt` at all (even as null). An
+        /// older server omits it, and then the row shows no "last active" line.
+        var reportsLastActive: Bool = false
 
         var isAdmin: Bool { role == .admin }
         var label: String { displayName.nonBlank ?? username }
-    }
 
+        /// The muted "Active 3 hours ago" line; nil from an older server.
+        func lastActiveLine(now: Date = Date()) -> String? {
+            reportsLastActive ? lastActiveLabel(lastActiveAt, now: now) : nil
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case id, username, displayName, role, autoApproveMovies, autoApproveTv, createdAt
+            case isCurrentUser, avatarUrl, linked, hasPassword, lastActiveAt
+        }
+    }
+}
+
+extension API.HouseholdMember {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        username = try c.decode(String.self, forKey: .username)
+        displayName = try c.decodeIfPresent(String.self, forKey: .displayName)
+        role = try c.decode(API.UserRole.self, forKey: .role)
+        autoApproveMovies = try c.decode(Bool.self, forKey: .autoApproveMovies)
+        autoApproveTv = try c.decode(Bool.self, forKey: .autoApproveTv)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        isCurrentUser = try c.decode(Bool.self, forKey: .isCurrentUser)
+        avatarUrl = try c.decodeIfPresent(String.self, forKey: .avatarUrl)
+        linked = try c.decodeIfPresent(LinkedAccounts.self, forKey: .linked)
+        hasPassword = try c.decodeIfPresent(Bool.self, forKey: .hasPassword)
+        lastActiveAt = try c.decodeIfPresent(Date.self, forKey: .lastActiveAt)
+        reportsLastActive = c.contains(.lastActiveAt)
+    }
+}
+
+extension API {
     /// `PUT` and `DELETE /users/{id}/avatar`: where the photo is now (nil once removed).
     struct AvatarResult: Codable, Hashable, Sendable {
         let ok: Bool
