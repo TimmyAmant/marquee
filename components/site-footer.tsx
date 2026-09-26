@@ -8,9 +8,12 @@ export function SiteFooter() {
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-text-muted sm:px-6 lg:px-8">
         <span>Marquee — self-hosted media dashboard</span>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <Link href="/changelog" className="transition-colors hover:text-text-primary">
             v{packageJson.version}
+          </Link>
+          <Link href="/help/colors" className="transition-colors hover:text-text-primary">
+            Colors
           </Link>
           <Link href="/help/errors" className="transition-colors hover:text-text-primary">
             Error reference

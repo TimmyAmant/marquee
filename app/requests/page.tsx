@@ -22,12 +22,12 @@ import { NotFoundSection } from "@/components/not-found-section";
 import { getNotFoundAfterHours, getNotFoundRequests } from "@/lib/requests/not-found";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
-  pending: "bg-tracked-bg text-tracked",
+  pending: "bg-info-bg text-info",
   declined: "bg-untracked-bg text-text-secondary",
   owned: "bg-owned-bg text-owned",
-  downloading: "bg-tracked-bg text-tracked",
+  downloading: "bg-downloading-bg text-downloading",
   coming_soon: "bg-soon-bg text-soon",
-  approved: "bg-tracked-bg text-tracked",
+  approved: "bg-info-bg text-info",
 };
 
 function myRequestBadge(

@@ -3,7 +3,8 @@
   Settings › About (app/settings/about/page.tsx, the Mac's
   AboutSettingsView): the server this PC is signed in to (Sign out, Change
   server), then this app's version and updates, whether the server is up to
-  date, the server's facts and the support links.
+  date, the server's facts and the support links, then "What the colors
+  mean": every library status's swatch, name and meaning (StatusColorLegend).
 -->
 <UserControl
     x:Class="Marquee.Windows.Views.Settings.AboutSettingsView"
@@ -12,6 +13,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Marquee.Windows.ViewModels"
+    xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d">
 
     <StackPanel Spacing="20">
@@ -153,6 +155,19 @@
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
+            </StackPanel>
+        </Border>
+
+        <!-- What the colors mean: the same list as the Color key pill's flyout, always here to look up. -->
+        <TextBlock Text="What the colors mean" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <Border Style="{StaticResource SettingsCard}">
+            <StackPanel Spacing="12">
+                <TextBlock
+                    Text="The colored strip under a poster and the status badge on a title show where it stands in your library. They match Radarr's and Sonarr's own colors."
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <controls:StatusColorLegend />
             </StackPanel>
         </Border>
     </StackPanel>

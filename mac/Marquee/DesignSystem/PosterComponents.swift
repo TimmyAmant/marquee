@@ -328,6 +328,9 @@ struct PosterCard: View {
             .overlay(alignment: .bottom) {
                 if let status = effectiveStatus, let strip = Theme.statusStrip(status) {
                     strip.frame(height: 3)
+                        .help(status.name)
+                        .accessibilityElement()
+                        .accessibilityLabel(status.name)
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

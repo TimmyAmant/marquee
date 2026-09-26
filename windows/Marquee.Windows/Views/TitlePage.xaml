@@ -252,13 +252,13 @@
                                             Visibility="{x:Bind ViewModel.ShowsRequested, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             Padding="12,4"
                                             CornerRadius="14"
-                                            Background="{ThemeResource TrackedBadgeBackgroundBrush}"
+                                            Background="{ThemeResource InfoBadgeBackgroundBrush}"
                                             VerticalAlignment="Center">
                                             <TextBlock
                                                 Text="{x:Bind ViewModel.RequestedLine, Mode=OneWay}"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 FontWeight="SemiBold"
-                                                Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                                                Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
                                         </Border>
                                         <Button
                                             Content="{x:Bind ViewModel.RequestLabel, Mode=OneWay}"
@@ -399,13 +399,13 @@
                                             Visibility="{x:Bind ViewModel.ShowsFourKRequested, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             Padding="12,4"
                                             CornerRadius="14"
-                                            Background="{ThemeResource TrackedBadgeBackgroundBrush}"
+                                            Background="{ThemeResource InfoBadgeBackgroundBrush}"
                                             VerticalAlignment="Center">
                                             <TextBlock
                                                 Text="4K requested"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 FontWeight="SemiBold"
-                                                Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                                                Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
                                         </Border>
                                         <Button
                                             Content="{x:Bind ViewModel.RequestFourKLabel, Mode=OneWay}"

@@ -11,16 +11,21 @@ using Microsoft.UI.Xaml.Media.Imaging;
 namespace Marquee.Windows.ViewModels;
 
 /// <summary>
-/// Which palette a pill or badge draws itself in. Owned, Tracked (blue:
-/// downloading), Missing, Soon and Neutral are the five library-status
-/// colors (<see cref="StatusTone"/>); Tracked also serves other blue pills.
+/// Which palette a pill or badge draws itself in, named for what it means.
+/// Owned (green), Downloading (purple), Missing (red), Unmonitored (orange),
+/// Soon (blue) and Neutral (grey) are the library-status colors
+/// (<see cref="StatusTone"/>, the same as Radarr's and Sonarr's legends).
+/// Info is the same blue as Soon for pills that aren't a library status:
+/// pending, requested, a monitored season, 4K, an admin tag.
 /// </summary>
 public enum BadgeTone
 {
     Owned,
-    Tracked,
+    Downloading,
     Missing,
+    Unmonitored,
     Soon,
+    Info,
     Neutral,
 }
 
@@ -53,7 +58,7 @@ public sealed partial class PosterItem : ObservableObject
     private int errorGeneration;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(StatusLabel), nameof(Tone), nameof(IsOwnedTone), nameof(IsTrackedTone), nameof(IsMissingTone), nameof(IsSoonTone), nameof(IsNeutralTone), nameof(AccessibleName))]
+    [NotifyPropertyChangedFor(nameof(StatusLabel), nameof(StatusName), nameof(Tone), nameof(IsOwnedTone), nameof(IsDownloadingTone), nameof(IsMissingTone), nameof(IsUnmonitoredTone), nameof(IsSoonTone), nameof(IsNeutralTone), nameof(AccessibleName))]
     private LibraryStatus? status;
 
     [ObservableProperty]
@@ -101,11 +106,15 @@ public sealed partial class PosterItem : ObservableObject
 
     public string? StatusLabel => Status?.CompactLabel;
 
+    /// <summary>The color key's name for the status ("Not monitored"): the strip's and badge's tooltip.</summary>
+    public string? StatusName => Status?.Name;
+
     public BadgeTone? Tone => Status is { } known ? ToneFor(known) : null;
 
     public bool IsOwnedTone => Tone == BadgeTone.Owned;
-    public bool IsTrackedTone => Tone == BadgeTone.Tracked;
+    public bool IsDownloadingTone => Tone == BadgeTone.Downloading;
     public bool IsMissingTone => Tone == BadgeTone.Missing;
+    public bool IsUnmonitoredTone => Tone == BadgeTone.Unmonitored;
     public bool IsSoonTone => Tone == BadgeTone.Soon;
     public bool IsNeutralTone => Tone == BadgeTone.Neutral;
 

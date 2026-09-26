@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   App-wide resources: the WinUI control styles, the converters every page
-  uses, the status badge palette (the five library-status colors: the Mac
-  app's Theme.owned/tracked/missing/soon and the website's marquee-missing/soon CSS tokens)
+  uses, the status badge palette (the library-status colors, the same as
+  the website's lib/library/status-tone.ts, the Mac app and Radarr/Sonarr)
   and the navigation's glass and text colors (mac/Docs/DESIGN_TARGET.md,
   "Navigation"), in light, dark and high contrast. No RequestedTheme is
   set, so light/dark follows Windows.
@@ -27,17 +27,27 @@
               rings), and the avatar's 140° accent gradient. The glass
               is in-app Acrylic tinted to the web's fill, so the page shows
               through it blurred the way backdrop-filter does on the web.
+
+              The *Badge brushes are the library-status colors, named for
+              what they mean (lib/library/status-tone.ts) and matching
+              Radarr's and Sonarr's legends: Owned green, Downloading
+              purple, Missing red, Unmonitored orange, Soon blue, Neutral
+              grey. Info is Soon's blue for pills that aren't a status.
             -->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="#2F7A52" />
                     <SolidColorBrush x:Key="OwnedBadgeBackgroundBrush" Color="#E3F3EA" />
-                    <SolidColorBrush x:Key="TrackedBadgeForegroundBrush" Color="#2F6FB0" />
-                    <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="#E5F0FA" />
-                    <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="#B34D00" />
-                    <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="#FFF0E5" />
-                    <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#7048B8" />
-                    <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#F0E9FB" />
+                    <SolidColorBrush x:Key="DownloadingBadgeForegroundBrush" Color="#7048B8" />
+                    <SolidColorBrush x:Key="DownloadingBadgeBackgroundBrush" Color="#F0E9FB" />
+                    <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="#C42B2B" />
+                    <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="#FDEAEA" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeForegroundBrush" Color="#B34D00" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeBackgroundBrush" Color="#FFF0E5" />
+                    <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#2F6FB0" />
+                    <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#E5F0FA" />
+                    <SolidColorBrush x:Key="InfoBadgeForegroundBrush" Color="#2F6FB0" />
+                    <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="#E5F0FA" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#5C574C" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="#EFECE3" />
 
@@ -70,12 +80,16 @@
                 <ResourceDictionary x:Key="Default">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="#4CAF7D" />
                     <SolidColorBrush x:Key="OwnedBadgeBackgroundBrush" Color="#14251C" />
-                    <SolidColorBrush x:Key="TrackedBadgeForegroundBrush" Color="#4F8FD1" />
-                    <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="#10202F" />
-                    <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="#E8833A" />
-                    <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="#2A1A0E" />
-                    <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#A98BE8" />
-                    <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#1F1830" />
+                    <SolidColorBrush x:Key="DownloadingBadgeForegroundBrush" Color="#A98BE8" />
+                    <SolidColorBrush x:Key="DownloadingBadgeBackgroundBrush" Color="#1F1830" />
+                    <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="#F25B5B" />
+                    <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="#2C1315" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeForegroundBrush" Color="#E8833A" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeBackgroundBrush" Color="#2A1A0E" />
+                    <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#5D9CEC" />
+                    <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#10202F" />
+                    <SolidColorBrush x:Key="InfoBadgeForegroundBrush" Color="#5D9CEC" />
+                    <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="#10202F" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#A8A4B3" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="#201F26" />
 
@@ -108,12 +122,16 @@
                 <ResourceDictionary x:Key="HighContrast">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="OwnedBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
-                    <SolidColorBrush x:Key="TrackedBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
-                    <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="DownloadingBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="DownloadingBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="UnmonitoredBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="InfoBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
 

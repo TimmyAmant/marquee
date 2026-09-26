@@ -91,32 +91,49 @@
                     <!--
                       The status strip along the artwork's foot (poster-card.tsx):
                       the badge's color, none for a title not in the library.
-                      Drawn before the badges so a badge sits on top of it.
+                      Drawn before the badges so a badge sits on top of it. Hovering
+                      it (or the badge) names the status.
                     -->
                     <Border
                         Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         VerticalAlignment="Bottom"
                         Height="3"
                         CornerRadius="0,0,7,7"
-                        Background="{ThemeResource OwnedBadgeForegroundBrush}" />
+                        Background="{ThemeResource OwnedBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
-                        Visibility="{x:Bind Item.IsTrackedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Visibility="{x:Bind Item.IsDownloadingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         VerticalAlignment="Bottom"
                         Height="3"
                         CornerRadius="0,0,7,7"
-                        Background="{ThemeResource TrackedBadgeForegroundBrush}" />
+                        Background="{ThemeResource DownloadingBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
                         Visibility="{x:Bind Item.IsMissingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         VerticalAlignment="Bottom"
                         Height="3"
                         CornerRadius="0,0,7,7"
-                        Background="{ThemeResource MissingBadgeForegroundBrush}" />
+                        Background="{ThemeResource MissingBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
+                    <Border
+                        Visibility="{x:Bind Item.IsUnmonitoredTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        VerticalAlignment="Bottom"
+                        Height="3"
+                        CornerRadius="0,0,7,7"
+                        Background="{ThemeResource UnmonitoredBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
                     <Border
                         Visibility="{x:Bind Item.IsSoonTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         VerticalAlignment="Bottom"
                         Height="3"
                         CornerRadius="0,0,7,7"
-                        Background="{ThemeResource SoonBadgeForegroundBrush}" />
+                        Background="{ThemeResource SoonBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
 
                     <Border
                         Visibility="{x:Bind Item.IsOwnedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -127,7 +144,8 @@
                         CornerRadius="9"
                         Background="{ThemeResource OwnedBadgeBackgroundBrush}"
                         BorderBrush="{ThemeResource OwnedBadgeForegroundBrush}"
-                        BorderThickness="1">
+                        BorderThickness="1"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
                             <TextBlock
@@ -139,22 +157,23 @@
                     </Border>
 
                     <Border
-                        Visibility="{x:Bind Item.IsTrackedTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Visibility="{x:Bind Item.IsDownloadingTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"
                         Margin="6"
                         Padding="7,2"
                         CornerRadius="9"
-                        Background="{ThemeResource TrackedBadgeBackgroundBrush}"
-                        BorderBrush="{ThemeResource TrackedBadgeForegroundBrush}"
-                        BorderThickness="1">
+                        Background="{ThemeResource DownloadingBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource DownloadingBadgeForegroundBrush}"
+                        BorderThickness="1"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource TrackedBadgeForegroundBrush}" />
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource DownloadingBadgeForegroundBrush}" />
                             <TextBlock
                                 Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
                                 FontSize="10"
                                 FontWeight="SemiBold"
-                                Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                                Foreground="{ThemeResource DownloadingBadgeForegroundBrush}" />
                         </StackPanel>
                     </Border>
 
@@ -167,7 +186,8 @@
                         CornerRadius="9"
                         Background="{ThemeResource MissingBadgeBackgroundBrush}"
                         BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
-                        BorderThickness="1">
+                        BorderThickness="1"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
                             <TextBlock
@@ -175,6 +195,27 @@
                                 FontSize="10"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Visibility="{x:Bind Item.IsUnmonitoredTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="6"
+                        Padding="7,2"
+                        CornerRadius="9"
+                        Background="{ThemeResource UnmonitoredBadgeBackgroundBrush}"
+                        BorderBrush="{ThemeResource UnmonitoredBadgeForegroundBrush}"
+                        BorderThickness="1"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
+                            <TextBlock
+                                Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
                         </StackPanel>
                     </Border>
 
@@ -187,7 +228,8 @@
                         CornerRadius="9"
                         Background="{ThemeResource SoonBadgeBackgroundBrush}"
                         BorderBrush="{ThemeResource SoonBadgeForegroundBrush}"
-                        BorderThickness="1">
+                        BorderThickness="1"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource SoonBadgeForegroundBrush}" />
                             <TextBlock
@@ -207,7 +249,8 @@
                         CornerRadius="9"
                         Background="{ThemeResource NeutralBadgeBackgroundBrush}"
                         BorderBrush="{ThemeResource NeutralBadgeForegroundBrush}"
-                        BorderThickness="1">
+                        BorderThickness="1"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{ThemeResource NeutralBadgeForegroundBrush}" />
                             <TextBlock
@@ -292,15 +335,15 @@
                     Visibility="{x:Bind Item.IsRequestedAction, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                     Padding="8,4"
                     CornerRadius="12"
-                    Background="{ThemeResource TrackedBadgeBackgroundBrush}"
-                    BorderBrush="{ThemeResource TrackedBadgeForegroundBrush}"
+                    Background="{ThemeResource InfoBadgeBackgroundBrush}"
+                    BorderBrush="{ThemeResource InfoBadgeForegroundBrush}"
                     BorderThickness="1">
                     <TextBlock
                         Text="Requested"
                         FontSize="10.5"
                         FontWeight="SemiBold"
                         HorizontalAlignment="Center"
-                        Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+                        Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
                 </Border>
 
                 <Border

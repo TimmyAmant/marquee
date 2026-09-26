@@ -35,8 +35,8 @@ export function RequestButton({
       <span
         className={
           compact
-            ? "block rounded-full bg-tracked-bg px-2 py-1 text-center text-[10px] font-medium text-tracked"
-            : "rounded-full bg-tracked-bg px-4 py-1.5 text-xs font-medium text-tracked"
+            ? "block rounded-full bg-info-bg px-2 py-1 text-center text-[10px] font-medium text-info"
+            : "rounded-full bg-info-bg px-4 py-1.5 text-xs font-medium text-info"
         }
       >
         {compact ? "Requested" : "Requested — waiting for approval"}

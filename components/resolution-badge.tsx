@@ -43,7 +43,7 @@ export function AudioBadge({ audioCodec }: { audioCodec: string | null | undefin
   if (!label) return null;
 
   return (
-    <span className="inline-flex items-center rounded-full border border-tracked/30 bg-tracked-bg px-2 py-0.5 text-[10px] font-medium text-tracked">
+    <span className="inline-flex items-center rounded-full border border-info/30 bg-info-bg px-2 py-0.5 text-[10px] font-medium text-info">
       {label}
     </span>
   );

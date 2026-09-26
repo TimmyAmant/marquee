@@ -10,7 +10,8 @@ import {
 } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import type { LibraryStatus } from "@/components/status-badge";
-import { toYear, isDroppedArrRow, isPossibleDuplicate } from "@/lib/library/query-policy";
+import { toYear, arrRowStatus, isDroppedArrRow, isPossibleDuplicate } from "@/lib/library/query-policy";
+import { statusRank } from "@/lib/arr/fan-out";
 
 export type LibraryItem = {
   titleId: string;
@@ -115,7 +116,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       name: title.name,
       posterPath: title.posterPath,
       year: toYear(title),
-      status: (status as LibraryStatus) ?? "tracked_monitored",
+      status: arrRowStatus(status, monitored),
       source: "radarr",
       sizeBytes,
       addedAt: null,
@@ -142,7 +143,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       name: title.name,
       posterPath: title.posterPath,
       year: toYear(title),
-      status: (status as LibraryStatus) ?? "tracked_monitored",
+      status: arrRowStatus(status, monitored),
       source: "sonarr",
       sizeBytes,
       addedAt: null,
@@ -462,8 +463,12 @@ export async function getLibraryStatusMap(
         ),
       );
     for (const row of rows) {
-      if (isDroppedArrRow(row.status, row.monitored)) continue;
-      map.set(`movie:${row.tmdbId}`, (row.status as LibraryStatus) ?? "tracked_monitored");
+      // Unmonitored with nothing on disk still gets its (orange) status here,
+      // unlike the library list, which drops it (isDroppedArrRow). With
+      // several servers, the copy furthest along wins.
+      const key = `movie:${row.tmdbId}`;
+      const status = arrRowStatus(row.status, row.monitored);
+      if (statusRank(status) > statusRank(map.get(key))) map.set(key, status);
     }
   }
 
@@ -483,8 +488,12 @@ export async function getLibraryStatusMap(
         ),
       );
     for (const row of rows) {
-      if (isDroppedArrRow(row.status, row.monitored)) continue;
-      map.set(`tv:${row.tmdbId}`, (row.status as LibraryStatus) ?? "tracked_monitored");
+      // Unmonitored with nothing on disk still gets its (orange) status here,
+      // unlike the library list, which drops it (isDroppedArrRow). With
+      // several servers, the copy furthest along wins.
+      const key = `tv:${row.tmdbId}`;
+      const status = arrRowStatus(row.status, row.monitored);
+      if (statusRank(status) > statusRank(map.get(key))) map.set(key, status);
     }
   }
 

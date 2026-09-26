@@ -19,16 +19,24 @@ enum Theme {
     static let accentHover = dynamic(light: 0x9C6818, dark: 0xF0B954)
     static let accentMuted = dynamic(light: 0xF3DFB0, dark: 0x6B5326)
 
+    // The library-status tones, named for what they mean and matching
+    // Radarr's/Sonarr's own legends (lib/library/status-tone.ts on the
+    // website): green in the library, purple downloading, red missing,
+    // orange not monitored, blue coming soon.
     static let owned = dynamic(light: 0x2F7A52, dark: 0x4CAF7D)
     static let ownedBg = dynamic(light: 0xE3F3EA, dark: 0x14251C)
-    static let tracked = dynamic(light: 0x2F6FB0, dark: 0x4F8FD1)
-    static let trackedBg = dynamic(light: 0xE5F0FA, dark: 0x10202F)
-    /// Missing (Sonarr/Radarr still looking) and Coming soon — the other two
-    /// library-status tones (`--marquee-missing` / `--marquee-soon`).
-    static let missing = dynamic(light: 0xB34D00, dark: 0xE8833A)
-    static let missingBg = dynamic(light: 0xFFF0E5, dark: 0x2A1A0E)
-    static let soon = dynamic(light: 0x7048B8, dark: 0xA98BE8)
-    static let soonBg = dynamic(light: 0xF0E9FB, dark: 0x1F1830)
+    static let downloading = dynamic(light: 0x7048B8, dark: 0xA98BE8)
+    static let downloadingBg = dynamic(light: 0xF0E9FB, dark: 0x1F1830)
+    static let missing = dynamic(light: 0xC42B2B, dark: 0xF25B5B)
+    static let missingBg = dynamic(light: 0xFDEAEA, dark: 0x2C1315)
+    static let unmonitored = dynamic(light: 0xB34D00, dark: 0xE8833A)
+    static let unmonitoredBg = dynamic(light: 0xFFF0E5, dark: 0x2A1A0E)
+    static let soon = dynamic(light: 0x2F6FB0, dark: 0x5D9CEC)
+    static let soonBg = dynamic(light: 0xE5F0FA, dark: 0x10202F)
+    /// Not a library status: pending / requested / monitored-season / 4K
+    /// pills and other informational chips. Same blue as `soon`.
+    static let info = dynamic(light: 0x2F6FB0, dark: 0x5D9CEC)
+    static let infoBg = dynamic(light: 0xE5F0FA, dark: 0x10202F)
     static let untrackedBg = dynamic(light: 0xEFECE3, dark: 0x201F26)
 
     static let danger = Color(red: 0.97, green: 0.44, blue: 0.44)

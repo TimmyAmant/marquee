@@ -161,12 +161,13 @@ extension API {
         let canAdd: Bool
 
         /// The gold outline chip: "In 4K", "4K downloading", "4K missing",
-        /// "4K coming soon"; nil when the 4K instance doesn't have it.
+        /// "4K not monitored", "4K coming soon"; nil when the 4K instance doesn't have it.
         var statusLabel: String? {
             switch status {
             case .owned: "In 4K"
             case .trackedDownloading: "4K downloading"
             case .trackedMonitored: "4K missing"
+            case .trackedUnmonitored: "4K not monitored"
             case .comingSoon: "4K coming soon"
             case .untracked, .unknown: nil
             }

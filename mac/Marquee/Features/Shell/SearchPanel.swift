@@ -185,8 +185,9 @@ private struct SearchPanelRow: View {
 
 /// The Movie/TV/Actor pill, wearing a title's library status in the same
 /// tone as a poster's badge and strip (`API.LibraryStatus.tone`, the
-/// website's lib/library/status-tone.ts): green in the library, blue
-/// downloading, orange missing, purple coming soon. Not in the library, a
+/// website's lib/library/status-tone.ts): green in the library, purple
+/// downloading, red missing, orange not monitored, blue coming soon (as in
+/// Radarr and Sonarr). Not in the library, a
 /// person, or a status this app doesn't know stays the plain grey outline.
 struct SuggestionKindPill: View {
     let kind: API.SuggestionKind

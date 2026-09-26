@@ -1,14 +1,18 @@
 import SwiftUI
 
-/// Which palette a pill or badge draws itself in. The five library-status
-/// tones (owned, tracked = downloading, missing, soon, neutral) match
-/// lib/library/status-tone.ts on the website.
+/// Which palette a pill or badge draws itself in. The six library-status
+/// tones (owned, downloading, missing, unmonitored, soon, neutral) match
+/// lib/library/status-tone.ts on the website and Radarr's/Sonarr's own
+/// legends. `info` is the same blue as `soon` for chips that aren't a
+/// library status (pending, requested, monitored season, audio codec).
 enum BadgeTone: Hashable {
     case owned
-    case tracked
+    case downloading
     case missing
+    case unmonitored
     case soon
     case neutral
+    case info
     case accent
     case danger
 
@@ -16,9 +20,11 @@ enum BadgeTone: Hashable {
     var palette: (foreground: Color, background: Color, border: Color)? {
         switch self {
         case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.3))
-        case .tracked: return (Theme.tracked, Theme.trackedBg, Theme.tracked.opacity(0.3))
+        case .downloading: return (Theme.downloading, Theme.downloadingBg, Theme.downloading.opacity(0.3))
         case .missing: return (Theme.missing, Theme.missingBg, Theme.missing.opacity(0.3))
+        case .unmonitored: return (Theme.unmonitored, Theme.unmonitoredBg, Theme.unmonitored.opacity(0.3))
         case .soon: return (Theme.soon, Theme.soonBg, Theme.soon.opacity(0.3))
+        case .info: return (Theme.info, Theme.infoBg, Theme.info.opacity(0.3))
         case .accent: return (Theme.accent, Theme.accent.opacity(0.12), Theme.accent.opacity(0.45))
         case .danger: return (Theme.danger, Theme.danger.opacity(0.12), Theme.danger.opacity(0.4))
         case .neutral: return nil
@@ -36,8 +42,9 @@ extension API.LibraryStatus {
     var tone: BadgeTone {
         switch self {
         case .owned: return .owned
-        case .trackedDownloading: return .tracked
+        case .trackedDownloading: return .downloading
         case .trackedMonitored: return .missing
+        case .trackedUnmonitored: return .unmonitored
         case .comingSoon: return .soon
         case .untracked, .unknown: return .neutral
         }
@@ -49,7 +56,8 @@ extension API.RequestTone {
     var badgeTone: BadgeTone {
         switch self {
         case .owned: return .owned
-        case .pending, .downloading, .approved: return .tracked
+        case .downloading: return .downloading
+        case .pending, .approved: return .info
         case .comingSoon: return .soon
         case .declined, .unknown: return .neutral
         }
@@ -130,7 +138,7 @@ struct QualityBadges: View {
                 TonePill(text: hdr == "Dolby Vision" ? "DV" : hdr, tone: .owned, small: true)
             }
             if showsAudio, let audio = Quality.audioLabel(file.audioCodec) {
-                TonePill(text: audio, tone: .tracked, small: true)
+                TonePill(text: audio, tone: .info, small: true)
             }
         }
     }

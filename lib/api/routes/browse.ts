@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { invalid, queryBool, queryInt } from "@/lib/api/request";
@@ -88,7 +89,7 @@ export function browseExtrasHandler(lockedType: MediaType) {
               return titleCard(item, {
                 status,
                 favorited: byw.favoritedIds.has(item.tmdbId),
-                canQuickAdd: byw.arrConfigured && !status,
+                canQuickAdd: byw.arrConfigured && isUnwanted(status),
               });
             }),
           }

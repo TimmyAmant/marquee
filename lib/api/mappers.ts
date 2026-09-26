@@ -10,6 +10,7 @@ import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/househol
 import { avatarPath } from "@/lib/users/avatar-path";
 import type { NotificationSender } from "@/lib/sharing/parse";
 import type { LibraryStatus } from "@/components/status-badge";
+import { isUnwanted } from "@/lib/library/status-tone";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
 import { myRequestBadge, reviewedRequestLabel, seasonsLabel } from "@/lib/requests/labels";
@@ -102,7 +103,7 @@ export function fourKViewerState(
   fourK: { configured: boolean; status: LibraryStatus; requestStatus: RequestStatus | null } | null,
 ): Dto.FourKViewerState | null {
   if (!fourK) return null;
-  const free = fourK.configured && fourK.status === "untracked";
+  const free = fourK.configured && isUnwanted(fourK.status);
   return {
     status: fourK.status,
     requestStatus: fourK.requestStatus,
@@ -152,7 +153,7 @@ export function titleViewerState(input: {
 }): Dto.TitleViewerState {
   const blocked = input.blocked ?? null;
 
-  const untracked = input.status === "untracked";
+  const untracked = isUnwanted(input.status);
   const alreadyRequested = input.requestStatus === "pending";
   return {
     isAdmin: input.isAdmin,
@@ -160,9 +161,10 @@ export function titleViewerState(input: {
     requestStatus: input.requestStatus,
     alreadyRequested,
     otherRequesters: input.otherRequesters,
-    // A title Sonarr/Radarr already has, unmonitored with nothing on disk,
-    // reads as untracked — but it's "Start monitoring" (arrTracking) that
-    // turns it back on; an Add next to it would do the same thing twice.
+    // A title Sonarr/Radarr already has, unmonitored with nothing on disk
+    // ("tracked_unmonitored"), is as open to requests as an untracked one —
+    // but for the admin it's "Start monitoring" (arrTracking) that turns it
+    // back on; an Add next to it would do the same thing twice.
     canAdd: untracked && input.isAdmin && input.configured && !input.arrTracking,
     needsArrSetup: untracked && input.isAdmin && !input.configured,
     canRequest: untracked && !input.isAdmin && !alreadyRequested && !blocked,

@@ -1,4 +1,5 @@
 import type { TitleDetail } from "@/lib/api/types";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { libraryInfo, statusKey, titleCard, titleViewerState } from "@/lib/api/mappers";
 import {
   buildExternalLinks,
@@ -40,8 +41,8 @@ export function titleDetailDto(
       status,
       favorited: maps.favorited.has(item.tmdbId),
       requested,
-      canQuickAdd: !status && isAdmin && data.arrConfigured[item.mediaType],
-      canRequest: !status && !isAdmin,
+      canQuickAdd: isUnwanted(status) && isAdmin && data.arrConfigured[item.mediaType],
+      canRequest: isUnwanted(status) && !isAdmin,
     });
   };
 

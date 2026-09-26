@@ -16,17 +16,26 @@
   --marquee-accent-hover: #f0b954;
   --marquee-accent-muted: #6b5326;
 
+  /* Library-status tones (lib/library/status-tone.ts), named for what they
+     mean. The hues follow Radarr's and Sonarr's own legends: green on disk,
+     purple downloading/queued, red missing (a deeper red than the red-400
+     used for errors and destructive actions), orange in Sonarr/Radarr but
+     not monitored, blue not released yet. Every foreground clears 4.5:1 on
+     its -bg and on bg-0/bg-1 for small text. */
   --marquee-owned: #4caf7d;
   --marquee-owned-bg: #14251c;
-  --marquee-tracked: #4f8fd1;
-  --marquee-tracked-bg: #10202f;
-  /* Missing (Sonarr/Radarr still looking) and Coming soon — the other two
-     library-status tones (lib/library/status-tone.ts). The orange is kept
-     well clear of the gold accent. */
-  --marquee-missing: #e8833a;
-  --marquee-missing-bg: #2a1a0e;
-  --marquee-soon: #a98be8;
-  --marquee-soon-bg: #1f1830;
+  --marquee-downloading: #a98be8;
+  --marquee-downloading-bg: #1f1830;
+  --marquee-missing: #f25b5b;
+  --marquee-missing-bg: #2c1315;
+  --marquee-unmonitored: #e8833a;
+  --marquee-unmonitored-bg: #2a1a0e;
+  --marquee-soon: #5d9cec;
+  --marquee-soon-bg: #10202f;
+  /* Neutral information that isn't a library status — pending/requested
+     pills, 4K, "Upgrade available" — in the soon blue. */
+  --marquee-info: #5d9cec;
+  --marquee-info-bg: #10202f;
   --marquee-untracked-bg: #201f26;
 
   /* The navigation menu's frosted panel (components/nav-menu.tsx). */
@@ -63,12 +72,16 @@
 
   --marquee-owned: #2f7a52;
   --marquee-owned-bg: #e3f3ea;
-  --marquee-tracked: #2f6fb0;
-  --marquee-tracked-bg: #e5f0fa;
-  --marquee-missing: #b34d00;
-  --marquee-missing-bg: #fff0e5;
-  --marquee-soon: #7048b8;
-  --marquee-soon-bg: #f0e9fb;
+  --marquee-downloading: #7048b8;
+  --marquee-downloading-bg: #f0e9fb;
+  --marquee-missing: #c42b2b;
+  --marquee-missing-bg: #fdeaea;
+  --marquee-unmonitored: #b34d00;
+  --marquee-unmonitored-bg: #fff0e5;
+  --marquee-soon: #2f6fb0;
+  --marquee-soon-bg: #e5f0fa;
+  --marquee-info: #2f6fb0;
+  --marquee-info-bg: #e5f0fa;
   --marquee-untracked-bg: #efece3;
 
   --marquee-glass: rgb(255 255 255 / 0.74);
@@ -97,12 +110,16 @@
 
     --marquee-owned: #2f7a52;
     --marquee-owned-bg: #e3f3ea;
-    --marquee-tracked: #2f6fb0;
-    --marquee-tracked-bg: #e5f0fa;
-    --marquee-missing: #b34d00;
-    --marquee-missing-bg: #fff0e5;
-    --marquee-soon: #7048b8;
-    --marquee-soon-bg: #f0e9fb;
+    --marquee-downloading: #7048b8;
+    --marquee-downloading-bg: #f0e9fb;
+    --marquee-missing: #c42b2b;
+    --marquee-missing-bg: #fdeaea;
+    --marquee-unmonitored: #b34d00;
+    --marquee-unmonitored-bg: #fff0e5;
+    --marquee-soon: #2f6fb0;
+    --marquee-soon-bg: #e5f0fa;
+    --marquee-info: #2f6fb0;
+    --marquee-info-bg: #e5f0fa;
     --marquee-untracked-bg: #efece3;
 
   --marquee-glass: rgb(255 255 255 / 0.74);
@@ -131,12 +148,16 @@
 
   --color-owned: var(--marquee-owned);
   --color-owned-bg: var(--marquee-owned-bg);
-  --color-tracked: var(--marquee-tracked);
-  --color-tracked-bg: var(--marquee-tracked-bg);
+  --color-downloading: var(--marquee-downloading);
+  --color-downloading-bg: var(--marquee-downloading-bg);
   --color-missing: var(--marquee-missing);
   --color-missing-bg: var(--marquee-missing-bg);
+  --color-unmonitored: var(--marquee-unmonitored);
+  --color-unmonitored-bg: var(--marquee-unmonitored-bg);
   --color-soon: var(--marquee-soon);
   --color-soon-bg: var(--marquee-soon-bg);
+  --color-info: var(--marquee-info);
+  --color-info-bg: var(--marquee-info-bg);
   --color-untracked-bg: var(--marquee-untracked-bg);
 
   --color-background: var(--background);

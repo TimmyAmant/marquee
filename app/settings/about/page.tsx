@@ -50,6 +50,7 @@ export default async function AboutSettingsPage() {
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <div className="divide-y divide-border">
           <LinkRow label="Changelog" href="/changelog" />
+          <LinkRow label="What the colors mean" href="/help/colors" />
           <LinkRow label="Error reference" href="/help/errors" />
           <LinkRow label="GitHub" href={REPO_URL} />
           <LinkRow label="Report an issue" href={`${REPO_URL}/issues`} />

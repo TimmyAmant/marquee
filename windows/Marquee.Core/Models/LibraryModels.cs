@@ -274,7 +274,7 @@ public sealed record FourKViewerState
     /// <summary>"Add to 4K Radarr/Sonarr" (admin; <c>POST …/add</c> with <c>{"is4k": true}</c>).</summary>
     public required bool CanAdd { get; init; }
 
-    /// <summary>The gold outline chip: "In 4K", "4K downloading", "4K missing", "4K coming soon"; null when untracked (or unknown).</summary>
+    /// <summary>The gold outline chip: "In 4K", "4K downloading", "4K missing", "4K not monitored", "4K coming soon"; null when untracked (or unknown).</summary>
     public string? StatusLabel
     {
         get
@@ -282,6 +282,7 @@ public sealed record FourKViewerState
             if (Status == LibraryStatus.Owned) return "In 4K";
             if (Status == LibraryStatus.TrackedDownloading) return "4K downloading";
             if (Status == LibraryStatus.TrackedMonitored) return "4K missing";
+            if (Status == LibraryStatus.TrackedUnmonitored) return "4K not monitored";
             if (Status == LibraryStatus.ComingSoon) return "4K coming soon";
             return null;
         }

@@ -519,6 +519,7 @@ struct AboutSettingsView: View {
                 SettingsSectionLabel(text: "Getting Support")
                 VStack(spacing: 0) {
                     linkRow("Releases") { openWindow(id: "changelog") }
+                    linkRow("What the colors mean") { openWindow(id: "status-colors") }
                     linkRow("Error reference") { openWindow(id: "error-reference") }
                     if let repo = info.repoURL {
                         linkRow("GitHub") { openURL(repo) }

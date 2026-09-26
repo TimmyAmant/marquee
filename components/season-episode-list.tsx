@@ -65,7 +65,7 @@ export function SeasonAccordion({
                 {stats && (
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      complete ? "bg-owned-bg text-owned" : "bg-tracked-bg text-tracked"
+                      complete ? "bg-owned-bg text-owned" : "bg-info-bg text-info"
                     }`}
                   >
                     {stats.have}/{stats.total}

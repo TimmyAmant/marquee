@@ -46,7 +46,7 @@ struct SeasonAccordion: View {
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 if let label = season.completenessLabel {
-                    TonePill(text: label, tone: season.isComplete ? .owned : .tracked, small: true)
+                    TonePill(text: label, tone: season.isComplete ? .owned : .info, small: true)
                 }
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .semibold))

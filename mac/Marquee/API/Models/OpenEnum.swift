@@ -145,17 +145,21 @@ extension API {
         case owned
         case trackedDownloading
         case trackedMonitored
+        case trackedUnmonitored
         case comingSoon
         case untracked
         case unknown(String)
 
-        static let knownCases: [LibraryStatus] = [.owned, .trackedDownloading, .trackedMonitored, .comingSoon, .untracked]
+        static let knownCases: [LibraryStatus] = [
+            .owned, .trackedDownloading, .trackedMonitored, .trackedUnmonitored, .comingSoon, .untracked,
+        ]
 
         var rawValue: String {
             switch self {
             case .owned: return "owned"
             case .trackedDownloading: return "tracked_downloading"
             case .trackedMonitored: return "tracked_monitored"
+            case .trackedUnmonitored: return "tracked_unmonitored"
             case .comingSoon: return "coming_soon"
             case .untracked: return "untracked"
             case let .unknown(raw): return raw
@@ -168,6 +172,7 @@ extension API {
             case .owned: return "Already in your library"
             case .trackedDownloading: return "Downloading"
             case .trackedMonitored: return "Missing"
+            case .trackedUnmonitored: return "Not monitored"
             case .comingSoon: return "Coming soon"
             case .untracked: return "Not in your library"
             case let .unknown(raw): return raw
@@ -180,6 +185,7 @@ extension API {
             case .owned: return "Owned"
             case .trackedDownloading: return "Downloading"
             case .trackedMonitored: return "Missing"
+            case .trackedUnmonitored: return "Not monitored"
             case .comingSoon: return "Coming soon"
             case .untracked: return "Not owned"
             case let .unknown(raw): return raw
@@ -192,6 +198,7 @@ extension API {
             case .owned: return "In your library"
             case .trackedDownloading: return "Downloading"
             case .trackedMonitored: return "Missing"
+            case .trackedUnmonitored: return "Not monitored"
             case .comingSoon: return "Coming soon"
             case .untracked: return "Not in your library"
             case let .unknown(raw): return raw
@@ -202,8 +209,9 @@ extension API {
         var meaning: String {
             switch self {
             case .owned: return "The file is in your library, ready to watch."
-            case .trackedDownloading: return "It's downloading right now."
-            case .trackedMonitored: return "Added, but Sonarr/Radarr hasn't found a copy yet — it keeps looking."
+            case .trackedDownloading: return "It's downloading or queued right now."
+            case .trackedMonitored: return "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking."
+            case .trackedUnmonitored: return "In Sonarr/Radarr but not monitored — it won't download on its own."
             case .comingSoon: return "Added, but it hasn't been released yet."
             case .untracked: return "Not added yet. Posters get no colored strip."
             case .unknown: return ""
@@ -213,7 +221,7 @@ extension API {
         /// In the library in any form (owned or tracked by Sonarr/Radarr).
         var isInLibrary: Bool {
             switch self {
-            case .owned, .trackedDownloading, .trackedMonitored, .comingSoon: return true
+            case .owned, .trackedDownloading, .trackedMonitored, .trackedUnmonitored, .comingSoon: return true
             case .untracked, .unknown: return false
             }
         }

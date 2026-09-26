@@ -203,13 +203,13 @@ struct AccountSettingsView: View {
             }
             Spacer()
             if member.linked?.plex == true {
-                TonePill(text: "Plex", tone: .tracked, small: true)
+                TonePill(text: "Plex", tone: .info, small: true)
             }
             if member.linked?.jellyfin == true {
-                TonePill(text: model.session.serverInfo.jellyfinName, tone: .tracked, small: true)
+                TonePill(text: model.session.serverInfo.jellyfinName, tone: .info, small: true)
             }
             if member.linked?.sso == true {
-                TonePill(text: "SSO", tone: .tracked, small: true)
+                TonePill(text: "SSO", tone: .info, small: true)
             }
             if member.isAdmin {
                 TonePill(text: "Admin", tone: .accent, small: true)

@@ -13,6 +13,7 @@ const FOURK_LABEL: Record<FourKViewerState["status"], string | null> = {
   owned: "In 4K",
   tracked_downloading: "4K downloading",
   tracked_monitored: "4K missing",
+  tracked_unmonitored: "4K not monitored",
   coming_soon: "4K coming soon",
   untracked: null,
 };
@@ -62,7 +63,7 @@ export function FourKControls({
         </span>
       )}
       {requested && (
-        <span className="flex h-8 items-center rounded-full bg-tracked-bg px-3.5 text-[13px] font-medium text-tracked">
+        <span className="flex h-8 items-center rounded-full bg-info-bg px-3.5 text-[13px] font-medium text-info">
           4K requested
         </span>
       )}

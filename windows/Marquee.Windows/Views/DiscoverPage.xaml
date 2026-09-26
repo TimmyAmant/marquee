@@ -23,7 +23,11 @@
     <Grid>
         <ScrollViewer Visibility="{x:Bind ViewModel.HasShelves, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Padding="28,20,0,28">
-                <TextBlock Text="Discover" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,16" />
+                <!-- The page title, with the Color key pill for the shelves' poster colors. -->
+                <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,0,0,16">
+                    <TextBlock Text="Discover" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                    <controls:StatusColorKey />
+                </StackPanel>
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Shelves, Mode=OneWay}">
                     <ItemsRepeater.Layout>
                         <StackLayout Orientation="Vertical" Spacing="24" />

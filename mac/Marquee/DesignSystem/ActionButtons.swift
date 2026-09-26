@@ -162,11 +162,11 @@ struct RequestButton: View {
         if requested || alreadyRequested {
             Text(compact ? "Requested" : "Requested — waiting for approval")
                 .font(.system(size: compact ? 10 : 12, weight: .medium))
-                .foregroundStyle(Theme.tracked)
+                .foregroundStyle(Theme.info)
                 .padding(.horizontal, compact ? 8 : 14)
                 .padding(.vertical, compact ? 4 : 6)
                 .frame(maxWidth: compact ? .infinity : nil)
-                .background(Capsule().fill(Theme.trackedBg))
+                .background(Capsule().fill(Theme.infoBg))
         } else {
             VStack(alignment: compact ? .center : .leading, spacing: 4) {
                 Button {

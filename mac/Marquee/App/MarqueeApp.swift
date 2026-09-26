@@ -51,6 +51,12 @@ struct MarqueeApp: App {
         }
         .defaultSize(width: 720, height: 760)
 
+        Window("What the Colors Mean", id: "status-colors") {
+            StatusColorsHelpView()
+                .frame(minWidth: 460, minHeight: 420)
+        }
+        .defaultSize(width: 620, height: 640)
+
         Window("Marquee Releases", id: "changelog") {
             ChangelogView()
                 .environment(model)

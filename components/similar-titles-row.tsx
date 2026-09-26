@@ -1,4 +1,5 @@
 import { PosterCard } from "@/components/poster-card";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { PosterRowItem } from "@/components/poster-row";
 import { Shelf } from "@/components/shelf";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
@@ -46,8 +47,8 @@ export function SimilarTitlesRow({
     <Shelf title="More like this">
       {items.map((item) => {
         const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
-        const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
-        const canRequest = !status && isAdmin === false && !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
+        const canQuickAdd = isUnwanted(status) && isAdmin === true && arrConfigured?.[item.mediaType];
+        const canRequest = isUnwanted(status) && isAdmin === false && !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
         return (
           <PosterRowItem key={`${item.mediaType}-${item.tmdbId}`}>
             <PosterCard

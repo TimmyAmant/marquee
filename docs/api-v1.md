@@ -229,7 +229,18 @@ computed against `libraryOwnerId` (from `/me`), exactly like the website.
 
 `LibraryStatus`: `"owned"` (badge "Owned" / "Already in your library"),
 `"tracked_downloading"` ("Downloading"), `"tracked_monitored"` ("Missing"),
-`"coming_soon"` ("Coming soon"), `"untracked"` ("Not owned" / "Not in your library").
+`"tracked_unmonitored"` ("Not monitored" — newer servers only: in Sonarr/Radarr but not
+monitored, nothing on disk, so it won't download on its own; older servers
+send `"untracked"` or null for these), `"coming_soon"` ("Coming soon"),
+`"untracked"` ("Not owned" / "Not in your library"). It's an open set: treat
+any value you don't know as neutral (no color, no strip).
+
+Colors, the same as Radarr's and Sonarr's own legends: `owned` green,
+`tracked_downloading` purple, `tracked_monitored` red, `tracked_unmonitored`
+orange, `coming_soon` blue, `untracked` none (grey label, no poster strip).
+`tracked_unmonitored` is still requestable (`canRequest`) — an approved
+request turns monitoring back on — and admins get "Start monitoring"
+(`arrTracking`) rather than Add.
 
 #### `PersonCard`, `CompanyCard`, `NetworkCard`
 
@@ -816,12 +827,12 @@ Website labels: person → "Actor", movie → "Movie", tv → "TV".
 
 `status` (movies and series only; absent for people) is the
 viewer's library status — the same `LibraryStatus` values as elsewhere
-(`owned`, `tracked_downloading`, `tracked_monitored`, `coming_soon`,
-`untracked`), from the locally synced Sonarr/Radarr/Plex/Jellyfin state, never
+(`owned`, `tracked_downloading`, `tracked_monitored`, `tracked_unmonitored`,
+`coming_soon`, `untracked`), from the locally synced Sonarr/Radarr/Plex/Jellyfin state, never
 a live Sonarr/Radarr call. Treat it as an open set, and a missing field (an
 older server) as unknown. The website tints the Movie/TV pill with it: green
-in the library, blue downloading, red missing, purple coming soon, grey
-otherwise. Active requests aren't reflected here (search result cards don't
+in the library, purple downloading, red missing, orange not monitored, blue
+coming soon, grey otherwise. Active requests aren't reflected here (search result cards don't
 show them either).
 
 ---

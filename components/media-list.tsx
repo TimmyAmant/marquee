@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { isUnwanted } from "@/lib/library/status-tone";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { PosterCard } from "@/components/poster-card";
 import { PosterGrid } from "@/components/poster-grid";
@@ -70,13 +71,14 @@ const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   owned: "Owned",
   tracked_downloading: "Downloading",
   tracked_monitored: "Missing",
+  tracked_unmonitored: "Not monitored",
   coming_soon: "Coming soon",
   untracked: "Not owned",
 };
 
-// Only these are offered as filter chips — "untracked" rows never actually
-// appear in the library (getUserLibrary drops them; see isDroppedArrRow), so
-// showing it as a tab was always an empty dead end.
+// Only these are offered as filter chips — "untracked" and "tracked_unmonitored"
+// rows never actually appear in the library (getUserLibrary drops them; see
+// isDroppedArrRow), so showing them as tabs would be an empty dead end.
 const VISIBLE_STATUS_FILTERS: StatusFilter[] = [
   "all",
   "owned",
@@ -369,7 +371,7 @@ export function MediaList({
       ) : view === "grid" ? (
         <PosterGrid>
           {sortedEntries.map((entry) => {
-            const canQuickAdd = !entry.status && arrConfigured?.[entry.mediaType];
+            const canQuickAdd = isUnwanted(entry.status) && arrConfigured?.[entry.mediaType];
 
             return (
               <PosterCard
@@ -471,7 +473,7 @@ export function MediaList({
                   {hasUpgradeData && (
                     <td className="px-4 py-3 text-text-secondary">
                       {entry.qualityCutoffNotMet ? (
-                        <span className="text-tracked">Upgrade available</span>
+                        <span className="text-info">Upgrade available</span>
                       ) : (
                         "—"
                       )}

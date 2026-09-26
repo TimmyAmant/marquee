@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toYear, isDroppedArrRow, isPossibleDuplicate } from "./query-policy";
+import { toYear, arrRowStatus, isDroppedArrRow, isPossibleDuplicate } from "./query-policy";
 
 describe("toYear", () => {
   it("prefers releaseDate over firstAirDate", () => {
@@ -20,8 +20,15 @@ describe("toYear", () => {
 });
 
 describe("isDroppedArrRow", () => {
-  it("is dropped when status is untracked", () => {
-    expect(isDroppedArrRow("untracked", true)).toBe(true);
+  it("is dropped when the sync wrote tracked_unmonitored (or the older untracked)", () => {
+    expect(isDroppedArrRow("tracked_unmonitored", false)).toBe(true);
+    expect(isDroppedArrRow("untracked", false)).toBe(true);
+    expect(isDroppedArrRow("untracked", null)).toBe(true);
+  });
+
+  it("is NOT dropped once Start monitoring flipped the flag back on", () => {
+    expect(isDroppedArrRow("tracked_unmonitored", true)).toBe(false);
+    expect(isDroppedArrRow("untracked", true)).toBe(false);
   });
 
   it("is dropped for tracked_monitored with monitoring off", () => {
@@ -46,6 +53,31 @@ describe("isDroppedArrRow", () => {
 
   it("is NOT dropped when monitored is null (unknown) rather than explicitly false", () => {
     expect(isDroppedArrRow("tracked_monitored", null)).toBe(false);
+  });
+});
+
+describe("arrRowStatus", () => {
+  it("reads unmonitored rows with nothing on disk as tracked_unmonitored, whatever shape they were cached in", () => {
+    expect(arrRowStatus("tracked_unmonitored", false)).toBe("tracked_unmonitored");
+    expect(arrRowStatus("untracked", false)).toBe("tracked_unmonitored");
+    expect(arrRowStatus("tracked_monitored", false)).toBe("tracked_unmonitored");
+    expect(arrRowStatus("coming_soon", false)).toBe("tracked_unmonitored");
+  });
+
+  it("keeps a file on disk whatever the monitored flag says", () => {
+    expect(arrRowStatus("owned", false)).toBe("owned");
+    expect(arrRowStatus("tracked_downloading", false)).toBe("tracked_downloading");
+  });
+
+  it("passes monitored statuses through", () => {
+    expect(arrRowStatus("tracked_monitored", true)).toBe("tracked_monitored");
+    expect(arrRowStatus("coming_soon", true)).toBe("coming_soon");
+    expect(arrRowStatus("owned", true)).toBe("owned");
+    expect(arrRowStatus(null, null)).toBe("tracked_monitored");
+  });
+
+  it("treats an unmonitored row monitored again (before the next sync) as missing", () => {
+    expect(arrRowStatus("tracked_unmonitored", true)).toBe("tracked_monitored");
   });
 });
 
