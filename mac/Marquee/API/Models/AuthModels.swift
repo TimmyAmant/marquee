@@ -92,6 +92,44 @@ extension API {
         let password: String
     }
 
+    /// `GET /me/plex-watchlist`: "Request from my Plex Watchlist", which
+    /// requests what this account adds to its own Plex Watchlist.
+    struct PlexWatchlist: Codable, Hashable, Sendable {
+        /// Plex is linked to this account, so it can be turned on.
+        let available: Bool
+        let enabled: Bool
+        /// Which kinds get requested.
+        let movies: Bool
+        let tv: Bool
+        /// The last successful check; nil before the first.
+        let lastSyncedAt: Date?
+        /// Why the last check failed, or why it switched itself off.
+        let lastError: String?
+        let requestedCount: Int
+
+        /// What an older server, without the endpoint (404), amounts to.
+        static let unavailable = PlexWatchlist(
+            available: false, enabled: false, movies: true, tv: true,
+            lastSyncedAt: nil, lastError: nil, requestedCount: 0
+        )
+
+        /// plex-watchlist.tsx's status line: "Checked 5m ago · 3 titles
+        /// requested so far", or "Checking your watchlist…" before the first.
+        func statusLine(now: Date = Date()) -> String {
+            var line = lastSyncedAt.map { "Checked \(Format.timeAgo($0, now: now))" } ?? "Checking your watchlist…"
+            if requestedCount > 0 {
+                line += " · \(requestedCount) \(requestedCount == 1 ? "title" : "titles") requested so far"
+            }
+            return line
+        }
+    }
+
+    /// `PATCH /me/plex-watchlist` body: only the kinds being changed.
+    struct PlexWatchlistTypes: Codable, Hashable, Sendable {
+        var movies: Bool?
+        var tv: Bool?
+    }
+
     /// A Plex user id (a number) or a Jellyfin one (a string), sent back to
     /// the server exactly as it came.
     enum ExternalID: Codable, Hashable, Sendable, CustomStringConvertible {
