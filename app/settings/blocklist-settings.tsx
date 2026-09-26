@@ -12,20 +12,26 @@ const inputClass =
 function RemoveButton({ id }: { id: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={async () => {
-        setBusy(true);
-        await removeBlocklistEntryAction(id);
-        setBusy(false);
-        router.refresh();
-      }}
-      className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline disabled:opacity-60"
-    >
-      {busy ? "Removing…" : "Remove"}
-    </button>
+    <span className="flex shrink-0 flex-col items-end">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError(null);
+          const result = await removeBlocklistEntryAction(id);
+          setBusy(false);
+          if (result.error) setError(result.error);
+          else router.refresh();
+        }}
+        className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline disabled:opacity-60"
+      >
+        {busy ? "Removing…" : "Remove"}
+      </button>
+      {error && <span className="text-xs text-red-400">{error}</span>}
+    </span>
   );
 }
 
@@ -58,7 +64,8 @@ export function BlocklistSettings({ entries }: { entries: BlocklistEntry[] }) {
           ))}
         </ul>
       )}
-      <form action={formAction} className="flex flex-col gap-3 border-t border-border px-6 py-4">
+      {/* Keyed on the list, so a successful add clears the fields. */}
+      <form key={entries.length} action={formAction} className="flex flex-col gap-3 border-t border-border px-6 py-4">
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
           Block a keyword or genre
           <input name="keyword" required placeholder="e.g. anime, reality, horror" className={inputClass} />

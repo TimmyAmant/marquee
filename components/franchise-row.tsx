@@ -21,6 +21,7 @@ export function FranchiseRow({
   items,
   statusMap,
   requestStatusMap,
+  blockedKeys,
   favoritedIds,
   showFavorite,
   arrConfigured,
@@ -35,6 +36,8 @@ export function FranchiseRow({
    * already requested shows "Requested" instead of the button again. Absent
    * when signed out (members never see the request button then anyway). */
   requestStatusMap?: Map<string, string>;
+  /** Titles on the admin's blocklist ("movie:603"): no Request button. */
+  blockedKeys?: Set<string>;
   favoritedIds?: Set<number>;
   showFavorite?: boolean;
   /** Omitted when signed out or nothing is configured. */
@@ -69,7 +72,7 @@ export function FranchiseRow({
         {items.map((item) => {
           const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
           const canQuickAdd = !status && isAdmin === true && arrConfigured?.[item.mediaType];
-          const canRequest = !status && isAdmin === false;
+          const canRequest = !status && isAdmin === false && !blockedKeys?.has(`${item.mediaType}:${item.tmdbId}`);
           return (
             <PosterCard
               key={`${item.mediaType}-${item.tmdbId}`}

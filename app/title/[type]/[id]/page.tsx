@@ -48,6 +48,7 @@ export default async function TitlePage({
     fourK,
     openReports,
     blocked,
+    blockedKeys,
     trailer,
     externalIds,
     cast,
@@ -156,6 +157,7 @@ export default async function TitlePage({
             items={franchiseItems}
             statusMap={franchiseStatusMap}
             requestStatusMap={franchiseRequestStatusMap}
+            blockedKeys={blockedKeys}
             favoritedIds={franchiseFavoritedIds}
             showFavorite={Boolean(viewer.session)}
             arrConfigured={viewer.session ? arrConfigured : undefined}
@@ -169,6 +171,7 @@ export default async function TitlePage({
           items={similarItems}
           statusMap={similarStatusMap}
           requestStatusMap={similarRequestStatusMap}
+          blockedKeys={blockedKeys}
           favoritedIds={similarFavoritedIds}
           showFavorite={Boolean(viewer.session)}
           arrConfigured={viewer.session ? arrConfigured : undefined}

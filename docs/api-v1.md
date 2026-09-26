@@ -1277,7 +1277,12 @@ title's TMDb keywords and genres, case-insensitively). A request for one —
 regular, seasons, 4K, or from a Plex Watchlist (then skipped for good) — is
 refused with `403 forbidden` "The admin isn't taking requests for this
 title." plus the admin's reason, if any. The admin can still add a blocked
-title themselves.
+title themselves. Requests made before a title was blocked stay in the
+queue. Genre names differ between movies and TV on TMDb ("Science Fiction"
+vs "Sci-Fi & Fantasy"), so block both to cover both. Blocking something
+already on the list just updates its reason. A keyword block needs the
+title's TMDb record; if TMDb can't be reached for a title Marquee hasn't
+seen before, the keyword can't be checked and the request goes through.
 
 The title's `viewer.blocked` is `{ "reason": "Already on Max.", "keyword":
 null }` when it's blocked (`keyword` set when a keyword did it), else null;
