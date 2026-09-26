@@ -35,6 +35,8 @@ public sealed class MarqueeApiTitlesRequestTests
             api => api.Titles.RelinkAsync(MediaType.Movie, 603, RelinkTarget.Imdb("tt0133093"))),
         new("POST", "/titles/tv/1399/request", null, "request-created", ServerChange.Requests | ServerChange.Library,
             api => api.Titles.RequestAsync(MediaType.Tv, 1399)),
+        new("POST", "/titles/movie/425/request-all-missing", null, "request-all-missing", ServerChange.Requests | ServerChange.Library,
+            api => api.Titles.RequestAllMissingAsync(MediaType.Movie, 425)),
         new("POST", "/titles/tv/1399/add", """{"is4k":true}""", "title-add", ServerChange.Library | ServerChange.Requests,
             api => api.Titles.AddFourKAsync(MediaType.Tv, 1399)),
         new("POST", "/titles/movie/603/request", """{"is4k":true}""", "request-created", ServerChange.Requests | ServerChange.Library,

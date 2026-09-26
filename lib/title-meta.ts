@@ -104,6 +104,31 @@ export function franchiseMissingItems<T extends { mediaType: "movie" | "tv"; tmd
     .map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId }));
 }
 
+/** The franchise row's "Request all N missing" set for a household member
+ * (plain or trusted): exactly the titles whose poster shows a Request button
+ * — not in the library at all, not already asked for by this viewer, not on
+ * the admin's blocklist. Empty for the admin (who gets "Add all") and when
+ * signed out. A keyword block is left to createRequest's refusal, as the
+ * poster buttons do. */
+export function franchiseRequestableItems<T extends { mediaType: "movie" | "tv"; tmdbId: number }>(
+  items: T[],
+  statusKeys: { has(key: string): boolean },
+  requestedKeys: { has(key: string): boolean } | undefined,
+  blockedKeys: { has(key: string): boolean } | undefined,
+  isAdmin: boolean | undefined,
+): { mediaType: "movie" | "tv"; tmdbId: number }[] {
+  if (isAdmin !== false) return [];
+  const seen = new Set<string>();
+  const result: { mediaType: "movie" | "tv"; tmdbId: number }[] = [];
+  for (const item of items) {
+    const key = `${item.mediaType}:${item.tmdbId}`;
+    if (seen.has(key) || statusKeys.has(key) || requestedKeys?.has(key) || blockedKeys?.has(key)) continue;
+    seen.add(key);
+    result.push({ mediaType: item.mediaType, tmdbId: item.tmdbId });
+  }
+  return result;
+}
+
 /** Creator + Executive Producer credits for a TV show — same dedup/cap
  * approach as extractMovieCredits, see there for why. */
 export function extractTvCredits(

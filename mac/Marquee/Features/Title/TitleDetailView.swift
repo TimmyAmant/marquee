@@ -992,9 +992,11 @@ private struct FranchiseSection: View {
 
     @Environment(AppModel.self) private var model
     @State private var confirmingAddAll = false
+    @State private var confirmingRequestAll = false
 
     var body: some View {
         let missingCount = franchise.addAllMissing.count
+        let requestableCount = franchise.requestAllMissing?.count ?? 0
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
                 SectionTitle(text: franchise.title)
@@ -1010,6 +1012,17 @@ private struct FranchiseSection: View {
                         .buttonStyle(OutlineButtonStyle(compact: true))
                         .disabled(screen.isAddingAll)
                 }
+                if let result = screen.requestAllResult {
+                    Text(result)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                } else if requestableCount > 0 {
+                    Button(screen.isRequestingAll ? "Requesting…" : "Request all \(requestableCount) missing") {
+                        confirmingRequestAll = true
+                    }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    .disabled(screen.isRequestingAll)
+                }
             }
             PosterGrid {
                 ForEach(franchise.items) { card in
@@ -1022,6 +1035,13 @@ private struct FranchiseSection: View {
             isPresented: $confirmingAddAll
         ) {
             Button("Add All") { screen.addAllMissing() }
+            Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Request all \(requestableCount) missing title\(requestableCount == 1 ? "" : "s")?",
+            isPresented: $confirmingRequestAll
+        ) {
+            Button("Request All") { Task { await screen.requestAllMissing() } }
             Button("Cancel", role: .cancel) {}
         }
     }

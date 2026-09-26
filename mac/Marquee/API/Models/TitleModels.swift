@@ -149,6 +149,10 @@ extension API {
             let items: [TitleCard]
             /// The admin's "Add all N missing" set (empty for members).
             let addAllMissing: [TitleID]
+            /// A household member's "Request all N missing" set (always empty
+            /// for the admin); nil from a server older than the feature, which
+            /// hides the button like an empty list.
+            let requestAllMissing: [TitleID]?
         }
 
         let mediaType: MediaType

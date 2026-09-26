@@ -82,7 +82,12 @@ where the real server needed something the core contract didn't spell out.
     PIN flow; new `/me/links/sso/*` and admin `/settings/sso`. A server
     older than this has neither field — treat missing as null/false and
     don't offer the buttons.
-13. **Personal notifications (0.45+, additive).** Every account can add its
+13. **"Request all N missing" for household members (additive).** The title
+    detail's `franchise` gains `requestAllMissing`, and the new
+    `POST /titles/{type}/{tmdbId}/request-all-missing` requests them all in
+    one go. A server older than this leaves the field out — treat missing as
+    an empty list and don't show the button.
+14. **Personal notifications (0.45.0+, additive).** Every account can add its
     own channels (`/me/notification-channels`) and choose which events reach
     the bell, device push and each channel (`/me/notification-preferences`);
     the admin picks what the household channels post
@@ -750,14 +755,26 @@ Header type-ahead: up to 7 people/movies/series. `q` shorter than 2 characters
 ```json
 {
   "results": [
-    { "id": 603, "mediaType": "movie", "name": "The Matrix", "posterPath": "/aOIu.jpg", "subtitle": "1999" },
-    { "id": 6384, "mediaType": "person", "name": "Keanu Reeves", "posterPath": "/8RZL.jpg", "subtitle": "Acting" }
+    { "id": 603, "mediaType": "movie", "name": "The Matrix", "posterPath": "/aOIu.jpg", "subtitle": "1999", "status": "owned" },
+    { "id": 6384, "mediaType": "person", "name": "Keanu Reeves", "posterPath": "/8RZL.jpg", "subtitle": "Acting" },
+    { "id": 604, "mediaType": "movie", "name": "The Matrix Reloaded", "posterPath": "/9TGH.jpg", "subtitle": "2003", "status": "tracked_downloading" },
+    { "id": 624860, "mediaType": "movie", "name": "The Matrix Resurrections", "posterPath": "/8c4a.jpg", "subtitle": "2021", "status": "untracked" }
   ]
 }
 ```
 
 `subtitle` is the year for titles and the known-for department for people.
 Website labels: person → "Actor", movie → "Movie", tv → "TV".
+
+`status` (movies and series only; absent for people) is the
+viewer's library status — the same `LibraryStatus` values as elsewhere
+(`owned`, `tracked_downloading`, `tracked_monitored`, `coming_soon`,
+`untracked`), from the locally synced Sonarr/Radarr/Plex/Jellyfin state, never
+a live Sonarr/Radarr call. Treat it as an open set, and a missing field (an
+older server) as unknown. The website tints the Movie/TV pill with it: green
+in the library, blue downloading, red missing, purple coming soon, grey
+otherwise. Active requests aren't reflected here (search result cards don't
+show them either).
 
 ---
 
@@ -859,7 +876,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "collectionId": 2344,
     "collectionFavorited": false,
     "items": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest — oldest first */ ],
-    "addAllMissing": [ { "mediaType": "movie", "tmdbId": 604 } ]
+    "addAllMissing": [ { "mediaType": "movie", "tmdbId": 604 } ],
+    "requestAllMissing": []
   },
   "studios": [ { "tmdbId": 79, "name": "Village Roadshow Pictures", "logoPath": "/at4u.png", "favorited": false } ],
   "similar": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ]
@@ -982,7 +1000,13 @@ Field notes:
   `collectionId`/`collectionFavorited` are null for TV groups; the star next to
   the heading favorites the collection (`/favorites/collection/{collectionId}`).
   `addAllMissing` is the admin's "Add all N missing" set (empty for members);
-  add each with `POST /titles/{type}/{id}/add`.
+  add each with `POST /titles/{type}/{id}/add`. `requestAllMissing` is a
+  household member's "Request all N missing" set (plain and trusted members;
+  always empty for the admin): the franchise titles that show a Request
+  button — not tracked or owned, not already requested by you, not on the
+  blocklist. Show "Request all N missing" when it isn't empty, confirm
+  ("Request all N missing titles?"), then
+  `POST /titles/{type}/{tmdbId}/request-all-missing` and reload the page.
 - `studios`: production companies (or networks for thinly-credited streaming
   originals), heading "Studio".
 - `similar`: TMDb recommendations, heading "More like this".
@@ -1324,6 +1348,40 @@ numbers must be whole numbers." / "Season 7 isn't listed for this show." /
 your library." (whole series) / "You've already requested this — it's waiting
 for approval." / "Those seasons are already in your library or on their way."
 (seasons); `404` / `502` (TMDb).
+
+### `POST /titles/{type}/{tmdbId}/request-all-missing` — user
+
+A franchise row's "Request all N missing" (household members; the admin gets
+`403 forbidden` and uses "Add all"). No body. The server works out the set
+itself from this title's collection or crossover group — the detail's
+`franchise.requestAllMissing` — and requests each title exactly as
+`POST …/request` would (whole series for TV), so request limits, the
+blocklist, auto-approval and trusted members' instant approval all apply.
+Reviewers get one alert for the batch ("Anna requested 3 titles from “Ice
+Age Collection”: …") instead of one per title.
+
+Some titles can be refused while the rest go through — still `200`. `total`
+is how many were in the set, `requested` how many requests were filed,
+`refused` the rest with the reason, and `message` the line to show:
+"Requested all 4." / "Requested 2 of 4. You've used your 2 movie requests
+for a week. You can ask again in 7 days." / "Couldn't request any of the 4.
+…" / "Nothing left to request here." (the set was empty).
+
+```json
+{
+  "ok": true,
+  "total": 4,
+  "requested": 2,
+  "refused": [
+    { "mediaType": "movie", "tmdbId": 57800, "title": "Ice Age: Continental Drift", "error": "You've used your 2 movie requests for a week. You can ask again in 7 days." },
+    { "mediaType": "movie", "tmdbId": 278154, "title": "Ice Age: Collision Course", "error": "You've used your 2 movie requests for a week. You can ask again in 7 days." }
+  ],
+  "message": "Requested 2 of 4. You've used your 2 movie requests for a week. You can ask again in 7 days."
+}
+```
+
+Errors: `403 forbidden` (the admin); `404 not_found` (no such title, or it
+isn't part of a collection); `502 upstream` (TMDb).
 
 ### `GET /requests/mine` — user
 
@@ -2975,6 +3033,7 @@ what to do, grouped by area.
 | | `DELETE /favorites/{entityType}/{tmdbId}` | user |
 | | `POST /favorites/{entityType}/{tmdbId}/toggle` | user |
 | Requests | `POST /titles/{type}/{tmdbId}/request` | user |
+| | `POST /titles/{type}/{tmdbId}/request-all-missing` | user |
 | | `GET /requests/mine` | user |
 | | `GET /requests/pending` | admin |
 | | `GET /requests/history` | admin |

@@ -57,6 +57,26 @@ extension API {
         let requestId: UUID
     }
 
+    /// `POST /titles/{type}/{tmdbId}/request-all-missing` response: some titles
+    /// can be refused (request limits, the blocklist) while the rest go through.
+    struct RequestAllMissingResult: Codable, Hashable, Sendable {
+        struct Refusal: Codable, Hashable, Sendable {
+            let mediaType: MediaType
+            let tmdbId: Int
+            let title: String
+            let error: String
+        }
+
+        let ok: Bool
+        /// How many titles were in the set.
+        let total: Int
+        /// How many requests were filed.
+        let requested: Int
+        let refused: [Refusal]
+        /// The line to show: "Requested 2 of 4. You've used your 2 movie requests…"
+        let message: String
+    }
+
     /// `GET /requests/mine`: your own requests, newest first.
     struct MyRequest: Codable, Hashable, Sendable, Identifiable {
         let id: UUID
