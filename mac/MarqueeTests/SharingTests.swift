@@ -47,7 +47,7 @@ final class SharingTests: XCTestCase {
 
     func testTitleSharedNotification() throws {
         let list = try decode(API.NotificationList.self, "notifications")
-        XCTAssertEqual(list.results.count, 2)
+        XCTAssertEqual(list.results.count, 3)
 
         let declined = list.results[0]
         XCTAssertEqual(declined.eventType, .requestRejected)
@@ -55,7 +55,7 @@ final class SharingTests: XCTestCase {
         XCTAssertNil(declined.note)
         XCTAssertEqual(declined.bannerTitle, "The Matrix")
 
-        let shared = list.results[1]
+        let shared = list.results[2]
         XCTAssertEqual(shared.eventType, .titleShared)
         XCTAssertEqual(shared.titleID, API.TitleID(.movie, 425))
         XCTAssertEqual(shared.note, "You'd love this one")

@@ -81,6 +81,9 @@ extension API {
         let isMine: Bool
         let createdAt: Date
         let resolvedAt: Date?
+        /// 0.46+: comments in its conversation; nil from an older server,
+        /// which has no conversations (no "Comments" then).
+        var commentCount: Int? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
 

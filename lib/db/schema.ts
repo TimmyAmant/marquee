@@ -15,8 +15,10 @@ import {
   uniqueIndex,
   check,
   customType,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { AddOverrides } from "@/lib/arr/add-options";
 
 const bytea = customType<{ data: Buffer }>({
   dataType() {
@@ -496,6 +498,10 @@ export const notificationEventTypeValues = [
   // A household member sent this title to you (lib/sharing) — the sender
   // and their note are on the row (senderUserId, note).
   "title_shared",
+  // A new comment on a request or problem report you're part of
+  // (lib/comments): the requester or reporter, and the reviewers.
+  "request_comment",
+  "issue_comment",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -528,13 +534,16 @@ export const notifications = pgTable(
     // their optional note, plain text.
     senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
     note: text("note"),
+    // issue_comment: the problem report it's about (request_comment uses
+    // requestId). Null once the report is withdrawn.
+    issueId: uuid("issue_id").references((): AnyPgColumn => issues.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found','request_comment','issue_comment')`,
     ),
   ],
 );
@@ -602,6 +611,16 @@ export const requests = pgTable(
     notFoundAlertedAt: timestamp("not_found_alerted_at", { withTimezone: true }),
     notFoundDismissedAt: timestamp("not_found_dismissed_at", { withTimezone: true }),
     notFoundArrPath: text("not_found_arr_path"),
+    // "Couldn't add" (lib/requests/mutate.ts): approved, but Sonarr/Radarr
+    // couldn't be reached or didn't take it. It stays approved (a reviewer
+    // said yes) with the error, until a reviewer's Retry goes through — with
+    // the same Advanced picks (`addOverrides`) unless they send new ones.
+    addFailedAt: timestamp("add_failed_at", { withTimezone: true }),
+    addError: text("add_error"),
+    addOverrides: jsonb("add_overrides").$type<AddOverrides>(),
+    // When the requester (or a reviewer) last changed its seasons or 4K
+    // while it was pending; null if never.
+    editedAt: timestamp("edited_at", { withTimezone: true }),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),
@@ -1027,6 +1046,29 @@ export const issues = pgTable(
       "issues_kind_check",
       sql`${table.kind} in ('video','audio','subtitles','wont_play','wrong_title','other')`,
     ),
+  ],
+);
+
+/** A conversation on a request or a problem report (lib/comments): between
+ * whoever asked or reported and the reviewers. Plain text. Exactly one of
+ * requestId / issueId is set; the thread goes with its request or report. */
+export const comments = pgTable(
+  "comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id").references(() => requests.id, { onDelete: "cascade" }),
+    issueId: uuid("issue_id").references(() => issues.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("comments_request_created_idx").on(table.requestId, table.createdAt),
+    index("comments_issue_created_idx").on(table.issueId, table.createdAt),
+    check("comments_one_parent_check", sql`(${table.requestId} is null) <> (${table.issueId} is null)`),
   ],
 );
 

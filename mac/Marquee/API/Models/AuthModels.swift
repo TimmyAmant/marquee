@@ -417,12 +417,18 @@ extension API {
         /// Requests listed under "Can't find" (0.46+, reviewers; always 0 for
         /// members). nil from an older server.
         var notFoundRequests: Int? = nil
+        /// Approved requests listed under "Couldn't add" (0.46+, reviewers;
+        /// always 0 for members). nil from an older server.
+        var failedRequests: Int? = nil
 
         static let zero = Badges(unreadNotifications: 0, pendingRequests: 0)
 
-        /// The Requests rail badge: requests, problem reports and "Can't find"
-        /// all wait on the Requests page (components/sidebar.tsx's sum).
-        var requestsPageCount: Int { pendingRequests + (openIssues ?? 0) + (notFoundRequests ?? 0) }
+        /// The Requests rail badge: requests, problem reports, "Can't find"
+        /// and "Couldn't add" all wait on the Requests page
+        /// (components/sidebar.tsx's sum).
+        var requestsPageCount: Int {
+            pendingRequests + (openIssues ?? 0) + (notFoundRequests ?? 0) + (failedRequests ?? 0)
+        }
 
         /// The bell's cap on the website: "9+".
         var bellLabel: String? {

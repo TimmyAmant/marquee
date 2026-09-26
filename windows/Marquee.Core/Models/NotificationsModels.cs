@@ -23,7 +23,8 @@ public sealed record NotificationItem
     /// <summary>
     /// <c>grabbed</c> (started downloading), <c>downloaded</c> (finished),
     /// <c>request_approved</c>, <c>request_rejected</c>, <c>issue_reported</c>,
-    /// <c>issue_resolved</c>, <c>title_shared</c>; <c>Emoji</c> gives
+    /// <c>issue_resolved</c>, <c>title_shared</c>, <c>request_not_found</c>,
+    /// <c>request_comment</c>, <c>issue_comment</c>; <c>Emoji</c> gives
     /// the website's glyph for each.
     /// </summary>
     public required NotificationEventType EventType { get; init; }
@@ -51,6 +52,15 @@ public sealed record NotificationItem
 
     /// <summary>The sharer's note, shown in quotes under the message; null without one (and on other kinds).</summary>
     public string? Note { get; init; }
+
+    /// <summary>
+    /// The request a <c>request_created</c> or <c>request_comment</c> one is
+    /// about (0.46+); null on other kinds, and from an older server.
+    /// </summary>
+    public Guid? RequestId { get; init; }
+
+    /// <summary>The problem report an <c>issue_comment</c> one is about (0.46+); null otherwise.</summary>
+    public Guid? IssueId { get; init; }
 
     /// <summary>Clicking one opens this title and marks it read.</summary>
     public TitleId TitleId => new(MediaType, TmdbId);

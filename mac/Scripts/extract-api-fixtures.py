@@ -68,6 +68,8 @@ BLOCKS = [
     ("`GET /requests/not-found`", ["requests-not-found"]),
     ("`GET /requests/pending-count`", ["requests-pending-count"]),
     ("`POST /requests/approve-all`", ["requests-approve-all"]),
+    ("`GET /requests/{id}/edit-options`", ["request-edit-options"]),
+    ("`GET /requests/{id}/comments`", ["comment-thread"]),
     ("`POST /titles/{type}/{tmdbId}/issues`", ["issue-report-body"]),
     ("`GET /issues`", ["issues"]),
     ("`GET /notifications`", ["notifications"]),

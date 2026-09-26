@@ -286,12 +286,15 @@ public sealed record Badges
     /// <summary>Requests listed under "Can't find" (0.46+; an older server omits it, meaning 0). Always 0 for members.</summary>
     public int NotFoundRequests { get; init; }
 
+    /// <summary>Approved requests listed under "Couldn't add" (0.46+; an older server omits it, meaning 0). Always 0 for members.</summary>
+    public int FailedRequests { get; init; }
+
     /// <summary>
-    /// The Requests badge: pending requests, open problem reports and
-    /// "Can't find" requests, since all of them wait on that page (the
-    /// website's sum).
+    /// The Requests badge: pending requests, open problem reports, "Can't
+    /// find" and "Couldn't add" requests, since all of them wait on that page
+    /// (the website's sum).
     /// </summary>
-    public int RequestsBadge => PendingRequests + OpenIssues + NotFoundRequests;
+    public int RequestsBadge => PendingRequests + OpenIssues + NotFoundRequests + FailedRequests;
 
     public static Badges Zero { get; } = new() { UnreadNotifications = 0, PendingRequests = 0 };
 

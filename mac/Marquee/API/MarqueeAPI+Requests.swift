@@ -129,6 +129,42 @@ extension MarqueeAPI {
             try await reject(id, reason: nil)
         }
 
+        /// `PATCH /requests/{id}` (0.46+) — "Save changes" in Edit: your own
+        /// pending request, or (reviewers) anyone's before approving. A field
+        /// left `.unchanged` / nil sends no key. `.conflict("It's already been
+        /// reviewed, so it can't be changed. …")`, `.invalid`, `.notFound`.
+        func edit(_ id: UUID, _ edit: API.RequestEdit) async throws {
+            let _: API.OK = try await transport.mutate(
+                .patch, "/requests/\(MarqueeAPI.segment(id))", body: edit, timeout: Timeout.integrations,
+                changes: [.requests, .notifications]
+            )
+        }
+
+        /// `GET /requests/{id}/edit-options` (0.46+) — what "Edit" can offer.
+        /// `.notFound` (not yours, or an older server), `.conflict` once reviewed.
+        func editOptions(_ id: UUID) async throws -> API.RequestEditOptions {
+            try await transport.get("/requests/\(MarqueeAPI.segment(id))/edit-options", timeout: Timeout.integrations)
+        }
+
+        /// `DELETE /requests/{id}` (0.46+) — "Cancel request": your own, while
+        /// it's pending. `.forbidden` for a reviewer on someone else's,
+        /// `.conflict` once reviewed.
+        func cancel(_ id: UUID) async throws {
+            let _: API.OK = try await transport.mutate(
+                .delete, "/requests/\(MarqueeAPI.segment(id))", changes: [.requests, .library, .notifications]
+            )
+        }
+
+        /// `POST /requests/{id}/retry` (reviewers, 0.46+) — "Retry" under
+        /// "Couldn't add": adds it again with the picks it was approved with,
+        /// or `overrides` ("Advanced"); nil sends no body at all.
+        func retry(_ id: UUID, overrides: API.AddOverrides? = nil) async throws {
+            let _: API.OK = try await transport.mutate(
+                .post, "/requests/\(MarqueeAPI.segment(id))/retry", body: overrides, timeout: Timeout.integrations,
+                changes: [.requests, .library, .notifications]
+            )
+        }
+
         /// `POST /requests/approve-all` (admin) — one at a time; failures stay
         /// pending. Throws the first failure when none could be approved.
         func approveAll() async throws -> API.ApproveAllResult {

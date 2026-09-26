@@ -215,6 +215,14 @@ public sealed record TitleViewerState
     public DateTimeOffset? NotFoundSince { get; init; }
 
     /// <summary>
+    /// The viewer's own requests for this title (0.46+), regular and 4K,
+    /// newest first (at most five): shown under the actions with Edit,
+    /// Cancel and the conversation. Empty when there are none, and from an
+    /// older server.
+    /// </summary>
+    public IReadOnlyList<TitleRequestSummary> MyRequests { get; init; } = [];
+
+    /// <summary>
     /// On the admin's request blocklist (0.41+): the can-request flags are
     /// then already false. Null when it isn't, and from an older server.
     /// </summary>

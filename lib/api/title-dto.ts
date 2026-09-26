@@ -111,6 +111,7 @@ export function titleDetailDto(
       openReports: data.openReports,
       blocked: data.blocked,
       notFoundSince: data.notFoundSince,
+      myRequests: data.myRequests,
     }),
     seasons: seasonsNewestFirst(data.seasons).map((season) => {
       const stats = seasonCompleteness.get(season.season_number);

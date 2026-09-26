@@ -19,7 +19,9 @@ public sealed class RequestsFixtureTests
     public void MyRequestsDecode()
     {
         var mine = Fixtures.Decode<ListResponse<MyRequest>>("requests-mine").Results;
-        var request = Assert.Single(mine);
+        // An approved movie, then (0.46+) a pending season request.
+        Assert.Equal(2, mine.Count);
+        var request = mine[0];
 
         Assert.Equal(RequestId, request.Id);
         Assert.Equal(MediaType.Movie, request.MediaType);
@@ -93,9 +95,10 @@ public sealed class RequestsFixtureTests
     public void HistoryDecodes()
     {
         var history = Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results;
-        // The rejected request, then (0.43+) one approved to a second Radarr.
-        Assert.Equal(2, history.Count);
-        var request = history[0];
+        // (0.46+) one under "Couldn't add" first, the rejected request, then
+        // (0.43+) one approved to a second Radarr.
+        Assert.Equal(3, history.Count);
+        var request = history[1];
 
         Assert.Equal(RequestId, request.Id);
         Assert.Equal(RequestStatus.Rejected, request.Status);
@@ -112,7 +115,7 @@ public sealed class RequestsFixtureTests
     [Fact]
     public void AddedToDecodes()
     {
-        var approved = Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results[1];
+        var approved = Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results[2];
 
         Assert.Equal("Dune", approved.Title);
         Assert.Equal(RequestStatus.Approved, approved.Status);
@@ -157,12 +160,12 @@ public sealed class RequestsFixtureTests
 
         var history = Fixtures.Read("requests-history")
             .Replace("\"statusLabel\": \"Rejected\",", "\"statusLabel\": \"Rejected\", \"rejectionReason\": \"Not a fit\",", StringComparison.Ordinal);
-        var reviewed = Json.Decode<ListResponse<ReviewedRequest>>(history).Results[0];
+        var reviewed = Json.Decode<ListResponse<ReviewedRequest>>(history).Results[1];
         Assert.Equal("Not a fit", reviewed.RejectionReason);
 
         var mine = Fixtures.Read("requests-mine")
             .Replace("\"statusLabel\": \"Downloading\",", "\"statusLabel\": \"Downloading\", \"rejectionReason\": null,", StringComparison.Ordinal);
-        Assert.Null(Assert.Single(Json.Decode<ListResponse<MyRequest>>(mine).Results).RejectionReason);
+        Assert.All(Json.Decode<ListResponse<MyRequest>>(mine).Results, request => Assert.Null(request.RejectionReason));
     }
 
     [Fact]
@@ -196,7 +199,7 @@ public sealed class RequestsFixtureTests
         var json = Fixtures.Read("requests-mine")
             .Replace("\"statusTone\": \"downloading\"", "\"statusTone\": \"archived\"", StringComparison.Ordinal)
             .Replace("\"libraryStatus\": \"tracked_downloading\"", "\"libraryStatus\": \"vaulted\"", StringComparison.Ordinal);
-        var request = Assert.Single(Json.Decode<ListResponse<MyRequest>>(json).Results);
+        var request = Json.Decode<ListResponse<MyRequest>>(json).Results[0];
         Assert.Equal("archived", request.StatusTone.Value);
         Assert.False(request.StatusTone.IsKnown);
         Assert.NotNull(request.LibraryStatus);
@@ -221,7 +224,7 @@ public sealed class RequestsFixtureTests
     [Fact]
     public void Is4kDecodesOnEveryList()
     {
-        var mine = Assert.Single(Fixtures.Decode<ListResponse<MyRequest>>("requests-mine").Results);
+        var mine = Fixtures.Decode<ListResponse<MyRequest>>("requests-mine").Results[0];
         Assert.False(mine.Is4k);
         Assert.Equal("", mine.DetailText);
         Assert.All(Fixtures.Decode<PendingRequests>("requests-pending").Results, request => Assert.False(request.Is4k));

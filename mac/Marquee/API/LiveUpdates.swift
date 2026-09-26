@@ -254,7 +254,8 @@ final class LiveUpdates {
             var change: ServerEvents.Change = []
             if fresh.unreadNotifications != previous.unreadNotifications { change.insert(.notifications) }
             if fresh.pendingRequests != previous.pendingRequests || fresh.openIssues != previous.openIssues
-                || fresh.notFoundRequests != previous.notFoundRequests {
+                || fresh.notFoundRequests != previous.notFoundRequests
+                || fresh.failedRequests != previous.failedRequests {
                 change.insert(.requests)
             }
             if !change.isEmpty { events.record(change, source: .server) }
@@ -333,7 +334,9 @@ final class LiveUpdates {
                 alert: newest.alert,
                 createdAt: newest.createdAt,
                 sharedBy: newest.sharedBy,
-                note: newest.note
+                note: newest.note,
+                requestId: newest.requestId,
+                issueId: newest.issueId
             ))
         }
     }

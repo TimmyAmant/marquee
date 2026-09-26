@@ -1,0 +1,40 @@
+{
+  "canComment": true,
+  "maxLength": 2000,
+  "results": [
+    {
+      "id": "report:83bedf64-c5d8-4f43-98a0-bb615c4b9897",
+      "kind": "report",
+      "author": {
+        "userId": "2d0b6e1a-8f3c-4a5d-9e7b-1c2d3e4f5a6b",
+        "label": "Member",
+        "avatarUrl": null,
+        "role": "member"
+      },
+      "body": "Out of sync after 20 minutes",
+      "createdAt": "2026-09-26T02:40:11.000Z",
+      "editedAt": null,
+      "isMine": true,
+      "canEdit": false,
+      "canDelete": false,
+      "editableUntil": null
+    },
+    {
+      "id": "7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b",
+      "kind": "comment",
+      "author": {
+        "userId": "11111111-2222-4333-8444-555555555555",
+        "label": "Tess",
+        "avatarUrl": "/api/v1/users/11111111-2222-4333-8444-555555555555/avatar?v=1758220800000",
+        "role": "reviewer"
+      },
+      "body": "Which episode?\nI'll swap the file tonight.",
+      "createdAt": "2026-09-26T03:02:40.000Z",
+      "editedAt": "2026-09-26T03:04:02.000Z",
+      "isMine": false,
+      "canEdit": false,
+      "canDelete": false,
+      "editableUntil": null
+    }
+  ]
+}

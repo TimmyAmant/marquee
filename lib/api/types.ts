@@ -29,7 +29,11 @@ export type NotificationEventType =
    * ("We're still looking for …"). */
   | "request_not_found"
   /** 0.45.1+: a household member shared a title with you (`sharedBy`, `note`). */
-  | "title_shared";
+  | "title_shared"
+  /** 0.46+: a new comment on a request (`requestId`) or problem report
+   * (`issueId`) you're part of. */
+  | "request_comment"
+  | "issue_comment";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -187,6 +191,10 @@ export type Badges = {
   /** 0.46+: approved requests Sonarr/Radarr can't find ("Can't find" on the
    * Requests page); 0 for members, and an older server omits it. */
   notFoundRequests: number;
+  /** 0.46+: approved requests Sonarr/Radarr couldn't be reached to add
+   * ("Couldn't add" on the Requests page); 0 for members, and an older
+   * server omits it. */
+  failedRequests: number;
 };
 
 /** A problem report (GET /issues). */
@@ -212,6 +220,45 @@ export type Issue = {
   isMine: boolean;
   createdAt: string;
   resolvedAt: string | null;
+  /** 0.46+: comments in its conversation (the report's own note and the
+   * resolution note aren't counted). */
+  commentCount: number;
+};
+
+/** 0.46+: who wrote a comment. `role` "reviewer" is a trusted member;
+ * null once the account is gone (`label` is then "Someone"). */
+export type CommentAuthor = {
+  userId: string | null;
+  label: string;
+  avatarUrl: string | null;
+  role: "admin" | "reviewer" | "member" | null;
+};
+
+/** 0.46+: one message in a request's or problem report's thread. Besides
+ * real comments (`kind` "comment"), a thread starts with what was already
+ * said: the report's own note ("report"), the note it was marked fixed with
+ * ("resolution"), and why a request was declined ("declined") — those have
+ * ids like "report:<issue id>" and can't be edited or deleted. */
+export type Comment = {
+  id: string;
+  kind: "comment" | "report" | "resolution" | "declined";
+  author: CommentAuthor;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+  isMine: boolean;
+  /** The author, for 15 minutes after posting. */
+  canEdit: boolean;
+  /** As canEdit, or the admin at any time. */
+  canDelete: boolean;
+  /** When canEdit runs out; null for the notes. */
+  editableUntil: string | null;
+};
+
+export type CommentThread = ListResponse<Comment> & {
+  /** The viewer may add to it (the requester or reporter, and reviewers). */
+  canComment: boolean;
+  maxLength: number;
 };
 
 export type IssuesResponse = ListResponse<Issue> & {
@@ -385,6 +432,46 @@ export type TitleViewerState = {
    * this title became "Can't find" (Sonarr/Radarr has found nothing); null
    * otherwise, and omitted by an older server. */
   notFoundSince: string | null;
+  /** 0.46+: the viewer's own requests for this title (regular and 4K, the
+   * newest five), for Cancel / Edit and the conversation. Empty when there
+   * are none; an older server omits it. */
+  myRequests: TitleRequestSummary[];
+};
+
+/** 0.46+: GET /requests/{id}/edit-options — what "Edit" on a pending
+ * request can offer. */
+export type RequestEditOptions = {
+  requestId: string;
+  mediaType: MediaType;
+  title: string;
+  /** As it is now: null seasons is the whole series (and every movie). */
+  seasons: number[] | null;
+  is4k: boolean;
+  /** TV: the show's seasons, newest first, as the season picker lists them
+   * — "requestable" ones can be ticked (this request's own included). Empty
+   * for a movie. */
+  seasonRows: {
+    seasonNumber: number;
+    name: string;
+    episodeCount: number;
+    state: "requestable" | "complete" | "monitored" | "requested" | "unavailable";
+  }[];
+  /** It can be switched to (or stay) 4K: the 4K Sonarr/Radarr is set up. */
+  fourKAvailable: boolean;
+};
+
+/** 0.46+: one of the viewer's own requests, on the title page. */
+export type TitleRequestSummary = {
+  id: string;
+  status: RequestStatus;
+  seasons: number[] | null;
+  seasonsLabel: string | null;
+  is4k: boolean;
+  /** Still pending: its requester may change its seasons / 4K or cancel it. */
+  canEdit: boolean;
+  canCancel: boolean;
+  commentCount: number;
+  createdAt: string;
 };
 
 export type FourKViewerState = {
@@ -579,6 +666,14 @@ export type MyRequest = {
   statusTone: "pending" | "declined" | "owned" | "downloading" | "coming_soon" | "approved";
   createdAt: string;
   reviewedAt: string | null;
+  /** 0.46+: you may still change it (seasons, 4K) or cancel it — while it's
+   * pending. An older server omits these, meaning false. */
+  canEdit: boolean;
+  canCancel: boolean;
+  /** 0.46+: when its seasons or 4K were last changed; null if never. */
+  editedAt: string | null;
+  /** 0.46+: comments in its conversation (the notes aren't counted). */
+  commentCount: number;
 };
 
 export type PendingRequest = {
@@ -596,6 +691,10 @@ export type PendingRequest = {
   is4k: boolean;
   requestedBy: RequestPerson;
   createdAt: string;
+  /** 0.46+: when its seasons or 4K were last changed; null if never. */
+  editedAt: string | null;
+  /** 0.46+: comments in its conversation. */
+  commentCount: number;
 };
 
 export type PendingRequestsResponse = ListResponse<PendingRequest> & {
@@ -630,6 +729,11 @@ export type ReviewedRequest = {
   /** 0.46+: listed under "Can't find" since then; null when it isn't (an
    * older server omits it). */
   notFoundSince: string | null;
+  /** 0.46+: approved, but Sonarr/Radarr couldn't be reached (or errored) to
+   * add it — "Couldn't add", with a Retry. Null otherwise. */
+  addFailed: { error: string; since: string } | null;
+  /** 0.46+: comments in its conversation. */
+  commentCount: number;
 };
 
 /** 0.46+: an approved request Sonarr/Radarr hasn't found (GET /requests/not-found). */
@@ -698,6 +802,11 @@ export type NotificationItem = {
   sharedBy: ShareableUser | null;
   /** 0.45.1+: title_shared — the sharer's note, plain text; else null. */
   note: string | null;
+  /** 0.46+: the request a request_created or request_comment notification is
+   * about, and the problem report an issue_comment one is about; else null
+   * (and null once it's gone). Missing on older servers. */
+  requestId: string | null;
+  issueId: string | null;
 };
 
 /** GET /me/notification-channels (0.45+). */
