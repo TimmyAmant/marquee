@@ -39,8 +39,11 @@ extension API {
         var linked: LinkedAccounts? = nil
         /// See `User.hasPassword`; nil from older servers.
         var hasPassword: Bool? = nil
+        /// 0.39+: the account's request limits; nil from older servers.
+        var requestLimits: RequestLimits? = nil
 
         var isAdmin: Bool { role == .admin }
+        var canReviewRequests: Bool { role.canReviewRequests }
         /// What the website prints: the display name, else the username.
         var label: String { displayName.nonBlank ?? username }
 
@@ -50,6 +53,51 @@ extension API {
                 libraryOwnerId: libraryOwnerId, avatarUrl: avatarUrl,
                 linked: linked, hasPassword: hasPassword
             )
+        }
+    }
+
+    /// `requestLimits` on `/me` (0.39+): each type is nil when it isn't
+    /// limited (always for the admin and trusted members).
+    struct RequestLimits: Codable, Hashable, Sendable {
+        var movie: RequestLimit?
+        var tv: RequestLimit?
+
+        init(movie: RequestLimit? = nil, tv: RequestLimit? = nil) {
+            self.movie = movie
+            self.tv = tv
+        }
+
+        /// The line above a member's requests (app/requests/page.tsx):
+        /// "Movies: 3 of 5 requests left (every 7 days) · TV: none left
+        /// until Oct 3"; nil when neither type is limited.
+        func summaryLine(calendar: Calendar = .current) -> String? {
+            let parts = [
+                movie.map { $0.line(label: "Movies", calendar: calendar) },
+                tv.map { $0.line(label: "TV", calendar: calendar) },
+            ].compactMap { $0 }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        }
+    }
+
+    /// One type's limit: at most `limit` requests in any `days` days.
+    struct RequestLimit: Codable, Hashable, Sendable {
+        let limit: Int
+        let days: Int
+        let used: Int
+        let remaining: Int
+        /// While none is left: when the oldest counted request ages out.
+        var nextSlotAt: Date? = nil
+
+        /// The website's `quotaLine`.
+        func line(label: String, calendar: Calendar = .current) -> String {
+            if remaining > 0 {
+                return "\(label): \(remaining) of \(limit) requests left (every \(days) days)"
+            }
+            guard let nextSlotAt else { return "\(label): none left" }
+            // "Oct 3", like the website's toLocaleDateString("en-US", …).
+            let style = Date.FormatStyle(locale: Locale(identifier: "en_US"), calendar: calendar, timeZone: calendar.timeZone)
+                .month(.abbreviated).day()
+            return "\(label): none left until \(nextSlotAt.formatted(style))"
         }
     }
 

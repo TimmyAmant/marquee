@@ -25,6 +25,8 @@ struct User: Codable, Equatable, Hashable, Sendable {
     var hasPassword: Bool? = nil
 
     var isAdmin: Bool { role == .admin }
+    /// Request and problem-report review: the admin or a trusted member.
+    var canReviewRequests: Bool { role.canReviewRequests }
 }
 
 /// `linked` on `/me` and household members: which media-server accounts
