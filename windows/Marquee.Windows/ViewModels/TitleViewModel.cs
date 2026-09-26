@@ -205,6 +205,12 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(CanReport),
         nameof(ShowsProblemReported),
         nameof(ReportButtonLabel),
+        nameof(ShowsBlockedPill),
+        nameof(BlockedLine),
+        nameof(ShowsBlockedByKeyword),
+        nameof(BlockedKeywordLine),
+        nameof(CanBlock),
+        nameof(CanUnblock),
     ];
 
     private readonly AppModel model;
@@ -290,6 +296,10 @@ public sealed partial class TitleViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasFourKError))]
     private string? fourKError;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UnblockLabel))]
+    private bool isUnblocking;
 
     public TitleViewModel(AppModel model)
     {
@@ -485,6 +495,65 @@ public sealed partial class TitleViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowsProblemReported));
         OnPropertyChanged(nameof(ReportButtonLabel));
         await RefreshStatusAsync();
+    }
+
+    // MARK: Request blocklist (viewer.blocked, 0.41+; components/block-requests-button.tsx)
+
+    private TitleBlock? Blocked => Viewer?.Blocked;
+    private bool ViewerIsAdmin => Viewer?.IsAdmin == true;
+
+    /// <summary>A member's "Requests are closed for this title — reason" in place of Request.</summary>
+    public bool ShowsBlockedPill => Blocked != null && !ViewerIsAdmin;
+
+    public string BlockedLine => Blocked?.MemberLine ?? "";
+
+    /// <summary>The admin's "Requests blocked by “anime”": a keyword did it, so it's unblocked from Settings.</summary>
+    public bool ShowsBlockedByKeyword => ViewerIsAdmin && Blocked?.KeywordLine != null;
+
+    public string BlockedKeywordLine => Blocked?.KeywordLine ?? "";
+
+    /// <summary>The admin's "Block requests"; hidden on a server older than the blocklist.</summary>
+    public bool CanBlock => ViewerIsAdmin && Viewer?.HasBlocklist == true && Blocked == null;
+
+    /// <summary>The admin's "Unblock requests" on a title blocked from its own page.</summary>
+    public bool CanUnblock => ViewerIsAdmin && Blocked != null && Blocked.KeywordLine == null;
+
+    public string UnblockLabel => IsUnblocking ? "Unblocking…" : "Unblock requests";
+
+    /// <summary>
+    /// The Block dialog's submit (<c>POST …/block</c>, with the optional
+    /// reason). Throws <see cref="ApiException"/> for the dialog to show
+    /// inline; on success the status block is re-read.
+    /// </summary>
+    public async Task BlockAsync(string? reason)
+    {
+        await model.Api.Blocklist.BlockTitleAsync(Id.MediaType, Id.TmdbId, reason);
+        await RefreshStatusAsync();
+    }
+
+    /// <summary>"Unblock requests" (<c>DELETE …/block</c>).</summary>
+    [RelayCommand]
+    private async Task UnblockAsync()
+    {
+        if (IsUnblocking)
+        {
+            return;
+        }
+        IsUnblocking = true;
+        AddError = null;
+        try
+        {
+            await model.Api.Blocklist.UnblockTitleAsync(Id.MediaType, Id.TmdbId);
+            await RefreshStatusAsync();
+        }
+        catch (ApiException error)
+        {
+            AddError = error.Message;
+        }
+        finally
+        {
+            IsUnblocking = false;
+        }
     }
 
     // MARK: Lifecycle

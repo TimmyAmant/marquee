@@ -62,6 +62,23 @@ extension MarqueeAPI {
             return result.newTmdbId
         }
 
+        /// `POST /titles/{type}/{tmdbId}/block` (admin, 0.41+) — "Block
+        /// requests", with an optional reason (≤ 200 characters) shown to
+        /// whoever asks. A blank reason sends no body.
+        func block(_ type: API.MediaType, id tmdbId: Int, reason: String? = nil) async throws {
+            let body: (any Encodable & Sendable)? = reason.nonBlank.map { API.BlockTitleRequest(reason: $0) }
+            let _: API.OK = try await transport.mutate(
+                .post, Self.path(type, tmdbId) + "/block", body: body, changes: [.library, .settings]
+            )
+        }
+
+        /// `DELETE /titles/{type}/{tmdbId}/block` (admin, 0.41+) — "Unblock requests".
+        func unblock(_ type: API.MediaType, id tmdbId: Int) async throws {
+            let _: API.OK = try await transport.mutate(
+                .delete, Self.path(type, tmdbId) + "/block", changes: [.library, .settings]
+            )
+        }
+
         static func path(_ type: API.MediaType, _ tmdbId: Int) -> String {
             "/titles/\(MarqueeAPI.segment(type))/\(tmdbId)"
         }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/block-requests-button.tsx's reason field: an optional reason
+  for whoever asks, then Block. Block sends it itself and keeps the dialog
+  open with the message on a failure, like the Report dialog.
+-->
+<ContentDialog
+    x:Class="Marquee.Windows.Controls.BlockRequestsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Block requests"
+    PrimaryButtonText="Block"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    Closing="OnClosing">
+
+    <StackPanel Spacing="14" MinWidth="380">
+        <TextBlock
+            Text="Nobody can request this title (you can still add it yourself). Members see your reason in place of Request."
+            Style="{StaticResource BodyTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="Wrap" />
+        <TextBox
+            x:Name="ReasonBox"
+            Header="Reason (optional)"
+            PlaceholderText="Why, for whoever asks"
+            MaxLength="200" />
+        <TextBlock
+            x:Name="ErrorText"
+            Visibility="Collapsed"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="Wrap" />
+    </StackPanel>
+</ContentDialog>

@@ -35,7 +35,17 @@ final class MarqueeAPIRequestTests: XCTestCase {
         super.tearDown()
     }
 
+    /// `GET /settings/blocklist`'s example from the doc's prose, with real
+    /// ids and dates (the doc elides them).
+    nonisolated static let blocklistResponse = #"""
+    {"results":[
+      {"id":"5b1c2f3e-8a4d-4f7e-9c2b-1a2b3c4d5e6f","kind":"keyword","mediaType":null,"tmdbId":null,"title":null,"keyword":"anime","reason":null,"createdAt":"2026-09-25T20:00:00.000Z"},
+      {"id":"0f9e8d7c-6b5a-4c3d-2e1f-0a9b8c7d6e5f","kind":"title","mediaType":"movie","tmdbId":438631,"title":"Dune","keyword":null,"reason":"Already on Max.","createdAt":"2026-09-25T19:00:00.000Z"}
+    ]}
+    """#
+
     private func fixture(_ name: String) throws -> Data {
+        if name == "blocklist" { return Data(Self.blocklistResponse.utf8) }
         let file = name.contains(".") ? name : name + ".json"
         let url = Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/api/\(file)")
         return try Data(contentsOf: url)
@@ -137,6 +147,18 @@ final class MarqueeAPIRequestTests: XCTestCase {
             },
             Case(method: "POST", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/search", response: "ok") { try await $0.issues.searchAgain(request) },
             Case(method: "DELETE", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0", response: "ok") { try await $0.issues.delete(request) },
+            // Request blocklist (0.41+)
+            Case(method: "POST", path: "/titles/movie/438631/block", body: #"{"reason":"Already on Max."}"#, response: "ok") {
+                try await $0.titles.block(.movie, id: 438631, reason: "Already on Max.")
+            },
+            Case(method: "DELETE", path: "/titles/movie/438631/block", response: "ok") { try await $0.titles.unblock(.movie, id: 438631) },
+            Case(method: "GET", path: "/settings/blocklist", response: "blocklist") { _ = try await $0.blocklist.list() },
+            Case(method: "POST", path: "/settings/blocklist", body: #"{"keyword":"anime","reason":"Not for this house."}"#, response: "ok") {
+                try await $0.blocklist.blockKeyword(" anime ", reason: "Not for this house.")
+            },
+            Case(method: "DELETE", path: "/settings/blocklist/5b1c2f3e-8a4d-4f7e-9c2b-1a2b3c4d5e6f", response: "ok") {
+                try await $0.blocklist.remove("5b1c2f3e-8a4d-4f7e-9c2b-1a2b3c4d5e6f")
+            },
             // Notifications
             Case(method: "GET", path: "/notifications", query: ["limit": "5"], response: "notifications") { _ = try await $0.notifications.list(limit: 5) },
             Case(method: "GET", path: "/notifications/unread-count", response: "notifications-unread-count") { _ = try await $0.notifications.unreadCount() },
@@ -229,8 +251,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 104, "docs/api-v1.md documents 104 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 104, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 109, "docs/api-v1.md documents 109 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 109, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
@@ -359,6 +381,25 @@ final class MarqueeAPIRequestTests: XCTestCase {
             XCTAssertEqual(sent.value(forHTTPHeaderField: "Content-Type"), "application/json", path)
             XCTAssertEqual(try Self.jsonObject(Self.body(of: sent)), ["is4k": true] as NSDictionary, path)
         }
+    }
+
+    /// A blank reason sends no reason: no body for a title, just the keyword.
+    func testBlockingWithoutAReasonSendsNoReason() async throws {
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+        let data = try fixture("ok")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, data) }
+
+        StubURLProtocol.requests = []
+        try await api.titles.block(.tv, id: 1399, reason: "  ")
+        let title = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(title.url?.path, "/api/v1/titles/tv/1399/block")
+        XCTAssertTrue(Self.body(of: title).isEmpty)
+
+        StubURLProtocol.requests = []
+        try await api.blocklist.blockKeyword("reality", reason: "")
+        let keyword = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(try Self.jsonObject(Self.body(of: keyword)), ["keyword": "reality"] as NSDictionary)
     }
 
     func testNoServerThrowsUnauthorizedWithoutSending() async {
