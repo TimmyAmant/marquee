@@ -39,6 +39,7 @@ export const GET = withApi(async (request): Promise<IntegrationsSettings> => {
     },
     jellyfin: {
       connected: Boolean(data.jellyfin.existing),
+      name: data.jellyfin.name,
       baseUrl: data.jellyfin.existing?.baseUrl ?? null,
       hasApiKey: data.jellyfin.existing?.hasApiKey ?? false,
       servers: syncedServers(data.jellyfin.summary.servers),

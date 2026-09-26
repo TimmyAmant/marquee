@@ -21,7 +21,7 @@ struct LinkedAccountsCard: View {
 
         VStack(alignment: .leading, spacing: 12) {
             ForEach(API.MediaServer.allCases) { server in
-                row(server, linked: linked.isLinked(server), offered: offers(server, info))
+                row(server, label: info.label(for: server), linked: linked.isLinked(server), offered: offers(server, info))
             }
             if busy == .plex, plexTask != nil {
                 HStack(spacing: 10) {
@@ -47,7 +47,7 @@ struct LinkedAccountsCard: View {
         .sheet(isPresented: $linkingJellyfin) {
             JellyfinLinkSheet { linked in
                 if linked {
-                    notice = "Your Jellyfin account is linked."
+                    notice = "Your \(model.session.serverInfo.jellyfinName) account is linked."
                     model.refreshViewer()
                 }
             }
@@ -66,15 +66,15 @@ struct LinkedAccountsCard: View {
         }
     }
 
-    private func row(_ server: API.MediaServer, linked: Bool, offered: Bool) -> some View {
+    private func row(_ server: API.MediaServer, label: String, linked: Bool, offered: Bool) -> some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(server.label)
+                Text(label)
                     .font(.system(size: 13.5))
                     .foregroundStyle(Theme.textPrimary)
                 Text(linked
-                     ? "Linked: you can sign in with your \(server.label) account."
-                     : (offered ? "Not linked." : "\(server.label) isn't connected to this server."))
+                     ? "Linked: you can sign in with your \(label) account."
+                     : (offered ? "Not linked." : "\(label) isn't connected to this server."))
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textMuted)
             }
@@ -85,7 +85,7 @@ struct LinkedAccountsCard: View {
                     .font(.system(size: 12))
                     .disabled(busy != nil)
             } else if offered {
-                Button("Link \(server.label)") { link(server) }
+                Button("Link \(label)") { link(server) }
                     .buttonStyle(OutlineButtonStyle(compact: true))
                     .disabled(busy != nil)
             }
@@ -143,7 +143,7 @@ struct LinkedAccountsCard: View {
         Task {
             do {
                 try await api.links.unlink(server)
-                notice = "Your \(server.label) account is unlinked."
+                notice = "Your \(model.session.serverInfo.label(for: server)) account is unlinked."
                 model.refreshViewer()
             } catch {
                 self.error = error.localizedDescription
@@ -321,15 +321,18 @@ private struct JellyfinLinkSheet: View {
     @State private var pending = false
     @State private var error: String?
 
+    /// "Emby" when that's the connected server.
+    private var name: String { model.session.serverInfo.jellyfinName }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Link Jellyfin")
+            Text("Link \(name)")
                 .font(.marqueeDisplay(22))
-            Text("Sign in with your Jellyfin account to use it for Marquee too.")
+            Text("Sign in with your \(name) account to use it for Marquee too.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
-            SettingsField(label: "Jellyfin username", text: $username)
-            SettingsField(label: "Jellyfin password", text: $password, secure: true)
+            SettingsField(label: "\(name) username", text: $username)
+            SettingsField(label: "\(name) password", text: $password, secure: true)
             if let error { InlineMessage(text: error) }
             HStack {
                 Spacer()
@@ -353,7 +356,7 @@ private struct JellyfinLinkSheet: View {
     private func save() {
         let username = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !username.isEmpty, !password.isEmpty else {
-            error = "Enter your Jellyfin username and password."
+            error = "Enter your \(name) username and password."
             return
         }
         pending = true
@@ -392,14 +395,14 @@ struct MediaServerMembersCard: View {
 
         VStack(alignment: .leading, spacing: 12) {
             if servers.isEmpty {
-                Text("Connect Plex or Jellyfin in Settings › Integrations to import household members from it and let them sign in with those accounts.")
+                Text("Connect Plex or \(info.jellyfinName) in Settings › Integrations to import household members from it and let them sign in with those accounts.")
                     .font(.system(size: 12.5))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 HStack(spacing: 10) {
                     ForEach(servers) { server in
-                        Button("Import from \(server.label)") { importing = server }
+                        Button("Import from \(info.label(for: server))") { importing = server }
                             .buttonStyle(OutlineButtonStyle(compact: true))
                     }
                 }
@@ -407,16 +410,16 @@ struct MediaServerMembersCard: View {
             if let settings, !unsupported {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("New accounts from Plex/Jellyfin sign-in")
+                        Text("New accounts from Plex/\(info.jellyfinName) sign-in")
                             .font(.system(size: 13.5))
                             .foregroundStyle(Theme.textPrimary)
-                        Text("When someone who can use your Plex or Jellyfin server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way.")
+                        Text("When someone who can use your Plex or \(info.jellyfinName) server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way.")
                             .font(.system(size: 12))
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
-                    Toggle("New accounts from Plex/Jellyfin sign-in", isOn: Binding(
+                    Toggle("New accounts from Plex/\(info.jellyfinName) sign-in", isOn: Binding(
                         get: { settings.mediaServerSignup },
                         set: { save($0) }
                     ))
@@ -466,6 +469,8 @@ struct MediaServerMembersCard: View {
 /// each with a checkbox; existing members are listed but can't be picked.
 private struct ImportMembersSheet: View {
     let server: API.MediaServer
+    /// "Emby" rather than "Jellyfin" when that's the connected server.
+    private var label: String { model.session.serverInfo.label(for: server) }
 
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -477,9 +482,9 @@ private struct ImportMembersSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Import from \(server.label)")
+            Text("Import from \(label)")
                 .font(.marqueeDisplay(22))
-            Text("Each person you pick gets a member account linked to their \(server.label) account, so they can sign in with it.")
+            Text("Each person you pick gets a member account linked to their \(label) account, so they can sign in with it.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -487,7 +492,7 @@ private struct ImportMembersSheet: View {
             Group {
                 if let candidates {
                     if candidates.isEmpty {
-                        Text("No \(server.label) users to import.")
+                        Text("No \(label) users to import.")
                             .font(.system(size: 12.5))
                             .foregroundStyle(Theme.textMuted)
                     } else {

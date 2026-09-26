@@ -13,7 +13,15 @@ const buttonClass =
 
 /** The people on the admin's Plex/Jellyfin, each with a checkbox; the ones
  * already linked to an account are shown but can't be picked. */
-function ImportDialog({ provider, onClose }: { provider: Provider; onClose: (message?: string) => void }) {
+function ImportDialog({
+  provider,
+  labels,
+  onClose,
+}: {
+  provider: Provider;
+  labels: Record<Provider, string>;
+  onClose: (message?: string) => void;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [candidates, setCandidates] = useState<ImportCandidate[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -62,15 +70,15 @@ function ImportDialog({ provider, onClose }: { provider: Provider; onClose: (mes
       className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-bg-1 p-0 text-text-primary backdrop:bg-black/60"
     >
       <div className="p-6">
-        <h3 className="font-display text-xl">Import from {LABEL[provider]}</h3>
+        <h3 className="font-display text-xl">Import from {labels[provider]}</h3>
         <p className="mt-1 text-sm text-text-secondary">
-          Each person gets a member account and signs in with {LABEL[provider]}.
+          Each person gets a member account and signs in with {labels[provider]}.
         </p>
 
         <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-border">
           {candidates === null && !error && <p className="px-4 py-3 text-sm text-text-muted">Loading…</p>}
           {candidates?.length === 0 && (
-            <p className="px-4 py-3 text-sm text-text-muted">Nobody else has access to your {LABEL[provider]} server.</p>
+            <p className="px-4 py-3 text-sm text-text-muted">Nobody else has access to your {labels[provider]} server.</p>
           )}
           {candidates && candidates.length > 0 && (
             <ul className="divide-y divide-border">
@@ -121,10 +129,14 @@ function ImportDialog({ provider, onClose }: { provider: Provider; onClose: (mes
 export function ImportMembers({
   available,
   mediaServerSignup,
+  jellyfinName = "Jellyfin",
 }: {
   available: { plex: boolean; jellyfin: boolean };
   mediaServerSignup: boolean;
+  /** "Emby" when that's the connected server (lib/jellyfin/product.ts). */
+  jellyfinName?: string;
 }) {
+  const labels: Record<Provider, string> = { ...LABEL, jellyfin: jellyfinName };
   const router = useRouter();
   const [open, setOpen] = useState<Provider | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -146,7 +158,7 @@ export function ImportMembers({
             }}
             className={buttonClass}
           >
-            Import from {LABEL[provider]}
+            Import from {labels[provider]}
           </button>
         ))}
       </div>
@@ -169,7 +181,7 @@ export function ImportMembers({
           className="mt-0.5 h-4 w-4 rounded border-border accent-accent"
         />
         <span>
-          New accounts from {providers.map((p) => LABEL[p]).join("/")} sign-in
+          New accounts from {providers.map((p) => labels[p]).join("/")} sign-in
           <span className="mt-0.5 block text-xs text-text-muted">
             Anyone who can use your server gets a member account the first time they sign in, including anyone you
             remove here, who can come straight back. Off: only the people you import (or who link their account)
@@ -182,6 +194,7 @@ export function ImportMembers({
       {open && (
         <ImportDialog
           provider={open}
+          labels={labels}
           onClose={(done) => {
             setOpen(null);
             if (done) {

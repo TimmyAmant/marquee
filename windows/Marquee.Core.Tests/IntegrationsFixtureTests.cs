@@ -11,6 +11,18 @@ namespace Marquee.Core.Tests;
 public sealed class IntegrationsFixtureTests
 {
     [Fact]
+    public void JellyfinNameDecodes()
+    {
+        const string Rest = "\"connected\":true,\"hasApiKey\":true,\"servers\":[],\"movieCount\":0,\"tvCount\":0,\"totalBytes\":0";
+        Assert.Equal("Emby", Decode<JellyfinSettings>($"{{\"name\":\"Emby\",{Rest}}}").Name);
+        // Before 0.40 there's no name: it's Jellyfin.
+        Assert.Equal("Jellyfin", Decode<JellyfinSettings>($"{{{Rest}}}").Name);
+        Assert.Equal("Jellyfin", Decode<JellyfinSettings>($"{{\"name\":null,{Rest}}}").Name);
+    }
+
+    private static T Decode<T>(string json) => System.Text.Json.JsonSerializer.Deserialize<T>(json, Json.Options)!;
+
+    [Fact]
     public void OverviewDecodes()
     {
         var overview = Fixtures.Decode<IntegrationsOverview>("integrations");
@@ -24,6 +36,7 @@ public sealed class IntegrationsFixtureTests
         Assert.Equal(9_123_456_789_012L, overview.Plex.TotalBytes);
 
         Assert.False(overview.Jellyfin.Connected);
+        Assert.Equal("Jellyfin", overview.Jellyfin.Name);
         Assert.Null(overview.Jellyfin.BaseUrl);
         Assert.False(overview.Jellyfin.HasApiKey);
         Assert.Empty(overview.Jellyfin.Servers);

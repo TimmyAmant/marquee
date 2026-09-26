@@ -175,6 +175,8 @@ public sealed class MarqueeApiAuthRequestTests
         Assert.Equal("0.22.0", info.Version);
         Assert.True(info.SetupComplete);
         Assert.False(info.IsDegraded);
+        Assert.Equal("Jellyfin", info.SignIn!.JellyfinName);
+        Assert.Equal("Jellyfin", info.JellyfinName);
 
         var login = Fixtures.Decode<AuthResponse>("auth-login");
         Assert.StartsWith("mqt_", login.Token);

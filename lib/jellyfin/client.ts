@@ -53,6 +53,8 @@ export interface JellyfinSystemInfo {
   Id: string;
   ServerName: string;
   Version: string;
+  /** "Jellyfin Server" on Jellyfin; Emby doesn't send it. */
+  ProductName?: string;
 }
 
 export function testConnection(config: JellyfinConfig): Promise<JellyfinSystemInfo> {

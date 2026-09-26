@@ -188,7 +188,7 @@ Cheap: a few small queries (3 s timeout together), no calls to integrations.
   "version": "0.22.0",
   "setupComplete": true,
   "status": "ok",
-  "signIn": { "password": true, "plex": true, "jellyfin": false }
+  "signIn": { "password": true, "plex": true, "jellyfin": false, "jellyfinName": "Jellyfin" }
 }
 ```
 
@@ -196,6 +196,14 @@ Cheap: a few small queries (3 s timeout together), no calls to integrations.
 while the admin has that server connected in Settings → Integrations (Plex
 also needs its first library sync done). Missing on older servers — show
 password sign-in only.
+
+`jellyfinName` (0.40+; treat missing as "Jellyfin"): what to call the
+"jellyfin" server. Emby speaks the same API, so the Jellyfin integration
+works with an Emby server as it is; once the first sync has seen it, this
+is `"Emby"`. Label everything about that server with it — the sign-in
+button ("Sign in with Emby"), its username/password fields, Linked accounts,
+"Import from Emby", member tags. The server's own messages already use it
+("Incorrect Emby username or password").
 
 Database unreachable → still `200` with `"setupComplete": null, "status": "degraded"`
 and `signIn` password-only.
@@ -1356,7 +1364,15 @@ admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
 `eventType`: `grabbed` (⬇️ started downloading), `downloaded` (✅ finished),
 `request_approved` (👍), `request_rejected` (👎), and from 0.38
 `issue_reported` (⚠️, to the admin) and `issue_resolved` (🛠️, to the
-reporter). Tapping one opens
+reporter), and from 0.40 `request_created` (🙋, "Anna requested “Dune”
+(Season 2) in 4K"): a request waiting for review, to the admin and trusted
+members (not the requester, and not when it was auto-approved). Open the
+Requests screen for it. A Plex Watchlist sync sends one for its whole batch
+instead ("Anna's Plex Watchlist requested 3 titles: “Dune”, “Severance” and
+1 more"). Once the request is reviewed, by anyone, its alerts are marked
+read for every reviewer. On the website's push notification it carries
+"Approve" and "Decline" buttons where the browser supports them (Android,
+desktop Chrome/Edge). Tapping one opens
 `/titles/{mediaType}/{tmdbId}` and marks it read.
 
 ### `GET /notifications` — user
@@ -1815,7 +1831,7 @@ take a few seconds.
     "movieCount": 812, "tvCount": 143, "totalBytes": 9123456789012
   },
   "jellyfin": {
-    "connected": false, "baseUrl": null, "hasApiKey": false,
+    "connected": false, "name": "Jellyfin", "baseUrl": null, "hasApiKey": false,
     "servers": [], "movieCount": 0, "tvCount": 0, "totalBytes": 0
   },
   "sonarr": {
@@ -1856,7 +1872,8 @@ take a few seconds.
 }
 ```
 
-`sonarr4k` / `radarr4k` (0.37+; an older server omits them): the optional 4K
+`jellyfin.name` (0.40+): "Jellyfin" or "Emby" — the same card connects
+either (website: "Jellyfin or Emby"). `sonarr4k` / `radarr4k` (0.37+; an older server omits them): the optional 4K
 Sonarr and Radarr — a second instance of each for 4K copies. Connected and
 configured exactly like the main ones, at `/settings/integrations/sonarr4k`
 and `/radarr4k` (PUT, DELETE, `…/options`, `…/defaults`, same bodies and

@@ -124,6 +124,8 @@ const createRequest = vi.hoisted(() =>
   vi.fn(async (_viewer: unknown, input: { tmdbId: number }): Promise<CreateResult> => ({ ok: true, requestId: `req-${input.tmdbId}` })),
 );
 vi.mock("@/lib/requests/mutate", () => ({ createRequest }));
+const alerts = vi.hoisted(() => ({ notifyReviewersOfWatchlist: vi.fn(async (_userId: string, _ids: string[]) => undefined) }));
+vi.mock("@/lib/requests/alerts", () => alerts);
 
 import {
   disableWatchlist,
@@ -170,8 +172,10 @@ describe("the watchlist sync", () => {
     expect(await syncPlexWatchlist("m1")).toEqual({ requested: 2 });
     expect(createRequest).toHaveBeenCalledWith(
       { userId: "m1", isAdmin: false, libraryOwnerId: "admin" },
-      { mediaType: "movie", tmdbId: 10, title: "Movie 10", posterPath: null },
+      { mediaType: "movie", tmdbId: 10, title: "Movie 10", posterPath: null, quiet: true },
     );
+    // One alert for the batch, not one per title.
+    expect(alerts.notifyReviewersOfWatchlist).toHaveBeenLastCalledWith("m1", ["req-10", "req-20"]);
     expect(outcomes()).toEqual(["movie:10:requested", "tv:20:requested"]);
     expect(tables.plexWatchlists[0]).toMatchObject({ etag: "etag-1", lastError: null });
 

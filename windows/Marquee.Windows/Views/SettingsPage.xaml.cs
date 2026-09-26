@@ -92,14 +92,14 @@ public sealed partial class SettingsPage : Page
     /// <summary>"Link Jellyfin": true once the dialog linked the account.</summary>
     private async Task<bool> ShowLinkJellyfinDialogAsync()
     {
-        var dialog = new JellyfinLinkDialog(ViewModel.LinkJellyfinAccountAsync) { XamlRoot = XamlRoot };
+        var dialog = new JellyfinLinkDialog(ViewModel.JellyfinName, ViewModel.LinkJellyfinAccountAsync) { XamlRoot = XamlRoot };
         return await dialog.TryShowAsync() == ContentDialogResult.Primary;
     }
 
     /// <summary>"Import from Plex/Jellyfin": what was imported, or null when cancelled.</summary>
     private async Task<ImportUsersResult?> ShowImportMembersDialogAsync(MediaServerKind server)
     {
-        var dialog = new ImportMembersDialog(server, ViewModel.LoadImportCandidatesAsync, ViewModel.RunImportAsync) { XamlRoot = XamlRoot };
+        var dialog = new ImportMembersDialog(server, ViewModel.ServerName(server), ViewModel.LoadImportCandidatesAsync, ViewModel.RunImportAsync) { XamlRoot = XamlRoot };
         var result = await dialog.TryShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Result : null;
     }

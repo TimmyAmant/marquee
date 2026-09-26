@@ -20,6 +20,7 @@ const EVENT_EMOJI: Record<NotificationEventType, string> = {
   request_rejected: "👎",
   issue_reported: "⚠️",
   issue_resolved: "🛠️",
+  request_created: "🙋",
 };
 
 export async function getUnreadCount(userId: string): Promise<number> {
@@ -75,6 +76,8 @@ export async function createNotification(input: {
   dedupeSince?: Date;
   /** About the 4K copy: repeats are only dropped among other 4K notices. */
   is4k?: boolean;
+  /** request_created: the request its Approve / Decline buttons act on. */
+  requestId?: string;
 }): Promise<boolean> {
   const { relay = true, dedupeSince, ...row } = input;
   const saved = dedupeSince ? await insertUnlessRecent(row, dedupeSince) : await insertNotification(row);

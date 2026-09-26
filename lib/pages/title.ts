@@ -1,4 +1,5 @@
 import type { TitleMeta, TitleSidebarData } from "@/components/title-hero";
+import { findBlock } from "@/lib/requests/blocklist";
 import { getOpenIssuesFor } from "@/lib/issues";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import type { SimilarTitle } from "@/components/similar-titles-row";
@@ -110,6 +111,7 @@ export async function loadTitleStatus(
       : [null, null];
   const fourK = fourKLibrary ? { ...fourKLibrary, requestStatus: fourKRequestStatus } : null;
   const openReports = viewer.userId ? await getOpenIssuesFor(viewer.userId, type, tmdbId) : 0;
+  const blocked = viewer.userId ? await findBlock(type, tmdbId).catch(() => null) : null;
 
   const seasonRequests = {
     states: seasonStates,
@@ -133,6 +135,7 @@ export async function loadTitleStatus(
     seasonRequests,
     fourK,
     openReports,
+    blocked,
   };
 }
 
@@ -168,6 +171,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     seasonRequests,
     fourK,
     openReports,
+    blocked,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -386,6 +390,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     seasonRequests,
     fourK,
     openReports,
+    blocked,
     runtimeMinutes,
     runtimeLabel,
     titleMeta,

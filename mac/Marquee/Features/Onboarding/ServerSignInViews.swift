@@ -115,12 +115,14 @@ struct SignInForm: View {
         let offersPlex = info?.offersPlexSignIn == true
         let offersJellyfin = info?.offersJellyfinSignIn == true
         let jellyfin = offersJellyfin && method == .jellyfin
+        // "Emby" when the server's Jellyfin integration is talking to Emby.
+        let name = info.jellyfinName
         let busy = pending || waitingForPlex
 
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
                 title: "Welcome back",
-                message: jellyfin ? "Sign in with your Jellyfin account." : "Sign in to your Marquee account."
+                message: jellyfin ? "Use the username and password you use for \(name)." : "Sign in to your Marquee account."
             )
             if let server = model.session.server {
                 ServerChip(address: server, version: info?.version) {
@@ -130,8 +132,8 @@ struct SignInForm: View {
             if let notice = model.authNotice {
                 AuthNotice(text: notice)
             }
-            AuthField(label: jellyfin ? "Jellyfin username" : "Username", text: $username, contentType: .username, autofocus: true)
-            AuthField(label: jellyfin ? "Jellyfin password" : "Password", text: $password, secure: true, contentType: .password)
+            AuthField(label: jellyfin ? "\(name) username" : "Username", text: $username, contentType: .username, autofocus: true)
+            AuthField(label: jellyfin ? "\(name) password" : "Password", text: $password, secure: true, contentType: .password)
             if info?.isDegraded == true {
                 InlineMessage(text: "Your server can't reach its database right now, so signing in may fail.")
             }
@@ -139,7 +141,7 @@ struct SignInForm: View {
             Button {
                 submit(jellyfin: jellyfin)
             } label: {
-                Text(pending ? "Signing in…" : (jellyfin ? "Sign in with Jellyfin" : "Sign in")).frame(maxWidth: .infinity)
+                Text(pending ? "Signing in…" : (jellyfin ? "Sign in with \(name)" : "Sign in")).frame(maxWidth: .infinity)
             }
             .buttonStyle(AccentButtonStyle())
             .keyboardShortcut(.defaultAction)
@@ -165,7 +167,7 @@ struct SignInForm: View {
                             error = nil
                             password = ""
                         } label: {
-                            Text(jellyfin ? "Sign in with a Marquee account" : "Sign in with Jellyfin").frame(maxWidth: .infinity)
+                            Text(jellyfin ? "Sign in with a Marquee account" : "Sign in with \(name)").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(OutlineButtonStyle())
                         .disabled(busy)

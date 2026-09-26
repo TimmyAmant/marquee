@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.40.0",
+    date: "2026-09-26",
+    changes: [
+      "Emby: connect an Emby server in the Jellyfin card (now \"Jellyfin or Emby\") — it speaks the same language, so the library, sign-in, linked accounts and member import all work with it, and everything says \"Emby\" once it's connected.",
+      "New-request alerts: the admin and trusted members are notified when someone makes a request that's waiting for review (and Discord and the other channels hear about it once).",
+      "On a phone or desktop browser with Marquee's notifications on, that alert has Approve and Decline buttons right on it (Android, Chrome and Edge; iPhone shows the alert without buttons).",
+      "Installing the website as an app on Android now uses proper icons, and a long-press on the icon offers Requests and Search.",
+    ],
+  },
+  {
     version: "0.39.0",
     date: "2026-09-26",
     changes: [

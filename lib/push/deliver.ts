@@ -103,17 +103,24 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], string> = {
   request_rejected: "Request declined",
   issue_reported: "Problem reported",
   issue_resolved: "Problem fixed",
+  request_created: "New request",
 };
 
-/** What the service worker (public/sw.js) shows. */
-export type PushMessage = { title: string; body: string; url: string; tag: string };
+/** What the service worker (public/sw.js) shows. `requestId`: a new
+ * request, which the notification offers to approve or decline on the spot
+ * (where the browser supports notification buttons). */
+export type PushMessage = { title: string; body: string; url: string; tag: string; requestId?: string };
 
-export function pushMessageFor(row: Pick<NotificationRow, "id" | "eventType" | "message" | "mediaType" | "tmdbId">): PushMessage {
+export function pushMessageFor(
+  row: Pick<NotificationRow, "id" | "eventType" | "message" | "mediaType" | "tmdbId" | "requestId">,
+): PushMessage {
+  const isNewRequest = row.eventType === "request_created" && row.requestId;
   return {
     title: EVENT_TITLES[row.eventType] ?? "Marquee",
     body: row.message,
-    url: `/title/${row.mediaType}/${row.tmdbId}`,
+    url: isNewRequest ? "/requests" : `/title/${row.mediaType}/${row.tmdbId}`,
     tag: row.id,
+    ...(isNewRequest ? { requestId: row.requestId! } : {}),
   };
 }
 

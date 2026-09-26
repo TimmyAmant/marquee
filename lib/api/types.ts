@@ -17,7 +17,9 @@ export type NotificationEventType =
   | "request_approved"
   | "request_rejected"
   | "issue_reported"
-  | "issue_resolved";
+  | "issue_resolved"
+  /** 0.40+: a new request waiting for review (admin and trusted members). */
+  | "request_created";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -42,7 +44,15 @@ export type ServerInfo = {
   signIn: SignInMethods;
 };
 
-export type SignInMethods = { password: true; plex: boolean; jellyfin: boolean };
+export type SignInMethods = {
+  password: true;
+  plex: boolean;
+  jellyfin: boolean;
+  /** 0.40+: "Jellyfin", or "Emby" when the connected server is Emby (it
+   * speaks the same API, so everything "jellyfin" works with it). Label
+   * the Jellyfin sign-in, linking and import with this. */
+  jellyfinName: string;
+};
 
 /** Which media-server accounts an account signs in with. */
 export type LinkedAccounts = { plex: boolean; jellyfin: boolean };
@@ -297,6 +307,11 @@ export type TitleViewerState = {
   canReport: boolean;
   /** The viewer's own open problem reports for this title. */
   openReports: number;
+  /** 0.41+: the admin's blocklist covers this title — no Request (nor 4K,
+   * nor seasons) for members; `reason` is the admin's note. The admin sees
+   * it too, with an Unblock button (`DELETE …/block`). Null when it isn't
+   * blocked. */
+  blocked: { reason: string | null; keyword: string | null } | null;
 };
 
 export type FourKViewerState = {
@@ -627,6 +642,8 @@ export type IntegrationsSettings = {
   plex: { connected: boolean; servers: SyncedServer[]; movieCount: number; tvCount: number; totalBytes: number };
   jellyfin: {
     connected: boolean;
+    /** 0.40+: "Jellyfin", or "Emby" when the connected server is Emby. */
+    name: string;
     baseUrl: string | null;
     hasApiKey: boolean;
     servers: SyncedServer[];
@@ -697,4 +714,18 @@ export type ChangelogEntry = { version: string; date: string; changes: string[] 
 export type ErrorReferenceCategory = {
   title: string;
   entries: { message: string; meaning: string; whatToDo: string }[];
+};
+
+/** GET /settings/blocklist (0.41+). */
+export type BlocklistEntry = {
+  id: string;
+  kind: "title" | "keyword";
+  /** A title: which one, and its name when blocked. */
+  mediaType: MediaType | null;
+  tmdbId: number | null;
+  title: string | null;
+  /** A TMDb keyword or genre, lower-case. */
+  keyword: string | null;
+  reason: string | null;
+  createdAt: string;
 };

@@ -288,6 +288,27 @@
       "when": 1790390828697,
       "tag": "0040_add_quotas_trusted",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790392084931,
+      "tag": "0041_add_media_server_product",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790392409730,
+      "tag": "0042_add_request_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790392782229,
+      "tag": "0043_add_request_blocklist",
+      "breakpoints": true
     }
   ]
 }

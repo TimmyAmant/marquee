@@ -98,7 +98,7 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
   );
 }
 
-function JellyfinRow({ linked, available }: { linked: boolean; available: boolean }) {
+function JellyfinRow({ linked, available, name }: { linked: boolean; available: boolean; name: string }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // A successful link revalidates the page, which comes back with `linked`
@@ -108,7 +108,7 @@ function JellyfinRow({ linked, available }: { linked: boolean; available: boolea
   return (
     <li className="flex flex-col gap-3 px-6 py-4 text-sm">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-text-primary">Jellyfin</span>
+        <span className="text-text-primary">{name}</span>
         <div className="flex items-center gap-3">
           {linked && <LinkedBadge />}
           {linked ? (
@@ -117,7 +117,7 @@ function JellyfinRow({ linked, available }: { linked: boolean; available: boolea
             available &&
             !open && (
               <button type="button" onClick={() => setOpen(true)} className={smallButtonClass}>
-                Link Jellyfin
+                Link {name}
               </button>
             )
           )}
@@ -126,11 +126,11 @@ function JellyfinRow({ linked, available }: { linked: boolean; available: boolea
       {open && !linked && (
         <form action={formAction} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            Jellyfin username
+            {name} username
             <input type="text" name="username" required autoComplete="username" className={inputClass} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            Jellyfin password
+            {name} password
             <input type="password" name="password" required autoComplete="current-password" className={inputClass} />
           </label>
           {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
@@ -164,15 +164,18 @@ function JellyfinRow({ linked, available }: { linked: boolean; available: boolea
 export function LinkedAccounts({
   linked,
   available,
+  jellyfinName = "Jellyfin",
 }: {
   linked: { plex: boolean; jellyfin: boolean };
   available: { plex: boolean; jellyfin: boolean };
+  /** "Emby" when that's the connected server. */
+  jellyfinName?: string;
 }) {
   return (
     <ul className="divide-y divide-border">
       {(available.plex || linked.plex) && <PlexRow linked={linked.plex} available={available.plex} />}
       {(available.jellyfin || linked.jellyfin) && (
-        <JellyfinRow linked={linked.jellyfin} available={available.jellyfin} />
+        <JellyfinRow linked={linked.jellyfin} available={available.jellyfin} name={jellyfinName} />
       )}
     </ul>
   );

@@ -1,4 +1,5 @@
 import { APP_VERSION } from "@/lib/api/version";
+import { getMediaServerName } from "@/lib/jellyfin/product";
 import { getChannelSummaries } from "@/lib/notifications/channels";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import { getUserLibrary, summarizeLibrary } from "@/lib/library/query";
@@ -110,6 +111,8 @@ export async function loadIntegrationsPage(adminUserId: string) {
     jellyfin: {
       existing: jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, hasApiKey: true } : null,
       summary: jellyfinSummary,
+      /** "Jellyfin" or "Emby" (lib/jellyfin/product.ts). */
+      name: await getMediaServerName(adminUserId),
     },
     sonarr: arrExisting(sonarrCred),
     radarr: arrExisting(radarrCred),

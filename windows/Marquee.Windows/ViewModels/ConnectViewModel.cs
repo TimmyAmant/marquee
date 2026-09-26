@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
+using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
 namespace Marquee.Windows.ViewModels;
@@ -50,6 +51,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         nameof(PasswordHeader),
         nameof(SignInLabel),
         nameof(JellyfinToggleLabel),
+        nameof(JellyfinName),
     ];
 
     private readonly AppModel model;
@@ -161,17 +163,20 @@ public sealed partial class ConnectViewModel : ObservableObject
     /// <summary>The form posts to <c>/auth/jellyfin</c>.</summary>
     public bool UsesJellyfin => IsJellyfinMode && OffersJellyfinSignIn;
 
-    public string SignInSubtitle => UsesJellyfin ? "Sign in with your Jellyfin account." : "Sign in to your Marquee account.";
-    public string UsernameHeader => UsesJellyfin ? "Jellyfin username" : "Username";
-    public string PasswordHeader => UsesJellyfin ? "Jellyfin password" : "Password";
-    public string JellyfinToggleLabel => UsesJellyfin ? "Sign in with a Marquee account" : "Sign in with Jellyfin";
+    /// <summary>"Jellyfin", or "Emby" when that's the server connected (server-info.signIn.jellyfinName).</summary>
+    public string JellyfinName => model.Session.ServerInfo?.JellyfinName ?? MediaServerKindExtensions.DefaultJellyfinName;
+
+    public string SignInSubtitle => UsesJellyfin ? $"Sign in with your {JellyfinName} account." : "Sign in to your Marquee account.";
+    public string UsernameHeader => UsesJellyfin ? $"{JellyfinName} username" : "Username";
+    public string PasswordHeader => UsesJellyfin ? $"{JellyfinName} password" : "Password";
+    public string JellyfinToggleLabel => UsesJellyfin ? "Sign in with a Marquee account" : $"Sign in with {JellyfinName}";
 
     // MARK: Labels
 
     public bool HasAddressError => AddressError != null;
     public bool HasFormError => FormError != null;
     public string CheckLabel => IsChecking ? "Checking…" : "Check";
-    public string SignInLabel => IsSubmitting ? "Signing in…" : (UsesJellyfin ? "Sign in with Jellyfin" : "Sign in");
+    public string SignInLabel => IsSubmitting ? "Signing in…" : (UsesJellyfin ? $"Sign in with {JellyfinName}" : "Sign in");
     public string SetupLabel => IsSubmitting ? "Creating account…" : "Create admin account";
 
     // MARK: Can't-reach card

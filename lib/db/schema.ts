@@ -299,6 +299,10 @@ export const jellyfinServers = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     serverId: text("server_id").notNull(),
     name: text("name"),
+    /** "jellyfin" or "emby": Emby speaks the same API, so the Jellyfin
+     * integration serves both; this only decides the name people see
+     * (lib/jellyfin/product.ts). Null until the first sync. */
+    product: text("product").$type<"jellyfin" | "emby">(),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   },
   (table) => [unique().on(table.userId, table.serverId)],
@@ -415,6 +419,9 @@ export const notificationEventTypeValues = [
   // whoever reported it once it's fixed.
   "issue_reported",
   "issue_resolved",
+  // A new request waiting for review, to the admin and trusted members —
+  // with Approve / Decline right on the push notification (public/sw.js).
+  "request_created",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -434,13 +441,16 @@ export const notifications = pgTable(
     // About the 4K copy (lib/arr/fourk.ts): kept apart from the regular
     // copy's notices when repeats are dropped, so one doesn't hide the other.
     is4k: boolean("is_4k").default(false).notNull(),
+    // The request a request_created notification is about — what its
+    // Approve / Decline buttons act on.
+    requestId: uuid("request_id").references(() => requests.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created')`,
     ),
   ],
 );
@@ -808,5 +818,33 @@ export const issues = pgTable(
       "issues_kind_check",
       sql`${table.kind} in ('video','audio','subtitles','wont_play','wrong_title','other')`,
     ),
+  ],
+);
+
+export const blocklistKindValues = ["title", "keyword"] as const;
+export type BlocklistKind = (typeof blocklistKindValues)[number];
+
+/** What nobody may request (lib/requests/blocklist.ts): one title, or every
+ * title with a TMDb keyword or genre of that name (e.g. "anime"). The admin
+ * can still add a blocked title themselves. */
+export const requestBlocklist = pgTable(
+  "request_blocklist",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull().$type<BlocklistKind>(),
+    mediaType: text("media_type").$type<MediaType>(),
+    tmdbId: integer("tmdb_id"),
+    /** A title's name as it was when blocked, for the list. */
+    title: text("title"),
+    /** For a keyword: lower-case, trimmed. */
+    keyword: text("keyword"),
+    /** Shown to whoever tries to request it. */
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check("request_blocklist_kind_check", sql`${table.kind} in ('title','keyword')`),
+    uniqueIndex("request_blocklist_title_idx").on(table.mediaType, table.tmdbId).where(sql`${table.kind} = 'title'`),
+    uniqueIndex("request_blocklist_keyword_idx").on(table.keyword).where(sql`${table.kind} = 'keyword'`),
   ],
 );

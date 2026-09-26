@@ -26,6 +26,7 @@ import {
 import { getJellyfinCredential, getPlexCredential } from "@/lib/integrations/credentials";
 import { buildPlexAuthUrl, checkPin, createPin } from "@/lib/plex/client";
 import { disableWatchlist, enableWatchlist, syncPlexWatchlist } from "@/lib/plex/watchlist";
+import { getMediaServerName } from "@/lib/jellyfin/product";
 import {
   getPlexAccount,
   getPlexSharedUsers,
@@ -58,10 +59,17 @@ import { checkRateLimit } from "@/lib/rate-limit";
 
 type UserRow = typeof users.$inferSelect;
 
-export type SignInMethods = { password: true; plex: boolean; jellyfin: boolean };
+export type SignInMethods = {
+  password: true;
+  plex: boolean;
+  jellyfin: boolean;
+  /** What to call the "jellyfin" server: "Jellyfin", or "Emby" when that's
+   * what's connected (lib/jellyfin/product.ts). */
+  jellyfinName: string;
+};
 
 type PlexContext = { adminId: string; clientId: string; authToken: string; machineIds: string[] };
-type JellyfinContext = { adminId: string; baseUrl: string; apiKey: string };
+type JellyfinContext = { adminId: string; baseUrl: string; apiKey: string; name: string };
 
 /** The admin's Plex connection, when there's one with at least one synced
  * server to check access against. */
@@ -82,13 +90,18 @@ async function getJellyfinContext(): Promise<JellyfinContext | null> {
   const adminId = await getAdminUserId();
   if (!adminId) return null;
   const credential = await getJellyfinCredential(adminId);
-  return credential ? { adminId, ...credential } : null;
+  return credential ? { adminId, ...credential, name: await getMediaServerName(adminId) } : null;
 }
 
 /** Which sign-in methods the login page and apps should offer. */
 export async function getSignInMethods(): Promise<SignInMethods> {
   const [plex, jellyfin] = await Promise.all([getPlexContext(), getJellyfinContext()]);
-  return { password: true, plex: Boolean(plex), jellyfin: Boolean(jellyfin) };
+  return {
+    password: true,
+    plex: Boolean(plex),
+    jellyfin: Boolean(jellyfin),
+    jellyfinName: jellyfin?.name ?? "Jellyfin",
+  };
 }
 
 const PLEX_NOT_CONNECTED = "Plex sign-in isn't set up on this server.";
@@ -472,12 +485,12 @@ async function verifyJellyfinUser(
       return result.ok ? { jellyfinUser: result.user } : null;
     });
   } catch {
-    return fail("upstream", "Couldn't reach Jellyfin. Try again.");
+    return fail("upstream", `Couldn't reach ${jellyfin.name}. Try again.`);
   }
   if (!outcome.ok) {
     return outcome.reason === "rate_limited"
       ? fail("rate_limited", "Too many attempts. Try again in a few minutes.")
-      : fail("invalid_credentials", "Incorrect Jellyfin username or password");
+      : fail("invalid_credentials", `Incorrect ${jellyfin.name} username or password`);
   }
   return { ok: true, jellyfin, jellyfinUser: outcome.jellyfinUser };
 }
@@ -599,7 +612,7 @@ async function importSources(provider: MediaProvider): Promise<CoreResult<{ sour
         .map((u) => ({ id: u.id, username: u.name, title: u.name, thumb: jellyfinUserImageUrl(jellyfin.baseUrl, u) })),
     };
   } catch {
-    return fail("upstream", "Couldn't reach Jellyfin. Try again.");
+    return fail("upstream", `Couldn't reach ${jellyfin.name}. Try again.`);
   }
 }
 
