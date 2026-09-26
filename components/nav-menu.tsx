@@ -264,12 +264,15 @@ export function NavMenu({
         }`}
       />
 
+      {/* Slides in from the left, or from the right with the menu set to Right. */}
       <div
         id="nav-menu-panel"
         ref={panelRef}
         inert={!open}
-        className={`nav-glass fixed bottom-3 left-3 top-3 z-50 flex w-[288px] md:hidden max-w-[calc(100vw-24px)] origin-left flex-col overflow-hidden rounded-[24px] transition-[opacity,transform] duration-200 ease-out ${
-          open ? "translate-x-0 scale-100 opacity-100" : "pointer-events-none -translate-x-3 scale-[0.98] opacity-0"
+        className={`nav-glass fixed bottom-3 left-3 top-3 z-50 flex w-[288px] md:hidden max-w-[calc(100vw-24px)] origin-left flex-col overflow-hidden rounded-[24px] transition-[opacity,transform] duration-200 ease-out rail-right:left-auto rail-right:right-3 rail-right:origin-right ${
+          open
+            ? "translate-x-0 scale-100 opacity-100"
+            : "pointer-events-none -translate-x-3 scale-[0.98] opacity-0 rail-right:translate-x-3"
         }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-3 pt-4">
