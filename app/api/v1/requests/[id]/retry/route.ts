@@ -17,7 +17,7 @@ export const POST = withApi<{ id: string }>(async (request, params): Promise<Ok>
   const requestId = parseUuidSegment(params.id, msg("server.requestNotWaiting"));
   const parsed = parseAddOverrides(await readJsonBody(request), "tv");
   if (!parsed.ok) throw invalid(parsed.error);
-  if (hasOverrides(parsed.overrides) && !can(ctx.user, "advancedRequests")) throw ApiError.of("forbidden", ADVANCED_REFUSED);
+  if (hasOverrides(parsed.overrides) && !can(ctx.user, "advancedRequests")) throw ApiError.of("forbidden", msg(ADVANCED_REFUSED));
   unwrap(await retryRequest(requestId, ctx.user.id, hasOverrides(parsed.overrides) ? parsed.overrides : undefined));
   return { ok: true };
 });

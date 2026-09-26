@@ -21,7 +21,7 @@ export const POST = withApi<{ id: string }>(async (request, params): Promise<Ok>
   const parsed = parseAddOverrides(await readJsonBody(request), "tv");
   if (!parsed.ok) throw invalid(parsed.error);
   // Advanced picks take the advancedRequests permission as well.
-  if (hasOverrides(parsed.overrides) && !can(ctx.user, "advancedRequests")) throw ApiError.of("forbidden", ADVANCED_REFUSED);
+  if (hasOverrides(parsed.overrides) && !can(ctx.user, "advancedRequests")) throw ApiError.of("forbidden", msg(ADVANCED_REFUSED));
   unwrap(await approveRequest(requestId, ctx.user.id, parsed.overrides));
   return { ok: true };
 });

@@ -52,13 +52,21 @@ export async function getT(): Promise<Translator> {
 
 /** The database, loaded on first use: plenty of code that translates (and
  * its tests) never needs it — only a recipient's language does. */
-async function database() {
+async function loadDatabase() {
   const [{ db }, { users }, { eq, inArray }] = await Promise.all([
     import("@/lib/db/client"),
     import("@/lib/db/schema"),
     import("drizzle-orm"),
   ]);
   return { db, users, eq, inArray };
+}
+
+// One load shared by every caller, so concurrent first calls agree on the
+// module (vitest's async mocks otherwise hand a racing caller the real one).
+let loaded: ReturnType<typeof loadDatabase> | null = null;
+
+function database() {
+  return (loaded ??= loadDatabase());
 }
 
 /** An account's own language, or null when it follows its browser. */
