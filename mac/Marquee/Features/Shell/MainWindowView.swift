@@ -107,6 +107,7 @@ struct RouteDestinationView: View {
         case let .person(id): PersonDetailView(tmdbId: id)
         case let .company(id): CompanyDetailView(tmdbId: id)
         case let .search(query): SearchResultsView(query: query)
+        case let .discoverList(list): DiscoverListView(list: list)
         case .errorReference: ErrorReferenceView()
         case .changelog: ChangelogView()
         }

@@ -81,22 +81,22 @@ struct DiscoverView: View {
         }
 
         if !shelves.recentlyAdded.isEmpty {
-            posterShelf("Recently Added", shelves.recentlyAdded)
+            posterShelf("Recently Added", shelves.recentlyAdded, seeAll: seeAll(.recentlyAdded, in: shelves))
         }
         if !shelves.trending.isEmpty {
-            posterShelf("Trending", shelves.trending)
+            posterShelf("Trending", shelves.trending, seeAll: seeAll(.trending, in: shelves))
         }
         if !shelves.popularMovies.isEmpty {
-            posterShelf("Popular Movies", shelves.popularMovies, seeAll: { model.browse(.movie) })
+            posterShelf("Popular Movies", shelves.popularMovies, seeAll: seeAll(.popularMovies, in: shelves))
         }
         if !shelves.movieGenres.isEmpty {
-            genreShelf("Movie Genres", shelves.movieGenres, mediaType: .movie, seeAll: { model.browse(.movie) })
+            genreShelf("Movie Genres", shelves.movieGenres, mediaType: .movie, seeAll: seeAll(.movieGenres, in: shelves))
         }
         if !shelves.upcomingMovies.isEmpty {
-            posterShelf("Upcoming Movies", shelves.upcomingMovies)
+            posterShelf("Upcoming Movies", shelves.upcomingMovies, seeAll: seeAll(.upcomingMovies, in: shelves))
         }
         if !shelves.studios.isEmpty {
-            Shelf(title: "Studios") {
+            Shelf(title: "Studios", seeAll: seeAll(.studios, in: shelves)) {
                 ForEach(shelves.studios) { studio in
                     LogoCard(name: studio.name, logoPath: studio.logoPath) {
                         model.open(.company(studio.tmdbId))
@@ -105,16 +105,16 @@ struct DiscoverView: View {
             }
         }
         if !shelves.popularSeries.isEmpty {
-            posterShelf("Popular Series", shelves.popularSeries, seeAll: { model.browse(.tv) })
+            posterShelf("Popular Series", shelves.popularSeries, seeAll: seeAll(.popularSeries, in: shelves))
         }
         if !shelves.seriesGenres.isEmpty {
-            genreShelf("Series Genres", shelves.seriesGenres, mediaType: .tv, seeAll: { model.browse(.tv) })
+            genreShelf("Series Genres", shelves.seriesGenres, mediaType: .tv, seeAll: seeAll(.seriesGenres, in: shelves))
         }
         if !shelves.upcomingSeries.isEmpty {
-            posterShelf("Upcoming Series", shelves.upcomingSeries)
+            posterShelf("Upcoming Series", shelves.upcomingSeries, seeAll: seeAll(.upcomingSeries, in: shelves))
         }
         if !shelves.networks.isEmpty {
-            Shelf(title: "Networks") {
+            Shelf(title: "Networks", seeAll: seeAll(.networks, in: shelves)) {
                 ForEach(shelves.networks) { network in
                     LogoCard(name: network.name, logoPath: network.logoPath) {
                         model.browse(.tv, networkId: network.tmdbId)
@@ -131,6 +131,16 @@ struct DiscoverView: View {
             && shelves.networks.isEmpty
     }
 
+    /// What `shelf`'s "See all" chevron does (`seeAll` in the response, or
+    /// the pre-0.43 defaults); nil hides it.
+    private func seeAll(_ shelf: API.DiscoverShelf, in shelves: API.DiscoverShelves) -> (() -> Void)? {
+        switch shelves.seeAllDestination(shelf) {
+        case let .list(list): return { model.open(.discoverList(list)) }
+        case let .browse(mediaType): return { model.browse(mediaType) }
+        case nil: return nil
+        }
+    }
+
     /// Every Discover row carries the MOVIE/SERIES pill, like the web page.
     private func posterShelf(_ title: String, _ cards: [API.TitleCard], seeAll: (() -> Void)? = nil) -> some View {
         Shelf(title: title, seeAll: seeAll) {
@@ -144,7 +154,7 @@ struct DiscoverView: View {
         }
     }
 
-    private func genreShelf(_ title: String, _ tiles: [API.GenreTile], mediaType: API.MediaType, seeAll: @escaping () -> Void) -> some View {
+    private func genreShelf(_ title: String, _ tiles: [API.GenreTile], mediaType: API.MediaType, seeAll: (() -> Void)?) -> some View {
         // `.row{gap:16px}` on the genre row.
         Shelf(title: title, seeAll: seeAll, itemGap: Metrics.tileGap) {
             ForEach(Array(tiles.enumerated()), id: \.element.id) { index, tile in

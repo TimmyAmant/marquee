@@ -44,6 +44,18 @@ struct AppModelTests {
         #expect(model.path.isEmpty)
     }
 
+    @Test func aDiscoverListLinkOpensItOnDiscover() {
+        let model = makeModel()
+        model.phase = .ready
+        model.select(.movies)
+        model.handle(url: URL(string: "marquee://discover/trending")!)
+        #expect(model.selection == .discover)
+        #expect(model.path == [.discoverList(.trending)])
+
+        model.handle(url: URL(string: "marquee://discover/top-secret")!)
+        #expect(model.path == [.discoverList(.trending)], "An unknown list is ignored")
+    }
+
     @Test func otherSchemesAreIgnored() {
         let model = makeModel()
         model.handle(url: URL(string: "https://example.com/title/movie/603")!)
@@ -55,6 +67,7 @@ struct AppModelTests {
         #expect(model.webURL(for: .title(API.TitleID(.tv, 1399)))?.absoluteString == "http://127.0.0.1:3100/title/tv/1399")
         #expect(model.webURL(for: .person(287))?.absoluteString == "http://127.0.0.1:3100/person/287")
         #expect(model.webURL(for: .company(420))?.absoluteString == "http://127.0.0.1:3100/company/420")
+        #expect(model.webURL(for: .discoverList(.upcomingMovies))?.absoluteString == "http://127.0.0.1:3100/discover/upcoming-movies")
         #expect(model.webURL(for: .search("matrix")) == nil)
         #expect(makeModel().webURL(for: .person(287)) == nil, "No server, no link")
     }
