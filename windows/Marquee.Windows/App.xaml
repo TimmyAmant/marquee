@@ -34,8 +34,8 @@
                     <SolidColorBrush x:Key="OwnedBadgeBackgroundBrush" Color="#E3F3EA" />
                     <SolidColorBrush x:Key="TrackedBadgeForegroundBrush" Color="#2F6FB0" />
                     <SolidColorBrush x:Key="TrackedBadgeBackgroundBrush" Color="#E5F0FA" />
-                    <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="#A3501A" />
-                    <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="#FCECE0" />
+                    <SolidColorBrush x:Key="MissingBadgeForegroundBrush" Color="#B34D00" />
+                    <SolidColorBrush x:Key="MissingBadgeBackgroundBrush" Color="#FFF0E5" />
                     <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#7048B8" />
                     <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#F0E9FB" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#5C574C" />

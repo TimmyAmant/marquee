@@ -65,8 +65,8 @@
   --marquee-owned-bg: #e3f3ea;
   --marquee-tracked: #2f6fb0;
   --marquee-tracked-bg: #e5f0fa;
-  --marquee-missing: #a3501a;
-  --marquee-missing-bg: #fcece0;
+  --marquee-missing: #b34d00;
+  --marquee-missing-bg: #fff0e5;
   --marquee-soon: #7048b8;
   --marquee-soon-bg: #f0e9fb;
   --marquee-untracked-bg: #efece3;
@@ -99,8 +99,8 @@
     --marquee-owned-bg: #e3f3ea;
     --marquee-tracked: #2f6fb0;
     --marquee-tracked-bg: #e5f0fa;
-    --marquee-missing: #a3501a;
-    --marquee-missing-bg: #fcece0;
+    --marquee-missing: #b34d00;
+    --marquee-missing-bg: #fff0e5;
     --marquee-soon: #7048b8;
     --marquee-soon-bg: #f0e9fb;
     --marquee-untracked-bg: #efece3;
