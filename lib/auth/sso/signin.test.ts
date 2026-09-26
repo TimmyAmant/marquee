@@ -311,6 +311,23 @@ describe("website sign-in", () => {
     ).toMatchObject({ ok: false, code: "failed" });
   });
 
+  it("logs a foreign issuer on one line, quoted", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      const ip = freshIp();
+      const started = await startWebSsoSignIn(ip, false);
+      if (!started.ok) throw new Error(started.error);
+      const back = idp.authorize(started.flow.authUrl, { sub: "bob-sub" });
+      const iss = "https://x/\n[auth] admin signed in from 10.0.0.1";
+      await completeSsoCallback({ state: back.state, code: back.code, error: null, iss, cookie: started.binding, ip, sessionUserId: null });
+      const logged = warn.mock.calls.flat().join(" ");
+      expect(logged).not.toContain("\n");
+      expect(logged).toContain(JSON.stringify(iss));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("reports a cancel at the provider", async () => {
     expect(await webSignIn({ sub: "bob-sub" }, { error: "access_denied" })).toMatchObject({ ok: false, code: "cancelled" });
   });

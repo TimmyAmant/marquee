@@ -219,7 +219,9 @@ export async function completeSsoCallback(input: {
   const name = config.name;
 
   if (input.iss && !sameIssuer(input.iss, flow.issuer)) {
-    console.warn("[sso] callback came back with another issuer:", input.iss);
+    // Quoted and cut short: it's whatever the URL said, and mustn't be able
+    // to write lines of its own into the log.
+    console.warn("[sso] callback came back with another issuer:", JSON.stringify(input.iss.slice(0, 200)));
     return end(refuse("forbidden", "failed", name));
   }
   if (input.error || !input.code) {
