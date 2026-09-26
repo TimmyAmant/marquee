@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.43.0",
+    date: "2026-09-26",
+    changes: [
+      "Any number of Sonarr and Radarr servers (Settings › Integrations), each with its own quality profile, folder, tags and webhook link, and a 4K switch. One of each kind is the default. Your current Sonarr, Radarr and 4K connections become the defaults automatically, and the old webhook links keep working.",
+      "Anime: Sonarr servers have their own anime quality profile, folder and tags, and anime shows are added as series type Anime.",
+      "Advanced options when approving a request or adding a title: pick the server, quality profile, folder, tags (and for shows, the series type). Past requests show where each title went.",
+      "A title on any of your regular servers counts as in your library, and Search now, monitoring, the calendar and disk space look at every server. On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.42.4",
     date: "2026-09-26",
     changes: [

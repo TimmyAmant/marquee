@@ -78,4 +78,7 @@ WHERE "s"."user_id" = "c"."user_id"
 	AND "s"."is_4k" = false
 	AND "s"."is_default";
 --> statement-breakpoint
-DELETE FROM "integration_credentials" WHERE "provider" IN ('sonarr', 'radarr', 'sonarr4k', 'radarr4k');
+-- The old integration_credentials rows are left in place (nothing reads
+-- them any more), so going back to a 0.42.x image still finds its Sonarr
+-- and Radarr connections.
+SELECT 1;

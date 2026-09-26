@@ -50,11 +50,10 @@ describe("migration 0044: the fixed connections become default servers", () => {
     expect(insert).toMatch(/replace\(gen_random_uuid\(\)::text, '-', ''\) \|\| replace\(gen_random_uuid\(\)::text, '-', ''\)/);
   });
 
-  it("links the cached statuses to the standard default, then drops the old rows last", () => {
+  it("links the cached statuses to the standard default, and keeps the old rows for a rollback", () => {
     expect(cacheLink).toBeGreaterThan(statements.indexOf(insert));
     expect(statements[cacheLink]).toContain(`"s"."is_4k" = false`);
-    expect(cleanup).toBe(statements.length - 1);
-    expect(statements[cleanup]).toContain(`WHERE "provider" IN ('sonarr', 'radarr', 'sonarr4k', 'radarr4k')`);
+    expect(cleanup).toBe(-1);
   });
 
   it("allows at most one default per owner, kind and 4K-ness", () => {
