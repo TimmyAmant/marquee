@@ -1,11 +1,12 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { readJsonBody } from "@/lib/api/request";
 import { getNotFoundAfterHours, saveNotFoundAfterHours } from "@/lib/requests/not-found";
 import type { NotFoundSettings } from "@/lib/api/types";
 
-const FORBIDDEN = "Only the admin can change this.";
+const FORBIDDEN = msg("server.onlyAdminChangeThis");
 
 /** How long after approval an unfound request counts as "Can't find" (0.46+). */
 export const GET = withApi(async (request): Promise<NotFoundSettings> => {

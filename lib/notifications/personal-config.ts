@@ -1,6 +1,7 @@
 import type { UserNotificationChannelKind } from "@/lib/db/schema";
 import { isEmailAddress } from "@/lib/email/client";
 import { outboundUrlError, type OutboundPolicy } from "@/lib/notifications/outbound";
+import type { Translator } from "@/lib/i18n/translator";
 
 // What each kind of personal channel keeps, how what someone typed becomes
 // that, and the masked form Settings shows. Pure; unit tested
@@ -20,6 +21,8 @@ export type ConfigContext = {
   /** The household ntfy server (its address without the topic), or null. */
   ntfyServer: string | null;
   policy: OutboundPolicy;
+  /** Whoever reads the error: the one adding the channel. */
+  t: Translator;
 };
 
 function text(value: unknown): string {
@@ -54,6 +57,7 @@ export function parsePersonalConfig(
   context: ConfigContext,
 ): { ok: true; config: PersonalChannelConfig } | { ok: false; error: string } {
   const fail = (error: string) => ({ ok: false as const, error });
+  const { t } = context;
   const same = saved?.kind === kind ? saved : null;
   switch (kind) {
     case "telegram": {
@@ -61,27 +65,27 @@ export function parsePersonalConfig(
       // Someone's own chat with the bot: a positive number. Groups and
       // channels are the household's business.
       if (!/^\d{1,20}$/.test(chatId)) {
-        return fail("Your chat ID is a number. Send the bot /start, and it's in the reply you get from @userinfobot.");
+        return fail(t("notify.personalTelegramChat"));
       }
       return { ok: true, config: { kind, chatId } };
     }
     case "pushover": {
       const userKey = text(input.userKey) || (same?.kind === "pushover" ? same.userKey : "");
       if (!/^[A-Za-z0-9]{30}$/.test(userKey)) {
-        return fail("Your user key is the 30-character code at the top of your pushover.net dashboard.");
+        return fail(t("notify.personalPushoverKey"));
       }
       return { ok: true, config: { kind, userKey } };
     }
     case "email": {
       const address = text(input.address).toLowerCase();
-      if (!isEmailAddress(address)) return fail("Enter your email address, like you@example.com.");
+      if (!isEmailAddress(address)) return fail(t("notify.personalEmail"));
       return { ok: true, config: { kind, address } };
     }
     case "discord": {
       const webhookUrl = text(input.webhookUrl) || (same?.kind === "discord" ? same.webhookUrl : "");
-      if (!webhookUrl) return fail("Enter your Discord webhook URL.");
+      if (!webhookUrl) return fail(t("notify.personalDiscordEnter"));
       if (!DISCORD_WEBHOOK.test(webhookUrl)) {
-        return fail("That doesn't look like a Discord webhook URL. In Discord: channel settings › Integrations › Webhooks › Copy Webhook URL.");
+        return fail(t("notify.personalDiscordBad"));
       }
       return { ok: true, config: { kind, webhookUrl } };
     }
@@ -89,20 +93,20 @@ export function parsePersonalConfig(
       const topic = text(input.topic);
       const url = text(input.url);
       if (topic) {
-        if (!context.ntfyServer) return fail("This household has no ntfy server set up. Enter a full topic URL instead.");
-        if (!NTFY_TOPIC.test(topic)) return fail("A topic is letters, numbers, - and _ (up to 64).");
+        if (!context.ntfyServer) return fail(t("notify.personalNtfyNoServer"));
+        if (!NTFY_TOPIC.test(topic)) return fail(t("notify.personalNtfyTopic"));
         return { ok: true, config: { kind, topic } };
       }
       const chosen = url || (same?.kind === "ntfy" && same.url ? same.url : "");
-      if (!chosen) return fail(context.ntfyServer ? "Enter a topic name or a full topic URL." : "Enter your ntfy topic URL, like https://ntfy.sh/your-topic.");
-      const invalid = outboundUrlError(chosen, context.policy);
+      if (!chosen) return fail(context.ntfyServer ? t("notify.personalNtfyEnterTopic") : t("notify.personalNtfyEnterUrl"));
+      const invalid = outboundUrlError(chosen, context.policy, t);
       if (invalid) return fail(invalid);
       return { ok: true, config: { kind, url: chosen } };
     }
     case "webhook": {
       const url = text(input.url) || (same?.kind === "webhook" ? same.url : "");
-      if (!url) return fail("Enter the webhook URL.");
-      const invalid = outboundUrlError(url, context.policy);
+      if (!url) return fail(t("notify.personalWebhookEnter"));
+      const invalid = outboundUrlError(url, context.policy, t);
       if (invalid) return fail(invalid);
       return { ok: true, config: { kind, url } };
     }

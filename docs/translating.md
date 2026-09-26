@@ -94,9 +94,14 @@ Say, Italian (`it`):
    app's language list, then fill the Italian column of
    `Localizable.xcstrings` (in Xcode, or with any String Catalog-aware
    tool).
-3. **Windows.** Add `Strings/it-IT/` with a copy of every English `.resw`
-   file, translate the `<value>`s, and add the language to the app's
-   language list.
+3. **Windows.** Add `windows/Marquee.Windows/Strings/it/Resources.resw`
+   (folders are named by the neutral language, `es`, `fr`, `de`, except
+   `en-US` and `pt-BR`) with a copy of every English `<data>` entry, and
+   translate the `<value>`s. Add `"it"` to `AppLanguage.Supported` (with its
+   name in `AppLanguage.NativeName` and its prefix in `AppLanguage.Normalize`,
+   `windows/Marquee.Core/Localization/AppLanguage.cs`), its folder to
+   `Resw.Translations` in `windows/Marquee.Core.Tests/Support/Strings.cs`,
+   and, if its plural rule differs from English's, to `Loc.IsSingular`.
 4. Add a column to [the glossary](i18n-glossary.md) and translate its terms
    first.
 5. Update the API docs' list of languages (`docs/api-v1.md`, `GET /me`).

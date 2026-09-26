@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { regenerateWebhookSecret } from "@/lib/integrations/credentials";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { getT } from "@/lib/i18n/server";
 
 // Sonarr/Radarr servers themselves are managed in ./arr-server-actions.ts.
 
 export type RegenerateWebhookSecretState = { secret?: string; error?: string };
 
 export async function regenerateWebhookSecretAction(): Promise<RegenerateWebhookSecretState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   const secret = await regenerateWebhookSecret(admin.userId);

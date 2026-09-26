@@ -1,11 +1,12 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment, readJsonBody } from "@/lib/api/request";
 import { deleteTraktSync, updateTraktSync } from "@/lib/trakt/sync";
 import type { Ok, TraktSync } from "@/lib/api/types";
 
-const NOT_FOUND = "That Trakt sync doesn't exist any more.";
+const NOT_FOUND = msg("server.traktSyncGone");
 
 /** Which kinds it requests: `{ movies?, tv? }`. Your own (the admin: anyone's). */
 export const PATCH = withApi<{ id: string }>(async (request, params): Promise<TraktSync> => {

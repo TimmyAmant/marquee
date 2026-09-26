@@ -4,6 +4,7 @@ vi.mock("@/lib/db/client", () => ({ db: {} }));
 vi.mock("@/lib/tmdb/cache", () => ({ getOrFetchTitle: async () => null }));
 
 import { blockedMessage, normalizeKeyword, titleTags } from "./blocklist";
+import { englishT } from "@/lib/i18n/catalog";
 
 describe("the request blocklist", () => {
   it("compares keywords case- and spacing-insensitively", () => {
@@ -21,8 +22,8 @@ describe("the request blocklist", () => {
   });
 
   it("explains the refusal, with the admin's reason", () => {
-    expect(blockedMessage({ reason: null, keyword: null })).toBe("The admin isn't taking requests for this title.");
-    expect(blockedMessage({ reason: "Already on Netflix.", keyword: null })).toBe(
+    expect(blockedMessage(englishT(), { reason: null, keyword: null })).toBe("The admin isn't taking requests for this title.");
+    expect(blockedMessage(englishT(), { reason: "Already on Netflix.", keyword: null })).toBe(
       "The admin isn't taking requests for this title. Already on Netflix.",
     );
   });

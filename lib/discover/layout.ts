@@ -4,18 +4,23 @@ import { db } from "@/lib/db/client";
 import { discoverShelves } from "@/lib/db/schema";
 import {
   applyLayoutOrder,
+  customTitle,
   defaultLayout,
+  defaultShelfTitle,
   isBuiltInShelf,
   isCustomShelfKind,
   isShelfUuid,
   MAX_CUSTOM_SHELVES,
+  parseStoredSource,
   resolveLayout,
   validateShelfInput,
   validateSource,
-  validateTitle,
   type LayoutShelf,
+  type ShelfRow,
   type ShelfSource,
 } from "@/lib/discover/shelves";
+import { getT } from "@/lib/i18n/server";
+import { englishT } from "@/lib/i18n/catalog";
 import { getCompanyDetails, getKeywordDetails, getMovieGenres, getNetworkDetails, getTmdbList, getTvGenres } from "@/lib/tmdb/client";
 import { fail, type CoreResult } from "@/lib/core-result";
 
@@ -26,20 +31,41 @@ import { fail, type CoreResult } from "@/lib/core-result";
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 async function readRows(tx: Tx | typeof db = db) {
-  return tx.select().from(discoverShelves).orderBy(asc(discoverShelves.position));
+  const rows = await tx.select().from(discoverShelves).orderBy(asc(discoverShelves.position));
+  return rows.map(withoutSavedDefaultTitle);
+}
+
+/**
+ * A row left unnamed is stored with no title and shown under its default
+ * name in each reader's language. Rows saved before that kept their
+ * (English) default name as their title: read those as unnamed too.
+ */
+function withoutSavedDefaultTitle<R extends ShelfRow>(row: R): R {
+  if (row.builtIn !== null || row.title === null || !isCustomShelfKind(row.kind)) return row;
+  const english = englishT();
+  const source = parseStoredSource(row.kind, row.source, english);
+  if (!source || row.title !== defaultShelfTitle(row.kind, source, english)) return row;
+  return { ...row, title: null };
 }
 
 /** The Discover rows in the admin's order, hidden ones included. With
- * nothing saved, exactly the built-in rows in their usual order. */
+ * nothing saved, exactly the built-in rows in their usual order. Named in
+ * the reader's language. */
 export async function getDiscoverLayout(): Promise<LayoutShelf[]> {
-  return resolveLayout(await readRows());
+  return resolveLayout(await readRows(), await getT());
 }
 
-export async function getCustomShelf(id: string): Promise<LayoutShelf | null> {
+async function readCustomRow(id: string) {
   if (!isShelfUuid(id)) return null;
   const [row] = await db.select().from(discoverShelves).where(eq(discoverShelves.id, id)).limit(1);
   if (!row || row.builtIn !== null) return null;
-  return resolveLayout([row]).find((shelf) => shelf.id === id) ?? null;
+  return withoutSavedDefaultTitle(row);
+}
+
+export async function getCustomShelf(id: string): Promise<LayoutShelf | null> {
+  const row = await readCustomRow(id);
+  if (!row) return null;
+  return resolveLayout([row], await getT()).find((shelf) => shelf.id === id) ?? null;
 }
 
 /** Writes every row's place: built-in rows get a row of their own the first
@@ -71,8 +97,9 @@ function refreshDiscover() {
 /** A new order and which rows show: `[{ id, hidden? }, …]` (see
  * applyLayoutOrder). Answers the whole layout. */
 export async function saveDiscoverLayout(requested: unknown): Promise<CoreResult<{ shelves: LayoutShelf[] }>> {
+  const t = await getT();
   const result = await db.transaction(async (tx) => {
-    const order = applyLayoutOrder(resolveLayout(await readRows(tx)), requested);
+    const order = applyLayoutOrder(resolveLayout(await readRows(tx), t), requested, t);
     if (!order.ok) return fail("invalid", order.error);
     await writeOrder(tx, order.value);
     return { ok: true as const };
@@ -112,23 +139,23 @@ async function withSourceName(kind: string, source: ShelfSource): Promise<ShelfS
 /** Adds one of the admin's own rows at the end, shown. Body: `{ kind,
  * title?, mediaType?, tmdbId?, name?, url? }`. */
 export async function createCustomShelf(body: Record<string, unknown>): Promise<CoreResult<{ shelf: LayoutShelf }>> {
-  const validated = validateShelfInput(body);
+  const t = await getT();
+  const validated = validateShelfInput(body, t);
   if (!validated.ok) return fail("invalid", validated.error);
   const { kind } = validated.value;
   const source = await withSourceName(kind, validated.value.source);
-  // Named after what it shows when the admin left the name blank — now
-  // that the name of the keyword or list is known.
-  const titleInput = typeof body.title === "string" && body.title.trim() ? body.title : undefined;
-  const title = validateTitle(titleInput, kind, source);
+  // Left unnamed, it's shown named after what it shows — now that the name
+  // of the keyword or list is known — in each reader's language.
+  const title = customTitle(body.title, t);
   if (!title.ok) return fail("invalid", title.error);
 
   const created = await db.transaction(async (tx) => {
     const rows = await readRows(tx);
     if (rows.filter((row) => row.builtIn === null).length >= MAX_CUSTOM_SHELVES) {
-      return fail("conflict", `Discover can have up to ${MAX_CUSTOM_SHELVES} rows of your own. Remove one first.`);
+      return fail("conflict", t("discover.errorTooManyRows", { max: MAX_CUSTOM_SHELVES }));
     }
     // Pin every existing row's place before adding one after them.
-    const layout = resolveLayout(rows);
+    const layout = resolveLayout(rows, t);
     await writeOrder(
       tx,
       layout.map((shelf) => ({ id: shelf.id, hidden: shelf.hidden })),
@@ -142,21 +169,22 @@ export async function createCustomShelf(body: Record<string, unknown>): Promise<
   if (!created.ok) return created;
   refreshDiscover();
   const shelf = await getCustomShelf(created.id);
-  return shelf ? { ok: true, shelf } : fail("internal", "The row was added but couldn't be read back.");
+  return shelf ? { ok: true, shelf } : fail("internal", t("discover.errorReadBack"));
 }
 
 /** Renames a custom row, changes what it shows (same kind), or shows/hides
  * any row. Body: `{ title?, hidden?, mediaType?, tmdbId?, name?, url? }`. */
 export async function updateShelf(id: string, body: Record<string, unknown>): Promise<CoreResult<{ shelf: LayoutShelf }>> {
-  if (body.hidden !== undefined && typeof body.hidden !== "boolean") return fail("invalid", '"hidden" is true or false.');
+  const t = await getT();
+  if (body.hidden !== undefined && typeof body.hidden !== "boolean") return fail("invalid", t("discover.errorHiddenBoolean"));
   const hidden = body.hidden as boolean | undefined;
 
   if (isBuiltInShelf(id)) {
     const changesMore = ["title", "mediaType", "tmdbId", "name", "url"].some((key) => body[key] !== undefined);
-    if (changesMore) return fail("invalid", "A built-in row can only be shown or hidden.");
-    if (hidden === undefined) return fail("invalid", 'Send "hidden".');
+    if (changesMore) return fail("invalid", t("discover.errorBuiltInOnlyHide"));
+    if (hidden === undefined) return fail("invalid", t("discover.errorSendHidden"));
     await db.transaction(async (tx) => {
-      const layout = resolveLayout(await readRows(tx));
+      const layout = resolveLayout(await readRows(tx), t);
       await writeOrder(
         tx,
         layout.map((shelf) => ({ id: shelf.id, hidden: shelf.id === id ? hidden : shelf.hidden })),
@@ -167,14 +195,15 @@ export async function updateShelf(id: string, body: Record<string, unknown>): Pr
     return { ok: true, shelf };
   }
 
-  const current = await getCustomShelf(id);
-  if (!current) return fail("not_found", "That Discover row doesn't exist any more.");
+  const row = await readCustomRow(id);
+  const current = row ? resolveLayout([row], t).find((shelf) => shelf.id === id) : undefined;
+  if (!row || !current) return fail("not_found", t("discover.errorRowGone"));
   if (isCustomShelfKind(current.kind)) {
     const changesSource = ["mediaType", "tmdbId", "name", "url"].some((key) => body[key] !== undefined);
     let source = current.source;
     if (changesSource || !source) {
       const merged = { ...(current.source ?? {}), ...body };
-      const validated = validateSource(current.kind, merged);
+      const validated = validateSource(current.kind, merged, t);
       if (!validated.ok) return fail("invalid", validated.error);
       // A new keyword or list: its old name no longer applies.
       const sameThing = current.source && validated.value.tmdbId === current.source.tmdbId;
@@ -183,9 +212,10 @@ export async function updateShelf(id: string, body: Record<string, unknown>): Pr
         name: body.name !== undefined || sameThing ? validated.value.name : null,
       });
     }
-    let title = current.title;
+    // The name as stored: null (unnamed) keeps following what the row shows.
+    let title = row.title;
     if (body.title !== undefined) {
-      const validated = validateTitle(body.title, current.kind, source!);
+      const validated = customTitle(body.title, t);
       if (!validated.ok) return fail("invalid", validated.error);
       title = validated.value;
     }
@@ -199,18 +229,19 @@ export async function updateShelf(id: string, body: Record<string, unknown>): Pr
   }
   refreshDiscover();
   const shelf = await getCustomShelf(id);
-  return shelf ? { ok: true, shelf } : fail("not_found", "That Discover row doesn't exist any more.");
+  return shelf ? { ok: true, shelf } : fail("not_found", t("discover.errorRowGone"));
 }
 
 /** Removes one of the admin's own rows. A built-in row can only be hidden. */
 export async function deleteShelf(id: string): Promise<CoreResult> {
-  if (isBuiltInShelf(id)) return fail("invalid", "A built-in row can't be removed. Hide it instead.");
-  if (!isShelfUuid(id)) return fail("not_found", "That Discover row doesn't exist any more.");
+  const t = await getT();
+  if (isBuiltInShelf(id)) return fail("invalid", t("discover.errorBuiltInRemove"));
+  if (!isShelfUuid(id)) return fail("not_found", t("discover.errorRowGone"));
   const deleted = await db
     .delete(discoverShelves)
     .where(eq(discoverShelves.id, id))
     .returning({ id: discoverShelves.id, builtIn: discoverShelves.builtIn });
-  if (deleted.length === 0) return fail("not_found", "That Discover row doesn't exist any more.");
+  if (deleted.length === 0) return fail("not_found", t("discover.errorRowGone"));
   refreshDiscover();
   return { ok: true };
 }
@@ -218,10 +249,11 @@ export async function deleteShelf(id: string): Promise<CoreResult> {
 /** Back to the usual built-in rows, all shown, in their usual order; the
  * admin's own rows stay, after them, as they were. */
 export async function resetDiscoverLayout(): Promise<{ shelves: LayoutShelf[] }> {
+  const t = await getT();
   await db.transaction(async (tx) => {
-    const custom = resolveLayout(await readRows(tx)).filter((shelf) => shelf.custom);
+    const custom = resolveLayout(await readRows(tx), t).filter((shelf) => shelf.custom);
     await writeOrder(tx, [
-      ...defaultLayout().map((shelf) => ({ id: shelf.id, hidden: false })),
+      ...defaultLayout(t).map((shelf) => ({ id: shelf.id, hidden: false })),
       ...custom.map((shelf) => ({ id: shelf.id, hidden: shelf.hidden })),
     ]);
   });

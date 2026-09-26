@@ -1,3 +1,5 @@
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
+
 /** "2001–2011" for an ended show, "2026" for a movie or a show missing one
  * end of the range, null if neither year is known. Pulled out of the title
  * page as a standalone function so this specific piece of logic — which
@@ -8,20 +10,49 @@ export function computeYearRange(startYear: string | null, endYear: string | nul
   return startYear ?? endYear;
 }
 
-/** TMDb's own wording for an ongoing show ("Returning Series") is longer
- * than the "Continuing"/"Ended" convention Sonarr and other *arr apps use —
- * relabel just that one case, pass everything else through as-is. */
-export function relabelTvStatus(status: string | null): string | null {
-  return status === "Returning Series" ? "Continuing" : status;
+/** TMDb's status values, in the page's language. TMDb's own wording for an
+ * ongoing show ("Returning Series") is longer than the "Continuing"/"Ended"
+ * convention Sonarr and other *arr apps use, so that one reads "Continuing". */
+const TMDB_STATUS_KEYS: Record<string, MessageKey> = {
+  "Returning Series": "title.statusContinuing",
+  Ended: "title.statusEnded",
+  Canceled: "title.statusCanceled",
+  "In Production": "title.statusInProduction",
+  Planned: "title.statusPlanned",
+  Pilot: "title.statusPilot",
+  Released: "title.statusReleased",
+  "Post Production": "title.statusPostProduction",
+  Rumored: "title.statusRumored",
+};
+
+/** A title's TMDb status as shown on its page; one TMDb adds later passes
+ * through as-is. */
+export function relabelTvStatus(t: Translator, status: string | null): string | null {
+  if (!status) return status;
+  const key = Object.prototype.hasOwnProperty.call(TMDB_STATUS_KEYS, status) ? TMDB_STATUS_KEYS[status] : undefined;
+  return key ? t(key) : status;
 }
 
 export type CreditEntry = { role: string; name: string };
+
+const CREDIT_ROLE_KEYS: Record<string, MessageKey> = {
+  Director: "title.roleDirector",
+  Screenplay: "title.roleScreenplay",
+  Writer: "title.roleWriter",
+  Creator: "title.roleCreator",
+  "Executive Producer": "title.roleExecutiveProducer",
+};
+
+function roleLabel(t: Translator, job: string): string {
+  return Object.prototype.hasOwnProperty.call(CREDIT_ROLE_KEYS, job) ? t(CREDIT_ROLE_KEYS[job]) : job;
+}
 
 /** Director + Screenplay/Writer credits for a movie, deduped by person (a
  * writer credited for both "Screenplay" and "Story" would otherwise appear
  * twice) and capped so the credits grid never sprawls past a couple of
  * rows. */
 export function extractMovieCredits(
+  t: Translator,
   crew: { id: number; name: string; job: string; department: string }[],
 ): CreditEntry[] {
   const seen = new Set<number>();
@@ -29,13 +60,13 @@ export function extractMovieCredits(
 
   for (const member of crew) {
     if (member.job !== "Director" || seen.has(member.id)) continue;
-    entries.push({ role: "Director", name: member.name });
+    entries.push({ role: roleLabel(t, "Director"), name: member.name });
     seen.add(member.id);
   }
   for (const member of crew) {
     if (seen.has(member.id)) continue;
     if (member.department === "Writing" && (member.job === "Screenplay" || member.job === "Writer")) {
-      entries.push({ role: member.job, name: member.name });
+      entries.push({ role: roleLabel(t, member.job), name: member.name });
       seen.add(member.id);
     }
   }
@@ -135,6 +166,7 @@ export function franchiseRequestableItems<T extends { mediaType: "movie" | "tv";
 /** Creator + Executive Producer credits for a TV show — same dedup/cap
  * approach as extractMovieCredits, see there for why. */
 export function extractTvCredits(
+  t: Translator,
   createdBy: { id: number; name: string }[],
   crew: { id: number; name: string; job: string }[],
 ): CreditEntry[] {
@@ -143,12 +175,12 @@ export function extractTvCredits(
 
   for (const person of createdBy) {
     if (seen.has(person.id)) continue;
-    entries.push({ role: "Creator", name: person.name });
+    entries.push({ role: roleLabel(t, "Creator"), name: person.name });
     seen.add(person.id);
   }
   for (const member of crew) {
     if (member.job !== "Executive Producer" || seen.has(member.id)) continue;
-    entries.push({ role: "Executive Producer", name: member.name });
+    entries.push({ role: roleLabel(t, "Executive Producer"), name: member.name });
     seen.add(member.id);
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 export function YearSelect({
   currentYear,
@@ -11,6 +12,7 @@ export function YearSelect({
   currentParams: Record<string, string | undefined>;
   basePath?: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const thisYear = new Date().getFullYear();
   const years = Array.from({ length: thisYear - 1949 }, (_, i) => thisYear - i);
@@ -31,7 +33,7 @@ export function YearSelect({
       onChange={(e) => navigate(e.target.value)}
       className="rounded-full border border-border bg-bg-0 px-3 py-1.5 text-xs text-text-secondary outline-none transition-colors hover:border-border-strong focus:border-accent"
     >
-      <option value="">All years</option>
+      <option value="">{t("discover.allYears")}</option>
       {years.map((year) => (
         <option key={year} value={year}>
           {year}

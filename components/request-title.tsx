@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { seasonsLabel } from "@/lib/requests/labels";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 /** A request's title as the Requests page lists it — a link to the title
  * page, with the seasons asked for underneath when it's a season request. */
@@ -18,7 +21,8 @@ export function RequestTitle({
   /** Asked for in 4K (lib/arr/fourk.ts). */
   is4k?: boolean;
 }) {
-  const label = [seasonsLabel(seasons), is4k ? "In 4K" : null].filter(Boolean).join(" · ");
+  const t = useT();
+  const label = [seasonsLabel(t, seasons), is4k ? t("requests.in4k") : null].filter(Boolean).join(" · ");
   return (
     <div className="min-w-0">
       <Link

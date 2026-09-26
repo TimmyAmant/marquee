@@ -4,11 +4,12 @@ import { useState } from "react";
 import {
   normalizePermissions,
   PERMISSION_GROUPS,
+  PERMISSION_PRESET_LABELS,
   presetFor,
   presetPermissions,
   type Permission,
-  type PermissionPreset,
 } from "@/lib/users/permissions";
+import { useT } from "@/lib/i18n/client";
 
 // The admin's per-member switches (lib/users/permissions.ts), grouped, with
 // a preset picker on top that fills them in — and reads "Custom" as soon as
@@ -16,13 +17,8 @@ import {
 // `perm:<name>` checkboxes plus `permissionsForm=1`; the server works the
 // role out from them.
 
-const PRESET_LABEL: Record<Exclude<PermissionPreset, "admin">, string> = {
-  member: "Member",
-  trusted: "Trusted",
-  custom: "Custom",
-};
-
 export function PermissionsEditor({ initial }: { initial: string[] }) {
+  const t = useT();
   const [granted, setGranted] = useState<Set<Permission>>(() => new Set(normalizePermissions(initial)));
   const preset = presetFor({ role: "member", permissions: [...granted] });
   const reviews = granted.has("reviewRequests");
@@ -42,7 +38,7 @@ export function PermissionsEditor({ initial }: { initial: string[] }) {
     <fieldset className="flex flex-col gap-4 text-sm text-text-secondary">
       <input type="hidden" name="permissionsForm" value="1" />
       <label className="flex flex-col gap-1.5">
-        What they can do
+        {t("settings.permWhatTheyCanDo")}
         <select
           value={preset === "admin" ? "custom" : preset}
           onChange={(event) => {
@@ -51,17 +47,17 @@ export function PermissionsEditor({ initial }: { initial: string[] }) {
           }}
           className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
         >
-          <option value="member">{PRESET_LABEL.member} — requests, and reports problems</option>
-          <option value="trusted">{PRESET_LABEL.trusted} — also reviews requests and problem reports</option>
+          <option value="member">{t("settings.presetMemberOption")}</option>
+          <option value="trusted">{t("settings.presetTrustedOption")}</option>
           <option value="custom" disabled={preset !== "custom"}>
-            {PRESET_LABEL.custom}
+            {t(PERMISSION_PRESET_LABELS.custom)}
           </option>
         </select>
       </label>
 
       {PERMISSION_GROUPS.map((group) => (
-        <div key={group.title} className="flex flex-col gap-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{group.title}</p>
+        <div key={group.id} className="flex flex-col gap-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{t(group.title)}</p>
           {group.items.map((item) => {
             // Locked on while they review requests (can() treats it so).
             const locked = item.permission === "viewRequests" && reviews;
@@ -79,9 +75,9 @@ export function PermissionsEditor({ initial }: { initial: string[] }) {
                 {/* A disabled box isn't sent; this keeps it on. */}
                 {locked && <input type="hidden" name={`perm:${item.permission}`} value="on" />}
                 <span>
-                  <span className="text-text-primary">{item.label}</span>
+                  <span className="text-text-primary">{t(item.label)}</span>
                   <span className="block text-xs text-text-muted">
-                    {locked ? "Comes with reviewing requests." : item.description}
+                    {locked ? t("settings.permComesWithReviewing") : t(item.description)}
                   </span>
                 </span>
               </label>
@@ -89,9 +85,7 @@ export function PermissionsEditor({ initial }: { initial: string[] }) {
           })}
         </div>
       ))}
-      <p className="text-xs text-text-muted">
-        Settings, integrations, household accounts, API keys and sign-in stay yours alone.
-      </p>
+      <p className="text-xs text-text-muted">{t("settings.permAdminOnlyNote")}</p>
     </fieldset>
   );
 }

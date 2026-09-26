@@ -20,6 +20,7 @@ import {
 import { getCustomShelf } from "@/lib/discover/layout";
 import { customShelfMaxPage, fetchCustomShelfPage } from "@/lib/discover/custom-shelves";
 import type { LayoutShelf } from "@/lib/discover/shelves";
+import { getT } from "@/lib/i18n/server";
 
 // A Discover shelf's full list — "See all" on Recently Added, Trending,
 // Upcoming Movies and Upcoming Series. Shared by app/discover/[list] (first
@@ -204,7 +205,7 @@ export async function fetchDiscoverListPage(
   page: number,
   viewer: ViewerIdentity,
 ): Promise<DiscoverListPage> {
-  const title = DISCOVER_LIST_TITLES[list];
+  const title = (await getT())(DISCOVER_LIST_TITLES[list]);
 
   if (list === "recently-added") {
     const newest = viewer.libraryOwnerId

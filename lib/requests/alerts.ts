@@ -3,6 +3,8 @@ import { db } from "@/lib/db/client";
 import { notifications, requests, users } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications/query";
 import { quotedRequestTitle } from "@/lib/requests/labels";
+import { translatorsForUsers } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 import { usersWhoCan } from "@/lib/users/access";
 
 // "Anna requested “Dune” (Season 2)" to everyone who reviews requests — the
@@ -26,8 +28,22 @@ export async function clearRequestAlerts(requestId: string): Promise<void> {
     .where(and(eq(notifications.requestId, requestId), eq(notifications.eventType, "request_created")));
 }
 
+/** "Anna requested "Dune" (Season 2)", in `t`'s language. */
+function requestedMessage(
+  t: Translator,
+  who: string | null,
+  request: { title: string; seasons: number[] | null; is4k: boolean },
+): string {
+  const quoted = quotedRequestTitle(t, request.title, request.seasons);
+  return t("notify.requested", {
+    who: who || t("notify.someone"),
+    request: request.is4k ? t("notify.requestIn4k", { request: quoted }) : quoted,
+  });
+}
+
 /** A pending request was changed (other seasons, or 4K): its "new request"
- * alerts nobody has read yet say what's asked for now. */
+ * alerts nobody has read yet say what's asked for now — each in its
+ * reader's language. */
 export async function refreshRequestAlerts(request: {
   id: string;
   requestedByUserId: string;
@@ -40,18 +56,21 @@ export async function refreshRequestAlerts(request: {
     .from(users)
     .where(eq(users.id, request.requestedByUserId))
     .limit(1);
-  const who = requester?.name || requester?.username || "Someone";
-  const what = quotedRequestTitle(request.title, request.seasons) + (request.is4k ? " in 4K" : "");
-  await db
-    .update(notifications)
-    .set({ message: `${who} requested ${what}`, is4k: request.is4k })
-    .where(
-      and(
-        eq(notifications.requestId, request.id),
-        eq(notifications.eventType, "request_created"),
-        eq(notifications.read, false),
-      ),
-    );
+  const who = requester?.name || requester?.username || null;
+  const unread = and(
+    eq(notifications.requestId, request.id),
+    eq(notifications.eventType, "request_created"),
+    eq(notifications.read, false),
+  );
+  const readers = await db.selectDistinct({ userId: notifications.userId }).from(notifications).where(unread);
+  const translators = await translatorsForUsers(readers.map((r) => r.userId));
+  for (const { userId } of readers) {
+    const t = translators.get(userId)!;
+    await db
+      .update(notifications)
+      .set({ message: requestedMessage(t, who, request), is4k: request.is4k })
+      .where(and(unread, eq(notifications.userId, userId)));
+  }
 }
 
 /**
@@ -61,18 +80,16 @@ export async function refreshRequestAlerts(request: {
  * more than one request behind it.
  */
 export async function notifyReviewersOfWatchlist(requesterId: string, requestIds: string[]): Promise<void> {
-  await notifyReviewersOfBatch(requesterId, requestIds, (who, count, list) =>
-    count === 1 ? `${who}'s Plex Watchlist requested ${list}` : `${who}'s Plex Watchlist requested ${count} titles: ${list}`,
+  await notifyReviewersOfBatch(requesterId, requestIds, (t, who, count, list) =>
+    t("notify.watchlistRequested", { who, count, list }),
   );
 }
 
 /** Same for a member's Trakt list kept in sync (lib/trakt/sync.ts): one
  * alert per list per check. */
 export async function notifyReviewersOfTraktSync(requesterId: string, requestIds: string[], listName: string): Promise<void> {
-  await notifyReviewersOfBatch(requesterId, requestIds, (who, count, list) =>
-    count === 1
-      ? `${who}'s Trakt list “${listName}” requested ${list}`
-      : `${who}'s Trakt list “${listName}” requested ${count} titles: ${list}`,
+  await notifyReviewersOfBatch(requesterId, requestIds, (t, who, count, list) =>
+    t("notify.traktRequested", { who, listName, count, list }),
   );
 }
 
@@ -84,22 +101,24 @@ export async function notifyReviewersOfCollection(
   requestIds: string[],
   collection: string,
 ): Promise<void> {
-  await notifyReviewersOfBatch(requesterId, requestIds, (who, count, list) =>
-    count === 1 ? `${who} requested ${list}` : `${who} requested ${count} titles from “${collection}”: ${list}`,
+  await notifyReviewersOfBatch(requesterId, requestIds, (t, who, count, list) =>
+    t("notify.collectionRequested", { who, collection, count, list }),
   );
 }
 
 /** "“A”, “B” and 3 more" — the first two names of a batch. Pure. */
-export function batchTitleList(titles: string[]): string {
-  const names = titles.slice(0, 2).map((t) => `“${t}”`);
-  const more = titles.length > 2 ? ` and ${titles.length - 2} more` : "";
-  return names.join(", ") + more;
+export function batchTitleList(t: Translator, titles: string[]): string {
+  const names = titles
+    .slice(0, 2)
+    .map((title) => t("notify.batchQuoted", { title }))
+    .join(", ");
+  return titles.length > 2 ? t("notify.batchMore", { list: names, count: titles.length - 2 }) : names;
 }
 
 async function notifyReviewersOfBatch(
   requesterId: string,
   requestIds: string[],
-  describe: (who: string, count: number, list: string) => string,
+  describe: (t: Translator, who: string, count: number, list: string) => string,
 ): Promise<void> {
   if (requestIds.length === 0) return;
   const waiting = await db
@@ -114,8 +133,10 @@ async function notifyReviewersOfBatch(
     .from(users)
     .where(eq(users.id, requesterId))
     .limit(1);
-  const who = requester?.name || requester?.username || "Someone";
-  const message = describe(who, waiting.length, batchTitleList(waiting.map((r) => r.title)));
+  const who = requester?.name || requester?.username || null;
+  // In each reader's language (and the household's, for its channels).
+  const message = (t: Translator) =>
+    describe(t, who || t("notify.someone"), waiting.length, batchTitleList(t, waiting.map((r) => r.title)));
   const [first] = waiting;
   for (const [index, reviewer] of (await reviewersExcept(requesterId)).entries()) {
     await createNotification({
@@ -155,7 +176,6 @@ export async function notifyReviewersOfRequest(requestId: string): Promise<void>
   const reviewers = await reviewersExcept(request.requesterId);
 
   const who = request.requesterName || request.requesterUsername;
-  const what = quotedRequestTitle(request.title, request.seasons) + (request.is4k ? " in 4K" : "");
   for (const [index, reviewer] of reviewers.entries()) {
     await createNotification({
       userId: reviewer.id,
@@ -163,7 +183,7 @@ export async function notifyReviewersOfRequest(requestId: string): Promise<void>
       tmdbId: request.tmdbId,
       title: request.title,
       eventType: "request_created",
-      message: `${who} requested ${what}`,
+      message: (t) => requestedMessage(t, who, request),
       requestId,
       is4k: request.is4k,
       relay: index === 0,

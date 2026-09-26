@@ -3,12 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db/client", () => ({ db: {} }));
 
 import { pushMessageFor } from "./deliver";
+import { englishT, translatorFor } from "@/lib/i18n/catalog";
 
 const base = { id: "n1", message: "Anna requested \"Dune\"", mediaType: "movie" as const, tmdbId: 438631, requestId: null };
 
 describe("pushMessageFor", () => {
   it("opens the title for ordinary notifications", () => {
-    expect(pushMessageFor({ ...base, eventType: "downloaded" })).toEqual({
+    expect(pushMessageFor({ ...base, eventType: "downloaded" }, englishT())).toEqual({
       title: "Ready to watch",
       body: base.message,
       url: "/title/movie/438631",
@@ -18,7 +19,7 @@ describe("pushMessageFor", () => {
 
   it("opens a shared title under its own heading", () => {
     const message = "Susan shared “Ice Age” with you: Watch it";
-    expect(pushMessageFor({ ...base, message, tmdbId: 425, eventType: "title_shared" })).toEqual({
+    expect(pushMessageFor({ ...base, message, tmdbId: 425, eventType: "title_shared" }, englishT())).toEqual({
       title: "Shared with you",
       body: message,
       url: "/title/movie/425",
@@ -27,12 +28,16 @@ describe("pushMessageFor", () => {
   });
 
   it("carries the request, for Approve / Decline, and opens Requests", () => {
-    expect(pushMessageFor({ ...base, eventType: "request_created", requestId: "r1" })).toEqual({
+    expect(pushMessageFor({ ...base, eventType: "request_created", requestId: "r1" }, englishT())).toEqual({
       title: "New request",
       body: base.message,
       url: "/requests",
       tag: "n1",
       requestId: "r1",
     });
+  });
+
+  it("heads it in the recipient's language", () => {
+    expect(pushMessageFor({ ...base, eventType: "downloaded" }, translatorFor("fr")).title).toBe("Prêt à regarder");
   });
 });

@@ -2,8 +2,9 @@ import { type TmdbCompanyRef } from "@/lib/tmdb/client";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import { StudioChip } from "@/components/studio-chip";
 import { FavoriteButton } from "@/components/favorite-button";
+import { getT } from "@/lib/i18n/server";
 
-export function StudioRow({
+export async function StudioRow({
   companies,
   favoritedIds,
   showFavorite,
@@ -15,10 +16,11 @@ export function StudioRow({
   if (companies.length === 0) return null;
 
   const items = dedupeCompanies(companies);
+  const t = await getT();
 
   return (
     <section>
-      <h2 className="mb-4 font-display text-xl text-text-primary">Studio</h2>
+      <h2 className="mb-4 font-display text-xl text-text-primary">{t("discover.kindStudio")}</h2>
       <div className="flex flex-wrap gap-3">
         {items.map((item) => (
           <StudioChip

@@ -102,7 +102,7 @@ describe("the account's language on /me", () => {
     });
     const french = await call(meRoute.PATCH, { method: "PATCH", body: { language: "es-MX" }, headers: { "accept-language": "fr-FR,fr;q=0.9" } });
     expect(french.status).toBe(400);
-    expect(french.body.error).toBe("language doit valoir null ou l’une de ces valeurs : en, es, fr, de, pt-BR.");
+    expect(french.body.error).toBe("language doit valoir null ou l’une de ces valeurs\u00a0: en, es, fr, de, pt-BR.");
   });
 
   it("answers in the account's language over the device's once chosen", async () => {

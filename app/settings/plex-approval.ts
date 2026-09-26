@@ -1,5 +1,7 @@
 "use client";
 
+import type { Translator } from "@/lib/i18n/translator";
+
 export type PlexPollAnswer = { status: "pending" } | { status: "done" } | { status: "error"; error: string };
 
 /** Tells one approval attempt from the next: Cancel (or leaving the page)
@@ -17,6 +19,7 @@ export async function runPlexApproval(
   start: () => Promise<{ handle?: string; authUrl?: string; error?: string }>,
   poll: (handle: string) => Promise<PlexPollAnswer>,
   attempts: ApprovalAttempts,
+  t: Translator,
 ): Promise<
   | { status: "done" }
   /** `completed`: a poll already under way when it was cancelled went
@@ -32,7 +35,7 @@ export async function runPlexApproval(
   if (!started.handle || !started.authUrl) {
     tab?.close();
     if (cancelled()) return { status: "cancelled", completed: false };
-    return { status: "error", error: started.error ?? "Couldn't start Plex sign-in. Try again." };
+    return { status: "error", error: started.error ?? t("settings.plexStartFailed") };
   }
   if (tab) tab.location.href = started.authUrl;
   else window.open(started.authUrl, "_blank", "noopener,noreferrer");
@@ -47,5 +50,5 @@ export async function runPlexApproval(
     return answer;
   }
   if (cancelled()) return { status: "cancelled", completed: false };
-  return { status: "error", error: "Timed out waiting for Plex sign-in. Try again." };
+  return { status: "error", error: t("settings.plexTimedOut") };
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { currentSubscription, enablePush, pushSupport, PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
+import { useT } from "@/lib/i18n/client";
 
 type Mode = "hidden" | "ask" | "ios-home-screen";
 
@@ -31,6 +32,7 @@ function dismiss() {
  * On an iPhone in a Safari tab it explains the Home Screen step instead.
  */
 export function PushPrompt() {
+  const t = useT();
   const [mode, setMode] = useState<Mode>("hidden");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function PushPrompt() {
   async function turnOn() {
     setBusy(true);
     setError(null);
-    const result = await enablePush();
+    const result = await enablePush(t);
     setBusy(false);
     if (result.ok) {
       setMode("hidden");
@@ -81,12 +83,10 @@ export function PushPrompt() {
       className="nav-glass fixed bottom-4 left-4 right-4 z-50 rounded-2xl p-4 sm:left-auto sm:w-[340px] md:rail-right:right-[84px] md:rail-bottom:bottom-[calc(84px+env(safe-area-inset-bottom))]"
     >
       <p id="push-prompt-title" className="text-[15px] font-semibold text-text-primary">
-        {mode === "ask" ? "Get notifications on this device?" : "Notifications on your iPhone or iPad"}
+        {mode === "ask" ? t("nav.pushAskTitle") : t("nav.pushIosTitle")}
       </p>
       <p className="mt-1 text-[13px] leading-5 text-text-secondary">
-        {mode === "ask"
-          ? "Hear when a request is approved or declined and when something you asked for is ready to watch. They come straight from your Marquee server."
-          : "Tap Share, then Add to Home Screen, and open Marquee from there. It can ask to send notifications once it's on your Home Screen."}
+        {mode === "ask" ? t("nav.pushAskBody") : t("nav.pushIosBody")}
       </p>
       {error && <p className="mt-2 text-[12.5px] text-red-400">{error}</p>}
       <div className="mt-3 flex justify-end gap-2">
@@ -95,7 +95,7 @@ export function PushPrompt() {
           onClick={close}
           className="rounded-full px-3.5 py-1.5 text-[13px] text-text-secondary transition-colors hover:text-text-primary"
         >
-          {mode === "ask" ? "Not now" : "Got it"}
+          {mode === "ask" ? t("nav.notNow") : t("nav.gotIt")}
         </button>
         {mode === "ask" && (
           <button
@@ -104,7 +104,7 @@ export function PushPrompt() {
             disabled={busy}
             className="rounded-full bg-accent px-4 py-1.5 text-[13px] font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
           >
-            {busy ? "Turning on…" : "Turn on"}
+            {busy ? t("nav.turningOn") : t("nav.turnOn")}
           </button>
         )}
       </div>

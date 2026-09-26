@@ -6,8 +6,9 @@ import { getUpcomingReleases, type CalendarEntry } from "@/lib/calendar/query";
 import { computeCalendarGrid, toDateKey } from "@/lib/calendar/grid";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getViewerContext } from "@/lib/integrations/library-owner";
+import { getT } from "@/lib/i18n/server";
+import { formatDate } from "@/lib/i18n/format";
 
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE_PER_DAY = 4;
 
 export default async function CalendarPage({
@@ -17,6 +18,7 @@ export default async function CalendarPage({
 }) {
   const viewer = await getViewerContext();
   if (!viewer.session) redirect("/login");
+  const t = await getT();
 
   const isAdmin = viewer.isAdmin;
   const libraryOwnerId = viewer.libraryOwnerId;
@@ -28,18 +30,16 @@ export default async function CalendarPage({
   if (!radarrCred && !sonarrCred) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-20 text-center">
-        <h1 className="font-display text-3xl text-text-primary">Calendar</h1>
+        <h1 className="font-display text-3xl text-text-primary">{t("discover.calendarTitle")}</h1>
         <p className="mt-3 text-text-secondary">
-          {isAdmin
-            ? "Connect Sonarr or Radarr to see upcoming releases and air dates here."
-            : "The household admin hasn't connected Sonarr or Radarr yet."}
+          {isAdmin ? t("discover.calendarConnectAdmin") : t("discover.calendarConnectMember")}
         </p>
         {isAdmin && (
           <Link
             href="/settings/integrations"
             className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
           >
-            Connect an integration
+            {t("discover.connectIntegration")}
           </Link>
         )}
       </div>
@@ -63,29 +63,27 @@ export default async function CalendarPage({
     <div className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl text-text-primary">Calendar</h1>
-          <p className="mt-2 text-text-secondary">
-            {firstOfMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-          </p>
+          <h1 className="font-display text-3xl text-text-primary">{t("discover.calendarTitle")}</h1>
+          <p className="mt-2 text-text-secondary">{formatDate(t, firstOfMonth, "monthYear")}</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Link
             href="/calendar"
             className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
           >
-            Today
+            {t("discover.today")}
           </Link>
           <Link
             href={`/calendar?month=${prevMonth}`}
             className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
           >
-            ← Prev
+            {t("discover.previousMonth")}
           </Link>
           <Link
             href={`/calendar?month=${nextMonth}`}
             className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
           >
-            Next →
+            {t("discover.nextMonth")}
           </Link>
         </div>
       </div>
@@ -95,9 +93,11 @@ export default async function CalendarPage({
           to the point the day's entries become unreadable. */}
       <div className="mt-8 overflow-x-auto rounded-2xl border border-border">
         <div className="grid min-w-[560px] grid-cols-7 gap-px bg-border">
-          {WEEKDAY_LABELS.map((label) => (
-            <div key={label} className="bg-bg-1 px-2 py-2 text-center text-xs font-medium text-text-secondary">
-              {label}
+          {/* The grid's first week runs Sunday to Saturday: its days name the
+              columns, in the reader's language. */}
+          {days.slice(0, 7).map((day) => (
+            <div key={day.getDay()} className="bg-bg-1 px-2 py-2 text-center text-xs font-medium text-text-secondary">
+              {new Intl.DateTimeFormat(t.tag, { weekday: "short" }).format(day)}
             </div>
           ))}
 
@@ -149,7 +149,9 @@ export default async function CalendarPage({
                     );
                   })}
                   {overflowCount > 0 && (
-                    <span className="px-1 text-[10px] text-text-secondary">+{overflowCount} more</span>
+                    <span className="px-1 text-[10px] text-text-secondary">
+                      {t("discover.moreOnDay", { count: overflowCount })}
+                    </span>
                   )}
                 </div>
               </div>

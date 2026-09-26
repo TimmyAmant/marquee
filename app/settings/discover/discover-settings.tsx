@@ -14,6 +14,8 @@ import {
 import { describeShelf, moveShelf, type CustomShelfKind, type LayoutShelf } from "@/lib/discover/shelves";
 import type { DiscoverLookupResult } from "@/lib/api/types";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -22,14 +24,14 @@ const smallButtonClass =
 const iconButtonClass =
   "flex h-7 w-7 items-center justify-center rounded-full border border-border-strong text-text-secondary transition-colors hover:border-accent hover:text-accent disabled:opacity-30 disabled:hover:border-border-strong disabled:hover:text-text-secondary";
 
-const KIND_OPTIONS: { kind: CustomShelfKind; label: string; hint: string }[] = [
-  { kind: "keyword", label: "TMDb keyword", hint: "Everything TMDb tags with a keyword, like “anime” or “time travel”." },
-  { kind: "genre", label: "Genre", hint: "The most popular movies or series in one genre." },
-  { kind: "company", label: "Studio", hint: "A production company's titles, like A24 or Studio Ghibli." },
-  { kind: "network", label: "Network", hint: "Series from one network or streaming service." },
-  { kind: "tmdbList", label: "TMDb list", hint: "A public list on themoviedb.org, by its number or link." },
-  { kind: "traktList", label: "Trakt list", hint: "A public list or watchlist on trakt.tv, by its link." },
-  { kind: "library", label: "Recently added", hint: "What's new on your Plex or Jellyfin server." },
+const KIND_OPTIONS: { kind: CustomShelfKind; label: MessageKey; hint: MessageKey }[] = [
+  { kind: "keyword", label: "integrations.shelfKindKeyword", hint: "integrations.shelfKindKeywordHint" },
+  { kind: "genre", label: "integrations.shelfKindGenre", hint: "integrations.shelfKindGenreHint" },
+  { kind: "company", label: "integrations.shelfKindCompany", hint: "integrations.shelfKindCompanyHint" },
+  { kind: "network", label: "integrations.shelfKindNetwork", hint: "integrations.shelfKindNetworkHint" },
+  { kind: "tmdbList", label: "integrations.shelfKindTmdbList", hint: "integrations.shelfKindTmdbListHint" },
+  { kind: "traktList", label: "integrations.shelfKindTraktList", hint: "integrations.shelfKindTraktListHint" },
+  { kind: "library", label: "integrations.shelfKindLibrary", hint: "integrations.shelfKindLibraryHint" },
 ];
 
 type MediaChoice = "all" | "movie" | "tv";
@@ -61,6 +63,7 @@ function ShelfRowEditor({
   onRename: (title: string) => Promise<boolean>;
   onRemove: () => void;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(shelf.title);
   const [confirming, setConfirming] = useState(false);
@@ -70,7 +73,7 @@ function ShelfRowEditor({
       <div className="flex shrink-0 gap-1.5">
         <button
           type="button"
-          aria-label={`Move ${shelf.title} up`}
+          aria-label={t("integrations.moveUp", { name: shelf.title })}
           disabled={busy || index === 0}
           onClick={() => onMove(-1)}
           className={iconButtonClass}
@@ -79,7 +82,7 @@ function ShelfRowEditor({
         </button>
         <button
           type="button"
-          aria-label={`Move ${shelf.title} down`}
+          aria-label={t("integrations.moveDown", { name: shelf.title })}
           disabled={busy || index === count - 1}
           onClick={() => onMove(1)}
           className={iconButtonClass}
@@ -102,11 +105,11 @@ function ShelfRowEditor({
               maxLength={60}
               autoFocus
               onChange={(event) => setTitle(event.target.value)}
-              aria-label="Row name"
+              aria-label={t("integrations.rowName")}
               className={`${inputClass} py-1.5`}
             />
             <button type="submit" disabled={busy} className={smallButtonClass}>
-              Save
+              {t("common.save")}
             </button>
             <button
               type="button"
@@ -116,16 +119,16 @@ function ShelfRowEditor({
               }}
               className="text-xs text-text-secondary hover:text-accent"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </form>
         ) : (
           <p className="truncate text-sm font-medium text-text-primary">
             {shelf.title}
-            {shelf.hidden && <span className="ml-2 text-xs font-normal text-text-muted">Hidden</span>}
+            {shelf.hidden && <span className="ml-2 text-xs font-normal text-text-muted">{t("integrations.hidden")}</span>}
           </p>
         )}
-        <p className="mt-0.5 truncate text-xs text-text-muted">{describeShelf(shelf)}</p>
+        <p className="mt-0.5 truncate text-xs text-text-muted">{describeShelf(shelf, t)}</p>
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3">
@@ -137,21 +140,21 @@ function ShelfRowEditor({
             onChange={onToggle}
             className="h-4 w-4 rounded border-border accent-accent"
           />
-          Show
+          {t("integrations.show")}
         </label>
         {shelf.custom && !editing && (
           <button type="button" disabled={busy} onClick={() => setEditing(true)} className="text-xs text-text-secondary hover:text-accent">
-            Rename
+            {t("integrations.rename")}
           </button>
         )}
         {shelf.custom &&
           (confirming ? (
             <span className="flex items-center gap-2 text-xs">
               <button type="button" disabled={busy} onClick={onRemove} className="text-red-400 hover:underline">
-                Remove it
+                {t("integrations.removeIt")}
               </button>
               <button type="button" onClick={() => setConfirming(false)} className="text-text-secondary hover:text-accent">
-                Keep
+                {t("integrations.keep")}
               </button>
             </span>
           ) : (
@@ -161,7 +164,7 @@ function ShelfRowEditor({
               onClick={() => setConfirming(true)}
               className="text-xs text-text-secondary hover:text-red-400"
             >
-              Remove
+              {t("common.remove")}
             </button>
           ))}
       </div>
@@ -180,6 +183,7 @@ function SourcePicker({
   picked: DiscoverLookupResult | null;
   onPick: (result: DiscoverLookupResult | null) => void;
 }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DiscoverLookupResult[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -214,14 +218,21 @@ function SourcePicker({
           {picked.detail && <span className="ml-1 text-xs text-text-muted">({picked.detail})</span>}
         </span>
         <button type="button" onClick={() => onPick(null)} className="text-xs text-text-secondary hover:text-accent">
-          Change
+          {t("integrations.change")}
         </button>
       </div>
     );
   }
 
-  const placeholder =
-    kind === "keyword" ? "Search keywords, e.g. anime" : kind === "company" ? "Search studios, e.g. A24" : kind === "network" ? "Filter networks, or a TMDb network number" : "Filter genres";
+  const placeholder = t(
+    kind === "keyword"
+      ? "integrations.searchKeywords"
+      : kind === "company"
+        ? "integrations.searchStudios"
+        : kind === "network"
+          ? "integrations.filterNetworks"
+          : "integrations.filterGenres",
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -233,7 +244,7 @@ function SourcePicker({
         className={inputClass}
       />
       {error && <p className="text-xs text-red-400">{error}</p>}
-      {searching && !tooShort && results.length === 0 && <p className="text-xs text-text-muted">Searching…</p>}
+      {searching && !tooShort && results.length === 0 && <p className="text-xs text-text-muted">{t("integrations.searching")}</p>}
       {!tooShort && results.length > 0 && (
         <ul className="max-h-60 overflow-y-auto rounded-lg border border-border">
           {results.map((result) => (
@@ -265,6 +276,7 @@ function AddShelfForm({
   traktConfigured: boolean;
   onAdded: (result: DiscoverActionResult) => void;
 }) {
+  const t = useT();
   const [kind, setKind] = useState<CustomShelfKind>("keyword");
   const [mediaType, setMediaType] = useState<MediaChoice>("all");
   const [picked, setPicked] = useState<DiscoverLookupResult | null>(null);
@@ -290,7 +302,7 @@ function AddShelfForm({
     const body: Record<string, unknown> = { kind, title: title.trim() || undefined };
     if (kind === "keyword" || kind === "company" || kind === "network" || kind === "genre") {
       if (!picked) {
-        setError(`Pick a ${option.label.toLowerCase()} first.`);
+        setError(t("integrations.pickSourceFirst", { kind }));
         return;
       }
       body.tmdbId = picked.tmdbId;
@@ -314,7 +326,7 @@ function AddShelfForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4 p-5">
-      <p className="text-sm font-medium text-text-primary">Add a row</p>
+      <p className="text-sm font-medium text-text-primary">{t("integrations.addRowHeading")}</p>
       <div className="flex flex-wrap gap-2">
         {KIND_OPTIONS.map((o) => (
           <button
@@ -327,11 +339,11 @@ function AddShelfForm({
                 : "border-border-strong text-text-secondary hover:border-accent hover:text-accent"
             }`}
           >
-            {o.label}
+            {t(o.label)}
           </button>
         ))}
       </div>
-      <p className="text-xs text-text-muted">{option.hint}</p>
+      <p className="text-xs text-text-muted">{t(option.hint)}</p>
 
       {mediaChoices && (
         <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
@@ -347,7 +359,7 @@ function AddShelfForm({
                 }}
                 className="accent-accent"
               />
-              {choice === "all" ? "Movies & series" : choice === "movie" ? "Movies" : "Series"}
+              {choice === "all" ? t("integrations.mediaAll") : choice === "movie" ? t("common.movies") : t("common.series")}
             </label>
           ))}
         </div>
@@ -360,8 +372,8 @@ function AddShelfForm({
         <input
           value={link}
           onChange={(event) => setLink(event.target.value)}
-          placeholder="https://www.themoviedb.org/list/8136 or 8136"
-          aria-label="TMDb list number or link"
+          placeholder={t("integrations.tmdbListPlaceholder")}
+          aria-label={t("integrations.tmdbListLabel")}
           className={inputClass}
         />
       )}
@@ -370,25 +382,23 @@ function AddShelfForm({
           <input
             value={link}
             onChange={(event) => setLink(event.target.value)}
-            placeholder="https://trakt.tv/users/someone/lists/favourites"
-            aria-label="Trakt list link"
+            placeholder="https://trakt.tv/users/someone/lists/favourites" // i18n-ignore
+            aria-label={t("integrations.traktListLabel")}
             className={inputClass}
           />
           {!traktConfigured && (
-            <p className="text-xs text-amber-300">
-              Trakt isn&apos;t connected yet — connect it in Settings → Integrations, or this row stays empty.
-            </p>
+            <p className="text-xs text-amber-300">{t("integrations.traktNotConnected")}</p>
           )}
         </>
       )}
 
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Name (optional)
+        {t("integrations.rowNameOptional")}
         <input
           value={title}
           maxLength={60}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={picked ? picked.name : "Named after what it shows"}
+          placeholder={picked ? picked.name : t("integrations.rowNamePlaceholder")}
           className={inputClass}
         />
       </label>
@@ -399,7 +409,7 @@ function AddShelfForm({
         disabled={busy}
         className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {busy ? "Adding…" : "Add row"}
+        {busy ? t("integrations.adding") : t("integrations.addRow")}
       </button>
     </form>
   );
@@ -416,6 +426,7 @@ export function DiscoverSettingsEditor({
   traktConfigured: boolean;
   maxCustomShelves: number;
 }) {
+  const t = useT();
   const router = useRouter();
   const [shelves, setShelves] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -463,11 +474,11 @@ export function DiscoverSettingsEditor({
         </ul>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3">
           <p className="text-xs text-text-muted">
-            {error ? <span className="text-red-400">{error}</span> : "Changes apply to Discover straight away, for everyone."}
+            {error ? <span className="text-red-400">{error}</span> : t("integrations.changesApply")}
           </p>
           {confirmReset ? (
             <span className="flex items-center gap-3 text-xs">
-              <span className="text-text-secondary">Put the built-in rows back as they were?</span>
+              <span className="text-text-secondary">{t("integrations.resetConfirm")}</span>
               <button
                 type="button"
                 disabled={busy}
@@ -477,15 +488,15 @@ export function DiscoverSettingsEditor({
                 }}
                 className="text-accent hover:underline"
               >
-                Reset
+                {t("integrations.reset")}
               </button>
               <button type="button" onClick={() => setConfirmReset(false)} className="text-text-secondary hover:text-accent">
-                Cancel
+                {t("common.cancel")}
               </button>
             </span>
           ) : (
             <button type="button" disabled={busy} onClick={() => setConfirmReset(true)} className={smallButtonClass}>
-              Reset to default
+              {t("integrations.resetToDefault")}
             </button>
           )}
         </div>
@@ -493,9 +504,7 @@ export function DiscoverSettingsEditor({
 
       <div className="overflow-hidden rounded-2xl border border-border bg-bg-1">
         {customCount >= maxCustomShelves ? (
-          <p className="p-5 text-sm text-text-muted">
-            Discover has {maxCustomShelves} rows of your own, the most it can have. Remove one to add another.
-          </p>
+          <p className="p-5 text-sm text-text-muted">{t("integrations.maxCustomRows", { count: maxCustomShelves })}</p>
         ) : (
           <AddShelfForm
             traktConfigured={traktConfigured}

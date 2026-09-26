@@ -2,7 +2,11 @@
 // put in a redirect (/login?sso=…, /settings?sso=…, /login/sso/done?result=…)
 // and the page turns back into words. Only these fixed codes travel in the
 // URL — never text from the identity provider — so nobody can craft a link
-// that makes Marquee's own page say something it didn't. Client-safe.
+// that makes Marquee's own page say something it didn't. Server-side: the
+// words come from lib/i18n's message files.
+
+import { englishT } from "@/lib/i18n/catalog";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 export const SSO_ERROR_CODES = [
   "expired",
@@ -24,26 +28,25 @@ export function parseSsoErrorCode(value: unknown): SsoErrorCode | null {
     : null;
 }
 
-/** `name` is the button's name ("Authentik"). */
-export function ssoErrorMessage(code: SsoErrorCode, name: string): string {
-  switch (code) {
-    case "expired":
-      return `That ${name} sign-in expired or was already used. Try again.`;
-    case "cancelled":
-      return `${name} sign-in was cancelled.`;
-    case "not_allowed":
-      return `Your ${name} account isn't allowed to use Marquee. Ask the admin to add you to the right group.`;
-    case "no_account":
-      return `There's no Marquee account for this ${name} account yet. Ask the admin to add you.`;
-    case "linked_elsewhere":
-      return `This ${name} account is already linked to another Marquee account.`;
-    case "wrong_account":
-      return `You're signed in to Marquee as someone else in this browser. Sign in as the account you're linking, then try again.`;
-    case "not_configured":
-      return `${name} sign-in isn't set up on this server anymore.`;
-    case "rate_limited":
-      return "Too many attempts. Try again in a few minutes.";
-    case "failed":
-      return `Couldn't finish signing in with ${name}. Try again, or ask the admin to check the server log.`;
-  }
+const MESSAGE_KEYS: Record<SsoErrorCode, MessageKey> = {
+  expired: "auth.ssoExpired",
+  cancelled: "auth.ssoCancelled",
+  not_allowed: "auth.ssoNotAllowed",
+  no_account: "auth.ssoNoAccount",
+  linked_elsewhere: "auth.ssoLinkedElsewhere",
+  wrong_account: "auth.ssoWrongAccount",
+  not_configured: "auth.ssoNotConfigured",
+  rate_limited: "auth.tooManyAttempts",
+  failed: "auth.ssoFailed",
+};
+
+/** `name` is the button's name ("Authentik"); without one, "single sign-on"
+ * in the reader's language. `t` is the reader's language — English when
+ * left out (the API's error bodies). */
+export function ssoErrorMessage(
+  code: SsoErrorCode,
+  name: string | null | undefined,
+  t: Translator = englishT(),
+): string {
+  return t(MESSAGE_KEYS[code], { name: name || t("auth.singleSignOn") });
 }

@@ -4,6 +4,7 @@
 // GET /api/v1/discover/lists/{list}.
 
 import { TMDB_MAX_PAGE } from "@/lib/discover/paging";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 /** The shelves with no browse page of their own: "See all" opens the whole
  * list as a paged grid (/discover/{list} on the website). */
@@ -11,11 +12,12 @@ export const DISCOVER_LISTS = ["recently-added", "trending", "upcoming-movies", 
 
 export type DiscoverList = (typeof DISCOVER_LISTS)[number];
 
-export const DISCOVER_LIST_TITLES: Record<DiscoverList, string> = {
-  "recently-added": "Recently Added",
-  trending: "Trending",
-  "upcoming-movies": "Upcoming Movies",
-  "upcoming-series": "Upcoming Series",
+/** Each list's name, in the reader's language: `t(DISCOVER_LIST_TITLES[list])`. */
+export const DISCOVER_LIST_TITLES: Record<DiscoverList, MessageKey> = {
+  "recently-added": "discover.shelfRecentlyAdded",
+  trending: "discover.shelfTrending",
+  "upcoming-movies": "discover.shelfUpcomingMovies",
+  "upcoming-series": "discover.shelfUpcomingSeries",
 };
 
 export function parseDiscoverList(value: string | null | undefined): DiscoverList | null {

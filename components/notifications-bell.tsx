@@ -10,6 +10,8 @@ import {
 } from "@/lib/notifications/actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
+import { useT } from "@/lib/i18n/client";
+import { timeAgo } from "@/lib/i18n/format";
 
 type NotificationRow = Awaited<ReturnType<typeof getRecentNotificationsAction>>[number];
 
@@ -33,22 +35,16 @@ function useRailShowing(): boolean {
   );
 }
 
-function timeAgo(date: Date | string): string {
-  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
 /** A shared title's message without its note, which shows on a line of its
- * own ("Susan shared “Ice Age” with you: …" → "Susan shared “Ice Age” with you"). */
+ * own ("Susan shared “Ice Age” with you: …" → "Susan shared “Ice Age” with you").
+ * The message is stored in its recipient's language, so the separator
+ * before the note may be French's no-break space before the colon too. */
 function sharedHeadline(message: string, note: string): string {
-  const suffix = `: ${note}`;
-  return message.endsWith(suffix) ? message.slice(0, -suffix.length) : message;
+  for (const separator of [": ", " : ", " : "]) {
+    const suffix = `${separator}${note}`;
+    if (message.endsWith(suffix)) return message.slice(0, -suffix.length);
+  }
+  return message;
 }
 
 /**
@@ -65,6 +61,7 @@ export function NotificationsBell({
   variant?: "header" | "rail";
   railLabel?: ReactNode;
 } = {}) {
+  const t = useT();
   const onRail = variant === "rail";
   // Both bells are mounted (CSS hides one), so only the one on screen polls:
   // otherwise every signed-in page would ask twice every 30 seconds, and
@@ -123,7 +120,7 @@ export function NotificationsBell({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+        aria-label={unreadCount > 0 ? t("nav.notificationsUnread", { count: unreadCount }) : t("nav.notifications")}
         aria-expanded={open}
         className={
           onRail
@@ -166,14 +163,14 @@ export function NotificationsBell({
           }`}
         >
           <div className="flex items-center justify-between px-2 py-1.5">
-            <span className="text-xs font-medium text-text-primary">Notifications</span>
+            <span className="text-xs font-medium text-text-primary">{t("nav.notifications")}</span>
             {items.some((n) => !n.read) && (
               <button
                 type="button"
                 onClick={handleMarkAllRead}
                 className="text-[11px] text-text-secondary transition-colors hover:text-accent"
               >
-                Mark all read
+                {t("nav.markAllRead")}
               </button>
             )}
           </div>
@@ -183,7 +180,7 @@ export function NotificationsBell({
               (.rail-popover in app/globals.css). */}
           <div className={onRail ? "rail-popover-list overflow-y-auto" : "max-h-96 overflow-y-auto"}>
             {items.length === 0 ? (
-              <p className="px-2 py-4 text-center text-xs text-text-secondary">No notifications yet.</p>
+              <p className="px-2 py-4 text-center text-xs text-text-secondary">{t("nav.noNotifications")}</p>
             ) : (
               items.map((item) => (
                 <button
@@ -209,9 +206,9 @@ export function NotificationsBell({
                     <div className={item.read && !(item.eventType === "title_shared" && item.sender) ? "pl-3.5" : ""}>
                       <p>{item.eventType === "title_shared" && item.note ? sharedHeadline(item.message, item.note) : item.message}</p>
                       {item.eventType === "title_shared" && item.note && (
-                        <p className="mt-0.5 italic text-text-secondary">“{item.note}”</p>
+                        <p className="mt-0.5 italic text-text-secondary">{t("nav.quoted", { text: item.note })}</p>
                       )}
-                      <p className="mt-0.5 text-[10px] text-text-secondary">{timeAgo(item.createdAt)}</p>
+                      <p className="mt-0.5 text-[10px] text-text-secondary">{timeAgo(t, item.createdAt)}</p>
                     </div>
                   </div>
                 </button>

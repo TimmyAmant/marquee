@@ -8,13 +8,15 @@ import type { MediaType } from "@/lib/db/schema";
 import type { AddOverrides } from "@/lib/arr/add-options";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import type { FourKViewerState } from "@/lib/api/types";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
-const FOURK_LABEL: Record<FourKViewerState["status"], string | null> = {
-  owned: "In 4K",
-  tracked_downloading: "4K downloading",
-  tracked_monitored: "4K missing",
-  tracked_unmonitored: "4K not monitored",
-  coming_soon: "4K coming soon",
+const FOURK_LABEL: Record<FourKViewerState["status"], MessageKey | null> = {
+  owned: "title.fourKOwned",
+  tracked_downloading: "title.fourKDownloading",
+  tracked_monitored: "title.fourKMissing",
+  tracked_unmonitored: "title.fourKUnmonitored",
+  coming_soon: "title.fourKComingSoon",
   untracked: null,
 };
 
@@ -35,6 +37,7 @@ export function FourKControls({
   /** A member may pick the server, quality and folder (advancedRequests). */
   advanced?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +45,8 @@ export function FourKControls({
   const [addedNow, setAddedNow] = useState(false);
   // The Advanced picks, when that's open; null sends none (the defaults).
   const [overrides, setOverrides] = useState<AddOverrides | null>(null);
-  const label = FOURK_LABEL[fourK.status];
+  const labelKey = FOURK_LABEL[fourK.status];
+  const label = labelKey ? t(labelKey) : null;
   const arrName = mediaType === "movie" ? "Radarr" : "Sonarr";
 
   async function run(action: () => Promise<{ error?: string; success?: boolean }>, onDone: () => void) {
@@ -67,7 +71,7 @@ export function FourKControls({
       )}
       {requested && (
         <span className="flex h-8 items-center rounded-full bg-info-bg px-3.5 text-[13px] font-medium text-info">
-          4K requested
+          {t("title.fourKRequested")}
         </span>
       )}
       {!requested && fourK.canRequest && (
@@ -77,7 +81,7 @@ export function FourKControls({
           onClick={() => run(() => requestFourKAction(mediaType, tmdbId, overrides ?? undefined), () => setRequestedNow(true))}
           className="flex h-8 items-center rounded-full border border-accent px-4 text-[13px] font-semibold text-accent transition-colors hover:bg-accent hover:text-bg-0 disabled:opacity-60"
         >
-          {busy ? "Requesting…" : "Request in 4K"}
+          {busy ? t("title.requesting") : t("title.requestIn4k")}
         </button>
       )}
       {!addedNow && fourK.canAdd && (
@@ -87,7 +91,7 @@ export function FourKControls({
           onClick={() => run(() => addToFourK(mediaType, tmdbId, overrides ?? undefined), () => setAddedNow(true))}
           className="flex h-8 items-center rounded-full border border-accent px-4 text-[13px] font-semibold text-accent transition-colors hover:bg-accent hover:text-bg-0 disabled:opacity-60"
         >
-          {busy ? "Adding…" : `Add to 4K ${arrName}`}
+          {busy ? t("title.adding") : t("title.addTo", { app: `4K ${arrName}` })}
         </button>
       )}
       {!requested && fourK.canRequest && advanced && (

@@ -7,6 +7,19 @@ import { pushMessageFor, pushToUser } from "@/lib/push/deliver";
 import { bellAndPushFor, preferenceEventFor, type NotificationPreferenceEvent } from "@/lib/notifications/events";
 import { loadBellPushOverrides } from "@/lib/notifications/preferences";
 import { fanOut } from "@/lib/notifications/fan-out";
+import { householdT, translatorForUser } from "@/lib/i18n/server";
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
+
+/** A notification's text: fixed, or written in whichever language it's
+ * for — `(t) => t("notify.…", …)`. The recipient's copy (bell, push, their
+ * own channels) is in their language; the household channels' copy in the
+ * household's (lib/i18n/server.ts). */
+export type Localized = string | ((t: Translator) => string);
+
+export function localize(text: Localized, t: Translator): string {
+  return typeof text === "function" ? text(t) : text;
+}
 
 export async function getUnreadCount(userId: string): Promise<number> {
   const [row] = await db
@@ -66,9 +79,9 @@ export async function createNotification(input: {
   userId: string;
   mediaType: MediaType;
   tmdbId: number;
-  title: string;
+  title: Localized;
   eventType: NotificationEventType;
-  message: string;
+  message: Localized;
   /** Also post to the household channels (Discord / ntfy / Telegram /
    * Pushover / email / the generic webhook), for the events the admin
    * picked. Those are household-wide, so a second notification about the
@@ -95,8 +108,11 @@ export async function createNotification(input: {
   senderUserId?: string;
   note?: string | null;
 }): Promise<boolean> {
-  const { relay = true, dedupeSince, topic, ...row } = input;
+  const { relay = true, dedupeSince, topic, title, message, ...rest } = input;
   const event = topic ?? preferenceEventFor(input.eventType);
+  // Not being able to read the language mustn't lose it either: English.
+  const t = await translatorForUser(input.userId).catch(() => englishT());
+  const row = { ...rest, title: localize(title, t), message: localize(message, t) };
   // Not being able to read the choices mustn't lose the notification: the
   // defaults are what everyone had before there were choices.
   const overrides = await loadBellPushOverrides(input.userId).catch(() => ({}));
@@ -113,7 +129,12 @@ export async function createNotification(input: {
   // update the bell, and show a banner unless `alert` is false) and every
   // browser that turned notifications on.
   if (saved.inBell || saved.alert) publishNotification(saved);
-  if (saved.alert) void pushToUser(saved.userId, pushMessageFor(saved));
+  if (saved.alert) void pushToUser(saved.userId, pushMessageFor(saved, t));
+
+  // The household channels read the household's language, which can
+  // differ from this account's.
+  const fixed = typeof title === "string" && typeof message === "string";
+  const household = relay && !fixed ? await householdT().catch(() => englishT()) : null;
 
   // Household and personal channels, in the background: the notification
   // is already saved, and a slow or broken channel mustn't hold anything up.
@@ -124,6 +145,7 @@ export async function createNotification(input: {
       event,
       title: saved.title,
       message: saved.message,
+      ...(household ? { householdTitle: localize(title, household), householdMessage: localize(message, household) } : {}),
       mediaType: saved.mediaType,
       tmdbId: saved.tmdbId,
     },

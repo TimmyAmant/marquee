@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { addComment, deleteComment, editComment, listComments, type CommentTarget } from "@/lib/comments";
 import type { CommentThread } from "@/lib/api/types";
+import { getT } from "@/lib/i18n/server";
 
 // The website's side of comment threads — thin session wrappers around
 // lib/comments, which /api/v1/{requests,issues}/{id}/comments shares. The
@@ -25,18 +26,18 @@ export async function loadCommentsAction(
   id: string,
 ): Promise<{ thread?: CommentThread; error?: string }> {
   const who = await viewer();
-  if (!who) return { error: "Sign in first." };
+  if (!who) return { error: (await getT())("notify.signInFirst") };
   const t = target(kind, id);
-  if (!t) return { error: "Not found." };
+  if (!t) return { error: (await getT())("notify.notFound") };
   const result = await listComments(who, t, "/api");
   return result.ok ? { thread: result.thread } : { error: result.error };
 }
 
 export async function addCommentAction(kind: CommentTarget["kind"], id: string, body: string): Promise<CommentActionState> {
   const who = await viewer();
-  if (!who) return { error: "Sign in first." };
+  if (!who) return { error: (await getT())("notify.signInFirst") };
   const t = target(kind, id);
-  if (!t) return { error: "Not found." };
+  if (!t) return { error: (await getT())("notify.notFound") };
   const result = await addComment(who, t, body);
   return result.ok ? { success: true } : { error: result.error };
 }
@@ -48,9 +49,9 @@ export async function editCommentAction(
   body: string,
 ): Promise<CommentActionState> {
   const who = await viewer();
-  if (!who) return { error: "Sign in first." };
+  if (!who) return { error: (await getT())("notify.signInFirst") };
   const t = target(kind, id);
-  if (!t || typeof commentId !== "string") return { error: "Not found." };
+  if (!t || typeof commentId !== "string") return { error: (await getT())("notify.notFound") };
   const result = await editComment(who, t, commentId, body);
   return result.ok ? { success: true } : { error: result.error };
 }
@@ -61,9 +62,9 @@ export async function deleteCommentAction(
   commentId: string,
 ): Promise<CommentActionState> {
   const who = await viewer();
-  if (!who) return { error: "Sign in first." };
+  if (!who) return { error: (await getT())("notify.signInFirst") };
   const t = target(kind, id);
-  if (!t || typeof commentId !== "string") return { error: "Not found." };
+  if (!t || typeof commentId !== "string") return { error: (await getT())("notify.notFound") };
   const result = await deleteComment(who, t, commentId);
   return result.ok ? { success: true } : { error: result.error };
 }

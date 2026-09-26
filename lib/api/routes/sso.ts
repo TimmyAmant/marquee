@@ -1,4 +1,4 @@
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { webhookBaseUrl } from "@/lib/integrations/webhook-urls";
 import { callbackUrlFor, DEFAULT_GROUPS_CLAIM, DEFAULT_SSO_SCOPES, type SsoSettingsView } from "@/lib/auth/sso/config";
 import type { QuickConnectStart, SsoSettings, SsoStart } from "@/lib/api/types";
@@ -15,11 +15,11 @@ export function quickConnectStartDto(start: { handle: string; code: string; expi
 }
 
 export function ssoExpired(): ApiError {
-  return ApiError.of("expired", "That sign-in expired. Try again.");
+  return ApiError.of("expired", msg("server.ssoSignInExpired"));
 }
 
 export function quickConnectExpired(): ApiError {
-  return ApiError.of("expired", "That Quick Connect code expired. Try again.");
+  return ApiError.of("expired", msg("server.quickConnectExpired"));
 }
 
 /** GET /settings/sso: the saved settings without the secret, or — before

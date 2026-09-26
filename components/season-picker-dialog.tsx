@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { SeasonPickerState } from "@/lib/requests/seasons";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 export type SeasonPickerRow = {
   seasonNumber: number;
@@ -11,10 +13,10 @@ export type SeasonPickerRow = {
   state: SeasonPickerState;
 };
 
-const TAGS: Partial<Record<SeasonPickerState, { label: string; className: string }>> = {
-  complete: { label: "In library", className: "bg-owned-bg text-owned" },
-  monitored: { label: "Monitored", className: "bg-info-bg text-info" },
-  requested: { label: "Requested", className: "bg-info-bg text-info" },
+const TAGS: Partial<Record<SeasonPickerState, { label: MessageKey; className: string }>> = {
+  complete: { label: "title.seasonInLibrary", className: "bg-owned-bg text-owned" },
+  monitored: { label: "title.seasonMonitored", className: "bg-info-bg text-info" },
+  requested: { label: "title.requested", className: "bg-info-bg text-info" },
 };
 
 /**
@@ -51,6 +53,7 @@ export function SeasonPickerDialog({
   onSubmit: (seasons: number[]) => Promise<string | null>;
   onClose: () => void;
 }) {
+  const t = useT();
   const [selected, setSelected] = useState<Set<number>>(() => new Set(initialSelected));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -151,7 +154,7 @@ export function SeasonPickerDialog({
               onClick={toggleAll}
               className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-accent transition-colors hover:bg-text-primary/10"
             >
-              {allSelected ? "Clear all" : "Select all"}
+              {allSelected ? t("title.clearAll") : t("title.selectAll")}
             </button>
           )}
         </div>
@@ -163,7 +166,7 @@ export function SeasonPickerDialog({
         >
           {rows.map((row) => {
             const tag = TAGS[row.state];
-            const episodes = `${row.episodeCount} episode${row.episodeCount === 1 ? "" : "s"}`;
+            const episodes = t("common.episodes", { count: row.episodeCount });
             if (row.state === "requestable") {
               const checked = selected.has(row.seasonNumber);
               return (
@@ -196,7 +199,7 @@ export function SeasonPickerDialog({
                 <span className="shrink-0 text-[12px] text-text-muted">{episodes}</span>
                 {tag && (
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${tag.className}`}>
-                    {tag.label}
+                    {t(tag.label)}
                   </span>
                 )}
               </li>
@@ -216,7 +219,7 @@ export function SeasonPickerDialog({
               onClick={onClose}
               className="flex h-8 items-center rounded-full border border-border-strong px-4 text-[13px] text-text-primary transition-colors hover:border-accent hover:text-accent"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="button"

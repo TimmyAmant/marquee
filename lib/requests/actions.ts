@@ -18,8 +18,11 @@ import {
   retryRequest,
 } from "@/lib/requests/mutate";
 import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 import { hasOverrides, parseAddOverrides, parseAddOverridesForm, type AddOverrides } from "@/lib/arr/add-options";
-import { ADVANCED_REFUSED, attentionCount } from "@/lib/requests/access";
+import { attentionCount } from "@/lib/requests/access";
+import { SONARR_UNRESOLVED } from "@/lib/requests/errors";
 import { requestAllMissing } from "@/lib/requests/request-all";
 import { getRequestEditOptions } from "@/lib/requests/edit-options";
 import type { RequestEditOptions } from "@/lib/api/types";
@@ -33,7 +36,7 @@ export type RequestState = { error?: string; success?: boolean };
 async function overridesRefusal(overrides: AddOverrides): Promise<string | null> {
   if (!hasOverrides(overrides)) return null;
   const session = await auth();
-  return can(session?.user, "advancedRequests") ? null : ADVANCED_REFUSED;
+  return can(session?.user, "advancedRequests") ? null : (await getT())("notify.advancedNotAllowed");
 }
 
 /** Polled by the nav badge so a reviewer sees a new request (or problem
@@ -47,7 +50,7 @@ export async function getPendingRequestCountAction(): Promise<number> {
 
 /** "Can't find" → "Search again". */
 export async function searchNotFoundAgainAction(requestId: string): Promise<RequestState> {
-  const reviewer = await requirePermission("reviewRequests", "Only someone who reviews requests can do this.");
+  const reviewer = await requirePermission("reviewRequests", (await getT())("notify.onlyReviewers"));
   if (!reviewer.ok) return { error: reviewer.error };
   const result = await searchNotFoundAgain(requestId);
   if (!result.ok) return { error: result.error };
@@ -56,7 +59,7 @@ export async function searchNotFoundAgainAction(requestId: string): Promise<Requ
 
 /** "Can't find" → "Mark as found". */
 export async function dismissNotFoundAction(requestId: string): Promise<RequestState> {
-  const reviewer = await requirePermission("reviewRequests", "Only someone who reviews requests can do this.");
+  const reviewer = await requirePermission("reviewRequests", (await getT())("notify.onlyReviewers"));
   if (!reviewer.ok) return { error: reviewer.error };
   const result = await dismissNotFound(requestId);
   if (!result.ok) return { error: result.error };
@@ -73,14 +76,14 @@ export async function createRequestAction(
   formData: FormData,
 ): Promise<RequestState> {
   const viewer = await getViewerContext();
-  if (!viewer.session) return { error: "Sign in to request titles." };
+  if (!viewer.session) return { error: (await getT())("notify.signInToRequest") };
 
   // The arguments are bound in a client component, so they're whatever the
   // browser sends: the type and id have to be real before they reach the
   // database (nothing there constrains media_type), and createRequest takes
   // the title and poster from the TMDb cache rather than trusting these.
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
-    return { error: "That title couldn't be requested." };
+    return { error: (await getT())("notify.titleCantBeRequested") };
   }
 
   // The Advanced picks, when that section was opened (advancedRequests;
@@ -93,9 +96,9 @@ export async function createRequestAction(
 }
 
 /** Advanced picks a client component sent as an object (or nothing). */
-function overridesFrom(value: unknown, mediaType: MediaType): { ok: true; overrides: AddOverrides } | { ok: false; error: string } {
+function overridesFrom(t: Translator, value: unknown, mediaType: MediaType): { ok: true; overrides: AddOverrides } | { ok: false; error: string } {
   if (value === undefined || value === null) return { ok: true, overrides: {} };
-  if (typeof value !== "object" || Array.isArray(value)) return { ok: false, error: "Those options aren't valid." };
+  if (typeof value !== "object" || Array.isArray(value)) return { ok: false, error: t("notify.optionsInvalid") };
   return parseAddOverrides(value as Record<string, unknown>, mediaType);
 }
 
@@ -104,13 +107,13 @@ function overridesFrom(value: unknown, mediaType: MediaType): { ok: true; overri
  * the browser sent, and createRequest validates it. */
 export async function requestSeasonsAction(tmdbId: number, seasons: unknown, advanced?: unknown): Promise<RequestState> {
   const viewer = await getViewerContext();
-  if (!viewer.session) return { error: "Sign in to request titles." };
-  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) return { error: "That title couldn't be requested." };
+  if (!viewer.session) return { error: (await getT())("notify.signInToRequest") };
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) return { error: (await getT())("notify.titleCantBeRequested") };
   // null would quietly turn this into a whole-series request; the picker
   // always sends a list.
-  if (!Array.isArray(seasons)) return { error: "Pick at least one season." };
+  if (!Array.isArray(seasons)) return { error: (await getT())("notify.pickASeason") };
 
-  const overrides = overridesFrom(advanced, "tv");
+  const overrides = overridesFrom(await getT(), advanced, "tv");
   if (!overrides.ok) return { error: overrides.error };
 
   const result = await createRequest(viewer, {
@@ -131,9 +134,9 @@ export async function requestAllMissingAction(
   tmdbId: number,
 ): Promise<{ error?: string; message?: string; requested?: number }> {
   const viewer = await getViewerContext();
-  if (!viewer.session) return { error: "Sign in to request titles." };
+  if (!viewer.session) return { error: (await getT())("notify.signInToRequest") };
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
-    return { error: "That title couldn't be requested." };
+    return { error: (await getT())("notify.titleCantBeRequested") };
   }
   const result = await requestAllMissing(viewer, mediaType, tmdbId);
   return result.ok ? { message: result.message, requested: result.requested } : { error: result.error };
@@ -142,11 +145,11 @@ export async function requestAllMissingAction(
 /** The title page's "Request in 4K". */
 export async function requestFourKAction(mediaType: MediaType, tmdbId: number, advanced?: unknown): Promise<RequestState> {
   const viewer = await getViewerContext();
-  if (!viewer.session) return { error: "Sign in to request titles." };
+  if (!viewer.session) return { error: (await getT())("notify.signInToRequest") };
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
-    return { error: "That title couldn't be requested." };
+    return { error: (await getT())("notify.titleCantBeRequested") };
   }
-  const overrides = overridesFrom(advanced, mediaType);
+  const overrides = overridesFrom(await getT(), advanced, mediaType);
   if (!overrides.ok) return { error: overrides.error };
   const result = await createRequest(viewer, {
     mediaType,
@@ -159,14 +162,20 @@ export async function requestFourKAction(mediaType: MediaType, tmdbId: number, a
   return result.ok ? { success: true } : { error: result.error };
 }
 
-export type ReviewState = { error?: string; success?: boolean };
+export type ReviewState = {
+  error?: string;
+  success?: boolean;
+  /** "sonarr_unresolved": Sonarr couldn't resolve the show — the row offers
+   * adding it by hand. A code, since `error` is in the reviewer's language. */
+  code?: "sonarr_unresolved";
+};
 
 export async function approveRequestAction(
   requestId: string,
   _prevState: ReviewState | undefined,
   formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requirePermission("reviewRequests", "Only an admin can approve requests.");
+  const admin = await requirePermission("reviewRequests", (await getT())("notify.onlyAdminApproves"));
   if (!admin.ok) return { error: admin.error };
 
   // The row's "Advanced" picks, when it was opened (components/add-advanced-options.tsx).
@@ -179,7 +188,10 @@ export async function approveRequestAction(
   // Approved but not added: it moves to "Couldn't add" (with its error and
   // a Retry), so this row's job is done.
   if (!result.ok && "addFailed" in result) return { success: true };
-  return result.ok ? { success: true } : { error: result.error };
+  if (result.ok) return { success: true };
+  // Same request, same language: the text is exactly what title-actions gave.
+  const unresolved = result.error === (await getT())(SONARR_UNRESOLVED);
+  return unresolved ? { error: result.error, code: "sonarr_unresolved" } : { error: result.error };
 }
 
 /** "Retry" under "Couldn't add", with the row's Advanced picks if opened. */
@@ -188,7 +200,7 @@ export async function retryRequestAction(
   _prevState: ReviewState | undefined,
   formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requirePermission("reviewRequests", "Only an admin can retry requests.");
+  const admin = await requirePermission("reviewRequests", (await getT())("notify.onlyAdminRetries"));
   if (!admin.ok) return { error: admin.error };
   const parsed = parseAddOverridesForm(formData, "tv");
   if (!parsed.ok) return { error: parsed.error };
@@ -204,8 +216,8 @@ export async function requestEditOptionsAction(
   requestId: string,
 ): Promise<{ options?: RequestEditOptions; error?: string }> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in first." };
-  if (typeof requestId !== "string" || !/^[0-9a-f-]{36}$/i.test(requestId)) return { error: "Request not found." };
+  if (!session?.user) return { error: (await getT())("notify.signInFirst") };
+  if (typeof requestId !== "string" || !/^[0-9a-f-]{36}$/i.test(requestId)) return { error: (await getT())("notify.requestNotFound") };
   const result = await getRequestEditOptions({ userId: session.user.id, role: session.user.role, permissions: session.user.permissions }, requestId);
   return result.ok ? { options: result.options } : { error: result.error };
 }
@@ -213,8 +225,8 @@ export async function requestEditOptionsAction(
 /** "Cancel request" — the requester's own, while it's pending. */
 export async function cancelRequestAction(requestId: string): Promise<RequestState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in first." };
-  if (typeof requestId !== "string") return { error: "Request not found." };
+  if (!session?.user) return { error: (await getT())("notify.signInFirst") };
+  if (typeof requestId !== "string") return { error: (await getT())("notify.requestNotFound") };
   const result = await cancelRequest({ userId: session.user.id, role: session.user.role, permissions: session.user.permissions }, requestId);
   return result.ok ? { success: true } : { error: result.error };
 }
@@ -227,8 +239,8 @@ export async function editRequestAction(
   change: { seasons?: unknown; is4k?: unknown },
 ): Promise<RequestState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in first." };
-  if (typeof requestId !== "string" || !change || typeof change !== "object") return { error: "Request not found." };
+  if (!session?.user) return { error: (await getT())("notify.signInFirst") };
+  if (typeof requestId !== "string" || !change || typeof change !== "object") return { error: (await getT())("notify.requestNotFound") };
   const result = await editRequest({ userId: session.user.id, role: session.user.role, permissions: session.user.permissions }, requestId, {
     seasons: "seasons" in change ? change.seasons : undefined,
     is4k: "is4k" in change ? change.is4k : undefined,
@@ -243,7 +255,7 @@ export async function approveAllRequestsAction(
   _prevState: ApproveAllState | undefined,
   _formData: FormData,
 ): Promise<ApproveAllState> {
-  const admin = await requirePermission("reviewRequests", "Only an admin can approve requests.");
+  const admin = await requirePermission("reviewRequests", (await getT())("notify.onlyAdminApproves"));
   if (!admin.ok) return { error: admin.error };
 
   const { approvedCount, failedCount, firstError } = await approveAllRequests(admin.userId);
@@ -252,7 +264,7 @@ export async function approveAllRequestsAction(
     return { error: firstError };
   }
   if (failedCount > 0) {
-    return { success: true, approvedCount, error: `${failedCount} request(s) couldn't be approved.` };
+    return { success: true, approvedCount, error: (await getT())("notify.someNotApproved", { count: failedCount }) };
   }
   return { success: true, approvedCount };
 }
@@ -264,7 +276,7 @@ export async function manuallyApproveRequestAction(
   _formData: FormData,
 ): Promise<ReviewState> {
   // Admin only: it tells the requester the admin is adding it by hand.
-  const admin = await requireAdmin("Only the admin can mark a request as added by hand.");
+  const admin = await requireAdmin((await getT())("notify.onlyAdminManual"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await manuallyApproveRequest(requestId, admin.userId);
@@ -276,12 +288,14 @@ export async function rejectRequestAction(
   _prevState: ReviewState | undefined,
   formData: FormData,
 ): Promise<ReviewState> {
-  const admin = await requirePermission("reviewRequests", "Only an admin can reject requests.");
+  const admin = await requirePermission("reviewRequests", (await getT())("notify.onlyAdminRejects"));
   if (!admin.ok) return { error: admin.error };
 
   // The row's chooser won't enable Decline until a reason is picked, but the
   // form is just two inputs anyone can post, so the server owns the rule.
-  const resolved = resolveRejectionReason({
+  // A preset is stored in the reviewer's language; the Requests page shows
+  // it in each viewer's (localizeRejectionReason).
+  const resolved = resolveRejectionReason(await getT(), {
     preset: formData.get("reason"),
     custom: formData.get("customReason"),
   });

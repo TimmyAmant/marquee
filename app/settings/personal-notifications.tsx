@@ -19,6 +19,11 @@ import {
   updateChannelAction,
   verifyChannelAction,
 } from "./notification-actions";
+import { useT } from "@/lib/i18n/client";
+import { rich } from "@/lib/i18n/rich";
+import { timeAgo } from "@/lib/i18n/format";
+import type { Translator } from "@/lib/i18n/translator";
+import { eventLabel, isPreferenceEvent } from "@/lib/notifications/events";
 
 // Settings › Account › Notifications, below "this device": the account's own
 // channels (Telegram, Pushover, email, Discord, ntfy, a webhook) and which
@@ -26,14 +31,21 @@ import {
 
 type Kind = PersonalNotificationChannel["kind"];
 
-const KIND_LABEL: Record<Kind, string> = {
+const KINDS: Kind[] = ["telegram", "pushover", "email", "discord", "ntfy", "webhook"];
+
+/** Brand names stay as they are; "Email" and "Webhook" are translated. */
+const BRAND_LABEL: Record<Exclude<Kind, "email" | "webhook">, string> = {
   telegram: "Telegram",
   pushover: "Pushover",
-  email: "Email",
   discord: "Discord",
   ntfy: "ntfy",
-  webhook: "Webhook",
 };
+
+function kindLabel(t: Translator, kind: Kind): string {
+  if (kind === "email") return t("settings.channelEmail");
+  if (kind === "webhook") return t("settings.channelWebhook");
+  return BRAND_LABEL[kind];
+}
 
 const inputClass =
   "w-full rounded-lg border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -42,21 +54,12 @@ const smallButton =
 const primaryButton =
   "rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60";
 
-function timeAgo(iso: string): string {
-  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
-export function channelLabel(channel: Pick<PersonalNotificationChannel, "kind" | "name">): string {
-  return channel.name || KIND_LABEL[channel.kind];
+export function channelLabel(t: Translator, channel: Pick<PersonalNotificationChannel, "kind" | "name">): string {
+  return channel.name || kindLabel(t, channel.kind);
 }
 
 export function PersonalNotifications() {
+  const t = useT();
   const [data, setData] = useState<PersonalNotificationChannels | null>(null);
   const [prefs, setPrefs] = useState<NotificationPreferenceRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,20 +87,18 @@ export function PersonalNotifications() {
   if (!data || !prefs) {
     return (
       <div className="mt-4 max-w-2xl rounded-2xl border border-border bg-bg-1 p-6 text-sm text-text-muted">
-        {error ?? "Loading…"}
+        {error ?? t("common.loading")}
       </div>
     );
   }
 
   return (
     <>
-      <h3 className="mt-8 font-display text-lg text-text-primary">Your channels</h3>
-      <p className="mt-1 text-sm text-text-secondary">
-        Get your notifications on Telegram, Pushover, email, Discord, ntfy or a webhook. Only you can see these.
-      </p>
+      <h3 className="mt-8 font-display text-lg text-text-primary">{t("settings.yourChannels")}</h3>
+      <p className="mt-1 text-sm text-text-secondary">{t("settings.yourChannelsIntro")}</p>
       <div className="mt-4 max-w-2xl overflow-hidden rounded-2xl border border-border bg-bg-1">
         {data.channels.length === 0 && (
-          <p className="px-6 pt-5 text-sm text-text-muted">No channels yet. Add one below.</p>
+          <p className="px-6 pt-5 text-sm text-text-muted">{t("settings.noChannels")}</p>
         )}
         <ul>
           {data.channels.map((channel) => (
@@ -107,11 +108,8 @@ export function PersonalNotifications() {
         <AddChannel available={data.available} onAdded={refresh} />
       </div>
 
-      <h3 className="mt-8 font-display text-lg text-text-primary">What you hear about</h3>
-      <p className="mt-1 text-sm text-text-secondary">
-        Choose where each kind of notification goes. The bell is the list at the top of every page; devices are the
-        browsers, Macs and PCs you turned notifications on for.
-      </p>
+      <h3 className="mt-8 font-display text-lg text-text-primary">{t("settings.whatYouHearAbout")}</h3>
+      <p className="mt-1 text-sm text-text-secondary">{t("settings.whatYouHearAboutIntro")}</p>
       <PreferenceMatrix rows={prefs} channels={data.channels} onSaved={setPrefs} />
     </>
   );
@@ -126,6 +124,7 @@ function ChannelRow({
   onChange: (channel: PersonalNotificationChannel) => void;
   onRemoved: () => void;
 }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [code, setCode] = useState("");
@@ -153,8 +152,8 @@ function ChannelRow({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-text-primary">
-            {channelLabel(channel)}
-            {channel.name && <span className="text-text-muted"> · {KIND_LABEL[channel.kind]}</span>}
+            {channelLabel(t, channel)}
+            {channel.name && <span className="text-text-muted"> · {kindLabel(t, channel.kind)}</span>}
           </p>
           <p className="truncate text-xs text-text-muted">{channel.target}</p>
         </div>
@@ -168,12 +167,12 @@ function ChannelRow({
                 onChange={(e) => run(() => updateChannelAction(channel.id, { enabled: e.target.checked }))}
                 className="h-4 w-4 accent-accent"
               />
-              On
+              {t("common.on")}
             </label>
           )}
           {channel.verified && (
-            <button type="button" className={smallButton} disabled={busy} onClick={() => run(() => testChannelAction(channel.id), "Sent. It should arrive in a moment.")}>
-              Send a test
+            <button type="button" className={smallButton} disabled={busy} onClick={() => run(() => testChannelAction(channel.id), t("settings.channelTestSent"))}>
+              {t("settings.sendTest")}
             </button>
           )}
           <button
@@ -182,7 +181,7 @@ function ChannelRow({
             disabled={busy}
             onClick={remove}
           >
-            Remove
+            {t("common.remove")}
           </button>
         </div>
       </div>
@@ -192,34 +191,38 @@ function ChannelRow({
           className="mt-3 flex flex-wrap items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            run(() => verifyChannelAction(channel.id, code), "Confirmed. Notifications will go to this address.");
+            run(() => verifyChannelAction(channel.id, code), t("settings.channelConfirmed"));
           }}
         >
-          <span className="text-xs text-text-secondary">{channel.kind === "telegram" ? "The bot sent a 6-digit code to your Telegram chat." : `We emailed a 6-digit code to ${channel.target}.`}</span>
+          <span className="text-xs text-text-secondary">{channel.kind === "telegram" ? t("settings.codeSentTelegram") : t("settings.codeSentEmail", { address: channel.target })}</span>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
             inputMode="numeric"
             autoComplete="one-time-code"
             placeholder="123456"
-            aria-label="Confirmation code"
+            aria-label={t("settings.confirmationCode")}
             className={`${inputClass} w-28`}
           />
           <button type="submit" className={smallButton} disabled={busy || code.trim().length < 6}>
-            Confirm
+            {t("common.confirm")}
           </button>
-          <button type="button" className="text-xs text-text-secondary hover:text-accent" disabled={busy} onClick={() => run(() => resendCodeAction(channel.id), "A new code is on its way.")}>
-            Send a new code
+          <button type="button" className="text-xs text-text-secondary hover:text-accent" disabled={busy} onClick={() => run(() => resendCodeAction(channel.id), t("settings.newCodeSent"))}>
+            {t("settings.sendNewCode")}
           </button>
         </form>
       )}
 
       {channel.lastError ? (
         <p className="mt-2 text-xs text-red-400">
-          Last try failed{channel.lastErrorAt ? ` ${timeAgo(channel.lastErrorAt)}` : ""}: {channel.lastError}
+          {channel.lastErrorAt
+            ? t("settings.lastTryFailedAgo", { when: timeAgo(t, channel.lastErrorAt), error: channel.lastError })
+            : t("settings.lastTryFailed", { error: channel.lastError })}
         </p>
       ) : channel.lastSuccessAt ? (
-        <p className="mt-2 text-xs text-text-muted">Last delivered {timeAgo(channel.lastSuccessAt)}</p>
+        <p className="mt-2 text-xs text-text-muted">
+          {t("settings.lastDelivered", { when: timeAgo(t, channel.lastSuccessAt) })}
+        </p>
       ) : null}
       {message && (
         <p className={`mt-2 text-xs ${message.tone === "ok" ? "text-owned" : "text-red-400"}`}>{message.text}</p>
@@ -230,54 +233,78 @@ function ChannelRow({
 
 type Field = { name: string; label: string; placeholder?: string; hint?: string; type?: string };
 
-function fieldsFor(kind: Kind, available: PersonalNotificationChannels["available"], ntfyMode: "household" | "url"): Field[] {
+const WEBHOOK_SHAPE = "{ event, preference, title, message, mediaType, tmdbId }";
+
+function fieldsFor(
+  t: Translator,
+  kind: Kind,
+  available: PersonalNotificationChannels["available"],
+  ntfyMode: "household" | "url",
+): Field[] {
   switch (kind) {
     case "telegram":
       return [
         {
           name: "chatId",
-          label: "Your chat ID",
+          label: t("settings.telegramChatId"),
           placeholder: "123456789",
           hint: available.telegram.botUsername
-            ? `Message @${available.telegram.botUsername} /start, then paste your chat ID (@userinfobot on Telegram tells you yours). Or use Connect with Telegram above.`
-            : "Message the household's bot /start, then paste your chat ID (@userinfobot on Telegram tells you yours).",
+            ? t("settings.telegramChatIdHintBot", { bot: `@${available.telegram.botUsername}` })
+            : t("settings.telegramChatIdHint"),
         },
       ];
     case "pushover":
-      return [{ name: "userKey", label: "Your user key", hint: "The 30-character key at the top of your pushover.net dashboard.", type: "password" }];
+      return [{ name: "userKey", label: t("settings.pushoverUserKey"), hint: t("settings.pushoverUserKeyHint"), type: "password" }];
     case "email":
-      return [{ name: "address", label: "Your email address", placeholder: "you@example.com", type: "email", hint: "We'll email a code to confirm it's yours first." }];
+      return [
+        {
+          name: "address",
+          label: t("settings.emailAddress"),
+          placeholder: t("settings.emailPlaceholder"),
+          type: "email",
+          hint: t("settings.emailHint"),
+        },
+      ];
     case "discord":
       return [
         {
           name: "webhookUrl",
-          label: "Discord webhook URL",
+          label: t("settings.discordWebhookUrl"),
           placeholder: "https://discord.com/api/webhooks/…",
           type: "password",
-          hint: "In your own server: channel settings › Integrations › Webhooks › New Webhook › Copy Webhook URL.",
+          hint: t("settings.discordWebhookHint"),
         },
       ];
     case "ntfy":
       return ntfyMode === "household"
-        ? [{ name: "topic", label: "Topic", placeholder: "pick-something-hard-to-guess", hint: `On ${available.ntfy.householdServer}. Subscribe to the same topic in the ntfy app.` }]
-        : [{ name: "url", label: "Topic URL", placeholder: "https://ntfy.sh/your-topic", type: "password" }];
+        ? [
+            {
+              name: "topic",
+              label: t("settings.ntfyTopic"),
+              placeholder: t("settings.ntfyTopicPlaceholder"),
+              hint: t("settings.ntfyTopicHint", { server: available.ntfy.householdServer ?? "" }),
+            },
+          ]
+        : [{ name: "url", label: t("settings.ntfyTopicUrl"), placeholder: t("settings.ntfyTopicUrlPlaceholder"), type: "password" }];
     case "webhook":
       return [
         {
           name: "url",
-          label: "Webhook URL",
+          label: t("settings.webhookUrl"),
           placeholder: "https://example.com/hooks/marquee",
           type: "password",
+          // The JSON's shape is code, not words: never translated.
           hint: available.webhook.homeNetwork
-            ? "Marquee POSTs JSON: { event, preference, title, message, mediaType, tmdbId }."
-            : "Marquee POSTs JSON: { event, preference, title, message, mediaType, tmdbId }. It must be on the internet, not your home network.",
+            ? t("settings.webhookHint", { shape: WEBHOOK_SHAPE })
+            : t("settings.webhookHintInternet", { shape: WEBHOOK_SHAPE }),
         },
       ];
   }
 }
 
 function AddChannel({ available, onAdded }: { available: PersonalNotificationChannels["available"]; onAdded: () => void }) {
-  const kinds = (Object.keys(KIND_LABEL) as Kind[]).filter((kind) => available[kind].available);
+  const t = useT();
+  const kinds = KINDS.filter((kind) => available[kind].available);
   const [kind, setKind] = useState<Kind>(kinds[0] ?? "discord");
   const [ntfyMode, setNtfyMode] = useState<"household" | "url">(available.ntfy.householdServer ? "household" : "url");
   const [busy, setBusy] = useState(false);
@@ -289,14 +316,14 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
 
   useEffect(() => () => void polling.current++, []);
 
-  const missing = (Object.keys(KIND_LABEL) as Kind[]).filter((k) => !available[k].available);
+  const missing = KINDS.filter((k) => !available[k].available);
 
   async function submit(form: FormData) {
     setBusy(true);
     setError(null);
     setNotice(null);
     const config: Record<string, string> = {};
-    for (const field of fieldsFor(kind, available, ntfyMode)) config[field.name] = String(form.get(field.name) ?? "");
+    for (const field of fieldsFor(t, kind, available, ntfyMode)) config[field.name] = String(form.get(field.name) ?? "");
     const result = await addChannelAction({ kind, name: String(form.get("name") ?? ""), config });
     setBusy(false);
     if (result.error) {
@@ -306,10 +333,10 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
     formRef.current?.reset();
     setNotice(
       kind === "email"
-        ? "Check your inbox for the code."
+        ? t("settings.checkInbox")
         : kind === "telegram"
-          ? "Check Telegram: the bot sent you a code to enter above."
-          : "Added. A test message is on its way.",
+          ? t("settings.checkTelegram")
+          : t("settings.channelAdded"),
     );
     onAdded();
   }
@@ -318,7 +345,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
     setError(null);
     const started = await startTelegramLinkAction();
     if (!started.code || !started.url) {
-      setError(started.error ?? "Couldn't start. Enter your chat ID instead.");
+      setError(started.error ?? t("settings.telegramStartFailed"));
       return;
     }
     setLink({ code: started.code, url: started.url });
@@ -332,7 +359,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
       setLink(null);
       if (result.error) setError(result.error);
       else {
-        setNotice("Telegram connected. A test message is on its way.");
+        setNotice(t("settings.telegramConnected"));
         onAdded();
       }
       return;
@@ -343,11 +370,11 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
   if (kinds.length === 0) return null;
   // Email and a typed-in Telegram chat are confirmed with a code first.
   const sendsCode = kind === "email" || kind === "telegram";
-  const fields = fieldsFor(kind, available, ntfyMode);
+  const fields = fieldsFor(t, kind, available, ntfyMode);
 
   return (
     <div className="px-6 py-5 text-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">Add a channel</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">{t("settings.addChannel")}</p>
       <div className="mt-3 flex flex-wrap gap-2" role="tablist">
         {kinds.map((k) => (
           <button
@@ -364,7 +391,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
               k === kind ? "bg-accent text-bg-0" : "border border-border-strong text-text-secondary hover:text-accent"
             }`}
           >
-            {KIND_LABEL[k]}
+            {kindLabel(t, k)}
           </button>
         ))}
       </div>
@@ -372,16 +399,17 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
       {kind === "telegram" && available.telegram.botUsername && (
         <div className="mt-4 rounded-xl border border-border bg-bg-0 p-4">
           <p className="text-text-secondary">
-            Quickest: open the household&apos;s bot, <span className="text-text-primary">@{available.telegram.botUsername}</span>,
-            press Start, and come back. Marquee finds your chat by itself.
+            {rich(t("settings.telegramQuickest", { bot: `@${available.telegram.botUsername}` }), {
+              b: (chunks) => <span className="text-text-primary">{chunks}</span>,
+            })}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button type="button" className={smallButton} onClick={connectTelegram} disabled={Boolean(link)}>
-              {link ? "Waiting for Start…" : "Connect with Telegram"}
+              {link ? t("settings.waitingForStart") : t("settings.connectTelegram")}
             </button>
             {link && (
               <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent underline">
-                Open Telegram again
+                {t("settings.openTelegramAgain")}
               </a>
             )}
           </div>
@@ -392,11 +420,11 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
         <div className="mt-4 flex gap-4 text-xs text-text-secondary">
           <label className="flex items-center gap-1.5">
             <input type="radio" checked={ntfyMode === "household"} onChange={() => setNtfyMode("household")} className="accent-accent" />
-            A topic on the household&apos;s server
+            {t("settings.ntfyHouseholdTopic")}
           </label>
           <label className="flex items-center gap-1.5">
             <input type="radio" checked={ntfyMode === "url"} onChange={() => setNtfyMode("url")} className="accent-accent" />
-            A full topic URL
+            {t("settings.ntfyFullUrl")}
           </label>
         </div>
       )}
@@ -410,19 +438,27 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
           </label>
         ))}
         <label className="flex flex-col gap-1.5 text-text-secondary">
-          Name <span className="-mt-1 text-xs text-text-muted">Optional, like &ldquo;My phone&rdquo;</span>
+          {t("settings.nameLabel")} <span className="-mt-1 text-xs text-text-muted">{t("settings.channelNameHint")}</span>
           <input name="name" maxLength={60} autoComplete="off" className={inputClass} />
         </label>
         {error && <p className="text-xs text-red-400">{error}</p>}
         {notice && <p className="text-xs text-owned">{notice}</p>}
         <button type="submit" disabled={busy} className={`${primaryButton} self-start`}>
-          {busy ? (sendsCode ? "Sending code…" : "Testing…") : sendsCode ? "Send code" : "Test & add"}
+          {busy
+            ? sendsCode
+              ? t("settings.sendingCode")
+              : t("settings.testing")
+            : sendsCode
+              ? t("settings.sendCode")
+              : t("settings.testAndAdd")}
         </button>
       </form>
       {missing.length > 0 && (
         <p className="mt-4 text-xs text-text-muted">
-          {missing.map((k) => KIND_LABEL[k]).join(", ").replace(/, ([^,]*)$/, " and $1")} can be added once the admin sets {missing.length === 1 ? "it" : "them"} up
-          for the household.
+          {t("settings.channelsNotSetUp", {
+            channels: new Intl.ListFormat(t.tag, { type: "conjunction" }).format(missing.map((k) => kindLabel(t, k))),
+            count: missing.length,
+          })}
         </p>
       )}
     </div>
@@ -438,6 +474,7 @@ function PreferenceMatrix({
   channels: PersonalNotificationChannel[];
   onSaved: (rows: NotificationPreferenceRow[]) => void;
 }) {
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const usable = channels.filter((c) => c.verified);
@@ -465,20 +502,22 @@ function PreferenceMatrix({
   const reviewer = rows.filter((r) => r.reviewerOnly);
 
   function renderRows(list: NotificationPreferenceRow[]) {
-    return list.map((row) => (
+    return list.map((row) => {
+      const label = isPreferenceEvent(row.event) ? eventLabel(t, row.event) : row.label;
+      return (
       <tr key={row.event} className="border-t border-border">
-        <th scope="row" className="px-4 py-2 text-left font-normal text-text-primary">{row.label}</th>
+        <th scope="row" className="px-4 py-2 text-left font-normal text-text-primary">{label}</th>
         <td className={cell}>
-          <input type="checkbox" aria-label={`${row.label}: bell`} checked={row.inApp} onChange={(e) => toggle(row.event, { inApp: e.target.checked })} className="h-4 w-4 accent-accent" />
+          <input type="checkbox" aria-label={t("settings.eventWhere", { event: label, where: t("settings.bell") })} checked={row.inApp} onChange={(e) => toggle(row.event, { inApp: e.target.checked })} className="h-4 w-4 accent-accent" />
         </td>
         <td className={cell}>
-          <input type="checkbox" aria-label={`${row.label}: devices`} checked={row.push} onChange={(e) => toggle(row.event, { push: e.target.checked })} className="h-4 w-4 accent-accent" />
+          <input type="checkbox" aria-label={t("settings.eventWhere", { event: label, where: t("settings.devices") })} checked={row.push} onChange={(e) => toggle(row.event, { push: e.target.checked })} className="h-4 w-4 accent-accent" />
         </td>
         {usable.map((channel) => (
           <td key={channel.id} className={cell}>
             <input
               type="checkbox"
-              aria-label={`${row.label}: ${channelLabel(channel)}`}
+              aria-label={t("settings.eventWhere", { event: label, where: channelLabel(t, channel) })}
               checked={row.channels[channel.id] ?? false}
               onChange={(e) => toggle(row.event, { channels: { [channel.id]: e.target.checked } })}
               className="h-4 w-4 accent-accent"
@@ -486,7 +525,8 @@ function PreferenceMatrix({
           </td>
         ))}
       </tr>
-    ));
+      );
+    });
   }
 
   return (
@@ -494,12 +534,12 @@ function PreferenceMatrix({
       <table className="w-full min-w-[26rem]">
         <thead>
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-text-muted">Event</th>
-            <th className={header}>Bell</th>
-            <th className={header}>Devices</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-text-muted">{t("settings.event")}</th>
+            <th className={header}>{t("settings.bell")}</th>
+            <th className={header}>{t("settings.devices")}</th>
             {usable.map((channel) => (
               <th key={channel.id} className={header}>
-                {channelLabel(channel)}
+                {channelLabel(t, channel)}
               </th>
             ))}
           </tr>
@@ -509,7 +549,7 @@ function PreferenceMatrix({
           {reviewer.length > 0 && (
             <tr className="border-t border-border">
               <th colSpan={3 + usable.length} className="px-4 pb-1 pt-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
-                For reviewers
+                {t("settings.forReviewers")}
               </th>
             </tr>
           )}
@@ -517,7 +557,7 @@ function PreferenceMatrix({
         </tbody>
       </table>
       {(error || saving) && (
-        <p className={`px-4 pb-3 text-xs ${error ? "text-red-400" : "text-text-muted"}`}>{error ?? "Saving…"}</p>
+        <p className={`px-4 pb-3 text-xs ${error ? "text-red-400" : "text-text-muted"}`}>{error ?? t("common.saving")}</p>
       )}
     </div>
   );

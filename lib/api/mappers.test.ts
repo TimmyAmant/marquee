@@ -11,6 +11,7 @@ import {
   titleViewerState,
 } from "./mappers";
 import { MEMBER_PRESET, permissionMap } from "@/lib/users/permissions";
+import { englishT } from "@/lib/i18n/catalog";
 
 describe("iso", () => {
   it("formats dates as ISO-8601 UTC with milliseconds", () => {
@@ -202,7 +203,7 @@ describe("request mapping", () => {
   });
 
   it("maps a member's request with the page's status label", () => {
-    const dto = myRequest({
+    const dto = myRequest(englishT(), {
       id: "11111111-1111-1111-1111-111111111111",
       mediaType: "tv",
       tmdbId: 1399,
@@ -241,14 +242,14 @@ describe("request mapping", () => {
       createdAt: new Date("2026-09-01T00:00:00Z"),
       reviewedAt: new Date("2026-09-02T00:00:00Z"),
     };
-    expect(myRequest({ ...base, libraryStatus: null })).toMatchObject({
+    expect(myRequest(englishT(), { ...base, libraryStatus: null })).toMatchObject({
       seasons: null,
       seasonsLabel: null,
       statusLabel: "Declined",
       statusTone: "declined",
       rejectionReason: "Not enough space on the server right now",
     });
-    expect(reviewedRequest({ ...base, requestedByName: null, requestedByUsername: "member1" })).toMatchObject({
+    expect(reviewedRequest(englishT(), { ...base, requestedByName: null, requestedByUsername: "member1" })).toMatchObject({
       statusLabel: "Rejected",
       rejectionReason: "Not enough space on the server right now",
       requestedBy: { label: "member1" },
@@ -284,7 +285,7 @@ describe("fourKViewerState", () => {
 
 describe("Can't find mapping", () => {
   it("maps a flagged request with where it went and a tip", () => {
-    const dto = notFoundRequest({
+    const dto = notFoundRequest(englishT(), {
       id: "11111111-1111-1111-1111-111111111111",
       mediaType: "movie",
       tmdbId: 425,
@@ -312,7 +313,7 @@ describe("Can't find mapping", () => {
   });
 
   it("adds notFoundSince to history rows and the title's viewer state", () => {
-    const row = reviewedRequest({
+    const row = reviewedRequest(englishT(), {
       id: "11111111-1111-1111-1111-111111111111",
       mediaType: "movie",
       tmdbId: 425,

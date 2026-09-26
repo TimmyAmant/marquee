@@ -11,6 +11,7 @@ import {
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { loadTitlePage } from "@/lib/pages/title";
 import type { MediaType } from "@/lib/db/schema";
+import type { Translator } from "@/lib/i18n/translator";
 import { requestPermission } from "@/lib/users/permissions";
 
 type TitlePageData = NonNullable<Awaited<ReturnType<typeof loadTitlePage>>>;
@@ -18,12 +19,14 @@ type TitlePageData = NonNullable<Awaited<ReturnType<typeof loadTitlePage>>>;
 /** Maps the title page loader's output onto the API's TitleDetail, applying
  * the same presentation rules the page's components do (cast top-billing,
  * studio de-duplication, season ordering, franchise "Add all" set, which
- * add/request button shows). The viewer is always signed in here. */
+ * add/request button shows). The viewer is always signed in here; `t` is
+ * their language (English when left out). */
 export function titleDetailDto(
   type: MediaType,
   tmdbId: number,
   isAdmin: boolean,
   data: TitlePageData,
+  t?: Translator,
 ): TitleDetail {
   const { title, raw, titleMeta, titleSidebar, libraryStatus } = data;
 
@@ -101,6 +104,7 @@ export function titleDetailDto(
     },
     library: libraryInfo(libraryStatus),
     viewer: titleViewerState({
+      t,
       isAdmin,
       mediaType: type,
       permissions: data.permissions,

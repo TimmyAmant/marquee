@@ -1,5 +1,5 @@
 import { setScopedLanguage } from "@/lib/i18n/request-scope";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg, type ApiMessage } from "@/lib/api/errors";
 import { can, type Permission } from "@/lib/users/permissions";
 import { parseBearerToken } from "@/lib/api/tokens";
 import { authenticateApiToken, type AuthenticatedToken } from "@/lib/api/token-store";
@@ -31,10 +31,10 @@ export type ApiContext = {
   viewer: () => Promise<Extract<ViewerIdentity, { userId: string }>>;
 };
 
-const UNAUTHORIZED_MESSAGE = "Sign in again — this session is missing, expired or revoked.";
-const KEY_UNAUTHORIZED_MESSAGE = "This API key is missing, expired or revoked.";
-const KEY_CONFLICT_MESSAGE = "Send an API key or a session token, not both.";
-const KEY_RATE_LIMITED_MESSAGE = "Too many attempts with a wrong API key. Try again in a few minutes.";
+const UNAUTHORIZED_MESSAGE = msg("server.sessionInvalid");
+const KEY_UNAUTHORIZED_MESSAGE = msg("server.apiKeyInvalid");
+const KEY_CONFLICT_MESSAGE = msg("server.apiKeyAndToken");
+const KEY_RATE_LIMITED_MESSAGE = msg("server.apiKeyRateLimited");
 
 /** One authentication per request, however many times a handler (and
  * withApi before it) asks — keyed on the Request object itself. */
@@ -88,7 +88,7 @@ async function authenticate(request: Request): Promise<ApiContext> {
   }
 
   const decision = apiKeyDecision(request.method, new URL(request.url).pathname, key.scope);
-  if (!decision.allowed) throw ApiError.of("forbidden", decision.message);
+  if (!decision.allowed) throw ApiError.of("forbidden", msg(decision.message));
 
   return contextFor(key.user, { kind: "apiKey", keyId: key.keyId, scope: key.scope });
 }
@@ -130,14 +130,14 @@ export async function credentialStillValid(request: Request, ctx: ApiContext): P
 /** Same as requireApiUser, plus 403 unless the account may do `permission`
  * (lib/users/permissions.ts): always the admin, otherwise whoever has that
  * switch on — read fresh with the credential on every request. */
-export async function requireApiPermission(request: Request, permission: Permission, message: string): Promise<ApiContext> {
+export async function requireApiPermission(request: Request, permission: Permission, message: ApiMessage): Promise<ApiContext> {
   const ctx = await requireApiUser(request);
   if (!can(ctx.user, permission)) throw ApiError.of("forbidden", message);
   return ctx;
 }
 
 /** Same as requireApiUser, plus 403 forbidden unless the user is an admin. */
-export async function requireApiAdmin(request: Request, message = "Only the admin can do this."): Promise<ApiContext> {
+export async function requireApiAdmin(request: Request, message: ApiMessage = msg("server.adminOnly")): Promise<ApiContext> {
   const ctx = await requireApiUser(request);
   if (!ctx.user.isAdmin) throw ApiError.of("forbidden", message);
   return ctx;
@@ -146,8 +146,11 @@ export async function requireApiAdmin(request: Request, message = "Only the admi
 /** requireApiAdmin, signed in with a device token — never an API key, even
  * though the key policy already refuses them here too. For API-key
  * management itself. */
-export async function requireApiAdminSession(request: Request, message = "Only the admin can do this."): Promise<ApiContext> {
+export async function requireApiAdminSession(
+  request: Request,
+  message: ApiMessage = msg("server.adminOnly"),
+): Promise<ApiContext> {
   const ctx = await requireApiAdmin(request, message);
-  if (ctx.credential.kind !== "token") throw ApiError.of("forbidden", "API keys can't manage API keys.");
+  if (ctx.credential.kind !== "token") throw ApiError.of("forbidden", msg("server.apiKeysCantManageKeys"));
   return ctx;
 }

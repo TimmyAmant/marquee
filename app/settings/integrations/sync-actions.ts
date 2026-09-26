@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { syncNowForUser } from "@/lib/integrations/manage";
+import { getT } from "@/lib/i18n/server";
 
 export type SyncNowState = { error?: string; success?: boolean };
 
@@ -14,7 +15,7 @@ export async function syncNowAction(
   _formData: FormData,
 ): Promise<SyncNowState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("integrations.signInRequired") };
 
   const result = await syncNowForUser(session.user.id);
   return result.ok ? { success: true } : { error: result.error };

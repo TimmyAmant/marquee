@@ -7,6 +7,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 
 export type SimilarTitle = {
   tmdbId: number;
@@ -16,7 +17,7 @@ export type SimilarTitle = {
   year: string | null;
 };
 
-export function SimilarTitlesRow({
+export async function SimilarTitlesRow({
   items,
   statusMap,
   requestStatusMap,
@@ -45,9 +46,10 @@ export function SimilarTitlesRow({
   mayRequest?: { movie: boolean; tv: boolean };
 }) {
   if (items.length === 0) return null;
+  const t = await getT();
 
   return (
-    <Shelf title="More like this">
+    <Shelf title={t("discover.moreLikeThis")}>
       {items.map((item) => {
         const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
         const canQuickAdd = isUnwanted(status) && isAdmin === true && arrConfigured?.[item.mediaType];
@@ -63,7 +65,10 @@ export function SimilarTitlesRow({
               posterPath={item.posterPath}
               name={item.name}
               year={item.year}
-              typeLabel={item.mediaType === "movie" ? "MOVIE" : "SERIES"}
+              typeLabel={{
+                mediaType: item.mediaType,
+                text: item.mediaType === "movie" ? t("common.movie") : t("common.series"),
+              }}
               badge={status && <StatusBadge status={status} compact />}
               status={status}
               favoriteAction={

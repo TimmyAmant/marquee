@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { invalid, optionalBoolean, readJsonBody } from "@/lib/api/request";
 import { plexWatchlistDto } from "@/lib/api/routes/plex-watchlist";
@@ -17,7 +18,7 @@ export const PATCH = withApi(async (request): Promise<PlexWatchlist> => {
   const body = await readJsonBody(request);
   const movies = optionalBoolean(body, "movies");
   const tv = optionalBoolean(body, "tv");
-  if (movies === undefined && tv === undefined) throw invalid('Send "movies" and/or "tv".');
+  if (movies === undefined && tv === undefined) throw invalid(msg("server.sendMoviesOrTv"));
   await setWatchlistTypes(ctx.user.id, { movies, tv });
   return plexWatchlistDto(ctx.user.id);
 });

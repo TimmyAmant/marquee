@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createRequestAction } from "@/lib/requests/actions";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 export function RequestButton({
   mediaType,
@@ -31,6 +32,7 @@ export function RequestButton({
    * its fields with it (components/add-advanced-options.tsx). */
   formId?: string;
 }) {
+  const t = useT();
   const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
   const [state, formAction, isPending] = useActionState(action, undefined);
 
@@ -43,7 +45,7 @@ export function RequestButton({
             : "rounded-full bg-info-bg px-4 py-1.5 text-xs font-medium text-info"
         }
       >
-        {compact ? "Requested" : "Requested — waiting for approval"}
+        {compact ? t("title.requested") : t("title.requestedWaiting")}
       </span>
     );
   }
@@ -67,7 +69,7 @@ export function RequestButton({
             : "rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         }
       >
-        {isPending ? "Requesting…" : "Request"}
+        {isPending ? t("title.requesting") : t("common.request")}
       </button>
       {state?.error && (
         <p

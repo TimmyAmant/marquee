@@ -4,6 +4,7 @@ import { getViewerContext } from "@/lib/integrations/library-owner";
 import { fetchDiscoverItems, type DiscoverFetchParams, type DiscoverCardData } from "@/app/discover/fetch-items";
 import { pickSurprise, type SurpriseMeParams as SurpriseParams } from "@/lib/discover/surprise";
 import { fetchResolvedListPage, resolveDiscoverList } from "@/lib/pages/discover-lists";
+import { getT } from "@/lib/i18n/server";
 
 export type SurpriseMeParams = SurpriseParams;
 
@@ -43,7 +44,7 @@ export type SurpriseMeResult = { href?: string; error?: string };
 /** Picks one random title for the current filters — see pickSurprise. */
 export async function surpriseMeAction(params: SurpriseMeParams): Promise<SurpriseMeResult> {
   const viewer = await getViewerContext();
-  if (!viewer.session) return { error: "Sign in to use Surprise me." };
+  if (!viewer.session) return { error: (await getT())("discover.surpriseSignIn") };
   const result = await pickSurprise(viewer, params);
   return result.ok ? { href: `/title/${result.mediaType}/${result.tmdbId}` } : { error: result.error };
 }

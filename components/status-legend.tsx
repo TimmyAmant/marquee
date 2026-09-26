@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { LIBRARY_STATUSES, STATUS_COLORS_NOTE, STATUS_TEXT, statusClasses } from "@/lib/library/status-tone";
+import { LIBRARY_STATUSES, statusColorsNote, statusText, statusClasses } from "@/lib/library/status-tone";
+import { useT } from "@/lib/i18n/client";
 
 /** The statuses that wear a color, for the pill's row of swatch dots. */
 const SWATCH_STATUSES = LIBRARY_STATUSES.filter((status) => statusClasses(status).strip);
@@ -10,6 +11,7 @@ const SWATCH_STATUSES = LIBRARY_STATUSES.filter((status) => statusClasses(status
 /** Each library state with its swatch, name and one-line meaning — the
  * color key's panel and the help page's "What the colors mean". */
 export function StatusColorList({ size = "sm" }: { size?: "sm" | "md" }) {
+  const t = useT();
   const md = size === "md";
   return (
     <ul className={`flex flex-col ${md ? "gap-4" : "gap-2.5"}`}>
@@ -27,10 +29,10 @@ export function StatusColorList({ size = "sm" }: { size?: "sm" | "md" }) {
             />
             <span className="min-w-0">
               <span className={`block font-medium text-text-primary ${md ? "text-sm" : "text-xs"}`}>
-                {STATUS_TEXT[status].name}
+                {statusText(t, status).name}
               </span>
               <span className={`block leading-snug text-text-secondary ${md ? "text-[13px]" : "text-[11px]"}`}>
-                {STATUS_TEXT[status].meaning}
+                {statusText(t, status).meaning}
               </span>
             </span>
           </li>
@@ -44,6 +46,7 @@ export function StatusColorList({ size = "sm" }: { size?: "sm" | "md" }) {
  * status colors. Labeled rather than a bare "?" so it's easy to spot; its
  * dots preview the colors it explains. */
 export function StatusLegend({ className = "" }: { className?: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   // Right-aligned under the button, unless the button sits near the left
   // edge (beside a page title, or a narrow window wrapped it there), where
@@ -78,7 +81,7 @@ export function StatusLegend({ className = "" }: { className?: string }) {
         }}
         aria-expanded={open}
         aria-controls={panelId}
-        title="What do the colors mean?"
+        title={t("help.colorsQuestion")}
         className={`flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors ${
           open
             ? "border-accent text-accent"
@@ -90,22 +93,22 @@ export function StatusLegend({ className = "" }: { className?: string }) {
             <span key={status} className={`h-[7px] w-[7px] rounded-full ${statusClasses(status).strip}`} />
           ))}
         </span>
-        Color key
+        {t("help.colorKey")}
       </button>
 
       {open && (
         <div
           id={panelId}
           role="dialog"
-          aria-label="What the status colors mean"
+          aria-label={t("help.colorsDialogLabel")}
           className={`absolute top-9 z-50 ${alignLeft ? "left-0" : "right-0"} w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-bg-1 p-3 shadow-xl`}
         >
-          <p className="px-1 pb-2 text-xs font-medium text-text-primary">What do the colors mean?</p>
+          <p className="px-1 pb-2 text-xs font-medium text-text-primary">{t("help.colorsQuestion")}</p>
           <StatusColorList />
           <p className="mt-3 border-t border-border px-1 pt-2.5 text-[11px] text-text-muted">
-            {STATUS_COLORS_NOTE}{" "}
+            {statusColorsNote(t)}{" "}
             <Link href="/help/colors" className="underline decoration-dotted hover:text-accent">
-              More about the colors
+              {t("help.moreAboutColors")}
             </Link>
           </p>
         </div>

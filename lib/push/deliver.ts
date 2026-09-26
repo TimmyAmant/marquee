@@ -5,6 +5,8 @@ import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { generateVapidKeys, isAllowedPushEndpoint, sendWebPush, type VapidKeys } from "@/lib/push/web-push";
 import type { NotificationRow } from "@/lib/notifications/bus";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 // Web Push for the website: this server's keys, the browsers subscribed to
 // each account, and sending a notification to all of them. The encryption
@@ -54,10 +56,10 @@ export async function saveSubscription(
   const p256dh = typeof input.keys?.p256dh === "string" ? input.keys.p256dh : "";
   const auth = typeof input.keys?.auth === "string" ? input.keys.auth : "";
   if (!endpoint || !p256dh || !auth || endpoint.length > 1000 || p256dh.length > 200 || auth.length > 100) {
-    return fail("invalid", "That browser's notification details are incomplete.");
+    return fail("invalid", (await getT())("notify.pushDetailsIncomplete"));
   }
   if (!isAllowedPushEndpoint(endpoint)) {
-    return fail("invalid", "This browser uses a push service Marquee doesn't know.");
+    return fail("invalid", (await getT())("notify.pushUnknownService"));
   }
 
   await db
@@ -96,18 +98,18 @@ export async function listSubscriptions(userId: string) {
     .where(eq(pushSubscriptions.userId, userId));
 }
 
-const EVENT_TITLES: Record<NotificationRow["eventType"], string> = {
-  grabbed: "Downloading",
-  downloaded: "Ready to watch",
-  request_approved: "Request approved",
-  request_rejected: "Request declined",
-  issue_reported: "Problem reported",
-  issue_resolved: "Problem fixed",
-  request_created: "New request",
-  request_not_found: "Can't find it",
-  title_shared: "Shared with you",
-  request_comment: "New comment",
-  issue_comment: "New comment",
+const EVENT_TITLES: Record<NotificationRow["eventType"], MessageKey> = {
+  grabbed: "notify.pushDownloading",
+  downloaded: "notify.pushReadyToWatch",
+  request_approved: "notify.pushRequestApproved",
+  request_rejected: "notify.pushRequestDeclined",
+  issue_reported: "notify.pushProblemReported",
+  issue_resolved: "notify.pushProblemFixed",
+  request_created: "notify.pushNewRequest",
+  request_not_found: "notify.pushCantFind",
+  title_shared: "notify.pushSharedWithYou",
+  request_comment: "notify.pushNewComment",
+  issue_comment: "notify.pushNewComment",
 };
 
 /** What the service worker (public/sw.js) shows. `requestId`: a new
@@ -117,12 +119,14 @@ export type PushMessage = { title: string; body: string; url: string; tag: strin
 
 export function pushMessageFor(
   row: Pick<NotificationRow, "id" | "eventType" | "message" | "mediaType" | "tmdbId" | "requestId">,
+  /** The recipient's language. */
+  t: Translator,
 ): PushMessage {
   const isNewRequest = row.eventType === "request_created" && row.requestId;
   // A conversation lives on the Requests page.
   const isComment = row.eventType === "request_comment" || row.eventType === "issue_comment";
   return {
-    title: EVENT_TITLES[row.eventType] ?? "Marquee",
+    title: EVENT_TITLES[row.eventType] ? t(EVENT_TITLES[row.eventType]) : "Marquee",
     body: row.message,
     url: isNewRequest || isComment ? "/requests" : `/title/${row.mediaType}/${row.tmdbId}`,
     tag: row.id,

@@ -12,6 +12,7 @@ import { loadTitlePage } from "@/lib/pages/title";
 import { seasonsNewestFirst } from "@/lib/title-meta";
 import { seasonPickerState } from "@/lib/requests/seasons";
 import { seasonsLabel } from "@/lib/requests/labels";
+import { getT } from "@/lib/i18n/server";
 
 /** The 4K row, with no "Request in 4K" while the title is blocked. */
 function fourKFor(
@@ -34,6 +35,7 @@ export default async function TitlePage({
   if ((type !== "movie" && type !== "tv") || !Number.isFinite(tmdbId)) notFound();
 
   const viewer = await getViewerContext();
+  const t = await getT();
   // Shared with GET /api/v1/titles/[type]/[id].
   const [data, publicBase] = await Promise.all([
     loadTitlePage(viewer, type, tmdbId),
@@ -125,7 +127,7 @@ export default async function TitlePage({
                   state: seasonPickerState(seasonRequests.states.get(season.season_number)),
                 })),
                 canRequestSeasons: seasonRequests.canRequestSeasons,
-                requestedSeasonsLabel: seasonsLabel(seasonRequests.requestedSeasons),
+                requestedSeasonsLabel: seasonsLabel(t, seasonRequests.requestedSeasons),
               }
             : undefined
         }
@@ -147,6 +149,7 @@ export default async function TitlePage({
         myRequests={
           // The same summaries the API's `viewer.myRequests` carries.
           titleViewerState({
+            t,
             isAdmin: viewer.isAdmin,
             mediaType: type,
             permissions,
@@ -179,7 +182,7 @@ export default async function TitlePage({
         {seasons.length > 0 && (
           <section>
             <h2 className="mb-3 font-display text-[20px] font-semibold leading-none tracking-[-0.005em] text-text-primary">
-              Episodes
+              {t("title.episodesHeading")}
             </h2>
             <SeasonAccordion
               seasons={seasons}

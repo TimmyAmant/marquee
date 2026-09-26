@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("nodemailer", () => ({ default: { createTransport: () => ({}) } }));
 
 import { destinationKey, maskedTarget, ntfyServerOf, parsePersonalConfig, type ConfigContext } from "./personal-config";
+import { englishT } from "@/lib/i18n/catalog";
 
-const member: ConfigContext = { ntfyServer: "https://ntfy.example.com", policy: { allowPrivate: false } };
-const noNtfy: ConfigContext = { ntfyServer: null, policy: { allowPrivate: false } };
+const member: ConfigContext = { ntfyServer: "https://ntfy.example.com", policy: { allowPrivate: false }, t: englishT() };
+const noNtfy: ConfigContext = { ntfyServer: null, policy: { allowPrivate: false }, t: englishT() };
 
 const DISCORD = "https://discord.com/api/webhooks/123456789012345678/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_secret";
 const PUSHOVER = "uQiRzpo4DXghDmr9QzzfQu27cmVRsG";
@@ -53,7 +54,7 @@ describe("parsePersonalConfig", () => {
   });
 
   it("lets the admin's own URLs reach the home network, as the household ones can", () => {
-    const admin: ConfigContext = { ntfyServer: null, policy: { allowPrivate: true } };
+    const admin: ConfigContext = { ntfyServer: null, policy: { allowPrivate: true }, t: englishT() };
     expect(parsePersonalConfig("webhook", { url: "http://192.168.1.5/hook" }, null, admin)).toMatchObject({ ok: true });
   });
 

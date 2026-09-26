@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 /** The top-level pages the menu opens. On any of them there's nowhere to go
  * "back" to inside Marquee, so the button hides; deeper pages (a title, a
@@ -28,6 +29,7 @@ function canGoBackInMarquee(): boolean {
 export function BackButton() {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     pagesSeen += 1;
@@ -39,7 +41,7 @@ export function BackButton() {
     <button
       type="button"
       onClick={() => (canGoBackInMarquee() ? router.back() : router.push("/discover"))}
-      aria-label="Back"
+      aria-label={t("common.back")}
       className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-text-secondary transition-colors hover:border-accent hover:text-accent md:hidden"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden className="h-4 w-4">

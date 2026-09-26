@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
 import { createFirstAdmin, setupClientIp } from "@/lib/auth/setup";
+import { getT } from "@/lib/i18n/server";
 
 export type SetupState = { error?: string };
 
@@ -30,7 +31,7 @@ export async function setupAction(
     await signIn("credentials", { username, password, remember: "on", redirectTo: "/" });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "Account created, but sign-in failed. Please log in." };
+      return { error: (await getT())("auth.setupSignInFailed") };
     }
     throw error;
   }

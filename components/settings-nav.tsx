@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 const TAB_ICONS = {
   account: (
@@ -48,13 +50,13 @@ function TabIcon({ name }: { name: keyof typeof TAB_ICONS }) {
   );
 }
 
-const ALL_TABS = [
-  { href: "/settings", label: "Account", icon: "account" as const, adminOnly: false },
-  { href: "/settings/integrations", label: "Integrations", icon: "integrations" as const, adminOnly: true },
-  { href: "/settings/discover", label: "Discover", icon: "discover" as const, adminOnly: true },
-  { href: "/settings/activity", label: "Activity", icon: "activity" as const, adminOnly: true },
-  { href: "/settings/jobs", label: "Jobs", icon: "jobs" as const, adminOnly: true },
-  { href: "/settings/about", label: "About", icon: "about" as const, adminOnly: false },
+const ALL_TABS: { href: string; label: MessageKey; icon: keyof typeof TAB_ICONS; adminOnly: boolean }[] = [
+  { href: "/settings", label: "nav.settingsAccount", icon: "account", adminOnly: false },
+  { href: "/settings/integrations", label: "nav.settingsIntegrations", icon: "integrations", adminOnly: true },
+  { href: "/settings/discover", label: "nav.settingsDiscover", icon: "discover", adminOnly: true },
+  { href: "/settings/activity", label: "nav.settingsActivity", icon: "activity", adminOnly: true },
+  { href: "/settings/jobs", label: "nav.settingsJobs", icon: "jobs", adminOnly: true },
+  { href: "/settings/about", label: "nav.settingsAbout", icon: "about", adminOnly: false },
 ];
 
 /**
@@ -66,13 +68,14 @@ const ALL_TABS = [
  * through a client boundary, which Next.js supports natively.
  */
 export function SettingsNav({ isAdmin, children }: { isAdmin: boolean; children: React.ReactNode }) {
+  const t = useT();
   const pathname = usePathname();
   const tabs = ALL_TABS.filter((tab) => isAdmin || !tab.adminOnly);
   const activeTab = tabs.find((tab) => tab.href === pathname);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="font-display text-3xl text-text-primary">{activeTab?.label ?? "Account"}</h1>
+      <h1 className="font-display text-3xl text-text-primary">{t(activeTab?.label ?? "nav.settingsAccount")}</h1>
       <div className="mt-8 flex flex-col gap-8 sm:flex-row">
         <nav className="flex shrink-0 gap-2 sm:w-44 sm:flex-col">
           {tabs.map((tab) => {
@@ -88,7 +91,7 @@ export function SettingsNav({ isAdmin, children }: { isAdmin: boolean; children:
                 }`}
               >
                 <TabIcon name={tab.icon} />
-                {tab.label}
+                {t(tab.label)}
               </Link>
             );
           })}

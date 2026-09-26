@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
@@ -13,7 +14,7 @@ import type { MediaType } from "@/lib/db/schema";
 export const GET = withApi(async (request): Promise<SearchResults> => {
   const ctx = await requireApiUser(request);
   const query = new URL(request.url).searchParams.get("q")?.trim();
-  if (!query) throw invalid('"q" is required.');
+  if (!query) throw invalid(msg("server.queryRequired"));
   await requireTmdbConfigured();
 
   const data = await loadSearchResults(await ctx.viewer(), query);

@@ -11,6 +11,8 @@ import { QuickAddButton } from "@/components/quick-add-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ResolutionBadge, DynamicRangeBadge, AudioBadge } from "@/components/resolution-badge";
 import { formatBytes } from "@/lib/format";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 import { resolutionTierOf } from "@/lib/quality";
 
 export type MediaEntry = {
@@ -46,11 +48,11 @@ type SortOrder = "newest" | "oldest" | "az" | "recent";
 type TypeFilter = "all" | "movie" | "tv";
 type StatusFilter = "all" | LibraryStatus;
 
-const SORT_LABELS: Record<SortOrder, string> = {
-  newest: "Newest first",
-  oldest: "Oldest first",
-  az: "A–Z",
-  recent: "Recently added",
+const SORT_LABELS: Record<SortOrder, MessageKey> = {
+  newest: "discover.sortNewestFirst",
+  oldest: "discover.sortOldestFirst",
+  az: "discover.sortAz",
+  recent: "discover.sortRecentlyAdded",
 };
 
 const SOURCE_LABELS: Record<NonNullable<MediaEntry["source"]>, string> = {
@@ -60,20 +62,31 @@ const SOURCE_LABELS: Record<NonNullable<MediaEntry["source"]>, string> = {
   radarr: "Radarr",
 };
 
-const TYPE_LABELS: Record<TypeFilter, string> = {
-  all: "All",
-  movie: "Movies",
-  tv: "TV",
+const TYPE_LABELS: Record<TypeFilter, MessageKey> = {
+  all: "discover.filterAll",
+  movie: "common.movies",
+  tv: "discover.filterTv",
 };
 
-const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
-  all: "All",
-  owned: "Owned",
-  tracked_downloading: "Downloading",
-  tracked_monitored: "Missing",
-  tracked_unmonitored: "Not monitored",
-  coming_soon: "Coming soon",
-  untracked: "Not owned",
+const STATUS_FILTER_LABELS: Record<StatusFilter, MessageKey> = {
+  all: "discover.filterAll",
+  owned: "discover.statusOwned",
+  tracked_downloading: "discover.statusDownloading",
+  tracked_monitored: "discover.statusMissing",
+  tracked_unmonitored: "discover.statusNotMonitored",
+  coming_soon: "discover.statusComingSoon",
+  untracked: "discover.statusNotOwned",
+};
+
+const VIEW_LABELS: Record<"grid" | "table", MessageKey> = {
+  grid: "discover.viewGrid",
+  table: "discover.viewTable",
+};
+
+/** "12 titles" / "12 credits", by what the list holds. */
+const COUNT_LABELS: Record<"titles" | "credits", MessageKey> = {
+  titles: "common.titles",
+  credits: "discover.creditCount",
 };
 
 // Only these are offered as filter chips — "untracked" and "tracked_unmonitored"
@@ -121,12 +134,12 @@ function sortEntries(entries: MediaEntry[], order: SortOrder): MediaEntry[] {
   return sorted;
 }
 
-function buildMeta(entry: MediaEntry): string | undefined {
+function buildMeta(t: Translator, entry: MediaEntry): string | undefined {
   const parts: string[] = [];
   if (entry.source) parts.push(SOURCE_LABELS[entry.source]);
-  if (entry.sizeBytes) parts.push(formatBytes(entry.sizeBytes));
-  if (entry.qualityCutoffNotMet) parts.push("Upgrade available");
-  if (entry.possibleDuplicate) parts.push("Possible duplicate");
+  if (entry.sizeBytes) parts.push(formatBytes(t, entry.sizeBytes));
+  if (entry.qualityCutoffNotMet) parts.push(t("discover.upgradeAvailable"));
+  if (entry.possibleDuplicate) parts.push(t("discover.possibleDuplicate"));
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
@@ -138,26 +151,29 @@ export function MediaList({
   showStatusFilter = false,
   showSearch = false,
   arrConfigured,
-  emptyMessage = "Nothing found.",
+  emptyMessage,
   favoritedKeys,
   showFavorite = false,
 }: {
   entries: MediaEntry[];
+  /** The subtitle column's heading (already translated), when there is one. */
   subtitleLabel?: string;
-  itemLabel?: string;
+  /** What the count above the list counts. */
+  itemLabel?: "titles" | "credits";
   showTypeFilter?: boolean;
   showStatusFilter?: boolean;
   showSearch?: boolean;
   /** When provided, untracked titles get a quick "Add to Sonarr/Radarr" action. */
   arrConfigured?: { movie: boolean; tv: boolean };
   /** Shown when `entries` is empty — customize per page for a more specific,
-   * actionable message than the generic default. */
+   * actionable message than the generic default. Already translated. */
   emptyMessage?: string;
   /** Keyed by `${mediaType}:${tmdbId}`, since a bare tmdbId can collide
    * between a movie and a TV show. */
   favoritedKeys?: Set<string>;
   showFavorite?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -222,15 +238,13 @@ export function MediaList({
   );
 
   if (entries.length === 0) {
-    return <p className="text-sm text-text-muted">{emptyMessage}</p>;
+    return <p className="text-sm text-text-muted">{emptyMessage ?? t("discover.nothingFound")}</p>;
   }
 
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-text-secondary">
-          {sortedEntries.length} {itemLabel}
-        </p>
+        <p className="text-sm text-text-secondary">{t(COUNT_LABELS[itemLabel], { count: sortedEntries.length })}</p>
 
         <div className="flex flex-wrap items-center gap-3">
           {showSearch && (
@@ -241,7 +255,7 @@ export function MediaList({
                 setQuery(e.target.value);
                 syncParam("q", e.target.value, "");
               }}
-              placeholder="Search your library…"
+              placeholder={t("discover.searchLibrary")}
               className="w-44 rounded-full border border-border bg-bg-0 px-3.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-accent"
             />
           )}
@@ -261,7 +275,7 @@ export function MediaList({
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {TYPE_LABELS[type]}
+                  {t(TYPE_LABELS[type])}
                 </button>
               ))}
             </div>
@@ -282,7 +296,7 @@ export function MediaList({
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {STATUS_FILTER_LABELS[status]}
+                  {t(STATUS_FILTER_LABELS[status])}
                 </button>
               ))}
             </div>
@@ -301,7 +315,7 @@ export function MediaList({
                   : "border-border text-text-secondary hover:text-text-primary"
               }`}
             >
-              Needs upgrade
+              {t("discover.needsUpgrade")}
             </button>
           )}
 
@@ -318,7 +332,7 @@ export function MediaList({
                   : "border-border text-text-secondary hover:text-text-primary"
               }`}
             >
-              Possible duplicates
+              {t("discover.possibleDuplicates")}
             </button>
           )}
 
@@ -338,7 +352,7 @@ export function MediaList({
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {SORT_LABELS[order]}
+                  {t(SORT_LABELS[order])}
                 </button>
               ))}
           </div>
@@ -351,13 +365,13 @@ export function MediaList({
                   setView(v);
                   syncParam("view", v, "grid");
                 }}
-                className={`rounded-full px-3 py-1 capitalize transition-colors ${
+                className={`rounded-full px-3 py-1 transition-colors ${
                   view === v
                     ? "bg-accent text-bg-0"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
-                {v}
+                {t(VIEW_LABELS[v])}
               </button>
             ))}
           </div>
@@ -367,7 +381,7 @@ export function MediaList({
       </div>
 
       {sortedEntries.length === 0 ? (
-        <p className="text-sm text-text-muted">No titles match these filters.</p>
+        <p className="text-sm text-text-muted">{t("discover.noFilterMatches")}</p>
       ) : view === "grid" ? (
         <PosterGrid>
           {sortedEntries.map((entry) => {
@@ -381,7 +395,7 @@ export function MediaList({
                 name={entry.name}
                 year={entry.year}
                 subtitle={entry.subtitle}
-                meta={buildMeta(entry)}
+                meta={buildMeta(t, entry)}
                 badge={
                   (entry.status || entry.qualityName || entry.resolution || entry.dynamicRange) && (
                     <div className="flex items-center gap-1.5">
@@ -417,14 +431,14 @@ export function MediaList({
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-bg-1 text-text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">{t("discover.columnTitle")}</th>
                 {subtitleLabel && <th className="px-4 py-3 font-medium">{subtitleLabel}</th>}
-                <th className="px-4 py-3 font-medium">Year</th>
-                <th className="px-4 py-3 font-medium">Source</th>
-                <th className="px-4 py-3 font-medium">Size</th>
-                {hasResolutionData && <th className="px-4 py-3 font-medium">Video/Audio</th>}
-                <th className="px-4 py-3 font-medium">Location</th>
-                {hasUpgradeData && <th className="px-4 py-3 font-medium">Quality</th>}
+                <th className="px-4 py-3 font-medium">{t("discover.columnYear")}</th>
+                <th className="px-4 py-3 font-medium">{t("discover.columnSource")}</th>
+                <th className="px-4 py-3 font-medium">{t("discover.columnSize")}</th>
+                {hasResolutionData && <th className="px-4 py-3 font-medium">{t("discover.columnVideoAudio")}</th>}
+                <th className="px-4 py-3 font-medium">{t("discover.columnLocation")}</th>
+                {hasUpgradeData && <th className="px-4 py-3 font-medium">{t("discover.columnQuality")}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -446,7 +460,7 @@ export function MediaList({
                     {entry.source ? SOURCE_LABELS[entry.source] : "—"}
                   </td>
                   <td className="px-4 py-3 text-text-secondary">
-                    {entry.sizeBytes ? formatBytes(entry.sizeBytes) : "—"}
+                    {entry.sizeBytes ? formatBytes(t, entry.sizeBytes) : "—"}
                   </td>
                   {hasResolutionData && (
                     <td className="px-4 py-3">
@@ -466,14 +480,14 @@ export function MediaList({
                         className="mt-0.5 truncate text-red-400"
                         title={entry.otherFilePath ?? undefined}
                       >
-                        Possible duplicate: {entry.otherFilePath}
+                        {t("discover.possibleDuplicateOf", { path: entry.otherFilePath ?? "" })}
                       </div>
                     )}
                   </td>
                   {hasUpgradeData && (
                     <td className="px-4 py-3 text-text-secondary">
                       {entry.qualityCutoffNotMet ? (
-                        <span className="text-info">Upgrade available</span>
+                        <span className="text-info">{t("discover.upgradeAvailable")}</span>
                       ) : (
                         "—"
                       )}

@@ -1,7 +1,7 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiAdmin, requireApiUser } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { householdMember } from "@/lib/api/mappers";
 import { optionalBoolean, optionalString, parseUuidSegment, readJsonBody } from "@/lib/api/request";
 import { deleteHouseholdMember, getHouseholdMember, updateHouseholdMember } from "@/lib/users/household";
@@ -24,13 +24,13 @@ import type { Ok, UpdateUserResponse } from "@/lib/api/types";
  */
 export const PATCH = withApi<{ id: string }>(async (request, params): Promise<UpdateUserResponse> => {
   const ctx = await requireApiUser(request);
-  const userId = parseUuidSegment(params.id, "Account not found.");
+  const userId = parseUuidSegment(params.id, msg("server.accountNotFound"));
   const body = await readJsonBody(request);
 
   if (!ctx.user.isAdmin && userId !== ctx.user.id) {
-    throw ApiError.of("forbidden", "You can only edit your own account.");
+    throw ApiError.of("forbidden", msg("server.onlyEditOwnAccount"));
   }
-  if (!(await getHouseholdMember(userId))) throw ApiError.of("not_found", "Account not found.");
+  if (!(await getHouseholdMember(userId))) throw ApiError.of("not_found", msg("server.accountNotFound"));
 
   const { passwordChanged } = unwrap(
     await updateHouseholdMember(
@@ -56,14 +56,14 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Up
   );
 
   const updated = await getHouseholdMember(userId);
-  if (!updated) throw ApiError.of("not_found", "Account not found.");
+  if (!updated) throw ApiError.of("not_found", msg("server.accountNotFound"));
   return { ok: true, user: householdMember(updated, ctx.user.id), tokensRevoked: passwordChanged };
 });
 
 /** Remove a member's account (admin). Can't remove yourself or the admin. */
 export const DELETE = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
-  const ctx = await requireApiAdmin(request, "Only the admin can remove household members.");
-  const userId = parseUuidSegment(params.id, "Account not found.");
+  const ctx = await requireApiAdmin(request, msg("server.onlyAdminRemoveMembers"));
+  const userId = parseUuidSegment(params.id, msg("server.accountNotFound"));
   unwrap(await deleteHouseholdMember(ctx.user.id, userId));
   return { ok: true };
 });

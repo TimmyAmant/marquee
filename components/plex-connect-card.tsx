@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { startPlexAuth, checkPlexAuthStatus } from "@/app/settings/integrations/plex-actions";
 import { DisconnectButton } from "@/components/disconnect-button";
+import { useT } from "@/lib/i18n/client";
 
 type Phase = "idle" | "waiting" | "error";
 
@@ -17,6 +18,7 @@ export function PlexConnectCard({
   initialMovieCount: number;
   initialTvCount: number;
 }) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(initialConnected);
@@ -37,7 +39,7 @@ export function PlexConnectCard({
 
     const result = await startPlexAuth();
     if (result.error || !result.authUrl || !result.pinId) {
-      setError(result.error ?? "Couldn't start Plex sign-in.");
+      setError(result.error ?? t("integrations.plexStartFailed"));
       setPhase("error");
       return;
     }
@@ -48,7 +50,7 @@ export function PlexConnectCard({
     pollTimer.current = setInterval(async () => {
       if (Date.now() > pollDeadline.current) {
         stopPolling();
-        setError("Timed out waiting for Plex sign-in. Try again.");
+        setError(t("integrations.plexTimedOut"));
         setPhase("error");
         return;
       }
@@ -71,7 +73,7 @@ export function PlexConnectCard({
         <div className="flex items-center gap-3">
           {connected && (
             <span className="rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-              Connected
+              {t("integrations.connected")}
             </span>
           )}
           {connected && (
@@ -92,28 +94,22 @@ export function PlexConnectCard({
         <div className="mt-4">
           <p className="text-sm text-text-secondary">
             {servers.length > 0 && `${servers.map((s) => s.name).join(", ")} · `}
-            {movieCount} movies · {tvCount} TV shows
+            {t("integrations.librarySummary", { movies: movieCount, shows: tvCount })}
           </p>
-          <p className="mt-1 text-xs text-text-muted">
-            Your library is kept in sync automatically.
-          </p>
+          <p className="mt-1 text-xs text-text-muted">{t("integrations.librarySynced")}</p>
         </div>
       ) : (
         <div className="mt-4">
-          <p className="text-sm text-text-secondary">
-            Sign in with your Plex account to see what&apos;s already in your library.
-          </p>
+          <p className="text-sm text-text-secondary">{t("integrations.plexSignInPrompt")}</p>
           <button
             onClick={handleConnect}
             disabled={phase === "waiting"}
             className="mt-4 rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
           >
-            {phase === "waiting" ? "Waiting for Plex…" : "Connect Plex"}
+            {phase === "waiting" ? t("integrations.plexWaiting") : t("integrations.plexConnect")}
           </button>
           {phase === "waiting" && (
-            <p className="mt-2 text-xs text-text-muted">
-              Finish signing in in the tab that just opened.
-            </p>
+            <p className="mt-2 text-xs text-text-muted">{t("integrations.plexFinishSignIn")}</p>
           )}
         </div>
       )}

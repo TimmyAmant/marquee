@@ -1,9 +1,11 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment } from "@/lib/api/request";
 import { avatarResponse, readAvatarUpload, removeUserAvatar, setUserAvatar } from "@/lib/users/avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
+import { getT } from "@/lib/i18n/server";
 import type { AvatarResponse } from "@/lib/api/types";
 
 /**
@@ -15,7 +17,7 @@ import type { AvatarResponse } from "@/lib/api/types";
  */
 export const GET = withApi<{ id: string }>(async (request, params) => {
   const ctx = await requireApiUser(request);
-  const userId = parseUuidSegment(params.id, "Account not found.");
+  const userId = parseUuidSegment(params.id, msg("server.accountNotFound"));
   return avatarResponse({ userId: ctx.user.id, isAdmin: ctx.user.isAdmin }, userId, request);
 });
 
@@ -24,8 +26,8 @@ export const GET = withApi<{ id: string }>(async (request, params) => {
  * isn't read here, so convert it on the device first. */
 export const PUT = withApi<{ id: string }>(async (request, params): Promise<AvatarResponse> => {
   const ctx = await requireApiUser(request);
-  const userId = parseUuidSegment(params.id, "Account not found.");
-  const upload = unwrap(await readAvatarUpload(request));
+  const userId = parseUuidSegment(params.id, msg("server.accountNotFound"));
+  const upload = unwrap(await readAvatarUpload(request, await getT()));
   const { owner } = unwrap(await setUserAvatar({ userId: ctx.user.id, isAdmin: ctx.user.isAdmin }, userId, upload.bytes));
   return { ok: true, avatarUrl: avatarPath(owner, "/api/v1") };
 });
@@ -33,7 +35,7 @@ export const PUT = withApi<{ id: string }>(async (request, params): Promise<Avat
 /** Remove the photo, back to initials. */
 export const DELETE = withApi<{ id: string }>(async (request, params): Promise<AvatarResponse> => {
   const ctx = await requireApiUser(request);
-  const userId = parseUuidSegment(params.id, "Account not found.");
+  const userId = parseUuidSegment(params.id, msg("server.accountNotFound"));
   unwrap(await removeUserAvatar({ userId: ctx.user.id, isAdmin: ctx.user.isAdmin }, userId));
   return { ok: true, avatarUrl: null };
 });

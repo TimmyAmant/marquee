@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { optionalNumberish, readJsonBody } from "@/lib/api/request";
@@ -10,7 +11,7 @@ import type { RelinkResult } from "@/lib/api/types";
  * different TMDb title. Body: one of tmdbId, imdbId, tvdbId (TV only) —
  * checked in that order, like the web form. */
 export const POST = withApi<TitleParams>(async (request, params): Promise<RelinkResult> => {
-  const ctx = await requireApiAdmin(request, "Only the admin can correct a title's match.");
+  const ctx = await requireApiAdmin(request, msg("server.onlyAdminRelink"));
   const { mediaType, tmdbId } = parseTitleParams(params);
   const body = await readJsonBody(request);
 

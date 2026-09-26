@@ -12,6 +12,8 @@ import { getJellyfinFileInfo } from "@/lib/jellyfin/sync";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { createNotification } from "@/lib/notifications/query";
 import { seasonsLabel } from "@/lib/requests/labels";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 import {
   arrTitleUrl,
   decideNotFound,
@@ -49,7 +51,7 @@ export async function getNotFoundAfterHours(): Promise<number> {
 }
 
 export async function saveNotFoundAfterHours(value: unknown): Promise<CoreResult<{ afterHours: number }>> {
-  const parsed = parseNotFoundAfterHours(value);
+  const parsed = parseNotFoundAfterHours(await getT(), value);
   if (!parsed.ok) return fail("invalid", parsed.error);
   const [existing] = await db.select({ id: appSettings.id }).from(appSettings).limit(1);
   if (existing) {
@@ -272,8 +274,11 @@ function reviewers() {
  * the requester among them if they are one; "We're still looking for Ice
  * Age (2002)" to a requester who isn't (bell only unless they chose more). */
 async function notifyNotFound(row: Candidate, seasons: number[] | null, year: number | null, reminder: boolean) {
-  const name = notFoundName(row.title, year, seasons, seasonsLabel(seasons));
-  const shown = row.is4k ? `${name} in 4K` : name;
+  // In each reader's language (and the household's, for its channels).
+  const shown = (t: Translator) => {
+    const name = notFoundName(row.title, year, seasons, seasonsLabel(t, seasons));
+    return row.is4k ? t("notify.requestIn4k", { request: name }) : name;
+  };
   const who = row.requesterName || row.requesterUsername;
   const common = {
     mediaType: row.mediaType,
@@ -288,9 +293,11 @@ async function notifyNotFound(row: Candidate, seasons: number[] | null, year: nu
     await createNotification({
       ...common,
       userId: reviewer.id,
-      message: reminder
-        ? `Still can't find ${shown} — requested by ${mine ? "you" : who} a while ago`
-        : `Couldn't find ${shown} — requested by ${mine ? "you" : who}`,
+      message: (t) =>
+        t(reminder ? "notify.stillCantFind" : "notify.cantFind", {
+          title: shown(t),
+          who: mine ? t("notify.requestedByYou") : who,
+        }),
       relay: index === 0,
     }).catch(() => undefined);
   }
@@ -298,7 +305,7 @@ async function notifyNotFound(row: Candidate, seasons: number[] | null, year: nu
     await createNotification({
       ...common,
       userId: row.requesterId,
-      message: `We're still looking for ${shown}`,
+      message: (t) => t("notify.stillLooking", { title: shown(t) }),
       topic: "request_still_looking",
       relay: false,
     }).catch(() => undefined);
@@ -459,7 +466,7 @@ async function flaggedRequest(requestId: string) {
   return row ?? null;
 }
 
-const NOT_LISTED = "That request isn't in Can't find any more.";
+const NOT_LISTED = "notify.notInCantFind";
 
 /** "Mark as found": off the list for good, its alerts read. The request
  * itself stays approved. */
@@ -469,7 +476,7 @@ export async function dismissNotFound(requestId: string): Promise<CoreResult> {
     .set({ notFoundSince: null, notFoundDismissedAt: new Date() })
     .where(and(eq(requests.id, requestId), flagged))
     .returning({ id: requests.id });
-  if (updated.length === 0) return fail("not_found", NOT_LISTED);
+  if (updated.length === 0) return fail("not_found", (await getT())(NOT_LISTED));
   await clearNotFoundAlerts(requestId);
   return { ok: true };
 }
@@ -478,21 +485,22 @@ export async function dismissNotFound(requestId: string): Promise<CoreResult> {
  * the requested seasons of a show, or the whole of it. It stays listed
  * until something is grabbed. */
 export async function searchNotFoundAgain(requestId: string): Promise<CoreResult> {
+  const t = await getT();
   const row = await flaggedRequest(requestId);
-  if (!row) return fail("not_found", NOT_LISTED);
+  if (!row) return fail("not_found", t(NOT_LISTED));
   const server = await serverFor(row, await adminId());
   const kind = row.mediaType === "movie" ? "Radarr" : "Sonarr";
-  if (!server) return fail("conflict", `${kind} isn't connected any more.`);
+  if (!server) return fail("conflict", t("notify.arrNotConnected", { kind }));
   const config = arrConfig(server);
   try {
     if (row.mediaType === "movie") {
       const movie = await radarr.getMovieByTmdbId(config, row.tmdbId);
-      if (!movie) return fail("conflict", `${server.name} doesn't have it any more.`);
+      if (!movie) return fail("conflict", t("notify.arrDoesntHaveIt", { server: server.name }));
       await radarr.searchMovie(config, movie.id);
     } else {
       const tvdbId = row.tvdbId ?? (await getOrFetchTitle("tv", row.tmdbId).catch(() => null))?.tvdbId ?? null;
       const series = tvdbId ? await sonarr.getSeriesByTvdbId(config, tvdbId) : null;
-      if (!series) return fail("conflict", `${server.name} doesn't have it any more.`);
+      if (!series) return fail("conflict", t("notify.arrDoesntHaveIt", { server: server.name }));
       if (row.seasons && row.seasons.length > 0) {
         for (const season of row.seasons) await sonarr.searchSeason(config, series.id, season);
       } else {
@@ -500,7 +508,7 @@ export async function searchNotFoundAgain(requestId: string): Promise<CoreResult
       }
     }
   } catch {
-    return fail("upstream", `Couldn't reach ${server.name}.`);
+    return fail("upstream", t("notify.arrUnreachable", { server: server.name }));
   }
   return { ok: true };
 }

@@ -1,6 +1,8 @@
 import { apiJson, errorToApiError, jsonError } from "@/lib/api/errors";
 import { parseApiKeyCredential } from "@/lib/api/api-keys";
-import { runInLanguageScope } from "@/lib/i18n/request-scope";
+import { apiScope, runInLanguageScope } from "@/lib/i18n/request-scope";
+import { resolveLocale } from "@/lib/i18n/locales";
+import { translatorFor } from "@/lib/i18n/catalog";
 
 type RouteParams = Record<string, string | string[]>;
 type RouteContextLike<P extends RouteParams> = { params: Promise<P> };
@@ -40,7 +42,11 @@ export function withApi<P extends RouteParams = RouteParams>(handler: ApiHandler
           const url = new URL(request.url);
           console.error(`[api/v1] ${request.method} ${url.pathname} failed:`, err);
         }
-        return jsonError(error.status, error.code, error.message);
+        // In the account's language once it's known, else the request's
+        // Accept-Language (what getT() would say here, without its imports).
+        const scope = apiScope();
+        const t = translatorFor(resolveLocale(scope?.language, scope?.acceptLanguage));
+        return jsonError(error.status, error.code, error.messageIn(t));
       }
     });
 }

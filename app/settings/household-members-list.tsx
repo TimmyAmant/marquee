@@ -6,7 +6,9 @@ import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { updateHouseholdMemberAction, deleteUserAction, type HouseholdMember } from "./users-actions";
 import { lastActiveLabel } from "@/lib/users/last-active-label";
-import { presetFor } from "@/lib/users/permissions";
+import { PERMISSION_PRESET_LABELS, presetFor } from "@/lib/users/permissions";
+import { useT } from "@/lib/i18n/client";
+import { rich } from "@/lib/i18n/rich";
 import { PermissionsEditor } from "./permissions-editor";
 
 /** Longest side of what the browser sends. The server crops to a 512px
@@ -38,6 +40,7 @@ async function prepareUpload(file: File): Promise<Blob> {
  * own route (app/api/avatars/[id]), independent of the form's Save. The
  * photo stays on this server; nothing is uploaded anywhere else. */
 function PhotoField({ member }: { member: HouseholdMember }) {
+  const t = useT();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [src, setSrc] = useState(() => avatarPath(member, "/api"));
@@ -55,14 +58,14 @@ function PhotoField({ member }: { member: HouseholdMember }) {
       });
       const data = (await res.json().catch(() => ({}))) as { avatarUrl?: string | null; error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Couldn't save the photo. Try again.");
+        setError(data.error ?? t("settings.photoSaveFailed"));
         return;
       }
       setSrc(data.avatarUrl ?? null);
       // The menu's avatar and the list row are server-rendered.
       router.refresh();
     } catch {
-      setError("Couldn't reach the server. Try again.");
+      setError(t("settings.serverUnreachable"));
     } finally {
       setBusy(false);
     }
@@ -85,7 +88,7 @@ function PhotoField({ member }: { member: HouseholdMember }) {
             onClick={() => inputRef.current?.click()}
             className="rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
           >
-            {busy ? "Saving…" : src ? "Change photo" : "Add photo"}
+            {busy ? t("common.saving") : src ? t("settings.changePhoto") : t("settings.addPhoto")}
           </button>
           {src && (
             <button
@@ -94,11 +97,11 @@ function PhotoField({ member }: { member: HouseholdMember }) {
               onClick={() => send("DELETE")}
               className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline disabled:opacity-60"
             >
-              Remove
+              {t("common.remove")}
             </button>
           )}
         </div>
-        <p className="text-xs text-text-muted">Kept on this server and shown in the menu and the apps.</p>
+        <p className="text-xs text-text-muted">{t("settings.photoHelp")}</p>
         {error && <p className="text-xs text-red-400">{error}</p>}
       </div>
       {/* No name: the photo isn't part of the form's own submission. */}
@@ -106,7 +109,7 @@ function PhotoField({ member }: { member: HouseholdMember }) {
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/heic,image/heif"
-        aria-label="Choose a profile photo"
+        aria-label={t("settings.choosePhoto")}
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
@@ -115,6 +118,7 @@ function PhotoField({ member }: { member: HouseholdMember }) {
 }
 
 function RemoveMemberButton({ member }: { member: HouseholdMember }) {
+  const t = useT();
   const [confirming, setConfirming] = useState(false);
   const [state, formAction, isPending] = useActionState(deleteUserAction, undefined);
 
@@ -124,7 +128,7 @@ function RemoveMemberButton({ member }: { member: HouseholdMember }) {
         onClick={() => setConfirming(true)}
         className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline"
       >
-        Remove
+        {t("common.remove")}
       </button>
     );
   }
@@ -133,20 +137,20 @@ function RemoveMemberButton({ member }: { member: HouseholdMember }) {
     <form action={formAction} className="flex items-center gap-2">
       <input type="hidden" name="userId" value={member.id} />
       {state?.error && <span className="text-xs text-red-400">{state.error}</span>}
-      <span className="text-xs text-text-secondary">Remove {member.username}?</span>
+      <span className="text-xs text-text-secondary">{t("settings.removeMemberConfirm", { name: member.username })}</span>
       <button
         type="submit"
         disabled={isPending}
         className="text-xs font-medium text-red-400 underline-offset-2 hover:underline disabled:opacity-60"
       >
-        {isPending ? "Removing…" : "Confirm"}
+        {isPending ? t("settings.removing") : t("common.confirm")}
       </button>
       <button
         type="button"
         onClick={() => setConfirming(false)}
         className="text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline"
       >
-        Cancel
+        {t("common.cancel")}
       </button>
     </form>
   );
@@ -165,6 +169,7 @@ function EditMemberForm({
   onCancel: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(updateHouseholdMemberAction, undefined);
 
   useEffect(() => {
@@ -176,7 +181,7 @@ function EditMemberForm({
       <input type="hidden" name="userId" value={member.id} />
       <PhotoField member={member} />
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Name
+        {t("settings.nameLabel")}
         <input
           type="text"
           name="displayName"
@@ -185,7 +190,7 @@ function EditMemberForm({
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Username
+        {t("settings.usernameLabel")}
         <input
           type="text"
           name="username"
@@ -195,12 +200,12 @@ function EditMemberForm({
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        New password
+        {t("settings.newPasswordLabel")}
         <input
           type="password"
           name="password"
           autoComplete="new-password"
-          placeholder={member.hasPassword ? "Leave blank to keep current password" : "Leave blank for no password"}
+          placeholder={member.hasPassword ? t("settings.newPasswordKeepPlaceholder") : t("settings.newPasswordNonePlaceholder")}
           minLength={8}
           className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
         />
@@ -211,12 +216,12 @@ function EditMemberForm({
           has none yet. */}
       {isSelf && member.hasPassword && (
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Current password
+          {t("settings.currentPasswordLabel")}
           <input
             type="password"
             name="currentPassword"
             autoComplete="current-password"
-            placeholder="Needed only when setting a new password"
+            placeholder={t("settings.currentPasswordPlaceholder")}
             className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
           />
         </label>
@@ -226,29 +231,34 @@ function EditMemberForm({
         <>
           <PermissionsEditor initial={member.permissions} />
           <fieldset className="flex flex-col gap-2 text-sm text-text-secondary">
-            <legend className="mb-1">Request limits (blank for none; not for someone with No request limits)</legend>
+            <legend className="mb-1">{t("settings.requestLimitsLegend")}</legend>
             {(["movie", "tv"] as const).map((kind) => (
               <div key={kind} className="flex flex-wrap items-center gap-2">
-                <span className="w-16">{kind === "movie" ? "Movies" : "TV"}</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={1000}
-                  name={`${kind}QuotaLimit`}
-                  defaultValue={(kind === "movie" ? member.movieQuotaLimit : member.tvQuotaLimit) ?? ""}
-                  placeholder="No limit"
-                  className="w-24 rounded-lg border border-border bg-bg-0 px-3 py-2 text-text-primary outline-none focus:border-accent"
-                />
-                <span>every</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={365}
-                  name={`${kind}QuotaDays`}
-                  defaultValue={kind === "movie" ? member.movieQuotaDays : member.tvQuotaDays}
-                  className="w-20 rounded-lg border border-border bg-bg-0 px-3 py-2 text-text-primary outline-none focus:border-accent"
-                />
-                <span>days</span>
+                <span className="w-16">{kind === "movie" ? t("common.movies") : t("settings.tvShort")}</span>
+                {rich(t("settings.requestLimitEvery"), {
+                  limit: () => (
+                    <input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      name={`${kind}QuotaLimit`}
+                      defaultValue={(kind === "movie" ? member.movieQuotaLimit : member.tvQuotaLimit) ?? ""}
+                      placeholder={t("settings.noLimit")}
+                      className="w-24 rounded-lg border border-border bg-bg-0 px-3 py-2 text-text-primary outline-none focus:border-accent"
+                    />
+                  ),
+                  days: () => (
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      name={`${kind}QuotaDays`}
+                      defaultValue={kind === "movie" ? member.movieQuotaDays : member.tvQuotaDays}
+                      className="w-20 rounded-lg border border-border bg-bg-0 px-3 py-2 text-text-primary outline-none focus:border-accent"
+                    />
+                  ),
+                  text: (chunks) => <span>{chunks}</span>,
+                })}
               </div>
             ))}
           </fieldset>
@@ -263,14 +273,14 @@ function EditMemberForm({
           disabled={isPending}
           className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {isPending ? "Saving…" : "Save"}
+          {isPending ? t("common.saving") : t("common.save")}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary transition-colors hover:border-accent hover:text-accent"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </form>
@@ -289,6 +299,7 @@ export function HouseholdMembersList({
   /** "Emby" when that's the connected server. */
   jellyfinName?: string;
 }) {
+  const t = useT();
   const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
@@ -315,7 +326,7 @@ export function HouseholdMembersList({
                     the viewer's clock, so the server's render may differ. */}
                 {isAdmin && member.id !== currentUserId && (
                   <p className="mt-0.5 truncate text-xs text-text-muted" suppressHydrationWarning>
-                    {lastActiveLabel(member.lastActiveAt, new Date())}
+                    {lastActiveLabel(t, member.lastActiveAt, new Date())}
                   </p>
                 )}
               </div>
@@ -338,17 +349,17 @@ export function HouseholdMembersList({
               )}
               {member.role === "admin" && (
                 <span className="rounded-full border border-accent/50 px-2.5 py-0.5 text-xs text-accent">
-                  Admin
+                  {t(PERMISSION_PRESET_LABELS.admin)}
                 </span>
               )}
               {member.role !== "admin" && presetFor(member) !== "member" && (
                 <span className="rounded-full border border-accent/30 px-2.5 py-0.5 text-xs text-accent">
-                  {presetFor(member) === "trusted" ? "Trusted" : "Custom"}
+                  {t(PERMISSION_PRESET_LABELS[presetFor(member)])}
                 </span>
               )}
               {member.id === currentUserId && (
                 <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-text-secondary">
-                  You
+                  {t("settings.youBadge")}
                 </span>
               )}
               {(isAdmin || member.id === currentUserId) && (
@@ -356,7 +367,7 @@ export function HouseholdMembersList({
                   onClick={() => setEditingId(member.id)}
                   className="text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline"
                 >
-                  Edit
+                  {t("common.edit")}
                 </button>
               )}
               {isAdmin && member.role !== "admin" && <RemoveMemberButton member={member} />}

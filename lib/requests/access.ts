@@ -8,6 +8,8 @@ import { can, type PermissionSubject } from "@/lib/users/permissions";
 // find and Couldn't add for whoever reviews requests, open problem reports
 // for whoever handles them.
 
+/** English, for callers without a reader's language; the website uses
+ * the notify.advancedNotAllowed message. */
 export const ADVANCED_REFUSED = "Picking the server, quality or folder isn't turned on for your account.";
 
 export type AttentionCounts = {

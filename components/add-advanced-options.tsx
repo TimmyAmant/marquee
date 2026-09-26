@@ -6,6 +6,7 @@ import { TagChips } from "@/components/arr-servers-card";
 import type { AddOptions, AddOptionsServer } from "@/lib/arr/add-options-server";
 import type { AddOverrides } from "@/lib/arr/add-options";
 import type { MediaType, SonarrSeriesType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 // "Advanced" under Approve and the admin's Add: which server a title goes to
 // and with what quality profile, root folder, tags and (TV) series type.
@@ -60,6 +61,7 @@ export function AddAdvancedOptions({
   onChange?: (overrides: AddOverrides | null) => void;
   disabled?: boolean;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<AddOptions | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export function AddAdvancedOptions({
     const result = await getAddOptionsAction(mediaType, tmdbId, is4k).catch(() => null);
     setLoading(false);
     if (!result || !result.ok) {
-      setError(result?.error ?? "Couldn't load the servers.");
+      setError(result?.error ?? t("title.couldntLoadServers"));
       return;
     }
     setOptions(result.options);
@@ -107,21 +109,21 @@ export function AddAdvancedOptions({
         aria-expanded={open}
         className="self-start text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline disabled:opacity-60"
       >
-        {open ? "Hide advanced" : "Advanced"}
+        {open ? t("title.hideAdvanced") : t("title.advanced")}
       </button>
       {open && (
         <div className="flex max-w-sm flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs text-text-secondary">
-          {loading && <p>Loading servers…</p>}
+          {loading && <p>{t("title.loadingServers")}</p>}
           {error && <p className="text-red-400">{error}</p>}
           {options && options.servers.length === 0 && (
-            <p>No {is4k ? "4K " : ""}{tv ? "Sonarr" : "Radarr"} is set up yet.</p>
+            <p>{t("title.noServerSetUp", { server: `${is4k ? "4K " : ""}${tv ? "Sonarr" : "Radarr"}` })}</p>
           )}
           {options && picks && server && (
             <>
               {formId && <input type="hidden" name="advanced" value="1" form={formId} />}
-              {options.isAnime && tv && <p className="text-text-muted">TMDb lists this as anime.</p>}
+              {options.isAnime && tv && <p className="text-text-muted">{t("title.tmdbListsAnime")}</p>}
               <label className="flex flex-col gap-1">
-                Server
+                {t("title.server")}
                 <select
                   name="serverId"
                   form={formId}
@@ -134,20 +136,22 @@ export function AddAdvancedOptions({
                 >
                   {options.servers.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name}
-                      {s.isDefault ? " (default)" : ""}
-                      {s.reachable ? "" : " — not responding"}
+                      {t("title.serverOption", {
+                        name: s.name,
+                        isDefault: s.isDefault ? "yes" : "no",
+                        reachable: s.reachable ? "yes" : "no",
+                      })}
                     </option>
                   ))}
                 </select>
               </label>
               {!server.reachable && (
                 <p className="text-amber-300">
-                  {server.name} didn&apos;t answer, so only its saved defaults can be used.
+                  {t("title.serverDidntAnswer", { name: server.name })}
                 </p>
               )}
               <label className="flex flex-col gap-1">
-                Quality profile
+                {t("title.qualityProfile")}
                 <select
                   name="qualityProfileId"
                   form={formId}
@@ -155,7 +159,7 @@ export function AddAdvancedOptions({
                   onChange={(e) => update({ ...picks, qualityProfileId: e.target.value ? Number(e.target.value) : null })}
                   className={SELECT}
                 >
-                  {server.qualityProfiles.length === 0 && <option value={picks.qualityProfileId ?? ""}>Server default</option>}
+                  {server.qualityProfiles.length === 0 && <option value={picks.qualityProfileId ?? ""}>{t("title.serverDefault")}</option>}
                   {server.qualityProfiles.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
@@ -164,7 +168,7 @@ export function AddAdvancedOptions({
                 </select>
               </label>
               <label className="flex flex-col gap-1">
-                Root folder
+                {t("title.rootFolder")}
                 <select
                   name="rootFolderPath"
                   form={formId}
@@ -172,7 +176,7 @@ export function AddAdvancedOptions({
                   onChange={(e) => update({ ...picks, rootFolderPath: e.target.value || null })}
                   className={SELECT}
                 >
-                  {server.rootFolders.length === 0 && <option value={picks.rootFolderPath ?? ""}>Server default</option>}
+                  {server.rootFolders.length === 0 && <option value={picks.rootFolderPath ?? ""}>{t("title.serverDefault")}</option>}
                   {server.rootFolders.map((f) => (
                     <option key={f.id} value={f.path}>
                       {f.path}
@@ -182,7 +186,7 @@ export function AddAdvancedOptions({
               </label>
               {tv && (
                 <label className="flex flex-col gap-1">
-                  Series type
+                  {t("title.seriesType")}
                   <select
                     name="seriesType"
                     form={formId}
@@ -190,14 +194,14 @@ export function AddAdvancedOptions({
                     onChange={(e) => update({ ...picks, seriesType: e.target.value as SonarrSeriesType })}
                     className={SELECT}
                   >
-                    <option value="standard">Standard</option>
-                    <option value="daily">Daily</option>
-                    <option value="anime">Anime</option>
+                    <option value="standard">{t("title.seriesTypeStandard")}</option>
+                    <option value="daily">{t("title.seriesTypeDaily")}</option>
+                    <option value="anime">{t("title.seriesTypeAnime")}</option>
                   </select>
                 </label>
               )}
               <div className="flex flex-col gap-1">
-                Tags
+                {t("title.tags")}
                 {server.reachable ? (
                   <TagChips
                     tags={server.tags}
@@ -208,9 +212,9 @@ export function AddAdvancedOptions({
                   />
                 ) : (
                   <>
-                    <p className="text-text-muted">Its saved tags.</p>
-                    {picks.tags.map((t) => (
-                      <input key={t} type="hidden" name="tags" value={t} form={formId} />
+                    <p className="text-text-muted">{t("title.savedTags")}</p>
+                    {picks.tags.map((tag) => (
+                      <input key={tag} type="hidden" name="tags" value={tag} form={formId} />
                     ))}
                   </>
                 )}

@@ -7,6 +7,7 @@ import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadPersonPage } from "@/lib/pages/entities";
 import { ShareButton } from "@/components/share-button";
 import { getPublicBaseUrl } from "@/lib/sharing";
+import { getT } from "@/lib/i18n/server";
 
 export default async function PersonPage({
   params,
@@ -18,6 +19,7 @@ export default async function PersonPage({
   if (!Number.isFinite(tmdbId)) notFound();
 
   const viewer = await getViewerContext();
+  const t = await getT();
   // Shared with GET /api/v1/people/[id].
   const [data, publicBase] = await Promise.all([
     loadPersonPage(viewer, tmdbId),
@@ -55,12 +57,12 @@ export default async function PersonPage({
         <Suspense>
           <MediaList
             entries={entries}
-            subtitleLabel="Role"
+            subtitleLabel={t("discover.columnRole")}
             itemLabel="credits"
             showSearch
             showTypeFilter
             arrConfigured={arrConfigured}
-            emptyMessage="No processed filmography found for this person yet."
+            emptyMessage={t("discover.emptyPerson")}
             favoritedKeys={favoritedKeys}
             showFavorite={Boolean(viewer.session)}
           />

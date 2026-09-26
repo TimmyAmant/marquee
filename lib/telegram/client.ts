@@ -1,3 +1,6 @@
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 // Telegram via a bot the admin makes with @BotFather: its token, and the chat
 // (a person, group or channel the bot is in) to post to. Bot API:
 // https://core.telegram.org/bots/api#sendmessage.
@@ -10,16 +13,16 @@ export type TelegramConfig = { botToken: string; chatId: string };
 
 /** Checks the pieces before anything is sent; the message, or null when
  * they look right. Pure; unit tested. */
-export function telegramConfigError(config: { botToken: string; chatId: string }): string | null {
-  if (!config.botToken) return "Enter your bot's token.";
+export function telegramConfigError(config: { botToken: string; chatId: string }, t: Translator = englishT()): string | null {
+  if (!config.botToken) return t("notify.telegramEnterToken");
   // BotFather's tokens: the bot's numeric id, a colon, then 35-ish URL-safe characters.
   if (!/^\d{5,}:[A-Za-z0-9_-]{30,}$/.test(config.botToken)) {
-    return "That doesn't look like a bot token. It's the long code @BotFather gave you, like 123456789:AA…";
+    return t("notify.telegramBadToken");
   }
-  if (!config.chatId) return "Enter the chat ID to send to.";
+  if (!config.chatId) return t("notify.telegramEnterChat");
   // A numeric id (negative for groups and channels) or a public channel's @name.
   if (!/^(-?\d{1,20}|@[A-Za-z0-9_]{5,32})$/.test(config.chatId)) {
-    return "The chat ID is a number (groups and channels start with -100) or a channel's @name.";
+    return t("notify.telegramBadChat");
   }
   return null;
 }
@@ -56,9 +59,11 @@ export async function sendTelegramMessage(config: TelegramConfig, text: string):
 /** Posts a test message; the error is Telegram's own wording ("chat not
  * found", "Unauthorized") so the admin can tell what to fix. */
 export async function verifyTelegram(config: TelegramConfig): Promise<{ ok: true } | { ok: false; error: string }> {
-  return send(config, "✅ Marquee is now connected to this chat.").catch(() => ({
+  // Whoever is setting it up reads it.
+  const t = await getT();
+  return send(config, `✅ ${t("notify.connectedChat")}`).catch(() => ({
     ok: false as const,
-    error: "Couldn't reach Telegram.",
+    error: t("notify.telegramUnreachable"),
   }));
 }
 
@@ -67,8 +72,10 @@ export async function verifyTelegram(config: TelegramConfig): Promise<{ ok: true
 export async function deliverTelegram(
   config: TelegramConfig,
   text: string,
+  /** Whoever reads the reason. */
+  t: Translator = englishT(),
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  return send(config, text).catch(() => ({ ok: false as const, error: "Couldn't reach Telegram." }));
+  return send(config, text).catch(() => ({ ok: false as const, error: t("notify.telegramUnreachable") }));
 }
 
 /** The bot's @username, for "Open Telegram" links (t.me/<username>?start=…). */

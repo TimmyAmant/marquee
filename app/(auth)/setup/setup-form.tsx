@@ -1,22 +1,21 @@
 "use client";
 
 import { useActionState } from "react";
+import { useT } from "@/lib/i18n/client";
 import { setupAction } from "./actions";
 
 export function SetupForm() {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(setupAction, undefined);
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-8">
-      <h1 className="font-display text-2xl text-text-primary">Set up Marquee</h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Create the first account for this Marquee instance. Additional accounts for
-        other household members can be added later from Settings.
-      </p>
+      <h1 className="font-display text-2xl text-text-primary">{t("auth.setupTitle")}</h1>
+      <p className="mt-1 text-sm text-text-secondary">{t("auth.setupIntro")}</p>
 
       <form action={formAction} className="mt-6 flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Name
+          {t("auth.name")}
           <input
             type="text"
             name="displayName"
@@ -25,7 +24,7 @@ export function SetupForm() {
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Username
+          {t("auth.username")}
           <input
             type="text"
             name="username"
@@ -35,7 +34,7 @@ export function SetupForm() {
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Password
+          {t("auth.password")}
           <input
             type="password"
             name="password"
@@ -53,7 +52,7 @@ export function SetupForm() {
           disabled={isPending}
           className="mt-2 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {isPending ? "Creating account…" : "Create admin account"}
+          {isPending ? t("auth.creatingAccount") : t("auth.createAdminAccount")}
         </button>
       </form>
     </div>

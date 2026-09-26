@@ -1,4 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
+import type { Translator } from "@/lib/i18n/translator";
+import { getT } from "@/lib/i18n/server";
 import { db } from "@/lib/db/client";
 import { requestBlocklist, type MediaType } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
@@ -58,8 +60,8 @@ export async function getBlockedTitleKeys(): Promise<Set<string>> {
 }
 
 /** The refusal createRequest gives. Pure. */
-export function blockedMessage(block: BlockMatch): string {
-  const base = "The admin isn't taking requests for this title.";
+export function blockedMessage(t: Translator, block: BlockMatch): string {
+  const base = t("notify.blocked");
   return block.reason ? `${base} ${block.reason}` : base;
 }
 
@@ -76,7 +78,7 @@ function cleanReason(value: unknown): string | null {
 
 export async function blockTitle(mediaType: MediaType, tmdbId: number, reason: unknown): Promise<CoreResult> {
   const title = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
-  if (!title) return fail("upstream", "Couldn't look this title up with TMDb right now.");
+  if (!title) return fail("upstream", (await getT())("notify.tmdbLookupFailed"));
   // Already blocked: blocking again just updates the reason.
   const updated = await db
     .update(requestBlocklist)
@@ -107,7 +109,7 @@ export async function unblockTitle(mediaType: MediaType, tmdbId: number): Promis
 
 export async function blockKeyword(keyword: unknown, reason: unknown): Promise<CoreResult> {
   const value = normalizeKeyword(keyword);
-  if (!value) return fail("invalid", "Enter a keyword or genre, like anime.");
+  if (!value) return fail("invalid", (await getT())("notify.blockEnterKeyword"));
   const updated = await db
     .update(requestBlocklist)
     .set({ reason: cleanReason(reason) })
@@ -125,9 +127,9 @@ export async function blockKeyword(keyword: unknown, reason: unknown): Promise<C
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function removeBlocklistEntry(id: string): Promise<CoreResult> {
-  if (!UUID.test(id)) return fail("not_found", "Not on the blocklist.");
+  if (!UUID.test(id)) return fail("not_found", (await getT())("notify.notOnBlocklist"));
   const removed = await db.delete(requestBlocklist).where(eq(requestBlocklist.id, id)).returning();
-  if (removed.length === 0) return fail("not_found", "Not on the blocklist.");
+  if (removed.length === 0) return fail("not_found", (await getT())("notify.notOnBlocklist"));
   const [row] = removed;
   if (row.kind === "title" && row.mediaType && row.tmdbId) revalidatePathSafely(`/title/${row.mediaType}/${row.tmdbId}`);
   return { ok: true };

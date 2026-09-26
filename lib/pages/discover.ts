@@ -18,6 +18,7 @@ import type { MediaType } from "@/lib/db/schema";
 import { getDiscoverLayout } from "@/lib/discover/layout";
 import { fetchCustomShelfPage, type ShelfItem } from "@/lib/discover/custom-shelves";
 import { defaultLayout } from "@/lib/discover/shelves";
+import { getT } from "@/lib/i18n/server";
 
 /** Titles a row shows on Discover itself; the rest are on its See all. */
 export const SHELF_LENGTH = 20;
@@ -50,9 +51,9 @@ async function fetchTvGenreBackdrops(genres: TmdbGenre[]) {
  * to an empty shelf, exactly like the page.
  */
 export async function loadDiscoverShelves(viewer: ViewerIdentity) {
-  const layout = await getDiscoverLayout().catch((err) => {
+  const layout = await getDiscoverLayout().catch(async (err) => {
     console.error("[discover] couldn't read the Discover layout; showing the default:", err);
-    return defaultLayout();
+    return defaultLayout(await getT());
   });
   const visible = layout.filter((shelf) => !shelf.hidden);
   const shows = new Set(visible.map((shelf) => shelf.id));

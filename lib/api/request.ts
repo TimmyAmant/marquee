@@ -1,6 +1,7 @@
 // Request parsing helpers for /api/v1 handlers. Every failure throws an
-// ApiError(400 invalid) with a message that's safe to show in the UI.
-import { ApiError } from "@/lib/api/errors";
+// ApiError(400 invalid) with a message that's safe to show in the UI (in the
+// reader's language: see msg() in lib/api/errors.ts).
+import { ApiError, msg, type ApiMessage } from "@/lib/api/errors";
 import {
   arrProviderValues,
   favoriteEntityTypeValues,
@@ -12,7 +13,7 @@ import {
   type MediaType,
 } from "@/lib/db/schema";
 
-export function invalid(message: string): ApiError {
+export function invalid(message: ApiMessage): ApiError {
   return ApiError.of("invalid", message);
 }
 
@@ -21,7 +22,7 @@ export function invalid(message: string): ApiError {
 export const MAX_JSON_BODY_BYTES = 64 * 1024;
 
 function bodyTooLarge(): ApiError {
-  return new ApiError(413, "invalid", "Request body is too large.");
+  return new ApiError(413, "invalid", msg("server.bodyTooLarge"));
 }
 
 /** Reads the body as text without holding more than MAX_JSON_BODY_BYTES in
@@ -61,10 +62,10 @@ export async function readJsonBody(request: Request): Promise<Record<string, unk
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw invalid("Request body isn't valid JSON.");
+    throw invalid(msg("server.bodyNotJson"));
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw invalid("Request body must be a JSON object.");
+    throw invalid(msg("server.bodyNotObject"));
   }
   return parsed as Record<string, unknown>;
 }
@@ -72,26 +73,26 @@ export async function readJsonBody(request: Request): Promise<Record<string, unk
 export function optionalString(body: Record<string, unknown>, key: string): string | undefined {
   const value = body[key];
   if (value === undefined || value === null) return undefined;
-  if (typeof value !== "string") throw invalid(`"${key}" must be a string.`);
+  if (typeof value !== "string") throw invalid(msg("server.fieldMustBeString", { field: key }));
   return value;
 }
 
 export function requiredString(body: Record<string, unknown>, key: string): string {
   const value = optionalString(body, key);
-  if (value === undefined) throw invalid(`"${key}" is required.`);
+  if (value === undefined) throw invalid(msg("server.fieldRequired", { field: key }));
   return value;
 }
 
 export function optionalBoolean(body: Record<string, unknown>, key: string): boolean | undefined {
   const value = body[key];
   if (value === undefined || value === null) return undefined;
-  if (typeof value !== "boolean") throw invalid(`"${key}" must be true or false.`);
+  if (typeof value !== "boolean") throw invalid(msg("server.fieldMustBeBoolean", { field: key }));
   return value;
 }
 
 export function requiredBoolean(body: Record<string, unknown>, key: string): boolean {
   const value = optionalBoolean(body, key);
-  if (value === undefined) throw invalid(`"${key}" is required.`);
+  if (value === undefined) throw invalid(msg("server.fieldRequired", { field: key }));
   return value;
 }
 
@@ -100,7 +101,7 @@ export function optionalNumberish(body: Record<string, unknown>, key: string): s
   if (value === undefined || value === null || value === "") return undefined;
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   if (typeof value === "string") return value;
-  throw invalid(`"${key}" must be a number or a string.`);
+  throw invalid(msg("server.fieldMustBeNumberOrString", { field: key }));
 }
 
 function isOneOf<T extends string>(values: readonly T[], value: string): value is T {
@@ -108,25 +109,25 @@ function isOneOf<T extends string>(values: readonly T[], value: string): value i
 }
 
 export function parseMediaType(value: string): MediaType {
-  if (!isOneOf(mediaTypeValues, value)) throw ApiError.of("not_found", `Unknown media type "${value}".`);
+  if (!isOneOf(mediaTypeValues, value)) throw ApiError.of("not_found", msg("server.unknownMediaType", { value }));
   return value;
 }
 
 export function parseArrProvider(value: string): ArrProvider {
-  if (!isOneOf(arrProviderValues, value)) throw ApiError.of("not_found", `Unknown provider "${value}".`);
+  if (!isOneOf(arrProviderValues, value)) throw ApiError.of("not_found", msg("server.unknownProvider", { value }));
   return value;
 }
 
 export function parseIntegrationProvider(value: string): IntegrationProvider {
   if (!isOneOf(integrationProviderValues, value)) {
-    throw ApiError.of("not_found", `Unknown integration "${value}".`);
+    throw ApiError.of("not_found", msg("server.unknownIntegration", { value }));
   }
   return value;
 }
 
 export function parseFavoriteEntityType(value: string): FavoriteEntityType {
   if (!isOneOf(favoriteEntityTypeValues, value)) {
-    throw ApiError.of("not_found", `Unknown favorite type "${value}".`);
+    throw ApiError.of("not_found", msg("server.unknownFavoriteType", { value }));
   }
   return value;
 }
@@ -139,14 +140,14 @@ const MAX_INT_ID = 2_147_483_647;
 export function parseIdSegment(value: string, label = "id"): number {
   const id = Number(value);
   if (!/^\d+$/.test(value) || !Number.isSafeInteger(id) || id <= 0 || id > MAX_INT_ID) {
-    throw ApiError.of("not_found", `Invalid ${label} "${value}".`);
+    throw ApiError.of("not_found", msg("server.invalidId", { label, value }));
   }
   return id;
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function parseUuidSegment(value: string, notFoundMessage: string): string {
+export function parseUuidSegment(value: string, notFoundMessage: ApiMessage): string {
   if (!UUID_PATTERN.test(value)) throw ApiError.of("not_found", notFoundMessage);
   return value;
 }
@@ -159,9 +160,9 @@ export function queryInt(
   const raw = url.searchParams.get(key);
   if (raw === null || raw === "") return undefined;
   const value = Number(raw);
-  if (!Number.isInteger(value)) throw invalid(`"${key}" must be an integer.`);
-  if (min !== undefined && value < min) throw invalid(`"${key}" must be at least ${min}.`);
-  if (max !== undefined && value > max) throw invalid(`"${key}" must be at most ${max}.`);
+  if (!Number.isInteger(value)) throw invalid(msg("server.fieldMustBeInteger", { field: key }));
+  if (min !== undefined && value < min) throw invalid(msg("server.fieldAtLeast", { field: key, min: String(min) }));
+  if (max !== undefined && value > max) throw invalid(msg("server.fieldAtMost", { field: key, max: String(max) }));
   return value;
 }
 
@@ -171,5 +172,5 @@ export function queryBool(url: URL, key: string): boolean | undefined {
   if (raw === null || raw === "") return undefined;
   if (raw === "true" || raw === "1") return true;
   if (raw === "false" || raw === "0") return false;
-  throw invalid(`"${key}" must be true or false.`);
+  throw invalid(msg("server.fieldMustBeBoolean", { field: key }));
 }

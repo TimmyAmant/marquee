@@ -4,6 +4,8 @@
 // pure and unit tested; lib/requests/not-found.ts runs them against the
 // servers and the database.
 
+import type { Translator } from "@/lib/i18n/translator";
+
 /** Wait this long after approval before calling it "can't find": Radarr and
  * Sonarr search as soon as a title is added, and a slow indexer or a
  * download client that takes a while to start shouldn't set it off. */
@@ -141,10 +143,13 @@ export function notFoundAfterHours(saved: number | null | undefined): number {
 }
 
 /** Checks a PUT body's `afterHours`. Pure; unit tested. */
-export function parseNotFoundAfterHours(value: unknown): { ok: true; hours: number } | { ok: false; error: string } {
-  if (typeof value !== "number" || !Number.isInteger(value)) return { ok: false, error: '"afterHours" must be a whole number of hours.' };
+export function parseNotFoundAfterHours(
+  t: Translator,
+  value: unknown,
+): { ok: true; hours: number } | { ok: false; error: string } {
+  if (typeof value !== "number" || !Number.isInteger(value)) return { ok: false, error: t("notify.afterHoursWhole") };
   if (value < MIN_NOT_FOUND_AFTER_HOURS || value > MAX_NOT_FOUND_AFTER_HOURS) {
-    return { ok: false, error: `"afterHours" must be between ${MIN_NOT_FOUND_AFTER_HOURS} and ${MAX_NOT_FOUND_AFTER_HOURS}.` };
+    return { ok: false, error: t("notify.afterHoursRange", { min: MIN_NOT_FOUND_AFTER_HOURS, max: MAX_NOT_FOUND_AFTER_HOURS }) };
   }
   return { ok: true, hours: value };
 }
@@ -156,19 +161,17 @@ export function notFoundName(title: string, year: number | null, seasons: readon
 }
 
 /** "Can't find for 3 days": how long it's been listed, in the largest whole unit. */
-export function notFoundAgeLabel(since: Date, now: Date): string {
+export function notFoundAgeLabel(t: Translator, since: Date, now: Date): string {
   const hours = Math.max(0, Math.floor((now.getTime() - since.getTime()) / 3_600_000));
-  if (hours < 1) return "under an hour";
-  if (hours < 48) return hours === 1 ? "1 hour" : `${hours} hours`;
+  if (hours < 1) return t("notify.ageUnderHour");
+  if (hours < 48) return t("notify.ageHours", { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days} days`;
+  return t("notify.ageDays", { count: days });
 }
 
 /** The tip under a "Can't find" row's actions. */
-export function notFoundHint(mediaType: "movie" | "tv"): string {
-  return mediaType === "movie"
-    ? "In Radarr, Interactive Search on the movie lists every release the indexers have, so you can pick one by hand."
-    : "In Sonarr, Interactive Search on a season or episode lists every release the indexers have, so you can pick one by hand.";
+export function notFoundHint(t: Translator, mediaType: "movie" | "tv"): string {
+  return t(mediaType === "movie" ? "requests.notFoundHintMovie" : "requests.notFoundHintTv");
 }
 
 /** An address the browser can open for the title in Sonarr/Radarr. */

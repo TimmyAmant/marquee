@@ -10,6 +10,7 @@ import {
   parseNotFoundAfterHours,
   type NotFoundState,
 } from "./not-found-rules";
+import { englishT } from "@/lib/i18n/catalog";
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -161,10 +162,10 @@ describe("the setting and the words", () => {
   });
 
   it("checks the hours a client sends", () => {
-    expect(parseNotFoundAfterHours(12)).toEqual({ ok: true, hours: 12 });
-    expect(parseNotFoundAfterHours(0).ok).toBe(false);
-    expect(parseNotFoundAfterHours(1.5).ok).toBe(false);
-    expect(parseNotFoundAfterHours("12").ok).toBe(false);
+    expect(parseNotFoundAfterHours(englishT(), 12)).toEqual({ ok: true, hours: 12 });
+    expect(parseNotFoundAfterHours(englishT(), 0).ok).toBe(false);
+    expect(parseNotFoundAfterHours(englishT(), 1.5).ok).toBe(false);
+    expect(parseNotFoundAfterHours(englishT(), "12").ok).toBe(false);
   });
 
   it("names the title the way the alert does", () => {
@@ -175,9 +176,9 @@ describe("the setting and the words", () => {
 
   it("says how long it's been missing", () => {
     const since = new Date("2026-09-01T00:00:00Z");
-    expect(notFoundAgeLabel(since, new Date(since.getTime() + 20 * 60_000))).toBe("under an hour");
-    expect(notFoundAgeLabel(since, new Date(since.getTime() + 5 * HOUR))).toBe("5 hours");
-    expect(notFoundAgeLabel(since, new Date(since.getTime() + 3 * DAY))).toBe("3 days");
+    expect(notFoundAgeLabel(englishT(), since, new Date(since.getTime() + 20 * 60_000))).toBe("under an hour");
+    expect(notFoundAgeLabel(englishT(), since, new Date(since.getTime() + 5 * HOUR))).toBe("5 hours");
+    expect(notFoundAgeLabel(englishT(), since, new Date(since.getTime() + 3 * DAY))).toBe("3 days");
   });
 
   it("builds the Sonarr/Radarr link only when it can", () => {

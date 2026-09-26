@@ -2,6 +2,7 @@ import { getMovieGenres, getNetworkDetails, getTvGenres, searchCompany, searchKe
 import { CURATED_NETWORK_IDS } from "@/lib/tmdb/curated-companies";
 import type { DiscoverLookupResult } from "@/lib/api/types";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
 
 // Settings → Discover's search box when adding a row: TMDb keywords,
 // companies (studios), networks and genres by name. TMDb has no network
@@ -23,12 +24,12 @@ export async function lookUpShelfSource(
   mediaType: string | null,
 ): Promise<CoreResult<{ results: DiscoverLookupResult[] }>> {
   if (!(LOOKUP_TYPES as readonly string[]).includes(type)) {
-    return fail("invalid", `type is one of ${LOOKUP_TYPES.join(", ")}.`);
+    return fail("invalid", (await getT())("discover.errorLookupType", { types: LOOKUP_TYPES.join(", ") }));
   }
   const query = rawQuery.trim().slice(0, 100);
 
   if (type === "genre") {
-    if (mediaType !== "movie" && mediaType !== "tv") return fail("invalid", 'Genres need mediaType "movie" or "tv".');
+    if (mediaType !== "movie" && mediaType !== "tv") return fail("invalid", (await getT())("discover.errorGenreLookupMediaType"));
     const { genres } = await (mediaType === "tv" ? getTvGenres() : getMovieGenres());
     return {
       ok: true,

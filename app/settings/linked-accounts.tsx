@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { linkJellyfinAction, pollPlexLinkAction, startPlexLinkAction, startSsoLinkAction, unlinkAction } from "./media-actions";
 import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
+import { useT } from "@/lib/i18n/client";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -11,12 +12,16 @@ const smallButtonClass =
   "rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
 
 function LinkedBadge() {
+  const t = useT();
   return (
-    <span className="rounded-full border border-owned/30 bg-owned-bg px-2.5 py-0.5 text-xs text-owned">Linked</span>
+    <span className="rounded-full border border-owned/30 bg-owned-bg px-2.5 py-0.5 text-xs text-owned">
+      {t("settings.linked")}
+    </span>
   );
 }
 
 function UnlinkButton({ provider, onError }: { provider: "plex" | "jellyfin" | "sso"; onError: (e: string | null) => void }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   return (
@@ -33,12 +38,13 @@ function UnlinkButton({ provider, onError }: { provider: "plex" | "jellyfin" | "
       }}
       className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline disabled:opacity-60"
     >
-      {busy ? "Unlinking…" : "Unlink"}
+      {busy ? t("settings.unlinking") : t("settings.unlink")}
     </button>
   );
 }
 
 function PlexRow({ linked, available }: { linked: boolean; available: boolean }) {
+  const t = useT();
   const router = useRouter();
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +60,7 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
   async function handleLink() {
     setError(null);
     setWaiting(true);
-    const outcome = await runPlexApproval(startPlexLinkAction, pollPlexLinkAction, attempts.current);
+    const outcome = await runPlexApproval(startPlexLinkAction, pollPlexLinkAction, attempts.current, t);
     if (outcome.status === "cancelled") {
       if (outcome.completed) router.refresh();
       return;
@@ -81,24 +87,25 @@ function PlexRow({ linked, available }: { linked: boolean; available: boolean })
               }}
               className="text-xs text-text-secondary hover:text-accent"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           ) : (
             available && (
               <button type="button" onClick={handleLink} className={smallButtonClass}>
-                Link Plex
+                {t("settings.linkProvider", { name: "Plex" })}
               </button>
             )
           )}
         </div>
       </div>
-      {waiting && <p className="text-xs text-text-muted">Waiting for Plex… finish in the tab that opened.</p>}
+      {waiting && <p className="text-xs text-text-muted">{t("settings.waitingForPlex")}</p>}
       {error && <p className="text-xs text-red-400">{error}</p>}
     </li>
   );
 }
 
 function JellyfinRow({ linked, available, name }: { linked: boolean; available: boolean; name: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // A successful link revalidates the page, which comes back with `linked`
@@ -117,7 +124,7 @@ function JellyfinRow({ linked, available, name }: { linked: boolean; available: 
             available &&
             !open && (
               <button type="button" onClick={() => setOpen(true)} className={smallButtonClass}>
-                Link {name}
+                {t("settings.linkProvider", { name })}
               </button>
             )
           )}
@@ -126,11 +133,11 @@ function JellyfinRow({ linked, available, name }: { linked: boolean; available: 
       {open && !linked && (
         <form action={formAction} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            {name} username
+            {t("settings.providerUsername", { name })}
             <input type="text" name="username" required autoComplete="username" className={inputClass} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            {name} password
+            {t("settings.providerPassword", { name })}
             <input type="password" name="password" required autoComplete="current-password" className={inputClass} />
           </label>
           {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
@@ -140,14 +147,14 @@ function JellyfinRow({ linked, available, name }: { linked: boolean; available: 
               disabled={isPending}
               className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
             >
-              {isPending ? "Linking…" : "Link"}
+              {isPending ? t("settings.linking") : t("settings.link")}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary transition-colors hover:border-accent hover:text-accent"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -160,9 +167,10 @@ function JellyfinRow({ linked, available, name }: { linked: boolean; available: 
 /** "Link <SSO>": off to the identity provider in this tab; the server
  * brings the browser back to Settings with the outcome. */
 function SsoRow({ linked, name, message }: { linked: boolean; name: string | null; message: SsoMessage | null }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const label = name ?? "Single sign-on";
+  const label = name ?? t("settings.singleSignOn");
 
   async function handleLink() {
     setError(null);
@@ -173,7 +181,7 @@ function SsoRow({ linked, name, message }: { linked: boolean; name: string | nul
       return;
     }
     setBusy(false);
-    setError(started.error ?? "Couldn't start linking. Try again.");
+    setError(started.error ?? t("settings.linkStartFailed"));
   }
 
   return (
@@ -187,7 +195,7 @@ function SsoRow({ linked, name, message }: { linked: boolean; name: string | nul
           ) : (
             name && (
               <button type="button" disabled={busy} onClick={handleLink} className={smallButtonClass}>
-                {busy ? "Opening…" : `Link ${name}`}
+                {busy ? t("settings.opening") : t("settings.linkProvider", { name })}
               </button>
             )
           )}

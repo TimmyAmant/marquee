@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 export function GenreSelect({
   currentGenre,
@@ -13,6 +14,7 @@ export function GenreSelect({
   basePath: string;
   genres: { id: number; name: string }[];
 }) {
+  const t = useT();
   const router = useRouter();
 
   function navigate(genre: string) {
@@ -31,7 +33,7 @@ export function GenreSelect({
       onChange={(e) => navigate(e.target.value)}
       className="rounded-full border border-border bg-bg-0 px-3 py-1.5 text-xs text-text-secondary outline-none transition-colors hover:border-border-strong focus:border-accent"
     >
-      <option value="">All genres</option>
+      <option value="">{t("discover.allGenres")}</option>
       {genres.map((genre) => (
         <option key={genre.id} value={genre.id}>
           {genre.name}

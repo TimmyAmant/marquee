@@ -5,19 +5,21 @@
 
 import { DISCOVER_SHELF_KEYS, type DiscoverShelfKey } from "@/lib/discover/lists";
 import { parseTraktUrl } from "@/lib/trakt/url";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
-/** Every built-in shelf's name, as the website has always shown it. */
-export const BUILT_IN_SHELF_TITLES: Record<DiscoverShelfKey, string> = {
-  recentlyAdded: "Recently Added",
-  trending: "Trending",
-  popularMovies: "Popular Movies",
-  movieGenres: "Movie Genres",
-  upcomingMovies: "Upcoming Movies",
-  studios: "Studios",
-  popularSeries: "Popular Series",
-  seriesGenres: "Series Genres",
-  upcomingSeries: "Upcoming Series",
-  networks: "Networks",
+/** Every built-in shelf's name, as the website has always shown it — in the
+ * reader's language: `t(BUILT_IN_SHELF_TITLES[key])`. */
+export const BUILT_IN_SHELF_TITLES: Record<DiscoverShelfKey, MessageKey> = {
+  recentlyAdded: "discover.shelfRecentlyAdded",
+  trending: "discover.shelfTrending",
+  popularMovies: "discover.shelfPopularMovies",
+  movieGenres: "discover.shelfMovieGenres",
+  upcomingMovies: "discover.shelfUpcomingMovies",
+  studios: "discover.shelfStudios",
+  popularSeries: "discover.shelfPopularSeries",
+  seriesGenres: "discover.shelfSeriesGenres",
+  upcomingSeries: "discover.shelfUpcomingSeries",
+  networks: "discover.shelfNetworks",
 };
 
 export function isBuiltInShelf(value: string): value is DiscoverShelfKey {
@@ -60,16 +62,6 @@ const MAX_SOURCE_NAME_LENGTH = 120;
 export type ShelfInput = { kind: CustomShelfKind; title: string; source: ShelfSource };
 export type Validated<T> = { ok: true; value: T } | { ok: false; error: string };
 
-const KIND_LABELS: Record<CustomShelfKind, string> = {
-  keyword: "keyword",
-  genre: "genre",
-  company: "studio",
-  network: "network",
-  tmdbList: "TMDb list",
-  traktList: "Trakt list",
-  library: "recently added",
-};
-
 function positiveId(value: unknown): number | null {
   const n = typeof value === "string" && /^\d+$/.test(value.trim()) ? Number(value.trim()) : value;
   return typeof n === "number" && Number.isSafeInteger(n) && n > 0 ? n : null;
@@ -105,66 +97,87 @@ export function parseTmdbListId(value: unknown): number | null {
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-/** The name a shelf gets when the admin doesn't give one. */
-export function defaultShelfTitle(kind: CustomShelfKind, source: ShelfSource): string {
+/** The name a shelf gets when the admin doesn't give one, in the reader's
+ * language (worked out when it's shown, so each reader gets their own). */
+export function defaultShelfTitle(kind: CustomShelfKind, source: ShelfSource, t: Translator): string {
   const name = source.name;
   switch (kind) {
     case "keyword":
-      return name ? capitalise(name) : "Keyword";
+      return name ? capitalise(name) : t("discover.kindKeyword");
     case "genre":
-      return `${name ?? "Genre"} ${source.mediaType === "tv" ? "Series" : "Movies"}`;
+      return t("discover.genreTitle", {
+        genre: name ?? t("discover.kindGenre"),
+        kind: source.mediaType === "tv" ? "tv" : "movie",
+      });
     case "company":
     case "network":
-      return name ?? (kind === "company" ? "Studio" : "Network");
+      return name ?? (kind === "company" ? t("discover.kindStudio") : t("discover.kindNetwork"));
     case "tmdbList":
-      return name ?? "TMDb list";
+      return name ?? t("discover.kindTmdbList");
     case "traktList": {
       const parsed = source.url ? parseTraktUrl(source.url) : null;
-      if (!parsed) return "Trakt list";
-      return parsed.kind === "watchlist" ? `${parsed.username}'s watchlist` : capitalise(parsed.slug.replace(/-/g, " "));
+      if (!parsed) return t("discover.kindTraktList");
+      return parsed.kind === "watchlist"
+        ? t("discover.traktWatchlistTitle", { name: parsed.username })
+        : capitalise(parsed.slug.replace(/-/g, " "));
     }
     case "library":
       return source.mediaType === "movie"
-        ? "Recently Added Movies"
+        ? t("discover.recentlyAddedMovies")
         : source.mediaType === "tv"
-          ? "Recently Added Series"
-          : "Recently Added";
+          ? t("discover.recentlyAddedSeries")
+          : t("discover.shelfRecentlyAdded");
   }
 }
 
 /** A new custom shelf from a client: `{ kind, title?, mediaType?, tmdbId?,
  * name?, url? }`. Checks the shape only — whether the keyword or list exists
  * is TMDb's to say (lib/discover/layout.ts looks names up). */
-export function validateShelfInput(body: Record<string, unknown>): Validated<ShelfInput> {
+export function validateShelfInput(body: Record<string, unknown>, t: Translator): Validated<ShelfInput> {
   const kind = body.kind;
   if (!isCustomShelfKind(kind)) {
-    return { ok: false, error: `Pick what the row shows: one of ${CUSTOM_SHELF_KINDS.join(", ")}.` };
+    return { ok: false, error: t("discover.errorPickKind", { kinds: CUSTOM_SHELF_KINDS.join(", ") }) };
   }
-  const source = validateSource(kind, body);
+  const source = validateSource(kind, body, t);
   if (!source.ok) return source;
-  const title = validateTitle(body.title, kind, source.value);
+  const title = validateTitle(body.title, kind, source.value, t);
   if (!title.ok) return title;
   return { ok: true, value: { kind, title: title.value, source: source.value } };
 }
 
-export function validateTitle(value: unknown, kind: CustomShelfKind, source: ShelfSource): Validated<string> {
+/** The row's name as given, or its default name when none is given. See
+ * `customTitle` for what gets stored. */
+export function validateTitle(
+  value: unknown,
+  kind: CustomShelfKind,
+  source: ShelfSource,
+  t: Translator,
+): Validated<string> {
+  const title = customTitle(value, t);
+  if (!title.ok) return title;
+  return { ok: true, value: title.value ?? defaultShelfTitle(kind, source, t) };
+}
+
+/** The name the admin gave a row, checked — null when they left it blank,
+ * so the row is shown under its default name in each reader's language
+ * rather than the one it happened to be saved in. */
+export function customTitle(value: unknown, t: Translator): Validated<string | null> {
   if (value !== undefined && value !== null && typeof value !== "string") {
-    return { ok: false, error: "The row's name must be text." };
+    return { ok: false, error: t("discover.errorTitleNotText") };
   }
   const title = cleanText(value, Number.MAX_SAFE_INTEGER);
   if (title && title.length > MAX_SHELF_TITLE_LENGTH) {
-    return { ok: false, error: `Keep the row's name under ${MAX_SHELF_TITLE_LENGTH} characters.` };
+    return { ok: false, error: t("discover.errorTitleTooLong", { max: MAX_SHELF_TITLE_LENGTH }) };
   }
-  return { ok: true, value: title ?? defaultShelfTitle(kind, source) };
+  return { ok: true, value: title };
 }
 
-export function validateSource(kind: CustomShelfKind, body: Record<string, unknown>): Validated<ShelfSource> {
+export function validateSource(kind: CustomShelfKind, body: Record<string, unknown>, t: Translator): Validated<ShelfSource> {
   const name = cleanText(body.name, MAX_SOURCE_NAME_LENGTH);
-  const label = KIND_LABELS[kind];
 
   if (kind === "library") {
     const mediaType = mediaTypeOf(body.mediaType, ["movie", "tv", "all"], "all");
-    if (mediaType === "bad") return { ok: false, error: 'mediaType is "movie", "tv" or "all".' };
+    if (mediaType === "bad") return { ok: false, error: t("discover.errorMediaTypeAny") };
     return { ok: true, value: { mediaType, tmdbId: null, name: null, url: null } };
   }
 
@@ -172,31 +185,28 @@ export function validateSource(kind: CustomShelfKind, body: Record<string, unkno
     const raw = typeof body.url === "string" ? body.url.trim() : "";
     const parsed = raw ? parseTraktUrl(raw) : null;
     if (!parsed) {
-      return {
-        ok: false,
-        error: "Paste a public Trakt list or watchlist link, like https://trakt.tv/users/someone/lists/favourites.",
-      };
+      return { ok: false, error: t("discover.errorTraktLink") };
     }
     return { ok: true, value: { mediaType: "all", tmdbId: null, name: null, url: canonicalTraktUrl(parsed) } };
   }
 
   if (kind === "tmdbList") {
     const tmdbId = parseTmdbListId(body.tmdbId ?? body.url);
-    if (!tmdbId) return { ok: false, error: "Give the TMDb list's number or its themoviedb.org/list link." };
+    if (!tmdbId) return { ok: false, error: t("discover.errorTmdbList") };
     return { ok: true, value: { mediaType: "all", tmdbId, name, url: null } };
   }
 
   const tmdbId = positiveId(body.tmdbId);
-  if (!tmdbId) return { ok: false, error: `Pick a ${label}.` };
+  if (!tmdbId) return { ok: false, error: t("discover.errorPickSource", { kind }) };
 
   if (kind === "network") return { ok: true, value: { mediaType: "tv", tmdbId, name, url: null } };
   if (kind === "genre") {
     const mediaType = mediaTypeOf(body.mediaType, ["movie", "tv"], "movie");
-    if (mediaType === "bad") return { ok: false, error: 'A genre row is "movie" or "tv".' };
+    if (mediaType === "bad") return { ok: false, error: t("discover.errorGenreMediaType") };
     return { ok: true, value: { mediaType, tmdbId, name, url: null } };
   }
   const mediaType = mediaTypeOf(body.mediaType, ["movie", "tv", "all"], "all");
-  if (mediaType === "bad") return { ok: false, error: 'mediaType is "movie", "tv" or "all".' };
+  if (mediaType === "bad") return { ok: false, error: t("discover.errorMediaTypeAny") };
   return { ok: true, value: { mediaType, tmdbId, name, url: null } };
 }
 
@@ -209,9 +219,9 @@ export function canonicalTraktUrl(parsed: NonNullable<ReturnType<typeof parseTra
 
 /** A stored source read back — null when it's not one this version
  * understands (the row then shows nothing, but can still be removed). */
-export function parseStoredSource(kind: string, stored: unknown): ShelfSource | null {
+export function parseStoredSource(kind: string, stored: unknown, t: Translator): ShelfSource | null {
   if (!isCustomShelfKind(kind) || !stored || typeof stored !== "object") return null;
-  const result = validateSource(kind, stored as Record<string, unknown>);
+  const result = validateSource(kind, stored as Record<string, unknown>, t);
   return result.ok ? result.value : null;
 }
 
@@ -240,11 +250,11 @@ export type LayoutShelf = {
 };
 
 /** Today's Discover, exactly: every built-in shelf, in page order, shown. */
-export function defaultLayout(): LayoutShelf[] {
+export function defaultLayout(t: Translator): LayoutShelf[] {
   return DISCOVER_SHELF_KEYS.map((key) => ({
     id: key,
     kind: key,
-    title: BUILT_IN_SHELF_TITLES[key],
+    title: t(BUILT_IN_SHELF_TITLES[key]),
     custom: false,
     hidden: false,
     source: null,
@@ -255,7 +265,7 @@ export function defaultLayout(): LayoutShelf[] {
  * no row (none yet, or one added in an update) in its default place when
  * nothing is stored, or else at the end. A row for a built-in shelf this
  * version doesn't have is left out. */
-export function resolveLayout(rows: ShelfRow[]): LayoutShelf[] {
+export function resolveLayout(rows: ShelfRow[], t: Translator): LayoutShelf[] {
   const sorted = [...rows].sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
   const shelves: LayoutShelf[] = [];
   const seen = new Set<string>();
@@ -266,24 +276,26 @@ export function resolveLayout(rows: ShelfRow[]): LayoutShelf[] {
       shelves.push({
         id: row.builtIn,
         kind: row.builtIn,
-        title: BUILT_IN_SHELF_TITLES[row.builtIn],
+        title: t(BUILT_IN_SHELF_TITLES[row.builtIn]),
         custom: false,
         hidden: row.hidden,
         source: null,
       });
       continue;
     }
-    const source = parseStoredSource(row.kind, row.source);
+    const source = parseStoredSource(row.kind, row.source, t);
     shelves.push({
       id: row.id,
       kind: row.kind,
-      title: row.title ?? (isCustomShelfKind(row.kind) && source ? defaultShelfTitle(row.kind, source) : "Row"),
+      title:
+        row.title ??
+        (isCustomShelfKind(row.kind) && source ? defaultShelfTitle(row.kind, source, t) : t("discover.rowFallback")),
       custom: true,
       hidden: row.hidden,
       source,
     });
   }
-  for (const shelf of defaultLayout()) {
+  for (const shelf of defaultLayout(t)) {
     if (!seen.has(shelf.id)) shelves.push(shelf);
   }
   return shelves;
@@ -296,9 +308,10 @@ export function resolveLayout(rows: ShelfRow[]): LayoutShelf[] {
 export function applyLayoutOrder(
   current: LayoutShelf[],
   requested: unknown,
+  t: Translator,
 ): Validated<{ id: string; hidden: boolean }[]> {
   if (!Array.isArray(requested) || requested.length === 0) {
-    return { ok: false, error: 'Send "shelves": the rows in order, as [{ "id": "...", "hidden": false }, ...].' };
+    return { ok: false, error: t("discover.errorSendShelves") };
   }
   const byId = new Map(current.map((shelf) => [shelf.id, shelf]));
   const order: { id: string; hidden: boolean }[] = [];
@@ -306,13 +319,13 @@ export function applyLayoutOrder(
   for (const entry of requested) {
     const id = typeof entry === "string" ? entry : entry && typeof entry === "object" ? (entry as { id?: unknown }).id : null;
     if (typeof id !== "string" || !byId.has(id)) {
-      return { ok: false, error: `There's no Discover row "${String(id)}". Reload and try again.` };
+      return { ok: false, error: t("discover.errorNoSuchRow", { id: String(id) }) };
     }
-    if (seen.has(id)) return { ok: false, error: `The row "${id}" is in the list twice.` };
+    if (seen.has(id)) return { ok: false, error: t("discover.errorRowTwice", { id }) };
     seen.add(id);
     const hidden = entry && typeof entry === "object" ? (entry as { hidden?: unknown }).hidden : undefined;
     if (hidden !== undefined && typeof hidden !== "boolean") {
-      return { ok: false, error: '"hidden" is true or false.' };
+      return { ok: false, error: t("discover.errorHiddenBoolean") };
     }
     order.push({ id, hidden: typeof hidden === "boolean" ? hidden : byId.get(id)!.hidden });
   }
@@ -334,24 +347,31 @@ export function moveShelf<T>(shelves: readonly T[], index: number, delta: -1 | 1
 
 /** "Keyword · anime · Movies & series" — what a row is built from, for the
  * settings list. */
-export function describeShelf(shelf: Pick<LayoutShelf, "kind" | "custom" | "source">): string {
-  if (!shelf.custom) return "Built in";
-  const labels: Record<string, string> = {
-    keyword: "TMDb keyword",
-    genre: "Genre",
-    company: "Studio",
-    network: "Network",
-    tmdbList: "TMDb list",
-    traktList: "Trakt list",
-    library: "Recently added to your library",
-  };
+const KIND_DESCRIPTIONS: Record<CustomShelfKind, MessageKey> = {
+  keyword: "discover.kindTmdbKeyword",
+  genre: "discover.kindGenre",
+  company: "discover.kindStudio",
+  network: "discover.kindNetwork",
+  tmdbList: "discover.kindTmdbList",
+  traktList: "discover.kindTraktList",
+  library: "discover.kindLibrary",
+};
+
+export function describeShelf(shelf: Pick<LayoutShelf, "kind" | "custom" | "source">, t: Translator): string {
+  if (!shelf.custom) return t("discover.builtIn");
   const source = shelf.source;
-  const parts = [labels[shelf.kind] ?? "A kind of row this version doesn't know"];
+  const parts = [isCustomShelfKind(shelf.kind) ? t(KIND_DESCRIPTIONS[shelf.kind]) : t("discover.kindUnknown")];
   if (source?.name) parts.push(source.name);
   else if (shelf.kind === "tmdbList" && source?.tmdbId) parts.push(`#${source.tmdbId}`);
   else if (shelf.kind === "traktList" && source?.url) parts.push(source.url.replace(/^https:\/\//, ""));
   if (source?.mediaType && shelf.kind !== "network" && shelf.kind !== "tmdbList" && shelf.kind !== "traktList") {
-    parts.push(source.mediaType === "movie" ? "Movies" : source.mediaType === "tv" ? "Series" : "Movies & series");
+    parts.push(
+      source.mediaType === "movie"
+        ? t("common.movies")
+        : source.mediaType === "tv"
+          ? t("common.series")
+          : t("discover.moviesAndSeries"),
+    );
   }
   return parts.join(" · ");
 }

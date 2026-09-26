@@ -24,7 +24,6 @@ export async function notifyRequestersOfDownload(input: {
   fourK?: boolean;
 }): Promise<void> {
   const fourK = input.fourK ?? false;
-  const shown = fourK ? `${input.title} in 4K` : input.title;
   const open = await db
     .select({ userId: requests.requestedByUserId, createdAt: requests.createdAt })
     .from(requests)
@@ -55,10 +54,10 @@ export async function notifyRequestersOfDownload(input: {
       tmdbId: input.tmdbId,
       title: input.title,
       eventType: "downloaded",
-      message:
-        input.mediaType === "movie"
-          ? `${shown}, which you requested, is ready to watch`
-          : `${shown}, which you requested, has new episodes ready to watch`,
+      message: (t) => {
+        const shown = fourK ? t("notify.requestIn4k", { request: input.title }) : input.title;
+        return t(input.mediaType === "movie" ? "notify.requestedMovieReady" : "notify.requestedEpisodesReady", { title: shown });
+      },
       relay: false,
       dedupeSince: since,
       is4k: fourK,

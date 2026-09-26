@@ -9,7 +9,8 @@ import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import { getActiveRequestStatus } from "@/lib/requests/query";
 import { logActivityEvent } from "@/lib/activity/query";
-import { fail, type CoreResult } from "@/lib/core-result";
+import type { CoreResult } from "@/lib/core-result";
+import { failT } from "@/lib/core-failure";
 
 /** Imports a public Trakt list or watchlist as pending requests — reuses the
  * entire existing request/approve pipeline rather than adding a second way
@@ -26,18 +27,18 @@ export async function importTraktList(
   const url = rawUrl.trim();
   const parsedUrl = parseTraktUrl(url);
   if (!parsedUrl) {
-    return fail("invalid", "That doesn't look like a Trakt list or watchlist URL.");
+    return await failT("invalid", "server.notTraktListUrl");
   }
 
   const clientId = await getTraktClientId();
-  if (!clientId) return fail("conflict", "Connect Trakt in Settings first.");
+  if (!clientId) return await failT("conflict", "server.connectInSettingsFirst", { name: "Trakt" });
 
   const items = await (parsedUrl.kind === "watchlist"
     ? getWatchlistItems({ clientId }, parsedUrl.username)
     : getListItems({ clientId }, parsedUrl.username, parsedUrl.slug)
   ).catch(() => null);
   if (!items) {
-    return fail("upstream", "Couldn't fetch that list from Trakt — check the URL and that it's set to public.");
+    return await failT("upstream", "server.traktImportFetchFailed");
   }
 
   let importedCount = 0;

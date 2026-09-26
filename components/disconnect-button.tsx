@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { disconnectIntegrationAction } from "@/app/settings/integrations/disconnect-actions";
 import type { IntegrationProvider } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 export function DisconnectButton({
   provider,
@@ -19,6 +20,7 @@ export function DisconnectButton({
    * component. */
   onSuccess?: () => void;
 }) {
+  const t = useT();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -45,7 +47,7 @@ export function DisconnectButton({
         onClick={() => setConfirming(true)}
         className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline"
       >
-        Disconnect
+        {t("integrations.disconnect")}
       </button>
     );
   }
@@ -53,21 +55,21 @@ export function DisconnectButton({
   return (
     <div className="flex items-center gap-2">
       {error && <span className="text-xs text-red-400">{error}</span>}
-      <span className="text-xs text-text-secondary">Disconnect {label}?</span>
+      <span className="text-xs text-text-secondary">{t("integrations.disconnectConfirm", { name: label })}</span>
       <button
         type="button"
         onClick={handleConfirm}
         disabled={isPending}
         className="text-xs font-medium text-red-400 underline-offset-2 hover:underline disabled:opacity-60"
       >
-        {isPending ? "Disconnecting…" : "Confirm"}
+        {isPending ? t("integrations.disconnecting") : t("common.confirm")}
       </button>
       <button
         type="button"
         onClick={() => setConfirming(false)}
         className="text-xs text-text-secondary underline-offset-2 hover:text-accent hover:underline"
       >
-        Cancel
+        {t("common.cancel")}
       </button>
     </div>
   );

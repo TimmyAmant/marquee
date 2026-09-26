@@ -1,4 +1,5 @@
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 import type { LibraryStatus } from "@/components/status-badge";
 import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
 import { arrConfig, isServerConfigured, listArrServers, type ArrServer } from "@/lib/arr/servers";
@@ -101,7 +102,7 @@ export async function searchFourK(
   );
   const failed = copies.filter((_, i) => results[i].status === "rejected");
   if (failed.length === copies.length) {
-    return { ok: false, code: "upstream", error: `Couldn't queue a search on ${failed[0].server.name}.` };
+    return { ok: false, code: "upstream", error: (await getT())("notify.searchQueueFailed", { server: failed[0].server.name }) };
   }
   return { ok: true };
 }

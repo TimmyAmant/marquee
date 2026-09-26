@@ -6,6 +6,7 @@ import { requestSeasonsAction } from "@/lib/requests/actions";
 import { SeasonPickerDialog, type SeasonPickerRow } from "@/components/season-picker-dialog";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import type { AddOverrides } from "@/lib/arr/add-options";
+import { useT } from "@/lib/i18n/client";
 
 export type { SeasonPickerRow };
 
@@ -31,6 +32,7 @@ export function SeasonRequestPicker({
   /** Offer the Advanced picks (the advancedRequests permission). */
   advanced?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [overrides, setOverrides] = useState<AddOverrides | null>(null);
@@ -71,15 +73,15 @@ export function SeasonRequestPicker({
 
       {open && (
         <SeasonPickerDialog
-          heading="Request seasons"
+          heading={t("title.requestSeasons")}
           subheading={showName}
           rows={rows}
           submitLabel={(count, pending) =>
             pending
-              ? "Requesting…"
+              ? t("title.requesting")
               : count === 0
-                ? "Request seasons"
-                : `Request ${count} season${count === 1 ? "" : "s"}`
+                ? t("title.requestSeasons")
+                : t("title.requestSeasonCount", { count })
           }
           onSubmit={submit}
           onClose={close}

@@ -1,4 +1,7 @@
-import { STATUS_TEXT, statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
+"use client";
+
+import { statusText, statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
+import { useT } from "@/lib/i18n/client";
 
 export type { LibraryStatus };
 
@@ -9,7 +12,8 @@ export function StatusBadge({
   status: LibraryStatus;
   compact?: boolean;
 }) {
-  const text = STATUS_TEXT[status] ?? STATUS_TEXT.untracked;
+  const t = useT();
+  const text = statusText(t, status);
   const className = statusClasses(status).pill;
 
   // Both sizes come from the design mockup: the poster-corner pill is 17px

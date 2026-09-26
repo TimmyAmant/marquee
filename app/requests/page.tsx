@@ -11,9 +11,15 @@ import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
 import { RequestTitle } from "@/components/request-title";
 import { IssuesSection } from "@/components/issues-section";
-import { getQuotas, untilLabel, type QuotaState } from "@/lib/requests/quota";
+import { getQuotas, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
 import { issueDto, notFoundRequest, reviewedRequest } from "@/lib/api/mappers";
+import { getT } from "@/lib/i18n/server";
+import { translatorFor } from "@/lib/i18n/catalog";
+import { LOCALES } from "@/lib/i18n/locales";
+import { formatDate } from "@/lib/i18n/format";
+import type { Translator } from "@/lib/i18n/translator";
+import { localizeRejectionReason } from "@/lib/requests/rejection-reasons";
 import { countComments } from "@/lib/comments";
 import { CommentToggle, ThreadRow } from "@/components/comment-thread";
 import { CancelRequestButton, EditRequestButton } from "@/components/request-lifecycle";
@@ -32,6 +38,7 @@ const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
 };
 
 function myRequestBadge(
+  t: Translator,
   status: RequestStatus,
   libraryStatus: LibraryStatus | null,
   manuallyApproved: boolean,
@@ -41,14 +48,36 @@ function myRequestBadge(
   className: string;
 } {
   // Label wording shared with GET /api/v1/requests/mine.
-  const { label, tone } = badgeFor(status, libraryStatus, manuallyApproved, waitingToBeAdded);
+  const { label, tone } = badgeFor(t, status, libraryStatus, manuallyApproved, waitingToBeAdded);
   return { label, className: BADGE_CLASS[tone] };
 }
 
-/** "Movies: 3 of 5 left for the next 7 days" — or when the next frees up. */
-function quotaLine(label: string, quota: QuotaState): string {
-  if (quota.remaining > 0) return `${label}: ${quota.remaining} of ${quota.limit} requests left (every ${quota.days} days)`;
-  return `${label}: none left${quota.nextSlotAt ? ` — more ${untilLabel(quota.nextSlotAt, new Date())}` : ""}`;
+/** When the next request frees up, relative so it reads right whatever time
+ * zone the server and the member are in: "within the hour", "in 5 hours",
+ * "tomorrow", "in 3 days". */
+function untilText(t: Translator, when: Date, now: Date): string {
+  const ms = when.getTime() - now.getTime();
+  const hours = Math.ceil(ms / (60 * 60 * 1000));
+  if (hours <= 1) return t("requests.quotaWithinHour");
+  const relative = new Intl.RelativeTimeFormat(t.tag, { numeric: "auto" });
+  if (hours < 24) return relative.format(hours, "hour");
+  return relative.format(Math.ceil(ms / (24 * 60 * 60 * 1000)), "day");
+}
+
+/** "Movies: 3 of 5 requests left (every 7 days)" — or when the next frees up. */
+function quotaLine(t: Translator, kind: "movie" | "tv", quota: QuotaState): string {
+  if (quota.remaining > 0) {
+    return t("requests.quotaLine", { kind, remaining: quota.remaining, limit: quota.limit, days: quota.days });
+  }
+  if (!quota.nextSlotAt) return t("requests.quotaNoneLeft", { kind });
+  return t("requests.quotaNoneLeftUntil", { kind, when: untilText(t, quota.nextSlotAt, new Date()) });
+}
+
+/** A declined request's reason, a preset in the viewer's language. */
+function reasonText(t: Translator, reason: string): string {
+  return t("requests.reasonLine", {
+    reason: localizeRejectionReason(t, reason, LOCALES.map((locale) => translatorFor(locale))),
+  });
 }
 
 export default async function RequestsPage() {
@@ -69,7 +98,8 @@ export default async function RequestsPage() {
     "issue",
     issueRows.map((row) => row.id),
   );
-  const issues = issueRows.map((row) => issueDto(row, viewer.userId, issueComments.get(row.id) ?? 0));
+  const t = await getT();
+  const issues = issueRows.map((row) => issueDto(t, row, viewer.userId, issueComments.get(row.id) ?? 0));
 
   if (!reviews) {
     const [myRequests, quotas, everyonePending, everyoneReviewed] = await Promise.all([
@@ -91,31 +121,29 @@ export default async function RequestsPage() {
       myRequests.map((r) => r.id),
     );
     const limits = [
-      quotas.movie ? quotaLine("Movies", quotas.movie) : null,
-      quotas.tv ? quotaLine("TV", quotas.tv) : null,
+      quotas.movie ? quotaLine(t, "movie", quotas.movie) : null,
+      quotas.tv ? quotaLine(t, "tv", quotas.tv) : null,
     ].filter(Boolean);
 
     return (
       <div className="mx-auto max-w-4xl px-6 py-12">
         {limits.length > 0 && <p className="mb-4 text-sm text-text-secondary">{limits.join(" · ")}</p>}
         {myRequests.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            You haven&apos;t requested anything yet — find a title and hit Request.
-          </p>
+          <p className="text-sm text-text-muted">{t("requests.noRequestsYet")}</p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full min-w-[480px] text-left text-sm">
               <thead className="bg-bg-1 text-text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Title</th>
-                  <th className="px-4 py-3 font-medium">Requested</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnStatus")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {myRequests.map((r) => {
                   const src = tmdbImageUrl(r.posterPath, "w92");
-                  const badge = myRequestBadge(r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null);
+                  const badge = myRequestBadge(t, r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null);
                   return (
                     <ThreadRow
                       key={r.id}
@@ -145,7 +173,7 @@ export default async function RequestsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-text-secondary">
-                        {new Date(r.createdAt).toLocaleDateString()}
+                        {formatDate(t, r.createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -154,7 +182,7 @@ export default async function RequestsPage() {
                           {badge.label}
                         </span>
                         {r.status === "rejected" && r.rejectionReason && (
-                          <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
+                          <p className="mt-1.5 text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
                         )}
                         {r.status === "pending" && (
                           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -163,7 +191,7 @@ export default async function RequestsPage() {
                           </div>
                         )}
                         {r.status === "approved" && (
-                          <p className="mt-1.5 text-xs text-text-muted">Need a change? Ask in its comments.</p>
+                          <p className="mt-1.5 text-xs text-text-muted">{t("requests.askInComments")}</p>
                         )}
                       </td>
                     </ThreadRow>
@@ -173,7 +201,7 @@ export default async function RequestsPage() {
             </table>
           </div>
         )}
-        {seesEveryone && <EveryonesRequests requests={othersRequests} />}
+        {seesEveryone && <EveryonesRequests t={t} requests={othersRequests} />}
         <IssuesSection issues={issues} isAdmin={managesIssues} />
       </div>
     );
@@ -207,16 +235,16 @@ export default async function RequestsPage() {
       )}
 
       {pending.length === 0 ? (
-        <p className="text-sm text-text-muted">No pending requests.</p>
+        <p className="text-sm text-text-muted">{t("requests.noPending")}</p>
       ) : (
         <div className="mt-3 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-bg-1 text-text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium">Requested by</th>
-                <th className="px-4 py-3 font-medium">Requested</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnRequestedBy")}</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -246,26 +274,26 @@ export default async function RequestsPage() {
       )}
 
       <CouldntAddSection
-        requests={couldntAdd.map((r) => reviewedRequest(r, requestComments.get(r.id) ?? 0))}
+        requests={couldntAdd.map((r) => reviewedRequest(t, r, requestComments.get(r.id) ?? 0))}
         isAdmin={viewer.isAdmin}
         advanced={advanced}
       />
 
-      <NotFoundSection requests={notFound.map(notFoundRequest)} afterHours={notFoundAfterHours} />
+      <NotFoundSection requests={notFound.map((r) => notFoundRequest(t, r))} afterHours={notFoundAfterHours} />
 
       <IssuesSection issues={issues} isAdmin={managesIssues} />
 
       {pastRequests.length > 0 && (
         <>
-          <h2 className="mt-12 font-display text-xl text-text-primary">Past requests</h2>
+          <h2 className="mt-12 font-display text-xl text-text-primary">{t("requests.pastRequests")}</h2>
           <div className="mt-4 overflow-x-auto rounded-xl border border-border">
             <table className="w-full min-w-[560px] text-left text-sm">
               <thead className="bg-bg-1 text-text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Title</th>
-                  <th className="px-4 py-3 font-medium">Requested by</th>
-                  <th className="px-4 py-3 font-medium">Requested</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnRequestedBy")}</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
+                  <th className="px-4 py-3 font-medium">{t("requests.columnStatus")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -303,7 +331,7 @@ export default async function RequestsPage() {
                         {r.requestedByName || r.requestedByUsername}
                       </td>
                       <td className="px-4 py-3 text-text-secondary">
-                        {new Date(r.createdAt).toLocaleDateString()}
+                        {formatDate(t, r.createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -313,21 +341,21 @@ export default async function RequestsPage() {
                               : "bg-untracked-bg text-text-secondary"
                           }`}
                         >
-                          {reviewedRequestLabel(r.status, r.manuallyApproved)}
+                          {reviewedRequestLabel(t, r.status, r.manuallyApproved)}
                         </span>
                         {r.status === "rejected" && r.rejectionReason && (
-                          <p className="mt-1.5 text-xs text-text-muted">Reason: {r.rejectionReason}</p>
+                          <p className="mt-1.5 text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
                         )}
                         {r.status === "approved" && r.notFoundSince && (
                           <a
                             href="#cant-find"
                             className="ml-1.5 rounded-full bg-missing-bg px-3 py-1 text-xs font-medium text-missing"
                           >
-                            Can&apos;t find
+                            {t("requests.cantFind")}
                           </a>
                         )}
                         {r.status === "approved" && !r.manuallyApproved && r.arrServerName && (
-                          <p className="mt-1.5 text-xs text-text-muted">Added to {r.arrServerName}</p>
+                          <p className="mt-1.5 text-xs text-text-muted">{t("requests.addedTo", { server: r.arrServerName })}</p>
                         )}
                       </td>
                     </ThreadRow>
@@ -359,21 +387,21 @@ type EveryoneRow = {
 
 /** "Everyone's requests" — what the rest of the household has asked for,
  * for someone with "See everyone's requests" who doesn't review them. */
-function EveryonesRequests({ requests }: { requests: EveryoneRow[] }) {
+function EveryonesRequests({ t, requests }: { t: Translator; requests: EveryoneRow[] }) {
   return (
     <>
-      <h2 className="mt-12 font-display text-xl text-text-primary">Everyone&apos;s requests</h2>
+      <h2 className="mt-12 font-display text-xl text-text-primary">{t("requests.everyonesRequests")}</h2>
       {requests.length === 0 ? (
-        <p className="mt-4 text-sm text-text-muted">Nobody else has asked for anything yet.</p>
+        <p className="mt-4 text-sm text-text-muted">{t("requests.nobodyElseYet")}</p>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="bg-bg-1 text-text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium">Requested by</th>
-                <th className="px-4 py-3 font-medium">Requested</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnRequestedBy")}</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
+                <th className="px-4 py-3 font-medium">{t("requests.columnStatus")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -396,7 +424,7 @@ function EveryonesRequests({ requests }: { requests: EveryoneRow[] }) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-text-secondary">{r.requestedByName || r.requestedByUsername}</td>
-                    <td className="px-4 py-3 text-text-secondary">{new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-text-secondary">{formatDate(t, r.createdAt)}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -407,7 +435,7 @@ function EveryonesRequests({ requests }: { requests: EveryoneRow[] }) {
                               : "bg-untracked-bg text-text-secondary"
                         }`}
                       >
-                        {r.status === "pending" ? "Waiting for review" : reviewedRequestLabel(r.status, r.manuallyApproved)}
+                        {r.status === "pending" ? t("requests.waitingForReview") : reviewedRequestLabel(t, r.status, r.manuallyApproved)}
                       </span>
                     </td>
                   </tr>

@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { loadMoreDiscoverItems, loadMoreDiscoverList } from "@/app/discover/actions";
 import type { DiscoverCardData, DiscoverFetchParams } from "@/app/discover/fetch-items";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Movies/Series' results grid — server-rendered with the first page, then
@@ -43,6 +44,7 @@ export function InfiniteResultsGrid({
   showTypeLabel?: boolean;
   emptyMessage?: string;
 }) {
+  const t = useT();
   const [items, setItems] = useState(initialItems);
   const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
   const [isPending, startTransition] = useTransition();
@@ -88,12 +90,7 @@ export function InfiniteResultsGrid({
   if (items.length === 0) {
     return (
       <p className="text-sm text-text-muted">
-        {emptyMessage ?? (
-          <>
-            Nothing left here — try a different genre or year, or turn off &ldquo;Hide titles you
-            already track&rdquo;.
-          </>
-        )}
+        {emptyMessage ?? t("discover.gridEmpty")}
       </p>
     );
   }
@@ -111,7 +108,11 @@ export function InfiniteResultsGrid({
             meta={item.meta}
             rating={item.rating}
             overview={item.overview}
-            typeLabel={showTypeLabel ? (item.mediaType === "movie" ? "MOVIE" : "SERIES") : undefined}
+            typeLabel={
+              showTypeLabel
+                ? { mediaType: item.mediaType, text: item.mediaType === "movie" ? t("common.movie") : t("common.series") }
+                : undefined
+            }
             badge={item.status && <StatusBadge status={item.status} compact />}
             status={item.status}
             favoriteAction={
@@ -135,7 +136,7 @@ export function InfiniteResultsGrid({
 
       {hasNextPage && (
         <div ref={sentinelRef} className="mt-10 flex h-10 items-center justify-center">
-          {isPending && <span className="text-sm text-text-muted">Loading more…</span>}
+          {isPending && <span className="text-sm text-text-muted">{t("discover.loadingMore")}</span>}
         </div>
       )}
     </div>

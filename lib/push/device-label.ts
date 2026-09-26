@@ -1,5 +1,8 @@
+import type { Translator } from "@/lib/i18n/translator";
+
 /** "Chrome on macOS", "Safari on iPhone": enough for Settings to tell a
- * household's devices apart, from the browser's own User-Agent. */
+ * household's devices apart, from the browser's own User-Agent. Stored as
+ * it is (in English); localizeDeviceLabel words it for the reader. */
 export function deviceLabel(userAgent: string | null): string | null {
   if (!userAgent) return null;
   const ua = userAgent;
@@ -29,4 +32,12 @@ export function deviceLabel(userAgent: string | null): string | null {
               : null;
   if (browser && os) return `${browser} on ${os}`;
   return browser ?? os;
+}
+
+/** A stored deviceLabel in the reader's language: "Chrome on macOS" →
+ * "Chrome sur macOS". Browser and system names are never translated; a
+ * label of any other shape is shown as it is. */
+export function localizeDeviceLabel(t: Translator, label: string): string {
+  const match = /^(\S+) on (\S+)$/.exec(label);
+  return match ? t("settings.deviceBrowserOnOs", { browser: match[1], os: match[2] }) : label;
 }

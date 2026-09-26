@@ -23,6 +23,7 @@ import { getHouseholdEvents } from "@/lib/notifications/preferences";
 import { ApiKeysCard } from "@/components/api-keys-card";
 import { listApiKeys } from "@/lib/api/api-key-store";
 import { listHouseholdMembersFor } from "@/lib/users/household";
+import { getT } from "@/lib/i18n/server";
 
 export default async function IntegrationsSettingsPage() {
   const session = await auth();
@@ -57,6 +58,7 @@ export default async function IntegrationsSettingsPage() {
     listApiKeys(),
     listHouseholdMembersFor({ userId: session.user.id, isAdmin: true }),
   ]);
+  const t = await getT();
 
   const baseUrl = webhookBaseUrl(headerList);
 
@@ -64,12 +66,8 @@ export default async function IntegrationsSettingsPage() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-xl text-text-primary">Integrations</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Connect your own Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already
-            own and can send the rest straight to your download queue. Credentials are encrypted
-            and only ever used on your behalf.
-          </p>
+          <h2 className="font-display text-xl text-text-primary">{t("integrations.pageTitle")}</h2>
+          <p className="mt-2 text-sm text-text-secondary">{t("integrations.pageIntro")}</p>
         </div>
         <SyncNowButton />
       </div>
@@ -77,7 +75,7 @@ export default async function IntegrationsSettingsPage() {
       <div className="mt-6 flex flex-col gap-10">
         <section>
           <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Media Libraries
+            {t("integrations.sectionMediaLibraries")}
           </h3>
           <div className="mt-3 flex flex-col gap-6">
             <PlexConnectCard
@@ -105,7 +103,7 @@ export default async function IntegrationsSettingsPage() {
         </section>
 
         <section>
-          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">Sign-in</h3>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">{t("integrations.sectionSignIn")}</h3>
           <div className="mt-3 flex flex-col gap-6">
             <SsoSettingsCard initial={sso} defaultPublicUrl={baseUrl} />
           </div>
@@ -113,7 +111,7 @@ export default async function IntegrationsSettingsPage() {
 
         <section>
           <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Download Clients
+            {t("integrations.sectionDownloadClients")}
           </h3>
           <div className="mt-3 flex flex-col gap-6">
             {/* Only what a client may see: toArrServerDto drops the API key. */}
@@ -123,7 +121,7 @@ export default async function IntegrationsSettingsPage() {
 
         <section>
           <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Metadata Sources
+            {t("integrations.sectionMetadata")}
           </h3>
           <div className="mt-3 flex flex-col gap-6">
             <TmdbSettingsForm
@@ -137,7 +135,7 @@ export default async function IntegrationsSettingsPage() {
 
         <section>
           <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Household channels
+            {t("integrations.sectionHouseholdChannels")}
           </h3>
           <div className="mt-3 flex flex-col gap-6">
             <HouseholdEventsCard initial={householdEvents} />
@@ -158,7 +156,7 @@ export default async function IntegrationsSettingsPage() {
         </section>
 
         <section>
-          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">API access</h3>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">{t("integrations.sectionApiAccess")}</h3>
           <div className="mt-3 flex flex-col gap-6">
             <ApiKeysCard
               initialKeys={apiKeys}

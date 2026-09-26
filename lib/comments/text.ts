@@ -1,6 +1,8 @@
 // The pure side of comment threads (lib/comments): what a comment may say,
 // and how long its author can still change it. Unit tested.
 
+import type { Translator } from "@/lib/i18n/translator";
+
 export const MAX_COMMENT_LENGTH = 2000;
 /** Comments one person may post in COMMENT_WINDOW_MS, across every thread. */
 export const COMMENTS_PER_WINDOW = 12;
@@ -17,8 +19,8 @@ const CONTROL = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F‎‏‪-‮⁦-⁩]/g
 /** Plain text, cleaned: line endings made "\n", control and direction
  * characters dropped, trailing spaces trimmed off each line, at most one
  * blank line in a row, no blank lines at either end. */
-export function sanitizeComment(raw: unknown): { ok: true; body: string } | { ok: false; error: string } {
-  if (typeof raw !== "string") return { ok: false, error: "Write something first." };
+export function sanitizeComment(raw: unknown, t: Translator): { ok: true; body: string } | { ok: false; error: string } {
+  if (typeof raw !== "string") return { ok: false, error: t("notify.commentEmpty") };
   const body = raw
     .replace(/\r\n?/g, "\n")
     .replace(CONTROL, "")
@@ -27,9 +29,9 @@ export function sanitizeComment(raw: unknown): { ok: true; body: string } | { ok
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  if (body.length === 0) return { ok: false, error: "Write something first." };
+  if (body.length === 0) return { ok: false, error: t("notify.commentEmpty") };
   if (body.length > MAX_COMMENT_LENGTH) {
-    return { ok: false, error: `Keep it under ${MAX_COMMENT_LENGTH} characters.` };
+    return { ok: false, error: t("notify.commentTooLong", { count: MAX_COMMENT_LENGTH }) };
   }
   return { ok: true, body };
 }

@@ -3,6 +3,7 @@
 import type { IntegrationProvider } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { disconnectIntegration } from "@/lib/integrations/manage";
+import { getT } from "@/lib/i18n/server";
 
 export type DisconnectState = { error?: string; success?: boolean };
 
@@ -11,7 +12,7 @@ export type DisconnectState = { error?: string; success?: boolean };
 export async function disconnectIntegrationAction(
   provider: IntegrationProvider,
 ): Promise<DisconnectState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   await disconnectIntegration(admin.userId, provider);

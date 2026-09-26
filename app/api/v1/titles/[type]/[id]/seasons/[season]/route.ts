@@ -1,7 +1,7 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { parseTitleParams, requireTitle, type TitleParams } from "@/lib/api/routes/titles";
 import { loadSeasonEpisodes } from "@/lib/titles/season-episodes";
 import type { SeasonEpisodes } from "@/lib/api/types";
@@ -11,10 +11,10 @@ import type { SeasonEpisodes } from "@/lib/api/types";
 export const GET = withApi<TitleParams & { season: string }>(async (request, params): Promise<SeasonEpisodes> => {
   const ctx = await requireApiUser(request);
   const { mediaType, tmdbId } = parseTitleParams(params);
-  if (mediaType !== "tv") throw ApiError.of("not_found", "Only TV shows have seasons.");
+  if (mediaType !== "tv") throw ApiError.of("not_found", msg("server.onlyTvHasSeasons"));
   const seasonNumber = Number(params.season);
   if (!/^\d+$/.test(params.season) || !Number.isSafeInteger(seasonNumber)) {
-    throw ApiError.of("not_found", `Invalid season "${params.season}".`);
+    throw ApiError.of("not_found", msg("server.invalidSeason", { value: params.season }));
   }
   await requireTmdbConfigured();
 

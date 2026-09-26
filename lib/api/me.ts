@@ -1,4 +1,4 @@
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { userDto } from "@/lib/api/users";
 import { getLinkState } from "@/lib/auth/media-signin";
 import type { ApiContext } from "@/lib/api/auth";
@@ -20,7 +20,7 @@ export async function meDto(ctx: ApiContext): Promise<Me> {
     getLinkState(user.id),
     getQuotas(user.id),
   ]);
-  if (!links) throw ApiError.of("unauthorized", "Sign in again — this session is missing, expired or revoked.");
+  if (!links) throw ApiError.of("unauthorized", msg("server.sessionInvalid"));
   return {
     ...userDto(user, libraryOwnerId),
     // From before permissions: the same as `permissions.autoApproveMovies` / `…Tv`.

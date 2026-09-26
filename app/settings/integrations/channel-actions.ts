@@ -9,6 +9,7 @@ import {
   testAndSaveTelegram,
 } from "@/lib/notifications/channels";
 import type { NotificationChannelKind } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 
 // Settings → Integrations → Notifications: Telegram, Pushover and email —
 // the same test-and-save as PUT /api/v1/settings/integrations/{kind}.
@@ -28,10 +29,10 @@ function isKind(value: unknown): value is NotificationChannelKind {
 }
 
 export async function saveChannelAction(_prev: ChannelState | undefined, formData: FormData): Promise<ChannelState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
   const kind = formData.get("kind");
-  if (!isKind(kind)) return { error: "Unknown channel." };
+  if (!isKind(kind)) return { error: (await getT())("integrations.unknownChannel") };
   const fields = Object.fromEntries(
     [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
@@ -42,10 +43,10 @@ export async function saveChannelAction(_prev: ChannelState | undefined, formDat
 }
 
 export async function removeChannelAction(_prev: ChannelState | undefined, formData: FormData): Promise<ChannelState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
   const kind = formData.get("kind");
-  if (!isKind(kind)) return { error: "Unknown channel." };
+  if (!isKind(kind)) return { error: (await getT())("integrations.unknownChannel") };
   await clearChannel(kind);
   revalidateIntegrations();
   return { removed: true };

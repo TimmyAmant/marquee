@@ -5,6 +5,8 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
+import { displayNameSchema, firstIssueMessage, passwordSchema, usernameSchema } from "@/lib/users/account-rules";
 
 /** True once at least one account exists — used to gate the one-time first-run
  * setup page vs. normal login, since this app has no public self-serve signup. */
@@ -14,13 +16,9 @@ export async function hasAnyUser(): Promise<boolean> {
 }
 
 export const setupSchema = z.object({
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(32, "Username must be at most 32 characters")
-    .regex(/^[a-zA-Z0-9_.-]+$/, "Username can only contain letters, numbers, _ . -"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  displayName: z.string().min(1).max(80).optional(),
+  username: usernameSchema,
+  password: passwordSchema,
+  displayName: displayNameSchema.optional(),
 });
 
 /** The client address the setup rate limit is keyed on — getClientIp, so
@@ -42,17 +40,18 @@ export async function createFirstAdmin(
   input: SetupInput,
   ip: string,
 ): Promise<CoreResult<{ user: typeof users.$inferSelect }>> {
+  const t = await getT();
   if (await hasAnyUser()) {
-    return fail("setup_complete", "Setup has already been completed. Please sign in instead.");
+    return fail("setup_complete", t("server.setupDone"));
   }
 
   if (!checkRateLimit(`setup:${ip}`, 5, 60 * 60 * 1000)) {
-    return fail("rate_limited", "Too many attempts. Try again later.");
+    return fail("rate_limited", t("server.tooManyAttemptsLater"));
   }
 
   const parsed = setupSchema.safeParse(input);
   if (!parsed.success) {
-    return fail("invalid", parsed.error.issues[0]?.message ?? "Invalid input");
+    return fail("invalid", firstIssueMessage(parsed.error, t));
   }
 
   const { username, password, displayName } = parsed.data;
@@ -74,7 +73,7 @@ export async function createFirstAdmin(
     return created;
   });
   if (!user) {
-    return fail("setup_complete", "Setup has already been completed. Please sign in instead.");
+    return fail("setup_complete", t("server.setupDone"));
   }
 
   return { ok: true, user };

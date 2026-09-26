@@ -4,12 +4,14 @@ import Image from "next/image";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { approveRequestAction, rejectRequestAction, manuallyApproveRequestAction } from "@/lib/requests/actions";
-import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
 import {
   CUSTOM_REJECTION_REASON,
+  REJECTION_REASON_CODES,
   REJECTION_REASON_MAX_LENGTH,
-  REJECTION_REASON_PRESETS,
+  rejectionReasonText,
 } from "@/lib/requests/rejection-reasons";
+import { useT } from "@/lib/i18n/client";
+import { formatDate } from "@/lib/i18n/format";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { RequestTitle } from "@/components/request-title";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
@@ -57,6 +59,7 @@ export function RequestReviewRow({
   /** The reviewer may pick the server, quality and folder (advancedRequests). */
   advanced?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const approveAction = approveRequestAction.bind(null, id);
   const rejectAction = rejectRequestAction.bind(null, id);
@@ -80,7 +83,7 @@ export function RequestReviewRow({
   const done = Boolean(approveState?.success || rejectState?.success || manualApproveState?.success);
   const anyPending = isApproving || isRejecting || isManuallyApproving;
   // Only the admin can promise to add it by hand (a trusted reviewer can't).
-  const showManualApprove = canManuallyApprove && approveState?.error === SONARR_UNRESOLVED_ERROR;
+  const showManualApprove = canManuallyApprove && approveState?.code === "sonarr_unresolved";
   const requester = requestedByName || requestedByUsername;
   const canDecline =
     reason === CUSTOM_REJECTION_REASON ? customReason.trim().length > 0 : reason.length > 0;
@@ -120,7 +123,7 @@ export function RequestReviewRow({
           </div>
           <div className="min-w-0">
             <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} is4k={is4k} />
-            {edited && <p className="text-[11px] text-text-muted">Changed since asking</p>}
+            {edited && <p className="text-[11px] text-text-muted">{t("requests.changedSinceAsking")}</p>}
             <div className="flex flex-wrap items-center gap-x-3">
               <CommentToggle />
               {!choosingReason && (
@@ -133,7 +136,7 @@ export function RequestReviewRow({
         </div>
       </td>
       <td className="px-4 py-3 text-text-secondary">{requester}</td>
-      <td className="px-4 py-3 text-text-secondary">{new Date(createdAt).toLocaleDateString()}</td>
+      <td className="px-4 py-3 text-text-secondary">{formatDate(t, createdAt)}</td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -142,17 +145,17 @@ export function RequestReviewRow({
             onClick={() => setChoosingReason(true)}
             className="rounded-full border border-border-strong px-3 py-1.5 text-xs text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
           >
-            {isRejecting ? "Rejecting…" : "Reject"}
+            {isRejecting ? t("requests.rejecting") : t("requests.reject")}
           </button>
           {showManualApprove ? (
             <form action={manualApproveFormAction}>
               <button
                 type="submit"
                 disabled={anyPending}
-                title="Mark this approved without adding it via Sonarr — use once you've downloaded it yourself."
+                title={t("requests.manuallyApproveHint")}
                 className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
               >
-                {isManuallyApproving ? "Approving…" : "Manually approve"}
+                {isManuallyApproving ? t("requests.approving") : t("requests.manuallyApprove")}
               </button>
             </form>
           ) : (
@@ -162,7 +165,7 @@ export function RequestReviewRow({
                 disabled={anyPending}
                 className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
               >
-                {isApproving ? "Approving…" : "Approve"}
+                {isApproving ? t("requests.approving") : t("common.approve")}
               </button>
             </form>
           )}
@@ -183,8 +186,8 @@ export function RequestReviewRow({
             onSubmit={submitReject}
             className="mt-2 flex max-w-xs flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs"
           >
-            <p className="text-text-secondary">Let {requester} know why:</p>
-            {[...REJECTION_REASON_PRESETS, CUSTOM_REJECTION_REASON].map((preset) => (
+            <p className="text-text-secondary">{t("requests.letThemKnowWhy", { name: requester })}</p>
+            {([...REJECTION_REASON_CODES, CUSTOM_REJECTION_REASON] as const).map((preset) => (
               <label key={preset} className="flex items-center gap-2 text-text-primary">
                 <input
                   type="radio"
@@ -194,7 +197,7 @@ export function RequestReviewRow({
                   onChange={() => setReason(preset)}
                   className="h-4 w-4 border-border accent-accent"
                 />
-                {preset}
+                {preset === CUSTOM_REJECTION_REASON ? t("requests.reasonOther") : rejectionReasonText(t, preset)}
               </label>
             ))}
             {reason === CUSTOM_REJECTION_REASON && (
@@ -204,7 +207,7 @@ export function RequestReviewRow({
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 maxLength={REJECTION_REASON_MAX_LENGTH}
-                placeholder="Tell them why"
+                placeholder={t("requests.tellThemWhy")}
                 autoFocus
                 className="rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
               />
@@ -215,7 +218,7 @@ export function RequestReviewRow({
                 disabled={anyPending || !canDecline}
                 className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
               >
-                {isRejecting ? "Declining…" : "Decline request"}
+                {isRejecting ? t("requests.declining") : t("requests.declineRequest")}
               </button>
               <button
                 type="button"
@@ -223,7 +226,7 @@ export function RequestReviewRow({
                 onClick={cancelReject}
                 className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>
@@ -231,7 +234,7 @@ export function RequestReviewRow({
         {(approveState?.error || rejectState?.error || manualApproveState?.error) && (
           <p className="mt-1.5 max-w-xs text-xs text-red-400">
             {approveState?.error || rejectState?.error || manualApproveState?.error}
-            {approveState?.error === SONARR_UNRESOLVED_ERROR && sonarrUrl && (
+            {approveState?.code === "sonarr_unresolved" && sonarrUrl && (
               <>
                 {" — "}
                 <a
@@ -240,7 +243,7 @@ export function RequestReviewRow({
                   rel="noreferrer"
                   className="text-text-secondary underline underline-offset-2 hover:text-accent"
                 >
-                  Add manually in Sonarr
+                  {t("requests.addManuallyInSonarr")}
                 </a>
               </>
             )}

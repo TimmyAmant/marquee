@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { englishT } from "@/lib/i18n/catalog";
 import {
   applyPermissionChanges,
   autoApprovePermission,
@@ -114,19 +115,19 @@ describe("presets", () => {
 
 describe("permission changes", () => {
   it("takes known switches with true/false", () => {
-    expect(parsePermissionChanges({ requestTv: false, viewRequests: true })).toEqual({
+    expect(parsePermissionChanges({ requestTv: false, viewRequests: true }, englishT())).toEqual({
       ok: true,
       changes: { requestTv: false, viewRequests: true },
     });
-    expect(parsePermissionChanges({})).toEqual({ ok: true, changes: {} });
+    expect(parsePermissionChanges({}, englishT())).toEqual({ ok: true, changes: {} });
   });
 
   it("refuses anything else — including trying to name an admin-only setting", () => {
-    expect(parsePermissionChanges({ manageSettings: true })).toMatchObject({ ok: false });
-    expect(parsePermissionChanges({ admin: true })).toMatchObject({ ok: false });
-    expect(parsePermissionChanges({ requestTv: "yes" })).toMatchObject({ ok: false });
-    expect(parsePermissionChanges(["requestTv"])).toMatchObject({ ok: false });
-    expect(parsePermissionChanges(null)).toMatchObject({ ok: false });
+    expect(parsePermissionChanges({ manageSettings: true }, englishT())).toMatchObject({ ok: false });
+    expect(parsePermissionChanges({ admin: true }, englishT())).toMatchObject({ ok: false });
+    expect(parsePermissionChanges({ requestTv: "yes" }, englishT())).toMatchObject({ ok: false });
+    expect(parsePermissionChanges(["requestTv"], englishT())).toMatchObject({ ok: false });
+    expect(parsePermissionChanges(null, englishT())).toMatchObject({ ok: false });
   });
 
   it("applies them in the canonical order, keeping the rest", () => {

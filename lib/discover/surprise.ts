@@ -4,6 +4,7 @@ import { getTitleLibraryStatus } from "@/lib/integrations/status";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { MediaType } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
 
 export type SurpriseMeParams = {
   displayType: "movie" | "tv" | "all";
@@ -34,7 +35,7 @@ export async function pickSurprise(
 
   const first = await discoverFor(mediaType, params.genreId, params.year, 1).catch(() => null);
   if (!first || first.total_results === 0) {
-    return fail("not_found", "Nothing matches those filters — try loosening them.");
+    return fail("not_found", (await getT())("discover.surpriseNoMatch"));
   }
 
   const maxPage = Math.min(first.total_pages, 500);
@@ -57,5 +58,5 @@ export async function pickSurprise(
     return { ok: true, mediaType, tmdbId: pick.id };
   }
 
-  return fail("not_found", "Couldn't find something new — try different filters.");
+  return fail("not_found", (await getT())("discover.surpriseNothingNew"));
 }

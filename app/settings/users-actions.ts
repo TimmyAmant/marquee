@@ -11,6 +11,7 @@ import {
   type HouseholdMember as HouseholdMemberRow,
 } from "@/lib/users/household";
 import { PERMISSIONS } from "@/lib/users/permissions";
+import { getT } from "@/lib/i18n/server";
 
 // A type alias, not `export type { … }` — a re-export from a "use server"
 // file is treated as a server action export and fails the build.
@@ -32,7 +33,8 @@ export async function createUserAction(
   _prevState: CreateUserState | undefined,
   formData: FormData,
 ): Promise<CreateUserState> {
-  const admin = await requireAdmin("Only the admin can add household members.");
+  const t = await getT();
+  const admin = await requireAdmin(t("settings.onlyAdminAddsMembers"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await createHouseholdMember({
@@ -56,7 +58,7 @@ export async function updateHouseholdMemberAction(
   formData: FormData,
 ): Promise<UpdateMemberState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
 
   const isAdmin = session.user.role === "admin";
   const result = await updateHouseholdMember(
@@ -103,7 +105,8 @@ export async function deleteUserAction(
   _prevState: DeleteUserState | undefined,
   formData: FormData,
 ): Promise<DeleteUserState> {
-  const admin = await requireAdmin("Only the admin can remove household members.");
+  const t = await getT();
+  const admin = await requireAdmin(t("settings.onlyAdminRemovesMembers"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await deleteHouseholdMember(admin.userId, String(formData.get("userId") || ""));

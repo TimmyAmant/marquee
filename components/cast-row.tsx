@@ -5,6 +5,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { TmdbCastMember } from "@/lib/tmdb/client";
 import { topBilledCast } from "@/lib/title-meta";
+import { getT } from "@/lib/i18n/server";
 
 /** The design mockup's cast card: a 112x124 landscape-ish portrait rather
  * than a 2:3 poster, so a row of faces reads as a carousel of people and
@@ -50,7 +51,7 @@ function CastCard({
   );
 }
 
-export function CastRow({
+export async function CastRow({
   cast,
   favoritedIds,
   showFavorite,
@@ -62,9 +63,10 @@ export function CastRow({
   if (cast.length === 0) return null;
 
   const topBilled = topBilledCast(cast);
+  const t = await getT();
 
   return (
-    <Shelf title="Cast" gap="tile" flushRight>
+    <Shelf title={t("discover.cast")} gap="tile" flushRight>
       {topBilled.map((member) => (
         <CastCard
           key={member.id}

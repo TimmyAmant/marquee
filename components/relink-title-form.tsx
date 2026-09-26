@@ -4,8 +4,10 @@ import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { relinkTitleAction } from "@/app/title/[type]/[id]/actions";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; tmdbId: number }) {
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const action = relinkTitleAction.bind(null, mediaType, tmdbId);
@@ -24,7 +26,7 @@ export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; t
         onClick={() => setOpen(true)}
         className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-primary transition-colors hover:border-accent hover:text-accent"
       >
-        Fix ID
+        {t("title.fixId")}
       </button>
     );
   }
@@ -35,27 +37,26 @@ export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; t
       className="flex max-w-md flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs"
     >
       <p className="text-text-secondary">
-        Fill in whichever id you have — this repoints your synced library to the correct title
-        without needing to fix the match in Plex/Jellyfin/Sonarr itself.
+        {t("title.fixIdHelp")}
       </p>
       <div className="flex flex-wrap gap-2">
         <input
           type="text"
           name="tmdbId"
-          placeholder="TMDb ID"
+          placeholder={t("title.tmdbIdPlaceholder")}
           className="w-24 rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
         />
         <input
           type="text"
           name="imdbId"
-          placeholder="IMDb ID (tt…)"
+          placeholder={t("title.imdbIdPlaceholder")}
           className="w-32 rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
         />
         {mediaType === "tv" && (
           <input
             type="text"
             name="tvdbId"
-            placeholder="TVDB ID"
+            placeholder={t("title.tvdbIdPlaceholder")}
             className="w-24 rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
           />
         )}
@@ -67,14 +68,14 @@ export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; t
           disabled={isPending}
           className="rounded-full bg-accent px-3 py-1.5 font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {isPending ? "Fixing…" : "Save"}
+          {isPending ? t("title.fixing") : t("common.save")}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </form>

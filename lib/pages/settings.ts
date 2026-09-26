@@ -18,6 +18,7 @@ import {
   getNtfyUrl,
 } from "@/lib/integrations/app-settings";
 import type { ActivityEventType } from "@/lib/db/schema";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 // Settings-section page data (About, Activity, Integrations) shared between
 // app/settings/** and /api/v1/settings/**.
@@ -35,12 +36,14 @@ export async function loadAboutPage(viewer: ViewerIdentity) {
   return { version: APP_VERSION, summary, totalRequests, timeZone };
 }
 
-/** How Settings → Activity words each event ("Timmy approved Dune"). */
-export const ACTIVITY_EVENT_VERBS: Record<ActivityEventType, string> = {
-  request_created: "requested",
-  request_approved: "approved",
-  request_rejected: "declined",
-  request_manually_approved: "manually approved",
+/** The verb alone ("approved"), for GET /settings/activity's `verb`
+ * field: `t(ACTIVITY_EVENT_VERB_KEYS[type])`. (Settings → Activity itself
+ * words whole sentences; see app/settings/activity/page.tsx.) */
+export const ACTIVITY_EVENT_VERB_KEYS: Record<ActivityEventType, MessageKey> = {
+  request_created: "settings.activityVerbRequested",
+  request_approved: "settings.activityVerbApproved",
+  request_rejected: "settings.activityVerbDeclined",
+  request_manually_approved: "settings.activityVerbManuallyApproved",
 };
 
 /**

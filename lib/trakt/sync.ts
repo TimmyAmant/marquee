@@ -12,7 +12,11 @@ import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getQuota } from "@/lib/requests/quota";
 import { notifyReviewersOfTraktSync } from "@/lib/requests/alerts";
 import { can, requestPermission, type PermissionSubject } from "@/lib/users/permissions";
-import { fail, type CoreResult } from "@/lib/core-result";
+import type { CoreResult } from "@/lib/core-result";
+import { failT } from "@/lib/core-failure";
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 import type { TraktSync } from "@/lib/api/types";
 
 // "Keep in sync" with a public Trakt watchlist or list: each member adds
@@ -30,11 +34,24 @@ export const MAX_NEW_REQUESTS_PER_SYNC = 25;
 export const SYNC_NOW_LIMIT = 5;
 export const SYNC_NOW_WINDOW_MS = 5 * 60 * 1000;
 
-const NOT_CONNECTED = "Trakt isn't connected. The admin can connect it in Settings → Integrations.";
-const UNREADABLE =
-  "Couldn't read that list from Trakt. Check the link, and that the list (or watchlist) is public on Trakt.";
-const UNREACHABLE = "Couldn't reach Trakt to read this list. Marquee will try again at the next check.";
-const LIMITED = "You've reached your request limit, so the rest of this list waits until you have requests left.";
+const NOT_CONNECTED = "server.traktNotConnected" satisfies MessageKey;
+const UNREADABLE = "server.traktListUnreadable" satisfies MessageKey;
+const UNREACHABLE = "server.traktListUnreachable" satisfies MessageKey;
+const LIMITED = "server.traktListLimited" satisfies MessageKey;
+
+/** What a check leaves in lastError: stored in English, as it always was,
+ * and shown in the reader's language (lastErrorIn). */
+const STORED_ERRORS: readonly MessageKey[] = [NOT_CONNECTED, UNREADABLE, UNREACHABLE, LIMITED];
+
+function storedError(key: MessageKey): string {
+  return englishT()(key);
+}
+
+function lastErrorIn(t: Translator, stored: string | null): string | null {
+  if (!stored) return stored;
+  const key = STORED_ERRORS.find((k) => storedError(k) === stored);
+  return key ? t(key) : stored;
+}
 
 export type TraktSyncItem = { mediaType: MediaType; tmdbId: number; title: string };
 
@@ -68,9 +85,10 @@ export function pendingTraktItems(
   return out;
 }
 
-/** "Best of 2024" from its link, or "someone's watchlist". */
-export function traktListName(list: ParsedTraktUrl): string {
-  if (list.kind === "watchlist") return `${list.username}'s watchlist`;
+/** "Best of 2024" from its link, or "someone's watchlist" (in `t`'s
+ * language). */
+export function traktListName(list: ParsedTraktUrl, t: Translator = englishT()): string {
+  if (list.kind === "watchlist") return t("server.traktWatchlistName", { username: list.username });
   const words = list.slug.replace(/[-_]+/g, " ").trim();
   return words ? words.charAt(0).toUpperCase() + words.slice(1) : list.slug;
 }
@@ -105,7 +123,8 @@ async function readList(clientId: string, list: ParsedTraktUrl): Promise<TraktLi
 /** Syncs as the API shows them: one member's, or everyone's (the admin). */
 export async function listTraktSyncs(scope: { userId: string } | "all"): Promise<TraktSync[]> {
   const where = scope === "all" ? undefined : eq(traktSyncs.userId, scope.userId);
-  const [rows, counts] = await Promise.all([
+  const [t, rows, counts] = await Promise.all([
+    getT(),
     db
       .select({ sync: traktSyncs, username: users.username, displayName: users.displayName })
       .from(traktSyncs)
@@ -130,11 +149,11 @@ export async function listTraktSyncs(scope: { userId: string } | "all"): Promise
       id: sync.id,
       kind: sync.kind,
       url: urlOf(list),
-      name: traktListName(list),
+      name: traktListName(list, t),
       movies: sync.syncMovies,
       tv: sync.syncTv,
       lastSyncedAt: sync.lastSyncedAt?.toISOString() ?? null,
-      lastError: sync.lastError,
+      lastError: lastErrorIn(t, sync.lastError),
       requestedCount: requested.get(sync.id) ?? 0,
       createdAt: sync.createdAt.toISOString(),
       owner: { id: sync.userId, username, displayName },
@@ -182,30 +201,30 @@ export async function createTraktSync(
   const url = typeof body.url === "string" ? body.url : "";
   const list = url ? parseTraktUrl(url) : null;
   if (!list) {
-    return fail("invalid", "Paste a public Trakt list or watchlist link, like https://trakt.tv/users/someone/watchlist.");
+    return await failT("invalid", "server.pasteTraktLink");
   }
   for (const key of ["movies", "tv", "requestExisting"]) {
-    if (body[key] !== undefined && typeof body[key] !== "boolean") return fail("invalid", `"${key}" is true or false.`);
+    if (body[key] !== undefined && typeof body[key] !== "boolean") return await failT("invalid", "server.fieldTrueOrFalse", { field: key });
   }
   const movies = (body.movies as boolean | undefined) ?? true;
   const tv = (body.tv as boolean | undefined) ?? true;
   const requestExisting = (body.requestExisting as boolean | undefined) ?? false;
-  if (!movies && !tv) return fail("invalid", "Pick movies, TV shows or both.");
+  if (!movies && !tv) return await failT("invalid", "server.pickMoviesOrTv");
   if (!can(actor, requestPermission("movie", false)) && !can(actor, requestPermission("tv", false))) {
-    return fail("forbidden", "Your account can't request movies or series, so there's nothing to sync.");
+    return await failT("forbidden", "server.nothingToSync");
   }
 
   const clientId = await getTraktClientId();
-  if (!clientId) return fail("conflict", NOT_CONNECTED);
+  if (!clientId) return await failT("conflict", "server.traktNotConnected");
 
   const [{ n }] = await db.select({ n: count() }).from(traktSyncs).where(eq(traktSyncs.userId, actor.id));
   if (Number(n) >= MAX_SYNCS_PER_MEMBER) {
-    return fail("conflict", `You can keep up to ${MAX_SYNCS_PER_MEMBER} Trakt lists in sync. Remove one first.`);
+    return await failT("conflict", "server.tooManyTraktSyncs", { count: MAX_SYNCS_PER_MEMBER });
   }
 
   const items = await readList(clientId, list);
-  if (items === "missing") return fail("upstream", UNREADABLE);
-  if (items === "unreachable") return fail("upstream", "Couldn't reach Trakt just now. Try again in a minute.");
+  if (items === "missing") return await failT("upstream", "server.traktListUnreadable");
+  if (items === "unreachable") return await failT("upstream", "server.traktUnreachableNow");
 
   // One transaction: a scheduled check can't see the new sync before what's
   // on the list now is noted as already there.
@@ -242,10 +261,10 @@ export async function createTraktSync(
     }
     return inserted;
   });
-  if (!row) return fail("conflict", "You're already keeping that list in sync.");
+  if (!row) return await failT("conflict", "server.traktAlreadySynced");
 
   const sync = await getTraktSync(row.id);
-  if (!sync) return fail("internal", "The sync was added but couldn't be read back.");
+  if (!sync) return await failT("internal", "server.traktSyncUnreadable");
   // The first check (a long list with auto-approve can take a while) runs
   // in the background; lastSyncedAt fills in when it's done.
   if (requestExisting) {
@@ -257,25 +276,25 @@ export async function createTraktSync(
 /** Which kinds it requests: `{ movies?, tv? }`. */
 export async function updateTraktSync(actor: Actor, id: string, body: Record<string, unknown>): Promise<CoreResult<{ sync: TraktSync }>> {
   for (const key of ["movies", "tv"]) {
-    if (body[key] !== undefined && typeof body[key] !== "boolean") return fail("invalid", `"${key}" is true or false.`);
+    if (body[key] !== undefined && typeof body[key] !== "boolean") return await failT("invalid", "server.fieldTrueOrFalse", { field: key });
   }
   const movies = body.movies as boolean | undefined;
   const tv = body.tv as boolean | undefined;
-  if (movies === undefined && tv === undefined) return fail("invalid", 'Send "movies" and/or "tv".');
+  if (movies === undefined && tv === undefined) return await failT("invalid", "server.sendMoviesOrTv");
   const row = await ownedRow(actor, id);
-  if (!row) return fail("not_found", "That Trakt sync doesn't exist any more.");
+  if (!row) return await failT("not_found", "server.traktSyncGone");
   const next = { movies: movies ?? row.syncMovies, tv: tv ?? row.syncTv };
-  if (!next.movies && !next.tv) return fail("invalid", "Pick movies, TV shows or both — or remove the sync.");
+  if (!next.movies && !next.tv) return await failT("invalid", "server.pickMoviesOrTvOrRemove");
   await db.update(traktSyncs).set({ syncMovies: next.movies, syncTv: next.tv }).where(eq(traktSyncs.id, id));
   const sync = await getTraktSync(id);
-  return sync ? { ok: true, sync } : fail("not_found", "That Trakt sync doesn't exist any more.");
+  return sync ? { ok: true, sync } : await failT("not_found", "server.traktSyncGone");
 }
 
 /** Stops syncing. What it requested stays requested, and the titles it
  * handled stay handled (so adding it back doesn't re-ask for declined ones). */
 export async function deleteTraktSync(actor: Actor, id: string): Promise<CoreResult> {
   const row = await ownedRow(actor, id);
-  if (!row) return fail("not_found", "That Trakt sync doesn't exist any more.");
+  if (!row) return await failT("not_found", "server.traktSyncGone");
   await db.delete(traktSyncs).where(eq(traktSyncs.id, id));
   return { ok: true };
 }
@@ -297,7 +316,7 @@ async function runTraktSync(id: string): Promise<SyncOutcome> {
 
   const clientId = await getTraktClientId();
   if (!clientId) {
-    await setState({ lastError: NOT_CONNECTED });
+    await setState({ lastError: storedError(NOT_CONNECTED) });
     return { requested: 0 };
   }
   const [user] = await db
@@ -310,7 +329,7 @@ async function runTraktSync(id: string): Promise<SyncOutcome> {
   const list = parsedOf(row);
   const items = await readList(clientId, list);
   if (items === "missing" || items === "unreachable") {
-    await setState({ lastError: items === "missing" ? UNREADABLE : UNREACHABLE });
+    await setState({ lastError: storedError(items === "missing" ? UNREADABLE : UNREACHABLE) });
     return { requested: 0 };
   }
 
@@ -388,7 +407,7 @@ async function runTraktSync(id: string): Promise<SyncOutcome> {
       .catch((err) => console.error("[trakt-sync] couldn't record a handled title:", err));
   }
 
-  await setState({ lastSyncedAt: new Date(), lastError: limited ? LIMITED : null });
+  await setState({ lastSyncedAt: new Date(), lastError: limited ? storedError(LIMITED) : null });
   await notifyReviewersOfTraktSync(row.userId, newRequestIds, traktListName(list)).catch(() => undefined);
   return { requested };
 }

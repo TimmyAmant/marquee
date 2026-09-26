@@ -5,6 +5,10 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
+import { displayNameSchema, firstIssueMessage, passwordSchema, usernameSchema } from "@/lib/users/account-rules";
 import { revokeAllApiTokensForUser } from "@/lib/api/token-store";
 import { removeAllSubscriptions } from "@/lib/push/deliver";
 import { isRateLimited, recordFailedAttempt, refundAttempt } from "@/lib/rate-limit";
@@ -91,16 +95,10 @@ export async function getHouseholdMember(userId: string): Promise<HouseholdMembe
   return row ?? null;
 }
 
-const usernameSchema = z
-  .string()
-  .min(3, "Username must be at least 3 characters")
-  .max(32, "Username must be at most 32 characters")
-  .regex(/^[a-zA-Z0-9_.-]+$/, "Username can only contain letters, numbers, _ . -");
-
 const createUserSchema = z.object({
   username: usernameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  displayName: z.string().min(1).max(80).optional(),
+  password: passwordSchema,
+  displayName: displayNameSchema.optional(),
 });
 
 /** Adding another household member's account — the only way to create an
@@ -111,16 +109,17 @@ export async function createHouseholdMember(input: {
   password: unknown;
   displayName: unknown;
 }): Promise<CoreResult<{ userId: string }>> {
+  const t = await getT();
   const parsed = createUserSchema.safeParse(input);
   if (!parsed.success) {
-    return fail("invalid", parsed.error.issues[0]?.message ?? "Invalid input");
+    return fail("invalid", firstIssueMessage(parsed.error, t));
   }
 
   const { username, password, displayName } = parsed.data;
 
   const [existing] = await db.select().from(users).where(eq(users.username, username)).limit(1);
   if (existing) {
-    return fail("conflict", "An account with that username already exists");
+    return fail("conflict", t("server.usernameTaken"));
   }
 
   const passwordHash = await hash(password);
@@ -135,8 +134,8 @@ export async function createHouseholdMember(input: {
 const updateMemberSchema = z.object({
   userId: z.string().min(1),
   username: usernameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters").optional(),
-  displayName: z.string().max(80).optional(),
+  password: passwordSchema.optional(),
+  displayName: z.string().max(80, "server.displayNameTooLong" satisfies MessageKey).optional(),
 });
 
 /** Edits a household member's username/name, and resets their password if a
@@ -180,28 +179,29 @@ export async function updateHouseholdMember(
     tvQuotaDays?: unknown;
   },
 ): Promise<CoreResult<{ passwordChanged: boolean }>> {
+  const t = await getT();
   if (!actor.isAdmin && input.userId !== actor.userId) {
-    return fail("forbidden", "You can only edit your own account.");
+    return fail("forbidden", t("server.onlyEditOwnAccount"));
   }
 
   // Nobody but the admin changes what an account may do — not even their
   // own (lib/users/permissions.ts).
   if (input.permissions !== undefined && !actor.isAdmin) {
-    return fail("forbidden", "Only the admin can change what someone may do.");
+    return fail("forbidden", t("server.onlyAdminPermissions"));
   }
-  const adminFields = actor.isAdmin ? parseAdminFields(input) : { ok: true as const, set: {} };
+  const adminFields = actor.isAdmin ? parseAdminFields(input, t) : { ok: true as const, set: {} };
   if (!adminFields.ok) return fail("invalid", adminFields.error);
   const { role: requestedRole, ...limitFields } = adminFields.set;
-  const permissionChanges = input.permissions === undefined ? null : parsePermissionChanges(input.permissions);
+  const permissionChanges = input.permissions === undefined ? null : parsePermissionChanges(input.permissions, t);
   if (permissionChanges && !permissionChanges.ok) return fail("invalid", permissionChanges.error);
   if (requestedRole !== undefined || permissionChanges) {
     if (input.userId === actor.userId) {
-      return fail("invalid", requestedRole !== undefined ? "You can't change your own role." : "You can't change your own permissions.");
+      return fail("invalid", t(requestedRole !== undefined ? "server.cantChangeOwnRole" : "server.cantChangeOwnPermissions"));
     }
     if (typeof input.userId === "string") {
       const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId)).limit(1);
       if (target?.role === "admin") {
-        return fail("invalid", requestedRole !== undefined ? "The admin's role can't be changed." : "The admin can always do everything.");
+        return fail("invalid", t(requestedRole !== undefined ? "server.adminRoleFixed" : "server.adminCanDoEverything"));
       }
     }
   }
@@ -214,18 +214,18 @@ export async function updateHouseholdMember(
   });
 
   if (!parsed.success) {
-    return fail("invalid", parsed.error.issues[0]?.message ?? "Invalid input");
+    return fail("invalid", firstIssueMessage(parsed.error, t));
   }
 
   const { userId, username, password, displayName } = parsed.data;
 
   const [existing] = await db.select().from(users).where(eq(users.username, username)).limit(1);
   if (existing && existing.id !== userId) {
-    return fail("conflict", "An account with that username already exists");
+    return fail("conflict", t("server.usernameTaken"));
   }
 
   if (password && userId === actor.userId) {
-    const check = await verifyCurrentPassword(userId, input.currentPassword);
+    const check = await verifyCurrentPassword(userId, input.currentPassword, t);
     if (!check.ok) return check;
   }
 
@@ -311,32 +311,34 @@ type AdminFieldsInput = {
 };
 
 /** The admin-only fields of a member edit: role and request limits.
- * Omitted fields stay as they are. Pure; unit tested. */
+ * Omitted fields stay as they are. Pure; unit tested. Messages in `t`'s
+ * language. */
 export function parseAdminFields(
   input: AdminFieldsInput,
+  t: Translator = englishT(),
 ): { ok: true; set: Partial<typeof users.$inferInsert> } | { ok: false; error: string } {
   const set: Partial<typeof users.$inferInsert> = {};
   if (input.role !== undefined) {
-    if (input.role !== "member" && input.role !== "trusted") return { ok: false, error: "Role is member or trusted." };
+    if (input.role !== "member" && input.role !== "trusted") return { ok: false, error: t("server.roleMemberOrTrusted") };
     set.role = input.role;
   }
-  const limit = (value: unknown, label: string): number | null | "skip" | { error: string } => {
+  const limit = (value: unknown, rangeMessage: MessageKey): number | null | "skip" | { error: string } => {
     if (value === undefined) return "skip";
     if (value === null || value === "") return null;
     const n = typeof value === "number" ? value : Number(value);
-    return Number.isInteger(n) && n >= 1 && n <= 1000 ? n : { error: `${label} is a number from 1 to 1000, or blank for no limit.` };
+    return Number.isInteger(n) && n >= 1 && n <= 1000 ? n : { error: t(rangeMessage) };
   };
   const days = (value: unknown): number | "skip" | { error: string } => {
     if (value === undefined || value === null || value === "") return "skip";
     const n = typeof value === "number" ? value : Number(value);
-    return Number.isInteger(n) && n >= 1 && n <= 365 ? n : { error: "The number of days is from 1 to 365." };
+    return Number.isInteger(n) && n >= 1 && n <= 365 ? n : { error: t("server.quotaDaysRange") };
   };
-  const pairs: [unknown, "movieQuotaLimit" | "tvQuotaLimit", string][] = [
-    [input.movieQuotaLimit, "movieQuotaLimit", "The movie limit"],
-    [input.tvQuotaLimit, "tvQuotaLimit", "The TV limit"],
+  const pairs: [unknown, "movieQuotaLimit" | "tvQuotaLimit", MessageKey][] = [
+    [input.movieQuotaLimit, "movieQuotaLimit", "server.movieLimitRange"],
+    [input.tvQuotaLimit, "tvQuotaLimit", "server.tvLimitRange"],
   ];
-  for (const [value, key, label] of pairs) {
-    const parsed = limit(value, label);
+  for (const [value, key, rangeMessage] of pairs) {
+    const parsed = limit(value, rangeMessage);
     if (parsed === "skip") continue;
     if (parsed !== null && typeof parsed === "object") return { ok: false, error: parsed.error };
     set[key] = parsed;
@@ -360,24 +362,24 @@ const PASSWORD_CHANGE_WINDOW_MS = 15 * 60 * 1000;
  * sign-in (lib/auth/password-login.ts): the attempt is counted before the
  * argon2 check and refunded when it passes, so parallel guesses can't all
  * slip under the limit, and a correct password costs nothing. */
-async function verifyCurrentPassword(userId: string, currentPassword: unknown): Promise<CoreResult> {
+async function verifyCurrentPassword(userId: string, currentPassword: unknown, t: Translator): Promise<CoreResult> {
   const [row] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
   // An account made by Plex/Jellyfin sign-in has no password to confirm:
   // setting its first one needs only the session.
   if (row && !row.passwordHash) return { ok: true };
 
   if (typeof currentPassword !== "string" || !currentPassword) {
-    return fail("invalid", "Enter your current password to set a new one.");
+    return fail("invalid", t("server.currentPasswordNeeded"));
   }
 
   const key = `password-change:${userId}`;
   if (isRateLimited(key, PASSWORD_CHANGE_LIMIT)) {
-    return fail("rate_limited", "Too many attempts. Try again in a few minutes.");
+    return fail("rate_limited", t("server.tooManyAttempts"));
   }
   recordFailedAttempt(key, PASSWORD_CHANGE_WINDOW_MS);
 
   if (!row?.passwordHash || !(await verify(row.passwordHash, currentPassword))) {
-    return fail("invalid", "Your current password is incorrect.");
+    return fail("invalid", t("server.currentPasswordWrong"));
   }
 
   refundAttempt(key);
@@ -388,12 +390,13 @@ async function verifyCurrentPassword(userId: string, currentPassword: unknown): 
  * have verified). Their favorites, requests, integration credentials, API
  * tokens, etc. cascade-delete with them (see the users FKs in schema.ts). */
 export async function deleteHouseholdMember(adminUserId: string, userId: string): Promise<CoreResult> {
-  if (!userId) return fail("invalid", "Invalid request.");
-  if (userId === adminUserId) return fail("forbidden", "You can't remove your own account.");
+  const t = await getT();
+  if (!userId) return fail("invalid", t("server.invalidRequest"));
+  if (userId === adminUserId) return fail("forbidden", t("server.cantRemoveSelf"));
 
   const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
-  if (!target) return fail("not_found", "Account not found.");
-  if (target.role === "admin") return fail("forbidden", "Can't remove the admin account.");
+  if (!target) return fail("not_found", t("server.accountNotFound"));
+  if (target.role === "admin") return fail("forbidden", t("server.cantRemoveAdmin"));
 
   await db.delete(users).where(eq(users.id, userId));
   return { ok: true };

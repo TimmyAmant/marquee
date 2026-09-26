@@ -1,6 +1,6 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiAdmin } from "@/lib/api/auth";
-import { apiJson } from "@/lib/api/errors";
+import { apiJson, msg } from "@/lib/api/errors";
 import { unwrap } from "@/lib/api/guards";
 import { invalid, parseUuidSegment, readJsonBody } from "@/lib/api/request";
 import { INTEGRATIONS_FORBIDDEN } from "@/lib/api/routes/integrations";
@@ -42,7 +42,7 @@ export const createArrServerHandler = withApi(async (request) => {
   const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
   const body = await readJsonBody(request);
   const kind = parseArrKind(body.kind);
-  if (!kind) throw invalid('"kind" must be sonarr or radarr.');
+  if (!kind) throw invalid(msg("server.kindSonarrOrRadarr"));
   const { server } = unwrap(await createArrServer(ctx.user.id, kind, readInput(body)));
   return apiJson({ ok: true, server: toArrServerDto(server, webhookBaseUrl(request.headers)) }, { status: 201 });
 });
@@ -53,7 +53,7 @@ export const testArrServerHandler = withApi(
     const body = await readJsonBody(request);
     const input = readInput(body);
     if (body.serverId !== undefined && typeof body.serverId !== "string") {
-      throw invalid('"serverId" must be a string.');
+      throw invalid(msg("server.fieldMustBeString", { field: "serverId" }));
     }
     const result = unwrap(
       await testArrServerConnection(ctx.user.id, {

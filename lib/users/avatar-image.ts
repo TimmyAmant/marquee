@@ -1,5 +1,7 @@
 import sharp from "sharp";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 
 // The image half of profile photos (lib/users/avatar.ts has the storage
 // half): reading an upload and turning it into the stored copy. No database
@@ -24,23 +26,22 @@ const ACCEPTED_FORMATS = new Set(["jpeg", "png", "webp", "gif", "avif", "heif", 
  * gigapixel image. 50 megapixels covers any camera a household owns. */
 const MAX_INPUT_PIXELS = 50_000_000;
 
-const UNREADABLE = "That file isn't a photo Marquee can read. Use a JPEG, PNG or WebP image.";
-
 /** Decodes the upload, turns it the right way up (phone photos are often
  * stored sideways with an EXIF hint), crops it to a centered square, and
  * re-encodes it as a JPEG. Re-encoding is also what makes this safe to
  * serve: nothing of the original file survives, including its metadata
- * (GPS position, camera serial), which sharp drops unless asked to keep it. */
-export async function processAvatar(input: Uint8Array): Promise<CoreResult<{ image: Buffer }>> {
-  if (input.byteLength === 0) return fail("invalid", "Choose a photo to upload.");
+ * (GPS position, camera serial), which sharp drops unless asked to keep it.
+ * Messages in `t`'s language. */
+export async function processAvatar(input: Uint8Array, t: Translator = englishT()): Promise<CoreResult<{ image: Buffer }>> {
+  if (input.byteLength === 0) return fail("invalid", t("server.avatarChoose"));
   if (input.byteLength > AVATAR_MAX_UPLOAD_BYTES) {
-    return fail("invalid", "That photo is too big. Pick one under 15 MB.");
+    return fail("invalid", t("server.avatarTooBig"));
   }
 
   try {
     const source = sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, animated: false });
     const { format } = await source.metadata();
-    if (!format || !ACCEPTED_FORMATS.has(format)) return fail("invalid", UNREADABLE);
+    if (!format || !ACCEPTED_FORMATS.has(format)) return fail("invalid", t("server.avatarUnreadable"));
 
     const image = await source
       .rotate()
@@ -52,18 +53,22 @@ export async function processAvatar(input: Uint8Array): Promise<CoreResult<{ ima
       .toBuffer();
     return { ok: true, image };
   } catch {
-    return fail("invalid", UNREADABLE);
+    return fail("invalid", t("server.avatarUnreadable"));
   }
 }
 
 /** Reads an upload body without holding more than the limit in memory: a
  * declared Content-Length over it is refused up front, and a body that
- * turns out longer anyway is cut off as soon as it crosses the limit. */
-export async function readAvatarUpload(request: Request): Promise<CoreResult<{ bytes: Uint8Array }>> {
-  const tooBig = fail("invalid", "That photo is too big. Pick one under 15 MB.");
+ * turns out longer anyway is cut off as soon as it crosses the limit.
+ * Messages in `t`'s language. */
+export async function readAvatarUpload(
+  request: Request,
+  t: Translator = englishT(),
+): Promise<CoreResult<{ bytes: Uint8Array }>> {
+  const tooBig = fail("invalid", t("server.avatarTooBig"));
   const declared = Number(request.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > AVATAR_MAX_UPLOAD_BYTES) return tooBig;
-  if (!request.body) return fail("invalid", "Choose a photo to upload.");
+  if (!request.body) return fail("invalid", t("server.avatarChoose"));
 
   const chunks: Uint8Array[] = [];
   let total = 0;

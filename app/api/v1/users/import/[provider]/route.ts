@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { householdMember } from "@/lib/api/mappers";
@@ -8,7 +9,7 @@ import { importMediaUsers, listImportCandidates } from "@/lib/auth/media-signin"
 import { getHouseholdMember } from "@/lib/users/household";
 import type { HouseholdMember, ImportCandidate, ImportResult, ListResponse } from "@/lib/api/types";
 
-const FORBIDDEN = "Only the admin can add household members.";
+const FORBIDDEN = msg("server.onlyAdminAddMembers");
 
 /** "Import from Plex / Jellyfin" (admin): the people on the admin's Plex
  * (friends and Home users with access to the admin's server) or Jellyfin

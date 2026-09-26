@@ -1,4 +1,6 @@
-/** Shared with app/title/[type]/[id]/actions.ts (the error's source) so the
- * Requests page can match on it exactly to offer a "add manually" link,
- * without the two files drifting out of sync on the literal string. */
-export const SONARR_UNRESOLVED_ERROR = "Couldn't resolve this show for Sonarr.";
+/** The message key of "Couldn't resolve this show for Sonarr." — the one
+ * approval failure the Requests page offers "add it manually" for. The
+ * approve action (lib/requests/actions.ts) flags it with
+ * `code: "sonarr_unresolved"` rather than the page matching on text, which
+ * is in the reviewer's language. */
+export const SONARR_UNRESOLVED = "notify.sonarrUnresolved" as const;

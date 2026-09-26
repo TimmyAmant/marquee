@@ -99,6 +99,7 @@ const alerts = vi.hoisted(() => ({ notifyReviewersOfCollection: vi.fn(async () =
 vi.mock("@/lib/requests/alerts", () => alerts);
 
 import { requestAllMessage, requestAllMissing } from "./request-all";
+import { englishT } from "@/lib/i18n/catalog";
 import * as route from "@/app/api/v1/titles/[type]/[id]/request-all-missing/route";
 import { titleDetailDto } from "@/lib/api/title-dto";
 import { permissionMap } from "@/lib/users/permissions";
@@ -158,19 +159,19 @@ describe("franchiseRequestableItems", () => {
 
 describe("requestAllMessage", () => {
   it("says what happened", () => {
-    expect(requestAllMessage(0, 0, [])).toBe("Nothing left to request here.");
-    expect(requestAllMessage(1, 1, [])).toBe("Requested it.");
-    expect(requestAllMessage(4, 4, [])).toBe("Requested all 4.");
-    expect(requestAllMessage(4, 2, [{ error: LIMIT }, { error: LIMIT }])).toBe(`Requested 2 of 4. ${LIMIT}`);
-    expect(requestAllMessage(2, 0, [{ error: LIMIT }, { error: LIMIT }])).toBe(`Couldn't request any of the 2. ${LIMIT}`);
+    expect(requestAllMessage(englishT(), 0, 0, [])).toBe("Nothing left to request here.");
+    expect(requestAllMessage(englishT(), 1, 1, [])).toBe("Requested it.");
+    expect(requestAllMessage(englishT(), 4, 4, [])).toBe("Requested all 4.");
+    expect(requestAllMessage(englishT(), 4, 2, [{ error: LIMIT }, { error: LIMIT }])).toBe(`Requested 2 of 4. ${LIMIT}`);
+    expect(requestAllMessage(englishT(), 2, 0, [{ error: LIMIT }, { error: LIMIT }])).toBe(`Couldn't request any of the 2. ${LIMIT}`);
   });
 
   it("gives each reason once, most common first", () => {
     const blocked = "The admin isn't taking requests for this title.";
-    expect(requestAllMessage(4, 1, [{ error: blocked }, { error: LIMIT }, { error: LIMIT }])).toBe(
+    expect(requestAllMessage(englishT(), 4, 1, [{ error: blocked }, { error: LIMIT }, { error: LIMIT }])).toBe(
       `Requested 1 of 4. ${LIMIT} ${blocked}`,
     );
-    expect(requestAllMessage(2, 1, [{ error: "No trailing stop" }])).toBe("Requested 1 of 2. No trailing stop.");
+    expect(requestAllMessage(englishT(), 2, 1, [{ error: "No trailing stop" }])).toBe("Requested 1 of 2. No trailing stop.");
   });
 });
 

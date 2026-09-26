@@ -8,6 +8,8 @@ import { RequestsBadge } from "@/components/requests-badge";
 import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 /** Fired by the header's menu button on narrow screens, where the rail is
  * hidden and the header is the only thing on screen to open the menu from. */
@@ -72,18 +74,18 @@ function Icon({ name, className = "h-5 w-5" }: { name: IconName; className?: str
   );
 }
 
-type Destination = { href: string; label: string; icon: IconName };
+type Destination = { href: string; label: MessageKey; icon: IconName };
 
-const SEARCH: Destination = { href: "/search", label: "Search", icon: "search" };
-const DISCOVER: Destination = { href: "/discover", label: "Discover", icon: "discover" };
+const SEARCH: Destination = { href: "/search", label: "common.search", icon: "search" };
+const DISCOVER: Destination = { href: "/discover", label: "nav.discover", icon: "discover" };
 const BROWSE: Destination[] = [
-  { href: "/movies", label: "Movies", icon: "movies" },
-  { href: "/series", label: "Series", icon: "series" },
+  { href: "/movies", label: "common.movies", icon: "movies" },
+  { href: "/series", label: "common.series", icon: "series" },
 ];
 const LIBRARY: Destination[] = [
-  { href: "/favorites", label: "Favorites", icon: "favorites" },
-  { href: "/calendar", label: "Calendar", icon: "calendar" },
-  { href: "/requests", label: "Requests", icon: "requests" },
+  { href: "/favorites", label: "nav.favorites", icon: "favorites" },
+  { href: "/calendar", label: "nav.calendar", icon: "calendar" },
+  { href: "/requests", label: "nav.requests", icon: "requests" },
 ];
 
 function isCurrent(pathname: string, href: string): boolean {
@@ -120,6 +122,7 @@ export function NavMenu({
   avatarSrc: string | null;
   serverLabel: string | null;
 }) {
+  const t = useT();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -165,7 +168,7 @@ export function NavMenu({
     };
   }, [open]);
 
-  const name = userLabel ?? "Sign in";
+  const name = userLabel ?? t("nav.signIn");
   const profileHref = isSignedIn ? "/settings" : "/login";
   const library = isSignedIn ? LIBRARY : [];
   // Every section is on the rail, in the menu's order: Search and Discover,
@@ -179,21 +182,21 @@ export function NavMenu({
   return (
     <>
       <nav
-        aria-label="Main"
+        aria-label={t("nav.mainNav")}
         className="nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] md:flex rail-right:left-auto rail-right:right-4 rail-bar:left-1/2 rail-bar:-translate-x-1/2 rail-bar:translate-y-0 rail-bar:flex-row rail-top:top-3 rail-bottom:top-auto rail-bottom:bottom-[calc(12px+env(safe-area-inset-bottom))]"
       >
         <Link
           href={profileHref}
-          aria-label={isSignedIn ? `${name}: account and settings` : "Sign in"}
+          aria-label={isSignedIn ? t("nav.accountAndSettings", { name }) : t("nav.signIn")}
           aria-current={isCurrent(pathname, profileHref) ? "page" : undefined}
           className="group relative mb-1 rounded-full outline-offset-2 rail-bar:mb-0 rail-bar:mr-1"
         >
           <ProfilePicture signedIn={isSignedIn} label={name} src={avatarSrc} size={36} />
-          <RailLabel>{isSignedIn ? "Settings" : "Sign in"}</RailLabel>
+          <RailLabel>{isSignedIn ? t("nav.settings") : t("nav.signIn")}</RailLabel>
         </Link>
         {isSignedIn && (
           <>
-            <NotificationsBell variant="rail" railLabel={<RailLabel>Notifications</RailLabel>} />
+            <NotificationsBell variant="rail" railLabel={<RailLabel>{t("nav.notifications")}</RailLabel>} />
             <RailDivider />
           </>
         )}
@@ -209,7 +212,7 @@ export function NavMenu({
                     ref={searchButtonRef}
                     type="button"
                     onClick={() => setSearchOpen(true)}
-                    aria-label="Search"
+                    aria-label={t(item.label)}
                     aria-haspopup="dialog"
                     className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
                       current || searchOpen
@@ -218,7 +221,7 @@ export function NavMenu({
                     }`}
                   >
                     <Icon name={item.icon} className="h-[19px] w-[19px]" />
-                    <RailLabel>{item.label}</RailLabel>
+                    <RailLabel>{t(item.label)}</RailLabel>
                   </button>
                 );
               }
@@ -226,7 +229,7 @@ export function NavMenu({
                 <Link
                   key={item.href}
                   href={item.href}
-                  aria-label={item.label}
+                  aria-label={t(item.label)}
                   aria-current={current ? "page" : undefined}
                   className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
                     current
@@ -238,7 +241,7 @@ export function NavMenu({
                   {item.href === "/requests" && showRequestsBadge && pendingRequestCount > 0 && (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />
                   )}
-                  <RailLabel>{item.label}</RailLabel>
+                  <RailLabel>{t(item.label)}</RailLabel>
                 </Link>
               );
             })}
@@ -297,17 +300,17 @@ export function NavMenu({
             <SearchBar variant="compact" onNavigate={() => setOpen(false)} />
           </div>
 
-          <nav aria-label="Main menu" className="mt-3 flex flex-col gap-0.5">
+          <nav aria-label={t("nav.mainMenu")} className="mt-3 flex flex-col gap-0.5">
             {[SEARCH, DISCOVER].map((item) => (
               <MenuLink key={item.href} item={item} current={isCurrent(pathname, item.href)} prominent />
             ))}
 
-            <SectionHeader>Browse</SectionHeader>
+            <SectionHeader>{t("nav.browse")}</SectionHeader>
             {BROWSE.map((item) => (
               <MenuLink key={item.href} item={item} current={isCurrent(pathname, item.href)} />
             ))}
 
-            {library.length > 0 && <SectionHeader>Library</SectionHeader>}
+            {library.length > 0 && <SectionHeader>{t("nav.library")}</SectionHeader>}
             {library.map((item) => (
               <MenuLink key={item.href} item={item} current={isCurrent(pathname, item.href)} badge={badgeFor(item)} />
             ))}
@@ -336,6 +339,7 @@ export function NavMenu({
  * closes it too (NavMenu resets it on every route change).
  */
 function SearchDialog({ onNavigate, onDismiss }: { onNavigate: () => void; onDismiss: () => void }) {
+  const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -365,7 +369,7 @@ function SearchDialog({ onNavigate, onDismiss }: { onNavigate: () => void; onDis
   }, [onDismiss]);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Search" className="fixed inset-0 z-50 hidden md:block">
+    <div role="dialog" aria-modal="true" aria-label={t("common.search")} className="fixed inset-0 z-50 hidden md:block">
       <div aria-hidden onClick={onDismiss} className="absolute inset-0 bg-black/30" />
       <div
         ref={panelRef}
@@ -438,6 +442,7 @@ function MenuLink({
   prominent?: boolean;
   badge?: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <Link
       href={item.href}
@@ -451,7 +456,7 @@ function MenuLink({
       }`}
     >
       <Icon name={item.icon} className={prominent ? "h-5 w-5" : "h-[19px] w-[19px]"} />
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
       {badge}
     </Link>
   );

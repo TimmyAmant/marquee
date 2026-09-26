@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured, unwrap } from "@/lib/api/guards";
 import { invalid, optionalBoolean, readJsonBody } from "@/lib/api/request";
@@ -9,7 +10,7 @@ function optionalPositiveInt(body: Record<string, unknown>, key: string): number
   const value = body[key];
   if (value === undefined || value === null) return undefined;
   if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
-    throw invalid(`"${key}" must be a positive integer.`);
+    throw invalid(msg("server.fieldMustBePositiveInteger", { field: key }));
   }
   return value;
 }
@@ -22,7 +23,7 @@ export const POST = withApi(async (request): Promise<SurprisePick> => {
   const body = await readJsonBody(request);
   const displayType = body.type ?? "all";
   if (displayType !== "movie" && displayType !== "tv" && displayType !== "all") {
-    throw invalid(`"type" must be "movie", "tv" or "all".`);
+    throw invalid(msg("server.surpriseType"));
   }
   const params = {
     displayType,

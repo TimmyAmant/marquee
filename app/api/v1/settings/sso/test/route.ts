@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { readJsonBody } from "@/lib/api/request";
@@ -9,7 +10,7 @@ import type { SsoTestResult } from "@/lib/api/types";
  * discovery document without saving anything. `400` for a URL that isn't
  * one, `502 upstream` with the reason when it doesn't check out. */
 export const POST = withApi(async (request): Promise<SsoTestResult> => {
-  await requireApiAdmin(request, "Only the admin can change sign-in settings.");
+  await requireApiAdmin(request, msg("server.onlyAdminSignInSettings"));
   const { result } = unwrap(await testSsoIssuer((await readJsonBody(request)).issuer));
   return result;
 });

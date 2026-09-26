@@ -7,6 +7,8 @@ import { syncAllPlexWatchlists } from "@/lib/plex/watchlist";
 import { syncAllTraktSyncs } from "@/lib/trakt/sync";
 import { checkNotFoundRequests } from "@/lib/requests/not-found";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 // The scheduled maintenance jobs (see instrumentation.ts) as listed on
 // Settings → Jobs and GET /api/v1/settings/jobs, plus the manual "Run now".
@@ -25,60 +27,76 @@ export type JobId = (typeof JOB_IDS)[number];
 
 export type JobDefinition = { id: JobId; name: string; schedule: string; description: string };
 
-export const JOBS: JobDefinition[] = [
-  {
-    id: "plex-sync",
-    name: "Plex Library Sync",
-    schedule: "Every hour",
-    description: "Pulls the latest library state from every connected Plex server.",
+/** How often a job runs (instrumentation.ts has the cron itself). */
+type JobSchedule = { every: "minutes" | "hours"; count: number } | { dailyAt: { hour: number; minute: number } };
+
+// Names and descriptions are message keys, put into words by jobDefinitions
+// in the reader's language; the ids never change.
+const JOB_TEXT: Record<JobId, { name: MessageKey; description: MessageKey; schedule: JobSchedule }> = {
+  "plex-sync": {
+    name: "admin.jobPlexSyncName",
+    description: "admin.jobPlexSyncDescription",
+    schedule: { every: "hours", count: 1 },
   },
-  {
-    id: "jellyfin-sync",
-    name: "Jellyfin Library Sync",
-    schedule: "Every hour",
-    description: "Pulls the latest library state from every connected Jellyfin server.",
+  "jellyfin-sync": {
+    name: "admin.jobJellyfinSyncName",
+    description: "admin.jobJellyfinSyncDescription",
+    schedule: { every: "hours", count: 1 },
   },
-  {
-    id: "arr-sync",
-    name: "Sonarr/Radarr Sync",
-    schedule: "Every hour",
-    description: "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance.",
+  "arr-sync": {
+    name: "admin.jobArrSyncName",
+    description: "admin.jobArrSyncDescription",
+    schedule: { every: "hours", count: 1 },
   },
-  {
-    id: "plex-watchlist",
-    name: "Plex Watchlist Requests",
-    schedule: "Every 10 minutes",
-    description:
-      "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each.",
+  "plex-watchlist": {
+    name: "admin.jobPlexWatchlistName",
+    description: "admin.jobPlexWatchlistDescription",
+    schedule: { every: "minutes", count: 10 },
   },
-  {
-    id: "trakt-sync",
-    name: "Trakt List Requests",
-    schedule: "Every 3 hours",
-    description:
-      "Requests the new movies and shows on the Trakt watchlists and public lists members keep in sync, like pressing Request for each.",
+  "trakt-sync": {
+    name: "admin.jobTraktSyncName",
+    description: "admin.jobTraktSyncDescription",
+    schedule: { every: "hours", count: 3 },
   },
-  {
-    id: "not-found-check",
-    name: "Can't Find Check",
-    schedule: "Every hour",
-    description:
-      "Looks for approved requests that Sonarr/Radarr still hasn't found a copy of, and tells the admin and trusted members.",
+  "not-found-check": {
+    name: "admin.jobNotFoundCheckName",
+    description: "admin.jobNotFoundCheckDescription",
+    schedule: { every: "hours", count: 1 },
   },
-  {
-    id: "disk-space-snapshot",
-    name: "Disk Space Snapshot",
-    schedule: "Daily at 3:00 AM",
-    description: "Records free/used disk space for the storage forecast shown elsewhere in the app.",
+  "disk-space-snapshot": {
+    name: "admin.jobDiskSpaceName",
+    description: "admin.jobDiskSpaceDescription",
+    schedule: { dailyAt: { hour: 3, minute: 0 } },
   },
-  {
-    id: "cleanup",
-    name: "Database Cleanup",
-    schedule: "Daily at 3:30 AM",
-    description:
-      "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever.",
+  cleanup: {
+    name: "admin.jobCleanupName",
+    description: "admin.jobCleanupDescription",
+    schedule: { dailyAt: { hour: 3, minute: 30 } },
   },
-];
+};
+
+function scheduleText(t: Translator, schedule: JobSchedule): string {
+  if ("dailyAt" in schedule) {
+    // A wall-clock time with no date or zone to it: formatted as UTC so the
+    // server's own zone can't shift it.
+    const time = new Date(Date.UTC(2000, 0, 1, schedule.dailyAt.hour, schedule.dailyAt.minute)).toLocaleTimeString(
+      t.tag,
+      { hour: "numeric", minute: "2-digit", timeZone: "UTC" },
+    );
+    return t("admin.scheduleDailyAt", { time });
+  }
+  return t(schedule.every === "minutes" ? "admin.scheduleEveryMinutes" : "admin.scheduleEveryHours", {
+    count: schedule.count,
+  });
+}
+
+/** Every job, in `t`'s language, in the order Settings › Jobs lists them. */
+export function jobDefinitions(t: Translator): JobDefinition[] {
+  return JOB_IDS.map((id) => {
+    const text = JOB_TEXT[id];
+    return { id, name: t(text.name), schedule: scheduleText(t, text.schedule), description: t(text.description) };
+  });
+}
 
 const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "plex-sync": syncAllConnectedPlexUsers,
@@ -99,14 +117,15 @@ export function isJobId(value: string): value is JobId {
  * time — running it early never skips or alters the schedule. Admin-only at
  * every call site, since these sync every connected user's data. */
 export async function runJob(jobId: JobId): Promise<CoreResult> {
+  const t = await getT();
   const runner = JOB_RUNNERS[jobId];
-  if (!runner) return fail("not_found", "Unknown job.");
+  if (!runner) return fail("not_found", t("admin.unknownJob"));
 
   try {
     await runner();
     return { ok: true };
   } catch (err) {
     console.error(`[jobs] manual run of ${jobId} failed:`, err);
-    return fail("internal", "Job failed — check the server logs.");
+    return fail("internal", t("admin.jobFailed"));
   }
 }
