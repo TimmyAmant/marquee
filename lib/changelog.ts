@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.42.3",
+    date: "2026-09-26",
+    changes: [
+      "Mac: you stay signed in through relaunches and updates, and no more \"Marquee wants to use your confidential information\" Keychain password prompts. Your sign-in is kept in a private file only your Mac account can read. After this update, sign in once more.",
+      "Mac: after signing out, the sign-in screen fills in your username. Your password is never saved.",
+      "Old \"Marquee server session\" items in Keychain Access are no longer used and can be deleted.",
+    ],
+  },
+  {
     version: "0.42.2",
     date: "2026-09-26",
     changes: [
