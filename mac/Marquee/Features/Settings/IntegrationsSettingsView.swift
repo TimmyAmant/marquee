@@ -48,7 +48,9 @@ struct IntegrationsSettingsView: View {
                         remove: { try await $0.integrations.tvdb.remove() }
                     )
                 }
-                section("Notifications") {
+                section("Household channels") {
+                    // 0.45+: what these channels post.
+                    HouseholdEventsCard()
                     ArrWebhooksCard(
                         webhooks: overview.arrWebhooks,
                         radarr4kConnected: overview.radarr4k?.connected == true,

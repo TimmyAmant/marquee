@@ -13,6 +13,8 @@ export type CoreErrorCode =
   | "forbidden"
   | "not_found"
   | "conflict"
+  /** A one-time code or link that's used up or past its time. */
+  | "expired"
   | "setup_complete"
   | "rate_limited"
   | "upstream"

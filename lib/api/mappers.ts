@@ -314,6 +314,7 @@ export function notificationItem(n: {
   eventType: Dto.NotificationItem["eventType"];
   message: string;
   read: boolean;
+  alert?: boolean;
   createdAt: Date;
 }): Dto.NotificationItem {
   return {
@@ -324,6 +325,7 @@ export function notificationItem(n: {
     eventType: n.eventType,
     message: n.message,
     read: n.read,
+    alert: n.alert ?? true,
     createdAt: isoRequired(n.createdAt),
   };
 }

@@ -52,3 +52,12 @@ export async function verifyPushover(config: PushoverConfig): Promise<{ ok: true
     error: "Couldn't reach Pushover.",
   }));
 }
+
+/** Sends one notification and says why when it didn't go. Never throws. */
+export async function deliverPushover(
+  config: PushoverConfig,
+  title: string,
+  message: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return send(config, title, message).catch(() => ({ ok: false as const, error: "Couldn't reach Pushover." }));
+}

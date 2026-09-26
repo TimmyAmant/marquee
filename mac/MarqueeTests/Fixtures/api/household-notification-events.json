@@ -1,0 +1,14 @@
+{
+  "events": [
+    {
+      "event": "request_approved",
+      "label": "A request is approved",
+      "enabled": true
+    },
+    {
+      "event": "issue_updated",
+      "label": "A reported problem is fixed",
+      "enabled": false
+    }
+  ]
+}

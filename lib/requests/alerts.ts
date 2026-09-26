@@ -10,7 +10,8 @@ import { quotedRequestTitle } from "@/lib/requests/labels";
 // and Decline buttons (public/sw.js → app/api/push/requests/[id]/[action]).
 
 /** Reviewers, the admin first — the admin's copy is the one relayed to
- * Discord and the other channels, so those hear about it once. */
+ * the household channels (Discord and the rest), so those hear about it
+ * once. Each reviewer's own channels follow their own choices. */
 async function reviewersExcept(userId: string) {
   const reviewers = await db
     .select({ id: users.id, role: users.role })
@@ -90,6 +91,7 @@ async function notifyReviewersOfBatch(
       eventType: "request_created",
       message,
       ...(waiting.length === 1 ? { requestId: first.id } : {}),
+      topic: "watchlist_requests",
       relay: index === 0,
     }).catch(() => undefined);
   }

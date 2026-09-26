@@ -198,7 +198,7 @@ struct NotificationsPopover: View {
         items = items.map {
             API.NotificationItem(
                 id: $0.id, mediaType: $0.mediaType, tmdbId: $0.tmdbId, title: $0.title,
-                eventType: $0.eventType, message: $0.message, read: true, createdAt: $0.createdAt
+                eventType: $0.eventType, message: $0.message, read: true, alert: $0.alert, createdAt: $0.createdAt
             )
         }
         Task {

@@ -87,6 +87,15 @@ where the real server needed something the core contract didn't spell out.
     `POST /titles/{type}/{tmdbId}/request-all-missing` requests them all in
     one go. A server older than this leaves the field out — treat missing as
     an empty list and don't show the button.
+14. **Personal notifications (0.45.0+, additive).** Every account can add its
+    own channels (`/me/notification-channels`) and choose which events reach
+    the bell, device push and each channel (`/me/notification-preferences`);
+    the admin picks what the household channels post
+    (`/settings/notification-events`). `NotificationItem` gains `alert`:
+    false means the account turned device push off for that kind, so an app
+    shows no banner (it's still in the bell). A server older than this
+    answers `404 not_found` on the new endpoints and sends no `alert` —
+    treat missing as true and hide the new screens.
 
 ---
 
@@ -1788,13 +1797,18 @@ desktop Chrome/Edge). Tapping one opens
       "eventType": "request_rejected",
       "message": "\"The Matrix\" was declined: Not enough space on the server right now",
       "read": false,
+      "alert": true,
       "createdAt": "2026-09-17T17:12:41.470Z"
     }
   ]
 }
 ```
 
-Newest first. Empty → "No notifications yet." The website shows relative
+Newest first, and only what the account keeps in the bell (see
+`/me/notification-preferences`; the unread count follows the same rule).
+`alert` (0.45+): false when the account turned device push off for this
+kind — list it, but don't show a system banner for it. Missing on older
+servers: treat as true. Empty → "No notifications yet." The website shows relative
 times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap. A
 `request_rejected` message carries the admin's reason after a colon when one
 was given; without one it's just `"The Matrix" was declined.`
@@ -1830,7 +1844,7 @@ data: {}
 
 event: notification
 id: a23f7682-41ae-4e8a-8b17-14d903ab017a
-data: {"id":"a23f7682-41ae-4e8a-8b17-14d903ab017a","mediaType":"movie","tmdbId":27205,"title":"Inception","eventType":"request_rejected","message":"\"Inception\" was declined: Already available on a streaming service we have","read":false,"createdAt":"2026-09-25T11:25:16.885Z"}
+data: {"id":"a23f7682-41ae-4e8a-8b17-14d903ab017a","mediaType":"movie","tmdbId":27205,"title":"Inception","eventType":"request_rejected","message":"\"Inception\" was declined: Already available on a streaming service we have","read":false,"alert":true,"createdAt":"2026-09-25T11:25:16.885Z"}
 
 event: signed-out
 data: {}
@@ -1838,7 +1852,10 @@ data: {}
 
 - `ready` arrives first. After it, a `notification` event (one
   `NotificationItem`, exactly as `GET /notifications` lists it) arrives the
-  moment the server creates one for this account.
+  moment the server creates one for this account — unless the account keeps
+  that kind out of both the bell and device push. With `"alert": false`,
+  update the bell but show no banner. One the account keeps out of the bell
+  but wants pushed still arrives (show the banner; it won't be in the list).
 - A `: keep-alive` comment comes every 25 seconds. Each one is also when
   the server re-checks the token: once it's revoked (Sign out, a password
   change), the stream sends `signed-out` and closes. Sign in again.
@@ -1852,6 +1869,196 @@ data: {}
 
 The website doesn't use this: its notifications are Web Push, sent to the
 browsers that turned them on under Settings › Account › Notifications.
+
+### `GET /me/notification-channels` — user (0.45+)
+
+The signed-in account's own channels: Settings › Account › Notifications ›
+"Your channels". Nobody else's are ever listed, and every endpoint below
+answers `404 not_found` "There's no channel with that id." for an id that
+isn't yours, exactly as for one that doesn't exist.
+
+```json
+{
+  "available": {
+    "telegram": { "available": true, "botUsername": "MarqueeHomeBot" },
+    "pushover": { "available": false },
+    "email": { "available": true },
+    "discord": { "available": true },
+    "ntfy": { "available": true, "householdServer": "https://ntfy.sh" },
+    "webhook": { "available": true, "homeNetwork": false }
+  },
+  "channels": [
+    {
+      "id": "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44",
+      "kind": "telegram",
+      "name": "My phone",
+      "target": "Chat ••••6789",
+      "enabled": true,
+      "verified": true,
+      "lastSuccessAt": "2026-09-25T18:40:05.000Z",
+      "lastError": null,
+      "lastErrorAt": null,
+      "createdAt": "2026-09-20T09:12:00.000Z"
+    },
+    {
+      "id": "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61",
+      "kind": "email",
+      "name": null,
+      "target": "anna@example.com",
+      "enabled": true,
+      "verified": false,
+      "lastSuccessAt": null,
+      "lastError": null,
+      "lastErrorAt": null,
+      "createdAt": "2026-09-25T18:41:00.000Z"
+    }
+  ]
+}
+```
+
+`available`: which kinds this server can offer. Telegram, Pushover and
+email ride on the household's own bot, app and mail server (Settings ›
+Integrations), so they're only available once the admin set those up.
+`botUsername`: the household bot, for "message @… /start" and the one-tap
+Telegram link below (null if Telegram can't be reached). `householdServer`:
+the household ntfy server, where a member can pick just a topic (null: only
+full topic URLs). `homeNetwork`: whether this account's webhook and ntfy URLs
+may point at the home network (the admin's may; members' only when the
+server sets `MARQUEE_ALLOW_PRIVATE_WEBHOOKS=true`).
+
+Each channel: `kind` is `telegram`, `pushover`, `email`, `discord`, `ntfy`
+or `webhook` (treat any other as unknown and show it read-only). `target`:
+where it goes, **masked** — webhook URLs, ntfy topics and Pushover keys are
+secrets and the API never returns them (email addresses are shown whole).
+`enabled`: off, it gets nothing. `verified`: false for an email address,
+or a Telegram chat ID typed in by hand, until the 6-digit code sent there
+is entered; it gets nothing else until then (the chat could otherwise be
+anyone who ever pressed Start on the household bot). `lastError` /
+`lastErrorAt`: why the last delivery failed (the service's own words, e.g.
+"Forbidden: bot was blocked by the user", or "Some notifications were
+skipped: more than 30 in 10 minutes."), cleared by the next one that
+arrives. Each channel takes at most 30 notifications in 10 minutes; past
+that they're dropped (the bell still has them). Up to 10 channels per
+account.
+
+- **`POST /me/notification-channels`** — `{ "kind": "…", "name"?: "My
+  phone", "enabled"?: true, "config": {…} }`. `config` by kind:
+  `telegram` `{ "chatId": "123456789" }` (your own chat with the household
+  bot: message it /start first); `pushover` `{ "userKey": "…30 chars…" }`;
+  `email` `{ "address": "you@example.com" }`; `discord` `{ "webhookUrl":
+  "https://discord.com/api/webhooks/…" }`; `ntfy` `{ "topic": "…" }` on the
+  household server or `{ "url": "https://ntfy.sh/…" }`; `webhook` `{ "url":
+  "https://…" }`. A test message is sent first and the channel is saved only
+  if it arrives: `201` with the channel, or `400 invalid` with the reason
+  ("The test message didn't arrive: HTTP 404"). Email and Telegram instead
+  get a 6-digit code (`201`, `verified: false`; the bot sends Telegram's). Webhook and ntfy URLs must be on the
+  internet, not the home network (unless `homeNetwork`): `400` "Marquee only
+  sends to addresses on the internet, not the home network." — checked
+  again on every connection, and redirects aren't followed. `409 conflict`
+  for a kind the household hasn't set up, or past 10 channels; `429` after
+  10 adds in 10 minutes.
+- **`PATCH /me/notification-channels/{id}`** — `{ "name"?, "enabled"?,
+  "config"? }`. New details are tested the same way before they're kept; a
+  secret left out or blank keeps the saved one. A new email address goes
+  (or Telegram chat) goes back to `verified: false` with a new code. `200`
+  channel.
+- **`DELETE /me/notification-channels/{id}`** — `{ "ok": true }`.
+- **`POST /me/notification-channels/{id}/test`** — "Send a test". `200`
+  channel (with `lastSuccessAt` updated), or `400` with the reason (also
+  kept as `lastError`). `409` for a channel not yet confirmed; `429` after
+  5 a minute.
+- **`POST /me/notification-channels/{id}/verify`** — `{ "code": "123456" }`.
+  `200` channel, now `verified`. `400` wrong code, `410 expired` after 30
+  minutes, `429` after 5 wrong tries — send a new one.
+- **`POST /me/notification-channels/{id}/resend-code`** — sends a new code.
+  `200` channel; `429` after 3 in 10 minutes.
+- **`POST /me/notification-channels/telegram-link`** — no body. One-tap
+  Telegram: `{ "code": "…", "url": "https://t.me/MarqueeHomeBot?start=…",
+  "expiresAt": "…" }`. Open `url`; Telegram offers Start, which sends the
+  bot `/start <code>`.
+- **`POST /me/notification-channels/telegram-link/poll`** — `{ "code": "…",
+  "name"?: "…" }`. `202 { "status": "pending" }` until the bot has seen it,
+  then `201` with the new channel (after its test message; no code needed,
+  since pressing Start proved the chat is yours). Poll every few
+  seconds. `410 expired` after 10 minutes; `409` when the household bot
+  hands its messages to a webhook of its own, so they can't be read — enter
+  the chat ID instead.
+
+### `GET /me/notification-preferences` — user (0.45+)
+
+"What you hear about": each event this account can get, and whether it
+goes to the bell (`inApp`), to devices (`push`: Web Push, and banners in the
+Mac and Windows apps) and to each of the account's channels (by id).
+
+```json
+{
+  "events": [
+    {
+      "event": "request_approved",
+      "label": "A request is approved",
+      "reviewerOnly": false,
+      "inApp": true,
+      "push": true,
+      "channels": { "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44": true, "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61": true }
+    },
+    {
+      "event": "request_downloading",
+      "label": "Started downloading",
+      "reviewerOnly": false,
+      "inApp": true,
+      "push": false,
+      "channels": { "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44": false, "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61": false }
+    },
+    {
+      "event": "request_pending",
+      "label": "New request waiting for review",
+      "reviewerOnly": true,
+      "inApp": true,
+      "push": true,
+      "channels": { "0b7d5f6e-3c1a-4f3e-9d61-6f0c2e1a9b44": true, "5a0f4b1e-8d2c-4b6a-a1f7-2e9c3d4b5a61": true }
+    }
+  ]
+}
+```
+
+`event`, in the order to show them: `request_approved`, `request_declined`,
+`request_available` ("Ready to watch"), `request_downloading`,
+`issue_updated` ("A problem I reported is fixed"); for the admin and
+trusted members also `request_pending` and `watchlist_requests` (a Plex
+Watchlist batch); for the admin `issue_reported`. `request_comment` is
+reserved for comments on requests and not sent yet. Clients show `label`
+as it comes and keep any `event` they don't know, so a new one needs no
+app update. `reviewerOnly`: group these under "For reviewers".
+
+Defaults, until the account changes something: `inApp` and `push` on for
+everything (what every account got before 0.45); a new channel gets every
+event except `request_downloading`. The household channels are separate —
+see below.
+
+**`PUT /me/notification-preferences`** — `{ "events": [ { "event":
+"request_downloading", "push": false, "channels": { "<id>": true } } ] }`:
+only what's sent changes. Answers the whole list, as `GET`. `400` for an
+event this account can't get, or a channel id that isn't one of its own.
+
+### `GET /settings/notification-events` — admin (0.45+)
+
+What the household channels (Discord, ntfy, Telegram, Pushover, email and
+the webhook under Settings › Integrations › Household channels) post. Each
+notification is posted there once, from the admin's copy (a new request,
+say, not once per reviewer).
+
+```json
+{
+  "events": [
+    { "event": "request_approved", "label": "A request is approved", "enabled": true },
+    { "event": "issue_updated", "label": "A reported problem is fixed", "enabled": false }
+  ]
+}
+```
+
+The defaults are what those channels posted before 0.45: everything except
+`issue_updated`. **`PUT`** — `{ "events": { "issue_updated": true } }`: only
+what's sent changes; answers as `GET`. `403` for anyone but the admin.
 
 ---
 

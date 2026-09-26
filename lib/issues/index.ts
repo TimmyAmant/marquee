@@ -207,7 +207,8 @@ export async function resolveIssue(
       title: issue.title,
       eventType: "issue_resolved",
       message: resolution ? `The problem you reported with ${what} was fixed: ${resolution}` : `The problem you reported with ${what} was fixed.`,
-      relay: false,
+      // The household channels only post this if the admin picked "A
+      // reported problem is fixed" for them (off by default, as before).
     }).catch(() => undefined);
   }
   revalidatePathSafely("/requests");

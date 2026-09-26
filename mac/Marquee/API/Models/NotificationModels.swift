@@ -19,7 +19,14 @@ extension API {
         /// e.g. `"The Matrix" was declined.`
         let message: String
         let read: Bool
+        /// 0.45+: false when the account turned device push off for this
+        /// kind: it's in the bell, but no banner. Missing (an older server)
+        /// counts as true.
+        var alert: Bool?
         let createdAt: Date
+
+        /// Whether this Mac may show a system banner for it.
+        var showsBanner: Bool { alert ?? true }
 
         /// Clicking one opens this title and marks it read.
         var titleID: TitleID { TitleID(mediaType, tmdbId) }

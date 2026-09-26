@@ -70,6 +70,9 @@ final class APIFixtureTests: XCTestCase {
         "issues": decodes(API.IssueList.self),
         "notifications": decodes(API.NotificationList.self),
         "notifications-unread-count": decodes(API.Count.self),
+        "notification-channels": decodes(API.PersonalNotificationChannels.self),
+        "notification-preferences": decodes(API.NotificationPreferences.self),
+        "household-notification-events": decodes(API.HouseholdNotificationEvents.self),
         "calendar": decodes(API.CalendarMonthResponse.self),
         "activity": decodes(API.ListResponse<API.ActivityItem>.self),
         "household-member": decodes(API.HouseholdMember.self),
@@ -105,7 +108,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 73, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 76, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -180,6 +183,8 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(item.eventType, .requestRejected)
         XCTAssertEqual(item.eventType.emoji, "👎")
         XCTAssertEqual(item.titleID.route.absoluteString, "marquee://title/movie/603")
+        XCTAssertEqual(item.alert, true)
+        XCTAssertTrue(item.showsBanner)
 
         let activity = try decode(API.ListResponse<API.ActivityItem>.self, "activity").results
         XCTAssertEqual(activity.first?.sentence, "Timmy declined The Matrix")

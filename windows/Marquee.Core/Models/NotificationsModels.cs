@@ -31,6 +31,14 @@ public sealed record NotificationItem
     public required string Message { get; init; }
 
     public required bool Read { get; init; }
+
+    /// <summary>
+    /// 0.45+: false when the account turned device banners off for this
+    /// kind. It's still in the bell, but no Windows notification is shown
+    /// for it. Older servers don't send it: true.
+    /// </summary>
+    public bool Alert { get; init; } = true;
+
     public required DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>Clicking one opens this title and marks it read.</summary>
