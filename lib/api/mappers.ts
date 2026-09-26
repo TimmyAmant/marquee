@@ -2,6 +2,7 @@
 // free of database and TMDb client imports (types only) so the mapping rules
 // stay cheap to reason about and test.
 import type * as Dto from "@/lib/api/types";
+import { ISSUE_KIND_LABELS, issueEpisodeLabel, type IssueRow } from "@/lib/issues";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
 import { avatarPath } from "@/lib/users/avatar-path";
@@ -269,5 +270,31 @@ export function notificationItem(n: {
     message: n.message,
     read: n.read,
     createdAt: isoRequired(n.createdAt),
+  };
+}
+
+export function issueDto(row: IssueRow, viewerUserId: string): Dto.Issue {
+  return {
+    id: row.id,
+    mediaType: row.mediaType,
+    tmdbId: row.tmdbId,
+    title: row.title,
+    posterPath: row.posterPath,
+    seasonNumber: row.seasonNumber,
+    episodeNumber: row.episodeNumber,
+    episodeLabel: issueEpisodeLabel(row.seasonNumber, row.episodeNumber),
+    kind: row.kind,
+    kindLabel: ISSUE_KIND_LABELS[row.kind],
+    message: row.message,
+    status: row.status,
+    resolution: row.resolution,
+    reportedBy: requestPerson({
+      userId: row.reportedByUserId,
+      displayName: row.reportedByName,
+      username: row.reportedByUsername,
+    }),
+    isMine: row.reportedByUserId === viewerUserId,
+    createdAt: isoRequired(row.createdAt),
+    resolvedAt: iso(row.resolvedAt),
   };
 }
