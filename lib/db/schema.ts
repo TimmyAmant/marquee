@@ -1143,3 +1143,84 @@ export const requestBlocklist = pgTable(
     uniqueIndex("request_blocklist_keyword_idx").on(table.keyword).where(sql`${table.kind} = 'keyword'`),
   ],
 );
+
+/** The Discover page's rows as the admin arranged them (lib/discover/layout.ts):
+ * the built-in shelves (`builtIn` names one, e.g. "trending") in their
+ * chosen place, shown or hidden, and the admin's own shelves (a TMDb
+ * keyword, genre, studio, network or list, a Trakt list, or what was added
+ * to the library — `kind` and `source` say which). Empty until the admin
+ * first changes something: then every built-in shelf gets a row, and one
+ * missing later (a shelf added in an update) goes at the end. */
+export const discoverShelves = pgTable(
+  "discover_shelves",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    builtIn: text("built_in"),
+    kind: text("kind").notNull(),
+    /** A custom shelf's name; null for a built-in one (it keeps its own). */
+    title: text("title"),
+    source: jsonb("source").$type<Record<string, unknown>>(),
+    position: integer("position").notNull(),
+    hidden: boolean("hidden").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("discover_shelves_built_in_idx").on(table.builtIn)],
+);
+
+export const traktSyncKindValues = ["watchlist", "list"] as const;
+export type TraktSyncKind = (typeof traktSyncKindValues)[number];
+
+/** "Keep in sync": a member's public Trakt watchlist or list, checked every
+ * few hours (the trakt-sync job, lib/trakt/sync.ts), each new title filed as
+ * a normal request from that member. */
+export const traktSyncs = pgTable(
+  "trakt_syncs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull().$type<TraktSyncKind>(),
+    /** The Trakt username, as in the URL. */
+    username: text("username").notNull(),
+    /** The list's slug; "" for a watchlist (so the unique index holds). */
+    slug: text("slug").default("").notNull(),
+    syncMovies: boolean("sync_movies").default(true).notNull(),
+    syncTv: boolean("sync_tv").default(true).notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check("trakt_syncs_kind_check", sql`${table.kind} in ('watchlist','list')`),
+    uniqueIndex("trakt_syncs_user_list_idx").on(table.userId, table.kind, table.username, table.slug),
+  ],
+);
+
+export const traktSyncOutcomeValues = ["requested", "skipped", "existing"] as const;
+export type TraktSyncOutcome = (typeof traktSyncOutcomeValues)[number];
+
+/** Every title a member's Trakt syncs have handled, per member (not per
+ * list), so each is tried once: a request the admin declined isn't filed
+ * again, from this list or another, and one already owned isn't re-checked
+ * forever. "existing": already on the list when the sync was added without
+ * "request what's on it now". Kept when a sync is removed. */
+export const traktSyncItems = pgTable(
+  "trakt_sync_items",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    outcome: text("outcome").notNull().$type<TraktSyncOutcome>(),
+    syncId: uuid("sync_id").references(() => traktSyncs.id, { onDelete: "set null" }),
+    requestId: uuid("request_id").references(() => requests.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.mediaType, table.tmdbId] }),
+    check("trakt_sync_items_outcome_check", sql`${table.outcome} in ('requested','skipped','existing')`),
+  ],
+);

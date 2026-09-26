@@ -13,8 +13,13 @@ import {
   listTmdbPages,
   listTotalPages,
   sliceRecentlyAdded,
+  discoverListMaxPage,
+  parseDiscoverList,
   type DiscoverList,
 } from "@/lib/discover/lists";
+import { getCustomShelf } from "@/lib/discover/layout";
+import { customShelfMaxPage, fetchCustomShelfPage } from "@/lib/discover/custom-shelves";
+import type { LayoutShelf } from "@/lib/discover/shelves";
 
 // A Discover shelf's full list — "See all" on Recently Added, Trending,
 // Upcoming Movies and Upcoming Series. Shared by app/discover/[list] (first
@@ -31,7 +36,8 @@ type RawItem = {
 };
 
 export type DiscoverListPage = {
-  list: DiscoverList;
+  /** A built-in list's name, or a custom row's id. */
+  list: string;
   title: string;
   page: number;
   totalPages: number;
@@ -40,6 +46,19 @@ export type DiscoverListPage = {
 };
 
 const yearOf = (date: string | undefined | null) => (date || "").slice(0, 4) || null;
+
+/** A "See all" target: a built-in list ("trending") or one of the admin's
+ * own rows (its id, Settings → Discover). Null when it's neither. */
+export type ResolvedDiscoverList =
+  | { type: "builtIn"; list: DiscoverList; maxPage: number }
+  | { type: "custom"; shelf: LayoutShelf; maxPage: number };
+
+export async function resolveDiscoverList(name: string): Promise<ResolvedDiscoverList | null> {
+  const list = parseDiscoverList(name);
+  if (list) return { type: "builtIn", list, maxPage: discoverListMaxPage(list) };
+  const shelf = await getCustomShelf(name).catch(() => null);
+  return shelf ? { type: "custom", shelf, maxPage: customShelfMaxPage(shelf.kind) } : null;
+}
 
 /** Drops repeats: TMDb's rankings shift between the pages of one batch. */
 function dedupe(items: RawItem[]): RawItem[] {
@@ -147,6 +166,37 @@ async function enrich(viewer: ViewerIdentity, raw: RawItem[], knownStatus: boole
       canQuickAdd: Boolean(viewer.userId) && arrConfigured[item.mediaType] && isUnwanted(status),
     };
   });
+}
+
+/** One page of a custom row's See all (lib/discover/custom-shelves.ts). */
+export async function fetchCustomShelfListPage(
+  shelf: LayoutShelf,
+  page: number,
+  viewer: ViewerIdentity,
+): Promise<DiscoverListPage> {
+  const result = await fetchCustomShelfPage(shelf, page, viewer);
+  // Recently added knows each title's status already.
+  const knownStatus = shelf.kind === "library";
+  const items = await enrich(viewer, dedupe(result.items), knownStatus);
+  return {
+    list: shelf.id,
+    title: shelf.title,
+    page,
+    totalPages: result.totalPages,
+    totalResults: result.totalResults,
+    items,
+  };
+}
+
+/** Either kind of See all, by what resolveDiscoverList found. */
+export function fetchResolvedListPage(
+  resolved: ResolvedDiscoverList,
+  page: number,
+  viewer: ViewerIdentity,
+): Promise<DiscoverListPage> {
+  return resolved.type === "builtIn"
+    ? fetchDiscoverListPage(resolved.list, page, viewer)
+    : fetchCustomShelfListPage(resolved.shelf, page, viewer);
 }
 
 export async function fetchDiscoverListPage(

@@ -346,10 +346,100 @@ export type DiscoverShelves = {
   /** 0.42.4+ (an older server omits it): where each shelf's "See all" goes.
    * Every shelf has one. */
   seeAll: Record<DiscoverShelfKey, SeeAllTarget>;
+  /** 0.49+ (an older server omits it): the rows to show, in the admin's
+   * order (Settings → Discover), hidden ones left out, the admin's own rows
+   * included. The fixed keys above stay for older apps (a hidden built-in
+   * row is an empty array there). */
+  shelves: DiscoverShelf[];
 };
 
-/** GET /discover/lists/{list}: a Discover shelf's full list, paged. */
-export type DiscoverListResults = Paginated<TitleCard> & { list: DiscoverList; title: string };
+/** One Discover row. `kind` is the built-in row's key ("trending",
+ * "movieGenres", …) or a custom row's kind ("keyword", "genre", "company",
+ * "network", "tmdbList", "traktList", "library"). Exactly one of `results`
+ * (poster rows — every custom row), `genres` (movieGenres, seriesGenres)
+ * and `logos` (studios, networks) is non-null. An app that doesn't know a
+ * `kind` shows `results` as a poster row, and skips the row when that's
+ * null. */
+export type DiscoverShelf = {
+  id: string;
+  kind: string;
+  title: string;
+  custom: boolean;
+  results: TitleCard[] | null;
+  genres: GenreTile[] | null;
+  logos: NetworkCard[] | null;
+  /** Where "See all" goes; a custom row's is `{ type: "list", list: <its id> }`. */
+  seeAll: SeeAllTarget | null;
+};
+
+/** What a custom Discover row is built from (lib/discover/shelves.ts). */
+export type DiscoverShelfSource = {
+  mediaType: "movie" | "tv" | "all" | null;
+  tmdbId: number | null;
+  name: string | null;
+  url: string | null;
+};
+
+/** A row as Settings → Discover lists it. */
+export type DiscoverShelfSetting = {
+  id: string;
+  kind: string;
+  title: string;
+  custom: boolean;
+  hidden: boolean;
+  /** Null for a built-in row. */
+  source: DiscoverShelfSource | null;
+};
+
+/** GET /settings/discover (and the answer of every change to it). */
+export type DiscoverSettings = {
+  shelves: DiscoverShelfSetting[];
+  /** Trakt rows need Trakt connected (Settings → Integrations). */
+  traktConfigured: boolean;
+  maxCustomShelves: number;
+};
+
+/** GET /settings/discover/lookup: keywords, studios, networks or genres to
+ * build a row from. */
+export type DiscoverLookupResult = {
+  tmdbId: number;
+  name: string;
+  logoPath: string | null;
+  /** A hint to tell same-named ones apart, e.g. the company's country. */
+  detail: string | null;
+};
+
+/** GET /discover/lists/{list}: a Discover shelf's full list, paged. `list`
+ * is a built-in list's name or a custom row's id. */
+export type DiscoverListResults = Paginated<TitleCard> & { list: DiscoverList | string; title: string };
+
+/** A member's "Keep in sync" of a public Trakt watchlist or list
+ * (GET /trakt-syncs, lib/trakt/sync.ts). */
+export type TraktSync = {
+  id: string;
+  kind: "watchlist" | "list";
+  /** The list's link on trakt.tv. */
+  url: string;
+  /** "someone's watchlist" or the list's name from its link. */
+  name: string;
+  movies: boolean;
+  tv: boolean;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+  requestedCount: number;
+  createdAt: string;
+  /** Whose it is. */
+  owner: { id: string; username: string; displayName: string | null };
+};
+
+/** GET /trakt-syncs. */
+export type TraktSyncs = {
+  results: TraktSync[];
+  /** Trakt is connected (Settings → Integrations), so syncs can be added. */
+  available: boolean;
+  /** The most one account may have. */
+  maxPerMember: number;
+};
 
 export type BrowseExtras = {
   genres: Genre[];

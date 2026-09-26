@@ -181,5 +181,107 @@
       "list": null,
       "mediaType": "tv"
     }
-  }
+  },
+  "shelves": [
+    {
+      "id": "trending",
+      "kind": "trending",
+      "title": "Trending",
+      "custom": false,
+      "results": [
+        {
+          "mediaType": "movie",
+          "tmdbId": 603,
+          "name": "The Matrix",
+          "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+          "year": "1999",
+          "subtitle": null,
+          "overview": null,
+          "rating": null,
+          "status": null,
+          "favorited": false,
+          "requested": null,
+          "canQuickAdd": false,
+          "canRequest": false
+        }
+      ],
+      "genres": null,
+      "logos": null,
+      "seeAll": {
+        "type": "list",
+        "list": "trending",
+        "mediaType": null
+      }
+    },
+    {
+      "id": "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01",
+      "kind": "keyword",
+      "title": "Anime",
+      "custom": true,
+      "results": [
+        {
+          "mediaType": "movie",
+          "tmdbId": 603,
+          "name": "The Matrix",
+          "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+          "year": "1999",
+          "subtitle": null,
+          "overview": null,
+          "rating": null,
+          "status": null,
+          "favorited": false,
+          "requested": null,
+          "canQuickAdd": false,
+          "canRequest": false
+        }
+      ],
+      "genres": null,
+      "logos": null,
+      "seeAll": {
+        "type": "list",
+        "list": "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01",
+        "mediaType": null
+      }
+    },
+    {
+      "id": "movieGenres",
+      "kind": "movieGenres",
+      "title": "Movie Genres",
+      "custom": false,
+      "results": null,
+      "genres": [
+        {
+          "id": 28,
+          "name": "Action",
+          "backdropPath": "/qeQJ.jpg"
+        }
+      ],
+      "logos": null,
+      "seeAll": {
+        "type": "browse",
+        "list": null,
+        "mediaType": "movie"
+      }
+    },
+    {
+      "id": "studios",
+      "kind": "studios",
+      "title": "Studios",
+      "custom": false,
+      "results": null,
+      "genres": null,
+      "logos": [
+        {
+          "tmdbId": 2,
+          "name": "Walt Disney Pictures",
+          "logoPath": "/wdrC.png"
+        }
+      ],
+      "seeAll": {
+        "type": "browse",
+        "list": null,
+        "mediaType": "movie"
+      }
+    }
+  ]
 }

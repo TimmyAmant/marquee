@@ -1,0 +1,61 @@
+{
+  "shelves": [
+    {
+      "id": "recentlyAdded",
+      "kind": "recentlyAdded",
+      "title": "Recently Added",
+      "custom": false,
+      "hidden": false,
+      "source": null
+    },
+    {
+      "id": "trending",
+      "kind": "trending",
+      "title": "Trending",
+      "custom": false,
+      "hidden": true,
+      "source": null
+    },
+    {
+      "id": "5b0f3c2e-8f7a-4d0e-9b1c-2a6d7e8f9a01",
+      "kind": "keyword",
+      "title": "Anime",
+      "custom": true,
+      "hidden": false,
+      "source": {
+        "mediaType": "all",
+        "tmdbId": 210024,
+        "name": "anime",
+        "url": null
+      }
+    },
+    {
+      "id": "8d1e2f3a-4b5c-4d6e-8f70-1a2b3c4d5e6f",
+      "kind": "company",
+      "title": "A24",
+      "custom": true,
+      "hidden": false,
+      "source": {
+        "mediaType": "movie",
+        "tmdbId": 41077,
+        "name": "A24",
+        "url": null
+      }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f",
+      "kind": "traktList",
+      "title": "Best of 2024",
+      "custom": true,
+      "hidden": false,
+      "source": {
+        "mediaType": "all",
+        "tmdbId": null,
+        "name": null,
+        "url": "https://trakt.tv/users/someone/lists/best-of-2024"
+      }
+    }
+  ],
+  "traktConfigured": true,
+  "maxCustomShelves": 30
+}

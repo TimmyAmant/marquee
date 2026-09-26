@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "id": "0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c",
+      "kind": "list",
+      "url": "https://trakt.tv/users/someone/lists/best-of-2024",
+      "name": "Best of 2024",
+      "movies": true,
+      "tv": false,
+      "lastSyncedAt": "2026-09-25T18:40:05.000Z",
+      "lastError": null,
+      "requestedCount": 4,
+      "createdAt": "2026-09-20T09:12:44.000Z",
+      "owner": {
+        "id": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+        "username": "anna",
+        "displayName": "Anna"
+      }
+    }
+  ],
+  "available": true,
+  "maxPerMember": 10
+}

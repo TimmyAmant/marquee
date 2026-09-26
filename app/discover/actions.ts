@@ -3,8 +3,7 @@
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { fetchDiscoverItems, type DiscoverFetchParams, type DiscoverCardData } from "@/app/discover/fetch-items";
 import { pickSurprise, type SurpriseMeParams as SurpriseParams } from "@/lib/discover/surprise";
-import { discoverListMaxPage, parseDiscoverList } from "@/lib/discover/lists";
-import { fetchDiscoverListPage } from "@/lib/pages/discover-lists";
+import { fetchResolvedListPage, resolveDiscoverList } from "@/lib/pages/discover-lists";
 
 export type SurpriseMeParams = SurpriseParams;
 
@@ -24,17 +23,18 @@ export async function loadMoreDiscoverItems(
 }
 
 /** Infinite-scroll "load more" for a Discover shelf's full list
- * (/discover/[list]) — see fetchDiscoverListPage. */
+ * (/discover/[list]) — a built-in list or one of the admin's own rows. */
 export async function loadMoreDiscoverList(
   listName: string,
   page: number,
 ): Promise<{ items: DiscoverCardData[]; hasNextPage: boolean }> {
   const viewer = await getViewerContext();
-  const list = parseDiscoverList(listName);
-  if (!viewer.session || !list || !Number.isInteger(page) || page < 1 || page > discoverListMaxPage(list)) {
+  if (!viewer.session || typeof listName !== "string" || !Number.isInteger(page) || page < 1) {
     return { items: [], hasNextPage: false };
   }
-  const result = await fetchDiscoverListPage(list, page, viewer);
+  const resolved = await resolveDiscoverList(listName);
+  if (!resolved || page > resolved.maxPage) return { items: [], hasNextPage: false };
+  const result = await fetchResolvedListPage(resolved, page, viewer);
   return { items: result.items, hasNextPage: result.page < result.totalPages };
 }
 

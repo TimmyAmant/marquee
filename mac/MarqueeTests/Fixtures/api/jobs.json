@@ -25,6 +25,12 @@
       "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each."
     },
     {
+      "id": "trakt-sync",
+      "name": "Trakt List Requests",
+      "schedule": "Every 3 hours",
+      "description": "Requests the new movies and shows on the Trakt watchlists and public lists members keep in sync, like pressing Request for each."
+    },
+    {
       "id": "not-found-check",
       "name": "Can't Find Check",
       "schedule": "Every hour",

@@ -4,23 +4,32 @@ import { requireTmdbConfigured } from "@/lib/api/guards";
 import { ApiError } from "@/lib/api/errors";
 import { queryInt } from "@/lib/api/request";
 import { titleCard } from "@/lib/api/mappers";
-import { DISCOVER_LISTS, discoverListMaxPage, parseDiscoverList } from "@/lib/discover/lists";
-import { fetchDiscoverListPage } from "@/lib/pages/discover-lists";
+import { DISCOVER_LISTS } from "@/lib/discover/lists";
+import { fetchResolvedListPage, resolveDiscoverList } from "@/lib/pages/discover-lists";
 import type { DiscoverListResults } from "@/lib/api/types";
 
-/** A Discover shelf's full list ("See all" on Recently Added, Trending and
- * the Upcoming shelves), paged, with status, favorited and canQuickAdd. */
+/** A Discover shelf's full list ("See all" on Recently Added, Trending, the
+ * Upcoming shelves, and each row the admin added — by its id), paged, with
+ * status, favorited and canQuickAdd. */
 export const GET = withApi<{ list: string }>(async (request, params): Promise<DiscoverListResults> => {
   const ctx = await requireApiUser(request);
-  const list = parseDiscoverList(params.list);
-  if (!list) throw ApiError.of("not_found", `No Discover list "${params.list}" (one of ${DISCOVER_LISTS.join(", ")}).`);
-  const page = queryInt(new URL(request.url), "page", { min: 1, max: discoverListMaxPage(list) }) ?? 1;
+  const resolved = await resolveDiscoverList(params.list);
+  if (!resolved) {
+    throw ApiError.of(
+      "not_found",
+      `No Discover list "${params.list}" (one of ${DISCOVER_LISTS.join(", ")}, or a Discover row's id).`,
+    );
+  }
+  const page = queryInt(new URL(request.url), "page", { min: 1, max: resolved.maxPage }) ?? 1;
   // Recently Added comes from the library, not TMDb.
-  if (list !== "recently-added") await requireTmdbConfigured();
+  const fromLibrary =
+    (resolved.type === "builtIn" && resolved.list === "recently-added") ||
+    (resolved.type === "custom" && resolved.shelf.kind === "library");
+  if (!fromLibrary) await requireTmdbConfigured();
 
-  const result = await fetchDiscoverListPage(list, page, await ctx.viewer());
+  const result = await fetchResolvedListPage(resolved, page, await ctx.viewer());
   return {
-    list,
+    list: result.list,
     title: result.title,
     page,
     totalPages: result.totalPages,

@@ -41,8 +41,9 @@ const READABLE_SETTINGS = [
 ];
 
 /** Read with any key, but never changed with one: household accounts
- * (roles, passwords, photos) and where someone's notifications go. */
-const NO_CHANGES_PREFIXES = ["/users", "/me/notification-channels", "/me/plex-watchlist", "/settings"];
+ * (roles, passwords, photos), where someone's notifications go, and the
+ * standing syncs that file requests on someone's behalf. */
+const NO_CHANGES_PREFIXES = ["/users", "/me/notification-channels", "/me/plex-watchlist", "/trakt-syncs", "/settings"];
 
 export const KEY_DENIED_MESSAGE = "API keys can't manage API keys, sign-in, household accounts or admin settings.";
 export const KEY_READ_ONLY_MESSAGE = "This API key is read-only.";

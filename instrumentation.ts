@@ -15,6 +15,7 @@ export async function register() {
   const { pruneOldRecords } = await import("@/lib/jobs/cleanup");
   const { syncAllPlexWatchlists } = await import("@/lib/plex/watchlist");
   const { checkNotFoundRequests } = await import("@/lib/requests/not-found");
+  const { syncAllTraktSyncs } = await import("@/lib/trakt/sync");
 
   cron.schedule("0 * * * *", () => {
     syncAllConnectedPlexUsers().catch((err) => {
@@ -33,6 +34,15 @@ export async function register() {
   cron.schedule("5-59/10 * * * *", () => {
     syncAllPlexWatchlists().catch((err) => {
       console.error("[plex-watchlist] scheduled sync failed:", err);
+    });
+  });
+
+  // Trakt lists members keep in sync (lib/trakt/sync.ts). A public list
+  // changes slowly and Trakt has no cheap "unchanged" answer like plex.tv's
+  // 304, so every few hours rather than every few minutes.
+  cron.schedule("40 */3 * * *", () => {
+    syncAllTraktSyncs().catch((err) => {
+      console.error("[trakt-sync] scheduled sync failed:", err);
     });
   });
 
