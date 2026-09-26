@@ -51,6 +51,17 @@ export type FourKStatus = {
  * a title page asks). Null when there's no 4K instance for this type at all.
  * A lookup that fails counts as "untracked" rather than failing the page.
  */
+/** A title page waits at most this long for the 4K instance; a slow or
+ * unreachable one then reads as "untracked" rather than holding the page. */
+const FOURK_LOOKUP_BUDGET_MS = 2500;
+
+function withinBudget<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race([
+    promise.catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), FOURK_LOOKUP_BUDGET_MS).unref?.()),
+  ]);
+}
+
 export async function getFourKStatus(
   adminUserId: string,
   mediaType: MediaType,
@@ -62,10 +73,10 @@ export async function getFourKStatus(
   const configured = isArrFullyConfigured(credential);
   const config = { baseUrl: credential.baseUrl, apiKey: credential.apiKey };
   if (mediaType === "movie") {
-    const movie = await radarr.getMovieByTmdbId(config, tmdbId).catch(() => null);
+    const movie = await withinBudget(radarr.getMovieByTmdbId(config, tmdbId), null);
     return { configured, status: movie ? deriveRadarrStatus(movie) : "untracked" };
   }
   if (!tvdbId) return { configured, status: "untracked" };
-  const series = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
+  const series = await withinBudget(sonarr.getSeriesByTvdbId(config, tvdbId), null);
   return { configured, status: series ? deriveSonarrStatus(series) : "untracked" };
 }

@@ -177,7 +177,7 @@ export async function addSeriesToSonarrForUser(
       });
     }
   } catch {
-    return fail("upstream", "Couldn't add this series to Sonarr.");
+    return fail("upstream", `Couldn't add this series to ${fourK ? "the 4K Sonarr" : "Sonarr"}.`);
   }
 
   if (fourK) return { ok: true };

@@ -123,7 +123,7 @@ export async function POST(
   }
 
   if (title && tmdbId != null) {
-    const shown = fourK ? `${title} (4K)` : title;
+    const shown = fourK ? `${title} in 4K` : title;
     const message =
       eventType === "Grab" ? `${shown} started downloading` : `${shown} finished downloading`;
     await createNotification({
@@ -134,6 +134,7 @@ export async function POST(
       eventType: eventType === "Grab" ? "grabbed" : "downloaded",
       message,
       dedupeSince: new Date(Date.now() - NOTIFICATION_DEDUPE_WINDOW_MS),
+      is4k: fourK,
     }).catch(() => undefined);
 
     if (eventType === "Download") {

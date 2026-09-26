@@ -326,6 +326,7 @@ export async function getOtherPendingRequesters(
         eq(requests.mediaType, mediaType),
         eq(requests.tmdbId, tmdbId),
         ne(requests.requestedByUserId, excludeUserId),
+        eq(requests.is4k, false),
       ),
     );
 

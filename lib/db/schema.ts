@@ -417,6 +417,9 @@ export const notifications = pgTable(
     eventType: text("event_type").notNull().$type<NotificationEventType>(),
     message: text("message").notNull(),
     read: boolean("read").default(false).notNull(),
+    // About the 4K copy (lib/arr/fourk.ts): kept apart from the regular
+    // copy's notices when repeats are dropped, so one doesn't hide the other.
+    is4k: boolean("is_4k").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
