@@ -32,6 +32,17 @@ extension MarqueeAPI {
             return result.requestId
         }
 
+        /// `POST /titles/{type}/{tmdbId}/request-all-missing` — a franchise row's
+        /// "Request all N missing" (members; `.forbidden` for the admin). The
+        /// server works the set out from this title's collection itself and
+        /// requests each; a partial result still succeeds, with `message`.
+        func requestAllMissing(_ type: API.MediaType, id tmdbId: Int) async throws -> API.RequestAllMissingResult {
+            try await transport.mutate(
+                .post, TitlesEndpoints.path(type, tmdbId) + "/request-all-missing", body: nil, timeout: Timeout.integrations,
+                changes: [.requests, .library]
+            )
+        }
+
         /// `GET /requests/mine` — your own requests, newest first.
         func mine() async throws -> [API.MyRequest] {
             let list: API.ListResponse<API.MyRequest> = try await transport.get("/requests/mine", timeout: Timeout.integrations)

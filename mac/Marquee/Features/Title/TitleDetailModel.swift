@@ -37,6 +37,10 @@ final class TitleDetailModel {
     /// "Add all N missing".
     private(set) var isAddingAll = false
     private(set) var addAllResult: String?
+    /// A member's "Request all N missing": in flight, and the server's line
+    /// about how it went ("Requested 2 of 4. …").
+    private(set) var isRequestingAll = false
+    private(set) var requestAllResult: String?
     /// A problem report went through from this page (the "Problem reported"
     /// pill shows even before `viewer.openReports` catches up).
     private(set) var reportedProblem = false
@@ -301,5 +305,22 @@ final class TitleDetailModel {
             // posters need their new badges, and "Add all" its new count.
             await load(api)
         }
+    }
+
+    /// The franchise row's "Request all N missing" (household members). One
+    /// call: the server requests each title through the normal request path
+    /// and says how it went.
+    func requestAllMissing() async {
+        guard let api, !(detail?.franchise?.requestAllMissing ?? []).isEmpty, !isRequestingAll else { return }
+        isRequestingAll = true
+        requestAllResult = nil
+        do {
+            requestAllResult = try await api.requests.requestAllMissing(id.mediaType, id: id.tmdbId).message
+        } catch {
+            requestAllResult = error.localizedDescription
+        }
+        isRequestingAll = false
+        // The whole page, like "Add all": the posters show Requested now.
+        await load(api)
     }
 }

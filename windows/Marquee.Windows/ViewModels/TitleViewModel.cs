@@ -168,6 +168,10 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(AddAllLabel),
         nameof(ShowsAddAll),
         nameof(AddAllConfirmation),
+        nameof(RequestableCount),
+        nameof(RequestAllLabel),
+        nameof(ShowsRequestAll),
+        nameof(RequestAllConfirmation),
         nameof(Studios),
         nameof(HasStudios),
         nameof(Similar),
@@ -285,6 +289,17 @@ public sealed partial class TitleViewModel : ObservableObject
     private string? addAllResult;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RequestAllLabel))]
+    [NotifyPropertyChangedFor(nameof(CanRequestAll))]
+    private bool isRequestingAll;
+
+    /// <summary>The server's "Requested 2 of 4. …" in place of the Request all button.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRequestAllResult))]
+    [NotifyPropertyChangedFor(nameof(ShowsRequestAll))]
+    private string? requestAllResult;
+
+    [ObservableProperty]
     private bool isTogglingFavorite;
 
     /// <summary>"Request in 4K" and "Add to 4K …" share one busy flag, as components/fourk-controls.tsx.</summary>
@@ -394,6 +409,13 @@ public sealed partial class TitleViewModel : ObservableObject
     public string AddAllConfirmation =>
         $"Add all {MissingCount.ToString(CultureInfo.CurrentCulture)} missing {(MissingCount == 1 ? "title" : "titles")} to Sonarr/Radarr?";
 
+    /// <summary>A member's "Request all N missing" (franchise.requestAllMissing).</summary>
+    public int RequestableCount => detail?.Franchise?.RequestAllCount ?? 0;
+    public string RequestAllLabel => TitleFranchise.RequestAllLabel(RequestableCount, IsRequestingAll);
+    public bool ShowsRequestAll => RequestableCount > 0 && RequestAllResult == null;
+    public bool HasRequestAllResult => RequestAllResult != null;
+    public string RequestAllConfirmation => TitleFranchise.RequestAllConfirmation(RequestableCount);
+
     public IReadOnlyList<ChipItem> Studios => studios;
     public bool HasStudios => studios.Count > 0;
     public IReadOnlyList<PosterItem> Similar => similar;
@@ -458,6 +480,9 @@ public sealed partial class TitleViewModel : ObservableObject
 
     /// <summary>"Add all N missing" is one click at a time.</summary>
     public bool CanAddAll => !IsAddingAll;
+
+    /// <summary>So is "Request all N missing".</summary>
+    public bool CanRequestAll => !IsRequestingAll;
 
     // MARK: 4K (viewer.fourK, 0.37+; components/fourk-controls.tsx)
 
@@ -618,6 +643,7 @@ public sealed partial class TitleViewModel : ObservableObject
         FourKError = null;
         TrackingMessage = null;
         AddAllResult = null;
+        RequestAllResult = null;
         AddAdvanced.Reset(Id.MediaType, Id.TmdbId);
         AddFourKAdvanced.Reset(Id.MediaType, Id.TmdbId);
         foreach (var name in DetailProperties)
@@ -664,6 +690,7 @@ public sealed partial class TitleViewModel : ObservableObject
                 return;
             }
             AddAllResult = null;
+            RequestAllResult = null;
             SetDetail(fresh, rebuild: true);
         }
         catch (ApiException error)
@@ -1073,7 +1100,36 @@ public sealed partial class TitleViewModel : ObservableObject
         await ReloadKeepingAddAllResultAsync();
     }
 
-    /// <summary>A quiet full refetch after "Add all" that keeps its result line.</summary>
+    /// <summary>
+    /// The franchise row's "Request all N missing" (household members): one
+    /// call, the server requests each title and says how it went.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestAllMissingAsync()
+    {
+        if (IsRequestingAll || RequestableCount == 0)
+        {
+            return;
+        }
+        IsRequestingAll = true;
+        RequestAllResult = null;
+        try
+        {
+            RequestAllResult = (await model.Api.Titles.RequestAllMissingAsync(Id.MediaType, Id.TmdbId)).Message;
+        }
+        catch (ApiException error)
+        {
+            RequestAllResult = error.Message;
+        }
+        finally
+        {
+            IsRequestingAll = false;
+        }
+        // The whole page, like "Add all": the posters show Requested now.
+        await ReloadKeepingAddAllResultAsync();
+    }
+
+    /// <summary>A quiet full refetch after "Add all" or "Request all" that keeps their result lines.</summary>
     private async Task ReloadKeepingAddAllResultAsync()
     {
         try
@@ -1082,8 +1138,10 @@ public sealed partial class TitleViewModel : ObservableObject
             if (detail is { } latest && latest.Id == fresh.Id)
             {
                 var result = AddAllResult;
+                var requestResult = RequestAllResult;
                 SetDetail(fresh, rebuild: true);
                 AddAllResult = result;
+                RequestAllResult = requestResult;
             }
         }
         catch (ApiException)

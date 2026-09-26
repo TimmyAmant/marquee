@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "total": 4,
+  "requested": 2,
+  "refused": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 57800,
+      "title": "Ice Age: Continental Drift",
+      "error": "You've used your 2 movie requests for a week. You can ask again in 7 days."
+    },
+    {
+      "mediaType": "movie",
+      "tmdbId": 278154,
+      "title": "Ice Age: Collision Course",
+      "error": "You've used your 2 movie requests for a week. You can ask again in 7 days."
+    }
+  ],
+  "message": "Requested 2 of 4. You've used your 2 movie requests for a week. You can ask again in 7 days."
+}

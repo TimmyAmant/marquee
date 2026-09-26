@@ -35,24 +35,51 @@ export async function clearRequestAlerts(requestId: string): Promise<void> {
  * more than one request behind it.
  */
 export async function notifyReviewersOfWatchlist(requesterId: string, requestIds: string[]): Promise<void> {
+  await notifyReviewersOfBatch(requesterId, requestIds, (who, count, list) =>
+    count === 1 ? `${who}'s Plex Watchlist requested ${list}` : `${who}'s Plex Watchlist requested ${count} titles: ${list}`,
+  );
+}
+
+/** Same idea for a member's "Request all N missing" on a franchise row
+ * (lib/requests/request-all.ts): one "Anna requested 3 titles from “Ice Age
+ * Collection”" rather than three pushes. */
+export async function notifyReviewersOfCollection(
+  requesterId: string,
+  requestIds: string[],
+  collection: string,
+): Promise<void> {
+  await notifyReviewersOfBatch(requesterId, requestIds, (who, count, list) =>
+    count === 1 ? `${who} requested ${list}` : `${who} requested ${count} titles from “${collection}”: ${list}`,
+  );
+}
+
+/** "“A”, “B” and 3 more" — the first two names of a batch. Pure. */
+export function batchTitleList(titles: string[]): string {
+  const names = titles.slice(0, 2).map((t) => `“${t}”`);
+  const more = titles.length > 2 ? ` and ${titles.length - 2} more` : "";
+  return names.join(", ") + more;
+}
+
+async function notifyReviewersOfBatch(
+  requesterId: string,
+  requestIds: string[],
+  describe: (who: string, count: number, list: string) => string,
+): Promise<void> {
   if (requestIds.length === 0) return;
   const waiting = await db
     .select({ id: requests.id, mediaType: requests.mediaType, tmdbId: requests.tmdbId, title: requests.title })
     .from(requests)
     .where(and(inArray(requests.id, requestIds), eq(requests.status, "pending")));
   if (waiting.length === 0) return;
+  // Oldest first, as they were asked for.
+  waiting.sort((a, b) => requestIds.indexOf(a.id) - requestIds.indexOf(b.id));
   const [requester] = await db
     .select({ name: users.displayName, username: users.username })
     .from(users)
     .where(eq(users.id, requesterId))
     .limit(1);
   const who = requester?.name || requester?.username || "Someone";
-  const names = waiting.slice(0, 2).map((r) => `“${r.title}”`);
-  const more = waiting.length > 2 ? ` and ${waiting.length - 2} more` : "";
-  const message =
-    waiting.length === 1
-      ? `${who}'s Plex Watchlist requested ${names[0]}`
-      : `${who}'s Plex Watchlist requested ${waiting.length} titles: ${names.join(", ")}${more}`;
+  const message = describe(who, waiting.length, batchTitleList(waiting.map((r) => r.title)));
   const [first] = waiting;
   for (const [index, reviewer] of (await reviewersExcept(requesterId)).entries()) {
     await createNotification({

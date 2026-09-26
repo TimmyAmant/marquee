@@ -141,6 +141,9 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/favorites/company/420/toggle", response: "favorite-toggle") { try await $0.favorites.toggle(.company, id: 420) },
             // Requests
             Case(method: "POST", path: "/titles/tv/1399/request", response: "request-created") { try await $0.requests.create(.tv, id: 1399) },
+            Case(method: "POST", path: "/titles/movie/425/request-all-missing", response: "request-all-missing") {
+                _ = try await $0.requests.requestAllMissing(.movie, id: 425)
+            },
             Case(method: "GET", path: "/requests/mine", response: "requests-mine") { _ = try await $0.requests.mine() },
             Case(method: "GET", path: "/requests/pending", response: "requests-pending") { _ = try await $0.requests.pending() },
             Case(method: "GET", path: "/requests/history", response: "requests-history") { _ = try await $0.requests.history() },
@@ -294,8 +297,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 118, "docs/api-v1.md documents 118 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 118, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 119, "docs/api-v1.md documents 119 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 119, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

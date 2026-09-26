@@ -142,6 +142,24 @@ public sealed partial class TitlePage : Page
         }
     }
 
+    /// <summary>A member's "Request all N missing", behind the website's confirmation.</summary>
+    private async void OnRequestAllClick(object sender, RoutedEventArgs e)
+    {
+        var confirm = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = ViewModel.RequestAllConfirmation,
+            Content = "Each title is requested on its own, so your request limits still apply.",
+            PrimaryButtonText = "Request all",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        if (await confirm.TryShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.RequestAllMissingCommand.ExecuteAsync(null);
+        }
+    }
+
     /// <summary>The "Location" row's Copy button.</summary>
     private void OnCopyPathClick(object sender, RoutedEventArgs e)
     {

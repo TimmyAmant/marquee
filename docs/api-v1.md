@@ -82,6 +82,11 @@ where the real server needed something the core contract didn't spell out.
     PIN flow; new `/me/links/sso/*` and admin `/settings/sso`. A server
     older than this has neither field — treat missing as null/false and
     don't offer the buttons.
+13. **"Request all N missing" for household members (additive).** The title
+    detail's `franchise` gains `requestAllMissing`, and the new
+    `POST /titles/{type}/{tmdbId}/request-all-missing` requests them all in
+    one go. A server older than this leaves the field out — treat missing as
+    an empty list and don't show the button.
 
 ---
 
@@ -862,7 +867,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "collectionId": 2344,
     "collectionFavorited": false,
     "items": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest — oldest first */ ],
-    "addAllMissing": [ { "mediaType": "movie", "tmdbId": 604 } ]
+    "addAllMissing": [ { "mediaType": "movie", "tmdbId": 604 } ],
+    "requestAllMissing": []
   },
   "studios": [ { "tmdbId": 79, "name": "Village Roadshow Pictures", "logoPath": "/at4u.png", "favorited": false } ],
   "similar": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ]
@@ -985,7 +991,13 @@ Field notes:
   `collectionId`/`collectionFavorited` are null for TV groups; the star next to
   the heading favorites the collection (`/favorites/collection/{collectionId}`).
   `addAllMissing` is the admin's "Add all N missing" set (empty for members);
-  add each with `POST /titles/{type}/{id}/add`.
+  add each with `POST /titles/{type}/{id}/add`. `requestAllMissing` is a
+  household member's "Request all N missing" set (plain and trusted members;
+  always empty for the admin): the franchise titles that show a Request
+  button — not tracked or owned, not already requested by you, not on the
+  blocklist. Show "Request all N missing" when it isn't empty, confirm
+  ("Request all N missing titles?"), then
+  `POST /titles/{type}/{tmdbId}/request-all-missing` and reload the page.
 - `studios`: production companies (or networks for thinly-credited streaming
   originals), heading "Studio".
 - `similar`: TMDb recommendations, heading "More like this".
@@ -1327,6 +1339,40 @@ numbers must be whole numbers." / "Season 7 isn't listed for this show." /
 your library." (whole series) / "You've already requested this — it's waiting
 for approval." / "Those seasons are already in your library or on their way."
 (seasons); `404` / `502` (TMDb).
+
+### `POST /titles/{type}/{tmdbId}/request-all-missing` — user
+
+A franchise row's "Request all N missing" (household members; the admin gets
+`403 forbidden` and uses "Add all"). No body. The server works out the set
+itself from this title's collection or crossover group — the detail's
+`franchise.requestAllMissing` — and requests each title exactly as
+`POST …/request` would (whole series for TV), so request limits, the
+blocklist, auto-approval and trusted members' instant approval all apply.
+Reviewers get one alert for the batch ("Anna requested 3 titles from “Ice
+Age Collection”: …") instead of one per title.
+
+Some titles can be refused while the rest go through — still `200`. `total`
+is how many were in the set, `requested` how many requests were filed,
+`refused` the rest with the reason, and `message` the line to show:
+"Requested all 4." / "Requested 2 of 4. You've used your 2 movie requests
+for a week. You can ask again in 7 days." / "Couldn't request any of the 4.
+…" / "Nothing left to request here." (the set was empty).
+
+```json
+{
+  "ok": true,
+  "total": 4,
+  "requested": 2,
+  "refused": [
+    { "mediaType": "movie", "tmdbId": 57800, "title": "Ice Age: Continental Drift", "error": "You've used your 2 movie requests for a week. You can ask again in 7 days." },
+    { "mediaType": "movie", "tmdbId": 278154, "title": "Ice Age: Collision Course", "error": "You've used your 2 movie requests for a week. You can ask again in 7 days." }
+  ],
+  "message": "Requested 2 of 4. You've used your 2 movie requests for a week. You can ask again in 7 days."
+}
+```
+
+Errors: `403 forbidden` (the admin); `404 not_found` (no such title, or it
+isn't part of a collection); `502 upstream` (TMDb).
 
 ### `GET /requests/mine` — user
 
@@ -2780,6 +2826,7 @@ what to do, grouped by area.
 | | `DELETE /favorites/{entityType}/{tmdbId}` | user |
 | | `POST /favorites/{entityType}/{tmdbId}/toggle` | user |
 | Requests | `POST /titles/{type}/{tmdbId}/request` | user |
+| | `POST /titles/{type}/{tmdbId}/request-all-missing` | user |
 | | `GET /requests/mine` | user |
 | | `GET /requests/pending` | admin |
 | | `GET /requests/history` | admin |

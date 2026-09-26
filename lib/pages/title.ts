@@ -147,6 +147,96 @@ export function tvSeasonsOf(type: MediaType, raw: unknown): TmdbSeasonSummary[] 
 }
 
 /**
+ * The title's franchise row: a movie's TMDb collection or a TV show's
+ * hand-curated crossover group, with the viewer's library status, own
+ * requests and favorites for each member. Part of loadTitlePage, and on its
+ * own behind "Request all N missing" (lib/requests/request-all.ts), which
+ * works the set out again on the server rather than trusting the client's.
+ */
+export async function loadFranchise(
+  viewer: ViewerIdentity,
+  type: MediaType,
+  tmdbId: number,
+  raw: TmdbMovieDetails | TmdbTvDetails | null,
+) {
+  // Movie franchises (Harry Potter, James Bond, etc.) come straight from
+  // TMDb's own "collection" data. TV crossovers (Arrowverse, 9-1-1 universe)
+  // have no TMDb equivalent, so those come from a hand-curated list instead.
+  let franchiseTitle: string | null = null;
+  let franchiseItems: FranchiseItem[] = [];
+  let collectionId: number | undefined;
+
+  if (type === "movie") {
+    const collectionRef = (raw as TmdbMovieDetails | null)?.belongs_to_collection;
+    if (collectionRef) {
+      collectionId = collectionRef.id;
+      const collection = await getCollection(collectionRef.id).catch(() => null);
+      if (collection) {
+        franchiseTitle = collection.name;
+        franchiseItems = [...collection.parts]
+          .sort((a, b) => (a.release_date || "").localeCompare(b.release_date || ""))
+          .map((part) => ({
+            tmdbId: part.id,
+            mediaType: "movie" as MediaType,
+            name: part.title,
+            posterPath: part.poster_path,
+            year: (part.release_date || "").slice(0, 4) || null,
+          }));
+      }
+    }
+  } else {
+    const group = findTvFranchiseGroup(tmdbId);
+    if (group) {
+      const members = await Promise.all(
+        group.memberTmdbIds.map((memberId) => getOrFetchTitle("tv", memberId).catch(() => null)),
+      );
+      franchiseTitle = group.displayName;
+      franchiseItems = members
+        .filter((m): m is NonNullable<typeof m> => m !== null)
+        .map((m) => ({
+          tmdbId: m.tmdbId,
+          mediaType: "tv" as MediaType,
+          name: m.name,
+          posterPath: m.posterPath,
+          year: (m.releaseDate || m.firstAirDate || "").slice(0, 4) || null,
+        }));
+    }
+  }
+
+  const [franchiseStatusMap, franchiseRequestStatusMap, franchiseFavoritedIds, collectionFavorited] =
+    viewer.libraryOwnerId && franchiseItems.length > 0
+      ? await Promise.all([
+          getLibraryStatusMap(
+            viewer.libraryOwnerId,
+            franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+          ),
+          getActiveRequestStatusMap(
+            viewer.userId,
+            franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
+          ),
+          getFavoritedTmdbIds(
+            viewer.userId,
+            type,
+            franchiseItems.map((i) => i.tmdbId),
+          ),
+          collectionId !== undefined
+            ? isFavorited(viewer.userId, "collection", collectionId)
+            : Promise.resolve(false),
+        ])
+      : [new Map<string, LibraryStatus>(), new Map<string, RequestStatus>(), new Set<number>(), false];
+
+  return {
+    franchiseTitle,
+    franchiseItems,
+    collectionId,
+    franchiseStatusMap,
+    franchiseRequestStatusMap,
+    franchiseFavoritedIds,
+    collectionFavorited,
+  };
+}
+
+/**
  * Everything /title/[type]/[id] renders — hero, sidebar, file details,
  * seasons, cast, franchise, studios, similar titles — with the viewer's
  * library status, favorites, requests and admin controls. Shared by
@@ -231,71 +321,15 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
           new Set<number>(),
         ];
 
-  // Movie franchises (Harry Potter, James Bond, etc.) come straight from
-  // TMDb's own "collection" data. TV crossovers (Arrowverse, 9-1-1 universe)
-  // have no TMDb equivalent, so those come from a hand-curated list instead.
-  let franchiseTitle: string | null = null;
-  let franchiseItems: FranchiseItem[] = [];
-  let collectionId: number | undefined;
-
-  if (type === "movie") {
-    const collectionRef = (raw as TmdbMovieDetails | null)?.belongs_to_collection;
-    if (collectionRef) {
-      collectionId = collectionRef.id;
-      const collection = await getCollection(collectionRef.id).catch(() => null);
-      if (collection) {
-        franchiseTitle = collection.name;
-        franchiseItems = [...collection.parts]
-          .sort((a, b) => (a.release_date || "").localeCompare(b.release_date || ""))
-          .map((part) => ({
-            tmdbId: part.id,
-            mediaType: "movie" as MediaType,
-            name: part.title,
-            posterPath: part.poster_path,
-            year: (part.release_date || "").slice(0, 4) || null,
-          }));
-      }
-    }
-  } else {
-    const group = findTvFranchiseGroup(tmdbId);
-    if (group) {
-      const members = await Promise.all(
-        group.memberTmdbIds.map((memberId) => getOrFetchTitle("tv", memberId).catch(() => null)),
-      );
-      franchiseTitle = group.displayName;
-      franchiseItems = members
-        .filter((m): m is NonNullable<typeof m> => m !== null)
-        .map((m) => ({
-          tmdbId: m.tmdbId,
-          mediaType: "tv" as MediaType,
-          name: m.name,
-          posterPath: m.posterPath,
-          year: (m.releaseDate || m.firstAirDate || "").slice(0, 4) || null,
-        }));
-    }
-  }
-
-  const [franchiseStatusMap, franchiseRequestStatusMap, franchiseFavoritedIds, collectionFavorited] =
-    viewer.libraryOwnerId && franchiseItems.length > 0
-      ? await Promise.all([
-          getLibraryStatusMap(
-            viewer.libraryOwnerId,
-            franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-          ),
-          getActiveRequestStatusMap(
-            viewer.userId,
-            franchiseItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-          ),
-          getFavoritedTmdbIds(
-            viewer.userId,
-            type,
-            franchiseItems.map((i) => i.tmdbId),
-          ),
-          collectionId !== undefined
-            ? isFavorited(viewer.userId, "collection", collectionId)
-            : Promise.resolve(false),
-        ])
-      : [new Map<string, LibraryStatus>(), new Map<string, RequestStatus>(), new Set<number>(), false];
+  const {
+    franchiseTitle,
+    franchiseItems,
+    collectionId,
+    franchiseStatusMap,
+    franchiseRequestStatusMap,
+    franchiseFavoritedIds,
+    collectionFavorited,
+  } = await loadFranchise(viewer, type, tmdbId, raw);
 
   const seasonCompleteness = seasonLibrary ? seasonCompletenessOf(seasonLibrary) : null;
 

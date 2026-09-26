@@ -225,6 +225,25 @@ public sealed record TitleFranchise
 
     /// <summary>The admin's "Add all N missing" set (empty for members); add each with <c>POST /titles/{type}/{id}/add</c>.</summary>
     public required IReadOnlyList<TitleId> AddAllMissing { get; init; }
+
+    /// <summary>
+    /// A household member's "Request all N missing" set (always empty for the
+    /// admin); request them with <c>POST /titles/{type}/{tmdbId}/request-all-missing</c>.
+    /// Null from a server older than the feature, which hides the button like
+    /// an empty list.
+    /// </summary>
+    public IReadOnlyList<TitleId>? RequestAllMissing { get; init; }
+
+    /// <summary>How many titles "Request all N missing" would ask for; 0 hides it.</summary>
+    public int RequestAllCount => RequestAllMissing?.Count ?? 0;
+
+    /// <summary>"Request all 4 missing" / "Requesting…".</summary>
+    public static string RequestAllLabel(int count, bool busy) =>
+        busy ? "Requesting…" : $"Request all {count.ToString(CultureInfo.CurrentCulture)} missing";
+
+    /// <summary>"Request all 4 missing titles?", the website's confirmation.</summary>
+    public static string RequestAllConfirmation(int count) =>
+        $"Request all {count.ToString(CultureInfo.CurrentCulture)} missing {(count == 1 ? "title" : "titles")}?";
 }
 
 /// <summary><c>GET /titles/{type}/{tmdbId}</c>: everything the title page renders.</summary>
@@ -359,6 +378,35 @@ public sealed record TitleRequestCreated
 {
     public required bool Ok { get; init; }
     public required Guid RequestId { get; init; }
+}
+
+/// <summary>
+/// <c>POST /titles/{type}/{tmdbId}/request-all-missing</c>: some titles can be
+/// refused (request limits, the blocklist) while the rest go through.
+/// </summary>
+public sealed record RequestAllMissingResult
+{
+    public required bool Ok { get; init; }
+
+    /// <summary>How many titles were in the set.</summary>
+    public required int Total { get; init; }
+
+    /// <summary>How many requests were filed.</summary>
+    public required int Requested { get; init; }
+
+    public required IReadOnlyList<RequestAllRefusal> Refused { get; init; }
+
+    /// <summary>The line to show: "Requested 2 of 4. You've used your 2 movie requests…".</summary>
+    public required string Message { get; init; }
+}
+
+/// <summary>One title "Request all N missing" couldn't request, and why.</summary>
+public sealed record RequestAllRefusal
+{
+    public required MediaType MediaType { get; init; }
+    public required int TmdbId { get; init; }
+    public required string Title { get; init; }
+    public required string Error { get; init; }
 }
 
 /// <summary><c>POST /titles/tv/{tmdbId}/request</c> body for some seasons; the whole series sends no body.</summary>
