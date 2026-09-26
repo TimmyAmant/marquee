@@ -4,7 +4,8 @@
 // fields always present as null (never omitted).
 
 export type MediaType = "movie" | "tv";
-export type UserRole = "admin" | "member";
+/** trusted (0.38+): may review requests and problem reports. */
+export type UserRole = "admin" | "member" | "trusted";
 export type RequestStatus = "pending" | "approved" | "rejected";
 export type LibraryStatus = "owned" | "tracked_downloading" | "tracked_monitored" | "coming_soon" | "untracked";
 export type LibraryProvider = "plex" | "jellyfin" | "sonarr" | "radarr";

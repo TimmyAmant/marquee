@@ -24,7 +24,10 @@ const bytea = customType<{ data: Buffer }>({
   },
 });
 
-export const userRoleValues = ["admin", "member"] as const;
+// trusted: a member who may also review other people's requests and
+// problem reports (lib/users/roles.ts), with their own requests approved
+// straight away and no request limits. Settings stay the admin's.
+export const userRoleValues = ["admin", "member", "trusted"] as const;
 export type UserRole = (typeof userRoleValues)[number];
 
 export const users = pgTable(
@@ -50,6 +53,13 @@ export const users = pgTable(
     // movies can be trusted while TV still gets reviewed.
     autoApproveMovies: boolean("auto_approve_movies").default(false).notNull(),
     autoApproveTv: boolean("auto_approve_tv").default(false).notNull(),
+    // Request limits (lib/requests/quota.ts): at most `limit` requests of
+    // that type in any `days`-day stretch. Null limit = no limit. Admins and
+    // trusted members are never limited.
+    movieQuotaLimit: integer("movie_quota_limit"),
+    movieQuotaDays: integer("movie_quota_days").default(7).notNull(),
+    tvQuotaLimit: integer("tv_quota_limit"),
+    tvQuotaDays: integer("tv_quota_days").default(7).notNull(),
     // Browser sessions signed in before this moment are no longer valid —
     // see the jwt callback in auth.ts. Null until the password first changes.
     passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
@@ -70,7 +80,7 @@ export const users = pgTable(
     jellyfinUserId: text("jellyfin_user_id").unique("users_jellyfin_user_id_unique"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [check("users_role_check", sql`${table.role} in ('admin','member')`)],
+  (table) => [check("users_role_check", sql`${table.role} in ('admin','member','trusted')`)],
 );
 
 // Profile photos, kept in the database itself (so they live in the same
