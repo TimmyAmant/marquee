@@ -17,7 +17,7 @@ extension API {
         let isCurrentUser: Bool
         /// The profile photo (see `User.avatarUrl`).
         var avatarUrl: String? = nil
-        /// The "Plex" / "Jellyfin" tags; nil from older servers.
+        /// The "Plex" / "Jellyfin" / "SSO" tags; nil from older servers.
         var linked: LinkedAccounts? = nil
         /// See `User.hasPassword`; nil from older servers.
         var hasPassword: Bool? = nil

@@ -76,6 +76,52 @@ extension MarqueeAPI {
             return try APIClient.decode(API.AuthResponse.self, from: body, path: "/auth/jellyfin")
         }
 
+        /// `POST /auth/jellyfin/quick-connect/start` (public, 0.44+): show
+        /// `code`, then `quickConnectPoll` with the handle. Offered only when
+        /// `server-info.signIn.quickConnect`. `.conflict` when Quick Connect
+        /// is off (or the server is Emby).
+        func quickConnectStart() async throws -> API.QuickConnectStart {
+            try await transport.post("/auth/jellyfin/quick-connect/start", timeout: MarqueeAPI.Timeout.integrations)
+        }
+
+        /// `POST /auth/jellyfin/quick-connect/poll` — one poll, exactly like
+        /// `plexPoll`; 410 is `MediaSignInError.quickConnectExpired`.
+        func quickConnectPoll(handle: String, deviceName: String) async throws -> API.AuthResponse? {
+            let path = "/auth/jellyfin/quick-connect/poll"
+            let (status, body) = try await transport.exchange(
+                .post, path,
+                body: PlexPollRequest(handle: handle, deviceName: deviceName),
+                accepting: PlexPoll.answers,
+                timeout: MarqueeAPI.Timeout.integrations
+            )
+            guard let done = try PlexPoll.step(status: status, body: body, expired: .quickConnectExpired) else { return nil }
+            return try APIClient.decode(API.AuthResponse.self, from: done, path: path)
+        }
+
+        /// `POST /auth/sso/start` (public, rate-limited, 0.44+): open
+        /// `authUrl` (through `url(server:)`), then `ssoPoll` with the
+        /// handle. Offered only when `server-info.signIn.sso` isn't null.
+        func ssoStart(deviceName: String) async throws -> API.SsoSignInStart {
+            try await transport.post(
+                "/auth/sso/start", body: SsoStartRequest(deviceName: deviceName), timeout: MarqueeAPI.Timeout.integrations
+            )
+        }
+
+        /// `POST /auth/sso/poll` — one poll: nil while the person is still in
+        /// the browser (202), the login response once signed in (200).
+        /// Throws `MediaSignInError.refused` (403, with the server's reason)
+        /// and `.ssoExpired` (410).
+        func ssoPoll(handle: String, deviceName: String) async throws -> API.AuthResponse? {
+            let (status, body) = try await transport.exchange(
+                .post, "/auth/sso/poll",
+                body: PlexPollRequest(handle: handle, deviceName: deviceName),
+                accepting: PlexPoll.answers,
+                timeout: MarqueeAPI.Timeout.integrations
+            )
+            guard let done = try PlexPoll.step(status: status, body: body, expired: .ssoExpired) else { return nil }
+            return try APIClient.decode(API.AuthResponse.self, from: done, path: "/auth/sso/poll")
+        }
+
         /// `POST /auth/logout` — revokes this token only.
         func logout() async throws {
             let _: API.OK = try await transport.mutate(.post, "/auth/logout", changes: [])

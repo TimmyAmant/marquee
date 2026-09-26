@@ -30,20 +30,24 @@ struct User: Codable, Equatable, Hashable, Sendable {
 }
 
 /// `linked` on `/me` and household members: which media-server accounts
-/// sign in to this Marquee account.
+/// (and, 0.44+, the admin's single sign-on) sign in to this Marquee account.
 struct LinkedAccounts: Codable, Equatable, Hashable, Sendable {
     var plex: Bool
     var jellyfin: Bool
+    /// 0.44+; missing from older servers, which means false.
+    var sso: Bool
 
-    init(plex: Bool = false, jellyfin: Bool = false) {
+    init(plex: Bool = false, jellyfin: Bool = false, sso: Bool = false) {
         self.plex = plex
         self.jellyfin = jellyfin
+        self.sso = sso
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         plex = (try? container.decodeIfPresent(Bool.self, forKey: .plex)) ?? false
         jellyfin = (try? container.decodeIfPresent(Bool.self, forKey: .jellyfin)) ?? false
+        sso = (try? container.decodeIfPresent(Bool.self, forKey: .sso)) ?? false
     }
 
     func isLinked(_ server: API.MediaServer) -> Bool {
@@ -75,9 +79,14 @@ struct JellyfinLoginRequest: Encodable, Sendable {
     let deviceName: String
 }
 
-/// `POST /auth/plex/poll`.
+/// `POST /auth/plex/poll`, and the SSO and Quick Connect polls.
 struct PlexPollRequest: Encodable, Sendable {
     let handle: String
+    let deviceName: String
+}
+
+/// `POST /auth/sso/start`: the device name is shown on the page the browser opens.
+struct SsoStartRequest: Encodable, Sendable {
     let deviceName: String
 }
 

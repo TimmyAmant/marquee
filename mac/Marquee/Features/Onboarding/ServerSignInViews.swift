@@ -91,13 +91,25 @@ struct SetupForm: View {
 }
 
 /// app/(auth)/login/login-form.tsx, against `POST /api/v1/auth/login` —
-/// plus "Sign in with Plex" (`/auth/plex/start` + `/auth/plex/poll`) and
-/// "Sign in with Jellyfin" (`/auth/jellyfin`) when `server-info.signIn`
-/// offers them. Older servers send no `signIn`, so no extra buttons.
+/// plus "Sign in with {single sign-on}" (`/auth/sso/start` + `/auth/sso/poll`),
+/// "Sign in with Plex" (`/auth/plex/start` + `/auth/plex/poll`) and "Sign in
+/// with Jellyfin" (`/auth/jellyfin`, or Quick Connect) when
+/// `server-info.signIn` offers them. Older servers send no `signIn`, so no
+/// extra buttons.
 struct SignInForm: View {
     enum Method: Equatable {
         case password
         case jellyfin
+    }
+
+    /// A sign-in that finishes somewhere else: in the browser (Plex, single
+    /// sign-on) or in a Jellyfin app (Quick Connect).
+    enum Waiting: Equatable {
+        case plex
+        /// The single sign-on button's name ("Authentik").
+        case sso(String)
+        /// The code to show, once the server has handed one out.
+        case quickConnect(code: String?)
     }
 
     @Environment(AppModel.self) private var model
@@ -107,10 +119,10 @@ struct SignInForm: View {
     @State private var password = ""
     @State private var error: String?
     @State private var pending = false
-    /// The Plex sign-in in progress: cancelled by Cancel, by the card going
-    /// away, and when Marquee quits.
-    @State private var plexTask: Task<Void, Never>?
-    @State private var waitingForPlex = false
+    /// The Plex / single sign-on / Quick Connect sign-in in progress:
+    /// cancelled by Cancel, by the card going away, and when Marquee quits.
+    @State private var waitTask: Task<Void, Never>?
+    @State private var waiting: Waiting?
 
     init(username: String = "") {
         _username = State(initialValue: username)
@@ -120,10 +132,12 @@ struct SignInForm: View {
         let info = model.session.serverInfo
         let offersPlex = info?.offersPlexSignIn == true
         let offersJellyfin = info?.offersJellyfinSignIn == true
+        let sso = info?.singleSignOn
         let jellyfin = offersJellyfin && method == .jellyfin
         // "Emby" when the server's Jellyfin integration is talking to Emby.
         let name = info.jellyfinName
-        let busy = pending || waitingForPlex
+        let busy = pending || waiting != nil
+        let quickConnectCode: String?? = if case let .quickConnect(code) = waiting { .some(code) } else { .none }
 
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
@@ -138,41 +152,72 @@ struct SignInForm: View {
             if let notice = model.authNotice {
                 AuthNotice(text: notice)
             }
-            // A remembered username puts the cursor straight in the password.
-            AuthField(
-                label: jellyfin ? "\(name) username" : "Username", text: $username, contentType: .username,
-                autofocus: username.isEmpty
-            )
-            AuthField(
-                label: jellyfin ? "\(name) password" : "Password", text: $password, secure: true, contentType: .password,
-                autofocus: !username.isEmpty
-            )
-            if info?.isDegraded == true {
-                InlineMessage(text: "Your server can't reach its database right now, so signing in may fail.")
-            }
-            if let error { InlineMessage(text: error) }
-            Button {
-                submit(jellyfin: jellyfin)
-            } label: {
-                Text(pending ? "Signing in…" : (jellyfin ? "Sign in with \(name)" : "Sign in")).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(AccentButtonStyle())
-            .keyboardShortcut(.defaultAction)
-            .disabled(busy)
+            if let code = quickConnectCode {
+                quickConnectPanel(code: code)
+                if let error { InlineMessage(text: error) }
+            } else {
+                // A remembered username puts the cursor straight in the password.
+                AuthField(
+                    label: jellyfin ? "\(name) username" : "Username", text: $username, contentType: .username,
+                    autofocus: username.isEmpty
+                )
+                AuthField(
+                    label: jellyfin ? "\(name) password" : "Password", text: $password, secure: true, contentType: .password,
+                    autofocus: !username.isEmpty
+                )
+                if info?.isDegraded == true {
+                    InlineMessage(text: "Your server can't reach its database right now, so signing in may fail.")
+                }
+                if let error { InlineMessage(text: error) }
+                Button {
+                    submit(jellyfin: jellyfin)
+                } label: {
+                    Text(pending ? "Signing in…" : (jellyfin ? "Sign in with \(name)" : "Sign in")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(AccentButtonStyle())
+                .keyboardShortcut(.defaultAction)
+                .disabled(busy)
 
-            if offersPlex || offersJellyfin {
+                // Jellyfin's Quick Connect (never Emby): approve this Mac from
+                // a Jellyfin app instead of typing the password.
+                if jellyfin, info?.offersQuickConnect == true {
+                    Button {
+                        signInWithQuickConnect()
+                    } label: {
+                        Text("Use Quick Connect").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(OutlineButtonStyle())
+                    .disabled(busy)
+                }
+            }
+
+            if sso != nil || offersPlex || offersJellyfin {
                 AuthDivider()
                 VStack(spacing: 10) {
-                    if waitingForPlex {
-                        plexWaiting
-                    } else if offersPlex {
-                        Button {
-                            signInWithPlex()
-                        } label: {
-                            Text("Sign in with Plex").frame(maxWidth: .infinity)
+                    switch waiting {
+                    case .plex:
+                        browserWaiting(name: "Plex")
+                    case let .sso(ssoName):
+                        browserWaiting(name: ssoName)
+                    case .quickConnect, nil:
+                        if let sso {
+                            Button {
+                                signInWithSso(name: sso.name)
+                            } label: {
+                                Text("Sign in with \(sso.name)").frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(OutlineButtonStyle())
+                            .disabled(busy)
                         }
-                        .buttonStyle(OutlineButtonStyle())
-                        .disabled(pending)
+                        if offersPlex {
+                            Button {
+                                signInWithPlex()
+                            } label: {
+                                Text("Sign in with Plex").frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(OutlineButtonStyle())
+                            .disabled(busy)
+                        }
                     }
                     if offersJellyfin {
                         Button {
@@ -191,8 +236,8 @@ struct SignInForm: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // With new accounts from Plex/Jellyfin sign-in on, that's
-                // how a newcomer gets in — there's no other sign-up.
+                // With new accounts from Plex/Jellyfin/single sign-on on,
+                // that's how a newcomer gets in — there's no other sign-up.
                 if let hint = info?.signupHint {
                     Text(hint)
                         .font(.system(size: 12.5))
@@ -222,21 +267,22 @@ struct SignInForm: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .onDisappear { cancelPlex() }
+        .onDisappear { cancelWaiting() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-            cancelPlex()
+            cancelWaiting()
         }
     }
 
-    private var plexWaiting: some View {
+    /// Plex or single sign-on: finishing in the browser.
+    private func browserWaiting(name: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 ProgressView().controlSize(.small)
-                Text("Waiting for Plex…")
+                Text("Waiting for \(name)…")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Button("Cancel") { cancelPlex() }
+                Button("Cancel") { cancelWaiting() }
                     .buttonStyle(OutlineButtonStyle(compact: true))
                     .keyboardShortcut(.cancelAction)
             }
@@ -248,8 +294,41 @@ struct SignInForm: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Quick Connect: the code, big, while waiting for it to be approved.
+    private func quickConnectPanel(code: String?) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let code {
+                Text("In a Jellyfin app you're signed in to, open your profile → Quick Connect and enter this code:")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(code)
+                    .font(.system(size: 34, weight: .semibold, design: .monospaced))
+                    .tracking(8)
+                    .foregroundStyle(Theme.textPrimary)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel("Quick Connect code \(code)")
+            }
+            HStack(spacing: 10) {
+                ProgressView().controlSize(.small)
+                Text(code == nil ? "Getting a code…" : "Waiting for approval…")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.textMuted)
+                Spacer()
+                Button("Cancel") { cancelWaiting() }
+                    .buttonStyle(OutlineButtonStyle(compact: true))
+                    .keyboardShortcut(.cancelAction)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.border))
+    }
+
     private func submit(jellyfin: Bool) {
-        guard !pending, !waitingForPlex else { return }
+        guard !pending, waiting == nil else { return }
         pending = true
         error = nil
         let session = model.session
@@ -269,37 +348,68 @@ struct SignInForm: View {
     }
 
     private func signInWithPlex() {
-        guard !pending else { return }
-        plexTask?.cancel()
-        error = nil
-        waitingForPlex = true
         let session = model.session
-        plexTask = Task {
+        wait(for: .plex) {
+            let start = try await session.startPlexSignIn()
+            guard let url = start.url else {
+                throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
+            }
+            openURL(url)
+            return try await session.finishPlexSignIn(start)
+        }
+    }
+
+    private func signInWithSso(name: String) {
+        let session = model.session
+        wait(for: .sso(name)) {
+            let start = try await session.startSsoSignIn()
+            // Only https, or the server's own address — never anything else.
+            guard let url = start.url(server: session.server?.baseURL) else {
+                throw APIError.server("Your Marquee server sent a sign-in link this app couldn't open.")
+            }
+            openURL(url)
+            return try await session.finishSsoSignIn(start)
+        }
+    }
+
+    private func signInWithQuickConnect() {
+        let session = model.session
+        wait(for: .quickConnect(code: nil)) {
+            let start = try await session.startQuickConnect()
+            try Task.checkCancellation()
+            waiting = .quickConnect(code: start.code)
+            return try await session.finishQuickConnect(start)
+        }
+    }
+
+    /// Runs one of the sign-ins that finish elsewhere; the card shows
+    /// `state` until it's done, fails, or is cancelled.
+    private func wait(for state: Waiting, signIn: @escaping @MainActor () async throws -> User) {
+        guard !pending else { return }
+        waitTask?.cancel()
+        error = nil
+        waiting = state
+        waitTask = Task {
             do {
-                let start = try await session.startPlexSignIn()
-                guard let url = start.url else {
-                    throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
-                }
-                openURL(url)
-                let user = try await session.finishPlexSignIn(start)
-                waitingForPlex = false
-                plexTask = nil
+                let user = try await signIn()
+                waiting = nil
+                waitTask = nil
                 model.completeSignIn(user)
             } catch where PlexPoll.isCancellation(error) {
-                // Cancel, the card going away, or quitting: `cancelPlex` has
-                // already put the card back.
+                // Cancel, the card going away, or quitting: `cancelWaiting`
+                // has already put the card back.
             } catch {
-                waitingForPlex = false
-                plexTask = nil
+                waiting = nil
+                waitTask = nil
                 self.error = error.localizedDescription
             }
         }
     }
 
-    private func cancelPlex() {
-        plexTask?.cancel()
-        plexTask = nil
-        waitingForPlex = false
+    private func cancelWaiting() {
+        waitTask?.cancel()
+        waitTask = nil
+        waiting = nil
     }
 }
 

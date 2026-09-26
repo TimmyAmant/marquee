@@ -22,6 +22,8 @@ struct IntegrationsSettingsView: View {
                     PlexCard(settings: overview.plex)
                     JellyfinCard(settings: overview.jellyfin)
                 }
+                // 0.44+: single sign-on; nothing at all from an older server.
+                SsoSettingsSection()
                 section("Download Clients") {
                     // 0.43+: any number of servers. An older server omits
                     // the list and keeps the four fixed cards.

@@ -16,6 +16,30 @@ extension API {
         return url
     }
 
+    /// Single sign-on's page (Marquee's own "Continue with {name}?"): only
+    /// over https, or on the server's own origin (a home server reached over
+    /// plain http). Like `plexWebURL`, never a file, another app's URL
+    /// scheme, or plain http anywhere else.
+    static func signInPageURL(_ string: String, server: URL?) -> URL? {
+        guard let url = URL(string: string), let scheme = url.scheme?.lowercased(),
+              let host = url.host, !host.isEmpty
+        else { return nil }
+        if scheme == "https" { return url }
+        guard let server, sameOrigin(url, server) else { return nil }
+        return url
+    }
+
+    /// Same scheme, host and port (a missing port is the scheme's default).
+    static func sameOrigin(_ lhs: URL, _ rhs: URL) -> Bool {
+        func origin(_ url: URL) -> (String, String, Int)? {
+            guard let scheme = url.scheme?.lowercased(), let host = url.host?.lowercased(), !host.isEmpty else { return nil }
+            let port = url.port ?? (scheme == "https" ? 443 : scheme == "http" ? 80 : -1)
+            return (scheme, host, port)
+        }
+        guard let left = origin(lhs), let right = origin(rhs) else { return false }
+        return left == right
+    }
+
     typealias User = Marquee.User
     typealias ServerInfo = Marquee.ServerInfo
     /// `POST /auth/login` and `/auth/setup`.
@@ -129,9 +153,143 @@ extension API {
         var url: URL? { API.plexWebURL(authUrl) }
     }
 
-    /// `POST /me/links/plex/poll` body.
+    /// `POST /me/links/plex/poll` body (and `/me/links/sso/poll`'s).
     struct PlexLinkPollRequest: Codable, Hashable, Sendable {
         let handle: String
+    }
+
+    // MARK: Single sign-on / Quick Connect (0.44+)
+
+    /// `POST /auth/sso/start` and `/me/links/sso/start`: open `authUrl` in
+    /// the browser (only through `url(server:)`), then poll with `handle`
+    /// until `expiresAt`.
+    struct SsoSignInStart: Codable, Hashable, Sendable {
+        let handle: String
+        let authUrl: String
+        let expiresAt: Date
+
+        /// `authUrl` if it's https or on `server`'s own origin; nil otherwise.
+        func url(server: URL?) -> URL? { API.signInPageURL(authUrl, server: server) }
+    }
+
+    /// `POST /auth/jellyfin/quick-connect/start`: show `code` for the person
+    /// to enter in a Jellyfin app, then poll with `handle` until `expiresAt`.
+    struct QuickConnectStart: Codable, Hashable, Sendable {
+        let handle: String
+        let code: String
+        let expiresAt: Date
+    }
+
+    /// `GET /settings/sso` (admin): single sign-on with any OpenID Connect
+    /// provider. The client secret is never sent back; `hasClientSecret`
+    /// says whether one is saved.
+    struct SsoSettings: Codable, Hashable, Sendable {
+        /// False before it's set up: the rest are the defaults, with
+        /// `publicUrl` the address this request came in on.
+        var configured: Bool
+        /// The button says "Sign in with {name}".
+        var name: String
+        var issuer: String
+        var clientId: String
+        var hasClientSecret: Bool
+        var scopes: String
+        /// Marquee's address as people reach it.
+        var publicUrl: String
+        /// The redirect URI to register with the provider, exactly.
+        var callbackUrl: String
+        /// "New accounts from single sign-on".
+        var allowSignup: Bool
+        /// "Match existing accounts by verified email".
+        var matchEmail: Bool
+        var requiredGroup: String?
+        var trustedGroup: String?
+        var groupsClaim: String
+
+        static let defaultScopes = "openid profile email"
+        static let defaultGroupsClaim = "groups"
+        static let callbackPath = "/api/auth/sso/callback"
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            configured = try c.decodeIfPresent(Bool.self, forKey: .configured) ?? false
+            name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+            issuer = try c.decodeIfPresent(String.self, forKey: .issuer) ?? ""
+            clientId = try c.decodeIfPresent(String.self, forKey: .clientId) ?? ""
+            hasClientSecret = try c.decodeIfPresent(Bool.self, forKey: .hasClientSecret) ?? false
+            scopes = try c.decodeIfPresent(String.self, forKey: .scopes).nonBlank ?? Self.defaultScopes
+            publicUrl = try c.decodeIfPresent(String.self, forKey: .publicUrl) ?? ""
+            callbackUrl = try c.decodeIfPresent(String.self, forKey: .callbackUrl) ?? Self.callbackURL(for: publicUrl)
+            allowSignup = try c.decodeIfPresent(Bool.self, forKey: .allowSignup) ?? false
+            matchEmail = try c.decodeIfPresent(Bool.self, forKey: .matchEmail) ?? false
+            requiredGroup = try c.decodeIfPresent(String.self, forKey: .requiredGroup)
+            trustedGroup = try c.decodeIfPresent(String.self, forKey: .trustedGroup)
+            groupsClaim = try c.decodeIfPresent(String.self, forKey: .groupsClaim).nonBlank ?? Self.defaultGroupsClaim
+        }
+
+        /// The redirect URI for a "Marquee's address" as typed, updated live
+        /// like the website's: its origin plus the callback path, or a
+        /// placeholder until it's an address.
+        static func callbackURL(for publicUrl: String) -> String {
+            let trimmed = publicUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let url = URL(string: trimmed), let scheme = url.scheme?.lowercased(),
+                  scheme == "http" || scheme == "https",
+                  var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  let host = components.host, !host.isEmpty
+            else { return "https://your-marquee-address\(callbackPath)" }
+            components.scheme = scheme
+            components.host = host.lowercased()
+            components.user = nil
+            components.password = nil
+            components.query = nil
+            components.fragment = nil
+            // The scheme's default port is left out, as a URL origin does.
+            if components.port == (scheme == "https" ? 443 : 80) { components.port = nil }
+            components.path = callbackPath
+            return components.string ?? "https://your-marquee-address\(callbackPath)"
+        }
+    }
+
+    /// `PUT /settings/sso` body: the settings plus the write-only secret.
+    struct SsoSettingsRequest: Encodable, Hashable, Sendable {
+        var name: String
+        var issuer: String
+        var clientId: String
+        /// Missing (nil) or blank keeps the saved one.
+        var clientSecret: String?
+        /// True removes the saved secret (a public client); nil sends nothing.
+        var clearClientSecret: Bool?
+        var scopes: String
+        var publicUrl: String
+        var allowSignup: Bool
+        var matchEmail: Bool
+        /// Blank means none.
+        var requiredGroup: String?
+        var trustedGroup: String?
+        var groupsClaim: String
+    }
+
+    /// `POST /settings/sso/test` body.
+    struct SsoTestRequest: Encodable, Hashable, Sendable {
+        let issuer: String
+    }
+
+    /// `POST /settings/sso/test`: the provider's discovery document checked
+    /// out; `warnings` are things that work but deserve a look.
+    struct SsoTestResult: Codable, Hashable, Sendable {
+        let issuer: String
+        let authorizationEndpoint: String
+        let tokenEndpoint: String
+        let userinfoEndpoint: String?
+        let warnings: [String]
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            issuer = try c.decode(String.self, forKey: .issuer)
+            authorizationEndpoint = try c.decode(String.self, forKey: .authorizationEndpoint)
+            tokenEndpoint = try c.decode(String.self, forKey: .tokenEndpoint)
+            userinfoEndpoint = try c.decodeIfPresent(String.self, forKey: .userinfoEndpoint)
+            warnings = try c.decodeIfPresent([String].self, forKey: .warnings) ?? []
+        }
     }
 
     /// `POST /me/links/jellyfin` body.

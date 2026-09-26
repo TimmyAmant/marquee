@@ -56,20 +56,28 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
     /// (it speaks the same API); "Jellyfin" from older servers.
     var jellyfinName: String { signIn?.jellyfinName ?? SignInMethods.defaultJellyfinName }
 
-    /// The line under the Plex/Jellyfin buttons telling a newcomer how to
-    /// get an account, when the admin has new accounts from sign-in on;
-    /// names only the methods offered. Nil otherwise (and from servers
+    /// "Use Quick Connect" is offered on the Jellyfin sign-in (0.44+; never
+    /// for Emby, which has no Quick Connect).
+    var offersQuickConnect: Bool { signIn?.jellyfin == true && signIn?.quickConnect == true }
+    /// "Sign in with {name}", the admin's single sign-on (0.44+); nil when
+    /// it isn't set up, and from older servers.
+    var singleSignOn: SignInMethods.SingleSignOn? { signIn?.sso }
+
+    /// The line under the sign-in buttons telling a newcomer how to get an
+    /// account, when the admin has new accounts from sign-in on; names only
+    /// the methods that make one, like the website's signupMethodNames:
+    /// "Authentik (or Plex or Jellyfin)". Nil otherwise (and from servers
     /// older than 0.43, which don't say).
     var signupHint: String? {
-        guard let signIn, signIn.signup else { return nil }
-        let names: String
-        switch (signIn.plex, signIn.jellyfin) {
-        case (true, true): names = "Plex (or \(jellyfinName))"
-        case (true, false): names = "Plex"
-        case (false, true): names = jellyfinName
-        case (false, false): return nil
-        }
-        return "New here? Use Sign in with \(names) — your account is made for you."
+        guard let signIn else { return nil }
+        var names: [String] = []
+        if let sso = signIn.sso, sso.signup { names.append(sso.name) }
+        if signIn.signup, signIn.plex { names.append("Plex") }
+        if signIn.signup, signIn.jellyfin { names.append(jellyfinName) }
+        guard let first = names.first else { return nil }
+        let rest = names.dropFirst()
+        let label = rest.isEmpty ? first : "\(first) (or \(rest.joined(separator: " or ")))"
+        return "New here? Use Sign in with \(label) — your account is made for you."
     }
 
     /// A media server's user-facing name, with Emby called Emby.
@@ -102,21 +110,51 @@ struct SignInMethods: Codable, Equatable, Hashable, Sendable {
     /// 0.42.2+: new accounts from Plex/Jellyfin sign-in are on (and one of
     /// them is offered). Missing from older servers, which means false.
     var signup: Bool
+    /// 0.44+: the Jellyfin server offers Quick Connect (never Emby).
+    /// Missing from older servers, which means false.
+    var quickConnect: Bool
+    /// 0.44+: the admin's single sign-on, when it's set up. Missing from
+    /// older servers, which means none.
+    var sso: SingleSignOn?
 
     static let defaultJellyfinName = "Jellyfin"
+
+    /// `signIn.sso`: what to call the button, and whether signing in with
+    /// it makes an account for a newcomer.
+    struct SingleSignOn: Codable, Equatable, Hashable, Sendable {
+        /// "Authentik": the button says "Sign in with Authentik".
+        var name: String
+        /// New accounts from single sign-on are on.
+        var signup: Bool
+
+        init(name: String, signup: Bool = false) {
+            self.name = name
+            self.signup = signup
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            name = try container.decode(String.self, forKey: .name).trimmingCharacters(in: .whitespacesAndNewlines)
+            signup = (try? container.decodeIfPresent(Bool.self, forKey: .signup)) ?? false
+        }
+    }
 
     init(
         password: Bool = true,
         plex: Bool = false,
         jellyfin: Bool = false,
         jellyfinName: String = defaultJellyfinName,
-        signup: Bool = false
+        signup: Bool = false,
+        quickConnect: Bool = false,
+        sso: SingleSignOn? = nil
     ) {
         self.password = password
         self.plex = plex
         self.jellyfin = jellyfin
         self.jellyfinName = jellyfinName
         self.signup = signup
+        self.quickConnect = quickConnect
+        self.sso = sso
     }
 
     init(from decoder: Decoder) throws {
@@ -127,6 +165,9 @@ struct SignInMethods: Codable, Equatable, Hashable, Sendable {
         jellyfinName = (try? container.decodeIfPresent(String.self, forKey: .jellyfinName))?.nonBlank
             ?? Self.defaultJellyfinName
         signup = (try? container.decodeIfPresent(Bool.self, forKey: .signup)) ?? false
+        quickConnect = (try? container.decodeIfPresent(Bool.self, forKey: .quickConnect)) ?? false
+        // Lenient like the rest: an odd or nameless value hides the button.
+        sso = (try? container.decodeIfPresent(SingleSignOn.self, forKey: .sso)).flatMap { $0.name.isEmpty ? nil : $0 }
     }
 }
 
