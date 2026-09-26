@@ -164,7 +164,6 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
     const first = listings.find((l) => "failed" in l) as { failed: unknown };
     throw first.failed instanceof Error ? first.failed : new Error(`Couldn't reach ${kind}`);
   }
-  const okServers = serverIds.filter((id) => !failedServers.includes(id));
 
   // A server that didn't answer this time keeps its titles: where the
   // cached row came from it and is further along than what the servers that
@@ -206,13 +205,18 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
   }
 
   // Titles removed from every server (outside Marquee) won't appear above —
-  // drop their cached rows so they don't linger as "still tracked". Only rows
-  // that came from a server that answered (or from one since removed) go; a
-  // Sonarr series whose TMDb lookup failed this run skips cleanup entirely,
-  // since `seenTmdbIds` would then be an incomplete picture.
+  // drop their cached rows so they don't linger as "still tracked". Every
+  // row goes except one from a server that didn't answer this time: rows
+  // from a server that answered, from one since removed (null), and from
+  // one no longer in the library — moved to 4K, whose copies mustn't count
+  // as the library. A Sonarr series whose TMDb lookup failed this run skips
+  // cleanup entirely, since `seenTmdbIds` would then be an incomplete picture.
   if (failedLookupCount === 0) {
     await assertSameServers(userId, kind, serverIds);
-    const fromAnsweredServer = or(isNull(arrStatusCache.serverId), inArray(arrStatusCache.serverId, okServers));
+    const fromAnsweredServer =
+      failedServers.length > 0
+        ? or(isNull(arrStatusCache.serverId), notInArray(arrStatusCache.serverId, failedServers))
+        : undefined;
     await db
       .delete(arrStatusCache)
       .where(
