@@ -6,7 +6,7 @@ struct TitleDetailView: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
-    @Environment(\.navRailInset) private var navRailInset
+    @Environment(\.navRailInsets) private var navRailInsets
     @State private var screen: TitleDetailModel
     @State private var showingTrailer = false
     @State private var showingRelink = false
@@ -164,7 +164,7 @@ struct TitleDetailView: View {
                         alignment: .leading
                     )
                     .padding(.leading, leading)
-                    .padding(.trailing, Metrics.titleRightGutter)
+                    .padding(.trailing, trailing)
                     .padding(.top, Metrics.titlePosterTop)
                 }
 
@@ -195,18 +195,23 @@ struct TitleDetailView: View {
                     }
                 }
                 .padding(.leading, leading)
-                .padding(.trailing, Metrics.titleRightGutter)
+                .padding(.trailing, trailing)
                 .padding(.top, 44)
                 .padding(.bottom, 60)
             }
         }
-        .ignoresSafeArea(.container, edges: [.top, .leading])
+        .ignoresSafeArea(.container, edges: [.top, .horizontal])
     }
 
     /// `.tp-poster{left:48px}`, measured from the content area rather than
     /// from the window edge the page now starts at.
     private var leading: CGFloat {
-        navRailInset + Metrics.titleGutter
+        navRailInsets.leading + Metrics.titleGutter
+    }
+
+    /// The right gutter, past the rail too when it's on the right.
+    private var trailing: CGFloat {
+        navRailInsets.trailing + Metrics.titleRightGutter
     }
 }
 

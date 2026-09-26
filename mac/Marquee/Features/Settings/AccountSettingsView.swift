@@ -7,6 +7,8 @@ import UniformTypeIdentifiers
 struct AccountSettingsView: View {
     @Environment(AppModel.self) private var model
     @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
+    /// Settings › Menu position (`NavRailPosition`), per Mac.
+    @AppStorage(NavRailPosition.storageKey) private var menuPosition = NavRailPosition.left.rawValue
 
     @State private var members: [API.HouseholdMember]?
     @State private var loadError: String?
@@ -23,14 +25,33 @@ struct AccountSettingsView: View {
                     detail("Username", viewer.username)
                     detail("Role", viewer.role.label)
                     detail("Server", model.session.server?.displayName ?? "—")
-                    HStack {
-                        Picker("Appearance", selection: $appearance) {
-                            ForEach(AppearancePreference.allCases) { preference in
-                                Text(preference.label).tag(preference.rawValue)
+                    HStack(alignment: .bottom) {
+                        // This Mac's own look: the theme, and which edge of
+                        // the window the menu floats on.
+                        Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
+                            GridRow {
+                                Text("Appearance")
+                                Picker("Appearance", selection: $appearance) {
+                                    ForEach(AppearancePreference.allCases) { preference in
+                                        Text(preference.label).tag(preference.rawValue)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                                .labelsHidden()
+                                .frame(width: 210)
+                            }
+                            GridRow {
+                                Text("Menu position")
+                                Picker("Menu position", selection: $menuPosition) {
+                                    ForEach(NavRailPosition.allCases) { position in
+                                        Text(position.label).tag(position.rawValue)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                                .labelsHidden()
+                                .frame(width: 280)
                             }
                         }
-                        .pickerStyle(.segmented)
-                        .frame(width: 280)
                         Spacer()
                         Button("Sign out") { model.signOut() }
                             .buttonStyle(OutlineButtonStyle())
