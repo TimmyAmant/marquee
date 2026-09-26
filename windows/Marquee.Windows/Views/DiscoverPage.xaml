@@ -2,8 +2,9 @@
 <!--
   app/discover/page.tsx: the shelves from GET /discover as horizontal rails.
   The page's own vertical ScrollViewer holds one rail per shelf; each rail
-  is a horizontal ScrollViewer around an ItemsRepeater, so the mouse wheel
-  keeps scrolling the page while the rails scroll sideways with their bars.
+  is a horizontal ScrollViewer around an ItemsRepeater. WheelScroll.PassToPage
+  hands the mouse wheel to the page, so it keeps scrolling down with the pointer
+  over a rail; the rails scroll sideways with Shift+wheel or their bars.
   The shelves bleed off the right edge (no right padding), like the website.
 -->
 <Page
@@ -48,6 +49,7 @@
 
                                 <ScrollViewer
                                     HorizontalScrollMode="Enabled"
+                                    controls:WheelScroll.PassToPage="True"
                                     HorizontalScrollBarVisibility="Auto"
                                     VerticalScrollMode="Disabled"
                                     VerticalScrollBarVisibility="Disabled"
@@ -66,6 +68,7 @@
 
                                 <ScrollViewer
                                     HorizontalScrollMode="Enabled"
+                                    controls:WheelScroll.PassToPage="True"
                                     HorizontalScrollBarVisibility="Auto"
                                     VerticalScrollMode="Disabled"
                                     VerticalScrollBarVisibility="Disabled"

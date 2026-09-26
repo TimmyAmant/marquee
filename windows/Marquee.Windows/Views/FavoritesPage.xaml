@@ -106,6 +106,7 @@
                     <TextBlock Text="Studios" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <ScrollViewer
                         HorizontalScrollMode="Enabled"
+                        controls:WheelScroll.PassToPage="True"
                         HorizontalScrollBarVisibility="Auto"
                         VerticalScrollMode="Disabled"
                         VerticalScrollBarVisibility="Disabled">

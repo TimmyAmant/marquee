@@ -28,6 +28,7 @@
                         Margin="0,0,28,0" />
                     <ScrollViewer
                         HorizontalScrollMode="Enabled"
+                        controls:WheelScroll.PassToPage="True"
                         HorizontalScrollBarVisibility="Auto"
                         VerticalScrollMode="Disabled"
                         VerticalScrollBarVisibility="Disabled">
@@ -47,6 +48,7 @@
                 <!-- The filter bar keeps the 28px gutter; it scrolls sideways in a narrow window. -->
                 <ScrollViewer
                     HorizontalScrollMode="Enabled"
+                    controls:WheelScroll.PassToPage="True"
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollMode="Disabled"
                     VerticalScrollBarVisibility="Disabled"
