@@ -9,6 +9,7 @@ import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
 import { FourKControls } from "@/components/fourk-controls";
 import { ReportProblemButton } from "@/components/report-problem-button";
+import { BlockRequestsButton } from "@/components/block-requests-button";
 import type { FourKViewerState } from "@/lib/api/types";
 import { FileDetailsSection } from "@/components/file-details-section";
 import { CapsLabel } from "@/components/caps-label";
@@ -72,6 +73,7 @@ export function TitleHero({
   arrTracking,
   fourK,
   report,
+  blocked,
   file,
   runtimeLabel,
   cast,
@@ -102,6 +104,8 @@ export function TitleHero({
   fourK?: FourKViewerState | null;
   /** "Report a problem"; null when there's nothing to report (or signed out). */
   report?: { seasonNumbers: number[]; openReports: number } | null;
+  /** On the admin's blocklist (lib/requests/blocklist.ts); null otherwise. */
+  blocked?: { reason: string | null; keyword: string | null } | null;
   /** Renders a "File details" card in the sidebar below the rating/status
    * card — null when the title isn't in the library, same as the standalone
    * section this replaced. */
@@ -182,6 +186,7 @@ export function TitleHero({
                     otherRequesters={otherRequesters}
                     seasonPicker={seasonPicker}
                     inArr={Boolean(arrTracking)}
+                    blocked={blocked ?? null}
                   />
 
                   {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} />}
@@ -194,6 +199,8 @@ export function TitleHero({
                       openReports={report.openReports}
                     />
                   )}
+
+                  {isAdmin && <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked ?? null} />}
 
                   {isAdmin && arrTracking && (
                     <ArrTrackingControls
