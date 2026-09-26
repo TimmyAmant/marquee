@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.36.0",
+    date: "2026-09-26",
+    changes: [
+      "Telegram, Pushover and email notifications: next to Discord and ntfy in Settings › Integrations › Notifications (website, Mac and Windows). Everything that reaches the admin — grabbed, downloaded, requests approved or declined — also goes to each one you set up.",
+      "Telegram: your own bot (@BotFather) and a chat, group or channel. Pushover: an application token and your user or group key. Email: your own mail server (SMTP) to one or more addresses; with a login it always uses an encrypted connection.",
+      "Each one sends a test message before it's saved, and says what the service answered if it didn't go through. Saved tokens and passwords are never shown again; leave them blank to keep them.",
+    ],
+  },
+  {
     version: "0.35.0",
     date: "2026-09-25",
     changes: [

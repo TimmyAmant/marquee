@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   app/settings/page.tsx's Account tab for this PC: the account card and its
-  edit form, the Notifications switch, the household members list
+  edit form, the Notifications switch, the admin's notification channels
+  (Telegram, Pushover, email), the household members list
   (household-members-list.tsx, each row with its photo) with the admin's
   Add member, the server card (Change server, Sign out) and About. Each card is a Border with the card brushes; the page is a single
   column. The member dialogs are shown by the code-behind.
@@ -292,6 +293,261 @@
                         TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
+
+            <!--
+              Notification channels (components/notification-channel-cards.tsx,
+              Settings › Integrations › Notifications on the website): the
+              admin's household-wide Telegram, Pushover and email relays.
+              Every notification the admin gets is also sent to each one
+              connected. Admin-only, and only from a 0.36+ server.
+            -->
+            <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.Channels.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Notification channels" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="For the whole household: everything you’re notified about is also sent to each channel connected here. The server sends a test before saving."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Telegram notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="Posts to a Telegram chat, group or channel through your own bot whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Telegram.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Telegram.ConnectedTone}" VerticalAlignment="Center" />
+                        </Grid>
+                        <StackPanel Spacing="4">
+                            <PasswordBox
+                                Header="Bot token"
+                                PlaceholderText="{x:Bind ViewModel.Channels.Telegram.SecretPlaceholder, Mode=OneWay}"
+                                Password="{x:Bind ViewModel.Channels.Telegram.BotToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Message @BotFather on Telegram, send /newbot, and paste the token it gives you."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Chat ID"
+                                PlaceholderText="123456789, -100…, or @channelname"
+                                Text="{x:Bind ViewModel.Channels.Telegram.ChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Send your bot a message (or add it to the group), then open api.telegram.org/bot&lt;token&gt;/getUpdates to find the chat’s id."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Channels.Telegram.HasError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Telegram.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.Channels.Telegram.Error, Mode=OneWay}"
+                            IsClosable="False" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Channels.Telegram.HasNotice, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Telegram.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Success"
+                            Message="{x:Bind ViewModel.Channels.Telegram.Notice, Mode=OneWay}"
+                            IsClosable="False" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="{x:Bind ViewModel.Channels.Telegram.SaveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Channels.Telegram.SaveCommand}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button
+                                Content="{x:Bind ViewModel.Channels.Telegram.RemoveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Channels.Telegram.RemoveCommand}"
+                                Visibility="{x:Bind ViewModel.Channels.Telegram.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Channels.Telegram.RemoveError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Telegram.HasRemoveError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Pushover notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="Sends a push notification through Pushover whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Pushover.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Pushover.ConnectedTone}" VerticalAlignment="Center" />
+                        </Grid>
+                        <StackPanel Spacing="4">
+                            <PasswordBox
+                                Header="Application token"
+                                PlaceholderText="{x:Bind ViewModel.Channels.Pushover.SecretPlaceholder, Mode=OneWay}"
+                                Password="{x:Bind ViewModel.Channels.Pushover.AppToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Create an application at pushover.net/apps/build and copy its API token."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <PasswordBox
+                                Header="User or group key"
+                                Password="{x:Bind ViewModel.Channels.Pushover.UserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="Your user key is at the top of your pushover.net dashboard."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Channels.Pushover.HasError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Pushover.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.Channels.Pushover.Error, Mode=OneWay}"
+                            IsClosable="False" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Channels.Pushover.HasNotice, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Pushover.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Success"
+                            Message="{x:Bind ViewModel.Channels.Pushover.Notice, Mode=OneWay}"
+                            IsClosable="False" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="{x:Bind ViewModel.Channels.Pushover.SaveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Channels.Pushover.SaveCommand}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button
+                                Content="{x:Bind ViewModel.Channels.Pushover.RemoveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Channels.Pushover.RemoveCommand}"
+                                Visibility="{x:Bind ViewModel.Channels.Pushover.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Channels.Pushover.RemoveError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Pushover.HasRemoveError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Email notifications" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    Text="Emails one or more addresses through your own mail server (SMTP) whenever something is grabbed, downloaded, or a request is approved/rejected."
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Email.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Email.ConnectedTone}" VerticalAlignment="Center" />
+                        </Grid>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="SMTP server"
+                                PlaceholderText="smtp.gmail.com"
+                                Text="{x:Bind ViewModel.Channels.Email.Host, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Port"
+                                Text="{x:Bind ViewModel.Channels.Email.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="587 for most servers; 465 with &quot;Secure connection&quot; on."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Username"
+                                PlaceholderText="Leave blank if the server needs none"
+                                Text="{x:Bind ViewModel.Channels.Email.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <PasswordBox
+                                Header="Password"
+                                PlaceholderText="{x:Bind ViewModel.Channels.Email.SecretPlaceholder, Mode=OneWay}"
+                                Password="{x:Bind ViewModel.Channels.Email.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="From address"
+                                PlaceholderText="marquee@example.com"
+                                Text="{x:Bind ViewModel.Channels.Email.From, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBox
+                                Header="Send to"
+                                PlaceholderText="you@example.com, partner@example.com"
+                                Text="{x:Bind ViewModel.Channels.Email.To, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="One or more addresses, separated by commas."
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <CheckBox
+                            Content="Secure connection from the start (TLS, usually port 465)"
+                            IsChecked="{x:Bind ViewModel.Channels.Email.Secure, Mode=TwoWay}" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Channels.Email.HasError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Email.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Error"
+                            Message="{x:Bind ViewModel.Channels.Email.Error, Mode=OneWay}"
+                            IsClosable="False" />
+                        <InfoBar
+                            IsOpen="{x:Bind ViewModel.Channels.Email.HasNotice, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Email.HasNotice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Severity="Success"
+                            Message="{x:Bind ViewModel.Channels.Email.Notice, Mode=OneWay}"
+                            IsClosable="False" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="{x:Bind ViewModel.Channels.Email.SaveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Channels.Email.SaveCommand}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button
+                                Content="{x:Bind ViewModel.Channels.Email.RemoveLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Channels.Email.RemoveCommand}"
+                                Visibility="{x:Bind ViewModel.Channels.Email.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.Channels.Email.RemoveError, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.Channels.Email.HasRemoveError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
 
             <!-- Household members: every account for the admin, only your own for a member -->
             <Grid ColumnSpacing="12">
