@@ -5,6 +5,9 @@
   "Select all" ticks every requestable season. Request sends the request
   itself and keeps the dialog open with the server's message on a failure;
   it stays disabled while nothing is ticked.
+
+  The same picker changes a pending request (0.46+): "Change request", its
+  seasons ticked, the scope and 4K choices above the list, "Save changes".
 -->
 <ContentDialog
     x:Class="Marquee.Windows.Controls.SeasonRequestDialog"
@@ -29,8 +32,25 @@
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
+        <!--
+          Editing a pending request (0.46+, components/request-lifecycle.tsx):
+          "The whole series" / "Just these seasons" for TV, and "In 4K" when
+          4K is set up (always the whole show). Collapsed when requesting.
+        -->
+        <StackPanel x:Name="EditOptionsPanel" Spacing="2" Visibility="Collapsed">
+            <RadioButton x:Name="WholeSeriesRadio" Content="The whole series" GroupName="EditRequestScope" Checked="OnScopeChecked" />
+            <RadioButton x:Name="JustTheseRadio" Content="Just these seasons" GroupName="EditRequestScope" Checked="OnScopeChecked" />
+            <CheckBox x:Name="FourKBox" Content="In 4K" Click="OnFourKClick" />
+            <TextBlock
+                x:Name="NothingToChangeText"
+                Visibility="Collapsed"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
         <CheckBox x:Name="SelectAllBox" Content="Select all" Click="OnSelectAllClick" />
         <Border
+            x:Name="RowsBorder"
             CornerRadius="8"
             BorderThickness="1"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"

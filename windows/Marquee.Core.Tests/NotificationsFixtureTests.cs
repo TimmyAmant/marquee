@@ -18,7 +18,8 @@ public sealed class NotificationsFixtureTests
         var list = Fixtures.Decode<NotificationList>("notifications");
 
         Assert.Equal(1, list.UnreadCount);
-        Assert.Equal(2, list.Results.Count);
+        // A decline, (0.46+) a comment on a request, then a share.
+        Assert.Equal(3, list.Results.Count);
         var item = list.Results[0];
         Assert.Equal(NotificationId, item.Id);
         Assert.Equal(MediaType.Movie, item.MediaType);
@@ -34,12 +35,33 @@ public sealed class NotificationsFixtureTests
         // Present and null on every kind but title_shared.
         Assert.Null(item.SharedBy);
         Assert.Null(item.Note);
+        // 0.46+: present and null on kinds that aren't about a request or report.
+        Assert.Null(item.RequestId);
+        Assert.Null(item.IssueId);
+    }
+
+    [Fact]
+    public void RequestCommentCarriesItsRequest()
+    {
+        var item = Fixtures.Decode<NotificationList>("notifications").Results[1];
+
+        Assert.Equal(NotificationEventType.RequestComment, item.EventType);
+        Assert.True(item.EventType.IsKnown);
+        Assert.Equal("💬", item.EventType.Emoji);
+        Assert.Equal("New comment", item.EventType.NotificationTitle);
+        Assert.Equal(Guid.Parse("5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44"), item.RequestId);
+        Assert.Null(item.IssueId);
+        Assert.Equal(new TitleId(MediaType.Tv, 95396), item.TitleId);
+
+        Assert.Equal("💬", NotificationEventType.IssueComment.Emoji);
+        Assert.Equal("New comment", NotificationEventType.IssueComment.NotificationTitle);
+        Assert.Equal(NotificationEventType.IssueComment, Json.Decode<NotificationEventType>("\"issue_comment\""));
     }
 
     [Fact]
     public void TitleSharedCarriesWhoAndTheirNote()
     {
-        var item = Fixtures.Decode<NotificationList>("notifications").Results[1];
+        var item = Fixtures.Decode<NotificationList>("notifications").Results[2];
 
         Assert.Equal(SharedId, item.Id);
         Assert.Equal(new TitleId(MediaType.Movie, 425), item.TitleId);
@@ -74,6 +96,9 @@ public sealed class NotificationsFixtureTests
         Assert.Equal(NotificationEventType.Downloaded, item.EventType);
         Assert.Null(item.SharedBy);
         Assert.Null(item.Note);
+        // Nor (before 0.46) requestId / issueId.
+        Assert.Null(item.RequestId);
+        Assert.Null(item.IssueId);
     }
 
     [Fact]
@@ -85,7 +110,7 @@ public sealed class NotificationsFixtureTests
         Assert.True(start > 0 && end > start);
         var removed = json[..start] + "\"sharedBy\": null" + json[(end + 1)..];
 
-        var item = Json.Decode<NotificationList>(removed).Results[1];
+        var item = Json.Decode<NotificationList>(removed).Results[2];
         Assert.Equal(NotificationEventType.TitleShared, item.EventType);
         Assert.Null(item.SharedBy);
         Assert.Equal("You'd love this one", item.Note);

@@ -146,8 +146,8 @@ public sealed class NotFoundTests
         var history = Fixtures.Decode<ListResponse<ReviewedRequest>>("requests-history").Results;
         Assert.Null(history[0].NotFoundSince);
         Assert.False(history[0].IsNotFound);
-        Assert.Equal(Json.ParseDate("2026-09-18T18:20:00.412Z"), history[1].NotFoundSince);
-        Assert.True(history[1].IsNotFound);
+        Assert.Equal(Json.ParseDate("2026-09-18T18:20:00.412Z"), history[2].NotFoundSince);
+        Assert.True(history[2].IsNotFound);
 
         // Only an approved request shows the badge.
         Assert.False((history[1] with { Status = RequestStatus.Rejected }).IsNotFound);

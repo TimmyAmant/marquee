@@ -387,6 +387,15 @@ private struct TitleMainColumn: View {
             )
                 .padding(.top, 16)
 
+            // components/my-title-requests.tsx (0.46+): your own requests for
+            // it, with Edit / Cancel while pending and their conversations.
+            if !detail.viewer.ownRequests.isEmpty {
+                MyTitleRequestsList(requests: detail.viewer.ownRequests) {
+                    await screen.requestChanged()
+                }
+                .padding(.top, 14)
+            }
+
             if let tagline = detail.tagline.nonBlank {
                 Text(tagline)
                     .font(.system(size: 13.5))

@@ -113,6 +113,67 @@ public sealed class RequestsEndpoints(MarqueeApi.Transport transport)
             body: reason == null ? null : new RejectRequest(reason),
             changes: ServerChange.Requests | ServerChange.Notifications, ct: ct);
 
+    // MARK: Lifecycle (0.46+)
+
+    /// <summary>
+    /// <c>PATCH /requests/{id}</c> (0.46+): changes a pending request — your
+    /// own, or (a reviewer) anyone's — before it's approved. See
+    /// <see cref="RequestEdit"/> for absent vs null <c>seasons</c>. Conflict
+    /// "It's already been reviewed, so it can't be changed. Ask in its
+    /// comments instead." and the rules of asking afresh; Invalid for a movie
+    /// with seasons or a 4K request with some. An older server answers 404.
+    /// </summary>
+    public Task EditAsync(Guid id, RequestEdit edit, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Patch, $"/requests/{MarqueeApi.Segment(id)}",
+            body: edit.ToJson(),
+            timeout: MarqueeApi.Timeouts.Integrations,
+            changes: ServerChange.Requests | ServerChange.Notifications, ct: ct);
+
+    /// <summary>
+    /// <c>PATCH /requests/{id}</c> (0.46+) with <paramref name="seasons"/>
+    /// (null for the whole series) and, when given, <paramref name="is4k"/>.
+    /// Use <see cref="EditAsync(Guid, RequestEdit, CancellationToken)"/> to
+    /// leave the seasons out altogether.
+    /// </summary>
+    public Task EditAsync(Guid id, IReadOnlyList<int>? seasons, bool? is4k, CancellationToken ct = default) =>
+        EditAsync(id, seasons == null ? RequestEdit.WholeSeries(is4k) : RequestEdit.JustSeasons(seasons, is4k), ct);
+
+    /// <summary>
+    /// <c>GET /requests/{id}/edit-options</c> (0.46+): what "Edit" can offer.
+    /// NotFound for someone who may not edit it (and on an older server),
+    /// Conflict once it's reviewed. Sonarr is asked about the seasons, so it
+    /// gets the integrations timeout.
+    /// </summary>
+    public Task<RequestEditOptions> EditOptionsAsync(Guid id, CancellationToken ct = default) =>
+        transport.GetAsync<RequestEditOptions>($"/requests/{MarqueeApi.Segment(id)}/edit-options",
+            timeout: MarqueeApi.Timeouts.Integrations, ct: ct);
+
+    /// <summary>
+    /// <c>DELETE /requests/{id}</c> (0.46+): "Cancel request" on your own
+    /// pending request; it's gone, with its conversation. NotFound "Request
+    /// not found.", Forbidden "Only whoever asked can cancel it — decline it
+    /// instead.", Conflict once reviewed, RateLimited past 30 an hour.
+    /// </summary>
+    public Task CancelAsync(Guid id, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Delete, $"/requests/{MarqueeApi.Segment(id)}",
+            changes: ServerChange.Requests | ServerChange.Notifications, ct: ct);
+
+    /// <summary>
+    /// <c>POST /requests/{id}/retry</c> (0.46+, admin or trusted): "Retry" a
+    /// request under "Couldn't add", with the Advanced picks it was approved
+    /// with or (a non-null <paramref name="overrides"/>) the ones given.
+    /// NotFound "That request isn't waiting to be added any more.", Conflict
+    /// "Someone's already retrying it.", Upstream when still unreachable.
+    /// </summary>
+    public Task RetryAsync(Guid id, AddOverrides? overrides = null, CancellationToken ct = default) =>
+        transport.MutateAsync<OK>(
+            HttpMethod.Post, $"/requests/{MarqueeApi.Segment(id)}/retry",
+            body: overrides,
+            timeout: MarqueeApi.Timeouts.Integrations,
+            changes: ServerChange.Requests | ServerChange.Library | ServerChange.Notifications, ct: ct);
+
     /// <summary>
     /// <c>POST /requests/approve-all</c> (admin): one at a time; failures
     /// stay pending. Throws the first failure when none could be approved.

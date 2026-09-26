@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  components/request-lifecycle.tsx under a request (0.46+): "Edit" (the
+  season picker, shown from the code-behind since a ContentDialog needs the
+  XamlRoot) and "Cancel request", which asks "Cancel it?" with "Yes, cancel"
+  and "Keep it" in its place; the hint under an approved request; the
+  request's "Comments (N)". Each part collapses when it doesn't apply.
+-->
+<UserControl
+    x:Class="Marquee.Windows.Controls.RequestActionsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Marquee.Windows.Controls"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="2">
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <HyperlinkButton
+                Content="{x:Bind Actions.EditLabel, Mode=OneWay}"
+                Click="OnEditClick"
+                IsEnabled="{x:Bind Actions.CanAct, Mode=OneWay}"
+                Visibility="{x:Bind Actions.CanEdit, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                Padding="4,2" />
+            <HyperlinkButton
+                Content="Cancel request"
+                Command="{x:Bind Actions.StartCancelCommand, Mode=OneWay}"
+                IsEnabled="{x:Bind Actions.CanAct, Mode=OneWay}"
+                Visibility="{x:Bind Actions.ShowsCancel, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                Padding="4,2" />
+            <StackPanel Orientation="Horizontal" Spacing="4" Visibility="{x:Bind Actions.IsConfirmingCancel, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock
+                    Text="Cancel it?"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    VerticalAlignment="Center"
+                    Margin="4,0,0,0" />
+                <HyperlinkButton
+                    Content="{x:Bind Actions.ConfirmCancelLabel, Mode=OneWay}"
+                    Command="{x:Bind Actions.ConfirmCancelCommand, Mode=OneWay}"
+                    IsEnabled="{x:Bind Actions.CanAct, Mode=OneWay}"
+                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                    Padding="4,2" />
+                <HyperlinkButton
+                    Content="Keep it"
+                    Command="{x:Bind Actions.KeepItCommand, Mode=OneWay}"
+                    IsEnabled="{x:Bind Actions.CanAct, Mode=OneWay}"
+                    Padding="4,2" />
+            </StackPanel>
+        </StackPanel>
+        <TextBlock
+            Text="{x:Bind Actions.Hint, Mode=OneWay}"
+            Visibility="{x:Bind Actions.Hint, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            Margin="4,0,0,0"
+            TextWrapping="Wrap" />
+        <TextBlock
+            Text="{x:Bind Actions.Error, Mode=OneWay}"
+            Visibility="{x:Bind Actions.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            Margin="4,0,0,0"
+            TextWrapping="Wrap" />
+        <controls:CommentThreadView Thread="{x:Bind Actions.Thread, Mode=OneWay}" />
+    </StackPanel>
+</UserControl>

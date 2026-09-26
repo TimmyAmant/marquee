@@ -271,10 +271,15 @@ extension API {
         /// 0.46+: Sonarr/Radarr hasn't found an approved request ("Can't
         /// find"), to reviewers — or "We're still looking" to the requester.
         case requestNotFound
+        /// 0.46+: someone wrote in the conversation on a request
+        /// (`requestId`) or problem report (`issueId`) you're part of.
+        case requestComment
+        case issueComment
         case unknown(String)
 
         static let knownCases: [NotificationEventType] = [
             .grabbed, .downloaded, .requestApproved, .requestRejected, .issueReported, .issueResolved, .titleShared, .requestNotFound,
+            .requestComment, .issueComment,
         ]
 
         var rawValue: String {
@@ -287,6 +292,8 @@ extension API {
             case .issueResolved: return "issue_resolved"
             case .titleShared: return "title_shared"
             case .requestNotFound: return "request_not_found"
+            case .requestComment: return "request_comment"
+            case .issueComment: return "issue_comment"
             case let .unknown(raw): return raw
             }
         }
@@ -301,6 +308,7 @@ extension API {
             case .issueResolved: return "🛠️"
             case .titleShared: return "📨"
             case .requestNotFound: return "🔍"
+            case .requestComment, .issueComment: return "💬"
             case .unknown: return "🔔"
             }
         }

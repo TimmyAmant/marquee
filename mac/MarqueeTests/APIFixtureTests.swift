@@ -67,6 +67,8 @@ final class APIFixtureTests: XCTestCase {
         "requests-not-found": decodes(API.NotFoundRequests.self),
         "requests-pending-count": decodes(API.Count.self),
         "requests-approve-all": decodes(API.ApproveAllResult.self),
+        "request-edit-options": decodes(API.RequestEditOptions.self),
+        "comment-thread": decodes(API.CommentThread.self),
         "issue-report-body": decodes(API.IssueReport.self),
         "issues": decodes(API.IssueList.self),
         "notifications": decodes(API.NotificationList.self),
@@ -112,7 +114,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 80, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 82, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -165,6 +167,16 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(mine.first?.libraryStatus, .trackedDownloading)
         XCTAssertEqual(mine.first?.reviewedAt, APIClient.parseDate("2026-09-17T18:00:02.118Z"))
         XCTAssertNil(mine.first?.rejectionReason, "An approved request carries no reason")
+        // 0.46+: the lifecycle fields.
+        XCTAssertEqual(mine.first?.offersEdit, false, "An approved request can't be changed")
+        XCTAssertEqual(mine.first?.commentCount, 2)
+        XCTAssertEqual(mine.first?.showsAskInCommentsHint, true)
+        let pendingMine = try XCTUnwrap(mine.last)
+        XCTAssertEqual(pendingMine.status, .pending)
+        XCTAssertTrue(pendingMine.offersEdit)
+        XCTAssertTrue(pendingMine.offersCancel)
+        XCTAssertEqual(pendingMine.editedAt, APIClient.parseDate("2026-09-17T17:20:40.310Z"))
+        XCTAssertFalse(pendingMine.showsAskInCommentsHint)
 
         let pending = try decode(API.PendingRequests.self, "requests-pending")
         let request = try XCTUnwrap(pending.results.first)
@@ -176,11 +188,24 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(pending.rejectionReasons.count, 5)
         XCTAssertEqual(pending.rejectionReasons.first, "Already available on a streaming service we have")
         XCTAssertEqual(pending.rejectionReasonChoices, pending.rejectionReasons, "The server's list wins when it sent one")
+        XCTAssertEqual(request.commentCount, 1)
+        XCTAssertFalse(request.wasChanged)
+        XCTAssertTrue(try XCTUnwrap(pending.results.last).wasChanged, "Severance was changed since asking")
 
         let history = try decode(API.ListResponse<API.ReviewedRequest>.self, "requests-history").results
-        XCTAssertNil(history.first?.requestedBy.userId)
-        XCTAssertEqual(history.first?.status, .rejected)
-        XCTAssertEqual(history.first?.rejectionReason, "Not enough space on the server right now")
+        // "Couldn't add" (0.46+) comes first.
+        let failed = try XCTUnwrap(history.first)
+        XCTAssertTrue(failed.couldntAdd)
+        XCTAssertEqual(failed.addFailed?.error, "Couldn't add this movie to Radarr.")
+        XCTAssertEqual(failed.addFailed?.since, APIClient.parseDate("2026-09-17T19:02:00.000Z"))
+        XCTAssertEqual(failed.couldntAddLine?.hasPrefix("member1 · approved "), true)
+        XCTAssertEqual(failed.commentCount, 0)
+        let declined = history[1]
+        XCTAssertFalse(declined.couldntAdd)
+        XCTAssertNil(declined.requestedBy.userId)
+        XCTAssertEqual(declined.status, .rejected)
+        XCTAssertEqual(declined.rejectionReason, "Not enough space on the server right now")
+        XCTAssertEqual(declined.commentCount, 1)
 
         let notifications = try decode(API.NotificationList.self, "notifications")
         let item = try XCTUnwrap(notifications.results.first)
@@ -189,6 +214,38 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(item.titleID.route.absoluteString, "marquee://title/movie/603")
         XCTAssertEqual(item.alert, true)
         XCTAssertTrue(item.showsBanner)
+        XCTAssertNil(item.requestId)
+        let comment = try XCTUnwrap(notifications.results.first { $0.eventType == .requestComment })
+        XCTAssertEqual(comment.requestId, UUID(uuidString: "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44"))
+        XCTAssertNil(comment.issueId)
+        XCTAssertEqual(comment.eventType.emoji, "💬")
+        XCTAssertEqual(comment.markedRead().requestId, comment.requestId, "Marking read keeps the ids")
+
+        let badges = try decode(API.Badges.self, "badges")
+        XCTAssertEqual(badges.failedRequests, 0)
+        XCTAssertEqual(badges.requestsPageCount, 3)
+
+        let issues = try decode(API.IssueList.self, "issues")
+        XCTAssertEqual(issues.results.first?.commentCount, 1)
+
+        let thread = try decode(API.CommentThread.self, "comment-thread")
+        XCTAssertTrue(thread.canComment)
+        XCTAssertEqual(thread.maxLength, 2000)
+        XCTAssertEqual(thread.results.map(\.kind), [.report, .comment])
+        XCTAssertEqual(thread.results.map(\.author.role), [.member, .reviewer])
+        XCTAssertEqual(thread.commentCount, 1, "The report's own note isn't a comment")
+        XCTAssertEqual(thread.results.first?.id, "report:83bedf64-c5d8-4f43-98a0-bb615c4b9897")
+        XCTAssertEqual(thread.results.last?.body, "Which episode?\nI'll swap the file tonight.")
+        XCTAssertNotNil(thread.results.last?.editedAt)
+
+        let options = try decode(API.RequestEditOptions.self, "request-edit-options")
+        XCTAssertEqual(options.requestId, UUID(uuidString: "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44"))
+        XCTAssertEqual(options.seasons, [2])
+        XCTAssertEqual(options.seasonRows.map(\.requestState), [.requestable, .inLibrary])
+        XCTAssertTrue(options.fourKAvailable)
+
+        let title = try decode(API.TitleDetail.self, "title-detail")
+        XCTAssertEqual(title.viewer.myRequests, [])
 
         let activity = try decode(API.ListResponse<API.ActivityItem>.self, "activity").results
         XCTAssertEqual(activity.first?.sentence, "Timmy declined The Matrix")

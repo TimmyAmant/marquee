@@ -18,12 +18,22 @@ public sealed partial class SeasonPickerRow : ObservableObject
     private bool? isChecked = false;
 
     public SeasonPickerRow(SeasonSummary season, Action<SeasonPickerRow> changed)
+        : this(season.SeasonNumber, season.Name, season.EpisodeCount, season.RequestState, changed)
+    {
+    }
+
+    /// <summary>A row of the edit dialog (<c>GET /requests/{id}/edit-options</c>'s <c>seasonRows</c>).</summary>
+    public SeasonPickerRow(RequestEditSeasonRow row, Action<SeasonPickerRow> changed)
+        : this(row.SeasonNumber, row.Name, row.EpisodeCount, row.State.PickerState, changed)
+    {
+    }
+
+    private SeasonPickerRow(int seasonNumber, string name, int episodeCount, SeasonRequestState state, Action<SeasonPickerRow> changed)
     {
         this.changed = changed;
-        SeasonNumber = season.SeasonNumber;
-        Name = season.Name;
-        EpisodeLine = Format.Count(season.EpisodeCount, "episode", "episodes");
-        var state = season.RequestState;
+        SeasonNumber = seasonNumber;
+        Name = name;
+        EpisodeLine = Format.Count(episodeCount, "episode", "episodes");
         IsRequestable = state == SeasonRequestState.Requestable;
         Tag = state.Tag();
         TagTone = state == SeasonRequestState.InLibrary ? BadgeTone.Owned : BadgeTone.Tracked;

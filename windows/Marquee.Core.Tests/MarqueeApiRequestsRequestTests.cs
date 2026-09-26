@@ -166,16 +166,16 @@ public sealed class MarqueeApiRequestsRequestTests
         var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub));
 
         var mine = await api.Requests.MineAsync();
-        Assert.Equal("The Matrix", Assert.Single(mine).Title);
+        Assert.Equal(["The Matrix", "Severance"], mine.Select(request => request.Title));
 
         var pending = await api.Requests.PendingAsync();
         Assert.Equal("http://192.168.1.10:8989", pending.SonarrUrl);
         Assert.Equal(2, pending.Results.Count);
 
         var history = await api.Requests.HistoryAsync();
-        Assert.Equal(2, history.Count);
-        Assert.Equal(RequestStatus.Rejected, history[0].Status);
-        Assert.Equal("Added to Radarr 2", history[1].AddedToLine);
+        Assert.Equal(3, history.Count);
+        Assert.Equal(RequestStatus.Rejected, history[1].Status);
+        Assert.Equal("Added to Radarr 2", history[2].AddedToLine);
 
         Assert.Equal(3, await api.Requests.PendingCountAsync());
 

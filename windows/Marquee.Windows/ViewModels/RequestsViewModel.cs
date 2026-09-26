@@ -41,14 +41,19 @@ public abstract class RequestRowBase
 /// <summary>A member's own request (requests/page.tsx's table).</summary>
 public sealed class MyRequestRow : RequestRowBase
 {
-    public MyRequestRow(MyRequest request, ICommand openTitle)
+    /// <param name="actions">Edit, Cancel and the conversation (0.46+); null from an older server.</param>
+    public MyRequestRow(MyRequest request, ICommand openTitle, RequestActionsViewModel? actions)
         : base(request.Title, request.PosterPath, request.CreatedAt, request.TitleId, openTitle)
     {
         StatusLabel = request.StatusLabel;
         Tone = request.StatusTone.ToBadgeTone();
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
         SeasonsLine = request.DetailText;
+        Actions = actions;
     }
+
+    /// <summary>"Edit" / "Cancel request" while pending, the hint once approved, and "Comments (N)" (0.46+).</summary>
+    public RequestActionsViewModel? Actions { get; }
 
     /// <summary>"Seasons 1–3", "Seasons 1–3 · In 4K" or "In 4K" under the title; empty for a regular whole series or movie.</summary>
     public string SeasonsLine { get; }
@@ -63,9 +68,11 @@ public sealed class MyRequestRow : RequestRowBase
 /// <summary>A row of "Past requests".</summary>
 public sealed class ReviewedRow : RequestRowBase
 {
-    public ReviewedRow(ReviewedRequest request, ICommand openTitle)
+    /// <param name="thread">Its conversation (0.46+); null from an older server.</param>
+    public ReviewedRow(ReviewedRequest request, ICommand openTitle, CommentThreadViewModel? thread)
         : base(request.Title, request.PosterPath, request.CreatedAt, request.TitleId, openTitle)
     {
+        Thread = thread;
         RequesterLabel = request.RequestedBy.Label;
         StatusLabel = request.StatusLabel;
         Tone = request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
@@ -88,6 +95,9 @@ public sealed class ReviewedRow : RequestRowBase
 
     /// <summary>The red "Can't find" badge next to "Approved" (0.46+).</summary>
     public bool ShowsNotFound { get; }
+
+    /// <summary>"Comments (N)" (0.46+); null hides it.</summary>
+    public CommentThreadViewModel? Thread { get; }
 }
 
 /// <summary>
@@ -127,15 +137,27 @@ public sealed partial class PendingRow : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanAddManually))]
     private bool showManualApprove;
 
-    public PendingRow(RequestsViewModel owner, PendingRequest request, Uri? manualSonarrUrl, ICommand openTitle)
+    /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie. An edit changes it.</summary>
+    [ObservableProperty]
+    private string seasonsLine;
+
+    /// <summary>"Changed since asking" (0.46+): the requester or a reviewer changed its seasons or 4K; empty otherwise.</summary>
+    [ObservableProperty]
+    private string changedLine;
+
+    /// <param name="actions">"Edit" and the conversation (0.46+); null from an older server.</param>
+    public PendingRow(RequestsViewModel owner, PendingRequest request, Uri? manualSonarrUrl, ICommand openTitle, RequestActionsViewModel? actions)
     {
         this.owner = owner;
         Id = request.Id;
+        Is4k = request.Is4k;
         Title = request.Title;
         TitleId = request.TitleId;
         RequesterLabel = request.RequestedBy.Label;
         DateLabel = Format.ShortDate(request.CreatedAt);
-        SeasonsLine = request.DetailText;
+        seasonsLine = request.DetailText;
+        changedLine = request.WasEdited ? RequestLifecycle.ChangedSinceAsking : "";
+        Actions = actions;
         posterUrl = request.PosterPath.Url(ImageSize.W92);
         // Only an https Sonarr can be opened from here (see ExternalLinks).
         this.manualSonarrUrl = ExternalLinks.CanOpen(manualSonarrUrl) ? manualSonarrUrl : null;
@@ -151,13 +173,24 @@ public sealed partial class PendingRow : ObservableObject
     public AddOverridesViewModel Advanced { get; }
 
     public Guid Id { get; }
+
+    /// <summary>The copy "Advanced" picks servers for; a row whose 4K changed is built anew.</summary>
+    public bool Is4k { get; }
+
     public string Title { get; }
     public TitleId TitleId { get; }
     public string RequesterLabel { get; }
     public string DateLabel { get; }
 
-    /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie.</summary>
-    public string SeasonsLine { get; }
+    /// <summary>"Edit" (a reviewer may change seasons and 4K before approving) and "Comments (N)" (0.46+).</summary>
+    public RequestActionsViewModel? Actions { get; }
+
+    /// <summary>A reload brought this request again: what an edit may have changed.</summary>
+    internal void Refresh(PendingRequest request)
+    {
+        SeasonsLine = request.DetailText;
+        ChangedLine = request.WasEdited ? RequestLifecycle.ChangedSinceAsking : "";
+    }
 
     public bool HasPoster => posterUrl != null;
     public ImageSource? Poster => posterUrl == null ? null : poster ??= new BitmapImage(posterUrl);
@@ -293,9 +326,11 @@ public sealed partial class IssueRow : ObservableObject
     [ObservableProperty]
     private string note = "";
 
-    public IssueRow(RequestsViewModel owner, Issue issue, bool isAdmin, System.Windows.Input.ICommand openTitle)
+    /// <param name="thread">Its conversation (0.46+); null from an older server.</param>
+    public IssueRow(RequestsViewModel owner, Issue issue, bool isAdmin, System.Windows.Input.ICommand openTitle, CommentThreadViewModel? thread)
     {
         this.owner = owner;
+        Thread = thread;
         this.isAdmin = isAdmin;
         isMine = issue.IsMine;
         Id = issue.Id;
@@ -320,6 +355,9 @@ public sealed partial class IssueRow : ObservableObject
     public string Title { get; }
     public TitleId TitleId { get; }
     public bool IsOpen { get; }
+
+    /// <summary>"Comments (N)" (0.46+); null hides it.</summary>
+    public CommentThreadViewModel? Thread { get; }
 
     /// <summary>"S2 E5", "Season 2", "Specials", or empty.</summary>
     public string EpisodeLabel { get; }
@@ -553,6 +591,128 @@ public sealed partial class NotFoundRow : ObservableObject
 }
 
 /// <summary>
+/// components/couldnt-add-section.tsx's row (0.46+): approved, but
+/// Sonarr/Radarr couldn't be reached or didn't take it. The error in red,
+/// the "Advanced" picks, "Retry", for the admin "Added it by hand", and the
+/// conversation.
+/// </summary>
+public sealed partial class CouldntAddRow : ObservableObject
+{
+    private readonly RequestsViewModel owner;
+    private readonly Uri? posterUrl;
+    private readonly string serverError;
+    private ImageSource? poster;
+
+    /// <summary>"retry" or "manual" while that call is in flight.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanAct))]
+    [NotifyPropertyChangedFor(nameof(RetryLabel))]
+    [NotifyPropertyChangedFor(nameof(ManualLabel))]
+    private string? busy;
+
+    /// <summary>The last action's failure, shown in place of the stored error.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ErrorLine))]
+    private string? actionError;
+
+    /// <param name="thread">Its conversation; null from a server without them.</param>
+    public CouldntAddRow(RequestsViewModel owner, ReviewedRequest request, bool isAdmin, ICommand openTitle, CommentThreadViewModel? thread)
+    {
+        this.owner = owner;
+        Id = request.Id;
+        Title = request.Title;
+        TitleId = request.TitleId;
+        SeasonsLine = request.DetailText;
+        var failedSince = request.AddFailed?.Since ?? request.ReviewedAt ?? request.CreatedAt;
+        MetaLine = request.CouldntAddLine(Format.ShortDate(request.ReviewedAt ?? failedSince), Format.DateAndTime(failedSince));
+        serverError = request.AddFailed?.Error ?? "";
+        ShowsAddedByHand = isAdmin;
+        posterUrl = request.PosterPath.Url(ImageSize.W92);
+        Open = openTitle;
+        Thread = thread;
+        Advanced = new AddOverridesViewModel(() => owner.Api, request.MediaType, request.TmdbId, request.Is4k)
+        {
+            Unsupported = owner.AdvancedIsUnsupported,
+            IsUnsupported = owner.HasNoAddOptions,
+        };
+    }
+
+    public Guid Id { get; }
+    public string Title { get; }
+    public TitleId TitleId { get; }
+
+    /// <summary>"Seasons 1–3" and/or "In 4K" next to the title; empty for neither.</summary>
+    public string SeasonsLine { get; }
+
+    /// <summary>"member1 · approved Sep 17, 2026 · last tried Sep 17, 2026 7:02 PM".</summary>
+    public string MetaLine { get; }
+
+    /// <summary>What went wrong: the last Retry's failure, else what the server kept.</summary>
+    public string ErrorLine => ActionError ?? serverError;
+
+    /// <summary>"Added it by hand" is the admin's.</summary>
+    public bool ShowsAddedByHand { get; }
+
+    /// <summary>"Advanced": the server and settings Retry adds it with (the ones it was approved with when left closed).</summary>
+    public AddOverridesViewModel Advanced { get; }
+
+    /// <summary>"Comments (N)"; null hides it.</summary>
+    public CommentThreadViewModel? Thread { get; }
+
+    public bool HasPoster => posterUrl != null;
+    public ImageSource? Poster => posterUrl == null ? null : poster ??= new BitmapImage(posterUrl);
+    public ICommand Open { get; }
+
+    public bool CanAct => Busy == null;
+    public string RetryLabel => Busy == "retry" ? RequestLifecycle.RetryingLabel : RequestLifecycle.RetryLabel;
+    public string ManualLabel => Busy == "manual" ? "Saving…" : RequestLifecycle.AddedByHandLabel;
+    public string ManualTooltip => RequestLifecycle.AddedByHandTooltip;
+
+    /// <summary><c>POST /requests/{id}/retry</c>, with the "Advanced" picks once they're opened.</summary>
+    [RelayCommand]
+    private Task RetryAsync()
+    {
+        var overrides = Advanced.Overrides;
+        return RunAsync("retry", api => api.Requests.RetryAsync(Id, overrides));
+    }
+
+    /// <summary><c>POST /requests/{id}/manual-approve</c>: the admin got it some other way.</summary>
+    [RelayCommand]
+    private Task ManuallyApproveAsync() => RunAsync("manual", api => api.Requests.ManuallyApproveAsync(Id));
+
+    /// <summary>A success drops the row at once; one that's already off the list ("That request isn't waiting to be added any more.") reloads.</summary>
+    private async Task RunAsync(string label, Func<MarqueeApi, Task> action)
+    {
+        if (Busy != null)
+        {
+            return;
+        }
+        Busy = label;
+        ActionError = null;
+        try
+        {
+            await action(owner.Api);
+            owner.Settle(this);
+        }
+        catch (ApiException failure)
+        {
+            if (failure.Kind == ApiErrorKind.NotFound && label == "retry")
+            {
+                owner.ReloadIssues();
+            }
+            else
+            {
+                ActionError = failure.Message;
+            }
+        }
+        finally
+        {
+            Busy = null;
+        }
+    }
+}
+
+/// <summary>
 /// app/requests/page.tsx: a member's own requests, or the admin's review
 /// queue plus "Past requests". Reloads on F5, after any request changed
 /// (this app's own approvals included, so a settled row's replacement
@@ -583,6 +743,7 @@ public sealed partial class RequestsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsMember))]
     [NotifyPropertyChangedFor(nameof(IssuesHeading))]
     [NotifyPropertyChangedFor(nameof(ShowsNotFound))]
+    [NotifyPropertyChangedFor(nameof(ShowsCouldntAdd))]
     private bool reviews;
 
     // MARK: Member
@@ -660,6 +821,25 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>The server's preset reasons (empty on a server before 0.28.0; the dialog then uses its own list).</summary>
     public IReadOnlyList<string> RejectionReasons { get; private set; } = [];
 
+    // MARK: Couldn't add (addFailed on /requests/history, 0.46+; components/couldnt-add-section.tsx)
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsCouldntAdd))]
+    [NotifyPropertyChangedFor(nameof(CouldntAddCountLabel))]
+    private IReadOnlyList<CouldntAddRow> couldntAdd = [];
+
+    // MARK: Conversations and edits (0.46+)
+
+    /// <summary>
+    /// One thread per request or report, kept across reloads, so an open
+    /// conversation (and a half-written comment) survives the reload an edit
+    /// or another row's action brings.
+    /// </summary>
+    private readonly Dictionary<(CommentSubject Subject, Guid Id), CommentThreadViewModel> threads = new();
+
+    /// <summary>The same for each request's Edit / Cancel state.</summary>
+    private readonly Dictionary<Guid, RequestActionsViewModel> requestActions = new();
+
     // MARK: Can't find (GET /requests/not-found, 0.46+; components/not-found-section.tsx)
 
     [ObservableProperty]
@@ -722,6 +902,14 @@ public sealed partial class RequestsViewModel : ObservableObject
 
     /// <summary>The "Past requests" heading: there are rows, or a failure to report.</summary>
     public bool ShowsHistorySection => HasHistory || ShowsHistoryError;
+
+    /// <summary>"Couldn't add" shows for reviewers while anything is listed; an older server has none.</summary>
+    public bool ShowsCouldntAdd => Reviews && CouldntAdd.Count > 0;
+
+    /// <summary>The count next to the "Couldn't add" heading.</summary>
+    public string CouldntAddCountLabel => CouldntAdd.Count.ToString(CultureInfo.CurrentCulture);
+
+    public string CouldntAddExplanation => RequestHistory.CouldntAddExplanation;
 
     /// <summary>"Can't find" shows for reviewers while anything is listed; an older server has none.</summary>
     public bool ShowsNotFound => Reviews && NotFound.Count > 0;
@@ -797,6 +985,7 @@ public sealed partial class RequestsViewModel : ObservableObject
         else
         {
             NotFound = [];
+            CouldntAdd = [];
             await LoadMineAsync(token);
             if (!token.IsCancellationRequested)
             {
@@ -823,8 +1012,8 @@ public sealed partial class RequestsViewModel : ObservableObject
             {
                 return;
             }
-            OpenIssues = fresh.Open.Select(issue => new IssueRow(this, issue, Reviews, OpenIssueTitleCommand)).ToList();
-            FixedIssues = fresh.Fixed.Select(issue => new IssueRow(this, issue, Reviews, OpenIssueTitleCommand)).ToList();
+            OpenIssues = fresh.Open.Select(IssueRowFor).ToList();
+            FixedIssues = fresh.Fixed.Select(IssueRowFor).ToList();
         }
         catch (ApiException error)
         {
@@ -940,7 +1129,11 @@ public sealed partial class RequestsViewModel : ObservableObject
             {
                 return;
             }
-            Mine = fresh.Select(request => new MyRequestRow(request, OpenTitleCommand)).ToList();
+            Mine = fresh.Select(request => new MyRequestRow(
+                    request,
+                    OpenTitleCommand,
+                    ActionsFor(request.Id, request.HasConversation, request.CanEdit, request.CanCancel, request.ChangeHint, request.CommentCount)))
+                .ToList();
             MineError = null;
         }
         catch (ApiException error)
@@ -976,10 +1169,18 @@ public sealed partial class RequestsViewModel : ObservableObject
             RejectionReasons = fresh.RejectionReasons;
             // A row still pending keeps its state (an open "Advanced" and its picks) across reloads.
             var existing = Pending.ToDictionary(row => row.Id);
+            // One whose 4K changed (an edit) is built anew, so "Advanced" lists the right servers.
             var rows = fresh.Results
-                .Select(request => existing.TryGetValue(request.Id, out var row)
-                    ? row
-                    : new PendingRow(this, request, fresh.ManualSonarrAddUrl(request), OpenPendingTitleCommand))
+                .Select(request =>
+                {
+                    var actions = ActionsFor(request.Id, request.HasConversation, request.HasConversation, false, null, request.CommentCount);
+                    if (existing.TryGetValue(request.Id, out var row) && row.Is4k == request.Is4k)
+                    {
+                        row.Refresh(request);
+                        return row;
+                    }
+                    return new PendingRow(this, request, fresh.ManualSonarrAddUrl(request), OpenPendingTitleCommand, actions);
+                })
                 .ToList();
             Pending.Clear();
             foreach (var row in rows)
@@ -1019,7 +1220,18 @@ public sealed partial class RequestsViewModel : ObservableObject
             {
                 return;
             }
-            History = fresh.Select(request => new ReviewedRow(request, OpenTitleCommand)).ToList();
+            // "Couldn't add" (0.46+) comes first on the wire and has its own section.
+            var existingFailed = CouldntAdd.ToDictionary(row => row.Id);
+            CouldntAdd = RequestHistory.CouldntAdd(fresh)
+                .Select(request => existingFailed.TryGetValue(request.Id, out var row)
+                    ? row
+                    : new CouldntAddRow(this, request, model.Viewer?.IsAdmin == true, OpenCouldntAddTitleCommand,
+                        ThreadFor(CommentSubject.Request, request.Id, request.HasConversation, request.CommentCount)))
+                .ToList();
+            History = RequestHistory.Past(fresh)
+                .Select(request => new ReviewedRow(request, OpenTitleCommand,
+                    ThreadFor(CommentSubject.Request, request.Id, request.HasConversation, request.CommentCount)))
+                .ToList();
             HistoryError = null;
         }
         catch (ApiException error)
@@ -1084,6 +1296,57 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>A row's action succeeded: drop it now; the reload the mutation triggers brings the server's view.</summary>
     internal void Settle(PendingRow row) => Pending.Remove(row);
 
+    /// <summary>Retry or "Added it by hand" went through: drop the row now; the reload brings the server's view.</summary>
+    internal void Settle(CouldntAddRow row) => CouldntAdd = CouldntAdd.Where(candidate => candidate != row).ToList();
+
+    [RelayCommand]
+    private void OpenCouldntAddTitle(CouldntAddRow? row)
+    {
+        if (row != null)
+        {
+            model.OpenTitle(row.TitleId);
+        }
+    }
+
+    /// <summary>
+    /// The conversation of a request or report, the same one across reloads
+    /// (with the list's fresh count); null where the server has none (older than 0.46).
+    /// </summary>
+    private CommentThreadViewModel? ThreadFor(CommentSubject subject, Guid id, bool available, int count)
+    {
+        if (!available)
+        {
+            return null;
+        }
+        if (threads.TryGetValue((subject, id), out var thread))
+        {
+            thread.UpdateCount(count);
+            return thread;
+        }
+        thread = new CommentThreadViewModel(() => model.Api, subject, id, count);
+        threads[(subject, id)] = thread;
+        return thread;
+    }
+
+    /// <summary>A request's Edit / Cancel / conversation, the same across reloads with what it allows now; null on an older server.</summary>
+    private RequestActionsViewModel? ActionsFor(Guid id, bool available, bool canEdit, bool canCancel, string? hint, int count)
+    {
+        if (ThreadFor(CommentSubject.Request, id, available, count) is not { } thread)
+        {
+            return null;
+        }
+        if (!requestActions.TryGetValue(id, out var actions))
+        {
+            actions = new RequestActionsViewModel(() => model.Api, id, thread);
+            requestActions[id] = actions;
+        }
+        actions.Update(canEdit, canCancel, hint);
+        return actions;
+    }
+
+    private IssueRow IssueRowFor(Issue issue) =>
+        new(this, issue, Reviews, OpenIssueTitleCommand, ThreadFor(CommentSubject.Issue, issue.Id, issue.HasConversation, issue.CommentCount));
+
     /// <summary>The server has no add options (older than 0.43): no row offers "Advanced".</summary>
     internal bool HasNoAddOptions { get; private set; }
 
@@ -1092,6 +1355,10 @@ public sealed partial class RequestsViewModel : ObservableObject
     {
         HasNoAddOptions = true;
         foreach (var row in Pending)
+        {
+            row.Advanced.IsUnsupported = true;
+        }
+        foreach (var row in CouldntAdd)
         {
             row.Advanced.IsUnsupported = true;
         }

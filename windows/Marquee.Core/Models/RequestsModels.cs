@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace Marquee.Core.Models;
 
@@ -126,6 +127,38 @@ public sealed record MyRequest
     /// <summary>The second line under the title: "Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
     public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
 
+    /// <summary>"Edit" under the badge: it's still pending (0.46+; false from an older server).</summary>
+    public bool CanEdit { get; init; }
+
+    /// <summary>"Cancel request" under the badge: it's still pending (0.46+; false from an older server).</summary>
+    public bool CanCancel { get; init; }
+
+    /// <summary>When its seasons or 4K last changed (0.46+); null if never, and from an older server.</summary>
+    public DateTimeOffset? EditedAt { get; init; }
+
+    /// <summary>Comments in its conversation (0.46+; 0 from an older server). Sending it at all is what <see cref="HasConversation"/> reads.</summary>
+    public int CommentCount
+    {
+        get => commentCount;
+        init
+        {
+            commentCount = value;
+            HasConversation = true;
+        }
+    }
+
+    private readonly int commentCount;
+
+    /// <summary>The server sent <c>commentCount</c> (0.46+): it has the conversations, so "Comments (N)" shows.</summary>
+    [JsonIgnore]
+    public bool HasConversation { get; private init; }
+
+    /// <summary>
+    /// "Need a change? Ask in its comments." under an approved request, which
+    /// can no longer be edited or cancelled (0.46+ only); null otherwise.
+    /// </summary>
+    public string? ChangeHint => HasConversation && Status == RequestStatus.Approved ? RequestLifecycle.AskInCommentsHint : null;
+
     public TitleId TitleId => new(MediaType, TmdbId);
 }
 
@@ -193,6 +226,32 @@ public sealed record PendingRequest
     /// <summary>The second line under the title: "Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
     public string DetailText => SeasonLabels.RequestLine(SeasonsText, Is4k);
 
+    /// <summary>
+    /// When the requester (or a reviewer) last changed its seasons or 4K
+    /// (0.46+); null if never, and from an older server.
+    /// </summary>
+    public DateTimeOffset? EditedAt { get; init; }
+
+    /// <summary>The website's note: "Changed since asking".</summary>
+    public bool WasEdited => EditedAt != null;
+
+    /// <summary>Comments in its conversation (0.46+; 0 from an older server).</summary>
+    public int CommentCount
+    {
+        get => commentCount;
+        init
+        {
+            commentCount = value;
+            HasConversation = true;
+        }
+    }
+
+    private readonly int commentCount;
+
+    /// <summary>The server sent <c>commentCount</c> (0.46+): "Edit" and "Comments (N)" show on the row.</summary>
+    [JsonIgnore]
+    public bool HasConversation { get; private init; }
+
     public TitleId TitleId => new(MediaType, TmdbId);
 }
 
@@ -253,7 +312,72 @@ public sealed record ReviewedRequest
     /// <summary>The red "Can't find" badge next to "Approved".</summary>
     public bool IsNotFound => Status == RequestStatus.Approved && NotFoundSince != null;
 
+    /// <summary>
+    /// Approved, but Sonarr/Radarr couldn't be reached or errored when adding
+    /// it (0.46+): listed under "Couldn't add" instead of "Past requests".
+    /// Null otherwise, and from an older server.
+    /// </summary>
+    public AddFailed? AddFailed { get; init; }
+
+    /// <summary>Under "Couldn't add" rather than "Past requests".</summary>
+    public bool IsAddFailed => Status == RequestStatus.Approved && AddFailed != null;
+
+    /// <summary>Comments in its conversation (0.46+; 0 from an older server).</summary>
+    public int CommentCount
+    {
+        get => commentCount;
+        init
+        {
+            commentCount = value;
+            HasConversation = true;
+        }
+    }
+
+    private readonly int commentCount;
+
+    /// <summary>The server sent <c>commentCount</c> (0.46+): "Comments (N)" shows on the row.</summary>
+    [JsonIgnore]
+    public bool HasConversation { get; private init; }
+
+    /// <summary>
+    /// A "Couldn't add" row's second line: "member1 · approved Sep 17, 2026 ·
+    /// last tried Sep 17, 2026 7:02 PM". <paramref name="approvedDate"/> is
+    /// <see cref="ReviewedAt"/> (else the failure's time) and
+    /// <paramref name="lastTried"/> the failure's time, as the screen prints them.
+    /// </summary>
+    public string CouldntAddLine(string approvedDate, string lastTried) =>
+        $"{RequestedBy.Label} · approved {approvedDate} · last tried {lastTried}";
+
     public TitleId TitleId => new(MediaType, TmdbId);
+}
+
+/// <summary>
+/// <c>addFailed</c> on a past request (0.46+): Sonarr/Radarr couldn't take
+/// it. <see cref="Since"/> is when it was last tried.
+/// </summary>
+public sealed record AddFailed
+{
+    public required string Error { get; init; }
+    public required DateTimeOffset Since { get; init; }
+}
+
+/// <summary>
+/// "Past requests" and "Couldn't add" from one <c>GET /requests/history</c>:
+/// the server lists the failed ones first; the website shows them in their
+/// own section above "Can't find" and leaves them out of "Past requests".
+/// </summary>
+public static class RequestHistory
+{
+    public const string CouldntAddHeading = "Couldn't add";
+    public const string CouldntAddExplanation = "Approved, but Sonarr/Radarr couldn't be reached or didn't take them. Retry once it's back.";
+
+    /// <summary>The "Couldn't add" rows, in the server's order.</summary>
+    public static IReadOnlyList<ReviewedRequest> CouldntAdd(IEnumerable<ReviewedRequest> history) =>
+        history.Where(request => request.IsAddFailed).ToList();
+
+    /// <summary>"Past requests": everything else.</summary>
+    public static IReadOnlyList<ReviewedRequest> Past(IEnumerable<ReviewedRequest> history) =>
+        history.Where(request => !request.IsAddFailed).ToList();
 }
 
 /// <summary><c>addedTo</c> on a past request (0.43+): the server and the settings it was added with.</summary>

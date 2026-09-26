@@ -72,7 +72,9 @@ final class ArrServersTests: XCTestCase {
         let history = try decode(API.ListResponse<API.ReviewedRequest>.self, "requests-history").results
         XCTAssertNil(history.first?.addedTo)
         XCTAssertNil(history.first?.addedToLine)
-        let approved = try XCTUnwrap(history.first { $0.status == .approved })
+        // The first approved row is under "Couldn't add" (0.46+): not added anywhere yet.
+        XCTAssertTrue(try XCTUnwrap(history.first { $0.status == .approved }).couldntAdd)
+        let approved = try XCTUnwrap(history.first { $0.status == .approved && !$0.couldntAdd })
         XCTAssertEqual(approved.addedTo?.serverName, "Radarr 2")
         XCTAssertEqual(approved.addedTo?.tags, [2])
         XCTAssertNil(approved.addedTo?.seriesType)

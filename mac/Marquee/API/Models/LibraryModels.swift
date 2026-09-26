@@ -115,6 +115,13 @@ extension API {
         /// request since then, the "Can't find" pill. nil otherwise, and
         /// from an older server.
         var notFoundSince: Date? = nil
+        /// 0.46+: the viewer's own requests for this title, regular and 4K,
+        /// newest first (at most five). nil from an older server.
+        var myRequests: [TitleRequestSummary]? = nil
+
+        /// Your requests to list under the actions ("Your request (Season 2)
+        /// is waiting for review"); empty from an older server.
+        var ownRequests: [TitleRequestSummary] { myRequests ?? [] }
 
         /// On the admin's blocklist: the member's "Requests are closed" pill,
         /// the admin's "Unblock requests".

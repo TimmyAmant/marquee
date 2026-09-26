@@ -104,6 +104,16 @@ extension API {
         let seasonsLabel: String?
         /// Asked for in 4K (0.37+); nil from an older server, meaning no.
         let is4k: Bool?
+        /// 0.46+: true while it's pending — "Edit" (`PATCH /requests/{id}`)
+        /// and "Cancel request" (`DELETE /requests/{id}`). nil from an older
+        /// server, meaning neither.
+        var canEdit: Bool? = nil
+        var canCancel: Bool? = nil
+        /// 0.46+: when its seasons or 4K last changed; nil if never.
+        var editedAt: Date? = nil
+        /// 0.46+: comments in its conversation. nil from an older server,
+        /// which has no conversations (no "Comments" then).
+        var commentCount: Int? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
         /// The seasons in words, sent or computed locally.
@@ -111,6 +121,14 @@ extension API {
         /// What the requests screens print under the title: "Season 2 · In 4K",
         /// "In 4K", "Seasons 1–3", or nil.
         var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
+        /// Offer "Edit".
+        var offersEdit: Bool { canEdit == true }
+        /// Offer "Cancel request".
+        var offersCancel: Bool { canCancel == true }
+        /// The server has conversations (0.46+): show "Comments (N)".
+        var hasConversation: Bool { commentCount != nil }
+        /// An approved request on a 0.46+ server says "Need a change? Ask in its comments."
+        var showsAskInCommentsHint: Bool { hasConversation && status == .approved }
     }
 
     /// `GET /requests/pending`: the admin's review queue.
@@ -189,6 +207,12 @@ extension API {
         let seasonsLabel: String?
         /// Asked for in 4K (0.37+); nil from an older server, meaning no.
         let is4k: Bool?
+        /// 0.46+: when the requester (or a reviewer) last changed its seasons
+        /// or 4K — "Changed since asking". nil if never, and from an older server.
+        var editedAt: Date? = nil
+        /// 0.46+: comments in its conversation; nil from an older server
+        /// (no "Comments" and no "Edit" then).
+        var commentCount: Int? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
         /// The seasons in words, sent or computed locally.
@@ -196,6 +220,10 @@ extension API {
         /// What the requests screens print under the title: "Season 2 · In 4K",
         /// "In 4K", "Seasons 1–3", or nil.
         var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
+        /// The server has the request lifecycle (0.46+): "Edit" and "Comments (N)".
+        var hasConversation: Bool { commentCount != nil }
+        /// "Changed since asking".
+        var wasChanged: Bool { editedAt != nil }
     }
 
     /// `GET /requests/history`: "Past requests", the 50 most recently reviewed.
@@ -230,8 +258,34 @@ extension API {
         /// (0.46+); nil otherwise, and from an older server. A red "Can't
         /// find" pill next to "Approved".
         var notFoundSince: Date? = nil
+        /// 0.46+: approved, but Sonarr/Radarr couldn't be reached or errored
+        /// when adding it — listed under "Couldn't add" instead of "Past
+        /// requests". nil otherwise, and from an older server.
+        var addFailed: AddFailure? = nil
+        /// 0.46+: comments in its conversation; nil from an older server.
+        var commentCount: Int? = nil
+
+        /// `addFailed`: the error, and when adding it was last tried.
+        struct AddFailure: Codable, Hashable, Sendable {
+            let error: String
+            let since: Date
+        }
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
+        /// Listed under "Couldn't add" rather than "Past requests".
+        var couldntAdd: Bool { addFailed != nil }
+        /// The server has conversations (0.46+): "Comments (N)".
+        var hasConversation: Bool { commentCount != nil }
+        /// "Susan · approved Sep 17, 2026 · last tried Sep 17, 2026 at 7:02 PM",
+        /// under a "Couldn't add" row's title; nil when it isn't one.
+        var couldntAddLine: String? {
+            guard let addFailed else { return nil }
+            return [
+                requestedBy.label,
+                "approved \(Format.shortDate(reviewedAt ?? addFailed.since))",
+                "last tried \(Format.dateTime(addFailed.since))",
+            ].joined(separator: " · ")
+        }
         /// Show the "Can't find" pill.
         var isNotFound: Bool { status == .approved && notFoundSince != nil }
         /// The seasons in words, sent or computed locally.

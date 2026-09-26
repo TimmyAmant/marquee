@@ -179,6 +179,8 @@
                         Foreground="{ThemeResource OwnedBadgeForegroundBrush}"
                         Margin="4,2,0,0"
                         TextWrapping="Wrap" />
+                    <!-- 0.46+: the report's conversation with the reviewers. -->
+                    <controls:CommentThreadView Thread="{x:Bind Thread}" Margin="0,2,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Top" HorizontalAlignment="Right">
                     <Button
@@ -266,6 +268,73 @@
                 </StackPanel>
             </Grid>
         </DataTemplate>
+
+        <!--
+          components/couldnt-add-section.tsx's row (0.46+): poster, title, who and
+          when it was approved and last tried, the error, the Advanced picks and the
+          conversation; Retry and (the admin) "Added it by hand" on the right.
+        -->
+        <DataTemplate x:Key="CouldntAddRowTemplate" x:DataType="vm:CouldntAddRow">
+            <Grid Padding="16,10" ColumnSpacing="12" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="40" Height="56" CornerRadius="6" VerticalAlignment="Top" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                    <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
+                        <TextBlock
+                            Text="{x:Bind SeasonsLine}"
+                            Visibility="{x:Bind SeasonsLine, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{x:Bind MetaLine}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="4,0,0,0" TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="{x:Bind ErrorLine, Mode=OneWay}"
+                        Visibility="{x:Bind ErrorLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        Margin="4,2,0,0"
+                        TextWrapping="Wrap" />
+                    <Expander
+                        Header="Advanced"
+                        Margin="0,6,0,0"
+                        IsExpanded="{x:Bind Advanced.IsExpanded, Mode=TwoWay}"
+                        Visibility="{x:Bind Advanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch">
+                        <ContentControl
+                            Content="{x:Bind Advanced}"
+                            ContentTemplate="{StaticResource AddOverridesTemplate}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch" />
+                    </Expander>
+                    <controls:CommentThreadView Thread="{x:Bind Thread}" Margin="0,2,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Top" HorizontalAlignment="Right">
+                    <Button
+                        Content="{x:Bind RetryLabel, Mode=OneWay}"
+                        Command="{x:Bind RetryCommand}"
+                        IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Stretch" />
+                    <HyperlinkButton
+                        Content="{x:Bind ManualLabel, Mode=OneWay}"
+                        Command="{x:Bind ManuallyApproveCommand}"
+                        IsEnabled="{x:Bind CanAct, Mode=OneWay}"
+                        Visibility="{x:Bind ShowsAddedByHand, Converter={StaticResource BoolToVisibility}}"
+                        ToolTipService.ToolTip="Mark it approved without Sonarr/Radarr, once you've got it some other way."
+                        HorizontalAlignment="Right"
+                        Padding="4,2" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
     </Page.Resources>
 
     <ScrollViewer>
@@ -320,6 +389,16 @@
                                             <ColumnDefinition Width="150" />
                                             <ColumnDefinition Width="200" />
                                         </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <!-- 0.46+: Edit and Cancel request while pending, the hint once approved, and Comments (N). -->
+                                        <controls:RequestActionsView
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="3"
+                                            Actions="{x:Bind Actions}"
+                                            Margin="48,4,0,0" />
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                             <Border Width="40" Height="56" CornerRadius="6" Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                 <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
@@ -419,10 +498,17 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
+                                        <!-- 0.46+: Edit (a reviewer may change seasons and 4K before approving) and Comments (N). -->
+                                        <controls:RequestActionsView
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="4"
+                                            Actions="{x:Bind Actions}"
+                                            Margin="48,4,0,0" />
                                         <!-- 0.43+: which server, profile, folder, tags (and series type) Approve adds it with. -->
                                         <Expander
-                                            Grid.Row="1"
+                                            Grid.Row="2"
                                             Grid.ColumnSpan="4"
                                             Header="Advanced"
                                             Margin="0,8,0,0"
@@ -443,10 +529,17 @@
                                             <StackPanel VerticalAlignment="Center" Spacing="0">
                                                 <HyperlinkButton Content="{x:Bind Title}" Command="{x:Bind Open}" CommandParameter="{x:Bind}" Padding="4,2" />
                                                 <TextBlock
-                                                    Text="{x:Bind SeasonsLine}"
-                                                    Visibility="{x:Bind SeasonsLine, Converter={StaticResource StringToVisibility}}"
+                                                    Text="{x:Bind SeasonsLine, Mode=OneWay}"
+                                                    Visibility="{x:Bind SeasonsLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
                                                     Style="{StaticResource CaptionTextBlockStyle}"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Margin="4,0,0,0" />
+                                                <!-- 0.46+: its seasons or 4K changed after it was asked. -->
+                                                <TextBlock
+                                                    Text="{x:Bind ChangedLine, Mode=OneWay}"
+                                                    Visibility="{x:Bind ChangedLine, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                                     Margin="4,0,0,0" />
                                             </StackPanel>
                                         </StackPanel>
@@ -490,6 +583,37 @@
                         </ItemsRepeater>
                     </StackPanel>
                 </Border>
+
+                <!-- MARK: Couldn't add (0.46+): approved, but Sonarr/Radarr couldn't take them; hidden when there are none. -->
+                <StackPanel Spacing="8" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsCouldntAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="Couldn't add" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                        <Border
+                            Padding="8,2"
+                            CornerRadius="10"
+                            BorderThickness="1"
+                            BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Text="{x:Bind ViewModel.CouldntAddCountLabel, Mode=OneWay}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.CouldntAddExplanation}"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap" />
+                    <Border Style="{StaticResource TableCard}" Margin="0,4,0,0">
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.CouldntAdd, Mode=OneWay}" ItemTemplate="{StaticResource CouldntAddRowTemplate}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Vertical" Spacing="0" />
+                            </ItemsRepeater.Layout>
+                        </ItemsRepeater>
+                    </Border>
+                </StackPanel>
 
                 <!-- MARK: Can't find (0.46+): approved requests Sonarr/Radarr hasn't found; hidden when there are none. -->
                 <StackPanel Spacing="8" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsNotFound, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
@@ -561,6 +685,16 @@
                                             <ColumnDefinition Width="130" />
                                             <ColumnDefinition Width="260" />
                                         </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <!-- 0.46+: Comments (N). -->
+                                        <controls:CommentThreadView
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="4"
+                                            Thread="{x:Bind Thread}"
+                                            Margin="48,4,0,0" />
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                             <Border Width="40" Height="56" CornerRadius="6" Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                 <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />

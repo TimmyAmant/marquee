@@ -22,6 +22,13 @@ public static class Format
         return $"{local.ToString("MMM d, yyyy", CultureInfo.CurrentCulture)} {local.ToString("t", CultureInfo.CurrentCulture)}";
     }
 
+    /// <summary>"Sep 26, 3:02 AM": when a comment was written (the website's thread).</summary>
+    public static string MonthDayTime(DateTimeOffset moment)
+    {
+        var local = moment.ToLocalTime();
+        return $"{local.ToString("MMM d", CultureInfo.CurrentCulture)}, {local.ToString("t", CultureInfo.CurrentCulture)}";
+    }
+
     /// <summary>"September 2, 1964": a person's birthday.</summary>
     public static string LongDate(DateOnly day) => day.ToString("MMMM d, yyyy", CultureInfo.CurrentCulture);
 

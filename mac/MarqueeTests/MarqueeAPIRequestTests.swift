@@ -57,11 +57,16 @@ final class MarqueeAPIRequestTests: XCTestCase {
     /// `POST /titles/{type}/{tmdbId}/share`'s answer, from the doc's prose.
     nonisolated static let shareResponse = #"{"ok":true,"sharedWith":1}"#
 
+    /// `POST …/comments`' answer, from the doc's prose.
+    nonisolated static let commentCreatedResponse = #"{"ok":true,"commentId":"7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b"}"#
+    nonisolated static let commentId = "7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b"
+
     private func fixture(_ name: String) throws -> Data {
         if name == "blocklist" { return Data(Self.blocklistResponse.utf8) }
         if name == "arr-server-saved" { return Data(Self.arrServerSavedResponse.utf8) }
         if name == "arr-server-webhook" { return Data(Self.arrServerWebhookResponse.utf8) }
         if name == "share-result" { return Data(Self.shareResponse.utf8) }
+        if name == "comment-created" { return Data(Self.commentCreatedResponse.utf8) }
         let file = name.contains(".") ? name : name + ".json"
         let url = Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/api/\(file)")
         return try Data(contentsOf: url)
@@ -163,6 +168,41 @@ final class MarqueeAPIRequestTests: XCTestCase {
             },
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/not-found/dismiss", response: "ok") {
                 try await $0.requests.dismissNotFound(request)
+            },
+            // Request lifecycle (0.46+)
+            Case(method: "PATCH", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0", body: #"{"seasons":[1,2],"is4k":false}"#, response: "ok") {
+                try await $0.requests.edit(request, API.RequestEdit(seasons: .seasons([2, 1, 2]), is4k: false))
+            },
+            Case(method: "GET", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/edit-options", response: "request-edit-options") {
+                _ = try await $0.requests.editOptions(request)
+            },
+            Case(method: "DELETE", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0", response: "ok") { try await $0.requests.cancel(request) },
+            Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/retry", response: "ok") { try await $0.requests.retry(request) },
+            // Conversations (0.46+)
+            Case(method: "GET", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments", response: "comment-thread") {
+                _ = try await $0.comments.thread(.request(request))
+            },
+            Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments", body: #"{"body":"Could it be the 4K one?"}"#, response: "comment-created") {
+                let id = try await $0.comments.add("Could it be the 4K one?", to: .request(request))
+                XCTAssertEqual(id, Self.commentId)
+            },
+            Case(method: "PATCH", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments/7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b", body: #"{"body":"Or the regular one"}"#, response: "ok") {
+                try await $0.comments.edit(Self.commentId, in: .request(request), body: "Or the regular one")
+            },
+            Case(method: "DELETE", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments/7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b", response: "ok") {
+                try await $0.comments.delete(Self.commentId, in: .request(request))
+            },
+            Case(method: "GET", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments", response: "comment-thread") {
+                _ = try await $0.comments.thread(.issue(request))
+            },
+            Case(method: "POST", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments", body: #"{"body":"Which episode?"}"#, response: "comment-created") {
+                try await $0.comments.add("Which episode?", to: .issue(request))
+            },
+            Case(method: "PATCH", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments/7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b", body: #"{"body":"Season 2?"}"#, response: "ok") {
+                try await $0.comments.edit(Self.commentId, in: .issue(request), body: "Season 2?")
+            },
+            Case(method: "DELETE", path: "/issues/28713d50-27f2-4230-9c95-c1e6a000f6c0/comments/7e9d1c3b-5a2f-4e6d-8b0a-9c1d2e3f4a5b", response: "ok") {
+                try await $0.comments.delete(Self.commentId, in: .issue(request))
             },
             // Problem reports (0.38+)
             Case(
@@ -322,8 +362,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 126, "docs/api-v1.md documents 126 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 126, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 138, "docs/api-v1.md documents 138 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 138, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
@@ -407,6 +447,50 @@ final class MarqueeAPIRequestTests: XCTestCase {
         let bare = try XCTUnwrap(StubURLProtocol.requests.first)
         XCTAssertEqual(bare.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject")
         XCTAssertTrue(Self.body(of: bare).isEmpty, "nil reason sends no body")
+    }
+
+    /// `PATCH /requests/{id}` (0.46+): an absent `seasons` leaves them as
+    /// they are, `null` asks for the whole series — two different bodies —
+    /// and `is4k` is only sent when given. Retry sends its Advanced picks.
+    func testEditRequestTellsAbsentSeasonsFromNull() async throws {
+        let response = try fixture("ok")
+        StubURLProtocol.handler = { _ in (200, StubURLProtocol.apiHeaders, response) }
+        let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
+        let api = MarqueeAPI(client: client)
+
+        func sentBody(_ edit: API.RequestEdit) async throws -> String {
+            StubURLProtocol.requests = []
+            try await api.requests.edit(Self.requestId, edit)
+            let request = try XCTUnwrap(StubURLProtocol.requests.first)
+            XCTAssertEqual(request.httpMethod, "PATCH")
+            XCTAssertEqual(request.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0")
+            return String(decoding: Self.body(of: request), as: UTF8.self)
+        }
+
+        let wholeSeries = try await sentBody(API.RequestEdit(seasons: .wholeSeries))
+        XCTAssertEqual(try Self.jsonObject(Data(wholeSeries.utf8)), try Self.jsonObject(Data(#"{"seasons":null}"#.utf8)))
+        XCTAssertTrue(wholeSeries.contains(#""seasons":null"#), "null is sent, not left out: \(wholeSeries)")
+
+        let fourKOnly = try await sentBody(API.RequestEdit(is4k: true))
+        XCTAssertEqual(try Self.jsonObject(Data(fourKOnly.utf8)), try Self.jsonObject(Data(#"{"is4k":true}"#.utf8)))
+        XCTAssertFalse(fourKOnly.contains("seasons"), "Unchanged seasons send no key: \(fourKOnly)")
+
+        let nothing = try await sentBody(API.RequestEdit())
+        XCTAssertEqual(try Self.jsonObject(Data(nothing.utf8)), try Self.jsonObject(Data("{}".utf8)))
+
+        let seasons = try await sentBody(API.RequestEdit(seasons: .seasons([3, 1]), is4k: false))
+        XCTAssertEqual(try Self.jsonObject(Data(seasons.utf8)), try Self.jsonObject(Data(#"{"seasons":[1,3],"is4k":false}"#.utf8)))
+
+        StubURLProtocol.requests = []
+        try await api.requests.retry(Self.requestId, overrides: API.AddOverrides(
+            serverId: "b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31", qualityProfileId: 6, rootFolderPath: "/movies-kids", tags: [2], seriesType: nil
+        ))
+        let retry = try XCTUnwrap(StubURLProtocol.requests.first)
+        XCTAssertEqual(retry.url?.path, "/api/v1/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/retry")
+        XCTAssertEqual(
+            try Self.jsonObject(Self.body(of: retry)),
+            try Self.jsonObject(Data(#"{"serverId":"b3e1f7a2-9c4d-4e8b-a1f0-6d2c5e7b9a31","qualityProfileId":6,"rootFolderPath":"/movies-kids","tags":[2]}"#.utf8))
+        )
     }
 
     /// `PATCH /users/{id}` (0.39+) with the role and request limits (the

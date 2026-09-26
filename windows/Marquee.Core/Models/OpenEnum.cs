@@ -264,7 +264,13 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
     /// <summary>Sonarr/Radarr hasn't found an approved request (0.46+, to the admin and trusted members).</summary>
     public static readonly NotificationEventType RequestNotFound = new("request_not_found");
 
-    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved, TitleShared, RequestNotFound];
+    /// <summary>Someone wrote in the conversation on a request you're part of (0.46+); <c>RequestId</c> says which.</summary>
+    public static readonly NotificationEventType RequestComment = new("request_comment");
+
+    /// <summary>Someone wrote in the conversation on a problem report you're part of (0.46+); <c>IssueId</c> says which.</summary>
+    public static readonly NotificationEventType IssueComment = new("issue_comment");
+
+    public static IReadOnlyList<NotificationEventType> Known { get; } = [Grabbed, Downloaded, RequestApproved, RequestRejected, IssueReported, IssueResolved, TitleShared, RequestNotFound, RequestComment, IssueComment];
     public static NotificationEventType FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -281,6 +287,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == IssueResolved) return "🛠️";
             if (this == TitleShared) return "📨";
             if (this == RequestNotFound) return "🔍";
+            if (this == RequestComment || this == IssueComment) return "💬";
             return "🔔";
         }
     }
@@ -302,6 +309,7 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
             if (this == IssueResolved) return "Problem fixed";
             if (this == TitleShared) return "Shared with you";
             if (this == RequestNotFound) return "Can't find it";
+            if (this == RequestComment || this == IssueComment) return "New comment";
             return "Marquee";
         }
     }

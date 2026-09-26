@@ -442,6 +442,32 @@
                                         Visibility="{x:Bind ViewModel.HasOtherRequesters, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                    <!-- components/my-title-requests.tsx (0.46+): the viewer's own requests, with Edit, Cancel request and Comments (N). -->
+                                    <ItemsRepeater
+                                        ItemsSource="{x:Bind ViewModel.MyRequests, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.HasMyRequests, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                        MaxWidth="640"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,6,0,0">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Vertical" Spacing="8" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:TitleRequestItem">
+                                                <Border
+                                                    Padding="14,10"
+                                                    CornerRadius="12"
+                                                    BorderThickness="1"
+                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                                                    <StackPanel Spacing="2">
+                                                        <TextBlock Text="{x:Bind Line}" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+                                                        <controls:RequestActionsView Actions="{x:Bind Actions}" Margin="-4,0,0,0" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
                                     <TextBlock
                                         Text="{x:Bind ViewModel.AddError, Mode=OneWay}"
                                         Visibility="{x:Bind ViewModel.HasAddError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

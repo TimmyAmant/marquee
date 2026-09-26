@@ -72,7 +72,16 @@ private struct TableCard<Content: View>: View {
 private func titleCell(
     _ title: String, _ posterPath: API.ImageRef?, detail: String? = nil, action: @escaping () -> Void
 ) -> some View {
-    HStack(spacing: 12) {
+    titleCell(title, posterPath, detail: detail, action: action) { EmptyView() }
+}
+
+/// `titleCell` with more under the title: "Comments (2)", "Edit", notes.
+@MainActor
+private func titleCell<Footer: View>(
+    _ title: String, _ posterPath: API.ImageRef?, detail: String? = nil, action: @escaping () -> Void,
+    @ViewBuilder footer: () -> Footer
+) -> some View {
+    HStack(alignment: .top, spacing: 12) {
         RequestPoster(posterPath: posterPath)
         VStack(alignment: .leading, spacing: 2) {
             Button(title, action: action)
@@ -83,7 +92,21 @@ private func titleCell(
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.textSecondary)
             }
+            footer()
         }
+        .frame(minHeight: 56)
+    }
+}
+
+/// A row's conversation, opened under it: lined up with the title, past the poster.
+private struct RowThread: View {
+    let parent: API.CommentParent
+    let onCountChange: (Int) -> Void
+
+    var body: some View {
+        CommentThreadPanel(parent: parent, onCountChange: onCountChange)
+            .padding(.leading, 52)
+            .padding(.top, 4)
     }
 }
 
@@ -124,24 +147,7 @@ private struct MemberRequestsList: View {
                     TableCard(columns: ["Title", "Requested", "Status"]) {
                         ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
-                            HStack(spacing: 0) {
-                                titleCell(row.title, row.posterPath, detail: row.detailLine) { model.openTitle(row.titleID) }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                Text(Format.shortDate(row.createdAt))
-                                    .foregroundStyle(Theme.textSecondary)
-                                    .frame(width: 170, alignment: .leading)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
-                                    // The admin's reason, under "Declined" like the web page.
-                                    if let reason = row.rejectionReason {
-                                        RejectionReasonLine(reason: reason)
-                                    }
-                                }
-                                .frame(width: 170, alignment: .leading)
-                            }
-                            .font(.system(size: 13))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
+                            MyRequestRow(row: row)
                         }
                     }
                 }
@@ -166,6 +172,63 @@ private struct MemberRequestsList: View {
     }
 }
 
+/// One of a member's own requests: title, date, status — and (0.46+) Edit
+/// and Cancel while it's pending, "Need a change? Ask in its comments." once
+/// approved, and its conversation.
+private struct MyRequestRow: View {
+    let row: API.MyRequest
+
+    @Environment(AppModel.self) private var model
+    @State private var showsComments = false
+    @State private var shownCount: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
+                    if let count = row.commentCount {
+                        CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                            .padding(.top, 2)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(Format.shortDate(row.createdAt))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 170, alignment: .leading)
+                    .padding(.top, 18)
+                VStack(alignment: .leading, spacing: 4) {
+                    TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
+                    // The admin's reason, under "Declined" like the web page.
+                    if let reason = row.rejectionReason {
+                        RejectionReasonLine(reason: reason)
+                    }
+                    if row.offersEdit {
+                        EditRequestButton(requestId: row.id)
+                    }
+                    if row.offersCancel {
+                        CancelRequestControl(requestId: row.id)
+                    }
+                    if row.showsAskInCommentsHint {
+                        Text("Need a change? Ask in its comments.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.textMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(width: 170, alignment: .leading)
+                .padding(.top, 16)
+            }
+            if showsComments {
+                RowThread(parent: .request(row.id)) { shownCount = $0 }
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+    }
+}
+
 // MARK: - Admin view
 
 private struct AdminRequestsList: View {
@@ -182,6 +245,19 @@ private struct AdminRequestsList: View {
 
     private var pending: [API.PendingRequest] {
         (queue?.results ?? []).filter { !settled.contains($0.id) }
+    }
+
+    /// "Couldn't add" rows hidden right after Retry / Added it by hand.
+    @State private var settledFailed: Set<UUID> = []
+
+    /// "Couldn't add" (0.46+): approved, but Sonarr/Radarr didn't take them.
+    private var couldntAdd: [API.ReviewedRequest] {
+        reviewed.filter { $0.couldntAdd && !settledFailed.contains($0.id) }
+    }
+
+    /// "Past requests": the rest of the history.
+    private var past: [API.ReviewedRequest] {
+        reviewed.filter { !$0.couldntAdd }
     }
 
     var body: some View {
@@ -222,56 +298,33 @@ private struct AdminRequestsList: View {
                 LoadingView(label: "Checking requests against your library…")
             }
 
-            // "Can't find" (0.46+), then problem reports, between the queue
-            // and "Past requests", like app/requests/page.tsx.
+            // "Couldn't add" and "Can't find" (0.46+), then problem reports,
+            // between the queue and "Past requests", like app/requests/page.tsx.
+            if !couldntAdd.isEmpty {
+                CouldntAddSection(
+                    rows: couldntAdd,
+                    isAdmin: model.viewer?.isAdmin == true,
+                    rejectionReasons: queue?.rejectionReasonChoices ?? API.PendingRequests.defaultRejectionReasons,
+                    onSettled: { settledFailed.insert($0) }
+                )
+                .padding(.top, 28)
+            }
             NotFoundSection(topPadding: 28)
             IssuesSection(isAdmin: true, topPadding: 28)
 
-            if reviewed.isEmpty, let historyError {
+            if past.isEmpty, let historyError {
                 SectionTitle(text: "Past requests")
                     .padding(.top, 28)
                 InlineMessage(text: historyError)
             }
 
-            if !reviewed.isEmpty {
+            if !past.isEmpty {
                 SectionTitle(text: "Past requests")
                     .padding(.top, 28)
                 TableCard(columns: ["Title", "Requested by", "Requested", "Status"]) {
-                    ForEach(Array(reviewed.enumerated()), id: \.element.id) { index, row in
+                    ForEach(Array(past.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { Divider().overlay(Theme.border) }
-                        HStack(spacing: 0) {
-                            titleCell(row.title, row.posterPath, detail: row.detailLine) { model.openTitle(row.titleID) }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(row.requestedBy.label)
-                                .foregroundStyle(Theme.textSecondary)
-                                .frame(width: 170, alignment: .leading)
-                            Text(Format.shortDate(row.createdAt))
-                                .foregroundStyle(Theme.textSecondary)
-                                .frame(width: 170, alignment: .leading)
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: 6) {
-                                    TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
-                                    // 0.46+: Sonarr/Radarr hasn't found it (listed under "Can't find").
-                                    if row.isNotFound, let since = row.notFoundSince {
-                                        TonePill(text: "Can't find", tone: .danger)
-                                            .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
-                                    }
-                                }
-                                if let reason = row.rejectionReason {
-                                    RejectionReasonLine(reason: reason)
-                                }
-                                // 0.43+: "Added to Radarr 2", like the web page.
-                                if let addedTo = row.addedToLine {
-                                    Text(addedTo)
-                                        .font(.system(size: 11.5))
-                                        .foregroundStyle(Theme.textMuted)
-                                }
-                            }
-                            .frame(width: 170, alignment: .leading)
-                        }
-                        .font(.system(size: 13))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
+                        PastRequestRow(row: row)
                     }
                 }
             }
@@ -301,6 +354,7 @@ private struct AdminRequestsList: View {
             if Task.isCancelled { return }
             reviewed = history
             historyError = nil
+            settledFailed = []
         } catch let failure as APIError where failure.isCancellation {
             return
         } catch {
@@ -323,6 +377,222 @@ private struct AdminRequestsList: View {
             }
             approvingAll = false
         }
+    }
+}
+
+/// One "Past requests" row: its status, the reason or where it was added,
+/// and (0.46+) its conversation.
+private struct PastRequestRow: View {
+    let row: API.ReviewedRequest
+
+    @Environment(AppModel.self) private var model
+    @State private var showsComments = false
+    @State private var shownCount: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
+                    if let count = row.commentCount {
+                        CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                            .padding(.top, 2)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(row.requestedBy.label)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 170, alignment: .leading)
+                    .padding(.top, 18)
+                Text(Format.shortDate(row.createdAt))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 170, alignment: .leading)
+                    .padding(.top, 18)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                        // 0.46+: Sonarr/Radarr hasn't found it (listed under "Can't find").
+                        if row.isNotFound, let since = row.notFoundSince {
+                            TonePill(text: "Can't find", tone: .danger)
+                                .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
+                        }
+                    }
+                    if let reason = row.rejectionReason {
+                        RejectionReasonLine(reason: reason)
+                    }
+                    // 0.43+: "Added to Radarr 2", like the web page.
+                    if let addedTo = row.addedToLine {
+                        Text(addedTo)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+                .frame(width: 170, alignment: .leading)
+                .padding(.top, 16)
+            }
+            if showsComments {
+                RowThread(parent: .request(row.id)) { shownCount = $0 }
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+    }
+}
+
+// MARK: - Couldn't add
+
+/// components/couldnt-add-section.tsx (0.46+): approved requests Sonarr/Radarr
+/// couldn't be reached (or errored) to add, each with its error and Retry.
+private struct CouldntAddSection: View {
+    let rows: [API.ReviewedRequest]
+    /// "Added it by hand" is the admin's alone.
+    let isAdmin: Bool
+    /// What the Decline sheet lists, as in the queue.
+    let rejectionReasons: [String]
+    /// Hides a row right after Retry / Added it by hand / Decline went through.
+    let onSettled: (UUID) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    SectionTitle(text: "Couldn't add")
+                    TonePill(text: "\(rows.count)", tone: .danger)
+                }
+                Text("Approved, but Sonarr/Radarr couldn't be reached or didn't take them. Retry once it's back.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                    if index > 0 { Divider().overlay(Theme.border) }
+                    CouldntAddRow(row: row, isAdmin: isAdmin, rejectionReasons: rejectionReasons, onSettled: { onSettled(row.id) })
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+        }
+    }
+}
+
+/// components/couldnt-add-section.tsx `CouldntAddRow`.
+private struct CouldntAddRow: View {
+    let row: API.ReviewedRequest
+    let isAdmin: Bool
+    let rejectionReasons: [String]
+    let onSettled: () -> Void
+
+    @Environment(AppModel.self) private var model
+    @State private var busy: String?
+    @State private var error: String?
+    /// Decline opens the reason chooser, like the queue's.
+    @State private var choosingReason = false
+    /// "Advanced": Retry with other picks than it was approved with.
+    @State private var advanced = AdvancedAddOptions()
+    @State private var showsComments = false
+    @State private var shownCount: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
+                RequestPoster(posterPath: row.posterPath)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Button(row.title) { model.openTitle(row.titleID) }
+                            .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
+                            .font(.system(size: 13, weight: .medium))
+                        if let detail = row.detailLine {
+                            Text(detail)
+                                .font(.system(size: 11.5))
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                    }
+                    if let line = row.couldntAddLine {
+                        Text(line)
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    if let message = error ?? row.addFailed?.error {
+                        Text(message)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Theme.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .textSelection(.enabled)
+                    }
+                    HStack(spacing: 14) {
+                        if advanced.isOffered {
+                            AdvancedAddToggle(advanced: $advanced)
+                                .disabled(busy != nil)
+                        }
+                        if let count = row.commentCount {
+                            CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                        }
+                    }
+                    .padding(.top, 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .trailing, spacing: 6) {
+                    Button(busy == "retry" ? "Retrying…" : "Retry") { retry() }
+                        .buttonStyle(AccentButtonStyle(compact: true))
+                        .disabled(busy != nil || advanced.isLoading)
+                    if isAdmin {
+                        Button(busy == "manual" ? "Saving…" : "Added it by hand") { manuallyApprove() }
+                            .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
+                            .font(.system(size: 11.5))
+                            .disabled(busy != nil)
+                            .help("Mark it approved without Sonarr/Radarr — once you've got it some other way.")
+                    }
+                    Button(busy == "reject" ? "Declining…" : "Decline") { choosingReason = true }
+                        .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
+                        .font(.system(size: 11.5))
+                        .disabled(busy != nil)
+                }
+            }
+            if advanced.isExpanded {
+                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
+                    .padding(.leading, 52)
+            }
+            if showsComments {
+                CommentThreadPanel(parent: .request(row.id)) { shownCount = $0 }
+                    .padding(.leading, 52)
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+        .sheet(isPresented: $choosingReason) {
+            DeclineRequestSheet(title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) { reason in
+                run("reject") { try await $0.requests.reject(row.id, reason: reason) }
+            }
+        }
+    }
+
+    private func run(_ label: String, _ action: @escaping @MainActor (MarqueeAPI) async throws -> Void) {
+        busy = label
+        error = nil
+        let api = model.api
+        Task {
+            do {
+                try await action(api)
+                onSettled()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = nil
+        }
+    }
+
+    private func retry() {
+        let overrides = advanced.overrides
+        run("retry") { try await $0.requests.retry(row.id, overrides: overrides) }
+    }
+
+    private func manuallyApprove() {
+        run("manual") { try await $0.requests.manuallyApprove(row.id) }
     }
 }
 
@@ -421,8 +691,24 @@ private struct IssueRow: View {
     /// "Mark fixed" opens a note field with its own "Mark fixed".
     @State private var resolving = false
     @State private var note = ""
+    @State private var showsComments = false
+    @State private var shownCount: Int?
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            mainRow
+            if showsComments {
+                CommentThreadPanel(parent: .issue(issue.id)) { shownCount = $0 }
+                    .padding(.leading, 52)
+            }
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .onChange(of: issue.commentCount) { _, _ in shownCount = nil }
+    }
+
+    private var mainRow: some View {
         HStack(alignment: .top, spacing: 12) {
             RequestPoster(posterPath: issue.posterPath)
             VStack(alignment: .leading, spacing: 3) {
@@ -481,6 +767,11 @@ private struct IssueRow: View {
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.owned)
                 }
+                // 0.46+: its conversation with the reporter.
+                if let count = issue.commentCount {
+                    CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                        .padding(.top, 2)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -502,9 +793,6 @@ private struct IssueRow: View {
                 }
             }
         }
-        .font(.system(size: 13))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     /// Runs one action; `after` is shown in place of reloading (Search again
@@ -759,6 +1047,8 @@ private struct RequestReviewRow: View {
     /// "Advanced" (0.43+): where and how Approve adds it. Untouched, Approve
     /// sends no body, as before.
     @State private var advanced = AdvancedAddOptions()
+    @State private var showsComments = false
+    @State private var shownCount: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -767,10 +1057,17 @@ private struct RequestReviewRow: View {
                 AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
                     .padding(.leading, 52)
             }
+            if showsComments {
+                CommentThreadPanel(parent: .request(row.id)) { shownCount = $0 }
+                    .padding(.leading, 52)
+            }
         }
         .font(.system(size: 13))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+        // Edited to or from 4K: the Advanced picks were for the other servers.
+        .onChange(of: row.is4k) { _, _ in advanced.reset() }
         .sheet(isPresented: $choosingReason) {
             DeclineRequestSheet(title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) { reason in
                 reject(reason: reason)
@@ -780,8 +1077,26 @@ private struct RequestReviewRow: View {
 
     private var mainRow: some View {
         HStack(alignment: .top, spacing: 0) {
-            titleCell(row.title, row.posterPath, detail: row.detailLine) { model.openTitle(row.titleID) }
-                .frame(maxWidth: .infinity, alignment: .leading)
+            titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
+                // 0.46+: the requester (or a reviewer) changed it after asking.
+                if row.wasChanged, let editedAt = row.editedAt {
+                    Text("Changed since asking")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.textMuted)
+                        .help("Changed \(Format.dateTime(editedAt))")
+                }
+                // 0.46+: a reviewer may change the seasons or 4K before
+                // approving, and talk it over with the requester.
+                if let count = row.commentCount {
+                    HStack(spacing: 14) {
+                        CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                        EditRequestButton(requestId: row.id)
+                            .disabled(busy != nil)
+                    }
+                    .padding(.top, 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Text(row.requestedBy.label)
                 .foregroundStyle(Theme.textSecondary)
                 .frame(width: 170, alignment: .leading)
