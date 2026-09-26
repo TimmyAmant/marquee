@@ -11,6 +11,19 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.42.0",
+    date: "2026-09-26",
+    changes: [
+      "Menu position: put the menu bar on the left, right, top or bottom (Settings › Account). It's remembered per device, on the website and in the Mac and Windows apps. Phones keep the pull-out menu.",
+      "Windows: Settings now has tabs like the Mac — Account, Integrations, Activity, Jobs and About (the admin-only ones are hidden from members) — with every integration, the webhook URLs, the activity feed and Run now for jobs.",
+      "Windows: quick add on posters — hover a poster to add it to Sonarr/Radarr, request it, or see that it's requested, without opening it.",
+      "Windows: Discover's Studios and Networks show logo tiles and the genres show artwork tiles, like the Mac; studios show their logo on title, search and favorites pages.",
+      "Windows: the mouse wheel over a sideways row (Trending, Popular, cast…) scrolls the page instead of getting stuck on the row. Shift+wheel scrolls the row.",
+      "Windows: poster grids fill the width, so they line up with the \"Because you watched\" row above.",
+      "Mac and Windows: after \"Add all\" on a collection, the page updates right away — the posters show their new badges without leaving and coming back.",
+    ],
+  },
+  {
     version: "0.41.0",
     date: "2026-09-26",
     changes: [
