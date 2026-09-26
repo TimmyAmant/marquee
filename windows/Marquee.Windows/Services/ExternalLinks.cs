@@ -39,4 +39,12 @@ public static class ExternalLinks
         }
         return await global::Windows.System.Launcher.LaunchUriAsync(url);
     }
+
+    /// <summary>
+    /// A page of the Marquee website on <paramref name="server"/> itself (e.g.
+    /// <c>/changelog</c>), which may be plain http on a home network; the
+    /// same origin rule as <see cref="OpenSignInPageAsync"/>.
+    /// </summary>
+    public static Task<bool> OpenOnServerAsync(Uri server, string path) =>
+        OpenSignInPageAsync(new Uri(server, path), server);
 }

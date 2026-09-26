@@ -40,6 +40,10 @@ targets:
     platform: macOS
     sources:
       - path: Marquee
+      # The release notes this build ships with, for "What's new" after an
+      # app-only update (App/WhatsNew.swift reads it as it is).
+      - path: ../lib/changelog.ts
+        buildPhase: resources
     info:
       path: Marquee/Resources/Info.plist
       properties:

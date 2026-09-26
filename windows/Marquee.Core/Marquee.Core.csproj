@@ -18,4 +18,12 @@
     <InternalsVisibleTo Include="Marquee.Core.Tests" />
   </ItemGroup>
 
+  <!--
+    The release notes this build ships with, for "What's new" after an
+    app-only update (Updates/WhatsNew.cs reads the file as it is).
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\lib\changelog.ts" LogicalName="Marquee.Core.changelog.ts" Link="changelog.ts" />
+  </ItemGroup>
+
 </Project>

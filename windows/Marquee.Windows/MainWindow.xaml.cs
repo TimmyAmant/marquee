@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
 using Marquee.Core.Models;
+using Marquee.Core.Updates;
+using Marquee.Windows.Controls;
 using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
 using Marquee.Windows.Views;
@@ -97,6 +99,7 @@ public sealed partial class MainWindow : Window, INavigator
         ];
         model.Navigator = this;
         model.Notifications.AskPermission = AskForNotificationsAsync;
+        model.ShowWhatsNew = ShowWhatsNewAsync;
         model.PropertyChanged += OnModelPropertyChanged;
         model.SessionChanged += OnSessionChanged;
         updater.PropertyChanged += OnUpdaterPropertyChanged;
@@ -367,6 +370,42 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
+    // MARK: What's new (components/whats-new.tsx)
+
+    /// <summary>
+    /// "What's new in Marquee …" after an upgrade (<see cref="AppModel"/>
+    /// decides when). True once it's dismissed (OK, Escape, See all changes);
+    /// false when another dialog was open, so it's shown another time.
+    /// </summary>
+    private async Task<bool> ShowWhatsNewAsync(WhatsNewContent content)
+    {
+        if (Root.XamlRoot is not { } xamlRoot)
+        {
+            return false;
+        }
+        var server = model.Session.Server?.BaseUrl;
+        var dialog = new WhatsNewDialog(content, async () =>
+        {
+            if (server != null)
+            {
+                await ExternalLinks.OpenOnServerAsync(server, "/changelog");
+            }
+        })
+        {
+            XamlRoot = xamlRoot,
+        };
+        try
+        {
+            await dialog.ShowAsync();
+            return true;
+        }
+        catch (COMException)
+        {
+            // "Only a single ContentDialog can be open at any time."
+            return false;
+        }
+    }
+
     // MARK: Rail (components/nav-menu.tsx)
 
     /// <summary>
@@ -621,6 +660,7 @@ public sealed partial class MainWindow : Window, INavigator
         // The app ends with its only window: close the stream, and let a
         // later click on a notification launch the app afresh.
         model.Notifications.AskPermission = null;
+        model.ShowWhatsNew = null;
         model.Notifications.Shutdown();
         if (ReferenceEquals(model.Navigator, this))
         {
