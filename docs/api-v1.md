@@ -1659,6 +1659,12 @@ take a few seconds.
   "tvdb": { "connected": true },
   "discord": { "connected": false },
   "ntfy": { "connected": false },
+  "telegram": { "connected": true, "chatId": "-1001234567890" },
+  "pushover": { "connected": false },
+  "email": {
+    "connected": true, "host": "smtp.gmail.com", "port": 587, "secure": false,
+    "username": "me@gmail.com", "from": "me@gmail.com", "to": ["me@gmail.com", "partner@example.com"]
+  },
   "genericWebhook": { "connected": false },
   "arrWebhooks": {
     "secret": "d8a989b4f0ad05fab2ab959bf0d5615adb0a25a9a3974674",
@@ -1670,7 +1676,14 @@ take a few seconds.
 
 Page sections: **Media Libraries** (Plex, Jellyfin), **Download Clients**
 (Sonarr, Radarr), **Metadata Sources** (TMDb, Trakt, TheTVDB), **Notifications**
-(Sonarr/Radarr webhooks, Discord, ntfy, generic webhook).
+(Sonarr/Radarr webhooks, Discord, ntfy, Telegram, Pushover, email, generic
+webhook).
+
+`telegram`, `pushover`, `email` (0.36+; an older server omits them): each is
+a household-wide relay like Discord and ntfy — every notification the admin
+gets is also sent there. No token or password is ever returned; `telegram`
+shows the chat it posts to and `email` everything but the SMTP password, so a
+form can be prefilled.
 
 - `tmdb.savedInSettings` = the page's "Connected" chip; `configuredFromEnv`
   without it = "Using environment variable"; `connected` = TMDb usable at all.
@@ -1799,6 +1812,9 @@ value. All respond `{ "ok": true }`.
 | `/settings/integrations/discord` | `{ "webhookUrl": "https://discord.com/api/webhooks/…" }` | "Enter a Discord webhook URL.", "That doesn't look like a Discord webhook URL.", "Couldn't post a test message to that webhook. Check it and try again." |
 | `/settings/integrations/ntfy` | `{ "topicUrl": "https://ntfy.sh/my-topic" }` | "Enter your ntfy topic URL.", "Enter a full URL, e.g. https://ntfy.sh/your-topic-name.", "Couldn't post a test message to that topic. Check it and try again." |
 | `/settings/integrations/webhook` | `{ "webhookUrl": "https://…" }` (generic JSON webhook) | "Enter a webhook URL.", "Enter a valid URL, starting with http:// or https://.", "Couldn't post a test request to that URL. Check it and try again." |
+| `/settings/integrations/telegram` | `{ "botToken": "123456789:AA…", "chatId": "-1001234567890" }` — `botToken` may be left `""` to keep the saved one | "Enter your bot's token.", "That doesn't look like a bot token. …", "Enter the chat ID to send to.", "The chat ID is a number (groups and channels start with -100) or a channel's @name.", "Telegram didn't take the test message: chat not found" (Telegram's own reason) |
+| `/settings/integrations/pushover` | `{ "appToken": "…", "userKey": "…" }` — both 30 characters; `appToken` may be `""` to keep the saved one | "The application token is the 30-character code …", "The user key is the 30-character code …", "Pushover didn't take the test message: user identifier is not a valid user, group, or subscribed user key" (Pushover's own reason) |
+| `/settings/integrations/email` | `{ "host": "smtp.gmail.com", "port": 587, "secure": false, "username": "me@gmail.com", "password": "…", "from": "me@gmail.com", "to": ["me@gmail.com"] }` — `secure`: TLS from the start (usually 465), otherwise STARTTLS when offered; `username`/`password` both or neither; `password` may be `""` to keep the saved one when `host` and `username` are unchanged; `to` may also be one comma-separated string, at most 20 | "Enter the SMTP server's host name, like smtp.gmail.com.", "Enter the SMTP port, like 587.", "Enter both the SMTP username and password, or neither.", "Enter the address the emails come from.", "Enter at least one address to send to.", "\"bob\" isn't an email address.", "The test email didn't go through: 535 5.7.8 Username and Password not accepted…" (the server's own answer) |
 
 Deleting the TMDb token falls back to `TMDB_ACCESS_TOKEN`/`TMDB_API_KEY` from
 the server environment, if set.
@@ -1993,6 +2009,9 @@ what to do, grouped by area.
 | | `PUT /settings/integrations/discord` · `DELETE` | admin |
 | | `PUT /settings/integrations/ntfy` · `DELETE` | admin |
 | | `PUT /settings/integrations/webhook` · `DELETE` | admin |
+| | `PUT /settings/integrations/telegram` · `DELETE` | admin |
+| | `PUT /settings/integrations/pushover` · `DELETE` | admin |
+| | `PUT /settings/integrations/email` · `DELETE` | admin |
 | Settings: Jobs | `GET /settings/jobs` | admin |
 | | `POST /settings/jobs/{id}/run` | admin |
 | Settings: About & Changelog | `GET /settings/about` | user |

@@ -11,6 +11,7 @@ import { TraktConnectCard } from "@/components/trakt-connect-card";
 import { TvdbConnectCard } from "@/components/tvdb-connect-card";
 import { DiscordConnectCard } from "@/components/discord-connect-card";
 import { NtfyConnectCard } from "@/components/ntfy-connect-card";
+import { NotificationChannelCards } from "@/components/notification-channel-cards";
 import { WebhookConnectCard } from "@/components/webhook-connect-card";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { WebhookSettingsCard } from "@/components/webhook-settings-card";
@@ -34,6 +35,7 @@ export default async function IntegrationsSettingsPage() {
       discordConnected,
       genericWebhookConnected,
       ntfyConnected,
+      channels,
     },
     headerList,
   ] = await Promise.all([loadIntegrationsPage(session.user.id), headers()]);
@@ -119,6 +121,7 @@ export default async function IntegrationsSettingsPage() {
             />
             <DiscordConnectCard connected={discordConnected} />
             <NtfyConnectCard connected={ntfyConnected} />
+            <NotificationChannelCards channels={channels} />
             <WebhookConnectCard connected={genericWebhookConnected} />
           </div>
         </section>
