@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  A status pill in one of the three badge palettes (the Mac's TonePill):
+  A status pill in one of the five badge palettes (the Mac's TonePill):
   request status labels, a season's episode count, "Have it" / "Missing".
-  Three Borders with theme brushes, the same way PosterCard draws its badge,
+  One Border per palette, with theme brushes, the same way PosterCard draws its badge,
   so the colors keep following light/dark switches; the code-behind only
   chooses which one is visible.
 -->
@@ -44,6 +44,34 @@
                 FontSize="11"
                 FontWeight="SemiBold"
                 Foreground="{ThemeResource TrackedBadgeForegroundBrush}" />
+        </Border>
+        <Border
+            x:Name="MissingBorder"
+            Visibility="Collapsed"
+            Padding="8,2"
+            CornerRadius="10"
+            Background="{ThemeResource MissingBadgeBackgroundBrush}"
+            BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
+            BorderThickness="1">
+            <TextBlock
+                x:Name="MissingText"
+                FontSize="11"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
+        </Border>
+        <Border
+            x:Name="SoonBorder"
+            Visibility="Collapsed"
+            Padding="8,2"
+            CornerRadius="10"
+            Background="{ThemeResource SoonBadgeBackgroundBrush}"
+            BorderBrush="{ThemeResource SoonBadgeForegroundBrush}"
+            BorderThickness="1">
+            <TextBlock
+                x:Name="SoonText"
+                FontSize="11"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource SoonBadgeForegroundBrush}" />
         </Border>
         <Border
             x:Name="NeutralBorder"

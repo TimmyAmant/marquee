@@ -186,6 +186,30 @@ extension API {
             }
         }
 
+        /// The short name lists and the color key use (status-tone.ts `name`).
+        var name: String {
+            switch self {
+            case .owned: return "In your library"
+            case .trackedDownloading: return "Downloading"
+            case .trackedMonitored: return "Missing"
+            case .comingSoon: return "Coming soon"
+            case .untracked: return "Not in your library"
+            case let .unknown(raw): return raw
+            }
+        }
+
+        /// One line for the color key (status-tone.ts `meaning`).
+        var meaning: String {
+            switch self {
+            case .owned: return "The file is in your library, ready to watch."
+            case .trackedDownloading: return "It's downloading right now."
+            case .trackedMonitored: return "Added, but Sonarr/Radarr hasn't found a copy yet — it keeps looking."
+            case .comingSoon: return "Added, but it hasn't been released yet."
+            case .untracked: return "Not added yet. Posters get no colored strip."
+            case .unknown: return ""
+            }
+        }
+
         /// In the library in any form (owned or tracked by Sonarr/Radarr).
         var isInLibrary: Bool {
             switch self {

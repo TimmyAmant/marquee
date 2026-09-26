@@ -82,7 +82,10 @@
                     </StackPanel>
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasTitles, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="Titles" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Titles" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <controls:StatusColorKey />
+                        </StackPanel>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Titles, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />

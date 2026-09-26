@@ -183,38 +183,24 @@ private struct SearchPanelRow: View {
     }
 }
 
-/// The Movie/TV/Actor pill, wearing a title's library status in the colors a
-/// poster card uses for it (the website's search-bar.tsx STATUS_PILL): green
-/// in the library, blue downloading, the status strip's red for missing and
-/// purple for coming soon. Not in the library, a person, or a status this
-/// app doesn't know stays the plain grey outline.
+/// The Movie/TV/Actor pill, wearing a title's library status in the same
+/// tone as a poster's badge and strip (`API.LibraryStatus.tone`, the
+/// website's lib/library/status-tone.ts): green in the library, blue
+/// downloading, orange missing, purple coming soon. Not in the library, a
+/// person, or a status this app doesn't know stays the plain grey outline.
 struct SuggestionKindPill: View {
     let kind: API.SuggestionKind
     let status: API.LibraryStatus?
 
     /// (text, fill, border), or nil for the neutral pill.
     nonisolated static func colors(for status: API.LibraryStatus?) -> (foreground: Color, background: Color, border: Color)? {
-        switch status {
-        case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.4))
-        case .trackedDownloading: return (Theme.tracked, Theme.trackedBg, Theme.tracked.opacity(0.4))
-        case let .some(strip) where strip == .trackedMonitored || strip == .comingSoon:
-            let color = Theme.statusBar(strip)
-            return (color, color.opacity(0.12), color.opacity(0.4))
-        default: return nil
-        }
+        status?.tone.palette
     }
 
     /// "Movie · In your library"; just "Movie" when there's no known status.
     nonisolated static func accessibilityText(kind: API.SuggestionKind, status: API.LibraryStatus?) -> String {
-        let label: String? = switch status {
-        case .owned: "In your library"
-        case .trackedDownloading: "Downloading"
-        case .trackedMonitored: "Missing"
-        case .comingSoon: "Coming soon"
-        case .untracked: "Not in your library"
-        case .unknown, nil: nil
-        }
-        return label.map { "\(kind.label) · \($0)" } ?? kind.label
+        guard let status, status.isKnown else { return kind.label }
+        return "\(kind.label) · \(status.name)"
     }
 
     var body: some View {

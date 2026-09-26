@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { PosterCard } from "@/components/poster-card";
 import { PosterGrid } from "@/components/poster-grid";
 import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
+import { StatusLegend } from "@/components/status-legend";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ResolutionBadge, DynamicRangeBadge, AudioBadge } from "@/components/resolution-badge";
@@ -358,6 +359,8 @@ export function MediaList({
               </button>
             ))}
           </div>
+
+          {view === "grid" && sortedEntries.some((entry) => entry.status) && <StatusLegend />}
         </div>
       </div>
 

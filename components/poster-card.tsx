@@ -1,21 +1,7 @@
 import Link from "next/link";
 import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
-import type { LibraryStatus } from "@/components/status-badge";
-
-// A thin colored strip across the bottom of the poster art, Sonarr-style —
-// readable at a glance across a whole grid without having to read the badge
-// text on each card. Reuses the app's existing owned/tracked color tokens so
-// it stays consistent with the StatusBadge pill; red/purple/yellow have no
-// dedicated tokens of their own since only owned/downloading appear as
-// badges elsewhere, so Tailwind's default palette covers the rest.
-const STATUS_BAR_CLASS: Record<LibraryStatus, string> = {
-  owned: "bg-owned",
-  tracked_downloading: "bg-tracked",
-  tracked_monitored: "bg-red-500",
-  coming_soon: "bg-purple-500",
-  untracked: "bg-yellow-500",
-};
+import { statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
 
 export function PosterCard({
   href,
@@ -64,6 +50,7 @@ export function PosterCard({
   typeLabel?: "MOVIE" | "SERIES";
 }) {
   const src = tmdbImageUrl(posterPath, "w342");
+  const stripClass = status ? statusClasses(status).strip : null;
 
   return (
     <div className="group">
@@ -102,10 +89,11 @@ export function PosterCard({
           )
         )}
         {badge && <div className="pointer-events-none absolute right-1.5 top-1.5 z-10">{badge}</div>}
-        {status && (
-          <div
-            className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[3px] ${STATUS_BAR_CLASS[status]}`}
-          />
+        {/* A thin colored strip across the bottom of the art, Sonarr-style —
+            readable at a glance across a whole grid. Same tone as the badge
+            (lib/library/status-tone.ts); titles not in the library get none. */}
+        {stripClass && (
+          <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[3px] ${stripClass}`} />
         )}
 
         {overview && (

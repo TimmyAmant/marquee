@@ -136,6 +136,8 @@ struct BrowseView: View {
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.danger)
             }
+
+            StatusColorKey()
         }
     }
 

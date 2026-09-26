@@ -20,7 +20,7 @@ const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   declined: "bg-untracked-bg text-text-secondary",
   owned: "bg-owned-bg text-owned",
   downloading: "bg-tracked-bg text-tracked",
-  coming_soon: "bg-untracked-bg text-text-secondary",
+  coming_soon: "bg-soon-bg text-soon",
   approved: "bg-tracked-bg text-tracked",
 };
 

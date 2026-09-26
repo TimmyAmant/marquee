@@ -3,8 +3,8 @@
   One row of the shell's search type-ahead (components/search-bar.tsx, the
   Mac's SearchPanelRow): poster, the name over its subtitle, and the
   Actor/Movie/TV pill, which wears the title's library status in the poster
-  badge's palette (TonePill: green in the library, blue downloading or
-  missing, neutral otherwise).
+  badge's palette (TonePill: green in the library, blue downloading, orange
+  missing, purple coming soon, neutral otherwise).
 
   MainWindow's AutoSuggestBox uses this as its item template with no
   bindings (that file stays binding-free), so the row fills itself from its

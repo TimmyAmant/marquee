@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { SearchSuggestion } from "@/app/api/search/suggest/route";
-import type { LibraryStatus } from "@/components/status-badge";
+import { STATUS_TEXT, TONE_CLASS, statusTone } from "@/lib/library/status-tone";
 
 const TYPE_LABELS: Record<SearchSuggestion["mediaType"], string> = {
   person: "Actor",
@@ -15,30 +15,23 @@ const TYPE_LABELS: Record<SearchSuggestion["mediaType"], string> = {
 
 const NEUTRAL_PILL_CLASS = "border-border text-text-muted";
 
-/** The Movie/TV pill wears the title's library status, in the colors a
- * poster card uses for it: green when it's in the library (the Owned badge),
- * blue while downloading (the Downloading badge), and the poster status bar's
- * red for missing and purple for coming soon. Not in the library stays the
- * plain grey pill. */
-const STATUS_PILL: Record<LibraryStatus, { label: string; className: string }> = {
-  owned: { label: "In your library", className: "border-owned/40 bg-owned-bg text-owned" },
-  tracked_downloading: { label: "Downloading", className: "border-tracked/40 bg-tracked-bg text-tracked" },
-  tracked_monitored: { label: "Missing", className: "border-red-500/40 bg-red-500/10 text-red-500" },
-  coming_soon: { label: "Coming soon", className: "border-purple-500/40 bg-purple-500/10 text-purple-500" },
-  untracked: { label: "Not in your library", className: NEUTRAL_PILL_CLASS },
-};
-
+/** The Movie/TV pill wears the title's library status in the same tone as a
+ * poster's badge and strip (lib/library/status-tone.ts): green in the
+ * library, blue downloading, orange missing, purple coming soon. Not in the
+ * library stays the plain grey pill. */
 function TypePill({ suggestion }: { suggestion: SearchSuggestion }) {
   const typeLabel = TYPE_LABELS[suggestion.mediaType];
   // A status this build doesn't know (a newer server) reads as neutral.
-  const status = suggestion.status ? STATUS_PILL[suggestion.status] : undefined;
+  const known = suggestion.status && suggestion.status in STATUS_TEXT ? suggestion.status : undefined;
+  const tone = statusTone(known);
+  const statusLabel = known ? STATUS_TEXT[known].name : undefined;
   return (
     <span
-      title={status ? `${typeLabel} · ${status.label}` : undefined}
-      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${status?.className ?? NEUTRAL_PILL_CLASS}`}
+      title={statusLabel ? `${typeLabel} · ${statusLabel}` : undefined}
+      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${tone === "neutral" ? NEUTRAL_PILL_CLASS : TONE_CLASS[tone].pill}`}
     >
       {typeLabel}
-      {status && <span className="sr-only"> · {status.label}</span>}
+      {statusLabel && <span className="sr-only"> · {statusLabel}</span>}
     </span>
   );
 }

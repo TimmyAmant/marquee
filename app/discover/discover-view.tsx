@@ -4,6 +4,7 @@ import { PosterCard } from "@/components/poster-card";
 import { PosterRowItem } from "@/components/poster-row";
 import { Shelf } from "@/components/shelf";
 import { StatusBadge } from "@/components/status-badge";
+import { StatusLegend } from "@/components/status-legend";
 import { YearSelect } from "@/components/year-select";
 import { SortSelect } from "@/components/sort-select";
 import { GenreSelect } from "@/components/genre-select";
@@ -172,6 +173,8 @@ export async function DiscoverView({
           )}
 
           <SurpriseMeButton displayType={lockedType} genreId={genreId} year={year} hideOwned={hideOwned} />
+
+          {viewer.session && <StatusLegend className="ml-auto" />}
         </div>
 
         <div className="pr-4 sm:pr-7">

@@ -23,6 +23,12 @@ enum Theme {
     static let ownedBg = dynamic(light: 0xE3F3EA, dark: 0x14251C)
     static let tracked = dynamic(light: 0x2F6FB0, dark: 0x4F8FD1)
     static let trackedBg = dynamic(light: 0xE5F0FA, dark: 0x10202F)
+    /// Missing (Sonarr/Radarr still looking) and Coming soon — the other two
+    /// library-status tones (`--marquee-missing` / `--marquee-soon`).
+    static let missing = dynamic(light: 0xA3501A, dark: 0xE8833A)
+    static let missingBg = dynamic(light: 0xFCECE0, dark: 0x2A1A0E)
+    static let soon = dynamic(light: 0x7048B8, dark: 0xA98BE8)
+    static let soonBg = dynamic(light: 0xF0E9FB, dark: 0x1F1830)
     static let untrackedBg = dynamic(light: 0xEFECE3, dark: 0x201F26)
 
     static let danger = Color(red: 0.97, green: 0.44, blue: 0.44)
@@ -50,17 +56,11 @@ enum Theme {
         )
     }
 
-    /// Status strip colors under each poster (poster-card.tsx STATUS_BAR_CLASS).
-    /// A status this app doesn't know gets no strip.
-    static func statusBar(_ status: API.LibraryStatus) -> Color {
-        switch status {
-        case .owned: return owned
-        case .trackedDownloading: return tracked
-        case .trackedMonitored: return Color(red: 0.94, green: 0.27, blue: 0.27)
-        case .comingSoon: return Color(red: 0.66, green: 0.33, blue: 0.97)
-        case .untracked: return Color(red: 0.92, green: 0.70, blue: 0.03)
-        case .unknown: return .clear
-        }
+    /// The strip along the bottom of a poster (poster-card.tsx), in the same
+    /// tone as its badge. Titles not in the library, and a status this app
+    /// doesn't know, get no strip.
+    static func statusStrip(_ status: API.LibraryStatus) -> Color? {
+        status.tone.palette?.foreground
     }
 
     /// The mockup's grain texture opacity over a backdrop (.grain-overlay).

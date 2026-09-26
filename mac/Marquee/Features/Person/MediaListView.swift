@@ -108,6 +108,9 @@ struct MediaListView: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             .fixedSize()
+            if layout == .grid {
+                StatusColorKey()
+            }
         }
     }
 
