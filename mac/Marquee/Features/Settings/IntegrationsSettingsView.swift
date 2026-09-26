@@ -354,10 +354,12 @@ private struct JellyfinCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: "Jellyfin",
+            title: "Jellyfin or Emby",
+            description: "Emby speaks the same language as Jellyfin, so either works here"
+                + (settings.connectedName.map { " — connected to \($0)" } ?? "") + ".",
             connected: settings.connected,
             headerAccessory: settings.connected
-                ? AnyView(DisconnectButton(name: "Jellyfin") { try await $0.integrations.jellyfin.disconnect() })
+                ? AnyView(DisconnectButton(name: settings.connectedName ?? "Jellyfin") { try await $0.integrations.jellyfin.disconnect() })
                 : nil
         ) {
             if settings.connected {
@@ -365,7 +367,7 @@ private struct JellyfinCard: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textPrimary)
             }
-            Text("Generate an API key from Jellyfin's dashboard: Administration → API Keys.")
+            Text("Generate an API key from the dashboard: Administration → API Keys in Jellyfin, or Advanced → API Keys in Emby.")
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textSecondary)
             SettingsField(label: "Server URL", text: $baseUrl, placeholder: "http://localhost:8096")

@@ -52,6 +52,26 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
     var offersPlexSignIn: Bool { signIn?.plex == true }
     /// "Sign in with Jellyfin" is offered.
     var offersJellyfinSignIn: Bool { signIn?.jellyfin == true }
+    /// What to call the "jellyfin" server: "Emby" when that's what it is
+    /// (it speaks the same API); "Jellyfin" from older servers.
+    var jellyfinName: String { signIn?.jellyfinName ?? SignInMethods.defaultJellyfinName }
+
+    /// A media server's user-facing name, with Emby called Emby.
+    func label(for server: API.MediaServer) -> String {
+        switch server {
+        case .plex: server.label
+        case .jellyfin: jellyfinName
+        }
+    }
+}
+
+extension Optional where Wrapped == ServerInfo {
+    /// `jellyfinName`, or "Jellyfin" before server-info has loaded.
+    var jellyfinName: String { self?.jellyfinName ?? SignInMethods.defaultJellyfinName }
+
+    func label(for server: API.MediaServer) -> String {
+        self?.label(for: server) ?? server.label
+    }
 }
 
 /// `server-info.signIn`: the sign-in methods this server offers. Plex and
@@ -60,11 +80,17 @@ struct SignInMethods: Codable, Equatable, Hashable, Sendable {
     var password: Bool
     var plex: Bool
     var jellyfin: Bool
+    /// 0.40+: "Jellyfin", or "Emby" when the connected server is Emby.
+    /// Missing from older servers, which means "Jellyfin".
+    var jellyfinName: String
 
-    init(password: Bool = true, plex: Bool = false, jellyfin: Bool = false) {
+    static let defaultJellyfinName = "Jellyfin"
+
+    init(password: Bool = true, plex: Bool = false, jellyfin: Bool = false, jellyfinName: String = defaultJellyfinName) {
         self.password = password
         self.plex = plex
         self.jellyfin = jellyfin
+        self.jellyfinName = jellyfinName
     }
 
     init(from decoder: Decoder) throws {
@@ -72,6 +98,8 @@ struct SignInMethods: Codable, Equatable, Hashable, Sendable {
         password = (try? container.decodeIfPresent(Bool.self, forKey: .password)) ?? true
         plex = (try? container.decodeIfPresent(Bool.self, forKey: .plex)) ?? false
         jellyfin = (try? container.decodeIfPresent(Bool.self, forKey: .jellyfin)) ?? false
+        jellyfinName = (try? container.decodeIfPresent(String.self, forKey: .jellyfinName))?.nonBlank
+            ?? Self.defaultJellyfinName
     }
 }
 

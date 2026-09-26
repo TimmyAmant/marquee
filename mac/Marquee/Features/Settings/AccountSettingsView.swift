@@ -92,7 +92,7 @@ struct AccountSettingsView: View {
                         .cardSurface()
 
                     if viewer.linked != nil {
-                        SettingsSectionLabel(text: "Plex and Jellyfin members")
+                        SettingsSectionLabel(text: "Plex and \(model.session.serverInfo.jellyfinName) members")
                         MediaServerMembersCard()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardSurface()
@@ -181,7 +181,7 @@ struct AccountSettingsView: View {
                 TonePill(text: "Plex", tone: .tracked, small: true)
             }
             if member.linked?.jellyfin == true {
-                TonePill(text: "Jellyfin", tone: .tracked, small: true)
+                TonePill(text: model.session.serverInfo.jellyfinName, tone: .tracked, small: true)
             }
             if member.isAdmin {
                 TonePill(text: "Admin", tone: .accent, small: true)

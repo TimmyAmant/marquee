@@ -43,10 +43,23 @@ public static class MediaServerKindExtensions
         _ => throw new ArgumentOutOfRangeException(nameof(server)),
     };
 
-    public static string Label(this MediaServerKind server) => server switch
+    /// <summary>What a server that doesn't say (before 0.40) calls its "jellyfin" server.</summary>
+    public const string DefaultJellyfinName = "Jellyfin";
+
+    /// <summary>A server-sent Jellyfin name, with missing or blank read as "Jellyfin".</summary>
+    public static string NormalizedJellyfinName(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? DefaultJellyfinName : name.Trim();
+
+    public static string Label(this MediaServerKind server) => server.Label(DefaultJellyfinName);
+
+    /// <summary>
+    /// The user-facing name, with <paramref name="jellyfinName"/> ("Emby" on
+    /// an Emby server — see <c>ServerInfo.JellyfinName</c>) for Jellyfin.
+    /// </summary>
+    public static string Label(this MediaServerKind server, string? jellyfinName) => server switch
     {
         MediaServerKind.Plex => "Plex",
-        MediaServerKind.Jellyfin => "Jellyfin",
+        MediaServerKind.Jellyfin => NormalizedJellyfinName(jellyfinName),
         _ => throw new ArgumentOutOfRangeException(nameof(server)),
     };
 }

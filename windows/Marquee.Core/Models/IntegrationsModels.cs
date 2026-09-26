@@ -79,6 +79,18 @@ public sealed record PlexSettings
 public sealed record JellyfinSettings
 {
     public required bool Connected { get; init; }
+
+    private readonly string name = MediaServerKindExtensions.DefaultJellyfinName;
+
+    /// <summary>
+    /// <c>name</c> (0.40+): "Jellyfin" or "Emby" — the same integration
+    /// connects either. Missing or blank (older servers) reads as "Jellyfin".
+    /// </summary>
+    public string Name
+    {
+        get => name;
+        init => name = MediaServerKindExtensions.NormalizedJellyfinName(value);
+    }
     public string? BaseUrl { get; init; }
     public required bool HasApiKey { get; init; }
     public required IReadOnlyList<SyncedServer> Servers { get; init; }

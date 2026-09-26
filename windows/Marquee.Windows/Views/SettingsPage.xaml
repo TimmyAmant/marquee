@@ -141,7 +141,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Jellyfin" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.JellyfinName, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock
                                     Text="{x:Bind ViewModel.JellyfinLinkStatus, Mode=OneWay}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -150,7 +150,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button
-                                    Content="Link Jellyfin"
+                                    Content="{x:Bind ViewModel.LinkJellyfinLabel, Mode=OneWay}"
                                     Command="{x:Bind ViewModel.LinkJellyfinCommand}"
                                     Visibility="{x:Bind ViewModel.CanLinkJellyfin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                 <Button
@@ -682,11 +682,11 @@
               user without an account gets one on first sign-in.
             -->
             <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsMediaServerMembers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Plex and Jellyfin members" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="{x:Bind ViewModel.MediaServerMembersTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <Border Style="{StaticResource SettingsCard}">
                     <StackPanel Spacing="14">
                         <TextBlock
-                            Text="Connect Plex or Jellyfin in Settings › Integrations on the website to import household members from it and let them sign in with those accounts."
+                            Text="{x:Bind ViewModel.NoMediaServersExplanation, Mode=OneWay}"
                             Visibility="{x:Bind ViewModel.HasNoMediaServers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -697,18 +697,18 @@
                                 Command="{x:Bind ViewModel.ImportFromPlexCommand}"
                                 Visibility="{x:Bind ViewModel.CanImportFromPlex, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                             <Button
-                                Content="Import from Jellyfin"
+                                Content="{x:Bind ViewModel.ImportFromJellyfinLabel, Mode=OneWay}"
                                 Command="{x:Bind ViewModel.ImportFromJellyfinCommand}"
                                 Visibility="{x:Bind ViewModel.CanImportFromJellyfin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                         <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasSignInSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <ToggleSwitch
-                                Header="New accounts from Plex/Jellyfin sign-in"
+                                Header="{x:Bind ViewModel.MediaServerSignupHeader, Mode=OneWay}"
                                 IsOn="{x:Bind ViewModel.MediaServerSignup, Mode=TwoWay}"
                                 OnContent="On"
                                 OffContent="Off" />
                             <TextBlock
-                                Text="When someone who can use your Plex or Jellyfin server signs in without a Marquee account, create a member account for them. That includes anyone you remove here, who can come straight back. Off: only the people you import (or who link their account) can sign in that way."
+                                Text="{x:Bind ViewModel.MediaServerSignupExplanation, Mode=OneWay}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
