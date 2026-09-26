@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.49.0",
+    date: "2026-09-26",
+    changes: [
+      "Your own Discover: in Settings › Discover you can reorder or hide the rows, and add your own — a keyword like anime, a genre, a studio like A24, a network like Netflix, a TMDb list, a public Trakt list, or recently added to Plex/Jellyfin. Each has a See all page. Nothing changes until you do.",
+      "Trakt lists that stay in sync: anyone can add a Trakt watchlist or public list in Settings › Account, and new titles on it are requested for them every 3 hours, following their permissions, request limits and the blocklist. Reviewers get one alert per list.",
+      "On the website and in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.48.1",
     date: "2026-09-26",
     changes: [
