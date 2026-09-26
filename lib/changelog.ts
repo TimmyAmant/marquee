@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.44.1",
+    date: "2026-09-26",
+    changes: [
+      "On a phone, with the menu set to Right (Settings › Account › Appearance), the menu now slides in from the right, next to the menu button. Left, Top and Bottom keep it on the left.",
+    ],
+  },
+  {
     version: "0.44.0",
     date: "2026-09-26",
     changes: [
