@@ -358,7 +358,7 @@ curl -s -X POST "$SERVER/api/v1/auth/jellyfin" -H 'Content-Type: application/jso
 }
 ```
 
-`requestLimits` (0.38+; an older server omits it): the account's request
+`requestLimits` (0.39+; an older server omits it): the account's request
 limits, each null when that type isn't limited (always for the admin and
 trusted members). Otherwise `{ "limit": 5, "days": 7, "used": 5,
 "remaining": 0, "nextSlotAt": "2026-10-03T02:53:36.305Z" }` — `nextSlotAt`
@@ -376,7 +376,7 @@ Use `role` to decide which admin UI to show (Integrations/Activity/Jobs
 settings tabs, request review, Add buttons). The role is re-read on every
 request, so a demotion takes effect immediately (`403`s).
 
-`role` is `admin`, `member`, or (0.38+) `trusted`: a member who also works
+`role` is `admin`, `member`, or (0.39+) `trusted`: a member who also works
 the review queue — `/requests/pending`, `/pending-count`, `/history`,
 approve / manual-approve / reject / approve-all, and problem reports (`GET
 /issues` shows them everything, resolve, search again, remove). Approving
@@ -1031,7 +1031,7 @@ set up on this server." / "You've already requested this in 4K." / "It's
 already in the 4K library or on its way.", `502 upstream` "Couldn't look this
 title up with TMDb right now.".
 
-Request limits (0.38+): a member over their limit for the type gets `429
+Request limits (0.39+): a member over their limit for the type gets `429
 rate_limited` "You've used your 5 movie requests for a week. You can ask
 again on Oct 3." (see `requestLimits` on `/me`). A trusted member's
 requests are approved straight away.
@@ -1592,9 +1592,9 @@ The edit form. All fields are sent the way the form sends them:
 | `currentPassword` | string | **required with `password` when editing your own account that has a password** (the admin resetting someone else's password doesn't send it, nor does an account with `hasPassword: false` setting its first one). Website: "Current password", shown only on your own row when it has a password |
 | `autoApproveMovies` | bool | admin only (silently ignored for members); omitted = unchanged. Website: "Auto-approve movie requests", shown only for non-admin rows |
 | `autoApproveTv` | bool | same, "Auto-approve TV requests" |
-| `role` | string | 0.38+, admin only, another member's account: `"member"` or `"trusted"`. Website: a "Role" select ("Member", "Trusted — can approve requests and handle problem reports"). Errors: "Role is member or trusted.", "You can't change your own role.", "The admin's role can't be changed." |
-| `movieQuotaLimit`, `tvQuotaLimit` | number \| null | 0.38+, admin only: at most this many requests of that type in any `…QuotaDays` days (1–1000); `null` or `""` removes the limit; omitted = unchanged. Website: "Request limits" rows "Movies [ ] every [7] days" |
-| `movieQuotaDays`, `tvQuotaDays` | number | 0.38+, admin only: 1–365 (default 7) |
+| `role` | string | 0.39+, admin only, another member's account: `"member"` or `"trusted"`. Website: a "Role" select ("Member", "Trusted — can approve requests and handle problem reports"). Errors: "Role is member or trusted.", "You can't change your own role.", "The admin's role can't be changed." |
+| `movieQuotaLimit`, `tvQuotaLimit` | number \| null | 0.39+, admin only: at most this many requests of that type in any `…QuotaDays` days (1–1000); `null` or `""` removes the limit; omitted = unchanged. Website: "Request limits" rows "Movies [ ] every [7] days" |
+| `movieQuotaDays`, `tvQuotaDays` | number | 0.39+, admin only: 1–365 (default 7) |
 
 ```json
 { "ok": true, "user": { /* HouseholdMember */ }, "tokensRevoked": true }

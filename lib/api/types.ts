@@ -4,7 +4,7 @@
 // fields always present as null (never omitted).
 
 export type MediaType = "movie" | "tv";
-/** trusted (0.38+): may review requests and problem reports. */
+/** trusted (0.39+): may review requests and problem reports. */
 export type UserRole = "admin" | "member" | "trusted";
 export type RequestStatus = "pending" | "approved" | "rejected";
 export type LibraryStatus = "owned" | "tracked_downloading" | "tracked_monitored" | "coming_soon" | "untracked";
@@ -95,7 +95,7 @@ export type Me = User & {
   /** False for an account made by Plex/Jellyfin sign-in that hasn't set a
    * password; it sets one without a current password. */
   hasPassword: boolean;
-  /** This account's request limits and how much is left (0.38+); each null
+  /** This account's request limits and how much is left (0.39+); each null
    * when that type isn't limited. */
   requestLimits: { movie: RequestQuota | null; tv: RequestQuota | null };
 };
@@ -598,7 +598,7 @@ export type HouseholdMember = {
   /** Last time the account used the website or an app (to within a few
    * minutes); null when it never has. */
   lastActiveAt: string | null;
-  /** Request limits (0.38+): at most `limit` of that type in any `days`
+  /** Request limits (0.39+): at most `limit` of that type in any `days`
    * days; a null limit is none. Admins and trusted members aren't limited. */
   movieQuotaLimit: number | null;
   movieQuotaDays: number;
