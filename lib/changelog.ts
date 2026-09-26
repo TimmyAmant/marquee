@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.42.2",
+    date: "2026-09-26",
+    changes: [
+      "Signing up with Plex, Jellyfin or Emby: when you've turned on new accounts from Plex/Jellyfin sign-in, the sign-in screen (website, Mac and Windows) now tells newcomers they can just sign in with it and their account is made for them.",
+      "Someone without an account who tries Plex or Jellyfin sign-in is now told there's no Marquee account for them yet and to ask the admin to add them.",
+      "The README's feature list is up to date.",
+    ],
+  },
+  {
     version: "0.42.1",
     date: "2026-09-26",
     changes: [
