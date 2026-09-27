@@ -1,0 +1,43 @@
+{
+  "results": [
+    {
+      "key": "collection-2344",
+      "title": "The Matrix Collection",
+      "collectionId": 2344,
+      "collectionFavorited": false,
+      "items": [
+        {
+          "mediaType": "movie",
+          "tmdbId": 603,
+          "name": "The Matrix",
+          "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+          "year": "1999",
+          "subtitle": null,
+          "overview": null,
+          "rating": null,
+          "status": null,
+          "favorited": false,
+          "requested": null,
+          "canQuickAdd": false,
+          "canRequest": false
+        }
+      ],
+      "missingCount": 2,
+      "addAllMissing": [
+        {
+          "mediaType": "movie",
+          "tmdbId": 605
+        },
+        {
+          "mediaType": "movie",
+          "tmdbId": 624860
+        }
+      ],
+      "requestAllMissing": [],
+      "requestAllTarget": {
+        "mediaType": "movie",
+        "tmdbId": 603
+      }
+    }
+  ]
+}

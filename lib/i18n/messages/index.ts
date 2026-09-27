@@ -14,6 +14,7 @@ import en_help from "./en/help.json";
 import en_server from "./en/server.json";
 import en_notify from "./en/notify.json";
 import en_admin from "./en/admin.json";
+import en_library from "./en/library.json";
 import es_common from "./es/common.json";
 import es_nav from "./es/nav.json";
 import es_auth from "./es/auth.json";
@@ -26,6 +27,7 @@ import es_help from "./es/help.json";
 import es_server from "./es/server.json";
 import es_notify from "./es/notify.json";
 import es_admin from "./es/admin.json";
+import es_library from "./es/library.json";
 import fr_common from "./fr/common.json";
 import fr_nav from "./fr/nav.json";
 import fr_auth from "./fr/auth.json";
@@ -38,6 +40,7 @@ import fr_help from "./fr/help.json";
 import fr_server from "./fr/server.json";
 import fr_notify from "./fr/notify.json";
 import fr_admin from "./fr/admin.json";
+import fr_library from "./fr/library.json";
 import de_common from "./de/common.json";
 import de_nav from "./de/nav.json";
 import de_auth from "./de/auth.json";
@@ -50,6 +53,7 @@ import de_help from "./de/help.json";
 import de_server from "./de/server.json";
 import de_notify from "./de/notify.json";
 import de_admin from "./de/admin.json";
+import de_library from "./de/library.json";
 import ptBR_common from "./pt-BR/common.json";
 import ptBR_nav from "./pt-BR/nav.json";
 import ptBR_auth from "./pt-BR/auth.json";
@@ -62,8 +66,9 @@ import ptBR_help from "./pt-BR/help.json";
 import ptBR_server from "./pt-BR/server.json";
 import ptBR_notify from "./pt-BR/notify.json";
 import ptBR_admin from "./pt-BR/admin.json";
+import ptBR_library from "./pt-BR/library.json";
 
-export const NAMESPACES = ["common", "nav", "auth", "discover", "title", "requests", "settings", "integrations", "help", "server", "notify", "admin"] as const;
+export const NAMESPACES = ["common", "nav", "auth", "discover", "title", "requests", "settings", "integrations", "help", "server", "notify", "admin", "library"] as const;
 
 /** English, the source: its keys are the only valid ones. */
 export const english = {
@@ -79,6 +84,7 @@ export const english = {
   server: en_server,
   notify: en_notify,
   admin: en_admin,
+  library: en_library,
 };
 
 /** One language's messages: any of English's keys, each a string. */
@@ -98,6 +104,7 @@ export const catalogs = {
     server: en_server,
     notify: en_notify,
     admin: en_admin,
+    library: en_library,
   },
   es: {
     common: es_common,
@@ -112,6 +119,7 @@ export const catalogs = {
     server: es_server,
     notify: es_notify,
     admin: es_admin,
+    library: es_library,
   },
   fr: {
     common: fr_common,
@@ -126,6 +134,7 @@ export const catalogs = {
     server: fr_server,
     notify: fr_notify,
     admin: fr_admin,
+    library: fr_library,
   },
   de: {
     common: de_common,
@@ -140,6 +149,7 @@ export const catalogs = {
     server: de_server,
     notify: de_notify,
     admin: de_admin,
+    library: de_library,
   },
   "pt-BR": {
     common: ptBR_common,
@@ -154,5 +164,6 @@ export const catalogs = {
     server: ptBR_server,
     notify: ptBR_notify,
     admin: ptBR_admin,
+    library: ptBR_library,
   },
 } satisfies Record<string, Catalog>;

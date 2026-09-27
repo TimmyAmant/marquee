@@ -52,6 +52,13 @@ The apps are optional: the website does everything they do, in any browser.
   synced under the wrong match.
 - **People and studios**: full filmographies and catalogs, cross-referenced
   with your library, and favorites.
+- **Library**: everything in Plex, Jellyfin, Sonarr and Radarr in one place,
+  as a poster grid or a table, with filters (movies/series, status, server,
+  resolution, HDR, codec, genre, year), sort and search; the franchises you
+  own part of, with **Add all** / **Request all missing**; the admin's list
+  of **duplicates** (a title on several servers or in several files); and a
+  **Storage** card with free space per root folder and a "full in N days"
+  forecast.
 - **Calendar** of upcoming releases and air dates from Sonarr and Radarr.
 - **Requests**: members request whole titles or single seasons, in 4K too if
   you run a 4K Sonarr/Radarr. The admin (or a **trusted member**) approves or

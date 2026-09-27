@@ -1,4 +1,4 @@
-import { and, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { arrServers, diskSpaceSnapshots } from "@/lib/db/schema";
 import { arrConfig, listArrServers } from "@/lib/arr/servers";
@@ -56,6 +56,83 @@ export async function snapshotDiskSpaceForAllConnectedUsers(): Promise<void> {
 }
 
 export type { DiskSpaceForecast };
+
+export type StorageFolder = {
+  path: string;
+  freeBytes: number;
+  /** The Sonarr/Radarr servers that have this root folder ("Radarr", "4K Sonarr"). */
+  servers: string[];
+};
+
+export type StorageOverview = {
+  folders: StorageFolder[];
+  totalFreeBytes: number;
+  /** When the free-space figures were read: "live" from the servers just
+   * now, or the newest daily snapshot's time when no server answered (or
+   * none is connected). Null when there's nothing at all. */
+  measuredAt: Date | null;
+  live: boolean;
+  forecast: DiskSpaceForecast | null;
+};
+
+/**
+ * The Library page's Storage card: free space per root folder, with the
+ * servers that use it, and the forecast. Reads the servers live (a few
+ * seconds at most, each failure skipped); if none answers, the newest
+ * snapshot per path stands in, so the card still shows something while a
+ * server is down.
+ */
+export async function getStorageOverview(userId: string): Promise<StorageOverview> {
+  const servers = await listArrServers(userId);
+  const folderLists = await Promise.all(
+    servers.map((server) =>
+      (server.kind === "radarr" ? radarr.getRootFolders(arrConfig(server)) : sonarr.getRootFolders(arrConfig(server))).catch(
+        () => null,
+      ),
+    ),
+  );
+
+  const byPath = new Map<string, StorageFolder>();
+  for (const [index, folders] of folderLists.entries()) {
+    if (!folders) continue;
+    for (const folder of folders) {
+      if (typeof folder.freeSpace !== "number") continue;
+      const entry = byPath.get(folder.path) ?? { path: folder.path, freeBytes: folder.freeSpace, servers: [] };
+      entry.freeBytes = folder.freeSpace;
+      if (!entry.servers.includes(servers[index].name)) entry.servers.push(servers[index].name);
+      byPath.set(folder.path, entry);
+    }
+  }
+
+  let live = byPath.size > 0;
+  let measuredAt: Date | null = live ? new Date() : null;
+
+  if (!live) {
+    // The newest snapshot of each path, newest day first.
+    const rows = await db
+      .select({ path: diskSpaceSnapshots.path, freeBytes: diskSpaceSnapshots.freeBytes, capturedAt: diskSpaceSnapshots.capturedAt })
+      .from(diskSpaceSnapshots)
+      .where(eq(diskSpaceSnapshots.userId, userId))
+      .orderBy(desc(diskSpaceSnapshots.capturedAt))
+      .limit(500);
+    for (const row of rows) {
+      if (byPath.has(row.path)) continue;
+      byPath.set(row.path, { path: row.path, freeBytes: row.freeBytes, servers: [] });
+      if (!measuredAt || row.capturedAt > measuredAt) measuredAt = row.capturedAt;
+    }
+    live = false;
+  }
+
+  const folders = [...byPath.values()].sort((a, b) => a.path.localeCompare(b.path));
+  const forecast = await getDiskSpaceForecast(userId).catch(() => null);
+  return {
+    folders,
+    totalFreeBytes: folders.reduce((sum, f) => sum + f.freeBytes, 0),
+    measuredAt,
+    live,
+    forecast,
+  };
+}
 
 const FORECAST_LOOKBACK_DAYS = 30;
 

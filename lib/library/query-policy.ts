@@ -53,3 +53,14 @@ export function arrRowStatus(
 export function isPossibleDuplicate(existingPath: string | null, newPath: string | null): boolean {
   return Boolean(existingPath && newPath && existingPath !== newPath);
 }
+
+/** Which of a collection's parts are missing, and whether it's worth
+ * listing (some owned, some not). Pure; unit tested. */
+export function splitCollection<T extends { tmdbId: number }>(
+  items: readonly T[],
+  ownedIds: ReadonlySet<number>,
+): { owned: T[]; missing: T[]; incomplete: boolean } {
+  const owned = items.filter((item) => ownedIds.has(item.tmdbId));
+  const missing = items.filter((item) => !ownedIds.has(item.tmdbId));
+  return { owned, missing, incomplete: owned.length > 0 && missing.length > 0 };
+}

@@ -35,6 +35,8 @@ type RowFields = {
   qualityName?: string | null;
   dynamicRange?: string | null;
   audioCodec?: string | null;
+  /** Sonarr: episode files on disk. */
+  episodeCount?: number | null;
 };
 
 /** Throws when this kind's standard servers are no longer the ones this run
@@ -153,6 +155,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
             monitored: series.monitored,
             sizeBytes: series.statistics?.sizeOnDisk ?? null,
             filePath: series.path ?? null,
+            episodeCount: series.statistics?.episodeFileCount ?? null,
           },
         });
       }

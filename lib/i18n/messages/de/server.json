@@ -211,5 +211,6 @@
   "plexWatchlistRejected": "Plex akzeptiert den Zugriff von Marquee auf deine Watchlist nicht mehr (z. B. nach dem Abmelden von allen Geräten). Schalte sie wieder ein, um die Verbindung herzustellen.",
   "plexWatchlistLimited": "Du hast dein Anfragelimit erreicht, also wartet der Rest deiner Watchlist, bis du wieder Anfragen frei hast.",
   "plexWatchlistUnreachable": "Plex war zum Lesen deiner Watchlist nicht erreichbar. Marquee versucht es gleich noch mal.",
-  "pushTestBody": "Benachrichtigungen funktionieren auf diesem Gerät."
+  "pushTestBody": "Benachrichtigungen funktionieren auf diesem Gerät.",
+  "onlyAdminDuplicates": "Nur der Admin kann Duplikate sehen."
 }

@@ -211,5 +211,6 @@
   "plexWatchlistRejected": "Plex dejó de aceptar el acceso de Marquee a tu watchlist (por ejemplo, tras cerrar sesión en todos los dispositivos). Vuelve a activarla para reconectar.",
   "plexWatchlistLimited": "Llegaste a tu límite de solicitudes, así que el resto de tu watchlist espera hasta que te queden solicitudes.",
   "plexWatchlistUnreachable": "No se pudo contactar con Plex para leer tu watchlist. Marquee lo volverá a intentar en breve.",
-  "pushTestBody": "Las notificaciones funcionan en este dispositivo."
+  "pushTestBody": "Las notificaciones funcionan en este dispositivo.",
+  "onlyAdminDuplicates": "Solo el administrador puede ver los duplicados."
 }

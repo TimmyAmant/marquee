@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "path": "/movies",
+      "freeBytes": 812000000000,
+      "servers": [
+        "Radarr",
+        "4K Radarr"
+      ]
+    },
+    {
+      "path": "/tv",
+      "freeBytes": 812000000000,
+      "servers": [
+        "Sonarr"
+      ]
+    }
+  ],
+  "totalFreeBytes": 1624000000000,
+  "measuredAt": "2026-09-26T21:10:00.000Z",
+  "live": true,
+  "forecast": {
+    "daysRemaining": 42,
+    "bytesPerDay": 12300000000,
+    "fullOn": "2026-11-07"
+  }
+}
