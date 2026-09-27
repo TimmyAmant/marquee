@@ -1,10 +1,11 @@
 import { withApi } from "@/lib/api/handler";
-import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { invalid, queryBool, queryInt } from "@/lib/api/request";
 import { msg } from "@/lib/api/errors";
 import { statusKey, titleCard } from "@/lib/api/mappers";
+import { posterActions } from "@/lib/api/poster-actions";
+import { loadPosterActionRules } from "@/lib/api/poster-action-rules";
 import { fetchDiscoverItems } from "@/app/discover/fetch-items";
 import { loadBecauseYouWatched, loadBrowseFilters } from "@/lib/pages/browse";
 import type { BrowseExtras, Paginated, TitleCard } from "@/lib/api/types";
@@ -46,6 +47,7 @@ export function browseResultsHandler(lockedType: MediaType) {
 
     const viewer = await ctx.viewer();
     const result = await fetchDiscoverItems({ lockedType, sort, genreId, year, networkId, hideOwned, page }, viewer);
+    const rules = await loadPosterActionRules(ctx.user, result.items);
 
     return {
       page,
@@ -58,7 +60,7 @@ export function browseResultsHandler(lockedType: MediaType) {
           rating: item.rating,
           status: item.status ?? null,
           favorited: item.favorited,
-          canQuickAdd: item.canQuickAdd,
+          ...posterActions(rules, item.mediaType, item.tmdbId, item.status),
         }),
       ),
     };
@@ -78,6 +80,10 @@ export function browseExtrasHandler(lockedType: MediaType) {
       loadBrowseFilters(lockedType, networkId),
       loadBecauseYouWatched(viewer, lockedType, { genreId, year }),
     ]);
+    const rules = await loadPosterActionRules(ctx.user, byw.becauseYouWatched?.items ?? [], {
+      movie: lockedType === "movie" && byw.arrConfigured,
+      tv: lockedType === "tv" && byw.arrConfigured,
+    });
 
     return {
       genres: genresForFilter.map((g) => ({ id: g.id, name: g.name })),
@@ -90,7 +96,7 @@ export function browseExtrasHandler(lockedType: MediaType) {
               return titleCard(item, {
                 status,
                 favorited: byw.favoritedIds.has(item.tmdbId),
-                canQuickAdd: byw.arrConfigured && isUnwanted(status),
+                ...posterActions(rules, item.mediaType, item.tmdbId, status),
               });
             }),
           }

@@ -1,6 +1,6 @@
 import type { TitleDetail } from "@/lib/api/types";
-import { isUnwanted } from "@/lib/library/status-tone";
 import { libraryInfo, statusKey, titleCard, titleViewerState } from "@/lib/api/mappers";
+import { posterActions } from "@/lib/api/poster-actions";
 import {
   buildExternalLinks,
   franchiseMissingItems,
@@ -12,7 +12,6 @@ import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { loadTitlePage } from "@/lib/pages/title";
 import type { MediaType } from "@/lib/db/schema";
 import type { Translator } from "@/lib/i18n/translator";
-import { requestPermission } from "@/lib/users/permissions";
 
 type TitlePageData = NonNullable<Awaited<ReturnType<typeof loadTitlePage>>>;
 
@@ -30,6 +29,8 @@ export function titleDetailDto(
 ): TitleDetail {
   const { title, raw, titleMeta, titleSidebar, libraryStatus } = data;
 
+  // The franchise and similar rows' quick actions, by the same rule as every
+  // other list (lib/api/poster-actions.ts), from the maps the page loaded.
   const cardFor = (
     item: { mediaType: MediaType; tmdbId: number; name: string; posterPath: string | null; year: string | null },
     maps: {
@@ -40,13 +41,17 @@ export function titleDetailDto(
   ) => {
     const key = statusKey(item.mediaType, item.tmdbId);
     const status = (maps.status.get(key) ?? null) as TitleDetail["library"]["status"] | null;
-    const requested = maps.requests.has(key);
+    const rules = {
+      isAdmin,
+      arrConfigured: data.arrConfigured,
+      mayRequest: { movie: data.permissions.requestMovies, tv: data.permissions.requestTv },
+      blockedKeys: data.blockedKeys,
+      requestedKeys: new Set(maps.requests.keys()),
+    };
     return titleCard(item, {
       status,
       favorited: maps.favorited.has(item.tmdbId),
-      requested,
-      canQuickAdd: isUnwanted(status) && isAdmin && data.arrConfigured[item.mediaType],
-      canRequest: isUnwanted(status) && !isAdmin && data.permissions[requestPermission(item.mediaType, false)],
+      ...posterActions(rules, item.mediaType, item.tmdbId, status),
     });
   };
 
