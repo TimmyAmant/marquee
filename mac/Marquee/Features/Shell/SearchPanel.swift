@@ -131,7 +131,9 @@ struct SearchPanel: View {
                 runs.append((group, [(index, suggestion)]))
             }
         }
-        return runs.sorted { $0.group.rawValue < $1.group.rawValue }
+        // Groups in the order the server sent them: movies, series, people,
+        // studios & networks, or people first when the query names a person.
+        return runs
     }
 
     /// The flat order ↑↓ walks: the groups' rows top to bottom.

@@ -467,6 +467,10 @@ extension API {
         /// nil from a server before 0.55 (SearchPageLayout falls back to the
         /// fields above).
         var sections: Sections?
+        /// 0.55+: the non-empty blocks in the order to show them ("movies",
+        /// "series", "people", "studiosAndNetworks", "theme"); People leads
+        /// when the query names a person. nil from an older server.
+        var order: [String]?
 
         var isEmpty: Bool {
             let sectionsEmpty = sections.map {

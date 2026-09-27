@@ -215,7 +215,7 @@ struct SearchCompanyTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            LogoCard(name: company.name, logoPath: company.logoPath, width: width, action: action)
+            LogoCard(name: company.name, logoPath: company.logoPath, width: width, monogramFallback: true, action: action)
                 .overlay(alignment: .topTrailing) {
                     if let favorited = company.favorited, !company.isNetwork {
                         FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: favorited), compact: true)

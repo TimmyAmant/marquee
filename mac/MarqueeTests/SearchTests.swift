@@ -100,11 +100,18 @@ final class SearchTests: XCTestCase {
         XCTAssertEqual(SearchPanel.navigationOrder(list), [0, 1, 2, 3, 4, 5])
     }
 
-    func testAnOlderServersMixedSuggestionsAreRegrouped() throws {
-        // Before 0.55 the server sent TMDb's mixed order.
+    func testGroupsKeepTheServersOrderAndGatherStrays() throws {
+        // People first ("tom hanks"); an older server's mixed order gathers
+        // each kind into its group where that group first appears.
         let list = try [suggestion(1, "person"), suggestion(2, "movie"), suggestion(3, "tv"), suggestion(4, "movie")]
-        XCTAssertEqual(SearchPanel.groups(list).map(\.group), [.movies, .series, .people])
-        XCTAssertEqual(SearchPanel.navigationOrder(list), [1, 3, 2, 0], "↑↓ follow what's on screen")
+        XCTAssertEqual(SearchPanel.groups(list).map(\.group), [.people, .movies, .series])
+        XCTAssertEqual(SearchPanel.navigationOrder(list), [0, 1, 3, 2], "↑↓ follow what's on screen")
+    }
+
+    func testTheServersOrderPutsPeopleFirst() throws {
+        var results = try decode(API.SearchResults.self, Self.newServer(themePlacement: "last"))
+        results.order = ["people", "movies", "series", "studiosAndNetworks", "theme", "collections"]
+        XCTAssertEqual(SearchPageLayout(results).blocks.map(\.id), ["people", "movies", "series", "studios", "theme"])
     }
 
     func testUnknownSuggestionKindsDecodeAndAreSkipped() throws {

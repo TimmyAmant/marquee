@@ -39,8 +39,26 @@ struct SearchPageLayout: Equatable, Sendable {
 
     init(_ results: API.SearchResults) {
         let sections = results.sections ?? Self.fallback(results)
-        var blocks: [Block] = []
         let theme = results.theme.flatMap { $0.items.isEmpty ? nil : $0 }
+        // The server's order (0.55+: People first when the query names a
+        // person); keys this app doesn't know, and empty sections, skipped.
+        if let order = results.order {
+            var seen = Set<String>()
+            self.blocks = order.compactMap { key -> Block? in
+                guard seen.insert(key).inserted else { return nil }
+                switch key {
+                case "theme": return theme.map(Block.theme)
+                case "movies": return sections.movies.results.isEmpty ? nil : .titles(.movies, sections.movies)
+                case "series": return sections.series.results.isEmpty ? nil : .titles(.series, sections.series)
+                case "people": return sections.people.results.isEmpty ? nil : .people(sections.people)
+                case "studiosAndNetworks":
+                    return sections.studiosAndNetworks.results.isEmpty ? nil : .studios(sections.studiosAndNetworks)
+                default: return nil
+                }
+            }
+            return
+        }
+        var blocks: [Block] = []
         if let theme, theme.leadsPage { blocks.append(.theme(theme)) }
         if !sections.movies.results.isEmpty { blocks.append(.titles(.movies, sections.movies)) }
         if !sections.series.results.isEmpty { blocks.append(.titles(.series, sections.series)) }

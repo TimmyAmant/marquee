@@ -637,6 +637,9 @@ struct LogoCard: View {
     let logoPath: API.ImageRef?
     /// The shelf's fixed 224pt; nil fills the grid cell (search's See all).
     var width: CGFloat? = 224
+    /// Without a logo, initials instead of the name (search, where the name
+    /// is already in the caption underneath).
+    var monogramFallback = false
     let action: () -> Void
     @State private var hovering = false
 
@@ -647,6 +650,12 @@ struct LogoCard: View {
                     Color.white
                     RemoteImage(logoPath, size: .w500, contentMode: .fit, showsShimmer: false)
                         .padding(20)
+                } else if monogramFallback {
+                    Theme.bg1
+                    Text(verbatim: Self.monogram(name))
+                        .font(.marqueeDisplay(28))
+                        .foregroundStyle(Theme.textMuted)
+                        .accessibilityHidden(true)
                 } else {
                     Theme.bg1
                     Text(name)
@@ -663,6 +672,11 @@ struct LogoCard: View {
         .buttonStyle(.plain)
         .help(name)
         .onHover { hovering = $0 }
+    }
+
+    /// "Dune Productions" → "DP".
+    nonisolated static func monogram(_ name: String) -> String {
+        name.split(whereSeparator: \.isWhitespace).prefix(2).compactMap { $0.first?.uppercased() }.joined()
     }
 }
 
