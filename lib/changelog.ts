@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.50.0",
+    date: "2026-09-26",
+    changes: [
+      "Marquee now speaks Spanish, French, German and Portuguese (Brazil), on the website and in the Mac and Windows apps. Pick your language in Settings › Account › Appearance; without a choice it follows your browser or computer, then English.",
+      "Notifications (bell, push, email, Telegram, Pushover, your own webhooks) arrive in each person's language; household channels use the admin's.",
+      "Movie and show titles and descriptions still come from TMDb in English for now.",
+    ],
+  },
+  {
     version: "0.49.1",
     date: "2026-09-26",
     changes: [
