@@ -268,8 +268,8 @@ export async function TitleHero({
           the facts card ends where the rows do. Three columns from 1280px:
           poster | the title and everything about it | facts. */}
       <div className="px-6 xl:pl-12 xl:pr-10">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] min-[1800px]:grid-cols-[264px_minmax(0,1fr)_340px] min-[1800px]:gap-x-12 min-[2400px]:grid-cols-[300px_minmax(0,1fr)_380px] min-[2400px]:gap-x-16">
-          <div className="relative h-[240px] w-[160px] overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px] min-[1800px]:h-[396px] min-[1800px]:w-[264px] min-[2400px]:h-[450px] min-[2400px]:w-[300px]">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] 3xl:grid-cols-[264px_minmax(0,1fr)_340px] 3xl:gap-x-12 4xl:grid-cols-[300px_minmax(0,1fr)_380px] 4xl:gap-x-16">
+          <div className="relative h-[240px] w-[160px] overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px] 3xl:h-[396px] 3xl:w-[264px] 4xl:h-[450px] 4xl:w-[300px]">
             {poster && (
               <MediaImage
                 src={poster}
@@ -283,7 +283,7 @@ export async function TitleHero({
           </div>
 
           <div className="min-w-0">
-            <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px] min-[1800px]:text-[56px] min-[1800px]:leading-[62px] min-[2400px]:text-[64px] min-[2400px]:leading-[70px]">
+            <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px] 3xl:text-[56px] 3xl:leading-[62px] 4xl:text-[64px] 4xl:leading-[70px]">
               {logoSrc && logo ? (
                 <>
                   {/* The logo in the dark theme; its name for screen readers
@@ -297,7 +297,7 @@ export async function TitleHero({
                       height={Math.max(1, Math.round(500 / logo.aspectRatio))}
                       sizes="(min-width: 1800px) 520px, (min-width: 640px) 420px, 280px"
                       loading="eager"
-                      className="h-auto max-h-[96px] w-auto max-w-[min(100%,280px)] object-contain object-left drop-shadow-[0_2px_18px_rgba(0,0,0,0.5)] sm:max-h-[128px] sm:max-w-[min(100%,420px)] min-[1800px]:max-h-[160px] min-[1800px]:max-w-[520px]"
+                      className="h-auto max-h-[96px] w-auto max-w-[min(100%,280px)] object-contain object-left drop-shadow-[0_2px_18px_rgba(0,0,0,0.5)] sm:max-h-[128px] sm:max-w-[min(100%,420px)] 3xl:max-h-[160px] 3xl:max-w-[520px]"
                     />
                   </span>
                   <span className="title-logo-name">{name}</span>
@@ -397,7 +397,7 @@ export async function TitleHero({
 
             {/* Text stays at a readable measure however wide the column gets;
                 the artwork shows through beside it. */}
-            <div className="max-w-[860px] min-[2400px]:max-w-[980px]">
+            <div className="max-w-[860px] 4xl:max-w-[980px]">
               {tagline && <p className="mt-[26px] text-[14px] italic text-text-secondary">{tagline}</p>}
 
               {overview && (
@@ -409,14 +409,14 @@ export async function TitleHero({
                   >
                     {t("title.overview")}
                   </h2>
-                  <p className="mt-1.5 text-[14px] leading-[22px] text-text-secondary min-[1800px]:text-[15px] min-[1800px]:leading-[24px]">
+                  <p className="mt-1.5 text-[14px] leading-[22px] text-text-secondary 3xl:text-[15px] 3xl:leading-[24px]">
                     {overview}
                   </p>
                 </>
               )}
 
               {credits.length > 0 && (
-                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 min-[1800px]:grid-cols-4">
+                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 3xl:grid-cols-4">
                   {credits.map((credit, i) => (
                     <div key={i}>
                       <p className="truncate text-[13.5px] font-semibold leading-[18px] text-text-primary">

@@ -130,6 +130,14 @@
   }
 }
 
+/* Two wide-window breakpoints for the title page (components/title-hero.tsx):
+   1800px and 2400px, in rem so they sort after xl and 2xl (an arbitrary
+   min-[1800px] is emitted before them and loses to sm:/xl: values). */
+@theme {
+  --breakpoint-3xl: 112.5rem;
+  --breakpoint-4xl: 150rem;
+}
+
 @theme inline {
   --color-bg-0: var(--marquee-bg-0);
   --color-bg-1: var(--marquee-bg-1);
