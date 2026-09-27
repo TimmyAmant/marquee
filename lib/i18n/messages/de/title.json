@@ -243,5 +243,15 @@
   "studio": "Studio",
   "imdbRating": "IMDb-Bewertung",
   "rottenTomatoesCritics": "Rotten-Tomatoes-Kritikerwertung",
-  "metacriticScore": "Metacritic-Wertung"
+  "metacriticScore": "Metacritic-Wertung",
+  "requestMore": "Mehr anfragen",
+  "requestedToast": "{title} angefragt",
+  "autoApproveBanner": "Diese Anfrage wird automatisch genehmigt.",
+  "seasonColumn": "Staffel",
+  "episodesColumn": "Folgen",
+  "statusColumn": "Status",
+  "advancedSection": "Erweitert",
+  "seasonNotRequested": "Nicht angefragt",
+  "seasonAvailable": "Verfügbar",
+  "seasonUnavailable": "Nicht verfügbar"
 }

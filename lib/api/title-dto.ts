@@ -12,7 +12,6 @@ import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { loadTitlePage } from "@/lib/pages/title";
 import type { MediaType } from "@/lib/db/schema";
 import type { Translator } from "@/lib/i18n/translator";
-import { requestPermission } from "@/lib/users/permissions";
 import { hasAnyRating, imdbTitleUrl } from "@/lib/ratings/omdb";
 
 type TitlePageData = NonNullable<Awaited<ReturnType<typeof loadTitlePage>>>;

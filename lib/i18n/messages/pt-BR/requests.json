@@ -73,5 +73,7 @@
   "openIn": "Abrir no {app}",
   "markAsFound": "Marcar como encontrado",
   "cantFindIntro": "Aprovados e lançados, mas o Sonarr/Radarr ainda não tem nada {hours, plural, one {# hora} other {# horas}} ou mais após a aprovação. Quase sempre nenhum indexador tem uma cópia ainda.",
-  "notFoundHoursSetting": "Sinalizar um pedido após <field></field> horas sem ser encontrado"
+  "notFoundHoursSetting": "Sinalizar um pedido após <field></field> horas sem ser encontrado",
+  "requestedByLine": "Pedido {when} por",
+  "modifiedByLine": "Modificado {when} por"
 }

@@ -243,5 +243,15 @@
   "studio": "Studio",
   "imdbRating": "Note IMDb",
   "rottenTomatoesCritics": "Note des critiques Rotten Tomatoes",
-  "metacriticScore": "Note Metacritic"
+  "metacriticScore": "Note Metacritic",
+  "requestMore": "Demander plus",
+  "requestedToast": "{title} demandé",
+  "autoApproveBanner": "Cette demande sera approuvée automatiquement.",
+  "seasonColumn": "Saison",
+  "episodesColumn": "Épisodes",
+  "statusColumn": "Statut",
+  "advancedSection": "Avancé",
+  "seasonNotRequested": "Non demandée",
+  "seasonAvailable": "Disponible",
+  "seasonUnavailable": "Indisponible"
 }
