@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.53.0",
+    date: "2026-09-27",
+    changes: [
+      "Title pages: Play on Plex / Jellyfin / Emby, IMDb, Rotten Tomatoes and Metacritic ratings (add a free OMDb key in Settings › Integrations), \"Currently streaming on\" for your region, and more facts (original title, cinema and digital dates, budget, revenue, studio).",
+      "A new season picker for shows: a table with every season, its episode count and status, select-all, and a note when the request will be approved automatically. Afterwards the button reads \"Request more\".",
+      "Discover: a Your Watchlist row, a region and language setting, and (admin) editing the rows right on the page with the pencil. A search bar across the top of the website on desktop.",
+      "\"Show menu labels\" in Settings › Account shows names next to the menu icons, with the server version at the bottom.",
+      "Member profiles: photo, requests made, requests left and their Plex Watchlist, from the household list or your own photo. Requests on the website are now wide cards over the title's artwork.",
+    ],
+  },
+  {
     version: "0.52.2",
     date: "2026-09-27",
     changes: [
