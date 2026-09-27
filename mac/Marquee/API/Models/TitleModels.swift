@@ -29,8 +29,65 @@ extension API {
             let originalLanguage: String?
             let originalLanguageLabel: String?
             let productionCountry: ProductionCountry?
-            /// "Currently Streaming On": US flat-rate providers.
+            /// "Currently Streaming On": flat-rate providers in `streamingRegion`.
             let watchProviders: [WatchProvider]
+            /// 0.53+ (nil from an older server, which means the US): the
+            /// country the providers and release dates are for, and TMDb's
+            /// "where to watch" page there.
+            var streamingRegion: String? = nil
+            var streamingLink: String? = nil
+            /// Only when it differs from the name.
+            var originalTitle: String? = nil
+            /// A movie's release dates in `streamingRegion`, as labels.
+            var theatricalReleaseLabel: String? = nil
+            var digitalReleaseLabel: String? = nil
+            /// US dollars, formatted.
+            var budgetLabel: String? = nil
+            var revenueLabel: String? = nil
+            /// A movie's first studio (a show has `network`).
+            var studio: String? = nil
+            /// IMDb / Rotten Tomatoes / Metacritic, with an OMDb key on the
+            /// server; nil otherwise.
+            var ratings: Ratings? = nil
+
+            var streamingURL: URL? { streamingLink.nonBlank.flatMap(URL.init(string:)) }
+        }
+
+        /// 0.53+: OMDb's ratings for the title.
+        struct Ratings: Codable, Hashable, Sendable {
+            /// 0–10, one decimal.
+            let imdbRating: Double?
+            let imdbVotes: Int?
+            /// The Tomatometer, 0–100.
+            let rottenTomatoesCritics: Int?
+            /// The Metascore, 0–100.
+            let metacritic: Int?
+            let imdbUrl: String?
+
+            var imdbURL: URL? { imdbUrl.nonBlank.flatMap(URL.init(string:)) }
+        }
+
+        /// 0.53+: "Play on Plex" and friends — where the title can be played.
+        struct PlayLink: Codable, Hashable, Sendable, Identifiable {
+            /// `plex`, `jellyfin` or `emby`.
+            let server: String
+            let serverName: String?
+            /// "Play on Plex", in the account's language.
+            let label: String
+            /// The server's web app.
+            let url: String
+            /// The server's own scheme (`plex://`), for a Mac with its app.
+            let appUrl: String?
+
+            var id: String { url }
+            var link: URL? { URL(string: url) }
+
+            /// The menu's line when there are several: the label, and the
+            /// server's name when it has one.
+            var menuTitle: String {
+                guard let serverName = serverName.nonBlank else { return label }
+                return "\(label) (\(serverName))"
+            }
         }
 
         struct ProductionCountry: Codable, Hashable, Sendable {
@@ -185,6 +242,9 @@ extension API {
         let studios: [CompanyCard]
         /// TMDb recommendations, heading "More like this".
         let similar: [TitleCard]
+        /// 0.53+: where the title can be played now, Plex first; nil from
+        /// an older server, empty when no media server has it.
+        var play: [PlayLink]? = nil
 
         var id: TitleID { TitleID(mediaType, tmdbId) }
 
@@ -217,7 +277,8 @@ extension API {
                 overview: overview, tagline: tagline, posterPath: posterPath, backdropPath: backdropPath,
                 year: year, releaseDate: releaseDate, tmdbStatus: tmdbStatus, facts: facts, credits: credits,
                 keywords: keywords, links: links, library: status.library, viewer: status.viewer,
-                seasons: seasons, cast: cast, franchise: franchise, studios: studios, similar: similar
+                seasons: seasons, cast: cast, franchise: franchise, studios: studios, similar: similar,
+                play: play
             )
         }
     }
@@ -235,13 +296,14 @@ extension API {
         /// Not offered, for no reason the server spelled out.
         case unavailable
 
-        /// The tag in place of the checkbox.
-        var tag: String? {
+        /// The season dialog's status pill (0.53, after Seerr's).
+        var pillLabel: String {
             switch self {
-            case .requestable, .unavailable: nil
-            case .inLibrary: String(localized: "In library")
+            case .requestable: String(localized: "Not requested")
+            case .inLibrary: String(localized: "Available")
             case .monitored: String(localized: "Monitored")
             case .requested: String(localized: "Requested")
+            case .unavailable: String(localized: "Unavailable")
             }
         }
     }
@@ -252,13 +314,13 @@ extension API {
         /// server too old to take seasons.
         case wholeSeries
         /// Opens the season picker. `more`: the show is already tracked or
-        /// partly requested, so the button reads "Request more seasons".
+        /// partly requested, so the button reads "Request more".
         case pickSeasons(more: Bool)
 
         var buttonTitle: String {
             switch self {
             case .wholeSeries, .pickSeasons(more: false): String(localized: "Request")
-            case .pickSeasons(more: true): String(localized: "Request more seasons")
+            case .pickSeasons(more: true): String(localized: "Request more")
             }
         }
     }

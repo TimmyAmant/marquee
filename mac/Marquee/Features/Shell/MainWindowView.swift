@@ -6,12 +6,14 @@ struct MainWindowView: View {
     @Environment(AppModel.self) private var model
     /// Settings › Account › Menu position.
     @AppStorage(NavRailPosition.storageKey) private var railPositionValue = NavRailPosition.left.rawValue
+    /// Settings › Account › Show menu labels.
+    @AppStorage(NavRailPosition.labelsStorageKey) private var railShowsLabels = false
 
     var body: some View {
         @Bindable var model = model
         @Bindable var whatsNew = model.whatsNew
         let railPosition = NavRailPosition(stored: railPositionValue)
-        let railInsets = railPosition.contentInsets
+        let railInsets = railPosition.contentInsets(labeled: railShowsLabels)
 
         NavigationStack(path: $model.path) {
             SectionRootView(item: model.selection)
@@ -44,6 +46,7 @@ struct MainWindowView: View {
         .overlay {
             NavMenu()
                 .environment(\.navRailPosition, railPosition)
+                .environment(\.navRailShowsLabels, railShowsLabels)
                 .disabled(model.isSearchOpen)
                 .accessibilityHidden(model.isSearchOpen)
         }

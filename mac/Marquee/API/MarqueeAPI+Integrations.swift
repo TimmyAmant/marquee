@@ -46,6 +46,9 @@ extension MarqueeAPI {
         var trakt: TraktEndpoints { TraktEndpoints(transport: transport) }
         /// Import from Seerr / Overseerr / Jellyseerr (0.51+; `.notFound` from an older server).
         var seerrImport: SeerrImportEndpoints { SeerrImportEndpoints(transport: transport) }
+        /// Body `{apiKey}` (0.53+): an OMDb key, for IMDb / Rotten Tomatoes /
+        /// Metacritic ratings on title pages.
+        var omdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "omdb", field: "apiKey", changes: [.settings, .catalog]) }
         /// Body `{apiKey}`: a TheTVDB v4 API key.
         var tvdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "tvdb", field: "apiKey", changes: [.settings, .library, .catalog]) }
         /// Body `{webhookUrl}`: posts a test message before saving.

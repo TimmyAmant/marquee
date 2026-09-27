@@ -222,4 +222,21 @@ extension API {
         /// was your own account, sign in again.
         let tokensRevoked: Bool
     }
+
+    /// `GET /users/{id}/profile` (0.53+): a member's profile page.
+    struct MemberProfile: Codable, Hashable, Sendable {
+        /// Requests made, declined ones left out.
+        struct RequestCounts: Codable, Hashable, Sendable {
+            let total: Int
+            let movie: Int
+            let tv: Int
+        }
+
+        let user: HouseholdMember
+        let requests: RequestCounts
+        /// Each type nil when it isn't limited.
+        let requestLimits: RequestLimits
+        /// Their Plex Watchlist, newest first; nil when they don't sync one.
+        let watchlist: [TitleCard]?
+    }
 }

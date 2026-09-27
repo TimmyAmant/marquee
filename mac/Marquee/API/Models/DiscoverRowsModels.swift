@@ -215,6 +215,52 @@ extension API {
         let maxCustomShelves: Int
     }
 
+    /// `GET /settings/discover/locale` (0.53+, admin): Settings › Discover ›
+    /// Region & language. nil is the default for each: the server's country
+    /// (else US) for `streamingRegion`, worldwide for `discoverRegion`,
+    /// English for `discoverLanguage` (`"any"`: no limit).
+    struct DiscoverLocale: Codable, Hashable, Sendable {
+        /// What those come to.
+        struct Effective: Codable, Hashable, Sendable {
+            let streamingRegion: String
+            let discoverRegion: String?
+            let discoverLanguage: String?
+        }
+
+        var streamingRegion: String?
+        var discoverRegion: String?
+        var discoverLanguage: String?
+        let effective: Effective
+        /// ISO 3166-1 codes that may be chosen.
+        let regions: [String]
+        /// ISO 639-1 codes, with `"any"` first.
+        let languages: [String]
+
+        /// The choice as `PUT` sends it: every field, nil as JSON null (the
+        /// default).
+        var update: DiscoverLocaleUpdate {
+            DiscoverLocaleUpdate(streamingRegion: streamingRegion, discoverRegion: discoverRegion, discoverLanguage: discoverLanguage)
+        }
+    }
+
+    /// `PUT /settings/discover/locale`: all three, nil sent as null.
+    struct DiscoverLocaleUpdate: Encodable, Hashable, Sendable {
+        var streamingRegion: String?
+        var discoverRegion: String?
+        var discoverLanguage: String?
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(streamingRegion, forKey: .streamingRegion)
+            try container.encode(discoverRegion, forKey: .discoverRegion)
+            try container.encode(discoverLanguage, forKey: .discoverLanguage)
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case streamingRegion, discoverRegion, discoverLanguage
+        }
+    }
+
     /// `PUT /settings/discover`: the rows in their new order, each shown or hidden.
     struct ArrangeDiscoverRequest: Codable, Hashable, Sendable {
         struct Row: Codable, Hashable, Sendable {

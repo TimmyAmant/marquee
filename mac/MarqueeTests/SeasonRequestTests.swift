@@ -89,7 +89,7 @@ final class SeasonRequestTests: XCTestCase {
         XCTAssertEqual(detail.seasons.map(\.requestable), [true, false, false, false])
         XCTAssertEqual(detail.seasons.map(\.monitored), [nil, true, true, nil])
         XCTAssertEqual(detail.seasons.map(\.requestState), [.requestable, .monitored, .inLibrary, .requested])
-        XCTAssertEqual(detail.seasons.map(\.requestState.tag), [nil, "Monitored", "In library", "Requested"])
+        XCTAssertEqual(detail.seasons.map(\.requestState.pillLabel), ["Not requested", "Monitored", "Available", "Requested"])
         XCTAssertEqual(detail.seasons.first?.episodeCountLabel, "8 episodes")
     }
 
@@ -245,7 +245,7 @@ final class SeasonRequestTests: XCTestCase {
             canRequest: false, status: "tracked_monitored"
         )
         XCTAssertEqual(tracked.requestAction, .pickSeasons(more: true))
-        XCTAssertEqual(tracked.requestAction?.buttonTitle, "Request more seasons")
+        XCTAssertEqual(tracked.requestAction?.buttonTitle, "Request more")
 
         // An earlier request was approved (say, by hand) but nothing is in the
         // library yet: still just "Request", as on the website.

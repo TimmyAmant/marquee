@@ -43,6 +43,7 @@ final class APIFixtureTests: XCTestCase {
         "discover-list": decodes(API.DiscoverListPage.self),
         "discover-settings": decodes(API.DiscoverSettings.self),
         "discover-lookup": decodes(API.ListResponse<API.DiscoverLookupResult>.self),
+        "discover-locale": decodes(API.DiscoverLocale.self),
         "trakt-syncs": decodes(API.TraktSyncs.self),
         "browse-page": decodes(API.BrowsePage.self),
         "browse-extras": decodes(API.BrowseExtras.self),
@@ -86,6 +87,7 @@ final class APIFixtureTests: XCTestCase {
         "household-member": decodes(API.HouseholdMember.self),
         "users": decodes(API.ListResponse<API.HouseholdMember>.self),
         "user-update": decodes(API.UpdateUserResult.self),
+        "user-profile": decodes(API.MemberProfile.self),
         "users-import": decodes(API.ListResponse<API.ImportCandidate>.self),
         "users-import-result": decodes(API.ImportUsersResult.self),
         "sign-in-settings": decodes(API.SignInSettings.self),
@@ -127,7 +129,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 95, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 97, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -149,6 +151,17 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(detail.releaseDate, API.CalendarDay(year: 1999, month: 3, day: 31))
         XCTAssertEqual(detail.facts.productionCountry?.flag, "🇺🇸")
         XCTAssertEqual(detail.facts.ratingPercent, 83)
+        // 0.53+: ratings, more facts, where to play it.
+        XCTAssertEqual(detail.facts.ratings?.imdbRating, 8.7)
+        XCTAssertEqual(detail.facts.ratings?.rottenTomatoesCritics, 83)
+        XCTAssertEqual(detail.facts.ratings?.imdbURL?.host, "www.imdb.com")
+        XCTAssertEqual(detail.facts.streamingRegion, "US")
+        XCTAssertEqual(detail.facts.budgetLabel, "$63,000,000")
+        XCTAssertEqual(detail.facts.studio, "Village Roadshow Pictures")
+        XCTAssertEqual(detail.play?.first?.label, "Play on Plex")
+        XCTAssertEqual(detail.play?.first?.link?.host, "app.plex.tv")
+        XCTAssertEqual(detail.play?.first?.menuTitle, "Play on Plex (Living room)")
+        XCTAssertEqual(detail.viewer.autoApprove, true)
         XCTAssertEqual(detail.links.trailerURL?.absoluteString, "https://www.youtube.com/watch?v=FVI84Dfx2-I")
         XCTAssertEqual(detail.links.external.first?.link?.host, "www.imdb.com")
         XCTAssertEqual(detail.library.status, .owned)
@@ -427,6 +440,34 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNil(try decode(API.HouseholdMember.self, "household-member").avatarUrl)
         XCTAssertNotNil(try decode(API.AvatarResult.self, "avatar-set").avatarUrl)
         XCTAssertNil(try decode(API.AvatarResult.self, "avatar-removed").avatarUrl)
+    }
+
+    // MARK: 0.53
+
+    func testMemberProfileAndDiscoverLocale() throws {
+        let profile = try decode(API.MemberProfile.self, "user-profile")
+        XCTAssertEqual(profile.requests.total, 3)
+        XCTAssertEqual(profile.requestLimits.movie?.remaining, 3)
+        XCTAssertNil(profile.requestLimits.tv)
+        XCTAssertEqual(profile.watchlist?.count, 1)
+
+        let locale = try decode(API.DiscoverLocale.self, "discover-locale")
+        XCTAssertEqual(locale.streamingRegion, "GB")
+        XCTAssertNil(locale.discoverRegion)
+        XCTAssertEqual(locale.effective.discoverLanguage, "en")
+        XCTAssertEqual(locale.languages.first, "any")
+    }
+
+    func testDiscoverWatchlistAndRequestBackdrops() throws {
+        let discover = try decode(API.DiscoverShelves.self, "discover")
+        XCTAssertEqual(API.SeeAllDestination.resolve(API.SeeAllTarget(type: .list, list: .watchlist)), .list(.watchlist))
+        XCTAssertNotNil(discover.shelves)
+        XCTAssertEqual(API.DiscoverList(rawValue: "watchlist"), .watchlist)
+
+        let mine = try decode(API.ListResponse<API.MyRequest>.self, "requests-mine").results
+        XCTAssertEqual(mine.first?.backdropPath?.path, "/lrtSb1skJayPydZk0OSMAKjBOVe.jpg")
+        let history = try decode(API.ListResponse<API.ReviewedRequest>.self, "requests-history").results
+        XCTAssertEqual(history.first?.reviewedBy?.label, "Tim")
     }
 }
 

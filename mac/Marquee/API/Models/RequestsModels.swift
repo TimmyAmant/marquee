@@ -115,6 +115,10 @@ extension API {
         /// 0.46+: comments in its conversation. nil from an older server,
         /// which has no conversations (no "Comments" then).
         var commentCount: Int? = nil
+        /// 0.53+: the title's backdrop, faded behind the row.
+        var backdropPath: ImageRef? = nil
+        /// 0.53+: who approved or declined it by hand.
+        var reviewedBy: RequestPerson? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
         /// The seasons in words, sent or computed locally.
@@ -214,6 +218,8 @@ extension API {
         /// 0.46+: comments in its conversation; nil from an older server
         /// (no "Comments" and no "Edit" then).
         var commentCount: Int? = nil
+        /// 0.53+: the title's backdrop, faded behind the row.
+        var backdropPath: ImageRef? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
         /// The seasons in words, sent or computed locally.
@@ -265,6 +271,11 @@ extension API {
         var addFailed: AddFailure? = nil
         /// 0.46+: comments in its conversation; nil from an older server.
         var commentCount: Int? = nil
+        /// 0.53+: the title's backdrop, faded behind the row.
+        var backdropPath: ImageRef? = nil
+        /// 0.53+: who approved or declined it by hand; nil when it was
+        /// approved automatically.
+        var reviewedBy: RequestPerson? = nil
 
         /// `addFailed`: the error, and when adding it was last tried.
         struct AddFailure: Codable, Hashable, Sendable {

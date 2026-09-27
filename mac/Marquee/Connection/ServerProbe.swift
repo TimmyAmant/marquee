@@ -48,6 +48,12 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
         signIn = try? container.decodeIfPresent(SignInMethods.self, forKey: .signIn)
     }
 
+    /// Member profiles, `GET /users/{id}/profile` (0.53+).
+    var hasProfiles: Bool {
+        guard let server = AppVersion(version), let first = AppVersion("0.53.0") else { return false }
+        return server >= first
+    }
+
     /// "Sign in with Plex" is offered.
     var offersPlexSignIn: Bool { signIn?.plex == true }
     /// "Sign in with Jellyfin" is offered.

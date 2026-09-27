@@ -75,26 +75,20 @@ struct SeasonPickerSelection: Hashable, Sendable {
     }
 }
 
-/// The picker's list: every season in the accordion's order, each with a
-/// checkbox or the reason it has none, and "Select all" over it.
+/// The picker's list, after Seerr's: a table of every season in the
+/// accordion's order — a switch over the column that picks them all, then
+/// each season's switch, name, episode count and a status pill ("Not
+/// requested", "Requested", "Available", "Monitored").
 struct SeasonPickerList: View {
     let rows: [SeasonPickerRow]
     @Binding var selection: SeasonPickerSelection
-    /// Greys out the checkboxes (while saving, or when the choice is "The whole series").
+    /// Greys out the switches (while saving, or when the choice is "The whole series").
     var disabled = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if !selection.requestable.isEmpty {
-                Toggle("Select all", isOn: Binding(
-                    get: { selection.allSelected },
-                    set: { _ in selection.toggleAll() }
-                ))
-                .toggleStyle(.checkbox)
-                .font(.system(size: 13, weight: .medium))
-                .disabled(disabled)
-            }
-
+        VStack(spacing: 0) {
+            header
+            Divider().overlay(Theme.border)
             ScrollView {
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, season in
@@ -105,50 +99,101 @@ struct SeasonPickerList: View {
             }
             .frame(maxHeight: 340)
             .fixedSize(horizontal: false, vertical: true)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.bg2.opacity(0.5)))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
-            .opacity(disabled ? 0.6 : 1)
         }
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.bg2.opacity(0.5)))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+        .opacity(disabled ? 0.6 : 1)
+    }
+
+    /// The column heads, with the switch that picks every season.
+    private var header: some View {
+        HStack(spacing: 10) {
+            Toggle("Select all", isOn: Binding(
+                get: { selection.allSelected },
+                set: { _ in selection.toggleAll() }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .disabled(disabled || selection.requestable.isEmpty)
+            .help(selection.allSelected ? String(localized: "Clear all") : String(localized: "Select all"))
+            Text("Season")
+            Spacer(minLength: 8)
+            Text("Episodes")
+                .frame(width: 64, alignment: .trailing)
+            Text("Status")
+                .frame(width: 104, alignment: .trailing)
+        }
+        .font(.system(size: 11, weight: .medium))
+        .textCase(.uppercase)
+        .foregroundStyle(Theme.textMuted)
+        .padding(.horizontal, 12)
+        .frame(height: 32)
     }
 
     @ViewBuilder
     private func row(_ season: SeasonPickerRow) -> some View {
         let state = season.state
+        let pickable = state == .requestable
         HStack(spacing: 10) {
-            if state == .requestable {
-                Toggle(isOn: Binding(
-                    get: { selection.isSelected(season.seasonNumber) },
-                    set: { selection.set(season.seasonNumber, $0) }
-                )) {
-                    label(season, dimmed: false)
-                }
-                .toggleStyle(.checkbox)
-                .disabled(disabled)
-            } else {
-                label(season, dimmed: true)
-                    // Lines the name up with the checkbox rows' labels.
-                    .padding(.leading, 20)
-            }
+            Toggle(season.name, isOn: Binding(
+                get: { pickable && selection.isSelected(season.seasonNumber) },
+                set: { selection.set(season.seasonNumber, $0) }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .disabled(disabled || !pickable)
+            Text(season.name)
+                .font(.system(size: 13, weight: pickable ? .medium : .regular))
+                .foregroundStyle(pickable ? Theme.textPrimary : Theme.textSecondary)
+                .lineLimit(1)
             Spacer(minLength: 8)
-            if let tag = state.tag {
-                TonePill(text: tag, tone: state == .inLibrary ? .owned : .info, small: true)
+            Text(verbatim: "\(season.episodeCount)")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textMuted)
+                .frame(width: 64, alignment: .trailing)
+                .accessibilityLabel(season.episodeCountLabel)
+            HStack {
+                Spacer(minLength: 0)
+                SeasonStatusPill(state: state)
             }
+            .frame(width: 104)
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 36)
+        .contentShape(Rectangle())
+        // The whole row picks it, as on the website.
+        .onTapGesture {
+            guard pickable, !disabled else { return }
+            selection.set(season.seasonNumber, !selection.isSelected(season.seasonNumber))
+        }
     }
+}
 
-    private func label(_ season: SeasonPickerRow, dimmed: Bool) -> some View {
-        HStack(spacing: 8) {
-            Text(season.name)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(dimmed ? Theme.textSecondary : Theme.textPrimary)
-                .lineLimit(1)
-            Text(season.episodeCountLabel)
-                .font(.system(size: 12))
+/// A season's status in the picker: "Not requested" outlined, "Requested"
+/// blue, "Available" green, "Monitored" in the downloading tone.
+struct SeasonStatusPill: View {
+    let state: API.SeasonRequestState
+
+    var body: some View {
+        switch state {
+        case .requestable, .unavailable:
+            Text(state.pillLabel)
+                .font(.system(size: 10.5, weight: .medium))
                 .foregroundStyle(Theme.textMuted)
+                .padding(.horizontal, 8)
+                .frame(height: 20)
+                .overlay(Capsule().strokeBorder(Theme.border))
                 .lineLimit(1)
+                .fixedSize()
+        case .inLibrary:
+            TonePill(text: state.pillLabel, tone: .owned, small: true)
+        case .monitored:
+            TonePill(text: state.pillLabel, tone: .downloading, small: true)
+        case .requested:
+            TonePill(text: state.pillLabel, tone: .info, small: true)
         }
     }
 }
@@ -158,6 +203,8 @@ struct SeasonPickerList: View {
 struct SeasonRequestSheet: View {
     let title: String
     let rows: [SeasonPickerRow]
+    /// "This request will be approved automatically" (0.53+ servers say so).
+    var autoApprove = false
     /// Sends the request and reloads the page; a throw stays in the sheet.
     let onSubmit: @MainActor ([Int]) async throws -> Void
 
@@ -166,9 +213,15 @@ struct SeasonRequestSheet: View {
     @State private var pending = false
     @State private var error: String?
 
-    init(title: String, seasons: [API.TitleDetail.SeasonSummary], onSubmit: @escaping @MainActor ([Int]) async throws -> Void) {
+    init(
+        title: String,
+        seasons: [API.TitleDetail.SeasonSummary],
+        autoApprove: Bool = false,
+        onSubmit: @escaping @MainActor ([Int]) async throws -> Void
+    ) {
         self.title = title
         self.rows = seasons.map(SeasonPickerRow.init)
+        self.autoApprove = autoApprove
         self.onSubmit = onSubmit
         _selection = State(initialValue: SeasonPickerSelection(rows: rows))
     }
@@ -177,10 +230,20 @@ struct SeasonRequestSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Request seasons")
                 .font(.marqueeDisplay(22))
-            Text("Pick the seasons of \"\(title)\" you'd like added. Seasons already in the library or on their way can't be picked again.")
-                .font(.system(size: 12.5))
+            Text(title)
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
+
+            if autoApprove {
+                Label("This request will be approved automatically.", systemImage: "info.circle")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.info)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.infoBg))
+            }
 
             SeasonPickerList(rows: rows, selection: $selection, disabled: pending)
 

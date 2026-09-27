@@ -47,4 +47,15 @@ final class NavRailPositionTests: XCTestCase {
         XCTAssertEqual(NavRailPosition.left.rawValue, "left")
         XCTAssertEqual(NavRailPosition.left.contentInsets.leading, 72)
     }
+
+    /// Settings › Show menu labels: a rail on the left or right widens (its
+    /// 16 inset, 200 across, 16 more); a bar along the top or bottom stays.
+    func testMenuLabelsWidenASideRailOnly() {
+        XCTAssertEqual(NavRailPosition.left.contentInsets(labeled: true).leading, 232)
+        XCTAssertEqual(NavRailPosition.right.contentInsets(labeled: true).trailing, 232)
+        XCTAssertEqual(NavRailPosition.top.contentInsets(labeled: true), NavRailPosition.top.contentInsets)
+        XCTAssertEqual(NavRailPosition.bottom.contentInsets(labeled: true), NavRailPosition.bottom.contentInsets)
+        XCTAssertEqual(NavRailPosition.left.contentInsets(labeled: false), NavRailPosition.left.contentInsets)
+        XCTAssertEqual(NavRailPosition.labelsStorageKey, "marquee-nav-labels")
+    }
 }

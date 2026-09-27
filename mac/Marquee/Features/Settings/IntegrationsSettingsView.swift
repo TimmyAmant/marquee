@@ -47,6 +47,19 @@ struct IntegrationsSettingsView: View {
                         save: { try await $0.integrations.tvdb.save($1) },
                         remove: { try await $0.integrations.tvdb.remove() }
                     )
+                    // 0.53+: IMDb / Rotten Tomatoes / Metacritic on title pages.
+                    if let omdb = overview.omdb {
+                        SecretCard(
+                            title: String(localized: "OMDb (ratings)"),
+                            description: String(localized: "Optional. With a key, title pages show IMDb, Rotten Tomatoes and Metacritic scores beside TMDb's."),
+                            fieldLabel: String(localized: "API key"),
+                            placeholder: String(localized: "From omdbapi.com/apikey.aspx"),
+                            removeLabel: String(localized: "Remove saved key"),
+                            connected: omdb.connected,
+                            save: { try await $0.integrations.omdb.save($1) },
+                            remove: { try await $0.integrations.omdb.remove() }
+                        )
+                    }
                 }
                 section(String(localized: "Household channels")) {
                     // 0.45+: what these channels post.
