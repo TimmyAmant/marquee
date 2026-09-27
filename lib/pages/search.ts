@@ -207,10 +207,11 @@ async function enrich(
   const tvIds = titles.filter((t) => t.mediaType === "tv").map((t) => t.tmdbId);
   const studioIds = companies.filter((c) => c.kind === "studio").map((c) => c.tmdbId);
 
-  const [statusMap, radarr, sonarr, favPeople, favCompanies, favMovies, favTv] = viewer.libraryOwnerId
+  const ownerId = viewer.libraryOwnerId;
+  const [statusMap, radarr, sonarr, favPeople, favCompanies, favMovies, favTv] = viewer.userId
     ? await Promise.all([
-        titles.length > 0
-          ? getLibraryStatusMap(viewer.libraryOwnerId, titles.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })))
+        ownerId && titles.length > 0
+          ? getLibraryStatusMap(ownerId, titles.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })))
           : new Map<string, LibraryStatus>(),
         getArrCredential(viewer.userId, "radarr"),
         getArrCredential(viewer.userId, "sonarr"),

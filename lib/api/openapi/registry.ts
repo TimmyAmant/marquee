@@ -93,8 +93,9 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["GET", "/series", "user", "Browse series with filters and sorting (paginated)."],
     ["GET", "/series/extras", "user", "The genres, networks and other filter choices for browsing series."],
     ["POST", "/surprise", "user", "Pick a random title (\"Surprise me\")."],
-    ["GET", "/search", "user", "Search movies, series and people (?q=)."],
-    ["GET", "/search/suggest", "user", "Quick search suggestions while typing (?q=)."],
+    ["GET", "/search", "user", "Search movies, series, people, studios and networks, in sections (?q=)."],
+    ["GET", "/search/suggest", "user", "Quick search suggestions while typing, grouped (?q=, ?include=company,network)."],
+    ["GET", "/search/{section}", "user", "One search section's See all: movies, series, people or studios (?q=, ?page=)."],
   ]),
   ...group("Titles", [
     ["GET", "/titles/{type}/{id}", "user", "A movie or series page: details, cast, library status, requests."],

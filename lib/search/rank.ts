@@ -52,13 +52,15 @@ export function searchText(query: string): string {
   return match && normalizeName(match[1]) ? match[1].trim() : trimmed;
 }
 
-/** How well one name matches the query: 1000 exact, 500 starts with it,
- * 300 has every word of it, 0 otherwise. */
+/** How well one name matches the query: 1000 exactly what was typed, 900
+ * exactly it without its year hint ("Dune" for "dune 2021"), 500 starts
+ * with it, 300 has every word of it, 0 otherwise. */
 export function nameMatchScore(name: string | null | undefined, q: ParsedQuery): number {
   if (!name) return 0;
   const n = normalizeName(name);
   if (!n) return 0;
-  if (n === q.full || n === q.text) return 1000;
+  if (n === q.full) return 1000;
+  if (n === q.text) return 900;
   if (q.text && (n.startsWith(`${q.text} `) || n.startsWith(q.text))) return 500;
   const words = q.text.split(" ").filter(Boolean);
   const nameWords = new Set(n.split(" "));
@@ -86,7 +88,9 @@ export type RankableTitle = {
 
 export function titleScore(title: RankableTitle, index: number, q: ParsedQuery): number {
   const match = Math.max(nameMatchScore(title.name, q), nameMatchScore(title.originalName, q) - 50);
-  const yearHit = q.year !== null && title.year === String(q.year) ? 400 : 0;
+  // Enough to lift a prefix match of that year ("Dune: Part Two" for
+  // "dune 2024") over an exact title from another year.
+  const yearHit = q.year !== null && title.year === String(q.year) ? 600 : 0;
   return match + yearHit + popularityScore(title.popularity) + relevanceScore(index);
 }
 
@@ -149,7 +153,7 @@ export function matchNetworks<N extends { id: number; name: string; aliases?: re
 /** Whether any name in a list is exactly what was searched for. */
 export function hasExactName(names: readonly (string | null | undefined)[], query: string): boolean {
   const q = parseQuery(query);
-  return names.some((name) => nameMatchScore(name, q) === 1000);
+  return names.some((name) => nameMatchScore(name, q) >= 900);
 }
 
 /**

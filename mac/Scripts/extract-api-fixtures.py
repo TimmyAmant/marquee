@@ -46,6 +46,7 @@ BLOCKS = [
     ("`GET /movies/extras` and `GET /series/extras`", ["browse-extras"]),
     ("`POST /surprise`", ["surprise"]),
     ("`GET /search?q=`", ["search"]),
+    ("`GET /search/{section}", ["search-section"]),
     ("`GET /search/suggest?q=`", ["search-suggest"]),
     ("`GET /titles/{type}/{tmdbId}`", ["title-detail"]),
     ("`GET /titles/{type}/{tmdbId}`", ["title-season"]),
