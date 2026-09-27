@@ -1,7 +1,7 @@
 import XCTest
 @testable import Marquee
 
-/// Search in sections (0.54+): the page's order — Movies, TV Shows, People,
+/// Search in sections (0.55+): the page's order — Movies, TV Shows, People,
 /// Studios & Networks — from a new server and an older one, the theme's
 /// place, the type-ahead's groups and ↑↓ order, and decoding kinds this
 /// build doesn't know.
@@ -55,7 +55,7 @@ final class SearchTests: XCTestCase {
     }
 
     func testAnOlderServerStillGetsTheNewOrder() throws {
-        // Before 0.54: no sections, no placement, people/studios/titles only.
+        // Before 0.55: no sections, no placement, people/studios/titles only.
         let older = """
         {
           "query": "keanu",
@@ -101,7 +101,7 @@ final class SearchTests: XCTestCase {
     }
 
     func testAnOlderServersMixedSuggestionsAreRegrouped() throws {
-        // Before 0.54 the server sent TMDb's mixed order.
+        // Before 0.55 the server sent TMDb's mixed order.
         let list = try [suggestion(1, "person"), suggestion(2, "movie"), suggestion(3, "tv"), suggestion(4, "movie")]
         XCTAssertEqual(SearchPanel.groups(list).map(\.group), [.movies, .series, .people])
         XCTAssertEqual(SearchPanel.navigationOrder(list), [1, 3, 2, 0], "↑↓ follow what's on screen")

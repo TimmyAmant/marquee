@@ -12,7 +12,7 @@ import type { SearchResults } from "@/lib/api/types";
  * series, people, studios & networks — each ranked with its total, plus a
  * genre/keyword theme row, with status, favorites and the viewer's quick
  * action (lib/api/poster-actions.ts). `people`/`studios`/`titles` repeat
- * the sections the way apps before 0.54 read them. */
+ * the sections the way apps before 0.55 read them. */
 export const GET = withApi(async (request): Promise<SearchResults> => {
   const ctx = await requireApiUser(request);
   const query = new URL(request.url).searchParams.get("q")?.trim();
@@ -40,6 +40,7 @@ export const GET = withApi(async (request): Promise<SearchResults> => {
       data.theme && data.theme.items.length > 0
         ? { label: data.theme.label, items: data.theme.items.map(title), placement: data.theme.placement }
         : null,
+    order: data.order.map((block) => (block === "companies" ? "studiosAndNetworks" : block)),
     sections: {
       movies: { totalResults: data.movies.totalResults, totalPages: data.movies.totalPages, results: movies },
       series: { totalResults: data.series.totalResults, totalPages: data.series.totalPages, results: series },

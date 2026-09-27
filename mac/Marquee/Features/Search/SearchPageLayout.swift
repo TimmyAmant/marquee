@@ -4,7 +4,7 @@ import Foundation
 /// sections are always Movies, TV Shows, People, then Studios & Networks
 /// (the server ranks inside each), empty ones left out; a genre/keyword
 /// theme leads when the query is that theme ("horror"), else it comes last.
-/// A server before 0.54 sends no `sections`: its `titles` are split into
+/// A server before 0.55 sends no `sections`: its `titles` are split into
 /// movies and series and its `studios` stand in, with no See all. Pure.
 struct SearchPageLayout: Equatable, Sendable {
     enum Block: Hashable, Sendable, Identifiable {

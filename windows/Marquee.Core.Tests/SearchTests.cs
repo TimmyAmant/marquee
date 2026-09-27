@@ -4,7 +4,7 @@ using Marquee.Core.Tests.Support;
 
 namespace Marquee.Core.Tests;
 
-// Search in sections (0.54+), the Mac's SearchTests: the page's order —
+// Search in sections (0.55+), the Mac's SearchTests: the page's order —
 // Movies, TV Shows, People, Studios & Networks — from a new server and an
 // older one, the theme's place, the type-ahead's groups, and kinds this
 // build doesn't know.
@@ -62,7 +62,7 @@ public sealed class SearchTests
     [Fact]
     public void AnOlderServerStillGetsTheNewOrder()
     {
-        // Before 0.54: no sections, no placement, people/studios/titles only.
+        // Before 0.55: no sections, no placement, people/studios/titles only.
         var older = Json.Decode<SearchResults>($$"""
             {
               "query": "keanu",
@@ -119,7 +119,7 @@ public sealed class SearchTests
     [Fact]
     public void AnOlderServersMixedSuggestionsAreRegrouped()
     {
-        // Before 0.54 the server sent TMDb's mixed order.
+        // Before 0.55 the server sent TMDb's mixed order.
         var arranged = SuggestionGroups.Arrange([Suggestion(1, "person"), Suggestion(2, "movie"), Suggestion(3, "tv"), Suggestion(4, "movie")]);
         Assert.Equal([2, 4, 3, 1], arranged.Select(entry => entry.Suggestion.Id));
     }

@@ -12,7 +12,7 @@ import type { SearchSectionPage } from "@/lib/api/types";
 /** The API's section names, in the search page's order. */
 const SEARCH_SECTIONS = { movies: "movie", series: "tv", people: "person", studios: "company" } as const;
 
-/** A search section's "See all" (0.54+): one page of `movies`, `series`,
+/** A search section's "See all" (0.55+): one page of `movies`, `series`,
  * `people` or `studios` (studios and networks; networks only on page 1).
  * Page 1 is the section on GET /search, ranked the same way. */
 export const GET = withApi<{ section: string }>(async (request, params): Promise<SearchSectionPage> => {

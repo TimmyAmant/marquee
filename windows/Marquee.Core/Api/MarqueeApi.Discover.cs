@@ -97,15 +97,15 @@ public sealed class SearchEndpoints(MarqueeApi.Transport transport)
             new Dictionary<string, string?> { ["q"] = query, ["include"] = "company,network" },
             ct: ct);
 
-    /// <summary><c>GET /search/{movies|series}?q=&amp;page=</c> (0.54+): a title section's See all.</summary>
+    /// <summary><c>GET /search/{movies|series}?q=&amp;page=</c> (0.55+): a title section's See all.</summary>
     public Task<Paginated<TitleCard>> TitlesAsync(SearchSectionName section, string query, int page, CancellationToken ct = default) =>
         transport.GetAsync<Paginated<TitleCard>>(SectionPath(section), SectionQuery(query, page), MarqueeApi.Timeouts.Tmdb, ct);
 
-    /// <summary><c>GET /search/people?q=&amp;page=</c> (0.54+): People's See all.</summary>
+    /// <summary><c>GET /search/people?q=&amp;page=</c> (0.55+): People's See all.</summary>
     public Task<Paginated<PersonCard>> PeopleAsync(string query, int page, CancellationToken ct = default) =>
         transport.GetAsync<Paginated<PersonCard>>(SectionPath(SearchSectionName.People), SectionQuery(query, page), MarqueeApi.Timeouts.Tmdb, ct);
 
-    /// <summary><c>GET /search/studios?q=&amp;page=</c> (0.54+): Studios &amp; Networks' See all.</summary>
+    /// <summary><c>GET /search/studios?q=&amp;page=</c> (0.55+): Studios &amp; Networks' See all.</summary>
     public Task<Paginated<SearchCompanyCard>> StudiosAsync(string query, int page, CancellationToken ct = default) =>
         transport.GetAsync<Paginated<SearchCompanyCard>>(SectionPath(SearchSectionName.Studios), SectionQuery(query, page), MarqueeApi.Timeouts.Tmdb, ct);
 

@@ -174,7 +174,7 @@ where the real server needed something the core contract didn't spell out.
     `GET` / `PUT /settings/discover/locale` (§2). A server older than this
     omits the new fields — hide what they drive — and answers `404` on the
     new endpoints.
-22. **Search in sections (0.54+, additive).** `GET /search` gains
+22. **Search in sections (0.55+, additive).** `GET /search` gains
     `sections` — movies, series, people, studios & networks, in the order
     to show them, each ranked with its total — and `theme.placement`; the
     older `people`/`studios`/`titles` stay. `SearchCompanyCard` adds
@@ -314,7 +314,7 @@ request turns monitoring back on — and admins get "Start monitoring"
 
 `favorited` is null where the website shows no star (Discover's Studios shelf).
 
-On the search page (0.54+) a person may also carry `knownFor` — up to three
+On the search page (0.55+) a person may also carry `knownFor` — up to three
 titles, best known first — and a studio or network is a `SearchCompanyCard`:
 a `CompanyCard` plus `kind`, `"studio"` (opens `GET /companies/{id}`) or
 `"network"` (opens `GET /series?network={id}`; `favorited` is always null).
@@ -1111,31 +1111,42 @@ The search results page. `q` is required (`400` if blank).
     "series": { "totalResults": 4, "totalPages": 1, "results": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ] },
     "people": { "totalResults": 12, "totalPages": 1, "results": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false, "knownFor": ["The Matrix", "John Wick", "Speed"] } ] },
     "studiosAndNetworks": { "totalResults": 1, "totalPages": 1, "results": [ { "kind": "network", "tmdbId": 49, "name": "HBO", "logoPath": "/tuom.png", "favorited": null } ] }
-  }
+  },
+  "order": ["movies", "series", "people", "studiosAndNetworks", "theme"]
 }
 ```
 
-`sections` (0.54+) is the page, in the order to show it: **Movies, TV Shows
-(`series`), People, Studios & Networks**. Leave out an empty section. Each
-holds TMDb's first page, best match first — an exact title (or name) before
-the rest, relevance blended with popularity after that, and a year at the
-end of the query ("dune 2021", "dune (1984)") lifts that year's title; TMDb
-is searched without the year. `totalResults` is the heading's count; more
-than `results` holds → offer See all (`GET /search/{section}`). Studios &
+`sections` (0.55+) is the page: **Movies, TV Shows (`series`), People,
+Studios & Networks**. `order` (0.55+) lists the non-empty blocks in the
+order to show them — that order, except that People comes first when the
+query names a well-known person ("tom hanks": the best person match has
+exactly that name and no title with exactly that name is more popular), and
+`theme` first or last (see `placement`). Skip keys you don't know; without
+`order` (an older server) use the fixed order. Each section holds TMDb's
+first page, best match first: an exact title (or name) counts for more the
+more popular it is next to the section's most popular result, so an
+obscure film called exactly "Dune" doesn't outrank "Dune: Part Two";
+relevance blends with popularity after that; and a year at the end of the
+query ("dune 2021", "dune (1984)") lifts that year's title — TMDb is
+searched without the year. People without a photo whom hardly anyone looks
+up, and studios without a logo that aren't exactly what was typed, are left
+out here (they're still in See all); a section left with nothing is empty.
+`totalResults` is the heading's count, everything TMDb has; more than
+`results` holds → offer See all (`GET /search/{section}`). Studios &
 Networks mixes TMDb's studios with the networks Discover knows whose name
 matches (TMDb has no network search): `kind` says which.
 
 `theme` is non-null when the query (minus words like "movies"/"shows") names a
-TMDb genre or keyword. `placement` (0.54+) is where its shelf goes: `"first"`
+TMDb genre or keyword. `placement` (0.55+) is where its shelf goes: `"first"`
 when the query is that genre ("horror") or keyword with nothing else named
 exactly that ("natural disaster"), `"last"` otherwise (missing on an older
 server: after the titles). Everything empty → the website shows "No results
 for "…"."
 
 `people`, `studios` (studios only) and `titles` (movies then series) repeat
-the sections for apps before 0.54.
+the sections for apps before 0.55.
 
-### `GET /search/{section}?q=&page=` — user (0.54+)
+### `GET /search/{section}?q=&page=` — user (0.55+)
 
 A search section's See all, paged like any list. `section` is `movies`,
 `series`, `people` or `studios` (studios and networks — the networks only on
@@ -1154,9 +1165,10 @@ section "…" (one of movies, series, people, studios)."
 ### `GET /search/suggest?q=` — user
 
 Header type-ahead, grouped in the search page's order: up to 4 movies, 3
-series, 3 people and — only with `?include=company,network` (0.54+; older
-apps never see these kinds) — 2 studios/networks. Each group is ranked like
-the page's sections. `q` shorter than 2 characters → `{"results": []}`
+series, 3 people and — only with `?include=company,network` (0.55+; older
+apps never see these kinds) — 2 studios/networks. Each group is ranked and trimmed like
+the page's sections, and people come first when the query names a
+well-known person. `q` shorter than 2 characters → `{"results": []}`
 without calling TMDb (and without the TMDb check).
 
 ```json

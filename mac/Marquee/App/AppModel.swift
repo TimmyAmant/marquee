@@ -73,7 +73,7 @@ enum Route: Hashable {
     case person(Int)
     case company(Int)
     case search(String)
-    /// One search section's See all (0.54+).
+    /// One search section's See all (0.55+).
     case searchSection(String, API.SearchSectionName)
     /// A Discover shelf's full list (its "See all").
     case discoverList(API.DiscoverList)

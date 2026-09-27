@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   SEARCH_SECTION_ORDER,
   hasExactName,
+  isNotableCompany,
+  isNotablePerson,
+  matchWeight,
+  personLeads,
+  sectionOrder,
   matchNetworks,
   nameMatchScore,
   normalizeName,
@@ -156,6 +161,63 @@ describe("themePlacement", () => {
   it("goes last when a title is named that too, or the theme only partly matches", () => {
     expect(themePlacement({ query: "dune", label: "dune", isGenre: false, exactMatchElsewhere: true })).toBe("last");
     expect(themePlacement({ query: "sci", label: "Science Fiction", isGenre: true, exactMatchElsewhere: false })).toBe("last");
+  });
+});
+
+describe("popularity-weighted matches", () => {
+  const dunes = [
+    { name: "Dune", year: "2020", popularity: 0.6 },
+    { name: "Dune", year: "1989", popularity: 0.4 },
+    { name: "Dune: Part Two", year: "2024", popularity: 180 },
+    { name: "Dune", year: "1984", popularity: 25 },
+    { name: "Dune", year: "2021", popularity: 120 },
+  ];
+
+  it("keeps an obscure exact title behind a popular near-match", () => {
+    expect(rankTitles(dunes, "dune").map((t) => `${t.name} ${t.year}`).slice(0, 3)).toEqual([
+      "Dune 2021",
+      "Dune 1984",
+      "Dune: Part Two 2024",
+    ]);
+  });
+
+  it("still lets a year pick the obscure one", () => {
+    expect(rankTitles(dunes, "dune 1989")[0]).toMatchObject({ year: "1989" });
+  });
+
+  it("weighs every result fully without popularity data", () => {
+    expect(matchWeight(undefined, 0)).toBe(1);
+    expect(matchWeight(100, 100)).toBe(1);
+    expect(matchWeight(0, 100)).toBeCloseTo(0.3);
+  });
+});
+
+describe("noise", () => {
+  it("drops photo-less, little-known people and logo-less studios that aren't exactly the query", () => {
+    expect(isNotablePerson({ profilePath: null, popularity: 0.3 })).toBe(false);
+    expect(isNotablePerson({ profilePath: "/p.jpg", popularity: 0 })).toBe(true);
+    expect(isNotablePerson({ profilePath: null, popularity: 9 })).toBe(true);
+    expect(isNotableCompany({ name: "Dune Films", logoPath: null, kind: "studio" }, "dune")).toBe(false);
+    expect(isNotableCompany({ name: "Dune", logoPath: null, kind: "studio" }, "dune")).toBe(true);
+    expect(isNotableCompany({ name: "Legendary", logoPath: "/l.png", kind: "studio" }, "dune")).toBe(true);
+  });
+});
+
+describe("personLeads / sectionOrder", () => {
+  it("puts People first for a well-known person's exact name", () => {
+    const titles = [{ name: "Tom Hanks: The Nomad", popularity: 3 }];
+    expect(personLeads("tom hanks", { name: "Tom Hanks", popularity: 60 }, titles)).toBe(true);
+    expect(personLeads("tom hanks", { name: "Tom Hanks", popularity: 1 }, titles)).toBe(false);
+    expect(personLeads("dune", { name: "Dune Lawrence", popularity: 60 }, [])).toBe(false);
+    // A more popular title with exactly that name keeps titles first.
+    expect(personLeads("madonna", { name: "Madonna", popularity: 20 }, [{ name: "Madonna", popularity: 40 }])).toBe(false);
+  });
+
+  it("orders the blocks", () => {
+    const has = { movies: true, series: false, people: true, companies: true };
+    expect(sectionOrder({ theme: null, peopleFirst: false, has })).toEqual(["movies", "people", "companies"]);
+    expect(sectionOrder({ theme: "last", peopleFirst: true, has })).toEqual(["people", "movies", "companies", "theme"]);
+    expect(sectionOrder({ theme: "first", peopleFirst: false, has })).toEqual(["theme", "movies", "people", "companies"]);
   });
 });
 

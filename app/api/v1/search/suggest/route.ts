@@ -5,7 +5,7 @@ import { getSearchSuggestions, wantsCompanies } from "@/lib/search/suggest";
 import type { ListResponse, SearchSuggestion } from "@/lib/api/types";
 
 /** Header search type-ahead, grouped in the search page's order: movies,
- * series, people, and (with `?include=company,network`, 0.54+) studios and
+ * series, people, and (with `?include=company,network`, 0.55+) studios and
  * networks. Queries under two characters return an empty list without
  * calling TMDb. Movies/series carry the viewer's library status (a local
  * lookup, never a live Sonarr/Radarr call). */

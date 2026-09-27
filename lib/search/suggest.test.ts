@@ -35,7 +35,7 @@ beforeEach(() => {
 describe("groupSuggestions", () => {
   it("groups movies, then TV shows, then people, then studios & networks", () => {
     const list = groupSuggestions("the matrix", RESULTS as never, [
-      { kind: "company", id: 1, name: "The Matrix Studio", logoPath: null },
+      { kind: "company", id: 1, name: "The Matrix Studio", logoPath: "/ms.png" },
       { kind: "network", id: 49, name: "HBO", logoPath: "/h.png" },
     ]);
     expect(list.map((s) => s.mediaType)).toEqual(["movie", "movie", "tv", "person", "company", "network"]);
@@ -51,6 +51,15 @@ describe("groupSuggestions", () => {
     ];
     expect(groupSuggestions("dune", multi as never).map((s) => s.id)).toEqual([3, 2, 1]);
     expect(groupSuggestions("dune 1984", multi as never).map((s) => s.id)).toEqual([2, 3, 1]);
+  });
+
+  it("puts People first when the query names a well-known person, and drops photo-less unknowns", () => {
+    const multi = [
+      { id: 1, media_type: "movie", title: "Tom Hanks: The Nomad", popularity: 2 },
+      { id: 31, media_type: "person", name: "Tom Hanks", profile_path: "/t.jpg", popularity: 60 },
+      { id: 32, media_type: "person", name: "Tom Hanksley", profile_path: null, popularity: 0.2 },
+    ];
+    expect(groupSuggestions("tom hanks", multi as never).map((s) => `${s.mediaType}:${s.id}`)).toEqual(["person:31", "movie:1"]);
   });
 
   it("caps each group", () => {

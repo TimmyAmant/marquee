@@ -457,17 +457,17 @@ export type BrowseExtras = {
 
 export type SurprisePick = { mediaType: MediaType; tmdbId: number };
 
-/** One section of the search page (0.54+): the first page of results, best
+/** One section of the search page (0.55+): the first page of results, best
  * match first, and how many TMDb has in all — more than `results` means the
  * section's "See all" (GET /search/{section}) has more. */
 export type SearchSection<T> = { totalResults: number; totalPages: number; results: T[] };
 
-/** A studio or network in search's "Studios & Networks" (0.54+). A studio
+/** A studio or network in search's "Studios & Networks" (0.55+). A studio
  * opens its company page; a network opens Series filtered to it. Networks
  * can't be favorited (`favorited` null). */
 export type SearchCompanyCard = CompanyCard & { kind: "studio" | "network" };
 
-/** A person on the search page: PersonCard plus, 0.54+, up to three titles
+/** A person on the search page: PersonCard plus, 0.55+, up to three titles
  * they're known for. */
 export type SearchPersonCard = PersonCard & { knownFor?: string[] };
 
@@ -479,10 +479,10 @@ export type SearchResults = {
   studios: CompanyCard[];
   /** Movies then series (kept for older apps). */
   titles: TitleCard[];
-  /** `placement` (0.54+): "first" when the query names the genre/keyword
+  /** `placement` (0.55+): "first" when the query names the genre/keyword
    * itself ("horror"), so it leads the page; "last" otherwise. */
   theme: { label: string; items: TitleCard[]; placement?: "first" | "last" } | null;
-  /** 0.54+: the page's sections, shown in this order — movies, series,
+  /** 0.55+: the page's sections, shown in this order — movies, series,
    * people, studios & networks. An empty section is hidden. */
   sections?: {
     movies: SearchSection<TitleCard>;
@@ -490,14 +490,19 @@ export type SearchResults = {
     people: SearchSection<SearchPersonCard>;
     studiosAndNetworks: SearchSection<SearchCompanyCard>;
   };
+  /** 0.55+: the non-empty blocks in the order to show them, e.g.
+   * ["movies", "series", "people", "studiosAndNetworks", "theme"]. People
+   * comes first when the query names a person ("tom hanks"). Treat it as an
+   * open set: skip keys you don't know. */
+  order?: string[];
 };
 
-/** GET /search/{section} (0.54+): one page of a search section's "See all". */
+/** GET /search/{section} (0.55+): one page of a search section's "See all". */
 export type SearchSectionPage = Paginated<TitleCard> | Paginated<SearchPersonCard> | Paginated<SearchCompanyCard>;
 
 export type SearchSuggestion = {
   id: number;
-  /** "company" and "network" (0.54+) only when asked for with
+  /** "company" and "network" (0.55+) only when asked for with
    * `?include=company,network`, so older apps never see them. */
   mediaType: "person" | "movie" | "tv" | "company" | "network";
   name: string;

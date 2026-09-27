@@ -134,5 +134,12 @@
         }
       ]
     }
-  }
+  },
+  "order": [
+    "movies",
+    "series",
+    "people",
+    "studiosAndNetworks",
+    "theme"
+  ]
 }

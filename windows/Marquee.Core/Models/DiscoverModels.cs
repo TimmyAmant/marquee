@@ -67,7 +67,7 @@ public sealed record PersonCard
     /// <summary>Null where the website shows no star.</summary>
     public bool? Favorited { get; init; }
 
-    /// <summary>Search only (0.54+): up to three titles they're known for.</summary>
+    /// <summary>Search only (0.55+): up to three titles they're known for.</summary>
     public IReadOnlyList<string>? KnownFor { get; init; }
 
     public int Id => TmdbId;
@@ -411,7 +411,7 @@ public sealed record SearchTheme
     public required IReadOnlyList<TitleCard> Items { get; init; }
 
     /// <summary>
-    /// 0.54+: "first" when the query is that genre/keyword itself ("horror"),
+    /// 0.55+: "first" when the query is that genre/keyword itself ("horror"),
     /// so its row leads the page; "last", or null from an older server, puts
     /// it after the other sections.
     /// </summary>
@@ -433,7 +433,7 @@ public sealed record SearchResults
     public SearchTheme? Theme { get; init; }
 
     /// <summary>
-    /// 0.54+: the page in the order to show it (movies, series, people,
+    /// 0.55+: the page in the order to show it (movies, series, people,
     /// studios &amp; networks); null from an older server, where
     /// <see cref="SearchPageLayout"/> falls back to the fields above.
     /// </summary>
@@ -445,7 +445,7 @@ public sealed record SearchResults
             && Sections.People.Results.Count == 0 && Sections.StudiosAndNetworks.Results.Count == 0));
 }
 
-/// <summary>One section of the search page (0.54+): TMDb's first page, best match first, and how many in all.</summary>
+/// <summary>One section of the search page (0.55+): TMDb's first page, best match first, and how many in all.</summary>
 public sealed record SearchSection<T> where T : notnull
 {
     public required int TotalResults { get; init; }
@@ -456,7 +456,7 @@ public sealed record SearchSection<T> where T : notnull
     public bool HasMore => TotalResults > Results.Count;
 }
 
-/// <summary><c>SearchResults.sections</c> (0.54+).</summary>
+/// <summary><c>SearchResults.sections</c> (0.55+).</summary>
 public sealed record SearchSections
 {
     public required SearchSection<TitleCard> Movies { get; init; }
@@ -466,7 +466,7 @@ public sealed record SearchSections
 }
 
 /// <summary>
-/// A studio or network in search's Studios &amp; Networks (0.54+): a studio
+/// A studio or network in search's Studios &amp; Networks (0.55+): a studio
 /// opens its company page, a network the Series grid filtered to it.
 /// </summary>
 public sealed record SearchCompanyCard
@@ -497,7 +497,7 @@ public sealed record SearchCompanyCard
     };
 }
 
-/// <summary><c>GET /search/{section}</c> (0.54+): which section's See all.</summary>
+/// <summary><c>GET /search/{section}</c> (0.55+): which section's See all.</summary>
 public enum SearchSectionName
 {
     Movies,

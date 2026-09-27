@@ -11,6 +11,9 @@ import {
   rankPeople,
   rankTitles,
   searchText,
+  isNotableCompany,
+  isNotablePerson,
+  personLeads,
 } from "@/lib/search/rank";
 
 import { SUGGESTION_LIMITS, type SuggestionKind } from "@/lib/search/suggestion-groups";
@@ -60,7 +63,7 @@ export function groupSuggestions(
       .slice(0, SUGGESTION_LIMITS[mediaType])
       .map((t): SearchSuggestion => ({ id: t.id, mediaType, name: t.name, posterPath: t.posterPath, subtitle: t.year }));
 
-  const people = rankPeople(
+  const rankedPeople = rankPeople(
     multi
       .filter((r) => r.media_type === "person")
       .map((r) => ({
@@ -69,9 +72,19 @@ export function groupSuggestions(
         posterPath: r.profile_path ?? null,
         subtitle: r.known_for_department ?? null,
         popularity: r.popularity ?? null,
-      })),
+      }))
+      // No photo and hardly anyone looks them up: noise.
+      .filter((p) => isNotablePerson({ profilePath: p.posterPath, popularity: p.popularity })),
     query,
-  )
+  );
+  const peopleFirst = personLeads(
+    query,
+    rankedPeople[0],
+    multi
+      .filter((r) => r.media_type === "movie" || r.media_type === "tv")
+      .map((r) => ({ name: r.title || r.name || "", popularity: r.popularity ?? null })),
+  );
+  const people = rankedPeople
     .slice(0, SUGGESTION_LIMITS.person)
     .map((p): SearchSuggestion => ({ id: p.id, mediaType: "person", name: p.name, posterPath: p.posterPath, subtitle: p.subtitle }));
 
@@ -81,7 +94,9 @@ export function groupSuggestions(
   const brands = rankCompanies(
     companies
       .filter((c) => nameMatchScore(c.name, q) >= 500 || c.kind === "network")
-      .map((c) => ({ ...c, kind: c.kind === "network" ? ("network" as const) : ("studio" as const) })),
+      .map((c) => ({ ...c, kind: c.kind === "network" ? ("network" as const) : ("studio" as const) }))
+      // A studio with no logo only when it's exactly what was typed.
+      .filter((c) => isNotableCompany(c, searchText(query))),
     searchText(query),
   )
     .slice(0, SUGGESTION_LIMITS.company)
@@ -93,7 +108,10 @@ export function groupSuggestions(
       subtitle: null,
     }));
 
-  return [...titles("movie"), ...titles("tv"), ...people, ...brands];
+  // A query that names a person ("tom hanks") puts People first, as the page does.
+  return peopleFirst
+    ? [...people, ...titles("movie"), ...titles("tv"), ...brands]
+    : [...titles("movie"), ...titles("tv"), ...people, ...brands];
 }
 
 /** Type-ahead suggestions for the header search bar — shared by

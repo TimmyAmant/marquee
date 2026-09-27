@@ -34,6 +34,10 @@ import {
   rankTitles,
   searchText,
   themePlacement,
+  isNotableCompany,
+  isNotablePerson,
+  personLeads,
+  sectionOrder,
   type SearchSectionKind,
 } from "@/lib/search/rank";
 import { TMDB_MAX_PAGE } from "@/lib/discover/paging";
@@ -303,6 +307,9 @@ async function findTheme(query: string): Promise<Theme | null> {
   };
 }
 
+/** One block of the results page. */
+export type SearchBlock = "theme" | "movies" | "series" | "people" | "companies";
+
 export type SearchResultsData = {
   movies: SearchSectionPage<SearchTitleCard>;
   series: SearchSectionPage<SearchTitleCard>;
@@ -310,6 +317,8 @@ export type SearchResultsData = {
   /** Studios and networks, one section. */
   companies: SearchSectionPage<SearchCompanyCard>;
   theme: { label: string; placement: "first" | "last"; items: SearchTitleCard[] } | null;
+  /** The order to show the non-empty sections in (SearchSectionOrder). */
+  order: SearchBlock[];
   hasResults: boolean;
   arrConfigured: Record<MediaType, boolean>;
 };
@@ -330,29 +339,37 @@ export async function loadSearchResults(viewer: ViewerIdentity, query: string): 
     findTheme(query).catch(() => null),
   ]);
 
+  // Noise off the page (still in each section's See all, and still counted
+  // in its heading): people with no photo nobody looks up, studios with no
+  // logo that aren't exactly what was typed.
+  const text = searchText(query);
+  const notablePeople = people.items.filter(isNotablePerson);
+  const notableCompanies = companies.items.filter((company) => isNotableCompany(company, text));
+
   const themeItems = theme?.items ?? [];
-  const extra = await enrich(viewer, [...movies.items, ...series.items, ...themeItems], people.items, companies.items);
+  const extra = await enrich(viewer, [...movies.items, ...series.items, ...themeItems], notablePeople, notableCompanies);
 
   const exactMatchElsewhere = hasExactName(
     [
       ...movies.items.map((t) => t.name),
       ...series.items.map((t) => t.name),
-      ...people.items.map((p) => p.name),
-      ...companies.items.map((c) => c.name),
+      ...notablePeople.map((p) => p.name),
+      ...notableCompanies.map((c) => c.name),
     ],
     normalizeForThemeMatch(query),
   );
+  const peopleFirst = personLeads(query, notablePeople[0], [...movies.items, ...series.items]);
 
   const result: SearchResultsData = {
     movies: { ...movies, items: movies.items.map(extra.title) },
     series: { ...series, items: series.items.map(extra.title) },
     people: {
       ...people,
-      items: people.items.map(({ popularity: _popularity, ...person }) => ({ ...person, favorited: extra.personFavorited(person.tmdbId) })),
+      items: notablePeople.map(({ popularity: _popularity, ...person }) => ({ ...person, favorited: extra.personFavorited(person.tmdbId) })),
     },
     companies: {
       ...companies,
-      items: companies.items.map((company) => ({ ...company, favorited: extra.companyFavorited(company.kind, company.tmdbId) })),
+      items: notableCompanies.map((company) => ({ ...company, favorited: extra.companyFavorited(company.kind, company.tmdbId) })),
     },
     theme:
       theme && themeItems.length > 0
@@ -367,9 +384,20 @@ export async function loadSearchResults(viewer: ViewerIdentity, query: string): 
             items: themeItems.map(extra.title),
           }
         : null,
+    order: [],
     hasResults: false,
     arrConfigured: extra.arrConfigured,
   };
+  result.order = sectionOrder({
+    theme: result.theme?.placement ?? null,
+    peopleFirst,
+    has: {
+      movies: result.movies.items.length > 0,
+      series: result.series.items.length > 0,
+      people: result.people.items.length > 0,
+      companies: result.companies.items.length > 0,
+    },
+  });
   result.hasResults =
     result.movies.items.length + result.series.items.length + result.people.items.length + result.companies.items.length > 0 ||
     (result.theme?.items.length ?? 0) > 0;

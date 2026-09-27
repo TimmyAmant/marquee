@@ -391,7 +391,7 @@ extension API {
         }
     }
 
-    /// `SearchSuggestion.mediaType`: a title, a person, or (0.54+, only when
+    /// `SearchSuggestion.mediaType`: a title, a person, or (0.55+, only when
     /// the app asks with `include=`) a studio or network.
     enum SuggestionKind: OpenEnum {
         case person

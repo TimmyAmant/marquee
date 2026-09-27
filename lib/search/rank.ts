@@ -86,12 +86,32 @@ export type RankableTitle = {
   popularity?: number | null;
 };
 
-export function titleScore(title: RankableTitle, index: number, q: ParsedQuery): number {
+/**
+ * How much a name match counts for a result, from how popular it is next to
+ * the most popular result in the list: 1 for the most popular, down to 0.3
+ * for one nobody has heard of (log scale). So an obscure film that happens
+ * to be called exactly "Dune" doesn't outrank "Dune: Part Two", while a
+ * popular exact title still leads. Without popularity data every result
+ * weighs 1.
+ */
+export function matchWeight(popularity: number | null | undefined, maxPopularity: number): number {
+  if (!(maxPopularity > 0)) return 1;
+  const relative = Math.log1p(Math.max(0, popularity ?? 0)) / Math.log1p(maxPopularity);
+  return 0.3 + 0.7 * Math.min(1, relative);
+}
+
+function maxPopularityOf(items: readonly { popularity?: number | null }[]): number {
+  return items.reduce((max, item) => Math.max(max, item.popularity ?? 0), 0);
+}
+
+export function titleScore(title: RankableTitle, index: number, q: ParsedQuery, maxPopularity = 0): number {
   const match = Math.max(nameMatchScore(title.name, q), nameMatchScore(title.originalName, q) - 50);
   // Enough to lift a prefix match of that year ("Dune: Part Two" for
   // "dune 2024") over an exact title from another year.
   const yearHit = q.year !== null && title.year === String(q.year) ? 600 : 0;
-  return match + yearHit + popularityScore(title.popularity) + relevanceScore(index);
+  // The year the query names counts the match in full, however obscure.
+  const weight = yearHit ? 1 : matchWeight(title.popularity, maxPopularity);
+  return match * weight + yearHit + popularityScore(title.popularity) + relevanceScore(index);
 }
 
 /** Sorts by score, keeping TMDb's order among equals. */
@@ -106,14 +126,57 @@ function rankBy<T>(items: readonly T[], score: (item: T, index: number) => numbe
  * exact matches), then relevance blended with popularity. */
 export function rankTitles<T extends RankableTitle>(items: readonly T[], query: string): T[] {
   const q = parseQuery(query);
-  return rankBy(items, (item, index) => titleScore(item, index, q));
+  const maxPopularity = maxPopularityOf(items);
+  return rankBy(items, (item, index) => titleScore(item, index, q, maxPopularity));
 }
 
 export type RankablePerson = { name: string; popularity?: number | null };
 
 export function rankPeople<T extends RankablePerson>(items: readonly T[], query: string): T[] {
   const q = parseQuery(query);
-  return rankBy(items, (item, index) => nameMatchScore(item.name, q) + popularityScore(item.popularity) + relevanceScore(index));
+  const maxPopularity = maxPopularityOf(items);
+  return rankBy(
+    items,
+    (item, index) =>
+      nameMatchScore(item.name, q) * matchWeight(item.popularity, maxPopularity) +
+      popularityScore(item.popularity) +
+      relevanceScore(index),
+  );
+}
+
+/** A person without a photo that hardly anyone looks up: noise on the
+ * results page and in the type-ahead (still listed in People's See all). */
+export const PERSON_POPULARITY_FLOOR = 2;
+
+export function isNotablePerson(person: { profilePath: string | null; popularity?: number | null }): boolean {
+  return Boolean(person.profilePath) || (person.popularity ?? 0) >= PERSON_POPULARITY_FLOOR;
+}
+
+/** A studio without a logo is only worth a tile when it's exactly what was
+ * typed; networks come from Discover's list and always count. */
+export function isNotableCompany(company: { name: string; logoPath: string | null; kind: "studio" | "network" }, query: string): boolean {
+  return company.kind === "network" || Boolean(company.logoPath) || nameMatchScore(company.name, parseQuery(query)) >= 900;
+}
+
+/** A person's popularity above which an exact-name match means the query is
+ * that person ("tom hanks"), so People leads the page. */
+export const PERSON_LEADS_POPULARITY = 5;
+
+/**
+ * Whether the query names a person: the best person result has exactly that
+ * name, is well known, and no movie or series with exactly that title is
+ * more popular than them.
+ */
+export function personLeads(
+  query: string,
+  topPerson: { name: string; popularity?: number | null } | undefined,
+  titles: readonly { name: string; popularity?: number | null }[],
+): boolean {
+  if (!topPerson) return false;
+  const q = parseQuery(query);
+  const popularity = topPerson.popularity ?? 0;
+  if (nameMatchScore(topPerson.name, q) < 900 || popularity < PERSON_LEADS_POPULARITY) return false;
+  return !titles.some((title) => nameMatchScore(title.name, q) >= 900 && (title.popularity ?? 0) > popularity);
 }
 
 export type RankableCompany = { name: string; logoPath: string | null; kind: "studio" | "network" };
@@ -148,6 +211,25 @@ export function matchNetworks<N extends { id: number; name: string; aliases?: re
     }))
     .filter((entry) => entry.score > 0);
   return scored.sort((a, b) => b.score - a.score || a.index - b.index).map((entry) => entry.network);
+}
+
+/**
+ * The results page's blocks, top to bottom: Movies, TV Shows, People,
+ * Studios & Networks — People moved to the top when the query names a
+ * person — with the genre/keyword theme first or last; empty ones left out.
+ */
+export function sectionOrder(input: {
+  theme: "first" | "last" | null;
+  peopleFirst: boolean;
+  has: { movies: boolean; series: boolean; people: boolean; companies: boolean };
+}): ("theme" | "movies" | "series" | "people" | "companies")[] {
+  const sections = (input.peopleFirst
+    ? (["people", "movies", "series", "companies"] as const)
+    : (["movies", "series", "people", "companies"] as const)
+  ).filter((key) => input.has[key]);
+  if (input.theme === "first") return ["theme", ...sections];
+  if (input.theme === "last") return [...sections, "theme"];
+  return [...sections];
 }
 
 /** Whether any name in a list is exactly what was searched for. */

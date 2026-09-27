@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// /search?q=&type= — one search section's See all (`GET /search/{section}`,
-/// 0.54+): the whole list as an infinite grid, like DiscoverListView.
+/// 0.55+): the whole list as an infinite grid, like DiscoverListView.
 struct SearchSectionView: View {
     let query: String
     let section: API.SearchSectionName

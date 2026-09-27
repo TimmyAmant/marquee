@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // modules, withApi and the real token checks on a real Postgres (PGlite),
 // with TMDb mocked. Sections come back in the page's order — movies, series,
 // people, studios & networks — each ranked, with totals; the fields apps
-// before 0.54 read are still there; the type-ahead only offers studios and
+// before 0.55 read are still there; the type-ahead only offers studios and
 // networks to a client that asks for them.
 
 vi.mock("server-only", () => ({}));
@@ -55,7 +55,7 @@ vi.mock("@/lib/tmdb/client", () => ({
   searchTv: async (query: string) => (query === "dune" ? paged([{ id: 90228, name: "Dune: Prophecy", poster_path: null, first_air_date: "2024-11-17" }]) : paged([])),
   searchPeople: async (query: string) =>
     query === "dune"
-      ? paged([{ id: 1, name: "Dune Person", profile_path: null, known_for_department: "Acting", known_for: [{ title: "A" }, { name: "B" }, { title: "C" }, { title: "D" }] }], 3, 1)
+      ? paged([{ id: 1, name: "Dune Person", profile_path: "/p.jpg", known_for_department: "Acting", known_for: [{ title: "A" }, { name: "B" }, { title: "C" }, { title: "D" }] }], 3, 1)
       : paged([]),
   searchCompany: async (query: string) =>
     query === "hbo" ? { results: [{ id: 3268, name: "HBO", logo_path: "/hbo.png", origin_country: "US" }], total_pages: 1, total_results: 1 } : { results: [], total_pages: 0, total_results: 0 },
@@ -69,7 +69,7 @@ vi.mock("@/lib/tmdb/client", () => ({
   discoverTvByKeyword: async () => ({ results: [] }),
   searchMulti: async () => ({
     results: [
-      { id: 1, media_type: "person", name: "Dune Person" },
+      { id: 1, media_type: "person", name: "Dune Person", profile_path: "/p.jpg" },
       { id: 438632, media_type: "movie", title: "Dune", release_date: "2021-09-15", popularity: 150 },
       { id: 90228, media_type: "tv", name: "Dune: Prophecy", first_air_date: "2024-11-17" },
     ],
@@ -108,6 +108,8 @@ describe("GET /search", () => {
     const res = await call(searchRoute.GET as Handler, { query: "?q=dune" });
     expect(res.status).toBe(200);
     expect(Object.keys(res.body.sections)).toEqual(["movies", "series", "people", "studiosAndNetworks"]);
+    // Studios & Networks is empty, so it's not in the order.
+    expect(res.body.order).toEqual(["movies", "series", "people"]);
 
     const movies = res.body.sections.movies;
     expect(movies.totalResults).toBe(57);
@@ -120,7 +122,7 @@ describe("GET /search", () => {
     expect(res.body.sections.people.results[0]).toMatchObject({ name: "Dune Person", knownForDepartment: "Acting", knownFor: ["A", "B", "C"] });
     expect(res.body.sections.studiosAndNetworks.results).toEqual([]);
 
-    // What apps before 0.54 read.
+    // What apps before 0.55 read.
     expect(res.body.titles.map((t: { tmdbId: number }) => t.tmdbId)).toEqual([438632, 841, 438631, 90228]);
     expect(res.body.people).toHaveLength(1);
     expect(res.body.studios).toEqual([]);

@@ -47,7 +47,7 @@ extension API {
         let knownForDepartment: String?
         /// nil where the website shows no star.
         let favorited: Bool?
-        /// Search only (0.54+): up to three titles they're known for.
+        /// Search only (0.55+): up to three titles they're known for.
         var knownFor: [String]?
 
         var id: Int { tmdbId }
@@ -430,7 +430,7 @@ extension API {
         struct Theme: Codable, Hashable, Sendable {
             let label: String
             let items: [TitleCard]
-            /// 0.54+: "first" when the query is that genre/keyword itself
+            /// 0.55+: "first" when the query is that genre/keyword itself
             /// ("horror"), so its shelf leads the page; "last" (or nil, from an
             /// older server) puts it after the other sections.
             var placement: String?
@@ -438,7 +438,7 @@ extension API {
             var leadsPage: Bool { placement == "first" }
         }
 
-        /// One section (0.54+): TMDb's first page, best match first, and
+        /// One section (0.55+): TMDb's first page, best match first, and
         /// how many there are in all — the heading's count.
         struct Section<Item: Codable & Hashable & Sendable>: Codable, Hashable, Sendable {
             let totalResults: Int
@@ -449,7 +449,7 @@ extension API {
             var hasMore: Bool { totalResults > results.count }
         }
 
-        /// 0.54+: the page in the order to show it — movies, series, people,
+        /// 0.55+: the page in the order to show it — movies, series, people,
         /// studios & networks.
         struct Sections: Codable, Hashable, Sendable {
             let movies: Section<TitleCard>
@@ -464,7 +464,7 @@ extension API {
         /// With status, favorited and canQuickAdd.
         let titles: [TitleCard]
         let theme: Theme?
-        /// nil from a server before 0.54 (SearchPageLayout falls back to the
+        /// nil from a server before 0.55 (SearchPageLayout falls back to the
         /// fields above).
         var sections: Sections?
 
@@ -477,7 +477,7 @@ extension API {
         }
     }
 
-    /// A studio or network in search's Studios & Networks (0.54+): a studio
+    /// A studio or network in search's Studios & Networks (0.55+): a studio
     /// opens its company page, a network the Series grid filtered to it.
     struct SearchCompanyCard: Codable, Hashable, Sendable, Identifiable {
         /// "studio" or "network"; anything else is treated as a studio.
@@ -505,7 +505,7 @@ extension API {
         }
     }
 
-    /// `GET /search/{section}` (0.54+): which section's See all.
+    /// `GET /search/{section}` (0.55+): which section's See all.
     enum SearchSectionName: String, Hashable, Sendable, CaseIterable {
         case movies, series, people, studios
 

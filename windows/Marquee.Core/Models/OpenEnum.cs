@@ -437,7 +437,7 @@ public readonly record struct RequestTone(string Value) : IOpenEnum<RequestTone>
 }
 
 /// <summary>
-/// <c>SearchSuggestion.mediaType</c>: a title, a person, or (0.54+, only when
+/// <c>SearchSuggestion.mediaType</c>: a title, a person, or (0.55+, only when
 /// the app asks with <c>include=</c>) a studio or network.
 /// </summary>
 public readonly record struct SuggestionKind(string Value) : IOpenEnum<SuggestionKind>

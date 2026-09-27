@@ -70,17 +70,17 @@ extension MarqueeAPI {
             return list.results
         }
 
-        /// `GET /search/{movies|series}?q=&page=` (0.54+) — a title section's See all.
+        /// `GET /search/{movies|series}?q=&page=` (0.55+) — a title section's See all.
         func titles(_ section: API.SearchSectionName, query: String, page: Int) async throws -> Paginated<API.TitleCard> {
             try await transport.get("/search/\(section.rawValue)", query: ["q": query, "page": String(page)], timeout: Timeout.tmdb)
         }
 
-        /// `GET /search/people?q=&page=` (0.54+) — People's See all.
+        /// `GET /search/people?q=&page=` (0.55+) — People's See all.
         func people(query: String, page: Int) async throws -> Paginated<API.PersonCard> {
             try await transport.get("/search/people", query: ["q": query, "page": String(page)], timeout: Timeout.tmdb)
         }
 
-        /// `GET /search/studios?q=&page=` (0.54+) — Studios & Networks' See all.
+        /// `GET /search/studios?q=&page=` (0.55+) — Studios & Networks' See all.
         func studios(query: String, page: Int) async throws -> Paginated<API.SearchCompanyCard> {
             try await transport.get("/search/studios", query: ["q": query, "page": String(page)], timeout: Timeout.tmdb)
         }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fragment } from "react";
 import { SearchBar } from "@/components/search-bar";
 import { Shelf } from "@/components/shelf";
 import { PosterCard } from "@/components/poster-card";
@@ -14,7 +15,7 @@ import { InfiniteResultsGrid } from "@/components/infinite-results-grid";
 import { SearchSectionGrid } from "@/components/search-section-grid";
 import { companyHref } from "@/lib/search/links";
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { loadSearchResults, loadSearchSection, parseSearchSection, type SearchSectionKind, type SearchTitleCard } from "@/lib/pages/search";
+import { loadSearchResults, loadSearchSection, parseSearchSection, type SearchBlock, type SearchSectionKind, type SearchTitleCard } from "@/lib/pages/search";
 import { getT } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/format";
 import type { MessageKey } from "@/lib/i18n/translator";
@@ -120,32 +121,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     </Shelf>
   );
 
-  return (
-    <div className="rail-bleed relative overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 h-96"
-        style={{
-          background: "radial-gradient(120% 60% at 50% -10%, rgba(224,166,62,0.14) 0%, rgba(10,10,12,0) 60%)",
-        }}
-      />
-      <div className="flex flex-col gap-10 py-6 pl-4 pr-0 sm:py-7 sm:pl-7">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pr-4 sm:pr-7">
-          <h1 className="font-display text-2xl text-text-primary sm:text-3xl">{t("discover.searchResultsFor", { query })}</h1>
-          {signedIn && data.hasResults && <StatusLegend />}
-        </div>
-
-        {!data.hasResults && (
-          <div className="mx-auto max-w-md py-16 pr-4 text-center sm:pr-7">
-            <p className="font-display text-xl text-text-primary">{t("discover.noResults", { query })}</p>
-            <p className="mt-2 text-sm text-text-muted">{t("discover.noResultsHint")}</p>
-          </div>
-        )}
-
-        {data.theme?.placement === "first" && themeShelf}
-        {titleShelf("movie", data.movies)}
-        {titleShelf("tv", data.series)}
-
-        {data.people.items.length > 0 && (
+  const peopleShelf = data.people.items.length > 0 && (
           <Shelf
             id="search-person"
             title={t(SECTION_TITLES.person)}
@@ -170,9 +146,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               </div>
             ))}
           </Shelf>
-        )}
+        );
 
-        {data.companies.items.length > 0 && (
+  const companiesShelf = data.companies.items.length > 0 && (
           <Shelf
             id="search-company"
             title={t(SECTION_TITLES.company)}
@@ -199,9 +175,40 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               />
             ))}
           </Shelf>
+        );
+
+  // In data.order: Movies, TV Shows, People, Studios & Networks (People
+  // first when the query names a person), the theme first or last.
+  const blocks: Record<SearchBlock, React.ReactNode> = {
+    theme: themeShelf,
+    movies: titleShelf("movie", data.movies),
+    series: titleShelf("tv", data.series),
+    people: peopleShelf,
+    companies: companiesShelf,
+  };
+
+  return (
+    <div className="rail-bleed relative overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 h-96"
+        style={{
+          background: "radial-gradient(120% 60% at 50% -10%, rgba(224,166,62,0.14) 0%, rgba(10,10,12,0) 60%)",
+        }}
+      />
+      <div className="flex flex-col gap-10 py-6 pl-4 pr-0 sm:py-7 sm:pl-7">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pr-4 sm:pr-7">
+          <h1 className="font-display text-2xl text-text-primary sm:text-3xl">{t("discover.searchResultsFor", { query })}</h1>
+          {signedIn && data.hasResults && <StatusLegend />}
+        </div>
+
+        {!data.hasResults && (
+          <div className="mx-auto max-w-md py-16 pr-4 text-center sm:pr-7">
+            <p className="font-display text-xl text-text-primary">{t("discover.noResults", { query })}</p>
+            <p className="mt-2 text-sm text-text-muted">{t("discover.noResultsHint")}</p>
+          </div>
         )}
 
-        {data.theme?.placement === "last" && themeShelf}
+        {data.order.map((block) => <Fragment key={block}>{blocks[block]}</Fragment>)}
       </div>
     </div>
   );

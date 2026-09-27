@@ -12,6 +12,16 @@ import { tmdbImageUrl } from "@/lib/tmdb/image";
  * `fluid` fills its grid cell instead of the shelf's fixed 224px (search's
  * Studios & Networks grid); `caption` and `favoriteAction` add a small
  * line under the tile and a star in its corner. */
+/** "Dune Productions" → "DP": up to two initials. */
+export function monogram(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => Array.from(word)[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export function LogoCard({
   href,
   name,
@@ -46,6 +56,12 @@ export function LogoCard({
             className="h-full w-full object-contain"
           />
         </div>
+      ) : caption ? (
+        // The name is already in the caption underneath: a monogram here
+        // rather than the name twice.
+        <span className="font-display text-3xl text-text-muted" aria-hidden>
+          {monogram(name)}
+        </span>
       ) : (
         <span className="px-4 text-center text-sm text-text-secondary">{name}</span>
       )}
