@@ -9,6 +9,10 @@ public enum Section
     Discover,
     Movies,
     Series,
+
+    /// <summary>The household library in one place (0.51+ servers).</summary>
+    Library,
+
     Search,
     Requests,
     Favorites,
@@ -27,6 +31,7 @@ public static class SectionExtensions
         Section.Discover => Loc.Get("Nav_Discover"),
         Section.Movies => Loc.Get("Nav_Movies"),
         Section.Series => Loc.Get("Nav_Series"),
+        Section.Library => Loc.Get("Nav_Library"),
         Section.Search => Loc.Get("Nav_Search"),
         Section.Requests => Loc.Get("Nav_Requests"),
         Section.Favorites => Loc.Get("Nav_Favorites"),

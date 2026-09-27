@@ -1,0 +1,118 @@
+{
+  "page": 1,
+  "pageSize": 60,
+  "totalPages": 14,
+  "totalResults": 812,
+  "results": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": "owned",
+      "favorited": true,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false,
+      "tvdbId": null,
+      "source": "plex",
+      "sizeBytes": 31234567890,
+      "addedAt": "2026-09-20T18:04:11.000Z",
+      "genres": [
+        "Action",
+        "Science Fiction"
+      ],
+      "resolution": "4K",
+      "hdr": "Dolby Vision",
+      "videoCodec": "HEVC",
+      "audioCodec": "TrueHD Atmos",
+      "quality": "Bluray-2160p",
+      "filePath": "/movies/The Matrix (1999)/The Matrix (1999) Bluray-2160p.mkv",
+      "episodeCount": null,
+      "upgradeAvailable": false,
+      "possibleDuplicate": false,
+      "arrTracking": {
+        "arrId": 12,
+        "monitored": true
+      }
+    },
+    {
+      "mediaType": "tv",
+      "tmdbId": 1399,
+      "name": "Game of Thrones",
+      "posterPath": "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+      "year": "2011",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": "tracked_downloading",
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false,
+      "tvdbId": 121361,
+      "source": "sonarr",
+      "sizeBytes": 98765432100,
+      "addedAt": null,
+      "genres": [
+        "Drama",
+        "Sci-Fi & Fantasy"
+      ],
+      "resolution": null,
+      "hdr": null,
+      "videoCodec": null,
+      "audioCodec": null,
+      "quality": null,
+      "filePath": "/tv/Game of Thrones",
+      "episodeCount": 61,
+      "upgradeAvailable": false,
+      "possibleDuplicate": false,
+      "arrTracking": {
+        "arrId": 7,
+        "monitored": true
+      }
+    }
+  ],
+  "summary": {
+    "movies": 640,
+    "series": 172,
+    "episodes": 9840,
+    "totalBytes": 48000000000000,
+    "tracked": 23
+  },
+  "filters": {
+    "sources": [
+      "plex",
+      "sonarr",
+      "radarr"
+    ],
+    "genres": [
+      "Action",
+      "Drama",
+      "Science Fiction",
+      "Sci-Fi & Fantasy"
+    ],
+    "codecs": [
+      "AV1",
+      "H264",
+      "HEVC"
+    ],
+    "years": [
+      2026,
+      2025,
+      2011,
+      1999
+    ],
+    "resolutions": [
+      "4K",
+      "1080p",
+      "SD"
+    ],
+    "hasHdr": true
+  },
+  "connected": true
+}

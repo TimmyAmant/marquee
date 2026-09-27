@@ -117,13 +117,17 @@ final class APIFixtureTests: XCTestCase {
         "api-keys": decodes(API.ListResponse<API.ApiKey>.self),
         "api-key-created": decodes(API.ApiKeyCreated.self),
         "stats-summary": decodes(API.StatsSummary.self),
+        "library-page": decodes(API.LibraryPageResponse.self),
+        "library-collections-missing": decodes(API.ListResponse<API.LibraryCollection>.self),
+        "library-duplicates": decodes(API.ListResponse<API.LibraryDuplicate>.self),
+        "library-storage": decodes(API.LibraryStorage.self),
     ] }
 
     func testEveryDocExampleDecodes() throws {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 91, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 95, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 

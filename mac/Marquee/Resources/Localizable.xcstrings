@@ -8,6 +8,7 @@
       "shouldTranslate" : false
     },
     "%@ %@ %@" : {
+      "comment" : "Settings Activity row: who, what they did (e.g. declined), which title",
       "shouldTranslate" : false
     },
     "%@ (+%lld more)" : {
@@ -434,6 +435,34 @@
         }
       }
     },
+    "%@ free" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ libres"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ libres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ frei"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ livres"
+          }
+        }
+      }
+    },
     "%@ has no quality profiles or root folders yet — add them there, then Test again." : {
       "localizations" : {
         "de" : {
@@ -626,6 +655,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filmes e séries: %@"
+          }
+        }
+      }
+    },
+    "%@ on disk" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ en disco"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sur disque"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ auf der Festplatte"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ em disco"
           }
         }
       }
@@ -1631,6 +1688,7 @@
       }
     },
     "%lld left" : {
+      "comment" : "Characters left in a comment",
       "localizations" : {
         "de" : {
           "variations" : {
@@ -1717,6 +1775,100 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Restam %lld"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld missing" : {
+      "localizations" : {
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "falta %lld"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "faltan %lld"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld manquant"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld manquants"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fehlt"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fehlen"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld faltando"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld faltando"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld missing"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld missing"
                 }
               }
             }
@@ -2143,6 +2295,100 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld pedidos não puderam ser aprovados."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld series" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld series"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld series"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld serie"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld series"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld série"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld séries"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Serie"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Serien"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld série"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld séries"
                 }
               }
             }
@@ -2721,6 +2967,100 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "(salvo — digite outro para substituir)"
+          }
+        }
+      }
+    },
+    "+ %lld more downloading, missing or coming soon, not counted above" : {
+      "localizations" : {
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld más descargándose, sin encontrar o próximamente, no contado arriba"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld más descargándose, sin encontrar o próximamente, no contados arriba"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld de plus en téléchargement, introuvable ou à venir, non compté ci-dessus"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld de plus en téléchargement, introuvables ou à venir, non comptés ci-dessus"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld weiterer Titel wird heruntergeladen, fehlt oder erscheint demnächst – oben nicht mitgezählt"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld weitere Titel werden heruntergeladen, fehlen oder erscheinen demnächst – oben nicht mitgezählt"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld a mais baixando, não encontrado ou em breve, não contado acima"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld a mais baixando, não encontrados ou em breve, não contados acima"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld more downloading, missing or coming soon, not counted above"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %lld more downloading, missing or coming soon, not counted above"
+                }
+              }
+            }
           }
         }
       }
@@ -5511,6 +5851,34 @@
         }
       }
     },
+    "All titles" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los títulos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les titres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Titel"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os títulos"
+          }
+        }
+      }
+    },
     "All years" : {
       "localizations" : {
         "de" : {
@@ -5899,6 +6267,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tags para anime"
+          }
+        }
+      }
+    },
+    "Any codec" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier códec"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout codec"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Codec"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer codec"
+          }
+        }
+      }
+    },
+    "Any resolution" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier resolución"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toute résolution"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Auflösung"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer resolução"
+          }
+        }
+      }
+    },
+    "Any source" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier origen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toute source"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Quelle"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer origem"
+          }
+        }
+      }
+    },
+    "Any status" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier estado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout état"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Status"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer status"
           }
         }
       }
@@ -6357,6 +6837,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aprovando…"
+          }
+        }
+      }
+    },
+    "Around %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacia el %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vers le %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa am %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por volta de %@."
           }
         }
       }
@@ -8381,6 +8889,34 @@
         }
       }
     },
+    "Clear filters" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar filtros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer les filtres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter zurücksetzen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar filtros"
+          }
+        }
+      }
+    },
     "Client ID" : {
       "localizations" : {
         "de" : {
@@ -8433,6 +8969,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Segredo do cliente"
+          }
+        }
+      }
+    },
+    "Codec" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Códec"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codec"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codec"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codec"
           }
         }
       }
@@ -8941,6 +9505,34 @@
         }
       }
     },
+    "Connect Plex, Jellyfin, Sonarr or Radarr to see everything you already own in one place." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecta Plex, Jellyfin, Sonarr o Radarr para ver todo lo que ya tienes en un solo lugar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez Plex, Jellyfin, Sonarr ou Radarr pour voir tout ce que vous possédez déjà au même endroit."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbinde Plex, Jellyfin, Sonarr oder Radarr, um alles, was du schon hast, an einem Ort zu sehen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecte o Plex, o Jellyfin, o Sonarr ou o Radarr para ver tudo o que você já tem em um só lugar."
+          }
+        }
+      }
+    },
     "Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf." : {
       "localizations" : {
         "de" : {
@@ -8965,6 +9557,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Conecte o Plex, o Jellyfin, o Sonarr e o Radarr para que o Marquee saiba o que você já tem e possa mandar o resto direto para sua fila de downloads. As credenciais ficam criptografadas no seu servidor e só são usadas em seu nome."
+          }
+        }
+      }
+    },
+    "Connect Sonarr or Radarr to see free space per root folder here." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecta Sonarr o Radarr para ver aquí el espacio libre por carpeta raíz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez Sonarr ou Radarr pour voir ici l’espace libre par dossier racine."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbinde Sonarr oder Radarr, um hier den freien Speicher je Stammordner zu sehen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecte o Sonarr ou o Radarr para ver aqui o espaço livre por pasta raiz."
           }
         }
       }
@@ -10229,6 +10849,34 @@
         }
       }
     },
+    "Couldn't load your library" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar tu biblioteca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger votre bibliothèque"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Mediathek konnte nicht geladen werden"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível carregar sua biblioteca"
+          }
+        }
+      }
+    },
     "Couldn't open that file." : {
       "localizations" : {
         "de" : {
@@ -11209,6 +11857,34 @@
         }
       }
     },
+    "Different files" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivos distintos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers différents"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschiedene Dateien"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arquivos diferentes"
+          }
+        }
+      }
+    },
     "Director" : {
       "localizations" : {
         "de" : {
@@ -11747,6 +12423,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arraste para mover"
+          }
+        }
+      }
+    },
+    "Duplicates" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doublons"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikate"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicados"
           }
         }
       }
@@ -13665,6 +14369,34 @@
         }
       }
     },
+    "From the last daily snapshot, %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De la última instantánea diaria, %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’après le dernier instantané quotidien, %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus der letzten täglichen Aufzeichnung, %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do último registro diário, %@."
+          }
+        }
+      }
+    },
     "From thetvdb.com/dashboard/account/apikey" : {
       "localizations" : {
         "de" : {
@@ -13717,6 +14449,178 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acesso total"
+          }
+        }
+      }
+    },
+    "Full in about %lld days at the current rate (%@/day)." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Lleno en aproximadamente %1$lld día al ritmo actual (%2$@/día)."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Lleno en aproximadamente %1$lld días al ritmo actual (%2$@/día)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Plein dans environ %1$lld jour au rythme actuel (%2$@/jour)."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Plein dans environ %1$lld jours au rythme actuel (%2$@/jour)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Beim aktuellen Tempo in etwa %1$lld Tag voll (%2$@/Tag)."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Beim aktuellen Tempo in etwa %1$lld Tagen voll (%2$@/Tag)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Cheio em cerca de %1$lld dia no ritmo atual (%2$@/dia)."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Cheio em cerca de %1$lld dias no ritmo atual (%2$@/dia)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Full in about %1$lld day at the current rate (%2$@/day)."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Full in about %1$lld days at the current rate (%2$@/day)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Full today at the current rate (%@/day)." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lleno hoy al ritmo actual (%@/día)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plein aujourd’hui au rythme actuel (%@/jour)."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim aktuellen Tempo heute voll (%@/Tag)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cheio hoje no ritmo atual (%@/dia)."
           }
         }
       }
@@ -14001,6 +14905,34 @@
         }
       }
     },
+    "Grid" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuadrícula"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grille"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raster"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade"
+          }
+        }
+      }
+    },
     "Groups claim" : {
       "localizations" : {
         "de" : {
@@ -14025,6 +14957,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claim de grupos"
+          }
+        }
+      }
+    },
+    "HDR only" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo HDR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDR seulement"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur HDR"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só HDR"
           }
         }
       }
@@ -16463,6 +17423,34 @@
         }
       }
     },
+    "Library sections" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secciones de la biblioteca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sections de la bibliothèque"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereiche der Mediathek"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seções da biblioteca"
+          }
+        }
+      }
+    },
     "Light" : {
       "localizations" : {
         "de" : {
@@ -16851,6 +17839,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Carregando…"
+          }
+        }
+      }
+    },
+    "Location" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emplacement"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speicherort"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local"
           }
         }
       }
@@ -18205,6 +19221,34 @@
         }
       }
     },
+    "Missing from collections" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltan en colecciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manquants dans les collections"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Sammlungen fehlend"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltando nas coleções"
+          }
+        }
+      }
+    },
     "Monitored" : {
       "localizations" : {
         "de" : {
@@ -18453,6 +19497,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filmes"
+          }
+        }
+      }
+    },
+    "Movies and series" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Películas y series"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Films et séries"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filme und Serien"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filmes e séries"
           }
         }
       }
@@ -19381,6 +20453,34 @@
         }
       }
     },
+    "No duplicates — every title is on one server, in one file." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin duplicados: cada título está en un servidor y en un archivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun doublon : chaque titre est sur un seul serveur, dans un seul fichier."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Duplikate – jeder Titel liegt auf einem Server, in einer Datei."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem duplicados — cada título está em um servidor, em um arquivo."
+          }
+        }
+      }
+    },
     "No episode data for this season." : {
       "localizations" : {
         "de" : {
@@ -19405,6 +20505,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sem dados de episódios para esta temporada."
+          }
+        }
+      }
+    },
+    "No forecast yet — it needs a couple of days of readings from the daily disk-space snapshot." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay previsión: hacen falta un par de días de lecturas de la instantánea diaria de espacio en disco."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de prévision : il faut quelques jours de relevés de l’instantané quotidien de l’espace disque."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Prognose – dafür braucht es ein paar Tage Messwerte der täglichen Speicherplatz-Aufzeichnung."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda sem previsão — são necessários alguns dias de leituras do registro diário de espaço em disco."
           }
         }
       }
@@ -20165,6 +21293,34 @@
         }
       }
     },
+    "Nothing incomplete — every franchise you own part of is fully owned, or none of your titles belongs to one yet." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada incompleto: cada colección de la que tienes una parte está completa, o ninguno de tus títulos pertenece a una todavía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien d’incomplet : chaque collection dont vous possédez une partie est complète, ou aucun de vos titres n’appartient encore à une collection."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts Unvollständiges – jede Sammlung, von der du einen Teil hast, ist vollständig, oder noch keiner deiner Titel gehört zu einer."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada incompleto — cada coleção da qual você tem uma parte está completa, ou nenhum dos seus títulos pertence a uma ainda."
+          }
+        }
+      }
+    },
     "Nothing is answering on port %@ at %@. Check the port and that Marquee is running." : {
       "localizations" : {
         "de" : {
@@ -20585,6 +21741,34 @@
         }
       }
     },
+    "On several servers" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En varios servidores"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur plusieurs serveurs"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf mehreren Servern"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em vários servidores"
+          }
+        }
+      }
+    },
     "One or more addresses, separated by commas." : {
       "localizations" : {
         "de" : {
@@ -20637,6 +21821,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Só um administrador pode fazer isso."
+          }
+        }
+      }
+    },
+    "Only files with HDR or Dolby Vision" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo archivos con HDR o Dolby Vision"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement les fichiers en HDR ou Dolby Vision"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Dateien mit HDR oder Dolby Vision"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só arquivos com HDR ou Dolby Vision"
           }
         }
       }
@@ -21789,6 +23001,34 @@
         }
       }
     },
+    "Possible duplicate" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posible duplicado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doublon possible"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mögliches Duplikat"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Possível duplicado"
+          }
+        }
+      }
+    },
     "Posters get a colored strip along the bottom, and title pages a badge, showing where each title stands in your library. They use the same colors as Radarr and Sonarr, so a title looks the same everywhere." : {
       "localizations" : {
         "de" : {
@@ -22013,6 +23253,34 @@
         }
       }
     },
+    "Quality" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualité"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualität"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualidade"
+          }
+        }
+      }
+    },
     "Quality profile" : {
       "localizations" : {
         "de" : {
@@ -22149,6 +23417,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Executada deste Mac %@"
+          }
+        }
+      }
+    },
+    "Rating" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valoración"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewertung"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaliação"
+          }
+        }
+      }
+    },
+    "Read from your servers just now." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leído de tus servidores ahora mismo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lu sur vos serveurs à l’instant."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerade eben von deinen Servern gelesen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lido dos seus servidores agora mesmo."
           }
         }
       }
@@ -22311,6 +23635,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouts récents"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionados recentemente"
+          }
+        }
+      }
+    },
+    "Recently added" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadidos recientemente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutés récemment"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt hinzugefügt"
           }
         },
         "pt-BR" : {
@@ -24643,6 +25995,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tentando de novo…"
+          }
+        }
+      }
+    },
+    "Review integrations" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar integraciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifier les intégrations"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrationen prüfen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar integrações"
           }
         }
       }
@@ -28129,6 +29509,34 @@
         }
       }
     },
+    "Source" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Origen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Source"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Origem"
+          }
+        }
+      }
+    },
     "Specials" : {
       "localizations" : {
         "de" : {
@@ -28269,6 +29677,62 @@
         }
       }
     },
+    "Still syncing your library — check back in a moment, or review your integrations." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía sincronizando tu biblioteca: vuelve en un momento o revisa tus integraciones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation de votre bibliothèque en cours : revenez dans un instant, ou vérifiez vos intégrations."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Mediathek wird noch synchronisiert – schau gleich noch einmal vorbei oder prüfe deine Integrationen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda sincronizando sua biblioteca — volte daqui a pouco ou revise suas integrações."
+          }
+        }
+      }
+    },
+    "Still syncing — check back in a moment." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía sincronizando: vuelve en un momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation en cours : revenez dans un instant."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird noch synchronisiert – schau gleich noch einmal vorbei."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda sincronizando — volte daqui a pouco."
+          }
+        }
+      }
+    },
     "Stop" : {
       "localizations" : {
         "de" : {
@@ -28349,6 +29813,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parar de sincronizar %@? Os pedidos continuam."
+          }
+        }
+      }
+    },
+    "Storage" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Almacenamiento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stockage"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speicher"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Armazenamento"
           }
         }
       }
@@ -28937,6 +30429,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ID do TVDB"
+          }
+        }
+      }
+    },
+    "Table" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tableau"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabelle"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabela"
           }
         }
       }
@@ -29921,6 +31441,34 @@
         }
       }
     },
+    "The household admin hasn't connected Plex, Jellyfin, Sonarr or Radarr yet." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El administrador del hogar aún no ha conectado Plex, Jellyfin, Sonarr ni Radarr."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’administrateur du foyer n’a pas encore connecté Plex, Jellyfin, Sonarr ni Radarr."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Admin des Haushalts hat Plex, Jellyfin, Sonarr oder Radarr noch nicht verbunden."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O administrador da casa ainda não conectou o Plex, o Jellyfin, o Sonarr nem o Radarr."
+          }
+        }
+      }
+    },
     "The household admin hasn't connected Sonarr or Radarr yet." : {
       "localizations" : {
         "de" : {
@@ -30593,6 +32141,34 @@
         }
       }
     },
+    "This server doesn't have a Library page yet. Update it to Marquee 0.51 or later." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor aún no tiene página de Biblioteca. Actualízalo a Marquee 0.51 o posterior."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce serveur n’a pas encore de page Bibliothèque. Mettez-le à jour vers Marquee 0.51 ou une version ultérieure."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server hat noch keine Mediathek-Seite. Aktualisiere ihn auf Marquee 0.51 oder neuer."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor ainda não tem página de Biblioteca. Atualize-o para o Marquee 0.51 ou mais recente."
+          }
+        }
+      }
+    },
     "This server is newer than this app supports. Update Marquee for Mac to connect." : {
       "localizations" : {
         "de" : {
@@ -30841,6 +32417,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Títulos e palavras-chave que ninguém pode pedir. Você ainda pode adicioná-los."
+          }
+        }
+      }
+    },
+    "Titles that are on more than one server or in more than one file. Check the paths before deleting anything — Marquee deletes nothing itself." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Títulos que están en más de un servidor o en más de un archivo. Comprueba las rutas antes de borrar nada: Marquee no borra nada por sí mismo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titres présents sur plusieurs serveurs ou dans plusieurs fichiers. Vérifiez les chemins avant de supprimer quoi que ce soit : Marquee ne supprime rien lui-même."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel, die auf mehreren Servern oder in mehreren Dateien liegen. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Títulos que estão em mais de um servidor ou em mais de um arquivo. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho."
           }
         }
       }
@@ -32129,6 +33733,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualizando…"
+          }
+        }
+      }
+    },
+    "Upgrade available" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejora disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à niveau disponible"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upgrade verfügbar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upgrade disponível"
           }
         }
       }

@@ -98,6 +98,7 @@ private struct SectionRootView: View {
         case .discover: DiscoverView()
         case .movies: BrowseView(mediaType: .movie)
         case .series: BrowseView(mediaType: .tv)
+        case .library: LibraryView()
         case .favorites: FavoritesView()
         case .calendar: CalendarScreen()
         case .requests: RequestsView()

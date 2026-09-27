@@ -3,7 +3,7 @@ import Foundation
 // MARK: - The typed /api/v1 layer
 //
 // `MarqueeAPI` is a Sendable facade over `APIClient` with one typed async
-// method per endpoint in docs/api-v1.md (all 121), namespaced by area:
+// method per endpoint in docs/api-v1.md (all 163), namespaced by area:
 //
 //     let detail = try await model.api.titles.detail(.movie, id: 603)
 //     try await model.api.requests.approve(request.id)
@@ -65,6 +65,8 @@ struct MarqueeAPI: Sendable {
     var people: PeopleEndpoints { PeopleEndpoints(transport: transport) }
     var companies: CompaniesEndpoints { CompaniesEndpoints(transport: transport) }
     var favorites: FavoritesEndpoints { FavoritesEndpoints(transport: transport) }
+    /// The Library page (0.51+; `.notFound` from an older server).
+    var library: LibraryEndpoints { LibraryEndpoints(transport: transport) }
     var requests: RequestsEndpoints { RequestsEndpoints(transport: transport) }
     var issues: IssuesEndpoints { IssuesEndpoints(transport: transport) }
     var comments: CommentsEndpoints { CommentsEndpoints(transport: transport) }

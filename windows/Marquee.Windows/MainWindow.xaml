@@ -221,7 +221,7 @@
             <!--
               The rail is the menu: every destination, one click away, in
               the menu's order (profile and notifications; Search, Discover;
-              Movies, Series; Favorites, Calendar, Requests), groups split by a short
+              Movies, Series, Library; Favorites, Calendar, Requests), groups split by a short
               hairline, and (only while a newer Marquee is out) the update
               button, which opens Settings where "Update" is.
               Hovering or focusing an icon shows its name to the right.
@@ -317,6 +317,15 @@
                         x:Uid="Shell_RailSeriesButton"
                         ToolTipService.Placement="Right">
                         <FontIcon Glyph="&#xE7F4;" FontSize="19" />
+                    </Button>
+                    <Button
+                        x:Name="RailLibraryButton"
+                        Style="{StaticResource NavRailButtonStyle}"
+                        Tag="library"
+                        Click="OnSectionNavClick"
+                        x:Uid="Shell_RailLibraryButton"
+                        ToolTipService.Placement="Right">
+                        <FontIcon Glyph="&#xE8F1;" FontSize="19" />
                     </Button>
 
                     <Rectangle Width="24" Height="1" Margin="0,4,0,4" HorizontalAlignment="Center" Fill="{ThemeResource MarqueeGlassBorderBrush}" />

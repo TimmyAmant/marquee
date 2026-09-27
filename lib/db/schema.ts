@@ -362,6 +362,10 @@ export const plexLibraryItems = pgTable(
     bitrateKbps: integer("bitrate_kbps"),
     viewCount: integer("view_count"),
     lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
+    // Shows only: how many episode files Plex has for it (its "all leaves"),
+    // for the Library page's episode count. Null for a movie, and from a
+    // sync older than the column.
+    episodeCount: integer("episode_count"),
   },
   (table) => [
     unique().on(table.plexServerId, table.ratingKey),
@@ -495,6 +499,9 @@ export const arrStatusCache = pgTable(
     // same /movie response already fetched, no extra Radarr calls needed.
     dynamicRange: text("dynamic_range"),
     audioCodec: text("audio_codec"),
+    // Sonarr only: episode files on disk (statistics.episodeFileCount), for
+    // the Library page's episode count. Null for Radarr rows.
+    episodeCount: integer("episode_count"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],

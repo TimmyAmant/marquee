@@ -212,6 +212,7 @@
   "plexWatchlistLimited": "Vous avez atteint votre limite de demandes : le reste de votre watchlist attendra qu’il vous en reste.",
   "plexWatchlistUnreachable": "Impossible de joindre Plex pour lire votre watchlist. Marquee réessaiera sous peu.",
   "pushTestBody": "Les notifications fonctionnent sur cet appareil.",
+  "onlyAdminDuplicates": "Seul l’administrateur peut voir les doublons.",
   "onlyAdminSeerrImport": "Seul l’administrateur peut importer depuis Seerr.",
   "seerrKeyRequired": "Saisissez la clé API de Seerr (Paramètres → Général dans Seerr).",
   "seerrKeyRejected": "Seerr n’a pas accepté cette clé API. Copiez-la depuis Paramètres → Général dans Seerr.",

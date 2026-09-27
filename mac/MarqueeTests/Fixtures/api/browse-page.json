@@ -14,9 +14,9 @@
       "rating": 7.832,
       "status": null,
       "favorited": false,
-      "requested": null,
+      "requested": false,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": true
     }
   ]
 }

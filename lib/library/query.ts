@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, max, or } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, max, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   plexServers,
@@ -13,18 +13,32 @@ import type { LibraryStatus } from "@/components/status-badge";
 import { toYear, arrRowStatus, isDroppedArrRow, isPossibleDuplicate } from "@/lib/library/query-policy";
 import { statusRank } from "@/lib/arr/fan-out";
 
+export type LibrarySource = "plex" | "jellyfin" | "sonarr" | "radarr";
+
 export type LibraryItem = {
   titleId: string;
   mediaType: MediaType;
   tmdbId: number;
+  tvdbId: number | null;
   name: string;
   posterPath: string | null;
   year: string | null;
+  /** TMDb's genre names, for the Library page's genre filter. */
+  genres: string[];
+  /** TMDb vote average, 0–10; null when TMDb has none. */
+  rating: number | null;
   status: LibraryStatus;
-  source: "plex" | "jellyfin" | "sonarr" | "radarr";
+  source: LibrarySource;
   sizeBytes: number | null;
   addedAt: Date | null;
   monitored: boolean | null;
+  /** The title's id inside Radarr/Sonarr where one of them tracks it (the
+   * admin's Search now / monitoring actions); null for a media-server-only
+   * title. */
+  arrId: number | null;
+  /** Shows: episode files on disk, from Sonarr or Plex; null when neither
+   * reports it (Jellyfin doesn't), and for movies. */
+  episodeCount: number | null;
   filePath: string | null;
   /** Radarr-only for now — true when the owned file is below the
    * configured quality cutoff (an upgrade is expected/possible). */
@@ -42,6 +56,8 @@ export type LibraryItem = {
    * that owns it. */
   dynamicRange: string | null;
   audioCodec: string | null;
+  /** The media server's video codec ("HEVC", "AV1"); the arrs don't cache one. */
+  videoCodec: string | null;
   /** True when an arr app and a media server both report a file path for
    * this title and the paths don't match — a strong signal there are two
    * separate files on disk (e.g. a stale lower-quality grab left behind
@@ -57,11 +73,55 @@ const libraryTitleColumns = {
   id: titles.id,
   mediaType: titles.mediaType,
   tmdbId: titles.tmdbId,
+  tvdbId: titles.tvdbId,
   name: titles.name,
   posterPath: titles.posterPath,
   releaseDate: titles.releaseDate,
   firstAirDate: titles.firstAirDate,
+  // Two small pieces of the raw TMDb record (the genre names and the vote
+  // average), picked out in SQL rather than by loading the whole JSON.
+  genres: sql<{ name?: string }[] | null>`${titles.rawTmdb}->'genres'`,
+  rating: sql<number | string | null>`(${titles.rawTmdb}->>'vote_average')::float8`,
 };
+
+type LibraryTitleRow = {
+  id: string;
+  mediaType: MediaType;
+  tmdbId: number;
+  tvdbId: number | null;
+  name: string;
+  posterPath: string | null;
+  releaseDate: string | null;
+  firstAirDate: string | null;
+  genres: { name?: string }[] | null;
+  rating: number | string | null;
+};
+
+function titleGenres(row: LibraryTitleRow): string[] {
+  if (!Array.isArray(row.genres)) return [];
+  return row.genres.map((g) => (typeof g?.name === "string" ? g.name.trim() : "")).filter((name) => name.length > 0);
+}
+
+function titleRating(row: LibraryTitleRow): number | null {
+  if (row.rating == null) return null;
+  const value = Number(row.rating);
+  return Number.isFinite(value) && value > 0 ? Math.round(value * 10) / 10 : null;
+}
+
+/** The title columns every library row shares. */
+function titleFields(row: LibraryTitleRow) {
+  return {
+    titleId: row.id,
+    mediaType: row.mediaType,
+    tmdbId: row.tmdbId,
+    tvdbId: row.tvdbId,
+    name: row.name,
+    posterPath: row.posterPath,
+    year: toYear(row),
+    genres: titleGenres(row),
+    rating: titleRating(row),
+  };
+}
 
 export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
   const byKey = new Map<string, LibraryItem>();
@@ -73,6 +133,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         status: arrStatusCache.status,
         sizeBytes: arrStatusCache.sizeBytes,
         monitored: arrStatusCache.monitored,
+        arrId: arrStatusCache.arrId,
         filePath: arrStatusCache.filePath,
         qualityCutoffNotMet: arrStatusCache.qualityCutoffNotMet,
         qualityName: arrStatusCache.qualityName,
@@ -88,7 +149,9 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         status: arrStatusCache.status,
         sizeBytes: arrStatusCache.sizeBytes,
         monitored: arrStatusCache.monitored,
+        arrId: arrStatusCache.arrId,
         filePath: arrStatusCache.filePath,
+        episodeCount: arrStatusCache.episodeCount,
       })
       .from(arrStatusCache)
       .innerJoin(titles, and(eq(titles.mediaType, "tv"), eq(titles.tmdbId, arrStatusCache.externalId)))
@@ -100,6 +163,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
     status,
     sizeBytes,
     monitored,
+    arrId,
     filePath,
     qualityCutoffNotMet,
     qualityName,
@@ -110,50 +174,46 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
 
     const key = `${title.mediaType}:${title.tmdbId}`;
     byKey.set(key, {
-      titleId: title.id,
-      mediaType: title.mediaType,
-      tmdbId: title.tmdbId,
-      name: title.name,
-      posterPath: title.posterPath,
-      year: toYear(title),
+      ...titleFields(title),
       status: arrRowStatus(status, monitored),
       source: "radarr",
       sizeBytes,
       addedAt: null,
       monitored,
+      arrId,
+      episodeCount: null,
       filePath,
       qualityCutoffNotMet: qualityCutoffNotMet ?? false,
       qualityName,
       resolution: null,
       dynamicRange,
       audioCodec,
+      videoCodec: null,
       possibleDuplicate: false,
       otherFilePath: null,
     });
   }
 
-  for (const { title, status, sizeBytes, monitored, filePath } of sonarrRows) {
+  for (const { title, status, sizeBytes, monitored, arrId, filePath, episodeCount } of sonarrRows) {
     if (isDroppedArrRow(status, monitored)) continue;
 
     const key = `${title.mediaType}:${title.tmdbId}`;
     byKey.set(key, {
-      titleId: title.id,
-      mediaType: title.mediaType,
-      tmdbId: title.tmdbId,
-      name: title.name,
-      posterPath: title.posterPath,
-      year: toYear(title),
+      ...titleFields(title),
       status: arrRowStatus(status, monitored),
       source: "sonarr",
       sizeBytes,
       addedAt: null,
       monitored,
+      arrId,
+      episodeCount,
       filePath,
       qualityCutoffNotMet: false,
       qualityName: null,
       resolution: null,
       dynamicRange: null,
       audioCodec: null,
+      videoCodec: null,
       possibleDuplicate: false,
       otherFilePath: null,
     });
@@ -175,6 +235,8 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         resolution: plexLibraryItems.resolution,
         dynamicRange: plexLibraryItems.dynamicRange,
         audioCodec: plexLibraryItems.audioCodec,
+        videoCodec: plexLibraryItems.videoCodec,
+        episodeCount: plexLibraryItems.episodeCount,
       })
       .from(plexLibraryItems)
       .innerJoin(
@@ -187,25 +249,36 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
     // over an active download: Radarr can be re-grabbing a title Plex
     // already has an (older) file for, and "Downloading" is the more useful
     // status to surface until the new file lands.
-    for (const { title, sizeBytes, addedAt, filePath, resolution, dynamicRange, audioCodec } of plexRows) {
+    for (const {
+      title,
+      sizeBytes,
+      addedAt,
+      filePath,
+      resolution,
+      dynamicRange,
+      audioCodec,
+      videoCodec,
+      episodeCount,
+    } of plexRows) {
       const key = `${title.mediaType}:${title.tmdbId}`;
       const existing = byKey.get(key);
       if (existing?.status === "tracked_downloading") {
-        byKey.set(key, { ...existing, sizeBytes, addedAt });
+        byKey.set(key, { ...existing, sizeBytes, addedAt, episodeCount: existing.episodeCount ?? episodeCount, videoCodec });
         continue;
       }
       byKey.set(key, {
-        titleId: title.id,
-        mediaType: title.mediaType,
-        tmdbId: title.tmdbId,
-        name: title.name,
-        posterPath: title.posterPath,
-        year: toYear(title),
+        ...titleFields(title),
         status: "owned",
         source: "plex",
         sizeBytes,
         addedAt,
-        monitored: null,
+        // The arr's monitoring flag and id ride along, so the admin's
+        // Search now / Stop monitoring still work on a Plex-owned title
+        // Radarr/Sonarr also tracks.
+        monitored: existing?.monitored ?? null,
+        arrId: existing?.arrId ?? null,
+        // Sonarr's episode-file count is the more exact of the two.
+        episodeCount: existing?.episodeCount ?? episodeCount,
         // Plex only carries a single file path for movies (a show has one
         // per episode, not one for the whole series) — fall back to
         // whatever Sonarr already had cached for this title, if any.
@@ -220,6 +293,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         resolution,
         dynamicRange: existing?.dynamicRange ?? dynamicRange,
         audioCodec: existing?.audioCodec ?? audioCodec,
+        videoCodec,
         possibleDuplicate: isPossibleDuplicate(existing?.filePath ?? null, filePath),
         otherFilePath: isPossibleDuplicate(existing?.filePath ?? null, filePath)
           ? existing!.filePath
@@ -244,6 +318,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         resolution: jellyfinLibraryItems.resolution,
         dynamicRange: jellyfinLibraryItems.dynamicRange,
         audioCodec: jellyfinLibraryItems.audioCodec,
+        videoCodec: jellyfinLibraryItems.videoCodec,
       })
       .from(jellyfinLibraryItems)
       .innerJoin(
@@ -265,25 +340,23 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
       resolution,
       dynamicRange,
       audioCodec,
+      videoCodec,
     } of jellyfinRows) {
       const key = `${title.mediaType}:${title.tmdbId}`;
       const existing = byKey.get(key);
       if (existing?.status === "tracked_downloading") {
-        byKey.set(key, { ...existing, sizeBytes, addedAt });
+        byKey.set(key, { ...existing, sizeBytes, addedAt, videoCodec });
         continue;
       }
       byKey.set(key, {
-        titleId: title.id,
-        mediaType: title.mediaType,
-        tmdbId: title.tmdbId,
-        name: title.name,
-        posterPath: title.posterPath,
-        year: toYear(title),
+        ...titleFields(title),
         status: "owned",
         source: "jellyfin",
         sizeBytes,
         addedAt,
-        monitored: null,
+        monitored: existing?.monitored ?? null,
+        arrId: existing?.arrId ?? null,
+        episodeCount: existing?.episodeCount ?? null,
         filePath: filePath ?? existing?.filePath ?? null,
         qualityCutoffNotMet: existing?.qualityCutoffNotMet ?? false,
         qualityName: existing?.qualityName ?? null,
@@ -291,6 +364,7 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
         resolution,
         dynamicRange: existing?.dynamicRange ?? dynamicRange,
         audioCodec: existing?.audioCodec ?? audioCodec,
+        videoCodec,
         possibleDuplicate: isPossibleDuplicate(existing?.filePath ?? null, filePath),
         otherFilePath: isPossibleDuplicate(existing?.filePath ?? null, filePath)
           ? existing!.filePath
@@ -305,6 +379,9 @@ export async function getUserLibrary(userId: string): Promise<LibraryItem[]> {
 export type LibrarySummary = {
   movieCount: number;
   tvCount: number;
+  /** Episode files on disk across the shows Sonarr or Plex know — a
+   * Jellyfin-only show adds nothing (it doesn't report a count). */
+  episodeCount: number;
   totalBytes: number;
   trackedCount: number;
 };
@@ -316,6 +393,7 @@ export function summarizeLibrary(library: LibraryItem[]): LibrarySummary {
   return {
     movieCount: owned.filter((i) => i.mediaType === "movie").length,
     tvCount: owned.filter((i) => i.mediaType === "tv").length,
+    episodeCount: library.reduce((sum, i) => sum + (i.mediaType === "tv" ? (i.episodeCount ?? 0) : 0), 0),
     totalBytes: owned.reduce((sum, i) => sum + (i.sizeBytes ?? 0), 0),
     trackedCount: library.length - owned.length,
   };
