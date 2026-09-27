@@ -34873,35 +34873,6 @@
         }
       }
     },
-    "Updating…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird aktualisiert …"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actualizando…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mise à jour…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Atualizando…"
-          }
-        }
-      }
-    },
     "Upgrade available" : {
       "localizations" : {
         "es" : {
@@ -36438,35 +36409,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Roteirista"
-          }
-        }
-      }
-    },
-    "Wrong match? Point this title at the right id." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Falsche Zuordnung? Verweise diesen Titel auf die richtige ID."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¿Coincidencia incorrecta? Asocia este título al id correcto."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mauvaise correspondance ? Associez ce titre au bon identifiant."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Correspondência errada? Aponte este título para o id certo."
           }
         }
       }
