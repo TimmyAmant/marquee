@@ -21,6 +21,7 @@ import { getCustomShelf } from "@/lib/discover/layout";
 import { customShelfMaxPage, fetchCustomShelfPage } from "@/lib/discover/custom-shelves";
 import type { LayoutShelf } from "@/lib/discover/shelves";
 import { getT } from "@/lib/i18n/server";
+import { WATCHLIST_PAGE_SIZE, getWatchlistShelfItems } from "@/lib/plex/watchlist-shelf";
 
 // A Discover shelf's full list — "See all" on Recently Added, Trending,
 // Upcoming Movies and Upcoming Series. Shared by app/discover/[list] (first
@@ -72,7 +73,7 @@ function dedupe(items: RawItem[]): RawItem[] {
   });
 }
 
-async function tmdbPage(list: Exclude<DiscoverList, "recently-added">, page: number) {
+async function tmdbPage(list: Exclude<DiscoverList, "recently-added" | "watchlist">, page: number) {
   const pages = listTmdbPages(page);
   const empty = { results: [], total_pages: 0, total_results: 0 };
 
@@ -218,6 +219,22 @@ export async function fetchDiscoverListPage(
       true,
     );
     return { list, title, page, totalPages: slice.totalPages, totalResults: slice.totalResults, items };
+  }
+
+  if (list === "watchlist") {
+    // The viewer's own (lib/plex/watchlist-shelf.ts), one page plus one
+    // to learn whether there's another — like Recently Added.
+    const newest = await getWatchlistShelfItems(viewer, WATCHLIST_PAGE_SIZE + 1, (page - 1) * WATCHLIST_PAGE_SIZE);
+    const hasMore = newest.length > WATCHLIST_PAGE_SIZE;
+    const items = await enrich(viewer, newest.slice(0, WATCHLIST_PAGE_SIZE), true);
+    return {
+      list,
+      title,
+      page,
+      totalPages: hasMore ? page + 1 : Math.max(1, page),
+      totalResults: (page - 1) * WATCHLIST_PAGE_SIZE + items.length + (hasMore ? 1 : 0),
+      items,
+    };
   }
 
   const { responses, items: raw } = await tmdbPage(list, page);

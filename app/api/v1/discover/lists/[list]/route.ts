@@ -22,7 +22,7 @@ export const GET = withApi<{ list: string }>(async (request, params): Promise<Di
   const page = queryInt(new URL(request.url), "page", { min: 1, max: resolved.maxPage }) ?? 1;
   // Recently Added comes from the library, not TMDb.
   const fromLibrary =
-    (resolved.type === "builtIn" && resolved.list === "recently-added") ||
+    (resolved.type === "builtIn" && (resolved.list === "recently-added" || resolved.list === "watchlist")) ||
     (resolved.type === "custom" && resolved.shelf.kind === "library");
   if (!fromLibrary) await requireTmdbConfigured();
 

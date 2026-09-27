@@ -11,6 +11,13 @@ enum NavRailPosition: String, CaseIterable, Identifiable {
     case bottom
 
     static let storageKey = "marquee-nav-position"
+    /// Settings › Account › "Show menu labels": the section names beside
+    /// the icons (a rail on the left or right widens for them; a top or
+    /// bottom bar stays icons only), and the server's version at the foot.
+    /// Per Mac, like the position.
+    static let labelsStorageKey = "marquee-nav-labels"
+    /// The labeled rail's width, border to border.
+    static let labeledRailWidth: CGFloat = 200
     /// The space between a top or bottom bar and the page.
     static let bandGap: CGFloat = 12
 
@@ -71,7 +78,13 @@ enum NavRailPosition: String, CaseIterable, Identifiable {
     /// A bar along the top or bottom gets its own band with the same 16 on
     /// the page's side too, so it has room to breathe above the artwork.
     var contentInsets: EdgeInsets {
-        let reach = Metrics.contentLeading
+        contentInsets(labeled: false)
+    }
+
+    /// The same with menu labels on: a labeled rail on the left or right
+    /// reaches its 16 inset plus its width, and 16 more.
+    func contentInsets(labeled: Bool) -> EdgeInsets {
+        let reach = labeled && isVertical ? 16 + Self.labeledRailWidth + 16 : Metrics.contentLeading
         let band = reach + Self.bandGap
         switch self {
         case .left: return EdgeInsets(top: 0, leading: reach, bottom: 0, trailing: 0)
@@ -85,4 +98,6 @@ enum NavRailPosition: String, CaseIterable, Identifiable {
 extension EnvironmentValues {
     /// The main window's rail position, for the rail's own pieces.
     @Entry var navRailPosition: NavRailPosition = .left
+    /// "Show menu labels" (`NavRailPosition.labelsStorageKey`).
+    @Entry var navRailShowsLabels: Bool = false
 }

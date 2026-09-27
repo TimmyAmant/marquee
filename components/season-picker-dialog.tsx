@@ -3,8 +3,8 @@
 import { useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { SeasonPickerState } from "@/lib/requests/seasons";
+import { SEASON_PILL_LABELS, allPicked, seasonPill, toggleAllSeasons, type SeasonPill } from "@/lib/requests/season-picker";
 import { useT } from "@/lib/i18n/client";
-import type { MessageKey } from "@/lib/i18n/translator";
 
 export type SeasonPickerRow = {
   seasonNumber: number;
@@ -13,11 +13,37 @@ export type SeasonPickerRow = {
   state: SeasonPickerState;
 };
 
-const TAGS: Partial<Record<SeasonPickerState, { label: MessageKey; className: string }>> = {
-  complete: { label: "title.seasonInLibrary", className: "bg-owned-bg text-owned" },
-  monitored: { label: "title.seasonMonitored", className: "bg-info-bg text-info" },
-  requested: { label: "title.requested", className: "bg-info-bg text-info" },
+const PILL_CLASS: Record<SeasonPill, string> = {
+  notRequested: "border border-border text-text-muted",
+  requested: "bg-info-bg text-info",
+  available: "bg-owned-bg text-owned",
+  monitored: "bg-downloading-bg text-downloading",
+  unavailable: "border border-border text-text-muted",
 };
+
+/** A switch, the way Seerr draws them: a small pill with a sliding knob. */
+function Switch({ checked, disabled, onChange, label }: { checked: boolean; disabled?: boolean; onChange: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      // The row toggles on a click too; this click is the switch's alone.
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange();
+      }}
+      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-40 ${checked ? "bg-accent" : "bg-text-primary/20"}`}
+    >
+      <span
+        aria-hidden
+        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-[left] ${checked ? "left-[18px]" : "left-0.5"}`}
+      />
+    </button>
+  );
+}
 
 /**
  * The season picker's dialog: a show's seasons (same order as the Episodes
@@ -34,6 +60,7 @@ export function SeasonPickerDialog({
   extra,
   listDisabled = false,
   allowEmpty = false,
+  autoApprove = false,
   submitLabel,
   onSubmit,
   onClose,
@@ -48,6 +75,9 @@ export function SeasonPickerDialog({
   listDisabled?: boolean;
   /** Submit may be pressed with nothing ticked (the choice above says what). */
   allowEmpty?: boolean;
+  /** "This request will be approved automatically" (the viewer's
+   * auto-approve permission, or the admin). */
+  autoApprove?: boolean;
   submitLabel: (count: number, pending: boolean) => string;
   /** Resolves to an error to show, or null once done (the dialog closes). */
   onSubmit: (seasons: number[]) => Promise<string | null>;
@@ -65,7 +95,7 @@ export function SeasonPickerDialog({
   });
 
   const requestable = rows.filter((r) => r.state === "requestable").map((r) => r.seasonNumber);
-  const allSelected = requestable.length > 0 && requestable.every((n) => selected.has(n));
+  const allSelected = allPicked(selected, requestable);
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -74,7 +104,7 @@ export function SeasonPickerDialog({
       Array.from(panel.querySelectorAll<HTMLElement>("input:not(:disabled), button:not(:disabled)"));
     // Opened by a click or a key, so focus goes into the list: the first
     // season that can be picked, or Cancel when none can.
-    (panel.querySelector<HTMLElement>("input:not(:disabled)") ?? focusables()[0])?.focus();
+    (panel.querySelector<HTMLElement>("[role=switch]:not(:disabled)") ?? focusables()[0])?.focus();
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
@@ -111,7 +141,7 @@ export function SeasonPickerDialog({
   }
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(requestable));
+    setSelected((prev) => toggleAllSeasons(prev, requestable));
   }
 
   function submit() {
@@ -148,64 +178,73 @@ export function SeasonPickerDialog({
             </h2>
             <p className="mt-0.5 truncate text-[13px] text-text-secondary">{subheading}</p>
           </div>
-          {requestable.length > 1 && !listDisabled && (
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-accent transition-colors hover:bg-text-primary/10"
-            >
-              {allSelected ? t("title.clearAll") : t("title.selectAll")}
-            </button>
-          )}
         </div>
+
+        {autoApprove && (
+          <div className="mx-5 mb-2 flex items-start gap-2 rounded-xl border border-info/30 bg-info-bg px-3 py-2 text-[12.5px] text-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden className="mt-0.5 h-4 w-4 shrink-0">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8h.01M11 12h1v4h1" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {t("title.autoApproveBanner")}
+          </div>
+        )}
 
         {extra && <div className="px-5 pb-2">{extra}</div>}
 
-        <ul
-          className={`flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-2 ${listDisabled ? "opacity-50" : ""}`}
-        >
-          {rows.map((row) => {
-            const tag = TAGS[row.state];
-            const episodes = t("common.episodes", { count: row.episodeCount });
-            if (row.state === "requestable") {
-              const checked = selected.has(row.seasonNumber);
-              return (
-                <li key={row.seasonNumber}>
-                  <label
-                    className={`flex cursor-pointer items-center gap-3 rounded-full px-3 py-2 transition-colors hover:bg-text-primary/10 ${
-                      checked && !listDisabled ? "bg-text-primary/[0.07]" : ""
-                    }`}
+        <div className={`min-h-0 flex-1 overflow-y-auto px-5 pb-2 ${listDisabled ? "opacity-50" : ""}`}>
+          <table className="w-full border-separate border-spacing-0 text-left">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wider text-text-muted">
+                <th className="w-10 border-b border-[var(--marquee-glass-border)] py-2 pr-2 font-medium">
+                  <Switch
+                    checked={allSelected}
+                    disabled={listDisabled || requestable.length === 0}
+                    onChange={toggleAll}
+                    label={allSelected ? t("title.clearAll") : t("title.selectAll")}
+                  />
+                </th>
+                <th className="border-b border-[var(--marquee-glass-border)] py-2 font-medium">{t("title.seasonColumn")}</th>
+                <th className="border-b border-[var(--marquee-glass-border)] py-2 text-right font-medium">{t("title.episodesColumn")}</th>
+                <th className="border-b border-[var(--marquee-glass-border)] py-2 pl-3 text-right font-medium">{t("title.statusColumn")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const pickable = row.state === "requestable";
+                const checked = pickable && selected.has(row.seasonNumber);
+                const pill = seasonPill(row.state);
+                return (
+                  <tr
+                    key={row.seasonNumber}
+                    onClick={pickable && !listDisabled ? () => toggle(row.seasonNumber) : undefined}
+                    className={`${pickable ? "cursor-pointer hover:bg-text-primary/[0.06]" : ""} ${checked ? "bg-text-primary/[0.07]" : ""}`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={listDisabled}
-                      onChange={() => toggle(row.seasonNumber)}
-                      className="h-4 w-4 shrink-0 accent-accent"
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-text-primary">
-                      {row.name}
-                    </span>
-                    <span className="shrink-0 text-[12px] text-text-muted">{episodes}</span>
-                  </label>
-                </li>
-              );
-            }
-            return (
-              <li key={row.seasonNumber} className="flex items-center gap-3 px-3 py-2">
-                {/* Keeps the name lined up with the checkbox rows. */}
-                <span aria-hidden className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 flex-1 truncate text-[14px] text-text-secondary">{row.name}</span>
-                <span className="shrink-0 text-[12px] text-text-muted">{episodes}</span>
-                {tag && (
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${tag.className}`}>
-                    {t(tag.label)}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                    <td className="border-b border-[var(--marquee-glass-border)] py-2 pr-2">
+                      <Switch
+                        checked={checked}
+                        disabled={!pickable || listDisabled}
+                        onChange={() => toggle(row.seasonNumber)}
+                        label={row.name}
+                      />
+                    </td>
+                    <td className={`border-b border-[var(--marquee-glass-border)] py-2 text-[14px] ${pickable ? "font-medium text-text-primary" : "text-text-secondary"}`}>
+                      <span className="block truncate">{row.name}</span>
+                    </td>
+                    <td className="border-b border-[var(--marquee-glass-border)] py-2 text-right text-[12.5px] text-text-muted">
+                      {row.episodeCount}
+                    </td>
+                    <td className="border-b border-[var(--marquee-glass-border)] py-2 pl-3 text-right">
+                      <span className={`inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${PILL_CLASS[pill]}`}>
+                        {t(SEASON_PILL_LABELS[pill])}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
         <div className="border-t border-[var(--marquee-glass-border)] px-5 py-3">
           {error && (

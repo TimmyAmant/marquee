@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The website's season picker: every season TMDb lists, in the Episodes
-  accordion's order, each with a checkbox or the tag saying why it has none.
+  The website's season picker, after Seerr's: a table of every season TMDb
+  lists, in the Episodes accordion's order, each with a checkbox (enabled
+  when it can be picked), its episode count and a status pill. The header's
   "Select all" ticks every requestable season. Request sends the request
   itself and keeps the dialog open with the server's message on a failure;
   it stays disabled while nothing is ticked.
@@ -46,53 +47,77 @@
                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                 TextWrapping="Wrap" />
         </StackPanel>
-        <CheckBox x:Name="SelectAllBox" x:Uid="Season_SelectAll" Click="OnSelectAllClick" />
+        <!-- 0.53+: the viewer's requests are approved at once. -->
+        <InfoBar x:Name="AutoApproveBar" x:Uid="Season_AutoApprove" Severity="Informational" IsClosable="False" IsOpen="False" />
+        <!--
+          After Seerr's: a table. The header's checkbox picks every season;
+          each row is the season's checkbox, name, episode count and status.
+        -->
         <Border
             x:Name="RowsBorder"
             CornerRadius="8"
             BorderThickness="1"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-            <ScrollViewer x:Name="RowsScroller" MaxHeight="340" Padding="0,4">
-                <ItemsRepeater x:Name="RowsRepeater">
-                    <ItemsRepeater.ItemTemplate>
-                        <DataTemplate x:DataType="vm:SeasonPickerRow">
-                            <Grid Padding="12,2" MinHeight="40" ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox
-                                    Grid.Column="0"
-                                    IsChecked="{x:Bind IsChecked, Mode=TwoWay}"
-                                    Visibility="{x:Bind IsRequestable, Converter={StaticResource BoolToVisibility}}"
-                                    VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
+            <StackPanel>
+                <Grid Padding="12,4" MinHeight="36" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox x:Name="SelectAllBox" x:Uid="Season_SelectAll" Click="OnSelectAllClick" VerticalAlignment="Center" />
+                    <TextBlock
+                        Grid.Column="1"
+                        x:Uid="Season_EpisodesColumn"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Grid.Column="2"
+                        x:Uid="Season_StatusColumn"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <Rectangle Height="1" Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <ScrollViewer x:Name="RowsScroller" MaxHeight="340" Padding="0,4">
+                    <ItemsRepeater x:Name="RowsRepeater">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SeasonPickerRow">
+                                <Grid Padding="12,2" MinHeight="40" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="72" />
+                                        <ColumnDefinition Width="120" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox
+                                        Grid.Column="0"
+                                        IsChecked="{x:Bind IsChecked, Mode=TwoWay}"
+                                        IsEnabled="{x:Bind IsRequestable}"
+                                        VerticalAlignment="Center">
                                         <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" />
-                                        <TextBlock Text="{x:Bind EpisodeLine}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                    </StackPanel>
-                                </CheckBox>
-                                <!-- Lined up with the checkbox rows' labels. -->
-                                <StackPanel
-                                    Grid.Column="0"
-                                    Orientation="Horizontal"
-                                    Spacing="8"
-                                    Margin="28,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Visibility="{x:Bind IsRequestable, Converter={StaticResource InvertedBoolToVisibility}}">
-                                    <TextBlock Text="{x:Bind Name}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    <TextBlock Text="{x:Bind EpisodeLine}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                </StackPanel>
-                                <controls:TonePill
-                                    Grid.Column="1"
-                                    Text="{x:Bind Tag}"
-                                    Tone="{x:Bind TagTone}"
-                                    VerticalAlignment="Center" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsRepeater.ItemTemplate>
-                </ItemsRepeater>
-            </ScrollViewer>
+                                    </CheckBox>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{x:Bind EpisodeCountText}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center" />
+                                    <controls:TonePill
+                                        Grid.Column="2"
+                                        Text="{x:Bind Pill}"
+                                        Tone="{x:Bind PillTone}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+            </StackPanel>
         </Border>
         <TextBlock
             x:Name="ErrorText"

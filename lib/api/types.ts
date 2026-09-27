@@ -338,6 +338,10 @@ export type GenreTile = Genre & { backdropPath: string | null };
 
 export type DiscoverShelves = {
   recentlyAdded: TitleCard[];
+  /** 0.53+ (an older server omits it): the viewer's own Plex Watchlist,
+   * newest first, for a viewer with "Request from my Plex Watchlist" on;
+   * empty otherwise. */
+  watchlist?: TitleCard[];
   trending: TitleCard[];
   popularMovies: TitleCard[];
   movieGenres: GenreTile[];
@@ -548,6 +552,11 @@ export type TitleViewerState = {
    * newest five), for Cancel / Edit and the conversation. Empty when there
    * are none; an older server omits it. */
   myRequests: TitleRequestSummary[];
+  /** 0.53+: the viewer's requests of this type are approved at once (the
+   * admin, or autoApproveMovies / autoApproveTv) — the request dialog says
+   * "This request will be approved automatically". An older server omits
+   * it. */
+  autoApprove?: boolean;
 };
 
 /** 0.46+: GET /requests/{id}/edit-options — what "Edit" on a pending
@@ -627,6 +636,27 @@ export type SeasonSummary = {
   requestable: boolean;
 };
 
+export type TitleRatingsDto = {
+  /** 0–10, one decimal. */
+  imdbRating: number | null;
+  imdbVotes: number | null;
+  /** The Tomatometer, 0–100. */
+  rottenTomatoesCritics: number | null;
+  /** The Metascore, 0–100. */
+  metacritic: number | null;
+  /** The title's IMDb page, when it has an IMDb id. */
+  imdbUrl: string | null;
+};
+
+export type PlayLinkDto = {
+  server: "plex" | "jellyfin" | "emby";
+  serverName: string | null;
+  /** "Play on Plex", in the reader's language. */
+  label: string;
+  url: string;
+  appUrl: string | null;
+};
+
 export type TitleDetail = {
   mediaType: MediaType;
   tmdbId: number;
@@ -655,7 +685,35 @@ export type TitleDetail = {
     originalLanguageLabel: string | null;
     productionCountry: { code: string; name: string; flag: string } | null;
     watchProviders: { name: string; logoPath: string | null }[];
+    /** 0.53+ (an older server omits these). The country `watchProviders`
+     * and the release dates are for (Settings › Discover › Region &
+     * language), and TMDb's "where to watch" page there. */
+    streamingRegion?: string;
+    streamingLink?: string | null;
+    /** Only when it differs from `name`. */
+    originalTitle?: string | null;
+    /** A movie's release dates in `streamingRegion` (ISO days), and the
+     * same as labels in the reader's language. */
+    theatricalRelease?: string | null;
+    theatricalReleaseLabel?: string | null;
+    digitalRelease?: string | null;
+    digitalReleaseLabel?: string | null;
+    /** US dollars, and the same formatted; null when TMDb doesn't know. */
+    budget?: number | null;
+    budgetLabel?: string | null;
+    revenue?: number | null;
+    revenueLabel?: string | null;
+    /** A movie's first studio (a show's network is `network`). */
+    studio?: string | null;
+    /** IMDb / Rotten Tomatoes / Metacritic from OMDb (Settings ›
+     * Integrations › OMDb); null without a key or when nothing is known. */
+    ratings?: TitleRatingsDto | null;
   };
+  /** 0.53+: where the title can be played now — one entry per household
+   * media server that has it (Plex first). Empty when it's in none, or
+   * no media server is connected. `url` opens in a browser; `appUrl` is
+   * the server's own scheme (Plex's `plex://`) for devices with its app. */
+  play?: PlayLinkDto[];
   credits: { role: string; name: string }[];
   keywords: string[];
   links: {
@@ -786,6 +844,12 @@ export type MyRequest = {
   editedAt: string | null;
   /** 0.46+: comments in its conversation (the notes aren't counted). */
   commentCount: number;
+  /** 0.53+: the title's backdrop, for a card behind the request. */
+  backdropPath?: string | null;
+  /** 0.53+: who approved or declined it, when someone did by hand. */
+  reviewedBy?: RequestPerson | null;
+  /** 0.53+: the Sonarr/Radarr server approving it added it to, if known. */
+  addedToServer?: string | null;
 };
 
 export type PendingRequest = {
@@ -807,6 +871,8 @@ export type PendingRequest = {
   editedAt: string | null;
   /** 0.46+: comments in its conversation. */
   commentCount: number;
+  /** 0.53+: the title's backdrop, for a card behind the request. */
+  backdropPath?: string | null;
 };
 
 export type PendingRequestsResponse = ListResponse<PendingRequest> & {
@@ -846,6 +912,13 @@ export type ReviewedRequest = {
   addFailed: { error: string; since: string } | null;
   /** 0.46+: comments in its conversation. */
   commentCount: number;
+  /** 0.53+: the title's backdrop, for a card behind the request. */
+  backdropPath?: string | null;
+  /** 0.53+: who approved or declined it; null when nobody did by hand
+   * (auto-approved) or the account is gone. */
+  reviewedBy?: RequestPerson | null;
+  /** 0.53+: when its seasons or 4K were last changed; null if never. */
+  editedAt?: string | null;
 };
 
 /** 0.46+: an approved request Sonarr/Radarr hasn't found (GET /requests/not-found). */
@@ -1041,6 +1114,19 @@ export type ImportResult = { created: HouseholdMember[]; skipped: number };
 
 export type UpdateUserResponse = { ok: true; user: HouseholdMember; tokensRevoked: boolean };
 
+/** GET /users/{id}/profile (0.53+): a member's profile page — yours, or
+ * anyone's for the admin. */
+export type MemberProfile = {
+  user: HouseholdMember;
+  /** Requests made, declined ones left out. */
+  requests: { total: number; movie: number; tv: number };
+  /** Each null when that type isn't limited. */
+  requestLimits: { movie: RequestQuota | null; tv: RequestQuota | null };
+  /** Their Plex Watchlist, newest first (up to 20); null when they don't
+   * sync one. */
+  watchlist: TitleCard[] | null;
+};
+
 export type AvatarResponse = { ok: true; avatarUrl: string | null };
 
 export type SyncedServer = { name: string | null; lastSyncedAt: string | null };
@@ -1064,6 +1150,8 @@ export type IntegrationsSettings = {
     /** 0.40+: "Jellyfin", or "Emby" when the connected server is Emby. */
     name: string;
     baseUrl: string | null;
+    /** 0.53+: the address "Play on Jellyfin" opens, when set (else `baseUrl`). */
+    publicUrl?: string | null;
     hasApiKey: boolean;
     servers: SyncedServer[];
     movieCount: number;
@@ -1078,6 +1166,8 @@ export type IntegrationsSettings = {
   tmdb: { connected: boolean; savedInSettings: boolean; configuredFromEnv: boolean };
   trakt: { connected: boolean };
   tvdb: { connected: boolean };
+  /** 0.53+: OMDb, for IMDb / Rotten Tomatoes / Metacritic ratings. */
+  omdb?: { connected: boolean };
   discord: { connected: boolean };
   ntfy: { connected: boolean };
   /** No token is ever returned; chatId shows where messages go. */

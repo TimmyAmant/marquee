@@ -155,6 +155,12 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(HasRating),
         nameof(Providers),
         nameof(HasProviders),
+        nameof(StreamingRegion),
+        nameof(RatingsLine),
+        nameof(HasRatingsLine),
+        nameof(PlayItems),
+        nameof(HasPlayItems),
+        nameof(AutoApprove),
         nameof(FileCells),
         nameof(HasFile),
         nameof(FilePath),
@@ -402,6 +408,22 @@ public sealed partial class TitleViewModel : ObservableObject
     public bool HasRating => RatingLabel.Length > 0;
     public IReadOnlyList<ProviderItem> Providers => providers;
     public bool HasProviders => providers.Count > 0;
+
+    /// <summary>0.53+: the country "Currently streaming on" is for, beside the heading.</summary>
+    public string StreamingRegion => detail?.Facts.StreamingRegion ?? "";
+
+    /// <summary>0.53+: "IMDb 8.7 · 🍅 83% · Metacritic 73" under the TMDb score, with an OMDb key on the server.</summary>
+    public string RatingsLine => detail?.Facts.Ratings is { HasAny: true } ratings ? ratings.Line : "";
+    public bool HasRatingsLine => RatingsLine.Length > 0;
+
+    /// <summary>0.53+: "Play on Plex" and friends, one button per server that has it.</summary>
+    public IReadOnlyList<PlayItem> PlayItems => detail is { } current
+        ? current.Play.Where(link => link.Link != null).Select(link => new PlayItem(link, current.Play.Count > 1)).ToList()
+        : [];
+    public bool HasPlayItems => PlayItems.Count > 0;
+
+    /// <summary>0.53+: "This request will be approved automatically" in the season dialog.</summary>
+    public bool AutoApprove => detail?.Viewer.AutoApprove == true;
     public IReadOnlyList<FactRow> FileCells => fileCells;
     public bool HasFile => detail?.Library.File != null;
     public string FilePath => detail?.Library.File?.Path.NonBlank() ?? "";
@@ -878,13 +900,21 @@ public sealed partial class TitleViewModel : ObservableObject
     {
         var facts = fresh.Facts;
         var country = facts.ProductionCountry is { } place ? $"{place.Flag} {place.Name}" : null;
+        // A theatrical release on the release date's own day says nothing new.
+        var theatrical = facts.TheatricalReleaseLabel == facts.ReleaseDateLabel ? null : facts.TheatricalReleaseLabel;
         (string Label, string? Value)[] candidates =
         [
             (Loc.Get("Title_FactStatus"), facts.StatusLabel),
+            (Loc.Get("Title_FactOriginalTitle"), facts.OriginalTitle),
             (fresh.MediaType == MediaType.Movie ? Loc.Get("Title_FactReleaseDate") : Loc.Get("Title_FactFirstAirDate"), facts.ReleaseDateLabel),
+            (Loc.Get("Title_FactTheatricalRelease"), theatrical),
+            (Loc.Get("Title_FactDigitalRelease"), facts.DigitalReleaseLabel),
             (Loc.Get("Title_FactNextEpisode"), facts.NextAirDateLabel),
+            (Loc.Get("Title_FactBudget"), facts.BudgetLabel),
+            (Loc.Get("Title_FactRevenue"), facts.RevenueLabel),
             (Loc.Get("Title_FactOriginalLanguage"), facts.OriginalLanguageLabel),
             (Loc.Get("Title_FactProductionCountry"), country),
+            (Loc.Get("Title_FactStudio"), facts.Studio),
             (Loc.Get("Title_FactNetwork"), facts.Network),
         ];
         return candidates
@@ -982,7 +1012,15 @@ public sealed partial class TitleViewModel : ObservableObject
     {
         AddError = null;
         await model.Api.Titles.RequestAsync(Id.MediaType, Id.TmdbId, seasons);
-        _ = LoadAsync();
+        _ = ReloadAfterRequestAsync();
+    }
+
+    /// <summary>The page again, then "Severance requested" (Seerr's toast) where the page's messages show.</summary>
+    private async Task ReloadAfterRequestAsync()
+    {
+        var name = Name;
+        await LoadAsync();
+        TrackingMessage = Loc.Format("Title_RequestedToast", name);
     }
 
     /// <summary>

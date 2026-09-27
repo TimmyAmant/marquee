@@ -45,8 +45,101 @@ public sealed record TitleFacts
     public string? OriginalLanguageLabel { get; init; }
     public ProductionCountry? ProductionCountry { get; init; }
 
-    /// <summary>"Currently Streaming On": US flat-rate providers.</summary>
+    /// <summary>"Currently Streaming On": flat-rate providers in <see cref="StreamingRegion"/>.</summary>
     public required IReadOnlyList<WatchProvider> WatchProviders { get; init; }
+
+    /// <summary>
+    /// 0.53+ (null from an older server, which means the US): the country
+    /// the providers and release dates are for, and TMDb's "where to watch"
+    /// page there.
+    /// </summary>
+    public string? StreamingRegion { get; init; }
+
+    public string? StreamingLink { get; init; }
+
+    /// <summary>Only when it differs from the name.</summary>
+    public string? OriginalTitle { get; init; }
+
+    /// <summary>A movie's release dates in <see cref="StreamingRegion"/>, as labels.</summary>
+    public string? TheatricalReleaseLabel { get; init; }
+
+    public string? DigitalReleaseLabel { get; init; }
+
+    /// <summary>US dollars, formatted.</summary>
+    public string? BudgetLabel { get; init; }
+
+    public string? RevenueLabel { get; init; }
+
+    /// <summary>A movie's first studio (a show has <see cref="Network"/>).</summary>
+    public string? Studio { get; init; }
+
+    /// <summary>IMDb / Rotten Tomatoes / Metacritic, with an OMDb key on the server; null otherwise.</summary>
+    public TitleRatings? Ratings { get; init; }
+}
+
+/// <summary>0.53+: OMDb's ratings for a title.</summary>
+public sealed record TitleRatings
+{
+    /// <summary>0–10, one decimal.</summary>
+    public double? ImdbRating { get; init; }
+
+    public long? ImdbVotes { get; init; }
+
+    /// <summary>The Tomatometer, 0–100.</summary>
+    public int? RottenTomatoesCritics { get; init; }
+
+    /// <summary>The Metascore, 0–100.</summary>
+    public int? Metacritic { get; init; }
+
+    public string? ImdbUrl { get; init; }
+
+    public bool HasAny => ImdbRating != null || RottenTomatoesCritics != null || Metacritic != null;
+
+    /// <summary>"IMDb 8.7 · 🍅 83% · Metacritic 73", the parts it has.</summary>
+    public string Line
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (ImdbRating is { } imdb)
+            {
+                parts.Add(Loc.Format("TitleModel_RatingImdb", imdb.ToString("0.0", CultureInfo.CurrentCulture)));
+            }
+            if (RottenTomatoesCritics is { } critics)
+            {
+                parts.Add(Loc.Format("TitleModel_RatingRottenTomatoes", critics));
+            }
+            if (Metacritic is { } metacritic)
+            {
+                parts.Add(Loc.Format("TitleModel_RatingMetacritic", metacritic));
+            }
+            return string.Join(" · ", parts);
+        }
+    }
+}
+
+/// <summary>0.53+: "Play on Plex" and friends — where the title can be played.</summary>
+public sealed record PlayLink
+{
+    /// <summary><c>plex</c>, <c>jellyfin</c> or <c>emby</c>.</summary>
+    public required string Server { get; init; }
+
+    public string? ServerName { get; init; }
+
+    /// <summary>"Play on Plex", in the account's language.</summary>
+    public required string Label { get; init; }
+
+    /// <summary>The server's web app.</summary>
+    public required string Url { get; init; }
+
+    /// <summary>The server's own scheme (<c>plex://</c>), for a PC with its app.</summary>
+    public string? AppUrl { get; init; }
+
+    public Uri? Link => Uri.TryCreate(Url, UriKind.Absolute, out var link) ? link : null;
+
+    /// <summary>The label, with the server's name when there are several to tell apart.</summary>
+    public string ButtonLabel(bool several) =>
+        several && ServerName.NonBlank() is { } name ? $"{Label} ({name})" : Label;
 }
 
 public sealed record ProductionCountry
@@ -170,6 +263,16 @@ public enum SeasonRequestState
 
 public static class SeasonRequestStateExtensions
 {
+    /// <summary>The season dialog's status pill (0.53, after Seerr's): "Not requested", "Requested", "Available", "Monitored".</summary>
+    public static string PillLabel(this SeasonRequestState state) => state switch
+    {
+        SeasonRequestState.Requestable => Loc.Get("TitleModel_PillNotRequested"),
+        SeasonRequestState.InLibrary => Loc.Get("TitleModel_PillAvailable"),
+        SeasonRequestState.Monitored => Loc.Get("TitleModel_TagMonitored"),
+        SeasonRequestState.Requested => Loc.Get("TitleModel_TagRequested"),
+        _ => Loc.Get("TitleModel_PillUnavailable"),
+    };
+
     /// <summary>The tag in place of the checkbox; empty for a checkbox row or an unexplained one.</summary>
     public static string Tag(this SeasonRequestState state) => state switch
     {
@@ -289,6 +392,9 @@ public sealed record TitleDetail
 
     /// <summary>TMDb recommendations, heading "More like this".</summary>
     public required IReadOnlyList<TitleCard> Similar { get; init; }
+
+    /// <summary>0.53+: where the title can be played now, Plex first; empty from an older server or when no media server has it.</summary>
+    public IReadOnlyList<PlayLink> Play { get; init; } = [];
 
     public TitleId Id => new(MediaType, TmdbId);
 

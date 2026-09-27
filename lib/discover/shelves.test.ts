@@ -35,6 +35,7 @@ describe("the default layout", () => {
     expect(layout.map((s) => s.id)).toEqual([...DISCOVER_SHELF_KEYS]);
     expect(layout.map((s) => s.title)).toEqual([
       "Recently Added",
+      "Your Watchlist",
       "Trending",
       "Popular Movies",
       "Movie Genres",
@@ -211,7 +212,7 @@ describe("helpers", () => {
 
   it("names rows in the reader's language", () => {
     const fr = translatorFor("fr");
-    expect(resolveLayout([], fr)[1].title).toBe("Tendances");
+    expect(resolveLayout([], fr)[2].title).toBe("Tendances");
     expect(defaultShelfTitle("library", { mediaType: "tv", tmdbId: null, name: null, url: null }, fr)).toBe(
       "Séries ajoutées récemment",
     );

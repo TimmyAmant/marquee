@@ -37,8 +37,36 @@
         "name": "YouTube TV",
         "logoPath": "/48bV.png"
       }
-    ]
+    ],
+    "streamingRegion": "US",
+    "streamingLink": "https://www.themoviedb.org/movie/603-the-matrix/watch?locale=US",
+    "originalTitle": null,
+    "theatricalRelease": "1999-03-31",
+    "theatricalReleaseLabel": "March 31, 1999",
+    "digitalRelease": "1999-09-21",
+    "digitalReleaseLabel": "September 21, 1999",
+    "budget": 63000000,
+    "budgetLabel": "$63,000,000",
+    "revenue": 463517383,
+    "revenueLabel": "$463,517,383",
+    "studio": "Village Roadshow Pictures",
+    "ratings": {
+      "imdbRating": 8.7,
+      "imdbVotes": 2180000,
+      "rottenTomatoesCritics": 83,
+      "metacritic": 73,
+      "imdbUrl": "https://www.imdb.com/title/tt0133093"
+    }
   },
+  "play": [
+    {
+      "server": "plex",
+      "serverName": "Living room",
+      "label": "Play on Plex",
+      "url": "https://app.plex.tv/desktop/#!/server/5f1c…/details?key=%2Flibrary%2Fmetadata%2F4127",
+      "appUrl": "plex://preplay/?metadataKey=%2Flibrary%2Fmetadata%2F4127&metadataType=1&server=5f1c…"
+    }
+  ],
   "credits": [
     {
       "role": "Director",
@@ -119,7 +147,8 @@
     "openReports": 0,
     "blocked": null,
     "notFoundSince": null,
-    "myRequests": []
+    "myRequests": [],
+    "autoApprove": true
   },
   "seasons": [],
   "cast": [

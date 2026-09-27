@@ -48,6 +48,14 @@ public sealed class UsersEndpoints(MarqueeApi.Transport transport)
             HttpMethod.Delete, $"/users/{MarqueeApi.Segment(id)}",
             changes: ServerChange.Users | ServerChange.Requests | ServerChange.Notifications, ct: ct);
 
+    /// <summary>
+    /// <c>GET /users/{id}/profile</c> (0.53+): a member's profile — request
+    /// counts, limits and Plex Watchlist. Yours, or anyone's (admin);
+    /// Forbidden for someone else's otherwise.
+    /// </summary>
+    public Task<MemberProfile> ProfileAsync(Guid id, CancellationToken ct = default) =>
+        transport.GetAsync<MemberProfile>($"/users/{MarqueeApi.Segment(id)}/profile", ct: ct);
+
     // MARK: Profile photo
 
     /// <summary>The server's upload cap; a bigger photo is refused here, before it's sent.</summary>

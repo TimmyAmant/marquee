@@ -63,7 +63,7 @@ public sealed partial class TitlePage : Page
             await ViewModel.RequestCommand.ExecuteAsync(null);
             return;
         }
-        var dialog = new SeasonRequestDialog(ViewModel.Name, ViewModel.PickerSeasons, ViewModel.RequestSeasonsAsync) { XamlRoot = XamlRoot };
+        var dialog = new SeasonRequestDialog(ViewModel.Name, ViewModel.PickerSeasons, ViewModel.RequestSeasonsAsync, ViewModel.AutoApprove) { XamlRoot = XamlRoot };
         await dialog.TryShowAsync();
     }
 

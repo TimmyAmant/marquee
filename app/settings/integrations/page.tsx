@@ -10,6 +10,7 @@ import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
 import { TmdbSettingsForm } from "@/components/tmdb-settings-form";
 import { TraktConnectCard } from "@/components/trakt-connect-card";
 import { TvdbConnectCard } from "@/components/tvdb-connect-card";
+import { OmdbConnectCard } from "@/components/omdb-connect-card";
 import { DiscordConnectCard } from "@/components/discord-connect-card";
 import { NtfyConnectCard } from "@/components/ntfy-connect-card";
 import { NotificationChannelCards } from "@/components/notification-channel-cards";
@@ -40,6 +41,7 @@ export default async function IntegrationsSettingsPage() {
       tmdb,
       traktConnected,
       tvdbConnected,
+      omdbConnected,
       webhookSecret,
       discordConnected,
       genericWebhookConnected,
@@ -131,6 +133,7 @@ export default async function IntegrationsSettingsPage() {
             />
             <TraktConnectCard connected={traktConnected} />
             <TvdbConnectCard connected={tvdbConnected} />
+            <OmdbConnectCard connected={omdbConnected} />
           </div>
         </section>
 

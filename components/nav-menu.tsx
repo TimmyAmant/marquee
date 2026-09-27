@@ -9,6 +9,7 @@ import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { useT } from "@/lib/i18n/client";
+import { RAIL_LABELED_ITEM } from "@/lib/rail-position";
 import type { MessageKey } from "@/lib/i18n/translator";
 
 /** Fired by the header's menu button on narrow screens, where the rail is
@@ -120,6 +121,7 @@ export function NavMenu({
   userLabel,
   avatarSrc,
   serverLabel,
+  serverVersion,
 }: {
   isSignedIn: boolean;
   /** Whoever reviews requests or handles problem reports. */
@@ -129,6 +131,9 @@ export function NavMenu({
   /** The signed-in account's photo URL (lib/users/avatar-path.ts), if any. */
   avatarSrc: string | null;
   serverLabel: string | null;
+  /** This server's Marquee version, at the end of the labeled rail and the
+   * drawer ("Show menu labels", lib/rail-position.ts). */
+  serverVersion: string;
 }) {
   const t = useT();
   const pathname = usePathname();
@@ -191,20 +196,25 @@ export function NavMenu({
     <>
       <nav
         aria-label={t("nav.mainNav")}
-        className="nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] md:flex rail-right:left-auto rail-right:right-4 rail-bar:left-1/2 rail-bar:-translate-x-1/2 rail-bar:translate-y-0 rail-bar:flex-row rail-top:top-3 rail-bottom:top-auto rail-bottom:bottom-[calc(12px+env(safe-area-inset-bottom))]"
+        className="nav-glass fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-1 rounded-[30px] p-[7px] md:flex lg:rail-labeled:w-[208px] lg:rail-labeled:items-stretch lg:rail-labeled:rounded-[24px] lg:rail-labeled:p-2 rail-right:left-auto rail-right:right-4 rail-bar:left-1/2 rail-bar:-translate-x-1/2 rail-bar:translate-y-0 rail-bar:flex-row rail-top:top-3 rail-bottom:top-auto rail-bottom:bottom-[calc(12px+env(safe-area-inset-bottom))]"
       >
         <Link
           href={profileHref}
           aria-label={isSignedIn ? t("nav.accountAndSettings", { name }) : t("nav.signIn")}
           aria-current={isCurrent(pathname, profileHref) ? "page" : undefined}
-          className="group relative mb-1 rounded-full outline-offset-2 rail-bar:mb-0 rail-bar:mr-1"
+          className="group relative mb-1 rounded-full outline-offset-2 rail-bar:mb-0 rail-bar:mr-1 lg:rail-labeled:flex lg:rail-labeled:items-center lg:rail-labeled:gap-2.5 lg:rail-labeled:py-0.5 lg:rail-labeled:pl-0.5 lg:rail-labeled:pr-2 lg:rail-labeled:hover:bg-text-primary/10"
         >
           <ProfilePicture signedIn={isSignedIn} label={name} src={avatarSrc} size={36} />
+          <InlineLabel className="font-semibold">{name}</InlineLabel>
           <RailLabel>{isSignedIn ? t("nav.settings") : t("nav.signIn")}</RailLabel>
         </Link>
         {isSignedIn && (
           <>
-            <NotificationsBell variant="rail" railLabel={<RailLabel>{t("nav.notifications")}</RailLabel>} />
+            <NotificationsBell
+              variant="rail"
+              railLabel={<RailLabel>{t("nav.notifications")}</RailLabel>}
+              inlineLabel={<InlineLabel>{t("nav.notifications")}</InlineLabel>}
+            />
             <RailDivider />
           </>
         )}
@@ -222,13 +232,14 @@ export function NavMenu({
                     onClick={() => setSearchOpen(true)}
                     aria-label={t(item.label)}
                     aria-haspopup="dialog"
-                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${RAIL_LABELED_ITEM} ${
                       current || searchOpen
                         ? "bg-text-primary text-bg-0"
                         : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
                     }`}
                   >
                     <Icon name={item.icon} className="h-[19px] w-[19px]" />
+                    <InlineLabel>{t(item.label)}</InlineLabel>
                     <RailLabel>{t(item.label)}</RailLabel>
                   </button>
                 );
@@ -239,13 +250,14 @@ export function NavMenu({
                   href={item.href}
                   aria-label={t(item.label)}
                   aria-current={current ? "page" : undefined}
-                  className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                  className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${RAIL_LABELED_ITEM} ${
                     current
                       ? "bg-text-primary text-bg-0"
                       : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
                   }`}
                 >
                   <Icon name={item.icon} className="h-[19px] w-[19px]" />
+                  <InlineLabel>{t(item.label)}</InlineLabel>
                   {item.href === "/requests" && showRequestsBadge && pendingRequestCount > 0 && (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />
                   )}
@@ -255,6 +267,9 @@ export function NavMenu({
             })}
           </Fragment>
         ))}
+        <p className="hidden border-t border-[var(--marquee-glass-border)] px-3 pb-1 pt-2.5 text-[11px] text-text-muted lg:rail-labeled:block">
+          {t("nav.serverVersion", { version: serverVersion })}
+        </p>
       </nav>
 
       {searchOpen && (
@@ -332,6 +347,7 @@ export function NavMenu({
               <span className="absolute -right-2 -top-0.5 h-1.5 w-1.5 rounded-full bg-accent" />
             </span>
           </span>
+          <span className="ml-auto text-[11px] text-text-muted">{serverVersion}</span>
           <ThemeToggle />
         </div>
       </div>
@@ -404,13 +420,24 @@ function ProfilePicture({ signedIn, label, src, size }: { signedIn: boolean; lab
   );
 }
 
+/** The section's name beside a rail icon, shown only on the labeled rail
+ * (the icon-only rail names it on hover, RailLabel). Decorative: the item
+ * carries the same name as its accessible label. */
+export function InlineLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span aria-hidden className={`hidden min-w-0 truncate text-[14px] font-medium lg:rail-labeled:block ${className}`}>
+      {children}
+    </span>
+  );
+}
+
 /** The hairline between groups of rail items: across a vertical rail,
  * upright in a horizontal bar. */
 function RailDivider() {
   return (
     <span
       aria-hidden
-      className="my-1 h-px w-6 shrink-0 bg-[var(--marquee-glass-border)] rail-bar:mx-1 rail-bar:my-0 rail-bar:h-6 rail-bar:w-px"
+      className="my-1 h-px w-6 shrink-0 bg-[var(--marquee-glass-border)] rail-bar:mx-1 rail-bar:my-0 rail-bar:h-6 rail-bar:w-px lg:rail-labeled:w-full"
     />
   );
 }

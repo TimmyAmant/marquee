@@ -12,6 +12,7 @@ import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import type { loadTitlePage } from "@/lib/pages/title";
 import type { MediaType } from "@/lib/db/schema";
 import type { Translator } from "@/lib/i18n/translator";
+import { hasAnyRating, imdbTitleUrl } from "@/lib/ratings/omdb";
 
 type TitlePageData = NonNullable<Awaited<ReturnType<typeof loadTitlePage>>>;
 
@@ -88,7 +89,24 @@ export function titleDetailDto(
           ? { code: data.productionCountryCode, ...titleSidebar.productionCountry }
           : null,
       watchProviders: titleSidebar.watchProviders.map((p) => ({ name: p.name, logoPath: p.logoPath ?? null })),
+      streamingRegion: titleSidebar.streamingRegion,
+      streamingLink: titleSidebar.streamingLink,
+      originalTitle: titleSidebar.originalTitle,
+      theatricalRelease: data.releaseDates?.theatrical ?? null,
+      theatricalReleaseLabel: titleSidebar.theatricalReleaseLabel,
+      digitalRelease: data.releaseDates?.digital ?? null,
+      digitalReleaseLabel: titleSidebar.digitalReleaseLabel,
+      budget: data.budget,
+      budgetLabel: titleSidebar.budgetLabel,
+      revenue: data.revenue,
+      revenueLabel: titleSidebar.revenueLabel,
+      studio: titleSidebar.studio,
+      ratings:
+        titleSidebar.ratings && hasAnyRating(titleSidebar.ratings)
+          ? { ...titleSidebar.ratings, imdbUrl: title.imdbId ? imdbTitleUrl(title.imdbId) : null }
+          : null,
     },
+    play: data.playLinks,
     credits: data.credits,
     keywords: data.keywords,
     links: {

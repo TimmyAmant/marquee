@@ -19,6 +19,7 @@ import { getDiscoverLayout } from "@/lib/discover/layout";
 import { fetchCustomShelfPage, type ShelfItem } from "@/lib/discover/custom-shelves";
 import { defaultLayout } from "@/lib/discover/shelves";
 import { getT } from "@/lib/i18n/server";
+import { getWatchlistShelfItems } from "@/lib/plex/watchlist-shelf";
 
 /** Titles a row shows on Discover itself; the rest are on its See all. */
 export const SHELF_LENGTH = 20;
@@ -66,6 +67,7 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
 
   const [
     recentlyAdded,
+    watchlist,
     trending,
     popularMovies,
     upcomingMovies,
@@ -82,6 +84,8 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
       () => (viewer.libraryOwnerId ? getRecentlyAdded(viewer.libraryOwnerId, SHELF_LENGTH) : Promise.resolve([])),
       [],
     ),
+    // "Your Watchlist": only for a viewer with Plex Watchlist sync on.
+    when("watchlist", () => getWatchlistShelfItems(viewer, SHELF_LENGTH).catch(() => []), []),
     when("trending", () => getTrendingAll().catch(() => noResults), noResults),
     when("popularMovies", () => discoverMovies({ sort: "popularity", page: 1 }).catch(() => noResults), noResults),
     when("upcomingMovies", () => getUpcomingMovies().catch(() => noResults), noResults),
@@ -154,6 +158,8 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
     /** The rows to show, in the admin's order (hidden ones left out). */
     layout: visible,
     recentlyAdded,
+    /** The viewer's own Plex Watchlist (empty when the sync is off). */
+    watchlist,
     trendingItems,
     popularMovieItems,
     upcomingMovieItems,

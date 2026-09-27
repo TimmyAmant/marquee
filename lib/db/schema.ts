@@ -162,6 +162,11 @@ export const integrationCredentials = pgTable(
     plexClientId: text("plex_client_id"),
     qualityProfileId: integer("quality_profile_id"),
     rootFolderPath: text("root_folder_path"),
+    /** Jellyfin/Emby only: the address people reach the server at from
+     * outside (a reverse proxy, a domain), when it differs from `baseUrl`
+     * — what a title page's "Play on Jellyfin" opens
+     * (lib/media-servers/play-links.ts). Null: `baseUrl` is used. */
+    publicUrl: text("public_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -796,8 +801,45 @@ export const appSettings = pgTable("app_settings", {
   // How long after approval a released title Sonarr/Radarr hasn't found
   // counts as "Can't find" (lib/requests/not-found.ts). Null: 24 hours.
   notFoundAfterHours: integer("not_found_after_hours"),
+  // An OMDb API key (omdbapi.com) — optional; with one, title pages show
+  // IMDb, Rotten Tomatoes and Metacritic scores beside TMDb's
+  // (lib/ratings). Encrypted like the other keys here.
+  omdbApiKeyEnc: bytea("omdb_api_key_enc"),
+  omdbApiKeyIv: bytea("omdb_api_key_iv"),
+  omdbApiKeyTag: bytea("omdb_api_key_tag"),
+  // Settings › Discover › Region & language (lib/discover/locale.ts).
+  // ISO 3166-1 country for "Currently streaming on" and release dates on
+  // title pages; null: the server's locale, else US.
+  streamingRegion: text("streaming_region"),
+  // The region TMDb's Popular/Upcoming rows are for (null: none, TMDb's
+  // worldwide answer) and the original language they're filtered to (null:
+  // the English-only filter Discover has always applied; "any" for none).
+  discoverRegion: text("discover_region"),
+  discoverLanguage: text("discover_language"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/** Ratings from OMDb for a title, kept a day (lib/ratings/cache.ts) so a
+ * title page doesn't ask OMDb again on every view — its free tier is 1,000
+ * requests a day. A row with nothing in it means OMDb had nothing for the
+ * title, and is kept the same day so that isn't re-asked either. */
+export const titleRatings = pgTable(
+  "title_ratings",
+  {
+    mediaType: text("media_type").notNull().$type<MediaType>(),
+    tmdbId: integer("tmdb_id").notNull(),
+    imdbId: text("imdb_id"),
+    /** IMDb's 0–10 rating in tenths (82 = 8.2), so it's an exact integer. */
+    imdbRatingTenths: integer("imdb_rating_tenths"),
+    imdbVotes: integer("imdb_votes"),
+    /** The Tomatometer, 0–100. */
+    rottenTomatoesCritics: integer("rotten_tomatoes_critics"),
+    /** Metacritic's Metascore, 0–100. */
+    metacritic: integer("metacritic"),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.mediaType, table.tmdbId] })],
+);
 
 // "Sign in with <name>": the admin's OpenID Connect identity provider
 // (Authentik, Authelia, Pocket ID, Keycloak, Google…), set up in Settings →

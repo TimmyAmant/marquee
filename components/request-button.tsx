@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { showToast } from "@/components/toast";
 import { createRequestAction } from "@/lib/requests/actions";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
@@ -13,6 +14,7 @@ export function RequestButton({
   compact = false,
   alreadyRequested = false,
   formId,
+  autoApprove = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -31,10 +33,18 @@ export function RequestButton({
   /** The form's id, for an Advanced section elsewhere on the page to send
    * its fields with it (components/add-advanced-options.tsx). */
   formId?: string;
+  /** The request will be approved at once — shown as a hint under the button. */
+  autoApprove?: boolean;
 }) {
   const t = useT();
   const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
   const [state, formAction, isPending] = useActionState(action, undefined);
+
+  useEffect(() => {
+    if (state?.success) showToast(t("title.requestedToast", { title }));
+    // The toast is about this one success; `t`/`title` don't change it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.success]);
 
   if (state?.success || alreadyRequested) {
     return (
@@ -81,6 +91,9 @@ export function RequestButton({
         >
           {state.error}
         </p>
+      )}
+      {autoApprove && !compact && !state?.error && (
+        <p className="mt-1.5 text-[11px] text-text-muted">{t("title.autoApproveBanner")}</p>
       )}
     </form>
   );

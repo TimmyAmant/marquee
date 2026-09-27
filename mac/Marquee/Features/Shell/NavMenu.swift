@@ -69,6 +69,7 @@ private enum RailItem: Hashable {
 private struct NavRail: View {
     @Environment(AppModel.self) private var model
     @Environment(\.navRailPosition) private var position
+    @Environment(\.navRailLabeled) private var labeled
     let focus: FocusState<RailItem?>.Binding
     let onProfile: () -> Void
     let onSearch: () -> Void
@@ -79,8 +80,10 @@ private struct NavRail: View {
 
     var body: some View {
         let stack = position.isVertical
-            ? AnyLayout(VStackLayout(spacing: 4))
+            ? AnyLayout(VStackLayout(alignment: labeled ? .leading : .center, spacing: 4))
             : AnyLayout(HStackLayout(spacing: 4))
+        // 28 is half the icon rail's 56: a capsule.
+        let shape = RoundedRectangle(cornerRadius: labeled ? 22 : 28, style: .continuous)
         return stack {
             profile
                 .padding(position.isVertical ? .bottom : .trailing, 4)
@@ -101,12 +104,22 @@ private struct NavRail: View {
                 RailHairline()
                 updateButton
             }
+            // With menu labels on: the server's version at the foot.
+            if labeled, let version = model.session.serverInfo?.version {
+                RailHairline()
+                Text("Marquee \(version)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.textMuted)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+            }
         }
         // 7 of padding inside a 1pt border: 56 thick, ending 72 from the edge.
         .padding(8)
+        .frame(width: labeled ? NavRailPosition.labeledRailWidth : nil)
         // Unclipped, so the name labels can sit beside the rail.
-        .glassSurface(Capsule(), clipsContent: false)
-        .contentShape(Capsule())
+        .glassSurface(shape, clipsContent: false)
+        .contentShape(shape)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Main")
     }
@@ -115,25 +128,34 @@ private struct NavRail: View {
     private var profile: some View {
         let viewer = model.viewer
         return Button(action: onProfile) {
-            Group {
-                if let viewer {
-                    UserAvatarView(label: viewer.label, avatarUrl: viewer.avatarUrl, size: 36)
-                } else {
-                    Image(systemName: "person")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 36, height: 36)
-                        .background(Circle().fill(Theme.textPrimary.opacity(0.1)))
+            HStack(spacing: 10) {
+                Group {
+                    if let viewer {
+                        UserAvatarView(label: viewer.label, avatarUrl: viewer.avatarUrl, size: 36)
+                    } else {
+                        Image(systemName: "person")
+                            .font(.system(size: 16))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(Theme.textPrimary.opacity(0.1)))
+                    }
+                }
+                .frame(width: 40, height: 40)
+                // On Settings, a ring in place of the other items' solid pill.
+                .overlay {
+                    if model.selection == .settings {
+                        Circle().strokeBorder(Theme.textPrimary, lineWidth: 2)
+                    }
+                }
+                if labeled {
+                    Text(viewer?.label ?? String(localized: "Sign in"))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
                 }
             }
-            .frame(width: 40, height: 40)
-            // On Settings, a ring in place of the other items' solid pill.
-            .overlay {
-                if model.selection == .settings {
-                    Circle().strokeBorder(Theme.textPrimary, lineWidth: 2)
-                }
-            }
-            .contentShape(Circle())
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .modifier(RailLabeled(label: viewer == nil ? String(localized: "Sign in") : String(localized: "Settings"), focus: focus, item: .profile))
@@ -196,22 +218,25 @@ private struct NavRail: View {
 }
 
 /// Between the rail's groups: 24 long, across the rail, in the glass
-/// border color.
+/// border color (the labeled rail's whole width).
 private struct RailHairline: View {
     @Environment(\.navRailPosition) private var position
+    @Environment(\.navRailLabeled) private var labeled
 
     var body: some View {
         let vertical = position.isVertical
         Rectangle()
             .fill(Theme.glassBorder)
-            .frame(width: vertical ? 24 : 1, height: vertical ? 1 : 24)
+            .frame(width: vertical ? (labeled ? NavRailPosition.labeledRailWidth - 16 : 24) : 1, height: vertical ? 1 : 24)
             .padding(vertical ? .vertical : .horizontal, 4)
             .accessibilityHidden(true)
     }
 }
 
-/// One of the rail's 40pt round buttons.
+/// One of the rail's 40pt round buttons; on the labeled rail, a 40pt pill
+/// the rail's width with the name after the icon.
 private struct NavRailButton: View {
+    @Environment(\.navRailLabeled) private var labeled
     let systemImage: String
     let label: String
     let focus: FocusState<RailItem?>.Binding
@@ -225,9 +250,18 @@ private struct NavRailButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 16))
-                .frame(width: 40, height: 40)
+            HStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16))
+                    .frame(width: 40, height: 40)
+                if labeled {
+                    Text(label)
+                        .font(.system(size: 14, weight: .medium))
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                }
+            }
+            .frame(width: labeled ? NavRailPosition.labeledRailWidth - 16 : nil, alignment: .leading)
         }
         .buttonStyle(NavPillStyle(current: current, rest: Theme.textSecondary))
         .overlay(alignment: .topTrailing) {
@@ -240,7 +274,7 @@ private struct NavRailButton: View {
                     .allowsHitTesting(false)
             }
         }
-        .modifier(RailLabeled(label: label, focus: focus, item: item, hidden: hidesLabel))
+        .modifier(RailLabeled(label: label, focus: focus, item: item, hidden: hidesLabel || labeled))
         .accessibilityLabel(label)
         .accessibilityAddTraits(current ? .isSelected : [])
     }
@@ -252,6 +286,7 @@ private struct NavRailButton: View {
 /// button carries the same name as its accessible label.
 private struct RailLabeled: ViewModifier {
     @Environment(\.navRailPosition) private var position
+    @Environment(\.navRailLabeled) private var labeled
     let label: String
     let focus: FocusState<RailItem?>.Binding
     let item: RailItem
@@ -259,7 +294,8 @@ private struct RailLabeled: ViewModifier {
     @State private var hovering = false
 
     func body(content: Content) -> some View {
-        let showing = !hidden && (hovering || focus.wrappedValue == item)
+        // The labeled rail shows every name already.
+        let showing = !hidden && !labeled && (hovering || focus.wrappedValue == item)
         content
             .focused(focus, equals: item)
             .onHover { hovering = $0 }
@@ -336,5 +372,13 @@ private struct NavPillBody: View {
             .contentShape(Capsule())
             .onHover { hovering = $0 }
             .animation(.easeOut(duration: 0.15), value: hovering)
+    }
+}
+
+extension EnvironmentValues {
+    /// The rail shows its names: menu labels on, and the rail on the left or
+    /// right (a top or bottom bar stays icons only).
+    fileprivate var navRailLabeled: Bool {
+        navRailShowsLabels && navRailPosition.isVertical
     }
 }

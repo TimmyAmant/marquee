@@ -86,6 +86,12 @@ extension MarqueeAPI {
             )
         }
 
+        /// `GET /users/{id}/profile` (0.53+) — a member's profile: request
+        /// counts, limits and Plex Watchlist. Yours, or anyone's (admin).
+        func profile(_ id: UUID) async throws -> API.MemberProfile {
+            try await transport.get("/users/\(MarqueeAPI.segment(id))/profile")
+        }
+
         /// `GET /users/{id}/avatar` — the photo itself (a 512×512 JPEG), at the
         /// `avatarUrl` the server gave out. `.notFound` when there's none or
         /// it isn't yours to see.

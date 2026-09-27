@@ -1,15 +1,13 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getPendingRequests, getReviewedRequests, getMyRequests } from "@/lib/requests/query";
 import { RequestReviewRow } from "@/components/request-review-row";
 import { ApproveAllRequestsButton } from "@/components/approve-all-requests-button";
-import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
-import { RequestTitle } from "@/components/request-title";
+import { RequestCard } from "@/components/request-card";
 import { IssuesSection } from "@/components/issues-section";
 import { getQuotas, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
@@ -17,11 +15,9 @@ import { issueDto, notFoundRequest, reviewedRequest } from "@/lib/api/mappers";
 import { getT } from "@/lib/i18n/server";
 import { translatorFor } from "@/lib/i18n/catalog";
 import { LOCALES } from "@/lib/i18n/locales";
-import { formatDate } from "@/lib/i18n/format";
 import type { Translator } from "@/lib/i18n/translator";
 import { localizeRejectionReason } from "@/lib/requests/rejection-reasons";
 import { countComments } from "@/lib/comments";
-import { CommentToggle, ThreadRow } from "@/components/comment-thread";
 import { CancelRequestButton, EditRequestButton } from "@/components/request-lifecycle";
 import { CouldntAddSection } from "@/components/couldnt-add-section";
 import { NotFoundSection } from "@/components/not-found-section";
@@ -131,74 +127,47 @@ export default async function RequestsPage() {
         {myRequests.length === 0 ? (
           <p className="text-sm text-text-muted">{t("requests.noRequestsYet")}</p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[480px] text-left text-sm">
-              <thead className="bg-bg-1 text-text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnStatus")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {myRequests.map((r) => {
-                  const src = tmdbImageUrl(r.posterPath, "w92");
-                  const badge = myRequestBadge(t, r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null);
-                  return (
-                    <ThreadRow
-                      key={r.id}
-                      kind="request"
-                      id={r.id}
-                      count={myComments.get(r.id) ?? 0}
-                      colSpan={3}
-                      className="hover:bg-bg-1/60"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-                            {src && (
-                              <Image src={src} alt="" fill sizes="40px" className="object-cover" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <RequestTitle
-                              mediaType={r.mediaType}
-                              tmdbId={r.tmdbId}
-                              title={r.title}
-                              seasons={r.seasons}
-                              is4k={r.is4k}
-                            />
-                            <CommentToggle />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary">
-                        {formatDate(t, r.createdAt)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${badge.className}`}
-                        >
-                          {badge.label}
-                        </span>
-                        {r.status === "rejected" && r.rejectionReason && (
-                          <p className="mt-1.5 text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
-                        )}
-                        {r.status === "pending" && (
-                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <EditRequestButton requestId={r.id} />
-                            <CancelRequestButton requestId={r.id} />
-                          </div>
-                        )}
-                        {r.status === "approved" && (
-                          <p className="mt-1.5 text-xs text-text-muted">{t("requests.askInComments")}</p>
-                        )}
-                      </td>
-                    </ThreadRow>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-3">
+            {myRequests.map((r) => {
+              const badge = myRequestBadge(t, r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null);
+              const reviewer = r.reviewedByName || r.reviewedByUsername;
+              return (
+                <RequestCard
+                  key={r.id}
+                  id={r.id}
+                  mediaType={r.mediaType}
+                  tmdbId={r.tmdbId}
+                  title={r.title}
+                  posterPath={r.posterPath}
+                  backdropPath={r.backdropPath}
+                  seasons={r.seasons}
+                  is4k={r.is4k}
+                  status={badge}
+                  requestedBy={{ name: viewer.session.user.name || viewer.session.user.username || "" }}
+                  requestedAt={r.createdAt}
+                  modifiedAt={r.reviewedAt ?? r.editedAt}
+                  modifiedBy={reviewer ? { name: reviewer } : null}
+                  addedTo={r.status === "approved" && !r.manuallyApproved ? r.arrServerName : null}
+                  commentCount={myComments.get(r.id) ?? 0}
+                  notes={
+                    <>
+                      {r.status === "rejected" && r.rejectionReason && (
+                        <p className="text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
+                      )}
+                      {r.status === "approved" && <p className="text-xs text-text-muted">{t("requests.askInComments")}</p>}
+                    </>
+                  }
+                  actions={
+                    r.status === "pending" ? (
+                      <>
+                        <EditRequestButton requestId={r.id} />
+                        <CancelRequestButton requestId={r.id} />
+                      </>
+                    ) : undefined
+                  }
+                />
+              );
+            })}
           </div>
         )}
         {seesEveryone && <EveryonesRequests t={t} requests={othersRequests} />}
@@ -237,39 +206,28 @@ export default async function RequestsPage() {
       {pending.length === 0 ? (
         <p className="text-sm text-text-muted">{t("requests.noPending")}</p>
       ) : (
-        <div className="mt-3 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-bg-1 text-text-muted">
-              <tr>
-                <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
-                <th className="px-4 py-3 font-medium">{t("requests.columnRequestedBy")}</th>
-                <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
-                <th className="px-4 py-3 font-medium">{t("requests.columnActions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {pending.map((r) => (
-                <RequestReviewRow
-                  key={r.id}
-                  id={r.id}
-                  mediaType={r.mediaType}
-                  tmdbId={r.tmdbId}
-                  title={r.title}
-                  posterPath={r.posterPath}
-                  requestedByName={r.requestedByName}
-                  requestedByUsername={r.requestedByUsername}
-                  seasons={r.seasons}
-                  is4k={r.is4k}
-                  canManuallyApprove={viewer.isAdmin}
-                  advanced={advanced}
-                  createdAt={r.createdAt.toISOString()}
-                  sonarrUrl={r.is4k ? sonarr4kUrl : sonarrUrl}
-                  commentCount={requestComments.get(r.id) ?? 0}
-                  edited={r.editedAt !== null}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-3 flex flex-col gap-3">
+          {pending.map((r) => (
+            <RequestReviewRow
+              key={r.id}
+              id={r.id}
+              mediaType={r.mediaType}
+              tmdbId={r.tmdbId}
+              title={r.title}
+              posterPath={r.posterPath}
+              backdropPath={r.backdropPath}
+              requestedByName={r.requestedByName}
+              requestedByUsername={r.requestedByUsername}
+              seasons={r.seasons}
+              is4k={r.is4k}
+              canManuallyApprove={viewer.isAdmin}
+              advanced={advanced}
+              createdAt={r.createdAt.toISOString()}
+              editedAt={r.editedAt?.toISOString() ?? null}
+              sonarrUrl={r.is4k ? sonarr4kUrl : sonarrUrl}
+              commentCount={requestComments.get(r.id) ?? 0}
+            />
+          ))}
         </div>
       )}
 
@@ -286,83 +244,45 @@ export default async function RequestsPage() {
       {pastRequests.length > 0 && (
         <>
           <h2 className="mt-12 font-display text-xl text-text-primary">{t("requests.pastRequests")}</h2>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead className="bg-bg-1 text-text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnRequestedBy")}</th>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
-                  <th className="px-4 py-3 font-medium">{t("requests.columnStatus")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {pastRequests.map((r) => {
-                  const src = tmdbImageUrl(r.posterPath, "w92");
-                  return (
-                    <ThreadRow
-                      key={r.id}
-                      kind="request"
-                      id={r.id}
-                      count={requestComments.get(r.id) ?? 0}
-                      colSpan={4}
-                      className="hover:bg-bg-1/60"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-                            {src && (
-                              <Image src={src} alt="" fill sizes="40px" className="object-cover" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <RequestTitle
-                              mediaType={r.mediaType}
-                              tmdbId={r.tmdbId}
-                              title={r.title}
-                              seasons={r.seasons}
-                              is4k={r.is4k}
-                            />
-                            <CommentToggle />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary">
-                        {r.requestedByName || r.requestedByUsername}
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary">
-                        {formatDate(t, r.createdAt)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${
-                            r.status === "approved"
-                              ? "bg-owned-bg text-owned"
-                              : "bg-untracked-bg text-text-secondary"
-                          }`}
-                        >
-                          {reviewedRequestLabel(t, r.status, r.manuallyApproved)}
-                        </span>
-                        {r.status === "rejected" && r.rejectionReason && (
-                          <p className="mt-1.5 text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
-                        )}
-                        {r.status === "approved" && r.notFoundSince && (
-                          <a
-                            href="#cant-find"
-                            className="ml-1.5 rounded-full bg-missing-bg px-3 py-1 text-xs font-medium text-missing"
-                          >
-                            {t("requests.cantFind")}
-                          </a>
-                        )}
-                        {r.status === "approved" && !r.manuallyApproved && r.arrServerName && (
-                          <p className="mt-1.5 text-xs text-text-muted">{t("requests.addedTo", { server: r.arrServerName })}</p>
-                        )}
-                      </td>
-                    </ThreadRow>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="mt-4 flex flex-col gap-3">
+            {pastRequests.map((r) => {
+              const reviewer = r.reviewedByName || r.reviewedByUsername;
+              return (
+                <RequestCard
+                  key={r.id}
+                  id={r.id}
+                  mediaType={r.mediaType}
+                  tmdbId={r.tmdbId}
+                  title={r.title}
+                  posterPath={r.posterPath}
+                  backdropPath={r.backdropPath}
+                  seasons={r.seasons}
+                  is4k={r.is4k}
+                  status={{
+                    label: reviewedRequestLabel(t, r.status, r.manuallyApproved),
+                    className: r.status === "approved" ? "bg-owned-bg text-owned" : "bg-untracked-bg text-text-secondary",
+                  }}
+                  requestedBy={{ name: r.requestedByName || r.requestedByUsername }}
+                  requestedAt={r.createdAt}
+                  modifiedAt={r.reviewedAt}
+                  modifiedBy={reviewer ? { name: reviewer } : null}
+                  addedTo={r.status === "approved" && !r.manuallyApproved ? r.arrServerName : null}
+                  commentCount={requestComments.get(r.id) ?? 0}
+                  notes={
+                    <>
+                      {r.status === "rejected" && r.rejectionReason && (
+                        <p className="text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
+                      )}
+                      {r.status === "approved" && r.notFoundSince && (
+                        <a href="#cant-find" className="inline-flex w-fit rounded-full bg-missing-bg px-2.5 py-0.5 text-[11.5px] font-medium text-missing">
+                          {t("requests.cantFind")}
+                        </a>
+                      )}
+                    </>
+                  }
+                />
+              );
+            })}
           </div>
         </>
       )}
@@ -376,6 +296,7 @@ type EveryoneRow = {
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  backdropPath?: string | null;
   seasons: number[] | null;
   is4k: boolean;
   status: RequestStatus;
@@ -394,55 +315,32 @@ function EveryonesRequests({ t, requests }: { t: Translator; requests: EveryoneR
       {requests.length === 0 ? (
         <p className="mt-4 text-sm text-text-muted">{t("requests.nobodyElseYet")}</p>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="bg-bg-1 text-text-muted">
-              <tr>
-                <th className="px-4 py-3 font-medium">{t("requests.columnTitle")}</th>
-                <th className="px-4 py-3 font-medium">{t("requests.columnRequestedBy")}</th>
-                <th className="px-4 py-3 font-medium">{t("requests.columnRequested")}</th>
-                <th className="px-4 py-3 font-medium">{t("requests.columnStatus")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {requests.map((r) => {
-                const src = tmdbImageUrl(r.posterPath, "w92");
-                return (
-                  <tr key={r.id} className="hover:bg-bg-1/60">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-                          {src && <Image src={src} alt="" fill sizes="40px" className="object-cover" />}
-                        </div>
-                        <RequestTitle
-                          mediaType={r.mediaType}
-                          tmdbId={r.tmdbId}
-                          title={r.title}
-                          seasons={r.seasons}
-                          is4k={r.is4k}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{r.requestedByName || r.requestedByUsername}</td>
-                    <td className="px-4 py-3 text-text-secondary">{formatDate(t, r.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          r.status === "pending"
-                            ? "bg-info-bg text-info"
-                            : r.status === "approved"
-                              ? "bg-owned-bg text-owned"
-                              : "bg-untracked-bg text-text-secondary"
-                        }`}
-                      >
-                        {r.status === "pending" ? t("requests.waitingForReview") : reviewedRequestLabel(t, r.status, r.manuallyApproved)}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="mt-4 flex flex-col gap-3">
+          {requests.map((r) => (
+            <RequestCard
+              key={r.id}
+              id={r.id}
+              mediaType={r.mediaType}
+              tmdbId={r.tmdbId}
+              title={r.title}
+              posterPath={r.posterPath}
+              backdropPath={r.backdropPath}
+              seasons={r.seasons}
+              is4k={r.is4k}
+              status={{
+                label:
+                  r.status === "pending" ? t("requests.waitingForReview") : reviewedRequestLabel(t, r.status, r.manuallyApproved),
+                className:
+                  r.status === "pending"
+                    ? "bg-info-bg text-info"
+                    : r.status === "approved"
+                      ? "bg-owned-bg text-owned"
+                      : "bg-untracked-bg text-text-secondary",
+              }}
+              requestedBy={{ name: r.requestedByName || r.requestedByUsername }}
+              requestedAt={r.createdAt}
+            />
+          ))}
         </div>
       )}
     </>

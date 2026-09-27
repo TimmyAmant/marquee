@@ -263,5 +263,20 @@
   "activityVerbRequested": "requested",
   "activityVerbApproved": "approved",
   "activityVerbDeclined": "declined",
-  "activityVerbManuallyApproved": "manually approved"
+  "activityVerbManuallyApproved": "manually approved",
+  "menuLabelsLabel": "Show menu labels",
+  "menuLabelsHelp": "Names beside the menu's icons, and the server's version at the end.",
+  "profileUnlimited": "Unlimited",
+  "profileRemainingOf": "{remaining} of {limit}",
+  "profileEveryDays": "{days, plural, one {Every day} other {Every # days}}",
+  "profileJoined": "Joined {date}",
+  "profileEditAccount": "Edit account",
+  "profileManageMembers": "Household settings",
+  "profileTotalRequests": "Total requests",
+  "profileRequestSplit": "{movies, plural, one {# movie} other {# movies}} · {series} series",
+  "profileMovieRequestsLeft": "Movie requests left",
+  "profileSeriesRequestsLeft": "Series requests left",
+  "profilePlexWatchlist": "Plex Watchlist",
+  "profileWatchlistEmpty": "Nothing on the Watchlist yet.",
+  "profileView": "View profile"
 }

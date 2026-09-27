@@ -715,6 +715,34 @@
         }
       }
     },
+    "%@ requested" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ angefragt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ solicitado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ demandé"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pedido"
+          }
+        }
+      }
+    },
     "%@ responded, but it isn't a Marquee server. Check the address and port." : {
       "localizations" : {
         "de" : {
@@ -1970,6 +1998,34 @@
         }
       }
     },
+    "%lld of %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld sur %2$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld"
+          }
+        }
+      }
+    },
     "%lld of %lld addresses checked" : {
       "localizations" : {
         "de" : {
@@ -2772,6 +2828,9 @@
         }
       }
     },
+    "%lld%%" : {
+      "shouldTranslate" : false
+    },
     "%lld. %@" : {
       "shouldTranslate" : false
     },
@@ -2942,6 +3001,9 @@
           }
         }
       }
+    },
+    "(%@)" : {
+      "shouldTranslate" : false
     },
     "(saved — enter to replace)" : {
       "localizations" : {
@@ -6299,6 +6361,34 @@
         }
       }
     },
+    "Any language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Sprachen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier idioma"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les langues"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer idioma"
+          }
+        }
+      }
+    },
     "Any resolution" : {
       "localizations" : {
         "es" : {
@@ -7121,6 +7211,62 @@
         }
       }
     },
+    "Automatic — %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch – %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automática: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatique : %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automática — %@"
+          }
+        }
+      }
+    },
+    "Available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verfügbar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponible"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponível"
+          }
+        }
+      }
+    },
     "A–Z" : {
       "localizations" : {
         "de" : {
@@ -7565,6 +7711,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ver tudo: %@"
+          }
+        }
+      }
+    },
+    "Budget" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Budget"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presupuesto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Budget"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orçamento"
           }
         }
       }
@@ -8885,6 +9059,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar"
+          }
+        }
+      }
+    },
+    "Clear all" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle abwählen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout désélectionner"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar tudo"
           }
         }
       }
@@ -11885,6 +12087,34 @@
         }
       }
     },
+    "Digital Release" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digitale Veröffentlichung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estreno digital"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortie numérique"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lançamento digital"
+          }
+        }
+      }
+    },
     "Director" : {
       "localizations" : {
         "de" : {
@@ -12171,6 +12401,62 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Discover language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entdecken-Sprache"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idioma de Descubrir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue de Découvrir"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idioma de Descobrir"
+          }
+        }
+      }
+    },
+    "Discover region" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entdecken-Region"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Región de Descubrir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Région de Découvrir"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Região de Descobrir"
           }
         }
       }
@@ -13263,6 +13549,100 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Evento"
+          }
+        }
+      }
+    },
+    "Every %lld days" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Jeden Tag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Alle %lld Tage"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Every day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Every %lld days"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Cada día"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Cada %lld días"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Chaque jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Tous les %lld jours"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Todo dia"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A cada %lld dias"
+                }
+              }
+            }
           }
         }
       }
@@ -14369,6 +14749,34 @@
         }
       }
     },
+    "From omdbapi.com/apikey.aspx" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von omdbapi.com/apikey.aspx"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De omdbapi.com/apikey.aspx"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur omdbapi.com/apikey.aspx"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em omdbapi.com/apikey.aspx"
+          }
+        }
+      }
+    },
     "From the last daily snapshot, %@." : {
       "localizations" : {
         "es" : {
@@ -15325,6 +15733,34 @@
         }
       }
     },
+    "IMDb rating" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IMDb-Bewertung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puntuación de IMDb"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note IMDb"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota do IMDb"
+          }
+        }
+      }
+    },
     "IP address or URL" : {
       "localizations" : {
         "de" : {
@@ -16021,34 +16457,6 @@
         }
       }
     },
-    "In library" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In der Mediathek"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En la biblioteca"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dans la bibliothèque"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Na biblioteca"
-          }
-        }
-      }
-    },
     "In your library" : {
       "localizations" : {
         "de" : {
@@ -16353,6 +16761,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tarefas"
+          }
+        }
+      }
+    },
+    "Joined %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dabei seit %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se unió el %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inscrit le %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrou em %@"
           }
         }
       }
@@ -19053,6 +19489,34 @@
         }
       }
     },
+    "Menu labels" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menübeschriftungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiquetas del menú"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libellés du menu"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rótulos do menu"
+          }
+        }
+      }
+    },
     "Menu position" : {
       "localizations" : {
         "de" : {
@@ -19193,6 +19657,34 @@
         }
       }
     },
+    "Metascore" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metascore"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metascore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metascore"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metascore"
+          }
+        }
+      }
+    },
     "Missing" : {
       "localizations" : {
         "de" : {
@@ -19245,6 +19737,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Faltando nas coleções"
+          }
+        }
+      }
+    },
+    "Modified by" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geändert von"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modificado por"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifié par"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modificado por"
           }
         }
       }
@@ -19473,6 +19993,34 @@
         }
       }
     },
+    "Movie requests left" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbleibende Filmanfragen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solicitudes de películas restantes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demandes de films restantes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedidos de filmes restantes"
+          }
+        }
+      }
+    },
     "Movies" : {
       "localizations" : {
         "de" : {
@@ -19665,6 +20213,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Leva o nome do que mostra"
+          }
+        }
+      }
+    },
+    "Names beside the menu's icons, and the server's version at the end." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namen neben den Symbolen des Menüs und die Serverversion am Ende."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombres junto a los iconos del menú y la versión del servidor al final."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les noms à côté des icônes du menu, et la version du serveur à la fin."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nomes ao lado dos ícones do menu e a versão do servidor no final."
           }
         }
       }
@@ -21153,6 +21729,34 @@
         }
       }
     },
+    "Not requested" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht angefragt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No solicitada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non demandée"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não pedida"
+          }
+        }
+      }
+    },
     "Note for them (optional), e.g. Replaced the file" : {
       "localizations" : {
         "de" : {
@@ -21373,6 +21977,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nada mais aqui"
+          }
+        }
+      }
+    },
+    "Nothing on the Watchlist yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts auf der Watchlist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no hay nada en la Watchlist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien dans la Watchlist pour l'instant."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada na Watchlist ainda."
           }
         }
       }
@@ -21625,6 +22257,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "OMDb (ratings)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OMDb (Bewertungen)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OMDb (puntuaciones)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OMDb (notes)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OMDb (notas)"
           }
         }
       }
@@ -22217,6 +22877,34 @@
         }
       }
     },
+    "Optional. With a key, title pages show IMDb, Rotten Tomatoes and Metacritic scores beside TMDb's." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional. Mit einem Schlüssel zeigen Titelseiten die Bewertungen von IMDb, Rotten Tomatoes und Metacritic neben der von TMDb."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcional. Con una clave, las páginas de títulos muestran las puntuaciones de IMDb, Rotten Tomatoes y Metacritic junto a la de TMDb."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facultatif. Avec une clé, les pages des titres affichent les notes IMDb, Rotten Tomatoes et Metacritic à côté de celle de TMDb."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcional. Com uma chave, as páginas de títulos mostram as notas do IMDb, Rotten Tomatoes e Metacritic ao lado da do TMDb."
+          }
+        }
+      }
+    },
     "Original Language" : {
       "localizations" : {
         "de" : {
@@ -22241,6 +22929,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Idioma original"
+          }
+        }
+      }
+    },
+    "Original Title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originaltitel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título original"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titre original"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título original"
           }
         }
       }
@@ -22665,34 +23381,6 @@
         }
       }
     },
-    "Pick the seasons of \"%@\" you'd like added. Seasons already in the library or on their way can't be picked again." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wähle die Staffeln von „%@“, die hinzugefügt werden sollen. Staffeln, die schon in der Mediathek oder unterwegs sind, kannst du nicht erneut wählen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elige las temporadas de “%@” que quieres añadir. Las que ya están en la biblioteca o en camino no se pueden volver a elegir."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisissez les saisons de « %@ » à ajouter. Celles déjà dans la bibliothèque ou en route ne peuvent pas être choisies à nouveau."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escolha as temporadas de “%@” que você quer adicionar. As que já estão na biblioteca ou a caminho não podem ser escolhidas de novo."
-          }
-        }
-      }
-    },
     "Pick the server, quality profile, folder and tags when asking for or approving a title." : {
       "localizations" : {
         "de" : {
@@ -22857,6 +23545,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolhendo…"
+          }
+        }
+      }
+    },
+    "Play" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abspielen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduzir"
+          }
+        }
+      }
+    },
+    "Plex Watchlist" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex Watchlist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex Watchlist"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex Watchlist"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex Watchlist"
           }
         }
       }
@@ -23193,6 +23937,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "País de produção"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil"
           }
         }
       }
@@ -23865,6 +24637,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gerando de novo…"
+          }
+        }
+      }
+    },
+    "Region & language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Region und Sprache"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Región e idioma"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Région et langue"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Região e idioma"
           }
         }
       }
@@ -25383,30 +26183,30 @@
         }
       }
     },
-    "Request more seasons" : {
+    "Request more" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Weitere Staffeln anfragen"
+            "value" : "Mehr anfragen"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Solicitar más temporadas"
+            "value" : "Solicitar más"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demander d’autres saisons"
+            "value" : "Demander plus"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pedir mais temporadas"
+            "value" : "Pedir mais"
           }
         }
       }
@@ -25999,6 +26799,34 @@
         }
       }
     },
+    "Revenue" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einnahmen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recaudación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recettes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilheteria"
+          }
+        }
+      }
+    },
     "Review integrations" : {
       "localizations" : {
         "es" : {
@@ -26247,6 +27075,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pasta raiz"
+          }
+        }
+      }
+    },
+    "Rotten Tomatoes (critics)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotten Tomatoes (Kritiker)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotten Tomatoes (crítica)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotten Tomatoes (critiques)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotten Tomatoes (crítica)"
           }
         }
       }
@@ -27259,6 +28115,34 @@
         }
       }
     },
+    "Season" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Staffel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temporada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saison"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temporada"
+          }
+        }
+      }
+    },
     "Season %@" : {
       "localizations" : {
         "de" : {
@@ -28137,6 +29021,34 @@
         }
       }
     },
+    "Series requests left" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbleibende Serienanfragen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solicitudes de series restantes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demandes de séries restantes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedidos de séries restantes"
+          }
+        }
+      }
+    },
     "Series type" : {
       "localizations" : {
         "de" : {
@@ -28749,6 +29661,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar no Finder"
+          }
+        }
+      }
+    },
+    "Show menu labels" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menübeschriftungen anzeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar etiquetas del menú"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les libellés du menu"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar rótulos do menu"
           }
         }
       }
@@ -29841,6 +30781,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Armazenamento"
+          }
+        }
+      }
+    },
+    "Streaming region" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streaming-Region"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Región de streaming"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Région de streaming"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Região de streaming"
           }
         }
       }
@@ -31833,6 +32801,34 @@
         }
       }
     },
+    "Theatrical Release" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kinostart"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estreno en cines"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortie en salles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lançamento nos cinemas"
+          }
+        }
+      }
+    },
     "Their 4K TV requests skip the review queue." : {
       "localizations" : {
         "de" : {
@@ -32109,6 +33105,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esta conversa não está disponível."
+          }
+        }
+      }
+    },
+    "This request will be approved automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Anfrage wird automatisch genehmigt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta solicitud se aprobará automáticamente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette demande sera approuvée automatiquement."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este pedido será aprovado automaticamente."
           }
         }
       }
@@ -32641,6 +33665,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Total de pedidos"
+          }
+        }
+      }
+    },
+    "Total requests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anfragen insgesamt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solicitudes totales"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demandes au total"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedidos no total"
           }
         }
       }
@@ -33317,6 +34369,34 @@
         }
       }
     },
+    "Unavailable" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponible"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponível"
+          }
+        }
+      }
+    },
     "Unblock requests" : {
       "localizations" : {
         "de" : {
@@ -33369,6 +34449,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desbloqueando…"
+          }
+        }
+      }
+    },
+    "Unlimited" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbegrenzt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilimitadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illimitées"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilimitados"
           }
         }
       }
@@ -34069,6 +35177,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ver mudanças"
+          }
+        }
+      }
+    },
+    "View profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil ansehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir le profil"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver perfil"
           }
         }
       }
@@ -34997,6 +36133,34 @@
         }
       }
     },
+    "Which country streaming providers and release dates are for, and where and in what language TMDb's Popular and Upcoming rows are picked from." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für welches Land Streaming-Anbieter und Starttermine gelten und woher und in welcher Sprache die TMDb-Reihen Beliebt und Demnächst kommen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para qué país son los proveedores de streaming y las fechas de estreno, y de dónde y en qué idioma se eligen las filas Populares y Próximamente de TMDb."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le pays des services de streaming et des dates de sortie, et d’où et dans quelle langue sont choisies les rangées Populaires et À venir de TMDb."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para qual país são os serviços de streaming e as datas de lançamento, e de onde e em qual idioma vêm as fileiras Populares e Em breve do TMDb."
+          }
+        }
+      }
+    },
     "Who requested what, and who reviewed it — most recent first." : {
       "localizations" : {
         "de" : {
@@ -35133,6 +36297,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não reproduz"
+          }
+        }
+      }
+    },
+    "Worldwide" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weltweit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo el mundo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monde entier"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mundo todo"
           }
         }
       }
@@ -35805,6 +36997,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sua conta do Plex está vinculada."
+          }
+        }
+      }
+    },
+    "Your Watchlist" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Watchlist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu Watchlist"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre Watchlist"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua Watchlist"
           }
         }
       }

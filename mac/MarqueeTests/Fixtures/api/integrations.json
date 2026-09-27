@@ -15,6 +15,7 @@
     "connected": false,
     "name": "Jellyfin",
     "baseUrl": null,
+    "publicUrl": null,
     "hasApiKey": false,
     "servers": [],
     "movieCount": 0,
@@ -63,6 +64,9 @@
   },
   "tvdb": {
     "connected": true
+  },
+  "omdb": {
+    "connected": false
   },
   "discord": {
     "connected": false

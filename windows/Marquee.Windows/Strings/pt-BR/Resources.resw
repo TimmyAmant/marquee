@@ -4960,4 +4960,127 @@
   <data name="Integrations_SeerrOpen.Content" xml:space="preserve">
     <value>Abrir o importador no navegador</value>
   </data>
+  <data name="Account_MenuLabels.Header" xml:space="preserve">
+    <value>Mostrar rótulos do menu</value>
+  </data>
+  <data name="Account_MenuLabelsCaption.Text" xml:space="preserve">
+    <value>Nomes ao lado dos ícones do menu e a versão do servidor no final.</value>
+  </data>
+  <data name="Shell_ServerVersion" xml:space="preserve">
+    <value>Marquee {0}</value>
+  </data>
+  <data name="TitleModel_PillNotRequested" xml:space="preserve">
+    <value>Não pedida</value>
+  </data>
+  <data name="TitleModel_PillAvailable" xml:space="preserve">
+    <value>Disponível</value>
+  </data>
+  <data name="TitleModel_PillUnavailable" xml:space="preserve">
+    <value>Indisponível</value>
+  </data>
+  <data name="TitleModel_RatingImdb" xml:space="preserve">
+    <value>IMDb {0}</value>
+  </data>
+  <data name="TitleModel_RatingRottenTomatoes" xml:space="preserve">
+    <value>🍅 {0}%</value>
+  </data>
+  <data name="TitleModel_RatingMetacritic" xml:space="preserve">
+    <value>Metacritic {0}</value>
+  </data>
+  <data name="Model_DiscoverWatchlist" xml:space="preserve">
+    <value>Sua Watchlist</value>
+  </data>
+  <data name="Title_RequestedToast" xml:space="preserve">
+    <value>{0} pedido</value>
+  </data>
+  <data name="Title_FactOriginalTitle" xml:space="preserve">
+    <value>Título original</value>
+  </data>
+  <data name="Title_FactTheatricalRelease" xml:space="preserve">
+    <value>Lançamento nos cinemas</value>
+  </data>
+  <data name="Title_FactDigitalRelease" xml:space="preserve">
+    <value>Lançamento digital</value>
+  </data>
+  <data name="Title_FactBudget" xml:space="preserve">
+    <value>Orçamento</value>
+  </data>
+  <data name="Title_FactRevenue" xml:space="preserve">
+    <value>Bilheteria</value>
+  </data>
+  <data name="Title_FactStudio" xml:space="preserve">
+    <value>Estúdio</value>
+  </data>
+  <data name="Season_AutoApprove.Message" xml:space="preserve">
+    <value>Este pedido será aprovado automaticamente.</value>
+  </data>
+  <data name="Season_EpisodesColumn.Text" xml:space="preserve">
+    <value>Episódios</value>
+  </data>
+  <data name="Season_StatusColumn.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Requests_ModifiedBy" xml:space="preserve">
+    <value>Modificado por {0}</value>
+  </data>
+  <data name="Integrations_OmdbBlurb" xml:space="preserve">
+    <value>Opcional. Com uma chave, as páginas de títulos mostram as notas do IMDb, Rotten Tomatoes e Metacritic ao lado da do TMDb.</value>
+  </data>
+  <data name="Integrations_OmdbPlaceholder" xml:space="preserve">
+    <value>Em omdbapi.com/apikey.aspx</value>
+  </data>
+  <data name="Account_MemberProfile.Content" xml:space="preserve">
+    <value>Perfil</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Perfil</value>
+  </data>
+  <data name="Profile_Done" xml:space="preserve">
+    <value>Concluído</value>
+  </data>
+  <data name="Profile_Loading" xml:space="preserve">
+    <value>Carregando…</value>
+  </data>
+  <data name="Profile_Joined" xml:space="preserve">
+    <value>Entrou em {0}</value>
+  </data>
+  <data name="Profile_Unlimited" xml:space="preserve">
+    <value>Ilimitados</value>
+  </data>
+  <data name="Profile_RemainingOf" xml:space="preserve">
+    <value>{0} de {1}</value>
+  </data>
+  <data name="Profile_EveryDays_One" xml:space="preserve">
+    <value>Todo dia</value>
+  </data>
+  <data name="Profile_EveryDays_Other" xml:space="preserve">
+    <value>A cada {0} dias</value>
+  </data>
+  <data name="Profile_Movies_One" xml:space="preserve">
+    <value>{0} filme</value>
+  </data>
+  <data name="Profile_Movies_Other" xml:space="preserve">
+    <value>{0} filmes</value>
+  </data>
+  <data name="Profile_Series_One" xml:space="preserve">
+    <value>{0} série</value>
+  </data>
+  <data name="Profile_Series_Other" xml:space="preserve">
+    <value>{0} séries</value>
+  </data>
+  <data name="Profile_TotalRequests" xml:space="preserve">
+    <value>Pedidos no total</value>
+  </data>
+  <data name="Profile_MovieRequestsLeft" xml:space="preserve">
+    <value>Pedidos de filmes restantes</value>
+  </data>
+  <data name="Profile_SeriesRequestsLeft" xml:space="preserve">
+    <value>Pedidos de séries restantes</value>
+  </data>
+  <data name="Profile_PlexWatchlist" xml:space="preserve">
+    <value>Plex Watchlist</value>
+  </data>
+  <data name="Profile_WatchlistEmpty" xml:space="preserve">
+    <value>Nada na Watchlist ainda.</value>
+  </data>
 </root>

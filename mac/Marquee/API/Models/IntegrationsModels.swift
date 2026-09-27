@@ -34,6 +34,8 @@ extension API {
         /// which keeps the fixed cards above. When present, `sonarr` … `radarr4k`
         /// describe the default server of each kind.
         var arrServers: [ArrServer]? = nil
+        /// 0.53+: OMDb, for ratings; nil from an older server, which hides the card.
+        var omdb: ConnectionState? = nil
 
         /// nil only for a 4K instance an older server doesn't know about.
         func arr(_ provider: ArrProvider) -> ArrSettings? {

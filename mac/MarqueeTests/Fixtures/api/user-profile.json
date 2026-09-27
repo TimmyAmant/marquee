@@ -1,0 +1,73 @@
+{
+  "user": {
+    "id": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3",
+    "username": "member1",
+    "displayName": "Kid",
+    "role": "member",
+    "autoApproveMovies": false,
+    "autoApproveTv": true,
+    "permissions": {
+      "requestMovies": true,
+      "requestTv": true,
+      "request4kMovies": true,
+      "request4kTv": true,
+      "autoApproveMovies": false,
+      "autoApproveTv": true,
+      "autoApprove4kMovies": false,
+      "autoApprove4kTv": true,
+      "advancedRequests": false,
+      "viewRequests": false,
+      "reviewRequests": false,
+      "manageIssues": false,
+      "reportIssues": true,
+      "manageBlocklist": false,
+      "bypassLimits": false
+    },
+    "createdAt": "2026-09-17T17:12:40.991Z",
+    "isCurrentUser": false,
+    "avatarUrl": null,
+    "linked": {
+      "plex": false,
+      "jellyfin": true,
+      "sso": false
+    },
+    "hasPassword": false,
+    "lastActiveAt": "2026-09-25T18:42:10.000Z",
+    "movieQuotaLimit": 5,
+    "movieQuotaDays": 7,
+    "tvQuotaLimit": null,
+    "tvQuotaDays": 7
+  },
+  "requests": {
+    "total": 3,
+    "movie": 2,
+    "tv": 1
+  },
+  "requestLimits": {
+    "movie": {
+      "limit": 5,
+      "days": 7,
+      "used": 2,
+      "remaining": 3,
+      "nextSlotAt": null
+    },
+    "tv": null
+  },
+  "watchlist": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ]
+}

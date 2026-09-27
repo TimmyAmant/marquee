@@ -789,6 +789,13 @@
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
+                <!-- Show menu labels (0.53): names beside the rail's icons, the server's version at its foot. -->
+                <ToggleSwitch x:Uid="Account_MenuLabels" IsOn="{x:Bind ViewModel.ShowMenuLabels, Mode=TwoWay}" />
+                <TextBlock
+                    x:Uid="Account_MenuLabelsCaption"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    TextWrapping="Wrap" />
                 <!--
                   Language (0.50+ servers): saved on the account (PATCH /me), so
                   the website and the other apps follow it too. The pages already
@@ -936,6 +943,11 @@
                                             Text="{x:Bind YouTag}"
                                             Tone="{x:Bind YouTone}"
                                             Visibility="{x:Bind IsCurrentUser, Converter={StaticResource BoolToVisibility}}" />
+                                        <Button
+                                            x:Uid="Account_MemberProfile"
+                                            Command="{x:Bind Profile}"
+                                            CommandParameter="{x:Bind}"
+                                            Visibility="{x:Bind CanViewProfile, Converter={StaticResource BoolToVisibility}}" />
                                         <Button
                                             x:Uid="Account_MemberEdit"
                                             Command="{x:Bind Edit}"

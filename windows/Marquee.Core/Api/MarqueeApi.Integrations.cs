@@ -78,6 +78,10 @@ public sealed class IntegrationsEndpoints(MarqueeApi.Transport transport)
     public IntegrationSettingEndpoints Tvdb =>
         new(transport, IntegrationProvider.Tvdb, value => new TvdbSettingRequest(value), Reconnected);
 
+    /// <summary>Body <c>{apiKey}</c> (0.53+): an OMDb key, for IMDb / Rotten Tomatoes / Metacritic ratings on title pages.</summary>
+    public IntegrationSettingEndpoints Omdb =>
+        new(transport, IntegrationProvider.Omdb, value => new OmdbSettingRequest(value), ServerChange.Integrations);
+
     /// <summary>Body <c>{webhookUrl}</c>: posts a test message before saving.</summary>
     public IntegrationSettingEndpoints Discord =>
         new(transport, IntegrationProvider.Discord, value => new DiscordSettingRequest(value), ServerChange.Integrations);

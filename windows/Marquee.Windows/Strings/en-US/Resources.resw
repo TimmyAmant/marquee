@@ -5148,4 +5148,127 @@
   <data name="Integrations_SeerrOpen.Content" xml:space="preserve">
     <value>Open the importer in your browser</value>
   </data>
+  <data name="Account_MenuLabels.Header" xml:space="preserve">
+    <value>Show menu labels</value>
+  </data>
+  <data name="Account_MenuLabelsCaption.Text" xml:space="preserve">
+    <value>Names beside the menu's icons, and the server's version at the end.</value>
+  </data>
+  <data name="Shell_ServerVersion" xml:space="preserve">
+    <value>Marquee {0}</value>
+  </data>
+  <data name="TitleModel_PillNotRequested" xml:space="preserve">
+    <value>Not requested</value>
+  </data>
+  <data name="TitleModel_PillAvailable" xml:space="preserve">
+    <value>Available</value>
+  </data>
+  <data name="TitleModel_PillUnavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="TitleModel_RatingImdb" xml:space="preserve">
+    <value>IMDb {0}</value>
+  </data>
+  <data name="TitleModel_RatingRottenTomatoes" xml:space="preserve">
+    <value>🍅 {0}%</value>
+  </data>
+  <data name="TitleModel_RatingMetacritic" xml:space="preserve">
+    <value>Metacritic {0}</value>
+  </data>
+  <data name="Model_DiscoverWatchlist" xml:space="preserve">
+    <value>Your Watchlist</value>
+  </data>
+  <data name="Title_RequestedToast" xml:space="preserve">
+    <value>{0} requested</value>
+  </data>
+  <data name="Title_FactOriginalTitle" xml:space="preserve">
+    <value>Original Title</value>
+  </data>
+  <data name="Title_FactTheatricalRelease" xml:space="preserve">
+    <value>Theatrical Release</value>
+  </data>
+  <data name="Title_FactDigitalRelease" xml:space="preserve">
+    <value>Digital Release</value>
+  </data>
+  <data name="Title_FactBudget" xml:space="preserve">
+    <value>Budget</value>
+  </data>
+  <data name="Title_FactRevenue" xml:space="preserve">
+    <value>Revenue</value>
+  </data>
+  <data name="Title_FactStudio" xml:space="preserve">
+    <value>Studio</value>
+  </data>
+  <data name="Season_AutoApprove.Message" xml:space="preserve">
+    <value>This request will be approved automatically.</value>
+  </data>
+  <data name="Season_EpisodesColumn.Text" xml:space="preserve">
+    <value>Episodes</value>
+  </data>
+  <data name="Season_StatusColumn.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Requests_ModifiedBy" xml:space="preserve">
+    <value>Modified by {0}</value>
+  </data>
+  <data name="Integrations_OmdbBlurb" xml:space="preserve">
+    <value>Optional. With a key, title pages show IMDb, Rotten Tomatoes and Metacritic scores beside TMDb's.</value>
+  </data>
+  <data name="Integrations_OmdbPlaceholder" xml:space="preserve">
+    <value>From omdbapi.com/apikey.aspx</value>
+  </data>
+  <data name="Account_MemberProfile.Content" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Profile_Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Profile_Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="Profile_Joined" xml:space="preserve">
+    <value>Joined {0}</value>
+  </data>
+  <data name="Profile_Unlimited" xml:space="preserve">
+    <value>Unlimited</value>
+  </data>
+  <data name="Profile_RemainingOf" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="Profile_EveryDays_One" xml:space="preserve">
+    <value>Every day</value>
+  </data>
+  <data name="Profile_EveryDays_Other" xml:space="preserve">
+    <value>Every {0} days</value>
+  </data>
+  <data name="Profile_Movies_One" xml:space="preserve">
+    <value>{0} movie</value>
+  </data>
+  <data name="Profile_Movies_Other" xml:space="preserve">
+    <value>{0} movies</value>
+  </data>
+  <data name="Profile_Series_One" xml:space="preserve">
+    <value>{0} series</value>
+  </data>
+  <data name="Profile_Series_Other" xml:space="preserve">
+    <value>{0} series</value>
+  </data>
+  <data name="Profile_TotalRequests" xml:space="preserve">
+    <value>Total requests</value>
+  </data>
+  <data name="Profile_MovieRequestsLeft" xml:space="preserve">
+    <value>Movie requests left</value>
+  </data>
+  <data name="Profile_SeriesRequestsLeft" xml:space="preserve">
+    <value>Series requests left</value>
+  </data>
+  <data name="Profile_PlexWatchlist" xml:space="preserve">
+    <value>Plex Watchlist</value>
+  </data>
+  <data name="Profile_WatchlistEmpty" xml:space="preserve">
+    <value>Nothing on the Watchlist yet.</value>
+  </data>
 </root>

@@ -34,6 +34,59 @@ struct RequestsView: View {
     }
 }
 
+/// components/request-card.tsx (0.53+): the title's backdrop faded in
+/// behind a request row, under a wash of the card's own color that keeps
+/// the left, where the text is, the most solid.
+private struct RequestBackdrop: ViewModifier {
+    let path: API.ImageRef?
+
+    func body(content: Content) -> some View {
+        content.background {
+            if let path {
+                RemoteImage(path, size: .w780, showsShimmer: false)
+                    .opacity(0.3)
+                    .overlay {
+                        LinearGradient(
+                            stops: [
+                                .init(color: Theme.bg1, location: 0),
+                                .init(color: Theme.bg1.opacity(0.82), location: 0.45),
+                                .init(color: Theme.bg1.opacity(0.92), location: 1),
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    }
+                    .clipped()
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+}
+
+extension View {
+    fileprivate func requestBackdrop(_ path: API.ImageRef?) -> some View {
+        modifier(RequestBackdrop(path: path))
+    }
+}
+
+/// "Modified by <photo> Tim": who approved or declined a request.
+private struct ReviewerLine: View {
+    let person: API.RequestPerson
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Text("Modified by")
+                .foregroundStyle(Theme.textMuted)
+            UserAvatarView(label: person.label, avatarUrl: nil, size: 16)
+            Text(person.label)
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
+        }
+        .font(.system(size: 11.5))
+    }
+}
+
 private struct RequestPoster: View {
     let posterPath: API.ImageRef?
 
@@ -229,6 +282,7 @@ private struct MyRequestRow: View {
         .font(.system(size: 13))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .requestBackdrop(row.backdropPath)
         .onChange(of: row.commentCount) { _, _ in shownCount = nil }
     }
 }
@@ -429,6 +483,10 @@ private struct PastRequestRow: View {
                             .font(.system(size: 11.5))
                             .foregroundStyle(Theme.textMuted)
                     }
+                    // 0.53+: who reviewed it, as on the website's cards.
+                    if let reviewer = row.reviewedBy {
+                        ReviewerLine(person: reviewer)
+                    }
                 }
                 .frame(width: 170, alignment: .leading)
                 .padding(.top, 16)
@@ -440,6 +498,7 @@ private struct PastRequestRow: View {
         .font(.system(size: 13))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .requestBackdrop(row.backdropPath)
         .onChange(of: row.commentCount) { _, _ in shownCount = nil }
     }
 }
@@ -1147,6 +1206,7 @@ private struct RequestReviewRow: View {
         .font(.system(size: 13))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .requestBackdrop(row.backdropPath)
         .onChange(of: row.commentCount) { _, _ in shownCount = nil }
         // Edited to or from 4K: the Advanced picks were for the other servers.
         .onChange(of: row.is4k) { _, _ in advanced.reset() }

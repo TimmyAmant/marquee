@@ -212,6 +212,13 @@
   "plexWatchlistLimited": "Vous avez atteint votre limite de demandes : le reste de votre watchlist attendra qu’il vous en reste.",
   "plexWatchlistUnreachable": "Impossible de joindre Plex pour lire votre watchlist. Marquee réessaiera sous peu.",
   "pushTestBody": "Les notifications fonctionnent sur cet appareil.",
+  "enterOmdbKey": "Saisissez une clé d’API OMDb.",
+  "omdbUnreachable": "Impossible de joindre OMDb pour vérifier la clé. Réessayez dans un instant.",
+  "omdbKeyInvalid": "OMDb n’a pas accepté cette clé. Vérifiez-la et réessayez.",
+  "publicUrlInvalid": "L’URL publique doit commencer par http:// ou https://.",
+  "regionInvalid": "{field} doit être null ou un code pays à deux lettres connu de Marquee.",
+  "discoverLanguageInvalid": "discoverLanguage doit être null, « any » ou un code de langue à deux lettres connu de Marquee.",
+  "nothingToChange": "Envoyez au moins l’un de streamingRegion, discoverRegion ou discoverLanguage.",
   "onlyAdminDuplicates": "Seul l’administrateur peut voir les doublons.",
   "onlyAdminSeerrImport": "Seul l’administrateur peut importer depuis Seerr.",
   "seerrKeyRequired": "Saisissez la clé API de Seerr (Paramètres → Général dans Seerr).",
@@ -222,5 +229,6 @@
   "seerrTmdbRequired": "Connectez TMDb dans Paramètres → Intégrations avant d’importer des demandes ou des signalements : Marquee en a besoin pour leurs titres et affiches.",
   "seerrImportRunning": "Une importation est déjà en cours. Attendez qu’elle se termine.",
   "seerrImportNotFound": "Cette importation n’existe plus.",
-  "seerrNothingChosen": "Choisissez au moins un élément à importer."
+  "seerrNothingChosen": "Choisissez au moins un élément à importer.",
+  "onlyOwnProfile": "Vous ne pouvez voir que votre propre profil."
 }

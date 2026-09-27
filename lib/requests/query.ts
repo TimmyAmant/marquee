@@ -2,6 +2,10 @@ import { and, count, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
+import { alias } from "drizzle-orm/pg-core";
+
+/** The reviewer's row, joined beside the requester's. */
+const reviewers = alias(users, "reviewers");
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { getSonarrSeasonStates, getTitleLibraryStatus } from "@/lib/integrations/status";
 import { createNotification } from "@/lib/notifications/query";
@@ -39,6 +43,7 @@ export async function getPendingRequests(viewerUserId: string) {
       tvdbId: titles.tvdbId,
       title: requests.title,
       posterPath: requests.posterPath,
+      backdropPath: titles.backdropPath,
       seasons: requests.seasons,
       is4k: requests.is4k,
       createdAt: requests.createdAt,
@@ -170,6 +175,7 @@ function reviewedQuery() {
       tmdbId: requests.tmdbId,
       title: requests.title,
       posterPath: requests.posterPath,
+      backdropPath: titles.backdropPath,
       seasons: requests.seasons,
       is4k: requests.is4k,
       status: requests.status,
@@ -177,8 +183,12 @@ function reviewedQuery() {
       rejectionReason: requests.rejectionReason,
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
+      editedAt: requests.editedAt,
       requestedByName: users.displayName,
       requestedByUsername: users.username,
+      reviewedByUserId: requests.reviewedByUserId,
+      reviewedByName: reviewers.displayName,
+      reviewedByUsername: reviewers.username,
       arrServerId: requests.arrServerId,
       arrServerName: requests.arrServerName,
       arrQualityProfileId: requests.arrQualityProfileId,
@@ -192,6 +202,8 @@ function reviewedQuery() {
     })
     .from(requests)
     .innerJoin(users, eq(users.id, requests.requestedByUserId))
+    .leftJoin(reviewers, eq(reviewers.id, requests.reviewedByUserId))
+    .leftJoin(titles, and(eq(titles.mediaType, requests.mediaType), eq(titles.tmdbId, requests.tmdbId)))
     .$dynamic();
 }
 
@@ -207,6 +219,7 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       tvdbId: titles.tvdbId,
       title: requests.title,
       posterPath: requests.posterPath,
+      backdropPath: titles.backdropPath,
       seasons: requests.seasons,
       is4k: requests.is4k,
       status: requests.status,
@@ -216,12 +229,16 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       reviewedAt: requests.reviewedAt,
       editedAt: requests.editedAt,
       addFailedAt: requests.addFailedAt,
+      arrServerName: requests.arrServerName,
+      reviewedByName: reviewers.displayName,
+      reviewedByUsername: reviewers.username,
     })
     .from(requests)
     .leftJoin(
       titles,
       and(eq(titles.mediaType, requests.mediaType), eq(titles.tmdbId, requests.tmdbId)),
     )
+    .leftJoin(reviewers, eq(reviewers.id, requests.reviewedByUserId))
     .where(eq(requests.requestedByUserId, userId))
     .orderBy(desc(requests.createdAt));
 

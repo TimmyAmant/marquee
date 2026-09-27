@@ -14,6 +14,7 @@ import { isTmdbConfigured } from "@/lib/tmdb/client";
 import type { LayoutShelf } from "@/lib/discover/shelves";
 import type { DiscoverLookupResult } from "@/lib/api/types";
 import { getT } from "@/lib/i18n/server";
+import { saveDiscoverLocaleSettings, type DiscoverLocaleSettings } from "@/lib/discover/locale-settings";
 
 // Settings → Discover (the admin only): the same calls /api/v1/settings/discover
 // makes, for the website's editor.
@@ -74,4 +75,13 @@ export async function lookUpDiscoverSourceAction(
   } catch {
     return { error: (await getT())("integrations.tmdbSearchFailed") };
   }
+}
+
+/** Settings › Discover › Region & language (lib/discover/locale-settings.ts). */
+export async function saveDiscoverLocaleAction(
+  body: Record<string, unknown>,
+): Promise<{ settings?: DiscoverLocaleSettings; error?: string }> {
+  if (!(await isAdmin())) return { error: await forbidden() };
+  const result = await saveDiscoverLocaleSettings(body);
+  return result.ok ? { settings: result.settings } : { error: result.error };
 }

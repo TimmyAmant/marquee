@@ -36,7 +36,13 @@ import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbSeasonSummary, TmdbTvDetails } from "@/lib/tmdb/client";
 import { getT } from "@/lib/i18n/server";
-import { regionName } from "@/lib/i18n/format";
+import { formatNumber, regionName } from "@/lib/i18n/format";
+import { getTitleRatings } from "@/lib/ratings/cache";
+import { getPlayableItems } from "@/lib/media-servers/query";
+import { buildPlayLinks, type PlayLink } from "@/lib/media-servers/play-links";
+import { moneyOrNull, originalTitleOf, releaseDatesFor, streamingProvidersFor } from "@/lib/titles/facts";
+import { getDiscoverLocale } from "@/lib/tmdb/client";
+import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 
 /**
  * The title page's library status plus this viewer's state for it (favorite,
@@ -399,10 +405,27 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
       ? ((raw as TmdbMovieDetails | null)?.keywords?.keywords ?? []).map((k) => k.name)
       : ((raw as TmdbTvDetails | null)?.keywords?.results ?? []).map((k) => k.name);
 
-  const watchProviders = (raw?.["watch/providers"]?.results?.US?.flatrate ?? []).map((p) => ({
-    name: p.provider_name,
-    logoPath: p.logo_path,
-  }));
+  // "Currently streaming on" and a movie's release dates are for the
+  // streaming region (Settings › Discover › Region & language).
+  const { streamingRegion } = await getDiscoverLocale();
+  const streaming = streamingProvidersFor(raw?.["watch/providers"], streamingRegion);
+  const watchProviders = streaming.providers.map((p) => ({ name: p.name, logoPath: p.logoPath }));
+
+  // IMDb / Rotten Tomatoes / Metacritic, with an OMDb key (lib/ratings);
+  // where the title can be played, from the library sync
+  // (lib/media-servers). Both fail soft: the page shows what it has.
+  const [ratings, playableItems] = await Promise.all([
+    getTitleRatings(type, tmdbId, title.imdbId).catch(() => null),
+    viewer.libraryOwnerId ? getPlayableItems(viewer.libraryOwnerId, type, tmdbId, title.tvdbId).catch(() => []) : [],
+  ]);
+  const playLinks: PlayLink[] = buildPlayLinks(t, playableItems, type);
+
+  const movieRaw = type === "movie" ? (raw as TmdbMovieDetails | null) : null;
+  const releaseDates = movieRaw ? releaseDatesFor(movieRaw.release_dates, streamingRegion) : null;
+  const budget = moneyOrNull(movieRaw?.budget);
+  const revenue = moneyOrNull(movieRaw?.revenue);
+  const money = (value: number | null) =>
+    value === null ? null : formatNumber(t, value, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   const productionCountryRaw = raw?.production_countries?.[0];
   const nextAirDate = type === "tv" ? ((raw as TmdbTvDetails | null)?.next_episode_to_air?.air_date ?? null) : null;
@@ -412,10 +435,22 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     originalLanguageLabel: languageLabel(t, raw?.original_language),
     productionCountry: productionCountryRaw
       ? {
-          name: regionName(t, productionCountryRaw.iso_3166_1) ?? productionCountryRaw.name,           flag: countryCodeToFlagEmoji(productionCountryRaw.iso_3166_1),
+          name: regionName(t, productionCountryRaw.iso_3166_1) ?? productionCountryRaw.name,
+          flag: countryCodeToFlagEmoji(productionCountryRaw.iso_3166_1),
         }
       : null,
     watchProviders,
+    streamingRegion: streaming.region,
+    streamingLink: streaming.link,
+    originalTitle: originalTitleOf(type, raw, title.name),
+    theatricalReleaseLabel: formatDateLabel(t, releaseDates?.theatrical),
+    digitalReleaseLabel: formatDateLabel(t, releaseDates?.digital),
+    budgetLabel: money(budget),
+    revenueLabel: money(revenue),
+    // The first studio (a movie) — a show's network is its own row.
+    studio: type === "movie" ? (dedupeCompanies(companies)[0]?.name ?? null) : null,
+    ratings,
+    imdbId: title.imdbId,
   };
 
   return {
@@ -466,5 +501,9 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     titleSidebar,
     nextAirDate,
     productionCountryCode: productionCountryRaw?.iso_3166_1 ?? null,
+    releaseDates,
+    budget,
+    revenue,
+    playLinks,
   };
 }

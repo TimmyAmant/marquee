@@ -183,7 +183,10 @@ public readonly record struct DiscoverListKind(string Value) : IOpenEnum<Discove
     public static readonly DiscoverListKind UpcomingMovies = new("upcoming-movies");
     public static readonly DiscoverListKind UpcomingSeries = new("upcoming-series");
 
-    public static IReadOnlyList<DiscoverListKind> Known { get; } = [Trending, RecentlyAdded, UpcomingMovies, UpcomingSeries];
+    /// <summary>0.53+: "Your Watchlist", the viewer's own Plex Watchlist.</summary>
+    public static readonly DiscoverListKind Watchlist = new("watchlist");
+
+    public static IReadOnlyList<DiscoverListKind> Known { get; } = [Trending, RecentlyAdded, UpcomingMovies, UpcomingSeries, Watchlist];
     public static DiscoverListKind FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -194,6 +197,7 @@ public readonly record struct DiscoverListKind(string Value) : IOpenEnum<Discove
         : this == RecentlyAdded ? Loc.Get("Model_DiscoverRecentlyAdded")
         : this == UpcomingMovies ? Loc.Get("Model_DiscoverUpcomingMovies")
         : this == UpcomingSeries ? Loc.Get("Model_DiscoverUpcomingSeries")
+        : this == Watchlist ? Loc.Get("Model_DiscoverWatchlist")
         : IsCustomRow ? Loc.Get("Model_DiscoverCustomRow")
         : OpenEnum.Capitalized(Value.Replace('-', ' '));
 

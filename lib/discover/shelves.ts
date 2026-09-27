@@ -11,6 +11,7 @@ import type { MessageKey, Translator } from "@/lib/i18n/translator";
  * reader's language: `t(BUILT_IN_SHELF_TITLES[key])`. */
 export const BUILT_IN_SHELF_TITLES: Record<DiscoverShelfKey, MessageKey> = {
   recentlyAdded: "discover.shelfRecentlyAdded",
+  watchlist: "discover.shelfWatchlist",
   trending: "discover.shelfTrending",
   popularMovies: "discover.shelfPopularMovies",
   movieGenres: "discover.shelfMovieGenres",

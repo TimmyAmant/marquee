@@ -279,6 +279,10 @@ h3,
 @custom-variant rail-bottom (&:where([data-rail="bottom"] *));
 /* Top or bottom: the rail laid out as a horizontal bar. */
 @custom-variant rail-bar (&:where([data-rail="top"] *, [data-rail="bottom"] *));
+/* "Show menu labels" with the rail on the left or right: the rail widens to
+   hold each section's name (from Tailwind's lg; narrower windows keep the
+   icon rail). A top or bottom bar stays icons only. */
+@custom-variant rail-labeled (&:where([data-rail-labels="on"]:is([data-rail="left"], [data-rail="right"]) *));
 
 /* Everything below only applies where the rail shows (Tailwind's md);
    narrow screens use the drawer whatever the setting. Plain rules outside
@@ -408,5 +412,48 @@ h3,
   [data-rail="top"] .rail-popover-list,
   [data-rail="bottom"] .rail-popover-list {
     max-height: min(24rem, calc(100dvh - 180px));
+  }
+}
+
+/* The labeled rail's wider margin (see rail-labeled above): 208px across,
+   16px from the edge, with room to spare. Its hover names are redundant. */
+@media (min-width: 64rem) {
+  [data-rail-labels="on"][data-rail="left"] .rail-inset {
+    padding-left: 240px;
+  }
+  [data-rail-labels="on"][data-rail="right"] .rail-inset {
+    padding-right: 240px;
+  }
+  [data-rail-labels="on"][data-rail="left"] .rail-under {
+    left: -240px;
+  }
+  [data-rail-labels="on"][data-rail="right"] .rail-under {
+    right: -240px;
+  }
+  [data-rail-labels="on"][data-rail="left"] .rail-bleed {
+    margin-left: -240px;
+    padding-left: 240px;
+  }
+  [data-rail-labels="on"][data-rail="right"] .rail-bleed {
+    margin-right: -240px;
+    padding-right: 240px;
+  }
+  [data-rail-labels="on"][data-rail="left"] .rail-label,
+  [data-rail-labels="on"][data-rail="right"] .rail-label {
+    display: none;
+  }
+}
+
+/* The header's search box (components/site-header.tsx): desktop only, and
+   not with the rail as a bar along the top, which has its own Search. */
+.header-search {
+  display: none;
+}
+@media (min-width: 64rem) {
+  .header-search {
+    display: block;
+  }
+  [data-rail="top"] .header-search {
+    display: none;
   }
 }

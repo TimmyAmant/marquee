@@ -276,6 +276,10 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 _ = try await $0.users.update(user, API.UpdateUserRequest(username: "kid", autoApproveTv: true))
             },
             Case(method: "DELETE", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3", response: "ok") { try await $0.users.remove(user) },
+            // 0.53+
+            Case(method: "GET", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/profile", response: "user-profile") {
+                _ = try await $0.users.profile(user)
+            },
             // The `avatarUrl` exactly as the server hands it out, version and all.
             Case(method: "GET", path: "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar", query: ["v": "1790334036549"], response: "ok", responseType: "image/jpeg") {
                 _ = try await $0.users.avatar(at: "/api/v1/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/avatar?v=1790334036549")
@@ -346,6 +350,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 _ = try await $0.integrations.seerrImport.job("0d0c0b0a-1111-4222-8333-444455556666")
             },
             Case(method: "PUT", path: "/settings/integrations/tvdb", body: #"{"apiKey":"v"}"#, response: "ok") { try await $0.integrations.tvdb.save("v") },
+            Case(method: "PUT", path: "/settings/integrations/omdb", body: #"{"apiKey":"k"}"#, response: "ok") { try await $0.integrations.omdb.save("k") },
+            Case(method: "DELETE", path: "/settings/integrations/omdb", response: "ok") { try await $0.integrations.omdb.remove() },
             Case(method: "DELETE", path: "/settings/integrations/tvdb", response: "ok") { try await $0.integrations.tvdb.remove() },
             Case(method: "PUT", path: "/settings/integrations/discord", body: #"{"webhookUrl":"https://discord.com/api/webhooks/1"}"#, response: "ok") {
                 try await $0.integrations.discord.save("https://discord.com/api/webhooks/1")
@@ -449,6 +455,14 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 try await $0.discoverSettings.remove(Self.discoverRowId)
             },
             Case(method: "POST", path: "/settings/discover/reset", response: "discover-settings") { _ = try await $0.discoverSettings.reset() },
+            Case(method: "GET", path: "/settings/discover/locale", response: "discover-locale") { _ = try await $0.discoverSettings.locale() },
+            Case(
+                method: "PUT", path: "/settings/discover/locale",
+                body: #"{"streamingRegion":"GB","discoverRegion":null,"discoverLanguage":"any"}"#,
+                response: "discover-locale"
+            ) {
+                _ = try await $0.discoverSettings.saveLocale(API.DiscoverLocaleUpdate(streamingRegion: "GB", discoverRegion: nil, discoverLanguage: "any"))
+            },
             Case(method: "GET", path: "/settings/discover/lookup", query: ["type": "genre", "mediaType": "tv", "q": "com"], response: "discover-lookup") {
                 _ = try await $0.discoverSettings.lookup(.genre, query: " com ", mediaType: .tv)
             },
@@ -475,8 +489,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 164, "docs/api-v1.md documents 163 endpoints; GET /library is covered twice, with and without filters")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 163, "Each documented endpoint is covered")
+        XCTAssertEqual(cases.count, 169, "docs/api-v1.md documents 168 endpoints; GET /library is covered twice, with and without filters")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 168, "Each documented endpoint is covered")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

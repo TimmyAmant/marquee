@@ -263,5 +263,20 @@
   "activityVerbRequested": "hat angefragt",
   "activityVerbApproved": "hat genehmigt",
   "activityVerbDeclined": "hat abgelehnt",
-  "activityVerbManuallyApproved": "hat manuell genehmigt"
+  "activityVerbManuallyApproved": "hat manuell genehmigt",
+  "menuLabelsLabel": "Menübeschriftungen anzeigen",
+  "menuLabelsHelp": "Namen neben den Symbolen des Menüs und die Serverversion am Ende.",
+  "profileUnlimited": "Unbegrenzt",
+  "profileRemainingOf": "{remaining} von {limit}",
+  "profileEveryDays": "{days, plural, one {Jeden Tag} other {Alle # Tage}}",
+  "profileJoined": "Dabei seit {date}",
+  "profileEditAccount": "Konto bearbeiten",
+  "profileManageMembers": "Haushaltseinstellungen",
+  "profileTotalRequests": "Anfragen insgesamt",
+  "profileRequestSplit": "{movies, plural, one {# Film} other {# Filme}} · {series, plural, one {# Serie} other {# Serien}}",
+  "profileMovieRequestsLeft": "Verbleibende Filmanfragen",
+  "profileSeriesRequestsLeft": "Verbleibende Serienanfragen",
+  "profilePlexWatchlist": "Plex Watchlist",
+  "profileWatchlistEmpty": "Noch nichts auf der Watchlist.",
+  "profileView": "Profil ansehen"
 }

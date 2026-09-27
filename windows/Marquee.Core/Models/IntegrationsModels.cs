@@ -33,6 +33,9 @@ public sealed record IntegrationsOverview
     public required TmdbSettings Tmdb { get; init; }
     public required ConnectionState Trakt { get; init; }
     public required ConnectionState Tvdb { get; init; }
+
+    /// <summary>0.53+: OMDb, for ratings; null from an older server, which hides the card.</summary>
+    public ConnectionState? Omdb { get; init; }
     public required ConnectionState Discord { get; init; }
     public required ConnectionState Ntfy { get; init; }
 
@@ -349,6 +352,9 @@ public sealed record TraktSettingRequest(string ClientId);
 
 /// <summary><c>PUT /settings/integrations/tvdb</c>: a TheTVDB v4 API key.</summary>
 public sealed record TvdbSettingRequest(string ApiKey);
+
+/// <summary><c>PUT /settings/integrations/omdb</c> (0.53+): an OMDb API key.</summary>
+public sealed record OmdbSettingRequest(string ApiKey);
 
 /// <summary><c>PUT /settings/integrations/discord</c>: <c>https://discord.com/api/webhooks/…</c>.</summary>
 public sealed record DiscordSettingRequest(string WebhookUrl);

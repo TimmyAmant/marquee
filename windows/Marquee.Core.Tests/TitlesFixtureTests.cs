@@ -259,4 +259,26 @@ public sealed class TitlesFixtureTests
         Assert.Equal(label, fourK.StatusLabel);
         Assert.True(fourK.IsRequested);
     }
+
+    [Fact]
+    public void TitleDetailCarriesRatingsFactsAndPlayLinks()
+    {
+        var detail = Fixtures.Decode<TitleDetail>("title-detail");
+        var ratings = Assert.IsType<TitleRatings>(detail.Facts.Ratings);
+        Assert.Equal(8.7, ratings.ImdbRating);
+        Assert.Equal(83, ratings.RottenTomatoesCritics);
+        Assert.True(ratings.HasAny);
+        Assert.Equal("IMDb 8.7 · 🍅 83% · Metacritic 73", ratings.Line);
+        Assert.Equal("US", detail.Facts.StreamingRegion);
+        Assert.Equal("$63,000,000", detail.Facts.BudgetLabel);
+        Assert.Equal("Village Roadshow Pictures", detail.Facts.Studio);
+        var play = Assert.Single(detail.Play);
+        Assert.Equal("Play on Plex", play.ButtonLabel(several: false));
+        Assert.Equal("Play on Plex (Living room)", play.ButtonLabel(several: true));
+        Assert.Equal("app.plex.tv", play.Link?.Host);
+        Assert.True(detail.Viewer.AutoApprove);
+        Assert.Equal("Not requested", SeasonRequestState.Requestable.PillLabel());
+        Assert.Equal("Available", SeasonRequestState.InLibrary.PillLabel());
+    }
 }
+

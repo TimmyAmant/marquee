@@ -27,7 +27,15 @@
         "error": "Couldn't add this movie to Radarr.",
         "since": "2026-09-17T19:02:00.000Z"
       },
-      "commentCount": 0
+      "commentCount": 0,
+      "backdropPath": "/2S5Nr2aJTMwVJXw2XHN6Y7hHJXW.jpg",
+      "reviewedBy": {
+        "userId": "5d7e3c1a-2b4f-4a6e-8c9d-0e1f2a3b4c5d",
+        "displayName": "Tim",
+        "username": "tim",
+        "label": "Tim"
+      },
+      "editedAt": null
     },
     {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",

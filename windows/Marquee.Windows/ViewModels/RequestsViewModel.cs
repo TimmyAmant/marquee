@@ -80,8 +80,12 @@ public sealed class ReviewedRow : RequestRowBase
         ReasonLine = request.RejectionReason.NonBlank() is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
         SeasonsLine = request.DetailText;
         AddedToLine = request.AddedToLine ?? "";
+        ReviewerLine = request.ReviewedBy is { } reviewer ? Loc.Format("Requests_ModifiedBy", reviewer.Label) : "";
         ShowsNotFound = request.IsNotFound;
     }
+
+    /// <summary>"Modified by Tim" (0.53+): who reviewed it; empty when nobody did by hand.</summary>
+    public string ReviewerLine { get; }
 
     /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") under the title; empty for a regular whole series or movie.</summary>
     public string SeasonsLine { get; }

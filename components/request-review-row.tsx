@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { approveRequestAction, rejectRequestAction, manuallyApproveRequestAction } from "@/lib/requests/actions";
@@ -11,29 +10,29 @@ import {
   rejectionReasonText,
 } from "@/lib/requests/rejection-reasons";
 import { useT } from "@/lib/i18n/client";
-import { formatDate } from "@/lib/i18n/format";
-import { tmdbImageUrl } from "@/lib/tmdb/image";
-import { RequestTitle } from "@/components/request-title";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import type { MediaType } from "@/lib/db/schema";
-import { CommentToggle, ThreadRow } from "@/components/comment-thread";
 import { EditRequestButton } from "@/components/request-lifecycle";
+import { RequestCard } from "@/components/request-card";
 
+/** A pending request in the review queue: the card with Approve / Decline
+ * (and the reason chooser), Edit, and the reviewer's Advanced picks. */
 export function RequestReviewRow({
   id,
   mediaType,
   tmdbId,
   title,
   posterPath,
+  backdropPath = null,
   requestedByName,
   requestedByUsername,
   seasons,
   is4k = false,
   canManuallyApprove = true,
   createdAt,
+  editedAt = null,
   sonarrUrl,
   commentCount = 0,
-  edited = false,
   advanced = true,
 }: {
   id: string;
@@ -41,6 +40,7 @@ export function RequestReviewRow({
   tmdbId: number;
   title: string;
   posterPath: string | null;
+  backdropPath?: string | null;
   requestedByName: string | null;
   requestedByUsername: string;
   /** The seasons asked for; null for the whole series. */
@@ -48,14 +48,14 @@ export function RequestReviewRow({
   is4k?: boolean;
   canManuallyApprove?: boolean;
   createdAt: string;
+  /** The requester (or a reviewer) changed it since asking, when. */
+  editedAt?: string | null;
   /** Admin's connected Sonarr base URL (Settings > Integrations), if any —
    * used to link straight to Sonarr's own "add series" search when Marquee
    * can't resolve this show's TVDB id itself. */
   sonarrUrl: string | null;
   /** Comments in its conversation, for the "Comments (2)" toggle. */
   commentCount?: number;
-  /** The requester (or a reviewer) changed it since asking. */
-  edited?: boolean;
   /** The reviewer may pick the server, quality and folder (advancedRequests). */
   advanced?: boolean;
 }) {
@@ -79,7 +79,6 @@ export function RequestReviewRow({
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
 
-  const src = tmdbImageUrl(posterPath, "w92");
   const done = Boolean(approveState?.success || rejectState?.success || manualApproveState?.success);
   const anyPending = isApproving || isRejecting || isManuallyApproving;
   // Only the admin can promise to add it by hand (a trusted reviewer can't).
@@ -114,31 +113,26 @@ export function RequestReviewRow({
     startTransition(() => rejectFormAction(formData));
   }
 
+  const error = approveState?.error || rejectState?.error || manualApproveState?.error;
+
   return (
-    <ThreadRow kind="request" id={id} count={commentCount} colSpan={4} className="hover:bg-bg-1/60">
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg bg-bg-2">
-            {src && <Image src={src} alt="" fill sizes="44px" className="object-cover" />}
-          </div>
-          <div className="min-w-0">
-            <RequestTitle mediaType={mediaType} tmdbId={tmdbId} title={title} seasons={seasons} is4k={is4k} />
-            {edited && <p className="text-[11px] text-text-muted">{t("requests.changedSinceAsking")}</p>}
-            <div className="flex flex-wrap items-center gap-x-3">
-              <CommentToggle />
-              {!choosingReason && (
-                <span className="mt-1">
-                  <EditRequestButton requestId={id} />
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </td>
-      <td className="px-4 py-3 text-text-secondary">{requester}</td>
-      <td className="px-4 py-3 text-text-secondary">{formatDate(t, createdAt)}</td>
-      <td className="px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
+    <RequestCard
+      id={id}
+      mediaType={mediaType}
+      tmdbId={tmdbId}
+      title={title}
+      posterPath={posterPath}
+      backdropPath={backdropPath}
+      seasons={seasons}
+      is4k={is4k}
+      status={{ label: t("requests.waitingForReview"), className: "bg-info-bg text-info" }}
+      requestedBy={{ name: requester }}
+      requestedAt={createdAt}
+      modifiedAt={editedAt}
+      commentCount={commentCount}
+      actions={
+        <>
+          {!choosingReason && <EditRequestButton requestId={id} />}
           <button
             type="button"
             disabled={anyPending || choosingReason}
@@ -169,9 +163,11 @@ export function RequestReviewRow({
               </button>
             </form>
           )}
-        </div>
-        {advanced && !showManualApprove && !choosingReason && (
-          <div className="mt-1.5">
+        </>
+      }
+      below={
+        <>
+          {advanced && !showManualApprove && !choosingReason && (
             <AddAdvancedOptions
               mediaType={mediaType}
               tmdbId={tmdbId}
@@ -179,77 +175,77 @@ export function RequestReviewRow({
               formId={`approve-${id}`}
               disabled={anyPending}
             />
-          </div>
-        )}
-        {choosingReason && (
-          <form
-            onSubmit={submitReject}
-            className="mt-2 flex max-w-xs flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs"
-          >
-            <p className="text-text-secondary">{t("requests.letThemKnowWhy", { name: requester })}</p>
-            {([...REJECTION_REASON_CODES, CUSTOM_REJECTION_REASON] as const).map((preset) => (
-              <label key={preset} className="flex items-center gap-2 text-text-primary">
+          )}
+          {choosingReason && (
+            <form
+              onSubmit={submitReject}
+              className="flex max-w-xs flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs"
+            >
+              <p className="text-text-secondary">{t("requests.letThemKnowWhy", { name: requester })}</p>
+              {([...REJECTION_REASON_CODES, CUSTOM_REJECTION_REASON] as const).map((preset) => (
+                <label key={preset} className="flex items-center gap-2 text-text-primary">
+                  <input
+                    type="radio"
+                    name="reason"
+                    value={preset}
+                    checked={reason === preset}
+                    onChange={() => setReason(preset)}
+                    className="h-4 w-4 border-border accent-accent"
+                  />
+                  {preset === CUSTOM_REJECTION_REASON ? t("requests.reasonOther") : rejectionReasonText(t, preset)}
+                </label>
+              ))}
+              {reason === CUSTOM_REJECTION_REASON && (
                 <input
-                  type="radio"
-                  name="reason"
-                  value={preset}
-                  checked={reason === preset}
-                  onChange={() => setReason(preset)}
-                  className="h-4 w-4 border-border accent-accent"
+                  type="text"
+                  name="customReason"
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  maxLength={REJECTION_REASON_MAX_LENGTH}
+                  placeholder={t("requests.tellThemWhy")}
+                  autoFocus
+                  className="rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
                 />
-                {preset === CUSTOM_REJECTION_REASON ? t("requests.reasonOther") : rejectionReasonText(t, preset)}
-              </label>
-            ))}
-            {reason === CUSTOM_REJECTION_REASON && (
-              <input
-                type="text"
-                name="customReason"
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                maxLength={REJECTION_REASON_MAX_LENGTH}
-                placeholder={t("requests.tellThemWhy")}
-                autoFocus
-                className="rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
-              />
-            )}
-            <div className="mt-1 flex gap-2">
-              <button
-                type="submit"
-                disabled={anyPending || !canDecline}
-                className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
-              >
-                {isRejecting ? t("requests.declining") : t("requests.declineRequest")}
-              </button>
-              <button
-                type="button"
-                disabled={anyPending}
-                onClick={cancelReject}
-                className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
-              >
-                {t("common.cancel")}
-              </button>
-            </div>
-          </form>
-        )}
-        {(approveState?.error || rejectState?.error || manualApproveState?.error) && (
-          <p className="mt-1.5 max-w-xs text-xs text-red-400">
-            {approveState?.error || rejectState?.error || manualApproveState?.error}
-            {approveState?.code === "sonarr_unresolved" && sonarrUrl && (
-              <>
-                {" — "}
-                <a
-                  href={`${sonarrUrl}/add/new?term=${encodeURIComponent(title)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-text-secondary underline underline-offset-2 hover:text-accent"
+              )}
+              <div className="mt-1 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={anyPending || !canDecline}
+                  className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
                 >
-                  {t("requests.addManuallyInSonarr")}
-                </a>
-              </>
-            )}
-          </p>
-        )}
-      </td>
-    </ThreadRow>
+                  {isRejecting ? t("requests.declining") : t("requests.declineRequest")}
+                </button>
+                <button
+                  type="button"
+                  disabled={anyPending}
+                  onClick={cancelReject}
+                  className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
+                >
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </form>
+          )}
+          {error && (
+            <p className="mt-1.5 max-w-xs text-xs text-red-400">
+              {error}
+              {approveState?.code === "sonarr_unresolved" && sonarrUrl && (
+                <>
+                  {" — "}
+                  <a
+                    href={`${sonarrUrl}/add/new?term=${encodeURIComponent(title)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-text-secondary underline underline-offset-2 hover:text-accent"
+                  >
+                    {t("requests.addManuallyInSonarr")}
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+        </>
+      }
+    />
   );
 }

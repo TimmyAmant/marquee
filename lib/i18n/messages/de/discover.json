@@ -128,5 +128,18 @@
   "viewTable": "Tabelle",
   "creditCount": "{count, plural, one {# Mitwirkung} other {# Mitwirkungen}}",
   "emptyStudio": "Für dieses Studio wurden noch keine Titel gefunden.",
-  "emptyPerson": "Für diese Person gibt es noch keine verarbeitete Filmografie."
+  "emptyPerson": "Für diese Person gibt es noch keine verarbeitete Filmografie.",
+  "shelfWatchlist": "Deine Watchlist",
+  "emptyWatchlist": "Noch nichts aus deiner Plex-Watchlist – die nächste Prüfung holt es.",
+  "editDiscover": "Entdecken bearbeiten",
+  "editingDiscover": "Entdecken bearbeiten: Reihen zeigen, ausblenden und verschieben",
+  "editReset": "Zurücksetzen",
+  "editSave": "Speichern",
+  "editSaving": "Wird gespeichert…",
+  "editStop": "Bearbeiten beenden",
+  "editSaved": "Entdecken gespeichert",
+  "editHidden": "Ausgeblendet",
+  "editShowRow": "{title} anzeigen",
+  "editMoveUp": "{title} nach oben",
+  "editMoveDown": "{title} nach unten"
 }

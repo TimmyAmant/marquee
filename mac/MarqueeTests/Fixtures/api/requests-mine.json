@@ -20,7 +20,10 @@
       "canEdit": false,
       "canCancel": false,
       "editedAt": null,
-      "commentCount": 2
+      "commentCount": 2,
+      "backdropPath": "/lrtSb1skJayPydZk0OSMAKjBOVe.jpg",
+      "reviewedBy": null,
+      "addedToServer": "Radarr"
     },
     {
       "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",

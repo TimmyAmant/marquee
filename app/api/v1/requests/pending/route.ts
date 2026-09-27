@@ -45,6 +45,7 @@ export const GET = withApi(async (request): Promise<PendingRequestsResponse> => 
       createdAt: isoRequired(r.createdAt),
       editedAt: iso(r.editedAt),
       commentCount: comments.get(r.id) ?? 0,
+      backdropPath: r.backdropPath ?? null,
     })),
   };
 });

@@ -127,16 +127,19 @@ extension API {
     /// A Discover shelf's full list: `GET /discover/lists/{list}`.
     enum DiscoverList: OpenEnum {
         case recentlyAdded
+        /// 0.53+: "Your Watchlist", the viewer's own Plex Watchlist.
+        case watchlist
         case trending
         case upcomingMovies
         case upcomingSeries
         case unknown(String)
 
-        static let knownCases: [DiscoverList] = [.recentlyAdded, .trending, .upcomingMovies, .upcomingSeries]
+        static let knownCases: [DiscoverList] = [.recentlyAdded, .watchlist, .trending, .upcomingMovies, .upcomingSeries]
 
         var rawValue: String {
             switch self {
             case .recentlyAdded: return "recently-added"
+            case .watchlist: return "watchlist"
             case .trending: return "trending"
             case .upcomingMovies: return "upcoming-movies"
             case .upcomingSeries: return "upcoming-series"
@@ -148,6 +151,7 @@ extension API {
         var label: String {
             switch self {
             case .recentlyAdded: return String(localized: "Recently Added")
+            case .watchlist: return String(localized: "Your Watchlist")
             case .trending: return String(localized: "Trending")
             case .upcomingMovies: return String(localized: "Upcoming Movies")
             case .upcomingSeries: return String(localized: "Upcoming Series")
@@ -159,7 +163,7 @@ extension API {
         /// carry the MOVIE/SERIES pill; so can an admin's own row (0.49+).
         var mixesMediaTypes: Bool {
             switch self {
-            case .recentlyAdded, .trending, .unknown: return true
+            case .recentlyAdded, .watchlist, .trending, .unknown: return true
             case .upcomingMovies, .upcomingSeries: return false
             }
         }

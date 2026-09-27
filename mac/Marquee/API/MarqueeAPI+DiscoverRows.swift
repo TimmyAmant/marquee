@@ -40,6 +40,18 @@ extension MarqueeAPI {
             )
         }
 
+        /// `GET /settings/discover/locale` (0.53+, admin) — Region & language.
+        func locale() async throws -> API.DiscoverLocale {
+            try await transport.get("/settings/discover/locale")
+        }
+
+        /// `PUT /settings/discover/locale` (0.53+, admin) — the streaming
+        /// region and Discover's region and language; nil puts one back to
+        /// its default. `.invalid` for a code the server doesn't offer.
+        func saveLocale(_ update: API.DiscoverLocaleUpdate) async throws -> API.DiscoverLocale {
+            try await transport.mutate(.put, "/settings/discover/locale", body: update, changes: [.settings, .catalog])
+        }
+
         /// `POST /settings/discover/reset` (admin) — the built-in rows back
         /// in their usual order, all shown; custom rows stay, after them.
         func reset() async throws -> API.DiscoverSettings {

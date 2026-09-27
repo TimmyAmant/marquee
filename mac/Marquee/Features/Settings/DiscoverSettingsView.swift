@@ -37,6 +37,9 @@ struct DiscoverSettingsView: View {
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
+
+                // 0.53+: which country streaming and Discover are for.
+                DiscoverLocaleCard()
             } else if let loadError = discover.loadError {
                 InlineMessage(text: loadError)
             } else {
@@ -466,4 +469,124 @@ private struct LookupKey: Hashable {
     let kind: API.DiscoverRowKind
     let query: String
     let mediaType: API.MediaType?
+}
+
+/// app/settings/discover/region-language-settings.tsx (0.53+): the country
+/// "Currently streaming on" and a movie's release dates are for, and the
+/// region and original language TMDb's Popular and Upcoming rows are picked
+/// from. Saves as each is changed; hidden on an older server.
+private struct DiscoverLocaleCard: View {
+    @Environment(AppModel.self) private var model
+    @State private var locale: API.DiscoverLocale?
+    @State private var error: String?
+    @State private var saving = false
+
+    var body: some View {
+        Group {
+            if let locale {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Region & language")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Which country streaming providers and release dates are for, and where and in what language TMDb's Popular and Upcoming rows are picked from.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
+                        GridRow {
+                            Text("Streaming region")
+                            Picker("Streaming region", selection: binding(\.streamingRegion)) {
+                                Text("Automatic — \(Self.regionName(locale.effective.streamingRegion))").tag(String?.none)
+                                ForEach(locale.regions, id: \.self) { code in
+                                    Text(Self.regionName(code)).tag(String?.some(code))
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 260)
+                        }
+                        GridRow {
+                            Text("Discover region")
+                            Picker("Discover region", selection: binding(\.discoverRegion)) {
+                                Text("Worldwide").tag(String?.none)
+                                ForEach(locale.regions, id: \.self) { code in
+                                    Text(Self.regionName(code)).tag(String?.some(code))
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 260)
+                        }
+                        GridRow {
+                            Text("Discover language")
+                            Picker("Discover language", selection: languageBinding) {
+                                ForEach(locale.languages, id: \.self) { code in
+                                    Text(Self.languageName(code)).tag(code)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 260)
+                        }
+                    }
+                    .font(.system(size: 13))
+                    .disabled(saving)
+                    if let error { InlineMessage(text: error) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .cardSurface()
+            }
+        }
+        .task(id: model.reloadToken) {
+            // An older server answers 404: no card.
+            locale = try? await model.api.discoverSettings.locale()
+        }
+    }
+
+    /// "United Kingdom (GB)".
+    static func regionName(_ code: String) -> String {
+        let name = Locale.current.localizedString(forRegionCode: code) ?? code
+        return "\(name) (\(code))"
+    }
+
+    static func languageName(_ code: String) -> String {
+        if code == "any" { return String(localized: "Any language") }
+        return Locale.current.localizedString(forLanguageCode: code)?.localizedCapitalized ?? code
+    }
+
+    private func binding(_ key: WritableKeyPath<API.DiscoverLocale, String?>) -> Binding<String?> {
+        Binding(
+            get: { locale?[keyPath: key] },
+            set: { value in
+                guard var next = locale else { return }
+                next[keyPath: key] = value
+                save(next)
+            }
+        )
+    }
+
+    /// English is the default, sent as null.
+    private var languageBinding: Binding<String> {
+        Binding(
+            get: { locale?.discoverLanguage ?? "en" },
+            set: { value in
+                guard var next = locale else { return }
+                next.discoverLanguage = value == "en" ? nil : value
+                save(next)
+            }
+        )
+    }
+
+    private func save(_ next: API.DiscoverLocale) {
+        let previous = locale
+        locale = next
+        saving = true
+        error = nil
+        let api = model.api
+        Task {
+            do {
+                locale = try await api.discoverSettings.saveLocale(next.update)
+            } catch {
+                locale = previous
+                self.error = error.localizedDescription
+            }
+            saving = false
+        }
+    }
 }

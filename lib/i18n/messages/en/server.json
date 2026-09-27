@@ -212,6 +212,13 @@
   "plexWatchlistLimited": "You've reached your request limit, so the rest of your watchlist waits until you have requests left.",
   "plexWatchlistUnreachable": "Couldn't reach Plex to read your watchlist. Marquee will try again shortly.",
   "pushTestBody": "Notifications are working on this device.",
+  "enterOmdbKey": "Enter an OMDb API key.",
+  "omdbUnreachable": "Couldn't reach OMDb to check the key. Try again in a moment.",
+  "omdbKeyInvalid": "OMDb didn't accept this key. Check it and try again.",
+  "publicUrlInvalid": "The public URL must start with http:// or https://.",
+  "regionInvalid": "{field} must be null or a two-letter country code Marquee knows.",
+  "discoverLanguageInvalid": "discoverLanguage must be null, \"any\" or a two-letter language code Marquee knows.",
+  "nothingToChange": "Send at least one of streamingRegion, discoverRegion or discoverLanguage.",
   "onlyAdminDuplicates": "Only the admin can see duplicates.",
   "onlyAdminSeerrImport": "Only the admin can import from Seerr.",
   "seerrKeyRequired": "Enter the Seerr API key (Settings → General in Seerr).",
@@ -222,5 +229,6 @@
   "seerrTmdbRequired": "Connect TMDb in Settings → Integrations before importing requests or problem reports — Marquee needs it for their titles and posters.",
   "seerrImportRunning": "An import is already running. Wait for it to finish.",
   "seerrImportNotFound": "That import doesn't exist any more.",
-  "seerrNothingChosen": "Choose at least one thing to import."
+  "seerrNothingChosen": "Choose at least one thing to import.",
+  "onlyOwnProfile": "You can only see your own profile."
 }

@@ -16,6 +16,7 @@ export async function testAndSaveJellyfinConnection(
   const result = await testAndSave(admin.userId, {
     baseUrl: String(formData.get("baseUrl") || ""),
     apiKey: String(formData.get("apiKey") || ""),
+    publicUrl: String(formData.get("publicUrl") || "") || null,
   });
   return result.ok ? { success: true } : { error: result.error };
 }

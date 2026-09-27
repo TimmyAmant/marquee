@@ -6,7 +6,9 @@ import { disconnectHandler, INTEGRATIONS_FORBIDDEN } from "@/lib/api/routes/inte
 import { testAndSaveJellyfinConnection } from "@/lib/integrations/manage";
 import type { Ok } from "@/lib/api/types";
 
-/** Test a Jellyfin server URL + API key and save it. */
+/** Test a Jellyfin server URL + API key and save it; `publicUrl` (0.53+,
+ * optional) is the address "Play on Jellyfin" opens when it isn't the
+ * server URL. */
 export const PUT = withApi(async (request): Promise<Ok> => {
   const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
   const body = await readJsonBody(request);
@@ -14,6 +16,8 @@ export const PUT = withApi(async (request): Promise<Ok> => {
     await testAndSaveJellyfinConnection(ctx.user.id, {
       baseUrl: typeof body.baseUrl === "string" ? body.baseUrl : "",
       apiKey: typeof body.apiKey === "string" ? body.apiKey : "",
+      // 0.53+, optional: where "Play on Jellyfin" opens.
+      publicUrl: typeof body.publicUrl === "string" ? body.publicUrl : null,
     }),
   );
   return { ok: true };

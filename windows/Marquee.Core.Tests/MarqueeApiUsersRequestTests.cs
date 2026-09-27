@@ -43,6 +43,8 @@ public sealed class MarqueeApiUsersRequestTests
             api => api.Users.UpdateAsync(MemberId, new UpdateUserRequest("kid", AutoApproveTv: true))),
         new("DELETE", "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3", null, "ok", Removed,
             api => api.Users.RemoveAsync(MemberId)),
+        new("GET", "/users/83c55a49-6153-4cb9-ae22-4a42d48f4cf3/profile", null, "user-profile", ServerChange.None,
+            api => api.Users.ProfileAsync(MemberId)),
     ];
 
     public static TheoryData<string> CaseNames

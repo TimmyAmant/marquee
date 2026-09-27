@@ -192,6 +192,36 @@ public sealed class LinkItem
         url != null && ExternalLinks.CanOpen(url) ? new LinkItem(label, url) : null;
 }
 
+/// <summary>
+/// "Play on Plex" (or Jellyfin / Emby, 0.53+): the server's own app when this
+/// PC has it (Plex's <c>plex://</c>), else its web app — which may be plain
+/// http on a home network, as the server's own address is.
+/// </summary>
+public sealed class PlayItem
+{
+    public PlayItem(PlayLink link, bool several)
+    {
+        Label = link.ButtonLabel(several);
+        Open = new AsyncRelayCommand(async () =>
+        {
+            if (Uri.TryCreate(link.AppUrl ?? "", UriKind.Absolute, out var app)
+                && await global::Windows.System.Launcher.QueryUriSupportAsync(app, global::Windows.System.LaunchQuerySupportType.Uri)
+                    == global::Windows.System.LaunchQuerySupportStatus.Available
+                && await global::Windows.System.Launcher.LaunchUriAsync(app))
+            {
+                return;
+            }
+            if (link.Link is { } web && (web.Scheme == Uri.UriSchemeHttps || web.Scheme == Uri.UriSchemeHttp))
+            {
+                await global::Windows.System.Launcher.LaunchUriAsync(web);
+            }
+        });
+    }
+
+    public string Label { get; }
+    public ICommand Open { get; }
+}
+
 /// <summary>A label and its value: the title page's facts card, file details and the About rows.</summary>
 public sealed record FactRow(string Label, string Value);
 

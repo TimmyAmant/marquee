@@ -13,6 +13,7 @@ import {
   isTmdbAccessTokenSavedInSettings,
   getTraktClientId,
   getTvdbApiKey,
+  getOmdbApiKey,
   getDiscordWebhookUrl,
   getGenericWebhookUrl,
   getNtfyUrl,
@@ -75,6 +76,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     tmdbSavedInSettings,
     traktClientId,
     tvdbApiKey,
+    omdbApiKey,
     webhookSecret,
     discordWebhookUrl,
     genericWebhookUrl,
@@ -92,6 +94,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     isTmdbAccessTokenSavedInSettings(),
     getTraktClientId(),
     getTvdbApiKey(),
+    getOmdbApiKey(),
     getOrCreateWebhookSecret(adminUserId),
     getDiscordWebhookUrl(),
     getGenericWebhookUrl(),
@@ -115,7 +118,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
   return {
     plexSummary,
     jellyfin: {
-      existing: jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, hasApiKey: true } : null,
+      existing: jellyfinCred ? { baseUrl: jellyfinCred.baseUrl, publicUrl: jellyfinCred.publicUrl, hasApiKey: true } : null,
       summary: jellyfinSummary,
       /** "Jellyfin" or "Emby" (lib/jellyfin/product.ts). */
       name: await getMediaServerName(adminUserId),
@@ -134,6 +137,7 @@ export async function loadIntegrationsPage(adminUserId: string) {
     },
     traktConnected: Boolean(traktClientId),
     tvdbConnected: Boolean(tvdbApiKey),
+    omdbConnected: Boolean(omdbApiKey),
     webhookSecret,
     discordConnected: Boolean(discordWebhookUrl),
     genericWebhookConnected: Boolean(genericWebhookUrl),

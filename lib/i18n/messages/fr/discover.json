@@ -128,5 +128,18 @@
   "viewTable": "Tableau",
   "creditCount": "{count, plural, one {# crédit} other {# crédits}}",
   "emptyStudio": "Aucun titre trouvé pour ce studio pour l’instant.",
-  "emptyPerson": "Aucune filmographie traitée pour cette personne pour l’instant."
+  "emptyPerson": "Aucune filmographie traitée pour cette personne pour l’instant.",
+  "shelfWatchlist": "Votre Watchlist",
+  "emptyWatchlist": "Rien de votre Watchlist Plex pour l’instant : la prochaine vérification l’apportera.",
+  "editDiscover": "Modifier Découvrir",
+  "editingDiscover": "Modification de Découvrir : affichez, masquez et déplacez les rangées",
+  "editReset": "Réinitialiser",
+  "editSave": "Enregistrer",
+  "editSaving": "Enregistrement…",
+  "editStop": "Arrêter la modification",
+  "editSaved": "Découvrir enregistré",
+  "editHidden": "Masquée",
+  "editShowRow": "Afficher {title}",
+  "editMoveUp": "Monter {title}",
+  "editMoveDown": "Descendre {title}"
 }

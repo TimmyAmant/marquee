@@ -6,9 +6,8 @@ using Marquee.Windows.Services;
 namespace Marquee.Windows.ViewModels;
 
 /// <summary>
-/// One row of the season picker: name and episode count, then a checkbox
-/// when the season can be requested, else the tag saying why not ("In
-/// library", "Monitored", "Requested").
+/// One row of the season picker's table: a checkbox (enabled when the
+/// season can be requested), the name, the episode count and a status pill.
 /// </summary>
 public sealed partial class SeasonPickerRow : ObservableObject
 {
@@ -35,9 +34,16 @@ public sealed partial class SeasonPickerRow : ObservableObject
         SeasonNumber = seasonNumber;
         Name = name;
         EpisodeLine = Loc.Plural("Season_EpisodeCount", episodeCount);
+        EpisodeCountText = episodeCount.ToString(System.Globalization.CultureInfo.CurrentCulture);
         IsRequestable = state == SeasonRequestState.Requestable;
-        Tag = state.Tag();
-        TagTone = state == SeasonRequestState.InLibrary ? BadgeTone.Owned : BadgeTone.Info;
+        Pill = state.PillLabel();
+        PillTone = state switch
+        {
+            SeasonRequestState.InLibrary => BadgeTone.Owned,
+            SeasonRequestState.Monitored => BadgeTone.Downloading,
+            SeasonRequestState.Requested => BadgeTone.Info,
+            _ => BadgeTone.Neutral,
+        };
     }
 
     public int SeasonNumber { get; }
@@ -48,10 +54,13 @@ public sealed partial class SeasonPickerRow : ObservableObject
 
     public bool IsRequestable { get; }
 
-    /// <summary>"In library", "Monitored" or "Requested"; empty for a checkbox row (the pill then hides itself).</summary>
-    public string Tag { get; }
+    /// <summary>The Episodes column: just the count.</summary>
+    public string EpisodeCountText { get; }
 
-    public BadgeTone TagTone { get; }
+    /// <summary>The Status column (0.53, after Seerr's): "Not requested", "Requested", "Available", "Monitored".</summary>
+    public string Pill { get; }
+
+    public BadgeTone PillTone { get; }
 
     partial void OnIsCheckedChanged(bool? value) => changed(this);
 }

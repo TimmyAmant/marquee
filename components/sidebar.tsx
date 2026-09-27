@@ -48,6 +48,7 @@ export async function Sidebar() {
         userLabel={session?.user ? session.user.name || session.user.username || null : null}
         avatarSrc={photo ? avatarPath(photo, "/api") : null}
         serverLabel={serverLabel}
+        serverVersion={APP_VERSION}
       />
       {/* Asks about notifications on this device after signing in. */}
       {session?.user && <PushPrompt />}

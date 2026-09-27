@@ -27,6 +27,7 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
   // One request/blocklist lookup for every title on the page.
   const rules = await loadPosterActionRules(ctx.user, [
     ...data.recentlyAdded,
+    ...data.watchlist,
     ...data.trendingItems.map((i) => ({ mediaType: i.media_type as MediaType, tmdbId: i.id })),
     ...data.popularMovieItems.map((i) => ({ mediaType: "movie" as const, tmdbId: i.id })),
     ...data.upcomingMovieItems.map((i) => ({ mediaType: "movie" as const, tmdbId: i.id })),
@@ -41,6 +42,9 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
 
   const fixed = {
     recentlyAdded: data.recentlyAdded.map((item) =>
+      titleCard(item, withActions(item.mediaType, item.tmdbId, item.status ?? null)),
+    ),
+    watchlist: data.watchlist.map((item) =>
       titleCard(item, withActions(item.mediaType, item.tmdbId, item.status ?? null)),
     ),
     trending: data.trendingItems.map((item) => {

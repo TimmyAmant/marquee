@@ -11,6 +11,7 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { useT } from "@/lib/i18n/client";
+import { RAIL_LABELED_ITEM } from "@/lib/rail-position";
 import { timeAgo } from "@/lib/i18n/format";
 
 type NotificationRow = Awaited<ReturnType<typeof getRecentNotificationsAction>>[number];
@@ -58,9 +59,12 @@ function sharedHeadline(message: string, note: string): string {
 export function NotificationsBell({
   variant = "header",
   railLabel,
+  inlineLabel,
 }: {
   variant?: "header" | "rail";
   railLabel?: ReactNode;
+  /** Its name beside the icon on the labeled rail (components/nav-menu.tsx). */
+  inlineLabel?: ReactNode;
 } = {}) {
   const t = useT();
   const onRail = variant === "rail";
@@ -125,7 +129,7 @@ export function NotificationsBell({
         aria-expanded={open}
         className={
           onRail
-            ? `relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+            ? `relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${RAIL_LABELED_ITEM} ${
                 open ? "bg-text-primary text-bg-0" : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
               }`
             : "relative flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg-2/70 text-text-secondary backdrop-blur-[18px] transition-colors hover:border-accent hover:text-accent"
@@ -146,6 +150,7 @@ export function NotificationsBell({
           />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
+        {onRail && inlineLabel}
         {unreadCount > 0 &&
           (onRail ? (
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-bg-1" />

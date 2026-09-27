@@ -1,5 +1,6 @@
 import "server-only";
-import { getTmdbAccessToken } from "@/lib/integrations/app-settings";
+import { getStoredDiscoverLocale, getTmdbAccessToken } from "@/lib/integrations/app-settings";
+import { resolveDiscoverLocale, type DiscoverLocale } from "@/lib/discover/locale";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
 
 export { TmdbError, TmdbNotConfiguredError };
@@ -253,7 +254,25 @@ export function discoverTvByKeyword(keywordId: number, page = 1) {
 
 export type DiscoverSort = "popularity" | "top_rated" | "newest";
 
-export function discoverMovies(options: {
+/** Settings › Discover › Region & language (lib/discover/locale.ts): the
+ * region and original language Popular/Upcoming and the Movies/Series
+ * grids are for, and the country "Currently streaming on" is for. Read
+ * fresh each call (cached 30s underneath). */
+export async function getDiscoverLocale(): Promise<DiscoverLocale> {
+  return resolveDiscoverLocale(
+    await getStoredDiscoverLocale().catch(() => ({ streamingRegion: null, discoverRegion: null, discoverLanguage: null })),
+  );
+}
+
+/** TMDb's `region` / `with_original_language` for a discover call. */
+function discoverParams(locale: DiscoverLocale): { region?: string; with_original_language?: string } {
+  return {
+    region: locale.discoverRegion ?? undefined,
+    with_original_language: locale.discoverLanguage ?? undefined,
+  };
+}
+
+export async function discoverMovies(options: {
   genreId?: number;
   sort: DiscoverSort;
   page?: number;
@@ -268,7 +287,7 @@ export function discoverMovies(options: {
 
   return tmdbFetch<TmdbDiscoverResponse>("/discover/movie", {
     with_genres: options.genreId,
-    with_original_language: "en",
+    ...discoverParams(await getDiscoverLocale()),
     sort_by: sortBy,
     page: options.page ?? 1,
     primary_release_year: options.year,
@@ -276,7 +295,7 @@ export function discoverMovies(options: {
   });
 }
 
-export function discoverTv(options: {
+export async function discoverTv(options: {
   genreId?: number;
   sort: DiscoverSort;
   page?: number;
@@ -290,10 +309,12 @@ export function discoverTv(options: {
         ? "first_air_date.desc"
         : "popularity.desc";
 
+  // TMDb's /discover/tv has no region parameter.
+  const { with_original_language } = discoverParams(await getDiscoverLocale());
   return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
     with_genres: options.genreId,
     with_networks: options.networkId,
-    with_original_language: "en",
+    with_original_language,
     sort_by: sortBy,
     page: options.page ?? 1,
     first_air_date_year: options.year,
@@ -350,6 +371,18 @@ export interface TmdbWatchProviders {
   results?: Record<string, { link?: string; flatrate?: TmdbWatchProviderEntry[] }>;
 }
 
+/** One of a movie's release dates in one country (release_dates append).
+ * `type`: 1 premiere, 2 theatrical (limited), 3 theatrical, 4 digital,
+ * 5 physical, 6 TV. */
+export interface TmdbReleaseDate {
+  type: number;
+  release_date: string;
+}
+
+export interface TmdbReleaseDates {
+  results?: { iso_3166_1: string; release_dates: TmdbReleaseDate[] }[];
+}
+
 export interface TmdbProductionCountry {
   iso_3166_1: string;
   name: string;
@@ -399,13 +432,18 @@ export interface TmdbMovieDetails {
   genres?: { id: number; name: string }[];
   vote_average?: number;
   original_language?: string;
+  original_title?: string;
+  /** US dollars; 0 when TMDb doesn't know. */
+  budget?: number;
+  revenue?: number;
   keywords?: { keywords: TmdbKeywordRef[] };
   "watch/providers"?: TmdbWatchProviders;
+  release_dates?: TmdbReleaseDates;
 }
 
 export function getMovieDetails(id: number) {
   return tmdbFetch<TmdbMovieDetails>(`/movie/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers",
+    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,release_dates",
   });
 }
 
@@ -462,6 +500,7 @@ export interface TmdbTvDetails {
   genres?: { id: number; name: string }[];
   vote_average?: number;
   original_language?: string;
+  original_name?: string;
   origin_country?: string[];
   keywords?: { results: TmdbKeywordRef[] };
   "watch/providers"?: TmdbWatchProviders;
@@ -500,10 +539,13 @@ export interface TmdbUpcomingResult {
   release_date: string;
 }
 
-export function getUpcomingMovies(page = 1) {
+/** Upcoming in the Discover region (Settings › Discover), else the US —
+ * TMDb's answer without a region is every country's mixed together. */
+export async function getUpcomingMovies(page = 1) {
+  const locale = await getDiscoverLocale();
   return tmdbFetch<{ results: TmdbUpcomingResult[]; total_pages?: number; total_results?: number }>("/movie/upcoming", {
     page,
-    region: "US",
+    region: locale.discoverRegion ?? "US",
   });
 }
 
@@ -512,13 +554,14 @@ export function getUpcomingMovies(page = 1) {
  * series) — so this filters /discover/tv to future first-air dates instead,
  * for the same reason getUpcomingMovies' callers already re-filter
  * /movie/upcoming rather than trust it as-is. */
-export function getUpcomingTv(page = 1) {
+export async function getUpcomingTv(page = 1) {
   const todayStr = new Date().toISOString().slice(0, 10);
+  const { with_original_language } = discoverParams(await getDiscoverLocale());
   return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
     page,
     sort_by: "first_air_date.asc",
     "first_air_date.gte": todayStr,
-    with_original_language: "en",
+    with_original_language,
   });
 }
 

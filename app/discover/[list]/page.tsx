@@ -31,14 +31,16 @@ export default async function DiscoverListPage({ params }: { params: Promise<{ l
   const first = await fetchResolvedListPage(resolved, 1, viewer);
   const mixed =
     resolved.type === "builtIn"
-      ? resolved.list === "trending" || resolved.list === "recently-added"
+      ? resolved.list === "trending" || resolved.list === "recently-added" || resolved.list === "watchlist"
       : new Set(first.items.map((item) => item.mediaType)).size > 1 || resolved.shelf.source?.mediaType === "all";
 
   const emptyMessageKey: MessageKey =
     resolved.type === "builtIn"
       ? resolved.list === "recently-added"
         ? "discover.emptyLibrary"
-        : "discover.emptyTmdb"
+        : resolved.list === "watchlist"
+          ? "discover.emptyWatchlist"
+          : "discover.emptyTmdb"
       : resolved.shelf.kind === "library"
         ? "discover.emptyLibrary"
         : resolved.shelf.kind === "traktList"

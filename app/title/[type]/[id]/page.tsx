@@ -168,11 +168,15 @@ export default async function TitlePage({
                 request: mayRequest[type],
                 advanced: permissions.advancedRequests,
                 manageBlocklist: permissions.manageBlocklist,
+                // "This request will be approved automatically".
+                autoApprove:
+                  viewer.isAdmin || (type === "movie" ? permissions.autoApproveMovies : permissions.autoApproveTv),
               }
             : undefined
         }
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
+        playLinks={viewer.session ? data.playLinks : []}
         cast={
           <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
         }

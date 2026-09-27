@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { RAIL_POSITIONS, railPositionCookie, type RailPosition } from "@/lib/rail-position";
+import { RAIL_POSITIONS, railLabelsCookie, railPositionCookie, type RailPosition } from "@/lib/rail-position";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
 
@@ -78,6 +78,51 @@ export function RailPositionSetting({ initial }: { initial: RailPosition }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Settings › Account › Appearance: "Show menu labels", for this device
+ * (lib/rail-position.ts). The rail shows each section's name beside its
+ * icon and the server's version at the end. Applies at once, like the
+ * position above.
+ */
+export function RailLabelsSetting({ initial }: { initial: boolean }) {
+  const t = useT();
+  const router = useRouter();
+  const [on, setOn] = useState(initial);
+
+  function toggle() {
+    const next = !on;
+    setOn(next);
+    document.cookie = railLabelsCookie(next);
+    if (next) document.documentElement.setAttribute("data-rail-labels", "on");
+    else document.documentElement.removeAttribute("data-rail-labels");
+    router.refresh();
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-4 p-6">
+      <div>
+        <p id="rail-labels-label" className="text-sm font-medium text-text-primary">
+          {t("settings.menuLabelsLabel")}
+        </p>
+        <p className="mt-1 text-sm text-text-secondary">{t("settings.menuLabelsHelp")}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="rail-labels-label"
+        onClick={toggle}
+        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-accent" : "bg-text-primary/20"}`}
+      >
+        <span
+          aria-hidden
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${on ? "left-[22px]" : "left-0.5"}`}
+        />
+      </button>
     </div>
   );
 }

@@ -224,6 +224,13 @@ public sealed record TitleViewerState
     public IReadOnlyList<TitleRequestSummary> MyRequests { get; init; } = [];
 
     /// <summary>
+    /// 0.53+: the viewer's requests of this type are approved at once (the
+    /// admin, or the auto-approve permission) — "This request will be
+    /// approved automatically". Null from an older server.
+    /// </summary>
+    public bool? AutoApprove { get; init; }
+
+    /// <summary>
     /// On the admin's request blocklist (0.41+): the can-request flags are
     /// then already false. Null when it isn't, and from an older server.
     /// </summary>

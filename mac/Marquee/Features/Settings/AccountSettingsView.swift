@@ -9,6 +9,8 @@ struct AccountSettingsView: View {
     @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
     /// Settings › Menu position (`NavRailPosition`), per Mac.
     @AppStorage(NavRailPosition.storageKey) private var menuPosition = NavRailPosition.left.rawValue
+    /// Settings › Show menu labels, per Mac.
+    @AppStorage(NavRailPosition.labelsStorageKey) private var menuLabels = false
 
     @State private var members: [API.HouseholdMember]?
     @State private var loadError: String?
@@ -16,6 +18,8 @@ struct AccountSettingsView: View {
     @State private var removing: API.HouseholdMember?
     @State private var removeError: String?
     @State private var watchlist: API.PlexWatchlist?
+    /// Whose profile is open (0.53+).
+    @State private var profileOf: API.HouseholdMember?
 
     var body: some View {
         SettingsPane(title: String(localized: "Account"), subtitle: String(localized: "Your Marquee account details.")) {
@@ -51,6 +55,11 @@ struct AccountSettingsView: View {
                                 .labelsHidden()
                                 .frame(width: 280)
                             }
+                            GridRow {
+                                Text("Menu labels")
+                                Toggle("Show menu labels", isOn: $menuLabels)
+                                    .help("Names beside the menu's icons, and the server's version at the end.")
+                            }
                             // 0.50+: the account's language, the same one
                             // the website uses; an older server can't keep one.
                             if viewer.sendsLanguage {
@@ -61,6 +70,11 @@ struct AccountSettingsView: View {
                             }
                         }
                         Spacer()
+                        // 0.53+: your profile (app/profile).
+                        if model.session.serverInfo?.hasProfiles == true, let me = members?.first(where: \.isCurrentUser) {
+                            Button("View profile") { profileOf = me }
+                                .buttonStyle(OutlineButtonStyle())
+                        }
                         Button("Sign out") { model.signOut() }
                             .buttonStyle(OutlineButtonStyle())
                     }
@@ -172,6 +186,10 @@ struct AccountSettingsView: View {
             EditMemberSheet(member: member)
                 .environment(model)
         }
+        .sheet(item: $profileOf) { member in
+            MemberProfileSheet(member: member)
+                .environment(model)
+        }
         .confirmationDialog(
             removing.map { String(localized: "Remove \($0.username)?") } ?? String(localized: "Remove this member?"),
             isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
@@ -234,6 +252,11 @@ struct AccountSettingsView: View {
             }
             if member.isCurrentUser {
                 TonePill(text: String(localized: "You"), tone: .neutral, small: true)
+            }
+            if (isAdmin || member.isCurrentUser) && model.session.serverInfo?.hasProfiles == true {
+                Button("Profile") { profileOf = member }
+                    .buttonStyle(QuietButtonStyle())
+                    .font(.system(size: 12))
             }
             if isAdmin || member.isCurrentUser {
                 Button("Edit") { editing = member }

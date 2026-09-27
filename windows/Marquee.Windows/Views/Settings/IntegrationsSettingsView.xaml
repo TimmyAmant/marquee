@@ -930,6 +930,13 @@
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
+                <!-- 0.53+: IMDb / Rotten Tomatoes / Metacritic on title pages. -->
+                <ContentControl
+                    Content="{x:Bind ViewModel.Omdb}"
+                    ContentTemplate="{StaticResource SecretCardTemplate}"
+                    Visibility="{x:Bind ViewModel.ShowsOmdb, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" />
             </StackPanel>
 
             <!--

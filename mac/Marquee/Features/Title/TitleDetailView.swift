@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// app/title/[type]/[id]/page.tsx + components/title-hero.tsx.
@@ -80,8 +81,10 @@ struct TitleDetailView: View {
         }
         .sheet(isPresented: $showingSeasonPicker) {
             if let detail = screen.detail {
-                SeasonRequestSheet(title: detail.name, seasons: detail.seasons) { seasons in
+                SeasonRequestSheet(title: detail.name, seasons: detail.seasons, autoApprove: detail.viewer.autoApprove == true) { seasons in
                     try await screen.requestSeasons(seasons)
+                    // After Seerr's toast: "Severance requested".
+                    model.flash(String(localized: "\(detail.name) requested"))
                 }
             }
         }
@@ -559,6 +562,10 @@ private struct TitleActionRow: View {
                         .disabled(screen.isAdding || screen.advancedAdd.isLoading)
                 }
 
+                // components/play-button.tsx (0.53+): "Play on Plex" and
+                // friends, a menu when more than one server has it.
+                PlayOnServerButton(links: detail.play ?? [])
+
                 // components/fourk-controls.tsx (0.37+): the 4K copy, when
                 // the admin has a 4K Radarr/Sonarr for this type.
                 if let fourK = viewer.fourK {
@@ -863,13 +870,23 @@ private struct TitleSidebarColumn: View {
 
     /// The `.frow` rows this title actually has, in the mockup's order.
     private var facts: [(label: String, value: String)] {
+        let facts = detail.facts
+        // A theatrical release on the same day as the release date says
+        // nothing new.
+        let theatrical = facts.theatricalReleaseLabel == facts.releaseDateLabel ? nil : facts.theatricalReleaseLabel
         let candidates: [(String, String?)] = [
-            (String(localized: "Status"), detail.facts.statusLabel),
-            (detail.mediaType == .movie ? String(localized: "Release Date") : String(localized: "First Air Date"), detail.facts.releaseDateLabel),
-            (String(localized: "Next Episode"), detail.facts.nextAirDateLabel),
-            (String(localized: "Original Language"), detail.facts.originalLanguageLabel),
-            (String(localized: "Production Country"), detail.facts.productionCountry.map { "\($0.flag) \($0.name)" }),
-            (String(localized: "Network"), detail.facts.network),
+            (String(localized: "Status"), facts.statusLabel),
+            (String(localized: "Original Title"), facts.originalTitle),
+            (detail.mediaType == .movie ? String(localized: "Release Date") : String(localized: "First Air Date"), facts.releaseDateLabel),
+            (String(localized: "Theatrical Release"), theatrical),
+            (String(localized: "Digital Release"), facts.digitalReleaseLabel),
+            (String(localized: "Next Episode"), facts.nextAirDateLabel),
+            (String(localized: "Budget"), facts.budgetLabel),
+            (String(localized: "Revenue"), facts.revenueLabel),
+            (String(localized: "Original Language"), facts.originalLanguageLabel),
+            (String(localized: "Production Country"), facts.productionCountry.map { "\($0.flag) \($0.name)" }),
+            (String(localized: "Studio"), facts.studio),
+            (String(localized: "Network"), facts.network),
         ]
         return candidates.compactMap { label, value in
             value.nonBlank.map { (label: label, value: $0) }
@@ -904,22 +921,36 @@ private struct TitleSidebarColumn: View {
                 .frame(height: 50)
             }
 
+            // 0.53+: IMDb / Rotten Tomatoes / Metacritic (an OMDb key on the server).
+            let ratings = detail.facts.ratings.flatMap { TitleRatingsRow.hasAny($0) ? $0 : nil }
+            if let ratings {
+                TitleRatingsRow(ratings: ratings)
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .top) {
+                        if rating != nil { Theme.border.frame(height: 1) }
+                    }
+            }
+
             ForEach(Array(facts.enumerated()), id: \.offset) { index, row in
-                factRow(row.label, row.value, dividing: rating != nil || index > 0)
+                factRow(row.label, row.value, dividing: rating != nil || ratings != nil || index > 0)
             }
 
             if !detail.facts.watchProviders.isEmpty {
                 // .streaming — 1px top border, 14 above the caps label.
                 VStack(alignment: .leading, spacing: 10) {
-                    CapsLabel(text: String(localized: "CURRENTLY STREAMING ON"))
+                    HStack {
+                        CapsLabel(text: String(localized: "CURRENTLY STREAMING ON"))
+                        Spacer(minLength: 8)
+                        // 0.53+: the country they're for (Settings › Discover).
+                        if let region = detail.facts.streamingRegion.nonBlank {
+                            Text(verbatim: region)
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                    }
                     FlowLayout(spacing: 8, lineSpacing: 8) {
                         ForEach(detail.facts.watchProviders, id: \.name) { provider in
-                            RemoteImage(provider.logoPath, size: .w92, showsShimmer: false)
-                                .frame(width: 36, height: 36)
-                                .background(Color.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                                .shadow(color: .black.opacity(0.3), radius: 3, y: 2)
-                                .help(provider.name)
+                            providerTile(provider)
                         }
                     }
                 }
@@ -940,6 +971,24 @@ private struct TitleSidebarColumn: View {
                 .strokeBorder(Theme.border, lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.35), radius: 20, y: 18)
+    }
+
+    /// A provider's logo; with TMDb's "where to watch" page, a link to it.
+    @ViewBuilder
+    private func providerTile(_ provider: API.TitleDetail.WatchProvider) -> some View {
+        let tile = RemoteImage(provider.logoPath, size: .w92, showsShimmer: false)
+            .frame(width: 36, height: 36)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .shadow(color: .black.opacity(0.3), radius: 3, y: 2)
+            .help(provider.name)
+        if let url = detail.facts.streamingURL {
+            Link(destination: url) { tile }
+                .buttonStyle(.plain)
+                .accessibilityLabel(provider.name)
+        } else {
+            tile
+        }
     }
 
     /// `.frow` — label left, value right, hairline above. 38pt is a minimum,
@@ -1104,6 +1153,124 @@ private struct FranchiseSection: View {
         ) {
             Button("Request All") { Task { await screen.requestAllMissing() } }
             Button("Cancel", role: .cancel) {}
+        }
+    }
+}
+
+// MARK: - Ratings and Play (0.53+)
+
+/// components/title-hero.tsx's RatingsRow: IMDb (linking to the title there),
+/// Rotten Tomatoes and Metacritic as small badges under the TMDb score.
+private struct TitleRatingsRow: View {
+    let ratings: API.TitleDetail.Ratings
+
+    static func hasAny(_ ratings: API.TitleDetail.Ratings) -> Bool {
+        ratings.imdbRating != nil || ratings.rottenTomatoesCritics != nil || ratings.metacritic != nil
+    }
+
+    var body: some View {
+        FlowLayout(spacing: 6, lineSpacing: 6) {
+            if let imdb = ratings.imdbRating {
+                let badge = RatingBadge(mark: "IMDb", markColor: Color(red: 0.96, green: 0.77, blue: 0.09)) {
+                    Text(imdb.formatted(.number.precision(.fractionLength(1))))
+                    if let votes = ratings.imdbVotes {
+                        Text("(\(votes.formatted(.number.notation(.compactName))))")
+                            .foregroundStyle(Theme.textMuted)
+                            .font(.system(size: 11))
+                    }
+                }
+                .help("IMDb rating")
+                if let url = ratings.imdbURL {
+                    Link(destination: url) { badge }
+                        .buttonStyle(.plain)
+                } else {
+                    badge
+                }
+            }
+            if let critics = ratings.rottenTomatoesCritics {
+                RatingBadge(mark: "🍅", markColor: nil) {
+                    Text("\(critics)%")
+                }
+                .help("Rotten Tomatoes (critics)")
+            }
+            if let metacritic = ratings.metacritic {
+                RatingBadge(mark: "MC", markColor: Color(red: 0.4, green: 0.8, blue: 0.2)) {
+                    Text(verbatim: "\(metacritic)")
+                }
+                .help("Metascore")
+            }
+        }
+    }
+}
+
+/// One rating: a small mark (IMDb's yellow tag, a tomato, Metacritic's
+/// green) and the score, in an outlined capsule.
+private struct RatingBadge<Score: View>: View {
+    let mark: String
+    let markColor: Color?
+    @ViewBuilder let score: () -> Score
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let markColor {
+                Text(verbatim: mark)
+                    .font(.system(size: 9.5, weight: .heavy))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(RoundedRectangle(cornerRadius: 3).fill(markColor))
+            } else {
+                Text(verbatim: mark).font(.system(size: 11))
+            }
+            score()
+        }
+        .font(.system(size: 12, weight: .medium))
+        .foregroundStyle(Theme.textPrimary)
+        .padding(.horizontal, 9)
+        .frame(height: 26)
+        .overlay(Capsule().strokeBorder(Theme.border))
+    }
+}
+
+/// components/play-button.tsx: "Play on Plex" (or Jellyfin / Emby) — the
+/// server's own app when this Mac has it (Plex's `plex://`), else its web
+/// app. A menu when more than one household server has the title.
+private struct PlayOnServerButton: View {
+    let links: [API.TitleDetail.PlayLink]
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        if links.count == 1, let link = links.first {
+            Button { open(link) } label: { label(link.label) }
+                .buttonStyle(AccentButtonStyle())
+        } else if links.count > 1 {
+            Menu {
+                ForEach(links) { link in
+                    Button(link.menuTitle) { open(link) }
+                }
+            } label: {
+                label(String(localized: "Play"))
+            }
+            .menuStyle(.button)
+            .buttonStyle(AccentButtonStyle())
+            .fixedSize()
+        }
+    }
+
+    private func label(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "play.fill").font(.system(size: 10))
+            Text(text)
+        }
+    }
+
+    /// The app first when one is installed for its scheme.
+    private func open(_ link: API.TitleDetail.PlayLink) {
+        if let app = link.appUrl.nonBlank.flatMap(URL.init(string:)),
+           NSWorkspace.shared.urlForApplication(toOpen: app) != nil {
+            openURL(app)
+        } else if let web = link.link {
+            openURL(web)
         }
     }
 }

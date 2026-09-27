@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRailPosition, railPositionCookie, RAIL_POSITIONS } from "@/lib/rail-position";
+import { parseRailLabels, parseRailPosition, railLabelsCookie, railPositionCookie, RAIL_POSITIONS } from "@/lib/rail-position";
 
 describe("parseRailPosition", () => {
   it("accepts every position", () => {
@@ -27,5 +27,20 @@ describe("parseRailPosition", () => {
 describe("railPositionCookie", () => {
   it("writes a site-wide, year-long cookie", () => {
     expect(railPositionCookie("top")).toBe("marquee-rail=top; Path=/; Max-Age=31536000; SameSite=Lax");
+  });
+});
+
+describe("menu labels", () => {
+  it("is on only for \"on\"", () => {
+    expect(parseRailLabels("on")).toBe(true);
+    expect(parseRailLabels(" ON ")).toBe(true);
+    expect(parseRailLabels("off")).toBe(false);
+    expect(parseRailLabels(undefined)).toBe(false);
+    expect(parseRailLabels("yes")).toBe(false);
+  });
+
+  it("keeps the choice for a year", () => {
+    expect(railLabelsCookie(true)).toBe("marquee-rail-labels=on; Path=/; Max-Age=31536000; SameSite=Lax");
+    expect(railLabelsCookie(false)).toContain("marquee-rail-labels=off");
   });
 });
