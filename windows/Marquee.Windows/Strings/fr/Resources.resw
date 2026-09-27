@@ -4805,7 +4805,7 @@
     <value>Rien d’incomplet : chaque collection dont vous possédez une partie est complète, ou aucun de vos titres n’appartient encore à une collection.</value>
   </data>
   <data name="Library_DuplicatesIntro.Text" xml:space="preserve">
-    <value>Titres présents sur plusieurs serveurs ou dans plusieurs fichiers. Vérifiez les chemins avant de supprimer quoi que ce soit : Marquee ne supprime rien lui-même.</value>
+    <value>Les titres qui ont plus d'un fichier, ou qui figurent sur deux serveurs Plex ou deux serveurs Jellyfin. Un même fichier vu à travers des dossiers montés différemment (comme /movies et /data/Movies) ne compte pas. Vérifiez les chemins avant de supprimer quoi que ce soit — Marquee ne supprime rien lui-même.</value>
   </data>
   <data name="Library_DuplicatesEmpty.Text" xml:space="preserve">
     <value>Aucun doublon : chaque titre est sur un seul serveur, dans un seul fichier.</value>

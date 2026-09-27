@@ -597,7 +597,7 @@ private struct LibraryDuplicatesTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Titles that are on more than one server or in more than one file. Check the paths before deleting anything — Marquee deletes nothing itself.")
+            Text("Titles with more than one file, or listed by two Plex or two Jellyfin servers. The same file seen through different folder mappings (like /movies and /data/Movies) doesn't count. Check the paths before deleting anything — Marquee deletes nothing itself.")
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
