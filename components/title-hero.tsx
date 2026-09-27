@@ -243,20 +243,27 @@ export async function TitleHero({
             quality={85}
             className="object-cover object-[50%_25%]"
           />
-          {/* Three fades so the artwork has no edges: a scrim under the top
+          {/* Fades so the artwork has no edges: a scrim under the top
               bar, a long fall into the page background at the bottom (the
               rows below continue on the same colour), and a wash from the
-              left behind the poster and the text. */}
+              left behind the poster and the text, over a light veil. */}
           <div
             className="absolute inset-0"
             style={{
               background: [
-                "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 65%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 20%, transparent) 12%, transparent 24%)",
-                "linear-gradient(to bottom, transparent 38%, color-mix(in srgb, var(--marquee-bg-0) 45%, transparent) 62%, color-mix(in srgb, var(--marquee-bg-0) 85%, transparent) 82%, var(--marquee-bg-0) 100%)",
-                // Strong enough across the whole text column (it reaches
-                // ~70% of a laptop's width) that a bright frame never sits
-                // behind the overview, then gone well before the right edge.
-                "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 90%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 78%, transparent) 28%, color-mix(in srgb, var(--marquee-bg-0) 52%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 16%, transparent) 72%, transparent 88%)",
+                // Under the top bar.
+                "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 70%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 25%, transparent) 14%, transparent 28%)",
+                // Into the page at the bottom, starting high enough that the
+                // links and the rows below never sit on bright artwork.
+                "linear-gradient(to bottom, transparent 24%, color-mix(in srgb, var(--marquee-bg-0) 50%, transparent) 54%, color-mix(in srgb, var(--marquee-bg-0) 88%, transparent) 78%, var(--marquee-bg-0) 100%)",
+                // Behind the poster and the text column, strong enough across
+                // it that a bright or busy frame (a grey sky, faces) never
+                // fights the logo, the pills or the overview, and gone well
+                // before the right edge.
+                "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 94%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 84%, transparent) 30%, color-mix(in srgb, var(--marquee-bg-0) 62%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 26%, transparent) 74%, transparent 92%)",
+                // A light veil over all of it, so a bright image sits at the
+                // same level as a dark one.
+                "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 22%, transparent), color-mix(in srgb, var(--marquee-bg-0) 22%, transparent))",
               ].join(", "),
             }}
           />
@@ -447,6 +454,14 @@ export async function TitleHero({
               <div className="mt-3.5">
                 <ExternalLinks links={links} />
               </div>
+
+              {/* In the main column rather than under the facts card, where
+                  a tall card beside a short column left a hole. */}
+              {file && (
+                <div className="mt-6">
+                  <FileDetailsSection file={file} runtimeLabel={runtimeLabel ?? null} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -524,11 +539,6 @@ export async function TitleHero({
               )}
             </div>
 
-            {file && (
-              <div className="mt-4">
-                <FileDetailsSection file={file} runtimeLabel={runtimeLabel ?? null} />
-              </div>
-            )}
           </aside>
         </div>
       </div>
