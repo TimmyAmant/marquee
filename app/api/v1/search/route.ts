@@ -3,16 +3,16 @@ import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { invalid } from "@/lib/api/request";
-import { statusKey, titleCard, yearOf } from "@/lib/api/mappers";
-import { posterActions } from "@/lib/api/poster-actions";
 import { loadPosterActionRules } from "@/lib/api/poster-action-rules";
+import { searchCompanyDto, searchPersonDto, searchTitleDto } from "@/lib/api/search-dto";
 import { loadSearchResults } from "@/lib/pages/search";
 import type { SearchResults } from "@/lib/api/types";
-import type { MediaType } from "@/lib/db/schema";
 
-/** The /search?q= results page: people, studios, titles, and a genre/keyword
- * theme row, with status, favorites and the viewer's quick action
- * (lib/api/poster-actions.ts). */
+/** The /search?q= results page: `sections` in the page's order — movies,
+ * series, people, studios & networks — each ranked with its total, plus a
+ * genre/keyword theme row, with status, favorites and the viewer's quick
+ * action (lib/api/poster-actions.ts). `people`/`studios`/`titles` repeat
+ * the sections the way apps before 0.54 read them. */
 export const GET = withApi(async (request): Promise<SearchResults> => {
   const ctx = await requireApiUser(request);
   const query = new URL(request.url).searchParams.get("q")?.trim();
@@ -20,51 +20,35 @@ export const GET = withApi(async (request): Promise<SearchResults> => {
   await requireTmdbConfigured();
 
   const data = await loadSearchResults(await ctx.viewer(), query);
-  const rules = await loadPosterActionRules(
-    ctx.user,
-    [
-      ...data.titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
-      ...data.themeItems,
-    ],
-    data.arrConfigured,
-  );
+  const allTitles = [...data.movies.items, ...data.series.items, ...(data.theme?.items ?? [])];
+  const rules = await loadPosterActionRules(ctx.user, allTitles, data.arrConfigured);
+  const title = (card: (typeof allTitles)[number]) => searchTitleDto(rules, card);
 
-  const card = (base: { mediaType: MediaType; tmdbId: number; name: string; posterPath: string | null; year: string | null }) => {
-    const status = data.statusMap.get(statusKey(base.mediaType, base.tmdbId)) ?? null;
-    return titleCard(base, {
-      status,
-      favorited: data.favoritedTitle(base.mediaType, base.tmdbId),
-      ...posterActions(rules, base.mediaType, base.tmdbId, status),
-    });
-  };
+  const movies = data.movies.items.map(title);
+  const series = data.series.items.map(title);
+  const people = data.people.items.map(searchPersonDto);
+  const companies = data.companies.items.map(searchCompanyDto);
 
   return {
     query,
-    people: data.people.map((person) => ({
-      tmdbId: person.id,
-      name: person.name ?? "",
-      profilePath: person.profile_path ?? null,
-      knownForDepartment: person.known_for_department ?? null,
-      favorited: data.favoritedPersonIds.has(person.id),
-    })),
-    studios: data.companyResults.map((company) => ({
-      tmdbId: company.tmdbId,
-      name: company.name,
-      logoPath: company.logoPath,
-      favorited: data.favoritedCompanyIds.has(company.tmdbId),
-    })),
-    titles: data.titleResults.map((title) =>
-      card({
-        mediaType: title.media_type as MediaType,
-        tmdbId: title.id,
-        name: title.title || title.name || "",
-        posterPath: title.poster_path ?? null,
-        year: yearOf(title.release_date || title.first_air_date),
-      }),
-    ),
+    people,
+    studios: companies
+      .filter((company) => company.kind === "studio")
+      .map(({ kind: _kind, ...company }) => company),
+    titles: [...movies, ...series],
     theme:
-      data.themeItems.length > 0 && data.themeLabel
-        ? { label: data.themeLabel, items: data.themeItems.map((item) => card(item)) }
+      data.theme && data.theme.items.length > 0
+        ? { label: data.theme.label, items: data.theme.items.map(title), placement: data.theme.placement }
         : null,
+    sections: {
+      movies: { totalResults: data.movies.totalResults, totalPages: data.movies.totalPages, results: movies },
+      series: { totalResults: data.series.totalResults, totalPages: data.series.totalPages, results: series },
+      people: { totalResults: data.people.totalResults, totalPages: data.people.totalPages, results: people },
+      studiosAndNetworks: {
+        totalResults: data.companies.totalResults,
+        totalPages: data.companies.totalPages,
+        results: companies,
+      },
+    },
   };
 });

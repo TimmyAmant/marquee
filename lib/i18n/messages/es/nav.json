@@ -61,5 +61,13 @@
   "notFoundBody": "Esa página no existe: puede que el enlace sea incorrecto o que TMDb ya no tenga este título.",
   "backToDiscover": "Volver a Descubrir",
   "quoted": "«{text}»",
-  "serverVersion": "Marquee {version}"
+  "serverVersion": "Marquee {version}",
+  "typeStudio": "Estudio",
+  "typeNetwork": "Cadena",
+  "groupMovies": "Películas",
+  "groupTv": "Series",
+  "groupPeople": "Personas",
+  "groupStudiosNetworks": "Estudios y cadenas",
+  "searchSuggestions": "Sugerencias de búsqueda",
+  "searchAllResults": "Ver todos los resultados para «{query}»"
 }

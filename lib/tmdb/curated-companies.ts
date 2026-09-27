@@ -18,17 +18,22 @@ export const CURATED_STUDIO_IDS = [
   521, // DreamWorks Animation
 ];
 
-export const CURATED_NETWORK_IDS = [
-  213, // Netflix
-  49, // HBO
-  1024, // Amazon (Prime Video)
-  2739, // Disney+
-  2552, // Apple TV+
-  453, // Hulu
-  88, // FX
-  67, // Showtime
-  3353, // Peacock
-  4330, // Paramount+
-  6, // NBC
-  16, // CBS
+/** Discover's Networks row, with the names search matches against: TMDb
+ * has no network search, so "hbo" finds HBO here (lib/search/rank.ts
+ * matchNetworks). `aliases` are other names people type for the same one. */
+export const CURATED_NETWORKS: readonly { id: number; name: string; aliases?: readonly string[] }[] = [
+  { id: 213, name: "Netflix" },
+  { id: 49, name: "HBO", aliases: ["HBO Max", "Max"] },
+  { id: 1024, name: "Prime Video", aliases: ["Amazon", "Amazon Prime", "Amazon Prime Video"] },
+  { id: 2739, name: "Disney+", aliases: ["Disney Plus"] },
+  { id: 2552, name: "Apple TV+", aliases: ["Apple TV", "Apple TV Plus"] },
+  { id: 453, name: "Hulu" },
+  { id: 88, name: "FX" },
+  { id: 67, name: "Showtime" },
+  { id: 3353, name: "Peacock" },
+  { id: 4330, name: "Paramount+", aliases: ["Paramount Plus"] },
+  { id: 6, name: "NBC" },
+  { id: 16, name: "CBS" },
 ];
+
+export const CURATED_NETWORK_IDS = CURATED_NETWORKS.map((network) => network.id);

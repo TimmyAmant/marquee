@@ -141,5 +141,15 @@
   "editHidden": "Oculta",
   "editShowRow": "Mostrar {title}",
   "editMoveUp": "Mover {title} para cima",
-  "editMoveDown": "Mover {title} para baixo"
+  "editMoveDown": "Mover {title} para baixo",
+  "searchResultsFor": "Resultados para “{query}”",
+  "searchMovies": "Filmes",
+  "searchSeries": "Séries",
+  "searchPeople": "Pessoas",
+  "searchStudiosNetworks": "Estúdios e canais",
+  "searchStudio": "Estúdio",
+  "searchNetwork": "Canal",
+  "searchBackToAll": "← Todos os resultados para “{query}”",
+  "searchSectionFor": "{section} para “{query}”",
+  "noResultsHint": "Confira a ortografia ou tente um título mais curto, o nome de uma pessoa ou um estúdio."
 }

@@ -141,5 +141,15 @@
   "editHidden": "Hidden",
   "editShowRow": "Show {title}",
   "editMoveUp": "Move {title} up",
-  "editMoveDown": "Move {title} down"
+  "editMoveDown": "Move {title} down",
+  "searchResultsFor": "Results for “{query}”",
+  "searchMovies": "Movies",
+  "searchSeries": "TV Shows",
+  "searchPeople": "People",
+  "searchStudiosNetworks": "Studios & Networks",
+  "searchStudio": "Studio",
+  "searchNetwork": "Network",
+  "searchBackToAll": "← All results for “{query}”",
+  "searchSectionFor": "{section} for “{query}”",
+  "noResultsHint": "Check the spelling, or try a shorter title, a person's name or a studio."
 }
