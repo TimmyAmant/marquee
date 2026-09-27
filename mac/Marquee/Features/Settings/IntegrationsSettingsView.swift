@@ -1,9 +1,21 @@
 import SwiftUI
 
-/// app/settings/integrations/page.tsx and its connect cards. One
-/// `GET /settings/integrations` describes every provider; each card writes
-/// through its own endpoint and the `.settings` event reloads the overview.
+/// Which of Settings' tabs an `IntegrationsSettingsView` fills: the admin's
+/// General, Media servers and Services tabs, or one household channel under
+/// Notifications. They share `GET /settings/integrations`.
+enum IntegrationsPart: Hashable {
+    case general, mediaServers, services
+    case channel(NotificationsSubTab)
+}
+
+/// The website's app/settings/{general,media-servers,services}/page.tsx and
+/// app/settings/notifications/[agent]/page.tsx with their connect cards.
+/// One `GET /settings/integrations` describes every provider; each card
+/// writes through its own endpoint and the `.settings` event reloads the
+/// overview.
 struct IntegrationsSettingsView: View {
+    let part: IntegrationsPart
+
     @Environment(AppModel.self) private var model
 
     @State private var overview: API.IntegrationsOverview?
@@ -12,114 +24,28 @@ struct IntegrationsSettingsView: View {
     @State private var syncMessage: (String, Bool)?
 
     var body: some View {
-        SettingsPane(
-            title: String(localized: "Integrations"),
-            subtitle: String(localized: "Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf."),
-            trailing: AnyView(syncButton)
-        ) {
-            if let overview {
-                section(String(localized: "Media Libraries")) {
-                    PlexCard(settings: overview.plex)
-                    JellyfinCard(settings: overview.jellyfin)
+        Group {
+            switch part {
+            case .general:
+                SettingsPane(
+                    title: String(localized: "General"),
+                    subtitle: String(localized: "Where Marquee gets its movie and TV details, API keys for other apps, and moving over from Seerr.")
+                ) { loaded(general) }
+            case .mediaServers:
+                SettingsPane(
+                    title: String(localized: "Media servers"),
+                    subtitle: String(localized: "Connect Plex or Jellyfin so Marquee knows what the household already owns. Credentials are stored encrypted on your server."),
+                    trailing: AnyView(syncButton)
+                ) { loaded(mediaServers) }
+            case .services:
+                SettingsPane(
+                    title: String(localized: "Services"),
+                    subtitle: String(localized: "Sonarr and Radarr: where approved requests are sent. Add as many as you run; 4K ones take 4K requests.")
+                ) { loaded(services) }
+            case .channel(let channel):
+                VStack(alignment: .leading, spacing: 16) {
+                    loaded { overview in self.channel(channel, overview) }
                 }
-                // 0.44+: single sign-on; nothing at all from an older server.
-                SsoSettingsSection()
-                section(String(localized: "Download Clients")) {
-                    // 0.43+: any number of servers. An older server omits
-                    // the list and keeps the four fixed cards.
-                    if overview.usesServerList {
-                        ArrServersCard(kind: .sonarr, servers: overview.arrServers(of: .sonarr))
-                        ArrServersCard(kind: .radarr, servers: overview.arrServers(of: .radarr))
-                    } else {
-                        fixedArrCards(overview)
-                    }
-                }
-                section(String(localized: "Metadata Sources")) {
-                    TMDbCard(settings: overview.tmdb)
-                    TraktCard(connected: overview.trakt.connected)
-                    SecretCard(
-                        title: "TheTVDB",
-                        description: String(localized: "Fills in poster art and an overview for TV shows when TMDb doesn't have them yet — Sonarr's own metadata comes from here too."),
-                        fieldLabel: String(localized: "API key"),
-                        placeholder: String(localized: "From thetvdb.com/dashboard/account/apikey"),
-                        removeLabel: String(localized: "Remove saved key"),
-                        connected: overview.tvdb.connected,
-                        save: { try await $0.integrations.tvdb.save($1) },
-                        remove: { try await $0.integrations.tvdb.remove() }
-                    )
-                    // 0.53+: IMDb / Rotten Tomatoes / Metacritic on title pages.
-                    if let omdb = overview.omdb {
-                        SecretCard(
-                            title: String(localized: "OMDb (ratings)"),
-                            description: String(localized: "Optional. With a key, title pages show IMDb, Rotten Tomatoes and Metacritic scores beside TMDb's."),
-                            fieldLabel: String(localized: "API key"),
-                            placeholder: String(localized: "From omdbapi.com/apikey.aspx"),
-                            removeLabel: String(localized: "Remove saved key"),
-                            connected: omdb.connected,
-                            save: { try await $0.integrations.omdb.save($1) },
-                            remove: { try await $0.integrations.omdb.remove() }
-                        )
-                    }
-                }
-                section(String(localized: "Household channels")) {
-                    // 0.45+: what these channels post.
-                    HouseholdEventsCard()
-                    ArrWebhooksCard(
-                        webhooks: overview.arrWebhooks,
-                        radarr4kConnected: overview.radarr4k?.connected == true,
-                        sonarr4kConnected: overview.sonarr4k?.connected == true,
-                        isLegacy: overview.usesServerList
-                    )
-                    SecretCard(
-                        title: String(localized: "Discord notifications"),
-                        description: String(localized: "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected."),
-                        fieldLabel: String(localized: "Webhook URL"),
-                        placeholder: String(localized: "From a channel's Integrations → Webhooks settings in Discord"),
-                        successMessage: String(localized: "Connected — check the channel for a test message."),
-                        removeLabel: String(localized: "Remove saved webhook"),
-                        connected: overview.discord.connected,
-                        save: { try await $0.integrations.discord.save($1) },
-                        remove: { try await $0.integrations.discord.remove() }
-                    )
-                    SecretCard(
-                        title: String(localized: "ntfy notifications"),
-                        description: String(localized: "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events."),
-                        fieldLabel: String(localized: "Topic URL"),
-                        placeholder: "https://ntfy.sh/your-topic-name",
-                        successMessage: String(localized: "Connected — check the topic for a test message."),
-                        removeLabel: String(localized: "Remove saved topic"),
-                        connected: overview.ntfy.connected,
-                        save: { try await $0.integrations.ntfy.save($1) },
-                        remove: { try await $0.integrations.ntfy.remove() }
-                    )
-                    // 0.36+; an older server omits them.
-                    if let telegram = overview.telegram { TelegramCard(settings: telegram) }
-                    if let pushover = overview.pushover { PushoverCard(connected: pushover.connected) }
-                    if let email = overview.email { EmailCard(settings: email) }
-                    SecretCard(
-                        title: String(localized: "Custom webhook"),
-                        description: String(localized: "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway."),
-                        fieldLabel: String(localized: "Webhook URL"),
-                        placeholder: "https://your-endpoint.example.com/hook",
-                        successMessage: String(localized: "Connected — check your endpoint for a test request."),
-                        removeLabel: String(localized: "Remove saved webhook"),
-                        connected: overview.genericWebhook.connected,
-                        save: { try await $0.integrations.webhook.save($1) },
-                        remove: { try await $0.integrations.webhook.remove() }
-                    )
-                }
-                // 0.51+: the website's Import from Seerr; the card only
-                // links there, so it shows for any server.
-                section(String(localized: "Coming from Seerr?")) {
-                    SeerrImportCard()
-                }
-                // 0.47+: keys for dashboards and scripts; nothing at all
-                // from an older server.
-                ApiKeysSection()
-            } else if let loadError {
-                InlineMessage(text: loadError)
-            } else {
-                LoadingView(label: String(localized: "Checking your integrations…"))
             }
         }
         .task(id: ReloadKey(token: model.reloadToken, local: model.events.revision(of: .settings))) {
@@ -135,6 +61,142 @@ struct IntegrationsSettingsView: View {
             } catch {
                 if overview == nil { loadError = error.localizedDescription }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func loaded<Content: View>(@ViewBuilder _ content: (API.IntegrationsOverview) -> Content) -> some View {
+        if let overview {
+            content(overview)
+        } else if let loadError {
+            InlineMessage(text: loadError)
+        } else {
+            LoadingView(label: String(localized: "Checking your integrations…"))
+        }
+    }
+
+    // MARK: General
+
+    @ViewBuilder
+    private func general(_ overview: API.IntegrationsOverview) -> some View {
+        section(String(localized: "Metadata Sources")) {
+            TMDbCard(settings: overview.tmdb)
+            TraktCard(connected: overview.trakt.connected)
+            SecretCard(
+                title: "TheTVDB",
+                description: String(localized: "Fills in poster art and an overview for TV shows when TMDb doesn't have them yet — Sonarr's own metadata comes from here too."),
+                fieldLabel: String(localized: "API key"),
+                placeholder: String(localized: "From thetvdb.com/dashboard/account/apikey"),
+                removeLabel: String(localized: "Remove saved key"),
+                connected: overview.tvdb.connected,
+                save: { try await $0.integrations.tvdb.save($1) },
+                remove: { try await $0.integrations.tvdb.remove() }
+            )
+            // 0.53+: IMDb / Rotten Tomatoes / Metacritic on title pages.
+            if let omdb = overview.omdb {
+                SecretCard(
+                    title: String(localized: "OMDb (ratings)"),
+                    description: String(localized: "Optional. With a key, title pages show IMDb, Rotten Tomatoes and Metacritic scores beside TMDb's."),
+                    fieldLabel: String(localized: "API key"),
+                    placeholder: String(localized: "From omdbapi.com/apikey.aspx"),
+                    removeLabel: String(localized: "Remove saved key"),
+                    connected: omdb.connected,
+                    save: { try await $0.integrations.omdb.save($1) },
+                    remove: { try await $0.integrations.omdb.remove() }
+                )
+            }
+        }
+        // 0.47+: keys for dashboards and scripts; nothing at all from an
+        // older server.
+        ApiKeysSection()
+        // 0.51+: the website's Import from Seerr; the card only links there,
+        // so it shows for any server.
+        section(String(localized: "Coming from Seerr?")) {
+            SeerrImportCard()
+        }
+    }
+
+    // MARK: Media servers
+
+    @ViewBuilder
+    private func mediaServers(_ overview: API.IntegrationsOverview) -> some View {
+        PlexCard(settings: overview.plex)
+        JellyfinCard(settings: overview.jellyfin)
+    }
+
+    // MARK: Services
+
+    @ViewBuilder
+    private func services(_ overview: API.IntegrationsOverview) -> some View {
+        // 0.43+: any number of servers, as tiles. An older server omits the
+        // list and keeps the four fixed cards.
+        if overview.usesServerList {
+            ArrServersCard(kind: .sonarr, servers: overview.arrServers(of: .sonarr))
+            ArrServersCard(kind: .radarr, servers: overview.arrServers(of: .radarr))
+        } else {
+            fixedArrCards(overview)
+        }
+        ArrWebhooksCard(
+            webhooks: overview.arrWebhooks,
+            radarr4kConnected: overview.radarr4k?.connected == true,
+            sonarr4kConnected: overview.sonarr4k?.connected == true,
+            isLegacy: overview.usesServerList
+        )
+    }
+
+    // MARK: Notifications › a household channel
+
+    @ViewBuilder
+    private func channel(_ channel: NotificationsSubTab, _ overview: API.IntegrationsOverview) -> some View {
+        switch channel {
+        case .personal:
+            EmptyView()
+        case .household:
+            // 0.45+: what these channels post.
+            HouseholdEventsCard()
+        case .discord:
+            SecretCard(
+                title: String(localized: "Discord notifications"),
+                description: String(localized: "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected."),
+                fieldLabel: String(localized: "Webhook URL"),
+                placeholder: String(localized: "From a channel's Integrations → Webhooks settings in Discord"),
+                successMessage: String(localized: "Connected — check the channel for a test message."),
+                removeLabel: String(localized: "Remove saved webhook"),
+                connected: overview.discord.connected,
+                save: { try await $0.integrations.discord.save($1) },
+                remove: { try await $0.integrations.discord.remove() }
+            )
+        case .ntfy:
+            SecretCard(
+                title: String(localized: "ntfy notifications"),
+                description: String(localized: "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events."),
+                fieldLabel: String(localized: "Topic URL"),
+                placeholder: "https://ntfy.sh/your-topic-name",
+                successMessage: String(localized: "Connected — check the topic for a test message."),
+                removeLabel: String(localized: "Remove saved topic"),
+                connected: overview.ntfy.connected,
+                save: { try await $0.integrations.ntfy.save($1) },
+                remove: { try await $0.integrations.ntfy.remove() }
+            )
+        // 0.36+; an older server omits them.
+        case .telegram:
+            if let telegram = overview.telegram { TelegramCard(settings: telegram) }
+        case .pushover:
+            if let pushover = overview.pushover { PushoverCard(connected: pushover.connected) }
+        case .email:
+            if let email = overview.email { EmailCard(settings: email) }
+        case .webhook:
+            SecretCard(
+                title: String(localized: "Custom webhook"),
+                description: String(localized: "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway."),
+                fieldLabel: String(localized: "Webhook URL"),
+                placeholder: "https://your-endpoint.example.com/hook",
+                successMessage: String(localized: "Connected — check your endpoint for a test request."),
+                removeLabel: String(localized: "Remove saved webhook"),
+                connected: overview.genericWebhook.connected,
+                save: { try await $0.integrations.webhook.save($1) },
+                remove: { try await $0.integrations.webhook.remove() }
+            )
         }
     }
 
@@ -189,12 +251,8 @@ struct IntegrationsSettingsView: View {
         }
     }
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SettingsSectionLabel(text: title)
-            content()
-        }
-        .padding(.top, 8)
+    private func section<Content: View>(_ title: String, @ViewBuilder content: @escaping () -> Content) -> some View {
+        SettingsSection(title: title, content: content)
     }
 }
 

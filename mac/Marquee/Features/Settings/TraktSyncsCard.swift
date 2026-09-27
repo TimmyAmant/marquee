@@ -187,7 +187,7 @@ struct TraktSyncsSection: View {
     var body: some View {
         Group {
             if trakt.isVisible {
-                SettingsSectionLabel(text: String(localized: "Trakt lists"))
+                SettingsSectionTitle(text: String(localized: "Trakt lists"))
                 TraktSyncsCard(trakt: trakt)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardSurface()

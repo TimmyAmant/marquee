@@ -16,7 +16,7 @@ struct DiscoverView: View {
             VStack(alignment: .leading, spacing: Metrics.shelfSpacing) {
                 if let error, error.isTMDbUnconfigured {
                     TMDbMissingNotice(isAdmin: model.viewer?.isAdmin == true) {
-                        model.openSettings(.integrations)
+                        model.openSettings(.general)
                     }
                     .padding(.trailing, Metrics.pagePadding)
                 } else if let shelves {

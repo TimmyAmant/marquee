@@ -731,7 +731,7 @@ private struct TitleActionRow: View {
 
                 if viewer.needsArrSetup {
                     Button("Connect \(detail.mediaType.arrName) to add this title") {
-                        model.openSettings(.integrations)
+                        model.openSettings(.services)
                     }
                     .buttonStyle(QuietButtonStyle(color: Theme.accent))
                     .font(.system(size: 12.5))

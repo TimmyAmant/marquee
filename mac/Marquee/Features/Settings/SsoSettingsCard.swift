@@ -12,7 +12,7 @@ struct SsoSettingsSection: View {
         Group {
             if settings != nil || loadError != nil {
                 VStack(alignment: .leading, spacing: 12) {
-                    SettingsSectionLabel(text: String(localized: "Sign-in"))
+                    SettingsSectionTitle(text: String(localized: "Sign-in"))
                     if let settings {
                         SsoSettingsCard(saved: settings) { self.settings = $0 }
                     } else if let loadError {

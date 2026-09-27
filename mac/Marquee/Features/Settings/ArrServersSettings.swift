@@ -149,7 +149,8 @@ struct ArrServerForm: Hashable, Sendable {
 
 // MARK: - The list
 
-/// One kind's servers ("Sonarr" or "Radarr") with "Add … server".
+/// One kind's servers ("Sonarr" or "Radarr") as tiles — the website's
+/// Settings › Services — with an "Add … server" tile.
 struct ArrServersCard: View {
     let kind: API.ArrKind
     let servers: [API.ArrServer]
@@ -170,23 +171,25 @@ struct ArrServersCard: View {
         }
     }
 
+    private let columns = [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)]
+
     var body: some View {
-        IntegrationCard(title: kind.displayName, description: description, connected: !servers.isEmpty) {
+        SettingsSection(title: kind.displayName, subtitle: description) {
             if servers.isEmpty {
                 Text("No \(kind.displayName) server yet.")
                     .font(.system(size: 12.5))
                     .foregroundStyle(Theme.textSecondary)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(servers.enumerated()), id: \.element.id) { index, server in
-                        if index > 0 { Divider().overlay(Theme.border) }
-                        ArrServerRow(server: server) { sheet = SheetTarget(form: ArrServerForm(editing: server)) }
-                            .padding(.vertical, 12)
-                    }
+            }
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
+                ForEach(servers) { server in
+                    ArrServerRow(server: server) { sheet = SheetTarget(form: ArrServerForm(editing: server)) }
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .cardSurface(padding: 16)
+                }
+                AddServerTile(title: String(localized: "Add \(kind.displayName) server")) {
+                    sheet = SheetTarget(form: ArrServerForm(kind: kind))
                 }
             }
-            Button("Add \(kind.displayName) server") { sheet = SheetTarget(form: ArrServerForm(kind: kind)) }
-                .buttonStyle(OutlineButtonStyle())
         }
         .sheet(item: $sheet) { target in
             ArrServerSheet(form: target.form)
@@ -194,7 +197,35 @@ struct ArrServersCard: View {
     }
 }
 
-/// A server: name, URL and badges, its actions, and its webhook URL.
+/// The dashed "Add … server" tile at the end of the grid.
+private struct AddServerTile: View {
+    let title: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .font(.system(size: 18, weight: .regular))
+                Text(title)
+                    .font(.system(size: 12.5, weight: .medium))
+            }
+            .foregroundStyle(hovering ? Theme.accent : Theme.textSecondary)
+            .frame(maxWidth: .infinity, minHeight: 120)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(hovering ? Theme.accent : Theme.border, style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+    }
+}
+
+/// A server's tile: name and URL, whether it's ready, its Default / 4K
+/// badges, its actions, and (on request) its webhook URL.
 private struct ArrServerRow: View {
     let server: API.ArrServer
     let onEdit: () -> Void
@@ -205,27 +236,39 @@ private struct ArrServerRow: View {
     @State private var confirmingRegenerate = false
     @State private var webhookUrl: String?
     @State private var error: String?
+    @State private var showsWebhook = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
-                        Text(server.name)
-                            .font(.system(size: 13.5, weight: .semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                        if server.isDefault { TonePill(text: String(localized: "Default"), tone: .owned, small: true) }
-                        if server.is4k { TonePill(text: "4K", tone: .accent, small: true) }
-                        if !server.fullyConfigured { TonePill(text: String(localized: "Needs setup"), tone: .danger, small: true) }
-                    }
+                    Text(server.name)
+                        .font(.system(size: 13.5, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
                     Text(server.baseUrl)
                         .font(.system(size: 11.5, design: .monospaced))
                         .foregroundStyle(Theme.textMuted)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                         .textSelection(.enabled)
                 }
-                Spacer(minLength: 12)
-                actions
+                Spacer(minLength: 8)
+                Label(
+                    server.fullyConfigured ? String(localized: "Ready") : String(localized: "Needs setup"),
+                    systemImage: "circle.fill"
+                )
+                .labelStyle(StatusDotLabelStyle())
+                .font(.system(size: 11.5))
+                .foregroundStyle(server.fullyConfigured ? Theme.owned : Theme.danger)
             }
+            HStack(spacing: 6) {
+                if server.isDefault { TonePill(text: String(localized: "Default"), tone: .owned, small: true) }
+                if server.is4k { TonePill(text: "4K", tone: .accent, small: true) }
+            }
+            .frame(minHeight: 18)
+            Divider().overlay(Theme.border)
+            actions
             if !server.fullyConfigured {
                 Text("Pick a quality profile and root folder before adding titles — Edit, then Test to load them.")
                     .font(.system(size: 11.5))
@@ -233,7 +276,7 @@ private struct ArrServerRow: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let error { InlineMessage(text: error) }
-            if let url = webhookUrl ?? server.webhookUrl.nonBlank {
+            if showsWebhook, let url = webhookUrl ?? server.webhookUrl.nonBlank {
                 CopyField(value: url, label: String(localized: "Webhook URL — paste into \(server.kind.displayName) → Settings → Connect → Webhook (POST, on Grab and on Import)"))
                 regenerateControl
             }
@@ -258,8 +301,13 @@ private struct ArrServerRow: View {
                     Button(busy == "default" ? "Saving…" : "Make default") { makeDefault() }
                         .buttonStyle(QuietButtonStyle())
                 }
+                if server.webhookUrl.nonBlank != nil || webhookUrl != nil {
+                    Button(showsWebhook ? "Hide webhook" : "Webhook") { showsWebhook.toggle() }
+                        .buttonStyle(QuietButtonStyle())
+                }
+                Spacer(minLength: 0)
                 Button("Remove") { confirmingRemove = true }
-                    .buttonStyle(QuietButtonStyle())
+                    .buttonStyle(QuietButtonStyle(color: Theme.danger))
             }
         }
         .font(.system(size: 12))
@@ -569,6 +617,16 @@ private struct ArrServerSheet: View {
                 saveError = error.localizedDescription
             }
             saving = false
+        }
+    }
+}
+
+/// A small colored dot before the status text on a server's tile.
+private struct StatusDotLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 5) {
+            configuration.icon.font(.system(size: 6))
+            configuration.title
         }
     }
 }

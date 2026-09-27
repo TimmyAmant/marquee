@@ -24,7 +24,7 @@ function TabLink({ href, current, children }: { href: string; current: boolean; 
       ref={ref}
       href={href}
       aria-current={current ? "page" : undefined}
-      className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-sm font-medium transition-colors ${
+      className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-[13.5px] font-medium transition-colors ${
         current ? "bg-text-primary text-bg-0" : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
       }`}
     >
@@ -50,7 +50,7 @@ export function SettingsNav({ viewer, children }: { viewer: SettingsViewer; chil
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <h1 className="font-display text-3xl text-text-primary">{t("nav.settings")}</h1>
       <nav aria-label={t("nav.settings")} className="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-        <div className="flex w-max min-w-full gap-1.5 border-b border-border pb-3">
+        <div className="flex w-max min-w-full gap-0.5 border-b border-border pb-3">
           {tabs.map((tab) => (
             <TabLink key={tab.id} href={tab.href} current={tab.id === current?.id}>
               {t(tab.label)}

@@ -7631,6 +7631,34 @@
         }
       }
     },
+    "Blocklist" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista de bloqueo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de blocage"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sperrliste"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista de bloqueio"
+          }
+        }
+      }
+    },
     "Born %@" : {
       "localizations" : {
         "de" : {
@@ -9791,6 +9819,34 @@
         }
       }
     },
+    "Connect Plex or Jellyfin so Marquee knows what the household already owns. Credentials are stored encrypted on your server." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecta Plex o Jellyfin para que Marquee sepa lo que el hogar ya tiene. Las credenciales se guardan cifradas en tu servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez Plex ou Jellyfin pour que Marquee sache ce que le foyer possède déjà. Les identifiants sont chiffrés sur votre serveur."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbinde Plex oder Jellyfin, damit Marquee weiß, was der Haushalt schon hat. Zugangsdaten werden verschlüsselt auf deinem Server gespeichert."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecte o Plex ou o Jellyfin para o Marquee saber o que a casa já tem. As credenciais ficam criptografadas no seu servidor."
+          }
+        }
+      }
+    },
     "Connect Plex, Jellyfin, Sonarr or Radarr to see everything you already own in one place." : {
       "localizations" : {
         "es" : {
@@ -9815,34 +9871,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Conecte o Plex, o Jellyfin, o Sonarr ou o Radarr para ver tudo o que você já tem em um só lugar."
-          }
-        }
-      }
-    },
-    "Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verbinde Plex, Jellyfin, Sonarr und Radarr, damit Marquee weiß, was du schon hast, und den Rest direkt in deine Download-Warteschlange schicken kann. Zugangsdaten werden verschlüsselt auf deinem Server gespeichert und nur in deinem Auftrag verwendet."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conecta Plex, Jellyfin, Sonarr y Radarr para que Marquee sepa lo que ya tienes y pueda enviar el resto directamente a tu cola de descargas. Las credenciales se guardan cifradas en tu servidor y solo se usan en tu nombre."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connectez Plex, Jellyfin, Sonarr et Radarr pour que Marquee sache ce que vous possédez déjà et envoie le reste directement dans votre file de téléchargement. Les identifiants sont stockés chiffrés sur votre serveur et ne sont utilisés qu’en votre nom."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conecte o Plex, o Jellyfin, o Sonarr e o Radarr para que o Marquee saiba o que você já tem e possa mandar o resto direto para sua fila de downloads. As credenciais ficam criptografadas no seu servidor e só são usadas em seu nome."
           }
         }
       }
@@ -12601,34 +12629,6 @@
         }
       }
     },
-    "Download Clients" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Download-Clients"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clientes de descarga"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clients de téléchargement"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clientes de download"
-          }
-        }
-      }
-    },
     "Download Manually" : {
       "localizations" : {
         "de" : {
@@ -15117,6 +15117,34 @@
         }
       }
     },
+    "General" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Général"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allgemein"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geral"
+          }
+        }
+      }
+    },
     "Generate an API key from the dashboard: Administration → API Keys in Jellyfin, or Advanced → API Keys in Emby." : {
       "localizations" : {
         "de" : {
@@ -15705,6 +15733,34 @@
         }
       }
     },
+    "Hide webhook" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar webhook"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le webhook"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webhook ausblenden"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar webhook"
+          }
+        }
+      }
+    },
     "Hours" : {
       "localizations" : {
         "de" : {
@@ -15733,30 +15789,30 @@
         }
       }
     },
-    "Household channels" : {
+    "Household events" : {
       "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Haushaltskanäle"
-          }
-        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Canales del hogar"
+            "value" : "Eventos del hogar"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Canaux du foyer"
+            "value" : "Événements du foyer"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ereignisse im Haushalt"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Canais da casa"
+            "value" : "Eventos da casa"
           }
         }
       }
@@ -15785,6 +15841,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Membros da casa"
+          }
+        }
+      }
+    },
+    "How Marquee looks on this device." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómo se ve Marquee en este dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’apparence de Marquee sur cet appareil."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie Marquee auf diesem Gerät aussieht."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como o Marquee aparece neste dispositivo."
           }
         }
       }
@@ -16621,34 +16705,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nome de usuário ou senha incorretos."
-          }
-        }
-      }
-    },
-    "Integrations" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Integrationen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Integraciones"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Intégrations"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Integrações"
           }
         }
       }
@@ -19461,30 +19517,30 @@
         }
       }
     },
-    "Media Libraries" : {
+    "Media servers" : {
       "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mediatheken"
-          }
-        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bibliotecas multimedia"
+            "value" : "Servidores multimedia"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bibliothèques multimédias"
+            "value" : "Serveurs multimédias"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medienserver"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bibliotecas de mídia"
+            "value" : "Servidores de mídia"
           }
         }
       }
@@ -19545,6 +19601,34 @@
         }
       }
     },
+    "Members" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miembros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitglieder"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membros"
+          }
+        }
+      }
+    },
     "Members in this group become Trusted when they sign in. Nobody is ever made an admin this way." : {
       "localizations" : {
         "de" : {
@@ -19569,34 +19653,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Membros deste grupo passam a ser confiáveis quando entram. Ninguém vira administrador desse jeito."
-          }
-        }
-      }
-    },
-    "Menu labels" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menübeschriftungen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Etiquetas del menú"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Libellés du menu"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rótulos do menu"
           }
         }
       }
@@ -23297,6 +23353,34 @@
         }
       }
     },
+    "Personal" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personales"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personnelles"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persönlich"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pessoais"
+          }
+        }
+      }
+    },
     "Pick a genre." : {
       "localizations" : {
         "de" : {
@@ -24413,6 +24497,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Somente leitura"
+          }
+        }
+      }
+    },
+    "Ready" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prêt"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereit"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronto"
           }
         }
       }
@@ -26571,6 +26683,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pedidos"
+          }
+        }
+      }
+    },
+    "Requests approved or declined, and titles ready to watch, on this device." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solicitudes aprobadas o rechazadas y títulos listos para ver, en este dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demandes approuvées ou refusées, et titres prêts à regarder, sur cet appareil."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genehmigte oder abgelehnte Anfragen und Titel, die bereit zum Ansehen sind, auf diesem Gerät."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedidos aprovados ou recusados e títulos prontos para assistir, neste dispositivo."
           }
         }
       }
@@ -29273,6 +29413,34 @@
         }
       }
     },
+    "Services" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servicios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Services"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dienste"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serviços"
+          }
+        }
+      }
+    },
     "Set up Marquee" : {
       "localizations" : {
         "de" : {
@@ -30253,6 +30421,34 @@
         }
       }
     },
+    "Signs you out of Marquee on this Mac." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cierra tu sesión de Marquee en este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous déconnecte de Marquee sur ce Mac."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meldet dich auf diesem Mac von Marquee ab."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sai do Marquee neste Mac."
+          }
+        }
+      }
+    },
     "Since %@" : {
       "localizations" : {
         "de" : {
@@ -30473,6 +30669,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Webhooks do Sonarr / Radarr"
+          }
+        }
+      }
+    },
+    "Sonarr and Radarr: where approved requests are sent. Add as many as you run; 4K ones take 4K requests." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr y Radarr: adonde se envían las solicitudes aprobadas. Añade todos los que tengas; los 4K reciben las solicitudes en 4K."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr et Radarr : là où partent les demandes approuvées. Ajoutez-en autant que vous en avez ; ceux en 4K reçoivent les demandes 4K."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr und Radarr: Hierhin gehen genehmigte Anfragen. Füge so viele hinzu, wie du betreibst; 4K-Server bekommen 4K-Anfragen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr e Radarr: para onde vão os pedidos aprovados. Adicione quantos você tiver; os 4K recebem os pedidos em 4K."
           }
         }
       }
@@ -32629,6 +32853,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O administrador da casa ainda não conectou o TMDb."
+          }
+        }
+      }
+    },
+    "The language Marquee is shown in for your account, on every device." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El idioma en que ves Marquee con tu cuenta, en todos los dispositivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La langue dans laquelle Marquee s’affiche pour votre compte, sur tous vos appareils."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sprache, in der Marquee für dein Konto erscheint, auf jedem Gerät."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O idioma em que o Marquee aparece na sua conta, em todos os dispositivos."
           }
         }
       }
@@ -35293,34 +35545,6 @@
         }
       }
     },
-    "View profile" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profil ansehen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ver perfil"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voir le profil"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ver perfil"
-          }
-        }
-      }
-    },
     "Waiting for %@…" : {
       "localizations" : {
         "de" : {
@@ -36245,6 +36469,34 @@
         }
       }
     },
+    "Where Marquee gets its movie and TV details, API keys for other apps, and moving over from Seerr." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De dónde saca Marquee los datos de películas y series, las claves de API para otras apps y cómo pasarte desde Seerr."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’où Marquee tire les informations sur les films et les séries, les clés d’API pour d’autres apps, et le passage depuis Seerr."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Woher Marquee die Infos zu Filmen und Serien bekommt, API-Schlüssel für andere Apps und der Umzug von Seerr."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De onde o Marquee tira os dados de filmes e séries, chaves de API para outros apps e a mudança do Seerr."
+          }
+        }
+      }
+    },
     "Which country streaming providers and release dates are for, and where and in what language TMDb's Popular and Upcoming rows are picked from." : {
       "localizations" : {
         "de" : {
@@ -36269,6 +36521,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Para qual país são os serviços de streaming e as datas de lançamento, e de onde e em qual idioma vêm as fileiras Populares e Em breve do TMDb."
+          }
+        }
+      }
+    },
+    "Which edge of the window the menu sits on." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En qué borde de la ventana está el menú."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le bord de la fenêtre où se trouve le menu."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An welchem Fensterrand das Menü sitzt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em qual borda da janela o menu fica."
           }
         }
       }
@@ -36777,34 +37057,6 @@
         }
       }
     },
-    "Your Marquee account details." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Angaben zu deinem Marquee-Konto."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los datos de tu cuenta de Marquee."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les informations de votre compte Marquee."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os dados da sua conta do Marquee."
-          }
-        }
-      }
-    },
     "Your Marquee server is newer than this app. Update Marquee for Mac, then try again." : {
       "localizations" : {
         "de" : {
@@ -37281,6 +37533,34 @@
         }
       }
     },
+    "Your own notifications, and the channels the whole household hears from." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus propias notificaciones y los canales que escucha todo el hogar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos propres notifications, et les canaux que tout le foyer reçoit."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine eigenen Benachrichtigungen und die Kanäle, die der ganze Haushalt bekommt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suas próprias notificações e os canais que a casa toda recebe."
+          }
+        }
+      }
+    },
     "Your own rows: %lld of %lld. Drag a row, or use the arrows, to move it." : {
       "localizations" : {
         "de" : {
@@ -37333,6 +37613,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seus relatos de problemas"
+          }
+        }
+      }
+    },
+    "Your profile, how you sign in, and how Marquee looks on this device." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu perfil, cómo inicias sesión y cómo se ve Marquee en este dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre profil, votre façon de vous connecter et l’apparence de Marquee sur cet appareil."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Profil, wie du dich anmeldest und wie Marquee auf diesem Gerät aussieht."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu perfil, como você entra e como o Marquee aparece neste dispositivo."
           }
         }
       }

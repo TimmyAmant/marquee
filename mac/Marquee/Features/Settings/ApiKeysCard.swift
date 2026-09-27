@@ -233,7 +233,7 @@ struct ApiKeysSection: View {
         Group {
             if keys.isVisible {
                 VStack(alignment: .leading, spacing: 12) {
-                    SettingsSectionLabel(text: String(localized: "API keys"))
+                    SettingsSectionTitle(text: String(localized: "API keys"))
                     ApiKeysCard(keys: keys)
                 }
                 .padding(.top, 8)

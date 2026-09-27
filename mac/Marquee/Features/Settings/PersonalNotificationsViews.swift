@@ -47,7 +47,7 @@ struct PersonalNotificationsSection: View {
     @ViewBuilder
     private func channelsSection(_ channels: API.PersonalNotificationChannels) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            SettingsSectionLabel(text: String(localized: "Your channels"))
+            SettingsSectionTitle(text: String(localized: "Your channels"))
             Text("Get your notifications on Telegram, Pushover, email, Discord, ntfy or a webhook. Only you can see these.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
@@ -98,7 +98,7 @@ struct PersonalNotificationsSection: View {
     @ViewBuilder
     private func matrixSection(_ matrix: PreferenceMatrix, channels: API.PersonalNotificationChannels) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            SettingsSectionLabel(text: String(localized: "What you hear about"))
+            SettingsSectionTitle(text: String(localized: "What you hear about"))
             Text("Choose where each kind of notification goes. The bell is the list at the top of every page; devices are the browsers, Macs and PCs you turned notifications on for.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
