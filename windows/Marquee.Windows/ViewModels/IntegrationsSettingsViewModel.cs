@@ -79,6 +79,15 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
             Loc.Get("Integrations_RemoveSavedKey"),
             (api, value) => api.Integrations.Tvdb.SaveAsync(value),
             api => api.Integrations.Tvdb.RemoveAsync());
+        Omdb = new SecretCardViewModel(
+            model,
+            "OMDb",
+            Loc.Get("Integrations_OmdbBlurb"),
+            Loc.Get("Integrations_TvdbField"),
+            Loc.Get("Integrations_OmdbPlaceholder"),
+            Loc.Get("Integrations_RemoveSavedKey"),
+            (api, value) => api.Integrations.Omdb.SaveAsync(value),
+            api => api.Integrations.Omdb.RemoveAsync());
 
         Webhooks = new ArrWebhooksViewModel(model);
         Discord = new SecretCardViewModel(
@@ -156,6 +165,12 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     private bool showsTraktImport;
 
     public SecretCardViewModel Tvdb { get; }
+
+    /// <summary>OMDb, for ratings on title pages (0.53+; hidden on an older server).</summary>
+    public SecretCardViewModel Omdb { get; }
+
+    [ObservableProperty]
+    private bool showsOmdb;
     public ArrWebhooksViewModel Webhooks { get; }
     public SecretCardViewModel Discord { get; }
     public SecretCardViewModel Ntfy { get; }
@@ -289,6 +304,11 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         Trakt.Apply(overview.Trakt);
         ShowsTraktImport = overview.Trakt.Connected;
         Tvdb.Apply(overview.Tvdb);
+        ShowsOmdb = overview.Omdb != null;
+        if (overview.Omdb is { } omdb)
+        {
+            Omdb.Apply(omdb);
+        }
         Discord.Apply(overview.Discord);
         Ntfy.Apply(overview.Ntfy);
         Channels.Apply(overview);

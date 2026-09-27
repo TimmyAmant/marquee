@@ -19,8 +19,18 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed class HouseholdMemberRow
 {
-    public HouseholdMemberRow(HouseholdMember member, bool viewerIsAdmin, bool showsDivider, string jellyfinName, ICommand edit, ICommand remove)
+    public HouseholdMemberRow(
+        HouseholdMember member,
+        bool viewerIsAdmin,
+        bool showsDivider,
+        string jellyfinName,
+        ICommand edit,
+        ICommand remove,
+        ICommand profile,
+        bool hasProfiles)
     {
+        Profile = profile;
+        CanViewProfile = hasProfiles && (viewerIsAdmin || member.IsCurrentUser);
         Member = member;
         Label = member.Label;
         AvatarUrl = member.AvatarUrl ?? "";
@@ -107,6 +117,12 @@ public sealed class HouseholdMemberRow
 
     /// <summary>Runs with this row as its parameter: the remove confirmation.</summary>
     public ICommand Remove { get; }
+
+    /// <summary>"Profile" (0.53+ servers): yours, or anyone's for the admin.</summary>
+    public bool CanViewProfile { get; }
+
+    /// <summary>Runs with this row as its parameter: the profile dialog.</summary>
+    public ICommand Profile { get; }
 }
 
 /// <summary>
@@ -370,6 +386,18 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         }
     }
 
+    /// <summary>"Show menu labels" (This PC): the names beside the rail's icons, at once.</summary>
+    public bool ShowMenuLabels
+    {
+        get => model.ShowMenuLabels;
+        set
+        {
+            if (model.ShowMenuLabels == value) return;
+            model.ShowMenuLabels = value;
+            OnPropertyChanged();
+        }
+    }
+
     private void SyncMenuPosition()
     {
         var index = MenuPositionSetting.All.ToList().IndexOf(model.MenuPosition);
@@ -495,6 +523,23 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
 
     /// <summary>Set by the page: the edit dialog for a row, answering the saved result or null when cancelled.</summary>
     internal Func<HouseholdMember, Task<UpdateUserResult?>>? EditMemberPrompt { get; set; }
+
+    /// <summary>The profile dialog (0.53+), lent by the view.</summary>
+    internal Func<HouseholdMember, Task>? ProfilePrompt { get; set; }
+
+    /// <summary>A row's Profile: the member's request counts, limits and Plex Watchlist.</summary>
+    [RelayCommand]
+    private async Task ShowProfileAsync(HouseholdMemberRow? row)
+    {
+        if (row == null || !row.CanViewProfile || ProfilePrompt is not { } prompt)
+        {
+            return;
+        }
+        await prompt(row.Member);
+    }
+
+    /// <summary><c>GET /users/{id}/profile</c> for the dialog.</summary>
+    internal Task<MemberProfile> LoadProfileAsync(Guid id) => model.Api.Users.ProfileAsync(id);
 
     /// <summary>Set by the page: "Remove {username}?", true only when confirmed.</summary>
     internal Func<HouseholdMember, Task<bool>>? RemoveMemberPrompt { get; set; }
@@ -929,7 +974,9 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         var viewerIsAdmin = IsAdmin;
         var jellyfinName = JellyfinName;
         Members = list
-            .Select((member, index) => new HouseholdMemberRow(member, viewerIsAdmin, index > 0, jellyfinName, EditMemberCommand, RemoveMemberCommand))
+            .Select((member, index) => new HouseholdMemberRow(
+                member, viewerIsAdmin, index > 0, jellyfinName, EditMemberCommand, RemoveMemberCommand,
+                ShowProfileCommand, MemberProfileText.IsSupported(model.Session.ServerInfo?.Version)))
             .ToList();
     }
 

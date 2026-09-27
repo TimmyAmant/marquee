@@ -186,6 +186,12 @@ public sealed partial class AppModel : ObservableObject
 
     partial void OnMenuPositionChanged(MenuPosition value) => MenuPositionSetting.Write(Settings, value);
 
+    /// <summary>"Show menu labels" (Settings › Account › This PC), kept like the position.</summary>
+    [ObservableProperty]
+    private bool showMenuLabels;
+
+    partial void OnShowMenuLabelsChanged(bool value) => MenuLabelsSetting.Write(Settings, value);
+
     /// <summary>The session's server, token or user changed (already on the UI thread).</summary>
     public event EventHandler? SessionChanged;
 
@@ -207,6 +213,7 @@ public sealed partial class AppModel : ObservableObject
         Settings = settings;
         Notifications = new NotificationCenter(this);
         MenuPosition = MenuPositionSetting.Read(settings);
+        ShowMenuLabels = MenuLabelsSetting.Read(settings);
         session.StateChanged += OnSessionStateChanged;
         session.Unauthorized += OnSessionUnauthorized;
         Events.Changed += OnServerChanged;

@@ -204,6 +204,12 @@ public sealed partial class MainWindow : Window, INavigator
     private const double RailInset = 16;
     private const double RailClearance = 72;
 
+    /// <summary>Each labeled rail button's own content while the labels show, to put back when they go.</summary>
+    private readonly Dictionary<Button, object> railIcons = [];
+
+    /// <summary>The server's version at the foot of the labeled rail.</summary>
+    private TextBlock? railVersion;
+
     /// <summary>
     /// Puts the rail on this PC's edge (Settings › Account › Menu position):
     /// a column at the left or right, a row along the top or bottom (under
@@ -236,20 +242,23 @@ public sealed partial class MainWindow : Window, INavigator
             MenuPosition.Bottom => new Thickness(0, 0, 0, RailInset),
             _ => new Thickness(RailInset, 0, 0, 0),
         };
+        var labeled = MenuLabelsSetting.IsLabeled(model.ShowMenuLabels, position);
+        var clearance = MenuLabelsSetting.Clearance(labeled);
         ContentFrame.Margin = position switch
         {
-            MenuPosition.Right => new Thickness(0, 0, RailClearance, 0),
+            MenuPosition.Right => new Thickness(0, 0, clearance, 0),
             MenuPosition.Top => new Thickness(0, RailClearance - RailInset, 0, 0),
             MenuPosition.Bottom => new Thickness(0, 0, 0, RailClearance),
-            _ => new Thickness(RailClearance, 0, 0, 0),
+            _ => new Thickness(clearance, 0, 0, 0),
         };
+        ApplyMenuLabels(labeled);
 
         var orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
         RailItems.Orientation = orientation;
         RailUpdateGroup.Orientation = orientation;
         foreach (var separator in RailItems.Children.Concat(RailUpdateGroup.Children).OfType<Microsoft.UI.Xaml.Shapes.Rectangle>())
         {
-            separator.Width = horizontal ? 1 : 24;
+            separator.Width = horizontal ? 1 : labeled ? MenuLabelsSetting.RailWidth - 16 : 24;
             separator.Height = horizontal ? 24 : 1;
             separator.Margin = horizontal ? new Thickness(4, 0, 4, 0) : new Thickness(0, 4, 0, 4);
             separator.HorizontalAlignment = HorizontalAlignment.Center;
@@ -276,6 +285,87 @@ public sealed partial class MainWindow : Window, INavigator
             MenuPosition.Bottom => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.TopEdgeAlignedLeft,
             _ => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.RightEdgeAlignedTop,
         };
+    }
+
+    /// <summary>
+    /// "Show menu labels" on a rail at the left or right: each button the
+    /// rail's width with its name after the icon, the rail squarer, and the
+    /// server's version at its foot. Off puts the round icon buttons back.
+    /// The names are the buttons' own accessible names.
+    /// </summary>
+    private void ApplyMenuLabels(bool labeled)
+    {
+        Rail.CornerRadius = new CornerRadius(labeled ? 22 : 28);
+        foreach (var button in railButtons.Prepend(NotificationsButton).Prepend(RailProfileButton))
+        {
+            if (labeled && !railIcons.ContainsKey(button))
+            {
+                var icon = button.Content;
+                railIcons[button] = icon;
+                button.Content = null;
+                var iconBox = new Grid { Width = 40, Height = 40 };
+                iconBox.Children.Add((UIElement)icon);
+                var name = button == RailProfileButton ? RailAvatar.Label : AutomationProperties.GetName(button);
+                var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                row.Children.Add(iconBox);
+                row.Children.Add(new TextBlock
+                {
+                    Text = name,
+                    FontSize = 14,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxWidth = MenuLabelsSetting.RailWidth - 16 - 40 - 20,
+                });
+                button.Content = row;
+                button.Width = MenuLabelsSetting.RailWidth - 16;
+                button.HorizontalContentAlignment = HorizontalAlignment.Left;
+                button.VerticalContentAlignment = VerticalAlignment.Center;
+                button.CornerRadius = new CornerRadius(20);
+            }
+            else if (!labeled && railIcons.Remove(button, out var original))
+            {
+                if (button.Content is StackPanel labeledRow && labeledRow.Children.Count > 0 && labeledRow.Children[0] is Grid iconBox)
+                {
+                    iconBox.Children.Clear();
+                }
+                button.Content = original;
+                button.Width = 40;
+                var stretches = button == RailRequestsButton;
+                button.HorizontalContentAlignment = stretches ? HorizontalAlignment.Stretch : HorizontalAlignment.Center;
+                button.VerticalContentAlignment = stretches ? VerticalAlignment.Stretch : VerticalAlignment.Center;
+            }
+        }
+
+        if (labeled && railVersion == null)
+        {
+            railVersion = new TextBlock
+            {
+                FontSize = 11,
+                Margin = new Thickness(10, 6, 10, 2),
+                Foreground = (Brush)Application.Current.Resources["MarqueeNavTextMutedBrush"],
+            };
+            RailItems.Children.Add(railVersion);
+        }
+        else if (!labeled && railVersion != null)
+        {
+            RailItems.Children.Remove(railVersion);
+            railVersion = null;
+        }
+        RefreshRailLabels();
+    }
+
+    /// <summary>The labeled rail's texts that change with the account: its name, the server's version.</summary>
+    private void RefreshRailLabels()
+    {
+        if (RailProfileButton.Content is StackPanel profileRow && profileRow.Children.Count > 1 && profileRow.Children[1] is TextBlock profileName)
+        {
+            profileName.Text = RailAvatar.Label;
+        }
+        if (railVersion != null)
+        {
+            var version = model.Session.ServerInfo?.Version;
+            railVersion.Text = string.IsNullOrEmpty(version) ? "" : Loc.Format("Shell_ServerVersion", version);
+        }
     }
 
     // MARK: Shell state
@@ -320,6 +410,7 @@ public sealed partial class MainWindow : Window, INavigator
         var accountLabel = name.Length > 0 ? Loc.Format("Shell_AccountLabelNamed", name) : Loc.Get("Shell_AccountLabel");
         AutomationProperties.SetName(RailProfileButton, accountLabel);
         ToolTipService.SetToolTip(RailProfileButton, name.Length > 0 ? name : Loc.Get("Shell_SettingsTooltip"));
+        RefreshRailLabels();
     }
 
     /// <summary>
@@ -602,6 +693,7 @@ public sealed partial class MainWindow : Window, INavigator
                 UpdateBadges();
                 break;
             case nameof(AppModel.MenuPosition):
+            case nameof(AppModel.ShowMenuLabels):
                 ApplyMenuPosition();
                 break;
         }

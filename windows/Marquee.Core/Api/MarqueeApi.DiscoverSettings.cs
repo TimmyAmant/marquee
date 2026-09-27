@@ -36,6 +36,26 @@ public sealed class DiscoverSettingsEndpoints(MarqueeApi.Transport transport)
     }
 
     /// <summary>
+    /// <c>GET /settings/discover/locale</c> (0.53+): Region &amp; language.
+    /// Null from an older server, which answers 404: the card stays hidden.
+    /// </summary>
+    public async Task<DiscoverLocale?> GetLocaleAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await transport.GetAsync<DiscoverLocale>(Path + "/locale", ct: ct).ConfigureAwait(false);
+        }
+        catch (ApiException error) when (error.Kind == ApiErrorKind.NotFound)
+        {
+            return null;
+        }
+    }
+
+    /// <summary><c>PUT /settings/discover/locale</c> (0.53+): the streaming region and Discover's region and language. Invalid for a code the server doesn't offer.</summary>
+    public Task<DiscoverLocale> SaveLocaleAsync(DiscoverLocaleRequest request, CancellationToken ct = default) =>
+        transport.MutateAsync<DiscoverLocale>(HttpMethod.Put, Path + "/locale", body: request, changes: Changes, ct: ct);
+
+    /// <summary>
     /// <c>PUT /settings/discover</c>: the rows in their new order, each shown
     /// or hidden. Invalid "There's no Discover row "…". Reload and try again.".
     /// </summary>

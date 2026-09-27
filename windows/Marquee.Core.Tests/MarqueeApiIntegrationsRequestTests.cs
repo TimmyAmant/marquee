@@ -70,6 +70,8 @@ public sealed class MarqueeApiIntegrationsRequestTests
             ServerChange.Requests | ServerChange.Integrations, api => api.Integrations.Trakt.ImportListAsync("https://trakt.tv/users/u/watchlist")),
         new("PUT", "/settings/integrations/tvdb", """{"apiKey":"v"}""", "ok", Reconnected, api => api.Integrations.Tvdb.SaveAsync("v")),
         new("DELETE", "/settings/integrations/tvdb", null, "ok", Reconnected, api => api.Integrations.Tvdb.RemoveAsync()),
+        new("PUT", "/settings/integrations/omdb", """{"apiKey":"k"}""", "ok", ServerChange.Integrations, api => api.Integrations.Omdb.SaveAsync("k")),
+        new("DELETE", "/settings/integrations/omdb", null, "ok", ServerChange.Integrations, api => api.Integrations.Omdb.RemoveAsync()),
         new("PUT", "/settings/integrations/discord", """{"webhookUrl":"https://discord.com/api/webhooks/1"}""", "ok", ServerChange.Integrations,
             api => api.Integrations.Discord.SaveAsync("https://discord.com/api/webhooks/1")),
         new("DELETE", "/settings/integrations/discord", null, "ok", ServerChange.Integrations, api => api.Integrations.Discord.RemoveAsync()),
@@ -111,7 +113,7 @@ public sealed class MarqueeApiIntegrationsRequestTests
     {
         // Section 12 documents 43 endpoints (the Sonarr/Radarr four count four
         // times: Sonarr, Radarr, and their 4K instances from 0.37).
-        Assert.Equal(43, Cases.Length);
+        Assert.Equal(45, Cases.Length);
         Assert.Equal(Cases.Length, Cases.Select(testCase => testCase.Name).Distinct(StringComparer.Ordinal).Count());
     }
 

@@ -45,4 +45,25 @@ public sealed class MenuPositionTests
         Assert.True(MenuPosition.Bottom.IsHorizontal());
         Assert.Equal(["Left", "Right", "Top", "Bottom"], MenuPositionSetting.All.Select(position => position.Label()));
     }
+
+    [Fact]
+    public void MenuLabelsRoundTripAndWidenOnlyASideRail()
+    {
+        var store = new InMemorySettingsStore();
+        Assert.False(MenuLabelsSetting.Read(store));
+        MenuLabelsSetting.Write(store, true);
+        Assert.Equal("on", store.GetString(MenuLabelsSetting.Key));
+        Assert.True(MenuLabelsSetting.Read(store));
+        MenuLabelsSetting.Write(store, false);
+        Assert.Null(store.GetString(MenuLabelsSetting.Key));
+        Assert.False(MenuLabelsSetting.Parse("yes"));
+        Assert.True(MenuLabelsSetting.Parse(" ON "));
+
+        Assert.True(MenuLabelsSetting.IsLabeled(true, MenuPosition.Left));
+        Assert.True(MenuLabelsSetting.IsLabeled(true, MenuPosition.Right));
+        Assert.False(MenuLabelsSetting.IsLabeled(true, MenuPosition.Top));
+        Assert.False(MenuLabelsSetting.IsLabeled(false, MenuPosition.Left));
+        Assert.Equal(232, MenuLabelsSetting.Clearance(true));
+        Assert.Equal(72, MenuLabelsSetting.Clearance(false));
+    }
 }

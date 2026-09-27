@@ -34,7 +34,7 @@ public sealed class PeopleFixtureTests
         Assert.Equal("John Constantine", credit.Subtitle);
         Assert.Null(credit.Year);
         Assert.Null(credit.Status);
-        Assert.False(credit.CanQuickAdd);
+        Assert.True(credit.CanQuickAdd);
     }
 
     [Fact]

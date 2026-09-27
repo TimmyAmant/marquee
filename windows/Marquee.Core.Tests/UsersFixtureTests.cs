@@ -109,4 +109,25 @@ public sealed class UsersFixtureTests
         Assert.Equal("""{"username":"kid","displayName":"Kid","password":"correct-horse-battery","autoApproveMovies":true,"autoApproveTv":false}""",
             Json.EncodeBodyToString(new UpdateUserRequest("kid", "Kid", "correct-horse-battery", true, false)));
     }
+
+    [Fact]
+    public void MemberProfileDecodes()
+    {
+        var profile = Fixtures.Decode<MemberProfile>("user-profile");
+        Assert.Equal(3, profile.Requests.Total);
+        Assert.Equal("2 movies · 1 series", MemberProfileText.RequestSplit(profile.Requests));
+        Assert.Equal("3 of 5", MemberProfileText.LimitValue(profile.RequestLimits.Movie));
+        Assert.Equal("Every 7 days", MemberProfileText.LimitDetail(profile.RequestLimits.Movie));
+        Assert.Equal("Unlimited", MemberProfileText.LimitValue(profile.RequestLimits.Tv));
+        Assert.Single(profile.Watchlist!);
+        Assert.True(MemberProfileText.IsSupported("0.53.0"));
+        Assert.False(MemberProfileText.IsSupported("0.52.4"));
+        Assert.False(MemberProfileText.IsSupported(null));
+
+        var locale = Fixtures.Decode<DiscoverLocale>("discover-locale");
+        Assert.Equal("GB", locale.StreamingRegion);
+        Assert.Equal("en", locale.Effective.DiscoverLanguage);
+        Assert.Equal("any", locale.Languages[0]);
+    }
 }
+

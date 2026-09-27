@@ -139,6 +139,12 @@ public sealed record MyRequest
     /// <summary>When its seasons or 4K last changed (0.46+); null if never, and from an older server.</summary>
     public DateTimeOffset? EditedAt { get; init; }
 
+    /// <summary>0.53+: the title's backdrop, for a card behind the request.</summary>
+    public ImageRef? BackdropPath { get; init; }
+
+    /// <summary>0.53+: who approved or declined it by hand.</summary>
+    public RequestPerson? ReviewedBy { get; init; }
+
     /// <summary>Comments in its conversation (0.46+; 0 from an older server). Sending it at all is what <see cref="HasConversation"/> reads.</summary>
     public int CommentCount
     {
@@ -238,6 +244,9 @@ public sealed record PendingRequest
     /// <summary>The website's note: "Changed since asking".</summary>
     public bool WasEdited => EditedAt != null;
 
+    /// <summary>0.53+: the title's backdrop, for a card behind the request.</summary>
+    public ImageRef? BackdropPath { get; init; }
+
     /// <summary>Comments in its conversation (0.46+; 0 from an older server).</summary>
     public int CommentCount
     {
@@ -324,6 +333,12 @@ public sealed record ReviewedRequest
 
     /// <summary>Under "Couldn't add" rather than "Past requests".</summary>
     public bool IsAddFailed => Status == RequestStatus.Approved && AddFailed != null;
+
+    /// <summary>0.53+: the title's backdrop, for a card behind the request.</summary>
+    public ImageRef? BackdropPath { get; init; }
+
+    /// <summary>0.53+: who approved or declined it by hand; null when it was approved automatically.</summary>
+    public RequestPerson? ReviewedBy { get; init; }
 
     /// <summary>Comments in its conversation (0.46+; 0 from an older server).</summary>
     public int CommentCount

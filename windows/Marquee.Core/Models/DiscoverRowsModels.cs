@@ -550,3 +550,43 @@ public static class DiscoverLayoutEditing
         : kind == DiscoverRowKind.Network ? Loc.Get("Rows_PickNetwork")
         : Loc.Get("Rows_PickWhat");
 }
+
+/// <summary>
+/// <c>GET /settings/discover/locale</c> (0.53+, admin): Settings › Discover ›
+/// Region &amp; language. Null is the default for each: the server's country
+/// (else US) for <see cref="StreamingRegion"/>, worldwide for
+/// <see cref="DiscoverRegion"/>, English for <see cref="DiscoverLanguage"/>
+/// (<c>"any"</c>: no limit).
+/// </summary>
+public sealed record DiscoverLocale
+{
+    public string? StreamingRegion { get; init; }
+    public string? DiscoverRegion { get; init; }
+    public string? DiscoverLanguage { get; init; }
+    public required DiscoverLocaleEffective Effective { get; init; }
+
+    /// <summary>ISO 3166-1 codes that may be chosen.</summary>
+    public required IReadOnlyList<string> Regions { get; init; }
+
+    /// <summary>ISO 639-1 codes, <c>"any"</c> first.</summary>
+    public required IReadOnlyList<string> Languages { get; init; }
+}
+
+/// <summary>What <see cref="DiscoverLocale"/>'s choices come to.</summary>
+public sealed record DiscoverLocaleEffective
+{
+    public required string StreamingRegion { get; init; }
+    public string? DiscoverRegion { get; init; }
+    public string? DiscoverLanguage { get; init; }
+}
+
+/// <summary>
+/// <c>PUT /settings/discover/locale</c>: all three; "" puts one back to its
+/// default (requests leave nulls out, and the server takes "" as null).
+/// </summary>
+public sealed record DiscoverLocaleRequest(string StreamingRegion, string DiscoverRegion, string DiscoverLanguage)
+{
+    public static DiscoverLocaleRequest From(string? streamingRegion, string? discoverRegion, string? discoverLanguage) =>
+        new(streamingRegion ?? "", discoverRegion ?? "", discoverLanguage ?? "");
+}
+

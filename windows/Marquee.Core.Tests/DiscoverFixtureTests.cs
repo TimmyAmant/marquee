@@ -149,7 +149,7 @@ public sealed class DiscoverFixtureTests
     {
         var shelves = Fixtures.Decode<DiscoverShelves>("discover");
         Assert.NotNull(shelves.SeeAll);
-        Assert.Equal(10, shelves.SeeAll.Count);
+        Assert.Equal(11, shelves.SeeAll.Count);
         var trending = shelves.SeeAll[DiscoverShelfKey.Trending];
         Assert.NotNull(trending);
         Assert.Equal(SeeAllKind.List, trending.Type);
@@ -245,9 +245,9 @@ public sealed class DiscoverFixtureTests
         Assert.True(card.CanQuickAdd);
         Assert.False((page with { Page = 250 }).HasMorePages);
 
-        Assert.Equal(["trending", "recently-added", "upcoming-movies", "upcoming-series"], DiscoverListKind.Known.Select(kind => kind.Value));
-        Assert.Equal(["Trending", "Recently Added", "Upcoming Movies", "Upcoming Series"], DiscoverListKind.Known.Select(kind => kind.Title));
-        Assert.Equal([true, true, false, false], DiscoverListKind.Known.Select(kind => kind.MixesMediaTypes));
+        Assert.Equal(["trending", "recently-added", "upcoming-movies", "upcoming-series", "watchlist"], DiscoverListKind.Known.Select(kind => kind.Value));
+        Assert.Equal(["Trending", "Recently Added", "Upcoming Movies", "Upcoming Series", "Your Watchlist"], DiscoverListKind.Known.Select(kind => kind.Title));
+        Assert.Equal([true, true, false, false, true], DiscoverListKind.Known.Select(kind => kind.MixesMediaTypes));
         Assert.False(DiscoverListKind.FromValue("most-watched").IsKnown);
         Assert.Equal("Most Watched", DiscoverListKind.FromValue("most-watched").Title);
     }

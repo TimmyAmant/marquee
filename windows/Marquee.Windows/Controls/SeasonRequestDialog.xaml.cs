@@ -32,15 +32,16 @@ public sealed partial class SeasonRequestDialog : ContentDialog
     /// <param name="title">The show, for the explanation line.</param>
     /// <param name="seasons">Every season of the title, in the accordion's order.</param>
     /// <param name="submit">Sends <c>POST …/request</c> with the picked seasons; throws <see cref="ApiException"/> on a refusal.</param>
-    public SeasonRequestDialog(string title, IReadOnlyList<SeasonSummary> seasons, Func<IReadOnlyList<int>, Task> submit)
+    /// <param name="autoApprove">"This request will be approved automatically" (0.53+ servers say so).</param>
+    public SeasonRequestDialog(string title, IReadOnlyList<SeasonSummary> seasons, Func<IReadOnlyList<int>, Task> submit, bool autoApprove = false)
     {
         this.submit = submit;
         selection = new SeasonPickerSelection(seasons);
         rows = seasons.Select(season => new SeasonPickerRow(season, OnRowChanged)).ToList();
         InitializeComponent();
-        ExplanationText.Text =
-            Loc.Format("Season_Explanation", title);
-        SelectAllBox.Visibility = selection.Requestable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ExplanationText.Text = title;
+        AutoApproveBar.IsOpen = autoApprove;
+        SelectAllBox.IsEnabled = selection.Requestable.Count > 0;
         RowsRepeater.ItemsSource = rows;
         Update();
     }
@@ -66,7 +67,7 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         NothingToChangeText.Text = RequestEditForm.NothingToChangeMessage;
         NothingToChangeText.Visibility = form.HasNothingToChange ? Visibility.Visible : Visibility.Collapsed;
         RowsBorder.Visibility = rows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        SelectAllBox.Visibility = form.IsTv && selection.Requestable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        SelectAllBox.IsEnabled = form.IsTv && selection.Requestable.Count > 0;
 
         syncing = true;
         foreach (var row in rows)
@@ -134,7 +135,7 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         {
             PrimaryButtonText = RequestEditForm.SubmitTitle(pending);
             IsPrimaryButtonEnabled = !pending && form.CanSave;
-            SelectAllBox.IsEnabled = !pending && form.ListEnabled;
+            SelectAllBox.IsEnabled = !pending && form.ListEnabled && form.IsTv && selection.Requestable.Count > 0;
             RowsScroller.IsEnabled = !pending && form.ListEnabled;
             WholeSeriesRadio.IsEnabled = !pending && form.ScopeEnabled;
             JustTheseRadio.IsEnabled = !pending && form.ScopeEnabled;
@@ -144,7 +145,7 @@ public sealed partial class SeasonRequestDialog : ContentDialog
         {
             PrimaryButtonText = pending ? Loc.Get("Season_Requesting") : selection.SubmitTitle;
             IsPrimaryButtonEnabled = !pending && selection.Seasons.Count > 0;
-            SelectAllBox.IsEnabled = !pending;
+            SelectAllBox.IsEnabled = !pending && selection.Requestable.Count > 0;
             RowsScroller.IsEnabled = !pending;
         }
         SelectAllBox.IsChecked = selection.AllSelected;

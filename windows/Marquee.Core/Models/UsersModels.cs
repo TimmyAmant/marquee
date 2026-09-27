@@ -409,3 +409,47 @@ public sealed record AvatarResult
     public required bool Ok { get; init; }
     public string? AvatarUrl { get; init; }
 }
+
+/// <summary><c>GET /users/{id}/profile</c> (0.53+): a member's profile page.</summary>
+public sealed record MemberProfile
+{
+    public required HouseholdMember User { get; init; }
+    public required MemberRequestCounts Requests { get; init; }
+
+    /// <summary>Each type null when it isn't limited.</summary>
+    public required RequestLimits RequestLimits { get; init; }
+
+    /// <summary>Their Plex Watchlist, newest first; null when they don't sync one.</summary>
+    public IReadOnlyList<TitleCard>? Watchlist { get; init; }
+}
+
+/// <summary>Requests made, declined ones left out.</summary>
+public sealed record MemberRequestCounts
+{
+    public required int Total { get; init; }
+    public required int Movie { get; init; }
+    public required int Tv { get; init; }
+}
+
+/// <summary>The profile's words and when the server has profiles at all (0.53+).</summary>
+public static class MemberProfileText
+{
+    /// <summary>A server that has <c>GET /users/{id}/profile</c>: 0.53 or later.</summary>
+    public static bool IsSupported(string? serverVersion) =>
+        Marquee.Core.Updates.AppVersion.Parse(serverVersion) is { } server
+        && Marquee.Core.Updates.AppVersion.Parse("0.53.0") is { } first
+        && server.CompareTo(first) >= 0;
+
+    /// <summary>"3 of 5", or "Unlimited" when the type isn't limited.</summary>
+    public static string LimitValue(RequestLimit? limit) =>
+        limit is null ? Loc.Get("Profile_Unlimited") : Loc.Format("Profile_RemainingOf", limit.Remaining, limit.Limit);
+
+    /// <summary>"Every 7 days" under a limit; empty without one.</summary>
+    public static string LimitDetail(RequestLimit? limit) =>
+        limit is null ? "" : Loc.Plural("Profile_EveryDays", limit.Days);
+
+    /// <summary>"2 movies · 1 series" under the total.</summary>
+    public static string RequestSplit(MemberRequestCounts counts) =>
+        Loc.Plural("Profile_Movies", counts.Movie) + " · " + Loc.Plural("Profile_Series", counts.Tv);
+}
+
