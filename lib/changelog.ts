@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.53.1",
+    date: "2026-09-27",
+    changes: [
+      "The Docker Hub page now shows the same README as GitHub, updated automatically whenever it changes (once the Docker Hub token is added to the repository's secrets).",
+    ],
+  },
+  {
     version: "0.53.0",
     date: "2026-09-27",
     changes: [
