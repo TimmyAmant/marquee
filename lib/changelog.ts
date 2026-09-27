@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.54.1",
+    date: "2026-09-27",
+    changes: [
+      "\"Ready to watch\" now goes to the person who requested the title, once, when it's completely in: the movie's file, or every aired episode of the seasons they asked for. No more alert on the first episode of a show.",
+      "The admin no longer gets a \"finished downloading\" alert for every file (unless they requested the title themselves). Discord, ntfy and the other household channels post once, when a requested title is complete.",
+    ],
+  },
+  {
     version: "0.54.0",
     date: "2026-09-27",
     changes: [
