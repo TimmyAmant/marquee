@@ -9169,6 +9169,34 @@
         }
       }
     },
+    "Coming from Seerr?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kommst von Seerr?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Vienes de Seerr?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous venez de Seerr ?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vindo do Seerr?"
+          }
+        }
+      }
+    },
     "Coming soon" : {
       "localizations" : {
         "de" : {
@@ -15489,6 +15517,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importar do %@"
+          }
+        }
+      }
+    },
+    "Import from Seerr" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Seerr importieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar desde Seerr"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis Seerr"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar do Seerr"
           }
         }
       }
@@ -22101,6 +22157,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir no YouTube"
+          }
+        }
+      }
+    },
+    "Open the importer in your browser" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer im Browser öffnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir el importador en el navegador"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’importateur dans le navigateur"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir o importador no navegador"
           }
         }
       }
@@ -29869,6 +29953,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Me surpreenda"
+          }
+        }
+      }
+    },
+    "Switching from Seerr, Overseerr or Jellyseerr? Bring your household's accounts, requests, problem reports and blocklist over from its API. Nothing is sent to Sonarr or Radarr, and running it again only picks up what's new. The importer runs on the website." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du wechselst von Seerr, Overseerr oder Jellyseerr? Hol die Konten, Anfragen, Problemmeldungen und die Sperrliste deines Haushalts über dessen API herüber. An Sonarr oder Radarr wird nichts gesendet, und ein erneuter Lauf holt nur, was neu ist. Der Importer läuft auf der Website."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Te cambias desde Seerr, Overseerr o Jellyseerr? Trae las cuentas, solicitudes, informes de problemas y la lista de bloqueo de tu hogar desde su API. No se envía nada a Sonarr ni a Radarr, y volver a ejecutarlo solo recoge lo nuevo. El importador funciona en el sitio web."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous quittez Seerr, Overseerr ou Jellyseerr ? Récupérez les comptes, demandes, signalements et la liste de blocage de votre foyer depuis son API. Rien n’est envoyé à Sonarr ni à Radarr, et relancer l’import ne reprend que les nouveautés. L’importateur s’exécute sur le site web."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Está saindo do Seerr, Overseerr ou Jellyseerr? Traga as contas, pedidos, relatos de problema e a lista de bloqueio da sua casa pela API dele. Nada é enviado ao Sonarr ou ao Radarr, e rodar de novo só traz o que for novo. O importador roda no site."
           }
         }
       }

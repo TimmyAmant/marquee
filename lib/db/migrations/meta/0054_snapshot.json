@@ -1,5 +1,5 @@
 {
-  "id": "9cd41a36-9a74-4914-bb55-d20bad5fb644",
+  "id": "f1fd9ca0-c4e7-4bb7-97ea-5d4a79444387",
   "prevId": "c47b568c-45d5-4afe-a0c8-219ce266d0f3",
   "version": "7",
   "dialect": "postgresql",
@@ -769,12 +769,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "episode_count": {
-          "name": "episode_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "checked_at": {
           "name": "checked_at",
           "type": "timestamp with time zone",
@@ -1442,6 +1436,121 @@
         "favorites_entity_type_check": {
           "name": "favorites_entity_type_check",
           "value": "\"favorites\".\"entity_type\" in ('person','company','movie','tv','collection')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.import_links": {
+      "name": "import_links",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instance": {
+          "name": "instance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "import_links_source_idx": {
+          "name": "import_links_source_idx",
+          "columns": [
+            {
+              "expression": "source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "instance",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "import_links_target_idx": {
+          "name": "import_links_target_idx",
+          "columns": [
+            {
+              "expression": "target_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "import_links_source_check": {
+          "name": "import_links_source_check",
+          "value": "\"import_links\".\"source\" in ('seerr')"
+        },
+        "import_links_kind_check": {
+          "name": "import_links_kind_check",
+          "value": "\"import_links\".\"kind\" in ('user','request','issue','comment','blocklist')"
         }
       },
       "isRLSEnabled": false
@@ -2522,12 +2631,6 @@
         "last_viewed_at": {
           "name": "last_viewed_at",
           "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "episode_count": {
-          "name": "episode_count",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         }

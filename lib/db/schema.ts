@@ -1212,6 +1212,37 @@ export const traktSyncs = pgTable(
   ],
 );
 
+export const importSourceValues = ["seerr"] as const;
+export type ImportSource = (typeof importSourceValues)[number];
+
+export const importLinkKindValues = ["user", "request", "issue", "comment", "blocklist"] as const;
+export type ImportLinkKind = (typeof importLinkKindValues)[number];
+
+/** What "Import from Seerr" (lib/import/seerr) has already brought over,
+ * so running it again matches and skips rather than duplicates: the app it
+ * came from, which instance of it (`instance`: its address, lower-case
+ * host and port), what kind of thing, its id there, and the Marquee row it
+ * became. No foreign key on `targetId` (it points into five tables); a link
+ * whose target is gone is dropped and the thing imported again. */
+export const importLinks = pgTable(
+  "import_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source").notNull().$type<ImportSource>(),
+    instance: text("instance").notNull(),
+    kind: text("kind").notNull().$type<ImportLinkKind>(),
+    sourceId: integer("source_id").notNull(),
+    targetId: uuid("target_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("import_links_source_idx").on(table.source, table.instance, table.kind, table.sourceId),
+    index("import_links_target_idx").on(table.targetId),
+    check("import_links_source_check", sql`${table.source} in ('seerr')`),
+    check("import_links_kind_check", sql`${table.kind} in ('user','request','issue','comment','blocklist')`),
+  ],
+);
+
 export const traktSyncOutcomeValues = ["requested", "skipped", "existing"] as const;
 export type TraktSyncOutcome = (typeof traktSyncOutcomeValues)[number];
 

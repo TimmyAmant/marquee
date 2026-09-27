@@ -4,13 +4,12 @@ import { invalid } from "@/lib/api/request";
 import { msg } from "@/lib/api/errors";
 import { iso, statusKey, titleCard } from "@/lib/api/mappers";
 import { hdrLabel } from "@/lib/quality";
-import { isUnwanted } from "@/lib/library/status-tone";
+import { posterActions } from "@/lib/api/poster-actions";
 import { libraryIsHdr, libraryResolution, parseLibraryQuery, type RawLibraryQuery } from "@/lib/library/list";
 import { storageFullOn } from "@/lib/library/storage";
 import { loadLibraryCollections, loadLibraryDuplicates, loadLibraryPage, loadLibraryStorage } from "@/lib/pages/library";
 import type { LibraryItem } from "@/lib/library/query";
 import { franchiseMissingItems, franchiseRequestableItems } from "@/lib/title-meta";
-import { requestPermission } from "@/lib/users/permissions";
 import type * as Dto from "@/lib/api/types";
 
 // GET /api/v1/library and its /collections-missing, /duplicates and
@@ -93,19 +92,21 @@ export const libraryCollectionsHandler = withApi(async (request): Promise<Dto.Li
       title: collection.title,
       collectionId: collection.collectionId ?? null,
       collectionFavorited: collection.collectionId !== undefined ? collection.collectionFavorited : null,
+      // The same quick-action rule as every other list of cards
+      // (lib/api/poster-actions.ts), from the maps the page loaded.
       items: collection.items.map((item) => {
-        const key = statusKey(item.mediaType, item.tmdbId);
-        const status = collection.statusMap.get(key) ?? null;
+        const status = collection.statusMap.get(statusKey(item.mediaType, item.tmdbId)) ?? null;
+        const rules = {
+          isAdmin,
+          arrConfigured: data.connections.arrConfigured,
+          mayRequest: { movie: data.permissions.requestMovies, tv: data.permissions.requestTv },
+          blockedKeys: data.blockedKeys,
+          requestedKeys: new Set(collection.requestStatusMap.keys()),
+        };
         return titleCard(item, {
           status,
           favorited: collection.favoritedIds.has(item.tmdbId),
-          requested: collection.requestStatusMap.has(key),
-          canQuickAdd: isUnwanted(status) && isAdmin && data.connections.arrConfigured[item.mediaType],
-          canRequest:
-            isUnwanted(status) &&
-            !isAdmin &&
-            data.permissions[requestPermission(item.mediaType, false)] &&
-            !data.blockedKeys.has(key),
+          ...posterActions(rules, item.mediaType, item.tmdbId, status),
         });
       }),
       missingCount: collection.missing.length,

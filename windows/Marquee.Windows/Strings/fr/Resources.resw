@@ -4948,4 +4948,16 @@
   <data name="Library_CopyQuality.Text" xml:space="preserve">
     <value>Qualité</value>
   </data>
+  <data name="Integrations_SeerrHeading.Text" xml:space="preserve">
+    <value>Vous venez de Seerr ?</value>
+  </data>
+  <data name="Integrations_SeerrTitle.Text" xml:space="preserve">
+    <value>Importer depuis Seerr</value>
+  </data>
+  <data name="Integrations_SeerrBlurb.Text" xml:space="preserve">
+    <value>Vous quittez Seerr, Overseerr ou Jellyseerr ? Récupérez les comptes, demandes, signalements et la liste de blocage de votre foyer depuis son API. Rien n’est envoyé à Sonarr ni à Radarr, et relancer l’import ne reprend que les nouveautés. L’importateur s’exécute sur le site web.</value>
+  </data>
+  <data name="Integrations_SeerrOpen.Content" xml:space="preserve">
+    <value>Ouvrir l’importateur dans le navigateur</value>
+  </data>
 </root>

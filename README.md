@@ -94,6 +94,14 @@ off: point it at the same Plex/Jellyfin/Emby and Sonarr/Radarr, import your
 household from Plex or Jellyfin, and let people sign in with the accounts they
 already have.
 
+When you're ready to switch, **Settings › Integrations › Import from Seerr**
+brings everything over from the running Seerr's API with its admin key:
+accounts (matched to existing ones by Plex/Jellyfin id, email or username),
+permissions and request limits, every request with its seasons and 4K flag,
+problem reports with their comments, and the blocklist. Preview first, run
+with progress, download a report; run it again later and it only picks up
+what's new. See [`docs/migrating-from-seerr.md`](docs/migrating-from-seerr.md).
+
 ## API Documentation
 
 Every install serves its API description at `http://<your-server>:3000/api-docs`

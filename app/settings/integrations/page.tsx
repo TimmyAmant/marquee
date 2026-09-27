@@ -21,6 +21,7 @@ import { getSsoSettingsView } from "@/lib/auth/sso/config";
 import { HouseholdEventsCard } from "@/components/household-events-card";
 import { getHouseholdEvents } from "@/lib/notifications/preferences";
 import { ApiKeysCard } from "@/components/api-keys-card";
+import { SeerrImportCard } from "@/components/seerr-import-card";
 import { listApiKeys } from "@/lib/api/api-key-store";
 import { listHouseholdMembersFor } from "@/lib/users/household";
 import { getT } from "@/lib/i18n/server";
@@ -152,6 +153,13 @@ export default async function IntegrationsSettingsPage() {
             <NtfyConnectCard connected={ntfyConnected} />
             <NotificationChannelCards channels={channels} />
             <WebhookConnectCard connected={genericWebhookConnected} />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">{t("integrations.sectionMigrate")}</h3>
+          <div className="mt-3 flex flex-col gap-6">
+            <SeerrImportCard />
           </div>
         </section>
 

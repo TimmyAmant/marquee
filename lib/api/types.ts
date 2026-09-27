@@ -1117,6 +1117,18 @@ export type PlexPinStatus = { connected: boolean; movieCount: number | null; tvC
 
 export type TraktImportResult = { ok: true; importedCount: number; skippedCount: number };
 
+// Import from Seerr / Overseerr / Jellyseerr (0.51+): lib/import/seerr.
+export type {
+  SeerrImportChoices,
+  SeerrImportJob,
+  SeerrImportPreview,
+  SeerrImportReport,
+  SeerrImportWarning,
+  SeerrServerInfo,
+  SeerrUserPreview,
+} from "@/lib/import/seerr/import";
+export type SeerrTestResult = { ok: true; server: import("@/lib/import/seerr/import").SeerrServerInfo };
+
 export type Job = { id: string; name: string; schedule: string; description: string };
 
 export type AboutInfo = {

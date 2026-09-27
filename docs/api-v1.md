@@ -256,9 +256,15 @@ computed against `libraryOwnerId` (from `/me`), exactly like the website.
 | `overview`, `rating` | string \| null, number \| null | Movies/Series grid only (`rating` = TMDb vote average 0–10) |
 | `status` | `LibraryStatus` \| null | null = not in the library (the website shows no badge) |
 | `favorited` | bool \| null | null where the website shows no favorite star on that list |
-| `requested` | bool \| null | You already have a pending or approved request (franchise/similar rows); null elsewhere |
-| `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`) |
-| `canRequest` | bool | Show the "Request" quick action — unless `requested` is true, then show "Requested" |
+| `requested` | bool \| null | You already have a pending or approved request; null on lists that offer no quick action (Favorites) |
+| `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`): the admin, with Radarr/Sonarr set up for the type, on a title not in the library |
+| `canRequest` | bool | Show the "Request" quick action: a member with the request permission for the type, on a title not in the library, not blocked, not already requested — when `requested` is true, show "Requested" instead |
+
+Every list that returns TitleCards fills these three in the same way (newer servers;
+older servers left them false/null on Discover's shelves and never sent
+`canRequest` outside the title page), so a card's button is read from the
+card alone: `canQuickAdd` → Add, else `requested` → Requested, else
+`canRequest` → Request, else nothing.
 
 `LibraryStatus`: `"owned"` (badge "Owned" / "Already in your library"),
 `"tracked_downloading"` ("Downloading"), `"tracked_monitored"` ("Missing"),
@@ -730,8 +736,9 @@ All endpoints in this section need TMDb (`502 upstream` otherwise — deviation 
 
 ### `GET /discover` — user
 
-The Discover landing page, shelves in page order. Cards carry `status` only
-(the website shows no favorite/add buttons on these shelves). Empty shelves
+The Discover landing page, shelves in page order. Cards carry `status` and
+the viewer's quick action (`canQuickAdd` / `canRequest` / `requested`; newer servers)
+but no `favorited` (the website shows no favorite star on these shelves). Empty shelves
 are empty arrays — the website hides them. Genre tiles link to
 `/movies?genre=` / `/series?genre=`; studio logos to `/companies/{id}`;
 network logos to `/series?network=`.
@@ -741,7 +748,7 @@ network logos to `/series?network=`.
   "recentlyAdded": [ /* TitleCard, from Plex/Jellyfin, newest first, max 20 */ ],
   "trending": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
-      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": false, "canQuickAdd": true, "canRequest": false }
   ],
   "popularMovies": [ /* TitleCard ×20 */ ],
   "movieGenres": [ { "id": 28, "name": "Action", "backdropPath": "/qeQJ.jpg" } ],
@@ -830,7 +837,8 @@ drops re-releases whose release date has passed, so its pages can run short.
 its `totalPages` / `totalResults` only look one page ahead (it is empty
 without a connected media server). Continue while `page < totalPages`, skip
 titles already shown, as on the Movies grid. Cards carry `status`,
-`favorited` and `canQuickAdd`; `trending` and `recently-added` mix movies and
+`favorited` and the quick action (`canQuickAdd` / `canRequest` /
+`requested`); `trending` and `recently-added` mix movies and
 series.
 
 ```json
@@ -842,7 +850,7 @@ series.
   "totalResults": 1000,
   "results": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
-      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": null, "canQuickAdd": true, "canRequest": false }
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
   ]
 }
 ```
@@ -964,7 +972,7 @@ TMDb's ranking shifts; skip ones you already show (as the website does).
     { "mediaType": "movie", "tmdbId": 502, "name": "Fail Safe", "posterPath": "/qrsj.jpg", "year": "1964",
       "subtitle": "Thriller",
       "overview": "Because of a technical defect an American bomber team mistakenly orders the destruction of Moscow…",
-      "rating": 7.832, "status": null, "favorited": false, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "rating": 7.832, "status": null, "favorited": false, "requested": false, "canQuickAdd": false, "canRequest": true }
   ]
 }
 ```
@@ -991,7 +999,7 @@ active network chip, and the "Because you watched …" row.
   "network": { "tmdbId": 213, "name": "Netflix", "logoPath": "/wwem.png" },
   "becauseYouWatched": {
     "title": "Severance",
-    "items": [ /* TitleCard ×≤12 with status, favorited, canQuickAdd */ ]
+    "items": [ /* TitleCard ×≤12 with status, favorited, requested, canQuickAdd, canRequest */ ]
   }
 }
 ```
@@ -1028,7 +1036,7 @@ The search results page. `q` is required (`400` if blank).
   "query": "keanu",
   "people": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false } ],
   "studios": [ { "tmdbId": 420, "name": "Marvel Studios", "logoPath": "/hUze.png", "favorited": false } ],
-  "titles": [ /* TitleCard with status, favorited, canQuickAdd */ ],
+  "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ],
   "theme": {
     "label": "Science Fiction",
     "items": [ /* TitleCard — section heading on the website: "<label> movies & TV" */ ]
@@ -1582,7 +1590,7 @@ the corrected title may already be linked to something else in your library.".
   "credits": [
     { "mediaType": "movie", "tmdbId": 1638103, "name": "Constantine 2", "posterPath": "/aAcC.jpg", "year": null,
       "subtitle": "John Constantine", "overview": null, "rating": null, "status": null,
-      "favorited": false, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
   ]
 }
 ```
@@ -1604,7 +1612,7 @@ for this person yet." Errors: `404` (unknown person), `502 upstream`.
   "logoPath": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png",
   "titleCount": 137,
   "favorited": false,
-  "titles": [ /* TitleCard with status, favorited, canQuickAdd */ ]
+  "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ]
 }
 ```
 
@@ -3804,6 +3812,122 @@ Errors: `400` "That doesn't look like a Trakt list or watchlist URL.", `409`
 "Connect Trakt in Settings first.", `502` "Couldn't fetch that list from Trakt —
 check the URL and that it's set to public.", `403` "Only the admin can import from Trakt.".
 
+### Import from Seerr / Overseerr / Jellyseerr — admin (0.51+)
+
+Everything a household built up in Seerr — accounts, requests, problem
+reports with comments, the blocklist — read from that server's API with
+its admin key and written into Marquee (`lib/import/seerr`; the rules are
+in `docs/migrating-from-seerr.md`). Idempotent: what's been imported is
+remembered, so a re-run only picks up what's new. Nothing is sent to
+Sonarr/Radarr and nobody is notified. All four are admin-only (`403` "Only
+the admin can import from Seerr.") and **never callable with an API key**
+(a Seerr admin key travels through them). The Seerr key is never stored.
+
+Every body takes `url` (Seerr's address, `http://192.168.1.20:5055`; a
+pasted `/api/v1` is dropped) and `apiKey` (Seerr › Settings › General).
+Errors shared by all: `400` "Enter a full URL, starting with https:// or
+http://.", "Enter the Seerr API key (Settings → General in Seerr).", `401`
+"Seerr didn't accept that API key. …", `403` "That API key isn't an
+admin's. …", `502` "Couldn't reach Seerr at that address. …", "That address
+doesn't answer like Seerr, Overseerr or Jellyseerr. …".
+
+#### `POST /settings/import/seerr/test` — admin
+
+Checks the address answers like Seerr and the key is an admin's.
+
+```json
+{ "ok": true, "server": { "url": "http://192.168.1.20:5055", "version": "3.4.1", "applicationTitle": "Seerr", "adminName": "tim" } }
+```
+
+Website text: "Connected to Seerr 3.4.1 as tim."
+
+#### `POST /settings/import/seerr/preview` — admin
+
+Reads everything and says what an import would do; changes nothing.
+`users.items[].outcome`: `you` (Seerr's admin, or an account matched to
+you), `matched` (an existing account, by `matchedBy`: `plex`, `jellyfin`,
+`email`, `username`), `imported` (linked by an earlier run), `new`.
+`warnings[].code`: `tmdb_not_configured`, `seerr_admin_is_you`,
+`seerr_admins_trusted`, `arr_server_unmatched` (with `detail`, the server's
+name), `requests_without_requester`, `issues_without_reporter`,
+`notifications_not_imported`, `local_users_no_password`, `links_dropped`
+(each with `count` where it's a number of things).
+
+```json
+{
+  "server": { "url": "http://192.168.1.20:5055", "version": "3.4.1", "applicationTitle": "Seerr", "adminName": "tim" },
+  "tmdbConfigured": true,
+  "users": {
+    "total": 4, "you": 1, "imported": 0, "matched": 2, "new": 1,
+    "items": [
+      { "seerrId": 1, "name": "tim", "kind": "plex", "isAdmin": true, "outcome": "you", "matchedTo": "tester", "matchedBy": null, "permissions": ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "autoApproveMovies", "autoApproveTv", "autoApprove4kMovies", "autoApprove4kTv", "advancedRequests", "viewRequests", "reviewRequests", "manageIssues", "reportIssues", "bypassLimits"], "dropped": [], "movieQuotaLimit": null, "movieQuotaDays": 7, "tvQuotaLimit": null, "tvQuotaDays": 7 },
+      { "seerrId": 3, "name": "Bob Local", "kind": "local", "isAdmin": false, "outcome": "new", "matchedTo": null, "matchedBy": null, "permissions": ["requestMovies", "requestTv", "request4kMovies", "request4kTv", "advancedRequests", "viewRequests", "reviewRequests", "reportIssues"], "dropped": [], "movieQuotaLimit": 5, "movieQuotaDays": 7, "tvQuotaLimit": 2, "tvQuotaDays": 14 }
+    ]
+  },
+  "requests": {
+    "total": 6, "new": 6, "imported": 0, "pending": 2, "approved": 3, "rejected": 1, "fourK": 1, "withoutRequester": 0, "unmappable": 0,
+    "servers": [ { "name": "Radarr Main", "kind": "radarr", "matchedTo": "Radarr" }, { "name": "Sonarr Main", "kind": "sonarr", "matchedTo": null } ]
+  },
+  "issues": { "total": 2, "new": 2, "imported": 0, "comments": 3, "withoutReporter": 0, "unmappable": 0 },
+  "blocklist": { "total": 2, "new": 2, "imported": 0, "unmappable": 0 },
+  "warnings": [ { "code": "seerr_admin_is_you" }, { "code": "local_users_no_password", "count": 1 }, { "code": "arr_server_unmatched", "detail": "Sonarr Main" }, { "code": "notifications_not_imported" } ]
+}
+```
+
+Website text: "4 accounts: 3 matched, 1 new, 0 already imported." / "6
+requests: 6 to import (2 pending, 3 approved, 1 declined), 0 already
+imported." / "2 problem reports: 2 to import with 3 comments, 0 already
+imported." / "2 blocklist entries: 2 to import, 0 already imported."
+
+#### `POST /settings/import/seerr/run` — admin
+
+Starts the import in the background and answers **`202`** with the job
+(the same shape `GET …/jobs/{id}` returns, `state` `running`). Body: `url`,
+`apiKey` and what to import — `users`, `requests`, `issues`, `blocklist`
+(each `true` unless sent `false`) and `updateExistingUsers` (`false` unless
+sent `true`: also set matched accounts' permissions and limits from Seerr,
+never the admin's). One import at a time: `409` "An import is already
+running. Wait for it to finish." Requests or reports without TMDb: `409`
+"Connect TMDb in Settings → Integrations before importing …". Nothing
+chosen: `400` "Choose at least one thing to import.".
+
+#### `GET /settings/import/seerr/jobs/{id}` — admin
+
+Progress while it runs (`phase`: `connecting`, `users`, `requests`, `issues`,
+`blocklist`, `done`, with `done`/`total` for the current phase), then the
+report (`state` `done`) or why it stopped (`state` `failed`, `error`).
+Jobs are kept in memory an hour after finishing; `404` "That import doesn't
+exist any more." after that or across a restart.
+
+```json
+{
+  "id": "0d0c0b0a-1111-4222-8333-444455556666",
+  "state": "done", "phase": "done", "done": 1, "total": 1,
+  "startedAt": "2026-09-27T02:10:00.000Z", "finishedAt": "2026-09-27T02:10:04.000Z",
+  "error": null,
+  "report": {
+    "startedAt": "2026-09-27T02:10:00.000Z", "finishedAt": "2026-09-27T02:10:04.000Z",
+    "server": { "url": "http://192.168.1.20:5055", "version": "3.4.1", "applicationTitle": "Seerr", "adminName": "tim" },
+    "choices": { "users": true, "updateExistingUsers": false, "requests": true, "issues": true, "blocklist": true },
+    "users": {
+      "created": [ { "seerrId": 3, "name": "Bob Local", "username": "bob", "kind": "local" } ],
+      "matched": [ { "seerrId": 1, "name": "tim", "username": "tester", "updated": false }, { "seerrId": 2, "name": "anna", "username": "anna", "updated": false } ],
+      "skipped": []
+    },
+    "requests": { "created": 6, "skipped": 0, "failed": [], "titlesWithoutTmdb": 0 },
+    "issues": { "created": 2, "comments": 3, "skipped": 0, "failed": [] },
+    "blocklist": { "created": 2, "skipped": 0, "failed": [] },
+    "warnings": [ { "code": "seerr_admin_is_you" }, { "code": "local_users_no_password", "count": 1 }, { "code": "notifications_not_imported" } ]
+  }
+}
+```
+
+`requests.failed[].reason` / `issues.failed[].reason`: `requester_missing`
+/ `reporter_missing` (no such account here — import accounts too),
+`no_media`, `unknown_status`, `error`. Website text: "Import finished." /
+"Accounts: 1 created, 2 matched, 0 skipped." / "Requests: 6 imported, 0
+already here, 0 couldn't be imported." / "Download report (JSON)".
+
 ---
 
 ## 13. Settings — Jobs (admin)
@@ -4366,6 +4490,10 @@ see free space per root folder here."
 | | `PUT /settings/integrations/tmdb` · `DELETE` | admin |
 | | `PUT /settings/integrations/trakt` · `DELETE` | admin |
 | | `POST /settings/integrations/trakt/import` | admin |
+| Import from Seerr | `POST /settings/import/seerr/test` | admin (no API key) |
+| | `POST /settings/import/seerr/preview` | admin (no API key) |
+| | `POST /settings/import/seerr/run` | admin (no API key) |
+| | `GET /settings/import/seerr/jobs/{id}` | admin (no API key) |
 | | `PUT /settings/integrations/tvdb` · `DELETE` | admin |
 | | `PUT /settings/integrations/discord` · `DELETE` | admin |
 | | `PUT /settings/integrations/ntfy` · `DELETE` | admin |

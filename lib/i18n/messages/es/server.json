@@ -212,5 +212,15 @@
   "plexWatchlistLimited": "Llegaste a tu límite de solicitudes, así que el resto de tu watchlist espera hasta que te queden solicitudes.",
   "plexWatchlistUnreachable": "No se pudo contactar con Plex para leer tu watchlist. Marquee lo volverá a intentar en breve.",
   "pushTestBody": "Las notificaciones funcionan en este dispositivo.",
-  "onlyAdminDuplicates": "Solo el administrador puede ver los duplicados."
+  "onlyAdminDuplicates": "Solo el administrador puede ver los duplicados.",
+  "onlyAdminSeerrImport": "Solo el administrador puede importar desde Seerr.",
+  "seerrKeyRequired": "Introduce la clave de API de Seerr (Ajustes → General en Seerr).",
+  "seerrKeyRejected": "Seerr no aceptó esa clave de API. Cópiala de Ajustes → General en Seerr.",
+  "seerrKeyNotAdmin": "Esa clave de API no es de un administrador. Usa la clave de Ajustes → General en Seerr.",
+  "seerrUnreachable": "No se pudo conectar con Seerr en esa dirección. Compruébala, y que el servidor de Marquee pueda verla.",
+  "seerrNotSeerr": "Esa dirección no responde como Seerr, Overseerr o Jellyseerr. Comprueba la URL (por ejemplo http://192.168.1.20:5055).",
+  "seerrTmdbRequired": "Conecta TMDb en Ajustes → Integraciones antes de importar solicitudes o informes de problemas: Marquee lo necesita para sus títulos y pósteres.",
+  "seerrImportRunning": "Ya hay una importación en marcha. Espera a que termine.",
+  "seerrImportNotFound": "Esa importación ya no existe.",
+  "seerrNothingChosen": "Elige al menos una cosa para importar."
 }

@@ -28,8 +28,8 @@
       "rating": null,
       "status": null,
       "favorited": null,
-      "requested": null,
-      "canQuickAdd": false,
+      "requested": false,
+      "canQuickAdd": true,
       "canRequest": false
     }
   ],

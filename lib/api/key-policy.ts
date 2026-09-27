@@ -28,6 +28,8 @@ const DENIED_PREFIXES = [
   "/settings/sso",
   "/settings/sign-in",
   "/users/import",
+  // Import from Seerr: takes another server's admin key.
+  "/settings/import",
 ];
 
 /** The admin settings a key may read (GET only); every other /settings path
