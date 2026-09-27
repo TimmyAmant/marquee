@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.51.0",
+    date: "2026-09-27",
+    changes: [
+      "Coming from Seerr, Overseerr or Jellyseerr? Settings › Integrations › Import from Seerr brings over your users (matched to existing accounts, with their permissions and request limits), requests with their seasons and 4K, problem reports with comments, and the blocklist. You see a preview first; nothing is sent to Sonarr/Radarr and nobody is notified; running it again doesn't duplicate anything. Your Seerr API key is only used for the import and never saved.",
+      "A step-by-step guide is in docs/migrating-from-seerr.md.",
+    ],
+  },
+  {
     version: "0.50.1",
     date: "2026-09-26",
     changes: [
