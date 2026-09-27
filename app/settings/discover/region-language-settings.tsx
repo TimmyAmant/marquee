@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { saveDiscoverLocaleAction } from "./actions";
 import type { DiscoverLocaleSettings } from "@/lib/discover/locale-settings";
 import { useT } from "@/lib/i18n/client";
-import { languageName, regionName } from "@/lib/i18n/format";
 
 const selectClass =
   "rounded-lg border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -17,7 +16,16 @@ const selectClass =
  * TMDb's Popular and Upcoming rows are filtered to. Saves as each is
  * changed.
  */
-export function RegionLanguageSettings({ initial }: { initial: DiscoverLocaleSettings }) {
+export function RegionLanguageSettings({
+  initial,
+  regionNames,
+  languageNames,
+}: {
+  initial: DiscoverLocaleSettings;
+  /** Code to name, in the reader's language (worked out on the server). */
+  regionNames: Record<string, string>;
+  languageNames: Record<string, string>;
+}) {
   const t = useT();
   const router = useRouter();
   const [settings, setSettings] = useState(initial);
@@ -36,8 +44,8 @@ export function RegionLanguageSettings({ initial }: { initial: DiscoverLocaleSet
     });
   }
 
-  const region = (code: string) => `${regionName(t, code) ?? code} (${code})`;
-  const language = (code: string) => (code === "any" ? t("integrations.anyLanguage") : (languageName(t, code) ?? code));
+  const region = (code: string) => `${regionNames[code] ?? code} (${code})`;
+  const language = (code: string) => languageNames[code] ?? code;
 
   return (
     <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
