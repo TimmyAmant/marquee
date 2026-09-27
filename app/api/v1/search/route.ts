@@ -1,16 +1,18 @@
 import { withApi } from "@/lib/api/handler";
 import { msg } from "@/lib/api/errors";
-import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { invalid } from "@/lib/api/request";
 import { statusKey, titleCard, yearOf } from "@/lib/api/mappers";
+import { posterActions } from "@/lib/api/poster-actions";
+import { loadPosterActionRules } from "@/lib/api/poster-action-rules";
 import { loadSearchResults } from "@/lib/pages/search";
 import type { SearchResults } from "@/lib/api/types";
 import type { MediaType } from "@/lib/db/schema";
 
 /** The /search?q= results page: people, studios, titles, and a genre/keyword
- * theme row, with status, favorites and quick-add eligibility. */
+ * theme row, with status, favorites and the viewer's quick action
+ * (lib/api/poster-actions.ts). */
 export const GET = withApi(async (request): Promise<SearchResults> => {
   const ctx = await requireApiUser(request);
   const query = new URL(request.url).searchParams.get("q")?.trim();
@@ -18,13 +20,21 @@ export const GET = withApi(async (request): Promise<SearchResults> => {
   await requireTmdbConfigured();
 
   const data = await loadSearchResults(await ctx.viewer(), query);
+  const rules = await loadPosterActionRules(
+    ctx.user,
+    [
+      ...data.titleResults.map((t) => ({ mediaType: t.media_type as MediaType, tmdbId: t.id })),
+      ...data.themeItems,
+    ],
+    data.arrConfigured,
+  );
 
   const card = (base: { mediaType: MediaType; tmdbId: number; name: string; posterPath: string | null; year: string | null }) => {
     const status = data.statusMap.get(statusKey(base.mediaType, base.tmdbId)) ?? null;
     return titleCard(base, {
       status,
       favorited: data.favoritedTitle(base.mediaType, base.tmdbId),
-      canQuickAdd: data.arrConfigured[base.mediaType] && isUnwanted(status),
+      ...posterActions(rules, base.mediaType, base.tmdbId, status),
     });
   };
 

@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.51.1",
+    date: "2026-09-27",
+    changes: [
+      "Quick add on posters now works in the Mac and Windows apps everywhere, including Discover: the admin gets \"+ Add to Radarr/Sonarr\", members get \"Request\" (following their permissions and the blocklist), and titles they already asked for show \"Requested\". No app update needed.",
+    ],
+  },
+  {
     version: "0.51.0",
     date: "2026-09-27",
     changes: [

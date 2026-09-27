@@ -250,9 +250,15 @@ computed against `libraryOwnerId` (from `/me`), exactly like the website.
 | `overview`, `rating` | string \| null, number \| null | Movies/Series grid only (`rating` = TMDb vote average 0–10) |
 | `status` | `LibraryStatus` \| null | null = not in the library (the website shows no badge) |
 | `favorited` | bool \| null | null where the website shows no favorite star on that list |
-| `requested` | bool \| null | You already have a pending or approved request (franchise/similar rows); null elsewhere |
-| `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`) |
-| `canRequest` | bool | Show the "Request" quick action — unless `requested` is true, then show "Requested" |
+| `requested` | bool \| null | You already have a pending or approved request; null on lists that offer no quick action (Favorites) |
+| `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`): the admin, with Radarr/Sonarr set up for the type, on a title not in the library |
+| `canRequest` | bool | Show the "Request" quick action: a member with the request permission for the type, on a title not in the library, not blocked, not already requested — when `requested` is true, show "Requested" instead |
+
+Every list that returns TitleCards fills these three in the same way (newer servers;
+older servers left them false/null on Discover's shelves and never sent
+`canRequest` outside the title page), so a card's button is read from the
+card alone: `canQuickAdd` → Add, else `requested` → Requested, else
+`canRequest` → Request, else nothing.
 
 `LibraryStatus`: `"owned"` (badge "Owned" / "Already in your library"),
 `"tracked_downloading"` ("Downloading"), `"tracked_monitored"` ("Missing"),
@@ -724,8 +730,9 @@ All endpoints in this section need TMDb (`502 upstream` otherwise — deviation 
 
 ### `GET /discover` — user
 
-The Discover landing page, shelves in page order. Cards carry `status` only
-(the website shows no favorite/add buttons on these shelves). Empty shelves
+The Discover landing page, shelves in page order. Cards carry `status` and
+the viewer's quick action (`canQuickAdd` / `canRequest` / `requested`; newer servers)
+but no `favorited` (the website shows no favorite star on these shelves). Empty shelves
 are empty arrays — the website hides them. Genre tiles link to
 `/movies?genre=` / `/series?genre=`; studio logos to `/companies/{id}`;
 network logos to `/series?network=`.
@@ -735,7 +742,7 @@ network logos to `/series?network=`.
   "recentlyAdded": [ /* TitleCard, from Plex/Jellyfin, newest first, max 20 */ ],
   "trending": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
-      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": false, "canQuickAdd": true, "canRequest": false }
   ],
   "popularMovies": [ /* TitleCard ×20 */ ],
   "movieGenres": [ { "id": 28, "name": "Action", "backdropPath": "/qeQJ.jpg" } ],
@@ -824,7 +831,8 @@ drops re-releases whose release date has passed, so its pages can run short.
 its `totalPages` / `totalResults` only look one page ahead (it is empty
 without a connected media server). Continue while `page < totalPages`, skip
 titles already shown, as on the Movies grid. Cards carry `status`,
-`favorited` and `canQuickAdd`; `trending` and `recently-added` mix movies and
+`favorited` and the quick action (`canQuickAdd` / `canRequest` /
+`requested`); `trending` and `recently-added` mix movies and
 series.
 
 ```json
@@ -836,7 +844,7 @@ series.
   "totalResults": 1000,
   "results": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
-      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": null, "canQuickAdd": true, "canRequest": false }
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
   ]
 }
 ```
@@ -958,7 +966,7 @@ TMDb's ranking shifts; skip ones you already show (as the website does).
     { "mediaType": "movie", "tmdbId": 502, "name": "Fail Safe", "posterPath": "/qrsj.jpg", "year": "1964",
       "subtitle": "Thriller",
       "overview": "Because of a technical defect an American bomber team mistakenly orders the destruction of Moscow…",
-      "rating": 7.832, "status": null, "favorited": false, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "rating": 7.832, "status": null, "favorited": false, "requested": false, "canQuickAdd": false, "canRequest": true }
   ]
 }
 ```
@@ -985,7 +993,7 @@ active network chip, and the "Because you watched …" row.
   "network": { "tmdbId": 213, "name": "Netflix", "logoPath": "/wwem.png" },
   "becauseYouWatched": {
     "title": "Severance",
-    "items": [ /* TitleCard ×≤12 with status, favorited, canQuickAdd */ ]
+    "items": [ /* TitleCard ×≤12 with status, favorited, requested, canQuickAdd, canRequest */ ]
   }
 }
 ```
@@ -1022,7 +1030,7 @@ The search results page. `q` is required (`400` if blank).
   "query": "keanu",
   "people": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false } ],
   "studios": [ { "tmdbId": 420, "name": "Marvel Studios", "logoPath": "/hUze.png", "favorited": false } ],
-  "titles": [ /* TitleCard with status, favorited, canQuickAdd */ ],
+  "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ],
   "theme": {
     "label": "Science Fiction",
     "items": [ /* TitleCard — section heading on the website: "<label> movies & TV" */ ]
@@ -1576,7 +1584,7 @@ the corrected title may already be linked to something else in your library.".
   "credits": [
     { "mediaType": "movie", "tmdbId": 1638103, "name": "Constantine 2", "posterPath": "/aAcC.jpg", "year": null,
       "subtitle": "John Constantine", "overview": null, "rating": null, "status": null,
-      "favorited": false, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
   ]
 }
 ```
@@ -1598,7 +1606,7 @@ for this person yet." Errors: `404` (unknown person), `502 upstream`.
   "logoPath": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png",
   "titleCount": 137,
   "favorited": false,
-  "titles": [ /* TitleCard with status, favorited, canQuickAdd */ ]
+  "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ]
 }
 ```
 
