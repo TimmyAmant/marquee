@@ -16,7 +16,7 @@
       "rating": null,
       "status": null,
       "favorited": false,
-      "requested": false,
+      "requested": null,
       "canQuickAdd": true,
       "canRequest": false
     }
