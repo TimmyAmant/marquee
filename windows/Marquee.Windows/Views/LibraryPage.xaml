@@ -261,7 +261,7 @@
                                             </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{x:Bind Year}" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                <controls:TonePill Text="{x:Bind ResolutionLabel}" Tone="Accent" Visibility="{x:Bind ResolutionLabel, Converter={StaticResource StringToVisibility}}" />
+                                                <controls:TonePill Text="{x:Bind ResolutionLabel}" Tone="Info" Visibility="{x:Bind ResolutionLabel, Converter={StaticResource StringToVisibility}}" />
                                                 <controls:TonePill Text="{x:Bind HdrLabel}" Tone="Owned" Visibility="{x:Bind HdrLabel, Converter={StaticResource StringToVisibility}}" />
                                                 <controls:TonePill Text="{x:Bind VideoCodecLabel}" Tone="Neutral" Visibility="{x:Bind VideoCodecLabel, Converter={StaticResource StringToVisibility}}" />
                                                 <controls:TonePill Text="{x:Bind AudioCodecLabel}" Tone="Info" Visibility="{x:Bind AudioCodecLabel, Converter={StaticResource StringToVisibility}}" />
