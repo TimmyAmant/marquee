@@ -240,7 +240,8 @@ public sealed class SearchStudioSectionViewModel : SearchSectionViewModel<ChipIt
                 model.OpenCompany(company.TmdbId);
             }
         }),
-        company.StableId);
+        company.StableId,
+        company.IsNetwork ? Loc.Get("Enum_SuggestionNetwork") : Loc.Get("Enum_SuggestionStudio"));
 
     protected override async Task<(IReadOnlyList<ChipItem> Items, bool HasMore)> LoadPageAsync(int page, CancellationToken ct)
     {

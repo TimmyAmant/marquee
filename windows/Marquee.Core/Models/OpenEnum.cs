@@ -494,10 +494,19 @@ public static class SuggestionGroups
     /// <summary>The suggestions in group order, each with its group and whether it starts that group.</summary>
     public static IReadOnlyList<(SearchSuggestion Suggestion, SuggestionGroup Group, bool StartsGroup)> Arrange(IEnumerable<SearchSuggestion> suggestions)
     {
-        var ordered = suggestions
+        var entries = suggestions
             .Select((suggestion, index) => (suggestion, index, group: suggestion.MediaType.Group))
             .Where(entry => entry.group != null)
-            .OrderBy(entry => (int)entry.group!.Value)
+            .ToList();
+        // Groups in the order the server sent them (People first when the
+        // query names a person); a stray row joins its group where it first appears.
+        var firstSeen = new Dictionary<SuggestionGroup, int>();
+        foreach (var entry in entries)
+        {
+            firstSeen.TryAdd(entry.group!.Value, entry.index);
+        }
+        var ordered = entries
+            .OrderBy(entry => firstSeen[entry.group!.Value])
             .ThenBy(entry => entry.index)
             .ToList();
         var arranged = new List<(SearchSuggestion Suggestion, SuggestionGroup Group, bool StartsGroup)>(ordered.Count);

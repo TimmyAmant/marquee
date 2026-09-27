@@ -74,6 +74,38 @@
                         </ItemsRepeater>
                     </StackPanel>
 
+                    <!-- People first, when the query names a person ("tom hanks"); the same section as below, only one of the two shows. -->
+                    <StackPanel Visibility="{x:Bind ViewModel.PeopleFirst, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.People.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="{x:Bind ViewModel.People.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Bind ViewModel.People.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.People.Items}">
+                                <ItemsRepeater.Layout>
+                                    <UniformGridLayout MinItemWidth="132" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PersonItem">
+                                        <controls:SearchPersonTile Item="{x:Bind}" />
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button
+                                    Content="{x:Bind ViewModel.People.SeeMoreLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.People.SeeMoreCommand}"
+                                    Visibility="{x:Bind ViewModel.People.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.People.IsLoadingMore, Mode=OneWay}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.People.PageError, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.People.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
                     <!-- Movies. -->
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Movies.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="10">
@@ -134,33 +166,35 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- People. -->
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.People.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="{x:Bind ViewModel.People.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
-                            <TextBlock Text="{x:Bind ViewModel.People.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.People.Items}">
-                            <ItemsRepeater.Layout>
-                                <UniformGridLayout MinItemWidth="132" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
-                            </ItemsRepeater.Layout>
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PersonItem">
-                                    <controls:SearchPersonTile Item="{x:Bind}" />
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Button
-                                Content="{x:Bind ViewModel.People.SeeMoreLabel, Mode=OneWay}"
-                                Command="{x:Bind ViewModel.People.SeeMoreCommand}"
-                                Visibility="{x:Bind ViewModel.People.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                            <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.People.IsLoadingMore, Mode=OneWay}" />
-                            <TextBlock
-                                Text="{x:Bind ViewModel.People.PageError, Mode=OneWay}"
-                                Visibility="{x:Bind ViewModel.People.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                VerticalAlignment="Center" />
+                    <!-- People, after the titles. -->
+                    <StackPanel Visibility="{x:Bind ViewModel.PeopleFirst, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}">
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.People.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="{x:Bind ViewModel.People.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Bind ViewModel.People.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.People.Items}">
+                                <ItemsRepeater.Layout>
+                                    <UniformGridLayout MinItemWidth="132" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PersonItem">
+                                        <controls:SearchPersonTile Item="{x:Bind}" />
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button
+                                    Content="{x:Bind ViewModel.People.SeeMoreLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.People.SeeMoreCommand}"
+                                    Visibility="{x:Bind ViewModel.People.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.People.IsLoadingMore, Mode=OneWay}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.People.PageError, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.People.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 

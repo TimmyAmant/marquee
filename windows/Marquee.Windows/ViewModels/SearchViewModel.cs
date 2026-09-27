@@ -44,6 +44,10 @@ public sealed partial class SearchViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ThemeLast))]
     private string? themeTitle;
 
+    /// <summary>The query names a person ("tom hanks"): People comes before the titles.</summary>
+    [ObservableProperty]
+    private bool peopleFirst;
+
     /// <summary>The query is the theme itself ("horror"): its row leads the page.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ThemeFirst))]
@@ -134,6 +138,7 @@ public sealed partial class SearchViewModel : ObservableObject
             ThemeItems = [];
             ThemeTitle = null;
             ThemeLeads = false;
+            PeopleFirst = false;
         }
         active = true;
         model.PropertyChanged += OnModelPropertyChanged;
@@ -244,6 +249,7 @@ public sealed partial class SearchViewModel : ObservableObject
             ThemeTitle = null;
             ThemeLeads = false;
         }
+        PeopleFirst = results.PeopleFirst;
         IsEmpty = SearchPageLayout.Blocks(results).Count == 0;
         HasAnswer = true;
     }

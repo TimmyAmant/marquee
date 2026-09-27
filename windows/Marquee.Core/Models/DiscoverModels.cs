@@ -439,6 +439,26 @@ public sealed record SearchResults
     /// </summary>
     public SearchSections? Sections { get; init; }
 
+    /// <summary>
+    /// 0.55+: the non-empty blocks in the order to show them ("movies",
+    /// "series", "people", "studiosAndNetworks", "theme"); People leads when
+    /// the query names a person. Null from an older server.
+    /// </summary>
+    public IReadOnlyList<string>? Order { get; init; }
+
+    /// <summary>People comes before the titles (the query names a person).</summary>
+    public bool PeopleFirst
+    {
+        get
+        {
+            var blocks = SearchPageLayout.Blocks(this);
+            var people = blocks.ToList().IndexOf(SearchPageLayout.BlockKind.People);
+            var movies = blocks.ToList().IndexOf(SearchPageLayout.BlockKind.Movies);
+            var series = blocks.ToList().IndexOf(SearchPageLayout.BlockKind.Series);
+            return people >= 0 && (movies < 0 || people < movies) && (series < 0 || people < series);
+        }
+    }
+
     public bool IsEmpty =>
         People.Count == 0 && Studios.Count == 0 && Titles.Count == 0 && (Theme?.Items.Count ?? 0) == 0
         && (Sections is null || (Sections.Movies.Results.Count == 0 && Sections.Series.Results.Count == 0
@@ -530,6 +550,28 @@ public static class SearchPageLayout
         var sections = SectionsOf(results);
         var theme = results.Theme is { Items.Count: > 0 } ? results.Theme : null;
         var blocks = new List<BlockKind>();
+        // The server's order (0.55+: People first when the query names a
+        // person); keys this app doesn't know, and empty sections, skipped.
+        if (results.Order is { } order)
+        {
+            foreach (var key in order)
+            {
+                BlockKind? block = key switch
+                {
+                    "theme" when theme != null => BlockKind.Theme,
+                    "movies" when sections.Movies.Results.Count > 0 => BlockKind.Movies,
+                    "series" when sections.Series.Results.Count > 0 => BlockKind.Series,
+                    "people" when sections.People.Results.Count > 0 => BlockKind.People,
+                    "studiosAndNetworks" when sections.StudiosAndNetworks.Results.Count > 0 => BlockKind.Studios,
+                    _ => null,
+                };
+                if (block is { } kind && !blocks.Contains(kind))
+                {
+                    blocks.Add(kind);
+                }
+            }
+            return blocks;
+        }
         if (theme is { LeadsPage: true })
         {
             blocks.Add(BlockKind.Theme);

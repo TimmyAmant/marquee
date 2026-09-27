@@ -117,11 +117,27 @@ public sealed class SearchTests
     }
 
     [Fact]
-    public void AnOlderServersMixedSuggestionsAreRegrouped()
+    public void GroupsKeepTheServersOrderAndGatherStrays()
     {
-        // Before 0.55 the server sent TMDb's mixed order.
+        // People first ("tom hanks"); an older server's mixed order gathers
+        // each kind into its group where that group first appears.
         var arranged = SuggestionGroups.Arrange([Suggestion(1, "person"), Suggestion(2, "movie"), Suggestion(3, "tv"), Suggestion(4, "movie")]);
-        Assert.Equal([2, 4, 3, 1], arranged.Select(entry => entry.Suggestion.Id));
+        Assert.Equal([1, 2, 4, 3], arranged.Select(entry => entry.Suggestion.Id));
+        Assert.Equal([true, true, false, true], arranged.Select(entry => entry.StartsGroup));
+    }
+
+    [Fact]
+    public void TheServersOrderPutsPeopleFirst()
+    {
+        var results = Json.Decode<SearchResults>(NewServer("last")) with
+        {
+            Order = ["people", "movies", "series", "studiosAndNetworks", "theme", "collections"],
+        };
+        Assert.Equal(
+            [SearchPageLayout.BlockKind.People, SearchPageLayout.BlockKind.Movies, SearchPageLayout.BlockKind.Series, SearchPageLayout.BlockKind.Studios, SearchPageLayout.BlockKind.Theme],
+            SearchPageLayout.Blocks(results));
+        Assert.True(results.PeopleFirst);
+        Assert.False(Json.Decode<SearchResults>(NewServer("last")).PeopleFirst);
     }
 
     [Fact]
