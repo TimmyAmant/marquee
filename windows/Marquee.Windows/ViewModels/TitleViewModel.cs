@@ -225,6 +225,7 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(BlockedKeywordLine),
         nameof(CanBlock),
         nameof(CanUnblock),
+        nameof(HasMoreActions),
         nameof(MyRequests),
         nameof(HasMyRequests),
     ];
@@ -392,7 +393,7 @@ public sealed partial class TitleViewModel : ObservableObject
     public bool HasPoster => posterUrl != null;
     public ImageSource? Poster => posterUrl == null ? null : poster ??= new BitmapImage(posterUrl);
     public bool HasBackdrop => backdropUrl != null;
-    public ImageSource? Backdrop => backdropUrl == null ? null : backdrop ??= new BitmapImage(backdropUrl);
+    public ImageSource? Backdrop => backdropUrl == null ? null : backdrop ??= new BitmapImage(backdropUrl) { DecodePixelWidth = 2560 };
 
     /// <summary>Director, writers (or creator, executive producers): the label is the role, the value the name.</summary>
     public IReadOnlyList<FactRow> Credits => credits;
@@ -645,6 +646,13 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <summary>"Block requests" for whoever manages the blocklist; hidden on a server older than the blocklist.</summary>
     public bool CanBlock => ManagesBlocklist && Viewer?.HasBlocklist == true && Blocked == null;
 
+    /// <summary>
+    /// The action row's "…" (components/title-more-menu.tsx): Search now,
+    /// Stop / Start monitoring, Fix ID and Block requests, the tools nobody
+    /// needs every visit.
+    /// </summary>
+    public bool HasMoreActions => HasTracking || CanRelink || CanBlock;
+
     /// <summary>"Unblock requests" on a title blocked from its own page.</summary>
     public bool CanUnblock => ManagesBlocklist && Blocked != null && Blocked.KeywordLine == null;
 
@@ -861,7 +869,10 @@ public sealed partial class TitleViewModel : ObservableObject
         // w500 for the poster, w1280 for the backdrop: the widest window at
         // 2x is covered, and an "original" backdrop decodes to tens of megabytes.
         posterUrl = fresh.PosterPath.Url(ImageSize.W500);
-        backdropUrl = fresh.BackdropPath.Url(ImageSize.W1280);
+        // The original artwork, so the full-bleed backdrop stays sharp on a
+        // wide window; decoded at no more than 2560 wide (Backdrop) so it
+        // doesn't hold a 4K bitmap.
+        backdropUrl = fresh.BackdropPath.Url(ImageSize.Original);
         poster = null;
         backdrop = null;
 

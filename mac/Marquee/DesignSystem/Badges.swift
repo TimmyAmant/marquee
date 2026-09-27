@@ -396,6 +396,8 @@ extension View {
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
     var lineSpacing: CGFloat = 8
+    /// Centre each item vertically on its line instead of top-aligning it.
+    var centersLines = false
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
@@ -418,19 +420,29 @@ struct FlowLayout: Layout {
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        // Lines first, so each item can be centred on its line's midline
+        // when `centersLines` is set (a row of pills of mixed heights).
+        var lines: [[(index: Int, size: CGSize)]] = [[]]
         var x = bounds.minX
-        var y = bounds.minY
-        var lineHeight: CGFloat = 0
-        for subview in subviews {
+        for (index, subview) in subviews.enumerated() {
             let size = subview.sizeThatFits(.unspecified)
             if x > bounds.minX && x + size.width > bounds.maxX {
-                y += lineHeight + lineSpacing
+                lines.append([])
                 x = bounds.minX
-                lineHeight = 0
             }
-            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            lines[lines.count - 1].append((index, size))
             x += size.width + spacing
-            lineHeight = max(lineHeight, size.height)
+        }
+        var y = bounds.minY
+        for line in lines where !line.isEmpty {
+            let lineHeight = line.map(\.size.height).max() ?? 0
+            var x = bounds.minX
+            for item in line {
+                let dy = centersLines ? (lineHeight - item.size.height) / 2 : 0
+                subviews[item.index].place(at: CGPoint(x: x, y: y + dy), proposal: ProposedViewSize(item.size))
+                x += item.size.width + spacing
+            }
+            y += lineHeight + lineSpacing
         }
     }
 }

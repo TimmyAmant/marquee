@@ -8,7 +8,8 @@ import { StatusBadge, type LibraryStatus } from "@/components/status-badge";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import { RequestButton } from "@/components/request-button";
-import { AddAdvancedOptions } from "@/components/add-advanced-options";
+import { AddAdvancedPanel, AdvancedSplitToggle, useAddAdvancedOptions } from "@/components/add-advanced-options";
+import { PILL, PILL_ACCENT, PILL_NOTE } from "@/components/pill-styles";
 import { SeasonRequestPicker, type SeasonPickerRow } from "@/components/season-request-picker";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
@@ -74,6 +75,12 @@ export function AddToLibraryButton({
   const showRequest =
     open && !state?.success && isAdmin === false && canRequest && !alreadyRequested && !pickSeasons && !blocked;
   const requestedSeasonsLabel = seasonPicker?.requestedSeasonsLabel ?? null;
+  const showAdd = open && isAdmin !== false && configured && !inArr && !state?.success;
+  // "Advanced" for the admin's Add and a member's Request: a chevron on the
+  // button, its panel on a line of its own at the end of the action row.
+  const addAdvanced = useAddAdvancedOptions({ mediaType, tmdbId });
+  const requestAdvanced = useAddAdvancedOptions({ mediaType, tmdbId });
+  const arrName = mediaType === "movie" ? "Radarr" : "Sonarr";
 
   useEffect(() => {
     if (state?.success) {
@@ -84,93 +91,99 @@ export function AddToLibraryButton({
     }
   }, [state?.success, router]);
 
+  // `contents`: every capsule here is an item of the title page's action row
+  // (components/title-hero.tsx), so they share its gaps and line up with
+  // Play, Report and Share instead of sitting in a box of their own. The
+  // primary action comes first, then the library badge; notes and the
+  // Advanced panel go to the end of the row (`order-last basis-full`).
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={state?.success ? "tracked_monitored" : status} />
-
-        {blocked && isAdmin === false && (
-          <span className="flex h-8 items-center rounded-full border border-border px-3.5 text-[13px] text-text-secondary">
-            {blocked.reason
-              ? t("title.requestsClosedReason", { reason: blocked.reason })
-              : t("title.requestsClosed")}
-          </span>
-        )}
-
-        {showRequest && (
-          <RequestButton
-            mediaType={mediaType}
-            tmdbId={tmdbId}
-            title={name}
-            posterPath={posterPath}
-            formId={`request-${mediaType}-${tmdbId}`}
-            autoApprove={autoApprove}
-          />
-        )}
-
-        {/* A member picks seasons for a show whenever any are left to ask
-            for — for one already in the library, that's "more seasons". */}
-        {isAdmin === false && canRequest && !alreadyRequested && pickSeasons && seasonPicker && !blocked && (
-          <SeasonRequestPicker
-            tmdbId={tmdbId}
-            showName={name}
-            rows={seasonPicker.rows}
-            triggerLabel={open ? t("common.request") : t("title.requestMore")}
-            advanced={advanced}
-            autoApprove={autoApprove}
-          />
-        )}
-
-        {isAdmin === false && alreadyRequested && (open || requestedSeasonsLabel) && (
-          <span className="flex h-8 items-center rounded-full bg-info-bg px-4 text-[13px] font-medium text-info">
-            {requestedSeasonsLabel
-              ? t("title.requestedSeasonsWaiting", { seasons: requestedSeasonsLabel })
-              : t("title.requestedWaiting")}
-          </span>
-        )}
-
-        {open && isAdmin !== false && configured && !inArr && !state?.success && (
-          <form id={`add-${mediaType}-${tmdbId}`} action={formAction}>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex h-8 items-center rounded-full bg-accent px-4 text-[13px] font-semibold text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {isPending ? t("title.adding") : t("title.addTo", { app: mediaType === "movie" ? "Radarr" : "Sonarr" })}
-            </button>
-          </form>
-        )}
-
-        {open && isAdmin !== false && !configured && (
-          <Link
-            href="/settings/integrations"
-            className="text-xs text-text-muted underline decoration-dotted hover:text-accent"
-          >
-            {t("title.connectToAdd", { app: mediaType === "movie" ? "Radarr" : "Sonarr" })}
-          </Link>
-        )}
-      </div>
-
-      {open && isAdmin === true && configured && !inArr && !state?.success && (
-        <AddAdvancedOptions
+    <div className="contents">
+      {showRequest && (
+        <RequestButton
           mediaType={mediaType}
           tmdbId={tmdbId}
-          formId={`add-${mediaType}-${tmdbId}`}
-          disabled={isPending}
+          title={name}
+          posterPath={posterPath}
+          formId={`request-${mediaType}-${tmdbId}`}
+          autoApprove={autoApprove}
+          split={advanced ? <AdvancedSplitToggle state={requestAdvanced} /> : undefined}
         />
       )}
 
-      {showRequest && advanced && (
-        <AddAdvancedOptions mediaType={mediaType} tmdbId={tmdbId} formId={`request-${mediaType}-${tmdbId}`} />
+      {/* A member picks seasons for a show whenever any are left to ask
+          for — for one already in the library, that's "more seasons". */}
+      {isAdmin === false && canRequest && !alreadyRequested && pickSeasons && seasonPicker && !blocked && (
+        <SeasonRequestPicker
+          tmdbId={tmdbId}
+          showName={name}
+          rows={seasonPicker.rows}
+          triggerLabel={open ? t("common.request") : t("title.requestMore")}
+          advanced={advanced}
+          autoApprove={autoApprove}
+        />
+      )}
+
+      {showAdd && (
+        <form id={`add-${mediaType}-${tmdbId}`} action={formAction} className="contents">
+          <span className="inline-flex shrink-0 items-center">
+            <button
+              type="submit"
+              disabled={isPending}
+              className={`${PILL_ACCENT} ${isAdmin === true ? "rounded-r-none pr-3" : ""}`}
+            >
+              {isPending ? t("title.adding") : t("title.addTo", { app: arrName })}
+            </button>
+            {isAdmin === true && <AdvancedSplitToggle state={addAdvanced} disabled={isPending} />}
+          </span>
+        </form>
+      )}
+
+      <StatusBadge status={state?.success ? "tracked_monitored" : status} />
+
+      {isAdmin === false && alreadyRequested && (open || requestedSeasonsLabel) && (
+        <span className={`${PILL} bg-info-bg px-4 font-medium text-info`}>
+          {requestedSeasonsLabel
+            ? t("title.requestedSeasonsWaiting", { seasons: requestedSeasonsLabel })
+            : t("title.requestedWaiting")}
+        </span>
+      )}
+
+      {blocked && isAdmin === false && (
+        <span className={PILL_NOTE}>
+          {blocked.reason
+            ? t("title.requestsClosedReason", { reason: blocked.reason })
+            : t("title.requestsClosed")}
+        </span>
+      )}
+
+      {open && isAdmin !== false && !configured && (
+        <Link
+          href="/settings/integrations"
+          className={`${PILL_NOTE} border-dashed hover:border-accent hover:text-accent`}
+        >
+          {t("title.connectToAdd", { app: arrName })}
+        </Link>
+      )}
+
+      {showAdd && isAdmin === true && addAdvanced.open && (
+        <div className="order-last basis-full">
+          <AddAdvancedPanel state={addAdvanced} formId={`add-${mediaType}-${tmdbId}`} />
+        </div>
+      )}
+
+      {showRequest && advanced && requestAdvanced.open && (
+        <div className="order-last basis-full">
+          <AddAdvancedPanel state={requestAdvanced} formId={`request-${mediaType}-${tmdbId}`} />
+        </div>
       )}
 
       {open && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (
-        <p className="text-xs text-text-muted">
+        <p className="order-last basis-full text-xs text-text-muted">
           {t("title.alsoRequestedBy", { names: new Intl.ListFormat(t.tag).format(otherRequesters) })}
         </p>
       )}
 
-      {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
+      {state?.error && <p className="order-last basis-full text-xs text-red-400">{state.error}</p>}
     </div>
   );
 }

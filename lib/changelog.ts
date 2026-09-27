@@ -11,10 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "0.53.1",
+    version: "0.54.0",
     date: "2026-09-27",
     changes: [
-      "The Docker Hub page now shows the same README as GitHub, updated automatically whenever it changes (once the Docker Hub token is added to the repository's secrets).",
+      "Title pages use the whole screen: poster on the left, details in the middle, facts and File details on the right, with the rows below lined up to the same edges. Bigger posters and text on wide screens.",
+      "The artwork now fills the top of the page and fades smoothly into it, with no hard edge, and stays readable even on bright pictures. Where TMDb has one, the title's own logo is shown instead of plain text (dark theme).",
+      "The buttons sit on one tidy row, all the same height: Play and Add / Request first, \"Advanced\" as a small arrow joined to Add, and Search now, Stop monitoring, Block requests and Fix ID in a new \"…\" menu.",
+      "Keywords wrap onto a second line instead of being cut off.",
+      "The Mac and Windows apps' title pages get the same full-width layout, artwork and button row.",
     ],
   },
   {
@@ -34,13 +38,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       "Library › Duplicates no longer lists the same file seen through different Docker folder mappings (Radarr's /movies/… and Plex's /data/Movies/… are one file), or a title just because both Plex and Jellyfin have it. Real duplicates — two different files, or two Plex or two Jellyfin servers listing it — still show.",
       "The Duplicates list's Server, Location, Size and Quality columns now line up from one title to the next.",
-    ],
-  },
-  {
-    version: "0.52.1",
-    date: "2026-09-27",
-    changes: [
-      "Housekeeping: a test used Telegram's documentation example bot token, which GitHub's secret scanning flagged. It was never a real token; the tests now build a fake one at run time.",
     ],
   },
   {
@@ -65,13 +62,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       "Coming from Seerr, Overseerr or Jellyseerr? Settings › Integrations › Import from Seerr brings over your users (matched to existing accounts, with their permissions and request limits), requests with their seasons and 4K, problem reports with comments, and the blocklist. You see a preview first; nothing is sent to Sonarr/Radarr and nobody is notified; running it again doesn't duplicate anything. Your Seerr API key is only used for the import and never saved.",
       "A step-by-step guide is in docs/migrating-from-seerr.md.",
-    ],
-  },
-  {
-    version: "0.50.1",
-    date: "2026-09-26",
-    changes: [
-      "A new README on GitHub: a clear overview of every feature, how Marquee compares, and a separate Getting started guide for installing and running it.",
     ],
   },
   {
@@ -275,7 +265,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       "Signing up with Plex, Jellyfin or Emby: when you've turned on new accounts from Plex/Jellyfin sign-in, the sign-in screen (website, Mac and Windows) now tells newcomers they can just sign in with it and their account is made for them.",
       "Someone without an account who tries Plex or Jellyfin sign-in is now told there's no Marquee account for them yet and to ask the admin to add them.",
-      "The README's feature list is up to date.",
     ],
   },
   {
@@ -407,7 +396,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-25",
     changes: [
       "Settings › About in the Mac and Windows apps now says whether your server is up to date. If a newer Marquee is out, it names the version and how to update the server (pull the new Docker image; on Unraid, the Docker tab's Check for Updates).",
-      "The README is much shorter, with new screenshots of the current layout; the remote access guide has its own page.",
       "Under the hood: the database migration history is back in step with the schema, so future database changes generate cleanly. Nothing in your database changes.",
     ],
   },
@@ -553,7 +541,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       "Studio chips are all the same height now, whether or not the studio has a logo, and they're capsules like the rest of the app.",
       "Marquee for Mac: adding a title from a grid or shelf no longer leaves the card offering \"Add to Radarr\" — the card updates in place, without reloading the page under you.",
-      "Added light-theme screenshots to the README.",
     ],
   },
   {

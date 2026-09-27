@@ -5,6 +5,7 @@ import { showToast } from "@/components/toast";
 import { createRequestAction } from "@/lib/requests/actions";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { PILL, PILL_ACCENT } from "@/components/pill-styles";
 
 export function RequestButton({
   mediaType,
@@ -15,6 +16,7 @@ export function RequestButton({
   alreadyRequested = false,
   formId,
   autoApprove = false,
+  split,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -35,6 +37,9 @@ export function RequestButton({
   formId?: string;
   /** The request will be approved at once — shown as a hint under the button. */
   autoApprove?: boolean;
+  /** Joined onto the right of the Request capsule (the title page's
+   * "Advanced" chevron, making it a split button). */
+  split?: React.ReactNode;
 }) {
   const t = useT();
   const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
@@ -47,53 +52,50 @@ export function RequestButton({
   }, [state?.success]);
 
   if (state?.success || alreadyRequested) {
-    return (
-      <span
-        className={
-          compact
-            ? "block rounded-full bg-info-bg px-2 py-1 text-center text-[10px] font-medium text-info"
-            : "rounded-full bg-info-bg px-4 py-1.5 text-xs font-medium text-info"
-        }
-      >
-        {compact ? t("title.requested") : t("title.requestedWaiting")}
+    return compact ? (
+      <span className="block rounded-full bg-info-bg px-2 py-1 text-center text-[10px] font-medium text-info">
+        {t("title.requested")}
       </span>
+    ) : (
+      <span className={`${PILL} bg-info-bg font-medium text-info`}>{t("title.requestedWaiting")}</span>
     );
   }
 
-  return (
-    <form
-      id={formId}
-      action={formAction}
-      className={
-        compact
-          ? "opacity-100 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-          : undefined
-      }
-    >
-      <button
-        type="submit"
-        disabled={isPending}
-        className={
-          compact
-            ? "w-full rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-            : "rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-        }
+  if (compact) {
+    return (
+      <form
+        id={formId}
+        action={formAction}
+        className="opacity-100 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
       >
-        {isPending ? t("title.requesting") : t("common.request")}
-      </button>
-      {state?.error && (
-        <p
-          className={
-            compact
-              ? "mt-1 rounded bg-bg-0/90 px-1.5 py-0.5 text-center text-[9px] text-red-400"
-              : "mt-1.5 text-xs text-red-400"
-          }
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {state.error}
-        </p>
-      )}
-      {autoApprove && !compact && !state?.error && (
-        <p className="mt-1.5 text-[11px] text-text-muted">{t("title.autoApproveBanner")}</p>
+          {isPending ? t("title.requesting") : t("common.request")}
+        </button>
+        {state?.error && (
+          <p className="mt-1 rounded bg-bg-0/90 px-1.5 py-0.5 text-center text-[9px] text-red-400">{state.error}</p>
+        )}
+      </form>
+    );
+  }
+
+  // The title page's action row: the form's box is dropped (`contents`) so
+  // the capsule lines up with its neighbours, and the hint / error go to a
+  // line of their own at the end of the row.
+  return (
+    <form id={formId} action={formAction} className="contents">
+      <span className="inline-flex shrink-0 items-center">
+        <button type="submit" disabled={isPending} className={`${PILL_ACCENT} ${split ? "rounded-r-none pr-3" : ""}`}>
+          {isPending ? t("title.requesting") : t("common.request")}
+        </button>
+        {split}
+      </span>
+      {state?.error && <p className="order-last basis-full text-xs text-red-400">{state.error}</p>}
+      {autoApprove && !state?.error && (
+        <p className="order-last basis-full text-[11px] text-text-muted">{t("title.autoApproveBanner")}</p>
       )}
     </form>
   );

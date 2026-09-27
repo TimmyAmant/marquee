@@ -25,6 +25,8 @@ import { formatDate, formatNumber } from "@/lib/i18n/format";
 import { hasAnyRating, imdbTitleUrl, type TitleRatings } from "@/lib/ratings/omdb";
 import type { PlayLink } from "@/lib/media-servers/play-links";
 import { PlayButton } from "@/components/play-button";
+import { TitleMoreMenu } from "@/components/title-more-menu";
+import { PILL } from "@/components/pill-styles";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -147,7 +149,7 @@ export async function TitleHero({
   notFoundSince,
   file,
   runtimeLabel,
-  cast,
+  logo = null,
   share,
   myRequests = [],
   may,
@@ -189,10 +191,9 @@ export async function TitleHero({
    * section this replaced. */
   file?: FileInfo | null;
   runtimeLabel?: string | null;
-  /** The cast carousel, rendered inside the main column so it sits beside
-   * the right rail's lower half exactly as the mockup has it, instead of
-   * being pushed below the (much taller) rail. */
-  cast?: React.ReactNode;
+  /** TMDb's title-treatment artwork (lib/tmdb/logo.ts), shown in place of
+   * the plain-text name in the dark theme; null without one. */
+  logo?: { path: string; aspectRatio: number } | null;
   /** "Share" (signed in): Marquee's public address, null when none is set. */
   share?: { publicBase: string | null } | null;
   /** The viewer's own requests for this title: Edit / Cancel and comments. */
@@ -211,182 +212,252 @@ export async function TitleHero({
     (v): v is string => Boolean(v),
   );
   const backdrop = tmdbImageUrl(backdropPath, "original");
-  const poster = tmdbImageUrl(posterPath, "w500");
+  // w780 so the 264px poster of a wide window is still sharp at 2x;
+  // next/image picks the size the layout actually needs from it.
+  const poster = tmdbImageUrl(posterPath, "w780");
+  const logoSrc = logo ? tmdbImageUrl(logo.path, "original") : null;
+  // Admin-only tools nobody needs every visit: in the "…" menu rather than
+  // two more rows of pills. Unblock stays out in the row while the title is
+  // blocked, since it's also the only sign on the page that it is.
+  const menuBlock = Boolean(may?.manageBlocklist) && !blocked;
+  const menuTracking = Boolean(isAdmin && arrTracking);
+  const menuRelink = Boolean(isAdmin && !isUnwanted(status));
 
   return (
-    // -mt-[52px] lifts the page under the floating top bar (72px when the
-    // nav rail is a bar along the top and the header holds it): in the mockup
-    // .backdrop sits at top:0 of the content area with the toolbar over it,
-    // so the poster's 170 and the title/rail's 246 are all from the window
-    // top (Docs/DESIGN_TARGET.md).
-    <div className="relative -mt-[52px] md:rail-top:-mt-[72px]">
+    // --hero-h is the artwork's height: a fixed band on a phone, then
+    // min(70% of the window's height, 16:9 of its width) — the whole
+    // backdrop without letterboxing on a laptop and never more than the
+    // first screen on a wide monitor. -mt lifts the page under the floating
+    // top bar (72px when the nav rail is a bar along the top), so the art
+    // starts at the window's top edge.
+    <div className="relative -mt-[52px] [--hero-h:340px] sm:[--hero-h:440px] md:rail-top:-mt-[72px] md:[--hero-h:max(460px,min(70svh,56.25vw))]">
       {backdrop && (
-        <div className="grain-overlay rail-under absolute inset-x-0 top-0 -z-10 h-[300px] overflow-hidden sm:h-[380px]">
-          <MediaImage src={backdrop} alt="" fill priority className="object-cover" />
-          {/* Two gradients, same as the mockup's .backdrop .fade: down to the
-              page background at the bottom, plus a left-hand scrim so the
-              poster and title always have something dark behind them. */}
+        <div className="grain-overlay rail-under pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--hero-h)] overflow-hidden">
+          <MediaImage
+            src={backdrop}
+            alt=""
+            fill
+            loading="eager"
+            fetchPriority="high"
+            sizes="100vw"
+            quality={85}
+            className="object-cover object-[50%_25%]"
+          />
+          {/* Fades so the artwork has no edges: a scrim under the top
+              bar, a long fall into the page background at the bottom (the
+              rows below continue on the same colour), and a wash from the
+              left behind the poster and the text, over a light veil. */}
           <div
             className="absolute inset-0"
             style={{
-              background:
-                "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 60%, transparent) 0%, transparent 20%, transparent 40%, color-mix(in srgb, var(--marquee-bg-0) 72%, transparent) 74%, var(--marquee-bg-0) 100%), linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 50%, transparent), transparent 42%)",
+              background: [
+                // Under the top bar.
+                "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 70%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 25%, transparent) 14%, transparent 28%)",
+                // Into the page at the bottom, starting high enough that the
+                // links and the rows below never sit on bright artwork.
+                "linear-gradient(to bottom, transparent 24%, color-mix(in srgb, var(--marquee-bg-0) 50%, transparent) 54%, color-mix(in srgb, var(--marquee-bg-0) 88%, transparent) 78%, var(--marquee-bg-0) 100%)",
+                // Behind the poster and the text column, strong enough across
+                // it that a bright or busy frame (a grey sky, faces) never
+                // fights the logo, the pills or the overview, and gone well
+                // before the right edge.
+                "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 94%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 84%, transparent) 30%, color-mix(in srgb, var(--marquee-bg-0) 62%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 26%, transparent) 74%, transparent 92%)",
+                // A light veil over all of it, so a bright image sits at the
+                // same level as a dark one.
+                "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 22%, transparent), color-mix(in srgb, var(--marquee-bg-0) 22%, transparent))",
+              ].join(", "),
             }}
           />
         </div>
       )}
 
-      {/* Left-aligned with a fixed 48px gutter rather than centered in a
-          max-width container — that's what keeps this page and the Mac app
-          on the same coordinates (Docs/DESIGN_TARGET.md). */}
+      {/* The same gutters as the rows under the hero (page.tsx), so the
+          poster, the Cast row and "More like this" all start on one line and
+          the facts card ends where the rows do. Three columns from 1280px:
+          poster | the title and everything about it | facts. */}
       <div className="px-6 xl:pl-12 xl:pr-10">
-        <div className="flex flex-col gap-8 pt-[150px] sm:pt-[170px] xl:flex-row xl:items-start">
-          <div className="min-w-0 flex-1 xl:max-w-[802px]">
-            <div className="flex flex-wrap gap-6 sm:gap-8 min-[1440px]:flex-nowrap">
-              {/* Nothing but the poster and the title sits on the artwork. */}
-              <div className="relative h-[240px] w-[160px] shrink-0 overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px]">
-                {poster && <MediaImage src={poster} alt={name} fill sizes="224px" className="object-cover" />}
-              </div>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] 3xl:grid-cols-[264px_minmax(0,1fr)_340px] 3xl:gap-x-12 4xl:grid-cols-[300px_minmax(0,1fr)_380px] 4xl:gap-x-16">
+          <div className="relative h-[240px] w-[160px] overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px] 3xl:h-[396px] 3xl:w-[264px] 4xl:h-[450px] 4xl:w-[300px]">
+            {poster && (
+              <MediaImage
+                src={poster}
+                alt={name}
+                fill
+                loading="eager"
+                sizes="(min-width: 2400px) 300px, (min-width: 1800px) 264px, (min-width: 640px) 224px, 160px"
+                className="object-cover"
+              />
+            )}
+          </div>
 
-              <div className="min-w-0 flex-1 basis-[280px] xl:pt-[76px] min-[1440px]:w-[546px] min-[1440px]:flex-none min-[1440px]:basis-auto">
-                <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px]">
-                  {name}
-                </h1>
-
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px] text-text-secondary">
-                  {metaParts.length > 0 && <p>{metaParts.join(" · ")}</p>}
-                  {favorited !== undefined && (
-                    <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
-                  )}
-                </div>
-
-                {/* One row of capsules: library badge, then the actions that
-                    apply to it (search/monitor/relink), all 32px tall. */}
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <AddToLibraryButton
-                    mediaType={mediaType}
-                    tmdbId={tmdbId}
-                    name={name}
-                    posterPath={posterPath}
-                    status={status}
-                    configured={configured}
-                    isAdmin={isAdmin}
-                    alreadyRequested={alreadyRequested}
-                    otherRequesters={otherRequesters}
-                    seasonPicker={seasonPicker}
-                    inArr={Boolean(arrTracking)}
-                    blocked={blocked ?? null}
-                    canRequest={may?.request ?? false}
-                    advanced={may?.advanced ?? false}
-                    autoApprove={may?.autoApprove ?? false}
-                  />
-
-                  {playLinks.length > 0 && <PlayButton links={playLinks} />}
-
-                  {notFoundSince && (
-                    <Link
-                      href="/requests#cant-find"
-                      title={t("title.notFoundSince", { date: formatDate(t, notFoundSince) })}
-                      className="inline-flex h-8 items-center rounded-full border border-missing/40 bg-missing-bg px-3 text-xs font-medium text-missing hover:bg-missing/20"
-                    >
-                      {t("title.cantFind")}
-                    </Link>
-                  )}
-
-                  {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} advanced={may?.advanced ?? false} />}
-
-                  {report && (
-                    <ReportProblemButton
-                      mediaType={mediaType}
-                      tmdbId={tmdbId}
-                      seasonNumbers={report.seasonNumbers}
-                      openReports={report.openReports}
+          <div className="min-w-0">
+            <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px] 3xl:text-[56px] 3xl:leading-[62px] 4xl:text-[64px] 4xl:leading-[70px]">
+              {logoSrc && logo ? (
+                <>
+                  {/* The logo in the dark theme; its name for screen readers
+                      and in the light theme, where a white logo would vanish
+                      into the page (globals.css .title-logo). */}
+                  <span className="title-logo block">
+                    <Image
+                      src={logoSrc}
+                      alt=""
+                      width={500}
+                      height={Math.max(1, Math.round(500 / logo.aspectRatio))}
+                      sizes="(min-width: 1800px) 520px, (min-width: 640px) 420px, 280px"
+                      loading="eager"
+                      className="h-auto max-h-[96px] w-auto max-w-[min(100%,280px)] object-contain object-left drop-shadow-[0_2px_18px_rgba(0,0,0,0.5)] sm:max-h-[128px] sm:max-w-[min(100%,420px)] 3xl:max-h-[160px] 3xl:max-w-[520px]"
                     />
-                  )}
+                  </span>
+                  <span className="title-logo-name">{name}</span>
+                </>
+              ) : (
+                name
+              )}
+            </h1>
 
-                  {share && (
-                    <ShareButton
-                      name={name}
-                      path={`/title/${mediaType}/${tmdbId}`}
-                      publicBase={share.publicBase}
-                      links={publicTitleLinks(mediaType, tmdbId, links.imdbId ?? null)}
-                      sendTo={{ mediaType, tmdbId }}
-                    />
-                  )}
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px] text-text-secondary">
+              {metaParts.length > 0 && <p>{metaParts.join(" · ")}</p>}
+              {favorited !== undefined && (
+                <FavoriteButton entityType={mediaType} tmdbId={tmdbId} initialFavorited={favorited} />
+              )}
+            </div>
 
-                  {may?.manageBlocklist && (
-                    <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked ?? null} />
-                  )}
+            {/* One row of 32px capsules on a shared centre line: the main
+                action first (Play, Add / Request with "Advanced" as its
+                chevron), the library badge, the everyday extras, then "…".
+                Notes and the Advanced panel wrap to the end of the row. */}
+            <div className="mt-5 flex flex-wrap items-center gap-2" data-testid="title-actions">
+              {playLinks.length > 0 && <PlayButton links={playLinks} />}
 
-                  {isAdmin && arrTracking && (
+              <AddToLibraryButton
+                mediaType={mediaType}
+                tmdbId={tmdbId}
+                name={name}
+                posterPath={posterPath}
+                status={status}
+                configured={configured}
+                isAdmin={isAdmin}
+                alreadyRequested={alreadyRequested}
+                otherRequesters={otherRequesters}
+                seasonPicker={seasonPicker}
+                inArr={Boolean(arrTracking)}
+                blocked={blocked ?? null}
+                canRequest={may?.request ?? false}
+                advanced={may?.advanced ?? false}
+                autoApprove={may?.autoApprove ?? false}
+              />
+
+              {notFoundSince && (
+                <Link
+                  href="/requests#cant-find"
+                  title={t("title.notFoundSince", { date: formatDate(t, notFoundSince) })}
+                  className={`${PILL} border border-missing/40 bg-missing-bg font-medium text-missing hover:bg-missing/20`}
+                >
+                  {t("title.cantFind")}
+                </Link>
+              )}
+
+              {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} advanced={may?.advanced ?? false} />}
+
+              {report && (
+                <ReportProblemButton
+                  mediaType={mediaType}
+                  tmdbId={tmdbId}
+                  seasonNumbers={report.seasonNumbers}
+                  openReports={report.openReports}
+                />
+              )}
+
+              {share && (
+                <ShareButton
+                  name={name}
+                  path={`/title/${mediaType}/${tmdbId}`}
+                  publicBase={share.publicBase}
+                  links={publicTitleLinks(mediaType, tmdbId, links.imdbId ?? null)}
+                  sendTo={{ mediaType, tmdbId }}
+                />
+              )}
+
+              {may?.manageBlocklist && blocked && (
+                <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked} />
+              )}
+
+              {(menuBlock || menuTracking || menuRelink) && (
+                <TitleMoreMenu>
+                  {menuTracking && arrTracking && (
                     <ArrTrackingControls
                       mediaType={mediaType}
                       tmdbId={tmdbId}
                       tvdbId={tvdbId ?? null}
                       monitored={arrTracking.monitored}
+                      variant="menu"
                     />
                   )}
-
-                  {isAdmin && !isUnwanted(status) && (
-                    <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} />
+                  {menuBlock && (
+                    <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={null} variant="menu" />
                   )}
-                </div>
-
-                <MyTitleRequests requests={myRequests} />
-
-                {tagline && <p className="mt-[26px] text-[14px] italic text-text-secondary">{tagline}</p>}
-
-                {overview && (
-                  <>
-                    <h2
-                      className={`font-display text-[18px] font-semibold leading-6 text-text-primary ${
-                        tagline ? "mt-4" : "mt-[26px]"
-                      }`}
-                    >
-                      {t("title.overview")}
-                    </h2>
-                    <p className="mt-1.5 text-[14px] leading-[22px] text-text-secondary">{overview}</p>
-                  </>
-                )}
-
-                {credits.length > 0 && (
-                  <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {credits.map((credit, i) => (
-                      <div key={i}>
-                        <p className="truncate text-[13.5px] font-semibold leading-[18px] text-text-primary">
-                          {credit.name}
-                        </p>
-                        <p className="mt-px truncate text-[12px] leading-4 text-text-muted">{credit.role}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* A single row that never wraps — the overflow is clipped
-                    rather than stacked into more rows. */}
-                {keywords.length > 0 && (
-                  <div className="mt-[18px] flex gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)]">
-                    {keywords.map((keyword) => (
-                      <span
-                        key={keyword}
-                        className="inline-flex h-[22px] shrink-0 items-center whitespace-nowrap rounded-[11px] border border-border px-[9px] text-[11px] text-text-secondary"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-3.5">
-                  <ExternalLinks links={links} />
-                </div>
-              </div>
+                  {menuRelink && <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} variant="menu" />}
+                </TitleMoreMenu>
+              )}
             </div>
 
-            {cast && <div className="mt-10">{cast}</div>}
+            <MyTitleRequests requests={myRequests} />
+
+            {/* Text stays at a readable measure however wide the column gets;
+                the artwork shows through beside it. */}
+            <div className="max-w-[860px] 4xl:max-w-[980px]">
+              {tagline && <p className="mt-[26px] text-[14px] italic text-text-secondary">{tagline}</p>}
+
+              {overview && (
+                <>
+                  <h2
+                    className={`font-display text-[18px] font-semibold leading-6 text-text-primary ${
+                      tagline ? "mt-4" : "mt-[26px]"
+                    }`}
+                  >
+                    {t("title.overview")}
+                  </h2>
+                  <p className="mt-1.5 text-[14px] leading-[22px] text-text-secondary 3xl:text-[15px] 3xl:leading-[24px]">
+                    {overview}
+                  </p>
+                </>
+              )}
+
+              {credits.length > 0 && (
+                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 3xl:grid-cols-4">
+                  {credits.map((credit, i) => (
+                    <div key={i}>
+                      <p className="truncate text-[13.5px] font-semibold leading-[18px] text-text-primary">
+                        {credit.name}
+                      </p>
+                      <p className="mt-px truncate text-[12px] leading-4 text-text-muted">{credit.role}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Wrapped rather than clipped, so none is cut off at the
+                  column's edge; the first dozen (TMDb lists the most
+                  telling first) keep it to two or three lines. */}
+              {keywords.length > 0 && (
+                <div className="mt-[18px] flex flex-wrap gap-1.5">
+                  {keywords.slice(0, 12).map((keyword) => (
+                    <span
+                      key={keyword}
+                      className="inline-flex h-[22px] items-center whitespace-nowrap rounded-[11px] border border-border bg-bg-0/30 px-[9px] text-[11px] text-text-secondary"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3.5">
+                <ExternalLinks links={links} />
+              </div>
+            </div>
           </div>
 
-          <aside className="w-full shrink-0 xl:w-[288px] xl:pt-[76px]">
+          <aside className="min-w-0 sm:col-span-2 xl:col-span-1">
             <div className="rounded-2xl border border-border bg-bg-1/95 px-[18px] pb-4 pt-1 shadow-[0_18px_40px_rgba(0,0,0,0.35)] backdrop-blur-[20px]">
               {meta.ratingPercent !== null && (
                 <div className="flex h-[50px] items-center justify-between gap-2.5">
@@ -430,15 +501,15 @@ export async function TitleHero({
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {sidebar.watchProviders.map((provider) => {
-                      const logo = tmdbImageUrl(provider.logoPath, "w92");
+                      const providerLogo = tmdbImageUrl(provider.logoPath, "w92");
                       const tile = (
                         <div
                           title={provider.name}
                           className="h-9 w-9 shrink-0 overflow-hidden rounded-[9px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
                         >
-                          {logo && (
+                          {providerLogo && (
                             <Image
-                              src={logo}
+                              src={providerLogo}
                               alt={provider.name}
                               width={36}
                               height={36}
@@ -459,6 +530,7 @@ export async function TitleHero({
                 </div>
               )}
             </div>
+
 
             {file && (
               <div className="mt-4">

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   app/title/[type]/[id]/page.tsx + components/title-hero.tsx. The backdrop
-  runs across the top; the poster and the main column (name, meta line,
+  runs across the top, as tall as the window allows (TitlePage.xaml.cs); the
+  poster and the main column (name, meta line,
   status badge and actions, overview, credits, keywords, links) overlap its
   lower edge, with the facts and file-details cards in a rail on the right.
   Below: the Episodes accordion (TV), the Cast rail, the franchise grid,
@@ -142,29 +143,80 @@
                     IsTextSelectionEnabled="True" />
             </StackPanel>
         </DataTemplate>
+        <!--
+          The action row (components/title-hero.tsx, 0.54+): every capsule is
+          32 tall and centred on the row, so the badge, Add / Request, Play,
+          Report, Share and the overflow button line up.
+        -->
+        <Style x:Key="TitlePillButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="TitleAccentPillButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="TitlePillBorder" TargetType="Border">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </Page.Resources>
 
     <Grid>
         <ScrollViewer Visibility="{x:Bind ViewModel.HasDetail, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Padding="0,0,0,48">
-                <!-- .backdrop: full-bleed artwork faded into the page at the bottom. -->
-                <Grid Height="300">
+                <!--
+                  .backdrop: full-bleed artwork, as tall as min(70% of the
+                  window's height, 16:9 of its width) (the code-behind sizes
+                  it), under soft fades into the page: a light veil over all
+                  of it so a bright image reads like a dark one, a wash from
+                  the left behind the text, a scrim at the top and a long
+                  fall into the page at the bottom.
+                -->
+                <Grid x:Name="BackdropHost" Height="300">
                     <Image
                         Source="{x:Bind ViewModel.Backdrop, Mode=OneWay}"
-                        Stretch="UniformToFill"
-                        Opacity="0.55" />
+                        Stretch="UniformToFill" />
+                    <Rectangle Fill="{ThemeResource SolidBackgroundFillColorBaseBrush}" Opacity="0.22" />
+                    <Rectangle Opacity="0.9">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
+                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.28" />
+                                <GradientStop Color="Transparent" Offset="0.92" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <Rectangle Opacity="0.7">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
+                                <GradientStop Color="Transparent" Offset="0.28" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
                     <Rectangle>
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#00000000" Offset="0.3" />
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="1" />
+                                <GradientStop Color="Transparent" Offset="0.24" />
+                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.94" />
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
                 </Grid>
 
-                <!-- The poster and both columns start on the backdrop's lower third. -->
-                <Grid Margin="28,-140,28,0" ColumnSpacing="28">
+                <!--
+                  The poster and both columns start a little under halfway
+                  down the backdrop (the code-behind keeps that as it grows);
+                  the facts rail sits on the window's right edge however wide.
+                -->
+                <Grid x:Name="HeroColumns" Margin="28,-140,28,0" ColumnSpacing="28">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="300" />
@@ -201,7 +253,7 @@
                             </Grid>
 
                             <!-- The main column. -->
-                            <StackPanel Grid.Column="1" Spacing="14" Margin="0,120,0,0">
+                            <StackPanel Grid.Column="1" Spacing="14" Margin="0,120,0,0" MaxWidth="860" HorizontalAlignment="Left">
                                 <TextBlock
                                     Text="{x:Bind ViewModel.Name, Mode=OneWay}"
                                     Style="{StaticResource TitleLargeTextBlockStyle}"
@@ -230,119 +282,12 @@
 
                                 <!-- .tp-status: the library badge and the actions this viewer may take. -->
                                 <StackPanel Spacing="8">
+                                    <!--
+                                      One row on a shared centre line: the main action first (Play,
+                                      Request / Add with "Advanced" as its chevron), the library badge,
+                                      the everyday extras, then "…" for the rarely used tools.
+                                    -->
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <controls:TonePill Text="{x:Bind ViewModel.StatusLabel, Mode=OneWay}" Tone="{x:Bind ViewModel.StatusTone, Mode=OneWay}" />
-                                        <!-- components/title-hero.tsx (0.46+, reviewers): Sonarr/Radarr hasn't found the approved request. -->
-                                        <Border
-                                            Visibility="{x:Bind ViewModel.ShowsNotFound, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Padding="12,4"
-                                            CornerRadius="14"
-                                            BorderThickness="1"
-                                            Background="{ThemeResource MissingBadgeBackgroundBrush}"
-                                            BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
-                                            VerticalAlignment="Center"
-                                            ToolTipService.ToolTip="{x:Bind ViewModel.NotFoundTooltip, Mode=OneWay}">
-                                            <TextBlock
-                                                x:Uid="Title_CantFind"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                FontWeight="SemiBold"
-                                                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
-                                        </Border>
-                                        <Border
-                                            Visibility="{x:Bind ViewModel.ShowsRequested, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Padding="12,4"
-                                            CornerRadius="14"
-                                            Background="{ThemeResource InfoBadgeBackgroundBrush}"
-                                            VerticalAlignment="Center">
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.RequestedLine, Mode=OneWay}"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                FontWeight="SemiBold"
-                                                Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
-                                        </Border>
-                                        <Button
-                                            Content="{x:Bind ViewModel.RequestLabel, Mode=OneWay}"
-                                            Click="OnRequestClick"
-                                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
-                                            Visibility="{x:Bind ViewModel.CanRequest, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Style="{StaticResource AccentButtonStyle}" />
-                                        <Button
-                                            x:Uid="Title_RequestMoreSeasons"
-                                            Click="OnRequestClick"
-                                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
-                                            Visibility="{x:Bind ViewModel.ShowsRequestMoreSeasons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <!-- components/add-to-library-button.tsx (0.41+): a member sees why Request is gone. -->
-                                        <Border
-                                            Visibility="{x:Bind ViewModel.ShowsBlockedPill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Padding="12,4"
-                                            CornerRadius="14"
-                                            BorderThickness="1"
-                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                            VerticalAlignment="Center">
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.BlockedLine, Mode=OneWay}"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                TextWrapping="Wrap"
-                                                MaxWidth="420" />
-                                        </Border>
-                                        <Button
-                                            Content="{x:Bind ViewModel.AddLabel, Mode=OneWay}"
-                                            Command="{x:Bind ViewModel.AddCommand}"
-                                            Visibility="{x:Bind ViewModel.CanAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Style="{StaticResource AccentButtonStyle}" />
-                                        <Button
-                                            Content="{x:Bind ViewModel.SearchLabel, Mode=OneWay}"
-                                            Command="{x:Bind ViewModel.SearchNowCommand}"
-                                            Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            Content="{x:Bind ViewModel.MonitorLabel, Mode=OneWay}"
-                                            Command="{x:Bind ViewModel.ToggleMonitorCommand}"
-                                            Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            x:Uid="Title_FixId"
-                                            Click="OnFixIdClick"
-                                            Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <!-- components/block-requests-button.tsx (0.41+): the admin's request blocklist. -->
-                                        <Button
-                                            x:Uid="Title_BlockRequests"
-                                            Click="OnBlockRequestsClick"
-                                            Visibility="{x:Bind ViewModel.CanBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            Content="{x:Bind ViewModel.UnblockLabel, Mode=OneWay}"
-                                            Command="{x:Bind ViewModel.UnblockCommand}"
-                                            Visibility="{x:Bind ViewModel.CanUnblock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <Border
-                                            Visibility="{x:Bind ViewModel.ShowsBlockedByKeyword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Padding="12,4"
-                                            CornerRadius="14"
-                                            BorderThickness="1"
-                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                            VerticalAlignment="Center"
-                                            x:Uid="Title_BlockedByKeyword">
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.BlockedKeywordLine, Mode=OneWay}"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                        </Border>
-                                        <!-- components/report-problem-button.tsx (0.38+): the pill once reported, then the button. -->
-                                        <Border
-                                            Visibility="{x:Bind ViewModel.ShowsProblemReported, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            Padding="12,4"
-                                            CornerRadius="14"
-                                            BorderThickness="1"
-                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                            VerticalAlignment="Center">
-                                            <TextBlock
-                                                x:Uid="Title_ProblemReported"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        </Border>
-                                        <Button
-                                            Content="{x:Bind ViewModel.ReportButtonLabel, Mode=OneWay}"
-                                            Click="OnReportProblemClick"
-                                            Visibility="{x:Bind ViewModel.CanReport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            x:Uid="Title_ReportButton" />
                                         <!-- components/play-button.tsx (0.53+): Play on Plex / Jellyfin / Emby, one per server that has it. -->
                                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.PlayItems, Mode=OneWay}" VerticalAlignment="Center">
                                             <ItemsRepeater.Layout>
@@ -350,7 +295,7 @@
                                             </ItemsRepeater.Layout>
                                             <ItemsRepeater.ItemTemplate>
                                                 <DataTemplate x:DataType="vm:PlayItem">
-                                                    <Button Style="{StaticResource AccentButtonStyle}" Command="{x:Bind Open}">
+                                                    <Button Style="{StaticResource TitleAccentPillButton}" Command="{x:Bind Open}">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE768;" FontSize="12" />
                                                             <TextBlock Text="{x:Bind Label}" VerticalAlignment="Center" />
@@ -359,36 +304,188 @@
                                                 </DataTemplate>
                                             </ItemsRepeater.ItemTemplate>
                                         </ItemsRepeater>
+                                        <Button
+                                            Content="{x:Bind ViewModel.RequestLabel, Mode=OneWay}"
+                                            Click="OnRequestClick"
+                                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanRequest, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitleAccentPillButton}" />
+                                        <!-- Add, with "Advanced" (0.43+) as a chevron joined to its right; a plain pill on an older server. -->
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="1"
+                                            VerticalAlignment="Center"
+                                            Visibility="{x:Bind ViewModel.CanAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                            <Button
+                                                Content="{x:Bind ViewModel.AddLabel, Mode=OneWay}"
+                                                Command="{x:Bind ViewModel.AddCommand}"
+                                                Visibility="{x:Bind ViewModel.AddAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+                                                Style="{StaticResource TitleAccentPillButton}" />
+                                            <StackPanel
+                                                Orientation="Horizontal"
+                                                Spacing="1"
+                                                Visibility="{x:Bind ViewModel.AddAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                                <Button
+                                                    Content="{x:Bind ViewModel.AddLabel, Mode=OneWay}"
+                                                    Command="{x:Bind ViewModel.AddCommand}"
+                                                    CornerRadius="16,0,0,16"
+                                                    Style="{StaticResource TitleAccentPillButton}" />
+                                                <Button
+                                                    x:Uid="Title_AdvancedToggle"
+                                                    Click="OnAdvancedToggleClick"
+                                                    CornerRadius="0,16,16,0"
+                                                    Padding="10,0"
+                                                    Style="{StaticResource TitleAccentPillButton}">
+                                                    <FontIcon Glyph="&#xE70D;" FontSize="10" />
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Button
+                                            x:Uid="Title_RequestMoreSeasons"
+                                            Click="OnRequestClick"
+                                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.ShowsRequestMoreSeasons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillButton}" />
+                                        <controls:TonePill Text="{x:Bind ViewModel.StatusLabel, Mode=OneWay}" Tone="{x:Bind ViewModel.StatusTone, Mode=OneWay}" />
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsRequested, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillBorder}"
+                                            Background="{ThemeResource InfoBadgeBackgroundBrush}">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.RequestedLine, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                VerticalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
+                                        </Border>
+                                        <!-- components/title-hero.tsx (0.46+, reviewers): Sonarr/Radarr hasn't found the approved request. -->
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsNotFound, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillBorder}"
+                                            BorderThickness="1"
+                                            Background="{ThemeResource MissingBadgeBackgroundBrush}"
+                                            BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
+                                            ToolTipService.ToolTip="{x:Bind ViewModel.NotFoundTooltip, Mode=OneWay}">
+                                            <TextBlock
+                                                x:Uid="Title_CantFind"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                VerticalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
+                                        </Border>
+                                        <!-- components/add-to-library-button.tsx (0.41+): a member sees why Request is gone. -->
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsBlockedPill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillBorder}"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.BlockedLine, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                VerticalAlignment="Center"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                TextWrapping="Wrap"
+                                                MaxWidth="420" />
+                                        </Border>
+                                        <!-- components/report-problem-button.tsx (0.38+): the pill once reported, then the button. -->
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsProblemReported, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillBorder}"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                            <TextBlock
+                                                x:Uid="Title_ProblemReported"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                VerticalAlignment="Center"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </Border>
+                                        <Button
+                                            Content="{x:Bind ViewModel.ReportButtonLabel, Mode=OneWay}"
+                                            Click="OnReportProblemClick"
+                                            Visibility="{x:Bind ViewModel.CanReport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillButton}"
+                                            x:Uid="Title_ReportButton" />
                                         <!-- components/share-button.tsx (0.45.1+): send it to someone here, or share a link. -->
                                         <Button
                                             Click="OnShareClick"
                                             Visibility="{x:Bind ViewModel.CanShare, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillButton}"
                                             x:Uid="Title_ShareButton">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <FontIcon Glyph="&#xE72D;" FontSize="14" />
                                                 <TextBlock x:Uid="Title_ShareLabel" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
+                                        <!-- components/block-requests-button.tsx (0.41+): Unblock stays in the row while the title is blocked. -->
+                                        <Button
+                                            Content="{x:Bind ViewModel.UnblockLabel, Mode=OneWay}"
+                                            Command="{x:Bind ViewModel.UnblockCommand}"
+                                            Visibility="{x:Bind ViewModel.CanUnblock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillButton}" />
+                                        <Border
+                                            Visibility="{x:Bind ViewModel.ShowsBlockedByKeyword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource TitlePillBorder}"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            x:Uid="Title_BlockedByKeyword">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.BlockedKeywordLine, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                VerticalAlignment="Center"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                        </Border>
+                                        <!-- components/title-more-menu.tsx: Search now, Stop / Start monitoring, Fix ID and Block requests. -->
+                                        <Button
+                                            x:Uid="Title_MoreActions"
+                                            Width="32"
+                                            Padding="0"
+                                            Style="{StaticResource TitlePillButton}"
+                                            Visibility="{x:Bind ViewModel.HasMoreActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                            <FontIcon Glyph="&#xE712;" FontSize="14" />
+                                            <Button.Flyout>
+                                                <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                                    <MenuFlyoutItem
+                                                        Text="{x:Bind ViewModel.SearchLabel, Mode=OneWay}"
+                                                        Command="{x:Bind ViewModel.SearchNowCommand}"
+                                                        Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                                    <MenuFlyoutItem
+                                                        Text="{x:Bind ViewModel.MonitorLabel, Mode=OneWay}"
+                                                        Command="{x:Bind ViewModel.ToggleMonitorCommand}"
+                                                        Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                                    <MenuFlyoutItem
+                                                        x:Uid="Title_FixId"
+                                                        Click="OnFixIdClick"
+                                                        Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                                    <MenuFlyoutItem
+                                                        x:Uid="Title_BlockRequests"
+                                                        Click="OnBlockRequestsClick"
+                                                        Visibility="{x:Bind ViewModel.CanBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                                </MenuFlyout>
+                                            </Button.Flyout>
+                                        </Button>
                                         <HyperlinkButton
                                             Content="{x:Bind ViewModel.ArrSetupLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.OpenSettingsCommand}"
+                                            VerticalAlignment="Center"
                                             Visibility="{x:Bind ViewModel.NeedsArrSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                     </StackPanel>
-                                    <!-- 0.43+: which server and settings "Add to Radarr/Sonarr" uses; hidden on an older server. -->
+                                    <!-- 0.43+: which server and settings "Add to Radarr/Sonarr" uses, opened by the chevron on Add. -->
                                     <StackPanel Visibility="{x:Bind ViewModel.CanAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                        <Expander
-                                            x:Uid="Title_Advanced"
+                                        <Border
                                             MaxWidth="600"
-                                            IsExpanded="{x:Bind ViewModel.AddAdvanced.IsExpanded, Mode=TwoWay}"
-                                            Visibility="{x:Bind ViewModel.AddAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Stretch">
+                                            HorizontalAlignment="Left"
+                                            Padding="14,12"
+                                            CornerRadius="12"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                            Visibility="{x:Bind ViewModel.AddAdvanced.IsExpanded, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                             <ContentControl
                                                 Content="{x:Bind ViewModel.AddAdvanced}"
                                                 ContentTemplate="{StaticResource AddOverridesTemplate}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch" />
-                                        </Expander>
+                                        </Border>
                                     </StackPanel>
                                     <!-- components/fourk-controls.tsx: the 4K Radarr/Sonarr's copy (0.37+). -->
                                     <StackPanel
@@ -530,14 +627,15 @@
                                     </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
 
-                                <!-- .chips: keywords on one line, clipped. -->
+                                <!-- .chips: keywords, wrapped onto a second line rather than cut off at the column's edge. -->
                                 <TextBlock
                                     Text="{x:Bind ViewModel.Keywords, Mode=OneWay}"
                                     Visibility="{x:Bind ViewModel.HasKeywords, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap"
                                     TextTrimming="CharacterEllipsis"
-                                    MaxLines="1" />
+                                    MaxLines="2" />
 
                                 <!--
                                   components/external-links.tsx: "▶ Trailer", then the server's

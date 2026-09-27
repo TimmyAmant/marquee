@@ -5,8 +5,19 @@ import { useRouter } from "next/navigation";
 import { relinkTitleAction } from "@/app/title/[type]/[id]/actions";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { MENU_ITEM, PILL_OUTLINE } from "@/components/pill-styles";
 
-export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; tmdbId: number }) {
+/** "Fix ID": a pill, or a row of the title page's "…" menu
+ * (`variant="menu"`), that opens the relink form in place. */
+export function RelinkTitleForm({
+  mediaType,
+  tmdbId,
+  variant = "pill",
+}: {
+  mediaType: MediaType;
+  tmdbId: number;
+  variant?: "pill" | "menu";
+}) {
   const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -24,7 +35,7 @@ export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; t
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-primary transition-colors hover:border-accent hover:text-accent"
+        className={variant === "menu" ? MENU_ITEM : PILL_OUTLINE}
       >
         {t("title.fixId")}
       </button>
@@ -34,7 +45,9 @@ export function RelinkTitleForm({ mediaType, tmdbId }: { mediaType: MediaType; t
   return (
     <form
       action={formAction}
-      className="flex max-w-md flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs"
+      className={`flex max-w-md flex-col gap-2 text-xs ${
+        variant === "menu" ? "px-3 py-2" : "rounded-xl border border-border bg-bg-1 p-3"
+      }`}
     >
       <p className="text-text-secondary">
         {t("title.fixIdHelp")}

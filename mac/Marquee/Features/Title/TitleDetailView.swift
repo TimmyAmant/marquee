@@ -106,114 +106,108 @@ struct TitleDetailView: View {
     }
 
     private func content(_ detail: API.TitleDetail) -> some View {
-        // The mockup measures this page from the window's top edge, with the
-        // toolbar floating over the artwork (`.backdrop{top:0}` under
-        // `.toolbar.glass`), so the page starts under the top bar rather than
-        // below it. The backdrop also runs under the navigation rail to the
-        // window's left edge, so the columns step past the rail themselves
-        // (`leading`).
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // The backdrop sits behind the top of the page; the poster,
-                // the main column and the right rail are placed on it at the
-                // mockup's coordinates.
-                ZStack(alignment: .topLeading) {
-                    TitleBackdrop(
-                        backdropPath: detail.backdropPath,
-                        seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId)))
-                    )
-                    .equatable()
+        // The page is measured from the window's top edge, with the toolbar
+        // floating over the artwork, so the page starts under the top bar
+        // rather than below it. The backdrop also runs under the navigation
+        // rail to the window's left edge, so the columns step past the rail
+        // themselves (`leading`). Like the website (components/title-hero.tsx,
+        // 0.54+), the page uses the window's whole width: poster | title and
+        // details | facts on the right edge, and the rows below span the same
+        // width between the same gutters.
+        GeometryReader { proxy in
+            let hero = TitleHeroMetrics(window: proxy.size)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ZStack(alignment: .topLeading) {
+                        TitleBackdrop(
+                            backdropPath: detail.backdropPath,
+                            seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
+                            height: hero.backdropHeight,
+                            wide: hero.wide
+                        )
+                        .equatable()
 
-                    HStack(alignment: .top, spacing: Metrics.titleColumnGap) {
-                        // 48 → 850: poster + main column, with the season and
-                        // cast rows under them.
-                        VStack(alignment: .leading, spacing: Metrics.titleSectionGap) {
-                            HStack(alignment: .top, spacing: Metrics.titleColumnGap) {
-                                TitlePoster(posterPath: detail.posterPath)
-                                    .equatable()
+                        HStack(alignment: .top, spacing: Metrics.titleColumnGap) {
+                            TitlePoster(posterPath: detail.posterPath)
+                                .equatable()
 
-                                TitleMainColumn(
-                                    screen: screen,
-                                    detail: detail,
-                                    onTrailer: { showingTrailer = true },
-                                    onRelink: { showingRelink = true },
-                                    onPickSeasons: { showingSeasonPicker = true },
-                                    onReportProblem: { showingReportProblem = true },
-                                    onShare: { showingShare = true }
-                                )
-                                .frame(maxWidth: Metrics.titleTextWidth, alignment: .leading)
+                            TitleMainColumn(
+                                screen: screen,
+                                detail: detail,
+                                onTrailer: { showingTrailer = true },
+                                onRelink: { showingRelink = true },
+                                onPickSeasons: { showingSeasonPicker = true },
+                                onReportProblem: { showingReportProblem = true },
+                                onShare: { showingShare = true }
+                            )
+                            // A readable measure however wide the window;
+                            // the artwork shows through beside it.
+                            .frame(maxWidth: hero.textWidth, alignment: .leading)
+                            .padding(.top, Metrics.titleColumnTop)
+
+                            Spacer(minLength: 0)
+
+                            TitleSidebarColumn(detail: detail)
+                                .frame(width: hero.railWidth)
                                 .padding(.top, Metrics.titleColumnTop)
-                            }
+                        }
+                        .padding(.leading, leading)
+                        .padding(.trailing, trailing)
+                        .padding(.top, hero.posterTop)
+                    }
 
-                            if !detail.seasons.isEmpty {
-                                VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                                    SectionTitle(text: String(localized: "Episodes"))
-                                    SeasonAccordion(screen: screen, seasons: detail.seasons)
+                    VStack(alignment: .leading, spacing: 44) {
+                        if !detail.seasons.isEmpty {
+                            VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
+                                SectionTitle(text: String(localized: "Episodes"))
+                                SeasonAccordion(screen: screen, seasons: detail.seasons)
+                            }
+                        }
+                        if !detail.cast.isEmpty {
+                            Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
+                                ForEach(detail.cast) { member in
+                                    PersonCard(
+                                        profilePath: member.profilePath,
+                                        name: member.name,
+                                        character: member.character,
+                                        favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
+                                        link: .person(member.tmdbId)
+                                    ) {
+                                        model.open(.person(member.tmdbId))
+                                    }
                                 }
                             }
-                            if !detail.cast.isEmpty {
-                                Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
-                                    ForEach(detail.cast) { member in
-                                        PersonCard(
-                                            profilePath: member.profilePath,
-                                            name: member.name,
-                                            character: member.character,
-                                            favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
-                                            link: .person(member.tmdbId)
-                                        ) {
-                                            model.open(.person(member.tmdbId))
+                        }
+                        if let franchise = detail.franchise, !franchise.items.isEmpty {
+                            FranchiseSection(screen: screen, franchise: franchise)
+                        }
+                        if !detail.studios.isEmpty {
+                            VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
+                                SectionTitle(text: String(localized: "Studio"))
+                                FlowLayout(spacing: 10, lineSpacing: 10) {
+                                    ForEach(detail.studios) { studio in
+                                        StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
+                                    }
+                                }
+                            }
+                        }
+                        if !detail.similar.isEmpty {
+                            Shelf(title: String(localized: "More like this"), headInset: 0) {
+                                ForEach(detail.similar) { card in
+                                    ShelfItem {
+                                        PosterCard(card: card, showsTypeLabel: true) {
+                                            model.openTitle(card.id)
                                         }
                                     }
                                 }
                             }
                         }
-                        .frame(maxWidth: Metrics.titleLeftWidth, alignment: .leading)
-
-                        TitleSidebarColumn(detail: detail)
-                            .frame(width: Metrics.titleRailWidth)
-                            .padding(.top, Metrics.titleColumnTop)
                     }
-                    // Capped and left-aligned, so the rail stays at 882 in a
-                    // wider window instead of drifting right.
-                    .frame(
-                        maxWidth: Metrics.titleLeftWidth + Metrics.titleColumnGap + Metrics.titleRailWidth,
-                        alignment: .leading
-                    )
                     .padding(.leading, leading)
                     .padding(.trailing, trailing)
-                    .padding(.top, Metrics.titlePosterTop)
+                    .padding(.top, 44)
+                    .padding(.bottom, 60)
                 }
-
-                VStack(alignment: .leading, spacing: 44) {
-                    if let franchise = detail.franchise, !franchise.items.isEmpty {
-                        FranchiseSection(screen: screen, franchise: franchise)
-                    }
-                    if !detail.studios.isEmpty {
-                        VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                            SectionTitle(text: String(localized: "Studio"))
-                            FlowLayout(spacing: 10, lineSpacing: 10) {
-                                ForEach(detail.studios) { studio in
-                                    StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
-                                }
-                            }
-                        }
-                    }
-                    if !detail.similar.isEmpty {
-                        Shelf(title: String(localized: "More like this"), headInset: 0) {
-                            ForEach(detail.similar) { card in
-                                ShelfItem {
-                                    PosterCard(card: card, showsTypeLabel: true) {
-                                        model.openTitle(card.id)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                .padding(.leading, leading)
-                .padding(.trailing, trailing)
-                .padding(.top, 44)
-                .padding(.bottom, 60)
             }
         }
         .ignoresSafeArea(.container, edges: [.top, .horizontal])
@@ -233,52 +227,93 @@ struct TitleDetailView: View {
 
 // MARK: - Hero
 
-/// `.backdrop` — full-bleed artwork behind the top of the page: 380 tall,
-/// bled up under the window's toolbar, film grain over it, and gradients
-/// fading it into bg0 at the bottom and into the page at the left.
+/// How the title page's hero scales with the window (components/title-hero.tsx
+/// `--hero-h`): the artwork is min(70% of the window's height, 16:9 of its
+/// width), never shorter than the mockup's 380, and the poster row sits a
+/// little under halfway down it.
+struct TitleHeroMetrics: Equatable {
+    let backdropHeight: CGFloat
+    let posterTop: CGFloat
+    let textWidth: CGFloat
+    let railWidth: CGFloat
+    /// Wide enough that w1280 artwork would be soft on a Retina display.
+    let wide: Bool
+
+    init(window: CGSize) {
+        let width = max(window.width, 1)
+        backdropHeight = max(Metrics.backdropHeight, min(window.height * 0.7, width * 0.5625))
+        posterTop = max(Metrics.titlePosterTop, backdropHeight * 0.42)
+        textWidth = width >= 1700 ? 860 : 720
+        railWidth = width >= 1700 ? 320 : Metrics.titleRailWidth
+        wide = width > 1400
+    }
+}
+
+/// `.backdrop` — full-bleed artwork behind the top of the page, bled up
+/// under the window's toolbar, film grain over it, and soft fades into bg0:
+/// under the toolbar, at the bottom, from the left behind the text, and a
+/// light veil over all of it so a bright image reads like a dark one.
 private struct TitleBackdrop: View, Equatable {
     let backdropPath: API.ImageRef?
     /// Keeps the film grain identical across re-renders.
     let seed: UInt64
+    let height: CGFloat
+    let wide: Bool
 
     var body: some View {
+        // w1280 is plenty up to a 1400pt window; past that the original, so
+        // the artwork stays sharp full-bleed on a big display.
+        let size: API.ImageRef.Size = wide ? .original : .w1280
         Color.clear
-            .frame(height: Metrics.backdropHeight)
+            .frame(height: height)
             .frame(maxWidth: .infinity)
             // Aligned to the bottom so the extra height covers the toolbar
             // strip above the page's own top edge.
             .overlay(alignment: .bottom) {
                 ZStack {
                     Theme.bg1
-                    // w1280 covers the widest window at 2x well enough; an
-                    // `original` backdrop decodes to tens of megabytes.
-                    if backdropPath.url(.w1280) != nil {
-                        RemoteImage(backdropPath, size: .w1280)
+                    if backdropPath.url(size) != nil {
+                        // Focal point at the top: faces and titles sit
+                        // high in most backdrops.
+                        RemoteImage(backdropPath, size: size)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
                     FilmGrain(seed: seed).opacity(Theme.grainOpacity)
-                    // .fade — a scrim under the toolbar, then down to solid
-                    // bg0 by the bottom edge.
+                    Theme.bg0.opacity(0.22)
                     LinearGradient(
                         stops: [
-                            .init(color: Theme.bg0.opacity(0.6), location: 0),
-                            .init(color: .clear, location: 0.2),
-                            .init(color: .clear, location: 0.4),
-                            .init(color: Theme.bg0.opacity(0.72), location: 0.74),
-                            .init(color: Theme.bg0, location: 1),
+                            .init(color: Theme.bg0.opacity(0.7), location: 0),
+                            .init(color: Theme.bg0.opacity(0.25), location: 0.14),
+                            .init(color: .clear, location: 0.28),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                     LinearGradient(
                         stops: [
-                            .init(color: Theme.bg0.opacity(0.5), location: 0),
-                            .init(color: .clear, location: 0.42),
+                            .init(color: .clear, location: 0.24),
+                            .init(color: Theme.bg0.opacity(0.5), location: 0.54),
+                            .init(color: Theme.bg0.opacity(0.88), location: 0.76),
+                            // Solid a little before the edge, so the grain
+                            // fades out with the artwork instead of stopping.
+                            .init(color: Theme.bg0, location: 0.94),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    LinearGradient(
+                        stops: [
+                            .init(color: Theme.bg0.opacity(0.94), location: 0),
+                            .init(color: Theme.bg0.opacity(0.84), location: 0.3),
+                            .init(color: Theme.bg0.opacity(0.62), location: 0.52),
+                            .init(color: Theme.bg0.opacity(0.26), location: 0.74),
+                            .init(color: .clear, location: 0.92),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 }
-                .frame(height: Metrics.backdropHeight + Metrics.topBar)
+                .frame(height: height + Metrics.topBar)
                 .clipped()
             }
     }
@@ -446,11 +481,10 @@ private struct TitleMainColumn: View {
             }
 
             if !detail.keywords.isEmpty {
-                // .chips — one row only, clipped at the column's width with
-                // its last 28pt faded out, rather than wrapping into more
-                // rows or cutting a chip in half.
-                SingleRowLayout(spacing: 6) {
-                    ForEach(detail.keywords, id: \.self) { keyword in
+                // .chips — wrapped rather than clipped at the column's edge;
+                // the first dozen (TMDb lists the most telling first).
+                FlowLayout(spacing: 6, lineSpacing: 6) {
+                    ForEach(detail.keywords.prefix(12), id: \.self) { keyword in
                         Text(keyword)
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.textSecondary)
@@ -461,9 +495,6 @@ private struct TitleMainColumn: View {
                             .overlay(Capsule().strokeBorder(Theme.border))
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 22)
-                .fadingTrailingEdge()
                 .padding(.top, 18)
             }
 
@@ -492,9 +523,64 @@ private struct TitleActionRow: View {
         let viewer = detail.viewer
         // 0.48+: the blocklist can be handed to a member.
         let managesBlocklist = model.viewer?.can(.manageBlocklist) == true
+        let advancedOffered = offersAdvancedAdd(viewer)
+        let targets = advancedTargets(viewer)
+        // "Advanced" rides on the button it applies to, as a chevron.
+        let splitStandard = advancedOffered && targets.standard
+        let splitFourK = advancedOffered && !targets.standard && targets.fourK
+        let menuTracking = viewer.arrTracking
+        let menuBlock = viewer.offersBlocking(managesBlocklist: managesBlocklist) && viewer.block == nil && !askingBlockReason
         VStack(alignment: .leading, spacing: 8) {
-            FlowLayout(spacing: 8, lineSpacing: 8) {
+            // components/title-hero.tsx (0.54+): one row of 32pt capsules on
+            // a shared midline — the main action first, then the library
+            // badge, the everyday extras, and "…" for the rarely used tools.
+            FlowLayout(spacing: 8, lineSpacing: 8, centersLines: true) {
+                // components/play-button.tsx (0.53+): "Play on Plex" and
+                // friends, a menu when more than one server has it.
+                PlayOnServerButton(links: detail.play ?? [])
+
+                if !viewer.alreadyRequested, let action = detail.requestAction {
+                    switch action {
+                    case .wholeSeries:
+                        HStack(spacing: 1) {
+                            Button(screen.isAdding ? String(localized: "Requesting…") : action.buttonTitle) { screen.request() }
+                                .buttonStyle(AccentButtonStyle(height: 32, squaredTrailing: splitStandard))
+                                .disabled(screen.isAdding || screen.advancedAdd.isLoading)
+                            if splitStandard { advancedChevron(viewer, filled: true) }
+                        }
+                    case .pickSeasons(more: false):
+                        Button(action.buttonTitle, action: onPickSeasons)
+                            .buttonStyle(AccentButtonStyle(height: 32))
+                            .disabled(screen.isAdding)
+                    case .pickSeasons(more: true):
+                        // Among the secondary pills, so outlined like them.
+                        Button(action: onPickSeasons) {
+                            pillLabel("plus", action.buttonTitle, size: 13)
+                        }
+                        .buttonStyle(OutlineButtonStyle(pill: .large))
+                        .disabled(screen.isAdding)
+                    }
+                }
+
+                if viewer.canAdd {
+                    HStack(spacing: 1) {
+                        Button(screen.isAdding ? String(localized: "Adding…") : String(localized: "Add to \(detail.mediaType.arrName)")) { screen.add() }
+                            .buttonStyle(AccentButtonStyle(height: 32, squaredTrailing: splitStandard))
+                            .disabled(screen.isAdding || screen.advancedAdd.isLoading)
+                        if splitStandard { advancedChevron(viewer, filled: true) }
+                    }
+                }
+
                 StatusBadge(status: detail.library.status, large: true)
+
+                if viewer.alreadyRequested {
+                    Text(viewer.pendingRequestLine)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.info)
+                        .padding(.horizontal, 14)
+                        .frame(height: 32)
+                        .background(Capsule().fill(Theme.infoBg))
+                }
 
                 // components/title-hero.tsx (0.46+, reviewers): Sonarr/Radarr
                 // hasn't found the approved request; opens the Requests
@@ -529,43 +615,6 @@ private struct TitleActionRow: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if viewer.alreadyRequested {
-                    Text(viewer.pendingRequestLine)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.info)
-                        .padding(.horizontal, 14)
-                        .frame(height: 32)
-                        .background(Capsule().fill(Theme.infoBg))
-                } else if let action = detail.requestAction {
-                    switch action {
-                    case .wholeSeries:
-                        Button(screen.isAdding ? String(localized: "Requesting…") : action.buttonTitle) { screen.request() }
-                            .buttonStyle(AccentButtonStyle())
-                            .disabled(screen.isAdding || screen.advancedAdd.isLoading)
-                    case .pickSeasons(more: false):
-                        Button(action.buttonTitle, action: onPickSeasons)
-                            .buttonStyle(AccentButtonStyle())
-                            .disabled(screen.isAdding)
-                    case .pickSeasons(more: true):
-                        // Among the tracking pills, so outlined like them.
-                        Button(action: onPickSeasons) {
-                            pillLabel("plus", action.buttonTitle, size: 13)
-                        }
-                        .buttonStyle(OutlineButtonStyle(pill: .large))
-                        .disabled(screen.isAdding)
-                    }
-                }
-
-                if viewer.canAdd {
-                    Button(screen.isAdding ? "Adding…" : "Add to \(detail.mediaType.arrName)") { screen.add() }
-                        .buttonStyle(AccentButtonStyle())
-                        .disabled(screen.isAdding || screen.advancedAdd.isLoading)
-                }
-
-                // components/play-button.tsx (0.53+): "Play on Plex" and
-                // friends, a menu when more than one server has it.
-                PlayOnServerButton(links: detail.play ?? [])
-
                 // components/fourk-controls.tsx (0.37+): the 4K copy, when
                 // the admin has a 4K Radarr/Sonarr for this type.
                 if let fourK = viewer.fourK {
@@ -594,15 +643,7 @@ private struct TitleActionRow: View {
                             .buttonStyle(OutlineButtonStyle(tint: Theme.accent, pill: .large))
                             .disabled(screen.isFourKBusy || screen.advancedAdd4K.isLoading)
                     }
-                }
-
-                // 0.43+: pick the server, profile, folder and tags for Add.
-                if offersAdvancedAdd(viewer) {
-                    AdvancedAddToggle(advanced: Binding(
-                        get: { advancedToggleState(viewer) },
-                        set: { setAdvancedExpanded($0.isExpanded, viewer) }
-                    ))
-                    .frame(height: 32)
+                    if splitFourK { advancedChevron(viewer, filled: false) }
                 }
 
                 // components/report-problem-button.tsx (0.38+): once something
@@ -634,41 +675,58 @@ private struct TitleActionRow: View {
                 }
                 .buttonStyle(OutlineButtonStyle(pill: .large))
 
-                // components/block-requests-button.tsx (0.41+).
-                if viewer.offersBlocking(managesBlocklist: managesBlocklist) {
+                // components/block-requests-button.tsx (0.41+): Unblock (or
+                // the keyword that blocked it) stays in the row while the
+                // title is blocked — it's also the page's only sign of it.
+                if viewer.offersBlocking(managesBlocklist: managesBlocklist) && viewer.block != nil {
                     blockControl(viewer.block)
                 }
 
-                if let tracking = viewer.arrTracking {
-                    Button {
-                        screen.searchNow()
+                // components/title-more-menu.tsx: the tools nobody needs
+                // every visit.
+                if menuTracking != nil || menuBlock || viewer.canRelink {
+                    Menu {
+                        if let tracking = menuTracking {
+                            Button {
+                                screen.searchNow()
+                            } label: {
+                                Label(screen.isSearching ? String(localized: "Searching…") : String(localized: "Search now"), systemImage: "magnifyingglass")
+                            }
+                            .disabled(screen.isSearching)
+                            Button {
+                                screen.setMonitored(!tracking.monitored)
+                            } label: {
+                                Label(
+                                    tracking.monitored ? String(localized: "Stop monitoring") : String(localized: "Start monitoring"),
+                                    systemImage: tracking.monitored ? "eye.slash" : "eye"
+                                )
+                            }
+                            .disabled(screen.isTogglingMonitor)
+                        }
+                        if menuBlock {
+                            Button {
+                                askingBlockReason = true
+                            } label: {
+                                Label(String(localized: "Block requests"), systemImage: "hand.raised")
+                            }
+                        }
+                        if viewer.canRelink {
+                            Button(action: onRelink) {
+                                Label(String(localized: "Fix ID"), systemImage: "tag")
+                            }
+                        }
                     } label: {
-                        pillLabel("magnifyingglass", screen.isSearching ? String(localized: "Searching…") : String(localized: "Search now"), size: 13)
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(width: 32, height: 32)
+                            .contentShape(Circle())
                     }
-                    .buttonStyle(OutlineButtonStyle(pill: .large))
-                    .disabled(screen.isSearching)
-
-                    Button {
-                        screen.setMonitored(!tracking.monitored)
-                    } label: {
-                        pillLabel(
-                            tracking.monitored ? "eye.slash" : "eye",
-                            screen.isTogglingMonitor
-                                ? String(localized: "Updating…")
-                                : (tracking.monitored ? String(localized: "Stop monitoring") : String(localized: "Start monitoring")),
-                            size: 14
-                        )
-                    }
-                    .buttonStyle(OutlineButtonStyle(pill: .large))
-                    .disabled(screen.isTogglingMonitor)
-                }
-
-                if viewer.canRelink {
-                    Button(action: onRelink) {
-                        pillLabel("tag", String(localized: "Fix ID"), size: 13)
-                    }
-                    .buttonStyle(OutlineButtonStyle(pill: .large))
-                    .help("Wrong match? Point this title at the right id.")
+                    .menuStyle(.button)
+                    .menuIndicator(.hidden)
+                    .buttonStyle(MoreMenuButtonStyle())
+                    .fixedSize()
+                    .help(String(localized: "More actions"))
+                    .accessibilityLabel(String(localized: "More actions"))
                 }
 
                 if viewer.needsArrSetup {
@@ -677,6 +735,7 @@ private struct TitleActionRow: View {
                     }
                     .buttonStyle(QuietButtonStyle(color: Theme.accent))
                     .font(.system(size: 12.5))
+                    .frame(height: 32)
                 }
             }
 
@@ -820,6 +879,34 @@ private struct TitleActionRow: View {
         }
     }
 
+    /// "Advanced" as a chevron joined onto the Add / Request button (a
+    /// split button), or on its own after the 4K buttons.
+    private func advancedChevron(_ viewer: API.TitleViewerState, filled: Bool) -> some View {
+        let advanced = advancedToggleState(viewer)
+        return Button {
+            setAdvancedExpanded(!advanced.isExpanded, viewer)
+        } label: {
+            Image(systemName: "chevron.down")
+                .font(.system(size: 10, weight: .bold))
+                .rotationEffect(.degrees(advanced.isExpanded ? 180 : 0))
+                .frame(width: filled ? 28 : 32, height: 32)
+                .foregroundStyle(filled ? Theme.bg0 : Theme.accent)
+                .background {
+                    if filled {
+                        UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 16, topTrailingRadius: 16)
+                            .fill(Theme.accent)
+                    } else {
+                        Circle().strokeBorder(Theme.accent)
+                    }
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(screen.isAdding || screen.isFourKBusy)
+        .help("Pick the server, quality profile, root folder and tags it's added with.")
+        .accessibilityLabel(String(localized: "Advanced options"))
+    }
+
     private func pillLabel(_ symbol: String, _ title: String, size: CGFloat) -> some View {
         HStack(spacing: PillSize.large.iconGap) {
             Image(systemName: symbol)
@@ -827,6 +914,29 @@ private struct TitleActionRow: View {
                 .foregroundStyle(Theme.textSecondary)
             Text(title)
         }
+    }
+}
+
+/// The action row's "…" (components/title-more-menu.tsx): a 32pt outlined
+/// circle like the pills beside it.
+private struct MoreMenuButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        MoreMenuButtonBody(configuration: configuration)
+    }
+}
+
+private struct MoreMenuButtonBody: View {
+    let configuration: ButtonStyleConfiguration
+    @State private var hovering = false
+
+    var body: some View {
+        let active = hovering || configuration.isPressed
+        configuration.label
+            .foregroundStyle(active ? Theme.accent : Theme.textPrimary)
+            .background(Circle().fill(configuration.isPressed ? Theme.bg2 : Theme.bg0.opacity(0.4)))
+            .overlay(Circle().strokeBorder(active ? Theme.accent : Theme.borderStrong, lineWidth: 1))
+            .contentShape(Circle())
+            .onHover { hovering = $0 }
     }
 }
 
@@ -1242,7 +1352,7 @@ private struct PlayOnServerButton: View {
     var body: some View {
         if links.count == 1, let link = links.first {
             Button { open(link) } label: { label(link.label) }
-                .buttonStyle(AccentButtonStyle())
+                .buttonStyle(AccentButtonStyle(height: 32))
         } else if links.count > 1 {
             Menu {
                 ForEach(links) { link in
@@ -1252,7 +1362,7 @@ private struct PlayOnServerButton: View {
                 label(String(localized: "Play"))
             }
             .menuStyle(.button)
-            .buttonStyle(AccentButtonStyle())
+            .buttonStyle(AccentButtonStyle(height: 32))
             .fixedSize()
         }
     }

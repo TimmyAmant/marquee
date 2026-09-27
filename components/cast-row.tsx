@@ -66,7 +66,7 @@ export async function CastRow({
   const t = await getT();
 
   return (
-    <Shelf title={t("discover.cast")} gap="tile" flushRight>
+    <Shelf title={t("discover.cast")} gap="tile">
       {topBilled.map((member) => (
         <CastCard
           key={member.id}

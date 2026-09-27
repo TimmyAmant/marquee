@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { blockTitleAction, unblockTitleAction } from "@/lib/requests/blocklist-actions";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { MENU_ITEM, PILL_NOTE, PILL_OUTLINE } from "@/components/pill-styles";
 
 /** The admin's "Block requests" / "Unblock requests" on a title page
  * (lib/requests/blocklist.ts). A title blocked by a keyword can only be
@@ -13,10 +14,13 @@ export function BlockRequestsButton({
   mediaType,
   tmdbId,
   blocked,
+  variant = "pill",
 }: {
   mediaType: MediaType;
   tmdbId: number;
   blocked: { reason: string | null; keyword: string | null } | null;
+  /** A row of the title page's "…" menu instead of a pill. */
+  variant?: "pill" | "menu";
 }) {
   const t = useT();
   const router = useRouter();
@@ -38,12 +42,13 @@ export function BlockRequestsButton({
     }
   }
 
-  const pill =
-    "flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-secondary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60";
+  const menu = variant === "menu";
+  const outline = `${PILL_OUTLINE} hover:border-red-400 hover:text-red-400`;
+  const pill = menu ? `${MENU_ITEM} hover:text-red-400` : outline;
 
   if (blocked?.keyword) {
     return (
-      <span className="flex h-8 items-center rounded-full border border-border px-3.5 text-[13px] text-text-muted">
+      <span className={menu ? "px-3 py-1.5 text-[13px] text-text-muted" : `${PILL_NOTE} text-text-muted`}>
         {t("title.blockedByKeyword", { keyword: blocked.keyword })}
       </span>
     );
@@ -63,7 +68,7 @@ export function BlockRequestsButton({
     );
   }
   return (
-    <span className="flex basis-full flex-wrap items-center gap-2">
+    <span className={menu ? "flex flex-col gap-2 px-3 py-2" : "flex basis-full flex-wrap items-center gap-2"}>
       <input
         value={reason}
         maxLength={200}
@@ -71,12 +76,14 @@ export function BlockRequestsButton({
         placeholder={t("title.blockReasonPlaceholder")}
         className="h-8 min-w-0 flex-1 rounded-full border border-border bg-bg-0 px-3.5 text-[13px] text-text-primary outline-none focus:border-accent"
       />
-      <button type="button" disabled={busy} onClick={() => run(() => blockTitleAction(mediaType, tmdbId, reason))} className={pill}>
-        {busy ? t("title.blocking") : t("title.block")}
-      </button>
-      <button type="button" onClick={() => setAsking(false)} className="text-xs text-text-secondary hover:text-accent">
-        {t("common.cancel")}
-      </button>
+      <span className="flex items-center gap-2">
+        <button type="button" disabled={busy} onClick={() => run(() => blockTitleAction(mediaType, tmdbId, reason))} className={outline}>
+          {busy ? t("title.blocking") : t("title.block")}
+        </button>
+        <button type="button" onClick={() => setAsking(false)} className="text-xs text-text-secondary hover:text-accent">
+          {t("common.cancel")}
+        </button>
+      </span>
       {error && <span className="basis-full text-xs text-red-400">{error}</span>}
     </span>
   );

@@ -6,7 +6,8 @@ import { requestFourKAction } from "@/lib/requests/actions";
 import { addToFourK } from "@/app/title/[type]/[id]/actions";
 import type { MediaType } from "@/lib/db/schema";
 import type { AddOverrides } from "@/lib/arr/add-options";
-import { AddAdvancedOptions } from "@/components/add-advanced-options";
+import { AddAdvancedPanel, AdvancedSplitToggle, useAddAdvancedOptions } from "@/components/add-advanced-options";
+import { PILL } from "@/components/pill-styles";
 import type { FourKViewerState } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
@@ -62,49 +63,55 @@ export function FourKControls({
   }
 
   const requested = requestedNow || fourK.requestStatus === "pending";
+  const showRequest = !requested && fourK.canRequest;
+  const showAdd = !addedNow && fourK.canAdd;
+  const requestAdvanced = useAddAdvancedOptions({ mediaType, tmdbId, is4k: true, onChange: setOverrides });
+  const addAdvanced = useAddAdvancedOptions({ mediaType, tmdbId, is4k: true, onChange: setOverrides });
+  const button = `${PILL} border border-accent px-4 font-semibold text-accent hover:bg-accent hover:text-bg-0`;
+
+  // Items of the title page's action row, like Add / Request: "Advanced" is
+  // a chevron on the button and its panel goes to the end of the row.
   return (
     <>
-      {label && (
-        <span className="flex h-8 items-center rounded-full border border-accent/40 px-3.5 text-[13px] font-medium text-accent">
-          {label}
+      {label && <span className={`${PILL} border border-accent/40 font-medium text-accent`}>{label}</span>}
+      {requested && <span className={`${PILL} bg-info-bg font-medium text-info`}>{t("title.fourKRequested")}</span>}
+      {showRequest && (
+        <span className="inline-flex shrink-0 items-center">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => run(() => requestFourKAction(mediaType, tmdbId, overrides ?? undefined), () => setRequestedNow(true))}
+            className={`${button} ${advanced ? "rounded-r-none pr-3" : ""}`}
+          >
+            {busy ? t("title.requesting") : t("title.requestIn4k")}
+          </button>
+          {advanced && <AdvancedSplitToggle state={requestAdvanced} tone="outline" disabled={busy} />}
         </span>
       )}
-      {requested && (
-        <span className="flex h-8 items-center rounded-full bg-info-bg px-3.5 text-[13px] font-medium text-info">
-          {t("title.fourKRequested")}
+      {showAdd && (
+        <span className="inline-flex shrink-0 items-center">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => run(() => addToFourK(mediaType, tmdbId, overrides ?? undefined), () => setAddedNow(true))}
+            className={`${button} rounded-r-none pr-3`}
+          >
+            {busy ? t("title.adding") : t("title.addTo", { app: `4K ${arrName}` })}
+          </button>
+          <AdvancedSplitToggle state={addAdvanced} tone="outline" disabled={busy} />
         </span>
       )}
-      {!requested && fourK.canRequest && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => run(() => requestFourKAction(mediaType, tmdbId, overrides ?? undefined), () => setRequestedNow(true))}
-          className="flex h-8 items-center rounded-full border border-accent px-4 text-[13px] font-semibold text-accent transition-colors hover:bg-accent hover:text-bg-0 disabled:opacity-60"
-        >
-          {busy ? t("title.requesting") : t("title.requestIn4k")}
-        </button>
-      )}
-      {!addedNow && fourK.canAdd && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => run(() => addToFourK(mediaType, tmdbId, overrides ?? undefined), () => setAddedNow(true))}
-          className="flex h-8 items-center rounded-full border border-accent px-4 text-[13px] font-semibold text-accent transition-colors hover:bg-accent hover:text-bg-0 disabled:opacity-60"
-        >
-          {busy ? t("title.adding") : t("title.addTo", { app: `4K ${arrName}` })}
-        </button>
-      )}
-      {!requested && fourK.canRequest && advanced && (
-        <div className="basis-full">
-          <AddAdvancedOptions mediaType={mediaType} tmdbId={tmdbId} is4k onChange={setOverrides} disabled={busy} />
+      {showRequest && advanced && requestAdvanced.open && (
+        <div className="order-last basis-full">
+          <AddAdvancedPanel state={requestAdvanced} />
         </div>
       )}
-      {!addedNow && fourK.canAdd && (
-        <div className="basis-full">
-          <AddAdvancedOptions mediaType={mediaType} tmdbId={tmdbId} is4k onChange={setOverrides} disabled={busy} />
+      {showAdd && addAdvanced.open && (
+        <div className="order-last basis-full">
+          <AddAdvancedPanel state={addAdvanced} />
         </div>
       )}
-      {error && <span className="basis-full text-xs text-red-400">{error}</span>}
+      {error && <span className="order-last basis-full text-xs text-red-400">{error}</span>}
     </>
   );
 }

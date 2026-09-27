@@ -253,5 +253,7 @@
   "advancedSection": "Erweitert",
   "seasonNotRequested": "Nicht angefragt",
   "seasonAvailable": "Verfügbar",
-  "seasonUnavailable": "Nicht verfügbar"
+  "seasonUnavailable": "Nicht verfügbar",
+  "moreActions": "Weitere Aktionen",
+  "advancedOptions": "Erweiterte Optionen"
 }

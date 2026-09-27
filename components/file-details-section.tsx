@@ -88,7 +88,7 @@ export function FileDetailsSection({
   ].filter((cell): cell is { label: MessageKey; value: string } => cell.value !== "");
 
   return (
-    <div className="rounded-2xl border border-border bg-bg-1 px-[18px] pb-[18px] pt-[15px]">
+    <div className="rounded-2xl border border-border bg-bg-1/95 px-[18px] pb-[18px] pt-[15px] backdrop-blur-[20px]">
       <h2 className="mb-3 font-display text-[16px] font-semibold leading-[22px] text-text-primary">
         {t("title.fileDetails")}
       </h2>

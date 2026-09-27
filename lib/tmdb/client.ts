@@ -2,6 +2,10 @@ import "server-only";
 import { getStoredDiscoverLocale, getTmdbAccessToken } from "@/lib/integrations/app-settings";
 import { resolveDiscoverLocale, type DiscoverLocale } from "@/lib/discover/locale";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
+import { trimTitleImages, type TmdbTitleImages } from "@/lib/tmdb/logo";
+
+/** Logos (lib/tmdb/logo.ts) in English or with no text at all. */
+const TITLE_IMAGE_LANGUAGES = "en,null";
 
 export { TmdbError, TmdbNotConfiguredError };
 
@@ -439,12 +443,15 @@ export interface TmdbMovieDetails {
   keywords?: { keywords: TmdbKeywordRef[] };
   "watch/providers"?: TmdbWatchProviders;
   release_dates?: TmdbReleaseDates;
+  /** Trimmed to the one logo the title page shows (lib/tmdb/logo.ts). */
+  images?: TmdbTitleImages;
 }
 
 export function getMovieDetails(id: number) {
   return tmdbFetch<TmdbMovieDetails>(`/movie/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,release_dates",
-  });
+    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,release_dates,images",
+    include_image_language: TITLE_IMAGE_LANGUAGES,
+  }).then(trimTitleImages);
 }
 
 export interface TmdbCollectionRef {
@@ -504,12 +511,15 @@ export interface TmdbTvDetails {
   origin_country?: string[];
   keywords?: { results: TmdbKeywordRef[] };
   "watch/providers"?: TmdbWatchProviders;
+  /** Trimmed to the one logo the title page shows (lib/tmdb/logo.ts). */
+  images?: TmdbTitleImages;
 }
 
 export function getTvDetails(id: number) {
   return tmdbFetch<TmdbTvDetails>(`/tv/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers",
-  });
+    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,images",
+    include_image_language: TITLE_IMAGE_LANGUAGES,
+  }).then(trimTitleImages);
 }
 
 export function findTrailer(videos: { results: TmdbVideo[] } | undefined): TmdbVideo | null {

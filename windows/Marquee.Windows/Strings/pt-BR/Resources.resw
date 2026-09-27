@@ -4270,9 +4270,6 @@
   <data name="Title_AddToFourK" xml:space="preserve">
     <value>Adicionar ao {0} 4K</value>
   </data>
-  <data name="Title_Advanced.Header" xml:space="preserve">
-    <value>Avançado</value>
-  </data>
   <data name="Title_AdvancedFourK.Header" xml:space="preserve">
     <value>Avançado (4K)</value>
   </data>
@@ -4294,13 +4291,19 @@
   <data name="Title_AdvancedTags.Text" xml:space="preserve">
     <value>Tags</value>
   </data>
+  <data name="Title_AdvancedToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Opções avançadas</value>
+  </data>
+  <data name="Title_AdvancedToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Opções avançadas</value>
+  </data>
   <data name="Title_BlockedByKeyword.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Remova a palavra-chave em Configurações › Lista de bloqueio de pedidos para permitir pedidos de novo.</value>
   </data>
   <data name="Title_BlockRequests.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Ninguém poderá pedir este título; você ainda pode adicioná-lo.</value>
   </data>
-  <data name="Title_BlockRequests.Content" xml:space="preserve">
+  <data name="Title_BlockRequests.Text" xml:space="preserve">
     <value>Bloquear pedidos</value>
   </data>
   <data name="Title_Cancel" xml:space="preserve">
@@ -4399,7 +4402,7 @@
   <data name="Title_FixId.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Correspondência errada? Aponte este título para o ID certo.</value>
   </data>
-  <data name="Title_FixId.Content" xml:space="preserve">
+  <data name="Title_FixId.Text" xml:space="preserve">
     <value>Corrigir ID</value>
   </data>
   <data name="Title_FixIdFailed" xml:space="preserve">
@@ -4422,6 +4425,12 @@
   </data>
   <data name="Title_Missing" xml:space="preserve">
     <value>Faltando</value>
+  </data>
+  <data name="Title_MoreActions.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mais ações</value>
+  </data>
+  <data name="Title_MoreActions.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mais ações</value>
   </data>
   <data name="Title_MoreLikeThis.Text" xml:space="preserve">
     <value>Mais como este</value>

@@ -19,7 +19,7 @@ export async function PersonHeader({
   profilePath: string | null;
   favoriteAction?: React.ReactNode;
 }) {
-  const src = tmdbImageUrl(profilePath, "w342");
+  const src = tmdbImageUrl(profilePath, "w500");
   const t = await getT();
 
   return (
