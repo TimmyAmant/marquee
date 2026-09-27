@@ -253,7 +253,10 @@ export async function TitleHero({
               background: [
                 "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 65%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 20%, transparent) 12%, transparent 24%)",
                 "linear-gradient(to bottom, transparent 38%, color-mix(in srgb, var(--marquee-bg-0) 45%, transparent) 62%, color-mix(in srgb, var(--marquee-bg-0) 85%, transparent) 82%, var(--marquee-bg-0) 100%)",
-                "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 80%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 45%, transparent) 32%, transparent 64%)",
+                // Strong enough across the whole text column (it reaches
+                // ~70% of a laptop's width) that a bright frame never sits
+                // behind the overview, then gone well before the right edge.
+                "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 90%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 78%, transparent) 28%, color-mix(in srgb, var(--marquee-bg-0) 52%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 16%, transparent) 72%, transparent 88%)",
               ].join(", "),
             }}
           />
@@ -265,22 +268,22 @@ export async function TitleHero({
           the facts card ends where the rows do. Three columns from 1280px:
           poster | the title and everything about it | facts. */}
       <div className="px-6 xl:pl-12 xl:pr-10">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] min-[1800px]:grid-cols-[264px_minmax(0,1fr)_340px] min-[1800px]:gap-x-12">
-          <div className="relative h-[240px] w-[160px] overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px] min-[1800px]:h-[396px] min-[1800px]:w-[264px]">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] min-[1800px]:grid-cols-[264px_minmax(0,1fr)_340px] min-[1800px]:gap-x-12 min-[2400px]:grid-cols-[300px_minmax(0,1fr)_380px] min-[2400px]:gap-x-16">
+          <div className="relative h-[240px] w-[160px] overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px] min-[1800px]:h-[396px] min-[1800px]:w-[264px] min-[2400px]:h-[450px] min-[2400px]:w-[300px]">
             {poster && (
               <MediaImage
                 src={poster}
                 alt={name}
                 fill
                 loading="eager"
-                sizes="(min-width: 1800px) 264px, (min-width: 640px) 224px, 160px"
+                sizes="(min-width: 2400px) 300px, (min-width: 1800px) 264px, (min-width: 640px) 224px, 160px"
                 className="object-cover"
               />
             )}
           </div>
 
           <div className="min-w-0">
-            <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px] min-[1800px]:text-[56px] min-[1800px]:leading-[62px]">
+            <h1 className="font-display text-[34px] font-bold leading-[40px] tracking-[-0.015em] text-text-primary [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] sm:text-[48px] sm:leading-[54px] min-[1800px]:text-[56px] min-[1800px]:leading-[62px] min-[2400px]:text-[64px] min-[2400px]:leading-[70px]">
               {logoSrc && logo ? (
                 <>
                   {/* The logo in the dark theme; its name for screen readers
@@ -394,7 +397,7 @@ export async function TitleHero({
 
             {/* Text stays at a readable measure however wide the column gets;
                 the artwork shows through beside it. */}
-            <div className="max-w-[860px]">
+            <div className="max-w-[860px] min-[2400px]:max-w-[980px]">
               {tagline && <p className="mt-[26px] text-[14px] italic text-text-secondary">{tagline}</p>}
 
               {overview && (
