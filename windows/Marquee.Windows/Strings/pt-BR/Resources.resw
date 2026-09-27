@@ -4705,4 +4705,16 @@
   <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
     <value>Ver todas as mudanças</value>
   </data>
+  <data name="Integrations_SeerrHeading.Text" xml:space="preserve">
+    <value>Vindo do Seerr?</value>
+  </data>
+  <data name="Integrations_SeerrTitle.Text" xml:space="preserve">
+    <value>Importar do Seerr</value>
+  </data>
+  <data name="Integrations_SeerrBlurb.Text" xml:space="preserve">
+    <value>Está saindo do Seerr, Overseerr ou Jellyseerr? Traga as contas, pedidos, relatos de problema e a lista de bloqueio da sua casa pela API dele. Nada é enviado ao Sonarr ou ao Radarr, e rodar de novo só traz o que for novo. O importador roda no site.</value>
+  </data>
+  <data name="Integrations_SeerrOpen.Content" xml:space="preserve">
+    <value>Abrir o importador no navegador</value>
+  </data>
 </root>

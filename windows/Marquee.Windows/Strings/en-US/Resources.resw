@@ -4893,4 +4893,16 @@
   <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
     <value>See all changes</value>
   </data>
+  <data name="Integrations_SeerrHeading.Text" xml:space="preserve">
+    <value>Coming from Seerr?</value>
+  </data>
+  <data name="Integrations_SeerrTitle.Text" xml:space="preserve">
+    <value>Import from Seerr</value>
+  </data>
+  <data name="Integrations_SeerrBlurb.Text" xml:space="preserve">
+    <value>Switching from Seerr, Overseerr or Jellyseerr? Bring your household's accounts, requests, problem reports and blocklist over from its API. Nothing is sent to Sonarr or Radarr, and running it again only picks up what's new. The importer runs on the website.</value>
+  </data>
+  <data name="Integrations_SeerrOpen.Content" xml:space="preserve">
+    <value>Open the importer in your browser</value>
+  </data>
 </root>

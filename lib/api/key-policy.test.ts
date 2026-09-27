@@ -49,6 +49,7 @@ describe("apiKeyDecision over every route file", () => {
         op.path.startsWith("/settings/sso") ||
         op.path.startsWith("/settings/sign-in") ||
         op.path.startsWith("/users/import") ||
+        op.path.startsWith("/settings/import") ||
         (op.path.startsWith("/settings/") && op.method !== "GET") ||
         (op.path.startsWith("/users") && op.method !== "GET") ||
         (op.path.startsWith("/me/notification-channels") && op.method !== "GET"),

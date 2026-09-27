@@ -4705,4 +4705,16 @@
   <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
     <value>Alle Änderungen ansehen</value>
   </data>
+  <data name="Integrations_SeerrHeading.Text" xml:space="preserve">
+    <value>Du kommst von Seerr?</value>
+  </data>
+  <data name="Integrations_SeerrTitle.Text" xml:space="preserve">
+    <value>Aus Seerr importieren</value>
+  </data>
+  <data name="Integrations_SeerrBlurb.Text" xml:space="preserve">
+    <value>Du wechselst von Seerr, Overseerr oder Jellyseerr? Hol die Konten, Anfragen, Problemmeldungen und die Sperrliste deines Haushalts über dessen API herüber. An Sonarr oder Radarr wird nichts gesendet, und ein erneuter Lauf holt nur, was neu ist. Der Importer läuft auf der Website.</value>
+  </data>
+  <data name="Integrations_SeerrOpen.Content" xml:space="preserve">
+    <value>Importer im Browser öffnen</value>
+  </data>
 </root>
