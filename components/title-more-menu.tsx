@@ -54,7 +54,7 @@ export function TitleMoreMenu({ children }: { children: React.ReactNode }) {
         aria-expanded={open}
         aria-label={t("title.moreActions")}
         title={t("title.moreActions")}
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-bg-0/40 backdrop-blur-md transition-colors ${
           open
             ? "border-accent text-accent"
             : "border-border-strong text-text-primary hover:border-accent hover:text-accent"
