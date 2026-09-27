@@ -13,6 +13,7 @@ import { seasonsNewestFirst } from "@/lib/title-meta";
 import { seasonPickerState } from "@/lib/requests/seasons";
 import { seasonsLabel } from "@/lib/requests/labels";
 import { getT } from "@/lib/i18n/server";
+import { pickTitleLogo } from "@/lib/tmdb/logo";
 
 /** The 4K row, with no "Request in 4K" while the title is blocked. */
 function fourKFor(
@@ -86,6 +87,7 @@ export default async function TitlePage({
     titleSidebar,
   } = data;
   const mayRequest = { movie: permissions.requestMovies, tv: permissions.requestTv };
+  const titleLogo = pickTitleLogo(raw?.images);
 
   return (
     <div>
@@ -177,12 +179,14 @@ export default async function TitlePage({
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
         playLinks={viewer.session ? data.playLinks : []}
-        cast={
-          <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
-        }
+        logo={titleLogo ? { path: titleLogo.file_path, aspectRatio: titleLogo.aspect_ratio } : null}
       />
 
-      <div className="flex flex-col gap-12 px-6 pb-20 pt-10 xl:pl-12 xl:pr-10">
+      {/* Every row under the hero spans the same width, between the same
+          gutters as the hero's poster and facts card. */}
+      <div className="flex flex-col gap-12 px-6 pb-20 pt-12 xl:pl-12 xl:pr-10">
+        <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
+
         {seasons.length > 0 && (
           <section>
             <h2 className="mb-3 font-display text-[20px] font-semibold leading-none tracking-[-0.005em] text-text-primary">

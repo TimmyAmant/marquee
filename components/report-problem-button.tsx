@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { reportIssueAction } from "@/lib/issues/actions";
 import { issueKindLabel } from "@/lib/issues/labels";
 import { useT } from "@/lib/i18n/client";
+import { PILL_NOTE, PILL_OUTLINE } from "@/components/pill-styles";
 import {
   issueKindValues,
   type IssueKind,
@@ -65,7 +66,7 @@ export function ReportProblemButton({
   return (
     <>
       {reported && (
-        <span className="flex h-8 items-center rounded-full border border-border px-3.5 text-[13px] text-text-secondary">
+        <span className={PILL_NOTE}>
           {t("title.problemReported")}
         </span>
       )}
@@ -75,7 +76,7 @@ export function ReportProblemButton({
           setError(null);
           dialogRef.current?.showModal();
         }}
-        className="flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-secondary transition-colors hover:border-accent hover:text-accent"
+        className={PILL_OUTLINE}
       >
         {reported ? t("title.reportAnother") : t("title.reportProblem")}
       </button>

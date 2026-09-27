@@ -7,11 +7,11 @@ import { MAX_SHARE_NOTE, marqueeUrl, outsideShareTargets } from "@/lib/sharing/p
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
 import { rich } from "@/lib/i18n/rich";
+import { PILL_OUTLINE } from "@/components/pill-styles";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent";
-const pillClass =
-  "flex h-8 items-center rounded-full border border-border-strong px-3.5 text-[13px] text-text-secondary transition-colors hover:border-accent hover:text-accent";
+const pillClass = PILL_OUTLINE;
 
 type LinkChoice = "marquee" | "tmdb" | "imdb";
 
@@ -154,7 +154,7 @@ export function ShareButton({
   return (
     <>
       <button type="button" onClick={open} className={pillClass}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden className="mr-1.5 h-3.5 w-3.5">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden className="h-3.5 w-3.5">
           <path d="M12 3v12M7 8l5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

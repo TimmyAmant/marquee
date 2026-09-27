@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // 75 is next/image's default; 85 is the title page's full-bleed backdrop
+    // (components/title-hero.tsx), where 75 bands the long fades and shows
+    // blocks in dark skies at 2560px.
+    qualities: [75, 85],
     remotePatterns: [
       {
         protocol: "https",

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { PlayLink } from "@/lib/media-servers/play-links";
 import { useT } from "@/lib/i18n/client";
+import { PILL as PILL_BASE } from "@/components/pill-styles";
 
-const PILL =
-  "inline-flex h-8 items-center gap-1.5 rounded-full bg-text-primary px-3.5 text-xs font-semibold text-bg-0 transition-colors hover:bg-text-primary/85";
+const PILL = `${PILL_BASE} bg-text-primary px-4 font-semibold text-bg-0 hover:bg-text-primary/85`;
 
 function PlayIcon() {
   return (
