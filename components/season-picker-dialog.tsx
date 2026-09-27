@@ -30,7 +30,11 @@ function Switch({ checked, disabled, onChange, label }: { checked: boolean; disa
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
-      onClick={onChange}
+      // The row toggles on a click too; this click is the switch's alone.
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange();
+      }}
       className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-40 ${checked ? "bg-accent" : "bg-text-primary/20"}`}
     >
       <span
