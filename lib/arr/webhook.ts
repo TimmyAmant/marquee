@@ -5,7 +5,7 @@ import type { ArrProvider } from "@/lib/db/schema";
 import { syncArrLibrary } from "@/lib/arr/sync";
 import { debounce } from "@/lib/async/single-flight";
 import { createNotification } from "@/lib/notifications/query";
-import { notifyRequestersOfDownload } from "@/lib/requests/fulfilled";
+import { scheduleCompletionCheck } from "@/lib/requests/complete";
 import { clearNotFoundForTitle } from "@/lib/requests/not-found";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { getClientIp, isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
@@ -26,10 +26,9 @@ const WEBHOOK_RATE_WINDOW_MS = 60 * 1000;
  * per-episode events collapses into one library sync. */
 const SYNC_DEBOUNCE_MS = 5000;
 
-/** A season pack imports as one Download event per episode, often over
- * several minutes. Within this window a repeat event for the same title
- * and event type is the same news, so it doesn't notify (or post to
- * Discord/ntfy/the webhook/push) again. */
+/** A season pack is grabbed as one Grab event per episode. Within this
+ * window a repeat event for the same title is the same news, so it doesn't
+ * notify (or post to Discord/ntfy/the webhook/push) again. */
 const NOTIFICATION_DEDUPE_WINDOW_MS = 30 * 60 * 1000;
 
 export function secretsMatch(provided: string, expected: string): boolean {
@@ -72,8 +71,9 @@ type SonarrWebhookBody = {
   series?: { title?: string; tvdbId?: number };
 };
 
-/** After the secret checked out: notifies about a Grab or Download and
- * re-syncs the library. `ownerId` is the admin the server belongs to. */
+/** After the secret checked out: tells the admin about a Grab, checks
+ * whether a Download completed anyone's request, and re-syncs the library.
+ * `ownerId` is the admin the server belongs to. */
 export async function handleArrWebhookEvent(
   request: Request,
   target: { ownerId: string; kind: ArrProvider; fourK: boolean },
@@ -114,33 +114,33 @@ export async function handleArrWebhookEvent(
   }
 
   if (title && tmdbId != null) {
-    const name = title;
-    // In the account's language, and the household's for its channels.
-    const message = (t: Translator) => {
-      const shown = fourK ? t("notify.requestIn4k", { request: name }) : name;
-      return t(eventType === "Grab" ? "notify.startedDownloading" : "notify.finishedDownloading", { title: shown });
-    };
-    await createNotification({
-      userId,
-      mediaType,
-      tmdbId,
-      title,
-      eventType: eventType === "Grab" ? "grabbed" : "downloaded",
-      message,
-      dedupeSince: new Date(Date.now() - NOTIFICATION_DEDUPE_WINDOW_MS),
-      is4k: fourK,
-    }).catch(() => undefined);
+    if (eventType === "Grab") {
+      const name = title;
+      // In the account's language, and the household's for its channels.
+      const message = (t: Translator) =>
+        t("notify.startedDownloading", { title: fourK ? t("notify.requestIn4k", { request: name }) : name });
+      await createNotification({
+        userId,
+        mediaType,
+        tmdbId,
+        title,
+        eventType: "grabbed",
+        message,
+        dedupeSince: new Date(Date.now() - NOTIFICATION_DEDUPE_WINDOW_MS),
+        is4k: fourK,
+      }).catch(() => undefined);
+    } else {
+      // A file arrived. Nobody is told about the file itself: once the
+      // title's requests have everything they asked for, each requester is
+      // told it's ready to watch (lib/requests/complete.ts) — judged when
+      // the burst of per-episode events goes quiet.
+      scheduleCompletionCheck({ mediaType, tmdbId, is4k: fourK });
+    }
 
     // Something was found: it's not "Can't find" any more.
     await clearNotFoundForTitle(mediaType, tmdbId, fourK).catch((err) => {
       console.error("[webhook] clearing Can't find failed:", err);
     });
-
-    if (eventType === "Download") {
-      await notifyRequestersOfDownload({ mediaType, tmdbId, title, exceptUserId: userId, fourK }).catch((err) => {
-        console.error("[webhook] notifying requesters failed:", err);
-      });
-    }
   }
 
   // The queue/status is real-time in Sonarr/Radarr but Marquee's cache only

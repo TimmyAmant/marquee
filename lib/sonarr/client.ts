@@ -210,6 +210,8 @@ export interface SonarrEpisode {
   episodeNumber: number;
   hasFile: boolean;
   monitored: boolean;
+  /** When it first aired (UTC); missing for one with no date yet. */
+  airDateUtc?: string;
 }
 
 export function getEpisodesBySeriesId(
@@ -221,6 +223,13 @@ export function getEpisodesBySeriesId(
     config,
     `/episode?seriesId=${seriesId}&seasonNumber=${seasonNumber}`,
   );
+}
+
+/** Every episode of a series, all seasons, specials included — one call
+ * however many seasons it has. A long-running show's list is big, so this
+ * gets the library timeout rather than a page's. */
+export function getAllEpisodes(config: ArrConfig, seriesId: number): Promise<SonarrEpisode[]> {
+  return sonarrFetch<SonarrEpisode[]>(config, `/episode?seriesId=${seriesId}`, { timeoutMs: LIBRARY_TIMEOUT_MS });
 }
 
 /** IDs of series with an active entry in Sonarr's download queue right now

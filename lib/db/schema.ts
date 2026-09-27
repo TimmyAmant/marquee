@@ -654,6 +654,17 @@ export const requests = pgTable(
     // When the requester (or a reviewer) last changed its seasons or 4K
     // while it was pending; null if never.
     editedAt: timestamp("edited_at", { withTimezone: true }),
+    // "Ready to watch" (lib/requests/complete.ts): when the requester was
+    // told everything they asked for is in — the movie's file, or every
+    // aired episode of the seasons asked for. Set once, by whichever check
+    // gets there first (the Download webhook or the hourly sync), so it's
+    // never sent twice. Cleared when a pending request's seasons change.
+    notifiedCompleteAt: timestamp("notified_complete_at", { withTimezone: true }),
+    // False for a request that existed before these notices did (0057): the
+    // first check that sees it complete marks it told without telling
+    // anyone (it may have been in the library for years); seeing it
+    // incomplete first arms it, so its completion is announced as usual.
+    completeNoticeArmed: boolean("complete_notice_armed").notNull().default(true),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),

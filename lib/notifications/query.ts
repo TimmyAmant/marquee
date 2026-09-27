@@ -89,6 +89,9 @@ export async function createNotification(input: {
    * already told about) passes false to avoid posting it twice. The
    * account's own channels are separate and follow its own choices. */
   relay?: boolean;
+  /** What the household channels post, when the recipient's own words
+   * don't suit a shared channel ("…, which you requested, …"). */
+  householdMessage?: Localized;
   /** Skip it (and return false) if this user already has a notification for
    * the same title and event since this moment. Sonarr sends one webhook per
    * episode, so a season pack would otherwise notify (and relay) once per
@@ -108,7 +111,7 @@ export async function createNotification(input: {
   senderUserId?: string;
   note?: string | null;
 }): Promise<boolean> {
-  const { relay = true, dedupeSince, topic, title, message, ...rest } = input;
+  const { relay = true, dedupeSince, topic, title, message, householdMessage, ...rest } = input;
   const event = topic ?? preferenceEventFor(input.eventType);
   // Not being able to read the language mustn't lose it either: English.
   const t = await translatorForUser(input.userId).catch(() => englishT());
@@ -133,7 +136,8 @@ export async function createNotification(input: {
 
   // The household channels read the household's language, which can
   // differ from this account's.
-  const fixed = typeof title === "string" && typeof message === "string";
+  const shared = householdMessage ?? message;
+  const fixed = typeof title === "string" && typeof message === "string" && typeof shared === "string";
   const household = relay && !fixed ? await householdT().catch(() => englishT()) : null;
 
   // Household and personal channels, in the background: the notification
@@ -145,7 +149,11 @@ export async function createNotification(input: {
       event,
       title: saved.title,
       message: saved.message,
-      ...(household ? { householdTitle: localize(title, household), householdMessage: localize(message, household) } : {}),
+      ...(household
+        ? { householdTitle: localize(title, household), householdMessage: localize(shared, household) }
+        : typeof shared === "string" && shared !== message
+          ? { householdMessage: shared }
+          : {}),
       mediaType: saved.mediaType,
       tmdbId: saved.tmdbId,
     },

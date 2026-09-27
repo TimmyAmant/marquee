@@ -16,18 +16,34 @@ export async function register() {
   const { syncAllPlexWatchlists } = await import("@/lib/plex/watchlist");
   const { checkNotFoundRequests } = await import("@/lib/requests/not-found");
   const { syncAllTraktSyncs } = await import("@/lib/trakt/sync");
+  const { checkCompletedRequests } = await import("@/lib/requests/complete");
+
+  const checkComplete = (when: string) =>
+    checkCompletedRequests().catch((err) => {
+      console.error(`[complete-check] ${when} check failed:`, err);
+    });
 
   cron.schedule("0 * * * *", () => {
-    syncAllConnectedPlexUsers().catch((err) => {
-      console.error("[plex-sync] scheduled sync failed:", err);
-    });
-    syncAllConnectedJellyfinUsers().catch((err) => {
-      console.error("[jellyfin-sync] scheduled sync failed:", err);
-    });
-    syncAllConnectedArrUsers().catch((err) => {
-      console.error("[arr-sync] scheduled sync failed:", err);
-    });
+    const syncs = [
+      syncAllConnectedPlexUsers().catch((err) => {
+        console.error("[plex-sync] scheduled sync failed:", err);
+      }),
+      syncAllConnectedJellyfinUsers().catch((err) => {
+        console.error("[jellyfin-sync] scheduled sync failed:", err);
+      }),
+      syncAllConnectedArrUsers().catch((err) => {
+        console.error("[arr-sync] scheduled sync failed:", err);
+      }),
+    ];
+    // "Ready to watch" (lib/requests/complete.ts), once the libraries are
+    // fresh: catches whatever a missed or unconfigured webhook didn't.
+    void Promise.all(syncs).then(() => checkComplete("scheduled"));
   });
+
+  // Once shortly after starting, so the requests that were already in the
+  // library before these notices existed are recorded as told (without
+  // telling anyone) before a webhook can come along and announce them.
+  setTimeout(() => void checkComplete("startup"), 30_000).unref?.();
 
   // Often enough that adding something to a Plex Watchlist feels like
   // requesting it; an unchanged watchlist costs one 304 from plex.tv.

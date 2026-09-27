@@ -2625,7 +2625,14 @@ admin, "Withdraw" for the member's own. Fixed ones sit behind "Show fixed (N)".
 
 ## 8. Notifications
 
-`eventType`: `grabbed` (⬇️ started downloading), `downloaded` (✅ finished),
+`eventType`: `grabbed` (⬇️ started downloading, to the admin), `downloaded` (✅
+ready to watch: sent once to each person who requested the title, when
+everything the request asked for is in — the movie's file, or every aired
+episode of the seasons asked for; "Dune, which you requested, is ready to
+watch" / "Severance (Season 2), which you requested: all aired episodes are
+ready to watch". Not sent per file, and not to the admin unless they asked
+for it. Older servers sent the admin "… finished downloading" per file and
+the requester a first-episode notice under this type instead),
 `request_approved` (👍), `request_rejected` (👎), and from 0.38
 `issue_reported` (⚠️, to the admin) and `issue_resolved` (🛠️, to the
 reporter), and from 0.40 `request_created` (🙋, "Anna requested “Dune”

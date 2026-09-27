@@ -791,7 +791,8 @@ export async function editRequest(
 
   const updated = await db
     .update(requests)
-    .set({ is4k, seasons, editedAt: new Date() })
+    // Asking for something else: "ready to watch" is judged afresh.
+    .set({ is4k, seasons, editedAt: new Date(), notifiedCompleteAt: null })
     .where(and(eq(requests.id, requestId), eq(requests.status, "pending")))
     .returning()
     .catch((err) => {

@@ -400,6 +400,13 @@
       "when": 1790532568570,
       "tag": "0056_add_ratings_regions_play_links",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1790550439133,
+      "tag": "0057_add_request_complete_notice",
+      "breakpoints": true
     }
   ]
 }
