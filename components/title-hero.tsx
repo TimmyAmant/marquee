@@ -428,14 +428,15 @@ export async function TitleHero({
                 </div>
               )}
 
-              {/* A single row that never wraps — the overflow is clipped
-                  rather than stacked into more rows. */}
+              {/* Wrapped rather than clipped, so none is cut off at the
+                  column's edge; the first dozen (TMDb lists the most
+                  telling first) keep it to two or three lines. */}
               {keywords.length > 0 && (
-                <div className="mt-[18px] flex gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)]">
-                  {keywords.map((keyword) => (
+                <div className="mt-[18px] flex flex-wrap gap-1.5">
+                  {keywords.slice(0, 12).map((keyword) => (
                     <span
                       key={keyword}
-                      className="inline-flex h-[22px] shrink-0 items-center whitespace-nowrap rounded-[11px] border border-border px-[9px] text-[11px] text-text-secondary"
+                      className="inline-flex h-[22px] items-center whitespace-nowrap rounded-[11px] border border-border bg-bg-0/30 px-[9px] text-[11px] text-text-secondary"
                     >
                       {keyword}
                     </span>
