@@ -8,6 +8,7 @@
   "countMovies": "{count, plural, one {Film} other {Filme}}",
   "countSeries": "{count, plural, one {Serie} other {Serien}}",
   "countEpisodes": "{count, plural, one {# Folge} other {# Folgen}}",
+  "episodesLabel": "{count, plural, one {Folge} other {Folgen}}",
   "onDisk": "auf der Festplatte",
   "trackedNote": "{count, plural, one {+ # weiterer Titel wird heruntergeladen, fehlt oder erscheint demnächst – oben nicht mitgezählt} other {+ # weitere Titel werden heruntergeladen, fehlen oder erscheinen demnächst – oben nicht mitgezählt}}",
   "connectAdmin": "Verbinde Plex, Jellyfin, Sonarr oder Radarr, um alles, was du schon hast, an einem Ort zu sehen.",

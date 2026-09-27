@@ -113,7 +113,7 @@ async function AllTab({
           <Count value={summary.movieCount} label={t("library.countMovies", { count: summary.movieCount })} />
           <Count value={summary.tvCount} label={t("library.countSeries", { count: summary.tvCount })} />
           {summary.episodeCount > 0 && (
-            <Count value={summary.episodeCount} label={t("library.countEpisodes", { count: summary.episodeCount })} />
+            <Count value={summary.episodeCount} label={t("library.episodesLabel", { count: summary.episodeCount })} />
           )}
           {summary.totalBytes > 0 && <Count value={formatBytes(t, summary.totalBytes)} label={t("library.onDisk")} />}
         </div>
