@@ -15,7 +15,7 @@ public sealed class LibraryTextTests
     [Fact]
     public void CountsLineAndTrackedNote()
     {
-        var summary = Fixtures.Decode<LibraryPage>("library-page").Summary;
+        var summary = Fixtures.Decode<LibraryResults>("library-page").Summary;
         Assert.Equal("640 movies · 172 series · 9840 episodes · 43.7 TB on disk", LibraryText.CountsLine(summary));
         Assert.Equal("+ 23 more downloading, missing or coming soon, not counted above", LibraryText.TrackedNote(summary));
 
@@ -28,7 +28,7 @@ public sealed class LibraryTextTests
     [Fact]
     public void RowMetaAndQualityLines()
     {
-        var page = Fixtures.Decode<LibraryPage>("library-page");
+        var page = Fixtures.Decode<LibraryResults>("library-page");
         var matrix = page.Results[0];
         var thrones = page.Results[1];
 

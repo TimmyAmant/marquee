@@ -14,11 +14,11 @@ public sealed class LibraryEndpoints(MarqueeApi.Transport transport)
 {
     /// <summary>
     /// <c>GET /library</c>: one page of the library, filtered and sorted.
-    /// Continue while <see cref="LibraryPage.HasMorePages"/>. The counts
+    /// Continue while <see cref="LibraryResults.HasMorePages"/>. The counts
     /// and filter choices describe the whole library, not the page.
     /// </summary>
-    public Task<LibraryPage> PageAsync(LibraryQuery? query = null, int page = 1, CancellationToken ct = default) =>
-        transport.GetAsync<LibraryPage>("/library", (query ?? LibraryQuery.Default).ToQuery(page), ct: ct);
+    public Task<LibraryResults> PageAsync(LibraryQuery? query = null, int page = 1, CancellationToken ct = default) =>
+        transport.GetAsync<LibraryResults>("/library", (query ?? LibraryQuery.Default).ToQuery(page), ct: ct);
 
     /// <summary>
     /// <c>GET /library/collections-missing</c>: every franchise the library

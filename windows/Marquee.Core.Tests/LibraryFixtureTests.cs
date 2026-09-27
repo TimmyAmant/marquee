@@ -11,7 +11,7 @@ public sealed class LibraryFixtureTests
     [Fact]
     public void LibraryPageDecodes()
     {
-        var page = Fixtures.Decode<LibraryPage>("library-page");
+        var page = Fixtures.Decode<LibraryResults>("library-page");
 
         Assert.Equal(1, page.Page);
         Assert.Equal(60, page.PageSize);
@@ -69,7 +69,7 @@ public sealed class LibraryFixtureTests
     [Fact]
     public void LastPageHasNoMore()
     {
-        var page = Json.Decode<LibraryPage>("""
+        var page = Json.Decode<LibraryResults>("""
             {"page":3,"pageSize":60,"totalPages":3,"totalResults":130,"results":[],
              "summary":{"movies":1,"series":0,"episodes":0,"totalBytes":0,"tracked":0},
              "filters":{"sources":[],"genres":[],"codecs":[],"years":[],"resolutions":[],"hasHdr":false},
@@ -136,7 +136,7 @@ public sealed class LibraryFixtureTests
     [Fact]
     public void UnknownWireValuesStillDecode()
     {
-        var page = Json.Decode<LibraryPage>("""
+        var page = Json.Decode<LibraryResults>("""
             {"page":1,"pageSize":60,"totalPages":1,"totalResults":1,
              "results":[{"mediaType":"movie","tmdbId":1,"name":"X","posterPath":null,"year":null,"subtitle":null,"overview":null,"rating":null,
                "status":"owned","favorited":false,"requested":null,"canQuickAdd":false,"canRequest":false,

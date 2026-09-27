@@ -214,7 +214,7 @@ public sealed record LibraryFilters
 }
 
 /// <summary><c>GET /library</c>: one page, the counts, the pickers' choices and whether anything is connected.</summary>
-public sealed record LibraryPage
+public sealed record LibraryResults
 {
     public required int Page { get; init; }
     public required int PageSize { get; init; }

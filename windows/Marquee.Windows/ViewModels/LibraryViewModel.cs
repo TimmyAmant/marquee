@@ -618,7 +618,7 @@ public sealed partial class LibraryViewModel : ObservableObject
         IsLoadingPage = true;
         try
         {
-            LibraryPage page;
+            LibraryResults page;
             try
             {
                 page = await model.Api.Library.PageAsync(requested, nextPage, token);
