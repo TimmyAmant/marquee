@@ -312,6 +312,12 @@ private struct ScrollsUnderNavRail: ViewModifier {
 /// Primary gold capsule button (bg-accent text-bg-0).
 struct AccentButtonStyle: ButtonStyle {
     var compact = false
+    /// A fixed height (the title page's 32pt action row) instead of the
+    /// padding-sized one.
+    var height: CGFloat? = nil
+    /// Which ends are rounded: a split button's main half squares off its
+    /// trailing end against the chevron.
+    var squaredTrailing = false
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
@@ -321,14 +327,26 @@ struct AccentButtonStyle: ButtonStyle {
             .font(.system(size: compact ? 11.5 : 12.5, weight: .semibold))
             .foregroundStyle(Theme.bg0)
             .padding(.horizontal, compact ? 10 : 16)
-            .padding(.vertical, compact ? 0 : 7)
-            .frame(height: compact ? 26 : nil)
+            .padding(.vertical, compact || height != nil ? 0 : 7)
+            .frame(height: compact ? 26 : height)
             .background(
-                Capsule().fill(configuration.isPressed ? Theme.accentHover : Theme.accent)
+                shape.fill(configuration.isPressed ? Theme.accentHover : Theme.accent)
             )
             .shadow(color: compact ? Theme.accent.opacity(0.25) : .clear, radius: 4, y: 2)
             .opacity(isEnabled ? 1 : 0.6)
-            .contentShape(Capsule())
+            .contentShape(shape)
+    }
+
+    private var shape: UnevenRoundedRectangle {
+        // Half the height: a capsule end (the padded size is about 29pt).
+        let radius = (height ?? (compact ? 26 : 29)) / 2
+        return UnevenRoundedRectangle(
+            topLeadingRadius: radius,
+            bottomLeadingRadius: radius,
+            bottomTrailingRadius: squaredTrailing ? 0 : radius,
+            topTrailingRadius: squaredTrailing ? 0 : radius,
+            style: .continuous
+        )
     }
 }
 
@@ -380,7 +398,9 @@ private struct OutlineButtonBody: View {
             .padding(.trailing, pill?.trailing ?? (compact ? 10 : 14))
             .padding(.vertical, pill == nil ? (compact ? 4 : 6) : 0)
             .frame(height: pill?.height)
-            .background(Capsule().fill(configuration.isPressed ? Theme.bg2 : Color.clear))
+            // The title page's 32pt pills sit on artwork: a faint bg0 fill
+            // keeps their edge and label readable over a bright frame.
+            .background(Capsule().fill(configuration.isPressed ? Theme.bg2 : (pill == .large ? Theme.bg0.opacity(0.4) : Color.clear)))
             .overlay(Capsule().strokeBorder(active ? (tint ?? Theme.accent) : Theme.borderStrong, lineWidth: 1))
             .opacity(isEnabled ? 1 : 0.6)
             .contentShape(Capsule())

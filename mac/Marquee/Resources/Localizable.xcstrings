@@ -5829,6 +5829,34 @@
         }
       }
     },
+    "Advanced options" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweiterte Optionen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opciones avanzadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options avancées"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opções avançadas"
+          }
+        }
+      }
+    },
     "Advanced request options" : {
       "localizations" : {
         "de" : {
@@ -19821,6 +19849,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monitorado, mas o Sonarr/Radarr ainda não encontrou uma cópia — continua procurando."
+          }
+        }
+      }
+    },
+    "More actions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Aktionen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más acciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus d’actions"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais ações"
           }
         }
       }
@@ -34818,6 +34874,7 @@
       }
     },
     "Updating…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -36386,6 +36443,7 @@
       }
     },
     "Wrong match? Point this title at the right id." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
