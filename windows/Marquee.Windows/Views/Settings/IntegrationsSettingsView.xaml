@@ -1268,6 +1268,28 @@
             </StackPanel>
 
             <!--
+              Coming from Seerr? (0.51+): components/seerr-import-card.tsx.
+              The import itself (connect, preview, run) is the website's
+              page, opened in the browser on the server's own address.
+            -->
+            <StackPanel Spacing="12">
+                <TextBlock x:Uid="Integrations_SeerrHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Uid="Integrations_SeerrTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Integrations_SeerrBlurb"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button x:Uid="Integrations_SeerrOpen" Command="{x:Bind ViewModel.OpenSeerrImportCommand}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!--
               API keys (0.47+): keys for dashboards like Homepage or Homarr,
               scripts and other apps, each with Revoke (after a
               confirmation), and a form to create one. The secret shows

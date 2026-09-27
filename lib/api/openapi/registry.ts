@@ -248,6 +248,12 @@ export const API_OPERATIONS: ApiOperation[] = [
     ]),
     ["POST", "/settings/integrations/trakt/import", "admin", "Import a Trakt list as requests."],
   ]),
+  ...group("Import from Seerr", [
+    ["POST", "/settings/import/seerr/test", "admin", "Check a Seerr, Overseerr or Jellyseerr address and admin API key. Not callable with an API key."],
+    ["POST", "/settings/import/seerr/preview", "admin", "What importing from that Seerr would do: accounts matched and new, requests, problem reports, blocklist. Not callable with an API key."],
+    ["POST", "/settings/import/seerr/run", "admin", "Start the import in the background; answers 202 with the job to poll. Not callable with an API key."],
+    ["GET", "/settings/import/seerr/jobs/{id}", "admin", "An import's progress, then its report. Not callable with an API key."],
+  ]),
   ...group("Jobs", [
     ["GET", "/settings/jobs", "admin", "Background jobs and when they last ran."],
     ["POST", "/settings/jobs/{id}/run", "admin", "Run a background job now."],

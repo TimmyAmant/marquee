@@ -323,6 +323,20 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     }
 
     /// <summary><c>POST /settings/integrations/sync</c>: every connected library and download client, now.</summary>
+    /// <summary>
+    /// "Coming from Seerr?": the website's importer
+    /// (app/settings/integrations/import-seerr) in the browser, on the
+    /// server's own address (plain http on a home network is fine there).
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenSeerrImportAsync()
+    {
+        if (model.Session.Server?.BaseUrl is { } server)
+        {
+            await ExternalLinks.OpenOnServerAsync(server, "/settings/integrations/import-seerr");
+        }
+    }
+
     [RelayCommand]
     private async Task SyncNowAsync()
     {

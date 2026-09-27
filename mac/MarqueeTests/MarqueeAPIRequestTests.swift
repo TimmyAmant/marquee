@@ -89,6 +89,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
     private static let readOnlyPosts = [
         "/surprise", "/auth/login", "/auth/setup", "/auth/logout", "/settings/integrations/plex/pin",
         "/settings/arr-servers/test", "/titles/movie/425/share",
+        // Import from Seerr: testing and previewing read; only the run changes anything.
+        "/settings/import/seerr/test", "/settings/import/seerr/preview",
     ]
 
     private var cases: [Case] {
@@ -330,6 +332,19 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/settings/integrations/trakt/import", body: #"{"url":"https://trakt.tv/users/u/watchlist"}"#, response: "trakt-import") {
                 _ = try await $0.integrations.trakt.importList(url: "https://trakt.tv/users/u/watchlist")
             },
+            // Import from Seerr (0.51+)
+            Case(method: "POST", path: "/settings/import/seerr/test", body: #"{"apiKey":"k","url":"http://seerr.local:5055"}"#, response: "seerr-test") {
+                _ = try await $0.integrations.seerrImport.test(API.SeerrImportRequest(url: "http://seerr.local:5055", apiKey: "k"))
+            },
+            Case(method: "POST", path: "/settings/import/seerr/preview", body: #"{"apiKey":"k","url":"http://seerr.local:5055"}"#, response: "seerr-preview") {
+                _ = try await $0.integrations.seerrImport.preview(API.SeerrImportRequest(url: "http://seerr.local:5055", apiKey: "k"))
+            },
+            Case(method: "POST", path: "/settings/import/seerr/run", body: #"{"apiKey":"k","issues":false,"url":"http://seerr.local:5055"}"#, response: "seerr-job") {
+                _ = try await $0.integrations.seerrImport.run(API.SeerrImportRequest(url: "http://seerr.local:5055", apiKey: "k", issues: false))
+            },
+            Case(method: "GET", path: "/settings/import/seerr/jobs/0d0c0b0a-1111-4222-8333-444455556666", response: "seerr-job") {
+                _ = try await $0.integrations.seerrImport.job("0d0c0b0a-1111-4222-8333-444455556666")
+            },
             Case(method: "PUT", path: "/settings/integrations/tvdb", body: #"{"apiKey":"v"}"#, response: "ok") { try await $0.integrations.tvdb.save("v") },
             Case(method: "DELETE", path: "/settings/integrations/tvdb", response: "ok") { try await $0.integrations.tvdb.remove() },
             Case(method: "PUT", path: "/settings/integrations/discord", body: #"{"webhookUrl":"https://discord.com/api/webhooks/1"}"#, response: "ok") {
@@ -438,8 +453,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 155, "docs/api-v1.md documents 155 endpoints")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 155, "Each case covers a different endpoint")
+        XCTAssertEqual(cases.count, 159, "docs/api-v1.md documents 159 endpoints")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 159, "Each case covers a different endpoint")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
