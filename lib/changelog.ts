@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.50.1",
+    date: "2026-09-26",
+    changes: [
+      "A new README on GitHub: a clear overview of every feature, how Marquee compares, and a separate Getting started guide for installing and running it.",
+    ],
+  },
+  {
     version: "0.50.0",
     date: "2026-09-26",
     changes: [
