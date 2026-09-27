@@ -4445,9 +4445,6 @@
   <data name="Title_AddToFourK" xml:space="preserve">
     <value>Add to 4K {0}</value>
   </data>
-  <data name="Title_Advanced.Header" xml:space="preserve">
-    <value>Advanced</value>
-  </data>
   <data name="Title_AdvancedFourK.Header" xml:space="preserve">
     <value>Advanced (4K)</value>
   </data>
@@ -4469,13 +4466,19 @@
   <data name="Title_AdvancedTags.Text" xml:space="preserve">
     <value>Tags</value>
   </data>
+  <data name="Title_AdvancedToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Advanced options</value>
+  </data>
+  <data name="Title_AdvancedToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Advanced options</value>
+  </data>
   <data name="Title_BlockedByKeyword.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Remove the keyword under Settings › Request blocklist to allow requests again.</value>
   </data>
   <data name="Title_BlockRequests.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Nobody can request this title; you can still add it yourself.</value>
   </data>
-  <data name="Title_BlockRequests.Content" xml:space="preserve">
+  <data name="Title_BlockRequests.Text" xml:space="preserve">
     <value>Block requests</value>
   </data>
   <data name="Title_Cancel" xml:space="preserve">
@@ -4574,7 +4577,7 @@
   <data name="Title_FixId.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Wrong match? Point this title at the right id.</value>
   </data>
-  <data name="Title_FixId.Content" xml:space="preserve">
+  <data name="Title_FixId.Text" xml:space="preserve">
     <value>Fix ID</value>
   </data>
   <data name="Title_FixIdFailed" xml:space="preserve">
@@ -4597,6 +4600,12 @@
   </data>
   <data name="Title_Missing" xml:space="preserve">
     <value>Missing</value>
+  </data>
+  <data name="Title_MoreActions.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>More actions</value>
+  </data>
+  <data name="Title_MoreActions.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>More actions</value>
   </data>
   <data name="Title_MoreLikeThis.Text" xml:space="preserve">
     <value>More like this</value>

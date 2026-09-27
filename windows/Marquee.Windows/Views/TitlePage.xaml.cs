@@ -24,6 +24,32 @@ public sealed partial class TitlePage : Page
     {
         ViewModel = new TitleViewModel(AppServices.Model);
         InitializeComponent();
+        SizeChanged += OnPageSizeChanged;
+    }
+
+    /// <summary>
+    /// The backdrop grows with the window like the website's hero
+    /// (components/title-hero.tsx): min(70% of the height, 16:9 of the width),
+    /// never under 300; the poster row keeps starting a little under halfway
+    /// down it.
+    /// </summary>
+    private void OnPageSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var width = e.NewSize.Width;
+        var height = e.NewSize.Height;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+        var backdrop = Math.Max(300, Math.Min(height * 0.7, width * 0.5625));
+        BackdropHost.Height = backdrop;
+        HeroColumns.Margin = new Thickness(28, -Math.Round(backdrop * 0.47), 28, 0);
+    }
+
+    /// <summary>The chevron on Add: opens or closes "Advanced" (the first opening loads the options).</summary>
+    private void OnAdvancedToggleClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.AddAdvanced.IsExpanded = !ViewModel.AddAdvanced.IsExpanded;
     }
 
     /// <summary>The title this page shows; null only when navigated to without a parameter.</summary>
