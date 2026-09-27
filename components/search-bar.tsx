@@ -5,12 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { SearchSuggestion } from "@/app/api/search/suggest/route";
-import { STATUS_TEXT, TONE_CLASS, statusTone } from "@/lib/library/status-tone";
+import { TONE_CLASS, isLibraryStatus, statusText, statusTone } from "@/lib/library/status-tone";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
-const TYPE_LABELS: Record<SearchSuggestion["mediaType"], string> = {
-  person: "Actor",
-  movie: "Movie",
-  tv: "TV",
+const TYPE_LABELS: Record<SearchSuggestion["mediaType"], MessageKey> = {
+  person: "nav.typeActor",
+  movie: "common.movie",
+  tv: "nav.typeTv",
 };
 
 const NEUTRAL_PILL_CLASS = "border-border text-text-muted";
@@ -20,14 +22,15 @@ const NEUTRAL_PILL_CLASS = "border-border text-text-muted";
  * library, blue downloading, orange missing, purple coming soon. Not in the
  * library stays the plain grey pill. */
 function TypePill({ suggestion }: { suggestion: SearchSuggestion }) {
-  const typeLabel = TYPE_LABELS[suggestion.mediaType];
+  const t = useT();
+  const typeLabel = t(TYPE_LABELS[suggestion.mediaType]);
   // A status this build doesn't know (a newer server) reads as neutral.
-  const known = suggestion.status && suggestion.status in STATUS_TEXT ? suggestion.status : undefined;
+  const known = isLibraryStatus(suggestion.status) ? suggestion.status : undefined;
   const tone = statusTone(known);
-  const statusLabel = known ? STATUS_TEXT[known].name : undefined;
+  const statusLabel = known ? statusText(t, known).name : undefined;
   return (
     <span
-      title={statusLabel ? `${typeLabel} · ${statusLabel}` : undefined}
+      title={statusLabel ? t("nav.typeWithStatus", { type: typeLabel, status: statusLabel }) : undefined}
       className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${tone === "neutral" ? NEUTRAL_PILL_CLASS : TONE_CLASS[tone].pill}`}
     >
       {typeLabel}
@@ -53,6 +56,7 @@ export function SearchBar({
   onNavigate?: () => void;
   autoFocus?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const [value, setValue] = useState(initialValue);
@@ -167,7 +171,7 @@ export function SearchBar({
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => suggestions.length > 0 && setIsOpen(true)}
-          placeholder="Search an actor, a studio, a title…"
+          placeholder={t("nav.searchPlaceholder")}
           autoComplete="off"
           autoFocus={autoFocus}
           className={

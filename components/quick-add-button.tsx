@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
+import { useT } from "@/lib/i18n/client";
 
 export function QuickAddButton({
   mediaType,
@@ -12,6 +13,7 @@ export function QuickAddButton({
   mediaType: "movie" | "tv";
   tmdbId: number;
 }) {
+  const t = useT();
   const router = useRouter();
   const action =
     mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
@@ -46,7 +48,7 @@ export function QuickAddButton({
         disabled={isPending}
         className="flex h-[26px] w-full items-center justify-center gap-1 rounded-[13px] bg-accent px-2 text-[11.5px] font-semibold text-bg-0 shadow-[0_2px_8px_rgba(224,166,62,0.25)] transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {isPending ? "Adding…" : `+ Add to ${mediaType === "movie" ? "Radarr" : "Sonarr"}`}
+        {isPending ? t("discover.adding") : t("discover.addTo", { app: mediaType === "movie" ? "Radarr" : "Sonarr" })}
       </button>
       {state?.error && (
         <p className="mt-1 rounded bg-bg-0/90 px-1.5 py-0.5 text-center text-[9px] text-red-400">

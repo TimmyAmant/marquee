@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { invalid, readJsonBody } from "@/lib/api/request";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
@@ -15,7 +16,7 @@ import type { Ok } from "@/lib/api/types";
  * also pick the server, quality profile, root folder, tags and series type
  * (the same fields as approving a request). */
 export const POST = withApi<TitleParams>(async (request, params): Promise<Ok> => {
-  const ctx = await requireApiAdmin(request, "Only the admin can add titles.");
+  const ctx = await requireApiAdmin(request, msg("server.onlyAdminAddTitles"));
   const { mediaType, tmdbId } = parseTitleParams(params);
   const body = await readJsonBody(request);
   const parsed = parseAddOverrides(body, mediaType);

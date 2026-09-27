@@ -5,6 +5,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Controls;
@@ -47,7 +48,7 @@ public sealed class MyRequestRow : RequestRowBase
     {
         StatusLabel = request.StatusLabel;
         Tone = request.StatusTone.ToBadgeTone();
-        ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
+        ReasonLine = request.RejectionReason.NonBlank() is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
         SeasonsLine = request.DetailText;
         Actions = actions;
     }
@@ -76,7 +77,7 @@ public sealed class ReviewedRow : RequestRowBase
         RequesterLabel = request.RequestedBy.Label;
         StatusLabel = request.StatusLabel;
         Tone = request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
-        ReasonLine = request.RejectionReason.NonBlank() is { } reason ? $"Reason: {reason}" : "";
+        ReasonLine = request.RejectionReason.NonBlank() is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
         SeasonsLine = request.DetailText;
         AddedToLine = request.AddedToLine ?? "";
         ShowsNotFound = request.IsNotFound;
@@ -223,9 +224,9 @@ public sealed partial class PendingRow : ObservableObject
 
     public bool IsBusy => Busy != null;
     public bool CanAct => Busy == null;
-    public string ApproveLabel => Busy == "approve" ? "Approving…" : "Approve";
-    public string RejectLabel => Busy == "reject" ? "Rejecting…" : "Reject";
-    public string ManualLabel => Busy == "manual" ? "Approving…" : "Manually approve";
+    public string ApproveLabel => Busy == "approve" ? Loc.Get("Requests_Approving") : Loc.Get("Requests_Approve");
+    public string RejectLabel => Busy == "reject" ? Loc.Get("Requests_Rejecting") : Loc.Get("Requests_Reject");
+    public string ManualLabel => Busy == "manual" ? Loc.Get("Requests_Approving") : Loc.Get("Requests_ManuallyApprove");
 
     /// <summary>Approve gives way to Manually approve once Sonarr couldn't resolve the show.</summary>
     public bool ShowsApprove => !ShowManualApprove;
@@ -319,7 +320,7 @@ public sealed partial class PendingRow : ObservableObject
 /// </summary>
 public sealed partial class IssueRow : ObservableObject
 {
-    public const string SearchingMessage = "Searching for another copy…";
+    public static string SearchingMessage => Loc.Get("Requests_IssueSearching");
 
     private readonly RequestsViewModel owner;
     private readonly Uri? posterUrl;
@@ -371,7 +372,7 @@ public sealed partial class IssueRow : ObservableObject
             isAdmin ? issue.ReportedBy.Label : null,
             Format.ShortDate(issue.CreatedAt),
         }.OfType<string>());
-        MessageLine = issue.Message.NonBlank() is { } message ? $"“{message}”" : "";
+        MessageLine = issue.Message.NonBlank() is { } message ? Loc.Format("Requests_QuotedMessage", message) : "";
         FixedLine = issue.FixedLine;
         posterUrl = issue.PosterPath.Url(ImageSize.W92);
         Open = openTitle;
@@ -410,9 +411,9 @@ public sealed partial class IssueRow : ObservableObject
     /// <summary>"Withdraw" your own open report, or (admin) "Remove" any open one.</summary>
     public bool ShowsRemove => IsOpen && (isMine || isAdmin);
 
-    public string RemoveLabel => isMine && !isAdmin ? "Withdraw" : "Remove";
-    public string SearchLabel => Busy == "search" ? "Searching…" : "Search again";
-    public string ResolveLabel => Busy == "resolve" ? "Saving…" : "Mark fixed";
+    public string RemoveLabel => isMine && !isAdmin ? Loc.Get("Requests_IssueWithdraw") : Loc.Get("Requests_IssueRemove");
+    public string SearchLabel => Busy == "search" ? Loc.Get("Requests_Searching") : Loc.Get("Requests_SearchAgain");
+    public string ResolveLabel => Busy == "resolve" ? Loc.Get("Requests_Saving") : Loc.Get("Requests_MarkFixed");
 
     /// <summary><c>POST /issues/{id}/search</c>: Radarr/Sonarr looks for another copy.</summary>
     [RelayCommand]
@@ -540,8 +541,8 @@ public sealed partial class NotFoundRow : ObservableObject
     public bool CanAct => Busy == null;
     public bool HasError => Error != null;
     public bool HasInfo => Info != null;
-    public string SearchLabel => Busy == "search" ? "Searching…" : "Search again";
-    public string DismissLabel => Busy == "dismiss" ? "Saving…" : "Mark as found";
+    public string SearchLabel => Busy == "search" ? Loc.Get("Requests_Searching") : Loc.Get("Requests_SearchAgain");
+    public string DismissLabel => Busy == "dismiss" ? Loc.Get("Requests_Saving") : Loc.Get("Requests_MarkAsFound");
 
     /// <summary><c>POST /requests/{id}/not-found/search</c>: stays listed until something is grabbed.</summary>
     [RelayCommand]
@@ -570,7 +571,7 @@ public sealed partial class NotFoundRow : ObservableObject
         }
         catch (Exception failure) when (failure is ArgumentException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
         {
-            Error = $"Couldn't open {arrKindName}.";
+            Error = Loc.Format("Requests_CouldntOpenArr", arrKindName);
         }
     }
 
@@ -691,7 +692,7 @@ public sealed partial class CouldntAddRow : ObservableObject
 
     public bool CanAct => Busy == null;
     public string RetryLabel => Busy == "retry" ? RequestLifecycle.RetryingLabel : RequestLifecycle.RetryLabel;
-    public string ManualLabel => Busy == "manual" ? "Saving…" : RequestLifecycle.AddedByHandLabel;
+    public string ManualLabel => Busy == "manual" ? Loc.Get("Requests_Saving") : RequestLifecycle.AddedByHandLabel;
     public string ManualTooltip => RequestLifecycle.AddedByHandTooltip;
 
     /// <summary><c>POST /requests/{id}/retry</c>, with the "Advanced" picks once they're opened.</summary>
@@ -746,9 +747,9 @@ public sealed partial class CouldntAddRow : ObservableObject
 /// </summary>
 public sealed partial class RequestsViewModel : ObservableObject
 {
-    public const string MemberEmptyMessage = "You haven't requested anything yet. Find a title and hit Request.";
-    public const string QueueEmptyMessage = "No pending requests.";
-    public const string QueueLoadingMessage = "Checking requests against your library…";
+    public static string MemberEmptyMessage => Loc.Get("Requests_MemberEmpty");
+    public static string QueueEmptyMessage => Loc.Get("Requests_QueueEmpty");
+    public static string QueueLoadingMessage => Loc.Get("Requests_QueueLoading");
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
@@ -963,7 +964,7 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>"Approve all" only when more than one is pending (and while its outcome shows).</summary>
     public bool ShowsApproveAll => HasQueue && (PendingCount > 1 || IsApprovingAll || ApproveAllMessage != null);
 
-    public string ApproveAllLabel => IsApprovingAll ? "Approving…" : "Approve all";
+    public string ApproveAllLabel => IsApprovingAll ? Loc.Get("Requests_Approving") : Loc.Get("Requests_ApproveAll");
     public bool HasApproveAllMessage => ApproveAllMessage != null;
     public InfoBarSeverity ApproveAllSeverity => ApproveAllIsError ? InfoBarSeverity.Error : InfoBarSeverity.Success;
     public bool HasHistory => History.Count > 0;
@@ -991,7 +992,7 @@ public sealed partial class RequestsViewModel : ObservableObject
     /// <summary>The section shows once there's any report, open or fixed; an older server has none.</summary>
     public bool ShowsIssues => OpenIssues.Count > 0 || FixedIssues.Count > 0;
 
-    public string IssuesHeading => ManagesIssues ? "Reported problems" : "Your problem reports";
+    public string IssuesHeading => ManagesIssues ? Loc.Get("Requests_IssuesHeadingAll") : Loc.Get("Requests_IssuesHeadingMine");
     public bool HasOpenIssues => OpenIssues.Count > 0;
 
     /// <summary>"Nothing open right now." when only fixed ones are left.</summary>
@@ -1001,8 +1002,8 @@ public sealed partial class RequestsViewModel : ObservableObject
     public bool ShowsFixedIssues => IsShowingFixed && HasFixedIssues;
 
     public string ShowFixedLabel => IsShowingFixed
-        ? "Hide fixed"
-        : $"Show fixed ({FixedIssues.Count.ToString(CultureInfo.CurrentCulture)})";
+        ? Loc.Get("Requests_HideFixed")
+        : Loc.Format("Requests_ShowFixed", FixedIssues.Count.ToString(CultureInfo.CurrentCulture));
 
     internal MarqueeApi Api => model.Api;
 
@@ -1373,8 +1374,8 @@ public sealed partial class RequestsViewModel : ObservableObject
             var result = await model.Api.Requests.ApproveAllAsync();
             ApproveAllIsError = result.FailedCount > 0;
             ApproveAllMessage = result.FailedCount > 0
-                ? result.Message ?? $"{result.FailedCount.ToString(CultureInfo.CurrentCulture)} request(s) couldn't be approved."
-                : $"Approved {result.ApprovedCount.ToString(CultureInfo.CurrentCulture)}.";
+                ? result.Message ?? Loc.Plural("Requests_ApproveAllFailed", result.FailedCount)
+                : Loc.Format("Requests_ApproveAllDone", result.ApprovedCount.ToString(CultureInfo.CurrentCulture));
         }
         catch (ApiException error)
         {

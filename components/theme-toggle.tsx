@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { resolveTheme, THEME_STORAGE_KEY, type Theme } from "@/lib/theme";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Icon-only toggle between the two themes. Starts undetermined (theme is
@@ -13,6 +14,7 @@ import { resolveTheme, THEME_STORAGE_KEY, type Theme } from "@/lib/theme";
  * normally sets that attribute didn't run for some reason.
  */
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+  const t = useT();
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+      aria-label={theme === "light" ? t("nav.themeToDark") : t("nav.themeToLight")}
       className={`flex ${size} shrink-0 items-center justify-center rounded-full border border-border bg-bg-2/60 text-text-secondary transition-colors hover:border-accent hover:text-accent`}
     >
       {theme === null ? null : theme === "light" ? (

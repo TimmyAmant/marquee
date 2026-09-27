@@ -139,7 +139,7 @@ enum BundledChangelog {
     /// Nil when the source isn't the shape it expects.
     static func parse(_ source: String) -> [API.ChangelogEntry]? {
         let bytes = Array(source.utf8)
-        guard let declaration = find(Array("export const CHANGELOG".utf8), in: bytes, from: 0),
+        guard let declaration = find(Array("export const CHANGELOG".utf8), in: bytes, from: 0), // i18n-ignore
               let equals = bytes[declaration...].firstIndex(of: UInt8(ascii: "=")),
               let open = bytes[equals...].firstIndex(of: UInt8(ascii: "["))
         else { return nil }

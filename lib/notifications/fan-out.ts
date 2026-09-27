@@ -11,6 +11,8 @@ import { channelWants, type NotificationPreferenceEvent } from "@/lib/notificati
 import { householdPostsEvent, roleOf } from "@/lib/notifications/preferences";
 import { deliverableChannels, deliverToChannel, type ChannelMessage, type DeliverableChannel } from "@/lib/notifications/personal";
 import { destinationKey } from "@/lib/notifications/personal-config";
+import { translatorForUser } from "@/lib/i18n/server";
+import { englishT } from "@/lib/i18n/catalog";
 
 // Where a notification goes past the account's own bell and devices: the
 // household channels (the admin's Discord, ntfy, Telegram, Pushover, email
@@ -37,8 +39,13 @@ export type OutgoingNotification = {
   userId: string;
   eventType: NotificationEventType;
   event: NotificationPreferenceEvent;
+  /** The account's own copy, in its language. */
   title: string;
   message: string;
+  /** The household channels' copy, in the household's language (the
+   * account's copy when not given). */
+  householdTitle?: string;
+  householdMessage?: string;
   mediaType: string;
   tmdbId: number;
 };
@@ -47,7 +54,9 @@ export type OutgoingNotification = {
  * where they're posting (destinationKey's form), without waiting for them. */
 export async function relayToHousehold(input: OutgoingNotification): Promise<Set<string>> {
   const keys = new Set<string>();
-  const line = `${EVENT_EMOJI[input.eventType]} ${input.message}`;
+  const title = input.householdTitle ?? input.title;
+  const text = input.householdMessage ?? input.message;
+  const line = `${EVENT_EMOJI[input.eventType]} ${text}`;
   const [discord, ntfy, webhook, telegram, pushover, email] = await Promise.all([
     getDiscordWebhookUrl().catch(() => null),
     getNtfyUrl().catch(() => null),
@@ -62,7 +71,7 @@ export async function relayToHousehold(input: OutgoingNotification): Promise<Set
   }
   if (ntfy) {
     keys.add(destinationKey({ kind: "ntfy", url: ntfy }, null));
-    sendNtfyMessage(ntfy, input.title, input.message).catch(() => undefined);
+    sendNtfyMessage(ntfy, title, text).catch(() => undefined);
   }
   if (telegram) {
     keys.add(destinationKey({ kind: "telegram", chatId: telegram.chatId }, null));
@@ -70,15 +79,15 @@ export async function relayToHousehold(input: OutgoingNotification): Promise<Set
   }
   if (pushover) {
     keys.add(destinationKey({ kind: "pushover", userKey: pushover.userKey }, null));
-    sendPushoverMessage(pushover, input.title, input.message).catch(() => undefined);
+    sendPushoverMessage(pushover, title, text).catch(() => undefined);
   }
   if (email) {
     for (const address of email.to) keys.add(destinationKey({ kind: "email", address }, null));
-    sendEmail(email, line, `${input.message}\n\n— Marquee`).catch(() => undefined);
+    sendEmail(email, line, `${text}\n\n— Marquee`).catch(() => undefined);
   }
   if (webhook) {
     keys.add(destinationKey({ kind: "webhook", url: webhook }, null));
-    sendWebhookNotification(webhook, { event: input.eventType, title: input.title, message: input.message }).catch(
+    sendWebhookNotification(webhook, { event: input.eventType, title, message: text }).catch(
       () => undefined,
     );
   }
@@ -121,7 +130,9 @@ export async function fanOut(input: OutgoingNotification, relay: boolean): Promi
       mediaType: input.mediaType,
       tmdbId: input.tmdbId,
     };
-    await Promise.all(targets.map((target) => deliverToChannel(target, message, { id: input.userId, role })));
+    // The account's language, for any reason a channel records.
+    const t = await translatorForUser(input.userId).catch(() => englishT());
+    await Promise.all(targets.map((target) => deliverToChannel(target, message, { id: input.userId, role }, t)));
   } catch (err) {
     console.error("[notifications] fan-out failed:", err);
   }

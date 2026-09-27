@@ -147,11 +147,11 @@ extension API {
         /// The heading until the server's own `title` arrives.
         var label: String {
             switch self {
-            case .recentlyAdded: return "Recently Added"
-            case .trending: return "Trending"
-            case .upcomingMovies: return "Upcoming Movies"
-            case .upcomingSeries: return "Upcoming Series"
-            case .unknown: return "Discover"
+            case .recentlyAdded: return String(localized: "Recently Added")
+            case .trending: return String(localized: "Trending")
+            case .upcomingMovies: return String(localized: "Upcoming Movies")
+            case .upcomingSeries: return String(localized: "Upcoming Series")
+            case .unknown: return String(localized: "Discover")
             }
         }
 
@@ -315,9 +315,9 @@ extension API {
 
         var label: String {
             switch self {
-            case .popularity: return "Popular"
-            case .topRated: return "Top rated"
-            case .newest: return "Newest"
+            case .popularity: return String(localized: "Popular")
+            case .topRated: return String(localized: "Top rated")
+            case .newest: return String(localized: "Newest")
             }
         }
     }
@@ -461,12 +461,18 @@ extension APIError {
     /// TMDb-backed screen turns this into the "Connect TMDb" empty state
     /// instead of a raw error.
     static let tmdbUnconfiguredMessage =
-        "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations."
+        "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations." // i18n-ignore: matched against the server's wire message
 
     /// TMDb isn't set up on the server: show the "Connect TMDb to start
     /// browsing" notice rather than the error text.
     var isTMDbUnconfigured: Bool {
+        if case .tmdbUnconfigured = self { return true }
+        // A server older than 0.50 sends no reason, and always English.
         if case let .upstream(message) = self { return message == Self.tmdbUnconfiguredMessage }
         return false
+    }
+
+    static var tmdbUnconfiguredFallback: String {
+        String(localized: "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.")
     }
 }

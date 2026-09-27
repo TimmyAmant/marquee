@@ -19,8 +19,7 @@
             Style="{StaticResource MarqueeRailArrowStyle}"
             Click="OnPreviousClick"
             IsEnabled="False"
-            AutomationProperties.Name="Scroll left"
-            ToolTipService.ToolTip="Scroll left">
+            x:Uid="Rail_ScrollLeft">
             <FontIcon Glyph="&#xE76B;" FontSize="12" />
         </Button>
         <Button
@@ -28,8 +27,7 @@
             Style="{StaticResource MarqueeRailArrowStyle}"
             Click="OnNextClick"
             IsEnabled="False"
-            AutomationProperties.Name="Scroll right"
-            ToolTipService.ToolTip="Scroll right">
+            x:Uid="Rail_ScrollRight">
             <FontIcon Glyph="&#xE76C;" FontSize="12" />
         </Button>
     </StackPanel>

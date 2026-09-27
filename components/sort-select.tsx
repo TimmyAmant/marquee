@@ -2,11 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import type { DiscoverSort } from "@/lib/tmdb/client";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
-const SORT_LABELS: Record<DiscoverSort, string> = {
-  popularity: "Popular",
-  top_rated: "Top rated",
-  newest: "Newest",
+const SORT_LABELS: Record<DiscoverSort, MessageKey> = {
+  popularity: "discover.sortPopular",
+  top_rated: "discover.sortTopRated",
+  newest: "discover.sortNewest",
 };
 
 export function SortSelect({
@@ -18,6 +20,7 @@ export function SortSelect({
   currentParams: Record<string, string | undefined>;
   basePath: string;
 }) {
+  const t = useT();
   const router = useRouter();
 
   function navigate(sort: string) {
@@ -38,7 +41,7 @@ export function SortSelect({
     >
       {(Object.keys(SORT_LABELS) as DiscoverSort[]).map((sort) => (
         <option key={sort} value={sort}>
-          {SORT_LABELS[sort]}
+          {t(SORT_LABELS[sort])}
         </option>
       ))}
     </select>

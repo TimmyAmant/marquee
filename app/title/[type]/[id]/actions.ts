@@ -5,6 +5,7 @@ import type { MediaType } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { addTitleToLibrary, relinkTitle, searchTitle, setTitleMonitored } from "@/lib/arr/title-actions";
 import { parseAddOverrides, parseAddOverridesForm } from "@/lib/arr/add-options";
+import { getT } from "@/lib/i18n/server";
 
 // Thin form/session wrappers — the logic lives in lib/arr/title-actions.ts,
 // shared with /api/v1/titles/*.
@@ -17,7 +18,7 @@ export async function addMovieToRadarr(
   formData: FormData,
 ): Promise<AddToLibraryState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in to add titles." };
+  if (!session?.user) return { error: (await getT())("title.signInToAdd") };
 
   // The "Advanced" picks, when opened (components/add-advanced-options.tsx).
   const parsed = parseAddOverridesForm(formData, "movie");
@@ -32,7 +33,7 @@ export async function addSeriesToSonarr(
   formData: FormData,
 ): Promise<AddToLibraryState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in to add titles." };
+  if (!session?.user) return { error: (await getT())("title.signInToAdd") };
 
   const parsed = parseAddOverridesForm(formData, "tv");
   if (!parsed.ok) return { error: parsed.error };
@@ -44,9 +45,9 @@ export async function addSeriesToSonarr(
  * whatever the browser sends, checked by the same parser as the API. */
 export async function addToFourK(mediaType: MediaType, tmdbId: number, overrides?: unknown): Promise<AddToLibraryState> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in to add titles." };
+  if (!session?.user) return { error: (await getT())("title.signInToAdd") };
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
-    return { error: "That title couldn't be added." };
+    return { error: (await getT())("title.couldntAddTitle") };
   }
   const parsed =
     overrides && typeof overrides === "object"
@@ -66,7 +67,7 @@ export async function relinkTitleAction(
   _prevState: RelinkState | undefined,
   formData: FormData,
 ): Promise<RelinkState> {
-  const admin = await requireAdmin("Only the admin can correct a title's match.");
+  const admin = await requireAdmin((await getT())("title.onlyAdminRelink"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await relinkTitle(admin.userId, mediaType, currentTmdbId, {
@@ -87,7 +88,7 @@ export async function searchTitleAction(
   _prevState: ArrCommandState | undefined,
   _formData: FormData,
 ): Promise<ArrCommandState> {
-  const admin = await requireAdmin("Only the admin can trigger a search.");
+  const admin = await requireAdmin((await getT())("title.onlyAdminSearch"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await searchTitle(admin.userId, mediaType, tmdbId, tvdbId);
@@ -103,7 +104,7 @@ export async function setTitleMonitoredAction(
   _prevState: ArrCommandState | undefined,
   _formData: FormData,
 ): Promise<ArrCommandState> {
-  const admin = await requireAdmin("Only the admin can change monitoring.");
+  const admin = await requireAdmin((await getT())("title.onlyAdminMonitoring"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await setTitleMonitored(admin.userId, mediaType, tmdbId, tvdbId, monitored);

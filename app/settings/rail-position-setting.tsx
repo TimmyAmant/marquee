@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { RAIL_POSITIONS, railPositionCookie, type RailPosition } from "@/lib/rail-position";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
-const LABELS: Record<RailPosition, string> = {
-  left: "Left",
-  right: "Right",
-  top: "Top",
-  bottom: "Bottom",
+const LABELS: Record<RailPosition, MessageKey> = {
+  left: "settings.menuPositionLeft",
+  right: "settings.menuPositionRight",
+  top: "settings.menuPositionTop",
+  bottom: "settings.menuPositionBottom",
 };
 
 /** Where the menu sits in each option's little window, in a 40x28 box. */
@@ -32,6 +34,7 @@ function applyRailPosition(position: RailPosition) {
  * the rail and the page's margins follow in CSS, so there's no reload.
  */
 export function RailPositionSetting({ initial }: { initial: RailPosition }) {
+  const t = useT();
   const router = useRouter();
   const [position, setPosition] = useState<RailPosition>(initial);
 
@@ -46,11 +49,9 @@ export function RailPositionSetting({ initial }: { initial: RailPosition }) {
   return (
     <div className="p-6">
       <p id="rail-position-label" className="text-sm font-medium text-text-primary">
-        Menu position
+        {t("settings.menuPositionLabel")}
       </p>
-      <p className="mt-1 text-sm text-text-secondary">
-        Where the menu sits on this device. On a phone-sized window it stays behind the menu button and slides in from the right when set to Right, otherwise from the left.
-      </p>
+      <p className="mt-1 text-sm text-text-secondary">{t("settings.menuPositionHelp")}</p>
       <div role="radiogroup" aria-labelledby="rail-position-label" className="mt-4 grid grid-cols-4 gap-2">
         {RAIL_POSITIONS.map((option) => {
           const selected = option === position;
@@ -72,7 +73,7 @@ export function RailPositionSetting({ initial }: { initial: RailPosition }) {
                 <rect x="0.75" y="0.75" width="38.5" height="26.5" rx="4" fill="none" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" />
                 <rect {...bar} rx="2" className={selected ? "fill-accent" : "fill-current"} />
               </svg>
-              {LABELS[option]}
+              {t(LABELS[option])}
             </button>
           );
         })}

@@ -10,6 +10,7 @@ import { loadDiscoverShelves } from "@/lib/pages/discover";
 import { DISCOVER_SEE_ALL, seeAllHref, type DiscoverShelfKey } from "@/lib/discover/lists";
 import { isBuiltInShelf } from "@/lib/discover/shelves";
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 
 type PosterItem = {
   key: string;
@@ -29,6 +30,7 @@ type Row =
 
 export default async function DiscoverPage() {
   const viewer = await getViewerContext();
+  const t = await getT();
 
   // Shared with GET /api/v1/discover: the rows in the admin's order
   // (Settings → Discover), hidden ones left out.
@@ -210,7 +212,10 @@ export default async function DiscoverPage() {
                     posterPath={item.posterPath}
                     name={item.name}
                     year={item.year ?? undefined}
-                    typeLabel={item.mediaType === "movie" ? "MOVIE" : "SERIES"}
+                    typeLabel={{
+                      mediaType: item.mediaType,
+                      text: item.mediaType === "movie" ? t("common.movie") : t("common.series"),
+                    }}
                     badge={item.status && <StatusBadge status={item.status} compact />}
                     status={item.status}
                   />

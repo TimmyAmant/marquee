@@ -20,10 +20,18 @@ export type CoreErrorCode =
   | "upstream"
   | "internal";
 
-export type CoreFailure = { ok: false; error: string; code: CoreErrorCode };
+/** `apiReason`: a finer, stable code for the few failures a client acts on
+ * (see ErrorReason) — the message itself is in the reader's language, so
+ * it's never something to match on. */
+export type CoreFailure = { ok: false; error: string; code: CoreErrorCode; apiReason?: ErrorReason };
+
+/** The failures an app does something specific for, whatever language the
+ * message is in: offer "add it manually in Sonarr", or explain that TMDb
+ * needs setting up. Sent as `reason` on the API's error body (0.50+). */
+export type ErrorReason = "sonarr_unresolved" | "tmdb_not_configured";
 
 export type CoreResult<T extends object = object> = ({ ok: true } & T) | CoreFailure;
 
-export function fail(code: CoreErrorCode, error: string): CoreFailure {
-  return { ok: false, error, code };
+export function fail(code: CoreErrorCode, error: string, reason?: ErrorReason): CoreFailure {
+  return reason ? { ok: false, error, code, apiReason: reason } : { ok: false, error, code };
 }

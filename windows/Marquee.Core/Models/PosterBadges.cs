@@ -1,4 +1,5 @@
 using System.Globalization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -22,16 +23,16 @@ public enum TypeBadgeStyle
 /// </summary>
 public static class PosterBadges
 {
-    /// <summary>"MOVIE" / "SERIES"; a type this app doesn't know, upper-cased (the Mac's <c>typeLabel</c>).</summary>
+    /// <summary>"MOVIE" / "SERIES" (in the app's language); a type this app doesn't know, upper-cased (the Mac's <c>typeLabel</c>).</summary>
     public static string TypeLabel(MediaType mediaType)
     {
         if (mediaType == MediaType.Movie)
         {
-            return "MOVIE";
+            return Loc.Get("Card_TypeMovie");
         }
         if (mediaType == MediaType.Tv)
         {
-            return "SERIES";
+            return Loc.Get("Card_TypeSeries");
         }
         return mediaType.Value.ToUpperInvariant();
     }

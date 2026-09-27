@@ -8,6 +8,9 @@ import { Sidebar } from "@/components/sidebar";
 import { ThemeSync } from "@/components/theme-sync";
 import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { I18nProvider } from "@/lib/i18n/client";
+import { messagesFor } from "@/lib/i18n/catalog";
+import { getLocale, getT } from "@/lib/i18n/server";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -21,11 +24,10 @@ const manrope = Manrope({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Marquee",
-  description:
-    "Search any actor, studio, or catalog — see the full story, and know instantly what's already in your library.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: "Marquee", description: t("nav.siteDescription") };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -41,12 +43,16 @@ export default async function RootLayout({
   // Account › Appearance). Rendered here so the first paint already has it;
   // the rail and everything that makes room for it follow data-rail in CSS.
   const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
+  // The account's language, else the browser's (lib/i18n/server.ts). Client
+  // Components get it, with just that language's messages, from the
+  // provider below.
+  const locale = await getLocale();
 
   return (
     // The theme-init script below sets data-theme on <html> before React
     // hydrates, so the attribute never matches the server's HTML by design.
     <html
-      lang="en"
+      lang={locale}
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
       data-rail={railPosition}
       suppressHydrationWarning
@@ -63,16 +69,18 @@ export default async function RootLayout({
             exactly this, guaranteeing it actually runs pre-hydration on
             every load, not just the first. */}
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-        <ThemeSync />
-        <Sidebar />
-        {/* .rail-inset (app/globals.css) makes room for the floating nav
-            rail on whichever edge it sits; full-bleed artwork like a
-            title's backdrop pulls itself back under it (.rail-under). */}
-        <div className="rail-inset flex min-h-full min-w-0 flex-1 flex-col">
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-        </div>
+        <I18nProvider locale={locale} messages={messagesFor(locale)}>
+          <ThemeSync />
+          <Sidebar />
+          {/* .rail-inset (app/globals.css) makes room for the floating nav
+              rail on whichever edge it sits; full-bleed artwork like a
+              title's backdrop pulls itself back under it (.rail-under). */}
+          <div className="rail-inset flex min-h-full min-w-0 flex-1 flex-col">
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </div>
+        </I18nProvider>
       </body>
     </html>
   );

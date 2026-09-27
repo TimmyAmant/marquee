@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { saveHouseholdEventsAction } from "@/app/settings/notification-actions";
 import type { HouseholdNotificationEvents } from "@/lib/api/types";
+import { useT } from "@/lib/i18n/client";
 
 /** Settings › Integrations › Household channels: which events Discord,
  * ntfy, Telegram, Pushover, email and the webhook below post. Everyone's
  * own channels (Settings › Account) follow their own choices instead. */
 export function HouseholdEventsCard({ initial }: { initial: HouseholdNotificationEvents["events"] }) {
+  const t = useT();
   const [events, setEvents] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -24,12 +26,8 @@ export function HouseholdEventsCard({ initial }: { initial: HouseholdNotificatio
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
-      <h3 className="font-display text-xl text-text-primary">What the household channels post</h3>
-      <p className="mt-1 text-xs text-text-muted">
-        The channels below are the household&apos;s: everything picked here goes to each one that&apos;s set up, once.
-        Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Account ›
-        Notifications, using the bot, app and mail server set up here.
-      </p>
+      <h3 className="font-display text-xl text-text-primary">{t("integrations.householdEventsTitle")}</h3>
+      <p className="mt-1 text-xs text-text-muted">{t("integrations.householdEventsIntro")}</p>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {events.map((event) => (
           <li key={event.event}>
@@ -45,7 +43,7 @@ export function HouseholdEventsCard({ initial }: { initial: HouseholdNotificatio
           </li>
         ))}
       </ul>
-      {(error || saving) && <p className={`mt-3 text-xs ${error ? "text-red-400" : "text-text-muted"}`}>{error ?? "Saving…"}</p>}
+      {(error || saving) && <p className={`mt-3 text-xs ${error ? "text-red-400" : "text-text-muted"}`}>{error ?? t("common.saving")}</p>}
     </div>
   );
 }

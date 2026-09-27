@@ -2,6 +2,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Media;
@@ -23,7 +24,7 @@ public static class FavoriteGlyphs
     public static string For(bool favorited) => favorited ? Filled : Outline;
 
     /// <summary>What a screen reader calls the star.</summary>
-    public static string Label(bool favorited) => favorited ? "Remove from favorites" : "Add to favorites";
+    public static string Label(bool favorited) => favorited ? Loc.Get("Card_RemoveFavorite") : Loc.Get("Card_AddFavorite");
 }
 
 /// <summary>The tones the badge palette has, from a request's <c>statusTone</c> (requests/page.tsx's myRequestBadge).</summary>
@@ -291,7 +292,7 @@ public sealed class StatusKeyEntry
     public BadgeTone Tone { get; }
 
     /// <summary>What a screen reader says for the row: "Missing: Monitored, but …".</summary>
-    public string AccessibleName => $"{Name}: {Meaning}";
+    public string AccessibleName => Loc.Format("Card_StatusKeyAccessibleName", Name, Meaning);
 
     public bool IsOwnedTone => Tone == BadgeTone.Owned;
     public bool IsDownloadingTone => Tone == BadgeTone.Downloading;

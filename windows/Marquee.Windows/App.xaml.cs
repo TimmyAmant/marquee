@@ -18,9 +18,15 @@ public partial class App : Application
 {
     private Window? window;
 
+    /// <summary>Read before any XAML loads: it says which language the app starts in.</summary>
+    private readonly JsonSettingsStore settings = new();
+
     public App()
     {
         CrashReporter.Install(this);
+        // Before InitializeComponent: every x:Uid string is looked up in the
+        // language chosen here, App.xaml's included.
+        AppLocalization.Apply(settings);
         try
         {
             InitializeComponent();
@@ -89,7 +95,6 @@ public partial class App : Application
 
     private void Launch()
     {
-        var settings = new JsonSettingsStore();
         var session = new ServerSession(
             settings,
             new PasswordVaultTokenStore(),

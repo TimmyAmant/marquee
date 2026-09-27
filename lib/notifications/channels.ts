@@ -6,6 +6,7 @@ import { fail, type CoreResult } from "@/lib/core-result";
 import { telegramConfigError, verifyTelegram, type TelegramConfig } from "@/lib/telegram/client";
 import { pushoverConfigError, verifyPushover, type PushoverConfig } from "@/lib/pushover/client";
 import { emailConfigError, parseRecipients, verifyEmail, type EmailConfig } from "@/lib/email/client";
+import { getT } from "@/lib/i18n/server";
 
 // Telegram, Pushover and email settings (Settings → Integrations →
 // Notifications, and /api/v1/settings/integrations/{telegram,pushover,email}).
@@ -67,10 +68,11 @@ export async function testAndSaveTelegram(input: { botToken?: unknown; chatId?: 
     botToken: text(input.botToken) || saved?.botToken || "",
     chatId: text(input.chatId),
   };
-  const invalid = telegramConfigError(config);
+  const t = await getT();
+  const invalid = telegramConfigError(config, t);
   if (invalid) return fail("invalid", invalid);
   const test = await verifyTelegram(config);
-  if (!test.ok) return fail("invalid", `Telegram didn't take the test message: ${test.error}`);
+  if (!test.ok) return fail("invalid", t("notify.telegramTestFailed", { error: test.error }));
   await saveChannelConfig("telegram", config);
   return { ok: true };
 }
@@ -81,10 +83,11 @@ export async function testAndSavePushover(input: { appToken?: unknown; userKey?:
     appToken: text(input.appToken) || saved?.appToken || "",
     userKey: text(input.userKey),
   };
-  const invalid = pushoverConfigError(config);
+  const t = await getT();
+  const invalid = pushoverConfigError(config, t);
   if (invalid) return fail("invalid", invalid);
   const test = await verifyPushover(config);
-  if (!test.ok) return fail("invalid", `Pushover didn't take the test message: ${test.error}`);
+  if (!test.ok) return fail("invalid", t("notify.pushoverTestFailed", { error: test.error }));
   await saveChannelConfig("pushover", config);
   return { ok: true };
 }
@@ -113,13 +116,14 @@ export async function testAndSaveEmail(input: {
     from: text(input.from),
     to: Array.isArray(input.to) ? input.to.map(text).filter(Boolean) : parseRecipients(text(input.to)),
   };
+  const t = await getT();
   if (config.username && !config.password && saved?.password && !keepPassword) {
-    return fail("invalid", "Enter the password again. It's only kept when the server and username stay the same.");
+    return fail("invalid", t("notify.emailPasswordAgain"));
   }
-  const invalid = emailConfigError(config);
+  const invalid = emailConfigError(config, t);
   if (invalid) return fail("invalid", invalid);
   const test = await verifyEmail(config);
-  if (!test.ok) return fail("invalid", `The test email didn't go through: ${test.error}`);
+  if (!test.ok) return fail("invalid", t("notify.testEmailFailed", { error: test.error }));
   await saveChannelConfig("email", config);
   return { ok: true };
 }

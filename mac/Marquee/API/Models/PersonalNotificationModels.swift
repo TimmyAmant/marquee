@@ -38,10 +38,10 @@ extension API {
             switch self {
             case .telegram: return "Telegram"
             case .pushover: return "Pushover"
-            case .email: return "Email"
+            case .email: return String(localized: "Email")
             case .discord: return "Discord"
             case .ntfy: return "ntfy"
-            case .webhook: return "Webhook"
+            case .webhook: return String(localized: "Webhook")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -116,19 +116,23 @@ extension API {
         /// Where the confirmation code went, above the code field.
         var codeSentLine: String {
             kind == .telegram
-                ? "The bot sent a 6-digit code to your Telegram chat."
-                : "We emailed a 6-digit code to \(target)."
+                ? String(localized: "The bot sent a 6-digit code to your Telegram chat.")
+                : String(localized: "We emailed a 6-digit code to \(target).")
         }
 
         /// The row's status line: why the last delivery failed (in red), or
         /// when the last one arrived; nil before either.
         func statusLine(now: Date = Date()) -> (text: String, isError: Bool)? {
             if let lastError = lastError.nonBlank {
-                let when = lastErrorAt.map { " \(Format.timeAgo($0, now: now))" } ?? ""
-                return ("Last try failed\(when): \(lastError)", true)
+                if let lastErrorAt {
+                    let when = Format.timeAgo(lastErrorAt, now: now)
+                    return (String(localized: "Last try failed \(when): \(lastError)"), true)
+                }
+                return (String(localized: "Last try failed: \(lastError)"), true)
             }
             if let lastSuccessAt {
-                return ("Last delivered \(Format.timeAgo(lastSuccessAt, now: now))", false)
+                let when = Format.timeAgo(lastSuccessAt, now: now)
+                return (String(localized: "Last delivered \(when)"), false)
             }
             return nil
         }

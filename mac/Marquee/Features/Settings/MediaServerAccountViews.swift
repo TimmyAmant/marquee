@@ -71,7 +71,7 @@ struct LinkedAccountsCard: View {
         .sheet(isPresented: $linkingJellyfin) {
             JellyfinLinkSheet { linked in
                 if linked {
-                    notice = "Your \(model.session.serverInfo.jellyfinName) account is linked."
+                    notice = String(localized: "Your \(model.session.serverInfo.jellyfinName) account is linked.")
                     model.refreshViewer()
                 }
             }
@@ -90,15 +90,15 @@ struct LinkedAccountsCard: View {
     /// Single sign-on's row: `name` is nil once it's been turned off (then
     /// it can only be unlinked).
     private func ssoRow(name: String?, linked: Bool) -> some View {
-        let label = name ?? "Single sign-on"
+        let label = name ?? String(localized: "Single sign-on")
         return HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.system(size: 13.5))
                     .foregroundStyle(Theme.textPrimary)
                 Text(linked
-                     ? "Linked: you can sign in with your \(label) account."
-                     : (name != nil ? "Not linked." : "Single sign-on isn't set up on this server."))
+                     ? String(localized: "Linked: you can sign in with your \(label) account.")
+                     : (name != nil ? String(localized: "Not linked.") : String(localized: "Single sign-on isn't set up on this server.")))
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textMuted)
             }
@@ -128,13 +128,13 @@ struct LinkedAccountsCard: View {
                 let start = try await api.links.ssoStart()
                 // Only https, or the server's own address — never anything else.
                 guard let url = start.url(server: server) else {
-                    throw APIError.server("Your Marquee server sent a sign-in link this app couldn't open.")
+                    throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
                 }
                 openURL(url)
                 _ = try await PlexPoll.run(expiresAt: start.expiresAt, expired: .ssoExpired) {
                     try await api.links.ssoPoll(handle: start.handle) ? true : nil
                 }
-                notice = "\(name) is linked. You can sign in with it now."
+                notice = String(localized: "\(name) is linked. You can sign in with it now.")
                 model.refreshViewer()
             } catch where PlexPoll.isCancellation(error) {
                 return
@@ -161,7 +161,7 @@ struct LinkedAccountsCard: View {
         Task {
             do {
                 try await api.links.unlinkSso()
-                notice = "\(label) is unlinked."
+                notice = String(localized: "\(label) is unlinked.")
                 model.refreshViewer()
             } catch {
                 self.error = error.localizedDescription
@@ -184,8 +184,8 @@ struct LinkedAccountsCard: View {
                     .font(.system(size: 13.5))
                     .foregroundStyle(Theme.textPrimary)
                 Text(linked
-                     ? "Linked: you can sign in with your \(label) account."
-                     : (offered ? "Not linked." : "\(label) isn't connected to this server."))
+                     ? String(localized: "Linked: you can sign in with your \(label) account.")
+                     : (offered ? String(localized: "Not linked.") : String(localized: "\(label) isn't connected to this server.")))
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textMuted)
             }
@@ -222,13 +222,13 @@ struct LinkedAccountsCard: View {
             do {
                 let start = try await api.links.plexStart()
                 guard let url = start.url else {
-                    throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
+                    throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
                 }
                 openURL(url)
                 _ = try await PlexPoll.run(expiresAt: start.expiresAt) {
                     try await api.links.plexPoll(handle: start.handle) ? true : nil
                 }
-                notice = "Your Plex account is linked."
+                notice = String(localized: "Your Plex account is linked.")
                 model.refreshViewer()
             } catch where PlexPoll.isCancellation(error) {
                 return
@@ -254,7 +254,7 @@ struct LinkedAccountsCard: View {
         Task {
             do {
                 try await api.links.unlink(server)
-                notice = "Your \(model.session.serverInfo.label(for: server)) account is unlinked."
+                notice = String(localized: "Your \(model.session.serverInfo.label(for: server)) account is unlinked.")
                 model.refreshViewer()
             } catch {
                 self.error = error.localizedDescription
@@ -302,7 +302,7 @@ struct PlexWatchlistCard: View {
                 }
                 Spacer()
                 if state.enabled {
-                    TonePill(text: "On", tone: .owned, small: true)
+                    TonePill(text: String(localized: "On"), tone: .owned, small: true)
                 } else if approval == nil {
                     Button("Turn on") { turnOn() }
                         .buttonStyle(OutlineButtonStyle(compact: true))
@@ -386,7 +386,7 @@ struct PlexWatchlistCard: View {
             do {
                 let start = try await api.plexWatchlist.start()
                 guard let url = start.url else {
-                    throw APIError.server("Your Marquee server sent a Plex sign-in link this app couldn't open.")
+                    throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
                 }
                 openURL(url)
                 state = try await PlexPoll.run(expiresAt: start.expiresAt) {
@@ -442,8 +442,8 @@ private struct JellyfinLinkSheet: View {
             Text("Sign in with your \(name) account to use it for Marquee too.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
-            SettingsField(label: "\(name) username", text: $username)
-            SettingsField(label: "\(name) password", text: $password, secure: true)
+            SettingsField(label: String(localized: "\(name) username"), text: $username)
+            SettingsField(label: String(localized: "\(name) password"), text: $password, secure: true)
             if let error { InlineMessage(text: error) }
             HStack {
                 Spacer()
@@ -467,7 +467,7 @@ private struct JellyfinLinkSheet: View {
     private func save() {
         let username = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !username.isEmpty, !password.isEmpty else {
-            error = "Enter your \(name) username and password."
+            error = String(localized: "Enter your \(name) username and password.")
             return
         }
         pending = true
@@ -630,7 +630,7 @@ private struct ImportMembersSheet: View {
                 Button(result == nil ? "Cancel" : "Done") { dismiss() }
                     .buttonStyle(OutlineButtonStyle())
                     .keyboardShortcut(.cancelAction)
-                Button(pending ? "Importing…" : (selected.isEmpty ? "Import" : "Import \(selected.count)")) { importSelected() }
+                Button(pending ? String(localized: "Importing…") : (selected.isEmpty ? String(localized: "Import") : String(localized: "Import \(selected.count)"))) { importSelected() }
                     .buttonStyle(AccentButtonStyle())
                     .keyboardShortcut(.defaultAction)
                     .disabled(pending || selected.isEmpty)
@@ -665,7 +665,7 @@ private struct ImportMembersSheet: View {
             .disabled(candidate.alreadyMember || pending)
             Spacer()
             if candidate.alreadyMember {
-                TonePill(text: "Already a member", tone: .neutral, small: true)
+                TonePill(text: String(localized: "Already a member"), tone: .neutral, small: true)
             }
         }
     }
@@ -703,7 +703,9 @@ private struct ImportMembersSheet: View {
     }
 
     static func summary(created: Int, skipped: Int) -> String {
-        let made = created == 1 ? "Imported 1 member." : "Imported \(created) members."
-        return skipped > 0 ? "\(made) \(skipped) skipped (already members, or couldn't be added)." : made
+        let made = String(localized: "Imported \(created) members.")
+        guard skipped > 0 else { return made }
+        let notAdded = String(localized: "\(skipped) skipped (already members, or couldn't be added).")
+        return "\(made) \(notAdded)"
     }
 }

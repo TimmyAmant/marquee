@@ -1,3 +1,4 @@
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 // One place that decides what color each library status wears, so the poster
 // corner badge, the strip along a poster's bottom edge, the search
 // suggestion pill, the title page's status capsule and the color key all
@@ -63,46 +64,60 @@ export function statusTone(status: LibraryStatus | null | undefined): StatusTone
   }
 }
 
+type StatusText = { label: string; compactLabel: string; name: string; meaning: string };
+
 /** `label` is the title page's capsule, `compactLabel` the poster corner
  * badge, `name` the short name lists and the color key use. */
-export const STATUS_TEXT: Record<LibraryStatus, { label: string; compactLabel: string; name: string; meaning: string }> = {
+const STATUS_TEXT_KEYS: Record<LibraryStatus, Record<keyof StatusText, MessageKey>> = {
   owned: {
-    label: "Already in your library",
-    compactLabel: "Owned",
-    name: "In your library",
-    meaning: "The file is in your library, ready to watch.",
+    label: "title.statusOwnedLabel",
+    compactLabel: "title.statusOwnedCompact",
+    name: "title.statusOwnedName",
+    meaning: "title.statusOwnedMeaning",
   },
   tracked_downloading: {
-    label: "Downloading",
-    compactLabel: "Downloading",
-    name: "Downloading",
-    meaning: "It's downloading or queued right now.",
+    label: "title.statusDownloadingName",
+    compactLabel: "title.statusDownloadingName",
+    name: "title.statusDownloadingName",
+    meaning: "title.statusDownloadingMeaning",
   },
   tracked_monitored: {
-    label: "Missing",
-    compactLabel: "Missing",
-    name: "Missing",
-    meaning: "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.",
+    label: "title.statusMissingName",
+    compactLabel: "title.statusMissingName",
+    name: "title.statusMissingName",
+    meaning: "title.statusMissingMeaning",
   },
   tracked_unmonitored: {
-    label: "Not monitored",
-    compactLabel: "Not monitored",
-    name: "Not monitored",
-    meaning: "In Sonarr/Radarr but not monitored — it won't download on its own.",
+    label: "title.statusUnmonitoredName",
+    compactLabel: "title.statusUnmonitoredName",
+    name: "title.statusUnmonitoredName",
+    meaning: "title.statusUnmonitoredMeaning",
   },
   coming_soon: {
-    label: "Coming soon",
-    compactLabel: "Coming soon",
-    name: "Coming soon",
-    meaning: "Added, but it hasn't been released yet.",
+    label: "title.statusComingSoonName",
+    compactLabel: "title.statusComingSoonName",
+    name: "title.statusComingSoonName",
+    meaning: "title.statusComingSoonMeaning",
   },
   untracked: {
-    label: "Not in your library",
-    compactLabel: "Not owned",
-    name: "Not in your library",
-    meaning: "Not added yet. Posters get no colored strip.",
+    label: "title.statusUntrackedName",
+    compactLabel: "title.statusUntrackedCompact",
+    name: "title.statusUntrackedName",
+    meaning: "title.statusUntrackedMeaning",
   },
 };
+
+/** A status this build knows (a newer server may send one it doesn't). */
+export function isLibraryStatus(value: unknown): value is LibraryStatus {
+  return typeof value === "string" && (LIBRARY_STATUSES as readonly string[]).includes(value);
+}
+
+/** A library status in words, in the page's language; an unknown one reads
+ * as "Not in your library". */
+export function statusText(t: Translator, status: LibraryStatus | null | undefined): StatusText {
+  const keys = STATUS_TEXT_KEYS[isLibraryStatus(status) ? status : "untracked"];
+  return { label: t(keys.label), compactLabel: t(keys.compactLabel), name: t(keys.name), meaning: t(keys.meaning) };
+}
 
 type ToneClasses = {
   /** Tinted capsule: background, text and border (badges, pills). */
@@ -143,4 +158,6 @@ export function statusClasses(status: LibraryStatus | null | undefined): ToneCla
 }
 
 /** The one-line note under every color key and on the help page. */
-export const STATUS_COLORS_NOTE = "Same colors as Radarr and Sonarr.";
+export function statusColorsNote(t: Translator): string {
+  return t("title.statusColorsNote");
+}

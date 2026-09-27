@@ -55,7 +55,8 @@ final class CommentThreadModel {
     /// "150 left", once the draft is within 200 of the limit.
     var remainingLabel: String? {
         let used = draft.unicodeScalars.count
-        return used > maxLength - 200 ? "\(maxLength - used) left" : nil
+        let remaining = maxLength - used
+        return used > maxLength - 200 ? String(localized: "\(remaining) left", comment: "Characters left in a comment") : nil // i18n-ignore
     }
 
     func load(_ api: MarqueeAPI) async {
@@ -67,7 +68,7 @@ final class CommentThreadModel {
         } catch let failure as APIError where failure.isCancellation {
             return
         } catch APIError.notFound {
-            if thread == nil { loadError = "This conversation isn't available." }
+            if thread == nil { loadError = String(localized: "This conversation isn't available.") }
         } catch {
             if thread == nil { loadError = error.localizedDescription }
         }
@@ -129,7 +130,7 @@ final class CommentThreadModel {
 
     /// `APIError.forbidden` carries no text of its own ("Only an admin can
     /// do that."), so a 403 on a comment says what the server's does.
-    nonisolated static let tooLateMessage = "Comments can only be changed for 15 minutes after posting."
+    nonisolated static let tooLateMessage = String(localized: "Comments can only be changed for 15 minutes after posting.")
 
     nonisolated static func message(for error: any Error) -> String {
         if let failure = error as? APIError, failure == .forbidden { return tooLateMessage }
@@ -146,8 +147,8 @@ final class CommentThreadModel {
     /// The toggle's label: "Comment" with none yet, "Comments (2)", and
     /// "Hide comments" while it's open.
     nonisolated static func toggleLabel(count: Int, isOpen: Bool) -> String {
-        if isOpen { return "Hide comments" }
-        return count == 0 ? "Comment" : "Comments (\(count))"
+        if isOpen { return String(localized: "Hide comments") }
+        return count == 0 ? String(localized: "Comment") : String(localized: "Comments (\(count))")
     }
 }
 
@@ -217,7 +218,7 @@ struct CommentThreadPanel: View {
 
     private var composer: some View {
         VStack(alignment: .leading, spacing: 6) {
-            CommentTextEditor(text: $thread.draft, placeholder: "Write a comment", height: 56)
+            CommentTextEditor(text: $thread.draft, placeholder: String(localized: "Write a comment"), height: 56)
                 .disabled(thread.isSending)
             HStack {
                 if let remaining = thread.remainingLabel {
@@ -302,7 +303,7 @@ private struct CommentItemView: View {
             Text(comment.headerParts.joined(separator: " · "))
                 .font(.system(size: 11.5))
                 .foregroundStyle(Theme.textMuted)
-                .help(comment.editedAt.map { "Edited \(Format.dateTime($0))" } ?? "")
+                .help(comment.editedAt.map { String(localized: "Edited \(Format.dateTime($0))") } ?? "")
         }
     }
 
@@ -350,6 +351,6 @@ private struct CommentTextEditor: View {
                         .allowsHitTesting(false)
                 }
             }
-            .accessibilityLabel(placeholder.isEmpty ? "Comment" : placeholder)
+            .accessibilityLabel(placeholder.isEmpty ? String(localized: "Comment") : placeholder)
     }
 }

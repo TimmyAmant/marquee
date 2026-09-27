@@ -48,6 +48,9 @@ export type AuthenticatedToken = {
     permissions: string[];
     avatarUpdatedAt: Date | null;
     createdAt: Date;
+    /** The account's chosen language (lib/i18n), null to follow the
+     * app's Accept-Language. */
+    language: string | null;
   };
 };
 
@@ -72,6 +75,7 @@ export async function authenticateApiToken(token: string): Promise<Authenticated
       permissions: users.permissions,
       avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
+      language: users.language,
       lastActiveAt: users.lastActiveAt,
     })
     .from(apiTokens)
@@ -116,6 +120,7 @@ export async function authenticateApiToken(token: string): Promise<Authenticated
       permissions: row.permissions,
       avatarUpdatedAt: row.avatarUpdatedAt,
       createdAt: row.createdAt,
+      language: row.language,
     },
   };
 }

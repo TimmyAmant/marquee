@@ -5,6 +5,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { MediaList } from "@/components/media-list";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadCompanyPage } from "@/lib/pages/entities";
+import { getT } from "@/lib/i18n/server";
 
 export default async function CompanyPage({
   params,
@@ -16,6 +17,7 @@ export default async function CompanyPage({
   if (!Number.isFinite(tmdbId)) notFound();
 
   const viewer = await getViewerContext();
+  const t = await getT();
   // Shared with GET /api/v1/companies/[id].
   const data = await loadCompanyPage(viewer, tmdbId);
   if (!data) notFound();
@@ -44,7 +46,7 @@ export default async function CompanyPage({
             showSearch
             showTypeFilter
             arrConfigured={arrConfigured}
-            emptyMessage="No titles found for this studio yet."
+            emptyMessage={t("discover.emptyStudio")}
             favoritedKeys={favoritedKeys}
             showFavorite={Boolean(viewer.session)}
           />

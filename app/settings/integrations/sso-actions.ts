@@ -9,16 +9,19 @@ import {
   type SsoSettingsView,
   type SsoTestResult,
 } from "@/lib/auth/sso/config";
+import { getT } from "@/lib/i18n/server";
 
 // Settings → Integrations' single sign-on card (admin) — the same operations
 // as /api/v1/settings/sso (lib/auth/sso/config.ts).
 
-const FORBIDDEN = "Only the admin can change sign-in settings.";
+async function forbidden(): Promise<string> {
+  return (await getT())("integrations.adminOnlySignIn");
+}
 
 export type SsoSaveState = { error?: string; success?: boolean; settings?: SsoSettingsView };
 
 export async function saveSsoSettingsAction(_prev: SsoSaveState | undefined, formData: FormData): Promise<SsoSaveState> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { error: admin.error };
   const text = (key: string) => {
     const value = formData.get(key);
@@ -44,14 +47,14 @@ export async function saveSsoSettingsAction(_prev: SsoSaveState | undefined, for
 }
 
 export async function testSsoIssuerAction(issuer: string): Promise<{ result?: SsoTestResult; error?: string }> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { error: admin.error };
   const tested = await testSsoIssuer(issuer);
   return tested.ok ? { result: tested.result } : { error: tested.error };
 }
 
 export async function removeSsoSettingsAction(): Promise<{ error?: string; success?: boolean }> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { error: admin.error };
   await removeSsoSettings();
   revalidatePath("/settings", "layout");

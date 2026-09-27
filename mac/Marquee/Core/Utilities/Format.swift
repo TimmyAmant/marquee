@@ -3,19 +3,25 @@ import Foundation
 /// Port of lib/format.ts.
 enum Format {
     static func bytes(_ bytes: Int64?) -> String {
-        guard let bytes, bytes > 0 else { return "0 B" }
-        let units = ["B", "KB", "MB", "GB", "TB"]
-        let exponent = min(Int(floor(log(Double(bytes)) / log(1024))), units.count - 1)
+        guard let bytes, bytes > 0 else { return String(localized: "0 B") }
+        let exponent = min(Int(floor(log(Double(bytes)) / log(1024))), 4)
         let value = Double(bytes) / pow(1024, Double(exponent))
-        return String(format: "%.1f %@", value, units[exponent])
+        let number = value.formatted(.number.precision(.fractionLength(1)).grouping(.never))
+        switch exponent {
+        case 0: return String(localized: "\(number) B")
+        case 1: return String(localized: "\(number) KB")
+        case 2: return String(localized: "\(number) MB")
+        case 3: return String(localized: "\(number) GB")
+        default: return String(localized: "\(number) TB")
+        }
     }
 
     static func runtime(minutes: Int) -> String {
         let hours = minutes / 60
         let mins = minutes % 60
-        if hours == 0 { return "\(mins)m" }
-        if mins == 0 { return "\(hours)h" }
-        return "\(hours)h \(mins)m"
+        if hours == 0 { return String(localized: "\(mins)m") }
+        if mins == 0 { return String(localized: "\(hours)h") }
+        return String(localized: "\(hours)h \(mins)m")
     }
 
     /// "US" → 🇺🇸 via regional indicator symbols.
@@ -36,9 +42,10 @@ enum Format {
 
     private static let longDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US")
+        formatter.locale = .autoupdatingCurrent
         formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.dateFormat = "MMMM d, yyyy"
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
         return formatter
     }()
 
@@ -54,10 +61,10 @@ enum Format {
         return longDateFormatter.string(from: date)
     }
 
-    /// "en" → "English" via the system's own locale data.
+    /// "en" → "English" (in the app's language) via the system's own locale data.
     static func languageLabel(_ code: String?) -> String? {
         guard let code, !code.isEmpty else { return nil }
-        return Locale(identifier: "en").localizedString(forLanguageCode: code) ?? code.uppercased()
+        return Locale.current.localizedString(forLanguageCode: code) ?? code.uppercased()
     }
 
     static func year(_ string: String?) -> String? {
@@ -77,21 +84,21 @@ enum Format {
     /// notifications-bell.tsx timeAgo.
     static func timeAgo(_ date: Date, now: Date = Date()) -> String {
         let seconds = Int(now.timeIntervalSince(date))
-        if seconds < 60 { return "just now" }
+        if seconds < 60 { return String(localized: "just now") }
         let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m ago" }
+        if minutes < 60 { return String(localized: "\(minutes)m ago") }
         let hours = minutes / 60
-        if hours < 24 { return "\(hours)h ago" }
-        return "\(hours / 24)d ago"
+        if hours < 24 { return String(localized: "\(hours)h ago") }
+        let days = hours / 24
+        return String(localized: "\(days)d ago")
     }
 
     /// changelog-list.tsx daysAgo.
     static func daysAgo(_ isoDate: String, now: Date = Date()) -> String {
         guard let date = isoDay(isoDate) else { return isoDate }
         let days = max(0, Int(now.timeIntervalSince(date) / 86_400))
-        if days == 0 { return "Today" }
-        if days == 1 { return "1 day ago" }
-        return "\(days) days ago"
+        if days == 0 { return String(localized: "Today") }
+        return String(localized: "\(days) days ago")
     }
 
     static func todayISO(_ date: Date = Date()) -> String {
@@ -146,19 +153,20 @@ enum TitleMeta {
     }
 
     static func relabelTvStatus(_ status: String?) -> String? {
-        status == "Returning Series" ? "Continuing" : status
+        status == "Returning Series" ? String(localized: "Continuing") : status // i18n-ignore
     }
 
     static func movieCredits(_ crew: [(id: Int, name: String, job: String, department: String)]) -> [CreditEntry] {
         var seen = Set<Int>()
         var entries: [CreditEntry] = []
-        for member in crew where member.job == "Director" && !seen.contains(member.id) {
-            entries.append(CreditEntry(role: "Director", name: member.name))
+        for member in crew where member.job == "Director" && !seen.contains(member.id) { // i18n-ignore
+            entries.append(CreditEntry(role: String(localized: "Director"), name: member.name))
             seen.insert(member.id)
         }
         for member in crew where !seen.contains(member.id) {
-            if member.department == "Writing" && (member.job == "Screenplay" || member.job == "Writer") {
-                entries.append(CreditEntry(role: member.job, name: member.name))
+            if member.department == "Writing" && (member.job == "Screenplay" || member.job == "Writer") { // i18n-ignore
+                let role = member.job == "Screenplay" ? String(localized: "Screenplay") : String(localized: "Writer") // i18n-ignore
+                entries.append(CreditEntry(role: role, name: member.name))
                 seen.insert(member.id)
             }
         }
@@ -172,11 +180,11 @@ enum TitleMeta {
         var seen = Set<Int>()
         var entries: [CreditEntry] = []
         for person in createdBy where !seen.contains(person.id) {
-            entries.append(CreditEntry(role: "Creator", name: person.name))
+            entries.append(CreditEntry(role: String(localized: "Creator"), name: person.name))
             seen.insert(person.id)
         }
-        for member in crew where member.job == "Executive Producer" && !seen.contains(member.id) {
-            entries.append(CreditEntry(role: "Executive Producer", name: member.name))
+        for member in crew where member.job == "Executive Producer" && !seen.contains(member.id) { // i18n-ignore
+            entries.append(CreditEntry(role: String(localized: "Executive Producer"), name: member.name))
             seen.insert(member.id)
         }
         return Array(entries.prefix(6))

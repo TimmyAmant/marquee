@@ -1,4 +1,5 @@
 import type { UserRole } from "@/lib/db/schema";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 // Per-member permissions: the switches the admin sets in the household
 // member editor. The one place that answers "may this account do X" is
@@ -152,14 +153,15 @@ export function roleForPermissions(permissions: readonly string[]): "member" | "
  * Pure. */
 export function parsePermissionChanges(
   input: unknown,
+  t: Translator,
 ): { ok: true; changes: Partial<PermissionMap> } | { ok: false; error: string } {
   if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    return { ok: false, error: "Permissions are an object of switches, like { \"requestTv\": false }." };
+    return { ok: false, error: t("server.permissionsShape", { example: '{ "requestTv": false }' }) };
   }
   const changes: Partial<PermissionMap> = {};
   for (const [key, value] of Object.entries(input)) {
-    if (!isPermission(key)) return { ok: false, error: `There's no permission called “${key.slice(0, 40)}”.` };
-    if (typeof value !== "boolean") return { ok: false, error: `“${key}” is true or false.` };
+    if (!isPermission(key)) return { ok: false, error: t("server.noSuchPermission", { name: key.slice(0, 40) }) };
+    if (typeof value !== "boolean") return { ok: false, error: t("server.permissionTrueOrFalse", { name: key }) };
     changes[key] = value;
   }
   return { ok: true, changes };
@@ -175,60 +177,80 @@ export function applyPermissionChanges(current: readonly string[], changes: Part
   return normalizePermissions(next);
 }
 
-/** Plain-language labels and descriptions, grouped as the member editor
- * shows them (the apps carry the same words). */
+/** Plain-language labels and descriptions (message keys, lib/i18n),
+ * grouped as the member editor shows them (the apps carry the same words). */
 export const PERMISSION_GROUPS: {
-  title: string;
-  items: { permission: Permission; label: string; description: string }[];
+  id: "requests" | "autoApprove" | "helping";
+  title: MessageKey;
+  items: { permission: Permission; label: MessageKey; description: MessageKey }[];
 }[] = [
   {
-    title: "Requests",
+    id: "requests",
+    title: "settings.permGroupRequests",
     items: [
-      { permission: "requestMovies", label: "Request movies", description: "Ask for movies to be added." },
-      { permission: "requestTv", label: "Request TV", description: "Ask for shows, or some of their seasons, to be added." },
-      { permission: "request4kMovies", label: "Request 4K movies", description: "Ask for the 4K copy of a movie, once there's a 4K Radarr." },
-      { permission: "request4kTv", label: "Request 4K TV", description: "Ask for the 4K copy of a show, once there's a 4K Sonarr." },
-      {
-        permission: "advancedRequests",
-        label: "Advanced request options",
-        description: "Pick the server, quality profile, folder and tags when asking for or approving a title.",
-      },
-      { permission: "bypassLimits", label: "No request limits", description: "Request limits don't apply to them." },
+      { permission: "requestMovies", label: "settings.permRequestMovies", description: "settings.permRequestMoviesHelp" },
+      { permission: "requestTv", label: "settings.permRequestTv", description: "settings.permRequestTvHelp" },
+      { permission: "request4kMovies", label: "settings.permRequest4kMovies", description: "settings.permRequest4kMoviesHelp" },
+      { permission: "request4kTv", label: "settings.permRequest4kTv", description: "settings.permRequest4kTvHelp" },
+      { permission: "advancedRequests", label: "settings.permAdvancedRequests", description: "settings.permAdvancedRequestsHelp" },
+      { permission: "bypassLimits", label: "settings.permBypassLimits", description: "settings.permBypassLimitsHelp" },
     ],
   },
   {
-    title: "Approved straight away",
+    id: "autoApprove",
+    title: "settings.permGroupAutoApprove",
     items: [
-      { permission: "autoApproveMovies", label: "Movies", description: "Their movie requests skip the review queue." },
-      { permission: "autoApproveTv", label: "TV", description: "Their TV requests skip the review queue." },
-      { permission: "autoApprove4kMovies", label: "4K movies", description: "Their 4K movie requests skip the review queue." },
-      { permission: "autoApprove4kTv", label: "4K TV", description: "Their 4K TV requests skip the review queue." },
+      { permission: "autoApproveMovies", label: "settings.permAutoApproveMovies", description: "settings.permAutoApproveMoviesHelp" },
+      { permission: "autoApproveTv", label: "settings.permAutoApproveTv", description: "settings.permAutoApproveTvHelp" },
+      { permission: "autoApprove4kMovies", label: "settings.permAutoApprove4kMovies", description: "settings.permAutoApprove4kMoviesHelp" },
+      { permission: "autoApprove4kTv", label: "settings.permAutoApprove4kTv", description: "settings.permAutoApprove4kTvHelp" },
     ],
   },
   {
-    title: "Helping run things",
+    id: "helping",
+    title: "settings.permGroupHelping",
     items: [
-      { permission: "viewRequests", label: "See everyone's requests", description: "The Requests page lists what everyone has asked for." },
-      {
-        permission: "reviewRequests",
-        label: "Review requests",
-        description: "Approve, decline and change other people's requests, and handle Can't find and Couldn't add.",
-      },
-      { permission: "manageIssues", label: "Handle problem reports", description: "See everyone's problem reports and mark them fixed." },
-      { permission: "reportIssues", label: "Report problems", description: "Tell you when something's wrong with a title." },
-      { permission: "manageBlocklist", label: "Manage the blocklist", description: "Choose titles nobody can request." },
+      { permission: "viewRequests", label: "settings.permViewRequests", description: "settings.permViewRequestsHelp" },
+      { permission: "reviewRequests", label: "settings.permReviewRequests", description: "settings.permReviewRequestsHelp" },
+      { permission: "manageIssues", label: "settings.permManageIssues", description: "settings.permManageIssuesHelp" },
+      { permission: "reportIssues", label: "settings.permReportIssues", description: "settings.permReportIssuesHelp" },
+      { permission: "manageBlocklist", label: "settings.permManageBlocklist", description: "settings.permManageBlocklistHelp" },
     ],
   },
 ];
 
-/** "Review requests" — the label the member editor shows. */
-export function permissionLabel(permission: Permission): string {
-  for (const group of PERMISSION_GROUPS) {
-    const item = group.items.find((i) => i.permission === permission);
-    if (item) return group.title === "Approved straight away" ? `Auto-approve ${item.label.toLowerCase()}` : item.label;
-  }
-  return permission;
+/** A permission's name on its own, out of its group ("Auto-approve 4K
+ * movies" where the editor's group says just "4K movies"). */
+const PERMISSION_NAMES: Record<Permission, MessageKey> = {
+  requestMovies: "settings.permRequestMovies",
+  requestTv: "settings.permRequestTv",
+  request4kMovies: "settings.permRequest4kMovies",
+  request4kTv: "settings.permRequest4kTv",
+  autoApproveMovies: "settings.permAutoApproveMoviesName",
+  autoApproveTv: "settings.permAutoApproveTvName",
+  autoApprove4kMovies: "settings.permAutoApprove4kMoviesName",
+  autoApprove4kTv: "settings.permAutoApprove4kTvName",
+  advancedRequests: "settings.permAdvancedRequests",
+  viewRequests: "settings.permViewRequests",
+  reviewRequests: "settings.permReviewRequests",
+  manageIssues: "settings.permManageIssues",
+  reportIssues: "settings.permReportIssues",
+  manageBlocklist: "settings.permManageBlocklist",
+  bypassLimits: "settings.permBypassLimits",
+};
+
+/** "Review requests" — a permission's name in `t`'s language. */
+export function permissionLabel(permission: Permission, t: Translator): string {
+  return t(PERMISSION_NAMES[permission]);
 }
+
+/** "Member", "Trusted", "Custom", "Admin". */
+export const PERMISSION_PRESET_LABELS: Record<PermissionPreset, MessageKey> = {
+  admin: "settings.presetAdmin",
+  member: "settings.presetMember",
+  trusted: "settings.presetTrusted",
+  custom: "settings.presetCustom",
+};
 
 /** The columns a (non-admin) account's switches are stored in: the list
  * itself, the role that goes with it (roleForPermissions), and the old

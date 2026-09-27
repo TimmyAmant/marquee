@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 // See the matching constant in lib/discord/client.ts, lib/webhook/client.ts —
 // a slow/unreachable server shouldn't be able to hang a request.
 const REQUEST_TIMEOUT_MS = 8000;
@@ -33,5 +34,7 @@ export async function sendNtfyMessage(topicUrl: string, title: string, message: 
 }
 
 export async function verifyNtfyUrl(topicUrl: string): Promise<boolean> {
-  return postToNtfy(topicUrl, "Marquee", "Marquee is now connected to this topic.").catch(() => false);
+  // Whoever is setting it up reads it.
+  const t = await getT();
+  return postToNtfy(topicUrl, "Marquee", t("notify.connectedNtfy")).catch(() => false);
 }

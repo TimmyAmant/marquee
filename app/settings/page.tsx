@@ -7,6 +7,8 @@ import { SignOutButton } from "./sign-out-button";
 import { PushSettings } from "./push-settings";
 import { PersonalNotifications } from "./personal-notifications";
 import { RailPositionSetting } from "./rail-position-setting";
+import { LanguageSetting } from "./language-setting";
+import { storedLanguage } from "@/lib/users/language";
 import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
@@ -22,6 +24,7 @@ import { avatarPath } from "@/lib/users/avatar-path";
 import { parseSsoErrorCode, ssoErrorMessage } from "@/lib/auth/sso/messages";
 import { can } from "@/lib/users/permissions";
 import { TraktSyncsCard } from "./trakt-syncs";
+import { getT } from "@/lib/i18n/server";
 import { loadTraktSyncs } from "@/lib/trakt/sync";
 
 export default async function AccountSettingsPage({
@@ -31,6 +34,7 @@ export default async function AccountSettingsPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const t = await getT();
 
   const isAdmin = session.user.role === "admin";
   // The blocklist can be handed to a member (lib/users/permissions.ts).
@@ -52,19 +56,17 @@ export default async function AccountSettingsPage({
   const ssoError = parseSsoErrorCode(ssoParam);
   const ssoMessage =
     ssoParam === "linked"
-      ? { ok: true, text: `${ssoName ?? "Single sign-on"} is linked. You can sign in with it now.` }
+      ? { ok: true, text: t("settings.ssoLinked", { name: ssoName ?? t("settings.singleSignOn") }) }
       : ssoError
-        ? { ok: false, text: ssoErrorMessage(ssoError, ssoName ?? "single sign-on") }
+        ? { ok: false, text: ssoErrorMessage(ssoError, ssoName, t) }
         : null;
   // Your own row is always in the list (members see only theirs).
   const me = members.find((member) => member.id === session.user.id);
 
   return (
     <div>
-      <h2 className="font-display text-xl text-text-primary">Account</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        Your Marquee account details.
-      </p>
+      <h2 className="font-display text-xl text-text-primary">{t("settings.accountHeading")}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{t("settings.accountIntro")}</p>
 
       <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
         <div className="flex flex-col gap-4 text-sm">
@@ -74,11 +76,11 @@ export default async function AccountSettingsPage({
             size={56}
           />
           <div>
-            <p className="text-text-muted">Name</p>
+            <p className="text-text-muted">{t("settings.nameLabel")}</p>
             <p className="mt-1 text-text-primary">{session.user.name || "—"}</p>
           </div>
           <div>
-            <p className="text-text-muted">Username</p>
+            <p className="text-text-muted">{t("settings.usernameLabel")}</p>
             <p className="mt-1 text-text-primary">{session.user.username}</p>
           </div>
         </div>
@@ -96,10 +98,8 @@ export default async function AccountSettingsPage({
 
       {me && (available.plex || available.jellyfin || ssoName || me.plexLinked || me.jellyfinLinked || me.ssoLinked) && (
         <>
-          <h2 className="mt-10 font-display text-xl text-text-primary">Linked accounts</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Sign in with the account you use for the household&apos;s media server or single sign-on.
-          </p>
+          <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.linkedAccountsHeading")}</h2>
+          <p className="mt-2 text-sm text-text-secondary">{t("settings.linkedAccountsIntro")}</p>
           <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
             <LinkedAccounts
               linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked, sso: me.ssoLinked }}
@@ -117,34 +117,33 @@ export default async function AccountSettingsPage({
         </>
       )}
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">Trakt lists</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        Request what&apos;s added to your public Trakt watchlist or lists.
-      </p>
+      <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.traktListsHeading")}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{t("settings.traktListsIntro")}</p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <TraktSyncsCard initial={traktSyncs} currentUserId={session.user.id} />
       </div>
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">Notifications</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        Requests approved or declined, and titles ready to watch, on this device.
-      </p>
+      <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.notificationsHeading")}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{t("settings.notificationsIntro")}</p>
       <PushSettings />
       <PersonalNotifications />
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">Appearance</h2>
-      <p className="mt-2 text-sm text-text-secondary">How Marquee looks on this device.</p>
+      <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.appearanceHeading")}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{t("settings.appearanceIntro")}</p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <RailPositionSetting initial={railPosition} />
+        <div className="border-t border-border">
+          <LanguageSetting initial={storedLanguage(session.user.language)} />
+        </div>
       </div>
 
       <h2 className="mt-10 font-display text-xl text-text-primary">
-        {isAdmin ? "Household members" : "Your account"}
+        {isAdmin ? t("settings.householdMembersHeading") : t("settings.yourAccountHeading")}
       </h2>
       <p className="mt-2 text-sm text-text-secondary">
         {isAdmin
-          ? "Everyone with an account on this Marquee instance."
-          : "Edit your name, username, or password below."}
+          ? t("settings.householdMembersIntro")
+          : t("settings.yourAccountIntro")}
       </p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} jellyfinName={methods.jellyfinName} />
@@ -152,22 +151,16 @@ export default async function AccountSettingsPage({
 
       {isAdmin && (
         <>
-          <h2 className="mt-10 font-display text-xl text-text-primary">Add a household member</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            There&apos;s no public signup page — create accounts for other people in your
-            household here.
-          </p>
+          <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.addMemberHeading")}</h2>
+          <p className="mt-2 text-sm text-text-secondary">{t("settings.addMemberIntro")}</p>
           <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
             <CreateUserForm />
           </div>
 
           {(available.plex || available.jellyfin) && (
             <>
-              <h2 className="mt-10 font-display text-xl text-text-primary">Import from your media server</h2>
-              <p className="mt-2 text-sm text-text-secondary">
-                Add the people you already share your server with. They sign in with that account — no
-                password to hand out.
-              </p>
+              <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.importHeading")}</h2>
+              <p className="mt-2 text-sm text-text-secondary">{t("settings.importIntro")}</p>
               <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
                 <ImportMembers
                   available={available}
@@ -182,10 +175,8 @@ export default async function AccountSettingsPage({
 
       {managesBlocklist && (
         <>
-          <h2 className="mt-10 font-display text-xl text-text-primary">Request blocklist</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Titles and keywords nobody can request. Block a single title from its page.
-          </p>
+          <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.blocklistHeading")}</h2>
+          <p className="mt-2 text-sm text-text-secondary">{t("settings.blocklistIntro")}</p>
           <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
             <BlocklistSettings entries={blocklist} />
           </div>

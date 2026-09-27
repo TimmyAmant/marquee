@@ -1,3 +1,6 @@
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 // Pushover: an application token (made at pushover.net/apps) and the user or
 // group key to deliver to. API: https://pushover.net/api#messages.
 
@@ -6,12 +9,12 @@ const REQUEST_TIMEOUT_MS = 8000;
 export type PushoverConfig = { appToken: string; userKey: string };
 
 /** Pure; unit tested. Both are 30 characters of letters and digits. */
-export function pushoverConfigError(config: { appToken: string; userKey: string }): string | null {
+export function pushoverConfigError(config: { appToken: string; userKey: string }, t: Translator = englishT()): string | null {
   if (!/^[A-Za-z0-9]{30}$/.test(config.appToken)) {
-    return "The application token is the 30-character code from your app's page on pushover.net.";
+    return t("notify.pushoverBadAppToken");
   }
   if (!/^[A-Za-z0-9]{30}$/.test(config.userKey)) {
-    return "The user key is the 30-character code at the top of your pushover.net dashboard (or a group key).";
+    return t("notify.pushoverBadUserKey");
   }
   return null;
 }
@@ -47,9 +50,11 @@ export async function sendPushoverMessage(config: PushoverConfig, title: string,
 /** Sends a test notification; the error is Pushover's own ("application
  * token is invalid", "user key is invalid"). */
 export async function verifyPushover(config: PushoverConfig): Promise<{ ok: true } | { ok: false; error: string }> {
-  return send(config, "Marquee", "Marquee is now connected to Pushover.").catch(() => ({
+  // Whoever is setting it up reads it.
+  const t = await getT();
+  return send(config, "Marquee", t("notify.connectedPushover")).catch(() => ({
     ok: false as const,
-    error: "Couldn't reach Pushover.",
+    error: t("notify.pushoverUnreachable"),
   }));
 }
 
@@ -58,6 +63,8 @@ export async function deliverPushover(
   config: PushoverConfig,
   title: string,
   message: string,
+  /** Whoever reads the reason. */
+  t: Translator = englishT(),
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  return send(config, title, message).catch(() => ({ ok: false as const, error: "Couldn't reach Pushover." }));
+  return send(config, title, message).catch(() => ({ ok: false as const, error: t("notify.pushoverUnreachable") }));
 }

@@ -18,13 +18,13 @@ struct AccountSettingsView: View {
     @State private var watchlist: API.PlexWatchlist?
 
     var body: some View {
-        SettingsPane(title: "Account", subtitle: "Your Marquee account details.") {
+        SettingsPane(title: String(localized: "Account"), subtitle: String(localized: "Your Marquee account details.")) {
             if let viewer = model.viewer {
                 VStack(alignment: .leading, spacing: 14) {
-                    detail("Name", viewer.displayName.nonBlank ?? "—")
-                    detail("Username", viewer.username)
-                    detail("Role", viewer.roleLabel)
-                    detail("Server", model.session.server?.displayName ?? "—")
+                    detail(String(localized: "Name"), viewer.displayName.nonBlank ?? "—")
+                    detail(String(localized: "Username"), viewer.username)
+                    detail(String(localized: "Role"), viewer.roleLabel)
+                    detail(String(localized: "Server"), model.session.server?.displayName ?? "—")
                     HStack(alignment: .bottom) {
                         // This Mac's own look: the theme, and which edge of
                         // the window the menu floats on.
@@ -51,6 +51,14 @@ struct AccountSettingsView: View {
                                 .labelsHidden()
                                 .frame(width: 280)
                             }
+                            // 0.50+: the account's language, the same one
+                            // the website uses; an older server can't keep one.
+                            if viewer.sendsLanguage {
+                                GridRow {
+                                    Text("Language")
+                                    LanguagePicker(viewer: viewer)
+                                }
+                            }
                         }
                         Spacer()
                         Button("Sign out") { model.signOut() }
@@ -63,7 +71,7 @@ struct AccountSettingsView: View {
 
                 // Servers with Plex/Jellyfin sign-in send `linked` on /me.
                 if viewer.linked != nil {
-                    SettingsSectionLabel(text: "Linked accounts")
+                    SettingsSectionLabel(text: String(localized: "Linked accounts"))
                     LinkedAccountsCard(viewer: viewer)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .cardSurface()
@@ -77,14 +85,14 @@ struct AccountSettingsView: View {
                 // 0.49+: keep public Trakt lists in sync (every account).
                 TraktSyncsSection()
 
-                SettingsSectionLabel(text: "Notifications")
+                SettingsSectionLabel(text: String(localized: "Notifications"))
                 NotificationSettingsCard()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardSurface()
                 // 0.45+: your own channels and what you hear about.
                 PersonalNotificationsSection()
 
-                SettingsSectionLabel(text: viewer.isAdmin ? "Household members" : "Your account")
+                SettingsSectionLabel(text: viewer.isAdmin ? String(localized: "Household members") : String(localized: "Your account"))
                 Text(viewer.isAdmin
                      ? "Everyone with an account on this Marquee server."
                      : "Edit your name, username, or password below.")
@@ -109,7 +117,7 @@ struct AccountSettingsView: View {
                 if let removeError { InlineMessage(text: removeError) }
 
                 if viewer.isAdmin {
-                    SettingsSectionLabel(text: "Add a household member")
+                    SettingsSectionLabel(text: String(localized: "Add a household member"))
                     Text("There's no public signup — create accounts for other people in your household here.")
                         .font(.system(size: 12.5))
                         .foregroundStyle(Theme.textSecondary)
@@ -118,7 +126,7 @@ struct AccountSettingsView: View {
                         .cardSurface()
 
                     if viewer.linked != nil {
-                        SettingsSectionLabel(text: "Plex and \(model.session.serverInfo.jellyfinName) members")
+                        SettingsSectionLabel(text: String(localized: "Plex and \(model.session.serverInfo.jellyfinName) members"))
                         MediaServerMembersCard()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardSurface()
@@ -165,7 +173,7 @@ struct AccountSettingsView: View {
                 .environment(model)
         }
         .confirmationDialog(
-            "Remove \(removing?.username ?? "this member")?",
+            removing.map { String(localized: "Remove \($0.username)?") } ?? String(localized: "Remove this member?"),
             isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
             presenting: removing
         ) { member in
@@ -218,14 +226,14 @@ struct AccountSettingsView: View {
                 TonePill(text: "SSO", tone: .info, small: true)
             }
             if member.isAdmin {
-                TonePill(text: "Admin", tone: .accent, small: true)
+                TonePill(text: String(localized: "Admin"), tone: .accent, small: true)
             }
             // "Trusted" or "Custom" (0.48+: from their switches).
             if let tag = member.presetTag {
                 TonePill(text: tag, tone: .accent, small: true)
             }
             if member.isCurrentUser {
-                TonePill(text: "You", tone: .neutral, small: true)
+                TonePill(text: String(localized: "You"), tone: .neutral, small: true)
             }
             if isAdmin || member.isCurrentUser {
                 Button("Edit") { editing = member }
@@ -256,6 +264,60 @@ struct AccountSettingsView: View {
                 members = previous
                 removeError = error.localizedDescription
             }
+        }
+    }
+}
+
+/// Settings › Account › Language (like the website's Appearance): Automatic
+/// follows this Mac, or one of `AppLanguage`, saved on the account
+/// (`PATCH /me`). The new language shows after a restart (`AppLanguage`).
+private struct LanguagePicker: View {
+    let viewer: API.User
+
+    @Environment(AppModel.self) private var model
+    @State private var saving = false
+    @State private var error: String?
+
+    var body: some View {
+        let chosen = AppLanguage(code: viewer.language)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Picker("Language", selection: Binding(get: { chosen }, set: { save($0) })) {
+                    Text("Automatic (system language)").tag(AppLanguage?.none)
+                    Divider()
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(verbatim: language.nativeName).tag(AppLanguage?.some(language))
+                    }
+                }
+                .labelsHidden()
+                .frame(width: 210)
+                .disabled(saving)
+                if saving { ProgressView().controlSize(.small) }
+            }
+            if AppLanguage.needsRestart(toShow: chosen), !saving {
+                HStack(spacing: 10) {
+                    Text("Takes effect when Marquee restarts.")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(Theme.textMuted)
+                    Button("Restart") { AppLanguage.relaunch() }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
+                }
+            }
+            if let error { InlineMessage(text: error) }
+        }
+    }
+
+    private func save(_ language: AppLanguage?) {
+        guard language != AppLanguage(code: viewer.language) else { return }
+        saving = true
+        error = nil
+        Task {
+            do {
+                try await model.setLanguage(language)
+            } catch {
+                self.error = error.localizedDescription
+            }
+            saving = false
         }
     }
 }
@@ -346,7 +408,7 @@ private struct MemberPhotoField: View {
             UserAvatarView(label: member.label, avatarUrl: avatarUrl, size: 64)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 10) {
-                    Button(busy ? "Saving…" : (avatarUrl == nil ? "Add photo" : "Change photo")) {
+                    Button(busy ? String(localized: "Saving…") : (avatarUrl == nil ? String(localized: "Add photo") : String(localized: "Change photo"))) {
                         choosing = true
                     }
                     .buttonStyle(OutlineButtonStyle(compact: true))
@@ -421,12 +483,12 @@ private struct CreateMemberForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SettingsField(label: "Name", text: $displayName)
-            SettingsField(label: "Username", text: $username)
-            SettingsField(label: "Password", text: $password, secure: true)
+            SettingsField(label: String(localized: "Name"), text: $displayName)
+            SettingsField(label: String(localized: "Username"), text: $username)
+            SettingsField(label: String(localized: "Password"), text: $password, secure: true)
             if let error { InlineMessage(text: error) }
             if let createdName {
-                InlineMessage(text: "Account created — \(createdName) can now sign in.", isError: false)
+                InlineMessage(text: String(localized: "Account created — \(createdName) can now sign in."), isError: false)
             }
             Button(pending ? "Creating…" : "Create account") { create() }
                 .buttonStyle(AccentButtonStyle())
@@ -538,14 +600,14 @@ private struct EditMemberSheet: View {
             Text("Edit \(member.username)")
                 .font(.marqueeDisplay(22))
             MemberPhotoField(member: member)
-            SettingsField(label: "Name", text: $displayName)
-            SettingsField(label: "Username", text: $username)
-            SettingsField(label: "New password", text: $password, placeholder: "Leave blank to keep current password", secure: true)
+            SettingsField(label: String(localized: "Name"), text: $displayName)
+            SettingsField(label: String(localized: "Username"), text: $username)
+            SettingsField(label: String(localized: "New password"), text: $password, placeholder: String(localized: "Leave blank to keep current password"), secure: true)
             // The server wants it whenever you set a new password on your
             // own account; the admin resetting a member's doesn't know theirs.
             // An account made by Plex/Jellyfin sign-in has none to give.
             if needsCurrentPassword {
-                SettingsField(label: "Current password", text: $currentPassword, placeholder: "Needed only when setting a new password", secure: true)
+                SettingsField(label: String(localized: "Current password"), text: $currentPassword, placeholder: String(localized: "Needed only when setting a new password"), secure: true)
             }
 
             if let access, access.showsPermissions(isCurrentUser: member.isCurrentUser) {
@@ -561,8 +623,8 @@ private struct EditMemberSheet: View {
                          : "Request limits (blank for none; trusted members have none)")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textSecondary)
-                    limitRow("Movies", limit: $movieLimit, days: $movieDays)
-                    limitRow("TV", limit: $tvLimit, days: $tvDays)
+                    limitRow(String(localized: "Movies"), limit: $movieLimit, days: $movieDays)
+                    limitRow(String(localized: "TV"), limit: $tvLimit, days: $tvDays)
                 }
             }
 
@@ -632,7 +694,7 @@ private struct EditMemberSheet: View {
             movieQuota = .init(limitText: movieLimit, daysText: movieDays)
             tvQuota = .init(limitText: tvLimit, daysText: tvDays)
             guard movieQuota != nil, tvQuota != nil else {
-                error = "Request limits are whole numbers."
+                error = String(localized: "Request limits are whole numbers.")
                 return
             }
         }

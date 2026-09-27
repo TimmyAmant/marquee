@@ -13,9 +13,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Add a household member"
-    PrimaryButtonText="Create account"
-    CloseButtonText="Cancel"
+    x:Uid="Member_AddDialog"
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="False"
     PrimaryButtonClick="OnCreateClick"
@@ -23,26 +21,23 @@
 
     <StackPanel Spacing="12" MinWidth="380">
         <TextBlock
-            Text="There's no public signup. Create accounts for the other people in your household here; they sign in with the username and password you choose."
+            x:Uid="Member_AddIntro"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
         <TextBox
             x:Name="DisplayNameBox"
-            Header="Name"
-            PlaceholderText="Optional: how the household sees them"
+            x:Uid="Member_AddName"
             MaxLength="80" />
         <TextBox
             x:Name="UsernameBox"
-            Header="Username"
-            PlaceholderText="3 to 32 letters, numbers, _ . -"
+            x:Uid="Member_AddUsername"
             IsSpellCheckEnabled="False"
             MaxLength="32"
             TextChanged="OnUsernameChanged" />
         <PasswordBox
             x:Name="PasswordInput"
-            Header="Password"
-            PlaceholderText="At least 8 characters"
+            x:Uid="Member_AddPassword"
             PasswordChanged="OnPasswordChanged" />
         <InfoBar
             x:Name="ErrorBar"

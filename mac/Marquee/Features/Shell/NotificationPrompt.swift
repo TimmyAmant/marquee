@@ -49,7 +49,7 @@ struct NotificationPromptCard: View {
             await consent.turnOn()
             busy = false
             if consent.authorization == .denied {
-                model.flash("Notifications for Marquee are off in System Settings › Notifications.")
+                model.flash(String(localized: "Notifications for Marquee are off in System Settings › Notifications."))
             }
         }
     }

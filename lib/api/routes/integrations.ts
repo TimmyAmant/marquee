@@ -2,6 +2,7 @@ import { withApi } from "@/lib/api/handler";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { invalid, readJsonBody } from "@/lib/api/request";
+import { msg } from "@/lib/api/errors";
 import {
   clearIntegrationSetting,
   disconnectIntegration,
@@ -17,13 +18,13 @@ import type { ArrInstance, IntegrationProvider } from "@/lib/db/schema";
 // Handler factories for /api/v1/settings/integrations/* — every one of them
 // admin-only, exactly like Settings → Integrations and its server actions.
 
-export const INTEGRATIONS_FORBIDDEN = "Only the admin can manage integrations.";
+export const INTEGRATIONS_FORBIDDEN = msg("server.onlyAdminIntegrations");
 
 /** A body field the web form would read with `String(formData.get(key) || "")`. */
 function formString(body: Record<string, unknown>, key: string): string {
   const value = body[key];
   if (value === undefined || value === null) return "";
-  if (typeof value !== "string") throw invalid(`"${key}" must be a string.`);
+  if (typeof value !== "string") throw invalid(msg("server.fieldMustBeString", { field: key }));
   return value;
 }
 
@@ -65,7 +66,7 @@ export function arrDefaultsHandler(provider: ArrInstance) {
     const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
     const body = await readJsonBody(request);
     const qualityProfileId = body.qualityProfileId;
-    if (typeof qualityProfileId !== "number") throw invalid('"qualityProfileId" must be a number.');
+    if (typeof qualityProfileId !== "number") throw invalid(msg("server.fieldMustBeNumber", { field: "qualityProfileId" }));
     unwrap(
       await saveArrDefaultsFor(ctx.user.id, provider, {
         rootFolderPath: formString(body, "rootFolderPath"),

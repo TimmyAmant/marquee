@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Api;
 using Marquee.Core.Models;
 
@@ -257,7 +258,7 @@ public sealed class ServerSession
         if (username.Length == 0 || password.Length == 0)
         {
             // Never reaches the server's rate limiter.
-            throw ApiException.Invalid("Enter your username and password.");
+            throw ApiException.Invalid(Loc.Get("Server_EnterCredentials"));
         }
         if (Server is not { } server)
         {
@@ -340,7 +341,7 @@ public sealed class ServerSession
         username = username.Trim();
         if (username.Length == 0 || password.Length == 0)
         {
-            throw ApiException.Invalid("Enter your Jellyfin username and password.");
+            throw ApiException.Invalid(Loc.Get("Server_EnterJellyfinCredentials"));
         }
         if (Server is not { } server)
         {

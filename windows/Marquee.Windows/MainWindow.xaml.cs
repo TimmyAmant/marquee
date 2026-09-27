@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Marquee.Core.Api;
 using Marquee.Core.Connection;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Core.Updates;
 using Marquee.Windows.Controls;
@@ -314,9 +315,9 @@ public sealed partial class MainWindow : Window, INavigator
         RailAvatar.Label = name;
         RailAvatar.AvatarUrl = model.Viewer?.AvatarUrl ?? "";
 
-        var accountLabel = name.Length > 0 ? $"{name}: account and settings" : "Account and settings";
+        var accountLabel = name.Length > 0 ? Loc.Format("Shell_AccountLabelNamed", name) : Loc.Get("Shell_AccountLabel");
         AutomationProperties.SetName(RailProfileButton, accountLabel);
-        ToolTipService.SetToolTip(RailProfileButton, name.Length > 0 ? name : "Settings");
+        ToolTipService.SetToolTip(RailProfileButton, name.Length > 0 ? name : Loc.Get("Shell_SettingsTooltip"));
     }
 
     /// <summary>
@@ -329,13 +330,13 @@ public sealed partial class MainWindow : Window, INavigator
     {
         var can = model.Viewer?.Can;
         var pending = can is { ReviewRequests: true } or { ManageIssues: true } ? model.Badges.RequestsBadge : 0;
-        AutomationProperties.SetName(RailRequestsButton, pending > 0 ? $"Requests, {pending} waiting" : "Requests");
+        AutomationProperties.SetName(RailRequestsButton, pending > 0 ? Loc.Plural("Shell_RequestsWaiting", pending) : Loc.Get("Shell_RequestsLabel"));
         RailRequestsDot.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var unread = model.Badges.UnreadNotifications;
         NotificationsBadge.Value = unread;
         NotificationsBadge.Visibility = unread > 0 ? Visibility.Visible : Visibility.Collapsed;
-        AutomationProperties.SetName(NotificationsButton, unread > 0 ? $"Notifications, {unread} unread" : "Notifications");
+        AutomationProperties.SetName(NotificationsButton, unread > 0 ? Loc.Plural("Shell_NotificationsUnread", unread) : Loc.Get("Shell_NotificationsLabel"));
     }
 
     // MARK: Notifications on this PC
@@ -355,10 +356,10 @@ public sealed partial class MainWindow : Window, INavigator
         var dialog = new ContentDialog
         {
             XamlRoot = xamlRoot,
-            Title = "Get notifications on this PC?",
-            Content = "Marquee can tell you when something starts downloading, when it's ready to watch, and when a request is approved or declined. They come straight from your Marquee server while the app is open; nothing goes through an outside service. You can change this in Settings.",
-            PrimaryButtonText = "Turn on",
-            CloseButtonText = "Not now",
+            Title = Loc.Get("Shell_AskNotificationsTitle"),
+            Content = Loc.Get("Shell_AskNotificationsMessage"),
+            PrimaryButtonText = Loc.Get("Shell_AskNotificationsTurnOn"),
+            CloseButtonText = Loc.Get("Shell_AskNotificationsNotNow"),
             DefaultButton = ContentDialogButton.Primary,
         };
         try
@@ -417,14 +418,14 @@ public sealed partial class MainWindow : Window, INavigator
     private void UpdateUpdateButton()
     {
         RailUpdateGroup.Visibility = updater.ShowsUpdate ? Visibility.Visible : Visibility.Collapsed;
-        var label = updater.IsInstalling ? "Updating Marquee…" : updater.UpdateLabel;
+        var label = updater.IsInstalling ? Loc.Get("Shell_UpdatingMarquee") : updater.UpdateLabel;
         AutomationProperties.SetName(RailUpdateButton, label);
         ToolTipService.SetToolTip(RailUpdateButton, label);
 
         AuthUpdateBar.IsOpen = updater.ShowsUpdate && !shellShown && !authUpdateBarDismissed;
         AuthUpdateBar.Title = updater.UpdateLabel;
         AuthUpdateBar.Message = updater.StatusText;
-        AuthUpdateButton.Content = updater.IsInstalledCopy ? "Update" : "Download";
+        AuthUpdateButton.Content = updater.IsInstalledCopy ? Loc.Get("Shell_UpdateButton") : Loc.Get("Shell_DownloadButton");
         AuthUpdateButton.IsEnabled = !updater.IsBusy;
     }
 

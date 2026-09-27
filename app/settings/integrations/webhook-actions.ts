@@ -3,6 +3,7 @@
 import { clearGenericWebhookUrl } from "@/lib/integrations/app-settings";
 import { clearIntegrationSetting, testAndSaveGenericWebhookUrl } from "@/lib/integrations/manage";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { getT } from "@/lib/i18n/server";
 
 export type WebhookSettingsState = { error?: string; success?: boolean };
 
@@ -10,7 +11,7 @@ export async function testAndSaveGenericWebhook(
   _prevState: WebhookSettingsState | undefined,
   formData: FormData,
 ): Promise<WebhookSettingsState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await testAndSaveGenericWebhookUrl(String(formData.get("webhookUrl") || ""));
@@ -20,7 +21,7 @@ export async function testAndSaveGenericWebhook(
 export async function disconnectGenericWebhook(
   _prevState: WebhookSettingsState | undefined,
 ): Promise<WebhookSettingsState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   await clearIntegrationSetting(clearGenericWebhookUrl);

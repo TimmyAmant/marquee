@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -33,7 +34,7 @@ public sealed partial class SeasonPickerRow : ObservableObject
         this.changed = changed;
         SeasonNumber = seasonNumber;
         Name = name;
-        EpisodeLine = Format.Count(episodeCount, "episode", "episodes");
+        EpisodeLine = Loc.Plural("Season_EpisodeCount", episodeCount);
         IsRequestable = state == SeasonRequestState.Requestable;
         Tag = state.Tag();
         TagTone = state == SeasonRequestState.InLibrary ? BadgeTone.Owned : BadgeTone.Info;

@@ -1,11 +1,18 @@
 import { describe, it, expect } from "vitest";
 import {
   CUSTOM_REJECTION_REASON,
+  REJECTION_REASON_CODES,
   REJECTION_REASON_MAX_LENGTH,
-  REJECTION_REASON_PRESETS,
+  localizeRejectionReason,
   normalizeRejectionReason,
+  rejectionReasonPresets,
+  rejectionReasonText,
   resolveRejectionReason,
 } from "./rejection-reasons";
+import { englishT, translatorFor } from "@/lib/i18n/catalog";
+import { LOCALES } from "@/lib/i18n/locales";
+
+const t = englishT();
 
 describe("normalizeRejectionReason", () => {
   it("returns null for non-strings and blank input", () => {
@@ -40,39 +47,66 @@ describe("normalizeRejectionReason", () => {
 });
 
 describe("resolveRejectionReason", () => {
-  it("stores a preset's text as-is", () => {
-    for (const preset of REJECTION_REASON_PRESETS) {
-      expect(resolveRejectionReason({ preset })).toEqual({ ok: true, reason: preset });
-    }
+  it("stores a preset's code as its text, in the translator's language", () => {
+    const presets = rejectionReasonPresets(t);
+    expect(presets[0]).toBe("Already available on a streaming service we have");
+    REJECTION_REASON_CODES.forEach((preset, index) => {
+      expect(resolveRejectionReason(t, { preset })).toEqual({ ok: true, reason: presets[index] });
+    });
+    const fr = translatorFor("fr");
+    expect(resolveRejectionReason(fr, { preset: "no_space" })).toEqual({
+      ok: true,
+      reason: rejectionReasonText(fr, "no_space"),
+    });
+  });
+
+  it("no longer takes a preset's English text as its code", () => {
+    expect(resolveRejectionReason(t, { preset: rejectionReasonText(t, "streaming") }).ok).toBe(false);
   });
 
   it("stores the normalized custom text for Other, never the label itself", () => {
-    expect(resolveRejectionReason({ preset: CUSTOM_REJECTION_REASON, custom: "  Too  long, sorry " })).toEqual({
+    expect(resolveRejectionReason(t, { preset: CUSTOM_REJECTION_REASON, custom: "  Too  long, sorry " })).toEqual({
       ok: true,
       reason: "Too long, sorry",
     });
   });
 
   it("asks for text when Other is picked without any", () => {
-    expect(resolveRejectionReason({ preset: CUSTOM_REJECTION_REASON })).toEqual({
+    expect(resolveRejectionReason(t, { preset: CUSTOM_REJECTION_REASON })).toEqual({
       ok: false,
       error: "Add a short reason, or pick one from the list.",
     });
-    expect(resolveRejectionReason({ preset: CUSTOM_REJECTION_REASON, custom: "   " }).ok).toBe(false);
-    expect(resolveRejectionReason({ preset: CUSTOM_REJECTION_REASON, custom: null }).ok).toBe(false);
+    expect(resolveRejectionReason(t, { preset: CUSTOM_REJECTION_REASON, custom: "   " }).ok).toBe(false);
+    expect(resolveRejectionReason(t, { preset: CUSTOM_REJECTION_REASON, custom: null }).ok).toBe(false);
   });
 
   it("treats a missing or blank preset as no reason, for older clients", () => {
-    expect(resolveRejectionReason({})).toEqual({ ok: true, reason: null });
-    expect(resolveRejectionReason({ preset: null, custom: "ignored" })).toEqual({ ok: true, reason: null });
-    expect(resolveRejectionReason({ preset: "  " })).toEqual({ ok: true, reason: null });
-    expect(resolveRejectionReason({ preset: 7 })).toEqual({ ok: true, reason: null });
+    expect(resolveRejectionReason(t, {})).toEqual({ ok: true, reason: null });
+    expect(resolveRejectionReason(t, { preset: null, custom: "ignored" })).toEqual({ ok: true, reason: null });
+    expect(resolveRejectionReason(t, { preset: "  " })).toEqual({ ok: true, reason: null });
+    expect(resolveRejectionReason(t, { preset: 7 })).toEqual({ ok: true, reason: null });
   });
 
   it("refuses a preset that isn't on the list", () => {
-    expect(resolveRejectionReason({ preset: "Because I said so" })).toEqual({
+    expect(resolveRejectionReason(t, { preset: "Because I said so" })).toEqual({
       ok: false,
       error: "Pick a reason from the list.",
     });
+  });
+});
+
+describe("localizeRejectionReason", () => {
+  const all = LOCALES.map((locale) => translatorFor(locale));
+
+  it("shows a stored preset in the viewer's language, whatever language it was stored in", () => {
+    const de = translatorFor("de");
+    expect(localizeRejectionReason(de, rejectionReasonText(t, "no_space"), all)).toBe(rejectionReasonText(de, "no_space"));
+    expect(localizeRejectionReason(t, rejectionReasonText(translatorFor("es"), "unreleased"), all)).toBe(
+      "Not released yet, ask again once it's out",
+    );
+  });
+
+  it("leaves the admin's own words alone", () => {
+    expect(localizeRejectionReason(translatorFor("fr"), "We have it on DVD", all)).toBe("We have it on DVD");
   });
 });

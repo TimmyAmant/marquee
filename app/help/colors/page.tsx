@@ -1,32 +1,34 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusColorList } from "@/components/status-legend";
-import { LIBRARY_STATUSES, STATUS_COLORS_NOTE } from "@/lib/library/status-tone";
+import { LIBRARY_STATUSES, statusColorsNote } from "@/lib/library/status-tone";
+import { getT } from "@/lib/i18n/server";
+import { rich } from "@/lib/i18n/rich";
 
-export const metadata = { title: "What the colors mean — Marquee" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("help.colorsMetaTitle") };
+}
 
 /** The color key, for good: every library status with its color, name and
  * meaning — the same list the "Color key" pill beside each poster grid
  * opens (components/status-legend.tsx). */
-export default function StatusColorsHelpPage() {
+export default async function StatusColorsHelpPage() {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="font-display text-3xl text-text-primary">What the colors mean</h1>
+      <h1 className="font-display text-3xl text-text-primary">{t("help.colorsTitle")}</h1>
       <p className="mt-2 text-sm text-text-secondary">
-        Posters carry a thin colored strip along their bottom edge and a small badge in the corner
-        that say where each title stands in your library. {STATUS_COLORS_NOTE} Titles that
-        aren&apos;t in your library get no strip at all.
+        {t("help.colorsIntro", { note: statusColorsNote(t) })}
       </p>
 
       <div className="mt-8 rounded-2xl border border-border bg-bg-1 p-5">
         <StatusColorList size="md" />
       </div>
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">The badges</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        The same colors appear on the badge on a poster, on a title&apos;s own page and next to
-        search suggestions.
-      </p>
+      <h2 className="mt-10 font-display text-xl text-text-primary">{t("help.badgesTitle")}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{t("help.badgesBody")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {LIBRARY_STATUSES.map((status) => (
           <StatusBadge key={status} status={status} />
@@ -34,13 +36,13 @@ export default function StatusColorsHelpPage() {
       </div>
 
       <p className="mt-10 text-sm text-text-secondary">
-        On the Requests page, &ldquo;Can&apos;t find&rdquo; and &ldquo;Couldn&apos;t add&rdquo;
-        use the Missing red too: the request was approved, but the title isn&apos;t there yet.
-        Look up an error message in the{" "}
-        <Link href="/help/errors" className="text-accent hover:underline">
-          error reference
-        </Link>
-        .
+        {rich(t("help.colorsRequestsNote"), {
+          link: (chunks) => (
+            <Link href="/help/errors" className="text-accent hover:underline">
+              {chunks}
+            </Link>
+          ),
+        })}
       </p>
     </div>
   );

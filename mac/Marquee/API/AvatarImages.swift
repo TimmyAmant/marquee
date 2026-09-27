@@ -68,13 +68,13 @@ enum AvatarUpload {
         do {
             original = try Data(contentsOf: url)
         } catch {
-            throw APIError.invalid("Couldn't open that file.")
+            throw APIError.invalid(String(localized: "Couldn't open that file."))
         }
         if let jpeg = jpegData(from: original) {
             return Prepared(data: jpeg, contentType: "image/jpeg")
         }
         guard original.count <= maxBytes else {
-            throw APIError.invalid("That photo is too big. Pick one under 15 MB.")
+            throw APIError.invalid(String(localized: "That photo is too big. Pick one under 15 MB."))
         }
         let type = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
         return Prepared(data: original, contentType: type)

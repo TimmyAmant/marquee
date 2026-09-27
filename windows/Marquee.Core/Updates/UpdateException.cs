@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Updates;
 
 /// <summary>Every way checking for or downloading an update can fail.</summary>
@@ -48,19 +50,19 @@ public sealed class UpdateException : Exception
     private static string MessageFor(UpdateErrorKind kind, string? host) => kind switch
     {
         UpdateErrorKind.Unreachable =>
-            "Couldn't reach GitHub to check for updates. Check your internet connection and try again.",
+            Loc.Get("Update_Unreachable"),
         UpdateErrorKind.UnreadableRelease =>
-            "GitHub's answer about the latest release couldn't be read. Try again later.",
+            Loc.Get("Update_UnreadableRelease"),
         UpdateErrorKind.NoDownload =>
-            "The newest release doesn't have a Windows download yet. Try again in a few minutes.",
+            Loc.Get("Update_NoDownload"),
         UpdateErrorKind.DownloadFailed =>
-            "The download didn't finish. Check your internet connection and try again.",
+            Loc.Get("Update_DownloadFailed"),
         UpdateErrorKind.UntrustedHost =>
-            $"The download was sent somewhere unexpected ({host ?? "an unknown host"}), so Marquee stopped it.",
+            Loc.Format("Update_UntrustedHost", host ?? Loc.Get("Update_UnknownHost")),
         UpdateErrorKind.SizeMismatch or UpdateErrorKind.ChecksumMismatch =>
-            "The download didn't match what GitHub says it should be, so Marquee didn't install it.",
+            Loc.Get("Update_Mismatch"),
         UpdateErrorKind.LaunchFailed =>
-            "Marquee couldn't start its installer.",
-        _ => "Marquee couldn't update.",
+            Loc.Get("Update_LaunchFailed"),
+        _ => Loc.Get("Update_Failed"),
     };
 }

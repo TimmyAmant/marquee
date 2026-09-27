@@ -17,6 +17,7 @@ import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadBecauseYouWatched, loadBrowseFilters, parseDiscoverSort } from "@/lib/pages/browse";
 import { SurpriseMeButton } from "@/components/surprise-me-button";
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 
 export type DiscoverSearchParams = {
   genre?: string;
@@ -64,6 +65,7 @@ export async function DiscoverView({
 }) {
   const sp = await searchParams;
   const viewer = await getViewerContext();
+  const t = await getT();
 
   const sort: DiscoverSort = parseDiscoverSort(sp.sort);
   const genreId = sp.genre ? Number(sp.genre) : undefined;
@@ -102,7 +104,7 @@ export async function DiscoverView({
 
       <div className="flex flex-col gap-12 pl-4 pr-0 py-6 sm:pl-7 sm:py-7">
         {becauseYouWatched && (
-          <Shelf title={`Because you watched ${becauseYouWatched.title}`}>
+          <Shelf title={t("discover.becauseYouWatched", { title: becauseYouWatched.title })}>
             {becauseYouWatched.items.map((item) => {
               const status = statusMap.get(`${item.mediaType}:${item.tmdbId}`);
               const canQuickAdd = Boolean(viewer.session) && arrConfigured && isUnwanted(status);
@@ -154,6 +156,7 @@ export async function DiscoverView({
           {network && (
             <Link
               href={buildHref(basePath, sp, { network: undefined })}
+              aria-label={t("discover.clearNetworkFilter", { name: network.name })}
               className="rounded-full border border-accent px-3 py-1.5 text-xs text-accent transition-colors hover:opacity-80"
             >
               {network.name} ✕
@@ -169,7 +172,7 @@ export async function DiscoverView({
                   : "border-border text-text-secondary hover:text-text-primary"
               }`}
             >
-              {hideOwned ? "✓ Hiding titles you already track" : "Hide titles you already track"}
+              {hideOwned ? t("discover.hidingOwned") : t("discover.hideOwned")}
             </Link>
           )}
 

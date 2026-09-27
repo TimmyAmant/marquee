@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
@@ -27,7 +28,7 @@ public sealed class NotificationChannelsEndpoints(MarqueeApi.Transport transport
     private static readonly IReadOnlyCollection<int> TelegramPollAnswers = [202, 410];
 
     /// <summary>What an expired one-tap Telegram link says.</summary>
-    public const string TelegramLinkExpiredMessage = "The Telegram link expired. Try again.";
+    public static string TelegramLinkExpiredMessage => Loc.Get("Api_TelegramLinkExpired");
 
     private static string ChannelPath(Guid id) => $"{Path}/{MarqueeApi.Segment(id)}";
 

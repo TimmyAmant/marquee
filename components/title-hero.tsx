@@ -20,6 +20,8 @@ import { FileDetailsSection } from "@/components/file-details-section";
 import { CapsLabel } from "@/components/caps-label";
 import type { ArrTrackingInfo, FileInfo } from "@/lib/integrations/status";
 import type { CreditEntry } from "@/lib/title-meta";
+import { getT } from "@/lib/i18n/server";
+import { formatDate } from "@/lib/i18n/format";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -54,7 +56,7 @@ function SidebarRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TitleHero({
+export async function TitleHero({
   mediaType,
   tmdbId,
   name,
@@ -135,6 +137,7 @@ export function TitleHero({
    * signed out. */
   may?: { request: boolean; advanced: boolean; manageBlocklist: boolean };
 }) {
+  const t = await getT();
   // Rating/status/network live in the sidebar instead — this line is just
   // the quick facts, matching the reference layout's short line under the
   // title (runtime | genres | year), not a catch-all for every field.
@@ -214,10 +217,10 @@ export function TitleHero({
                   {notFoundSince && (
                     <Link
                       href="/requests#cant-find"
-                      title={`Sonarr/Radarr hasn't found it since ${new Date(notFoundSince).toLocaleDateString()}`}
+                      title={t("title.notFoundSince", { date: formatDate(t, notFoundSince) })}
                       className="inline-flex h-8 items-center rounded-full border border-missing/40 bg-missing-bg px-3 text-xs font-medium text-missing hover:bg-missing/20"
                     >
-                      Can&apos;t find
+                      {t("title.cantFind")}
                     </Link>
                   )}
 
@@ -271,7 +274,7 @@ export function TitleHero({
                         tagline ? "mt-4" : "mt-[26px]"
                       }`}
                     >
-                      Overview
+                      {t("title.overview")}
                     </h2>
                     <p className="mt-1.5 text-[14px] leading-[22px] text-text-secondary">{overview}</p>
                   </>
@@ -319,29 +322,29 @@ export function TitleHero({
               {meta.ratingPercent !== null && (
                 <div className="flex h-[50px] items-center justify-between gap-2.5">
                   <span className="font-display text-[22px] font-bold tracking-[-0.01em] text-accent">
-                    ★ {meta.ratingPercent}%
+                    ★ {t("title.ratingPercent", { percent: meta.ratingPercent })}
                   </span>
-                  <span className="text-[11px] text-text-muted">TMDb user score</span>
+                  <span className="text-[11px] text-text-muted">{t("title.tmdbUserScore")}</span>
                 </div>
               )}
               <div className={meta.ratingPercent === null ? "[&>div:first-child]:border-t-0" : ""}>
-                <SidebarRow label="Status" value={meta.statusLabel} />
+                <SidebarRow label={t("title.sidebarStatus")} value={meta.statusLabel} />
                 <SidebarRow
-                  label={mediaType === "movie" ? "Release Date" : "First Air Date"}
+                  label={mediaType === "movie" ? t("title.releaseDate") : t("title.firstAirDate")}
                   value={sidebar.releaseDateLabel}
                 />
-                <SidebarRow label="Next Air Date" value={sidebar.nextAirDateLabel} />
-                <SidebarRow label="Original Language" value={sidebar.originalLanguageLabel} />
+                <SidebarRow label={t("title.nextAirDate")} value={sidebar.nextAirDateLabel} />
+                <SidebarRow label={t("title.originalLanguage")} value={sidebar.originalLanguageLabel} />
                 <SidebarRow
-                  label="Production Country"
+                  label={t("title.productionCountry")}
                   value={sidebar.productionCountry ? `${sidebar.productionCountry.flag} ${sidebar.productionCountry.name}` : null}
                 />
-                <SidebarRow label="Network" value={meta.network} />
+                <SidebarRow label={t("title.network")} value={meta.network} />
               </div>
 
               {sidebar.watchProviders.length > 0 && (
                 <div className="border-t border-border pt-[14px]">
-                  <CapsLabel>Currently Streaming On</CapsLabel>
+                  <CapsLabel>{t("title.streamingOn")}</CapsLabel>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {sidebar.watchProviders.map((provider) => {
                       const logo = tmdbImageUrl(provider.logoPath, "w92");

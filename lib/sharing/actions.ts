@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import type { MediaType } from "@/lib/db/schema";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { listShareableUsers, shareTitle } from "@/lib/sharing";
+import { getT } from "@/lib/i18n/server";
 
 // The website's side of "Send to a household member" — thin wrappers around
 // lib/sharing, which /api/v1 shares.
@@ -28,9 +29,9 @@ export async function shareTitleAction(
   note: string,
 ): Promise<{ error?: string; sharedWith?: number }> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in to share." };
+  if (!session?.user) return { error: (await getT())("notify.signInToShare") };
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
-    return { error: "That title couldn't be found." };
+    return { error: (await getT())("notify.titleNotFound") };
   }
   const result = await shareTitle(session.user.id, mediaType, tmdbId, { userIds, note });
   return result.ok ? { sharedWith: result.sharedWith } : { error: result.error };

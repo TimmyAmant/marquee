@@ -134,15 +134,20 @@ extension API {
         /// components/my-title-requests.tsx: "Your request (Season 2) is
         /// waiting for review" / "is approved" / "is declined".
         var sentence: String {
-            let what = detailLine.map { " (\($0))" } ?? ""
-            let standing: String
-            switch status {
-            case .pending: standing = "waiting for review"
-            case .approved: standing = "approved"
-            case .rejected: standing = "declined"
-            case let .unknown(raw): standing = raw
+            if let detail = detailLine {
+                switch status {
+                case .pending: return String(localized: "Your request (\(detail)) is waiting for review")
+                case .approved: return String(localized: "Your request (\(detail)) is approved")
+                case .rejected: return String(localized: "Your request (\(detail)) is declined")
+                case let .unknown(raw): return String(localized: "Your request (\(detail)) is \(raw)")
+                }
             }
-            return "Your request\(what) is \(standing)"
+            switch status {
+            case .pending: return String(localized: "Your request is waiting for review")
+            case .approved: return String(localized: "Your request is approved")
+            case .rejected: return String(localized: "Your request is declined")
+            case let .unknown(raw): return String(localized: "Your request is \(raw)")
+            }
         }
     }
 
@@ -200,7 +205,7 @@ extension API {
             if let role = author.role?.tag { parts.append(role) }
             if let note = kind.noteLabel { parts.append(note) }
             parts.append(Format.dateTime(createdAt))
-            if editedAt != nil { parts.append("edited") }
+            if editedAt != nil { parts.append(String(localized: "edited")) }
             return parts
         }
     }
@@ -241,9 +246,9 @@ extension API {
         /// "Reported" / "Marked fixed" / "Declined"; nil for a comment.
         var noteLabel: String? {
             switch self {
-            case .report: return "Reported"
-            case .resolution: return "Marked fixed"
-            case .declined: return "Declined"
+            case .report: return String(localized: "Reported")
+            case .resolution: return String(localized: "Marked fixed")
+            case .declined: return String(localized: "Declined")
             case .comment, .unknown: return nil
             }
         }
@@ -270,8 +275,8 @@ extension API {
         /// "Admin" / "Reviewer" beside the name; nil for a member.
         var tag: String? {
             switch self {
-            case .admin: return "Admin"
-            case .reviewer: return "Reviewer"
+            case .admin: return String(localized: "Admin")
+            case .reviewer: return String(localized: "Reviewer")
             case .member, .unknown: return nil
             }
         }

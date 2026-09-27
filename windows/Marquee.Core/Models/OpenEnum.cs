@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -107,10 +108,10 @@ public readonly record struct MediaType(string Value) : IOpenEnum<MediaType>
     public override string ToString() => Value;
 
     /// <summary>"Movie" / "TV" (the search suggestion pill wording).</summary>
-    public string Label => this == Movie ? "Movie" : this == Tv ? "TV" : OpenEnum.Capitalized(Value);
+    public string Label => this == Movie ? Loc.Get("Enum_MediaMovie") : this == Tv ? Loc.Get("Enum_MediaTv") : OpenEnum.Capitalized(Value);
 
     /// <summary>"Movies" / "Series" (navigation and page titles).</summary>
-    public string PluralLabel => this == Movie ? "Movies" : this == Tv ? "Series" : OpenEnum.Capitalized(Value);
+    public string PluralLabel => this == Movie ? Loc.Get("Enum_MediaMovies") : this == Tv ? Loc.Get("Enum_MediaSeries") : OpenEnum.Capitalized(Value);
 
     /// <summary>"Radarr" / "Sonarr": who adds and tracks this media type.</summary>
     public string ArrName => this == Movie ? "Radarr" : this == Tv ? "Sonarr" : "Sonarr/Radarr";
@@ -129,7 +130,7 @@ public readonly record struct UserRole(string Value) : IOpenEnum<UserRole>
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    public string Label => this == Admin ? "Admin" : this == Member ? "Member" : this == Trusted ? "Trusted" : OpenEnum.Capitalized(Value);
+    public string Label => this == Admin ? Loc.Get("Enum_RoleAdmin") : this == Member ? Loc.Get("Enum_RoleMember") : this == Trusted ? Loc.Get("Enum_RoleTrusted") : OpenEnum.Capitalized(Value);
 
     /// <summary>
     /// lib/users/roles.ts canReviewRequests: the request-review queue, the
@@ -175,19 +176,19 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     public override string ToString() => Value;
 
     /// <summary>The color key's footnote.</summary>
-    public const string ColorKeyFootnote = "Same colors as Radarr and Sonarr.";
+    public static string ColorKeyFootnote => Loc.Get("Enum_ColorKeyFootnote");
 
     /// <summary>The title page badge.</summary>
     public string Label
     {
         get
         {
-            if (this == Owned) return "Already in your library";
-            if (this == TrackedDownloading) return "Downloading";
-            if (this == TrackedMonitored) return "Missing";
-            if (this == TrackedUnmonitored) return "Not monitored";
-            if (this == ComingSoon) return "Coming soon";
-            if (this == Untracked) return "Not in your library";
+            if (this == Owned) return Loc.Get("Enum_StatusLabelOwned");
+            if (this == TrackedDownloading) return Loc.Get("Enum_StatusLabelTrackedDownloading");
+            if (this == TrackedMonitored) return Loc.Get("Enum_StatusLabelTrackedMonitored");
+            if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusLabelTrackedUnmonitored");
+            if (this == ComingSoon) return Loc.Get("Enum_StatusLabelComingSoon");
+            if (this == Untracked) return Loc.Get("Enum_StatusLabelUntracked");
             return Value;
         }
     }
@@ -197,12 +198,12 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     {
         get
         {
-            if (this == Owned) return "Owned";
-            if (this == TrackedDownloading) return "Downloading";
-            if (this == TrackedMonitored) return "Missing";
-            if (this == TrackedUnmonitored) return "Not monitored";
-            if (this == ComingSoon) return "Coming soon";
-            if (this == Untracked) return "Not owned";
+            if (this == Owned) return Loc.Get("Enum_StatusCompactOwned");
+            if (this == TrackedDownloading) return Loc.Get("Enum_StatusCompactTrackedDownloading");
+            if (this == TrackedMonitored) return Loc.Get("Enum_StatusCompactTrackedMonitored");
+            if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusCompactTrackedUnmonitored");
+            if (this == ComingSoon) return Loc.Get("Enum_StatusCompactComingSoon");
+            if (this == Untracked) return Loc.Get("Enum_StatusCompactUntracked");
             return Value;
         }
     }
@@ -234,12 +235,12 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     {
         get
         {
-            if (this == Owned) return "In your library";
-            if (this == TrackedDownloading) return "Downloading";
-            if (this == TrackedMonitored) return "Missing";
-            if (this == TrackedUnmonitored) return "Not monitored";
-            if (this == ComingSoon) return "Coming soon";
-            if (this == Untracked) return "Not in your library";
+            if (this == Owned) return Loc.Get("Enum_StatusNameOwned");
+            if (this == TrackedDownloading) return Loc.Get("Enum_StatusNameTrackedDownloading");
+            if (this == TrackedMonitored) return Loc.Get("Enum_StatusNameTrackedMonitored");
+            if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusNameTrackedUnmonitored");
+            if (this == ComingSoon) return Loc.Get("Enum_StatusNameComingSoon");
+            if (this == Untracked) return Loc.Get("Enum_StatusNameUntracked");
             return Value;
         }
     }
@@ -249,12 +250,12 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     {
         get
         {
-            if (this == Owned) return "The file is in your library, ready to watch.";
-            if (this == TrackedDownloading) return "It's downloading or queued right now.";
-            if (this == TrackedMonitored) return "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.";
-            if (this == TrackedUnmonitored) return "In Sonarr/Radarr but not monitored — it won't download on its own.";
-            if (this == ComingSoon) return "Added, but it hasn't been released yet.";
-            if (this == Untracked) return "Not added yet. Posters get no colored strip.";
+            if (this == Owned) return Loc.Get("Enum_StatusMeaningOwned");
+            if (this == TrackedDownloading) return Loc.Get("Enum_StatusMeaningTrackedDownloading");
+            if (this == TrackedMonitored) return Loc.Get("Enum_StatusMeaningTrackedMonitored");
+            if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusMeaningTrackedUnmonitored");
+            if (this == ComingSoon) return Loc.Get("Enum_StatusMeaningComingSoon");
+            if (this == Untracked) return Loc.Get("Enum_StatusMeaningUntracked");
             return "";
         }
     }
@@ -392,15 +393,15 @@ public readonly record struct NotificationEventType(string Value) : IOpenEnum<No
     {
         get
         {
-            if (this == Grabbed) return "Downloading";
-            if (this == Downloaded) return "Ready to watch";
-            if (this == RequestApproved) return "Request approved";
-            if (this == RequestRejected) return "Request declined";
-            if (this == IssueReported) return "Problem reported";
-            if (this == IssueResolved) return "Problem fixed";
-            if (this == TitleShared) return "Shared with you";
-            if (this == RequestNotFound) return "Can't find it";
-            if (this == RequestComment || this == IssueComment) return "New comment";
+            if (this == Grabbed) return Loc.Get("Enum_NotifTitleGrabbed");
+            if (this == Downloaded) return Loc.Get("Enum_NotifTitleDownloaded");
+            if (this == RequestApproved) return Loc.Get("Enum_NotifTitleRequestApproved");
+            if (this == RequestRejected) return Loc.Get("Enum_NotifTitleRequestRejected");
+            if (this == IssueReported) return Loc.Get("Enum_NotifTitleIssueReported");
+            if (this == IssueResolved) return Loc.Get("Enum_NotifTitleIssueResolved");
+            if (this == TitleShared) return Loc.Get("Enum_NotifTitleTitleShared");
+            if (this == RequestNotFound) return Loc.Get("Enum_NotifTitleRequestNotFound");
+            if (this == RequestComment || this == IssueComment) return Loc.Get("Enum_NotifTitleComment");
             return "Marquee";
         }
     }
@@ -448,7 +449,7 @@ public readonly record struct SuggestionKind(string Value) : IOpenEnum<Suggestio
     public override string ToString() => Value;
 
     /// <summary>The website's pill: "Actor", "Movie", "TV".</summary>
-    public string Label => this == Person ? "Actor" : this == Movie ? "Movie" : this == Tv ? "TV" : OpenEnum.Capitalized(Value);
+    public string Label => this == Person ? Loc.Get("Enum_SuggestionActor") : this == Movie ? Loc.Get("Enum_MediaMovie") : this == Tv ? Loc.Get("Enum_MediaTv") : OpenEnum.Capitalized(Value);
 
     /// <summary>The title's media type, null for a person (or an unknown kind).</summary>
     public MediaType? MediaType => this == Movie ? Models.MediaType.Movie : this == Tv ? Models.MediaType.Tv : null;
@@ -548,7 +549,7 @@ public readonly record struct IntegrationProvider(string Value) : IOpenEnum<Inte
             if (this == Webhook) return "Webhook";
             if (this == Telegram) return "Telegram";
             if (this == Pushover) return "Pushover";
-            if (this == Email) return "Email";
+            if (this == Email) return Loc.Get("Enum_ProviderEmail");
             return OpenEnum.Capitalized(Value);
         }
     }
@@ -566,7 +567,7 @@ public readonly record struct BrowseSort(string Value) : IOpenEnum<BrowseSort>
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    public string Label => this == Popularity ? "Popular" : this == TopRated ? "Top rated" : this == Newest ? "Newest" : OpenEnum.Capitalized(Value);
+    public string Label => this == Popularity ? Loc.Get("Enum_SortPopular") : this == TopRated ? Loc.Get("Enum_SortTopRated") : this == Newest ? Loc.Get("Enum_SortNewest") : OpenEnum.Capitalized(Value);
 }
 
 /// <summary>A maintenance job's id (<c>GET /settings/jobs</c>, <c>POST /settings/jobs/{id}/run</c>).</summary>
@@ -607,5 +608,5 @@ public readonly record struct SeriesType(string Value) : IOpenEnum<SeriesType>
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    public string Label => this == Standard ? "Standard" : this == Daily ? "Daily" : this == Anime ? "Anime" : OpenEnum.Capitalized(Value);
+    public string Label => this == Standard ? Loc.Get("Enum_SeriesTypeStandard") : this == Daily ? Loc.Get("Enum_SeriesTypeDaily") : this == Anime ? Loc.Get("Enum_SeriesTypeAnime") : OpenEnum.Capitalized(Value);
 }

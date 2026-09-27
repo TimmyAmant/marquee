@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiPermission } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { optionalString, parseUuidSegment, readJsonBody } from "@/lib/api/request";
@@ -14,8 +15,8 @@ import type { Ok } from "@/lib/api/types";
  * 200 character cap) rather than rejecting long or unlisted input, so an
  * older client that sends no body at all still works. */
 export const POST = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
-  const ctx = await requireApiPermission(request, "reviewRequests", "Only an admin can reject requests.");
-  const requestId = parseUuidSegment(params.id, "Request not found or already reviewed.");
+  const ctx = await requireApiPermission(request, "reviewRequests", msg("server.onlyAdminRejectRequests"));
+  const requestId = parseUuidSegment(params.id, msg("server.requestNotFoundOrReviewed"));
   const body = await readJsonBody(request);
   const reason = normalizeRejectionReason(optionalString(body, "reason"));
   unwrap(await rejectRequest(requestId, ctx.user.id, reason));

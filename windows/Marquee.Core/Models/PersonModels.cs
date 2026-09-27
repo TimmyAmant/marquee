@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Globalization;
 
 namespace Marquee.Core.Models;
@@ -116,8 +117,8 @@ public static class TitleListOrderExtensions
 
     public static string Label(this TitleListOrder order) => order switch
     {
-        TitleListOrder.NewestFirst => "Newest first",
-        TitleListOrder.OldestFirst => "Oldest first",
+        TitleListOrder.NewestFirst => Loc.Get("Model_OrderNewestFirst"),
+        TitleListOrder.OldestFirst => Loc.Get("Model_OrderOldestFirst"),
         TitleListOrder.Alphabetical => "A–Z",
         _ => order.ToString(),
     };

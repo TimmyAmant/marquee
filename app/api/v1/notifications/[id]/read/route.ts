@@ -1,6 +1,6 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { parseUuidSegment } from "@/lib/api/request";
 import { markNotificationRead } from "@/lib/notifications/query";
 import type { Ok } from "@/lib/api/types";
@@ -9,9 +9,9 @@ import type { Ok } from "@/lib/api/types";
  * a notification is clicked). 404 for someone else's notification. */
 export const POST = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
   const ctx = await requireApiUser(request);
-  const id = parseUuidSegment(params.id, "Notification not found.");
+  const id = parseUuidSegment(params.id, msg("server.notificationNotFound"));
   if (!(await markNotificationRead(ctx.user.id, id))) {
-    throw ApiError.of("not_found", "Notification not found.");
+    throw ApiError.of("not_found", msg("server.notificationNotFound"));
   }
   return { ok: true };
 });

@@ -2,6 +2,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -49,7 +50,7 @@ public sealed class BlocklistRow
 /// </summary>
 public sealed partial class BlocklistSettingsViewModel : ObservableObject
 {
-    public const string EmptyText = "Nothing blocked. Block a title from its page, or a keyword below.";
+    public static string EmptyText => Loc.Get("Blocklist_Empty");
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
@@ -88,7 +89,7 @@ public sealed partial class BlocklistSettingsViewModel : ObservableObject
 
     public bool IsEmpty => Rows.Count == 0;
     public bool HasError => Error != null;
-    public string BlockLabel => IsBlocking ? "Blocking…" : "Block";
+    public string BlockLabel => IsBlocking ? Loc.Get("Blocklist_Blocking") : Loc.Get("Blocklist_Block");
     public bool CanBlock => !IsBlocking && Keyword.NonBlank() != null;
 
     /// <summary>

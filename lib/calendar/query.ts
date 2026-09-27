@@ -5,6 +5,8 @@ import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { episodeDateKey } from "@/lib/calendar/grid";
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 export type CalendarEntry = {
   date: string; // yyyy-mm-dd
@@ -29,10 +31,10 @@ function isWithin(iso: string, start: Date, end: Date): boolean {
 // the same month) — Radarr's /calendar only tells you the movie matched,
 // not which field matched, so check each independently rather than picking
 // just one and silently dropping the others.
-const RADARR_DATE_LABELS: [keyof radarr.RadarrCalendarMovie, string][] = [
-  ["inCinemas", "In theaters"],
-  ["digitalRelease", "Digital release"],
-  ["physicalRelease", "On disc"],
+const RADARR_DATE_LABELS: [keyof radarr.RadarrCalendarMovie, MessageKey][] = [
+  ["inCinemas", "discover.releaseInCinemas"],
+  ["digitalRelease", "discover.releaseDigital"],
+  ["physicalRelease", "discover.releasePhysical"],
 ];
 
 export async function getUpcomingReleases(
@@ -52,6 +54,8 @@ export async function getUpcomingReleases(
   ]);
 
   const entries: CalendarEntry[] = [];
+  // The movie entries' subtitles, in the reader's language.
+  const t = await getT();
 
   {
     const movies = movieLists.flat();
@@ -66,7 +70,7 @@ export async function getUpcomingReleases(
             tmdbId: movie.tmdbId,
             name: movie.title,
             posterPath: title?.posterPath ?? null,
-            subtitle: label,
+            subtitle: t(label),
           });
         }
       }

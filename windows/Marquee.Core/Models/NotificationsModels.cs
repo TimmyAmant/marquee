@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // Notifications (api-v1.md section 8): the bell's dropdown. The event type
@@ -81,18 +83,18 @@ public sealed record NotificationItem
         var seconds = (long)(now - createdAt).TotalSeconds;
         if (seconds < 60)
         {
-            return "just now";
+            return Loc.Get("Model_TimeAgoJustNow");
         }
         var minutes = seconds / 60;
         if (minutes < 60)
         {
-            return $"{minutes}m ago";
+            return Loc.Format("Model_TimeAgoMinutes", minutes);
         }
         var hours = minutes / 60;
         if (hours < 24)
         {
-            return $"{hours}h ago";
+            return Loc.Format("Model_TimeAgoHours", hours);
         }
-        return $"{hours / 24}d ago";
+        return Loc.Format("Model_TimeAgoDays", hours / 24);
     }
 }

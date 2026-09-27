@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Controls;
 using Marquee.Windows.Services;
@@ -130,9 +131,9 @@ public sealed partial class TitlePage : Page
             var failed = new ContentDialog
             {
                 XamlRoot = XamlRoot,
-                Title = "Couldn't fix the match",
+                Title = Loc.Get("Title_FixIdFailed"),
                 Content = error.Message,
-                CloseButtonText = "OK",
+                CloseButtonText = Loc.Get("Title_Ok"),
             };
             await failed.TryShowAsync();
         }
@@ -145,9 +146,9 @@ public sealed partial class TitlePage : Page
         {
             XamlRoot = XamlRoot,
             Title = ViewModel.AddAllConfirmation,
-            Content = "Each title is added with your Sonarr or Radarr, one at a time.",
-            PrimaryButtonText = "Add all",
-            CloseButtonText = "Cancel",
+            Content = Loc.Get("Title_AddAllBody"),
+            PrimaryButtonText = Loc.Get("Title_AddAllConfirm"),
+            CloseButtonText = Loc.Get("Title_Cancel"),
             DefaultButton = ContentDialogButton.Primary,
         };
         if (await confirm.TryShowAsync() == ContentDialogResult.Primary)
@@ -163,9 +164,9 @@ public sealed partial class TitlePage : Page
         {
             XamlRoot = XamlRoot,
             Title = ViewModel.RequestAllConfirmation,
-            Content = "Each title is requested on its own, so your request limits still apply.",
-            PrimaryButtonText = "Request all",
-            CloseButtonText = "Cancel",
+            Content = Loc.Get("Title_RequestAllBody"),
+            PrimaryButtonText = Loc.Get("Title_RequestAllConfirm"),
+            CloseButtonText = Loc.Get("Title_Cancel"),
             DefaultButton = ContentDialogButton.Primary,
         };
         if (await confirm.TryShowAsync() == ContentDialogResult.Primary)

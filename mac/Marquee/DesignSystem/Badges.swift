@@ -172,7 +172,7 @@ struct SettingsSectionLabel: View {
     let text: String
 
     var body: some View {
-        Text(text.uppercased())
+        Text(text.localizedUppercase)
             .font(.system(size: 10.5, weight: .semibold))
             .tracking(1)
             .foregroundStyle(Theme.textMuted)
@@ -184,7 +184,7 @@ struct MarqueeWordmark: View {
     var size: CGFloat = 24
 
     var body: some View {
-        Text("Marquee")
+        Text(verbatim: "Marquee")
             .font(.marqueeDisplay(size, weight: .medium))
             .foregroundStyle(Theme.textPrimary)
             .overlay(alignment: .topTrailing) {
@@ -244,7 +244,7 @@ struct EmptyStateView: View {
 }
 
 struct LoadingView: View {
-    var label = "Loading…"
+    var label = String(localized: "Loading…")
 
     var body: some View {
         VStack(spacing: 10) {

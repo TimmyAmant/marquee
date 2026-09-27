@@ -57,31 +57,31 @@ struct ChannelForm: Equatable {
         switch kind {
         case .telegram:
             let hint = channels.telegramBot.map {
-                "Message @\($0) /start, then paste your chat ID (@userinfobot on Telegram tells you yours). Or use Connect with Telegram above."
-            } ?? "Message the household's bot /start, then paste your chat ID (@userinfobot on Telegram tells you yours)."
-            return [Field(key: "chatId", label: "Your chat ID", placeholder: "123456789", hint: hint)]
+                String(localized: "Message @\($0) /start, then paste your chat ID (@userinfobot on Telegram tells you yours). Or use Connect with Telegram above.")
+            } ?? String(localized: "Message the household's bot /start, then paste your chat ID (@userinfobot on Telegram tells you yours).")
+            return [Field(key: "chatId", label: String(localized: "Your chat ID"), placeholder: "123456789", hint: hint)]
         case .pushover:
-            return [Field(key: "userKey", label: "Your user key", hint: "The 30-character key at the top of your pushover.net dashboard.", secure: true)]
+            return [Field(key: "userKey", label: String(localized: "Your user key"), hint: String(localized: "The 30-character key at the top of your pushover.net dashboard."), secure: true)]
         case .email:
-            return [Field(key: "address", label: "Your email address", placeholder: "you@example.com", hint: "We'll email a code to confirm it's yours first.")]
+            return [Field(key: "address", label: String(localized: "Your email address"), placeholder: "you@example.com", hint: String(localized: "We'll email a code to confirm it's yours first."))]
         case .discord:
             return [Field(
-                key: "webhookUrl", label: "Discord webhook URL", placeholder: "https://discord.com/api/webhooks/…",
-                hint: "In your own server: channel settings › Integrations › Webhooks › New Webhook › Copy Webhook URL.",
+                key: "webhookUrl", label: String(localized: "Discord webhook URL"), placeholder: "https://discord.com/api/webhooks/…",
+                hint: String(localized: "In your own server: channel settings › Integrations › Webhooks › New Webhook › Copy Webhook URL."),
                 secure: true
             )]
         case .ntfy:
             if ntfyMode == .household, let server = channels.ntfyHouseholdServer {
                 return [Field(
-                    key: "topic", label: "Topic", placeholder: "pick-something-hard-to-guess",
-                    hint: "On \(server). Subscribe to the same topic in the ntfy app."
+                    key: "topic", label: String(localized: "Topic"), placeholder: "pick-something-hard-to-guess",
+                    hint: String(localized: "On \(server). Subscribe to the same topic in the ntfy app.")
                 )]
             }
-            return [Field(key: "url", label: "Topic URL", placeholder: "https://ntfy.sh/your-topic", hint: Self.internetHint(channels), secure: true)]
+            return [Field(key: "url", label: String(localized: "Topic URL"), placeholder: "https://ntfy.sh/your-topic", hint: Self.internetHint(channels), secure: true)]
         case .webhook:
-            let payload = "Marquee POSTs JSON: { event, preference, title, message, mediaType, tmdbId }."
+            let payload = String(localized: "Marquee POSTs JSON: { event, preference, title, message, mediaType, tmdbId }.")
             return [Field(
-                key: "url", label: "Webhook URL", placeholder: "https://example.com/hooks/marquee",
+                key: "url", label: String(localized: "Webhook URL"), placeholder: "https://example.com/hooks/marquee",
                 hint: [payload, Self.internetHint(channels)].compactMap { $0 }.joined(separator: " "),
                 secure: true
             )]
@@ -91,7 +91,7 @@ struct ChannelForm: Equatable {
     }
 
     private static func internetHint(_ channels: API.PersonalNotificationChannels) -> String? {
-        channels.homeNetwork ? nil : "It must be on the internet, not your home network."
+        channels.homeNetwork ? nil : String(localized: "It must be on the internet, not your home network.")
     }
 
     /// The trimmed name, nil when blank.
@@ -102,11 +102,11 @@ struct ChannelForm: Equatable {
     /// The `POST /me/notification-channels` body, or `.invalid` with what to
     /// fix. The server checks everything again (and sends a test first).
     func request(_ channels: API.PersonalNotificationChannels) throws -> API.CreateNotificationChannelRequest {
-        guard kind.isKnown else { throw APIError.invalid("This app can't add that kind of channel.") }
+        guard kind.isKnown else { throw APIError.invalid(String(localized: "This app can't add that kind of channel.")) }
         var config: [String: String] = [:]
         for field in fields(channels) {
             let value = value(field).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !value.isEmpty else { throw APIError.invalid("\(field.label) is needed.") }
+            guard !value.isEmpty else { throw APIError.invalid(String(localized: "\(field.label) is needed.")) }
             if let problem = Self.problem(with: value, in: field) { throw APIError.invalid(problem) }
             config[field.key] = value
         }
@@ -119,21 +119,21 @@ struct ChannelForm: Equatable {
         case "chatId":
             let digits = value.hasPrefix("-") ? String(value.dropFirst()) : value
             return !digits.isEmpty && digits.allSatisfy(\.isASCII) && digits.allSatisfy(\.isNumber)
-                ? nil : "A chat ID is a number, like 123456789."
+                ? nil : String(localized: "A chat ID is a number, like 123456789.")
         case "userKey":
             return value.count == 30 && value.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber) }
-                ? nil : "A Pushover user key is 30 letters and numbers."
+                ? nil : String(localized: "A Pushover user key is 30 letters and numbers.")
         case "address":
             let parts = value.split(separator: "@", omittingEmptySubsequences: false)
             return parts.count == 2 && !parts[0].isEmpty && parts[1].contains(".") && !value.contains(" ")
-                ? nil : "Enter a valid email address."
+                ? nil : String(localized: "Enter a valid email address.")
         case "webhookUrl", "url":
             guard let url = URL(string: value), let scheme = url.scheme?.lowercased(),
                   scheme == "https" || scheme == "http", url.host?.isEmpty == false
-            else { return "Enter the full URL, starting with https://." }
+            else { return String(localized: "Enter the full URL, starting with https://.") }
             return nil
         case "topic":
-            return value.contains("/") || value.contains(" ") ? "A topic is one word, without slashes or spaces." : nil
+            return value.contains("/") || value.contains(" ") ? String(localized: "A topic is one word, without slashes or spaces.") : nil
         default:
             return nil
         }
@@ -144,13 +144,13 @@ struct ChannelForm: Equatable {
     var sendsCode: Bool { kind == .email || kind == .telegram }
 
     /// "Send code" when it gets a code rather than a test, else "Test & add".
-    var submitTitle: String { sendsCode ? "Send code" : "Test & add" }
-    var busyTitle: String { sendsCode ? "Sending code…" : "Testing…" }
+    var submitTitle: String { sendsCode ? String(localized: "Send code") : String(localized: "Test & add") }
+    var busyTitle: String { sendsCode ? String(localized: "Sending code…") : String(localized: "Testing…") }
     var successNotice: String {
         switch kind {
-        case .email: return "Check your inbox for the code."
-        case .telegram: return "Check Telegram: the bot sent you a code to enter above."
-        default: return "Added. A test message is on its way."
+        case .email: return String(localized: "Check your inbox for the code.")
+        case .telegram: return String(localized: "Check Telegram: the bot sent you a code to enter above.")
+        default: return String(localized: "Added. A test message is on its way.")
         }
     }
 
@@ -159,7 +159,9 @@ struct ChannelForm: Equatable {
         let missing = channels.missingKinds
         guard !missing.isEmpty else { return nil }
         let names = missing.map(\.label).joined(separator: ", ")
-        return "\(names) can be added once the admin sets \(missing.count == 1 ? "it" : "them") up for the household."
+        return missing.count == 1
+            ? String(localized: "\(names) can be added once the admin sets it up for the household.")
+            : String(localized: "\(names) can be added once the admin sets them up for the household.")
     }
 }
 

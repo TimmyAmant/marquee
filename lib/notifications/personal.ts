@@ -21,6 +21,9 @@ import {
   type ConfigContext,
   type PersonalChannelConfig,
 } from "@/lib/notifications/personal-config";
+import { getT, translatorForUser } from "@/lib/i18n/server";
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 
 // Each account's own notification channels (Settings › Account ›
 // Notifications, /api/v1/me/notification-channels). Every query here is
@@ -72,8 +75,8 @@ function policyFor(actor: Actor) {
   return { allowPrivate: actor.role === "admin" || privateAddressesAllowedForMembers() };
 }
 
-async function configContext(actor: Actor): Promise<ConfigContext> {
-  return { ntfyServer: ntfyServerOf(await getNtfyUrl().catch(() => null)), policy: policyFor(actor) };
+async function configContext(actor: Actor, t: Translator): Promise<ConfigContext> {
+  return { ntfyServer: ntfyServerOf(await getNtfyUrl().catch(() => null)), policy: policyFor(actor), t };
 }
 
 export async function getAvailability(actor: Actor): Promise<ChannelAvailability> {
@@ -156,7 +159,7 @@ function sealConfig(config: PersonalChannelConfig) {
   return { configEnc: sealed.ciphertext, configIv: sealed.iv, configTag: sealed.tag };
 }
 
-const NOT_FOUND = "There's no channel with that id.";
+const NOT_FOUND = "notify.channelNotFound";
 
 // ── Sending ─────────────────────────────────────────────────────────────
 
@@ -174,26 +177,33 @@ export type ChannelMessage = {
 };
 
 /** Sends one message through one channel. Needs the household pieces it
- * rides on (the bot, the app token, the mail server) to still be there. */
-export async function sendThrough(config: PersonalChannelConfig, message: ChannelMessage, actor: Actor): Promise<OutboundResult> {
+ * rides on (the bot, the app token, the mail server) to still be there.
+ * `t`: the channel owner's language, for the email footer and any reason
+ * it didn't go. */
+export async function sendThrough(
+  config: PersonalChannelConfig,
+  message: ChannelMessage,
+  actor: Actor,
+  t: Translator,
+): Promise<OutboundResult> {
   switch (config.kind) {
     case "telegram": {
       const household = await getChannelConfig("telegram");
-      if (!household) return { ok: false, error: "The household's Telegram bot isn't set up any more." };
-      return deliverTelegram({ botToken: household.botToken, chatId: config.chatId }, message.line);
+      if (!household) return { ok: false, error: t("notify.householdTelegramGone") };
+      return deliverTelegram({ botToken: household.botToken, chatId: config.chatId }, message.line, t);
     }
     case "pushover": {
       const household = await getChannelConfig("pushover");
-      if (!household) return { ok: false, error: "The household's Pushover app isn't set up any more." };
-      return deliverPushover({ appToken: household.appToken, userKey: config.userKey }, message.heading, message.message);
+      if (!household) return { ok: false, error: t("notify.householdPushoverGone") };
+      return deliverPushover({ appToken: household.appToken, userKey: config.userKey }, message.heading, message.message, t);
     }
     case "email": {
       const household = await getChannelConfig("email");
-      if (!household) return { ok: false, error: "The household's mail server isn't set up any more." };
+      if (!household) return { ok: false, error: t("notify.householdEmailGone") };
       return deliverEmail(
         { ...household, to: [config.address] },
         message.line,
-        `${message.message}\n\n— Marquee\n\nYou get these because you added this address under Settings › Account › Notifications in Marquee. Turn them off there.`,
+        `${message.message}\n\n— Marquee\n\n${t("notify.personalEmailFooter")}`,
       );
     }
     case "discord":
@@ -205,11 +215,12 @@ export async function sendThrough(config: PersonalChannelConfig, message: Channe
           body: JSON.stringify({ content: message.line, allowed_mentions: { parse: [] } }),
         },
         { allowPrivate: false },
+        t,
       );
     case "ntfy": {
       const server = ntfyServerOf(await getNtfyUrl().catch(() => null));
       const url = ntfyUrlFor(config, server);
-      if (!url) return { ok: false, error: "The household's ntfy server isn't set up any more." };
+      if (!url) return { ok: false, error: t("notify.householdNtfyGone") };
       return postOutbound(
         url,
         {
@@ -218,6 +229,7 @@ export async function sendThrough(config: PersonalChannelConfig, message: Channe
         },
         // The household server is the admin's choice; a full URL is the member's.
         config.topic ? { allowPrivate: true } : policyFor(actor),
+        t,
       );
     }
     case "webhook":
@@ -234,6 +246,7 @@ export async function sendThrough(config: PersonalChannelConfig, message: Channe
           }),
         },
         policyFor(actor),
+        t,
       );
   }
 }
@@ -271,17 +284,27 @@ export async function deliverableChannels(userId: string): Promise<DeliverableCh
 }
 
 /** One notification to one of someone's channels: rate limited, and the
- * outcome is kept on the channel for Settings to show. Never throws. */
-export async function deliverToChannel(channel: DeliverableChannel, message: ChannelMessage, actor: Actor): Promise<boolean> {
+ * outcome is kept on the channel for Settings to show (in `t`, the owner's
+ * language; looked up when not given). Never throws. */
+export async function deliverToChannel(
+  channel: DeliverableChannel,
+  message: ChannelMessage,
+  actor: Actor,
+  t?: Translator,
+): Promise<boolean> {
   try {
+    const reader = t ?? (await translatorForUser(channel.row.userId).catch(() => englishT()));
     if (!checkRateLimit(`personal-channel:${channel.row.id}`, CHANNEL_RATE_LIMIT.count, CHANNEL_RATE_LIMIT.windowMs)) {
       await recordOutcome(channel.row.id, {
         ok: false,
-        error: `Some notifications were skipped: more than ${CHANNEL_RATE_LIMIT.count} in ${CHANNEL_RATE_LIMIT.windowMs / 60000} minutes.`,
+        error: reader("notify.channelRateLimited", {
+          count: CHANNEL_RATE_LIMIT.count,
+          minutes: CHANNEL_RATE_LIMIT.windowMs / 60000,
+        }),
       });
       return false;
     }
-    const result = await sendThrough(channel.config, message, actor);
+    const result = await sendThrough(channel.config, message, actor, reader);
     await recordOutcome(channel.row.id, result);
     return result.ok;
   } catch (err) {
@@ -292,21 +315,19 @@ export async function deliverToChannel(channel: DeliverableChannel, message: Cha
 
 // ── Adding, changing, removing ──────────────────────────────────────────
 
-function cleanName(value: unknown): string | null | { error: string } {
+function cleanName(value: unknown, t: Translator): string | null | { error: string } {
   if (value === undefined || value === null) return null;
-  if (typeof value !== "string") return { error: '"name" must be text.' };
+  if (typeof value !== "string") return { error: t("notify.fieldMustBeText", { field: "name" }) };
   const name = value.trim();
-  if (name.length > 60) return { error: "Keep the name under 60 characters." };
+  if (name.length > 60) return { error: t("notify.channelNameTooLong", { count: 60 }) };
   return name || null;
 }
 
-const TEST_MESSAGE: ChannelMessage = {
-  line: "✅ Marquee will send your notifications here.",
-  heading: "Marquee",
-  message: "Marquee will send your notifications here.",
-  event: "test",
-  preference: "test",
-};
+/** "Send a test", in the language of whoever pressed it. */
+function testMessage(t: Translator): ChannelMessage {
+  const text = t("notify.channelTestMessage");
+  return { line: `✅ ${text}`, heading: "Marquee", message: text, event: "test", preference: "test" };
+}
 
 function hashCode(channelId: string, code: string): string {
   return createHash("sha256").update(`${channelId}:${code}`).digest("hex");
@@ -322,25 +343,27 @@ function needsCode(config: PersonalChannelConfig): config is Extract<PersonalCha
 async function sendVerificationCode(
   row: Pick<ChannelRow, "id">,
   config: Extract<PersonalChannelConfig, { kind: "email" | "telegram" }>,
+  t: Translator,
 ): Promise<CoreResult> {
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   if (config.kind === "email") {
     const household = await getChannelConfig("email");
-    if (!household) return fail("conflict", "Email isn't set up on this server. Ask the admin to add a mail server.");
+    if (!household) return fail("conflict", t("notify.emailNotSetUp"));
     const sent = await deliverEmail(
       { ...household, to: [config.address] },
-      `Your Marquee confirmation code: ${code}`,
-      `Your code is ${code}\n\nEnter it in Marquee (Settings › Account › Notifications) to get notifications at this address. It works for 30 minutes.\n\nIf you didn't ask for this, ignore this email — nothing more will be sent.\n\n— Marquee`,
+      t("notify.codeEmailSubject", { code }),
+      `${t("notify.codeEmailBody", { code, minutes: 30 })}\n\n— Marquee`,
     );
-    if (!sent.ok) return fail("invalid", `The confirmation email didn't go through: ${sent.error}`);
+    if (!sent.ok) return fail("invalid", t("notify.codeEmailFailed", { error: sent.error }));
   } else {
     const household = await getChannelConfig("telegram");
-    if (!household) return fail("conflict", "Telegram isn't set up on this server. Ask the admin to add a Telegram bot.");
+    if (!household) return fail("conflict", t("notify.telegramNotSetUp"));
     const sent = await deliverTelegram(
       { botToken: household.botToken, chatId: config.chatId },
-      `Your Marquee confirmation code is ${code}. Enter it in Marquee (Settings › Account › Notifications) within 30 minutes. If you didn't ask for this, ignore it.`,
+      t("notify.codeTelegram", { code, minutes: 30 }),
+      t,
     );
-    if (!sent.ok) return fail("invalid", `The code didn't reach that chat: ${sent.error}`);
+    if (!sent.ok) return fail("invalid", t("notify.codeTelegramFailed", { error: sent.error }));
   }
   await db
     .update(userNotificationChannels)
@@ -350,15 +373,15 @@ async function sendVerificationCode(
 }
 
 /** What a kind needs from the household before anyone can add it. */
-async function kindUnavailable(kind: UserNotificationChannelKind): Promise<string | null> {
+async function kindUnavailable(kind: UserNotificationChannelKind, t: Translator): Promise<string | null> {
   if (kind === "telegram" && !(await getChannelConfig("telegram"))) {
-    return "Telegram isn't set up on this server. Ask the admin to add a Telegram bot.";
+    return t("notify.telegramNotSetUp");
   }
   if (kind === "pushover" && !(await getChannelConfig("pushover"))) {
-    return "Pushover isn't set up on this server. Ask the admin to add a Pushover app.";
+    return t("notify.pushoverNotSetUp");
   }
   if (kind === "email" && !(await getChannelConfig("email"))) {
-    return "Email isn't set up on this server. Ask the admin to add a mail server.";
+    return t("notify.emailNotSetUp");
   }
   return null;
 }
@@ -374,36 +397,37 @@ export async function createChannel(
   /** The chat was found through the one-tap Telegram link: already proven. */
   options: { proven?: boolean } = {},
 ): Promise<CoreResult<{ channel: PersonalChannel }>> {
-  if (!isChannelKind(input.kind)) return fail("invalid", '"kind" must be telegram, pushover, email, discord, ntfy or webhook.');
+  const t = await getT();
+  if (!isChannelKind(input.kind)) return fail("invalid", t("notify.channelKindInvalid"));
   const kind = input.kind;
-  const name = cleanName(input.name);
+  const name = cleanName(input.name, t);
   if (name && typeof name === "object") return fail("invalid", name.error);
-  if (input.enabled !== undefined && typeof input.enabled !== "boolean") return fail("invalid", '"enabled" must be true or false.');
+  if (input.enabled !== undefined && typeof input.enabled !== "boolean") return fail("invalid", t("notify.fieldMustBeBoolean", { field: "enabled" }));
   const raw = input.config && typeof input.config === "object" && !Array.isArray(input.config) ? (input.config as Record<string, unknown>) : null;
-  if (!raw) return fail("invalid", 'Send "config" with the channel\'s details.');
+  if (!raw) return fail("invalid", t("notify.channelConfigMissing"));
 
-  const unavailable = await kindUnavailable(kind);
+  const unavailable = await kindUnavailable(kind, t);
   if (unavailable) return fail("conflict", unavailable);
 
   const [{ total }] = await db
     .select({ total: count() })
     .from(userNotificationChannels)
     .where(eq(userNotificationChannels.userId, actor.id));
-  if (total >= MAX_CHANNELS_PER_USER) return fail("conflict", `You can have up to ${MAX_CHANNELS_PER_USER} channels.`);
+  if (total >= MAX_CHANNELS_PER_USER) return fail("conflict", t("notify.channelLimit", { count: MAX_CHANNELS_PER_USER }));
 
   // Every add sends something somewhere, so it's limited like sign-in.
   if (!checkRateLimit(`personal-channel-add:${actor.id}`, 10, 10 * 60 * 1000)) {
-    return fail("rate_limited", "That's a lot of channels at once. Try again in a few minutes.");
+    return fail("rate_limited", t("notify.channelAddRateLimited"));
   }
 
-  const parsed = parsePersonalConfig(kind, raw, null, await configContext(actor));
+  const parsed = parsePersonalConfig(kind, raw, null, await configContext(actor, t));
   if (!parsed.ok) return fail("invalid", parsed.error);
   const config = parsed.config;
   const confirm = needsCode(config) && !options.proven;
 
   if (!confirm) {
-    const test = await sendThrough(config, TEST_MESSAGE, actor);
-    if (!test.ok) return fail("invalid", `The test message didn't arrive: ${test.error}`);
+    const test = await sendThrough(config, testMessage(t), actor, t);
+    if (!test.ok) return fail("invalid", t("notify.channelTestFailed", { error: test.error }));
   }
 
   const [row] = await db
@@ -421,7 +445,7 @@ export async function createChannel(
     .returning();
 
   if (confirm && needsCode(config)) {
-    const sent = await sendVerificationCode(row, config);
+    const sent = await sendVerificationCode(row, config, t);
     if (!sent.ok) {
       await db.delete(userNotificationChannels).where(eq(userNotificationChannels.id, row.id));
       return sent;
@@ -438,27 +462,28 @@ export async function updateChannel(
   id: string,
   input: { name?: unknown; enabled?: unknown; config?: unknown },
 ): Promise<CoreResult<{ channel: PersonalChannel }>> {
+  const t = await getT();
   const row = await ownRow(actor.id, id);
-  if (!row) return fail("not_found", NOT_FOUND);
+  if (!row) return fail("not_found", t(NOT_FOUND));
   const set: Partial<typeof userNotificationChannels.$inferInsert> = { updatedAt: new Date() };
 
   if (input.name !== undefined) {
-    const name = cleanName(input.name);
+    const name = cleanName(input.name, t);
     if (name && typeof name === "object") return fail("invalid", name.error);
     set.name = name as string | null;
   }
   if (input.enabled !== undefined) {
-    if (typeof input.enabled !== "boolean") return fail("invalid", '"enabled" must be true or false.');
+    if (typeof input.enabled !== "boolean") return fail("invalid", t("notify.fieldMustBeBoolean", { field: "enabled" }));
     set.enabled = input.enabled;
   }
 
   let toConfirm: Extract<PersonalChannelConfig, { kind: "email" | "telegram" }> | null = null;
   if (input.config !== undefined) {
     const raw = input.config && typeof input.config === "object" && !Array.isArray(input.config) ? (input.config as Record<string, unknown>) : null;
-    if (!raw) return fail("invalid", '"config" must be an object.');
-    const unavailable = await kindUnavailable(row.kind);
+    if (!raw) return fail("invalid", t("notify.fieldMustBeObject", { field: "config" }));
+    const unavailable = await kindUnavailable(row.kind, t);
     if (unavailable) return fail("conflict", unavailable);
-    const parsed = parsePersonalConfig(row.kind, raw, readConfig(row), await configContext(actor));
+    const parsed = parsePersonalConfig(row.kind, raw, readConfig(row), await configContext(actor, t));
     if (!parsed.ok) return fail("invalid", parsed.error);
     const config = parsed.config;
     const before = readConfig(row);
@@ -469,10 +494,10 @@ export async function updateChannel(
         set.verified = false;
       } else {
         if (!checkRateLimit(`personal-channel-add:${actor.id}`, 10, 10 * 60 * 1000)) {
-          return fail("rate_limited", "That's a lot of changes at once. Try again in a few minutes.");
+          return fail("rate_limited", t("notify.channelChangeRateLimited"));
         }
-        const test = await sendThrough(config, TEST_MESSAGE, actor);
-        if (!test.ok) return fail("invalid", `The test message didn't arrive: ${test.error}`);
+        const test = await sendThrough(config, testMessage(t), actor, t);
+        if (!test.ok) return fail("invalid", t("notify.channelTestFailed", { error: test.error }));
         set.lastSuccessAt = new Date();
         set.lastError = null;
         set.lastErrorAt = null;
@@ -483,9 +508,9 @@ export async function updateChannel(
 
   if (toConfirm) {
     if (!checkRateLimit(`personal-channel-code:${row.id}`, 3, 10 * 60 * 1000)) {
-      return fail("rate_limited", "A code was sent a moment ago. Try again in a few minutes.");
+      return fail("rate_limited", t("notify.codeRecentlySent"));
     }
-    const sent = await sendVerificationCode(row, toConfirm);
+    const sent = await sendVerificationCode(row, toConfirm, t);
     if (!sent.ok) return sent;
   }
 
@@ -498,8 +523,9 @@ export async function updateChannel(
 }
 
 export async function deleteChannel(userId: string, id: string): Promise<CoreResult> {
+  const t = await getT();
   const row = await ownRow(userId, id);
-  if (!row) return fail("not_found", NOT_FOUND);
+  if (!row) return fail("not_found", t(NOT_FOUND));
   await db
     .delete(userNotificationChannels)
     .where(and(eq(userNotificationChannels.id, row.id), eq(userNotificationChannels.userId, userId)));
@@ -508,30 +534,32 @@ export async function deleteChannel(userId: string, id: string): Promise<CoreRes
 
 /** "Send a test": through this channel only; the outcome is kept on it. */
 export async function testChannel(actor: Actor, id: string): Promise<CoreResult<{ channel: PersonalChannel }>> {
+  const t = await getT();
   const row = await ownRow(actor.id, id);
-  if (!row) return fail("not_found", NOT_FOUND);
-  if (!row.verified) return fail("conflict", "Enter the code we sent first.");
+  if (!row) return fail("not_found", t(NOT_FOUND));
+  if (!row.verified) return fail("conflict", t("notify.codeEnterFirst"));
   const config = readConfig(row);
-  if (!config) return fail("conflict", "This channel's details can't be read any more. Enter them again.");
+  if (!config) return fail("conflict", t("notify.channelUnreadable"));
   if (!checkRateLimit(`personal-channel-test:${actor.id}`, 5, 60 * 1000)) {
-    return fail("rate_limited", "That's a lot of tests. Try again in a minute.");
+    return fail("rate_limited", t("notify.channelTestRateLimited"));
   }
-  const result = await sendThrough(config, TEST_MESSAGE, actor);
+  const result = await sendThrough(config, testMessage(t), actor, t);
   await recordOutcome(row.id, result);
-  if (!result.ok) return fail("invalid", `The test message didn't arrive: ${result.error}`);
+  if (!result.ok) return fail("invalid", t("notify.channelTestFailed", { error: result.error }));
   return { ok: true, channel: toChannel((await ownRow(actor.id, id))!) };
 }
 
 export async function verifyChannel(userId: string, id: string, rawCode: unknown): Promise<CoreResult<{ channel: PersonalChannel }>> {
+  const t = await getT();
   const row = await ownRow(userId, id);
-  if (!row) return fail("not_found", NOT_FOUND);
+  if (!row) return fail("not_found", t(NOT_FOUND));
   if (row.verified) return { ok: true, channel: toChannel(row) };
   const code = typeof rawCode === "string" ? rawCode.replace(/\s+/g, "") : "";
-  if (!/^\d{6}$/.test(code)) return fail("invalid", "The code is the 6 digits we sent.");
+  if (!/^\d{6}$/.test(code)) return fail("invalid", t("notify.codeFormat"));
   if (!row.verifyCodeHash || !row.verifyExpiresAt || row.verifyExpiresAt < new Date()) {
-    return fail("expired", "That code has expired. Send a new one.");
+    return fail("expired", t("notify.codeExpired"));
   }
-  if (row.verifyAttempts >= VERIFY_MAX_ATTEMPTS) return fail("rate_limited", "Too many wrong codes. Send a new one.");
+  if (row.verifyAttempts >= VERIFY_MAX_ATTEMPTS) return fail("rate_limited", t("notify.codeTooManyWrong"));
   const expected = Buffer.from(row.verifyCodeHash, "hex");
   const given = Buffer.from(hashCode(row.id, code), "hex");
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) {
@@ -539,7 +567,7 @@ export async function verifyChannel(userId: string, id: string, rawCode: unknown
       .update(userNotificationChannels)
       .set({ verifyAttempts: row.verifyAttempts + 1 })
       .where(eq(userNotificationChannels.id, row.id));
-    return fail("invalid", "That code isn't right. Check it and try again.");
+    return fail("invalid", t("notify.codeWrong"));
   }
   const [updated] = await db
     .update(userNotificationChannels)
@@ -550,15 +578,16 @@ export async function verifyChannel(userId: string, id: string, rawCode: unknown
 }
 
 export async function resendVerification(userId: string, id: string): Promise<CoreResult<{ channel: PersonalChannel }>> {
+  const t = await getT();
   const row = await ownRow(userId, id);
-  if (!row) return fail("not_found", NOT_FOUND);
-  if (row.verified) return fail("conflict", "This channel is already confirmed.");
+  if (!row) return fail("not_found", t(NOT_FOUND));
+  if (row.verified) return fail("conflict", t("notify.channelAlreadyConfirmed"));
   const config = readConfig(row);
-  if (!config || !needsCode(config)) return fail("conflict", "This channel doesn't need confirming.");
+  if (!config || !needsCode(config)) return fail("conflict", t("notify.channelNoConfirmNeeded"));
   if (!checkRateLimit(`personal-channel-code:${row.id}`, 3, 10 * 60 * 1000)) {
-    return fail("rate_limited", "A code was sent a moment ago. Try again in a few minutes.");
+    return fail("rate_limited", t("notify.codeRecentlySent"));
   }
-  const sent = await sendVerificationCode(row, config);
+  const sent = await sendVerificationCode(row, config, t);
   if (!sent.ok) return sent;
   return { ok: true, channel: toChannel((await ownRow(userId, id))!) };
 }
@@ -578,10 +607,11 @@ const TELEGRAM_LINK_TTL_MS = 10 * 60 * 1000;
 
 /** A one-time "/start <code>" link to the household bot. */
 export async function startTelegramLink(userId: string): Promise<CoreResult<{ code: string; url: string; expiresAt: Date }>> {
+  const t = await getT();
   const household = await getChannelConfig("telegram");
-  if (!household) return fail("conflict", "Telegram isn't set up on this server. Ask the admin to add a Telegram bot.");
+  if (!household) return fail("conflict", t("notify.telegramNotSetUp"));
   const username = await botUsername(household.botToken);
-  if (!username) return fail("upstream", "Couldn't reach the household's Telegram bot. Enter your chat ID instead.");
+  if (!username) return fail("upstream", t("notify.telegramBotUnreachable"));
   const now = Date.now();
   for (const [code, link] of telegramLinks) if (link.expiresAt < now) telegramLinks.delete(code);
   const code = randomBytes(12).toString("base64url");
@@ -597,23 +627,24 @@ export async function pollTelegramLink(
   code: unknown,
   name?: unknown,
 ): Promise<CoreResult<{ status: "pending" } | { status: "connected"; channel: PersonalChannel }>> {
+  const t = await getT();
   const link = typeof code === "string" ? telegramLinks.get(code) : undefined;
   // Someone else's code reads exactly like an expired one.
   if (!link || link.userId !== actor.id || link.expiresAt < Date.now()) {
-    return fail("expired", "That link has expired. Press Connect again.");
+    return fail("expired", t("notify.telegramLinkExpired"));
   }
   if (!checkRateLimit(`telegram-link-poll:${actor.id}`, 40, 60 * 1000)) {
-    return fail("rate_limited", "Checking too often. Wait a moment.");
+    return fail("rate_limited", t("notify.telegramPollTooOften"));
   }
   const household = await getChannelConfig("telegram");
-  if (!household) return fail("conflict", "Telegram isn't set up on this server any more.");
+  if (!household) return fail("conflict", t("notify.telegramGone"));
   const found = await findTelegramStart(household.botToken, code as string);
   if (found.status === "unavailable") {
-    return fail("conflict", "The household bot can't be checked from here (it uses a webhook). Enter your chat ID instead.");
+    return fail("conflict", t("notify.telegramBotUsesWebhook"));
   }
   if (found.status === "pending") return { ok: true, status: "pending" };
   // Two polls can both see it; only the one that takes the code adds it.
-  if (!telegramLinks.delete(code as string)) return fail("expired", "That link has already been used.");
+  if (!telegramLinks.delete(code as string)) return fail("expired", t("notify.telegramLinkUsed"));
   const created = await createChannel(actor, { kind: "telegram", name, config: { chatId: found.chatId } }, { proven: true });
   if (!created.ok) return created;
   return { ok: true, status: "connected", channel: created.channel };

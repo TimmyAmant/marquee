@@ -38,7 +38,8 @@ import { verifyTvdbApiKey } from "@/lib/tvdb/client";
 import { verifyDiscordWebhook } from "@/lib/discord/client";
 import { verifyNtfyUrl } from "@/lib/ntfy/client";
 import { verifyWebhookUrl } from "@/lib/webhook/client";
-import { fail, type CoreResult } from "@/lib/core-result";
+import type { CoreResult } from "@/lib/core-result";
+import { failT } from "@/lib/core-failure";
 
 // Settings → Integrations operations shared by the web's server actions
 // (app/settings/integrations/*-actions.ts) and /api/v1/settings/integrations/*.
@@ -79,7 +80,7 @@ export async function testAndSaveArrConnection(
   const baseUrl = normalizeServerUrl(input.baseUrl);
   const apiKey = input.apiKey.trim();
   if (!baseUrl || !apiKey) {
-    return fail("invalid", "URL and API key are required.");
+    return await failT("invalid", "server.urlAndKeyRequired");
   }
   const result = await saveDefaultServerConnection(adminUserId, arrKindOf(provider), isFourK(provider), {
     baseUrl,
@@ -102,9 +103,9 @@ export async function testAndSaveArrConnection(
 export async function getArrOptions(adminUserId: string, provider: ArrInstance): Promise<CoreResult<ArrOptions>> {
   const [server] = await listArrServers(adminUserId, { kind: arrKindOf(provider), fourK: isFourK(provider) });
   const label = arrInstanceLabel(provider);
-  if (!server) return fail("conflict", `Connect ${label} in Settings first.`);
+  if (!server) return await failT("conflict", "server.connectInSettingsFirst", { name: label });
   const options = await getArrServerOptions(adminUserId, server.id);
-  if (!options.ok) return fail("upstream", `Couldn't reach ${label}. Check its connection in Settings.`);
+  if (!options.ok) return await failT("upstream", "server.arrUnreachable", { name: label });
   return { ok: true, rootFolders: options.rootFolders, qualityProfiles: options.qualityProfiles };
 }
 
@@ -114,7 +115,7 @@ export async function saveArrDefaultsFor(
   input: { rootFolderPath: string; qualityProfileId: number },
 ): Promise<CoreResult> {
   if (!input.rootFolderPath || !Number.isFinite(input.qualityProfileId)) {
-    return fail("invalid", "Pick a root folder and a quality profile.");
+    return await failT("invalid", "server.pickRootAndProfile");
   }
   const result = await saveDefaultServerDefaults(adminUserId, arrKindOf(provider), isFourK(provider), input);
   if (!result.ok) return result;
@@ -162,13 +163,13 @@ export async function testAndSaveJellyfinConnection(
   const baseUrl = normalizeServerUrl(input.baseUrl);
   const apiKey = input.apiKey.trim();
   if (!baseUrl || !apiKey) {
-    return fail("invalid", "URL and API key are required.");
+    return await failT("invalid", "server.urlAndKeyRequired");
   }
 
   try {
     await jellyfin.testConnection({ baseUrl, apiKey });
   } catch {
-    return fail("upstream", "Couldn't connect. Check the URL and API key and try again.");
+    return await failT("upstream", "server.couldNotConnect");
   }
 
   await upsertJellyfinCredential(adminUserId, { baseUrl, apiKey });
@@ -183,7 +184,7 @@ export async function startPlexAuthFor(adminUserId: string): Promise<CoreResult<
     const pin = await plex.createPin(clientId);
     return { ok: true, authUrl: plex.buildPlexAuthUrl(clientId, pin.code), pinId: pin.id };
   } catch {
-    return fail("upstream", "Couldn't start Plex sign-in. Try again.");
+    return await failT("upstream", "server.plexStartFailed");
   }
 }
 
@@ -231,15 +232,15 @@ export async function syncNowForUser(userId: string): Promise<CoreResult> {
   const failed = results.some((r) => r.status === "rejected");
 
   revalidateIntegrations();
-  return failed ? fail("upstream", "Some integrations failed to sync — check their connection.") : { ok: true };
+  return failed ? await failT("upstream", "server.someSyncsFailed") : { ok: true };
 }
 
 export async function testAndSaveTmdbToken(rawToken: string): Promise<CoreResult> {
   const token = rawToken.trim();
-  if (!token) return fail("invalid", "Enter an access token.");
+  if (!token) return await failT("invalid", "server.enterAccessToken");
 
   const valid = await verifyTmdbAccessToken(token).catch(() => false);
-  if (!valid) return fail("invalid", "Couldn't verify this token with TMDb. Check it and try again.");
+  if (!valid) return await failT("invalid", "server.tmdbTokenInvalid");
 
   await setTmdbAccessToken(token);
   revalidateIntegrations();
@@ -248,10 +249,10 @@ export async function testAndSaveTmdbToken(rawToken: string): Promise<CoreResult
 
 export async function testAndSaveTraktClientId(rawClientId: string): Promise<CoreResult> {
   const clientId = rawClientId.trim();
-  if (!clientId) return fail("invalid", "Enter a Trakt client id.");
+  if (!clientId) return await failT("invalid", "server.enterTraktClientId");
 
   const valid = await verifyTraktClientId(clientId).catch(() => false);
-  if (!valid) return fail("invalid", "Couldn't verify this client id with Trakt. Check it and try again.");
+  if (!valid) return await failT("invalid", "server.traktClientIdInvalid");
 
   await setTraktClientId(clientId);
   revalidateIntegrations();
@@ -260,10 +261,10 @@ export async function testAndSaveTraktClientId(rawClientId: string): Promise<Cor
 
 export async function testAndSaveTvdbApiKey(rawApiKey: string): Promise<CoreResult> {
   const apiKey = rawApiKey.trim();
-  if (!apiKey) return fail("invalid", "Enter a TheTVDB API key.");
+  if (!apiKey) return await failT("invalid", "server.enterTvdbKey");
 
   const valid = await verifyTvdbApiKey(apiKey).catch(() => false);
-  if (!valid) return fail("invalid", "Couldn't verify this key with TheTVDB. Check it and try again.");
+  if (!valid) return await failT("invalid", "server.tvdbKeyInvalid");
 
   await setTvdbApiKey(apiKey);
   revalidateIntegrations();
@@ -272,13 +273,13 @@ export async function testAndSaveTvdbApiKey(rawApiKey: string): Promise<CoreResu
 
 export async function testAndSaveDiscordWebhook(rawUrl: string): Promise<CoreResult> {
   const webhookUrl = rawUrl.trim();
-  if (!webhookUrl) return fail("invalid", "Enter a Discord webhook URL.");
+  if (!webhookUrl) return await failT("invalid", "server.enterDiscordWebhook");
   if (!webhookUrl.startsWith("https://discord.com/api/webhooks/")) {
-    return fail("invalid", "That doesn't look like a Discord webhook URL.");
+    return await failT("invalid", "server.notDiscordWebhook");
   }
 
   const valid = await verifyDiscordWebhook(webhookUrl);
-  if (!valid) return fail("invalid", "Couldn't post a test message to that webhook. Check it and try again.");
+  if (!valid) return await failT("invalid", "server.discordTestFailed");
 
   await setDiscordWebhookUrl(webhookUrl);
   revalidateIntegrations();
@@ -287,13 +288,13 @@ export async function testAndSaveDiscordWebhook(rawUrl: string): Promise<CoreRes
 
 export async function testAndSaveNtfyTopic(rawUrl: string): Promise<CoreResult> {
   const topicUrl = rawUrl.trim();
-  if (!topicUrl) return fail("invalid", "Enter your ntfy topic URL.");
+  if (!topicUrl) return await failT("invalid", "server.enterNtfyTopic");
   if (!topicUrl.startsWith("http://") && !topicUrl.startsWith("https://")) {
-    return fail("invalid", "Enter a full URL, e.g. https://ntfy.sh/your-topic-name.");
+    return await failT("invalid", "server.ntfyFullUrl");
   }
 
   const valid = await verifyNtfyUrl(topicUrl);
-  if (!valid) return fail("invalid", "Couldn't post a test message to that topic. Check it and try again.");
+  if (!valid) return await failT("invalid", "server.ntfyTestFailed");
 
   await setNtfyUrl(topicUrl);
   revalidateIntegrations();
@@ -302,13 +303,13 @@ export async function testAndSaveNtfyTopic(rawUrl: string): Promise<CoreResult> 
 
 export async function testAndSaveGenericWebhookUrl(rawUrl: string): Promise<CoreResult> {
   const webhookUrl = rawUrl.trim();
-  if (!webhookUrl) return fail("invalid", "Enter a webhook URL.");
+  if (!webhookUrl) return await failT("invalid", "server.enterWebhookUrl");
   if (!webhookUrl.startsWith("http://") && !webhookUrl.startsWith("https://")) {
-    return fail("invalid", "Enter a valid URL, starting with http:// or https://.");
+    return await failT("invalid", "server.webhookUrlInvalid");
   }
 
   const valid = await verifyWebhookUrl(webhookUrl);
-  if (!valid) return fail("invalid", "Couldn't post a test request to that URL. Check it and try again.");
+  if (!valid) return await failT("invalid", "server.webhookTestFailed");
 
   await setGenericWebhookUrl(webhookUrl);
   revalidateIntegrations();

@@ -2,6 +2,8 @@
 // does the I/O): which Marquee account a verified media-server user becomes,
 // and what username a new account gets. Kept free of the database so the
 // security-relevant decisions are unit tested directly (media-accounts.test.ts).
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 
 export type MediaProvider = "plex" | "jellyfin";
 
@@ -10,10 +12,9 @@ export const MEDIA_PROVIDER_LABEL: Record<MediaProvider, string> = { plex: "Plex
 /** The refusal for someone Plex/Jellyfin let in who has no Marquee account
  * while new accounts from sign-in are off. `name` is "Plex", "Jellyfin" or
  * "Emby". */
-export function noAccountMessage(name: string): string {
-  return `There's no Marquee account for this ${name} account yet. Ask the admin to add you.`;
+export function noAccountMessage(name: string, t: Translator = englishT()): string {
+  return t("server.noAccountForMedia", { name });
 }
-export const PLEX_NO_ACCESS_MESSAGE = "This Plex account doesn't have access to this server.";
 
 export type SignInDecision =
   | { action: "sign_in"; userId: string }
@@ -42,13 +43,18 @@ export function decideSignIn(input: {
   /** What to call the provider in the refusal ("Emby" for an Emby server);
    * the provider's own label otherwise. */
   providerName?: string;
+  /** The refusal's language (English by default). */
+  t?: Translator;
 }): SignInDecision {
   if (input.linkedUserId) return { action: "sign_in", userId: input.linkedUserId };
   if (input.provider === "plex" && input.ownsServer && input.admin && !input.admin.linked) {
     return { action: "link_admin", userId: input.admin.id };
   }
   if (input.signupAllowed) return { action: "create" };
-  return { action: "refuse", message: noAccountMessage(input.providerName ?? MEDIA_PROVIDER_LABEL[input.provider]) };
+  return {
+    action: "refuse",
+    message: noAccountMessage(input.providerName ?? MEDIA_PROVIDER_LABEL[input.provider], input.t),
+  };
 }
 
 /** Marquee's username rules (lib/users/household.ts): 3–32 characters of

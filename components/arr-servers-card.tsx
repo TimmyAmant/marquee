@@ -14,6 +14,8 @@ import { WebhookUrlRow } from "@/components/webhook-settings-card";
 import type { ArrServerDto } from "@/lib/arr/servers";
 import type { ArrPickerOptions } from "@/lib/arr/add-options-server";
 import type { ArrProvider, SonarrSeriesType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 // Settings → Integrations → Download Clients: every Sonarr and Radarr
 // server, each with its own defaults and webhook URL (lib/arr/servers.ts).
@@ -26,10 +28,10 @@ const SMALL_BUTTON =
 const PRIMARY_BUTTON =
   "rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60";
 
-const SERIES_TYPES: { value: SonarrSeriesType; label: string }[] = [
-  { value: "standard", label: "Standard" },
-  { value: "daily", label: "Daily" },
-  { value: "anime", label: "Anime" },
+const SERIES_TYPES: { value: SonarrSeriesType; label: MessageKey }[] = [
+  { value: "standard", label: "integrations.seriesTypeStandard" },
+  { value: "daily", label: "integrations.seriesTypeDaily" },
+  { value: "anime", label: "integrations.seriesTypeAnime" },
 ];
 
 function kindName(kind: ArrProvider) {
@@ -61,7 +63,8 @@ export function TagChips({
   /** The form those fields belong to, when they sit outside it. */
   form?: string;
 }) {
-  if (tags.length === 0) return <p className="text-xs text-text-muted">This server has no tags.</p>;
+  const t = useT();
+  if (tags.length === 0) return <p className="text-xs text-text-muted">{t("integrations.serverHasNoTags")}</p>;
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => {
@@ -80,7 +83,7 @@ export function TagChips({
               form={form}
               value={tag.id}
               checked={on}
-              onChange={() => onChange(on ? selected.filter((t) => t !== tag.id) : [...selected, tag.id])}
+              onChange={() => onChange(on ? selected.filter((id) => id !== tag.id) : [...selected, tag.id])}
             />
             {tag.label}
           </label>
@@ -134,6 +137,7 @@ function ServerEditor({
   server: ArrServerDto | null;
   onDone: () => void;
 }) {
+  const t = useT();
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>(() => draftFrom(server, kind));
   const [options, setOptions] = useState<ArrPickerOptions | null>(null);
@@ -180,7 +184,10 @@ function ServerEditor({
         qualityProfileId: d.qualityProfileId ?? result.qualityProfiles[0]?.id ?? null,
         rootFolderPath: d.rootFolderPath ?? result.rootFolders[0]?.path ?? null,
       }));
-      setMessage({ tone: "ok", text: result.version ? `Connected — ${kindName(kind)} ${result.version}.` : "Connected." });
+      setMessage({ tone: "ok", text: result.version
+          ? t("integrations.arrConnectedVersion", { app: kindName(kind), version: result.version })
+          : t("integrations.arrConnected"),
+      });
     });
   }
 
@@ -232,7 +239,7 @@ function ServerEditor({
     <div className="mt-3 flex flex-col gap-3 rounded-xl border border-border bg-bg-0/40 p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={LABEL}>
-          Name
+          {t("integrations.name")}
           <input
             type="text"
             value={draft.name}
@@ -243,27 +250,27 @@ function ServerEditor({
           />
         </label>
         <label className={LABEL}>
-          Server URL
+          {t("integrations.serverUrl")}
           <input
             type="url"
             value={draft.baseUrl}
-            placeholder={`http://localhost:${sonarr ? "8989" : "7878"}`}
+            placeholder={`http://localhost:${sonarr ? "8989" : "7878"}`} // i18n-ignore
             onChange={(e) => set("baseUrl", e.target.value)}
             className={INPUT}
           />
         </label>
         <label className={`${LABEL} sm:col-span-2`}>
-          API key
+          {t("integrations.apiKey")}
           <input
             type="password"
             value={draft.apiKey}
             autoComplete="off"
-            placeholder={server ? "Saved — enter a new one to replace it" : ""}
+            placeholder={server ? t("integrations.apiKeySavedPlaceholder") : ""}
             onChange={(e) => set("apiKey", e.target.value)}
             className={INPUT}
           />
           {urlChanged && !draft.apiKey && (
-            <span className="text-xs text-amber-300">Enter the API key again to change the URL.</span>
+            <span className="text-xs text-amber-300">{t("integrations.arrReenterApiKey")}</span>
           )}
         </label>
       </div>
@@ -271,7 +278,7 @@ function ServerEditor({
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-secondary">
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={draft.is4k} onChange={(e) => set("is4k", e.target.checked)} className="accent-accent" />
-          4K server
+          {t("integrations.arr4kServer")}
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -281,26 +288,25 @@ function ServerEditor({
             onChange={(e) => set("isDefault", e.target.checked)}
             className="accent-accent"
           />
-          Default {draft.is4k ? "4K " : ""}
-          {kindName(kind)}
+          {draft.is4k ? t("integrations.arrDefault4k", { app: kindName(kind) }) : t("integrations.arrDefault", { app: kindName(kind) })}
         </label>
         <button type="button" onClick={handleTest} disabled={busy || !draft.baseUrl} className={SMALL_BUTTON}>
-          {isTesting ? "Testing…" : "Test"}
+          {isTesting ? t("integrations.testing") : t("common.test")}
         </button>
       </div>
 
       {options && (
         <div className="flex flex-col gap-3 border-t border-border pt-3">
-          <p className="text-sm text-text-secondary">Used when a title is added to this server:</p>
+          <p className="text-sm text-text-secondary">{t("integrations.arrUsedWhenAdded")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className={LABEL}>
-              Quality profile
+              {t("integrations.qualityProfile")}
               <select
                 value={draft.qualityProfileId ?? ""}
                 onChange={(e) => set("qualityProfileId", e.target.value ? Number(e.target.value) : null)}
                 className={INPUT}
               >
-                <option value="">Pick one…</option>
+                <option value="">{t("integrations.pickOne")}</option>
                 {options.qualityProfiles.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -309,13 +315,13 @@ function ServerEditor({
               </select>
             </label>
             <label className={LABEL}>
-              Root folder
+              {t("integrations.rootFolder")}
               <select
                 value={draft.rootFolderPath ?? ""}
                 onChange={(e) => set("rootFolderPath", e.target.value || null)}
                 className={INPUT}
               >
-                <option value="">Pick one…</option>
+                <option value="">{t("integrations.pickOne")}</option>
                 {options.rootFolders.map((f) => (
                   <option key={f.id} value={f.path}>
                     {f.path}
@@ -325,23 +331,23 @@ function ServerEditor({
             </label>
           </div>
           <div className={LABEL}>
-            Tags
-            <TagChips tags={options.tags} selected={draft.tags} onChange={(t) => set("tags", t)} />
+            {t("integrations.tags")}
+            <TagChips tags={options.tags} selected={draft.tags} onChange={(tags) => set("tags", tags)} />
           </div>
 
           {sonarr && (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={LABEL}>
-                  Series type
+                  {t("integrations.seriesType")}
                   <select
                     value={draft.seriesType}
                     onChange={(e) => set("seriesType", e.target.value as SonarrSeriesType)}
                     className={INPUT}
                   >
-                    {SERIES_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    {SERIES_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {t(type.label)}
                       </option>
                     ))}
                   </select>
@@ -353,22 +359,19 @@ function ServerEditor({
                     onChange={(e) => set("seasonFolders", e.target.checked)}
                     className="accent-accent"
                   />
-                  Season folders
+                  {t("integrations.seasonFolders")}
                 </label>
               </div>
-              <p className="mt-1 text-sm text-text-secondary">
-                For anime (TMDb says it&apos;s anime, or it&apos;s animation from Japan) — added as series type
-                &ldquo;Anime&rdquo;:
-              </p>
+              <p className="mt-1 text-sm text-text-secondary">{t("integrations.arrAnimeIntro")}</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={LABEL}>
-                  Anime quality profile
+                  {t("integrations.animeQualityProfile")}
                   <select
                     value={draft.animeQualityProfileId ?? ""}
                     onChange={(e) => set("animeQualityProfileId", e.target.value ? Number(e.target.value) : null)}
                     className={INPUT}
                   >
-                    <option value="">Same as above</option>
+                    <option value="">{t("integrations.sameAsAbove")}</option>
                     {options.qualityProfiles.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
@@ -377,13 +380,13 @@ function ServerEditor({
                   </select>
                 </label>
                 <label className={LABEL}>
-                  Anime root folder
+                  {t("integrations.animeRootFolder")}
                   <select
                     value={draft.animeRootFolderPath ?? ""}
                     onChange={(e) => set("animeRootFolderPath", e.target.value || null)}
                     className={INPUT}
                   >
-                    <option value="">Same as above</option>
+                    <option value="">{t("integrations.sameAsAbove")}</option>
                     {options.rootFolders.map((f) => (
                       <option key={f.id} value={f.path}>
                         {f.path}
@@ -393,8 +396,11 @@ function ServerEditor({
                 </label>
               </div>
               <div className={LABEL}>
-                Anime tags <span className="text-xs text-text-muted">(none picked: the tags above)</span>
-                <TagChips tags={options.tags} selected={draft.animeTags} onChange={(t) => set("animeTags", t)} />
+                <span>
+                  {t("integrations.animeTags")}{" "}
+                  <span className="text-xs text-text-muted">{t("integrations.animeTagsHint")}</span>
+                </span>
+                <TagChips tags={options.tags} selected={draft.animeTags} onChange={(tags) => set("animeTags", tags)} />
               </div>
             </>
           )}
@@ -403,17 +409,16 @@ function ServerEditor({
 
       {server && webhookUrl && (
         <div className="flex flex-col gap-2 border-t border-border pt-3">
-          <WebhookUrlRow label="Webhook URL" url={webhookUrl} />
+          <WebhookUrlRow label={t("integrations.webhookUrl")} url={webhookUrl} />
           <p className="text-xs text-text-muted">
-            In {kindName(kind)} → Settings → Connect → Add → Webhook, paste this (method POST, on Grab and on
-            Import). {" "}
+            {t("integrations.arrWebhookHelp", { app: kindName(kind) })}{" "}
             <button
               type="button"
               onClick={handleRegenerate}
               disabled={isRegenerating}
               className="underline underline-offset-2 hover:text-accent disabled:opacity-60"
             >
-              {isRegenerating ? "Regenerating…" : "Regenerate secret"}
+              {isRegenerating ? t("integrations.regenerating") : t("integrations.regenerateSecret")}
             </button>
           </p>
         </div>
@@ -425,18 +430,19 @@ function ServerEditor({
 
       <div className="flex items-center gap-2">
         <button type="button" onClick={handleSave} disabled={busy || !canSave} className={PRIMARY_BUTTON}>
-          {isSaving ? "Saving…" : server ? "Save" : "Add server"}
+          {isSaving ? t("common.saving") : server ? t("common.save") : t("integrations.addServer")}
         </button>
         <button type="button" onClick={onDone} disabled={busy} className={SMALL_BUTTON}>
-          Cancel
+          {t("common.cancel")}
         </button>
-        {!server && !options && <span className="text-xs text-text-muted">Test the connection first.</span>}
+        {!server && !options && <span className="text-xs text-text-muted">{t("integrations.testConnectionFirst")}</span>}
       </div>
     </div>
   );
 }
 
 function ServerRow({ server, editing, onEdit, onDone }: { server: ArrServerDto; editing: boolean; onEdit: () => void; onDone: () => void }) {
+  const t = useT();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -447,7 +453,7 @@ function ServerRow({ server, editing, onEdit, onDone }: { server: ArrServerDto; 
     startTransition(async () => {
       const result = await action();
       if (!result.ok) {
-        setError(result.error ?? "Something went wrong.");
+        setError(result.error ?? t("common.somethingWentWrong"));
         return;
       }
       setConfirming(false);
@@ -461,9 +467,9 @@ function ServerRow({ server, editing, onEdit, onDone }: { server: ArrServerDto; 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-text-primary">{server.name}</span>
-            {server.isDefault && <Badge tone="accent">Default</Badge>}
-            {server.is4k && <Badge>4K</Badge>}
-            {!server.fullyConfigured && <Badge tone="warn">Needs a profile and folder</Badge>}
+            {server.isDefault && <Badge tone="accent">{t("integrations.defaultBadge")}</Badge>}
+            {server.is4k && <Badge>{/* i18n-ignore */}4K</Badge>}
+            {!server.fullyConfigured && <Badge tone="warn">{t("integrations.needsProfileAndFolder")}</Badge>}
           </div>
           <p className="mt-0.5 truncate text-xs text-text-muted">{server.baseUrl}</p>
         </div>
@@ -476,25 +482,25 @@ function ServerRow({ server, editing, onEdit, onDone }: { server: ArrServerDto; 
                 onClick={() => run(() => makeDefaultArrServerAction(server.id))}
                 className={SMALL_BUTTON}
               >
-                Make default
+                {t("integrations.makeDefault")}
               </button>
             )}
             <button type="button" onClick={onEdit} className={SMALL_BUTTON}>
-              Edit
+              {t("common.edit")}
             </button>
             {confirming ? (
               <>
-                <span className="text-xs text-text-secondary">Remove {server.name}?</span>
+                <span className="text-xs text-text-secondary">{t("integrations.removeServerConfirm", { name: server.name })}</span>
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => deleteArrServerAction(server.id))}
                   className="rounded-full border border-red-400/60 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-60"
                 >
-                  {isPending ? "Removing…" : "Remove"}
+                  {isPending ? t("integrations.removing") : t("common.remove")}
                 </button>
                 <button type="button" onClick={() => setConfirming(false)} className={SMALL_BUTTON}>
-                  Keep
+                  {t("integrations.keep")}
                 </button>
               </>
             ) : (
@@ -503,7 +509,7 @@ function ServerRow({ server, editing, onEdit, onDone }: { server: ArrServerDto; 
                 onClick={() => setConfirming(true)}
                 className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline"
               >
-                Remove
+                {t("common.remove")}
               </button>
             )}
           </div>
@@ -526,6 +532,7 @@ function KindSection({
   editing: string | null;
   setEditing: (key: string | null) => void;
 }) {
+  const t = useT();
   const adding = editing === `new:${kind}`;
   return (
     <div>
@@ -533,14 +540,13 @@ function KindSection({
         <h4 className="text-sm font-medium text-text-primary">{kindName(kind)}</h4>
         {!adding && (
           <button type="button" onClick={() => setEditing(`new:${kind}`)} className={SMALL_BUTTON}>
-            Add a {kindName(kind)} server
+            {t("integrations.addArrServer", { app: kindName(kind) })}
           </button>
         )}
       </div>
       {servers.length === 0 && !adding && (
         <p className="mt-2 text-sm text-text-muted">
-          No {kindName(kind)} yet — add one to send {kind === "sonarr" ? "shows" : "movies"} straight to your download
-          queue.
+          {kind === "sonarr" ? t("integrations.noSonarrYet") : t("integrations.noRadarrYet")}
         </p>
       )}
       <ul className="mt-3 flex flex-col gap-2">
@@ -560,15 +566,15 @@ function KindSection({
 }
 
 export function ArrServersCard({ servers }: { servers: ArrServerDto[] }) {
+  const t = useT();
   const [editing, setEditing] = useState<string | null>(null);
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
-      <h3 className="font-display text-xl text-text-primary">Sonarr &amp; Radarr</h3>
-      <p className="mt-1 text-sm text-text-secondary">
-        Add as many servers as you run. Titles go to the default one unless you pick another under
-        &ldquo;Advanced&rdquo; when approving or adding. A title on any standard server counts as in your library;
-        4K servers take 4K requests.
-      </p>
+      <h3 className="font-display text-xl text-text-primary">
+        {/* i18n-ignore */}
+        Sonarr &amp; Radarr
+      </h3>
+      <p className="mt-1 text-sm text-text-secondary">{t("integrations.arrIntro")}</p>
       <div className="mt-5 flex flex-col gap-6">
         {(["sonarr", "radarr"] as const).map((kind) => (
           <KindSection

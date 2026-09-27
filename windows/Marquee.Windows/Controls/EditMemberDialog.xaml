@@ -21,8 +21,7 @@
     xmlns:controls="using:Marquee.Windows.Controls"
     xmlns:models="using:Marquee.Core.Models"
     mc:Ignorable="d"
-    PrimaryButtonText="Save"
-    CloseButtonText="Cancel"
+    x:Uid="Member_EditDialog"
     DefaultButton="Primary"
     PrimaryButtonClick="OnSaveClick"
     Closing="OnDialogClosing">
@@ -36,12 +35,12 @@
             <controls:AvatarView x:Name="PhotoAvatar" Grid.Column="0" Diameter="64" VerticalAlignment="Center" />
             <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="ChoosePhotoButton" Content="Add photo" Click="OnChoosePhotoClick" />
-                    <Button x:Name="RemovePhotoButton" Content="Remove" Click="OnRemovePhotoClick" Visibility="Collapsed" />
+                    <Button x:Name="ChoosePhotoButton" Click="OnChoosePhotoClick" />
+                    <Button x:Name="RemovePhotoButton" x:Uid="Member_RemovePhoto" Click="OnRemovePhotoClick" Visibility="Collapsed" />
                     <ProgressRing x:Name="PhotoProgress" Width="16" Height="16" IsActive="False" Visibility="Collapsed" />
                 </StackPanel>
                 <TextBlock
-                    Text="Saved as soon as you pick one. The server crops it to a square and keeps it to itself."
+                    x:Uid="Member_PhotoNote"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
@@ -54,28 +53,25 @@
             IsClosable="False" />
         <TextBox
             x:Name="DisplayNameBox"
-            Header="Name"
-            PlaceholderText="Leave blank to keep the current name"
+            x:Uid="Member_EditName"
             MaxLength="80" />
         <TextBox
             x:Name="UsernameBox"
-            Header="Username"
+            x:Uid="Member_EditUsername"
             IsSpellCheckEnabled="False"
             MaxLength="32"
             TextChanged="OnUsernameChanged" />
         <PasswordBox
             x:Name="NewPasswordInput"
-            Header="New password"
-            PlaceholderText="Leave blank to keep the current password" />
+            x:Uid="Member_EditNewPassword" />
         <PasswordBox
             x:Name="CurrentPasswordInput"
-            Header="Current password"
-            PlaceholderText="Needed only when setting a new password"
+            x:Uid="Member_EditCurrentPassword"
             Visibility="Collapsed" />
         <!-- Before 0.48: the two auto-approve boxes. -->
         <StackPanel x:Name="AutoApprovePanel" Visibility="Collapsed">
-            <CheckBox x:Name="AutoApproveMoviesBox" Content="Auto-approve movie requests" />
-            <CheckBox x:Name="AutoApproveTvBox" Content="Auto-approve TV requests" />
+            <CheckBox x:Name="AutoApproveMoviesBox" x:Uid="Member_AutoApproveMovies" />
+            <CheckBox x:Name="AutoApproveTvBox" x:Uid="Member_AutoApproveTv" />
         </StackPanel>
         <!--
           0.48+: app/settings/permissions-editor.tsx, for the admin editing
@@ -86,12 +82,12 @@
         <StackPanel x:Name="PermissionsPanel" Spacing="12" Visibility="Collapsed">
             <ComboBox
                 x:Name="PresetBox"
-                Header="What they can do"
+                x:Uid="Member_Preset"
                 HorizontalAlignment="Stretch"
                 SelectedIndex="{x:Bind Access.PresetIndex, Mode=TwoWay}">
-                <ComboBoxItem Content="Member — requests, and reports problems" />
-                <ComboBoxItem Content="Trusted — also reviews requests and problem reports" />
-                <ComboBoxItem Content="Custom" IsEnabled="False" />
+                <ComboBoxItem x:Uid="Member_PresetMember" />
+                <ComboBoxItem x:Uid="Member_PresetTrusted" />
+                <ComboBoxItem x:Uid="Member_PresetCustom" IsEnabled="False" />
             </ComboBox>
             <ItemsControl ItemsSource="{x:Bind Access.Groups}" IsTabStop="False">
                 <ItemsControl.ItemTemplate>
@@ -128,51 +124,49 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
             <TextBlock
-                Text="Settings, integrations, household accounts, API keys and sign-in stay yours alone."
+                x:Uid="Member_AdminOnlyNote"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                 TextWrapping="Wrap" />
         </StackPanel>
         <!-- 0.39+: Role (before 0.48) and request limits, for the admin editing a non-admin account. -->
         <StackPanel x:Name="AccessPanel" Spacing="12" Visibility="Collapsed">
-            <ComboBox x:Name="RoleBox" Header="Role" HorizontalAlignment="Stretch" />
+            <ComboBox x:Name="RoleBox" x:Uid="Member_Role" HorizontalAlignment="Stretch" />
             <StackPanel Spacing="8">
                 <TextBlock x:Name="LimitsHeaderText" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="Movies" Width="56" VerticalAlignment="Center" />
+                    <TextBlock x:Uid="Member_LimitMovies" Width="80" VerticalAlignment="Center" />
                     <TextBox
                         x:Name="MovieLimitBox"
                         Width="96"
                         InputScope="Number"
                         MaxLength="4"
-                        PlaceholderText="No limit"
-                        AutomationProperties.Name="Movie request limit" />
-                    <TextBlock Text="every" VerticalAlignment="Center" />
+                        x:Uid="Member_MovieLimitBox" />
+                    <TextBlock x:Uid="Member_MovieEvery" VerticalAlignment="Center" />
                     <TextBox
                         x:Name="MovieDaysBox"
                         Width="72"
                         InputScope="Number"
                         MaxLength="3"
-                        AutomationProperties.Name="Movie limit days" />
-                    <TextBlock Text="days" VerticalAlignment="Center" />
+                        x:Uid="Member_MovieDaysBox" />
+                    <TextBlock x:Uid="Member_MovieDays" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="TV" Width="56" VerticalAlignment="Center" />
+                    <TextBlock x:Uid="Member_LimitTv" Width="80" VerticalAlignment="Center" />
                     <TextBox
                         x:Name="TvLimitBox"
                         Width="96"
                         InputScope="Number"
                         MaxLength="4"
-                        PlaceholderText="No limit"
-                        AutomationProperties.Name="TV request limit" />
-                    <TextBlock Text="every" VerticalAlignment="Center" />
+                        x:Uid="Member_TvLimitBox" />
+                    <TextBlock x:Uid="Member_TvEvery" VerticalAlignment="Center" />
                     <TextBox
                         x:Name="TvDaysBox"
                         Width="72"
                         InputScope="Number"
                         MaxLength="3"
-                        AutomationProperties.Name="TV limit days" />
-                    <TextBlock Text="days" VerticalAlignment="Center" />
+                        x:Uid="Member_TvDaysBox" />
+                    <TextBlock x:Uid="Member_TvDays" VerticalAlignment="Center" />
                 </StackPanel>
             </StackPanel>
         </StackPanel>

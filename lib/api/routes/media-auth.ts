@@ -1,4 +1,4 @@
-import { ApiError, apiJson } from "@/lib/api/errors";
+import { ApiError, apiJson, msg } from "@/lib/api/errors";
 import { invalid } from "@/lib/api/request";
 import { normalizeDeviceName } from "@/lib/api/tokens";
 import { issueApiToken } from "@/lib/api/token-store";
@@ -32,35 +32,35 @@ export function plexPending(): Response {
 }
 
 export function plexExpired(): ApiError {
-  return ApiError.of("expired", "That Plex sign-in expired. Try again.");
+  return ApiError.of("expired", msg("server.plexSignInExpired"));
 }
 
 /** A Plex poll's `handle`: required, and never longer than the 43-character
  * handles the server hands out (with room to spare). */
 export function readHandle(body: Record<string, unknown>): string {
   const handle = body.handle;
-  if (typeof handle !== "string" || !handle || handle.length > 128) throw invalid('"handle" is required.');
+  if (typeof handle !== "string" || !handle || handle.length > 128) throw invalid(msg("server.handleRequired"));
   return handle;
 }
 
 export function readJellyfinCredentials(body: Record<string, unknown>): { username: string; password: string } {
   const { username, password } = body;
   if (typeof username !== "string" || !username || typeof password !== "string" || !password) {
-    throw invalid("Enter your Jellyfin username and password.");
+    throw invalid(msg("server.enterJellyfinCredentials"));
   }
   return { username, password };
 }
 
 export function parseMediaProvider(value: string): MediaProvider {
   if (value === "plex" || value === "jellyfin") return value;
-  throw ApiError.of("not_found", `Unknown provider "${value}".`);
+  throw ApiError.of("not_found", msg("server.unknownProvider", { value }));
 }
 
 export function readImportIds(body: Record<string, unknown>): string[] {
   const ids = body.ids;
   if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string" || !id || id.length > 64)) {
-    throw invalid('"ids" must be a list of ids.');
+    throw invalid(msg("server.idsMustBeList"));
   }
-  if (ids.length > MAX_IMPORT_IDS) throw invalid(`Import at most ${MAX_IMPORT_IDS} people at a time.`);
+  if (ids.length > MAX_IMPORT_IDS) throw invalid(msg("server.importAtMost", { count: MAX_IMPORT_IDS }));
   return ids as string[];
 }

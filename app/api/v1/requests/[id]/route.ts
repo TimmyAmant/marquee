@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment, readJsonBody } from "@/lib/api/request";
@@ -10,7 +11,7 @@ import type { Ok } from "@/lib/api/types";
  * (reviewers) anyone's. */
 export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
   const ctx = await requireApiUser(request);
-  const id = parseUuidSegment(params.id, "Request not found.");
+  const id = parseUuidSegment(params.id, msg("server.requestNotFound"));
   const body = await readJsonBody(request);
   unwrap(
     await editRequest({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id, {
@@ -25,7 +26,7 @@ export const PATCH = withApi<{ id: string }>(async (request, params): Promise<Ok
 /** Cancels your own request while it's still waiting for review. */
 export const DELETE = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
   const ctx = await requireApiUser(request);
-  const id = parseUuidSegment(params.id, "Request not found.");
+  const id = parseUuidSegment(params.id, msg("server.requestNotFound"));
   unwrap(await cancelRequest({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id));
   return { ok: true };
 });

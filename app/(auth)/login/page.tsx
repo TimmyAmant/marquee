@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { hasAnyUser } from "@/lib/auth/setup";
 import { getSignInMethods } from "@/lib/auth/media-signin";
 import { parseSsoErrorCode, ssoErrorMessage } from "@/lib/auth/sso/messages";
+import { getT } from "@/lib/i18n/server";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sso?: string | string[] }> }) {
@@ -27,7 +28,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         quickConnect: methods.quickConnect,
         sso: methods.sso,
       }}
-      ssoError={ssoError ? ssoErrorMessage(ssoError, methods.sso?.name ?? "single sign-on") : null}
+      ssoError={ssoError ? ssoErrorMessage(ssoError, methods.sso?.name, await getT()) : null}
     />
   );
 }

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { saveNotFoundAfterHoursAction } from "@/app/settings/jobs/actions";
+import { useT } from "@/lib/i18n/client";
+import { rich } from "@/lib/i18n/rich";
 
 /** Settings › Jobs, under the Can't Find Check: how many hours after
  * approval an unfound request is flagged. */
 export function NotFoundHoursSetting({ initial }: { initial: number }) {
+  const t = useT();
   const [value, setValue] = useState(String(initial));
   const [saved, setSaved] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -20,23 +23,28 @@ export function NotFoundHoursSetting({ initial }: { initial: number }) {
     else if (result.afterHours !== undefined) {
       setSaved(result.afterHours);
       setValue(String(result.afterHours));
-      setMessage({ ok: "Saved" });
+      setMessage({ ok: t("common.saved") });
     }
   }
 
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-      <label htmlFor="not-found-hours">Flag a request after</label>
-      <input
-        id="not-found-hours"
-        type="number"
-        min={1}
-        max={720}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="w-16 rounded-lg border border-border bg-bg-0 px-2 py-1 text-xs text-text-primary outline-none focus:border-accent"
-      />
-      <span>hours without a find</span>
+      {/* One sentence with the box inside it, wherever the language puts it. */}
+      <label className="flex flex-wrap items-center gap-2">
+        {rich(t("requests.notFoundHoursSetting"), {
+          field: () => (
+            <input
+              id="not-found-hours"
+              type="number"
+              min={1}
+              max={720}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              className="w-16 rounded-lg border border-border bg-bg-0 px-2 py-1 text-xs text-text-primary outline-none focus:border-accent"
+            />
+          ),
+        })}
+      </label>
       {Number(value) !== saved && (
         <button
           type="button"
@@ -44,7 +52,7 @@ export function NotFoundHoursSetting({ initial }: { initial: number }) {
           onClick={save}
           className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-bg-0 hover:bg-accent-hover disabled:opacity-60"
         >
-          {busy ? "Saving…" : "Save"}
+          {busy ? t("common.saving") : t("common.save")}
         </button>
       )}
       {message?.error && <span className="text-red-400">{message.error}</span>}

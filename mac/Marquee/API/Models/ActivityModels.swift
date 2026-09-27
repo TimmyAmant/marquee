@@ -16,7 +16,7 @@ extension API {
         let createdAt: Date
 
         /// "{actor} {verb} {title}".
-        var sentence: String { "\(actor.label) \(verb) \(title)" }
+        var sentence: String { String(localized: "\(actor.label) \(verb) \(title)", comment: "Settings Activity row: who, what they did (e.g. declined), which title") } // i18n-ignore
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
     }

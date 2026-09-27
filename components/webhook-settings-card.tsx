@@ -3,8 +3,10 @@
 import { useState, useTransition } from "react";
 import { regenerateWebhookSecretAction } from "@/app/settings/integrations/actions";
 import { arrWebhookUrls } from "@/lib/integrations/webhook-urls";
+import { useT } from "@/lib/i18n/client";
 
 export function WebhookUrlRow({ label, url }: { label: string; url: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -29,7 +31,7 @@ export function WebhookUrlRow({ label, url }: { label: string; url: string }) {
           onClick={handleCopy}
           className="shrink-0 rounded-full border border-border-strong px-3 py-2 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent"
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("common.copied") : t("common.copy")}
         </button>
       </div>
     </div>
@@ -48,6 +50,7 @@ export function WebhookSettingsCard({
   /** Which 4K instances are connected, so their own webhook URLs show. */
   fourK?: { radarr: boolean; sonarr: boolean };
 }) {
+  const t = useT();
   const [secret, setSecret] = useState(initialSecret);
   const [isPending, startTransition] = useTransition();
 
@@ -63,27 +66,22 @@ export function WebhookSettingsCard({
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl text-text-primary">Shared webhook URLs</h3>
+        <h3 className="font-display text-xl text-text-primary">{t("integrations.sharedWebhooksTitle")}</h3>
         <button
           type="button"
           onClick={handleRegenerate}
           disabled={isPending}
           className="text-xs text-text-secondary transition-colors hover:text-accent disabled:opacity-60"
         >
-          {isPending ? "Regenerating…" : "Regenerate secret"}
+          {isPending ? t("integrations.regenerating") : t("integrations.regenerateSecret")}
         </button>
       </div>
-      <p className="mt-2 text-sm text-text-secondary">
-        Each Sonarr and Radarr server above has its own webhook URL now (under Edit) — use that for new
-        servers. These older shared URLs keep working for servers already set up with them: pasted into
-        Radarr/Sonarr → Settings → Connect → Add → Webhook (method POST, trigger on Grab + Download), they
-        tell you here as soon as something starts or finishes downloading.
-      </p>
+      <p className="mt-2 text-sm text-text-secondary">{t("integrations.sharedWebhooksIntro")}</p>
       <div className="mt-4 flex flex-col gap-3">
-        <WebhookUrlRow label="Radarr webhook URL" url={urls.radarr} />
-        <WebhookUrlRow label="Sonarr webhook URL" url={urls.sonarr} />
-        {fourK.radarr && <WebhookUrlRow label="4K Radarr webhook URL" url={urls.radarr4k} />}
-        {fourK.sonarr && <WebhookUrlRow label="4K Sonarr webhook URL" url={urls.sonarr4k} />}
+        <WebhookUrlRow label={t("integrations.webhookUrlFor", { app: "Radarr" })} url={urls.radarr} />
+        <WebhookUrlRow label={t("integrations.webhookUrlFor", { app: "Sonarr" })} url={urls.sonarr} />
+        {fourK.radarr && <WebhookUrlRow label={t("integrations.webhookUrlFor4k", { app: "Radarr" })} url={urls.radarr4k} />}
+        {fourK.sonarr && <WebhookUrlRow label={t("integrations.webhookUrlFor4k", { app: "Sonarr" })} url={urls.sonarr4k} />}
       </div>
     </div>
   );

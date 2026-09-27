@@ -329,7 +329,7 @@ final class LiveUpdates {
                 tmdbId: newest.tmdbId,
                 title: newest.title,
                 eventType: newest.eventType,
-                message: "\(newest.message) (+\(arrivals.count - 1) more)",
+                message: String(localized: "\(newest.message) (+\(arrivals.count - 1) more)"),
                 read: newest.read,
                 alert: newest.alert,
                 createdAt: newest.createdAt,

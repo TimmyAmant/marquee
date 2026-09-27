@@ -3,13 +3,16 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   LIBRARY_STATUSES,
-  STATUS_COLORS_NOTE,
-  STATUS_TEXT,
+  statusColorsNote,
+  statusText,
   TONE_CLASS,
   isUnwanted,
   statusClasses,
   statusTone,
 } from "./status-tone";
+import { englishT } from "@/lib/i18n/catalog";
+
+const t = englishT();
 
 describe("statusTone", () => {
   it("gives each library status its own color", () => {
@@ -86,18 +89,18 @@ describe("isUnwanted", () => {
   });
 });
 
-describe("STATUS_TEXT", () => {
+describe("statusText", () => {
   it("explains every status for the color key", () => {
     for (const status of LIBRARY_STATUSES) {
-      expect(STATUS_TEXT[status].name).toBeTruthy();
-      expect(STATUS_TEXT[status].meaning).toBeTruthy();
+      expect(statusText(t, status).name).toBeTruthy();
+      expect(statusText(t, status).meaning).toBeTruthy();
     }
   });
 
   it("names the unmonitored state the way Sonarr/Radarr users will recognize", () => {
-    expect(STATUS_TEXT.tracked_unmonitored.name).toBe("Not monitored");
-    expect(STATUS_TEXT.tracked_unmonitored.meaning).toMatch(/won't download on its own/);
-    expect(STATUS_COLORS_NOTE).toBe("Same colors as Radarr and Sonarr.");
+    expect(statusText(t, "tracked_unmonitored").name).toBe("Not monitored");
+    expect(statusText(t, "tracked_unmonitored").meaning).toMatch(/won't download on its own/);
+    expect(statusColorsNote(t)).toBe("Same colors as Radarr and Sonarr.");
   });
 });
 

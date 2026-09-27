@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
@@ -12,10 +13,10 @@ namespace Marquee.Core.Api;
 /// </summary>
 public static class LifecycleErrors
 {
-    public const string RequestNotFound = "Request not found.";
-    public const string OnlyTheRequesterCancels = "Only whoever asked can cancel it — decline it instead.";
-    public const string CommentNotFound = "Comment not found.";
-    public const string CommentTooOld = "Comments can only be changed for 15 minutes after posting.";
+    public static string RequestNotFound => Loc.Get("Api_RequestNotFound");
+    public static string OnlyTheRequesterCancels => Loc.Get("Api_OnlyRequesterCancels");
+    public static string CommentNotFound => Loc.Get("Api_CommentNotFound");
+    public static string CommentTooOld => Loc.Get("Api_CommentTooOld");
 
     /// <summary>Edit, its options, and Cancel on a request.</summary>
     public static string ForRequestChange(ApiException error) => error.Kind switch

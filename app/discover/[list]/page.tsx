@@ -6,11 +6,13 @@ import { StatusLegend } from "@/components/status-legend";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { DISCOVER_LIST_TITLES } from "@/lib/discover/lists";
 import { fetchResolvedListPage, resolveDiscoverList } from "@/lib/pages/discover-lists";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 export async function generateMetadata({ params }: { params: Promise<{ list: string }> }): Promise<Metadata> {
   const resolved = await resolveDiscoverList((await params).list);
   if (!resolved) return { title: "Marquee" };
-  const title = resolved.type === "custom" ? resolved.shelf.title : DISCOVER_LIST_TITLES[resolved.list];
+  const title = resolved.type === "custom" ? resolved.shelf.title : (await getT())(DISCOVER_LIST_TITLES[resolved.list]);
   return { title: `${title} — Marquee` };
 }
 
@@ -25,22 +27,23 @@ export default async function DiscoverListPage({ params }: { params: Promise<{ l
   if (!resolved) notFound();
 
   const viewer = await getViewerContext();
+  const t = await getT();
   const first = await fetchResolvedListPage(resolved, 1, viewer);
   const mixed =
     resolved.type === "builtIn"
       ? resolved.list === "trending" || resolved.list === "recently-added"
       : new Set(first.items.map((item) => item.mediaType)).size > 1 || resolved.shelf.source?.mediaType === "all";
 
-  const emptyMessage =
+  const emptyMessageKey: MessageKey =
     resolved.type === "builtIn"
       ? resolved.list === "recently-added"
-        ? "Nothing added to your Plex or Jellyfin library yet."
-        : "Nothing here right now — TMDb didn't send anything back."
+        ? "discover.emptyLibrary"
+        : "discover.emptyTmdb"
       : resolved.shelf.kind === "library"
-        ? "Nothing added to your Plex or Jellyfin library yet."
+        ? "discover.emptyLibrary"
         : resolved.shelf.kind === "traktList"
-          ? "Nothing here right now — Trakt didn't send anything back. The list has to be public, and Trakt connected in Settings."
-          : "Nothing here right now — TMDb didn't send anything back.";
+          ? "discover.emptyTrakt"
+          : "discover.emptyTmdb";
 
   return (
     <div className="rail-bleed relative overflow-hidden">
@@ -55,7 +58,7 @@ export default async function DiscoverListPage({ params }: { params: Promise<{ l
       <div className="flex flex-col gap-8 px-4 py-6 sm:px-7 sm:py-7">
         <div className="flex flex-col gap-1">
           <Link href="/discover" className="text-xs text-text-muted transition-colors hover:text-accent">
-            ← Discover
+            {t("discover.backToDiscover")}
           </Link>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="font-display text-3xl text-text-primary">{first.title}</h1>
@@ -70,7 +73,7 @@ export default async function DiscoverListPage({ params }: { params: Promise<{ l
           list={first.list}
           signedIn={Boolean(viewer.session)}
           showTypeLabel={mixed}
-          emptyMessage={emptyMessage}
+          emptyMessage={t(emptyMessageKey)}
         />
       </div>
     </div>

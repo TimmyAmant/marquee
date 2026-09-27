@@ -14,12 +14,14 @@ import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { seasonsSonarrKnows } from "@/lib/sonarr/season-monitoring";
-import { SONARR_UNRESOLVED_ERROR } from "@/lib/requests/errors";
+import { SONARR_UNRESOLVED } from "@/lib/requests/errors";
+import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 
 /** TMDb listed the requested seasons (createRequest checked), but Sonarr's
  * TVDB-based season list has none of them, so there's nothing to monitor. */
-const SONARR_UNKNOWN_SEASONS_ERROR = "Sonarr doesn't list the requested seasons for this show.";
-import { fail, type CoreResult } from "@/lib/core-result";
+const SONARR_UNKNOWN_SEASONS = "notify.sonarrUnknownSeasons" as const;
 
 // Title-page Sonarr/Radarr operations shared by the title page's server
 // actions (app/title/[type]/[id]/actions.ts), request approval
@@ -59,20 +61,20 @@ async function resolveAddTarget(
   fourK: boolean,
   overrides: AddOverrides,
 ): Promise<CoreResult<AddTarget>> {
+  const t = await getT();
   const picked = await pickServer(ownerId, mediaType, fourK, overrides.serverId);
   if (!picked.ok) return picked;
   const kind = mediaType === "movie" ? "Radarr" : "Sonarr";
   const server = picked.server;
-  if (!server) return fail("conflict", `Connect ${fourK ? `the 4K ${kind}` : kind} in Settings first.`);
+  const connectFirst = t(fourK ? "notify.arrConnectFirst4k" : "notify.arrConnectFirst", { kind });
+  if (!server) return fail("conflict", connectFirst);
   const anime = mediaType === "tv" && (await titleIsAnime(mediaType, tmdbId));
   const resolved = resolveAdd(server, anime, overrides);
   if (!resolved.qualityProfileId || !resolved.rootFolderPath) {
     // The old message while nothing was picked, as clients have always seen.
     return fail(
       "conflict",
-      hasOverrides(overrides)
-        ? `Pick a quality profile and root folder for ${server.name}.`
-        : `Connect ${fourK ? `the 4K ${kind}` : kind} in Settings first.`,
+      hasOverrides(overrides) ? t("notify.arrPickProfileFolder", { server: server.name }) : connectFirst,
     );
   }
   return { ok: true, server, resolved };
@@ -137,7 +139,8 @@ export async function addMovieToRadarrForUser(
   fourK = false,
   overrides: AddOverrides = {},
 ): Promise<CoreResult<{ placement: AddPlacement }>> {
-  if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
+  const t = await getT();
+  if (!(await isAdminUser(userId))) return fail("forbidden", t("notify.onlyAdminAdds"));
 
   const target = await resolveAddTarget(userId, "movie", tmdbId, fourK, overrides);
   if (!target.ok) return target;
@@ -167,7 +170,7 @@ export async function addMovieToRadarrForUser(
       addedNew = true;
     }
   } catch {
-    return fail("upstream", `Couldn't add this movie to ${serverLabel(server)}.`);
+    return fail("upstream", t("notify.addMovieFailed", { server: serverLabel(t, server) }));
   }
 
   await recordAdd(userId, server, "movie", tmdbId, added.id);
@@ -176,9 +179,9 @@ export async function addMovieToRadarrForUser(
 
 /** How errors name a server: the old wording ("Radarr", "the 4K Radarr")
  * for a server still called what it was called before servers had names. */
-function serverLabel(server: ArrServer): string {
+function serverLabel(t: Translator, server: ArrServer): string {
   const kind = server.kind === "sonarr" ? "Sonarr" : "Radarr";
-  if (server.is4k && server.name === `4K ${kind}`) return `the 4K ${kind}`;
+  if (server.is4k && server.name === `4K ${kind}`) return t("notify.arrThe4k", { kind });
   return server.name;
 }
 
@@ -199,7 +202,8 @@ export async function addSeriesToSonarrForUser(
   fourK = false,
   overrides: AddOverrides = {},
 ): Promise<CoreResult<{ placement: AddPlacement }>> {
-  if (!(await isAdminUser(userId))) return fail("forbidden", "Only the admin can add titles.");
+  const t = await getT();
+  if (!(await isAdminUser(userId))) return fail("forbidden", t("notify.onlyAdminAdds"));
 
   const target = await resolveAddTarget(userId, "tv", tmdbId, fourK, overrides);
   if (!target.ok) return target;
@@ -207,7 +211,7 @@ export async function addSeriesToSonarrForUser(
 
   const title = await getOrFetchTitle("tv", tmdbId).catch(() => undefined);
   if (!title?.tvdbId) {
-    return fail("conflict", SONARR_UNRESOLVED_ERROR);
+    return fail("conflict", t(SONARR_UNRESOLVED), "sonarr_unresolved");
   }
 
   let added: { id: number };
@@ -222,7 +226,7 @@ export async function addSeriesToSonarrForUser(
     const existing = await sonarr.getSeriesByTvdbId(config, title.tvdbId).catch(() => null);
     if (existing && seasons) {
       const known = seasonsSonarrKnows(existing.seasons ?? [], seasons);
-      if (known.length === 0) return fail("conflict", SONARR_UNKNOWN_SEASONS_ERROR);
+      if (known.length === 0) return fail("conflict", t(SONARR_UNKNOWN_SEASONS));
       await sonarr.monitorSeriesSeasons(config, existing.id, known);
       // Monitoring alone only catches episodes as they're released; these
       // seasons have usually aired already, so ask Sonarr to go find them.
@@ -247,7 +251,7 @@ export async function addSeriesToSonarrForUser(
       const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);
       if (!lookupResult) throw new Error("No lookup result");
       if (seasons && seasonsSonarrKnows(lookupResult.seasons ?? [], seasons).length === 0) {
-        return fail("conflict", SONARR_UNKNOWN_SEASONS_ERROR);
+        return fail("conflict", t(SONARR_UNKNOWN_SEASONS));
       }
       added = await sonarr.addSeries(config, {
         lookupResult,
@@ -261,7 +265,7 @@ export async function addSeriesToSonarrForUser(
       addedNew = true;
     }
   } catch {
-    return fail("upstream", `Couldn't add this series to ${serverLabel(server)}.`);
+    return fail("upstream", t("notify.addSeriesFailed", { server: serverLabel(t, server) }));
   }
 
   await recordAdd(userId, server, "tv", tmdbId, added.id);
@@ -305,6 +309,7 @@ export async function relinkTitle(
   currentTmdbId: number,
   input: RelinkInput,
 ): Promise<CoreResult<{ newTmdbId: number }>> {
+  const t = await getT();
   const tmdbIdInput = (input.tmdbId ?? "").trim();
   const imdbIdInput = (input.imdbId ?? "").trim();
   const tvdbIdInput = (input.tvdbId ?? "").trim();
@@ -313,30 +318,30 @@ export async function relinkTitle(
 
   if (tmdbIdInput) {
     const parsed = Number(tmdbIdInput);
-    if (!Number.isInteger(parsed) || parsed <= 0) return fail("invalid", "TMDb ID must be a positive number.");
+    if (!Number.isInteger(parsed) || parsed <= 0) return fail("invalid", t("notify.relinkTmdbPositive"));
     newTmdbId = parsed;
   } else if (imdbIdInput) {
     const normalized = imdbIdInput.startsWith("tt") ? imdbIdInput : `tt${imdbIdInput}`;
     const result = await findByImdbId(normalized).catch(() => null);
     newTmdbId =
       (mediaType === "movie" ? result?.movie_results?.[0]?.id : result?.tv_results?.[0]?.id) ?? null;
-    if (!newTmdbId) return fail("not_found", "Couldn't find that IMDb ID on TMDb.");
+    if (!newTmdbId) return fail("not_found", t("notify.relinkImdbNotFound"));
   } else if (tvdbIdInput) {
-    if (mediaType !== "tv") return fail("invalid", "A TVDB ID only applies to TV shows.");
+    if (mediaType !== "tv") return fail("invalid", t("notify.relinkTvdbTvOnly"));
     const parsed = Number(tvdbIdInput);
-    if (!Number.isInteger(parsed) || parsed <= 0) return fail("invalid", "TVDB ID must be a positive number.");
+    if (!Number.isInteger(parsed) || parsed <= 0) return fail("invalid", t("notify.relinkTvdbPositive"));
     newTmdbId = await resolveTmdbIdFromTvdbId(parsed).catch(() => null);
-    if (!newTmdbId) return fail("not_found", "Couldn't find that TVDB ID on TMDb.");
+    if (!newTmdbId) return fail("not_found", t("notify.relinkTvdbNotFound"));
   } else {
-    return fail("invalid", "Enter a TMDb ID, IMDb ID, or TVDB ID.");
+    return fail("invalid", t("notify.relinkEnterId"));
   }
 
   if (newTmdbId === currentTmdbId) {
-    return fail("invalid", "That's already the current match.");
+    return fail("invalid", t("notify.relinkSameMatch"));
   }
 
   const newTitle = await getOrFetchTitle(mediaType, newTmdbId).catch(() => null);
-  if (!newTitle) return fail("not_found", "Couldn't find that title on TMDb. Check the ID and try again.");
+  if (!newTitle) return fail("not_found", t("notify.relinkTitleNotFound"));
 
   const resolvedTmdbId = newTmdbId;
   try {
@@ -380,7 +385,7 @@ export async function relinkTitle(
     console.error("[relink-title] update failed:", err);
     return fail(
       "conflict",
-      "Couldn't update — the corrected title may already be linked to something else in your library.",
+      t("notify.relinkConflict"),
     );
   }
 
@@ -402,7 +407,7 @@ export async function searchTitle(
   tvdbId: number | null,
 ): Promise<CoreResult> {
   const copies = await findLibraryCopies(adminUserId, mediaType, tmdbId, tvdbId).catch(() => []);
-  if (copies.length === 0) return fail("conflict", "Not tracked in Radarr/Sonarr.");
+  if (copies.length === 0) return fail("conflict", (await getT())("notify.notTracked"));
 
   const results = await Promise.allSettled(
     copies.map((copy) =>
@@ -413,7 +418,7 @@ export async function searchTitle(
   );
   // One server taking it is a search queued; only all of them refusing fails.
   if (results.every((r) => r.status === "rejected")) {
-    return fail("upstream", "Couldn't queue a search — the *arr app didn't accept the request.");
+    return fail("upstream", (await getT())("notify.searchFailed"));
   }
   return { ok: true };
 }
@@ -430,7 +435,7 @@ export async function setTitleMonitored(
   monitored: boolean,
 ): Promise<CoreResult> {
   const copies = await findLibraryCopies(adminUserId, mediaType, tmdbId, tvdbId).catch(() => []);
-  if (copies.length === 0) return fail("conflict", "Not tracked in Radarr/Sonarr.");
+  if (copies.length === 0) return fail("conflict", (await getT())("notify.notTracked"));
 
   const results = await Promise.allSettled(
     copies.map((copy) =>
@@ -440,7 +445,7 @@ export async function setTitleMonitored(
     ),
   );
   if (results.some((r) => r.status === "rejected")) {
-    return fail("upstream", "Couldn't update monitoring — the *arr app didn't accept the request.");
+    return fail("upstream", (await getT())("notify.monitorFailed"));
   }
 
   await db

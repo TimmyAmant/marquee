@@ -23,13 +23,13 @@
                 <!-- The section without a query. -->
                 <StackPanel Spacing="12" MaxWidth="520" HorizontalAlignment="Left" Visibility="{x:Bind ViewModel.HasQuery, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}">
                     <TextBlock
-                        Text="Find an actor, a studio, or a title. Every result comes from TMDb through your server."
+                        x:Uid="Search_Intro"
                         Style="{StaticResource BodyTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap" />
                     <AutoSuggestBox
                         x:Name="PageSearchBox"
-                        PlaceholderText="Search an actor, a studio, a title…"
+                        x:Uid="Search_Box"
                         QueryIcon="Find"
                         QuerySubmitted="OnQuerySubmitted" />
                 </StackPanel>
@@ -43,7 +43,7 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasPeople, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="People" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock x:Uid="Search_People" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.People, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
@@ -58,7 +58,7 @@
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <Grid MinHeight="28">
-                            <TextBlock Text="Studios" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="Search_Studios" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                             <controls:RailArrows Target="{x:Bind StudiosRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
                         <ScrollViewer
@@ -79,7 +79,7 @@
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasTitles, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="Titles" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="Search_Titles" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                             <controls:StatusColorKey />
                         </StackPanel>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Titles, Mode=OneWay}">
@@ -116,7 +116,7 @@
                     Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="28" Height="28" />
                     <TextBlock
-                        Text="Searching…"
+                        x:Uid="Search_Searching"
                         Style="{StaticResource BodyTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         VerticalAlignment="Center" />
@@ -124,25 +124,25 @@
 
                 <!-- Error, when there are no results to keep. -->
                 <StackPanel Spacing="12" MaxWidth="440" HorizontalAlignment="Left" Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Couldn't search" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Search_ErrorHeading" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock
                         Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                         Style="{StaticResource BodyTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+                    <Button x:Uid="Search_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
                 </StackPanel>
 
                 <!-- TMDb isn't configured on the server (api-v1.md deviation 7). -->
                 <StackPanel Spacing="12" MaxWidth="440" HorizontalAlignment="Left" Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Connect TMDb to start browsing" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Search_TmdbMissingHeading" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock
                         Text="{x:Bind ViewModel.TmdbMissingMessage, Mode=OneWay}"
                         Style="{StaticResource BodyTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap" />
                     <Button
-                        Content="Open Settings"
+                        x:Uid="Search_OpenSettings"
                         Command="{x:Bind ViewModel.OpenSettingsCommand}"
                         Visibility="{x:Bind ViewModel.CanOpenSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>

@@ -10,20 +10,18 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Fix this title's match"
-    PrimaryButtonText="Save"
-    CloseButtonText="Cancel"
+    x:Uid="Relink_Dialog"
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="False">
 
     <StackPanel Spacing="12" MinWidth="380">
         <TextBlock
-            Text="Fill in whichever id you have. This repoints your synced library to the correct title without needing to fix the match in Plex, Jellyfin or Sonarr itself."
+            x:Uid="Relink_Intro"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
-        <TextBox x:Name="TmdbBox" Header="TMDb ID" IsSpellCheckEnabled="False" TextChanged="OnTextChanged" />
-        <TextBox x:Name="ImdbBox" Header="IMDb ID (tt…)" IsSpellCheckEnabled="False" TextChanged="OnTextChanged" />
-        <TextBox x:Name="TvdbBox" Header="TVDB ID" IsSpellCheckEnabled="False" Visibility="Collapsed" TextChanged="OnTextChanged" />
+        <TextBox x:Name="TmdbBox" x:Uid="Relink_TmdbBox" IsSpellCheckEnabled="False" TextChanged="OnTextChanged" />
+        <TextBox x:Name="ImdbBox" x:Uid="Relink_ImdbBox" IsSpellCheckEnabled="False" TextChanged="OnTextChanged" />
+        <TextBox x:Name="TvdbBox" x:Uid="Relink_TvdbBox" IsSpellCheckEnabled="False" Visibility="Collapsed" TextChanged="OnTextChanged" />
     </StackPanel>
 </ContentDialog>

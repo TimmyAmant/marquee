@@ -12,6 +12,7 @@ import {
   startQuickConnect,
 } from "@/lib/auth/media-signin";
 import { applySessionMaxAge, signInWithTicket } from "@/lib/auth/web-session";
+import { getT } from "@/lib/i18n/server";
 import { getClientIp } from "@/lib/rate-limit";
 
 export async function loginAction(
@@ -29,10 +30,11 @@ export async function loginAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
+      const t = await getT();
       if ((error as { code?: string }).code === "rate_limited") {
-        return { error: "Too many attempts. Try again in a few minutes." };
+        return { error: t("auth.tooManyAttempts") };
       }
-      return { error: "Incorrect username or password" };
+      return { error: t("auth.incorrectCredentials") };
     }
     throw error;
   }
@@ -55,7 +57,7 @@ export type PlexSignInPoll = { status: "pending" } | { status: "error"; error: s
 export async function pollPlexSignInAction(handle: string, remember: boolean): Promise<PlexSignInPoll> {
   const poll = await pollPlexSignIn(handle, getClientIp(await headers()));
   if (poll.status === "pending") return { status: "pending" };
-  if (poll.status === "expired") return { status: "error", error: "That Plex sign-in expired. Try again." };
+  if (poll.status === "expired") return { status: "error", error: (await getT())("auth.plexExpired") };
   if (!poll.ok) return { status: "error", error: poll.error };
 
   await signInWithTicket(poll.user.id, remember);
@@ -69,7 +71,7 @@ export async function jellyfinLoginAction(
   const username = formData.get("username");
   const password = formData.get("password");
   if (typeof username !== "string" || !username || typeof password !== "string" || !password) {
-    return { error: "Enter your Jellyfin username and password." };
+    return { error: (await getT())("auth.enterJellyfinCredentials") };
   }
 
   const result = await signInWithJellyfin(username, password, getClientIp(await headers()));
@@ -91,7 +93,7 @@ export async function startQuickConnectAction(): Promise<QuickConnectStartResult
 export async function pollQuickConnectAction(handle: string, remember: boolean): Promise<PlexSignInPoll> {
   const poll = await pollQuickConnect(handle, getClientIp(await headers()));
   if (poll.status === "pending") return { status: "pending" };
-  if (poll.status === "expired") return { status: "error", error: "That Quick Connect code expired. Try again." };
+  if (poll.status === "expired") return { status: "error", error: (await getT())("auth.quickConnectExpired") };
   if (!poll.ok) return { status: "error", error: poll.error };
 
   await signInWithTicket(poll.user.id, remember);

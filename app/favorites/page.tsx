@@ -5,12 +5,14 @@ import { PosterCard } from "@/components/poster-card";
 import { StudioChip } from "@/components/studio-chip";
 import { FavoriteButton } from "@/components/favorite-button";
 import { firstCollectionPart, loadFavoritesPage } from "@/lib/pages/favorites";
+import { getT } from "@/lib/i18n/server";
 
 export default async function FavoritesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+  const t = await getT();
 
   // Shared with GET /api/v1/favorites.
   const { favoritePeople, dedupedCompanies, favoriteMovies, favoriteShows, collections, hasFavorites } =
@@ -19,14 +21,12 @@ export default async function FavoritesPage() {
   return (
     <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
       {!hasFavorites && (
-        <p className="text-sm text-text-muted">
-          Nothing favorited yet — star anything from its page or card to see it here.
-        </p>
+        <p className="text-sm text-text-muted">{t("discover.favoritesEmpty")}</p>
       )}
 
       {favoriteMovies.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 font-display text-xl text-text-primary">Movies</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("common.movies")}</h2>
           <PosterGrid>
             {favoriteMovies.map((title) => (
               <PosterCard
@@ -46,7 +46,7 @@ export default async function FavoritesPage() {
 
       {favoriteShows.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 font-display text-xl text-text-primary">TV Shows</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("common.tvShows")}</h2>
           <PosterGrid>
             {favoriteShows.map((title) => (
               <PosterCard
@@ -66,7 +66,7 @@ export default async function FavoritesPage() {
 
       {collections.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 font-display text-xl text-text-primary">Collections</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("discover.collections")}</h2>
           <PosterGrid>
             {collections.map((collection) => {
               const firstPart = firstCollectionPart(collection.parts);
@@ -93,7 +93,7 @@ export default async function FavoritesPage() {
 
       {favoritePeople.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 font-display text-xl text-text-primary">People</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("discover.people")}</h2>
           <PosterGrid>
             {favoritePeople.map((person) => (
               <PosterCard
@@ -112,7 +112,7 @@ export default async function FavoritesPage() {
 
       {dedupedCompanies.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 font-display text-xl text-text-primary">Studios</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("discover.shelfStudios")}</h2>
           <div className="flex flex-wrap gap-3">
             {dedupedCompanies.map((company) => (
               <StudioChip

@@ -1,10 +1,11 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { readJsonBody, requiredBoolean } from "@/lib/api/request";
 import { getMediaServerSignup, setMediaServerSignup } from "@/lib/auth/media-signin";
 import type { SignInSettings } from "@/lib/api/types";
 
-const FORBIDDEN = "Only the admin can change sign-in settings.";
+const FORBIDDEN = msg("server.onlyAdminSignInSettings");
 
 /** "New accounts from Plex/Jellyfin sign-in" (admin). */
 export const GET = withApi(async (request): Promise<SignInSettings> => {

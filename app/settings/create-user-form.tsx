@@ -2,15 +2,19 @@
 
 import { useActionState } from "react";
 import { createUserAction } from "./users-actions";
+import { useT } from "@/lib/i18n/client";
+import { rich } from "@/lib/i18n/rich";
 
 export function CreateUserForm() {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(createUserAction, undefined);
 
   if (state?.success) {
     return (
       <p className="text-sm text-owned">
-        Account created — they can now sign in at{" "}
-        <span className="text-text-primary">/login</span>.
+        {rich(t("settings.accountCreated", { path: "/login" }), {
+          path: (chunks) => <span className="text-text-primary">{chunks}</span>,
+        })}
       </p>
     );
   }
@@ -18,7 +22,7 @@ export function CreateUserForm() {
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Name
+        {t("settings.nameLabel")}
         <input
           type="text"
           name="displayName"
@@ -27,7 +31,7 @@ export function CreateUserForm() {
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Username
+        {t("settings.usernameLabel")}
         <input
           type="text"
           name="username"
@@ -37,7 +41,7 @@ export function CreateUserForm() {
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Password
+        {t("settings.passwordLabel")}
         <input
           type="password"
           name="password"
@@ -55,7 +59,7 @@ export function CreateUserForm() {
         disabled={isPending}
         className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {isPending ? "Creating…" : "Create account"}
+        {isPending ? t("settings.creatingAccount") : t("settings.createAccount")}
       </button>
     </form>
   );

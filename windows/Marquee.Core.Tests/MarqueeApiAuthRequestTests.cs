@@ -197,6 +197,7 @@ public sealed class MarqueeApiAuthRequestTests
         Assert.Equal(Json.ParseDate("2026-09-17T17:10:57.821Z"), me.CreatedAt);
         // The same account, photo, linked sign-ins and permissions aside: the
         // doc's login example has none of them, its /me example has them all.
+        // The language (0.50+) is only ever on /me.
         Assert.Equal(login.User with { AvatarUrl = null, Permissions = null }, me.User with
         {
             AvatarUrl = null,
@@ -205,7 +206,9 @@ public sealed class MarqueeApiAuthRequestTests
             Permissions = null,
             AutoApproveMovies = null,
             AutoApproveTv = null,
+            Language = null,
         });
+        Assert.Null(login.User.Language);
         Assert.Equal(new LinkedAccounts { Plex = true, Jellyfin = false }, me.User.Linked);
         Assert.True(me.User.HasPassword);
 

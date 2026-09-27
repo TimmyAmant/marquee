@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -213,15 +214,15 @@ public sealed record Permissions
 /// </summary>
 public sealed class MemberPermissionsEditor : INotifyPropertyChanged
 {
-    public const string PresetHeader = "What they can do";
-    public const string MemberChoice = "Member — requests, and reports problems";
-    public const string TrustedChoice = "Trusted — also reviews requests and problem reports";
-    public const string CustomChoice = "Custom";
-    public const string Footer = "Settings, integrations, household accounts, API keys and sign-in stay yours alone.";
-    public const string ViewLockedNote = "Comes with reviewing requests.";
+    public static string PresetHeader => Loc.Get("Permission_PresetHeader");
+    public static string MemberChoice => Loc.Get("Permission_MemberChoice");
+    public static string TrustedChoice => Loc.Get("Permission_TrustedChoice");
+    public static string CustomChoice => Loc.Get("Permission_CustomChoice");
+    public static string Footer => Loc.Get("Permission_Footer");
+    public static string ViewLockedNote => Loc.Get("Permission_ViewLockedNote");
 
     /// <summary>The picker's entries, in <see cref="PermissionPreset"/> order; Custom is only ever picked by itself.</summary>
-    public static IReadOnlyList<string> PresetChoices { get; } = [MemberChoice, TrustedChoice, CustomChoice];
+    public static IReadOnlyList<string> PresetChoices => [MemberChoice, TrustedChoice, CustomChoice];
 
     private Permissions current;
 
@@ -230,29 +231,29 @@ public sealed class MemberPermissionsEditor : INotifyPropertyChanged
         current = initial.Normalize();
         Groups =
         [
-            new PermissionGroup("Requests",
+            new PermissionGroup(Loc.Get("Permission_GroupRequests"),
             [
-                Toggle(PermissionKey.RequestMovies, "Request movies", "Ask for movies to be added."),
-                Toggle(PermissionKey.RequestTv, "Request TV", "Ask for shows, or some of their seasons, to be added."),
-                Toggle(PermissionKey.Request4kMovies, "Request 4K movies", "Ask for the 4K copy of a movie, once there's a 4K Radarr."),
-                Toggle(PermissionKey.Request4kTv, "Request 4K TV", "Ask for the 4K copy of a show, once there's a 4K Sonarr."),
-                Toggle(PermissionKey.AdvancedRequests, "Advanced request options", "Pick the server, quality profile, folder and tags when asking for or approving a title."),
-                Toggle(PermissionKey.BypassLimits, "No request limits", "Request limits don't apply to them."),
+                Toggle(PermissionKey.RequestMovies, Loc.Get("Permission_RequestMovies"), Loc.Get("Permission_RequestMoviesHelp")),
+                Toggle(PermissionKey.RequestTv, Loc.Get("Permission_RequestTv"), Loc.Get("Permission_RequestTvHelp")),
+                Toggle(PermissionKey.Request4kMovies, Loc.Get("Permission_Request4kMovies"), Loc.Get("Permission_Request4kMoviesHelp")),
+                Toggle(PermissionKey.Request4kTv, Loc.Get("Permission_Request4kTv"), Loc.Get("Permission_Request4kTvHelp")),
+                Toggle(PermissionKey.AdvancedRequests, Loc.Get("Permission_AdvancedRequests"), Loc.Get("Permission_AdvancedRequestsHelp")),
+                Toggle(PermissionKey.BypassLimits, Loc.Get("Permission_BypassLimits"), Loc.Get("Permission_BypassLimitsHelp")),
             ]),
-            new PermissionGroup("Approved straight away",
+            new PermissionGroup(Loc.Get("Permission_GroupAutoApprove"),
             [
-                Toggle(PermissionKey.AutoApproveMovies, "Movies", "Their movie requests skip the review queue."),
-                Toggle(PermissionKey.AutoApproveTv, "TV", "Their TV requests skip the review queue."),
-                Toggle(PermissionKey.AutoApprove4kMovies, "4K movies", "Their 4K movie requests skip the review queue."),
-                Toggle(PermissionKey.AutoApprove4kTv, "4K TV", "Their 4K TV requests skip the review queue."),
+                Toggle(PermissionKey.AutoApproveMovies, Loc.Get("Permission_AutoApproveMovies"), Loc.Get("Permission_AutoApproveMoviesHelp")),
+                Toggle(PermissionKey.AutoApproveTv, Loc.Get("Permission_AutoApproveTv"), Loc.Get("Permission_AutoApproveTvHelp")),
+                Toggle(PermissionKey.AutoApprove4kMovies, Loc.Get("Permission_AutoApprove4kMovies"), Loc.Get("Permission_AutoApprove4kMoviesHelp")),
+                Toggle(PermissionKey.AutoApprove4kTv, Loc.Get("Permission_AutoApprove4kTv"), Loc.Get("Permission_AutoApprove4kTvHelp")),
             ]),
-            new PermissionGroup("Helping run things",
+            new PermissionGroup(Loc.Get("Permission_GroupHelping"),
             [
-                Toggle(PermissionKey.ViewRequests, "See everyone's requests", "The Requests page lists what everyone has asked for."),
-                Toggle(PermissionKey.ReviewRequests, "Review requests", "Approve, decline and change other people's requests, and handle Can't find and Couldn't add."),
-                Toggle(PermissionKey.ManageIssues, "Handle problem reports", "See everyone's problem reports and mark them fixed."),
-                Toggle(PermissionKey.ReportIssues, "Report problems", "Tell you when something's wrong with a title."),
-                Toggle(PermissionKey.ManageBlocklist, "Manage the blocklist", "Choose titles nobody can request."),
+                Toggle(PermissionKey.ViewRequests, Loc.Get("Permission_ViewRequests"), Loc.Get("Permission_ViewRequestsHelp")),
+                Toggle(PermissionKey.ReviewRequests, Loc.Get("Permission_ReviewRequests"), Loc.Get("Permission_ReviewRequestsHelp")),
+                Toggle(PermissionKey.ManageIssues, Loc.Get("Permission_ManageIssues"), Loc.Get("Permission_ManageIssuesHelp")),
+                Toggle(PermissionKey.ReportIssues, Loc.Get("Permission_ReportIssues"), Loc.Get("Permission_ReportIssuesHelp")),
+                Toggle(PermissionKey.ManageBlocklist, Loc.Get("Permission_ManageBlocklist"), Loc.Get("Permission_ManageBlocklistHelp")),
             ]),
         ];
     }

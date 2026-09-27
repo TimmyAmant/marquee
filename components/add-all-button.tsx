@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 export function AddAllButton({
   items,
@@ -12,6 +13,7 @@ export function AddAllButton({
    * these in, so every id here actually needs adding. */
   items: { mediaType: MediaType; tmdbId: number }[];
 }) {
+  const t = useT();
   const router = useRouter();
   const [state, setState] = useState<"idle" | "pending" | "done">("idle");
   const [failures, setFailures] = useState(0);
@@ -20,7 +22,7 @@ export function AddAllButton({
 
   async function handleClick() {
     const confirmed = window.confirm(
-      `Add all ${items.length} missing title${items.length === 1 ? "" : "s"} to Sonarr/Radarr?`,
+      t("title.addAllConfirm", { count: items.length }),
     );
     if (!confirmed) return;
 
@@ -44,8 +46,8 @@ export function AddAllButton({
     return (
       <span className="text-xs text-text-secondary">
         {failures > 0
-          ? `Added ${items.length - failures} of ${items.length} — ${failures} failed`
-          : `Added all ${items.length}`}
+          ? t("title.addAllPartial", { added: items.length - failures, total: items.length, failed: failures })
+          : t("title.addAllDone", { count: items.length })}
       </span>
     );
   }
@@ -57,7 +59,7 @@ export function AddAllButton({
       disabled={state === "pending"}
       className="rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
     >
-      {state === "pending" ? "Adding…" : `Add all ${items.length} missing`}
+      {state === "pending" ? t("title.adding") : t("title.addAllMissing", { count: items.length })}
     </button>
   );
 }

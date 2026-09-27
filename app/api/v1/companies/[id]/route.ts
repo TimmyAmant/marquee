@@ -2,7 +2,7 @@ import { withApi } from "@/lib/api/handler";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { parseIdSegment } from "@/lib/api/request";
 import { statusKey, titleCard } from "@/lib/api/mappers";
 import { loadCompanyPage } from "@/lib/pages/entities";
@@ -16,7 +16,7 @@ export const GET = withApi<{ id: string }>(async (request, params): Promise<Comp
   await requireTmdbConfigured();
 
   const data = await loadCompanyPage(await ctx.viewer(), tmdbId);
-  if (!data) throw ApiError.of("not_found", "No such company on TMDb.");
+  if (!data) throw ApiError.of("not_found", msg("server.noSuchCompany"));
 
   return {
     tmdbId,

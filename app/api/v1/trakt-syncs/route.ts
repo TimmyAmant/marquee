@@ -1,6 +1,6 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
-import { ApiError, apiJson } from "@/lib/api/errors";
+import { ApiError, apiJson, msg } from "@/lib/api/errors";
 import { unwrap } from "@/lib/api/guards";
 import { queryBool, readJsonBody } from "@/lib/api/request";
 import { getTraktClientId } from "@/lib/integrations/app-settings";
@@ -11,7 +11,7 @@ import type { TraktSyncs } from "@/lib/api/types";
 export const GET = withApi(async (request): Promise<TraktSyncs> => {
   const ctx = await requireApiUser(request);
   const all = queryBool(new URL(request.url), "all") ?? false;
-  if (all && !ctx.user.isAdmin) throw ApiError.of("forbidden", "Only the admin can see everyone's Trakt syncs.");
+  if (all && !ctx.user.isAdmin) throw ApiError.of("forbidden", msg("server.onlyAdminTraktSyncsAll"));
   const [results, clientId] = await Promise.all([
     listTraktSyncs(all ? "all" : { userId: ctx.user.id }),
     getTraktClientId().catch(() => null),

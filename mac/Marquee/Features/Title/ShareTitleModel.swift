@@ -15,8 +15,8 @@ enum ShareLinkKind: String, CaseIterable, Identifiable, Hashable, Sendable {
     /// The picker's wording (the website's).
     var label: String {
         switch self {
-        case .marquee: return "Marquee — they'll need to sign in"
-        case .tmdb: return "TMDb — anyone can open it"
+        case .marquee: return String(localized: "Marquee — they'll need to sign in")
+        case .tmdb: return String(localized: "TMDb — anyone can open it")
         case .imdb: return "IMDb"
         }
     }
@@ -37,7 +37,7 @@ struct ShareLinks: Hashable, Sendable {
     static func title(_ id: API.TitleID, imdbId: String?, publicUrl: String?, server: URL?) -> ShareLinks {
         let type = MarqueeAPI.segment(id.mediaType)
         return ShareLinks(
-            marqueePath: "title/\(type)/\(id.tmdbId)",
+            marqueePath: "title/\(type)/\(id.tmdbId)", // i18n-ignore: URL path
             tmdbPath: "\(type)/\(id.tmdbId)",
             imdbId: imdbId.nonBlank,
             base: base(publicUrl: publicUrl, server: server)
@@ -200,7 +200,7 @@ final class ShareTitleModel {
         } catch let failure as APIError where failure.isCancellation {
             return
         } catch APIError.notFound {
-            members = .unavailable("Your Marquee server needs updating before titles can be sent to people here.")
+            members = .unavailable(String(localized: "Your Marquee server needs updating before titles can be sent to people here."))
         } catch {
             members = .unavailable(error.localizedDescription)
         }
@@ -224,9 +224,9 @@ final class ShareTitleModel {
     /// "Sent to Kid." for one person, else "Sent to 3 people."
     nonisolated static func sentMessage(recipients: [API.ShareableUser], count: Int) -> String {
         if count == 1, recipients.count == 1, let only = recipients.first {
-            return "Sent to \(only.label)."
+            return String(localized: "Sent to \(only.label).")
         }
-        return count == 1 ? "Sent to 1 person." : "Sent to \(count) people."
+        return String(localized: "Sent to \(count) people.")
     }
 
     /// At most `maxNoteLength` characters, counted the server's way (code points).

@@ -207,7 +207,7 @@ struct MarqueeAPI: Sendable {
             do {
                 return try APIClient.encoder.encode(body)
             } catch {
-                throw APIError.invalid("Couldn't encode the request: \(error.localizedDescription)")
+                throw APIError.invalid(String(localized: "Couldn't encode the request: \(error.localizedDescription)"))
             }
         }
     }

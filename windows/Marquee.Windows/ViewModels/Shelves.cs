@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Media;
@@ -148,7 +149,7 @@ public sealed partial class PosterItem : ObservableObject
         Name,
         Year,
         Status?.Label,
-        QuickAction == PosterQuickAction.Requested ? "Requested" : null,
+        QuickAction == PosterQuickAction.Requested ? Loc.Get("Card_Requested") : null,
     }.OfType<string>());
 
     /// <summary>The click action; null makes the card inert.</summary>
@@ -168,8 +169,8 @@ public sealed partial class PosterItem : ObservableObject
     /// <summary>"+ Add to Radarr" / "+ Add to Sonarr".</summary>
     public string AddLabel { get; }
 
-    public string AddButtonLabel => IsQuickActionBusy ? "Adding…" : AddLabel;
-    public string RequestButtonLabel => IsQuickActionBusy ? "Requesting…" : "Request";
+    public string AddButtonLabel => IsQuickActionBusy ? Loc.Get("Card_Adding") : AddLabel;
+    public string RequestButtonLabel => IsQuickActionBusy ? Loc.Get("Card_Requesting") : Loc.Get("Card_Request");
 
     /// <summary>The admin's "+ Add": the button goes and the badge follows the server once it's in Radarr/Sonarr.</summary>
     [RelayCommand]
@@ -322,7 +323,7 @@ public sealed class ShelfViewModel
     public ICommand? SeeAll { get; }
 
     /// <summary>The chevron's tooltip and accessible name: "Browse all Trending".</summary>
-    public string SeeAllLabel => $"Browse all {Title}";
+    public string SeeAllLabel => Loc.Format("Rail_SeeAll", Title);
 
     public bool HasPosters => Posters.Count > 0;
 

@@ -4,6 +4,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -23,10 +24,8 @@ namespace Marquee.Windows.ViewModels;
 public sealed partial class BrowseViewModel : ObservableObject
 {
     public const int FirstYear = 1950;
-    public const string EmptyTitle = "Nothing left here";
-    public const string EmptyMessage = "Try a different genre or year, or turn off \"Hide titles you already track\".";
-    public const string AllGenres = "All genres";
-    public const string AllYears = "All years";
+    public static string AllGenres => Loc.Get("Browse_AllGenres");
+    public static string AllYears => Loc.Get("Browse_AllYears");
 
     /// <summary>With hideOwned a whole batch can filter to nothing; keep asking, bounded, so scrolling never dead-ends.</summary>
     private const int MaxEmptyBatches = 5;
@@ -138,8 +137,8 @@ public sealed partial class BrowseViewModel : ObservableObject
 
     public string Title => mediaType.PluralLabel;
 
-    public string LoadingLabel => $"Loading {mediaType.PluralLabel.ToLowerInvariant()}…";
-    public string ErrorTitle => $"Couldn't load {mediaType.PluralLabel.ToLowerInvariant()}";
+    public string LoadingLabel => mediaType == MediaType.Tv ? Loc.Get("Browse_LoadingSeries") : Loc.Get("Browse_LoadingMovies");
+    public string ErrorTitle => mediaType == MediaType.Tv ? Loc.Get("Browse_ErrorSeries") : Loc.Get("Browse_ErrorMovies");
 
     public bool HasError => ErrorMessage != null;
     public bool ShowsError => HasError && !HasCards;
@@ -157,14 +156,14 @@ public sealed partial class BrowseViewModel : ObservableObject
     /// <summary>An error while cards are still showing (the extras failed): a line under the grid, not the empty state.</summary>
     public bool ShowsInlineError => HasError && HasCards;
 
-    public string HideOwnedLabel => HideOwned ? "✓ Hiding titles you already track" : "Hide titles you already track";
-    public string SurpriseLabel => IsSurprising ? "Picking…" : "🎲 Surprise me";
+    public string HideOwnedLabel => HideOwned ? Loc.Get("Browse_HidingOwned") : Loc.Get("Browse_HideOwned");
+    public string SurpriseLabel => IsSurprising ? Loc.Get("Browse_Picking") : Loc.Get("Browse_SurpriseMe");
 
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
     public string TmdbMissingMessage => IsAdmin
-        ? "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations."
-        : "The household admin hasn't connected TMDb yet.";
+        ? Loc.Get("Discover_TmdbMissingAdmin")
+        : Loc.Get("Discover_TmdbMissingMember");
 
     public bool CanOpenSettings => IsTmdbMissing && IsAdmin;
 
@@ -204,7 +203,7 @@ public sealed partial class BrowseViewModel : ObservableObject
 
             YearIndex = filters.Year is { } year && year >= FirstYear && year <= CurrentYear ? CurrentYear - year + 1 : 0;
             HideOwned = filters.HideOwned;
-            NetworkChipLabel = mediaType == MediaType.Tv && filters.NetworkId != null ? $"{networkName ?? "Network"} ✕" : null;
+            NetworkChipLabel = mediaType == MediaType.Tv && filters.NetworkId != null ? Loc.Format("Browse_NetworkChip", networkName ?? Loc.Get("Browse_Network")) : null;
         }
         finally
         {
@@ -332,7 +331,7 @@ public sealed partial class BrowseViewModel : ObservableObject
             if (extras.BecauseYouWatched is { Items.Count: > 0 } watched)
             {
                 var items = watched.Items.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
-                BecauseYouWatched = ShelfViewModel.OfPosters($"Because you watched {watched.Title}", items);
+                BecauseYouWatched = ShelfViewModel.OfPosters(Loc.Format("Browse_BecauseYouWatched", watched.Title), items);
             }
         }
         catch (ApiException error)

@@ -37,7 +37,7 @@ struct UpdateService: Sendable {
     @concurrent
     func latestRelease() async throws -> GitHubRelease {
         var request = URLRequest(url: Self.latestReleaseURL)
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept") // i18n-ignore
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
         let (data, response) = try await fetch(request)
         guard response.statusCode == 200 else {
@@ -89,7 +89,7 @@ struct UpdateService: Sendable {
         if let host = delegate.refusedHost { throw UpdateError.untrustedHost(host) }
         // Where the redirects ended up.
         guard Self.isAllowed(response.url) else {
-            throw UpdateError.untrustedHost(response.url?.host ?? "an unknown host")
+            throw UpdateError.untrustedHost(response.url?.host ?? String(localized: "an unknown host"))
         }
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError.downloadFailed }
 
@@ -142,7 +142,7 @@ struct UpdateService: Sendable {
             let (data, response) = try await session.data(for: request, delegate: delegate)
             if let host = delegate.refusedHost { throw UpdateError.untrustedHost(host) }
             guard Self.isAllowed(response.url), let http = response as? HTTPURLResponse else {
-                throw UpdateError.untrustedHost(response.url?.host ?? "an unknown host")
+                throw UpdateError.untrustedHost(response.url?.host ?? String(localized: "an unknown host"))
             }
             return (data, http)
         } catch let error as UpdateError {
@@ -172,7 +172,7 @@ private final class RedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked 
             completionHandler(request)
             return
         }
-        lock.withLock { refused = request.url?.host ?? request.url?.absoluteString ?? "an unknown host" }
+        lock.withLock { refused = request.url?.host ?? request.url?.absoluteString ?? String(localized: "an unknown host") }
         task.cancel()
         completionHandler(nil)
     }

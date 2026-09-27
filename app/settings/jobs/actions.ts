@@ -3,6 +3,7 @@
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { runJob, type JobId as RegistryJobId } from "@/lib/jobs/registry";
 import { saveNotFoundAfterHours } from "@/lib/requests/not-found";
+import { getT } from "@/lib/i18n/server";
 
 export type JobId = RegistryJobId;
 
@@ -15,7 +16,7 @@ export type RunJobState = { success?: true; error?: string } | undefined;
 export async function runJobAction(jobId: JobId, _prevState: RunJobState): Promise<RunJobState> {
   const viewer = await getViewerContext();
   if (!viewer.session || !viewer.isAdmin) {
-    return { error: "Only the admin can run jobs." };
+    return { error: (await getT())("admin.onlyAdminRunJobs") };
   }
 
   const result = await runJob(jobId);
@@ -25,7 +26,7 @@ export async function runJobAction(jobId: JobId, _prevState: RunJobState): Promi
 /** The Can't Find Check's wait: hours after approval (1–720). */
 export async function saveNotFoundAfterHoursAction(hours: number): Promise<{ afterHours?: number; error?: string }> {
   const viewer = await getViewerContext();
-  if (!viewer.session || !viewer.isAdmin) return { error: "Only the admin can change this." };
+  if (!viewer.session || !viewer.isAdmin) return { error: (await getT())("admin.onlyAdminChange") };
   const result = await saveNotFoundAfterHours(hours);
   return result.ok ? { afterHours: result.afterHours } : { error: result.error };
 }

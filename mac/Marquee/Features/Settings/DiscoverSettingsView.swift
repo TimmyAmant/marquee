@@ -14,8 +14,8 @@ struct DiscoverSettingsView: View {
 
     var body: some View {
         SettingsPane(
-            title: "Discover",
-            subtitle: "Choose which rows Discover shows, and in what order. Everyone in your household sees the same page.",
+            title: String(localized: "Discover"),
+            subtitle: String(localized: "Choose which rows Discover shows, and in what order. Everyone in your household sees the same page."),
             trailing: discover.settings == nil ? nil : AnyView(headerButtons)
         ) {
             if discover.isUnavailable {
@@ -62,7 +62,7 @@ struct DiscoverSettingsView: View {
             Text("The built-in rows go back to their usual order, all shown. Your own rows stay, after them.")
         }
         .confirmationDialog(
-            "Remove \(removingRow?.title ?? "this row")?",
+            removingRow.map { String(localized: "Remove \($0.title)?") } ?? String(localized: "Remove this row?"),
             isPresented: Binding(
                 get: { discover.confirmingRemoveId != nil },
                 set: { if !$0 { discover.confirmingRemoveId = nil } }
@@ -100,11 +100,13 @@ struct DiscoverSettingsView: View {
     }
 
     private func footnote(_ settings: API.DiscoverSettings) -> String {
-        var text = "Your own rows: \(discover.customCount) of \(settings.maxCustomShelves). Drag a row, or use the arrows, to move it."
+        let count = discover.customCount
+        let limit = settings.maxCustomShelves
+        var sentences = [String(localized: "Your own rows: \(count) of \(limit). Drag a row, or use the arrows, to move it.")]
         if !settings.traktConfigured, settings.shelves.contains(where: { $0.rowKind == .traktList }) {
-            text += " Trakt rows stay empty until Trakt is connected in Settings › Integrations."
+            sentences.append(String(localized: "Trakt rows stay empty until Trakt is connected in Settings › Integrations."))
         }
-        return text
+        return sentences.joined(separator: " ")
     }
 
     // MARK: Rows
@@ -135,7 +137,7 @@ struct DiscoverSettingsView: View {
                         .font(.system(size: 13.5, weight: .medium))
                         .foregroundStyle(row.hidden ? Theme.textMuted : Theme.textPrimary)
                 }
-                Text(row.sourceLine ?? "Built-in")
+                Text(row.sourceLine ?? String(localized: "Built-in"))
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.textMuted)
                     .lineLimit(1)
@@ -169,8 +171,8 @@ struct DiscoverSettingsView: View {
             .help(row.hidden ? "Hidden — turn on to show it" : "Shown — turn off to hide it")
 
             HStack(spacing: 2) {
-                moveButton("chevron.up", "Move up", row, by: -1, disabled: index == 0)
-                moveButton("chevron.down", "Move down", row, by: 1, disabled: index == count - 1)
+                moveButton("chevron.up", String(localized: "Move up"), row, by: -1, disabled: index == 0)
+                moveButton("chevron.down", String(localized: "Move down"), row, by: 1, disabled: index == count - 1)
             }
         }
         .disabled(discover.isSaving && renamingId != row.id)
@@ -262,7 +264,7 @@ struct AddDiscoverRowSheet: View {
 
             source
 
-            SettingsField(label: "Name (optional)", text: $draft.title, placeholder: "Named after what it shows")
+            SettingsField(label: String(localized: "Name (optional)"), text: $draft.title, placeholder: String(localized: "Named after what it shows"))
                 .onChange(of: draft.title) { _, value in
                     if value.count > API.AddDiscoverRowRequest.maxTitleLength {
                         draft.title = String(value.prefix(API.AddDiscoverRowRequest.maxTitleLength))
@@ -308,19 +310,19 @@ struct AddDiscoverRowSheet: View {
             }
         case .tmdbList:
             VStack(alignment: .leading, spacing: 5) {
-                SettingsField(label: "TMDb list", text: $draft.tmdbList, placeholder: "8136 or https://www.themoviedb.org/list/8136")
-                hint("The list's number, or its link on themoviedb.org. It has to be public.")
+                SettingsField(label: String(localized: "TMDb list"), text: $draft.tmdbList, placeholder: String(localized: "8136 or https://www.themoviedb.org/list/8136"))
+                hint(String(localized: "The list's number, or its link on themoviedb.org. It has to be public."))
             }
         case .traktList:
             VStack(alignment: .leading, spacing: 5) {
-                SettingsField(label: "Trakt link", text: $draft.traktURL, placeholder: "https://trakt.tv/users/someone/lists/favourites")
-                hint("A public list or watchlist on trakt.tv.")
+                SettingsField(label: String(localized: "Trakt link"), text: $draft.traktURL, placeholder: "https://trakt.tv/users/someone/lists/favourites")
+                hint(String(localized: "A public list or watchlist on trakt.tv."))
                 if !traktConfigured {
-                    InlineMessage(text: "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › Integrations.")
+                    InlineMessage(text: String(localized: "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › Integrations."))
                 }
             }
         case .library:
-            hint("The newest titles on your Plex or Jellyfin server.")
+            hint(String(localized: "The newest titles on your Plex or Jellyfin server."))
         case .unknown:
             EmptyView()
         }
@@ -328,19 +330,19 @@ struct AddDiscoverRowSheet: View {
 
     private var searchLabel: String {
         switch draft.kind {
-        case .keyword: return "Search TMDb keywords"
-        case .company: return "Search studios"
-        case .network: return "Search networks"
-        default: return "Filter genres"
+        case .keyword: return String(localized: "Search TMDb keywords")
+        case .company: return String(localized: "Search studios")
+        case .network: return String(localized: "Search networks")
+        default: return String(localized: "Filter genres")
         }
     }
 
     private var searchPlaceholder: String {
         switch draft.kind {
-        case .keyword: return "e.g. anime, time travel"
-        case .company: return "e.g. A24"
-        case .network: return "e.g. HBO, or a TMDb network number"
-        default: return "e.g. Comedy"
+        case .keyword: return String(localized: "e.g. anime, time travel")
+        case .company: return String(localized: "e.g. A24")
+        case .network: return String(localized: "e.g. HBO, or a TMDb network number")
+        default: return String(localized: "e.g. Comedy")
         }
     }
 

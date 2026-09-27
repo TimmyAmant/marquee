@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import { getT } from "@/lib/i18n/server";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { arrServers, arrStatusCache } from "@/lib/db/schema";
@@ -24,9 +25,8 @@ import * as radarr from "@/lib/radarr/client";
 // Integrations on the website and /api/v1/settings/arr-servers. Callers have
 // already checked the actor is the admin; `ownerId` is that admin.
 
-export const SERVER_NOT_FOUND = "Server not found.";
-export const URL_NEEDS_KEY = "Enter the API key again to change the URL.";
-export const CONNECT_FAILED = "Couldn't connect. Check the URL and API key and try again.";
+/** "Server not found.": a message key, for the API routes' msg(). */
+export const SERVER_NOT_FOUND = "notify.serverNotFound" as const;
 
 export function newWebhookSecret(): string {
   return randomBytes(24).toString("hex");
@@ -81,20 +81,21 @@ async function checkConnection(
   baseUrl: string,
   apiKey: string,
 ): Promise<CoreResult<ArrConnectionCheck>> {
-  if (!baseUrl || !apiKey) return fail("invalid", "URL and API key are required.");
+  const t = await getT();
+  if (!baseUrl || !apiKey) return fail("invalid", t("notify.arrUrlKeyRequired"));
   const client = kind === "sonarr" ? sonarr : radarr;
   let version: string | null = null;
   try {
     const status = await client.testConnection({ baseUrl, apiKey });
     version = typeof status?.version === "string" ? status.version : null;
   } catch {
-    return fail("upstream", CONNECT_FAILED);
+    return fail("upstream", t("notify.arrConnectFailed"));
   }
   try {
     const options = await fetchPickerOptions({ kind, baseUrl, apiKey });
     return { ok: true, version, ...options };
   } catch {
-    return fail("upstream", CONNECT_FAILED);
+    return fail("upstream", t("notify.arrConnectFailed"));
   }
 }
 
@@ -107,14 +108,14 @@ export async function testArrServerConnection(
 ): Promise<CoreResult<ArrConnectionCheck>> {
   if (typeof input.serverId === "string" && input.serverId) {
     const server = await getArrServer(ownerId, input.serverId);
-    if (!server) return fail("not_found", SERVER_NOT_FOUND);
+    if (!server) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
     const baseUrl = input.baseUrl || server.baseUrl;
     const apiKey = input.apiKey || (baseUrl === server.baseUrl ? server.apiKey : "");
-    if (!input.apiKey && baseUrl !== server.baseUrl) return fail("invalid", URL_NEEDS_KEY);
+    if (!input.apiKey && baseUrl !== server.baseUrl) return fail("invalid", (await getT())("notify.arrUrlNeedsKey"));
     return checkConnection(server.kind, baseUrl, apiKey);
   }
   const kind = input.kind === "sonarr" || input.kind === "radarr" ? input.kind : null;
-  if (!kind) return fail("invalid", '"kind" must be sonarr or radarr.');
+  if (!kind) return fail("invalid", (await getT())("notify.arrKindInvalid"));
   return checkConnection(kind, input.baseUrl ?? "", input.apiKey ?? "");
 }
 
@@ -203,7 +204,7 @@ export async function createArrServer(
   if (!fourK) resyncInBackground(ownerId, kind);
   revalidateServers();
   const server = await getArrServer(ownerId, id);
-  if (!server) return fail("internal", SERVER_NOT_FOUND);
+  if (!server) return fail("internal", (await getT())(SERVER_NOT_FOUND));
   return { ok: true, server };
 }
 
@@ -215,23 +216,23 @@ export async function updateArrServer(
   input: ArrServerInput,
 ): Promise<CoreResult<{ server: ArrServer }>> {
   const current = await getArrServer(ownerId, serverId);
-  if (!current) return fail("not_found", SERVER_NOT_FOUND);
+  if (!current) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
 
   const baseUrl = input.baseUrl || current.baseUrl;
   const urlChanged = baseUrl !== current.baseUrl;
-  if (urlChanged && !input.apiKey) return fail("invalid", URL_NEEDS_KEY);
+  if (urlChanged && !input.apiKey) return fail("invalid", (await getT())("notify.arrUrlNeedsKey"));
   const apiKey = input.apiKey || current.apiKey;
   if (urlChanged || input.apiKey) {
     const check = await checkConnection(current.kind, baseUrl, apiKey);
     if (!check.ok) return check;
   }
-  if (input.name !== undefined && !input.name) return fail("invalid", "Give the server a name.");
+  if (input.name !== undefined && !input.name) return fail("invalid", (await getT())("notify.arrNameServer"));
 
   const sonarrServer = current.kind === "sonarr";
   const fourK = input.is4k ?? current.is4k;
   const movedGroup = fourK !== current.is4k;
   if (!movedGroup && current.isDefault && input.isDefault === false) {
-    return fail("conflict", "Make another server the default instead.");
+    return fail("conflict", (await getT())("notify.arrMakeAnotherDefault"));
   }
 
   const encrypted = input.apiKey ? encryptSecret(input.apiKey) : null;
@@ -270,7 +271,7 @@ export async function updateArrServer(
   else if (movedGroup || ((urlChanged || input.apiKey) && !fourK)) resyncInBackground(ownerId, current.kind);
   revalidateServers();
   const server = await getArrServer(ownerId, serverId);
-  if (!server) return fail("not_found", SERVER_NOT_FOUND);
+  if (!server) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
   return { ok: true, server };
 }
 
@@ -279,7 +280,7 @@ export async function updateArrServer(
  * statuses go at once (as disconnecting did before). */
 export async function deleteArrServer(ownerId: string, serverId: string): Promise<CoreResult> {
   const current = await getArrServer(ownerId, serverId);
-  if (!current) return fail("not_found", SERVER_NOT_FOUND);
+  if (!current) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
 
   await withServerLock(ownerId, async (tx) => {
     await tx.delete(arrServers).where(and(eq(arrServers.userId, ownerId), eq(arrServers.id, serverId)));
@@ -300,7 +301,7 @@ export async function regenerateArrServerSecret(
     .set({ webhookSecret: newWebhookSecret(), updatedAt: new Date() })
     .where(and(eq(arrServers.userId, ownerId), eq(arrServers.id, serverId)))
     .returning();
-  if (!row) return fail("not_found", SERVER_NOT_FOUND);
+  if (!row) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
   revalidateServers();
   return { ok: true, server: toArrServer(row) };
 }
@@ -311,11 +312,11 @@ export async function getArrServerOptions(
   serverId: string,
 ): Promise<CoreResult<ArrPickerOptions>> {
   const server = await getArrServer(ownerId, serverId);
-  if (!server) return fail("not_found", SERVER_NOT_FOUND);
+  if (!server) return fail("not_found", (await getT())(SERVER_NOT_FOUND));
   try {
     return { ok: true, ...(await fetchPickerOptions(server)) };
   } catch {
-    return fail("upstream", `Couldn't reach ${server.name}. Check its connection in Settings.`);
+    return fail("upstream", (await getT())("notify.arrUnreachableCheck", { server: server.name }));
   }
 }
 
@@ -358,7 +359,7 @@ export async function saveDefaultServerDefaults(
   input: { qualityProfileId: number; rootFolderPath: string },
 ): Promise<CoreResult> {
   const [current] = await listArrServers(ownerId, { kind, fourK });
-  if (!current) return fail("conflict", `Connect ${kindName(kind, fourK)} in Settings first.`);
+  if (!current) return fail("conflict", (await getT())("notify.arrConnectFirst", { kind: kindName(kind, fourK) }));
   const result = await updateArrServer(ownerId, current.id, input);
   return result.ok ? { ok: true } : result;
 }

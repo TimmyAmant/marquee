@@ -13,9 +13,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Link Jellyfin"
-    PrimaryButtonText="Link"
-    CloseButtonText="Cancel"
+    x:Uid="Member_LinkDialog"
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="False"
     PrimaryButtonClick="OnLinkClick"
@@ -24,18 +22,15 @@
     <StackPanel Spacing="12" MinWidth="380">
         <TextBlock
             x:Name="IntroText"
-            Text="Sign in with your Jellyfin account to use it for Marquee too."
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
         <TextBox
             x:Name="UsernameBox"
-            Header="Jellyfin username"
             IsSpellCheckEnabled="False"
             TextChanged="OnUsernameChanged" />
         <PasswordBox
             x:Name="PasswordInput"
-            Header="Jellyfin password"
             PasswordChanged="OnPasswordChanged" />
         <InfoBar
             x:Name="ErrorBar"

@@ -2,6 +2,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -56,17 +57,18 @@ public sealed partial class NotificationChannelsViewModel : ObservableObject
 public abstract partial class ChannelCardViewModel : ObservableObject
 {
     /// <summary>The website's placeholder for a saved secret.</summary>
-    public const string KeepSavedPlaceholder = "•••••••••••••••• (leave blank to keep)";
+    public static string KeepSavedPlaceholder => Loc.Get("Channels_KeepSavedPlaceholder");
 
-    private readonly string removeName;
-    private readonly string successText;
-
-    protected ChannelCardViewModel(AppModel model, string removeName, string successText)
+    protected ChannelCardViewModel(AppModel model)
     {
         Model = model;
-        this.removeName = removeName;
-        this.successText = successText;
     }
+
+    /// <summary>"Remove Telegram", …: the Remove button once connected.</summary>
+    protected abstract string RemoveText { get; }
+
+    /// <summary>The notice after "Test &amp; save" worked.</summary>
+    protected abstract string SuccessText { get; }
 
     protected AppModel Model { get; }
 
@@ -104,11 +106,11 @@ public abstract partial class ChannelCardViewModel : ObservableObject
     private string? removeError;
 
     /// <summary>"Connected" while connected; empty (the pill collapses) otherwise.</summary>
-    public string ConnectedBadge => IsConnected ? "Connected" : "";
+    public string ConnectedBadge => IsConnected ? Loc.Get("Channels_Connected") : "";
     public BadgeTone ConnectedTone { get; } = BadgeTone.Owned;
 
-    public string SaveLabel => IsSaving ? "Testing…" : "Test & save";
-    public string RemoveLabel => IsRemoving ? "Removing…" : $"Remove {removeName}";
+    public string SaveLabel => IsSaving ? Loc.Get("Channels_Testing") : Loc.Get("Channels_TestAndSave");
+    public string RemoveLabel => IsRemoving ? Loc.Get("Channels_Removing") : RemoveText;
     public bool CanSave => !IsSaving && !IsRemoving;
     public bool CanRemove => IsConnected && !IsSaving && !IsRemoving;
     public bool HasError => Error != null;
@@ -146,7 +148,7 @@ public abstract partial class ChannelCardViewModel : ObservableObject
             await SendAsync();
             ClearSecrets();
             IsConnected = true;
-            Notice = successText;
+            Notice = SuccessText;
         }
         catch (ApiException failure)
         {
@@ -192,8 +194,11 @@ public abstract partial class ChannelCardViewModel : ObservableObject
 
 /// <summary>"Telegram notifications": a bot token from @BotFather and the chat to post to.</summary>
 public sealed partial class TelegramChannelViewModel(AppModel model)
-    : ChannelCardViewModel(model, "Telegram", "Connected — check the chat for a test message.")
+    : ChannelCardViewModel(model)
 {
+    protected override string RemoveText => Loc.Get("Channels_RemoveTelegram");
+    protected override string SuccessText => Loc.Get("Channels_TelegramSuccess");
+
     [ObservableProperty]
     private string botToken = "";
 
@@ -219,8 +224,11 @@ public sealed partial class TelegramChannelViewModel(AppModel model)
 
 /// <summary>"Pushover notifications": an application token and a user or group key.</summary>
 public sealed partial class PushoverChannelViewModel(AppModel model)
-    : ChannelCardViewModel(model, "Pushover", "Connected — a test notification is on its way.")
+    : ChannelCardViewModel(model)
 {
+    protected override string RemoveText => Loc.Get("Channels_RemovePushover");
+    protected override string SuccessText => Loc.Get("Channels_PushoverSuccess");
+
     [ObservableProperty]
     private string appToken = "";
 
@@ -243,9 +251,12 @@ public sealed partial class PushoverChannelViewModel(AppModel model)
 
 /// <summary>"Email notifications": the admin's SMTP server and who to send to. Everything but the password is prefilled.</summary>
 public sealed partial class EmailChannelViewModel(AppModel model)
-    : ChannelCardViewModel(model, "Email", "Connected — check the inbox for a test email.")
+    : ChannelCardViewModel(model)
 {
-    public const string PortMissingMessage = "Enter the SMTP port, like 587.";
+    public static string PortMissingMessage => Loc.Get("Channels_PortMissing");
+
+    protected override string RemoveText => Loc.Get("Channels_RemoveEmail");
+    protected override string SuccessText => Loc.Get("Channels_EmailSuccess");
 
     [ObservableProperty]
     private string host = "";

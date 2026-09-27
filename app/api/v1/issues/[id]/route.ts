@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment } from "@/lib/api/request";
@@ -9,7 +10,7 @@ import type { Ok } from "@/lib/api/types";
 /** Withdraws a report: your own while it's open, or (admin) any. */
 export const DELETE = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
   const ctx = await requireApiUser(request);
-  const id = parseUuidSegment(params.id, "Report not found.");
+  const id = parseUuidSegment(params.id, msg("server.reportNotFound"));
   unwrap(await deleteIssue({ userId: ctx.user.id, managesIssues: can(ctx.user, "manageIssues") }, id));
   return { ok: true };
 });

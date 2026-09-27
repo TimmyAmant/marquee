@@ -31,9 +31,9 @@ struct UpdateStatusView: View {
             case .available:
                 if let update = updater.update { available(update) }
             case let .downloading(fraction):
-                progress("Downloading Marquee \(updater.update?.version.description ?? "")…", fraction: fraction)
+                progress(String(localized: "Downloading Marquee \(updater.update?.version.description ?? "")…"), fraction: fraction)
             case .verifying:
-                progress("Checking the download…", fraction: nil)
+                progress(String(localized: "Checking the download…"), fraction: nil)
             case .relaunching:
                 Label("Marquee will quit and reopen", systemImage: "arrow.clockwise")
                     .font(.system(size: 12.5, weight: .medium))
@@ -157,15 +157,15 @@ enum UpdateAlerts {
             let alert = NSAlert()
             switch result {
             case .upToDate:
-                alert.messageText = "You're up to date"
-                alert.informativeText = "Marquee \(current) is the newest version."
+                alert.messageText = String(localized: "You're up to date")
+                alert.informativeText = String(localized: "Marquee \(current) is the newest version.")
                 alert.runModal()
             case let .available(update):
-                alert.messageText = "Marquee \(update.version.description) is available"
-                alert.informativeText = "You have \(current). Marquee downloads the update, checks it, and quits and reopens to finish."
-                alert.addButton(withTitle: "Update")
-                alert.addButton(withTitle: "What's New")
-                alert.addButton(withTitle: "Later")
+                alert.messageText = String(localized: "Marquee \(update.version.description) is available")
+                alert.informativeText = String(localized: "You have \(current). Marquee downloads the update, checks it, and quits and reopens to finish.")
+                alert.addButton(withTitle: String(localized: "Update"))
+                alert.addButton(withTitle: String(localized: "What's New"))
+                alert.addButton(withTitle: String(localized: "Later"))
                 switch alert.runModal() {
                 case .alertFirstButtonReturn:
                     showProgress()
@@ -178,10 +178,10 @@ enum UpdateAlerts {
                 }
             case let .failed(error):
                 alert.alertStyle = .warning
-                alert.messageText = "Couldn't check for updates"
+                alert.messageText = String(localized: "Couldn't check for updates")
                 alert.informativeText = error.localizedDescription
-                alert.addButton(withTitle: "OK")
-                alert.addButton(withTitle: "Download Manually")
+                alert.addButton(withTitle: String(localized: "OK"))
+                alert.addButton(withTitle: String(localized: "Download Manually"))
                 if alert.runModal() == .alertSecondButtonReturn {
                     NSWorkspace.shared.open(releasesPage)
                 }
@@ -199,10 +199,10 @@ enum UpdateAlerts {
         guard case let .failed(failure) = updater.phase else { return }
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Marquee couldn't update"
+        alert.messageText = String(localized: "Marquee couldn't update")
         alert.informativeText = failure.error.localizedDescription
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: failure.downloadedApp == nil ? "Download Manually" : "Show in Finder")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.addButton(withTitle: failure.downloadedApp == nil ? String(localized: "Download Manually") : String(localized: "Show in Finder"))
         guard alert.runModal() == .alertSecondButtonReturn else { return }
         if let app = failure.downloadedApp {
             NSWorkspace.shared.activateFileViewerSelecting([app])

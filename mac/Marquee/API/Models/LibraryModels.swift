@@ -51,8 +51,9 @@ extension API {
         /// "58.4 Mbps", or "820 kbps" below a megabit.
         var bitrateLabel: String? {
             guard let bitrateKbps, bitrateKbps > 0 else { return nil }
-            if bitrateKbps < 1000 { return "\(bitrateKbps) kbps" }
-            return String(format: "%.1f Mbps", Double(bitrateKbps) / 1000)
+            if bitrateKbps < 1000 { return String(localized: "\(bitrateKbps) kbps") }
+            let megabits = (Double(bitrateKbps) / 1000).formatted(.number.precision(.fractionLength(1)))
+            return String(localized: "\(megabits) Mbps")
         }
 
         /// The "Audio" row: "TrueHD Atmos 7.1ch".
@@ -141,15 +142,16 @@ extension API {
         /// seasons for a whole-series request.
         var pendingRequestLine: String {
             if let label = API.seasonsLabel(requestedSeasons) {
-                return "Requested \(label) — waiting for approval"
+                return String(localized: "Requested \(label) — waiting for approval")
             }
-            return "Requested — waiting for approval"
+            return String(localized: "Requested — waiting for approval")
         }
 
         /// "Also requested by A, B", or nil when it shouldn't show.
         var otherRequestersLine: String? {
             guard !otherRequesters.isEmpty, !alreadyRequested else { return nil }
-            return "Also requested by \(otherRequesters.joined(separator: ", "))"
+            let names = otherRequesters.joined(separator: ", ")
+            return String(localized: "Also requested by \(names)")
         }
     }
 
@@ -168,11 +170,11 @@ extension API {
         /// "4K not monitored", "4K coming soon"; nil when the 4K instance doesn't have it.
         var statusLabel: String? {
             switch status {
-            case .owned: "In 4K"
-            case .trackedDownloading: "4K downloading"
-            case .trackedMonitored: "4K missing"
-            case .trackedUnmonitored: "4K not monitored"
-            case .comingSoon: "4K coming soon"
+            case .owned: String(localized: "In 4K")
+            case .trackedDownloading: String(localized: "4K downloading")
+            case .trackedMonitored: String(localized: "4K missing")
+            case .trackedUnmonitored: String(localized: "4K not monitored")
+            case .comingSoon: String(localized: "4K coming soon")
             case .untracked, .unknown: nil
             }
         }

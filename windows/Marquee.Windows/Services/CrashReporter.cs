@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Marquee.Core.Localization;
 using Microsoft.UI.Xaml;
 
 namespace Marquee.Windows.Services;
@@ -63,11 +64,32 @@ internal static class CrashReporter
         {
             return;
         }
+        var intro = Text(() => Loc.Get("Shell_CrashIntro"), "Marquee ran into a problem and has to close.");
+        var logIntro = Text(() => Loc.Get("Shell_CrashLogIntro"), "The details are saved in:");
         MessageBoxW(
             IntPtr.Zero,
-            $"Marquee ran into a problem and has to close.{Environment.NewLine}{Environment.NewLine}{error.GetType().Name}: {error.Message}{Environment.NewLine}{Environment.NewLine}The details are saved in:{Environment.NewLine}{LogPath}",
+            $"{intro}{Environment.NewLine}{Environment.NewLine}{error.GetType().Name}: {error.Message}{Environment.NewLine}{Environment.NewLine}{logIntro}{Environment.NewLine}{LogPath}",
             "Marquee",
             MessageBoxIconError);
+    }
+
+    /// <summary>
+    /// The crash box's text in the app's language, or the English here when
+    /// the strings can't be read: a crash can come before the resources are
+    /// set up (or be why they aren't), and the key itself (what an unknown
+    /// key reads as) is no message.
+    /// </summary>
+    private static string Text(Func<string> localized, string english)
+    {
+        try
+        {
+            var text = localized();
+            return text.Length > 0 && !text.StartsWith("Shell_", StringComparison.Ordinal) ? text : english;
+        }
+        catch (Exception failure) when (failure is COMException or InvalidOperationException or ArgumentException or IOException)
+        {
+            return english;
+        }
     }
 
     private const uint MessageBoxIconError = 0x00000010;

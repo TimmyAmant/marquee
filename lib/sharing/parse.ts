@@ -4,6 +4,7 @@
 // directly and the website's client code can use the link builders.
 
 import type { MediaType } from "@/lib/db/schema";
+import type { Translator } from "@/lib/i18n/translator";
 
 /** A note's longest, in characters (an emoji counts once). */
 export const MAX_SHARE_NOTE = 280;
@@ -28,15 +29,15 @@ type Parsed<T> = ({ ok: true } & T) | { ok: false; error: string };
 /** Who a share goes to: a non-empty list of account ids, without the
  * sender, at most MAX_SHARE_RECIPIENTS, repeats dropped. Whether each is a
  * real account is the caller's check. */
-export function parseRecipients(raw: unknown, senderId: string): Parsed<{ userIds: string[] }> {
-  if (!Array.isArray(raw) || raw.length === 0) return { ok: false, error: "Pick who to share it with." };
+export function parseRecipients(raw: unknown, senderId: string, t: Translator): Parsed<{ userIds: string[] }> {
+  if (!Array.isArray(raw) || raw.length === 0) return { ok: false, error: t("notify.sharePickWho") };
   if (!raw.every((id): id is string => typeof id === "string" && UUID_PATTERN.test(id))) {
-    return { ok: false, error: "Pick who to share it with." };
+    return { ok: false, error: t("notify.sharePickWho") };
   }
   const userIds = [...new Set(raw.map((id) => id.toLowerCase()))];
-  if (userIds.includes(senderId.toLowerCase())) return { ok: false, error: "You can't share with yourself." };
+  if (userIds.includes(senderId.toLowerCase())) return { ok: false, error: t("notify.shareNotYourself") };
   if (userIds.length > MAX_SHARE_RECIPIENTS) {
-    return { ok: false, error: `Share with at most ${MAX_SHARE_RECIPIENTS} people at a time.` };
+    return { ok: false, error: t("notify.shareTooMany", { count: MAX_SHARE_RECIPIENTS }) };
   }
   return { ok: true, userIds };
 }
@@ -52,9 +53,9 @@ const TAG = /<\/?[a-z][^<>]*>/gi;
 /** The note as plain text on one line: tags and invisible characters out,
  * runs of whitespace (line breaks included) to one space. Null when that
  * leaves nothing; an error past MAX_SHARE_NOTE characters. */
-export function cleanShareNote(raw: unknown): Parsed<{ note: string | null }> {
+export function cleanShareNote(raw: unknown, t: Translator): Parsed<{ note: string | null }> {
   if (raw === undefined || raw === null) return { ok: true, note: null };
-  if (typeof raw !== "string") return { ok: false, error: "The note has to be text." };
+  if (typeof raw !== "string") return { ok: false, error: t("notify.shareNoteNotText") };
   const note = raw
     .normalize("NFC")
     .replace(TAG, "")
@@ -64,15 +65,19 @@ export function cleanShareNote(raw: unknown): Parsed<{ note: string | null }> {
     .trim();
   if (!note) return { ok: true, note: null };
   if (Array.from(note).length > MAX_SHARE_NOTE) {
-    return { ok: false, error: `Keep the note under ${MAX_SHARE_NOTE} characters.` };
+    return { ok: false, error: t("notify.noteTooLong", { count: MAX_SHARE_NOTE }) };
   }
   return { ok: true, note };
 }
 
-/** What the recipient reads: `Susan shared “Ice Age” with you: <note>`. */
-export function shareMessage(senderLabel: string, title: string, note: string | null): string {
-  const base = `${senderLabel} shared “${title}” with you`;
-  return note ? `${base}: ${note}` : base;
+/** What the recipient reads, in their language: `Susan shared “Ice Age”
+ * with you: <note>`. Every language ends it with ": <note>" (French with a
+ * no-break space before the colon), which the bell relies on to show the
+ * note on a line of its own (components/notifications-bell.tsx). */
+export function shareMessage(t: Translator, senderLabel: string, title: string, note: string | null): string {
+  return note
+    ? t("notify.titleSharedWithNote", { sender: senderLabel, title, note })
+    : t("notify.titleShared", { sender: senderLabel, title });
 }
 
 /** The Marquee page for a title or person under `base` (the public address,

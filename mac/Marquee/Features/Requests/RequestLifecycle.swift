@@ -39,7 +39,7 @@ struct RequestEditForm: Hashable, Sendable {
     }
 
     /// "In 4K (always the whole show)" / "In 4K".
-    var fourKLabel: String { isTV ? "In 4K (always the whole show)" : "In 4K" }
+    var fourKLabel: String { isTV ? String(localized: "In 4K (always the whole show)") : String(localized: "In 4K") }
 
     /// What Save sends: 4K always; for a show, the whole series (4K, or
     /// "The whole series") or the ticked seasons; a movie sends no seasons.
@@ -261,7 +261,7 @@ struct CancelRequestControl: View {
                 await onCancelled()
             } catch APIError.forbidden {
                 // The server's own words; `.forbidden` carries none.
-                self.error = "Only whoever asked can cancel it — decline it instead."
+                self.error = String(localized: "Only whoever asked can cancel it — decline it instead.")
             } catch {
                 self.error = error.localizedDescription
             }

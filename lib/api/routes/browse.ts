@@ -3,6 +3,7 @@ import { isUnwanted } from "@/lib/library/status-tone";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { invalid, queryBool, queryInt } from "@/lib/api/request";
+import { msg } from "@/lib/api/errors";
 import { statusKey, titleCard } from "@/lib/api/mappers";
 import { fetchDiscoverItems } from "@/app/discover/fetch-items";
 import { loadBecauseYouWatched, loadBrowseFilters } from "@/lib/pages/browse";
@@ -18,7 +19,7 @@ const SORTS: DiscoverSort[] = ["popularity", "top_rated", "newest"];
 function parseSort(url: URL): DiscoverSort {
   const raw = url.searchParams.get("sort");
   if (raw === null || raw === "") return "popularity";
-  if (!(SORTS as string[]).includes(raw)) throw invalid(`"sort" must be one of ${SORTS.join(", ")}.`);
+  if (!(SORTS as string[]).includes(raw)) throw invalid(msg("server.fieldOneOf", { field: "sort", values: SORTS.join(", ") }));
   return raw as DiscoverSort;
 }
 

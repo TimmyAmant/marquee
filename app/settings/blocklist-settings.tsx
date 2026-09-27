@@ -5,11 +5,14 @@ import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { blockKeywordAction, removeBlocklistEntryAction } from "@/lib/requests/blocklist-actions";
 import type { BlocklistEntry } from "@/lib/api/types";
+import { useT } from "@/lib/i18n/client";
+import { rich } from "@/lib/i18n/rich";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
 
 function RemoveButton({ id }: { id: string }) {
+  const t = useT();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +31,7 @@ function RemoveButton({ id }: { id: string }) {
         }}
         className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline disabled:opacity-60"
       >
-        {busy ? "Removing…" : "Remove"}
+        {busy ? t("settings.removing") : t("common.remove")}
       </button>
       {error && <span className="text-xs text-red-400">{error}</span>}
     </span>
@@ -38,11 +41,12 @@ function RemoveButton({ id }: { id: string }) {
 /** Settings → Account (admin): what nobody may request — titles blocked from
  * their page, and keywords/genres added here. */
 export function BlocklistSettings({ entries }: { entries: BlocklistEntry[] }) {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(blockKeywordAction, undefined);
   return (
     <div className="flex flex-col gap-4">
       {entries.length === 0 ? (
-        <p className="px-6 pt-4 text-sm text-text-muted">Nothing blocked. Block a title from its page, or a keyword below.</p>
+        <p className="px-6 pt-4 text-sm text-text-muted">{t("settings.blocklistEmpty")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {entries.map((entry) => (
@@ -54,7 +58,9 @@ export function BlocklistSettings({ entries }: { entries: BlocklistEntry[] }) {
                   </Link>
                 ) : (
                   <span className="text-text-primary">
-                    Keyword: <span className="font-medium">{entry.keyword}</span>
+                    {rich(t("settings.blocklistKeyword", { keyword: entry.keyword ?? "" }), {
+                      b: (chunks) => <span className="font-medium">{chunks}</span>,
+                    })}
                   </span>
                 )}
                 {entry.reason && <p className="mt-0.5 truncate text-xs text-text-muted">{entry.reason}</p>}
@@ -67,14 +73,12 @@ export function BlocklistSettings({ entries }: { entries: BlocklistEntry[] }) {
       {/* Keyed on the list, so a successful add clears the fields. */}
       <form key={entries.length} action={formAction} className="flex flex-col gap-3 border-t border-border px-6 py-4">
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Block a keyword or genre
-          <input name="keyword" required placeholder="e.g. anime, reality, horror" className={inputClass} />
-          <span className="text-xs text-text-muted">
-            Any title with this TMDb keyword or genre can&apos;t be requested (you can still add it yourself).
-          </span>
+          {t("settings.blockKeywordLabel")}
+          <input name="keyword" required placeholder={t("settings.blockKeywordPlaceholder")} className={inputClass} />
+          <span className="text-xs text-text-muted">{t("settings.blockKeywordHelp")}</span>
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Reason (optional, shown to whoever asks)
+          {t("settings.blockReasonLabel")}
           <input name="reason" maxLength={200} className={inputClass} />
         </label>
         {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
@@ -83,7 +87,7 @@ export function BlocklistSettings({ entries }: { entries: BlocklistEntry[] }) {
           disabled={isPending}
           className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {isPending ? "Blocking…" : "Block"}
+          {isPending ? t("settings.blocking") : t("settings.block")}
         </button>
       </form>
     </div>

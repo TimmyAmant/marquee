@@ -2,6 +2,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -19,7 +20,7 @@ public sealed class ApiKeyRow
         Key = key;
         Name = key.Name;
         ScopeBadge = key.ScopeLabel;
-        ExpiredBadge = key.Expired ? "Expired" : "";
+        ExpiredBadge = key.Expired ? Loc.Get("ApiKeys_Expired") : "";
         DetailsLine = string.Join(
             " · ",
             new[] { key.ActAsLabel, key.Hint + "…", key.CreatedLabel, key.LastUsedLabel(now), key.ExpiryLabel }.OfType<string>());
@@ -56,7 +57,7 @@ public sealed class ApiKeyRow
 /// </summary>
 public sealed partial class ApiKeysSettingsViewModel : ObservableObject
 {
-    public const string EmptyText = "No keys yet.";
+    public static string EmptyText => Loc.Get("ApiKeys_Empty");
 
     private readonly ApiKeysModel keys;
     private CancellationTokenSource? loadCancellation;
@@ -121,7 +122,7 @@ public sealed partial class ApiKeysSettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanCreate))]
     private bool isCreating;
 
-    public string CreateLabel => IsCreating ? "Creating…" : "Create key";
+    public string CreateLabel => IsCreating ? Loc.Get("ApiKeys_Creating") : Loc.Get("ApiKeys_CreateKey");
     public bool CanCreate => !IsCreating;
 
     // MARK: The new key
@@ -138,7 +139,7 @@ public sealed partial class ApiKeysSettingsViewModel : ObservableObject
     public bool ShowsForm => NewKey == null;
 
     [ObservableProperty]
-    private string copyLabel = "Copy";
+    private string copyLabel = Loc.Get("ApiKeys_Copy");
 
     /// <summary>"Copy" for the new key; reads "Copied" for a moment.</summary>
     [RelayCommand]
@@ -148,9 +149,9 @@ public sealed partial class ApiKeysSettingsViewModel : ObservableObject
         {
             return;
         }
-        CopyLabel = "Copied";
+        CopyLabel = Loc.Get("ApiKeys_Copied");
         await Task.Delay(TimeSpan.FromSeconds(1.5));
-        CopyLabel = "Copy";
+        CopyLabel = Loc.Get("ApiKeys_Copy");
     }
 
     /// <summary>"Done": the secret is gone for good.</summary>
@@ -158,7 +159,7 @@ public sealed partial class ApiKeysSettingsViewModel : ObservableObject
     private void Done()
     {
         keys.Done();
-        CopyLabel = "Copy";
+        CopyLabel = Loc.Get("ApiKeys_Copy");
         Sync();
     }
 
@@ -189,7 +190,7 @@ public sealed partial class ApiKeysSettingsViewModel : ObservableObject
             ScopeIndex = 0;
             ActAsIndex = 0;
             ExpiryIndex = 0;
-            CopyLabel = "Copy";
+            CopyLabel = Loc.Get("ApiKeys_Copy");
             Sync();
         }
         finally

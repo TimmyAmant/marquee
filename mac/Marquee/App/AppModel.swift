@@ -28,13 +28,13 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .discover: return "Discover"
-        case .movies: return "Movies"
-        case .series: return "Series"
-        case .favorites: return "Favorites"
-        case .calendar: return "Calendar"
-        case .requests: return "Requests"
-        case .settings: return "Settings"
+        case .discover: return String(localized: "Discover")
+        case .movies: return String(localized: "Movies")
+        case .series: return String(localized: "Series")
+        case .favorites: return String(localized: "Favorites")
+        case .calendar: return String(localized: "Calendar")
+        case .requests: return String(localized: "Requests")
+        case .settings: return String(localized: "Settings")
         }
     }
 
@@ -80,7 +80,7 @@ extension Route {
     /// its root. nil for the screens the website has no standalone page for.
     var webPath: String? {
         switch self {
-        case let .title(id): return "title/\(id.mediaType.rawValue)/\(id.tmdbId)"
+        case let .title(id): return "title/\(id.mediaType.rawValue)/\(id.tmdbId)" // i18n-ignore
         case let .person(id): return "person/\(id)"
         case let .company(id): return "company/\(id)"
         case let .discoverList(list): return "discover/\(list.rawValue)"
@@ -151,7 +151,18 @@ final class AppModel {
         }
     }
     /// The signed-in account, exactly as the server reports it.
-    var viewer: API.User?
+    var viewer: API.User? {
+        didSet {
+            // The account's language becomes this app's from the next launch
+            // (`AppLanguage`). Only from a full `/me` — a sign-in response
+            // carries no `language` — and never in the unit-test host or a
+            // pinned (automated) run, which leave this Mac's settings alone.
+            guard let viewer, viewer.sendsLanguage, !AppInfo.isRunningTests, session.pinned == nil else { return }
+            if viewer.language != oldValue?.language || oldValue?.sendsLanguage != true {
+                AppLanguage.adoptAccountPreference(viewer.language)
+            }
+        }
+    }
     var authForm: AuthForm = .signIn
     /// A note on the sign-in card, e.g. after the server ended the session.
     var authNotice: String?
@@ -213,7 +224,7 @@ final class AppModel {
             self?.sessionEnded()
         }
         updater.onNewUpdate = { [weak self] update in
-            self?.flash("Marquee \(update.version) is available. Update it from the rail or Settings › About.")
+            self?.flash(String(localized: "Marquee \(update.version.description) is available. Update it from the rail or Settings › About."))
         }
     }
 
@@ -288,7 +299,7 @@ final class AppModel {
 
     /// Shown when the saved sign-in couldn't be read.
     static let savedSignInUnreadableNotice =
-        "Couldn't read your saved sign-in. Sign in again, or reload (⌘R) to retry."
+        String(localized: "Couldn't read your saved sign-in. Sign in again, or reload (⌘R) to retry.")
 
     private func showSignIn(notice: String? = nil, generation: Int) async {
         let outcome = await session.refreshInfo()
@@ -392,6 +403,10 @@ final class AppModel {
     ///   than someone signing in with a password just now.
     func completeSignIn(_ user: API.User, restored: Bool = false) {
         viewer = user
+        defer {
+            // A sign-in response has no `language`; `/me` does (0.50+).
+            if !user.sendsLanguage { refreshViewer() }
+        }
         authNotice = nil
         connectionProblem = nil
         selection = .discover
@@ -437,7 +452,7 @@ final class AppModel {
         guard phase == .ready else { return }
         clearSignedInState()
         authForm = .signIn
-        authNotice = "Your session has ended. Please sign in again."
+        authNotice = String(localized: "Your session has ended. Please sign in again.")
         phase = .signIn
     }
 
@@ -471,6 +486,15 @@ final class AppModel {
             guard user.id == asked.id, session.server == server, viewer?.id == asked.id else { return }
             if user != viewer { viewer = user }
         }
+    }
+
+    /// Settings › Account › Language: saves the account's language (nil =
+    /// follow this Mac) with `PATCH /me`; `viewer` adopts it for the next launch.
+    func setLanguage(_ language: AppLanguage?) async throws {
+        let asked = viewer?.id
+        let user = try await api.setLanguage(language?.rawValue)
+        guard phase == .ready, user.id == asked, viewer?.id == asked else { return }
+        viewer = user
     }
 
     /// Re-polls the server's badge counts now.
@@ -622,7 +646,7 @@ final class AppModel {
         pasteboard.clearContents()
         pasteboard.setString(url.absoluteString, forType: .URL)
         pasteboard.setString(url.absoluteString, forType: .string)
-        flash("Link copied.")
+        flash(String(localized: "Link copied."))
     }
 
     // MARK: Feedback

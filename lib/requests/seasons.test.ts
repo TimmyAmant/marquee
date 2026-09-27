@@ -11,45 +11,48 @@ import {
   unlistedSeasonError,
   type SeasonLibraryState,
 } from "./seasons";
+import { englishT } from "@/lib/i18n/catalog";
+
+const t = englishT();
 
 describe("parseSeasonsInput", () => {
   it("treats omitted or null as the whole series", () => {
-    expect(parseSeasonsInput(undefined)).toEqual({ ok: true, seasons: null });
-    expect(parseSeasonsInput(null)).toEqual({ ok: true, seasons: null });
+    expect(parseSeasonsInput(t, undefined)).toEqual({ ok: true, seasons: null });
+    expect(parseSeasonsInput(t, null)).toEqual({ ok: true, seasons: null });
   });
 
   it("sorts and de-duplicates", () => {
-    expect(parseSeasonsInput([3, 1, 2, 3, 1])).toEqual({ ok: true, seasons: [1, 2, 3] });
-    expect(parseSeasonsInput([0])).toEqual({ ok: true, seasons: [0] });
+    expect(parseSeasonsInput(t, [3, 1, 2, 3, 1])).toEqual({ ok: true, seasons: [1, 2, 3] });
+    expect(parseSeasonsInput(t, [0])).toEqual({ ok: true, seasons: [0] });
   });
 
   it("rejects anything that isn't a non-empty list of whole, non-negative numbers", () => {
     for (const bad of ["1", 1, {}, true, [], [1.5], [-1], ["1"], [null], [Number.NaN], [Number.MAX_SAFE_INTEGER + 1]]) {
-      expect(parseSeasonsInput(bad).ok).toBe(false);
+      expect(parseSeasonsInput(t, bad).ok).toBe(false);
     }
   });
 
   it("caps how many seasons one request can name", () => {
     const many = Array.from({ length: MAX_REQUESTED_SEASONS + 1 }, (_, i) => i);
-    expect(parseSeasonsInput(many).ok).toBe(false);
-    expect(parseSeasonsInput(many.slice(0, MAX_REQUESTED_SEASONS)).ok).toBe(true);
+    expect(parseSeasonsInput(t, many).ok).toBe(false);
+    expect(parseSeasonsInput(t, many.slice(0, MAX_REQUESTED_SEASONS)).ok).toBe(true);
     // The cap is on what was sent, before repeats collapse.
-    expect(parseSeasonsInput(Array(MAX_REQUESTED_SEASONS + 1).fill(1)).ok).toBe(false);
+    expect(parseSeasonsInput(t, Array(MAX_REQUESTED_SEASONS + 1).fill(1)).ok).toBe(false);
   });
 });
 
 describe("unlistedSeasonError", () => {
   it("passes seasons TMDb lists", () => {
-    expect(unlistedSeasonError([1, 2], [0, 1, 2, 3])).toBeNull();
+    expect(unlistedSeasonError(t, [1, 2], [0, 1, 2, 3])).toBeNull();
   });
 
   it("names the first season TMDb doesn't list", () => {
-    expect(unlistedSeasonError([1, 7], [1, 2])).toBe("Season 7 isn't listed for this show.");
+    expect(unlistedSeasonError(t, [1, 7], [1, 2])).toBe("Season 7 isn't listed for this show.");
   });
 
   it("only allows specials when TMDb lists them", () => {
-    expect(unlistedSeasonError([0], [1, 2])).toBe("This show has no specials listed.");
-    expect(unlistedSeasonError([0], [0, 1])).toBeNull();
+    expect(unlistedSeasonError(t, [0], [1, 2])).toBe("This show has no specials listed.");
+    expect(unlistedSeasonError(t, [0], [0, 1])).toBeNull();
   });
 });
 

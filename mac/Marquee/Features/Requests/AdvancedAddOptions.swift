@@ -51,7 +51,7 @@ struct AddOptionsSelection: Hashable, Sendable {
     var qualityProfileChoices: [API.QualityProfile] {
         let listed = server?.qualityProfiles ?? []
         guard let qualityProfileId, !listed.contains(where: { $0.id == qualityProfileId }) else { return listed }
-        return listed + [API.QualityProfile(id: qualityProfileId, name: "Profile \(qualityProfileId)")]
+        return listed + [API.QualityProfile(id: qualityProfileId, name: String(localized: "Profile \(qualityProfileId)"))]
     }
 
     /// The root folders to offer, with the current pick kept the same way.
@@ -176,7 +176,7 @@ struct AddOptionsPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let heading {
-                CapsLabel(text: heading.uppercased())
+                CapsLabel(text: heading.localizedUppercase)
             }
             content
         }
@@ -208,7 +208,9 @@ struct AddOptionsPanel: View {
             EmptyView()
         case let .loaded(selection):
             if selection.options.servers.isEmpty {
-                Text("No \(is4k ? "4K " : "")\(mediaType.arrName) server is set up for this yet.")
+                Text(is4k
+                    ? "No 4K \(mediaType.arrName) server is set up for this yet."
+                    : "No \(mediaType.arrName) server is set up for this yet.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textMuted)
             } else {

@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 // See the matching constant in lib/tvdb/client.ts, lib/radarr/client.ts —
 // a slow/unreachable Discord shouldn't be able to hang a request.
 const REQUEST_TIMEOUT_MS = 8000;
@@ -20,7 +21,7 @@ export async function sendDiscordMessage(webhookUrl: string, content: string): P
 }
 
 export async function verifyDiscordWebhook(webhookUrl: string): Promise<boolean> {
-  return postToWebhook(webhookUrl, "✅ Marquee is now connected to this channel.").catch(
-    () => false,
-  );
+  // Whoever is setting it up reads it.
+  const t = await getT();
+  return postToWebhook(webhookUrl, `✅ ${t("notify.connectedDiscord")}`).catch(() => false);
 }

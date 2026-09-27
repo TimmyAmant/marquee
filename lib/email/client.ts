@@ -1,4 +1,7 @@
 import nodemailer from "nodemailer";
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 
 // Email over the admin's own SMTP server (Gmail with an app password,
 // Fastmail, a relay on the LAN…), to one or more addresses.
@@ -26,17 +29,17 @@ export function parseRecipients(value: string): string[] {
 }
 
 /** Pure; unit tested. */
-export function emailConfigError(config: EmailConfig): string | null {
-  if (!config.host || /[\s/]/.test(config.host)) return "Enter the SMTP server's host name, like smtp.gmail.com.";
-  if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) return "Enter the SMTP port, like 587.";
+export function emailConfigError(config: EmailConfig, t: Translator = englishT()): string | null {
+  if (!config.host || /[\s/]/.test(config.host)) return t("notify.emailEnterHost");
+  if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) return t("notify.emailEnterPort");
   if (Boolean(config.username) !== Boolean(config.password)) {
-    return "Enter both the SMTP username and password, or neither.";
+    return t("notify.emailBothOrNeither");
   }
-  if (!ADDRESS.test(config.from)) return "Enter the address the emails come from.";
-  if (config.to.length === 0) return "Enter at least one address to send to.";
-  if (config.to.length > 20) return "Send to at most 20 addresses.";
+  if (!ADDRESS.test(config.from)) return t("notify.emailEnterFrom");
+  if (config.to.length === 0) return t("notify.emailEnterTo");
+  if (config.to.length > 20) return t("notify.emailTooManyTo", { count: 20 });
   const bad = config.to.find((a) => !ADDRESS.test(a));
-  if (bad) return `"${bad}" isn't an email address.`;
+  if (bad) return t("notify.emailNotAnAddress", { address: bad });
   return null;
 }
 
@@ -94,7 +97,9 @@ export async function deliverEmail(
  * usually says what's wrong (a rejected password, a refused sender). */
 export async function verifyEmail(config: EmailConfig): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    await send(config, "Marquee is connected", "Marquee will send its notifications to this address.");
+    // Whoever is setting it up reads it.
+    const t = await getT();
+    await send(config, t("notify.emailConnectedSubject"), t("notify.emailConnectedBody"));
     return { ok: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

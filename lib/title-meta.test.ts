@@ -7,6 +7,9 @@ import {
   seasonsNewestFirst,
   topBilledCast,
 } from "./title-meta";
+import { englishT } from "@/lib/i18n/catalog";
+
+const t = englishT();
 
 describe("topBilledCast", () => {
   it("orders by billing and keeps the top 20", () => {
@@ -98,15 +101,15 @@ describe("computeYearRange", () => {
 
 describe("relabelTvStatus", () => {
   it("relabels TMDb's 'Returning Series' to 'Continuing'", () => {
-    expect(relabelTvStatus("Returning Series")).toBe("Continuing");
+    expect(relabelTvStatus(t, "Returning Series")).toBe("Continuing");
   });
 
   it("passes other statuses through unchanged", () => {
-    expect(relabelTvStatus("Ended")).toBe("Ended");
-    expect(relabelTvStatus("Canceled")).toBe("Canceled");
+    expect(relabelTvStatus(t, "Ended")).toBe("Ended");
+    expect(relabelTvStatus(t, "Canceled")).toBe("Canceled");
   });
 
   it("passes null through", () => {
-    expect(relabelTvStatus(null)).toBeNull();
+    expect(relabelTvStatus(t, null)).toBeNull();
   });
 });

@@ -134,7 +134,7 @@
         <!-- The Mac's Settings column (SettingsLayout.columnWidth): up to 760 wide; a Stretch element under its MaxWidth is centered in the page. -->
         <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="760" HorizontalAlignment="Stretch">
             <StackPanel Spacing="14">
-                <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock x:Uid="Settings_Title" Style="{StaticResource TitleTextBlockStyle}" />
 
                 <!-- The tabs (components/settings-nav.tsx): icon and title, the admin's three hidden from a member. -->
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -143,10 +143,10 @@
                         Style="{StaticResource SettingsTabStyle}"
                         Tag="Account"
                         Click="OnTabClick"
-                        AutomationProperties.Name="Account">
+                        x:Uid="Settings_AccountTab">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE77B;" FontSize="14" />
-                            <TextBlock Text="Account" />
+                            <TextBlock x:Uid="Settings_AccountTabLabel" />
                         </StackPanel>
                     </Button>
                     <Button
@@ -154,11 +154,11 @@
                         Style="{StaticResource SettingsTabStyle}"
                         Tag="Integrations"
                         Click="OnTabClick"
-                        AutomationProperties.Name="Integrations"
+                        x:Uid="Settings_IntegrationsTab"
                         Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE71B;" FontSize="14" />
-                            <TextBlock Text="Integrations" />
+                            <TextBlock x:Uid="Settings_IntegrationsTabLabel" />
                         </StackPanel>
                     </Button>
                     <!-- Discover (0.49+): the admin's, once the server answered GET /settings/discover. -->
@@ -167,11 +167,11 @@
                         Style="{StaticResource SettingsTabStyle}"
                         Tag="Discover"
                         Click="OnTabClick"
-                        AutomationProperties.Name="Discover"
+                        x:Uid="Settings_DiscoverTab"
                         Visibility="{x:Bind ViewModel.ShowsDiscoverTab, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE8FD;" FontSize="14" />
-                            <TextBlock Text="Discover" />
+                            <TextBlock x:Uid="Settings_DiscoverTabLabel" />
                         </StackPanel>
                     </Button>
                     <Button
@@ -179,11 +179,11 @@
                         Style="{StaticResource SettingsTabStyle}"
                         Tag="Activity"
                         Click="OnTabClick"
-                        AutomationProperties.Name="Activity"
+                        x:Uid="Settings_ActivityTab"
                         Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE823;" FontSize="14" />
-                            <TextBlock Text="Activity" />
+                            <TextBlock x:Uid="Settings_ActivityTabLabel" />
                         </StackPanel>
                     </Button>
                     <Button
@@ -191,11 +191,11 @@
                         Style="{StaticResource SettingsTabStyle}"
                         Tag="Jobs"
                         Click="OnTabClick"
-                        AutomationProperties.Name="Jobs"
+                        x:Uid="Settings_JobsTab"
                         Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE895;" FontSize="14" />
-                            <TextBlock Text="Jobs" />
+                            <TextBlock x:Uid="Settings_JobsTabLabel" />
                         </StackPanel>
                     </Button>
                     <Button
@@ -203,10 +203,10 @@
                         Style="{StaticResource SettingsTabStyle}"
                         Tag="About"
                         Click="OnTabClick"
-                        AutomationProperties.Name="About">
+                        x:Uid="Settings_AboutTab">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE946;" FontSize="14" />
-                            <TextBlock Text="About" />
+                            <TextBlock x:Uid="Settings_AboutTabLabel" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

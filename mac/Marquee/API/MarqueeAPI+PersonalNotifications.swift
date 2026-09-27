@@ -156,8 +156,8 @@ enum TelegramLink {
     static let interval: Duration = .seconds(3)
     /// …120 times: about 6 minutes, inside the server's 10.
     static let maxPolls = 120
-    static let expiredMessage = "That Telegram link expired. Try again."
-    static let timedOutMessage = "Telegram didn't hear from you in time. Try again, or enter your chat ID."
+    static let expiredMessage = String(localized: "That Telegram link expired. Try again.")
+    static let timedOutMessage = String(localized: "Telegram didn't hear from you in time. Try again, or enter your chat ID.")
 
     /// Calls `poll` every `interval` until it returns a channel, it throws,
     /// the task is cancelled, or `maxPolls` pass (`MediaSignInError.expiredWith`).

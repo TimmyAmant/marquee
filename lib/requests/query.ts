@@ -7,6 +7,7 @@ import { getSonarrSeasonStates, getTitleLibraryStatus } from "@/lib/integrations
 import { createNotification } from "@/lib/notifications/query";
 import { mapWithLimit } from "@/lib/async/map-limit";
 import { quotedRequestTitle } from "@/lib/requests/labels";
+import type { Translator } from "@/lib/i18n/translator";
 import { seasonsStillNeeded, type ViewerTitleRequest } from "@/lib/requests/seasons";
 import { countComments } from "@/lib/comments";
 import type { LibraryStatus } from "@/components/status-badge";
@@ -114,13 +115,15 @@ export async function getPendingRequests(viewerUserId: string) {
     await Promise.all(
       rows.flatMap((r, i) => {
         if (!reconciledIds.has(r.id)) return [];
-        const message = r.is4k
-          ? `"${r.title}" is already in the 4K library or on its way.`
-          : statuses[i].status === "seasons_covered"
-            ? `${quotedRequestTitle(r.title, r.seasons)} is already in your library or on its way.`
-            : statuses[i].status === "coming_soon"
-              ? `"${r.title}" is already being tracked — it's not released yet.`
-              : `"${r.title}" was already in your library.`;
+        const status = statuses[i].status;
+        const message = (t: Translator) =>
+          r.is4k
+            ? t("notify.reconciled4k", { title: t("notify.quotedTitle", { title: r.title }) })
+            : status === "seasons_covered"
+              ? t("notify.reconciledSeasons", { request: quotedRequestTitle(t, r.title, r.seasons) })
+              : status === "coming_soon"
+                ? t("notify.reconciledComingSoon", { title: t("notify.quotedTitle", { title: r.title }) })
+                : t("notify.reconciledOwned", { title: t("notify.quotedTitle", { title: r.title }) });
         return createNotification({
           userId: r.requestedByUserId,
           mediaType: r.mediaType,

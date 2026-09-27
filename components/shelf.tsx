@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/client";
 
 /** Shelf head geometry comes straight from the design mockup
  * (Design/Mockups/mockup.html in the MarqueeMac repo): a 28px-tall row with
@@ -27,6 +28,7 @@ export function ShelfHead({
   atEnd?: boolean;
   children?: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div
       className={`mb-3 flex min-h-7 flex-wrap items-center gap-x-[9px] gap-y-2 ${
@@ -39,7 +41,7 @@ export function ShelfHead({
       {seeAllHref && (
         <Link
           href={seeAllHref}
-          aria-label={`Browse all ${title}`}
+          aria-label={t("discover.seeAllOf", { title })}
           className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border-strong text-text-secondary transition-colors hover:border-accent hover:text-accent"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-[11px] w-[11px]">
@@ -68,10 +70,11 @@ function ShelfArrow({
   disabled?: boolean;
   onScroll: (direction: 1 | -1) => void;
 }) {
+  const t = useT();
   return (
     <button
       type="button"
-      aria-label={direction === -1 ? "Scroll left" : "Scroll right"}
+      aria-label={direction === -1 ? t("discover.scrollLeft") : t("discover.scrollRight")}
       onClick={() => onScroll(direction)}
       className={`flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
         disabled

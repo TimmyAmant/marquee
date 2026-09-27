@@ -31,6 +31,8 @@ import {
   SYNC_NOW_WINDOW_MS,
   type WatchlistState,
 } from "@/lib/plex/watchlist";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 
 // Settings → Account's "Linked accounts" (any signed-in account, for itself
 // only) and the admin's "Import from Plex / Jellyfin" and sign-up toggle —
@@ -45,11 +47,16 @@ async function clientIp() {
   return getClientIp(await headers());
 }
 
+/** The message a non-admin gets, in their language. */
+async function adminOnly(key: Parameters<Translator>[0]): Promise<string> {
+  return (await getT())(key);
+}
+
 export type ActionResult = { error?: string; success?: boolean };
 
 export async function startPlexLinkAction(): Promise<{ handle?: string; authUrl?: string; error?: string }> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   const result = await startPlexLink(session.user.id, await clientIp());
   return result.ok ? { handle: result.handle, authUrl: result.authUrl } : { error: result.error };
 }
@@ -58,10 +65,10 @@ export async function pollPlexLinkAction(
   handle: string,
 ): Promise<{ status: "pending" } | { status: "done" } | { status: "error"; error: string }> {
   const session = await auth();
-  if (!session?.user) return { status: "error", error: "Sign in required." };
+  if (!session?.user) return { status: "error", error: (await getT())("settings.signInRequired") };
   const poll = await pollPlexLink(session.user.id, handle, await clientIp());
   if (poll.status === "pending") return { status: "pending" };
-  if (poll.status === "expired") return { status: "error", error: "That Plex sign-in expired. Try again." };
+  if (poll.status === "expired") return { status: "error", error: (await getT())("settings.plexExpired") };
   if (!poll.ok) return { status: "error", error: poll.error };
   revalidatePath("/settings");
   return { status: "done" };
@@ -69,11 +76,11 @@ export async function pollPlexLinkAction(
 
 export async function linkJellyfinAction(_prev: ActionResult | undefined, formData: FormData): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   const username = formData.get("username");
   const password = formData.get("password");
   if (typeof username !== "string" || !username || typeof password !== "string" || !password) {
-    return { error: "Enter your Jellyfin username and password." };
+    return { error: (await getT())("settings.enterJellyfinCredentials") };
   }
   const result = await linkJellyfin(session.user.id, username, password, await clientIp());
   if (!result.ok) return { error: result.error };
@@ -90,12 +97,12 @@ export async function linkJellyfinAction(_prev: ActionResult | undefined, formDa
  */
 export async function startSsoLinkAction(): Promise<{ authUrl?: string; error?: string }> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   const config = await getSsoConfig();
-  if (!config) return { error: "Single sign-on isn't set up on this server." };
+  if (!config) return { error: (await getT())("settings.ssoNotSetUp") };
   const headerList = await headers();
   if (!isPublicHost(config.publicUrl, headerList)) {
-    return { error: `Open Marquee at ${config.publicUrl} to link ${config.name} — that's the address ${config.name} sends you back to.` };
+    return { error: (await getT())("settings.ssoWrongHost", { url: config.publicUrl, name: config.name }) };
   }
   const cookieStore = await cookies();
   dropBrowserFlow(cookieStore.get(SSO_COOKIE)?.value);
@@ -107,7 +114,7 @@ export async function startSsoLinkAction(): Promise<{ authUrl?: string; error?: 
 
 export async function unlinkAction(provider: string): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   if (provider === "sso") {
     const result = await unlinkSso(session.user.id);
     if (!result.ok) return { error: result.error };
@@ -115,7 +122,7 @@ export async function unlinkAction(provider: string): Promise<ActionResult> {
     return { success: true };
   }
   const parsed = parseProvider(provider);
-  if (!parsed) return { error: "Invalid request." };
+  if (!parsed) return { error: (await getT())("settings.invalidRequest") };
   const result = await unlinkAccount(session.user.id, parsed);
   if (!result.ok) return { error: result.error };
   revalidatePath("/settings");
@@ -125,10 +132,10 @@ export async function unlinkAction(provider: string): Promise<ActionResult> {
 export async function listImportCandidatesAction(
   provider: string,
 ): Promise<{ results?: ImportCandidate[]; error?: string }> {
-  const admin = await requireAdmin("Only the admin can add household members.");
+  const admin = await requireAdmin(await adminOnly("settings.onlyAdminAddsMembers"));
   if (!admin.ok) return { error: admin.error };
   const parsed = parseProvider(provider);
-  if (!parsed) return { error: "Invalid request." };
+  if (!parsed) return { error: (await getT())("settings.invalidRequest") };
   const result = await listImportCandidates(parsed);
   return result.ok ? { results: result.results } : { error: result.error };
 }
@@ -137,10 +144,10 @@ export async function importMembersAction(
   provider: string,
   ids: string[],
 ): Promise<{ created?: number; skipped?: number; error?: string }> {
-  const admin = await requireAdmin("Only the admin can add household members.");
+  const admin = await requireAdmin(await adminOnly("settings.onlyAdminAddsMembers"));
   if (!admin.ok) return { error: admin.error };
   const parsed = parseProvider(provider);
-  if (!parsed) return { error: "Invalid request." };
+  if (!parsed) return { error: (await getT())("settings.invalidRequest") };
   const result = await importMediaUsers(parsed, ids);
   if (!result.ok) return { error: result.error };
   revalidatePath("/settings");
@@ -148,9 +155,9 @@ export async function importMembersAction(
 }
 
 export async function setMediaServerSignupAction(value: boolean): Promise<ActionResult> {
-  const admin = await requireAdmin("Only the admin can change sign-in settings.");
+  const admin = await requireAdmin(await adminOnly("settings.onlyAdminSignInSettings"));
   if (!admin.ok) return { error: admin.error };
-  if (typeof value !== "boolean") return { error: "Invalid request." };
+  if (typeof value !== "boolean") return { error: (await getT())("settings.invalidRequest") };
   await setMediaServerSignup(value);
   revalidatePath("/settings");
   return { success: true };
@@ -162,7 +169,7 @@ export type WatchlistActionResult = { state?: WatchlistState; error?: string };
 
 export async function startPlexWatchlistAction(): Promise<{ handle?: string; authUrl?: string; error?: string }> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   const result = await startPlexWatchlist(session.user.id, await clientIp());
   return result.ok ? { handle: result.handle, authUrl: result.authUrl } : { error: result.error };
 }
@@ -171,23 +178,23 @@ export async function pollPlexWatchlistAction(
   handle: string,
 ): Promise<{ status: "pending" } | { status: "done" } | { status: "error"; error: string }> {
   const session = await auth();
-  if (!session?.user) return { status: "error", error: "Sign in required." };
+  if (!session?.user) return { status: "error", error: (await getT())("settings.signInRequired") };
   const poll = await pollPlexWatchlist(session.user.id, handle, await clientIp());
   if (poll.status === "pending") return { status: "pending" };
-  if (poll.status === "expired") return { status: "error", error: "That Plex sign-in expired. Try again." };
+  if (poll.status === "expired") return { status: "error", error: (await getT())("settings.plexExpired") };
   if (!poll.ok) return { status: "error", error: poll.error };
   return { status: "done" };
 }
 
 export async function getPlexWatchlistAction(): Promise<WatchlistActionResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   return { state: await getWatchlistState(session.user.id) };
 }
 
 export async function setPlexWatchlistTypesAction(types: { movies?: boolean; tv?: boolean }): Promise<WatchlistActionResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   await setWatchlistTypes(session.user.id, {
     movies: typeof types.movies === "boolean" ? types.movies : undefined,
     tv: typeof types.tv === "boolean" ? types.tv : undefined,
@@ -197,16 +204,16 @@ export async function setPlexWatchlistTypesAction(types: { movies?: boolean; tv?
 
 export async function disablePlexWatchlistAction(): Promise<WatchlistActionResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   await disableWatchlist(session.user.id);
   return { state: await getWatchlistState(session.user.id) };
 }
 
 export async function syncPlexWatchlistAction(): Promise<WatchlistActionResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Sign in required." };
+  if (!session?.user) return { error: (await getT())("settings.signInRequired") };
   if (!checkRateLimit(`plex-watchlist:sync:${session.user.id}`, SYNC_NOW_LIMIT, SYNC_NOW_WINDOW_MS)) {
-    return { error: "Checked a moment ago. Try again in a minute." };
+    return { error: (await getT())("settings.checkedMomentAgo") };
   }
   await syncPlexWatchlist(session.user.id);
   revalidatePath("/requests");

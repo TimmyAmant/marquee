@@ -4,6 +4,7 @@ import { clearTraktClientId } from "@/lib/integrations/app-settings";
 import { clearIntegrationSetting, testAndSaveTraktClientId as testAndSave } from "@/lib/integrations/manage";
 import { importTraktList } from "@/lib/integrations/trakt-import";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { getT } from "@/lib/i18n/server";
 
 export type TraktSettingsState = { error?: string; success?: boolean };
 
@@ -11,7 +12,7 @@ export async function testAndSaveTraktClientId(
   _prevState: TraktSettingsState | undefined,
   formData: FormData,
 ): Promise<TraktSettingsState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await testAndSave(String(formData.get("clientId") || ""));
@@ -21,7 +22,7 @@ export async function testAndSaveTraktClientId(
 export async function disconnectTrakt(
   _prevState: TraktSettingsState | undefined,
 ): Promise<TraktSettingsState> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   await clearIntegrationSetting(clearTraktClientId);
@@ -40,7 +41,7 @@ export async function importTraktListAction(
   _prevState: TraktImportState | undefined,
   formData: FormData,
 ): Promise<TraktImportState> {
-  const admin = await requireAdmin("Only the admin can import from Trakt.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnlyTraktImport"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await importTraktList(admin.userId, String(formData.get("url") || ""));

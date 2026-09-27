@@ -1,4 +1,5 @@
 import { and, eq, gte, ne } from "drizzle-orm";
+import type { Translator } from "@/lib/i18n/translator";
 import { db } from "@/lib/db/client";
 import { requests, users, type MediaType } from "@/lib/db/schema";
 import { can } from "@/lib/users/permissions";
@@ -41,21 +42,21 @@ export function computeQuota(limit: number, days: number, createdAts: Date[], no
 
 /** "in 3 days", "in 5 hours", "in a few minutes" — relative, so it reads
  * right whatever time zone the server and the member are in. Pure. */
-export function untilLabel(when: Date, now: Date): string {
+export function untilLabel(t: Translator, when: Date, now: Date): string {
   const ms = when.getTime() - now.getTime();
   const hours = Math.ceil(ms / (60 * 60 * 1000));
-  if (hours <= 1) return "within the hour";
-  if (hours < 24) return `in ${hours} hours`;
+  if (hours <= 1) return t("notify.untilWithinHour");
+  if (hours < 24) return t("notify.untilHours", { count: hours });
   const days = Math.ceil(ms / DAY_MS);
-  return days === 1 ? "tomorrow" : `in ${days} days`;
+  return days === 1 ? t("notify.untilTomorrow") : t("notify.untilDays", { count: days });
 }
 
 /** The refusal, in words. Pure; unit tested. */
-export function quotaExceededMessage(mediaType: MediaType, quota: QuotaState, now = new Date()): string {
-  const what = mediaType === "movie" ? (quota.limit === 1 ? "movie request" : "movie requests") : quota.limit === 1 ? "TV request" : "TV requests";
-  const span = quota.days === 1 ? "a day" : quota.days === 7 ? "a week" : `${quota.days} days`;
-  const when = quota.nextSlotAt ? ` You can ask again ${untilLabel(quota.nextSlotAt, now)}.` : "";
-  return `You've used your ${quota.limit} ${what} for ${span}.${when}`;
+export function quotaExceededMessage(t: Translator, mediaType: MediaType, quota: QuotaState, now = new Date()): string {
+  const span =
+    quota.days === 1 ? t("notify.quotaSpanDay") : quota.days === 7 ? t("notify.quotaSpanWeek") : t("notify.quotaSpanDays", { count: quota.days });
+  const used = t("notify.quotaUsed", { kind: mediaType, count: quota.limit, span });
+  return quota.nextSlotAt ? `${used} ${t("notify.quotaAskAgain", { when: untilLabel(t, quota.nextSlotAt, now) })}` : used;
 }
 
 type LimitColumns = {
@@ -129,6 +130,8 @@ const locks: Map<string, Promise<unknown>> = (globalThis.__marqueeQuotaLocks ??=
  * can't both take the last slot. Unlimited members skip straight to it.
  */
 export async function insertWithinQuota<T>(
+  /** Whoever reads the refusal. */
+  t: Translator,
   userId: string,
   mediaType: MediaType,
   insert: () => Promise<T>,
@@ -139,7 +142,7 @@ export async function insertWithinQuota<T>(
     .catch(() => undefined)
     .then(async () => {
       const quota = await getQuota(userId, mediaType);
-      if (quota && quota.remaining === 0) return { ok: false as const, error: quotaExceededMessage(mediaType, quota) };
+      if (quota && quota.remaining === 0) return { ok: false as const, error: quotaExceededMessage(t, mediaType, quota) };
       return { ok: true as const, value: await insert() };
     });
   locks.set(key, run);

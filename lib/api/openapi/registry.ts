@@ -69,6 +69,7 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["POST", "/auth/sso/start", "public", "Start a single sign-on sign-in (returns a browser link)."],
     ["POST", "/auth/sso/poll", "public", "Poll a single sign-on sign-in until it completes."],
     ["GET", "/me", "user", "The signed-in account."],
+    ["PATCH", "/me", "user", "Change your own preferences: the language Marquee is shown in."],
     ["GET", "/badges", "user", "The nav counters: unread notifications and, for reviewers, requests and problem reports waiting."],
   ]),
   ...group("Dashboard widgets", [

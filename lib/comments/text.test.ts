@@ -7,25 +7,28 @@ import {
   MAX_COMMENT_LENGTH,
   sanitizeComment,
 } from "./text";
+import { englishT } from "@/lib/i18n/catalog";
+
+const t = englishT();
 
 describe("sanitizeComment", () => {
   it("keeps plain text, trims it, and tidies line breaks", () => {
-    expect(sanitizeComment("  Hi there  ")).toEqual({ ok: true, body: "Hi there" });
-    expect(sanitizeComment("one\r\ntwo\rthree")).toEqual({ ok: true, body: "one\ntwo\nthree" });
-    expect(sanitizeComment("a   \n\n\n\n\nb")).toEqual({ ok: true, body: "a\n\nb" });
-    expect(sanitizeComment("<b>bold</b> & co")).toEqual({ ok: true, body: "<b>bold</b> & co" });
+    expect(sanitizeComment("  Hi there  ", t)).toEqual({ ok: true, body: "Hi there" });
+    expect(sanitizeComment("one\r\ntwo\rthree", t)).toEqual({ ok: true, body: "one\ntwo\nthree" });
+    expect(sanitizeComment("a   \n\n\n\n\nb", t)).toEqual({ ok: true, body: "a\n\nb" });
+    expect(sanitizeComment("<b>bold</b> & co", t)).toEqual({ ok: true, body: "<b>bold</b> & co" });
   });
 
   it("drops control and direction-override characters", () => {
-    expect(sanitizeComment("a\u0000b\u0007c‮d⁦e\tf")).toEqual({ ok: true, body: "abcde\tf" });
+    expect(sanitizeComment("a\u0000b\u0007c‮d⁦e\tf", t)).toEqual({ ok: true, body: "abcde\tf" });
   });
 
   it("refuses nothing, non-text, and too much", () => {
-    expect(sanitizeComment("   \n ")).toMatchObject({ ok: false, error: "Write something first." });
-    expect(sanitizeComment(42)).toMatchObject({ ok: false });
-    expect(sanitizeComment(undefined)).toMatchObject({ ok: false });
-    expect(sanitizeComment("x".repeat(MAX_COMMENT_LENGTH))).toMatchObject({ ok: true });
-    expect(sanitizeComment("x".repeat(MAX_COMMENT_LENGTH + 1))).toMatchObject({ ok: false });
+    expect(sanitizeComment("   \n ", t)).toMatchObject({ ok: false, error: "Write something first." });
+    expect(sanitizeComment(42, t)).toMatchObject({ ok: false });
+    expect(sanitizeComment(undefined, t)).toMatchObject({ ok: false });
+    expect(sanitizeComment("x".repeat(MAX_COMMENT_LENGTH), t)).toMatchObject({ ok: true });
+    expect(sanitizeComment("x".repeat(MAX_COMMENT_LENGTH + 1), t)).toMatchObject({ ok: false });
   });
 });
 

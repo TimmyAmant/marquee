@@ -42,7 +42,7 @@ struct BrowseView: View {
                     .padding(.trailing, Metrics.pagePadding)
                 } else {
                     if let becauseYouWatched = extras?.becauseYouWatched, !becauseYouWatched.items.isEmpty {
-                        Shelf(title: "Because you watched \(becauseYouWatched.title)") {
+                        Shelf(title: String(localized: "Because you watched \(becauseYouWatched.title)")) {
                             ForEach(becauseYouWatched.items) { card in
                                 ShelfItem {
                                     PosterCard(card: card) { model.openTitle(card.id) }
@@ -111,7 +111,7 @@ struct BrowseView: View {
                 Button {
                     setFilters { $0.networkId = nil }
                 } label: {
-                    Text("\(extras?.network?.name ?? "Network") ✕")
+                    Text("\(extras?.network?.name ?? String(localized: "Network")) ✕")
                 }
                 .buttonStyle(OutlineButtonStyle(tint: Theme.accent, compact: true))
             }
@@ -154,16 +154,16 @@ struct BrowseView: View {
             LoadingView()
         } else if let error, cards.isEmpty {
             EmptyStateView(
-                title: "Couldn't load \(mediaType.pluralLabel.lowercased())",
+                title: mediaType == .tv ? String(localized: "Couldn't load series") : String(localized: "Couldn't load movies"),
                 message: error.localizedDescription,
                 systemImage: "exclamationmark.triangle",
-                actionTitle: "Try again",
+                actionTitle: String(localized: "Try again"),
                 action: { model.reload() }
             )
         } else if cards.isEmpty {
             EmptyStateView(
-                title: "Nothing left here",
-                message: "Try a different genre or year, or turn off “Hide titles you already track”.",
+                title: String(localized: "Nothing left here"),
+                message: String(localized: "Try a different genre or year, or turn off “Hide titles you already track”."),
                 systemImage: "sparkle.magnifyingglass"
             )
         } else {
@@ -184,7 +184,7 @@ struct BrowseView: View {
                         ProgressView().controlSize(.small)
                         Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
                     } else if let pageError {
-                        InlineMessage(text: "Couldn't load more")
+                        InlineMessage(text: String(localized: "Couldn't load more"))
                             .help(pageError.localizedDescription)
                         Button("Retry") {
                             Task { await loadNextPage(retrying: true) }

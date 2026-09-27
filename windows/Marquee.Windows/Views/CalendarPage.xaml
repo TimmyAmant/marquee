@@ -32,7 +32,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Calendar" Style="{StaticResource TitleTextBlockStyle}" />
+                            <TextBlock x:Uid="Calendar_Title" Style="{StaticResource TitleTextBlockStyle}" />
                             <TextBlock
                                 Text="{x:Bind ViewModel.MonthLabel, Mode=OneWay}"
                                 Style="{StaticResource BodyTextBlockStyle}"
@@ -41,9 +41,9 @@
                         <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="20" Height="20" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-                        <Button Content="Today" Command="{x:Bind ViewModel.ShowTodayCommand}" />
-                        <Button Content="← Prev" Command="{x:Bind ViewModel.ShowPreviousCommand}" />
-                        <Button Content="Next →" Command="{x:Bind ViewModel.ShowNextCommand}" />
+                        <Button x:Uid="Calendar_Today" Command="{x:Bind ViewModel.ShowTodayCommand}" />
+                        <Button x:Uid="Calendar_Prev" Command="{x:Bind ViewModel.ShowPreviousCommand}" />
+                        <Button x:Uid="Calendar_Next" Command="{x:Bind ViewModel.ShowNextCommand}" />
                     </StackPanel>
                 </Grid>
 
@@ -76,13 +76,13 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Sun" Style="{StaticResource CalendarWeekday}" />
-                            <TextBlock Grid.Column="1" Text="Mon" Style="{StaticResource CalendarWeekday}" />
-                            <TextBlock Grid.Column="2" Text="Tue" Style="{StaticResource CalendarWeekday}" />
-                            <TextBlock Grid.Column="3" Text="Wed" Style="{StaticResource CalendarWeekday}" />
-                            <TextBlock Grid.Column="4" Text="Thu" Style="{StaticResource CalendarWeekday}" />
-                            <TextBlock Grid.Column="5" Text="Fri" Style="{StaticResource CalendarWeekday}" />
-                            <TextBlock Grid.Column="6" Text="Sat" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="0" Text="{x:Bind vm:CalendarViewModel.SundayLabel}" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="1" Text="{x:Bind vm:CalendarViewModel.MondayLabel}" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="2" Text="{x:Bind vm:CalendarViewModel.TuesdayLabel}" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="3" Text="{x:Bind vm:CalendarViewModel.WednesdayLabel}" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="4" Text="{x:Bind vm:CalendarViewModel.ThursdayLabel}" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="5" Text="{x:Bind vm:CalendarViewModel.FridayLabel}" Style="{StaticResource CalendarWeekday}" />
+                            <TextBlock Grid.Column="6" Text="{x:Bind vm:CalendarViewModel.SaturdayLabel}" Style="{StaticResource CalendarWeekday}" />
                         </Grid>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Cells, Mode=OneWay}">
                             <ItemsRepeater.Layout>
@@ -183,7 +183,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsNotConfigured, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Calendar" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Calendar_NotConfiguredTitle" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.NotConfiguredMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
@@ -191,7 +191,7 @@
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
             <Button
-                Content="Connect an integration"
+                x:Uid="Calendar_ConnectIntegration"
                 Command="{x:Bind ViewModel.OpenSettingsCommand}"
                 Visibility="{x:Bind ViewModel.CanOpenSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 HorizontalAlignment="Center" />
@@ -204,7 +204,7 @@
             Visibility="{x:Bind ViewModel.IsInitialLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <ProgressRing IsActive="{x:Bind ViewModel.IsInitialLoading, Mode=OneWay}" Width="36" Height="36" />
             <TextBlock
-                Text="Loading the calendar…"
+                x:Uid="Calendar_LoadingText"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 HorizontalAlignment="Center" />
@@ -217,14 +217,14 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Couldn't load the calendar" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Calendar_ErrorText" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Calendar_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
         </StackPanel>
     </Grid>
 </Page>

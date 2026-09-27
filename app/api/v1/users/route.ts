@@ -4,7 +4,7 @@ import { unwrap } from "@/lib/api/guards";
 import { householdMember } from "@/lib/api/mappers";
 import { readJsonBody } from "@/lib/api/request";
 import { createHouseholdMember, getHouseholdMember, listHouseholdMembersFor } from "@/lib/users/household";
-import { ApiError, apiJson } from "@/lib/api/errors";
+import { ApiError, apiJson, msg } from "@/lib/api/errors";
 import type { HouseholdMember, ListResponse } from "@/lib/api/types";
 
 /** Settings → Account's member list: every account for the admin (oldest
@@ -17,7 +17,7 @@ export const GET = withApi(async (request): Promise<ListResponse<HouseholdMember
 
 /** "Add a household member" (admin). Body: { username, password, displayName? }. */
 export const POST = withApi(async (request): Promise<Response> => {
-  const ctx = await requireApiAdmin(request, "Only the admin can add household members.");
+  const ctx = await requireApiAdmin(request, msg("server.onlyAdminAddMembers"));
   const body = await readJsonBody(request);
 
   const { userId } = unwrap(
@@ -29,6 +29,6 @@ export const POST = withApi(async (request): Promise<Response> => {
   );
 
   const created = await getHouseholdMember(userId);
-  if (!created) throw ApiError.of("internal", "Account was created but couldn't be read back.");
+  if (!created) throw ApiError.of("internal", msg("server.accountCreatedUnreadable"));
   return apiJson(householdMember(created, ctx.user.id), { status: 201 });
 });

@@ -280,7 +280,7 @@ final class ServerSession {
     func login(username: String, password: String) async throws -> User {
         let username = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !username.isEmpty, !password.isEmpty else {
-            throw APIError.invalid("Enter your username and password.")
+            throw APIError.invalid(String(localized: "Enter your username and password."))
         }
         guard let server else { throw APIError.notMarquee }
         let response = try await postAuth(
@@ -438,7 +438,7 @@ final class ServerSession {
     func loginWithJellyfin(username: String, password: String) async throws -> User {
         let username = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !username.isEmpty, !password.isEmpty else {
-            throw APIError.invalid("Enter your \(serverInfo.jellyfinName) username and password.")
+            throw APIError.invalid(String(localized: "Enter your \(serverInfo.jellyfinName) username and password."))
         }
         guard let server else { throw APIError.notMarquee }
         let deviceName = self.deviceName

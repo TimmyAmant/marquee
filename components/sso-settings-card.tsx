@@ -7,6 +7,7 @@ import {
   testSsoIssuerAction,
 } from "@/app/settings/integrations/sso-actions";
 import type { SsoSettingsView, SsoTestResult } from "@/lib/auth/sso/config";
+import { useT } from "@/lib/i18n/client";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -38,6 +39,7 @@ function Toggle({ name, defaultChecked, label, hint }: { name: string; defaultCh
  * write-only — the page only knows whether one is saved.
  */
 export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSettingsView | null; defaultPublicUrl: string }) {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(saveSsoSettingsAction, undefined);
   const [removed, setRemoved] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -60,41 +62,39 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
     <div className="rounded-2xl border border-border bg-bg-1 p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="font-display text-xl text-text-primary">Single sign-on</h3>
-          <p className="mt-1 text-xs text-text-muted">
-            Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak,
-            Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps.
-          </p>
+          <h3 className="font-display text-xl text-text-primary">{t("integrations.ssoTitle")}</h3>
+          <p className="mt-1 text-xs text-text-muted">{t("integrations.ssoIntro")}</p>
         </div>
         {saved && (
           <span className="shrink-0 rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-            On
+            {t("common.on")}
           </span>
         )}
       </div>
 
       <form action={formAction} className="mt-4 flex flex-col gap-3">
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Button name
+          {t("integrations.ssoButtonName")}
+          {/* i18n-ignore */}
           <input name="name" required maxLength={40} defaultValue={saved?.name ?? ""} placeholder="Authentik" className={inputClass} />
-          <span className="text-xs text-text-muted">The sign-in button says “Sign in with {"<name>"}”.</span>
+          <span className="text-xs text-text-muted">{t("integrations.ssoButtonNameHint")}</span>
         </label>
 
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Marquee&apos;s address
+          {t("integrations.ssoPublicUrl")}
           <input
             name="publicUrl"
             required
             value={publicUrl}
             onChange={(e) => setPublicUrl(e.target.value)}
-            placeholder="https://marquee.example.com"
+            placeholder="https://marquee.example.com" // i18n-ignore
             className={inputClass}
           />
-          <span className="text-xs text-text-muted">The address people use to reach Marquee from outside.</span>
+          <span className="text-xs text-text-muted">{t("integrations.ssoPublicUrlHint")}</span>
         </label>
 
         <div className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Redirect URI — add this to the provider exactly
+          {t("integrations.ssoRedirectUri")}
           <div className="flex items-center gap-2">
             <code className="min-w-0 flex-1 break-all rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-xs text-text-primary">
               {callbackUrl}
@@ -112,20 +112,20 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
               }}
               className="shrink-0 rounded-full border border-border-strong px-3 py-1.5 text-xs text-text-primary hover:border-accent hover:text-accent"
             >
-              {copied ? "Copied" : "Copy"}
+              {copied ? t("common.copied") : t("common.copy")}
             </button>
           </div>
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Issuer URL
+          {t("integrations.ssoIssuerUrl")}
           <div className="flex gap-2">
             <input
               name="issuer"
               required
               value={issuer}
               onChange={(e) => setIssuer(e.target.value)}
-              placeholder="https://auth.example.com/application/o/marquee/"
+              placeholder="https://auth.example.com/application/o/marquee/" // i18n-ignore
               className={`${inputClass} min-w-0 flex-1`}
             />
             <button
@@ -134,17 +134,15 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
               disabled={testing || !issuer.trim()}
               className="shrink-0 rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-accent hover:text-accent disabled:opacity-60"
             >
-              {testing ? "Testing…" : "Test"}
+              {testing ? t("integrations.testing") : t("common.test")}
             </button>
           </div>
-          <span className="text-xs text-text-muted">
-            The provider&apos;s issuer, or its …/.well-known/openid-configuration address.
-          </span>
+          <span className="text-xs text-text-muted">{t("integrations.ssoIssuerHint")}</span>
         </label>
         {test?.error && <p className="text-sm text-red-400">{test.error}</p>}
         {test?.result && (
           <div className="rounded-lg border border-owned/30 bg-owned-bg px-3.5 py-2.5 text-xs text-owned">
-            Found {test.result.issuer}
+            {t("integrations.ssoFound", { issuer: test.result.issuer })}
             {test.result.warnings.map((w) => (
               <p key={w} className="mt-1 text-amber-400">
                 {w}
@@ -154,65 +152,65 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
         )}
 
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Client ID
+          {t("integrations.clientId")}
           <input name="clientId" required defaultValue={saved?.clientId ?? ""} className={inputClass} autoComplete="off" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Client secret
+          {t("integrations.ssoClientSecret")}
           <input
             name="clientSecret"
             type="password"
             autoComplete="new-password"
-            placeholder={saved?.hasClientSecret ? "•••••••••••••••• (enter to replace)" : "Leave empty for a public client"}
+            placeholder={saved?.hasClientSecret ? t("integrations.enterToReplace") : t("integrations.ssoPublicClient")}
             className={inputClass}
           />
         </label>
         {saved?.hasClientSecret && (
           <label className="flex items-center gap-2 text-xs text-text-muted">
             <input type="checkbox" name="clearClientSecret" className="h-3.5 w-3.5 accent-accent" />
-            Remove the saved secret (a public client)
+            {t("integrations.ssoRemoveSecret")}
           </label>
         )}
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Scopes
+          {t("integrations.ssoScopes")}
           <input name="scopes" defaultValue={saved?.scopes ?? "openid profile email"} className={inputClass} />
-          <span className="text-xs text-text-muted">Add “groups” for Authelia and Pocket ID if you use groups below.</span>
+          <span className="text-xs text-text-muted">{t("integrations.ssoScopesHint")}</span>
         </label>
 
         <div className="mt-2 flex flex-col gap-3">
           <Toggle
             name="allowSignup"
             defaultChecked={saved?.allowSignup ?? false}
-            label="New accounts from single sign-on"
-            hint="Anyone your provider lets in gets a member account on first sign-in. Off: only accounts that linked it can use it."
+            label={t("integrations.ssoAllowSignup")}
+            hint={t("integrations.ssoAllowSignupHint")}
           />
           <Toggle
             name="matchEmail"
             defaultChecked={saved?.matchEmail ?? false}
-            label="Match existing accounts by verified email"
-            hint="First sign-in links an account whose username is the person's email — only when the provider says the email is verified, and never the admin account."
+            label={t("integrations.ssoMatchEmail")}
+            hint={t("integrations.ssoMatchEmailHint")}
           />
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Required group (optional)
+          {t("integrations.ssoRequiredGroup")}
+          {/* i18n-ignore */}
           <input name="requiredGroup" defaultValue={saved?.requiredGroup ?? ""} placeholder="marquee-users" className={inputClass} />
-          <span className="text-xs text-text-muted">Only people in this group can sign in with it.</span>
+          <span className="text-xs text-text-muted">{t("integrations.ssoRequiredGroupHint")}</span>
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Trusted group (optional)
+          {t("integrations.ssoTrustedGroup")}
+          {/* i18n-ignore */}
           <input name="trustedGroup" defaultValue={saved?.trustedGroup ?? ""} placeholder="marquee-trusted" className={inputClass} />
-          <span className="text-xs text-text-muted">
-            Members in this group become Trusted when they sign in. Nobody is ever made an admin this way.
-          </span>
+          <span className="text-xs text-text-muted">{t("integrations.ssoTrustedGroupHint")}</span>
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-          Groups claim
+          {t("integrations.ssoGroupsClaim")}
           <input name="groupsClaim" defaultValue={saved?.groupsClaim ?? "groups"} className={inputClass} />
         </label>
 
         {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
-        {state?.success && !removed && <p className="text-sm text-owned">Saved. The sign-in button is live.</p>}
+        {state?.success && !removed && <p className="text-sm text-owned">{t("integrations.ssoSaved")}</p>}
 
         <button
           type="submit"
@@ -220,7 +218,7 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
           onClick={() => setRemoved(false)}
           className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {isPending ? "Checking…" : "Test & save"}
+          {isPending ? t("integrations.checking") : t("integrations.testAndSave")}
         </button>
       </form>
 
@@ -236,7 +234,7 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
           }}
           className="mt-3 text-xs text-text-muted underline decoration-dotted hover:text-red-400 disabled:opacity-60"
         >
-          {removing ? "Turning off…" : "Turn off single sign-on"}
+          {removing ? t("integrations.ssoTurningOff") : t("integrations.ssoTurnOff")}
         </button>
       )}
     </div>

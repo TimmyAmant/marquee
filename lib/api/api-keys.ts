@@ -4,6 +4,8 @@
 // lib/api/api-key-store.ts; what a key may call is lib/api/key-policy.ts.
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { ApiKeyScope } from "@/lib/db/schema";
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 
 /** Distinct from device tokens' `mqt_`, so one header parse tells them apart. */
 export const API_KEY_PREFIX = "mq_";
@@ -13,8 +15,6 @@ const KEY_PATTERN = /^mq_[A-Za-z0-9_-]{43}$/;
 /** How much of a key is kept in the clear, to tell keys apart in a list. */
 const HINT_LENGTH = API_KEY_PREFIX.length + 4;
 
-export const API_KEYS_FORBIDDEN = "Only the admin can manage API keys.";
-export const API_KEY_NOT_FOUND = "That API key doesn't exist any more.";
 export const API_KEY_NAME_MAX_LENGTH = 80;
 /** The longest expiry a key can be given (ten years); null means never. */
 export const API_KEY_MAX_EXPIRY_DAYS = 3650;
@@ -100,21 +100,25 @@ export type ApiKeyInput = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Validates a create-key form or body; the error is the text to show. */
-export function parseApiKeyInput(body: Record<string, unknown>): { ok: true; input: ApiKeyInput } | { ok: false; error: string } {
+/** Validates a create-key form or body; the error is the text to show, in
+ * `t`'s language. */
+export function parseApiKeyInput(
+  body: Record<string, unknown>,
+  t: Translator = englishT(),
+): { ok: true; input: ApiKeyInput } | { ok: false; error: string } {
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name) return { ok: false, error: "Give the key a name, like Homepage." };
+  if (!name) return { ok: false, error: t("server.apiKeyNameMissing") };
   if (name.length > API_KEY_NAME_MAX_LENGTH) {
-    return { ok: false, error: `Keep the name under ${API_KEY_NAME_MAX_LENGTH} characters.` };
+    return { ok: false, error: t("server.apiKeyNameTooLong", { max: String(API_KEY_NAME_MAX_LENGTH) }) };
   }
 
   const scope = body.scope;
-  if (scope !== "read" && scope !== "full") return { ok: false, error: "Choose read-only or full access." };
+  if (scope !== "read" && scope !== "full") return { ok: false, error: t("server.apiKeyChooseScope") };
 
   const actAs = body.actAsUserId;
   let actAsUserId: string | null = null;
   if (actAs !== undefined && actAs !== null && actAs !== "") {
-    if (typeof actAs !== "string" || !UUID.test(actAs)) return { ok: false, error: "Choose a household member." };
+    if (typeof actAs !== "string" || !UUID.test(actAs)) return { ok: false, error: t("server.apiKeyChooseMember") };
     actAsUserId = actAs.toLowerCase();
   }
 
@@ -123,7 +127,7 @@ export function parseApiKeyInput(body: Record<string, unknown>): { ok: true; inp
   if (days !== undefined && days !== null && days !== "") {
     const value = typeof days === "string" ? Number(days) : days;
     if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > API_KEY_MAX_EXPIRY_DAYS) {
-      return { ok: false, error: `Expiry must be between 1 and ${API_KEY_MAX_EXPIRY_DAYS} days, or never.` };
+      return { ok: false, error: t("server.apiKeyExpiryRange", { max: String(API_KEY_MAX_EXPIRY_DAYS) }) };
     }
     expiresInDays = value;
   }

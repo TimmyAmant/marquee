@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { toggleFavorite } from "@/lib/favorites/actions";
 import type { FavoriteEntityType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 export function FavoriteButton({
   entityType,
@@ -19,6 +20,7 @@ export function FavoriteButton({
    * year/subtitle line rather than as a standalone page-header action. */
   compact?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const action = toggleFavorite.bind(null, entityType, tmdbId);
   const [state, formAction, isPending] = useActionState(action, undefined);
@@ -40,7 +42,7 @@ export function FavoriteButton({
           type="submit"
           disabled={isPending}
           aria-pressed={favorited}
-          aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+          aria-label={favorited ? t("discover.removeFavorite") : t("discover.addFavorite")}
           className={`flex h-5 w-5 items-center justify-center rounded-full text-sm leading-none transition-colors disabled:opacity-60 ${
             favorited ? "text-accent" : "text-text-muted hover:text-text-primary"
           }`}
@@ -64,7 +66,7 @@ export function FavoriteButton({
         }`}
       >
         <span>{favorited ? "★" : "☆"}</span>
-        {favorited ? "Favorited" : "Favorite"}
+        {favorited ? t("discover.favorited") : t("discover.favorite")}
       </button>
       {state?.error && <p className="mt-1 text-xs text-red-400">{state.error}</p>}
     </form>

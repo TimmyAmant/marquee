@@ -40,7 +40,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind IsLoading, Mode=OneWay}" Width="16" Height="16" />
                     <TextBlock
-                        Text="Checking your Sonarr and Radarr servers…"
+                        x:Uid="Requests_AdvLoading"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         VerticalAlignment="Center" />
@@ -51,7 +51,7 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                         TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind LoadCommand}" />
+                    <Button x:Uid="Requests_AdvTryAgain" Command="{x:Bind LoadCommand}" />
                 </StackPanel>
                 <TextBlock
                     Text="{x:Bind NoServersMessage, Mode=OneWay}"
@@ -61,28 +61,28 @@
                     TextWrapping="Wrap" />
                 <StackPanel Spacing="10" Visibility="{x:Bind ShowsPickers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ComboBox
-                        Header="Server"
+                        x:Uid="Requests_AdvServer"
                         MinWidth="260"
                         ItemsSource="{x:Bind ServerNames, Mode=OneWay}"
                         SelectedIndex="{x:Bind ServerIndex, Mode=TwoWay}" />
                     <TextBlock
-                        Text="This server isn't responding right now, so its lists can't be shown. Its saved settings will be used."
+                        x:Uid="Requests_AdvServerDown"
                         Visibility="{x:Bind ServerIsDown, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
                         TextWrapping="Wrap" />
                     <ComboBox
-                        Header="Quality profile"
+                        x:Uid="Requests_AdvQualityProfile"
                         MinWidth="260"
                         ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
                         SelectedIndex="{x:Bind QualityProfileIndex, Mode=TwoWay}" />
                     <ComboBox
-                        Header="Root folder"
+                        x:Uid="Requests_AdvRootFolder"
                         MinWidth="260"
                         ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
                         SelectedIndex="{x:Bind RootFolderIndex, Mode=TwoWay}" />
                     <StackPanel Spacing="6" Visibility="{x:Bind HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="Tags" Style="{StaticResource FieldLabel}" />
+                        <TextBlock x:Uid="Requests_AdvTags" Style="{StaticResource FieldLabel}" />
                         <ItemsRepeater ItemsSource="{x:Bind Tags, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout MinItemWidth="140" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
@@ -95,13 +95,13 @@
                         </ItemsRepeater>
                     </StackPanel>
                     <ComboBox
-                        Header="Series type"
+                        x:Uid="Requests_AdvSeriesType"
                         MinWidth="260"
                         ItemsSource="{x:Bind SeriesTypes}"
                         SelectedIndex="{x:Bind SeriesTypeIndex, Mode=TwoWay}"
                         Visibility="{x:Bind ShowsSeriesType, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBlock
-                        Text="Picking another server resets the rest to that server's defaults."
+                        x:Uid="Requests_AdvServerResets"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap" />
@@ -156,7 +156,7 @@
                         <TextBox
                             Grid.Column="0"
                             Text="{x:Bind Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            PlaceholderText="Note for them (optional), e.g. Replaced the file"
+                            x:Uid="Requests_IssueNote"
                             MaxLength="500" />
                         <Button
                             Grid.Column="1"
@@ -190,7 +190,7 @@
                         Visibility="{x:Bind ShowsAdminActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
                     <Button
-                        Content="Mark fixed"
+                        x:Uid="Requests_IssueMarkFixed"
                         Command="{x:Bind StartResolvingCommand}"
                         Visibility="{x:Bind ShowsAdminActions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
@@ -303,7 +303,7 @@
                         Margin="4,2,0,0"
                         TextWrapping="Wrap" />
                     <Expander
-                        Header="Advanced"
+                        x:Uid="Requests_CouldntAddAdvanced"
                         Margin="0,6,0,0"
                         IsExpanded="{x:Bind Advanced.IsExpanded, Mode=TwoWay}"
                         Visibility="{x:Bind Advanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -329,7 +329,7 @@
                         Command="{x:Bind ManuallyApproveCommand}"
                         IsEnabled="{x:Bind CanAct, Mode=OneWay}"
                         Visibility="{x:Bind ShowsAddedByHand, Converter={StaticResource BoolToVisibility}}"
-                        ToolTipService.ToolTip="Mark it approved without Sonarr/Radarr, once you've got it some other way."
+                        x:Uid="Requests_CouldntAddManual"
                         HorizontalAlignment="Right"
                         Padding="4,2" />
                 </StackPanel>
@@ -340,7 +340,7 @@
     <ScrollViewer>
         <!-- A Stretch element under its MaxWidth is centered in the page, like Settings. -->
         <StackPanel Padding="28,20,28,40" Spacing="16" MaxWidth="1080" HorizontalAlignment="Stretch">
-            <TextBlock Text="Requests" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock x:Uid="Requests_PageTitle" Style="{StaticResource TitleTextBlockStyle}" />
 
             <!-- MARK: Member -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsMember, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
@@ -353,15 +353,15 @@
                     TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="12" Visibility="{x:Bind ViewModel.IsMineLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind ViewModel.IsMineLoading, Mode=OneWay}" Width="24" Height="24" />
-                    <TextBlock Text="Loading your requests…" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock x:Uid="Requests_MineLoading" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.ShowsMineError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Couldn't load your requests" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Requests_MineError" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock Text="{x:Bind ViewModel.MineError, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+                    <Button x:Uid="Requests_MineTryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
                 </StackPanel>
                 <TextBlock
-                    Text="You haven't requested anything yet. Find a title and hit Request."
+                    x:Uid="Requests_MineEmptyText"
                     Visibility="{x:Bind ViewModel.IsMineEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -373,9 +373,9 @@
                                 <ColumnDefinition Width="150" />
                                 <ColumnDefinition Width="200" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Title" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="1" Text="Requested" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="2" Text="Status" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="0" x:Uid="Requests_MineTitleHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="1" x:Uid="Requests_MineRequestedHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="2" x:Uid="Requests_MineStatusHeader" Style="{StaticResource TableHeaderText}" />
                         </Grid>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Mine, Mode=OneWay}">
                             <ItemsRepeater.Layout>
@@ -457,10 +457,10 @@
                                     <ColumnDefinition Width="130" />
                                     <ColumnDefinition Width="180" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Title" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="1" Text="Requested by" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="2" Text="Requested" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="3" Text="Status" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="0" x:Uid="Requests_EveryoneTitleHeader" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="1" x:Uid="Requests_EveryoneRequestedByHeader" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="2" x:Uid="Requests_EveryoneRequestedHeader" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="3" x:Uid="Requests_EveryoneStatusHeader" Style="{StaticResource TableHeaderText}" />
                             </Grid>
                             <ItemsRepeater ItemsSource="{x:Bind ViewModel.Everyone, Mode=OneWay}">
                                 <ItemsRepeater.Layout>
@@ -524,15 +524,15 @@
 
                 <StackPanel Orientation="Horizontal" Spacing="12" Visibility="{x:Bind ViewModel.IsQueueLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind ViewModel.IsQueueLoading, Mode=OneWay}" Width="24" Height="24" />
-                    <TextBlock Text="Checking requests against your library…" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock x:Uid="Requests_QueueLoadingText" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.ShowsQueueError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Couldn't load the request queue" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Uid="Requests_QueueError" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock Text="{x:Bind ViewModel.QueueError, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+                    <Button x:Uid="Requests_QueueTryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
                 </StackPanel>
                 <TextBlock
-                    Text="No pending requests."
+                    x:Uid="Requests_QueueEmptyText"
                     Visibility="{x:Bind ViewModel.IsQueueEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -547,10 +547,10 @@
                                 <ColumnDefinition Width="130" />
                                 <ColumnDefinition Width="260" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Title" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="1" Text="Requested by" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="2" Text="Requested" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="3" Text="Actions" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="0" x:Uid="Requests_QueueTitleHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="1" x:Uid="Requests_QueueRequestedByHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="2" x:Uid="Requests_QueueRequestedHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="3" x:Uid="Requests_QueueActionsHeader" Style="{StaticResource TableHeaderText}" />
                         </Grid>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Pending}">
                             <ItemsRepeater.Layout>
@@ -580,7 +580,7 @@
                                         <Expander
                                             Grid.Row="2"
                                             Grid.ColumnSpan="4"
-                                            Header="Advanced"
+                                            x:Uid="Requests_PendingAdvanced"
                                             Margin="0,8,0,0"
                                             IsExpanded="{x:Bind Advanced.IsExpanded, Mode=TwoWay}"
                                             Visibility="{x:Bind Advanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -633,7 +633,7 @@
                                                     IsEnabled="{x:Bind CanAct, Mode=OneWay}"
                                                     Visibility="{x:Bind ShowManualApprove, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                                     Style="{StaticResource AccentButtonStyle}"
-                                                    ToolTipService.ToolTip="Mark this approved without adding it via Sonarr. Use once you've downloaded it yourself." />
+                                                    x:Uid="Requests_PendingManualTip" />
                                             </StackPanel>
                                             <TextBlock
                                                 Text="{x:Bind Error, Mode=OneWay}"
@@ -642,7 +642,7 @@
                                                 Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                                 TextWrapping="Wrap" />
                                             <HyperlinkButton
-                                                Content="Add manually in Sonarr"
+                                                x:Uid="Requests_AddInSonarr"
                                                 Command="{x:Bind AddManuallyCommand}"
                                                 Visibility="{x:Bind CanAddManually, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                                 Padding="0,2" />
@@ -657,7 +657,7 @@
                 <!-- MARK: Couldn't add (0.46+): approved, but Sonarr/Radarr couldn't take them; hidden when there are none. -->
                 <StackPanel Spacing="8" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsCouldntAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="Couldn't add" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="Requests_CouldntAddHeading" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                         <Border
                             Padding="8,2"
                             CornerRadius="10"
@@ -689,7 +689,7 @@
                 <!-- MARK: Can't find (0.46+): approved requests Sonarr/Radarr hasn't found; hidden when there are none. -->
                 <StackPanel Spacing="8" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsNotFound, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="Can't find" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="Requests_NotFoundHeading" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                         <Border
                             Padding="8,2"
                             CornerRadius="10"
@@ -720,7 +720,7 @@
 
                 <!-- Past requests -->
                 <TextBlock
-                    Text="Past requests"
+                    x:Uid="Requests_PastHeading"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Margin="0,20,0,0"
                     Visibility="{x:Bind ViewModel.ShowsHistorySection, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
@@ -739,10 +739,10 @@
                                 <ColumnDefinition Width="130" />
                                 <ColumnDefinition Width="260" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Title" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="1" Text="Requested by" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="2" Text="Requested" Style="{StaticResource TableHeaderText}" />
-                            <TextBlock Grid.Column="3" Text="Status" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="0" x:Uid="Requests_PastTitleHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="1" x:Uid="Requests_PastRequestedByHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="2" x:Uid="Requests_PastRequestedHeader" Style="{StaticResource TableHeaderText}" />
+                            <TextBlock Grid.Column="3" x:Uid="Requests_PastStatusHeader" Style="{StaticResource TableHeaderText}" />
                         </Grid>
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.History, Mode=OneWay}">
                             <ItemsRepeater.Layout>
@@ -796,7 +796,7 @@
                                                     BorderBrush="{ThemeResource MissingBadgeForegroundBrush}"
                                                     VerticalAlignment="Center">
                                                     <TextBlock
-                                                        Text="Can't find"
+                                                        x:Uid="Requests_PastNotFoundBadge"
                                                         Style="{StaticResource CaptionTextBlockStyle}"
                                                         FontWeight="SemiBold"
                                                         Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
@@ -828,7 +828,7 @@
             <StackPanel Spacing="12" Margin="0,20,0,0" Visibility="{x:Bind ViewModel.ShowsIssues, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="{x:Bind ViewModel.IssuesHeading, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Nothing open right now."
+                    x:Uid="Requests_IssuesNoneOpen"
                     Visibility="{x:Bind ViewModel.IsOpenIssuesEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}" />

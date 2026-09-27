@@ -2,8 +2,10 @@ import { asc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { ssoSettings, users, type MediaType } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
+import type { Translator } from "@/lib/i18n/translator";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { createNotification } from "@/lib/notifications/query";
+import { getT } from "@/lib/i18n/server";
 import { consumeRateLimit, refundAttempt } from "@/lib/rate-limit";
 import {
   cleanShareNote,
@@ -67,9 +69,10 @@ export async function shareTitle(
   tmdbId: number,
   input: { userIds?: unknown; note?: unknown },
 ): Promise<CoreResult<{ sharedWith: number }>> {
-  const recipients = parseRecipients(input.userIds, senderId);
+  const t = await getT();
+  const recipients = parseRecipients(input.userIds, senderId, t);
   if (!recipients.ok) return fail("invalid", recipients.error);
-  const note = cleanShareNote(input.note);
+  const note = cleanShareNote(input.note, t);
   if (!note.ok) return fail("invalid", note.error);
 
   const found = await db
@@ -77,24 +80,26 @@ export async function shareTitle(
     .from(users)
     .where(inArray(users.id, [...recipients.userIds, senderId]));
   const known = new Set(found.map((row) => row.id.toLowerCase()));
-  if (!known.has(senderId.toLowerCase())) return fail("unauthorized", "Sign in again.");
+  if (!known.has(senderId.toLowerCase())) return fail("unauthorized", t("notify.signInAgain"));
   if (!recipients.userIds.every((id) => known.has(id))) {
-    return fail("not_found", "Someone you picked isn't in this household any more.");
+    return fail("not_found", t("notify.shareRecipientGone"));
   }
 
   const key = `share:${senderId}`;
   if (!consumeRateLimit(key, recipients.userIds.length, SHARES_PER_HOUR, 60 * 60 * 1000)) {
-    return fail("rate_limited", "That's a lot of sharing in a short time. Try again in a while.");
+    return fail("rate_limited", t("notify.shareRateLimited"));
   }
 
   const title = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
   if (!title) {
     recipients.userIds.forEach(() => refundAttempt(key));
-    return fail("upstream", "Couldn't look this title up with TMDb right now.");
+    return fail("upstream", t("notify.tmdbLookupFailed"));
   }
 
   const sender = await getNotificationSender(senderId);
-  const message = shareMessage(sender?.displayName || sender?.username || "Someone", title.name, note.note);
+  const senderName = sender?.displayName || sender?.username || null;
+  // In each recipient's own language.
+  const message = (rt: Translator) => shareMessage(rt, senderName ?? rt("notify.someone"), title.name, note.note);
   await Promise.all(
     recipients.userIds.map((userId) =>
       createNotification({

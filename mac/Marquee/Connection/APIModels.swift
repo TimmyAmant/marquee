@@ -30,8 +30,51 @@ struct User: Codable, Equatable, Hashable, Sendable {
     /// auto-approval, for the fallback when `permissions` is missing.
     var autoApproveMovies: Bool? = nil
     var autoApproveTv: Bool? = nil
+    /// `/me` only, 0.50+: the language this account reads Marquee in (`en`,
+    /// `es`, `fr`, `de`, `pt-BR`), or nil to follow the Mac (`AppLanguage`).
+    var language: String? = nil
+    /// Whether the server sent `language` at all (even null): an older
+    /// server doesn't, and can't store one — Settings hides the picker.
+    var sendsLanguage = false
 
     var isAdmin: Bool { role == .admin }
+
+    enum CodingKeys: String, CodingKey {
+        case id, username, displayName, role, libraryOwnerId, avatarUrl, linked, hasPassword
+        case permissions, autoApproveMovies, autoApproveTv, language
+    }
+}
+
+extension User {
+    /// Synthesized, except that a present `language: null` is told apart
+    /// from no `language` (`sendsLanguage`).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        username = try container.decode(String.self, forKey: .username)
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+        role = try container.decode(API.UserRole.self, forKey: .role)
+        libraryOwnerId = try container.decode(UUID.self, forKey: .libraryOwnerId)
+        avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
+        linked = try container.decodeIfPresent(LinkedAccounts.self, forKey: .linked)
+        hasPassword = try container.decodeIfPresent(Bool.self, forKey: .hasPassword)
+        permissions = try container.decodeIfPresent(API.Permissions.self, forKey: .permissions)
+        autoApproveMovies = try container.decodeIfPresent(Bool.self, forKey: .autoApproveMovies)
+        autoApproveTv = try container.decodeIfPresent(Bool.self, forKey: .autoApproveTv)
+        sendsLanguage = container.contains(.language)
+        language = try container.decodeIfPresent(String.self, forKey: .language)
+    }
+}
+
+/// `PATCH /me` (0.50+): `{"language": "fr"}`, or `{"language": null}` to
+/// follow the device again — null is sent, never left out.
+struct MeLanguageUpdate: Encodable, Sendable {
+    let language: String?
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: User.CodingKeys.self)
+        try container.encode(language, forKey: .language)
+    }
 }
 
 /// `linked` on `/me` and household members: which media-server accounts

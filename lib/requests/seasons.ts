@@ -4,6 +4,8 @@
 // be unit tested; createRequest (lib/requests/mutate.ts), the title page
 // loader and the API's title DTO all share them.
 
+import type { Translator } from "@/lib/i18n/translator";
+
 /** Far more than any real show has; it only bounds what one request body can
  * make the server check. */
 export const MAX_REQUESTED_SEASONS = 100;
@@ -14,14 +16,14 @@ export type ParsedSeasons = { ok: true; seasons: number[] | null } | { ok: false
  * whole series (what every client did before per-season requests), anything
  * else must be a non-empty list of season numbers. Returned sorted and
  * without repeats, which is how it's stored. */
-export function parseSeasonsInput(value: unknown): ParsedSeasons {
+export function parseSeasonsInput(t: Translator, value: unknown): ParsedSeasons {
   if (value === undefined || value === null) return { ok: true, seasons: null };
-  if (!Array.isArray(value)) return { ok: false, error: "Seasons must be a list of season numbers." };
-  if (value.length === 0) return { ok: false, error: "Pick at least one season." };
-  if (value.length > MAX_REQUESTED_SEASONS) return { ok: false, error: "That's too many seasons for one request." };
+  if (!Array.isArray(value)) return { ok: false, error: t("notify.seasonsNotList") };
+  if (value.length === 0) return { ok: false, error: t("notify.pickASeason") };
+  if (value.length > MAX_REQUESTED_SEASONS) return { ok: false, error: t("notify.tooManySeasons") };
   for (const n of value) {
     if (typeof n !== "number" || !Number.isSafeInteger(n) || n < 0) {
-      return { ok: false, error: "Season numbers must be whole numbers." };
+      return { ok: false, error: t("notify.seasonsWholeNumbers") };
     }
   }
   const seasons = [...new Set(value as number[])].sort((a, b) => a - b);
@@ -31,11 +33,11 @@ export function parseSeasonsInput(value: unknown): ParsedSeasons {
 /** Every requested season has to be one TMDb lists for the show — season 0
  * (specials) included only when TMDb has it. Returns the error to show, or
  * null when they all check out. */
-export function unlistedSeasonError(seasons: number[], listed: readonly number[]): string | null {
+export function unlistedSeasonError(t: Translator, seasons: number[], listed: readonly number[]): string | null {
   const known = new Set(listed);
   const missing = seasons.find((n) => !known.has(n));
   if (missing === undefined) return null;
-  return missing === 0 ? "This show has no specials listed." : `Season ${missing} isn't listed for this show.`;
+  return missing === 0 ? t("notify.noSpecialsListed") : t("notify.seasonNotListed", { number: missing });
 }
 
 /** One season as the library owner's Sonarr has it. `monitored` is whether

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n/client";
 
 export function TrailerButton({ videoKey }: { videoKey: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export function TrailerButton({ videoKey }: { videoKey: string }) {
         onClick={() => setOpen(true)}
         className="flex h-[30px] items-center gap-1.5 rounded-[15px] border border-border-strong pl-[11px] pr-[13px] text-[12.5px] text-text-primary transition-colors hover:border-accent hover:text-accent"
       >
-        <span className="text-accent">▶</span> Trailer
+        <span className="text-accent">▶</span> {t("title.trailer")}
       </button>
 
       {open && (
@@ -36,7 +38,7 @@ export function TrailerButton({ videoKey }: { videoKey: string }) {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Close trailer"
+              aria-label={t("title.closeTrailer")}
               className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-bg-0/80 text-text-primary transition-colors hover:text-accent"
             >
               ✕
@@ -45,7 +47,7 @@ export function TrailerButton({ videoKey }: { videoKey: string }) {
               <iframe
                 className="h-full w-full"
                 src={`https://www.youtube.com/embed/${videoKey}?autoplay=1`}
-                title="Trailer"
+                title={t("title.trailer")}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />

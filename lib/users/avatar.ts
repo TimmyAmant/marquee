@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { userAvatars, users } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
 import type { Actor } from "@/lib/users/household";
 import type { AvatarOwner } from "@/lib/users/avatar-path";
 import { processAvatar } from "@/lib/users/avatar-image";
@@ -27,12 +28,13 @@ export async function setUserAvatar(
   userId: string,
   upload: Uint8Array,
 ): Promise<CoreResult<{ owner: AvatarOwner }>> {
-  if (!canAccessAvatar(actor, userId)) return fail("forbidden", "You can only change your own photo.");
+  const t = await getT();
+  if (!canAccessAvatar(actor, userId)) return fail("forbidden", t("server.avatarOnlyOwn"));
 
   const [target] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
-  if (!target) return fail("not_found", "Account not found.");
+  if (!target) return fail("not_found", t("server.accountNotFound"));
 
-  const processed = await processAvatar(upload);
+  const processed = await processAvatar(upload, t);
   if (!processed.ok) return processed;
 
   const now = new Date();
@@ -53,7 +55,7 @@ export async function setUserAvatar(
 /** Removes the account's photo, back to initials. Removing one that isn't
  * there is fine. */
 export async function removeUserAvatar(actor: Actor, userId: string): Promise<CoreResult> {
-  if (!canAccessAvatar(actor, userId)) return fail("forbidden", "You can only change your own photo.");
+  if (!canAccessAvatar(actor, userId)) return fail("forbidden", (await getT())("server.avatarOnlyOwn"));
 
   await db.transaction(async (tx) => {
     await tx.delete(userAvatars).where(eq(userAvatars.userId, userId));

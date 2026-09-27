@@ -3,6 +3,8 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { normalizePermissions, presetPermissions, storedPermissionFields, TRUSTED_PRESET } from "@/lib/users/permissions";
 import { fail, type CoreErrorCode, type CoreFailure, type CoreResult } from "@/lib/core-result";
+import { failT } from "@/lib/core-failure";
+import { getT } from "@/lib/i18n/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isUniqueViolation, uniqueUsername, unlinkWouldLockOut } from "@/lib/auth/media-accounts";
 import { getLinkState } from "@/lib/auth/media-signin";
@@ -61,9 +63,6 @@ const START_SHARED_LIMIT = 120;
 const START_WINDOW_MS = 10 * 60 * 1000;
 const CALLBACK_LIMIT = 60;
 const POLL_LIMIT = 1200;
-const RATE_LIMITED = "Too many attempts. Try again in a few minutes.";
-const NOT_CONFIGURED = "Single sign-on isn't set up on this server.";
-const TOO_MANY_WAITING = "Too many sign-ins are waiting right now. Try again in a few minutes.";
 
 // ── Discovery, cached briefly ──────────────────────────────────────────────
 
@@ -91,16 +90,16 @@ async function startFlow(purpose: SsoPurpose, ip: string | null): Promise<CoreRe
   const allowed = ip
     ? checkRateLimit(`sso:start:${ip}`, START_LIMIT, START_WINDOW_MS)
     : checkRateLimit("sso:start:shared", START_SHARED_LIMIT, START_WINDOW_MS);
-  if (!allowed) return fail("rate_limited", RATE_LIMITED);
+  if (!allowed) return await failT("rate_limited", "server.tooManyAttempts");
 
   const config = await getSsoConfig();
-  if (!config) return fail("conflict", NOT_CONFIGURED);
+  if (!config) return await failT("conflict", "server.ssoNotSetUp");
   let discovery: Discovery;
   try {
     discovery = await getDiscovery(config.issuer);
   } catch (err) {
     console.warn("[sso] discovery failed:", err instanceof Error ? err.message : err);
-    return fail("upstream", `Couldn't reach ${config.name}. Try again.`);
+    return await failT("upstream", "server.serverUnreachable", { name: config.name });
   }
 
   const secrets = newAuthRequestSecrets();
@@ -114,7 +113,7 @@ async function startFlow(purpose: SsoPurpose, ip: string | null): Promise<CoreRe
     owner: ip ?? SHARED_SSO_OWNER,
     authUrl: buildAuthorizationUrl({ discovery, clientId: config.clientId, redirectUri, scopes: config.scopes, secrets }),
   });
-  if (!created) return fail("rate_limited", TOO_MANY_WAITING);
+  if (!created) return await failT("rate_limited", "server.tooManySignInsWaiting");
   return { ok: true, ...created, config };
 }
 
@@ -171,8 +170,10 @@ export type CallbackOutcome =
  * the web redirects (lib/auth/sso/messages.ts). */
 type SsoFailure = CoreFailure & { reason: SsoErrorCode };
 
-function refuse(code: CoreErrorCode, reason: SsoErrorCode, name: string): SsoFailure {
-  return { ...fail(code, ssoErrorMessage(reason, name)), reason };
+/** In the language of the request that decided it (the browser, for a
+ * callback). */
+async function refuse(code: CoreErrorCode, reason: SsoErrorCode, name: string | null): Promise<SsoFailure> {
+  return { ...fail(code, ssoErrorMessage(reason, name, await getT())), reason };
 }
 
 function reasonOf(failure: CoreFailure): SsoErrorCode {
@@ -215,7 +216,7 @@ export async function completeSsoCallback(input: {
 
   const config = await getSsoConfig();
   if (!config || !sameIssuer(config.issuer, flow.issuer) || config.clientId !== flow.clientId) {
-    return end(refuse("conflict", "not_configured", config?.name ?? "single sign-on"));
+    return end(await refuse("conflict", "not_configured", config?.name ?? null));
   }
   const name = config.name;
 
@@ -223,14 +224,14 @@ export async function completeSsoCallback(input: {
     // Quoted and cut short: it's whatever the URL said, and mustn't be able
     // to write lines of its own into the log.
     console.warn("[sso] callback came back with another issuer:", JSON.stringify(input.iss.slice(0, 200)));
-    return end(refuse("forbidden", "failed", name));
+    return end(await refuse("forbidden", "failed", name));
   }
   if (input.error || !input.code) {
     const cancelled = input.error === "access_denied" || input.error === "login_required";
-    return end(refuse("forbidden", cancelled ? "cancelled" : "failed", name));
+    return end(await refuse("forbidden", cancelled ? "cancelled" : "failed", name));
   }
   if (flow.purpose.kind === "web_link" && flow.purpose.userId !== input.sessionUserId) {
-    return end(refuse("forbidden", "wrong_account", name));
+    return end(await refuse("forbidden", "wrong_account", name));
   }
 
   let identity: SsoIdentity;
@@ -238,7 +239,7 @@ export async function completeSsoCallback(input: {
     identity = await verifiedIdentity(config, flow, input.code);
   } catch (err) {
     console.warn("[sso] sign-in failed:", err instanceof Error ? err.message : err);
-    return end(refuse("upstream", "failed", name));
+    return end(await refuse("upstream", "failed", name));
   }
 
   if (flow.purpose.kind === "web_link" || flow.purpose.kind === "app_link") {
@@ -392,7 +393,7 @@ export async function linkSsoIdentity(userId: string, identity: SsoIdentity, con
       throw err;
     });
   if (updated === null) return refuse("conflict", "linked_elsewhere", config.name);
-  if (updated.length === 0) return fail("not_found", "Account not found.");
+  if (updated.length === 0) return await failT("not_found", "server.accountNotFound");
   return { ok: true };
 }
 
@@ -407,19 +408,19 @@ function pollAllowed(ip: string | null): boolean {
 /** An app's sign-in poll: pending/expired, or the account to issue a token
  * for (read fresh — it may have been removed meanwhile). */
 export async function pollAppSsoSignIn(handle: unknown, ip: string | null): Promise<SsoPoll<{ user: UserRow; deviceName: string | null }>> {
-  if (!pollAllowed(ip)) return { status: "done", ...fail("rate_limited", RATE_LIMITED) };
+  if (!pollAllowed(ip)) return { status: "done", ...(await failT("rate_limited", "server.tooManyAttempts")) };
   const poll = pollFlowHandle(handle, { kind: "app_sign_in" });
   if (poll.status !== "done") return poll;
   if (!poll.result.ok) return { status: "done", ...poll.result };
   const [user] = await db.select().from(users).where(eq(users.id, poll.result.userId)).limit(1);
-  if (!user) return { status: "done", ...fail("forbidden", "This account no longer exists.") };
+  if (!user) return { status: "done", ...(await failT("forbidden", "server.accountGone")) };
   const deviceName = poll.flow.purpose.kind === "app_sign_in" ? poll.flow.purpose.deviceName : null;
   return { status: "done", ok: true, user, deviceName };
 }
 
 /** An app's link poll, for the account that started it. */
 export async function pollAppSsoLink(userId: string, handle: unknown, ip: string | null): Promise<SsoPoll<object>> {
-  if (!pollAllowed(ip)) return { status: "done", ...fail("rate_limited", RATE_LIMITED) };
+  if (!pollAllowed(ip)) return { status: "done", ...(await failT("rate_limited", "server.tooManyAttempts")) };
   const poll = pollFlowHandle(handle, { kind: "app_link", userId });
   if (poll.status !== "done") return poll;
   return poll.result.ok ? { status: "done", ok: true } : { status: "done", ...poll.result };
@@ -431,7 +432,7 @@ export async function pollAppSsoLink(userId: string, handle: unknown, ip: string
  * way to sign in. */
 export async function unlinkSso(userId: string): Promise<CoreResult> {
   const state = await getLinkState(userId);
-  if (!state) return fail("not_found", "Account not found.");
+  if (!state) return await failT("not_found", "server.accountNotFound");
   if (!state.linked.sso) return { ok: true };
   if (
     unlinkWouldLockOut("sso", {
@@ -441,7 +442,7 @@ export async function unlinkSso(userId: string): Promise<CoreResult> {
       ssoLinked: true,
     })
   ) {
-    return fail("conflict", "Set a password first — without single sign-on, there'd be no way to sign in to this account.");
+    return await failT("conflict", "server.setPasswordFirstSso");
   }
   await db.update(users).set({ ssoIssuer: null, ssoSubject: null }).where(eq(users.id, userId));
   return { ok: true };

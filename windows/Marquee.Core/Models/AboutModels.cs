@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Globalization;
 
 namespace Marquee.Core.Models;
@@ -53,7 +54,7 @@ public sealed record ChangelogEntry
     public required IReadOnlyList<string> Changes { get; init; }
 
     /// <summary>"Release v0.22.0", the row's heading.</summary>
-    public string Label => $"Release v{Version}";
+    public string Label => Loc.Format("Model_ReleaseLabel", Version);
 
     /// <summary>"Today", "1 day ago", "12 days ago": the row's age, as of now.</summary>
     public string DaysAgo() => DaysAgo(DateTimeOffset.UtcNow);
@@ -70,9 +71,8 @@ public sealed record ChangelogEntry
         var days = Math.Max(0, (int)Math.Floor((now - released).TotalDays));
         return days switch
         {
-            0 => "Today",
-            1 => "1 day ago",
-            _ => $"{days.ToString(CultureInfo.InvariantCulture)} days ago",
+            0 => Loc.Get("Model_ReleaseToday"),
+            _ => Loc.Plural("Model_ReleaseDaysAgo", days),
         };
     }
 }

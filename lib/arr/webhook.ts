@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import type { Translator } from "@/lib/i18n/translator";
 import { NextResponse } from "next/server";
 import type { ArrProvider } from "@/lib/db/schema";
 import { syncArrLibrary } from "@/lib/arr/sync";
@@ -113,9 +114,12 @@ export async function handleArrWebhookEvent(
   }
 
   if (title && tmdbId != null) {
-    const shown = fourK ? `${title} in 4K` : title;
-    const message =
-      eventType === "Grab" ? `${shown} started downloading` : `${shown} finished downloading`;
+    const name = title;
+    // In the account's language, and the household's for its channels.
+    const message = (t: Translator) => {
+      const shown = fourK ? t("notify.requestIn4k", { request: name }) : name;
+      return t(eventType === "Grab" ? "notify.startedDownloading" : "notify.finishedDownloading", { title: shown });
+    };
     await createNotification({
       userId,
       mediaType,

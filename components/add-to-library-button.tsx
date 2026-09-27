@@ -11,6 +11,7 @@ import { RequestButton } from "@/components/request-button";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import { SeasonRequestPicker, type SeasonPickerRow } from "@/components/season-request-picker";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 export function AddToLibraryButton({
   mediaType,
@@ -57,6 +58,7 @@ export function AddToLibraryButton({
     requestedSeasonsLabel: string | null;
   };
 }) {
+  const t = useT();
   const router = useRouter();
   // Not in the library and not on its way (untracked, or in Sonarr/Radarr
   // but not monitored): requests stay open.
@@ -86,7 +88,9 @@ export function AddToLibraryButton({
 
         {blocked && isAdmin === false && (
           <span className="flex h-8 items-center rounded-full border border-border px-3.5 text-[13px] text-text-secondary">
-            Requests are closed for this title{blocked.reason ? ` — ${blocked.reason}` : ""}
+            {blocked.reason
+              ? t("title.requestsClosedReason", { reason: blocked.reason })
+              : t("title.requestsClosed")}
           </span>
         )}
 
@@ -107,7 +111,7 @@ export function AddToLibraryButton({
             tmdbId={tmdbId}
             showName={name}
             rows={seasonPicker.rows}
-            triggerLabel={open ? "Request" : "Request more seasons"}
+            triggerLabel={open ? t("common.request") : t("title.requestMoreSeasons")}
             advanced={advanced}
           />
         )}
@@ -115,8 +119,8 @@ export function AddToLibraryButton({
         {isAdmin === false && alreadyRequested && (open || requestedSeasonsLabel) && (
           <span className="flex h-8 items-center rounded-full bg-info-bg px-4 text-[13px] font-medium text-info">
             {requestedSeasonsLabel
-              ? `Requested ${requestedSeasonsLabel} — waiting for approval`
-              : "Requested — waiting for approval"}
+              ? t("title.requestedSeasonsWaiting", { seasons: requestedSeasonsLabel })
+              : t("title.requestedWaiting")}
           </span>
         )}
 
@@ -127,7 +131,7 @@ export function AddToLibraryButton({
               disabled={isPending}
               className="flex h-8 items-center rounded-full bg-accent px-4 text-[13px] font-semibold text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
             >
-              {isPending ? "Adding…" : `Add to ${mediaType === "movie" ? "Radarr" : "Sonarr"}`}
+              {isPending ? t("title.adding") : t("title.addTo", { app: mediaType === "movie" ? "Radarr" : "Sonarr" })}
             </button>
           </form>
         )}
@@ -137,7 +141,7 @@ export function AddToLibraryButton({
             href="/settings/integrations"
             className="text-xs text-text-muted underline decoration-dotted hover:text-accent"
           >
-            Connect {mediaType === "movie" ? "Radarr" : "Sonarr"} to add this title
+            {t("title.connectToAdd", { app: mediaType === "movie" ? "Radarr" : "Sonarr" })}
           </Link>
         )}
       </div>
@@ -156,7 +160,9 @@ export function AddToLibraryButton({
       )}
 
       {open && isAdmin === false && !alreadyRequested && otherRequesters && otherRequesters.length > 0 && (
-        <p className="text-xs text-text-muted">Also requested by {otherRequesters.join(", ")}</p>
+        <p className="text-xs text-text-muted">
+          {t("title.alsoRequestedBy", { names: new Intl.ListFormat(t.tag).format(otherRequesters) })}
+        </p>
       )}
 
       {state?.error && <p className="text-xs text-red-400">{state.error}</p>}

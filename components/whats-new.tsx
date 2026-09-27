@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangelogEntry } from "@/lib/changelog";
 import { decideWhatsNew, whatsNewStorageKey } from "@/lib/whats-new";
 import { whatsNewAction } from "@/lib/whats-new-actions";
+import { useT } from "@/lib/i18n/client";
+import { formatDate } from "@/lib/i18n/format";
+import type { Translator } from "@/lib/i18n/translator";
 
 type Shown = { version: string; entries: ChangelogEntry[]; hasMore: boolean };
 
@@ -25,10 +28,8 @@ function remember(key: string, version: string) {
 }
 
 /** "Sep 26, 2026": the changelog's day, read as UTC so it never shifts a day. */
-function formatDay(day: string): string {
-  const date = new Date(`${day}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return day;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+function formatDay(t: Translator, day: string): string {
+  return formatDate(t, `${day}T00:00:00Z`, "medium", "UTC") || day;
 }
 
 /**
@@ -40,6 +41,7 @@ function formatDay(day: string): string {
  * sheet at phone width, a centred card from sm up.
  */
 export function WhatsNew({ userId, serverVersion }: { userId: string; serverVersion: string }) {
+  const t = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const okRef = useRef<HTMLButtonElement>(null);
   const [shown, setShown] = useState<Shown | null>(null);
@@ -112,15 +114,15 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="px-6 pb-3 pt-6">
           <h2 id="whats-new-title" className="font-display text-xl leading-tight">
-            What&rsquo;s new in Marquee {shown.version}
+            {t("nav.whatsNewTitle", { version: shown.version })}
           </h2>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
           {shown.entries.map((entry) => (
             <section key={entry.version} className="border-t border-border py-4 first:border-t-0 first:pt-1">
               <h3 className="flex flex-wrap items-baseline gap-x-2 text-sm font-semibold">
-                <span>Marquee {entry.version}</span>
-                <span className="text-xs font-normal text-text-muted">{formatDay(entry.date)}</span>
+                <span>{t("nav.whatsNewVersion", { version: entry.version })}</span>
+                <span className="text-xs font-normal text-text-muted">{formatDay(t, entry.date)}</span>
               </h3>
               <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-[13.5px] leading-5 text-text-secondary marker:text-text-muted">
                 {entry.changes.map((change, i) => (
@@ -130,7 +132,7 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
             </section>
           ))}
           {shown.hasMore && (
-            <p className="pb-2 text-[13px] text-text-muted">And more in earlier releases.</p>
+            <p className="pb-2 text-[13px] text-text-muted">{t("nav.whatsNewMore")}</p>
           )}
         </div>
         <div className="flex flex-col gap-3 border-t border-border px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -139,7 +141,7 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
             onClick={dismiss}
             className="text-center text-[13px] text-text-secondary underline-offset-4 hover:text-text-primary hover:underline"
           >
-            See all changes
+            {t("nav.seeAllChanges")}
           </Link>
           <button
             ref={okRef}
@@ -147,7 +149,7 @@ export function WhatsNew({ userId, serverVersion }: { userId: string; serverVers
             onClick={dismiss}
             className="rounded-full bg-accent px-8 py-2.5 text-sm font-semibold text-bg-0 transition-colors hover:bg-accent-hover sm:py-2"
           >
-            OK
+            {t("nav.ok")}
           </button>
         </div>
       </div>

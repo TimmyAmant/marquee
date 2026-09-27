@@ -1,4 +1,7 @@
 import { and, eq } from "drizzle-orm";
+import { getT } from "@/lib/i18n/server";
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 import type { PermissionSubject } from "@/lib/users/permissions";
 import { db } from "@/lib/db/client";
 import { appSettings, notificationPreferences, userNotificationChannels, users } from "@/lib/db/schema";
@@ -11,6 +14,8 @@ import {
   householdWants,
   isPreferenceEvent,
   NOTIFICATION_EVENTS,
+  eventLabel,
+  householdEventLabel,
   type BellPushOverrides,
   type NotificationPreferenceEvent,
 } from "@/lib/notifications/events";
@@ -50,9 +55,10 @@ export async function getPreferences(userId: string, account: PermissionSubject)
       .where(eq(userNotificationChannels.userId, userId))
       .orderBy(userNotificationChannels.createdAt),
   ]);
+  const t = await getT();
   return eventsFor(account).map((event) => ({
     event,
-    label: NOTIFICATION_EVENTS[event].label,
+    label: eventLabel(t, event),
     reviewerOnly: NOTIFICATION_EVENTS[event].audience !== "everyone",
     ...bellAndPushFor(overrides, event),
     channels: Object.fromEntries(channels.map((channel) => [channel.id, channelWants(channel.events, event)])),
@@ -72,29 +78,30 @@ export function parsePreferenceChanges(
   body: unknown,
   allowedEvents: readonly NotificationPreferenceEvent[],
   ownChannelIds: ReadonlySet<string>,
+  t: Translator = englishT(),
 ): { ok: true; changes: PreferenceChange[] } | { ok: false; error: string } {
   const events = (body as { events?: unknown } | null)?.events;
-  if (!Array.isArray(events)) return { ok: false, error: 'Send "events": a list of { event, inApp?, push?, channels? }.' };
-  if (events.length > 50) return { ok: false, error: "Too many changes at once." };
+  if (!Array.isArray(events)) return { ok: false, error: t("notify.prefsSendEvents", { shape: "{ event, inApp?, push?, channels? }" }) };
+  if (events.length > 50) return { ok: false, error: t("notify.prefsTooMany") };
   const changes: PreferenceChange[] = [];
   for (const entry of events) {
-    if (!entry || typeof entry !== "object") return { ok: false, error: "Each change must be an object." };
+    if (!entry || typeof entry !== "object") return { ok: false, error: t("notify.prefsEachObject") };
     const { event, inApp, push, channels } = entry as Record<string, unknown>;
     if (!isPreferenceEvent(event) || !allowedEvents.includes(event)) {
-      return { ok: false, error: `"${String(event)}" isn't an event you can choose.` };
+      return { ok: false, error: t("notify.prefsUnknownEvent", { event: String(event) }) };
     }
-    if (inApp !== undefined && typeof inApp !== "boolean") return { ok: false, error: '"inApp" must be true or false.' };
-    if (push !== undefined && typeof push !== "boolean") return { ok: false, error: '"push" must be true or false.' };
+    if (inApp !== undefined && typeof inApp !== "boolean") return { ok: false, error: t("notify.fieldMustBeBoolean", { field: "inApp" }) };
+    if (push !== undefined && typeof push !== "boolean") return { ok: false, error: t("notify.fieldMustBeBoolean", { field: "push" }) };
     let channelChanges: Record<string, boolean> | undefined;
     if (channels !== undefined) {
       if (!channels || typeof channels !== "object" || Array.isArray(channels)) {
-        return { ok: false, error: '"channels" must map channel ids to true or false.' };
+        return { ok: false, error: t("notify.prefsChannelsMap") };
       }
       channelChanges = {};
       for (const [id, on] of Object.entries(channels as Record<string, unknown>)) {
         // Someone else's channel reads exactly like one that doesn't exist.
-        if (!ownChannelIds.has(id)) return { ok: false, error: "There's no channel with that id." };
-        if (typeof on !== "boolean") return { ok: false, error: '"channels" must map channel ids to true or false.' };
+        if (!ownChannelIds.has(id)) return { ok: false, error: t("notify.channelNotFound") };
+        if (typeof on !== "boolean") return { ok: false, error: t("notify.prefsChannelsMap") };
         channelChanges[id] = on;
       }
     }
@@ -108,7 +115,7 @@ export async function savePreferences(userId: string, account: PermissionSubject
     .select({ id: userNotificationChannels.id, events: userNotificationChannels.events })
     .from(userNotificationChannels)
     .where(eq(userNotificationChannels.userId, userId));
-  const parsed = parsePreferenceChanges(body, eventsFor(account), new Set(channels.map((c) => c.id)));
+  const parsed = parsePreferenceChanges(body, eventsFor(account), new Set(channels.map((c) => c.id)), await getT());
   if (!parsed.ok) return fail("invalid", parsed.error);
 
   const overrides: Record<string, { inApp?: boolean; push?: boolean }> = {};
@@ -169,25 +176,27 @@ export type HouseholdEventRow = { event: NotificationPreferenceEvent; label: str
 
 export async function getHouseholdEvents(): Promise<HouseholdEventRow[]> {
   const saved = await savedHouseholdEvents();
+  const t = await getT();
   return householdEvents.map((event) => ({
     event,
-    label: NOTIFICATION_EVENTS[event].householdLabel ?? NOTIFICATION_EVENTS[event].label,
+    label: householdEventLabel(t, event),
     enabled: householdWants(saved, event),
   }));
 }
 
 /** `{ events: { request_approved: false, … } }`: changes; the rest stay. */
 export async function saveHouseholdEvents(body: unknown): Promise<CoreResult> {
+  const t = await getT();
   const changes = (body as { events?: unknown } | null)?.events;
   if (!changes || typeof changes !== "object" || Array.isArray(changes)) {
-    return fail("invalid", 'Send "events": { "<event>": true or false }.');
+    return fail("invalid", t("notify.householdSendEvents", { shape: `{ "<event>": true/false }` }));
   }
   const current = new Set((await getHouseholdEvents()).filter((e) => e.enabled).map((e) => e.event as string));
   for (const [event, on] of Object.entries(changes as Record<string, unknown>)) {
     if (!isPreferenceEvent(event) || !householdEvents.includes(event)) {
-      return fail("invalid", `"${event}" isn't an event the household channels can post.`);
+      return fail("invalid", t("notify.householdUnknownEvent", { event }));
     }
-    if (typeof on !== "boolean") return fail("invalid", "Each event must be true or false.");
+    if (typeof on !== "boolean") return fail("invalid", t("notify.householdEachBoolean"));
     if (on) current.add(event);
     else current.delete(event);
   }

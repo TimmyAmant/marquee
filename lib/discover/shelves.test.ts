@@ -13,6 +13,9 @@ import {
 } from "./shelves";
 import { DISCOVER_SHELF_KEYS } from "./lists";
 import { interleaveByPopularity } from "./merge";
+import { englishT, translatorFor } from "@/lib/i18n/catalog";
+
+const t = englishT();
 
 const row = (over: Partial<ShelfRow>): ShelfRow => ({
   id: "00000000-0000-4000-8000-000000000000",
@@ -27,8 +30,8 @@ const row = (over: Partial<ShelfRow>): ShelfRow => ({
 
 describe("the default layout", () => {
   it("is today's Discover exactly: every built-in row, in page order, shown", () => {
-    const layout = resolveLayout([]);
-    expect(layout).toEqual(defaultLayout());
+    const layout = resolveLayout([], t);
+    expect(layout).toEqual(defaultLayout(t));
     expect(layout.map((s) => s.id)).toEqual([...DISCOVER_SHELF_KEYS]);
     expect(layout.map((s) => s.title)).toEqual([
       "Recently Added",
@@ -60,7 +63,7 @@ describe("resolveLayout", () => {
       ...DISCOVER_SHELF_KEYS.filter((k) => k !== "networks").map((key, i) =>
         row({ id: `b${i}`, builtIn: key, kind: key, position: 2 + i }),
       ),
-    ]);
+    ], t);
     expect(layout[0]).toMatchObject({ id: "networks", hidden: true, custom: false, title: "Networks" });
     expect(layout[1]).toMatchObject({
       id: "11111111-1111-4111-8111-111111111111",
@@ -75,21 +78,21 @@ describe("resolveLayout", () => {
     const layout = resolveLayout([
       row({ id: "a", builtIn: "trending", kind: "trending", position: 0 }),
       row({ id: "b", builtIn: "someFutureRow", kind: "someFutureRow", position: 1 }),
-    ]);
+    ], t);
     expect(layout.map((s) => s.id)).toEqual(["trending", ...DISCOVER_SHELF_KEYS.filter((k) => k !== "trending")]);
   });
 
   it("keeps a custom row of an unknown kind, with no source, so it can be removed", () => {
-    const [first] = resolveLayout([row({ id: "22222222-2222-4222-8222-222222222222", kind: "fromTheFuture", title: "Mystery", position: 0 })]);
+    const [first] = resolveLayout([row({ id: "22222222-2222-4222-8222-222222222222", kind: "fromTheFuture", title: "Mystery", position: 0 })], t);
     expect(first).toMatchObject({ custom: true, kind: "fromTheFuture", title: "Mystery", source: null });
   });
 });
 
 describe("applyLayoutOrder", () => {
-  const current = resolveLayout([]);
+  const current = resolveLayout([], t);
 
   it("takes the new order and visibility; rows left out follow in their order", () => {
-    const result = applyLayoutOrder(current, [{ id: "networks", hidden: true }, { id: "trending" }]);
+    const result = applyLayoutOrder(current, [{ id: "networks", hidden: true }, { id: "trending" }], t);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.slice(0, 3)).toEqual([
@@ -101,37 +104,37 @@ describe("applyLayoutOrder", () => {
   });
 
   it("refuses unknown ids, repeats, bad values and an empty list", () => {
-    expect(applyLayoutOrder(current, [{ id: "nope" }])).toMatchObject({ ok: false });
-    expect(applyLayoutOrder(current, [{ id: "trending" }, { id: "trending" }])).toMatchObject({ ok: false });
-    expect(applyLayoutOrder(current, [{ id: "trending", hidden: "yes" }])).toMatchObject({ ok: false });
-    expect(applyLayoutOrder(current, [])).toMatchObject({ ok: false });
-    expect(applyLayoutOrder(current, "trending")).toMatchObject({ ok: false });
+    expect(applyLayoutOrder(current, [{ id: "nope" }], t)).toMatchObject({ ok: false });
+    expect(applyLayoutOrder(current, [{ id: "trending" }, { id: "trending" }], t)).toMatchObject({ ok: false });
+    expect(applyLayoutOrder(current, [{ id: "trending", hidden: "yes" }], t)).toMatchObject({ ok: false });
+    expect(applyLayoutOrder(current, [], t)).toMatchObject({ ok: false });
+    expect(applyLayoutOrder(current, "trending", t)).toMatchObject({ ok: false });
   });
 });
 
 describe("validateShelfInput", () => {
   it("builds each kind's source, with sensible default names", () => {
-    expect(validateShelfInput({ kind: "keyword", tmdbId: 210024, name: "anime" })).toEqual({
+    expect(validateShelfInput({ kind: "keyword", tmdbId: 210024, name: "anime" }, t)).toEqual({
       ok: true,
       value: { kind: "keyword", title: "Anime", source: { mediaType: "all", tmdbId: 210024, name: "anime", url: null } },
     });
-    expect(validateShelfInput({ kind: "genre", tmdbId: "28", name: "Action", mediaType: "movie" })).toMatchObject({
+    expect(validateShelfInput({ kind: "genre", tmdbId: "28", name: "Action", mediaType: "movie" }, t)).toMatchObject({
       ok: true,
       value: { title: "Action Movies", source: { tmdbId: 28, mediaType: "movie" } },
     });
-    expect(validateShelfInput({ kind: "company", tmdbId: 41077, name: "A24", mediaType: "movie", title: "  A24 films " })).toMatchObject({
+    expect(validateShelfInput({ kind: "company", tmdbId: 41077, name: "A24", mediaType: "movie", title: "  A24 films " }, t)).toMatchObject({
       ok: true,
       value: { title: "A24 films", source: { tmdbId: 41077, mediaType: "movie" } },
     });
-    expect(validateShelfInput({ kind: "network", tmdbId: 213, mediaType: "movie" })).toMatchObject({
+    expect(validateShelfInput({ kind: "network", tmdbId: 213, mediaType: "movie" }, t)).toMatchObject({
       ok: true,
       value: { title: "Network", source: { mediaType: "tv" } },
     });
-    expect(validateShelfInput({ kind: "tmdbList", url: "https://www.themoviedb.org/list/8136-star-wars" })).toMatchObject({
+    expect(validateShelfInput({ kind: "tmdbList", url: "https://www.themoviedb.org/list/8136-star-wars" }, t)).toMatchObject({
       ok: true,
       value: { source: { tmdbId: 8136 } },
     });
-    expect(validateShelfInput({ kind: "traktList", url: "https://trakt.tv/users/Someone/lists/best-of-2024?sort=rank" })).toEqual({
+    expect(validateShelfInput({ kind: "traktList", url: "https://trakt.tv/users/Someone/lists/best-of-2024?sort=rank" }, t)).toEqual({
       ok: true,
       value: {
         kind: "traktList",
@@ -139,22 +142,22 @@ describe("validateShelfInput", () => {
         source: { mediaType: "all", tmdbId: null, name: null, url: "https://trakt.tv/users/Someone/lists/best-of-2024" },
       },
     });
-    expect(validateShelfInput({ kind: "library", mediaType: "tv" })).toMatchObject({
+    expect(validateShelfInput({ kind: "library", mediaType: "tv" }, t)).toMatchObject({
       ok: true,
       value: { title: "Recently Added Series", source: { mediaType: "tv", tmdbId: null } },
     });
   });
 
   it("refuses bad kinds, ids, media types, titles and links", () => {
-    expect(validateShelfInput({ kind: "person", tmdbId: 1 })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "keyword" })).toMatchObject({ ok: false, error: "Pick a keyword." });
-    expect(validateShelfInput({ kind: "keyword", tmdbId: -3 })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "keyword", tmdbId: 1.5 })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "genre", tmdbId: 28, mediaType: "all" })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "library", mediaType: "books" })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "keyword", tmdbId: 1, title: "x".repeat(61) })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "keyword", tmdbId: 1, title: 42 })).toMatchObject({ ok: false });
-    expect(validateShelfInput({ kind: "tmdbList", url: "https://evil.example/list/8136" })).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "person", tmdbId: 1 }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "keyword" }, t)).toMatchObject({ ok: false, error: "Pick a keyword." });
+    expect(validateShelfInput({ kind: "keyword", tmdbId: -3 }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "keyword", tmdbId: 1.5 }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "genre", tmdbId: 28, mediaType: "all" }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "library", mediaType: "books" }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "keyword", tmdbId: 1, title: "x".repeat(61) }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "keyword", tmdbId: 1, title: 42 }, t)).toMatchObject({ ok: false });
+    expect(validateShelfInput({ kind: "tmdbList", url: "https://evil.example/list/8136" }, t)).toMatchObject({ ok: false });
     // Only trakt.tv links: the server reads Trakt's API, never the link.
     for (const url of [
       "https://evil.example/users/a/lists/b",
@@ -163,19 +166,19 @@ describe("validateShelfInput", () => {
       "javascript:alert(1)",
       "https://trakt.tv/users/a%2F..%2Fb/lists/c",
     ]) {
-      expect(validateShelfInput({ kind: "traktList", url }), url).toMatchObject({ ok: false });
+      expect(validateShelfInput({ kind: "traktList", url }, t), url).toMatchObject({ ok: false });
     }
   });
 
   it("reads a stored source back, and nothing for one it can't", () => {
-    expect(parseStoredSource("keyword", { tmdbId: 5, name: "x", mediaType: "movie" })).toEqual({
+    expect(parseStoredSource("keyword", { tmdbId: 5, name: "x", mediaType: "movie" }, t)).toEqual({
       mediaType: "movie",
       tmdbId: 5,
       name: "x",
       url: null,
     });
-    expect(parseStoredSource("keyword", { tmdbId: "nope" })).toBeNull();
-    expect(parseStoredSource("unknown", {})).toBeNull();
+    expect(parseStoredSource("keyword", { tmdbId: "nope" }, t)).toBeNull();
+    expect(parseStoredSource("unknown", {}, t)).toBeNull();
   });
 });
 
@@ -197,13 +200,25 @@ describe("helpers", () => {
   });
 
   it("describes a row for the settings list", () => {
-    expect(describeShelf({ kind: "trending", custom: false, source: null })).toBe("Built in");
+    expect(describeShelf({ kind: "trending", custom: false, source: null }, t)).toBe("Built in");
     expect(
-      describeShelf({ kind: "company", custom: true, source: { mediaType: "movie", tmdbId: 41077, name: "A24", url: null } }),
+      describeShelf({ kind: "company", custom: true, source: { mediaType: "movie", tmdbId: 41077, name: "A24", url: null } }, t),
     ).toBe("Studio · A24 · Movies");
-    expect(defaultShelfTitle("traktList", { mediaType: "all", tmdbId: null, name: null, url: "https://trakt.tv/users/bob/watchlist" })).toBe(
-      "bob's watchlist",
+    expect(
+      defaultShelfTitle("traktList", { mediaType: "all", tmdbId: null, name: null, url: "https://trakt.tv/users/bob/watchlist" }, t),
+    ).toBe("bob's watchlist");
+  });
+
+  it("names rows in the reader's language", () => {
+    const fr = translatorFor("fr");
+    expect(resolveLayout([], fr)[1].title).toBe("Tendances");
+    expect(defaultShelfTitle("library", { mediaType: "tv", tmdbId: null, name: null, url: null }, fr)).toBe(
+      "Séries ajoutées récemment",
     );
+    expect(validateShelfInput({ kind: "keyword" }, translatorFor("de"))).toMatchObject({
+      ok: false,
+      error: "Wähle ein Schlagwort aus.",
+    });
   });
 
   it("mixes movies and series by popularity, dropping repeats", () => {

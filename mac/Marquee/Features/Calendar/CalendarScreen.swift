@@ -17,21 +17,21 @@ struct CalendarScreen: View {
         Group {
             if let page, !page.configured {
                 EmptyStateView(
-                    title: "Calendar",
+                    title: String(localized: "Calendar"),
                     message: model.viewer?.isAdmin == true
-                        ? "Connect Sonarr or Radarr to see upcoming releases and air dates here."
-                        : "The household admin hasn't connected Sonarr or Radarr yet.",
+                        ? String(localized: "Connect Sonarr or Radarr to see upcoming releases and air dates here.")
+                        : String(localized: "The household admin hasn't connected Sonarr or Radarr yet."),
                     systemImage: "calendar",
-                    actionTitle: model.viewer?.isAdmin == true ? "Connect an integration" : nil,
+                    actionTitle: model.viewer?.isAdmin == true ? String(localized: "Connect an integration") : nil,
                     action: model.viewer?.isAdmin == true ? { model.openSettings(.integrations) } : nil
                 )
                 .frame(maxHeight: .infinity)
             } else if let error, page == nil {
                 EmptyStateView(
-                    title: "Couldn't load the calendar",
+                    title: String(localized: "Couldn't load the calendar"),
                     message: error,
                     systemImage: "exclamationmark.triangle",
-                    actionTitle: "Try again",
+                    actionTitle: String(localized: "Try again"),
                     action: { model.reload() }
                 )
                 .frame(maxHeight: .infinity)
@@ -49,7 +49,7 @@ struct CalendarScreen: View {
                 }
                 .scrollsUnderNavRail()
             } else {
-                LoadingView(label: "Loading the calendar…")
+                LoadingView(label: String(localized: "Loading the calendar…"))
                     .frame(maxHeight: .infinity)
             }
         }
@@ -87,7 +87,8 @@ struct CalendarScreen: View {
         let byDay = page.entriesByDay
         return VStack(spacing: 1) {
             HStack(spacing: 1) {
-                ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { label in
+                // Sunday first, like the server's grid, in the app's language.
+                ForEach(Array(API.CalendarDay.gregorian.shortWeekdaySymbols.enumerated()), id: \.offset) { _, label in
                     Text(label)
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundStyle(Theme.textSecondary)

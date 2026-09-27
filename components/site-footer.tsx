@@ -1,22 +1,24 @@
 import Link from "next/link";
 import packageJson from "@/package.json";
+import { getT } from "@/lib/i18n/server";
 
 const REPO_URL = "https://github.com/TimmyAmant/marquee";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const t = await getT();
   return (
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-text-muted sm:px-6 lg:px-8">
-        <span>Marquee — self-hosted media dashboard</span>
+        <span>{t("nav.footerTagline")}</span>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <Link href="/changelog" className="transition-colors hover:text-text-primary">
             v{packageJson.version}
           </Link>
           <Link href="/help/colors" className="transition-colors hover:text-text-primary">
-            Colors
+            {t("nav.colors")}
           </Link>
           <Link href="/help/errors" className="transition-colors hover:text-text-primary">
-            Error reference
+            {t("nav.errorReference")}
           </Link>
           <a
             href={REPO_URL}
@@ -32,7 +34,7 @@ export function SiteFooter() {
             rel="noreferrer"
             className="transition-colors hover:text-text-primary"
           >
-            Support
+            {t("nav.support")}
           </a>
         </div>
       </div>

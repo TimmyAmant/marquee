@@ -81,10 +81,10 @@ struct ArrServerForm: Hashable, Sendable {
     /// they can.
     var problem: String? {
         if trimmedURL.isEmpty || (!isEditing && enteredKey == nil) {
-            return "URL and API key are required."
+            return String(localized: "URL and API key are required.")
         }
         if isEditing && urlChanged && enteredKey == nil {
-            return "Enter the API key again to change the URL."
+            return String(localized: "Enter the API key again to change the URL.")
         }
         return nil
     }
@@ -164,9 +164,9 @@ struct ArrServersCard: View {
     private var description: String {
         switch kind {
         case .radarr:
-            return "Movies are added here. Add as many as you like — a 4K one for 4K requests, a second for the kids' movies — and pick one under Advanced when approving."
+            return String(localized: "Movies are added here. Add as many as you like — a 4K one for 4K requests, a second for the kids' movies — and pick one under Advanced when approving.")
         default:
-            return "Shows are added here. Add as many as you like — a 4K one for 4K requests, a second for anime — and pick one under Advanced when approving."
+            return String(localized: "Shows are added here. Add as many as you like — a 4K one for 4K requests, a second for anime — and pick one under Advanced when approving.")
         }
     }
 
@@ -214,9 +214,9 @@ private struct ArrServerRow: View {
                         Text(server.name)
                             .font(.system(size: 13.5, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
-                        if server.isDefault { TonePill(text: "Default", tone: .owned, small: true) }
+                        if server.isDefault { TonePill(text: String(localized: "Default"), tone: .owned, small: true) }
                         if server.is4k { TonePill(text: "4K", tone: .accent, small: true) }
-                        if !server.fullyConfigured { TonePill(text: "Needs setup", tone: .danger, small: true) }
+                        if !server.fullyConfigured { TonePill(text: String(localized: "Needs setup"), tone: .danger, small: true) }
                     }
                     Text(server.baseUrl)
                         .font(.system(size: 11.5, design: .monospaced))
@@ -234,7 +234,7 @@ private struct ArrServerRow: View {
             }
             if let error { InlineMessage(text: error) }
             if let url = webhookUrl ?? server.webhookUrl.nonBlank {
-                CopyField(value: url, label: "Webhook URL — paste into \(server.kind.displayName) → Settings → Connect → Webhook (POST, on Grab and on Import)")
+                CopyField(value: url, label: String(localized: "Webhook URL — paste into \(server.kind.displayName) → Settings → Connect → Webhook (POST, on Grab and on Import)"))
                 regenerateControl
             }
         }
@@ -340,7 +340,7 @@ private struct ArrServerSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(form.editing.map { "Edit \($0.name)" } ?? "Add \(kindName) server")
+            Text(form.editing.map { String(localized: "Edit \($0.name)") } ?? String(localized: "Add \(kindName) server"))
                 .font(.marqueeDisplay(22))
                 .foregroundStyle(Theme.textPrimary)
                 .padding([.horizontal, .top], 24)
@@ -366,17 +366,17 @@ private struct ArrServerSheet: View {
 
     @ViewBuilder
     private var connectionFields: some View {
-        SettingsField(label: "Name", text: $form.name, placeholder: form.is4k ? "4K \(kindName)" : kindName)
-        SettingsField(label: "Server URL", text: $form.baseUrl, placeholder: "http://localhost:\(form.kind.defaultPort)")
+        SettingsField(label: String(localized: "Name"), text: $form.name, placeholder: form.is4k ? "4K \(kindName)" : kindName)
+        SettingsField(label: String(localized: "Server URL"), text: $form.baseUrl, placeholder: "http://localhost:\(form.kind.defaultPort)")
         VStack(alignment: .leading, spacing: 5) {
             SettingsField(
-                label: "API key",
+                label: String(localized: "API key"),
                 text: $form.apiKey,
-                placeholder: form.isEditing ? "Saved — enter to replace" : "From Settings → General in \(kindName)",
+                placeholder: form.isEditing ? String(localized: "Saved — enter to replace") : String(localized: "From Settings → General in \(kindName)"),
                 secure: true
             )
             if form.isEditing {
-                hint("Changing the URL needs the API key again, so a saved key is never sent anywhere new.")
+                hint(String(localized: "Changing the URL needs the API key again, so a saved key is never sent anywhere new."))
             }
         }
         Toggle("4K server — 4K requests and Add in 4K go here", isOn: $form.is4k)
@@ -388,7 +388,7 @@ private struct ArrServerSheet: View {
                 .font(.system(size: 12.5))
                 .disabled(!form.canChangeDefault)
             if !form.canChangeDefault {
-                hint("Make another server the default instead.")
+                hint(String(localized: "Make another server the default instead."))
             }
         }
         HStack(spacing: 12) {
@@ -409,7 +409,7 @@ private struct ArrServerSheet: View {
             .foregroundStyle(Theme.textPrimary)
         if let options = form.options {
             if options.qualityProfiles.isEmpty || options.rootFolders.isEmpty {
-                hint("\(kindName) has no quality profiles or root folders yet — add them there, then Test again.")
+                hint(String(localized: "\(kindName) has no quality profiles or root folders yet — add them there, then Test again."))
             }
             Picker("Quality profile", selection: $form.qualityProfileId) {
                 ForEach(options.qualityProfiles) { profile in
@@ -421,14 +421,14 @@ private struct ArrServerSheet: View {
                     Text(folder.path).tag(Optional(folder.path))
                 }
             }
-            tagChecklist("Tags", tags: options.tags, selection: $form.tags)
+            tagChecklist(String(localized: "Tags"), tags: options.tags, selection: $form.tags)
             if form.isSonarr {
                 Picker("Series type", selection: $form.seriesType) {
                     ForEach(API.SeriesType.knownCases, id: \.self) { type in
                         Text(type.label).tag(type)
                     }
                 }
-                hint("For shows that aren't anime. Anime shows are added as Anime unless you pick otherwise when approving.")
+                hint(String(localized: "For shows that aren't anime. Anime shows are added as Anime unless you pick otherwise when approving."))
                 Toggle("Season folders", isOn: $form.seasonFolders)
                     .toggleStyle(.checkbox)
                     .font(.system(size: 12.5))
@@ -448,13 +448,13 @@ private struct ArrServerSheet: View {
                         Text(folder.path).tag(Optional(folder.path))
                     }
                 }
-                tagChecklist("Anime tags", tags: options.tags, selection: $form.animeTags)
-                hint("Used instead of the tags above for anime shows, when any are ticked.")
+                tagChecklist(String(localized: "Anime tags"), tags: options.tags, selection: $form.animeTags)
+                hint(String(localized: "Used instead of the tags above for anime shows, when any are ticked."))
             }
         } else {
             hint(loadingOptions
-                ? "Loading \(kindName)'s quality profiles, root folders and tags…"
-                : "Test the connection to pick a quality profile, root folder and tags.")
+                ? String(localized: "Loading \(kindName)'s quality profiles, root folders and tags…")
+                : String(localized: "Test the connection to pick a quality profile, root folder and tags."))
         }
     }
 
@@ -467,7 +467,7 @@ private struct ArrServerSheet: View {
             Button("Cancel") { dismiss() }
                 .buttonStyle(OutlineButtonStyle())
                 .keyboardShortcut(.cancelAction)
-            Button(saving ? "Saving…" : (form.isEditing ? "Save" : "Add server")) { save() }
+            Button(saving ? String(localized: "Saving…") : (form.isEditing ? String(localized: "Save") : String(localized: "Add server"))) { save() }
                 .buttonStyle(AccentButtonStyle())
                 .keyboardShortcut(.defaultAction)
                 .disabled(saving || testing)
@@ -487,7 +487,7 @@ private struct ArrServerSheet: View {
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textSecondary)
             if tags.isEmpty {
-                hint("No tags in \(kindName) yet.")
+                hint(String(localized: "No tags in \(kindName) yet."))
             } else {
                 FlowLayout(spacing: 12, lineSpacing: 6) {
                     ForEach(tags) { tag in
@@ -534,8 +534,12 @@ private struct ArrServerSheet: View {
             do {
                 let result = try await api.integrations.arrServers.test(request)
                 form.apply(result.options)
-                let version = result.version.nonBlank.map { " \($0)" } ?? ""
-                testMessage = ("Connected to \(kindName)\(version).", false)
+                let message = if let version = result.version.nonBlank {
+                    String(localized: "Connected to \(kindName) \(version).")
+                } else {
+                    String(localized: "Connected to \(kindName).")
+                }
+                testMessage = (message, false)
             } catch {
                 testMessage = (error.localizedDescription, true)
             }

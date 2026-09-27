@@ -13,11 +13,11 @@ enum MediaSignInError: LocalizedError, Equatable, Sendable {
     /// `ssoExpired` / `quickConnectExpired`.
     case expiredWith(String)
 
-    static let expiredMessage = "The Plex sign-in expired. Try again."
-    static let refusedFallback = "This account can't sign in to this Marquee server."
+    static let expiredMessage = String(localized: "The Plex sign-in expired. Try again.")
+    static let refusedFallback = String(localized: "This account can't sign in to this Marquee server.")
     /// The server's own wording for each (api-v1.md).
-    static let ssoExpired = MediaSignInError.expiredWith("That sign-in expired. Try again.")
-    static let quickConnectExpired = MediaSignInError.expiredWith("That Quick Connect code expired. Try again.")
+    static let ssoExpired = MediaSignInError.expiredWith(String(localized: "That sign-in expired. Try again."))
+    static let quickConnectExpired = MediaSignInError.expiredWith(String(localized: "That Quick Connect code expired. Try again."))
 
     var errorDescription: String? {
         switch self {

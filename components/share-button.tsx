@@ -5,6 +5,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { listShareMembersAction, shareTitleAction, type ShareMember } from "@/lib/sharing/actions";
 import { MAX_SHARE_NOTE, marqueeUrl, outsideShareTargets } from "@/lib/sharing/parse";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
+import { rich } from "@/lib/i18n/rich";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -57,6 +59,7 @@ export function ShareButton({
   /** The title to send to household members; omitted on a person's page. */
   sendTo?: { mediaType: MediaType; tmdbId: number };
 }) {
+  const t = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [members, setMembers] = useState<ShareMember[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -77,7 +80,7 @@ export function ShareButton({
 
   const url =
     choice === "tmdb" ? links.tmdb : choice === "imdb" && links.imdb ? links.imdb : marqueeUrl(origin, path);
-  const text = choice === "marquee" ? `${name} on Marquee` : name;
+  const text = choice === "marquee" ? t("title.shareOnMarquee", { name }) : name;
   const targets = outsideShareTargets(text, url);
 
   function open() {
@@ -104,14 +107,14 @@ export function ShareButton({
   async function send() {
     if (!sendTo) return;
     if (picked.size === 0) {
-      setError("Pick who to share it with.");
+      setError(t("title.sharePickWho"));
       return;
     }
     setBusy(true);
     setError(null);
     setSentText(null);
     const result = await shareTitleAction(sendTo.mediaType, sendTo.tmdbId, [...picked], note).catch(() => ({
-      error: "Couldn't send it. Try again.",
+      error: t("title.shareCouldntSend"),
       sharedWith: undefined,
     }));
     setBusy(false);
@@ -120,7 +123,11 @@ export function ShareButton({
       return;
     }
     const names = (members ?? []).filter((m) => picked.has(m.id)).map((m) => m.label);
-    setSentText(names.length === 1 ? `Sent to ${names[0]}.` : `Sent to ${result.sharedWith ?? names.length} people.`);
+    setSentText(
+      names.length === 1
+        ? t("title.sentToName", { name: names[0] })
+        : t("title.sentToPeople", { count: result.sharedWith ?? names.length }),
+    );
     setPicked(new Set());
     setNote("");
   }
@@ -151,20 +158,20 @@ export function ShareButton({
           <path d="M12 3v12M7 8l5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Share
+        {t("title.share")}
       </button>
       <dialog
         ref={dialogRef}
-        aria-label={`Share ${name}`}
+        aria-label={t("title.shareName", { name })}
         className="m-auto max-h-[calc(100dvh-2rem)] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-border bg-bg-1 p-0 text-text-primary backdrop:bg-black/60"
       >
         <div className="flex flex-col gap-5 p-6">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="font-display text-xl">Share “{name}”</h3>
+            <h3 className="font-display text-xl">{t("title.shareQuoted", { name })}</h3>
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="-mr-2 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:text-text-primary"
             >
               ✕
@@ -173,11 +180,11 @@ export function ShareButton({
 
           {sendTo && (
             <section className="flex flex-col gap-3">
-              <h4 className="text-sm font-medium text-text-primary">Send to someone in the household</h4>
+              <h4 className="text-sm font-medium text-text-primary">{t("title.sendToHousehold")}</h4>
               {members === null ? (
-                <p className="text-sm text-text-secondary">Loading…</p>
+                <p className="text-sm text-text-secondary">{t("common.loading")}</p>
               ) : members.length === 0 ? (
-                <p className="text-sm text-text-secondary">No one else has an account here yet.</p>
+                <p className="text-sm text-text-secondary">{t("title.noOneElse")}</p>
               ) : (
                 <>
                   <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
@@ -198,7 +205,7 @@ export function ShareButton({
                   </ul>
                   <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
                     <span className="flex justify-between">
-                      Add a note (optional)
+                      {t("title.addNoteOptional")}
                       {noteLength > MAX_SHARE_NOTE - 40 && (
                         <span className={noteLength > MAX_SHARE_NOTE ? "text-red-400" : ""}>
                           {noteLength}/{MAX_SHARE_NOTE}
@@ -210,7 +217,7 @@ export function ShareButton({
                       rows={2}
                       maxLength={MAX_SHARE_NOTE * 2}
                       onChange={(e) => setNote(e.target.value)}
-                      placeholder="e.g. You'd love this one"
+                      placeholder={t("title.sharePlaceholder")}
                       className={inputClass}
                     />
                   </label>
@@ -223,7 +230,7 @@ export function ShareButton({
                       onClick={send}
                       className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
                     >
-                      {busy ? "Sending…" : "Send"}
+                      {busy ? t("title.sending") : t("title.send")}
                     </button>
                   </div>
                 </>
@@ -232,13 +239,13 @@ export function ShareButton({
           )}
 
           <section className={`flex flex-col gap-3 ${sendTo ? "border-t border-border pt-5" : ""}`}>
-            <h4 className="text-sm font-medium text-text-primary">Share a link</h4>
-            <div className="flex flex-col gap-1.5" role="radiogroup" aria-label="Which link">
+            <h4 className="text-sm font-medium text-text-primary">{t("title.shareLink")}</h4>
+            <div className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("title.whichLink")}>
               {(
                 [
-                  ["marquee", "Marquee", "they'll need to sign in"],
-                  ["tmdb", "TMDb", "anyone can open it"],
-                  ...(links.imdb ? ([["imdb", "IMDb", "anyone can open it"]] as const) : []),
+                  ["marquee", "Marquee", t("title.linkNeedsSignIn")],
+                  ["tmdb", "TMDb", t("title.linkAnyone")],
+                  ...(links.imdb ? ([["imdb", "IMDb", t("title.linkAnyone")]] as const) : []),
                 ] as const
               ).map(([value, label, hint]) => (
                 <label key={value} className="flex items-center gap-2 text-sm text-text-secondary">
@@ -253,7 +260,9 @@ export function ShareButton({
                     className="h-4 w-4 accent-accent"
                   />
                   <span>
-                    <span className="text-text-primary">{label}</span> — {hint}
+                    {rich(t("title.linkChoice", { label, hint }), {
+                      b: (chunks) => <span className="text-text-primary">{chunks}</span>,
+                    })}
                   </span>
                 </label>
               ))}
@@ -268,25 +277,27 @@ export function ShareButton({
                   onClick={webShare}
                   className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
                 >
-                  Share…
+                  {t("title.shareEllipsis")}
                 </button>
               )}
               <button type="button" onClick={copy} className={pillClass}>
-                {copied ? "Copied" : "Copy link"}
+                {copied ? t("common.copied") : t("title.copyLink")}
               </button>
               {!canWebShare && (
                 <>
                   <a href={targets.sms} className={pillClass}>
-                    Text message
+                    {t("title.textMessage")}
                   </a>
                   <a href={targets.email} className={pillClass}>
-                    Email
+                    {t("title.email")}
                   </a>
                   <a href={targets.whatsapp} target="_blank" rel="noopener noreferrer" className={pillClass}>
+                    {/* i18n-ignore */}
                     WhatsApp
                   </a>
                   {isTouch && (
                     <a href={targets.messenger} className={pillClass}>
+                      {/* i18n-ignore */}
                       Messenger
                     </a>
                   )}

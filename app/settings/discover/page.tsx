@@ -4,19 +4,18 @@ import { getDiscoverLayout } from "@/lib/discover/layout";
 import { getTraktClientId } from "@/lib/integrations/app-settings";
 import { MAX_CUSTOM_SHELVES } from "@/lib/discover/shelves";
 import { DiscoverSettingsEditor } from "./discover-settings";
+import { getT } from "@/lib/i18n/server";
 
 export default async function DiscoverSettingsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session || !viewer.isAdmin) redirect("/settings");
   const [shelves, traktClientId] = await Promise.all([getDiscoverLayout(), getTraktClientId().catch(() => null)]);
+  const t = await getT();
 
   return (
     <div>
-      <h2 className="font-display text-xl text-text-primary">Discover rows</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        The rows on Discover, for everyone in the household. Move them, hide the ones nobody uses, and add your own —
-        a TMDb keyword, genre, studio, network or list, a Trakt list, or what&apos;s new in your library.
-      </p>
+      <h2 className="font-display text-xl text-text-primary">{t("integrations.discoverTitle")}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{t("integrations.discoverIntro")}</p>
       <DiscoverSettingsEditor
         initial={shelves}
         traktConfigured={Boolean(traktClientId)}

@@ -98,8 +98,8 @@ extension API {
         /// "Fixed: Replaced the file", or just "Fixed" without a note.
         var fixedLine: String? {
             guard status == .resolved else { return nil }
-            if let note = resolution.nonBlank { return "Fixed: \(note)" }
-            return "Fixed"
+            if let note = resolution.nonBlank { return String(localized: "Fixed: \(note)") }
+            return String(localized: "Fixed")
         }
     }
 

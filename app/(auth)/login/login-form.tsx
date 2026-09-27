@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n/client";
+import type { Translator } from "@/lib/i18n/translator";
 import { PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
 import {
   jellyfinLoginAction,
@@ -32,6 +34,7 @@ function resetPushPrompt() {
 }
 
 function RememberCheckbox({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+  const t = useT();
   return (
     <label className="flex items-center gap-2 text-sm text-text-secondary">
       <input
@@ -41,21 +44,22 @@ function RememberCheckbox({ checked, onChange }: { checked: boolean; onChange: (
         onChange={(e) => onChange(e.target.checked)}
         className="h-4 w-4 rounded border-border bg-bg-0 accent-accent"
       />
-      Keep me signed in for 30 days
+      {t("auth.rememberMe")}
     </label>
   );
 }
 
 function PasswordForm({ remember, setRemember }: { remember: boolean; setRemember: (v: boolean) => void }) {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(loginAction, undefined);
   return (
     <form action={formAction} onSubmit={resetPushPrompt} className="mt-6 flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Username
+        {t("auth.username")}
         <input type="text" name="username" required autoComplete="username" className={inputClass} />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        Password
+        {t("auth.password")}
         <input type="password" name="password" required autoComplete="current-password" className={inputClass} />
       </label>
 
@@ -68,7 +72,7 @@ function PasswordForm({ remember, setRemember }: { remember: boolean; setRemembe
         disabled={isPending}
         className="mt-2 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {isPending ? "Signing in…" : "Sign in"}
+        {isPending ? t("auth.signingIn") : t("auth.signIn")}
       </button>
     </form>
   );
@@ -78,6 +82,12 @@ function PasswordForm({ remember, setRemember }: { remember: boolean; setRemembe
  * person is already signed in to, and signs in once they have (the server
  * asks Jellyfin; this page only polls). */
 function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel: () => void }) {
+  const t = useT();
+  // For the messages set from inside the polling loop, which starts once.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const cancelled = useRef(false);
@@ -93,7 +103,7 @@ function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel
       const started = await startQuickConnectAction();
       if (cancelled.current) return;
       if (!started.handle || !started.code) {
-        setError(started.error ?? "Couldn't start Quick Connect. Try again.");
+        setError(started.error ?? tRef.current("auth.quickConnectStartFailed"));
         return;
       }
       setCode(started.code);
@@ -111,7 +121,7 @@ function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel
         }
       }
       if (!cancelled.current) {
-        setError("Timed out waiting for Quick Connect. Try again.");
+        setError(tRef.current("auth.quickConnectTimedOut"));
         setCode(null);
       }
     })();
@@ -124,20 +134,18 @@ function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-0 p-4 text-sm">
       {code ? (
         <>
-          <p className="text-text-secondary">
-            In a Jellyfin app you&apos;re signed in to, open your profile → Quick Connect and enter this code:
-          </p>
+          <p className="text-text-secondary">{t("auth.quickConnectInstructions")}</p>
           <p className="text-center font-mono text-3xl tracking-[0.3em] text-text-primary" aria-live="polite">
             {code}
           </p>
-          <p className="text-xs text-text-muted">Waiting for approval…</p>
+          <p className="text-xs text-text-muted">{t("auth.waitingForApproval")}</p>
         </>
       ) : (
-        !error && <p className="text-text-secondary">Getting a code…</p>
+        !error && <p className="text-text-secondary">{t("auth.gettingCode")}</p>
       )}
       {error && <p className="text-red-400">{error}</p>}
       <button type="button" onClick={onCancel} className="self-start text-text-secondary hover:text-accent">
-        {error ? "Back" : "Cancel"}
+        {error ? t("common.back") : t("common.cancel")}
       </button>
     </div>
   );
@@ -159,6 +167,7 @@ function JellyfinForm({
   setRemember: (v: boolean) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(jellyfinLoginAction, undefined);
   const [usingQuickConnect, setUsingQuickConnect] = useState(false);
   if (usingQuickConnect) {
@@ -171,13 +180,13 @@ function JellyfinForm({
   }
   return (
     <form action={formAction} onSubmit={resetPushPrompt} className="mt-6 flex flex-col gap-4">
-      <p className="text-sm text-text-secondary">Use the username and password you use for {name}.</p>
+      <p className="text-sm text-text-secondary">{t("auth.mediaServerHint", { name })}</p>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        {name} username
+        {t("auth.mediaServerUsername", { name })}
         <input type="text" name="username" required autoComplete="username" className={inputClass} />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        {name} password
+        {t("auth.mediaServerPassword", { name })}
         <input type="password" name="password" required autoComplete="current-password" className={inputClass} />
       </label>
 
@@ -190,15 +199,15 @@ function JellyfinForm({
         disabled={isPending}
         className="mt-2 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {isPending ? "Signing in…" : `Sign in with ${name}`}
+        {isPending ? t("auth.signingIn") : t("auth.signInWith", { name })}
       </button>
       {quickConnect && (
         <button type="button" onClick={() => setUsingQuickConnect(true)} className={secondaryButtonClass}>
-          Use Quick Connect
+          {t("auth.useQuickConnect")}
         </button>
       )}
       <button type="button" onClick={onCancel} className="text-sm text-text-secondary hover:text-accent">
-        Use a Marquee password instead
+        {t("auth.useMarqueePassword")}
       </button>
     </form>
   );
@@ -208,6 +217,7 @@ function JellyfinForm({
  * the server does the rest (lib/auth/media-signin.ts) and this page
  * navigates home once it has signed in. */
 function PlexButton({ remember }: { remember: boolean }) {
+  const t = useT();
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cancelled = useRef(false);
@@ -230,7 +240,7 @@ function PlexButton({ remember }: { remember: boolean }) {
     const started = await startPlexSignInAction();
     if (!started.handle || !started.authUrl) {
       tab?.close();
-      setError(started.error ?? "Couldn't start Plex sign-in. Try again.");
+      setError(started.error ?? t("auth.plexStartFailed"));
       setWaiting(false);
       return;
     }
@@ -252,7 +262,7 @@ function PlexButton({ remember }: { remember: boolean }) {
       }
     }
     if (!cancelled.current) {
-      setError("Timed out waiting for Plex sign-in. Try again.");
+      setError(t("auth.plexTimedOut"));
       setWaiting(false);
     }
   }
@@ -261,7 +271,7 @@ function PlexButton({ remember }: { remember: boolean }) {
     <div className="flex flex-col gap-2">
       {waiting ? (
         <div className="flex items-center justify-between gap-3 rounded-full border border-border-strong px-4 py-2.5 text-sm text-text-secondary">
-          <span>Waiting for Plex… finish in the tab that opened.</span>
+          <span>{t("auth.plexWaiting")}</span>
           <button
             type="button"
             onClick={() => {
@@ -270,12 +280,12 @@ function PlexButton({ remember }: { remember: boolean }) {
             }}
             className="text-text-secondary hover:text-accent"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       ) : (
         <button type="button" onClick={handleClick} className={secondaryButtonClass}>
-          Sign in with Plex
+          {t("auth.signInWith", { name: "Plex" })}
         </button>
       )}
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -294,31 +304,36 @@ type Methods = {
 
 /** "Plex", "Jellyfin", "Plex (or Emby)", "Authentik (or Plex)"… — the
  * sign-ins that make new accounts, for the sign-up line. Null when none do. */
-function signupMethodNames(methods: Methods): string | null {
+function signupMethodNames(methods: Methods, t: Translator): string | null {
   const names: string[] = [];
   if (methods.sso?.signup) names.push(methods.sso.name);
   if (methods.signup && methods.plex) names.push("Plex");
   if (methods.signup && methods.jellyfin) names.push(methods.jellyfinName);
   if (names.length === 0) return null;
   const [first, ...rest] = names;
-  return rest.length > 0 ? `${first} (or ${rest.join(" or ")})` : first;
+  if (rest.length === 0) return first;
+  // "Plex or Jellyfin" in the page's language.
+  const others = new Intl.ListFormat(t.tag, { type: "disjunction" }).format(rest);
+  return t("auth.signupNamesAlternatives", { first, rest: others });
 }
 
 /** "Sign in with <SSO>": a plain link to the server, which sends the
  * browser on to the identity provider and back (app/api/auth/sso). */
 function SsoButton({ name, remember }: { name: string; remember: boolean }) {
+  const t = useT();
   return (
     <a
       href={`/api/auth/sso/start${remember ? "?remember=1" : ""}`}
       onClick={resetPushPrompt}
       className={`${secondaryButtonClass} text-center`}
     >
-      Sign in with {name}
+      {t("auth.signInWith", { name })}
     </a>
   );
 }
 
 export function LoginForm({ methods, ssoError }: { methods: Methods; ssoError: string | null }) {
+  const t = useT();
   const [mode, setMode] = useState<"password" | "jellyfin">("password");
   const [remember, setRemember] = useState(true);
   // The other ways in, under an "or": SSO and Plex always, Jellyfin unless
@@ -327,14 +342,12 @@ export function LoginForm({ methods, ssoError }: { methods: Methods; ssoError: s
   const hasOtherMethods = Boolean(methods.sso) || methods.plex || (methods.jellyfin && mode !== "jellyfin");
   // With new accounts from Plex/Jellyfin/SSO sign-in on, that's how a
   // newcomer gets in — there's no other sign-up.
-  const signupNames = signupMethodNames(methods);
+  const signupNames = signupMethodNames(methods, t);
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-8">
-      <h1 className="font-display text-2xl text-text-primary">Welcome back</h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Sign in to your Marquee account.
-      </p>
+      <h1 className="font-display text-2xl text-text-primary">{t("auth.welcomeBack")}</h1>
+      <p className="mt-1 text-sm text-text-secondary">{t("auth.signInSubtitle")}</p>
 
       {ssoError && <p className="mt-4 text-sm text-red-400">{ssoError}</p>}
 
@@ -354,7 +367,7 @@ export function LoginForm({ methods, ssoError }: { methods: Methods; ssoError: s
         <>
           <div className="my-6 flex items-center gap-3 text-xs text-text-muted">
             <span className="h-px flex-1 bg-border" />
-            or
+            {t("common.or")}
             <span className="h-px flex-1 bg-border" />
           </div>
           <div className="flex flex-col gap-3">
@@ -362,7 +375,7 @@ export function LoginForm({ methods, ssoError }: { methods: Methods; ssoError: s
             {methods.plex && <PlexButton remember={remember} />}
             {methods.jellyfin && mode !== "jellyfin" && (
               <button type="button" onClick={() => setMode("jellyfin")} className={secondaryButtonClass}>
-                Sign in with {methods.jellyfinName}
+                {t("auth.signInWith", { name: methods.jellyfinName })}
               </button>
             )}
           </div>
@@ -371,7 +384,7 @@ export function LoginForm({ methods, ssoError }: { methods: Methods; ssoError: s
 
       {signupNames && (
         <p className="mt-4 text-center text-sm text-text-secondary">
-          New here? Use Sign in with {signupNames} — your account is made for you.
+          {t("auth.signupHint", { names: signupNames })}
         </p>
       )}
     </div>

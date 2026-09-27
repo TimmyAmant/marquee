@@ -1,10 +1,18 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
 namespace Marquee.Windows.ViewModels;
+
+/// <summary>What <see cref="MediaListViewModel.CountLabel"/> counts: "12 credits" or "12 titles".</summary>
+public enum MediaListNoun
+{
+    Credit,
+    Title,
+}
 
 /// <summary>
 /// components/media-list.tsx: the person and studio pages' client-side
@@ -14,7 +22,7 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class MediaListViewModel : ObservableObject
 {
-    public static IReadOnlyList<string> TypeOptions { get; } = ["All", "Movies", "TV"];
+    public static IReadOnlyList<string> TypeOptions => [Loc.Get("Media_TypeAll"), Loc.Get("Media_TypeMovies"), Loc.Get("Media_TypeTv")];
 
     public static IReadOnlyList<string> OrderOptions { get; } =
         TitleListOrderExtensions.All.Select(order => order.Label()).ToList();
@@ -22,8 +30,7 @@ public sealed partial class MediaListViewModel : ObservableObject
     private readonly AppModel model;
     private readonly IReadOnlyList<TitleCard> cards;
     private readonly ICommand openTitle;
-    private readonly string singular;
-    private readonly string plural;
+    private readonly MediaListNoun noun;
 
     [ObservableProperty]
     private string query = "";
@@ -41,14 +48,13 @@ public sealed partial class MediaListViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CountLabel))]
     private IReadOnlyList<PosterItem> visible = [];
 
-    /// <param name="singular">"credit" / "title": the noun in the count.</param>
+    /// <param name="noun">What the count counts: credits or titles.</param>
     /// <param name="emptyMessage">What to say when the server sent no cards at all.</param>
-    public MediaListViewModel(AppModel model, IReadOnlyList<TitleCard> cards, string singular, string plural, string emptyMessage)
+    public MediaListViewModel(AppModel model, IReadOnlyList<TitleCard> cards, MediaListNoun noun, string emptyMessage)
     {
         this.model = model;
         this.cards = cards;
-        this.singular = singular;
-        this.plural = plural;
+        this.noun = noun;
         EmptyMessage = emptyMessage;
         openTitle = new RelayCommand<PosterItem>(item =>
         {
@@ -69,7 +75,9 @@ public sealed partial class MediaListViewModel : ObservableObject
     public bool NoMatches => HasCards && Visible.Count == 0;
 
     /// <summary>"12 credits".</summary>
-    public string CountLabel => Format.Count(Visible.Count, singular, plural);
+    public string CountLabel => noun == MediaListNoun.Credit
+        ? Loc.Plural("Media_CreditCount", Visible.Count)
+        : Loc.Plural("Media_TitleCount", Visible.Count);
 
     partial void OnQueryChanged(string value) => Rebuild();
 

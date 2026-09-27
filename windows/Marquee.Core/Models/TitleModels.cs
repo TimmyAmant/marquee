@@ -1,4 +1,5 @@
 using System.Globalization;
+using Marquee.Core.Localization;
 
 namespace Marquee.Core.Models;
 
@@ -172,9 +173,9 @@ public static class SeasonRequestStateExtensions
     /// <summary>The tag in place of the checkbox; empty for a checkbox row or an unexplained one.</summary>
     public static string Tag(this SeasonRequestState state) => state switch
     {
-        SeasonRequestState.InLibrary => "In library",
-        SeasonRequestState.Monitored => "Monitored",
-        SeasonRequestState.Requested => "Requested",
+        SeasonRequestState.InLibrary => Loc.Get("TitleModel_TagInLibrary"),
+        SeasonRequestState.Monitored => Loc.Get("TitleModel_TagMonitored"),
+        SeasonRequestState.Requested => Loc.Get("TitleModel_TagRequested"),
         _ => "",
     };
 }
@@ -239,11 +240,11 @@ public sealed record TitleFranchise
 
     /// <summary>"Request all 4 missing" / "Requesting…".</summary>
     public static string RequestAllLabel(int count, bool busy) =>
-        busy ? "Requesting…" : $"Request all {count.ToString(CultureInfo.CurrentCulture)} missing";
+        busy ? Loc.Get("TitleModel_Requesting") : Loc.Plural("TitleModel_RequestAllMissing", count);
 
     /// <summary>"Request all 4 missing titles?", the website's confirmation.</summary>
     public static string RequestAllConfirmation(int count) =>
-        $"Request all {count.ToString(CultureInfo.CurrentCulture)} missing {(count == 1 ? "title" : "titles")}?";
+        Loc.Plural("TitleModel_RequestAllConfirm", count);
 }
 
 /// <summary><c>GET /titles/{type}/{tmdbId}</c>: everything the title page renders.</summary>
@@ -475,6 +476,6 @@ public sealed class SeasonPickerSelection
 
     /// <summary>"Request 1 season" / "Request 3 seasons"; "Request seasons" while nothing is picked (the button is disabled then), as on the website.</summary>
     public string SubmitTitle => selected.Count == 0
-        ? "Request seasons"
-        : $"Request {selected.Count.ToString(CultureInfo.CurrentCulture)} {(selected.Count == 1 ? "season" : "seasons")}";
+        ? Loc.Get("TitleModel_RequestSeasons")
+        : Loc.Plural("TitleModel_RequestNSeasons", selected.Count);
 }

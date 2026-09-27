@@ -1,7 +1,10 @@
 import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { getT } from "@/lib/i18n/server";
+import { formatDate } from "@/lib/i18n/format";
+import { rich } from "@/lib/i18n/rich";
 
-export function PersonHeader({
+export async function PersonHeader({
   name,
   biography,
   birthday,
@@ -17,6 +20,7 @@ export function PersonHeader({
   favoriteAction?: React.ReactNode;
 }) {
   const src = tmdbImageUrl(profilePath, "w342");
+  const t = await getT();
 
   return (
     <div className="flex flex-col gap-8 sm:flex-row">
@@ -33,11 +37,8 @@ export function PersonHeader({
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-text-secondary">
           {birthday && (
             <span>
-              <span className="text-text-muted">Born </span>
-              {new Date(birthday).toLocaleDateString(undefined, {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
+              {rich(t("discover.bornOn", { date: formatDate(t, birthday, "long", "UTC") }), {
+                muted: (chunks) => <span className="text-text-muted">{chunks}</span>,
               })}
             </span>
           )}

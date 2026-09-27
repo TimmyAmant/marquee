@@ -1,8 +1,8 @@
 using System.ComponentModel;
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 using Microsoft.UI.Xaml.Media;
@@ -17,8 +17,7 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class CompanyViewModel : ObservableObject
 {
-    public const string ErrorTitle = "Couldn't load this studio";
-    public const string EmptyTitles = "No titles found for this studio yet.";
+    public static string EmptyTitles => Loc.Get("Company_EmptyTitles");
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
@@ -73,7 +72,7 @@ public sealed partial class CompanyViewModel : ObservableObject
     public string Name => Company?.Name ?? "";
 
     /// <summary>"137 titles in the catalog".</summary>
-    public string CountLine => Company is { } current ? $"{current.TitleCount.ToString(CultureInfo.CurrentCulture)} titles in the catalog" : "";
+    public string CountLine => Company is { } current ? Loc.Plural("Company_TitlesInCatalog", current.TitleCount) : "";
 
     public string Description => Company?.ShortDescription ?? "";
     public bool HasDescription => Description.Length > 0;
@@ -148,7 +147,7 @@ public sealed partial class CompanyViewModel : ObservableObject
             logoUrl = fresh.LogoPath.Url(ImageSize.W342);
             logo = null;
             IsFavorited = fresh.Favorited;
-            Titles = new MediaListViewModel(model, fresh.Titles, "title", "titles", EmptyTitles);
+            Titles = new MediaListViewModel(model, fresh.Titles, MediaListNoun.Title, EmptyTitles);
             Company = fresh;
         }
         catch (ApiException error)

@@ -12,7 +12,7 @@ struct SsoSettingsSection: View {
         Group {
             if settings != nil || loadError != nil {
                 VStack(alignment: .leading, spacing: 12) {
-                    SettingsSectionLabel(text: "Sign-in")
+                    SettingsSectionLabel(text: String(localized: "Sign-in"))
                     if let settings {
                         SsoSettingsCard(saved: settings) { self.settings = $0 }
                     } else if let loadError {
@@ -73,42 +73,42 @@ struct SsoSettingsCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: "Single sign-on",
-            description: "Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps.",
+            title: String(localized: "Single sign-on"),
+            description: String(localized: "Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps."),
             connected: saved.configured,
-            connectedLabel: "On"
+            connectedLabel: String(localized: "On")
         ) {
             HintedField(
-                label: "Button name", text: $name, placeholder: "Authentik",
-                hint: "The sign-in button says “Sign in with \(name.nonBlank ?? "<name>")”."
+                label: String(localized: "Button name"), text: $name, placeholder: "Authentik",
+                hint: String(localized: "The sign-in button says “Sign in with \(name.nonBlank ?? String(localized: "<name>"))”.")
             )
             HintedField(
-                label: "Marquee's address", text: $publicUrl, placeholder: "https://marquee.example.com",
-                hint: "The address people use to reach Marquee from outside."
+                label: String(localized: "Marquee's address"), text: $publicUrl, placeholder: "https://marquee.example.com",
+                hint: String(localized: "The address people use to reach Marquee from outside.")
             )
             CopyField(
                 value: API.SsoSettings.callbackURL(for: publicUrl),
-                label: "Redirect URI — add this to the provider exactly"
+                label: String(localized: "Redirect URI — add this to the provider exactly")
             )
 
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .bottom, spacing: 8) {
                     SettingsField(
-                        label: "Issuer URL", text: $issuer,
+                        label: String(localized: "Issuer URL"), text: $issuer,
                         placeholder: "https://auth.example.com/application/o/marquee/"
                     )
                     Button(testing ? "Testing…" : "Test") { runTest() }
                         .buttonStyle(OutlineButtonStyle())
                         .disabled(testing || issuer.nonBlank == nil)
                 }
-                hint("The provider's issuer, or its …/.well-known/openid-configuration address.")
+                hint(String(localized: "The provider's issuer, or its …/.well-known/openid-configuration address."))
             }
             testOutcome
 
-            SettingsField(label: "Client ID", text: $clientId)
+            SettingsField(label: String(localized: "Client ID"), text: $clientId)
             SettingsField(
-                label: "Client secret", text: $clientSecret,
-                placeholder: saved.hasClientSecret ? "(saved — enter to replace)" : "Leave empty for a public client",
+                label: String(localized: "Client secret"), text: $clientSecret,
+                placeholder: saved.hasClientSecret ? String(localized: "(saved — enter to replace)") : String(localized: "Leave empty for a public client"),
                 secure: true
             )
             if saved.hasClientSecret {
@@ -118,31 +118,31 @@ struct SsoSettingsCard: View {
                     .foregroundStyle(Theme.textMuted)
             }
             HintedField(
-                label: "Scopes", text: $scopes,
-                hint: "Add “groups” for Authelia and Pocket ID if you use groups below."
+                label: String(localized: "Scopes"), text: $scopes,
+                hint: String(localized: "Add “groups” for Authelia and Pocket ID if you use groups below.")
             )
 
             VStack(alignment: .leading, spacing: 10) {
                 HintedToggle(
-                    label: "New accounts from single sign-on", isOn: $allowSignup,
-                    hint: "Anyone your provider lets in gets a member account on first sign-in. Off: only accounts that linked it can use it."
+                    label: String(localized: "New accounts from single sign-on"), isOn: $allowSignup,
+                    hint: String(localized: "Anyone your provider lets in gets a member account on first sign-in. Off: only accounts that linked it can use it.")
                 )
                 HintedToggle(
-                    label: "Match existing accounts by verified email", isOn: $matchEmail,
-                    hint: "First sign-in links an account whose username is the person's email — only when the provider says the email is verified, and never the admin account."
+                    label: String(localized: "Match existing accounts by verified email"), isOn: $matchEmail,
+                    hint: String(localized: "First sign-in links an account whose username is the person's email — only when the provider says the email is verified, and never the admin account.")
                 )
             }
             .padding(.top, 2)
 
             HintedField(
-                label: "Required group (optional)", text: $requiredGroup, placeholder: "marquee-users",
-                hint: "Only people in this group can sign in with it."
+                label: String(localized: "Required group (optional)"), text: $requiredGroup, placeholder: "marquee-users",
+                hint: String(localized: "Only people in this group can sign in with it.")
             )
             HintedField(
-                label: "Trusted group (optional)", text: $trustedGroup, placeholder: "marquee-trusted",
-                hint: "Members in this group become Trusted when they sign in. Nobody is ever made an admin this way."
+                label: String(localized: "Trusted group (optional)"), text: $trustedGroup, placeholder: "marquee-trusted",
+                hint: String(localized: "Members in this group become Trusted when they sign in. Nobody is ever made an admin this way.")
             )
-            SettingsField(label: "Groups claim", text: $groupsClaim)
+            SettingsField(label: String(localized: "Groups claim"), text: $groupsClaim)
 
             if let message { InlineMessage(text: message.0, isError: message.1) }
             HStack(spacing: 12) {
@@ -160,7 +160,7 @@ struct SsoSettingsCard: View {
         switch test {
         case let .success(result):
             VStack(alignment: .leading, spacing: 4) {
-                InlineMessage(text: "Found \(result.issuer)", isError: false)
+                InlineMessage(text: String(localized: "Found \(result.issuer)"), isError: false)
                 ForEach(result.warnings, id: \.self) { warning in
                     Label(warning, systemImage: "exclamationmark.circle")
                         .font(.system(size: 12))
@@ -269,7 +269,7 @@ struct SsoSettingsCard: View {
                 // The issuer as the provider states it.
                 issuer = fresh.issuer
                 onChange(fresh)
-                message = ("Saved. The sign-in button is live.", false)
+                message = (String(localized: "Saved. The sign-in button is live."), false)
                 // The sign-in screen and Linked accounts read server-info.
                 await session.refreshInfo()
             } catch {
@@ -291,7 +291,7 @@ struct SsoSettingsCard: View {
                 clearClientSecret = false
                 confirmingRemove = false
                 onChange(fresh)
-                message = ("Single sign-on is off. Accounts keep their links in case you set it up again.", false)
+                message = (String(localized: "Single sign-on is off. Accounts keep their links in case you set it up again."), false)
                 await session.refreshInfo()
             } catch {
                 message = (error.localizedDescription, true)

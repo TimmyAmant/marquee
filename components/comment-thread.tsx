@@ -9,6 +9,9 @@ import {
 } from "@/lib/comments/actions";
 import { UserAvatar } from "@/components/user-avatar";
 import type { Comment, CommentThread } from "@/lib/api/types";
+import { useT } from "@/lib/i18n/client";
+import { formatDate } from "@/lib/i18n/format";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 // The conversation on a request or problem report (lib/comments): the
 // requester or reporter and the reviewers. Collapsed to a "Comments (2)"
@@ -17,22 +20,17 @@ import type { Comment, CommentThread } from "@/lib/api/types";
 
 type Kind = "request" | "issue";
 
-const NOTE_LABEL: Partial<Record<Comment["kind"], string>> = {
-  report: "Reported",
-  resolution: "Marked fixed",
-  declined: "Declined",
+const NOTE_LABEL: Partial<Record<Comment["kind"], MessageKey>> = {
+  report: "title.noteReported",
+  resolution: "title.noteMarkedFixed",
+  declined: "title.noteDeclined",
 };
 
-const ROLE_LABEL: Record<NonNullable<Comment["author"]["role"]>, string | null> = {
-  admin: "Admin",
-  reviewer: "Reviewer",
+const ROLE_LABEL: Record<NonNullable<Comment["author"]["role"]>, MessageKey | null> = {
+  admin: "title.roleAdmin",
+  reviewer: "title.roleReviewer",
   member: null,
 };
-
-function when(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-}
 
 function CommentItem({
   comment,
@@ -45,12 +43,15 @@ function CommentItem({
   parentId: string;
   onChanged: () => void;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [error, setError] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
-  const note = NOTE_LABEL[comment.kind];
-  const role = comment.author.role ? ROLE_LABEL[comment.author.role] : null;
+  const noteKey = NOTE_LABEL[comment.kind];
+  const note = noteKey ? t(noteKey) : null;
+  const roleKey = comment.author.role ? ROLE_LABEL[comment.author.role] : null;
+  const role = roleKey ? t(roleKey) : null;
 
   function save() {
     setError(null);
@@ -83,8 +84,8 @@ function CommentItem({
           <span className="font-medium text-text-primary">{comment.author.label}</span>
           {role && <span>{role}</span>}
           {note && <span>· {note}</span>}
-          <span>· {when(comment.createdAt)}</span>
-          {comment.editedAt && <span>· edited</span>}
+          <span>· {formatDate(t, comment.createdAt, "dateTime")}</span>
+          {comment.editedAt && <span>· {t("title.edited")}</span>}
         </p>
         {editing ? (
           <div className="mt-1 flex flex-col gap-1.5">
@@ -102,7 +103,7 @@ function CommentItem({
                 disabled={busy || draft.trim().length === 0}
                 className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-bg-0 hover:bg-accent-hover disabled:opacity-60"
               >
-                {busy ? "Saving…" : "Save"}
+                {busy ? t("common.saving") : t("common.save")}
               </button>
               <button
                 type="button"
@@ -112,7 +113,7 @@ function CommentItem({
                 }}
                 className="rounded-full border border-border-strong px-3 py-1 text-xs text-text-primary hover:border-accent hover:text-accent"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -123,12 +124,12 @@ function CommentItem({
           <div className="mt-0.5 flex gap-3 text-xs">
             {comment.canEdit && (
               <button type="button" onClick={() => setEditing(true)} className="text-text-muted hover:text-accent">
-                Edit
+                {t("common.edit")}
               </button>
             )}
             {comment.canDelete && (
               <button type="button" onClick={remove} disabled={busy} className="text-text-muted hover:text-red-400 disabled:opacity-60">
-                Delete
+                {t("common.delete")}
               </button>
             )}
           </div>
@@ -149,6 +150,7 @@ export function CommentPanel({
   id: string;
   onCountChange?: (count: number) => void;
 }) {
+  const t = useT();
   const [thread, setThread] = useState<CommentThread | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -161,8 +163,8 @@ export function CommentPanel({
       setThread(result.thread);
       setLoadError(null);
       onCountChange?.(result.thread.results.filter((c) => c.kind === "comment").length);
-    } else setLoadError(result.error ?? "Couldn't load the conversation.");
-  }, [kind, id, onCountChange]);
+    } else setLoadError(result.error ?? t("title.couldntLoadConversation"));
+  }, [kind, id, onCountChange, t]);
 
   useEffect(() => {
     // Loaded when opened; nothing to do with the render itself.
@@ -185,11 +187,11 @@ export function CommentPanel({
   return (
     <div className="rounded-xl border border-border bg-bg-1/60 p-3">
       {loadError && <p className="text-xs text-red-400">{loadError}</p>}
-      {!thread && !loadError && <p className="text-xs text-text-muted">Loading…</p>}
+      {!thread && !loadError && <p className="text-xs text-text-muted">{t("common.loading")}</p>}
       {thread && (
         <>
           {thread.results.length === 0 ? (
-            <p className="text-xs text-text-muted">No comments yet.</p>
+            <p className="text-xs text-text-muted">{t("title.noComments")}</p>
           ) : (
             <ul className="flex flex-col gap-3">
               {thread.results.map((comment) => (
@@ -204,13 +206,13 @@ export function CommentPanel({
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={thread.maxLength}
                 rows={2}
-                placeholder="Write a comment"
-                aria-label="Write a comment"
+                placeholder={t("title.writeComment")}
+                aria-label={t("title.writeComment")}
                 className="w-full resize-y rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-sm text-text-primary outline-none focus:border-accent"
               />
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-text-muted">
-                  {draft.length > thread.maxLength - 200 ? `${thread.maxLength - draft.length} left` : ""}
+                  {draft.length > thread.maxLength - 200 ? t("title.charactersLeft", { count: thread.maxLength - draft.length }) : ""}
                 </span>
                 <button
                   type="button"
@@ -218,7 +220,7 @@ export function CommentPanel({
                   disabled={sending || draft.trim().length === 0}
                   className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-bg-0 hover:bg-accent-hover disabled:opacity-60"
                 >
-                  {sending ? "Sending…" : "Send"}
+                  {sending ? t("title.sending") : t("title.send")}
                 </button>
               </div>
               {error && <p className="text-xs text-red-400">{error}</p>}
@@ -230,21 +232,22 @@ export function CommentPanel({
   );
 }
 
-function toggleLabel(count: number, open: boolean): string {
-  if (open) return "Hide comments";
-  return count === 0 ? "Comment" : `Comments (${count})`;
+function toggleLabel(t: Translator, count: number, open: boolean): string {
+  if (open) return t("title.hideComments");
+  return t("title.commentsToggle", { count });
 }
 
 const toggleClass = "text-xs text-text-secondary hover:text-accent";
 
 /** A "Comments (2)" button with the thread under it, for lists that aren't tables. */
 export function CommentSection({ kind, id, count }: { kind: Kind; id: string; count: number }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(count);
   return (
     <div className="mt-1.5">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className={toggleClass}>
-        {toggleLabel(shown, open)}
+        {toggleLabel(t, shown, open)}
       </button>
       {open && (
         <div className="mt-2">
@@ -292,11 +295,12 @@ export function ThreadRow({
 }
 
 export function CommentToggle() {
+  const t = useT();
   const row = useContext(RowThreadContext);
   if (!row) return null;
   return (
     <button type="button" onClick={row.toggle} aria-expanded={row.open} className={`mt-1 block ${toggleClass}`}>
-      {toggleLabel(row.count, row.open)}
+      {toggleLabel(t, row.count, row.open)}
     </button>
   );
 }

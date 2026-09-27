@@ -3,6 +3,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -17,12 +18,6 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class DiscoverViewModel : ObservableObject
 {
-    public const string EmptyTitle = "Nothing to show yet";
-    public const string EmptyMessage =
-        "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (F5).";
-    public const string ErrorTitle = "Couldn't load Discover";
-    public const string TmdbMissingTitle = "Connect TMDb to start browsing";
-
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
     private bool active;
@@ -71,8 +66,8 @@ public sealed partial class DiscoverViewModel : ObservableObject
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
     public string TmdbMissingMessage => IsAdmin
-        ? "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations."
-        : "The household admin hasn't connected TMDb yet.";
+        ? Loc.Get("Discover_TmdbMissingAdmin")
+        : Loc.Get("Discover_TmdbMissingMember");
 
     /// <summary>Only an admin can fix a missing TMDb credential.</summary>
     public bool CanOpenSettings => IsTmdbMissing && IsAdmin;

@@ -14,13 +14,16 @@ import {
   updateArrServer,
 } from "@/lib/arr/server-manage";
 import type { ArrPickerOptions } from "@/lib/arr/add-options-server";
+import { getT } from "@/lib/i18n/server";
 
 // Settings → Integrations → Download Clients (components/arr-servers-card.tsx).
 // Thin session wrappers over lib/arr/server-manage.ts, shared with
 // /api/v1/settings/arr-servers. The client sends plain objects; everything
 // is validated again here by the same parser the API uses.
 
-const FORBIDDEN = "Only the admin can manage integrations.";
+async function forbidden(): Promise<string> {
+  return (await getT())("integrations.adminOnly");
+}
 
 export type ArrServerActionResult<T extends object = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -30,7 +33,7 @@ export async function testArrServerAction(input: {
   baseUrl?: unknown;
   apiKey?: unknown;
 }): Promise<ArrServerActionResult<ArrPickerOptions & { version: string | null }>> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { ok: false, error: admin.error };
   const parsed = parseArrServerInput({ baseUrl: input.baseUrl, apiKey: input.apiKey });
   if (!parsed.ok) return { ok: false, error: parsed.error };
@@ -59,15 +62,15 @@ export async function saveArrServerAction(
   serverId: string | null,
   body: Record<string, unknown>,
 ): Promise<ArrServerActionResult<{ server: ArrServerDto }>> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { ok: false, error: admin.error };
-  if (!body || typeof body !== "object") return { ok: false, error: "Nothing to save." };
+  if (!body || typeof body !== "object") return { ok: false, error: (await getT())("integrations.nothingToSave") };
   const parsed = parseArrServerInput(body);
   if (!parsed.ok) return { ok: false, error: parsed.error };
 
   if (serverId === null) {
     const kind = parseArrKind(body.kind);
-    if (!kind) return { ok: false, error: '"kind" must be sonarr or radarr.' };
+    if (!kind) return { ok: false, error: (await getT())("integrations.arrKindInvalid") };
     const result = await createArrServer(admin.userId, kind, parsed.input);
     return result.ok ? { ok: true, server: await dto(result.server) } : { ok: false, error: result.error };
   }
@@ -76,14 +79,14 @@ export async function saveArrServerAction(
 }
 
 export async function makeDefaultArrServerAction(serverId: string): Promise<ArrServerActionResult> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { ok: false, error: admin.error };
   const result = await updateArrServer(admin.userId, serverId, { isDefault: true });
   return result.ok ? { ok: true } : { ok: false, error: result.error };
 }
 
 export async function deleteArrServerAction(serverId: string): Promise<ArrServerActionResult> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { ok: false, error: admin.error };
   const result = await deleteArrServer(admin.userId, serverId);
   return result.ok ? { ok: true } : { ok: false, error: result.error };
@@ -92,14 +95,14 @@ export async function deleteArrServerAction(serverId: string): Promise<ArrServer
 export async function regenerateArrServerSecretAction(
   serverId: string,
 ): Promise<ArrServerActionResult<{ webhookUrl: string }>> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { ok: false, error: admin.error };
   const result = await regenerateArrServerSecret(admin.userId, serverId);
   return result.ok ? { ok: true, webhookUrl: (await dto(result.server)).webhookUrl } : { ok: false, error: result.error };
 }
 
 export async function getArrServerOptionsAction(serverId: string): Promise<ArrServerActionResult<ArrPickerOptions>> {
-  const admin = await requireAdmin(FORBIDDEN);
+  const admin = await requireAdmin(await forbidden());
   if (!admin.ok) return { ok: false, error: admin.error };
   const result = await getArrServerOptions(admin.userId, serverId);
   if (!result.ok) return { ok: false, error: result.error };

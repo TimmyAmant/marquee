@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Globalization;
 
 namespace Marquee.Core.Models;
@@ -189,11 +190,11 @@ public readonly record struct DiscoverListKind(string Value) : IOpenEnum<Discove
 
     /// <summary>The heading until the server's own <see cref="DiscoverListResults.Title"/> arrives.</summary>
     public string Title =>
-        this == Trending ? "Trending"
-        : this == RecentlyAdded ? "Recently Added"
-        : this == UpcomingMovies ? "Upcoming Movies"
-        : this == UpcomingSeries ? "Upcoming Series"
-        : IsCustomRow ? "Discover"
+        this == Trending ? Loc.Get("Model_DiscoverTrending")
+        : this == RecentlyAdded ? Loc.Get("Model_DiscoverRecentlyAdded")
+        : this == UpcomingMovies ? Loc.Get("Model_DiscoverUpcomingMovies")
+        : this == UpcomingSeries ? Loc.Get("Model_DiscoverUpcomingSeries")
+        : IsCustomRow ? Loc.Get("Model_DiscoverCustomRow")
         : OpenEnum.Capitalized(Value.Replace('-', ' '));
 
     /// <summary>A custom row's uuid rather than a named list (0.49+): no name of its own until the server's title arrives.</summary>

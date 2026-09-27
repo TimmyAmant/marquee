@@ -22,7 +22,7 @@ extension API {
         let sorted = Array(Set(seasons)).sorted()
         guard !sorted.isEmpty else { return nil }
         var parts: [String] = []
-        if sorted.contains(0) { parts.append("Specials") }
+        if sorted.contains(0) { parts.append(String(localized: "Specials")) }
         let numbered = sorted.filter { $0 != 0 }
         if let first = numbered.first {
             var runs: [String] = []
@@ -39,7 +39,8 @@ extension API {
                 }
             }
             close()
-            parts.append((numbered.count == 1 ? "Season " : "Seasons ") + runs.joined(separator: ", "))
+            let list = runs.joined(separator: ", ")
+            parts.append(numbered.count == 1 ? String(localized: "Season \(list)") : String(localized: "Seasons \(list)"))
         }
         return parts.joined(separator: ", ")
     }
@@ -47,7 +48,7 @@ extension API {
     /// components/request-title.tsx: the small line under a request's title,
     /// the seasons and "In 4K" joined with " · "; nil when there's neither.
     static func requestDetailLine(_ seasons: String?, is4k: Bool) -> String? {
-        let parts = [seasons.nonBlank, is4k ? "In 4K" : nil].compactMap { $0 }
+        let parts = [seasons.nonBlank, is4k ? String(localized: "In 4K") : nil].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
@@ -146,11 +147,11 @@ extension API {
         /// list: an older server still takes the reason as free text, so the
         /// chooser works against it too.
         static let defaultRejectionReasons: [String] = [
-            "Already available on a streaming service we have",
-            "Not released yet, ask again once it's out",
-            "Not enough space on the server right now",
-            "Not a fit for the household library",
-            "Couldn't find a good copy of it",
+            String(localized: "Already available on a streaming service we have"),
+            String(localized: "Not released yet, ask again once it's out"),
+            String(localized: "Not enough space on the server right now"),
+            String(localized: "Not a fit for the household library"),
+            String(localized: "Couldn't find a good copy of it"),
         ]
 
         /// What the Reject chooser lists: the server's reasons, else the built-in ones.
@@ -282,8 +283,8 @@ extension API {
             guard let addFailed else { return nil }
             return [
                 requestedBy.label,
-                "approved \(Format.shortDate(reviewedAt ?? addFailed.since))",
-                "last tried \(Format.dateTime(addFailed.since))",
+                String(localized: "approved \(Format.shortDate(reviewedAt ?? addFailed.since))"),
+                String(localized: "last tried \(Format.dateTime(addFailed.since))"),
             ].joined(separator: " · ")
         }
         /// Show the "Can't find" pill.
@@ -295,7 +296,7 @@ extension API {
         var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
         /// "Added to Radarr 2", under the Approved badge; nil when the server
         /// wasn't recorded or has since been removed.
-        var addedToLine: String? { addedTo?.serverName.nonBlank.map { "Added to \($0)" } }
+        var addedToLine: String? { addedTo?.serverName.nonBlank.map { String(localized: "Added to \($0)") } }
     }
 
     /// `GET /requests/not-found` (reviewers, 0.46+): "Can't find", approved
@@ -310,7 +311,7 @@ extension API {
 
         /// The section's blurb, as on the website.
         var blurb: String {
-            "Approved and released, but Sonarr/Radarr still has nothing \(afterHours) hour\(afterHours == 1 ? "" : "s") or more after approval. Most often no indexer has a copy yet."
+            String(localized: "Approved and released, but Sonarr/Radarr still has nothing \(afterHours) hours or more after approval. Most often no indexer has a copy yet.")
         }
     }
 
@@ -358,16 +359,16 @@ extension API {
             return url
         }
         /// "Open in Radarr" / "Open in Sonarr".
-        var openInArrTitle: String { "Open in \(server.kindName)" }
+        var openInArrTitle: String { String(localized: "Open in \(server.kindName)") }
         /// "Radarr is searching again…" after Search again, with the server's
         /// own name when it has one ("Radarr 4K is searching again…").
-        var searchingAgainLine: String { "\(server.name.nonBlank ?? server.kindName) is searching again…" }
+        var searchingAgainLine: String { String(localized: "\(server.name.nonBlank ?? server.kindName) is searching again…") }
 
         /// "Susan · can't find for 3 days (since 9/18/2026) · Radarr".
         func summaryLine(now: Date = Date()) -> String {
             var parts = [
                 requestedBy.label,
-                "can't find for \(API.notFoundAgeLabel(since: notFoundSince, now: now)) (since \(Format.shortDate(notFoundSince)))",
+                String(localized: "can't find for \(API.notFoundAgeLabel(since: notFoundSince, now: now)) (since \(Format.shortDate(notFoundSince)))"),
             ]
             if let name = server.name.nonBlank { parts.append(name) }
             return parts.joined(separator: " · ")
@@ -378,9 +379,10 @@ extension API {
     /// "1 hour", "30 hours" (under 48), then whole days: "3 days".
     static func notFoundAgeLabel(since: Date, now: Date) -> String {
         let hours = max(0, Int((now.timeIntervalSince(since) / 3600).rounded(.down)))
-        if hours < 1 { return "under an hour" }
-        if hours < 48 { return hours == 1 ? "1 hour" : "\(hours) hours" }
-        return "\(hours / 24) days"
+        if hours < 1 { return String(localized: "under an hour") }
+        if hours < 48 { return String(localized: "\(hours) hours") }
+        let days = hours / 24
+        return String(localized: "\(days) days")
     }
 
     /// `POST /requests/approve-all`.
@@ -396,12 +398,18 @@ extension API {
 extension APIError {
     /// The server's message when approving (or adding) a TV title Sonarr can't
     /// resolve; control flow depends on it.
-    static let sonarrUnresolvableMessage = "Couldn't resolve this show for Sonarr."
+    static let sonarrUnresolvableMessage = "Couldn't resolve this show for Sonarr." // i18n-ignore
 
     /// Approving a TV request failed because Sonarr couldn't resolve the show:
     /// offer "Manually approve" and "Add manually in Sonarr".
     var isSonarrUnresolvable: Bool {
+        if case .sonarrUnresolvable = self { return true }
+        // A server older than 0.50 sends no reason, and always English.
         if case let .conflict(message) = self { return message == Self.sonarrUnresolvableMessage }
         return false
+    }
+
+    static var sonarrUnresolvableFallback: String {
+        String(localized: "Couldn't resolve this show for Sonarr.")
     }
 }

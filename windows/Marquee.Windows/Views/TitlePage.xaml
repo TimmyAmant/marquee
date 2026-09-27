@@ -36,7 +36,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ProgressRing IsActive="{x:Bind IsLoading, Mode=OneWay}" Width="16" Height="16" />
                     <TextBlock
-                        Text="Checking your Sonarr and Radarr servers…"
+                        x:Uid="Title_CheckingServers"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         VerticalAlignment="Center" />
@@ -47,7 +47,7 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                         TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind LoadCommand}" />
+                    <Button x:Uid="Title_AdvancedRetry" Command="{x:Bind LoadCommand}" />
                 </StackPanel>
                 <TextBlock
                     Text="{x:Bind NoServersMessage, Mode=OneWay}"
@@ -57,28 +57,28 @@
                     TextWrapping="Wrap" />
                 <StackPanel Spacing="10" Visibility="{x:Bind ShowsPickers, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <ComboBox
-                        Header="Server"
+                        x:Uid="Title_AdvancedServer"
                         MinWidth="260"
                         ItemsSource="{x:Bind ServerNames, Mode=OneWay}"
                         SelectedIndex="{x:Bind ServerIndex, Mode=TwoWay}" />
                     <TextBlock
-                        Text="This server isn't responding right now, so its lists can't be shown. Its saved settings will be used."
+                        x:Uid="Title_ServerDown"
                         Visibility="{x:Bind ServerIsDown, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
                         TextWrapping="Wrap" />
                     <ComboBox
-                        Header="Quality profile"
+                        x:Uid="Title_AdvancedQualityProfile"
                         MinWidth="260"
                         ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
                         SelectedIndex="{x:Bind QualityProfileIndex, Mode=TwoWay}" />
                     <ComboBox
-                        Header="Root folder"
+                        x:Uid="Title_AdvancedRootFolder"
                         MinWidth="260"
                         ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
                         SelectedIndex="{x:Bind RootFolderIndex, Mode=TwoWay}" />
                     <StackPanel Spacing="6" Visibility="{x:Bind HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="Tags" Style="{StaticResource FieldLabel}" />
+                        <TextBlock x:Uid="Title_AdvancedTags" Style="{StaticResource FieldLabel}" />
                         <ItemsRepeater ItemsSource="{x:Bind Tags, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout MinItemWidth="140" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
@@ -91,13 +91,13 @@
                         </ItemsRepeater>
                     </StackPanel>
                     <ComboBox
-                        Header="Series type"
+                        x:Uid="Title_AdvancedSeriesType"
                         MinWidth="260"
                         ItemsSource="{x:Bind SeriesTypes}"
                         SelectedIndex="{x:Bind SeriesTypeIndex, Mode=TwoWay}"
                         Visibility="{x:Bind ShowsSeriesType, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <TextBlock
-                        Text="Picking another server resets the rest to that server's defaults."
+                        x:Uid="Title_ServerResetHint"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap" />
@@ -223,7 +223,7 @@
                                         AutomationProperties.Name="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <FontIcon Glyph="{x:Bind ViewModel.FavoriteGlyph, Mode=OneWay}" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                                            <TextBlock Text="Favorite" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+                                            <TextBlock x:Uid="Title_Favorite" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
@@ -243,7 +243,7 @@
                                             VerticalAlignment="Center"
                                             ToolTipService.ToolTip="{x:Bind ViewModel.NotFoundTooltip, Mode=OneWay}">
                                             <TextBlock
-                                                Text="Can't find"
+                                                x:Uid="Title_CantFind"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 FontWeight="SemiBold"
                                                 Foreground="{ThemeResource MissingBadgeForegroundBrush}" />
@@ -267,7 +267,7 @@
                                             Visibility="{x:Bind ViewModel.CanRequest, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                             Style="{StaticResource AccentButtonStyle}" />
                                         <Button
-                                            Content="Request more seasons"
+                                            x:Uid="Title_RequestMoreSeasons"
                                             Click="OnRequestClick"
                                             IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.ShowsRequestMoreSeasons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
@@ -300,16 +300,14 @@
                                             Command="{x:Bind ViewModel.ToggleMonitorCommand}"
                                             Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                         <Button
-                                            Content="Fix ID"
+                                            x:Uid="Title_FixId"
                                             Click="OnFixIdClick"
-                                            Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            ToolTipService.ToolTip="Wrong match? Point this title at the right id." />
+                                            Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                         <!-- components/block-requests-button.tsx (0.41+): the admin's request blocklist. -->
                                         <Button
-                                            Content="Block requests"
+                                            x:Uid="Title_BlockRequests"
                                             Click="OnBlockRequestsClick"
-                                            Visibility="{x:Bind ViewModel.CanBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            ToolTipService.ToolTip="Nobody can request this title; you can still add it yourself." />
+                                            Visibility="{x:Bind ViewModel.CanBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                         <Button
                                             Content="{x:Bind ViewModel.UnblockLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.UnblockCommand}"
@@ -321,7 +319,7 @@
                                             BorderThickness="1"
                                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                             VerticalAlignment="Center"
-                                            ToolTipService.ToolTip="Remove the keyword under Settings › Request blocklist to allow requests again.">
+                                            x:Uid="Title_BlockedByKeyword">
                                             <TextBlock
                                                 Text="{x:Bind ViewModel.BlockedKeywordLine, Mode=OneWay}"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -336,7 +334,7 @@
                                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                             VerticalAlignment="Center">
                                             <TextBlock
-                                                Text="Problem reported"
+                                                x:Uid="Title_ProblemReported"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                         </Border>
@@ -344,16 +342,15 @@
                                             Content="{x:Bind ViewModel.ReportButtonLabel, Mode=OneWay}"
                                             Click="OnReportProblemClick"
                                             Visibility="{x:Bind ViewModel.CanReport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            ToolTipService.ToolTip="Bad video or audio, missing subtitles, won't play: the admin is told." />
+                                            x:Uid="Title_ReportButton" />
                                         <!-- components/share-button.tsx (0.45.1+): send it to someone here, or share a link. -->
                                         <Button
                                             Click="OnShareClick"
                                             Visibility="{x:Bind ViewModel.CanShare, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            ToolTipService.ToolTip="Send it to someone in the household, or share a link."
-                                            AutomationProperties.Name="Share">
+                                            x:Uid="Title_ShareButton">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <FontIcon Glyph="&#xE72D;" FontSize="14" />
-                                                <TextBlock Text="Share" VerticalAlignment="Center" />
+                                                <TextBlock x:Uid="Title_ShareLabel" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
                                         <HyperlinkButton
@@ -364,7 +361,7 @@
                                     <!-- 0.43+: which server and settings "Add to Radarr/Sonarr" uses; hidden on an older server. -->
                                     <StackPanel Visibility="{x:Bind ViewModel.CanAdd, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                         <Expander
-                                            Header="Advanced"
+                                            x:Uid="Title_Advanced"
                                             MaxWidth="600"
                                             IsExpanded="{x:Bind ViewModel.AddAdvanced.IsExpanded, Mode=TwoWay}"
                                             Visibility="{x:Bind ViewModel.AddAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -402,7 +399,7 @@
                                             Background="{ThemeResource InfoBadgeBackgroundBrush}"
                                             VerticalAlignment="Center">
                                             <TextBlock
-                                                Text="4K requested"
+                                                x:Uid="Title_FourKRequested"
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 FontWeight="SemiBold"
                                                 Foreground="{ThemeResource InfoBadgeForegroundBrush}" />
@@ -419,7 +416,7 @@
                                     <!-- 0.43+: which 4K server and settings "Add to 4K …" uses. -->
                                     <StackPanel Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                         <Expander
-                                            Header="Advanced (4K)"
+                                            x:Uid="Title_AdvancedFourK"
                                             MaxWidth="600"
                                             IsExpanded="{x:Bind ViewModel.AddFourKAdvanced.IsExpanded, Mode=TwoWay}"
                                             Visibility="{x:Bind ViewModel.AddFourKAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -491,7 +488,7 @@
                                     TextWrapping="Wrap" />
 
                                 <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.HasOverview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                    <TextBlock Text="Overview" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                    <TextBlock x:Uid="Title_OverviewHeader" Style="{StaticResource SubtitleTextBlockStyle}" />
                                     <TextBlock
                                         Text="{x:Bind ViewModel.Overview, Mode=OneWay}"
                                         Style="{StaticResource BodyTextBlockStyle}"
@@ -554,7 +551,7 @@
                                 </Grid>
 
                                 <HyperlinkButton
-                                    Content="Open in browser"
+                                    x:Uid="Title_OpenInBrowser"
                                     Command="{x:Bind ViewModel.OpenInBrowserCommand}"
                                     Visibility="{x:Bind ViewModel.CanOpenInBrowser, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                     Padding="0,4" />
@@ -563,7 +560,7 @@
 
                         <!-- components/season-episode-list.tsx -->
                         <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.HasSeasons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="Episodes" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Uid="Title_EpisodesHeader" Style="{StaticResource SubtitleTextBlockStyle}" />
                             <ItemsRepeater ItemsSource="{x:Bind ViewModel.Seasons, Mode=OneWay}">
                                 <ItemsRepeater.Layout>
                                     <StackLayout Orientation="Vertical" Spacing="6" />
@@ -604,7 +601,7 @@
                                                     Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                                     TextWrapping="Wrap" />
                                                 <TextBlock
-                                                    Text="No episode data for this season."
+                                                    x:Uid="Title_NoEpisodeData"
                                                     Visibility="{x:Bind IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                                     Style="{StaticResource CaptionTextBlockStyle}"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -662,7 +659,7 @@
                         <!-- Cast rail. -->
                         <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.HasCast, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <Grid MinHeight="28">
-                                <TextBlock Text="Cast" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                                <TextBlock x:Uid="Title_CastHeader" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                                 <controls:RailArrows Target="{x:Bind CastRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                             <ScrollViewer
@@ -704,7 +701,7 @@
                                         VerticalAlignment="Center" />
                                     <TextBlock
                                         Grid.Column="1"
-                                        Text="TMDb user score"
+                                        x:Uid="Title_UserScore"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         HorizontalAlignment="Right"
@@ -720,7 +717,7 @@
                                     Margin="0,12,0,0"
                                     Visibility="{x:Bind ViewModel.HasProviders, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                     <TextBlock
-                                        Text="CURRENTLY STREAMING ON"
+                                        x:Uid="Title_StreamingOn"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         CharacterSpacing="60"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -754,10 +751,10 @@
                             BorderThickness="1"
                             Visibility="{x:Bind ViewModel.HasFile, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Spacing="10">
-                                <TextBlock Text="File details" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock x:Uid="Title_FileDetails" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasFilePath, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                     <TextBlock
-                                        Text="LOCATION"
+                                        x:Uid="Title_Location"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         CharacterSpacing="60"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -776,7 +773,7 @@
                                             VerticalAlignment="Center" />
                                         <Button
                                             Grid.Column="1"
-                                            Content="Copy"
+                                            x:Uid="Title_CopyPath"
                                             Click="OnCopyPathClick"
                                             Padding="8,4"
                                             VerticalAlignment="Top" />
@@ -833,7 +830,7 @@
 
                     <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <Grid MinHeight="28">
-                            <TextBlock Text="Studio" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="Title_StudioHeader" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                             <controls:RailArrows Target="{x:Bind StudiosRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
                         <ScrollViewer
@@ -854,7 +851,7 @@
 
                     <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.HasSimilar, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <Grid MinHeight="28">
-                            <TextBlock Text="More like this" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="Title_MoreLikeThis" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
                             <controls:RailArrows Target="{x:Bind SimilarRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
                         <ScrollViewer
@@ -879,7 +876,7 @@
             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" Width="36" Height="36" />
             <TextBlock
-                Text="Loading this title…"
+                x:Uid="Title_Loading"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 HorizontalAlignment="Center" />
@@ -893,14 +890,14 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.ShowsError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Couldn't load this title" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Title_LoadFailed" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Title_Retry" Command="{x:Bind ViewModel.LoadCommand}" HorizontalAlignment="Center" />
         </StackPanel>
     </Grid>
 </Page>

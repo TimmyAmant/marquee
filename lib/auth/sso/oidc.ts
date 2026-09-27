@@ -7,6 +7,8 @@ import {
   type JWTPayload,
   type JWTVerifyGetKey,
 } from "jose";
+import { englishT } from "@/lib/i18n/catalog";
+import type { MessageKey, MessageValues, Translator } from "@/lib/i18n/translator";
 
 // The OpenID Connect authorization-code flow with PKCE, state and nonce, as
 // Marquee's single sign-on uses it (lib/auth/sso/signin.ts). Written against
@@ -23,10 +25,19 @@ const TIMEOUT_MS = 10_000;
 /** How far the provider's clock may be off from ours. */
 const CLOCK_TOLERANCE_S = 60;
 
+/** `message` is English (the log); the ones an admin sees when testing a
+ * provider carry a message key too, for `messageIn(t)`. */
 export class OidcError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly localized: { key: MessageKey; values?: MessageValues } | null;
+
+  constructor(message: string | { key: MessageKey; values?: MessageValues }) {
+    super(typeof message === "string" ? message : englishT()(message.key, message.values));
     this.name = "OidcError";
+    this.localized = typeof message === "string" ? null : message;
+  }
+
+  messageIn(t: Translator): string {
+    return this.localized ? t(this.localized.key, this.localized.values) : this.message;
   }
 }
 
@@ -82,22 +93,20 @@ function stringList(value: unknown): string[] {
 
 /** Checks a discovery document fetched for `issuer`. Pure; unit tested. */
 export function parseDiscovery(issuer: string, body: unknown): Discovery {
-  if (!body || typeof body !== "object") throw new OidcError("The discovery document isn't JSON.");
+  if (!body || typeof body !== "object") throw new OidcError({ key: "server.discoveryNotJson" });
   const doc = body as Record<string, unknown>;
   if (typeof doc.issuer !== "string" || !sameIssuer(doc.issuer, issuer)) {
-    throw new OidcError(
-      `The provider calls itself "${String(doc.issuer ?? "")}", not "${issuer}". Use its issuer URL exactly.`,
-    );
+    throw new OidcError({ key: "server.issuerMismatch", values: { stated: String(doc.issuer ?? ""), issuer } });
   }
   const authorizationEndpoint = httpUrl(doc.authorization_endpoint);
   const tokenEndpoint = httpUrl(doc.token_endpoint);
   const jwksUri = httpUrl(doc.jwks_uri);
   if (!authorizationEndpoint || !tokenEndpoint || !jwksUri) {
-    throw new OidcError("The discovery document is missing its authorization, token or keys endpoint.");
+    throw new OidcError({ key: "server.discoveryMissingEndpoints" });
   }
   const responseTypes = stringList(doc.response_types_supported);
   if (responseTypes.length > 0 && !responseTypes.includes("code")) {
-    throw new OidcError("The provider doesn't support the authorization-code flow.");
+    throw new OidcError({ key: "server.noCodeFlow" });
   }
   const algs = stringList(doc.id_token_signing_alg_values_supported).filter((a) => a !== "none");
   return {
@@ -120,14 +129,14 @@ export async function fetchDiscovery(issuer: string, fetchImpl: Fetch = fetch): 
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch {
-    throw new OidcError(`Couldn't reach ${discoveryUrl(issuer)}.`);
+    throw new OidcError({ key: "server.couldNotReachUrl", values: { url: discoveryUrl(issuer) } });
   }
-  if (!res.ok) throw new OidcError(`${discoveryUrl(issuer)} answered ${res.status}.`);
+  if (!res.ok) throw new OidcError({ key: "server.urlAnswered", values: { url: discoveryUrl(issuer), status: String(res.status) } });
   let body: unknown;
   try {
     body = await res.json();
   } catch {
-    throw new OidcError("The discovery document isn't JSON.");
+    throw new OidcError({ key: "server.discoveryNotJson" });
   }
   return parseDiscovery(issuer, body);
 }

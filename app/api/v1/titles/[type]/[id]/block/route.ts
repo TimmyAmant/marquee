@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiPermission } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { readJsonBody } from "@/lib/api/request";
@@ -6,7 +7,7 @@ import { parseTitleParams, type TitleParams } from "@/lib/api/routes/titles";
 import { blockTitle, unblockTitle } from "@/lib/requests/blocklist";
 import type { Ok } from "@/lib/api/types";
 
-const FORBIDDEN = "Only the admin can manage the blocklist.";
+const FORBIDDEN = msg("server.onlyAdminBlocklist");
 
 /** "Block requests" for this title. Body (optional): `{ "reason": "…" }`,
  * shown to whoever tries to request it. */

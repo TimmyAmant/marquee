@@ -10,6 +10,7 @@ import { QuickAddButton } from "@/components/quick-add-button";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { loadSearchResults } from "@/lib/pages/search";
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 
 export default async function SearchPage({
   searchParams,
@@ -18,11 +19,12 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams;
   const query = q?.trim();
+  const t = await getT();
 
   if (!query) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-20 text-center">
-        <h1 className="font-display text-3xl text-text-primary">Search Marquee</h1>
+        <h1 className="font-display text-3xl text-text-primary">{t("discover.searchTitle")}</h1>
         <div className="mt-8">
           {/* The menu's Search item lands here, ready to type. */}
           <SearchBar autoFocus />
@@ -50,14 +52,12 @@ export default async function SearchPage({
   return (
     <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
       {!hasResults && (
-        <p className="text-center text-text-secondary">
-          No results for &ldquo;{query}&rdquo;.
-        </p>
+        <p className="text-center text-text-secondary">{t("discover.noResults", { query })}</p>
       )}
 
       {people.length > 0 && (
         <section className="mb-12">
-          <h2 className="mb-4 font-display text-xl text-text-primary">People</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("discover.people")}</h2>
           <PosterGrid>
             {people.map((person) => (
               <PosterCard
@@ -84,7 +84,7 @@ export default async function SearchPage({
 
       {companyResults.length > 0 && (
         <section className="mb-12">
-          <h2 className="mb-4 font-display text-xl text-text-primary">Studios</h2>
+          <h2 className="mb-4 font-display text-xl text-text-primary">{t("discover.shelfStudios")}</h2>
           <div className="flex flex-wrap gap-3">
             {companyResults.map((company) => (
               <StudioChip
@@ -111,7 +111,7 @@ export default async function SearchPage({
       {titleResults.length > 0 && (
         <section className="mb-12">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="font-display text-xl text-text-primary">Titles</h2>
+            <h2 className="font-display text-xl text-text-primary">{t("discover.titles")}</h2>
             {viewer.session && <StatusLegend />}
           </div>
           <PosterGrid>
@@ -151,7 +151,7 @@ export default async function SearchPage({
       {themeItems.length > 0 && (
         <section>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="font-display text-xl text-text-primary">{`${themeLabel} movies & TV`}</h2>
+            <h2 className="font-display text-xl text-text-primary">{t("discover.themeHeading", { theme: themeLabel })}</h2>
             {viewer.session && titleResults.length === 0 && <StatusLegend />}
           </div>
           <PosterGrid>

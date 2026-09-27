@@ -8,11 +8,14 @@ import { deleteIssueAction, resolveIssueAction, searchAgainAction } from "@/lib/
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { Issue } from "@/lib/api/types";
 import { CommentSection } from "@/components/comment-thread";
+import { useT } from "@/lib/i18n/client";
+import { formatDate } from "@/lib/i18n/format";
 
 const smallButton =
   "rounded-full border border-border-strong px-3 py-1 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
 
 function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
+  const t = useT();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,11 +51,15 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
         <p className="mt-0.5 text-text-secondary">
           {issue.kindLabel}
           {isAdmin && <span className="text-text-muted"> · {who}</span>}
-          <span className="text-text-muted"> · {new Date(issue.createdAt).toLocaleDateString()}</span>
+          <span className="text-text-muted"> · {formatDate(t, issue.createdAt)}</span>
         </p>
-        {issue.message && <p className="mt-1 whitespace-pre-line text-text-secondary">“{issue.message}”</p>}
+        {issue.message && (
+          <p className="mt-1 whitespace-pre-line text-text-secondary">{t("title.quoted", { text: issue.message })}</p>
+        )}
         {issue.status === "resolved" && (
-          <p className="mt-1 text-xs text-owned">Fixed{issue.resolution ? `: ${issue.resolution}` : ""}</p>
+          <p className="mt-1 text-xs text-owned">
+            {issue.resolution ? t("title.issueFixedNote", { note: issue.resolution }) : t("title.issueFixed")}
+          </p>
         )}
         {resolving && (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -60,7 +67,7 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
               value={note}
               maxLength={500}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Note for them (optional), e.g. Replaced the file"
+              placeholder={t("title.resolveNotePlaceholder")}
               className="min-w-0 flex-1 rounded-lg border border-border bg-bg-0 px-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent"
             />
             <button
@@ -69,7 +76,7 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
               onClick={() => run("resolve", () => resolveIssueAction(issue.id, note))}
               className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-bg-0 hover:bg-accent-hover disabled:opacity-60"
             >
-              {busy === "resolve" ? "Saving…" : "Mark fixed"}
+              {busy === "resolve" ? t("common.saving") : t("title.markFixed")}
             </button>
           </div>
         )}
@@ -84,13 +91,13 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
               <button
                 type="button"
                 disabled={busy !== null}
-                onClick={() => run("search", () => searchAgainAction(issue.id), "Searching for another copy…")}
+                onClick={() => run("search", () => searchAgainAction(issue.id), t("title.searchingAnotherCopy"))}
                 className={smallButton}
               >
-                {busy === "search" ? "Searching…" : "Search again"}
+                {busy === "search" ? t("title.searching") : t("title.searchAgain")}
               </button>
               <button type="button" onClick={() => setResolving(true)} className={smallButton}>
-                Mark fixed
+                {t("title.markFixed")}
               </button>
             </>
           )}
@@ -101,7 +108,7 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
               onClick={() => run("delete", () => deleteIssueAction(issue.id))}
               className="text-xs text-text-muted hover:text-red-400 disabled:opacity-60"
             >
-              {issue.isMine && !isAdmin ? "Withdraw" : "Remove"}
+              {issue.isMine && !isAdmin ? t("title.withdraw") : t("common.remove")}
             </button>
           )}
         </div>
@@ -113,15 +120,16 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
 /** "Reported problems" on the Requests page: the admin's open reports (and
  * the latest fixed ones), or a member's own. */
 export function IssuesSection({ issues, isAdmin }: { issues: Issue[]; isAdmin: boolean }) {
+  const t = useT();
   const open = issues.filter((i) => i.status === "open");
   const fixed = issues.filter((i) => i.status === "resolved");
   const [showFixed, setShowFixed] = useState(false);
   if (issues.length === 0) return null;
   return (
     <section className="mt-12">
-      <h2 className="font-display text-xl text-text-primary">{isAdmin ? "Reported problems" : "Your problem reports"}</h2>
+      <h2 className="font-display text-xl text-text-primary">{isAdmin ? t("title.reportedProblems") : t("title.yourProblemReports")}</h2>
       {open.length === 0 ? (
-        <p className="mt-3 text-sm text-text-muted">Nothing open right now.</p>
+        <p className="mt-3 text-sm text-text-muted">{t("title.nothingOpen")}</p>
       ) : (
         <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
           {open.map((issue) => (
@@ -136,7 +144,7 @@ export function IssuesSection({ issues, isAdmin }: { issues: Issue[]; isAdmin: b
             onClick={() => setShowFixed((v) => !v)}
             className="mt-3 text-xs text-text-secondary hover:text-accent"
           >
-            {showFixed ? "Hide fixed" : `Show fixed (${fixed.length})`}
+            {showFixed ? t("title.hideFixed") : t("title.showFixed", { count: fixed.length })}
           </button>
           {showFixed && (
             <ul className="mt-2 divide-y divide-border rounded-xl border border-border opacity-80">

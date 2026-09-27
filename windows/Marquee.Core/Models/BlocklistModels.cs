@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // The request blocklist (api-v1.md section 7, "Request blocklist (0.41+)"):
@@ -21,10 +23,10 @@ public sealed record TitleBlock
 
     /// <summary>A member's pill (components/add-to-library-button.tsx): "Requests are closed for this title — Already on Max."</summary>
     public string MemberLine =>
-        Reason.NonBlank() is { } reason ? $"Requests are closed for this title — {reason}" : "Requests are closed for this title";
+        Reason.NonBlank() is { } reason ? Loc.Format("Model_BlockMemberLineReason", reason) : Loc.Get("Model_BlockMemberLine");
 
     /// <summary>The admin's pill when a keyword did it: "Requests blocked by “anime”"; null for a title blocked directly.</summary>
-    public string? KeywordLine => Keyword.NonBlank() is { } keyword ? $"Requests blocked by “{keyword}”" : null;
+    public string? KeywordLine => Keyword.NonBlank() is { } keyword ? Loc.Format("Model_BlockKeywordLine", keyword) : null;
 }
 
 public readonly record struct BlocklistKind(string Value) : IOpenEnum<BlocklistKind>
@@ -70,7 +72,7 @@ public sealed record BlocklistEntry
             {
                 return Title.NonBlank() ?? $"#{title.TmdbId}";
             }
-            return $"Keyword: {Keyword}";
+            return Loc.Format("Model_BlockKeywordLabel", Keyword);
         }
     }
 }

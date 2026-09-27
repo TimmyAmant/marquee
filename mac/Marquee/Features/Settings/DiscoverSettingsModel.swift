@@ -95,7 +95,7 @@ final class DiscoverSettingsModel {
     @discardableResult
     func rename(_ id: String, to title: String, _ api: MarqueeAPI) async -> Bool {
         guard let trimmed = title.nonBlank?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-            error = "Give the row a name."
+            error = String(localized: "Give the row a name.")
             return false
         }
         guard let row = rows.first(where: { $0.id == id }), row.custom else { return false }
@@ -225,14 +225,14 @@ struct DiscoverRowDraft: Hashable, Sendable {
     /// nil when it's ready.
     var missingMessage: String? {
         switch kind {
-        case .keyword: return picked == nil ? "Pick a keyword." : nil
-        case .genre: return picked == nil ? "Pick a genre." : nil
-        case .company: return picked == nil ? "Pick a studio." : nil
-        case .network: return picked == nil ? "Pick a network." : nil
-        case .tmdbList: return tmdbList.nonBlank == nil ? "Enter a TMDb list's number or link." : nil
-        case .traktList: return traktURL.nonBlank == nil ? "Paste a public Trakt list or watchlist link." : nil
+        case .keyword: return picked == nil ? String(localized: "Pick a keyword.") : nil
+        case .genre: return picked == nil ? String(localized: "Pick a genre.") : nil
+        case .company: return picked == nil ? String(localized: "Pick a studio.") : nil
+        case .network: return picked == nil ? String(localized: "Pick a network.") : nil
+        case .tmdbList: return tmdbList.nonBlank == nil ? String(localized: "Enter a TMDb list's number or link.") : nil
+        case .traktList: return traktURL.nonBlank == nil ? String(localized: "Paste a public Trakt list or watchlist link.") : nil
         case .library: return nil
-        case .unknown: return "Pick what the row shows."
+        case .unknown: return String(localized: "Pick what the row shows.")
         }
     }
 

@@ -1,4 +1,5 @@
 import type { MediaType } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { isAnime, type AnimeSignals } from "@/lib/arr/anime";
 import { kindForMediaType, serverDefaults, type AddDefaults } from "@/lib/arr/add-options";
@@ -19,7 +20,6 @@ export async function titleIsAnime(mediaType: MediaType, tmdbId: number): Promis
   return isAnime((title?.rawTmdb ?? null) as AnimeSignals | null);
 }
 
-export const SERVER_CANT_TAKE_IT = "That server can't take this request.";
 
 /** The server a title of this type goes to: the one picked (which must be
  * of the right kind and 4K-ness), or the default. Null when there's none. */
@@ -32,7 +32,7 @@ export async function pickServer(
   const kind = kindForMediaType(mediaType);
   if (serverId) {
     const server = await getArrServer(ownerId, serverId);
-    if (!server || server.kind !== kind || server.is4k !== fourK) return fail("invalid", SERVER_CANT_TAKE_IT);
+    if (!server || server.kind !== kind || server.is4k !== fourK) return fail("invalid", (await getT())("notify.serverCantTakeIt"));
     return { ok: true, server };
   }
   const [server] = await listArrServers(ownerId, { kind, fourK });

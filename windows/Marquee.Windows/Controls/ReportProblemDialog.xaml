@@ -12,22 +12,20 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Report a problem"
-    PrimaryButtonText="Send report"
-    CloseButtonText="Cancel"
+    x:Uid="Report_Dialog"
     DefaultButton="Primary"
     PrimaryButtonClick="OnPrimaryButtonClick"
     Closing="OnClosing">
 
     <StackPanel Spacing="14" MinWidth="380">
         <TextBlock
-            Text="The admin is told, and you'll hear back when it's fixed."
+            x:Uid="Report_Intro"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
         <RadioButtons
             x:Name="KindButtons"
-            Header="What's wrong?"
+            x:Uid="Report_Kind"
             SelectionChanged="OnKindChanged" />
         <Grid x:Name="EpisodeRow" ColumnSpacing="12" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
@@ -37,21 +35,20 @@
             <ComboBox
                 x:Name="SeasonBox"
                 Grid.Column="0"
-                Header="Season (optional)"
+                x:Uid="Report_Season"
                 HorizontalAlignment="Stretch"
                 SelectionChanged="OnSeasonChanged" />
             <TextBox
                 x:Name="EpisodeBox"
                 Grid.Column="1"
-                Header="Episode"
+                x:Uid="Report_Episode"
                 InputScope="Number"
                 MaxLength="4"
                 IsEnabled="False" />
         </Grid>
         <TextBox
             x:Name="NoteBox"
-            Header="Anything else? (optional)"
-            PlaceholderText="e.g. The audio drifts out of sync after about 20 minutes."
+            x:Uid="Report_Note"
             AcceptsReturn="True"
             TextWrapping="Wrap"
             MinHeight="72"

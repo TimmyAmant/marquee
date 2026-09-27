@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
-import { STATUS_TEXT, statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
+import { statusText, statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
+import { useT } from "@/lib/i18n/client";
 
 export function PosterCard({
   href,
@@ -43,17 +46,19 @@ export function PosterCard({
    * meaningful for owned/tracked titles backed by a local file — omitted
    * (or null) elsewhere, e.g. Discover's TMDb-only cards. */
   filePath?: string | null;
-  /** Corner pill reading "MOVIE" or "SERIES" — Discover's mixed-media rows
-   * (Trending) use this so a title's type is clear without opening it;
-   * single-type rows/grids elsewhere have no need for it. Shares the
-   * top-left corner with `rating`, so pass at most one of the two. */
-  typeLabel?: "MOVIE" | "SERIES";
+  /** Corner pill reading "MOVIE" or "SERIES" (`text`, already translated —
+   * this card renders in server and client trees alike) — Discover's
+   * mixed-media rows (Trending) use this so a title's type is clear without
+   * opening it; single-type rows/grids elsewhere have no need for it. Shares
+   * the top-left corner with `rating`, so pass at most one of the two. */
+  typeLabel?: { mediaType: "movie" | "tv"; text: string };
 }) {
+  const t = useT();
   const src = tmdbImageUrl(posterPath, "w342");
   const stripClass = status ? statusClasses(status).strip : null;
   // The strip's status in words, for its tooltip and screen readers — and
   // the whole poster's tooltip leads with it, since 3px is hard to hover.
-  const stripName = stripClass && status ? (STATUS_TEXT[status]?.name ?? null) : null;
+  const stripName = stripClass && status ? statusText(t, status).name : null;
   const posterTitle = [stripName, filePath].filter(Boolean).join(" — ") || undefined;
 
   return (
@@ -78,10 +83,10 @@ export function PosterCard({
         {typeLabel ? (
           <div
             className={`pointer-events-none absolute left-[7px] top-[7px] z-10 rounded-[4px] px-[5px] py-[3px] text-[9px] font-bold uppercase leading-none tracking-[0.05em] text-white shadow-[0_1px_3px_rgba(0,0,0,0.35)] ${
-              typeLabel === "MOVIE" ? "bg-blue-600" : "bg-fuchsia-600"
+              typeLabel.mediaType === "movie" ? "bg-blue-600" : "bg-fuchsia-600"
             }`}
           >
-            {typeLabel}
+            {typeLabel.text}
           </div>
         ) : (
           typeof rating === "number" &&

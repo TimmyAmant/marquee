@@ -12,7 +12,7 @@ struct SeasonPickerRow: Hashable, Sendable, Identifiable {
 
     /// "1 episode" / "10 episodes".
     var episodeCountLabel: String {
-        "\(episodeCount) episode\(episodeCount == 1 ? "" : "s")"
+        String(localized: "\(episodeCount) episodes")
     }
 
     init(seasonNumber: Int, name: String, episodeCount: Int, state: API.SeasonRequestState) {
@@ -71,7 +71,7 @@ struct SeasonPickerSelection: Hashable, Sendable {
     /// "Request 1 season" / "Request 3 seasons".
     var submitTitle: String {
         // Nothing picked yet (the button is disabled): no "0", as on the website.
-        selected.isEmpty ? "Request seasons" : "Request \(selected.count) season\(selected.count == 1 ? "" : "s")"
+        selected.isEmpty ? String(localized: "Request seasons") : String(localized: "Request \(selected.count) seasons")
     }
 }
 
@@ -191,7 +191,7 @@ struct SeasonRequestSheet: View {
                 Button("Cancel") { dismiss() }
                     .buttonStyle(OutlineButtonStyle())
                     .keyboardShortcut(.cancelAction)
-                Button(pending ? "Requesting…" : selection.submitTitle) { submit() }
+                Button(pending ? String(localized: "Requesting…") : selection.submitTitle) { submit() }
                     .buttonStyle(AccentButtonStyle())
                     .keyboardShortcut(.defaultAction)
                     .disabled(pending || selection.seasons.isEmpty)

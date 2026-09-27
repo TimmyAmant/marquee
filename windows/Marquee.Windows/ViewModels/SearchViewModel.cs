@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -14,8 +15,6 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class SearchViewModel : ObservableObject
 {
-    public const string ErrorTitle = "Couldn't search";
-
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
     private bool active;
@@ -80,9 +79,9 @@ public sealed partial class SearchViewModel : ObservableObject
     public bool HasQuery => Query.Length > 0;
 
     /// <summary>"Results for “keanu”", or the section title without a query.</summary>
-    public string Heading => HasQuery ? $"Results for “{Query}”" : "Search";
+    public string Heading => HasQuery ? Loc.Format("Search_ResultsFor", Query) : Loc.Get("Search_Title");
 
-    public string EmptyMessage => $"No results for “{Query}”.";
+    public string EmptyMessage => Loc.Format("Search_NoResults", Query);
 
     public bool HasError => ErrorMessage != null;
     public bool HasResults => HasAnswer;
@@ -95,8 +94,8 @@ public sealed partial class SearchViewModel : ObservableObject
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
     public string TmdbMissingMessage => IsAdmin
-        ? "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations."
-        : "The household admin hasn't connected TMDb yet.";
+        ? Loc.Get("Discover_TmdbMissingAdmin")
+        : Loc.Get("Discover_TmdbMissingMember");
 
     public bool CanOpenSettings => IsTmdbMissing && IsAdmin;
 
@@ -211,7 +210,7 @@ public sealed partial class SearchViewModel : ObservableObject
         if (results.Theme is { Items.Count: > 0 } theme)
         {
             ThemeItems = theme.Items.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
-            ThemeTitle = $"{theme.Label} movies & TV";
+            ThemeTitle = Loc.Format("Search_ThemeTitle", theme.Label);
         }
         else
         {

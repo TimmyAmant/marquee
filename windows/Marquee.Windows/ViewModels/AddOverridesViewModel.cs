@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Windows.ViewModels;
@@ -121,7 +122,9 @@ public sealed partial class AddOverridesViewModel : ObservableObject
     public bool ShowsNoServers => IsLoaded && selection?.HasServers != true;
     public bool ShowsSeriesType => ShowsPickers && mediaType == MediaType.Tv;
     public IReadOnlyList<string> SeriesTypes { get; } = AddOverridesSelection.SeriesTypes.Select(type => type.Label).ToList();
-    public string NoServersMessage => $"No {(is4k ? "4K " : "")}{mediaType.ArrName} is set up for this yet.";
+    public string NoServersMessage => is4k
+        ? Loc.Format("Overrides_NoServers4k", mediaType.ArrName)
+        : Loc.Format("Overrides_NoServers", mediaType.ArrName);
 
     /// <summary>What Approve / Add send: null (no body, the server's defaults) until the section has loaded.</summary>
     public AddOverrides? Overrides => IsLoaded ? selection?.Overrides : null;

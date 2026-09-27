@@ -24,7 +24,7 @@ struct FileTokenStore: TokenStore {
 
     static var defaultDirectory: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support", isDirectory: true)
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support", isDirectory: true) // i18n-ignore
         return base.appendingPathComponent("Marquee", isDirectory: true)
     }
 

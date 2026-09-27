@@ -2,11 +2,12 @@
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { checkPlexAuthFor, startPlexAuthFor } from "@/lib/integrations/manage";
+import { getT } from "@/lib/i18n/server";
 
 export type StartPlexAuthResult = { error?: string; authUrl?: string; pinId?: number };
 
 export async function startPlexAuth(): Promise<StartPlexAuthResult> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
   const result = await startPlexAuthFor(admin.userId);
@@ -21,7 +22,7 @@ export type PlexAuthStatus = {
 };
 
 export async function checkPlexAuthStatus(pinId: number): Promise<PlexAuthStatus> {
-  const admin = await requireAdmin("Only the admin can manage integrations.");
+  const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { connected: false, error: admin.error };
 
   return checkPlexAuthFor(admin.userId, pinId);

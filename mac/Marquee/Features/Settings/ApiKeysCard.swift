@@ -29,16 +29,16 @@ final class ApiKeysModel {
 
         var label: String {
             switch self {
-            case .never: return "Never"
-            case .days30: return "30 days"
-            case .days90: return "90 days"
-            case .year: return "1 year"
+            case .never: return String(localized: "Never")
+            case .days30: return String(localized: "30 days")
+            case .days90: return String(localized: "90 days")
+            case .year: return String(localized: "1 year")
             }
         }
     }
 
     /// The server's own message for a blank name, checked here first.
-    static let blankNameMessage = "Give the key a name, like Homepage."
+    static let blankNameMessage = String(localized: "Give the key a name, like Homepage.")
 
     /// nil until the first load answers.
     private(set) var keys: [API.ApiKey]?
@@ -129,7 +129,7 @@ final class ApiKeysModel {
             actAsUserId = nil
             expiry = .never
         } catch APIError.notFound {
-            createError = "That household member doesn't exist any more."
+            createError = String(localized: "That household member doesn't exist any more.")
         } catch {
             createError = error.localizedDescription
         }
@@ -166,19 +166,21 @@ final class ApiKeysModel {
 
     /// "as Kid" when the key acts as a household member.
     static func actAsLabel(_ key: API.ApiKey) -> String? {
-        key.actAs.map { "as \($0.label)" }
+        key.actAs.map { String(localized: "as \($0.label)") }
     }
 
     /// "Created Sep 20, 2026".
-    static func createdLabel(_ key: API.ApiKey, timeZone: TimeZone = .current) -> String {
-        "Created \(dayString(key.createdAt, timeZone: timeZone))"
+    static func createdLabel(_ key: API.ApiKey, timeZone: TimeZone = .current, locale: Locale = .current) -> String {
+        let day = dayString(key.createdAt, timeZone: timeZone, locale: locale)
+        return String(localized: "Created \(day)")
     }
 
     /// "Expires Dec 19, 2026", "Never expires" or "Expired".
-    static func expiryLabel(_ key: API.ApiKey, now: Date = Date(), timeZone: TimeZone = .current) -> String {
-        if isExpired(key, now: now) { return "Expired" }
-        guard let expiresAt = key.expiresAt else { return "Never expires" }
-        return "Expires \(dayString(expiresAt, timeZone: timeZone))"
+    static func expiryLabel(_ key: API.ApiKey, now: Date = Date(), timeZone: TimeZone = .current, locale: Locale = .current) -> String {
+        if isExpired(key, now: now) { return String(localized: "Expired") }
+        guard let expiresAt = key.expiresAt else { return String(localized: "Never expires") }
+        let day = dayString(expiresAt, timeZone: timeZone, locale: locale)
+        return String(localized: "Expires \(day)")
     }
 
     static func isExpired(_ key: API.ApiKey, now: Date = Date()) -> Bool {
@@ -188,26 +190,35 @@ final class ApiKeysModel {
     }
 
     /// "Last used 2 minutes ago" / "Never used".
-    static func lastUsedLabel(_ key: API.ApiKey, now: Date = Date(), timeZone: TimeZone = .current) -> String {
-        guard let lastUsedAt = key.lastUsedAt else { return "Never used" }
+    static func lastUsedLabel(_ key: API.ApiKey, now: Date = Date(), timeZone: TimeZone = .current, locale: Locale = .current) -> String {
+        guard let lastUsedAt = key.lastUsedAt else { return String(localized: "Never used") }
         let minute: TimeInterval = 60
         let hour = 60 * minute
         let day = 24 * hour
         let ago = max(0, now.timeIntervalSince(lastUsedAt))
-        func plural(_ count: Int, _ unit: String) -> String { "\(count) \(unit)\(count == 1 ? "" : "s")" }
-        if ago < 2 * minute { return "Last used just now" }
-        if ago < hour { return "Last used \(plural(Int(ago / minute), "minute")) ago" }
-        if ago < day { return "Last used \(plural(Int(ago / hour), "hour")) ago" }
-        if ago < 2 * day { return "Last used yesterday" }
-        if ago < 30 * day { return "Last used \(Int(ago / day)) days ago" }
-        return "Last used \(dayString(lastUsedAt, timeZone: timeZone))"
+        if ago < 2 * minute { return String(localized: "Last used just now") }
+        if ago < hour {
+            let minutes = Int(ago / minute)
+            return String(localized: "Last used \(minutes) minutes ago")
+        }
+        if ago < day {
+            let hours = Int(ago / hour)
+            return String(localized: "Last used \(hours) hours ago")
+        }
+        if ago < 2 * day { return String(localized: "Last used yesterday") }
+        if ago < 30 * day {
+            let days = Int(ago / day)
+            return String(localized: "Last used \(days) days ago")
+        }
+        let date = dayString(lastUsedAt, timeZone: timeZone, locale: locale)
+        return String(localized: "Last used \(date)")
     }
 
-    private static func dayString(_ date: Date, timeZone: TimeZone) -> String {
+    private static func dayString(_ date: Date, timeZone: TimeZone, locale: Locale) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = locale
         formatter.timeZone = timeZone
-        formatter.dateFormat = "MMM d, yyyy"
+        formatter.setLocalizedDateFormatFromTemplate("MMMdyyyy")
         return formatter.string(from: date)
     }
 }
@@ -222,7 +233,7 @@ struct ApiKeysSection: View {
         Group {
             if keys.isVisible {
                 VStack(alignment: .leading, spacing: 12) {
-                    SettingsSectionLabel(text: "API keys")
+                    SettingsSectionLabel(text: String(localized: "API keys"))
                     ApiKeysCard(keys: keys)
                 }
                 .padding(.top, 8)
@@ -240,8 +251,8 @@ struct ApiKeysCard: View {
 
     var body: some View {
         IntegrationCard(
-            title: "API keys",
-            description: "Let dashboards like Homepage or Homarr, scripts and other apps use Marquee. A key works like signing in, so keep it secret."
+            title: String(localized: "API keys"),
+            description: String(localized: "Let dashboards like Homepage or Homarr, scripts and other apps use Marquee. A key works like signing in, so keep it secret.")
         ) {
             if let loadError = keys.loadError, keys.keys == nil {
                 InlineMessage(text: loadError)
@@ -339,7 +350,7 @@ struct ApiKeysCard: View {
 
     private func secretPanel(_ secret: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            InlineMessage(text: "Copy this key now — it won't be shown again.", isError: false)
+            InlineMessage(text: String(localized: "Copy this key now — it won't be shown again."), isError: false)
             HStack(spacing: 8) {
                 Text(secret)
                     .font(.system(size: 12, design: .monospaced))
@@ -367,7 +378,7 @@ struct ApiKeysCard: View {
             Text("Create a key")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
-            SettingsField(label: "Name", text: $keys.name, placeholder: "Homepage")
+            SettingsField(label: String(localized: "Name"), text: $keys.name, placeholder: "Homepage")
             Picker("Access", selection: $keys.scope) {
                 Text(API.ApiKeyScope.read.label).tag(API.ApiKeyScope.read)
                 Text(API.ApiKeyScope.full.label).tag(API.ApiKeyScope.full)

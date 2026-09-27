@@ -32,6 +32,12 @@
       "cannot find the file specified") before its window ever showed.
     -->
     <EnableMsixTooling>true</EnableMsixTooling>
+    <!--
+      The app's text lives in Strings/<language>/Resources.resw: en-US (the
+      source and the fallback), es, fr, de and pt-BR, all compiled into the
+      same .pri. Which one shows is decided at startup (Services/AppLocalization.cs).
+    -->
+    <DefaultLanguage>en-US</DefaultLanguage>
     <Description>Marquee for Windows: the household media dashboard as a native app.</Description>
     <!-- Built from the Mac icon's artwork by windows/Scripts/make-icon.mjs. -->
     <ApplicationIcon>Assets\Marquee.ico</ApplicationIcon>

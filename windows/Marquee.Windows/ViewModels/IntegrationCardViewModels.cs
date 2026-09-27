@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -41,8 +42,8 @@ public sealed partial class DisconnectViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string? error;
 
-    public string Prompt => $"Disconnect {Name}?";
-    public string ConfirmLabel => IsPending ? "Disconnecting…" : "Confirm";
+    public string Prompt => Loc.Format("Integrations_DisconnectPrompt", Name);
+    public string ConfirmLabel => IsPending ? Loc.Get("Integrations_Disconnecting") : Loc.Get("Integrations_Confirm");
 
     /// <summary>The plain "Disconnect" button shows.</summary>
     public bool IsAsking => !IsConfirming;
@@ -94,7 +95,7 @@ public sealed partial class DisconnectViewModel : ObservableObject
 /// <summary>components/plex-connect-card.tsx: "Connect Plex" (a plex.tv PIN), the synced library, Disconnect.</summary>
 public sealed partial class PlexIntegrationViewModel : ObservableObject
 {
-    public const string TimedOutMessage = "Timed out waiting for Plex sign-in. Try again.";
+    public static string TimedOutMessage => Loc.Get("Integrations_PlexTimedOut");
 
     /// <summary>The website polls every 2.5 s and gives up after 2 minutes.</summary>
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(2500);
@@ -133,10 +134,10 @@ public sealed partial class PlexIntegrationViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string? error;
 
-    public string ConnectedBadge => IsConnected ? "Connected" : "";
+    public string ConnectedBadge => IsConnected ? Loc.Get("Integrations_Connected") : "";
     public BadgeTone ConnectedTone { get; } = BadgeTone.Owned;
     public bool IsDisconnected => !IsConnected;
-    public string ConnectLabel => IsWaiting ? "Waiting for Plex…" : "Connect Plex";
+    public string ConnectLabel => IsWaiting ? Loc.Get("Integrations_PlexWaiting") : Loc.Get("Integrations_PlexConnect");
     public bool CanConnect => !IsWaiting;
     public bool HasError => Error != null;
 
@@ -229,7 +230,7 @@ public sealed partial class PlexIntegrationViewModel : ObservableObject
 /// </summary>
 public abstract partial class IntegrationFormViewModel : ObservableObject
 {
-    public const string ReplacePlaceholder = "•••••••••••••••• (enter to replace)";
+    public static string ReplacePlaceholder => Loc.Get("Integrations_ReplacePlaceholder");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SaveLabel))]
@@ -244,7 +245,7 @@ public abstract partial class IntegrationFormViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasNotice))]
     private string? notice;
 
-    public string SaveLabel => IsSaving ? "Testing…" : "Test & save";
+    public string SaveLabel => IsSaving ? Loc.Get("Integrations_Testing") : Loc.Get("Integrations_TestAndSave");
     public bool CanSave => !IsSaving;
     public bool HasError => Error != null;
     public bool HasNotice => Notice != null;
@@ -289,12 +290,13 @@ public sealed partial class JellyfinIntegrationViewModel : IntegrationFormViewMo
     [ObservableProperty]
     private string apiKeyPlaceholder = "";
 
-    public string ConnectedBadge => IsConnected ? "Connected" : "";
+    public string ConnectedBadge => IsConnected ? Loc.Get("Integrations_Connected") : "";
     public BadgeTone ConnectedTone { get; } = BadgeTone.Owned;
 
     private static string DescriptionFor(string? connectedName) =>
-        "Emby speaks the same language as Jellyfin, so either works here"
-        + (connectedName != null ? $" — connected to {connectedName}" : "") + ".";
+        connectedName != null
+            ? Loc.Format("Integrations_JellyfinDescriptionConnected", connectedName)
+            : Loc.Get("Integrations_JellyfinDescription");
 
     internal void Apply(JellyfinSettings settings)
     {
@@ -323,7 +325,7 @@ public sealed partial class JellyfinIntegrationViewModel : IntegrationFormViewMo
         {
             await model.Api.Integrations.Jellyfin.ConnectAsync(BaseUrl.Trim(), ApiKey.Trim());
             ApiKey = "";
-            Notice = "Connected successfully.";
+            Notice = Loc.Get("Integrations_ConnectedSuccessfully");
         }
         catch (ApiException failure)
         {
@@ -414,7 +416,7 @@ public sealed partial class ArrIntegrationViewModel : IntegrationFormViewModel
     [ObservableProperty]
     private bool defaultsSaved;
 
-    public string ConnectedBadge => IsConnected ? "Connected" : "";
+    public string ConnectedBadge => IsConnected ? Loc.Get("Integrations_Connected") : "";
     public BadgeTone ConnectedTone { get; } = BadgeTone.Owned;
     public bool HasDescription => Description.Length > 0;
 
@@ -424,7 +426,7 @@ public sealed partial class ArrIntegrationViewModel : IntegrationFormViewModel
     /// <summary>Connected, but no root folder or quality profile picked yet, and no pickers to pick them with.</summary>
     public bool NeedsDefaults => IsConnected && !IsFullyConfigured && !ShowsDefaults;
 
-    public string SaveDefaultsLabel => IsSavingDefaults ? "Saving…" : "Save defaults";
+    public string SaveDefaultsLabel => IsSavingDefaults ? Loc.Get("Integrations_Saving") : Loc.Get("Integrations_SaveDefaults");
     public bool CanSaveDefaults => !IsSavingDefaults;
 
     internal void Apply(ArrSettings settings)
@@ -514,7 +516,7 @@ public sealed partial class ArrIntegrationViewModel : IntegrationFormViewModel
             BaseUrl = result.BaseUrl;
             IsConnected = true;
             ShowOptions(result.Options, result.SelectedRootFolder, result.SelectedQualityProfileId);
-            Notice = "Connected successfully.";
+            Notice = Loc.Get("Integrations_ConnectedSuccessfully");
         }
         catch (ApiException failure)
         {
@@ -537,7 +539,7 @@ public sealed partial class ArrIntegrationViewModel : IntegrationFormViewModel
         if (SelectedRootFolderIndex < 0 || SelectedRootFolderIndex >= RootFolders.Count
             || SelectedQualityProfileIndex < 0 || SelectedQualityProfileIndex >= qualityProfileIds.Count)
         {
-            Error = "Pick a root folder and a quality profile.";
+            Error = Loc.Get("Integrations_PickDefaults");
             return;
         }
         var path = RootFolders[SelectedRootFolderIndex];
@@ -584,7 +586,7 @@ public sealed partial class SecretCardViewModel : IntegrationFormViewModel
         string removeLabel,
         Func<MarqueeApi, string, Task> save,
         Func<MarqueeApi, Task> remove,
-        string successMessage = "Connected successfully.")
+        string? successMessage = null)
     {
         this.model = model;
         Title = title;
@@ -594,7 +596,7 @@ public sealed partial class SecretCardViewModel : IntegrationFormViewModel
         this.removeLabel = removeLabel;
         this.save = save;
         this.remove = remove;
-        this.successMessage = successMessage;
+        this.successMessage = successMessage ?? Loc.Get("Integrations_ConnectedSuccessfully");
     }
 
     public string Title { get; }
@@ -607,10 +609,10 @@ public sealed partial class SecretCardViewModel : IntegrationFormViewModel
     [NotifyPropertyChangedFor(nameof(CanRemove))]
     private bool isConnected;
 
-    /// <summary>"Connected", or TMDb's "Using environment variable".</summary>
+    /// <summary>TMDb's token comes from the server's environment variable: the chip says so instead of "Connected".</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ConnectedBadge))]
-    private string connectedLabel = "Connected";
+    private bool usesEnvironment;
 
     /// <summary>An extra line over the field (TMDb's environment variable); empty collapses it.</summary>
     [ObservableProperty]
@@ -627,10 +629,13 @@ public sealed partial class SecretCardViewModel : IntegrationFormViewModel
     public string Placeholder => IsConnected ? ReplacePlaceholder : placeholder;
 
     /// <summary>The chip shows for a saved secret, or a server-side environment value; empty collapses it.</summary>
-    public string ConnectedBadge => IsConnected || ConnectedLabel != "Connected" ? ConnectedLabel : "";
+    public string ConnectedBadge =>
+        UsesEnvironment ? Loc.Get("Integrations_UsingEnvironment")
+        : IsConnected ? Loc.Get("Integrations_Connected")
+        : "";
 
     public BadgeTone ConnectedTone { get; } = BadgeTone.Owned;
-    public string RemoveButtonLabel => IsRemoving ? "Removing…" : removeLabel;
+    public string RemoveButtonLabel => IsRemoving ? Loc.Get("Integrations_Removing") : removeLabel;
     public bool CanRemove => IsConnected && !IsRemoving;
 
     internal void Apply(ConnectionState state) => IsConnected = state.Connected;
@@ -640,9 +645,9 @@ public sealed partial class SecretCardViewModel : IntegrationFormViewModel
     {
         IsConnected = settings.SavedInSettings;
         var fromEnv = !settings.SavedInSettings && settings.ConfiguredFromEnv;
-        ConnectedLabel = fromEnv ? "Using environment variable" : "Connected";
+        UsesEnvironment = fromEnv;
         Note = fromEnv
-            ? "Using the TMDB_ACCESS_TOKEN environment variable set on your server. Saving a token here overrides it."
+            ? Loc.Get("Integrations_TmdbEnvNote")
             : "";
     }
 
@@ -724,7 +729,7 @@ public sealed partial class TraktImportViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasNotice))]
     private string? notice;
 
-    public string ImportLabel => IsImporting ? "Importing…" : "Import";
+    public string ImportLabel => IsImporting ? Loc.Get("Integrations_Importing") : Loc.Get("Integrations_Import");
     public bool CanImport => !IsImporting;
     public bool HasError => Error != null;
     public bool HasNotice => Notice != null;
@@ -768,7 +773,7 @@ public sealed partial class WebhookUrlRow : ObservableObject
     public string Url { get; }
 
     [ObservableProperty]
-    private string copyLabel = "Copy";
+    private string copyLabel = Loc.Get("Integrations_Copy");
 
     [RelayCommand]
     private async Task CopyAsync()
@@ -777,9 +782,9 @@ public sealed partial class WebhookUrlRow : ObservableObject
         {
             return;
         }
-        CopyLabel = "Copied";
+        CopyLabel = Loc.Get("Integrations_Copied");
         await Task.Delay(TimeSpan.FromSeconds(1.5));
-        CopyLabel = "Copy";
+        CopyLabel = Loc.Get("Integrations_Copy");
     }
 }
 
@@ -815,11 +820,11 @@ public sealed partial class ArrWebhooksViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string? error;
 
-    public string ListeningBadge { get; } = "Listening";
+    public string ListeningBadge { get; } = Loc.Get("Integrations_Listening");
     public BadgeTone ListeningTone { get; } = BadgeTone.Owned;
     public bool IsAsking => !IsConfirming;
     public bool IsIdle => !IsRegenerating;
-    public string ConfirmLabel => IsRegenerating ? "Regenerating…" : "Confirm";
+    public string ConfirmLabel => IsRegenerating ? Loc.Get("Integrations_Regenerating") : Loc.Get("Integrations_Confirm");
     public bool HasError => Error != null;
 
     internal void Apply(ArrWebhooks webhooks, bool radarr4k, bool sonarr4k)
@@ -833,16 +838,16 @@ public sealed partial class ArrWebhooksViewModel : ObservableObject
     {
         var rows = new List<WebhookUrlRow>
         {
-            new("Radarr webhook URL", webhooks.RadarrUrl),
-            new("Sonarr webhook URL", webhooks.SonarrUrl),
+            new(Loc.Get("Integrations_RadarrWebhookUrl"), webhooks.RadarrUrl),
+            new(Loc.Get("Integrations_SonarrWebhookUrl"), webhooks.SonarrUrl),
         };
         if (radarr4kConnected && webhooks.Radarr4kUrl is { } radarr4k)
         {
-            rows.Add(new("4K Radarr webhook URL", radarr4k));
+            rows.Add(new(Loc.Get("Integrations_Radarr4kWebhookUrl"), radarr4k));
         }
         if (sonarr4kConnected && webhooks.Sonarr4kUrl is { } sonarr4k)
         {
-            rows.Add(new("4K Sonarr webhook URL", sonarr4k));
+            rows.Add(new(Loc.Get("Integrations_Sonarr4kWebhookUrl"), sonarr4k));
         }
         Urls = rows;
     }

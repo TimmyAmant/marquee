@@ -5,14 +5,19 @@ import { CapsLabel } from "@/components/caps-label";
 import { formatBytes } from "@/lib/format";
 import { resolutionTierOf } from "@/lib/quality";
 import type { FileInfo } from "@/lib/integrations/status";
+import { useT } from "@/lib/i18n/client";
+import { formatDate, formatNumber } from "@/lib/i18n/format";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 /** Media servers report a whole-file bitrate in the tens of thousands of
  * kbps — Mbps to one decimal is the readable form, with kbps kept for the
  * rare low-bitrate file where "0.4 Mbps" would lose the detail. */
-function formatBitrate(kbps: number | null | undefined): string {
+function formatBitrate(t: Translator, kbps: number | null | undefined): string {
   if (!kbps || kbps <= 0) return "";
-  if (kbps < 1000) return `${kbps} kbps`;
-  return `${(kbps / 1000).toFixed(1)} Mbps`;
+  if (kbps < 1000) return t("title.bitrateKbps", { value: formatNumber(t, kbps) });
+  return t("title.bitrateMbps", {
+    value: formatNumber(t, kbps / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+  });
 }
 
 /** One cell of the card's two-column grid: 11px label over a 13px value. */
@@ -45,6 +50,7 @@ export function FileDetailsSection({
    * averaged from TMDb's per-episode runtimes) read differently. */
   runtimeLabel: string | null;
 }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   if (!file) return null;
@@ -57,7 +63,7 @@ export function FileDetailsSection({
   }
 
   const tier = resolutionTierOf(file.quality, file.resolution);
-  const audio = [file.audioCodec, file.audioChannels ? `${file.audioChannels}ch` : null]
+  const audio = [file.audioCodec, file.audioChannels ? t("title.audioChannels", { channels: String(file.audioChannels) }) : null]
     .filter(Boolean)
     .join(" ");
 
@@ -66,30 +72,30 @@ export function FileDetailsSection({
   // Plex-owned show now carries codec/container/bitrate aggregated across its
   // episodes, and a Radarr-tracked movie still fills exactly the same cells
   // it always did.
-  const cells: { label: string; value: string }[] = [
-    { label: "Size", value: file.sizeBytes ? formatBytes(file.sizeBytes) : "" },
-    { label: "Runtime", value: runtimeLabel ?? "" },
-    { label: "Added", value: file.dateAdded ? new Date(file.dateAdded).toLocaleDateString() : "" },
-    { label: "Resolution", value: tier ?? file.resolution ?? "" },
-    { label: "Quality profile", value: file.quality ?? "" },
-    { label: "Video", value: file.videoCodec ?? "" },
-    { label: "Dynamic range", value: file.dynamicRange ?? "" },
-    { label: "Audio", value: audio },
-    { label: "Container", value: file.container ?? "" },
-    { label: "Bitrate", value: formatBitrate(file.bitrateKbps) },
-    { label: "Edition", value: file.edition ?? "" },
-    { label: "Release group", value: file.releaseGroup ?? "" },
-  ].filter((cell) => cell.value !== "");
+  const cells: { label: MessageKey; value: string }[] = [
+    { label: "title.fileSize", value: file.sizeBytes ? formatBytes(t, file.sizeBytes) : "" },
+    { label: "title.fileRuntime", value: runtimeLabel ?? "" },
+    { label: "title.fileAdded", value: file.dateAdded ? formatDate(t, file.dateAdded) : "" },
+    { label: "title.fileResolution", value: tier ?? file.resolution ?? "" },
+    { label: "title.qualityProfile", value: file.quality ?? "" },
+    { label: "title.fileVideo", value: file.videoCodec ?? "" },
+    { label: "title.fileDynamicRange", value: file.dynamicRange ?? "" },
+    { label: "title.fileAudio", value: audio },
+    { label: "title.fileContainer", value: file.container ?? "" },
+    { label: "title.fileBitrate", value: formatBitrate(t, file.bitrateKbps) },
+    { label: "title.fileEdition", value: file.edition ?? "" },
+    { label: "title.fileReleaseGroup", value: file.releaseGroup ?? "" },
+  ].filter((cell): cell is { label: MessageKey; value: string } => cell.value !== "");
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 px-[18px] pb-[18px] pt-[15px]">
       <h2 className="mb-3 font-display text-[16px] font-semibold leading-[22px] text-text-primary">
-        File details
+        {t("title.fileDetails")}
       </h2>
 
       {file.path && (
         <>
-          <CapsLabel>Location</CapsLabel>
+          <CapsLabel>{t("title.fileLocation")}</CapsLabel>
           <div className="mt-1.5 flex h-8 items-center gap-2 rounded-lg border border-border bg-bg-0 pl-2.5 pr-1">
             <input
               type="text"
@@ -103,7 +109,7 @@ export function FileDetailsSection({
               onClick={handleCopy}
               className="flex h-6 shrink-0 items-center gap-1 rounded-md border border-border-strong bg-bg-3 px-2 text-[11px] font-semibold text-text-primary transition-colors hover:border-accent hover:text-accent"
             >
-              {copied ? "Copied" : "Copy"}
+              {copied ? t("common.copied") : t("common.copy")}
             </button>
           </div>
         </>
@@ -112,7 +118,7 @@ export function FileDetailsSection({
       {cells.length > 0 && (
         <div className="mt-3.5 grid grid-cols-2 gap-x-3.5 gap-y-3">
           {cells.map((cell) => (
-            <DetailCell key={cell.label} label={cell.label} value={cell.value} />
+            <DetailCell key={cell.label} label={t(cell.label)} value={cell.value} />
           ))}
         </div>
       )}

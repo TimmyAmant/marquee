@@ -3,7 +3,8 @@
 // stay cheap to reason about and test.
 import type * as Dto from "@/lib/api/types";
 import type { BlocklistEntry as BlocklistRow } from "@/lib/requests/blocklist";
-import { ISSUE_KIND_LABELS, issueEpisodeLabel } from "@/lib/issues/labels";
+import { issueKindLabel, issueEpisodeLabel } from "@/lib/issues/labels";
+import type { Translator } from "@/lib/i18n/translator";
 import type { IssueRow } from "@/lib/issues";
 import type { FileInfo, TitleLibraryStatus, ArrTrackingInfo } from "@/lib/integrations/status";
 import type { HouseholdMember as HouseholdMemberRow } from "@/lib/users/household";
@@ -14,6 +15,7 @@ import { isUnwanted } from "@/lib/library/status-tone";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import { resolutionTierOf } from "@/lib/quality";
 import { myRequestBadge, reviewedRequestLabel, seasonsLabel } from "@/lib/requests/labels";
+import { englishT } from "@/lib/i18n/catalog";
 import type { NotFoundRow } from "@/lib/requests/not-found";
 import { notFoundHint } from "@/lib/requests/not-found-rules";
 import { can, permissionMap, requestPermission, type PermissionMap } from "@/lib/users/permissions";
@@ -147,6 +149,8 @@ export function titleViewerState(input: {
   blocked?: { reason: string | null; keyword: string | null } | null;
   /** Reviewers only (loadTitleStatus): listed under "Can't find" since. */
   notFoundSince?: Date | null;
+  /** The language of myRequests' seasonsLabel; English when omitted. */
+  t?: Translator;
   /** The viewer's own requests for the title (loadTitleStatus). */
   myRequests?: {
     id: string;
@@ -188,7 +192,7 @@ export function titleViewerState(input: {
     myRequests: (input.myRequests ?? []).map((r) => ({
       id: r.id,
       status: r.status,
-      ...requestSeasons(r.seasons),
+      ...requestSeasons(input.t ?? englishT(), r.seasons),
       is4k: r.is4k,
       canEdit: r.status === "pending",
       canCancel: r.status === "pending",
@@ -199,8 +203,11 @@ export function titleViewerState(input: {
 }
 
 /** A request's seasons as every request DTO carries them. */
-export function requestSeasons(seasons: number[] | null): { seasons: number[] | null; seasonsLabel: string | null } {
-  return { seasons: seasons ?? null, seasonsLabel: seasonsLabel(seasons ?? null) };
+export function requestSeasons(
+  t: Translator,
+  seasons: number[] | null,
+): { seasons: number[] | null; seasonsLabel: string | null } {
+  return { seasons: seasons ?? null, seasonsLabel: seasonsLabel(t, seasons ?? null) };
 }
 
 export function requestPerson(input: {
@@ -216,7 +223,7 @@ export function requestPerson(input: {
   };
 }
 
-export function myRequest(row: {
+export function myRequest(t: Translator, row: {
   id: string;
   mediaType: MediaType;
   tmdbId: number;
@@ -233,14 +240,14 @@ export function myRequest(row: {
   editedAt?: Date | null;
   addFailedAt?: Date | null;
 }, commentCount = 0): Dto.MyRequest {
-  const badge = myRequestBadge(row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt));
+  const badge = myRequestBadge(t, row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt));
   return {
     id: row.id,
     mediaType: row.mediaType,
     tmdbId: row.tmdbId,
     title: row.title,
     posterPath: row.posterPath,
-    ...requestSeasons(row.seasons),
+    ...requestSeasons(t, row.seasons),
     is4k: row.is4k ?? false,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
@@ -258,14 +265,14 @@ export function myRequest(row: {
 }
 
 /** "Can't find" rows (GET /requests/not-found). */
-export function notFoundRequest(row: NotFoundRow): Dto.NotFoundRequest {
+export function notFoundRequest(t: Translator, row: NotFoundRow): Dto.NotFoundRequest {
   return {
     id: row.id,
     mediaType: row.mediaType,
     tmdbId: row.tmdbId,
     title: row.title,
     posterPath: row.posterPath,
-    ...requestSeasons(row.seasons),
+    ...requestSeasons(t, row.seasons),
     is4k: row.is4k,
     requestedBy: requestPerson({
       userId: row.requestedByUserId,
@@ -277,11 +284,11 @@ export function notFoundRequest(row: NotFoundRow): Dto.NotFoundRequest {
     notFoundSince: isoRequired(row.notFoundSince),
     server: row.server,
     arrUrl: row.arrUrl,
-    hint: notFoundHint(row.mediaType),
+    hint: notFoundHint(t, row.mediaType),
   };
 }
 
-export function reviewedRequest(row: {
+export function reviewedRequest(t: Translator, row: {
   id: string;
   mediaType: MediaType;
   tmdbId: number;
@@ -312,12 +319,12 @@ export function reviewedRequest(row: {
     tmdbId: row.tmdbId,
     title: row.title,
     posterPath: row.posterPath,
-    ...requestSeasons(row.seasons),
+    ...requestSeasons(t, row.seasons),
     is4k: row.is4k ?? false,
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,
-    statusLabel: reviewedRequestLabel(row.status, row.manuallyApproved),
+    statusLabel: reviewedRequestLabel(t, row.status, row.manuallyApproved),
     requestedBy: requestPerson({ displayName: row.requestedByName, username: row.requestedByUsername }),
     createdAt: isoRequired(row.createdAt),
     reviewedAt: iso(row.reviewedAt),
@@ -325,7 +332,7 @@ export function reviewedRequest(row: {
     notFoundSince: iso(row.notFoundSince ?? null),
     addFailed:
       row.status === "approved" && row.addFailedAt
-        ? { error: row.addError ?? "Sonarr/Radarr didn't take it.", since: row.addFailedAt.toISOString() }
+        ? { error: row.addError ?? t("notify.arrDidntTakeIt"), since: row.addFailedAt.toISOString() }
         : null,
     commentCount,
   };
@@ -424,7 +431,7 @@ export function shareableUser(user: NotificationSender): Dto.ShareableUser {
   };
 }
 
-export function issueDto(row: IssueRow, viewerUserId: string, commentCount = 0): Dto.Issue {
+export function issueDto(t: Translator, row: IssueRow, viewerUserId: string, commentCount = 0): Dto.Issue {
   return {
     id: row.id,
     mediaType: row.mediaType,
@@ -433,9 +440,9 @@ export function issueDto(row: IssueRow, viewerUserId: string, commentCount = 0):
     posterPath: row.posterPath,
     seasonNumber: row.seasonNumber,
     episodeNumber: row.episodeNumber,
-    episodeLabel: issueEpisodeLabel(row.seasonNumber, row.episodeNumber),
+    episodeLabel: issueEpisodeLabel(t, row.seasonNumber, row.episodeNumber),
     kind: row.kind,
-    kindLabel: ISSUE_KIND_LABELS[row.kind],
+    kindLabel: issueKindLabel(t, row.kind),
     message: row.message,
     status: row.status,
     resolution: row.resolution,

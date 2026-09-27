@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -68,16 +69,16 @@ public abstract record ProbeOutcome
         return this switch
         {
             Marquee => null,
-            Legacy => $"Found Marquee at {name}, but the server needs updating to {Models.ServerInfo.MinimumServerVersion} or later to work with the Windows app.",
-            Incompatible incompatible => $"The server at {name} runs Marquee {incompatible.Info.Version}, which is newer than this app supports. Update Marquee for Windows.",
-            NotMarquee => $"{name} responded, but it isn't a Marquee server. Check the address and port.",
+            Legacy => Loc.Format("Server_ProbeLegacy", name, Models.ServerInfo.MinimumServerVersion),
+            Incompatible incompatible => Loc.Format("Server_ProbeTooNew", name, incompatible.Info.Version),
+            NotMarquee => Loc.Format("Server_ProbeNotMarquee", name),
             Unreachable unreachable => unreachable.Reason.Kind switch
             {
-                UnreachableReasonKind.Refused => $"Nothing is answering on port {address.EffectivePort} at {address.Host}. Check the port and that Marquee is running.",
-                UnreachableReasonKind.NoResponse => $"Couldn't reach {name}. Check the address and that the server is on.",
-                UnreachableReasonKind.UnknownHost => $"Couldn't find {address.Host} on your network. Try its IP address instead.",
-                UnreachableReasonKind.LocalNetworkDenied => "Windows blocked Marquee from reaching your local network. Check the app's network permissions in Settings.",
-                _ => $"Couldn't connect to {name}: {unreachable.Reason.Detail}",
+                UnreachableReasonKind.Refused => Loc.Format("Server_ProbeRefused", address.EffectivePort, address.Host),
+                UnreachableReasonKind.NoResponse => Loc.Format("Server_ProbeNoResponse", name),
+                UnreachableReasonKind.UnknownHost => Loc.Format("Server_ProbeUnknownHost", address.Host),
+                UnreachableReasonKind.LocalNetworkDenied => Loc.Get("Server_ProbeLocalNetworkDenied"),
+                _ => Loc.Format("Server_ProbeOther", name, unreachable.Reason.Detail),
             },
             _ => null,
         };
@@ -167,7 +168,7 @@ public static class ServerProbe
         {
             // A v1 server that failed to answer server-info (it's meant to
             // return 200 even when degraded): it's ours, but not usable now.
-            return new ProbeOutcome.Unreachable(UnreachableReason.Failed($"the server returned an error ({statusCode})."));
+            return new ProbeOutcome.Unreachable(UnreachableReason.Failed(Loc.Format("Server_ProbeServerError", statusCode)));
         }
         return new ProbeOutcome.NotMarquee();
     }

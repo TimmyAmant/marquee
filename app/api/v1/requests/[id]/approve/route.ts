@@ -5,7 +5,7 @@ import { invalid, parseUuidSegment, readJsonBody } from "@/lib/api/request";
 import { hasOverrides, parseAddOverrides } from "@/lib/arr/add-options";
 import { ADVANCED_REFUSED } from "@/lib/requests/access";
 import { can } from "@/lib/users/permissions";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { approveRequest } from "@/lib/requests/mutate";
 import type { Ok } from "@/lib/api/types";
 
@@ -15,13 +15,13 @@ import type { Ok } from "@/lib/api/types";
  * whoever also has advancedRequests;
  * no body is the server's defaults, as it always was. */
 export const POST = withApi<{ id: string }>(async (request, params): Promise<Ok> => {
-  const ctx = await requireApiPermission(request, "reviewRequests", "Only an admin can approve requests.");
-  const requestId = parseUuidSegment(params.id, "Request not found or already reviewed.");
+  const ctx = await requireApiPermission(request, "reviewRequests", msg("server.onlyAdminApproveRequests"));
+  const requestId = parseUuidSegment(params.id, msg("server.requestNotFoundOrReviewed"));
   // Series type is checked as if for a show; a movie simply ignores it.
   const parsed = parseAddOverrides(await readJsonBody(request), "tv");
   if (!parsed.ok) throw invalid(parsed.error);
   // Advanced picks take the advancedRequests permission as well.
-  if (hasOverrides(parsed.overrides) && !can(ctx.user, "advancedRequests")) throw ApiError.of("forbidden", ADVANCED_REFUSED);
+  if (hasOverrides(parsed.overrides) && !can(ctx.user, "advancedRequests")) throw ApiError.of("forbidden", msg(ADVANCED_REFUSED));
   unwrap(await approveRequest(requestId, ctx.user.id, parsed.overrides));
   return { ok: true };
 });

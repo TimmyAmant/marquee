@@ -78,13 +78,13 @@ struct ServerAddress: Hashable, Sendable {
         var errorDescription: String? {
             switch self {
             case .empty:
-                return "Enter your server's IP address or URL."
+                return String(localized: "Enter your server's IP address or URL.")
             case .invalid:
-                return "That doesn't look like an address. Try something like 192.168.1.20:3000."
+                return String(localized: "That doesn't look like an address. Try something like 192.168.1.20:3000.")
             case let .unsupportedScheme(scheme):
-                return "Marquee servers use http or https, not \(scheme)."
+                return String(localized: "Marquee servers use http or https, not \(scheme).")
             case .invalidPort:
-                return "The port must be a number between 1 and 65535."
+                return String(localized: "The port must be a number between 1 and 65535.")
             }
         }
     }

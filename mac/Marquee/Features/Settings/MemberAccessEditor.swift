@@ -62,9 +62,9 @@ struct MemberAccessEditor: Equatable, Sendable {
     /// The picker's rows, as the website words them.
     static func pickerLabel(_ preset: API.PermissionPreset) -> String {
         switch preset {
-        case .member: return "Member — requests, and reports problems"
-        case .trusted: return "Trusted — also reviews requests and problem reports"
-        case .custom: return "Custom"
+        case .member: return String(localized: "Member — requests, and reports problems")
+        case .trusted: return String(localized: "Trusted — also reviews requests and problem reports")
+        case .custom: return String(localized: "Custom")
         }
     }
 

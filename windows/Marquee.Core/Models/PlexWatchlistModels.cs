@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // "Request from my Plex Watchlist" (Settings > Account, under Linked
@@ -36,10 +38,10 @@ public sealed record PlexWatchlist
     public string Summary(DateTimeOffset now)
     {
         var checkedText = LastSyncedAt is { } synced
-            ? $"Checked {NotificationItem.TimeAgoLabel(synced, now)}"
-            : "Checking your watchlist…";
+            ? Loc.Format("Model_SyncChecked", NotificationItem.TimeAgoLabel(synced, now))
+            : Loc.Get("Model_WatchlistChecking");
         return RequestedCount > 0
-            ? $"{checkedText} · {RequestedCount} {(RequestedCount == 1 ? "title" : "titles")} requested so far"
+            ? Loc.Plural("Model_SyncRequestedSoFar", RequestedCount, checkedText)
             : checkedText;
     }
 }

@@ -5,6 +5,7 @@ import { parseTitleParams, requireTitle, type TitleParams } from "@/lib/api/rout
 import { libraryInfo, titleViewerState } from "@/lib/api/mappers";
 import { loadTitleStatus, tvSeasonsOf } from "@/lib/pages/title";
 import type { TitleStatus } from "@/lib/api/types";
+import { getT } from "@/lib/i18n/server";
 
 /** Just the title page's library/action state — the `library` and `viewer`
  * blocks of the full detail — for refreshing after add/request/monitor. */
@@ -27,6 +28,7 @@ export const GET = withApi<TitleParams>(async (request, params): Promise<TitleSt
     tmdbId,
     library: libraryInfo(status.libraryStatus),
     viewer: titleViewerState({
+      t: await getT(),
       isAdmin: ctx.user.isAdmin,
       mediaType,
       permissions: status.permissions,

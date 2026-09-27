@@ -6,6 +6,7 @@
 // route's own code (so a route that validates its body first, or forgets
 // its auth check, still can't be reached), and again in requireApiUser.
 import type { ApiKeyScope } from "@/lib/db/schema";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 export const API_V1_PREFIX = "/api/v1";
 
@@ -45,10 +46,12 @@ const READABLE_SETTINGS = [
  * standing syncs that file requests on someone's behalf. */
 const NO_CHANGES_PREFIXES = ["/users", "/me/notification-channels", "/me/plex-watchlist", "/trakt-syncs", "/settings"];
 
-export const KEY_DENIED_MESSAGE = "API keys can't manage API keys, sign-in, household accounts or admin settings.";
-export const KEY_READ_ONLY_MESSAGE = "This API key is read-only.";
+/** Why a key was refused, as message keys (lib/i18n) — translated where the
+ * refusal is written (lib/api/auth.ts). */
+export const KEY_DENIED_MESSAGE = "server.apiKeyDenied" satisfies MessageKey;
+export const KEY_READ_ONLY_MESSAGE = "server.apiKeyReadOnly" satisfies MessageKey;
 
-export type KeyDecision = { allowed: true } | { allowed: false; message: string };
+export type KeyDecision = { allowed: true } | { allowed: false; message: MessageKey };
 
 function under(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(`${prefix}/`);

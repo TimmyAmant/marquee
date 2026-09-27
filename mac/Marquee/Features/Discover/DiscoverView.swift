@@ -22,14 +22,14 @@ struct DiscoverView: View {
                 } else if let shelves {
                     content(shelves)
                 } else if loading {
-                    LoadingView(label: "Loading Discover…")
+                    LoadingView(label: String(localized: "Loading Discover…"))
                         .padding(.trailing, Metrics.pagePadding)
                 } else if let error {
                     EmptyStateView(
-                        title: "Couldn't load Discover",
+                        title: String(localized: "Couldn't load Discover"),
                         message: error.localizedDescription,
                         systemImage: "wifi.exclamationmark",
-                        actionTitle: "Try again",
+                        actionTitle: String(localized: "Try again"),
                         action: { model.reload() }
                     )
                     .padding(.top, 60)
@@ -76,8 +76,8 @@ struct DiscoverView: View {
         let layout = DiscoverLayout(shelves)
         if layout.isEmpty {
             EmptyStateView(
-                title: "Nothing to show yet",
-                message: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (⌘R).",
+                title: String(localized: "Nothing to show yet"),
+                message: String(localized: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (⌘R)."),
                 systemImage: "wifi.exclamationmark"
             )
             .padding(.trailing, Metrics.pagePadding)
@@ -175,12 +175,12 @@ struct TMDbMissingNotice: View {
 
     var body: some View {
         EmptyStateView(
-            title: "Connect TMDb to start browsing",
+            title: String(localized: "Connect TMDb to start browsing"),
             message: isAdmin
-                ? "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations."
-                : "The household admin hasn't connected TMDb yet.",
+                ? String(localized: "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations.")
+                : String(localized: "The household admin hasn't connected TMDb yet."),
             systemImage: "film.stack",
-            actionTitle: isAdmin ? "Open Settings" : nil,
+            actionTitle: isAdmin ? String(localized: "Open Settings") : nil,
             action: isAdmin ? openSettings : nil
         )
         .padding(.top, 60)

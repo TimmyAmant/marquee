@@ -2,6 +2,8 @@
 // (components/push-prompt.tsx) and Settings (app/settings/push-settings.tsx).
 // Browser-only: every function here touches navigator/window.
 
+import type { Translator } from "@/lib/i18n/translator";
+
 /** "Not now" on the prompt, remembered per browser until the next sign-in
  * (the login form clears it, which is what makes the question come back
  * each time someone signs in rather than on every page). */
@@ -65,14 +67,14 @@ export type EnableResult = { ok: true } | { ok: false; reason: "denied" | "faile
 /** Asks for permission (this must run from a click: Safari refuses
  * otherwise), subscribes with this server's key and registers the
  * subscription with the server. */
-export async function enablePush(): Promise<EnableResult> {
+export async function enablePush(t: Translator): Promise<EnableResult> {
   try {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
       return {
         ok: false,
         reason: "denied",
-        message: "Notifications are blocked for this site. Allow them in the browser's site settings, then try again.",
+        message: t("notify.pushBlocked"),
       };
     }
 
@@ -101,11 +103,11 @@ export async function enablePush(): Promise<EnableResult> {
     });
     if (!saveRes.ok) {
       const data = (await saveRes.json().catch(() => ({}))) as { error?: string };
-      return { ok: false, reason: "failed", message: data.error ?? "Couldn't turn on notifications. Try again." };
+      return { ok: false, reason: "failed", message: data.error ?? t("notify.pushEnableFailed") };
     }
     return { ok: true };
   } catch {
-    return { ok: false, reason: "failed", message: "Couldn't turn on notifications. Try again." };
+    return { ok: false, reason: "failed", message: t("notify.pushEnableFailed") };
   }
 }
 

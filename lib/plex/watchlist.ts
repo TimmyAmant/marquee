@@ -10,6 +10,9 @@ import { fetchWatchlist, type WatchlistItem } from "@/lib/plex/watchlist-api";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { getQuota } from "@/lib/requests/quota";
 import { notifyReviewersOfWatchlist } from "@/lib/requests/alerts";
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/translator";
 
 // "Request what's on my Plex Watchlist": a member turns it on with their own
 // Plex account (lib/auth/media-signin.ts startPlexWatchlist/pollPlexWatchlist
@@ -26,11 +29,23 @@ export const MAX_NEW_REQUESTS_PER_SYNC = 25;
 export const SYNC_NOW_LIMIT = 5;
 export const SYNC_NOW_WINDOW_MS = 5 * 60 * 1000;
 
-export const WATCHLIST_TOKEN_REJECTED =
-  "Plex stopped accepting Marquee's access to your watchlist (for example after signing out of all devices). Turn it on again to reconnect.";
-const WATCHLIST_LIMITED =
-  "You've reached your request limit, so the rest of your watchlist waits until you have requests left.";
-const WATCHLIST_UNREACHABLE = "Couldn't reach Plex to read your watchlist. Marquee will try again shortly.";
+/** What a sync leaves in lastError: stored in English, as it always was,
+ * and shown in the reader's language (getWatchlistState). */
+const STORED_ERRORS = {
+  rejected: "server.plexWatchlistRejected",
+  limited: "server.plexWatchlistLimited",
+  unreachable: "server.plexWatchlistUnreachable",
+} as const satisfies Record<string, MessageKey>;
+
+export const WATCHLIST_TOKEN_REJECTED = englishT()(STORED_ERRORS.rejected);
+const WATCHLIST_LIMITED = englishT()(STORED_ERRORS.limited);
+const WATCHLIST_UNREACHABLE = englishT()(STORED_ERRORS.unreachable);
+
+async function lastErrorForReader(stored: string | null): Promise<string | null> {
+  if (!stored) return stored;
+  const key = Object.values(STORED_ERRORS).find((k) => englishT()(k) === stored);
+  return key ? (await getT())(key) : stored;
+}
 
 export type WatchlistState = {
   /** Whether turning it on is possible: the account has Plex linked. */
@@ -86,7 +101,7 @@ export async function getWatchlistState(userId: string): Promise<WatchlistState>
     movies: current?.syncMovies ?? true,
     tv: current?.syncTv ?? true,
     lastSyncedAt: current?.lastSyncedAt ?? null,
-    lastError: current?.lastError ?? null,
+    lastError: await lastErrorForReader(current?.lastError ?? null),
     requestedCount: requested.length,
   };
 }

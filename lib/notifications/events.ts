@@ -1,5 +1,6 @@
 import type { NotificationEventType } from "@/lib/db/schema";
 import { can, type PermissionSubject } from "@/lib/users/permissions";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 // The events someone can choose to hear about, and where (Settings ›
 // Account › Notifications). Finer than the notification's own eventType:
@@ -33,9 +34,10 @@ export function isPreferenceEvent(value: unknown): value is NotificationPreferen
 }
 
 type EventInfo = {
-  label: string;
+  /** Its name in Settings (a message key: eventLabel()). */
+  labelKey: MessageKey;
   /** How the household channels' list puts it, where that differs. */
-  householdLabel?: string;
+  householdLabelKey?: MessageKey;
   /** Who can get it at all. */
   audience: "everyone" | "reviewers" | "admin";
   /** Sent today. An event that isn't is never listed. */
@@ -55,22 +57,33 @@ type EventInfo = {
 };
 
 export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo> = {
-  request_approved: { label: "A request is approved", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
-  request_declined: { label: "A request is declined", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
-  request_available: { label: "Ready to watch", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
-  request_downloading: { label: "Started downloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
-  request_still_looking: { label: "Still looking for something I asked for", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
-  issue_updated: { label: "A problem I reported is fixed", householdLabel: "A reported problem is fixed", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
+  request_approved: { labelKey: "settings.eventRequestApproved", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
+  request_declined: { labelKey: "settings.eventRequestDeclined", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
+  request_available: { labelKey: "settings.eventRequestAvailable", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
+  request_downloading: { labelKey: "settings.eventRequestDownloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
+  request_still_looking: { labelKey: "settings.eventRequestStillLooking", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
+  issue_updated: { labelKey: "settings.eventIssueUpdated", householdLabelKey: "settings.eventIssueUpdatedHousehold", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
   // Between the people in the conversation, so never the household channels.
-  request_comment: { label: "Comments on requests and problem reports", audience: "everyone", live: true, channelDefault: true, householdDefault: false, personalOnly: true },
+  request_comment: { labelKey: "settings.eventRequestComment", audience: "everyone", live: true, channelDefault: true, householdDefault: false, personalOnly: true },
   // In the bell and pushed to devices by default like everything else, but
   // off for a new personal channel: it's a nudge, not news.
-  title_shared: { label: "Someone shares a title with me", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
-  request_pending: { label: "New request waiting for review", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
-  request_not_found: { label: "Sonarr/Radarr can't find a request", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
-  issue_reported: { label: "New problem report", audience: "admin", live: true, channelDefault: true, householdDefault: true },
-  watchlist_requests: { label: "Plex Watchlist requests", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
+  title_shared: { labelKey: "settings.eventTitleShared", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
+  request_pending: { labelKey: "settings.eventRequestPending", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
+  request_not_found: { labelKey: "settings.eventRequestNotFound", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
+  issue_reported: { labelKey: "settings.eventIssueReported", audience: "admin", live: true, channelDefault: true, householdDefault: true },
+  watchlist_requests: { labelKey: "settings.eventWatchlistRequests", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
 };
+
+/** An event's name for someone's own list, in `t`'s language. */
+export function eventLabel(t: Translator, event: NotificationPreferenceEvent): string {
+  return t(NOTIFICATION_EVENTS[event].labelKey);
+}
+
+/** An event's name in the household channels' list, in `t`'s language. */
+export function householdEventLabel(t: Translator, event: NotificationPreferenceEvent): string {
+  const info = NOTIFICATION_EVENTS[event];
+  return t(info.householdLabelKey ?? info.labelKey);
+}
 
 /** The events this account gets, in the order Settings lists them:
  * reviewers' events for whoever may review requests. */

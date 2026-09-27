@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { parseUuidSegment } from "@/lib/api/request";
@@ -9,6 +10,6 @@ import type { RequestEditOptions } from "@/lib/api/types";
  * picker, and whether 4K is an option. Your own request, or (reviewers) any. */
 export const GET = withApi<{ id: string }>(async (request, params): Promise<RequestEditOptions> => {
   const ctx = await requireApiUser(request);
-  const id = parseUuidSegment(params.id, "Request not found.");
+  const id = parseUuidSegment(params.id, msg("server.requestNotFound"));
   return unwrap(await getRequestEditOptions({ userId: ctx.user.id, role: ctx.user.role, permissions: ctx.user.permissions }, id)).options;
 });

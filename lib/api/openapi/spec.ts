@@ -5,6 +5,7 @@
 import { keyAccessFor } from "@/lib/api/key-policy";
 import { API_OPERATIONS, type ApiAuthLevel, type ApiOperation } from "@/lib/api/openapi/registry";
 import { permissionLabel } from "@/lib/users/permissions";
+import { englishT } from "@/lib/i18n/catalog";
 
 type Json = Record<string, unknown>;
 
@@ -17,7 +18,7 @@ const AUTH_DESCRIPTIONS: Record<"public" | "user" | "admin", string> = {
 /** Who may call it, in words. */
 export function authDescription(auth: ApiAuthLevel): string {
   if (auth === "public" || auth === "user" || auth === "admin") return AUTH_DESCRIPTIONS[auth];
-  return `The admin, or an account with the “${permissionLabel(auth)}” permission (\`${auth}\`); 403 for others.`;
+  return `The admin, or an account with the “${permissionLabel(auth, englishT())}” permission (\`${auth}\`); 403 for others.`;
 }
 
 const KEY_ACCESS_DESCRIPTIONS = {

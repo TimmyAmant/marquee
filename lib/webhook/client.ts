@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 // See the matching constant in lib/discord/client.ts, lib/tvdb/client.ts —
 // a slow/unreachable endpoint shouldn't be able to hang a request.
 const REQUEST_TIMEOUT_MS = 8000;
@@ -23,9 +24,11 @@ export async function sendWebhookNotification(url: string, payload: WebhookPaylo
 }
 
 export async function verifyWebhookUrl(url: string): Promise<boolean> {
+  // Whoever is setting it up reads it.
+  const t = await getT();
   return postToWebhook(url, {
     event: "test",
     title: "Marquee",
-    message: "Marquee is now connected to this webhook.",
+    message: t("notify.connectedWebhook"),
   }).catch(() => false);
 }

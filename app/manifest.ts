@@ -1,13 +1,18 @@
 import type { MetadataRoute } from "next";
+import { getT } from "@/lib/i18n/server";
 
 /** What "Add to Home Screen" (and a desktop browser's Install) uses. On an
  * iPhone or iPad this is also what makes notifications possible at all:
- * Safari only offers Web Push to a site opened from the Home Screen. */
-export default function manifest(): MetadataRoute.Manifest {
+ * Safari only offers Web Push to a site opened from the Home Screen. In the
+ * language of whoever installs it (reading the request makes it dynamic
+ * rather than cached at build time). */
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const t = await getT();
   return {
     name: "Marquee",
     short_name: "Marquee",
-    description: "Your self-hosted media dashboard",
+    description: t("nav.manifestDescription"),
+    lang: t.locale,
     start_url: "/discover",
     scope: "/",
     display: "standalone",
@@ -23,8 +28,8 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     // Long-press the home-screen icon.
     shortcuts: [
-      { name: "Requests", url: "/requests" },
-      { name: "Search", url: "/search" },
+      { name: t("nav.requests"), url: "/requests" },
+      { name: t("common.search"), url: "/search" },
     ],
   };
 }

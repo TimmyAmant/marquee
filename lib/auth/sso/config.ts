@@ -3,6 +3,9 @@ import { db } from "@/lib/db/client";
 import { ssoSettings } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { englishT } from "@/lib/i18n/catalog";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 import {
   fetchDiscovery,
   normalizeIssuerInput,
@@ -124,33 +127,35 @@ export function normalizePublicUrl(raw: string): string | null {
   }
 }
 
-/** Validates the form without touching the network. Pure; unit tested. */
+/** Validates the form without touching the network. Pure; unit tested.
+ * Messages in `t`'s language. */
 export function parseSsoSettingsInput(
   input: SsoSettingsInput,
   existing: Pick<SsoConfig, "clientSecret" | "issuer"> | null,
+  t: Translator = englishT(),
 ): CoreResult<{ config: SsoConfig }> {
   const name = text(input.name, 40);
-  if (!name) return fail("invalid", "Give the sign-in button a name, like Authentik.");
+  if (!name) return fail("invalid", t("server.ssoNameMissing"));
   const issuer = normalizeIssuerInput(text(input.issuer, 500));
-  if (!issuer) return fail("invalid", "Enter the provider's issuer URL (starting with https://).");
+  if (!issuer) return fail("invalid", t("server.ssoIssuerMissing"));
   const clientId = text(input.clientId, 500);
-  if (!clientId) return fail("invalid", "Enter the client ID from your identity provider.");
+  if (!clientId) return fail("invalid", t("server.ssoClientIdMissing"));
   const publicUrl = normalizePublicUrl(text(input.publicUrl, 500));
-  if (!publicUrl) return fail("invalid", "Enter Marquee's address, like https://marquee.example.com.");
+  if (!publicUrl) return fail("invalid", t("server.ssoPublicUrlMissing"));
 
   const typedSecret = typeof input.clientSecret === "string" ? input.clientSecret.trim() : "";
-  if (typedSecret.length > 1000) return fail("invalid", "That client secret is too long.");
+  if (typedSecret.length > 1000) return fail("invalid", t("server.ssoSecretTooLong"));
   // The saved secret is only ever sent back to the provider it was made
   // for: pointing Marquee at another issuer needs it typed again.
   const keptSecret =
     input.clearClientSecret === true || !existing || !sameIssuer(existing.issuer, issuer) ? null : existing.clientSecret;
   if (!typedSecret && input.clearClientSecret !== true && existing?.clientSecret && !keptSecret) {
-    return fail("invalid", "Enter the client secret again — the saved one belongs to the previous provider.");
+    return fail("invalid", t("server.ssoSecretAgain"));
   }
   const clientSecret = typedSecret || keptSecret;
 
   const groupsClaim = text(input.groupsClaim, 100) || DEFAULT_GROUPS_CLAIM;
-  if (!/^[A-Za-z0-9_:.\-/]+$/.test(groupsClaim)) return fail("invalid", "The groups claim can only be a claim name.");
+  if (!/^[A-Za-z0-9_:.\-/]+$/.test(groupsClaim)) return fail("invalid", t("server.ssoGroupsClaimInvalid"));
 
   return {
     ok: true,
@@ -179,10 +184,10 @@ export type SsoTestResult = {
   warnings: string[];
 };
 
-export function testResultFor(discovery: Discovery): SsoTestResult {
+export function testResultFor(discovery: Discovery, t: Translator = englishT()): SsoTestResult {
   const warnings: string[] = [];
   if (!discovery.issuer.startsWith("https://")) {
-    warnings.push("The provider isn't using https — sign-ins and the client secret travel unencrypted.");
+    warnings.push(t("server.ssoNotHttps"));
   }
   return {
     issuer: discovery.issuer,
@@ -195,12 +200,13 @@ export function testResultFor(discovery: Discovery): SsoTestResult {
 
 /** "Test": fetches and checks the provider's discovery document. */
 export async function testSsoIssuer(rawIssuer: unknown, fetchImpl?: Fetch): Promise<CoreResult<{ result: SsoTestResult }>> {
+  const t = await getT();
   const issuer = normalizeIssuerInput(typeof rawIssuer === "string" ? rawIssuer : "");
-  if (!issuer) return fail("invalid", "Enter the provider's issuer URL (starting with https://).");
+  if (!issuer) return fail("invalid", t("server.ssoIssuerMissing"));
   try {
-    return { ok: true, result: testResultFor(await fetchDiscovery(issuer, fetchImpl)) };
+    return { ok: true, result: testResultFor(await fetchDiscovery(issuer, fetchImpl), t) };
   } catch (err) {
-    return fail("upstream", err instanceof OidcError ? err.message : "Couldn't reach the identity provider.");
+    return fail("upstream", err instanceof OidcError ? err.messageIn(t) : t("server.idpUnreachable"));
   }
 }
 
@@ -208,14 +214,15 @@ export async function testSsoIssuer(rawIssuer: unknown, fetchImpl?: Fetch): Prom
  * discovery document states (so ID tokens can be checked against it
  * exactly). */
 export async function testAndSaveSsoSettings(input: SsoSettingsInput): Promise<CoreResult<{ settings: SsoSettingsView }>> {
+  const t = await getT();
   const existing = await getSsoConfig();
-  const parsed = parseSsoSettingsInput(input, existing);
+  const parsed = parseSsoSettingsInput(input, existing, t);
   if (!parsed.ok) return parsed;
   let discovery: Discovery;
   try {
     discovery = await fetchDiscovery(parsed.config.issuer);
   } catch (err) {
-    return fail("upstream", err instanceof OidcError ? err.message : "Couldn't reach the identity provider.");
+    return fail("upstream", err instanceof OidcError ? err.messageIn(t) : t("server.idpUnreachable"));
   }
   const config: SsoConfig = { ...parsed.config, issuer: discovery.issuer };
   const secret = config.clientSecret ? encryptSecret(config.clientSecret) : null;

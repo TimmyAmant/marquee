@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { avatarResponse, readAvatarUpload, removeUserAvatar, setUserAvatar } from "@/lib/users/avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
+import { getT } from "@/lib/i18n/server";
 import type { Actor } from "@/lib/users/household";
 
 // The website's side of profile photos, on the browser session. Native
@@ -40,11 +41,11 @@ export async function GET(request: Request, { params }: Context) {
 export async function PUT(request: Request, { params }: Context) {
   const { id } = await params;
   const viewer = await actor();
-  if (!viewer) return error(401, "Sign in required.");
+  if (!viewer) return error(401, (await getT())("server.signInRequired"));
   if (crossSite(request)) return error(403, "Forbidden.");
-  if (!UUID.test(id)) return error(404, "Account not found.");
+  if (!UUID.test(id)) return error(404, (await getT())("server.accountNotFound"));
 
-  const upload = await readAvatarUpload(request);
+  const upload = await readAvatarUpload(request, await getT());
   if (!upload.ok) return error(400, upload.error);
   const result = await setUserAvatar(viewer, id, upload.bytes);
   if (!result.ok) return error(result.code === "forbidden" ? 403 : result.code === "not_found" ? 404 : 400, result.error);
@@ -54,9 +55,9 @@ export async function PUT(request: Request, { params }: Context) {
 export async function DELETE(request: Request, { params }: Context) {
   const { id } = await params;
   const viewer = await actor();
-  if (!viewer) return error(401, "Sign in required.");
+  if (!viewer) return error(401, (await getT())("server.signInRequired"));
   if (crossSite(request)) return error(403, "Forbidden.");
-  if (!UUID.test(id)) return error(404, "Account not found.");
+  if (!UUID.test(id)) return error(404, (await getT())("server.accountNotFound"));
 
   const result = await removeUserAvatar(viewer, id);
   if (!result.ok) return error(403, result.error);

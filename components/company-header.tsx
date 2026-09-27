@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
+import { getT } from "@/lib/i18n/server";
 
-export function CompanyHeader({
+export async function CompanyHeader({
   name,
   description,
   logoPath,
@@ -15,6 +16,7 @@ export function CompanyHeader({
   favoriteAction?: React.ReactNode;
 }) {
   const src = tmdbImageUrl(logoPath, "w342");
+  const t = await getT();
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -36,7 +38,7 @@ export function CompanyHeader({
           <h1 className="font-display text-4xl text-text-primary">{name}</h1>
           {favoriteAction}
         </div>
-        <p className="mt-1 text-sm text-text-muted">{count} titles in the catalog</p>
+        <p className="mt-1 text-sm text-text-muted">{t("discover.catalogCount", { count })}</p>
         {description && (
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-secondary">
             {description.length > 400 ? `${description.slice(0, 400)}…` : description}

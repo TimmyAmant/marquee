@@ -16,9 +16,9 @@
 
     <StackPanel Spacing="20">
         <StackPanel Spacing="4">
-            <TextBlock Text="Activity" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock x:Uid="Activity_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
             <TextBlock
-                Text="Who requested what, and who reviewed it — most recent first."
+                x:Uid="Activity_Subtitle"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap" />
@@ -36,10 +36,10 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                 TextWrapping="Wrap" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.LoadCommand}" />
+            <Button x:Uid="Activity_TryAgain" Command="{x:Bind ViewModel.LoadCommand}" />
         </StackPanel>
         <TextBlock
-            Text="Nothing yet."
+            x:Uid="Activity_Empty"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorTertiaryBrush}" />

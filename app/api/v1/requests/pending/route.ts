@@ -1,8 +1,10 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiPermission } from "@/lib/api/auth";
 import { iso, isoRequired, requestPerson, requestSeasons } from "@/lib/api/mappers";
 import { getPendingRequests } from "@/lib/requests/query";
-import { REJECTION_REASON_PRESETS } from "@/lib/requests/rejection-reasons";
+import { rejectionReasonPresets } from "@/lib/requests/rejection-reasons";
+import { getT } from "@/lib/i18n/server";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import { countComments } from "@/lib/comments";
 import type { PendingRequestsResponse } from "@/lib/api/types";
@@ -14,7 +16,7 @@ import type { PendingRequestsResponse } from "@/lib/api/types";
  * Reject chooser offers, so a native client shows the same choices and just
  * posts the chosen text to /requests/{id}/reject. */
 export const GET = withApi(async (request): Promise<PendingRequestsResponse> => {
-  const ctx = await requireApiPermission(request, "viewRequests", "Only an admin can review requests.");
+  const ctx = await requireApiPermission(request, "viewRequests", msg("server.onlyAdminReviewRequests"));
   const libraryOwnerId = await ctx.libraryOwnerId();
 
   const [pending, sonarrCred] = await Promise.all([
@@ -22,17 +24,18 @@ export const GET = withApi(async (request): Promise<PendingRequestsResponse> => 
     getArrCredential(libraryOwnerId, "sonarr"),
   ]);
   const comments = await countComments("request", pending.map((r) => r.id));
+  const t = await getT();
 
   return {
     sonarrUrl: sonarrCred?.baseUrl ?? null,
-    rejectionReasons: [...REJECTION_REASON_PRESETS],
+    rejectionReasons: rejectionReasonPresets(t),
     results: pending.map((r) => ({
       id: r.id,
       mediaType: r.mediaType,
       tmdbId: r.tmdbId,
       title: r.title,
       posterPath: r.posterPath,
-      ...requestSeasons(r.seasons),
+      ...requestSeasons(t, r.seasons),
       is4k: r.is4k,
       requestedBy: requestPerson({
         userId: r.requestedByUserId,

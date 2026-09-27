@@ -1,3 +1,4 @@
+using Marquee.Core.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -11,8 +12,8 @@ namespace Marquee.Windows.Controls;
 /// </summary>
 public sealed partial class DeclineRequestDialog : ContentDialog
 {
-    /// <summary>The free-text choice. Only the chooser's label: what gets sent is the admin's own words, never this word itself.</summary>
-    public const string Other = "Other";
+    /// <summary>The free-text choice, always the last option. Only the chooser's label: what gets sent is the admin's own words, never this word itself.</summary>
+    public static string Other => Loc.Get("Decline_OtherChoice");
 
     /// <summary>The server's cap (api-v1.md, reject); the TextBox enforces it too.</summary>
     public const int MaxReasonLength = 200;
@@ -22,13 +23,13 @@ public sealed partial class DeclineRequestDialog : ContentDialog
     /// no <c>rejectionReasons</c>. Such a server ignores the reason anyway,
     /// but the admin still gets the same chooser.
     /// </summary>
-    public static IReadOnlyList<string> DefaultReasons { get; } =
+    public static IReadOnlyList<string> DefaultReasons =>
     [
-        "Already available on a streaming service we have",
-        "Not released yet, ask again once it's out",
-        "Not enough space on the server right now",
-        "Not a fit for the household library",
-        "Couldn't find a good copy of it",
+        Loc.Get("Decline_DefaultStreaming"),
+        Loc.Get("Decline_DefaultUnreleased"),
+        Loc.Get("Decline_DefaultNoSpace"),
+        Loc.Get("Decline_DefaultNotAFit"),
+        Loc.Get("Decline_DefaultNoCopy"),
     ];
 
     private readonly IReadOnlyList<string> options;
@@ -41,8 +42,7 @@ public sealed partial class DeclineRequestDialog : ContentDialog
         var presets = reasons.Count > 0 ? reasons : DefaultReasons;
         options = presets.Append(Other).ToList();
         InitializeComponent();
-        ExplanationText.Text =
-            $"Let {requester} know why \"{title}\" isn't being added. They'll see it under Declined on their Requests page and in the notification.";
+        ExplanationText.Text = Loc.Format("Decline_Explanation", requester, title);
         ReasonButtons.ItemsSource = options;
     }
 
@@ -56,19 +56,17 @@ public sealed partial class DeclineRequestDialog : ContentDialog
             {
                 return null;
             }
-            var choice = options[index];
-            if (choice != Other)
+            if (index != options.Count - 1)
             {
-                return choice;
+                return options[index];
             }
             var custom = CustomReasonBox.Text.Trim();
             return custom.Length == 0 ? null : custom;
         }
     }
 
-    private bool IsOtherChosen => ReasonButtons.SelectedIndex >= 0
-        && ReasonButtons.SelectedIndex < options.Count
-        && options[ReasonButtons.SelectedIndex] == Other;
+    /// <summary>"Other" is the last option (compared by place: a preset could read the same).</summary>
+    private bool IsOtherChosen => ReasonButtons.SelectedIndex == options.Count - 1;
 
     private void OnReasonChanged(object sender, SelectionChangedEventArgs e)
     {

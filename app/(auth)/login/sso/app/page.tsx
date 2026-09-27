@@ -1,5 +1,7 @@
 import { getSsoButton } from "@/lib/auth/sso/config";
 import { getAppFlow } from "@/lib/auth/sso/flows";
+import { getT } from "@/lib/i18n/server";
+import { rich } from "@/lib/i18n/rich";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +16,13 @@ export default async function SsoAppPage({ searchParams }: { searchParams: Promi
   const { key } = await searchParams;
   const flow = getAppFlow(typeof key === "string" ? key : null);
   const sso = await getSsoButton();
+  const t = await getT();
 
   if (!flow || !sso) {
     return (
       <div className="rounded-2xl border border-border bg-bg-1 p-8">
-        <h1 className="font-display text-2xl text-text-primary">This link has expired</h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Sign-in links work once, for ten minutes. Start again from the Marquee app.
-        </p>
+        <h1 className="font-display text-2xl text-text-primary">{t("auth.linkExpiredTitle")}</h1>
+        <p className="mt-2 text-sm text-text-secondary">{t("auth.linkExpiredBody")}</p>
       </div>
     );
   }
@@ -29,36 +30,22 @@ export default async function SsoAppPage({ searchParams }: { searchParams: Promi
   const purpose = flow.purpose;
   const linking = purpose.kind === "app_link";
   const device = purpose.kind === "app_sign_in" ? purpose.deviceName : null;
+  const highlight = (chunks: React.ReactNode) => <span className="text-text-primary">{chunks}</span>;
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-8">
       <h1 className="font-display text-2xl text-text-primary">
-        {linking ? `Link ${sso.name}` : "Sign in to the Marquee app"}
+        {linking ? t("auth.appLinkTitle", { name: sso.name }) : t("auth.appSignInTitle")}
       </h1>
       <p className="mt-2 text-sm text-text-secondary">
-        {linking ? (
-          <>
-            The Marquee app wants to link your {sso.name} account to the Marquee account{" "}
-            <span className="text-text-primary">
-              {purpose.kind === "app_link" ? purpose.username : ""}
-            </span>
-            , so it can sign in with {sso.name}.
-          </>
-        ) : (
-          <>
-            A Marquee app wants to sign in with your {sso.name} account
-            {device ? (
-              <>
-                {" "}(it calls itself “<span className="text-text-primary">{device}</span>”)
-              </>
-            ) : null}
-            .
-          </>
-        )}
+        {purpose.kind === "app_link"
+          ? rich(t("auth.appLinkBody", { name: sso.name, username: purpose.username }), { user: highlight })
+          : device
+            ? rich(t("auth.appSignInBodyDevice", { name: sso.name, device }), { device: highlight })
+            : t("auth.appSignInBody", { name: sso.name })}
       </p>
       <p className="mt-3 text-sm text-text-secondary">
-        Only continue if you started this yourself, just now, in the Marquee app. If someone sent you this
-        link, don&apos;t — continuing would {linking ? "tie your account to theirs" : "sign their app in as you"}.
+        {linking ? t("auth.appWarningLink") : t("auth.appWarningSignIn")}
       </p>
       <form method="post" action="/api/auth/sso/app" className="mt-6">
         <input type="hidden" name="key" value={key as string} />
@@ -66,7 +53,7 @@ export default async function SsoAppPage({ searchParams }: { searchParams: Promi
           type="submit"
           className="w-full rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
         >
-          Continue with {sso.name}
+          {t("auth.continueWith", { name: sso.name })}
         </button>
       </form>
     </div>

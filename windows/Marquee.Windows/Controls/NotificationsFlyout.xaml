@@ -25,12 +25,12 @@
             </Grid.ColumnDefinitions>
             <TextBlock
                 Grid.Column="0"
-                Text="Notifications"
+                x:Uid="Notifications_Title"
                 Style="{StaticResource BodyStrongTextBlockStyle}"
                 VerticalAlignment="Center" />
             <HyperlinkButton
                 Grid.Column="1"
-                Content="Mark all read"
+                x:Uid="Notifications_MarkAllRead"
                 Command="{x:Bind ViewModel.MarkAllReadCommand}"
                 Visibility="{x:Bind ViewModel.HasUnread, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 Padding="8,4" />
@@ -52,7 +52,7 @@
             Margin="4,8" />
 
         <TextBlock
-            Text="No notifications yet."
+            x:Uid="Notifications_Empty"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"

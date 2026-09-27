@@ -17,19 +17,19 @@ struct FavoritesView: View {
                 if let favorites {
                     if favorites.isEmpty {
                         EmptyStateView(
-                            title: "Nothing favorited yet",
-                            message: "Star anything from its page or card to see it here.",
+                            title: String(localized: "Nothing favorited yet"),
+                            message: String(localized: "Star anything from its page or card to see it here."),
                             systemImage: "star"
                         )
                     } else {
                         if !favorites.movies.isEmpty {
-                            section("Movies") { titleGrid(favorites.movies) }
+                            section(String(localized: "Movies")) { titleGrid(favorites.movies) }
                         }
                         if !favorites.tv.isEmpty {
-                            section("TV Shows") { titleGrid(favorites.tv) }
+                            section(String(localized: "TV Shows")) { titleGrid(favorites.tv) }
                         }
                         if !favorites.collections.isEmpty {
-                            section("Collections") {
+                            section(String(localized: "Collections")) {
                                 PosterGrid {
                                     ForEach(favorites.collections) { collection in
                                         PosterCard(
@@ -46,7 +46,7 @@ struct FavoritesView: View {
                             }
                         }
                         if !favorites.people.isEmpty {
-                            section("People") {
+                            section(String(localized: "People")) {
                                 PosterGrid {
                                     ForEach(favorites.people) { person in
                                         PosterCard(
@@ -63,7 +63,7 @@ struct FavoritesView: View {
                             }
                         }
                         if !favorites.studios.isEmpty {
-                            section("Studios") {
+                            section(String(localized: "Studios")) {
                                 FlowLayout(spacing: 10, lineSpacing: 10) {
                                     ForEach(favorites.studios) { studio in
                                         StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
@@ -74,10 +74,10 @@ struct FavoritesView: View {
                     }
                 } else if let error {
                     EmptyStateView(
-                        title: "Couldn't load your favorites",
+                        title: String(localized: "Couldn't load your favorites"),
                         message: error,
                         systemImage: "exclamationmark.triangle",
-                        actionTitle: "Try again",
+                        actionTitle: String(localized: "Try again"),
                         action: { model.reload() }
                     )
                 } else {

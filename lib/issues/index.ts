@@ -2,7 +2,7 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { issues, users, type IssueKind, type MediaType } from "@/lib/db/schema";
 import {
-  ISSUE_KIND_LABELS,
+  issueKindLabel,
   issueEpisodeLabel,
   MAX_ISSUE_RESOLUTION,
   MAX_OPEN_ISSUES_PER_USER,
@@ -10,7 +10,9 @@ import {
   type ReportInput,
 } from "@/lib/issues/labels";
 
-export { ISSUE_KIND_LABELS, issueEpisodeLabel, parseReport, type ReportInput };
+export { issueKindLabel, issueEpisodeLabel, parseReport, type ReportInput };
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
@@ -29,9 +31,10 @@ import { revalidatePathSafely } from "@/lib/cache/revalidate";
 // Requests page: see what's wrong, have Sonarr/Radarr look for a better
 // copy, and mark it fixed — the reporter is told either way.
 
-function describe(title: string, seasonNumber: number | null, episodeNumber: number | null): string {
-  const episode = issueEpisodeLabel(seasonNumber, episodeNumber);
-  return episode ? `"${title}" (${episode})` : `"${title}"`;
+/** `"Dune"`, or `"Dune" (S2 E5)`: how notifications name a report's title. */
+function describe(t: Translator, title: string, seasonNumber: number | null, episodeNumber: number | null): string {
+  const episode = issueEpisodeLabel(t, seasonNumber, episodeNumber);
+  return episode ? t("notify.quotedTitleWithDetail", { title, detail: episode }) : t("notify.quotedTitle", { title });
 }
 
 export async function reportIssue(
@@ -40,15 +43,16 @@ export async function reportIssue(
   tmdbId: number,
   input: ReportInput,
 ): Promise<CoreResult<{ issueId: string }>> {
+  const t = await getT();
   if (!can(await getAccess(userId), "reportIssues")) {
-    return fail("forbidden", "Reporting problems isn't turned on for your account.");
+    return fail("forbidden", t("notify.reportingNotAllowed"));
   }
-  const parsed = parseReport(mediaType, input);
+  const parsed = parseReport(t, mediaType, input);
   if (!parsed.ok) return fail("invalid", parsed.error);
   // Counted per report sent, not per report still open: withdrawing and
   // re-sending would otherwise post to every notification channel without end.
   if (!checkRateLimit(`issue-report:${userId}`, REPORTS_PER_HOUR, 60 * 60 * 1000)) {
-    return fail("rate_limited", "That's a lot of reports in a short time. Try again in a while.");
+    return fail("rate_limited", t("notify.reportRateLimited"));
   }
 
   const [open] = await db
@@ -56,11 +60,11 @@ export async function reportIssue(
     .from(issues)
     .where(and(eq(issues.reportedByUserId, userId), eq(issues.status, "open")));
   if ((open?.count ?? 0) >= MAX_OPEN_ISSUES_PER_USER) {
-    return fail("rate_limited", "You have a lot of open reports already. Wait until some are fixed.");
+    return fail("rate_limited", t("notify.reportTooManyOpen"));
   }
 
   const title = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
-  if (!title) return fail("upstream", "Couldn't look this title up with TMDb right now.");
+  if (!title) return fail("upstream", t("notify.tmdbLookupFailed"));
 
   const [row] = await db
     .insert(issues)
@@ -90,11 +94,13 @@ export async function reportIssue(
       tmdbId,
       title: title.name,
       eventType: "issue_reported",
-      message: `${reporter?.name || reporter?.username || "Someone"} reported a problem with ${describe(
-        title.name,
-        parsed.seasonNumber,
-        parsed.episodeNumber,
-      )}: ${ISSUE_KIND_LABELS[parsed.kind]}`,
+      // The admin's language here, and the household's on its channels.
+      message: (rt) =>
+        rt("notify.issueReported", {
+          who: reporter?.name || reporter?.username || rt("notify.someone"),
+          title: describe(rt, title.name, parsed.seasonNumber, parsed.episodeNumber),
+          kind: issueKindLabel(rt, parsed.kind),
+        }),
     }).catch(() => undefined);
   }
 
@@ -192,27 +198,32 @@ export async function resolveIssue(
   issueId: string,
   note: unknown,
 ): Promise<CoreResult> {
-  if (!UUID.test(issueId)) return fail("not_found", "That report isn't open any more.");
+  const t = await getT();
+  if (!UUID.test(issueId)) return fail("not_found", t("notify.reportNotOpen"));
   const resolution = typeof note === "string" ? note.trim() : "";
   if (resolution.length > MAX_ISSUE_RESOLUTION) {
-    return fail("invalid", `Keep the note under ${MAX_ISSUE_RESOLUTION} characters.`);
+    return fail("invalid", t("notify.noteTooLong", { count: MAX_ISSUE_RESOLUTION }));
   }
   const [issue] = await db
     .update(issues)
     .set({ status: "resolved", resolution: resolution || null, resolvedByUserId: adminUserId, resolvedAt: new Date() })
     .where(and(eq(issues.id, issueId), eq(issues.status, "open")))
     .returning();
-  if (!issue) return fail("not_found", "That report isn't open any more.");
+  if (!issue) return fail("not_found", t("notify.reportNotOpen"));
 
   if (issue.reportedByUserId !== adminUserId) {
-    const what = describe(issue.title, issue.seasonNumber, issue.episodeNumber);
     await createNotification({
       userId: issue.reportedByUserId,
       mediaType: issue.mediaType,
       tmdbId: issue.tmdbId,
       title: issue.title,
       eventType: "issue_resolved",
-      message: resolution ? `The problem you reported with ${what} was fixed: ${resolution}` : `The problem you reported with ${what} was fixed.`,
+      message: (rt) => {
+        const what = describe(rt, issue.title, issue.seasonNumber, issue.episodeNumber);
+        return resolution
+          ? rt("notify.issueFixedWithNote", { title: what, note: resolution })
+          : rt("notify.issueFixed", { title: what });
+      },
       // The household channels only post this if the admin picked "A
       // reported problem is fixed" for them (off by default, as before).
     }).catch(() => undefined);
@@ -224,13 +235,14 @@ export async function resolveIssue(
 /** "Search again": asks Sonarr/Radarr for another copy of the title the
  * report is about — the usual first fix for a bad file. */
 export async function searchAgainForIssue(reviewerUserId: string, issueId: string): Promise<CoreResult> {
-  if (!UUID.test(issueId)) return fail("not_found", "Report not found.");
+  const t = await getT();
+  if (!UUID.test(issueId)) return fail("not_found", t("notify.reportNotFound"));
   // A trusted member has no Sonarr/Radarr of their own: search with the admin's.
   const [reviewer] = await db.select({ role: users.role }).from(users).where(eq(users.id, reviewerUserId)).limit(1);
   const adminUserId = reviewer?.role === "admin" ? reviewerUserId : await getAdminUserId();
-  if (!adminUserId) return fail("conflict", "There's no admin account to search with.");
+  if (!adminUserId) return fail("conflict", t("notify.noAdminToSearch"));
   const [issue] = await db.select().from(issues).where(eq(issues.id, issueId)).limit(1);
-  if (!issue) return fail("not_found", "Report not found.");
+  if (!issue) return fail("not_found", t("notify.reportNotFound"));
   const title = await getOrFetchTitle(issue.mediaType, issue.tmdbId).catch(() => null);
   const tvdbId = title?.tvdbId ?? null;
   const main = await searchTitle(adminUserId, issue.mediaType, issue.tmdbId, tvdbId);
@@ -245,7 +257,7 @@ export async function searchAgainForIssue(reviewerUserId: string, issueId: strin
 /** Anyone may withdraw their own open report; whoever handles problem
  * reports may remove any. */
 export async function deleteIssue(viewer: { userId: string; managesIssues: boolean }, issueId: string): Promise<CoreResult> {
-  if (!UUID.test(issueId)) return fail("not_found", "Report not found.");
+  if (!UUID.test(issueId)) return fail("not_found", (await getT())("notify.reportNotFound"));
   const deleted = await db
     .delete(issues)
     .where(
@@ -254,7 +266,7 @@ export async function deleteIssue(viewer: { userId: string; managesIssues: boole
         : and(eq(issues.id, issueId), eq(issues.reportedByUserId, viewer.userId), eq(issues.status, "open")),
     )
     .returning({ id: issues.id });
-  if (deleted.length === 0) return fail("not_found", "Report not found.");
+  if (deleted.length === 0) return fail("not_found", (await getT())("notify.reportNotFound"));
   revalidatePathSafely("/requests");
   return { ok: true };
 }

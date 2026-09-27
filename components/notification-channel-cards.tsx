@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { removeChannelAction, saveChannelAction } from "@/app/settings/integrations/channel-actions";
 import type { ChannelSummaries } from "@/lib/notifications/channels";
 import type { NotificationChannelKind } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -23,6 +24,7 @@ type Field = {
 function ChannelCard({
   kind,
   title,
+  shortName,
   description,
   connected,
   fields,
@@ -31,12 +33,15 @@ function ChannelCard({
 }: {
   kind: NotificationChannelKind;
   title: string;
+  /** "Telegram", "Pushover", "Email" — for "Remove …". */
+  shortName: string;
   description: React.ReactNode;
   connected: boolean;
   fields: Field[];
   children?: React.ReactNode;
   successText: string;
 }) {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(saveChannelAction, undefined);
   const [removeState, removeAction, isRemoving] = useActionState(removeChannelAction, undefined);
   // The newer of the two outcomes wins: a save after a remove is connected.
@@ -54,7 +59,7 @@ function ChannelCard({
         </div>
         {isConnected && (
           <span className="shrink-0 rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-            Connected
+            {t("integrations.connected")}
           </span>
         )}
       </div>
@@ -70,7 +75,7 @@ function ChannelCard({
               required={field.required && !(field.keepsSaved && isConnected)}
               defaultValue={typed?.[field.name] ?? field.defaultValue}
               autoComplete="off"
-              placeholder={field.keepsSaved && isConnected ? "•••••••••••••••• (leave blank to keep)" : field.placeholder}
+              placeholder={field.keepsSaved && isConnected ? t("integrations.leaveBlankToKeep") : field.placeholder}
               className={inputClass}
             />
             {field.hint && <span className="text-xs text-text-muted">{field.hint}</span>}
@@ -86,7 +91,7 @@ function ChannelCard({
           disabled={isPending}
           className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {isPending ? "Testing…" : "Test & save"}
+          {isPending ? t("integrations.testing") : t("integrations.testAndSave")}
         </button>
       </form>
 
@@ -98,7 +103,7 @@ function ChannelCard({
             disabled={isRemoving}
             className="text-xs text-text-muted underline decoration-dotted hover:text-red-400 disabled:opacity-60"
           >
-            {isRemoving ? "Removing…" : `Remove ${title.split(" ")[0]}`}
+            {isRemoving ? t("integrations.removing") : t("integrations.removeChannel", { name: shortName })}
           </button>
           {removeState?.error && <p className="mt-1 text-xs text-red-400">{removeState.error}</p>}
         </form>
@@ -107,100 +112,107 @@ function ChannelCard({
   );
 }
 
-const WHAT = "for the events picked above. Members can use it for their own notifications too.";
-
 export function NotificationChannelCards({ channels }: { channels: ChannelSummaries }) {
+  const t = useT();
   const { telegram, pushover, email } = channels;
   return (
     <>
       <ChannelCard
         kind="telegram"
-        title="Telegram notifications"
-        description={`Posts to a Telegram chat, group or channel through your own bot ${WHAT}`}
+        title={t("integrations.channelTelegramTitle")}
+        shortName="Telegram"
+        description={t("integrations.channelTelegramIntro")}
         connected={telegram.connected}
-        successText="Connected — check the chat for a test message."
+        successText={t("integrations.channelTelegramSuccess")}
         fields={[
           {
             name: "botToken",
-            label: "Bot token",
+            label: t("integrations.botToken"),
             type: "password",
             required: true,
             keepsSaved: true,
             placeholder: "123456789:AA…",
-            hint: "Message @BotFather on Telegram, send /newbot, and paste the token it gives you.",
+            hint: t("integrations.botTokenHint"),
           },
           {
             name: "chatId",
-            label: "Chat ID",
+            label: t("integrations.chatId"),
             required: true,
             defaultValue: telegram.chatId ?? "",
-            placeholder: "123456789, -100…, or @channelname",
-            hint: "Send your bot a message (or add it to the group), then open api.telegram.org/bot<token>/getUpdates to find the chat's id.",
+            placeholder: t("integrations.chatIdPlaceholder"),
+            hint: t("integrations.chatIdHint", { url: "api.telegram.org/bot<token>/getUpdates" }),
           },
         ]}
       />
       <ChannelCard
         kind="pushover"
-        title="Pushover notifications"
-        description={`Sends a push notification through Pushover ${WHAT}`}
+        title={t("integrations.channelPushoverTitle")}
+        shortName="Pushover"
+        description={t("integrations.channelPushoverIntro")}
         connected={pushover.connected}
-        successText="Connected — a test notification is on its way."
+        successText={t("integrations.channelPushoverSuccess")}
         fields={[
           {
             name: "appToken",
-            label: "Application token",
+            label: t("integrations.appToken"),
             type: "password",
             required: true,
             keepsSaved: true,
-            hint: "Create an application at pushover.net/apps/build and copy its API token.",
+            hint: t("integrations.appTokenHint"),
           },
           {
             name: "userKey",
-            label: "User or group key",
+            label: t("integrations.userKey"),
             type: "password",
             required: true,
-            hint: "Your user key is at the top of your pushover.net dashboard.",
+            hint: t("integrations.userKeyHint"),
           },
         ]}
       />
       <ChannelCard
         kind="email"
-        title="Email notifications"
-        description={`Emails one or more addresses through your own mail server (SMTP) ${WHAT}`}
+        title={t("integrations.channelEmailTitle")}
+        shortName={t("integrations.channelEmailShort")}
+        description={t("integrations.channelEmailIntro")}
         connected={email.connected}
-        successText="Connected — check the inbox for a test email."
+        successText={t("integrations.channelEmailSuccess")}
         fields={[
-          { name: "host", label: "SMTP server", required: true, defaultValue: email.host ?? "", placeholder: "smtp.gmail.com" },
+          { name: "host", label: t("integrations.smtpServer"), required: true, defaultValue: email.host ?? "", placeholder: "smtp.gmail.com" },
           {
             name: "port",
-            label: "Port",
+            label: t("integrations.port"),
             type: "number",
             required: true,
             defaultValue: String(email.port ?? 587),
-            hint: "587 for most servers; 465 with \"Secure connection\" on.",
+            hint: t("integrations.portHint"),
           },
-          { name: "username", label: "Username", defaultValue: email.username ?? "", placeholder: "Leave blank if the server needs none" },
+          {
+            name: "username",
+            label: t("integrations.username"),
+            defaultValue: email.username ?? "",
+            placeholder: t("integrations.usernamePlaceholder"),
+          },
           {
             name: "password",
-            label: "Password",
+            label: t("integrations.password"),
             type: "password",
             keepsSaved: true,
-            hint: "For Gmail, an app password (myaccount.google.com/apppasswords), not your normal one.",
+            hint: t("integrations.passwordHint"),
           },
-          { name: "from", label: "From address", type: "email", required: true, defaultValue: email.from ?? "", placeholder: "marquee@example.com" },
+          { name: "from", label: t("integrations.fromAddress"), type: "email", required: true, defaultValue: email.from ?? "", placeholder: "marquee@example.com" },
           {
             name: "to",
-            label: "Send to",
+            label: t("integrations.sendTo"),
             required: true,
             defaultValue: email.to.join(", "),
             placeholder: "you@example.com, partner@example.com",
-            hint: "One or more addresses, separated by commas.",
+            hint: t("integrations.sendToHint"),
           },
         ]}
       >
         <label className="flex items-center gap-2 text-sm text-text-secondary">
           <input type="checkbox" name="secure" defaultChecked={email.secure} className="h-4 w-4 rounded border-border accent-accent" />
-          Secure connection from the start (TLS, usually port 465)
+          {t("integrations.secureConnection")}
         </label>
       </ChannelCard>
     </>

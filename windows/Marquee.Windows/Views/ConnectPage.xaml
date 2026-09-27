@@ -27,22 +27,22 @@
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsLaunching, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <ProgressRing IsActive="{x:Bind ViewModel.IsLaunching, Mode=OneWay}" Width="32" Height="32" HorizontalAlignment="Left" />
                 <TextBlock
-                    Text="Connecting to your server…"
+                    x:Uid="Connect_Launching"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
             <!-- Connect: which server. -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsConnectStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Connect to your server" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Connect_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Enter the IP address or URL of the computer running Marquee. The port is usually 3000."
+                    x:Uid="Connect_Intro"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
                 <TextBox
                     x:Name="AddressBox"
-                    Header="IP address or URL"
+                    x:Uid="Connect_AddressBox"
                     PlaceholderText="192.168.1.20:3000"
                     Text="{x:Bind ViewModel.Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     IsSpellCheckEnabled="False"
@@ -61,7 +61,7 @@
 
             <!-- Sign in. -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsSignInStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Welcome back" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Connect_WelcomeBack" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
                     Text="{x:Bind ViewModel.SignInSubtitle, Mode=OneWay}"
                     Style="{StaticResource BodyTextBlockStyle}"
@@ -83,7 +83,7 @@
                     </StackPanel>
                     <HyperlinkButton
                         Grid.Column="1"
-                        Content="Change"
+                        x:Uid="Connect_ChangeServerLink"
                         Command="{x:Bind ViewModel.ChangeServerCommand}"
                         VerticalAlignment="Center" />
                 </Grid>
@@ -108,7 +108,7 @@
                 <InfoBar
                     IsOpen="{x:Bind ViewModel.IsDegraded, Mode=OneWay}"
                     Severity="Warning"
-                    Message="Your server can't reach its database right now, so signing in may fail."
+                    x:Uid="Connect_DegradedBar"
                     IsClosable="False" />
                 <InfoBar
                     IsOpen="{x:Bind ViewModel.HasFormError, Mode=OneWay}"
@@ -122,14 +122,14 @@
                     HorizontalAlignment="Stretch" />
                 <!-- Jellyfin's Quick Connect (0.44+, never Emby): on the Jellyfin form, when server-info.signIn.quickConnect. -->
                 <Button
-                    Content="Use Quick Connect"
+                    x:Uid="Connect_UseQuickConnect"
                     Command="{x:Bind ViewModel.UseQuickConnectCommand}"
                     Visibility="{x:Bind ViewModel.ShowsQuickConnectButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                     HorizontalAlignment="Stretch" />
                 <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.IsQuickConnecting, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Spacing="12">
                         <TextBlock
-                            Text="In a Jellyfin app you're signed in to, open your profile → Quick Connect and enter this code"
+                            x:Uid="Connect_QuickConnectHelp"
                             Style="{StaticResource BodyTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
@@ -150,7 +150,7 @@
                                 <ProgressRing IsActive="{x:Bind ViewModel.IsQuickConnecting, Mode=OneWay}" Width="16" Height="16" />
                                 <TextBlock Text="{x:Bind ViewModel.QuickConnectStatus, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
                             </StackPanel>
-                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.CancelSignInElsewhereCommand}" />
+                            <Button Grid.Column="1" x:Uid="Connect_CancelQuickConnect" Command="{x:Bind ViewModel.CancelSignInElsewhereCommand}" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -161,7 +161,7 @@
                 -->
                 <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersOtherSignIn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock
-                        Text="or"
+                        x:Uid="Connect_Or"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         HorizontalAlignment="Center" />
@@ -171,7 +171,7 @@
                         Visibility="{x:Bind ViewModel.ShowsSsoButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
                     <Button
-                        Content="Sign in with Plex"
+                        x:Uid="Connect_SignInWithPlex"
                         Command="{x:Bind ViewModel.SignInWithPlexCommand}"
                         Visibility="{x:Bind ViewModel.ShowsPlexButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
@@ -185,10 +185,10 @@
                                 <ProgressRing IsActive="{x:Bind ViewModel.IsWaitingForBrowser, Mode=OneWay}" Width="16" Height="16" />
                                 <TextBlock Text="{x:Bind ViewModel.WaitingLabel, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
                             </StackPanel>
-                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.CancelSignInElsewhereCommand}" />
+                            <Button Grid.Column="1" x:Uid="Connect_CancelBrowser" Command="{x:Bind ViewModel.CancelSignInElsewhereCommand}" />
                         </Grid>
                         <TextBlock
-                            Text="Finish signing in in the browser window that just opened."
+                            x:Uid="Connect_FinishInBrowser"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
@@ -211,12 +211,12 @@
                 <!-- Setup is only offered while the server has no accounts. -->
                 <StackPanel Spacing="8" Margin="0,8,0,0" Visibility="{x:Bind ViewModel.OffersSetup, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock
-                        Text="New to Marquee?"
+                        x:Uid="Connect_NewToMarquee"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         HorizontalAlignment="Center" />
                     <Button
-                        Content="Create an account"
+                        x:Uid="Connect_CreateAccount"
                         Command="{x:Bind ViewModel.ShowSetupCommand}"
                         HorizontalAlignment="Stretch" />
                 </StackPanel>
@@ -224,9 +224,9 @@
 
             <!-- First-run setup: the server's first (admin) account. -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsSetupStep, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Set up Marquee" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Uid="Connect_SetupTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Create the first account on this server. It becomes the admin, and accounts for other household members can be added later from Settings."
+                    x:Uid="Connect_SetupIntro"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
@@ -247,21 +247,21 @@
                     </StackPanel>
                     <HyperlinkButton
                         Grid.Column="1"
-                        Content="Change"
+                        x:Uid="Connect_SetupChangeServerLink"
                         Command="{x:Bind ViewModel.ChangeServerCommand}"
                         VerticalAlignment="Center" />
                 </Grid>
                 <TextBox
-                    Header="Name"
+                    x:Uid="Connect_SetupNameBox"
                     Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     KeyDown="OnSetupKeyDown" />
                 <TextBox
-                    Header="Username"
+                    x:Uid="Connect_SetupUsernameBox"
                     Text="{x:Bind ViewModel.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     IsSpellCheckEnabled="False"
                     KeyDown="OnSetupKeyDown" />
                 <PasswordBox
-                    Header="Password"
+                    x:Uid="Connect_SetupPasswordBox"
                     Password="{x:Bind ViewModel.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     KeyDown="OnSetupKeyDown" />
                 <InfoBar
@@ -276,12 +276,12 @@
                     HorizontalAlignment="Stretch" />
                 <StackPanel Spacing="8" Margin="0,8,0,0">
                     <TextBlock
-                        Text="Already have an account?"
+                        x:Uid="Connect_HaveAccount"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         HorizontalAlignment="Center" />
                     <Button
-                        Content="Log in"
+                        x:Uid="Connect_LogIn"
                         Command="{x:Bind ViewModel.ShowSignInCommand}"
                         HorizontalAlignment="Stretch" />
                 </StackPanel>
@@ -316,7 +316,7 @@
                     Style="{StaticResource AccentButtonStyle}"
                     HorizontalAlignment="Stretch" />
                 <Button
-                    Content="Change server"
+                    x:Uid="Connect_ChangeServerButton"
                     Command="{x:Bind ViewModel.ChangeServerCommand}"
                     HorizontalAlignment="Stretch" />
             </StackPanel>

@@ -39,7 +39,7 @@ extension API {
         /// The system notification's title: "Shared with you" for a share
         /// (the message already names the title), else the title's name.
         var bannerTitle: String {
-            eventType == .titleShared ? "Shared with you" : title
+            eventType == .titleShared ? String(localized: "Shared with you") : title
         }
 
         /// A copy marked read (the bell's "Mark all read").

@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text.Json;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Core.Api;
@@ -12,16 +13,27 @@ namespace Marquee.Core.Api;
 /// </summary>
 public sealed class ApiException : Exception
 {
-    /// <summary>The 409 message that means "offer Manually approve" (api-v1.md, Errors).</summary>
+    /// <summary>The 409 message that means "offer Manually approve" (api-v1.md, Errors): the server's wire text, compared, never shown by the app itself.</summary>
     public const string SonarrUnresolvableMessage = "Couldn't resolve this show for Sonarr.";
 
-    public const string UnreadableResponseMessage = "Your Marquee server sent a response this version of the app couldn't read.";
-    public const string InvalidRequestDefaultMessage = "The request was invalid.";
+    public static string UnreadableResponseMessage => Loc.Get("Api_UnreadableResponse");
+    public static string InvalidRequestDefaultMessage => Loc.Get("Api_InvalidRequest");
 
     public ApiErrorKind Kind { get; }
 
     /// <summary>The server's <c>error</c> string, trimmed; null when the body had none (or for a transport failure).</summary>
     public string? ServerMessage { get; }
+
+    /// <summary>
+    /// The body's stable <c>reason</c> (0.50+), for the few failures the app
+    /// acts on (<see cref="SonarrUnresolvableReason"/>, <c>tmdb_not_configured</c>);
+    /// null otherwise and from an older server. Match on this, never on the
+    /// text, which is in the account's language.
+    /// </summary>
+    public string? Reason { get; private set; }
+
+    /// <summary>The <c>reason</c> of a TV approval's 409 that means "offer Manually approve".</summary>
+    public const string SonarrUnresolvableReason = "sonarr_unresolved";
 
     /// <summary>Set for <see cref="ApiErrorKind.Network"/> only.</summary>
     public NetworkFailure? Failure { get; }
@@ -56,40 +68,40 @@ public sealed class ApiException : Exception
     // MARK: Factories (one per kind, so a call site reads like the Swift cases)
 
     public static ApiException Unauthorized(int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.Unauthorized, "Your session has ended. Please sign in again.", statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.Unauthorized, Loc.Get("Api_Unauthorized"), statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException InvalidCredentials(int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.InvalidCredentials, "Incorrect username or password.", statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.InvalidCredentials, Loc.Get("Api_InvalidCredentials"), statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException RateLimited(string? message, int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.RateLimited, message ?? "Too many attempts. Try again in a few minutes.", message, statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.RateLimited, message ?? Loc.Get("Api_RateLimited"), message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException Forbidden(int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.Forbidden, "Only an admin can do that.", statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.Forbidden, Loc.Get("Api_Forbidden"), statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException NotFound(int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.NotFound, "That couldn't be found on your Marquee server.", statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.NotFound, Loc.Get("Api_NotFound"), statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException Conflict(string? message, int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.Conflict, message ?? "That conflicts with something already on your server.", message, statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.Conflict, message ?? Loc.Get("Api_Conflict"), message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException SetupComplete(int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.SetupComplete, "Setup has already been completed on this server. Please sign in instead.", statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.SetupComplete, Loc.Get("Api_SetupComplete"), statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException Upstream(string? message, int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.Upstream, message ?? "A service connected to your Marquee server didn't respond.", message, statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.Upstream, message ?? Loc.Get("Api_Upstream"), message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException Invalid(string message, int? statusCode = null, bool hasApiHeader = false) =>
         new(ApiErrorKind.Invalid, message, message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     public static ApiException Server(string? message, int? statusCode = null, bool hasApiHeader = false) =>
-        new(ApiErrorKind.Server, message ?? "Your Marquee server ran into a problem. Try again in a moment.", message, statusCode: statusCode, hasApiHeader: hasApiHeader);
+        new(ApiErrorKind.Server, message ?? Loc.Get("Api_Server"), message, statusCode: statusCode, hasApiHeader: hasApiHeader);
 
     /// <summary>What a Plex sign-in that expired says (410, or past its <c>expiresAt</c>).</summary>
-    public const string PlexSignInExpiredMessage = "The Plex sign-in expired. Try again.";
+    public static string PlexSignInExpiredMessage => Loc.Get("Api_PlexSignInExpired");
 
     /// <summary>A refused Plex/Jellyfin sign-in with no reason given.</summary>
-    public const string SignInRefusedDefaultMessage = "This account can't sign in to this Marquee server.";
+    public static string SignInRefusedDefaultMessage => Loc.Get("Api_SignInRefused");
 
     /// <summary>
     /// 403 from Plex/Jellyfin sign-in or linking: Forbidden, but with the
@@ -108,10 +120,10 @@ public sealed class ApiException : Exception
         SignInExpired(PlexSignInExpiredMessage, statusCode, hasApiHeader);
 
     /// <summary>What a single sign-on sign-in or link that expired says (the server's own wording).</summary>
-    public const string SsoSignInExpiredMessage = "That sign-in expired. Try again.";
+    public static string SsoSignInExpiredMessage => Loc.Get("Api_SsoSignInExpired");
 
     /// <summary>What a Quick Connect code that expired says (the server's own wording).</summary>
-    public const string QuickConnectExpiredMessage = "That Quick Connect code expired. Try again.";
+    public static string QuickConnectExpiredMessage => Loc.Get("Api_QuickConnectExpired");
 
     /// <summary>A PIN-style sign-in (Plex, single sign-on, Quick Connect) that's gone: 410, or past its <c>expiresAt</c>.</summary>
     public static ApiException SignInExpired(string message, int? statusCode = null, bool hasApiHeader = false) =>
@@ -121,7 +133,7 @@ public sealed class ApiException : Exception
         new(ApiErrorKind.Network, NetworkMessage(failure, detail), failure: failure, inner: inner);
 
     public static ApiException NotMarquee(int? statusCode = null) =>
-        new(ApiErrorKind.NotMarquee, $"The server didn't answer like a Marquee server. It may need updating to {ServerInfo.MinimumServerVersion} or later.", statusCode: statusCode);
+        new(ApiErrorKind.NotMarquee, Loc.Format("Api_NotMarquee", ServerInfo.MinimumServerVersion), statusCode: statusCode);
 
     // MARK: Classification
 
@@ -132,7 +144,15 @@ public sealed class ApiException : Exception
     /// </summary>
     public static ApiException FromResponse(int statusCode, string body, bool hasApiHeader = false)
     {
+        var error = ClassifyResponse(statusCode, body, hasApiHeader, out var reason);
+        error.Reason = reason;
+        return error;
+    }
+
+    private static ApiException ClassifyResponse(int statusCode, string body, bool hasApiHeader, out string? reason)
+    {
         var decoded = DecodeBody(body);
+        reason = decoded?.Reason?.Trim().NonBlank();
         var message = decoded?.Error?.Trim().NonBlank();
 
         switch (decoded?.Code)
@@ -195,8 +215,14 @@ public sealed class ApiException : Exception
     /// </summary>
     public bool IsRejectedToken => Kind == ApiErrorKind.Unauthorized && HasApiHeader;
 
-    /// <summary>The 409 that means "offer Manually approve" for a TV request.</summary>
-    public bool IsSonarrUnresolvable => Kind == ApiErrorKind.Conflict && ServerMessage == SonarrUnresolvableMessage;
+    /// <summary>
+    /// The 409 that means "offer Manually approve" for a TV request: its
+    /// <c>reason</c>, or (a server older than 0.50, which sends none and
+    /// always writes English) its exact text.
+    /// </summary>
+    public bool IsSonarrUnresolvable =>
+        Kind == ApiErrorKind.Conflict
+        && (Reason == SonarrUnresolvableReason || (Reason == null && ServerMessage == SonarrUnresolvableMessage));
 
     private static ApiErrorBody? DecodeBody(string body)
     {
@@ -216,11 +242,11 @@ public sealed class ApiException : Exception
 
     private static string NetworkMessage(NetworkFailure failure, string? detail) => failure switch
     {
-        NetworkFailure.Timeout => "Your Marquee server took too long to respond.",
+        NetworkFailure.Timeout => Loc.Get("Api_Timeout"),
         NetworkFailure.Refused or NetworkFailure.UnknownHost or NetworkFailure.ConnectionLost =>
-            "Couldn't reach your Marquee server. Check that it's running and on your network.",
-        NetworkFailure.Cancelled => "The request was cancelled.",
-        _ => $"Couldn't reach your Marquee server: {detail ?? "unknown error"}",
+            Loc.Get("Api_Unreachable"),
+        NetworkFailure.Cancelled => Loc.Get("Api_Cancelled"),
+        _ => Loc.Format("Api_NetworkOther", detail ?? Loc.Get("Api_UnknownError")),
     };
 
     /// <summary>
@@ -274,4 +300,7 @@ public sealed record ApiErrorBody
 {
     public string? Error { get; init; }
     public string? Code { get; init; }
+
+    /// <summary>0.50+: a stable machine-readable detail on a few failures (api-v1.md, Errors).</summary>
+    public string? Reason { get; init; }
 }

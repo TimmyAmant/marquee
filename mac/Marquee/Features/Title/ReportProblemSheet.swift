@@ -13,23 +13,23 @@ struct ProblemReportForm: Hashable, Sendable {
 
     /// "What's wrong?" for "Something else", else "Anything else? (optional)".
     var messageLabel: String {
-        kind == .other ? "What's wrong?" : "Anything else? (optional)"
+        kind == .other ? String(localized: "What's wrong?") : String(localized: "Anything else? (optional)")
     }
 
     /// The body to send, or the message to show instead (the server's own
     /// wording, so an older check here and the server's agree).
     func report() -> Result<API.IssueReport, ProblemReportError> {
-        guard let kind else { return .failure(.init("Pick what's wrong.")) }
+        guard let kind else { return .failure(.init(String(localized: "Pick what's wrong."))) }
         let note = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        if kind == .other, note.isEmpty { return .failure(.init("Say what's wrong.")) }
+        if kind == .other, note.isEmpty { return .failure(.init(String(localized: "Say what's wrong."))) }
         if note.unicodeScalars.count > API.IssueReport.maxMessageLength {
-            return .failure(.init("Keep it under 1000 characters."))
+            return .failure(.init(String(localized: "Keep it under 1000 characters.")))
         }
         var episodeNumber: Int?
         let typed = episode.trimmingCharacters(in: .whitespaces)
         if season != nil, !typed.isEmpty {
             guard let number = Int(typed), number >= 1 else {
-                return .failure(.init("Season and episode are whole numbers."))
+                return .failure(.init(String(localized: "Season and episode are whole numbers.")))
             }
             episodeNumber = number
         }
@@ -79,7 +79,7 @@ struct ReportProblemSheet: View {
             if mediaType == .tv, !seasonNumbers.isEmpty {
                 HStack(alignment: .bottom, spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) {
-                        fieldLabel("Season (optional)")
+                        fieldLabel(String(localized: "Season (optional)"))
                         Picker("Season (optional)", selection: $form.season) {
                             Text("Whole show").tag(Int?.none)
                             ForEach(seasonNumbers, id: \.self) { number in
@@ -90,7 +90,7 @@ struct ReportProblemSheet: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 6) {
-                        fieldLabel("Episode")
+                        fieldLabel(String(localized: "Episode"))
                         TextField("", text: $form.episode)
                             .textFieldStyle(.roundedBorder)
                             .disabled(form.season == nil)

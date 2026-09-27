@@ -1,3 +1,5 @@
+using Marquee.Core.Localization;
+
 namespace Marquee.Core.Models;
 
 // Personal notifications (api-v1.md section 8 and deviation 13, 0.45+):
@@ -32,7 +34,7 @@ public readonly record struct NotificationChannelKind(string Value) : IOpenEnum<
         {
             if (this == Telegram) return "Telegram";
             if (this == Pushover) return "Pushover";
-            if (this == Email) return "Email";
+            if (this == Email) return Loc.Get("Model_ChannelEmail");
             if (this == Discord) return "Discord";
             if (this == Ntfy) return "ntfy";
             if (this == Webhook) return "Webhook";
@@ -101,9 +103,9 @@ public sealed record PersonalNotificationChannel
     {
         get
         {
-            if (Kind == NotificationChannelKind.Email) return $"We emailed a 6-digit code to {Target}.";
-            if (Kind == NotificationChannelKind.Telegram) return "The bot sent a 6-digit code to your Telegram chat.";
-            return $"A 6-digit code was sent to {Target}.";
+            if (Kind == NotificationChannelKind.Email) return Loc.Format("Model_CodeSentEmail", Target);
+            if (Kind == NotificationChannelKind.Telegram) return Loc.Get("Model_CodeSentTelegram");
+            return Loc.Format("Model_CodeSentOther", Target);
         }
     }
 
@@ -320,8 +322,8 @@ public enum NotificationPreferenceColumnKind
 /// </summary>
 public readonly record struct NotificationPreferenceColumn(NotificationPreferenceColumnKind Kind, Guid ChannelId, string Label)
 {
-    public static readonly NotificationPreferenceColumn Bell = new(NotificationPreferenceColumnKind.Bell, Guid.Empty, "Bell");
-    public static readonly NotificationPreferenceColumn Devices = new(NotificationPreferenceColumnKind.Devices, Guid.Empty, "Devices");
+    public static NotificationPreferenceColumn Bell => new(NotificationPreferenceColumnKind.Bell, Guid.Empty, Loc.Get("Model_ColumnBell"));
+    public static NotificationPreferenceColumn Devices => new(NotificationPreferenceColumnKind.Devices, Guid.Empty, Loc.Get("Model_ColumnDevices"));
 
     public static NotificationPreferenceColumn For(PersonalNotificationChannel channel) =>
         new(NotificationPreferenceColumnKind.Channel, channel.Id, channel.Label);

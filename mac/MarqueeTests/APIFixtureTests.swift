@@ -543,6 +543,19 @@ final class APIValueTypeTests: XCTestCase {
 
     func testSonarrUnresolvableDetection() {
         XCTAssertTrue(APIError.conflict("Couldn't resolve this show for Sonarr.").isSonarrUnresolvable)
+        // 0.50+: the message is in the account's language; the reason decides.
+        let french = APIError.from(
+            statusCode: 409,
+            body: Data(#"{"error":"Impossible d’identifier cette série pour Sonarr.","code":"conflict","reason":"sonarr_unresolved"}"#.utf8)
+        )
+        XCTAssertTrue(french.isSonarrUnresolvable)
+        XCTAssertEqual(french.errorDescription, "Impossible d’identifier cette série pour Sonarr.")
+        let tmdb = APIError.from(
+            statusCode: 502,
+            body: Data(#"{"error":"TMDb no está configurado.","code":"upstream","reason":"tmdb_not_configured"}"#.utf8)
+        )
+        XCTAssertTrue(tmdb.isTMDbUnconfigured)
+        XCTAssertFalse(APIError.from(statusCode: 409, body: Data(#"{"error":"Nope","code":"conflict"}"#.utf8)).isSonarrUnresolvable)
         XCTAssertFalse(APIError.conflict("Request was already reviewed.").isSonarrUnresolvable)
         XCTAssertFalse(APIError.upstream("Couldn't resolve this show for Sonarr.").isSonarrUnresolvable)
     }

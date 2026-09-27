@@ -1,3 +1,5 @@
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 import { sonarrSeriesTypeValues, type ArrProvider, type SonarrSeriesType } from "@/lib/db/schema";
 
 // Validates what Settings sends for a Sonarr/Radarr server — the website's
@@ -34,26 +36,27 @@ export function normalizeServerUrl(value: string): string {
   return value.trim().replace(/\/+$/, "");
 }
 
-export function parseArrServerInput(body: Record<string, unknown>): ParsedServerInput {
+/** `t`: whoever reads the error (English when not given). */
+export function parseArrServerInput(body: Record<string, unknown>, t: Translator = englishT()): ParsedServerInput {
   const input: ArrServerInput = {};
 
   for (const key of ["name", "baseUrl", "apiKey"] as const) {
     const value = body[key];
     if (value === undefined || value === null) continue;
-    if (typeof value !== "string") return { ok: false, error: `"${key}" must be a string.` };
+    if (typeof value !== "string") return { ok: false, error: t("notify.fieldMustBeString", { field: key }) };
     input[key] = key === "baseUrl" ? normalizeServerUrl(value) : value.trim();
   }
   if (input.name !== undefined && input.name.length > SERVER_NAME_MAX_LENGTH) {
-    return { ok: false, error: `Name can be at most ${SERVER_NAME_MAX_LENGTH} characters.` };
+    return { ok: false, error: t("notify.arrNameTooLong", { count: SERVER_NAME_MAX_LENGTH }) };
   }
   if (input.baseUrl && !/^https?:\/\/[^\s/]+/i.test(input.baseUrl)) {
-    return { ok: false, error: "Enter the server's full URL, starting with http:// or https://." };
+    return { ok: false, error: t("notify.arrUrlNotFull") };
   }
 
   for (const key of ["is4k", "isDefault", "seasonFolders"] as const) {
     const value = body[key];
     if (value === undefined || value === null) continue;
-    if (typeof value !== "boolean") return { ok: false, error: `"${key}" must be true or false.` };
+    if (typeof value !== "boolean") return { ok: false, error: t("notify.fieldMustBeBoolean", { field: key }) };
     input[key] = value;
   }
 
@@ -65,7 +68,7 @@ export function parseArrServerInput(body: Record<string, unknown>): ParsedServer
       continue;
     }
     if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
-      return { ok: false, error: `"${key}" must be a number.` };
+      return { ok: false, error: t("notify.fieldMustBeNumber", { field: key }) };
     }
     input[key] = value;
   }
@@ -77,7 +80,7 @@ export function parseArrServerInput(body: Record<string, unknown>): ParsedServer
       input[key] = null;
       continue;
     }
-    if (typeof value !== "string") return { ok: false, error: `"${key}" must be a string.` };
+    if (typeof value !== "string") return { ok: false, error: t("notify.fieldMustBeString", { field: key }) };
     input[key] = value.trim() || null;
   }
 
@@ -88,7 +91,7 @@ export function parseArrServerInput(body: Record<string, unknown>): ParsedServer
       !Array.isArray(value) ||
       !value.every((t) => typeof t === "number" && Number.isSafeInteger(t) && t > 0)
     ) {
-      return { ok: false, error: `"${key}" must be a list of numbers.` };
+      return { ok: false, error: t("notify.fieldMustBeNumberList", { field: key }) };
     }
     input[key] = [...new Set(value as number[])].sort((a, b) => a - b);
   }
@@ -96,7 +99,7 @@ export function parseArrServerInput(body: Record<string, unknown>): ParsedServer
   const seriesType = body.seriesType;
   if (seriesType !== undefined && seriesType !== null) {
     if (typeof seriesType !== "string" || !(sonarrSeriesTypeValues as readonly string[]).includes(seriesType)) {
-      return { ok: false, error: '"seriesType" must be standard, daily or anime.' };
+      return { ok: false, error: t("notify.seriesTypeInvalid") };
     }
     input.seriesType = seriesType as SonarrSeriesType;
   }

@@ -46,7 +46,7 @@
                         Visibility="{x:Bind ViewModel.IsLoadingPage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <ProgressRing IsActive="{x:Bind ViewModel.IsLoadingPage, Mode=OneWay}" Width="20" Height="20" />
                         <TextBlock
-                            Text="Loading more…"
+                            x:Uid="Discover_ListLoadingMore"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             VerticalAlignment="Center" />
@@ -58,15 +58,15 @@
                         VerticalAlignment="Center"
                         Visibility="{x:Bind ViewModel.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock
-                            Text="Couldn't load more"
+                            x:Uid="Discover_ListPageError"
                             ToolTipService.ToolTip="{x:Bind ViewModel.PageError, Mode=OneWay}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                             VerticalAlignment="Center" />
-                        <Button Content="Retry" Command="{x:Bind ViewModel.RetryPageCommand}" />
+                        <Button x:Uid="Discover_ListRetry" Command="{x:Bind ViewModel.RetryPageCommand}" />
                     </StackPanel>
                     <Button
-                        Content="Load more"
+                        x:Uid="Discover_ListLoadMore"
                         Command="{x:Bind ViewModel.LoadMoreCommand}"
                         Visibility="{x:Bind ViewModel.ShowsLoadMoreButton, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Center"
@@ -109,7 +109,7 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
-            <Button Content="Try again" Command="{x:Bind ViewModel.ResetCommand}" HorizontalAlignment="Center" />
+            <Button x:Uid="Discover_ListTryAgain" Command="{x:Bind ViewModel.ResetCommand}" HorizontalAlignment="Center" />
         </StackPanel>
 
         <!-- TMDb isn't configured on the server (api-v1.md deviation 7). -->
@@ -120,7 +120,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsTmdbMissing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Connect TMDb to start browsing" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Discover_ListTmdbMissingTitle" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.TmdbMissingMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"
@@ -128,7 +128,7 @@
                 TextWrapping="Wrap"
                 TextAlignment="Center" />
             <Button
-                Content="Open Settings"
+                x:Uid="Discover_ListOpenSettings"
                 Command="{x:Bind ViewModel.OpenSettingsCommand}"
                 Visibility="{x:Bind ViewModel.CanOpenSettings, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 HorizontalAlignment="Center" />
@@ -142,7 +142,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Nothing here right now" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+            <TextBlock x:Uid="Discover_ListEmptyHeading" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
             <TextBlock
                 Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
                 Style="{StaticResource BodyTextBlockStyle}"

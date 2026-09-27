@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { requestAllMissingAction } from "@/lib/requests/actions";
 import type { MediaType } from "@/lib/db/schema";
+import { useT } from "@/lib/i18n/client";
 
 /** A household member's "Request all N missing" on a franchise row — the
  * admin's AddAllButton counterpart. `count` is only what the button says:
@@ -18,6 +19,7 @@ export function RequestAllButton({
   tmdbId: number;
   count: number;
 }) {
+  const t = useT();
   const router = useRouter();
   const [state, setState] = useState<"idle" | "pending" | "done">("idle");
   const [message, setMessage] = useState("");
@@ -25,12 +27,12 @@ export function RequestAllButton({
   if (count === 0 && state === "idle") return null;
 
   async function handleClick() {
-    const confirmed = window.confirm(`Request all ${count} missing title${count === 1 ? "" : "s"}?`);
+    const confirmed = window.confirm(t("title.requestAllConfirm", { count }));
     if (!confirmed) return;
 
     setState("pending");
     const result = await requestAllMissingAction(mediaType, tmdbId).catch(() => ({
-      error: "Something went wrong. Try again.",
+      error: t("common.somethingWentWrong"),
       message: undefined,
     }));
     setMessage(result.error ?? result.message ?? "");
@@ -54,7 +56,7 @@ export function RequestAllButton({
       disabled={state === "pending"}
       className="rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
     >
-      {state === "pending" ? "Requesting…" : `Request all ${count} missing`}
+      {state === "pending" ? t("title.requesting") : t("title.requestAllMissing", { count })}
     </button>
   );
 }

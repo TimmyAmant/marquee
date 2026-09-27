@@ -9,6 +9,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications/query";
 import { quotedRequestTitle } from "@/lib/requests/labels";
 import { issueEpisodeLabel } from "@/lib/issues/labels";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 import {
   canDeleteComment,
   canEditComment,
@@ -38,7 +40,7 @@ function threadPermission(kind: CommentTarget["kind"]): Permission {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const NOT_FOUND = { request: "Request not found.", issue: "Report not found." } as const;
+const NOT_FOUND = { request: "notify.requestNotFound", issue: "notify.reportNotFound" } as const;
 
 type Note = { kind: Comment["kind"]; authorId: string | null; body: string; at: Date };
 
@@ -49,8 +51,9 @@ type Parent = {
   mediaType: MediaType;
   tmdbId: number;
   title: string;
-  /** How notifications name it: `"Dune" (Season 2)` or `the problem with "Dune" (S2 E5)`. */
-  label: string;
+  /** The comment notification, in its reader's language: `Anna commented
+   * on "Dune" (Season 2): …`, `… on the problem with "Dune" (S2 E5): …`. */
+  notice: (t: Translator, who: string, snippet: string) => string;
   /** Reviewers already involved: whoever reviewed the request or fixed the report. */
   reviewerIds: string[];
   notes: Note[];
@@ -61,13 +64,19 @@ async function loadParent(target: CommentTarget): Promise<Parent | null> {
   if (target.kind === "request") {
     const [row] = await db.select().from(requests).where(eq(requests.id, target.id)).limit(1);
     if (!row) return null;
-    const name = quotedRequestTitle(row.title, row.seasons) + (row.is4k ? " in 4K" : "");
     return {
       ownerId: row.requestedByUserId,
       mediaType: row.mediaType,
       tmdbId: row.tmdbId,
       title: row.title,
-      label: name,
+      notice: (t, who, snippet) => {
+        const quoted = quotedRequestTitle(t, row.title, row.seasons);
+        return t("notify.commentOnRequest", {
+          who,
+          request: row.is4k ? t("notify.requestIn4k", { request: quoted }) : quoted,
+          snippet,
+        });
+      },
       reviewerIds: row.reviewedByUserId ? [row.reviewedByUserId] : [],
       notes:
         row.status === "rejected" && row.rejectionReason && row.reviewedAt
@@ -77,7 +86,6 @@ async function loadParent(target: CommentTarget): Promise<Parent | null> {
   }
   const [row] = await db.select().from(issues).where(eq(issues.id, target.id)).limit(1);
   if (!row) return null;
-  const episode = issueEpisodeLabel(row.seasonNumber, row.episodeNumber);
   const notes: Note[] = [];
   if (row.message) notes.push({ kind: "report", authorId: row.reportedByUserId, body: row.message, at: row.createdAt });
   if (row.resolution && row.resolvedAt) {
@@ -88,7 +96,12 @@ async function loadParent(target: CommentTarget): Promise<Parent | null> {
     mediaType: row.mediaType,
     tmdbId: row.tmdbId,
     title: row.title,
-    label: `the problem with "${row.title}"${episode ? ` (${episode})` : ""}`,
+    notice: (t, who, snippet) => {
+      const episode = issueEpisodeLabel(t, row.seasonNumber, row.episodeNumber);
+      return episode
+        ? t("notify.commentOnIssueEpisode", { who, title: row.title, episode, snippet })
+        : t("notify.commentOnIssue", { who, title: row.title, snippet });
+    },
     reviewerIds: row.resolvedByUserId ? [row.resolvedByUserId] : [],
     notes,
   };
@@ -103,7 +116,7 @@ export function canSeeThread(viewer: CommentViewer, ownerId: string, kind: Comme
  * a thread someone can't see is indistinguishable from one that isn't there. */
 async function openThread(viewer: CommentViewer, target: CommentTarget): Promise<CoreResult<{ parent: Parent }>> {
   const parent = await loadParent(target);
-  if (!parent || !canSeeThread(viewer, parent.ownerId, target.kind)) return fail("not_found", NOT_FOUND[target.kind]);
+  if (!parent || !canSeeThread(viewer, parent.ownerId, target.kind)) return fail("not_found", (await getT())(NOT_FOUND[target.kind]));
   return { ok: true, parent };
 }
 
@@ -120,8 +133,8 @@ type AuthorRow = {
   avatarUpdatedAt: Date | null;
 };
 
-function authorDto(user: AuthorRow | undefined, avatarBase: "/api" | "/api/v1"): CommentAuthor {
-  if (!user) return { userId: null, label: "Someone", avatarUrl: null, role: null };
+function authorDto(user: AuthorRow | undefined, avatarBase: "/api" | "/api/v1", t: Translator): CommentAuthor {
+  if (!user) return { userId: null, label: t("notify.someone"), avatarUrl: null, role: null };
   return {
     userId: user.id,
     label: user.displayName || user.username,
@@ -160,11 +173,12 @@ export async function listComments(
           .from(users)
           .where(inArray(users.id, authorIds));
   const byId = new Map(authors.map((a) => [a.id, a]));
+  const t = await getT();
 
   const notes: Comment[] = parent.notes.map((note) => ({
     id: `${note.kind}:${target.id}`,
     kind: note.kind,
-    author: authorDto(note.authorId ? byId.get(note.authorId) : undefined, avatarBase),
+    author: authorDto(note.authorId ? byId.get(note.authorId) : undefined, avatarBase, t),
     body: note.body,
     createdAt: note.at.toISOString(),
     editedAt: null,
@@ -178,7 +192,7 @@ export async function listComments(
     return {
       id: row.id,
       kind: "comment",
-      author: authorDto(byId.get(row.authorUserId), avatarBase),
+      author: authorDto(byId.get(row.authorUserId), avatarBase, t),
       body: row.body,
       createdAt: row.createdAt.toISOString(),
       editedAt: row.editedAt?.toISOString() ?? null,
@@ -219,14 +233,15 @@ export async function addComment(
   const opened = await openThread(viewer, target);
   if (!opened.ok) return opened;
   const { parent } = opened;
-  const parsed = sanitizeComment(rawBody);
+  const t = await getT();
+  const parsed = sanitizeComment(rawBody, t);
   if (!parsed.ok) return fail("invalid", parsed.error);
   if (rateLimited && !checkRateLimit(`comment:${viewer.userId}`, COMMENTS_PER_WINDOW, COMMENT_WINDOW_MS)) {
-    return fail("rate_limited", "That's a lot of comments in a short time. Try again in a few minutes.");
+    return fail("rate_limited", t("notify.commentRateLimited"));
   }
   const [existing] = await db.select({ count: count() }).from(comments).where(parentColumn(target));
   if ((existing?.count ?? 0) >= MAX_COMMENTS_PER_THREAD) {
-    return fail("conflict", "This conversation is full.");
+    return fail("conflict", t("notify.commentThreadFull"));
   }
 
   const [row] = await db
@@ -243,7 +258,7 @@ export async function addComment(
       if (err && typeof err === "object" && "code" in err && err.code === "23503") return [];
       throw err;
     });
-  if (!row) return fail("not_found", NOT_FOUND[target.kind]);
+  if (!row) return fail("not_found", t(NOT_FOUND[target.kind]));
 
   await notifyThread(viewer.userId, target, parent, parsed.body).catch(() => undefined);
   return { ok: true, commentId: row.id };
@@ -285,8 +300,10 @@ async function notifyThread(authorId: string, target: CommentTarget, parent: Par
     involvedIds: [...parent.reviewerIds, ...commenterRows.map((r) => r.id)],
     reviewerIds: reviewerRows.map((r) => r.id),
   });
-  const who = author?.name || author?.username || "Someone";
-  const message = `${who} commented on ${parent.label}: ${commentSnippet(body)}`;
+  const who = author?.name || author?.username || null;
+  const snippet = commentSnippet(body);
+  // In each recipient's own language.
+  const message = (t: Translator) => parent.notice(t, who ?? t("notify.someone"), snippet);
   for (const userId of recipients) {
     await createNotification({
       userId,
@@ -323,13 +340,14 @@ export async function editComment(
   rawBody: unknown,
   now = new Date(),
 ): Promise<CoreResult> {
+  const t = await getT();
   const row = await findComment(viewer, target, commentId);
-  if (!row) return fail("not_found", "Comment not found.");
-  if (row.authorUserId !== viewer.userId) return fail("forbidden", "You can only edit your own comments.");
+  if (!row) return fail("not_found", t("notify.commentNotFound"));
+  if (row.authorUserId !== viewer.userId) return fail("forbidden", t("notify.commentEditOwnOnly"));
   if (!canEditComment(row, viewer.userId, now)) {
-    return fail("forbidden", "Comments can only be changed for 15 minutes after posting.");
+    return fail("forbidden", t("notify.commentEditWindow"));
   }
-  const parsed = sanitizeComment(rawBody);
+  const parsed = sanitizeComment(rawBody, t);
   if (!parsed.ok) return fail("invalid", parsed.error);
   await db
     .update(comments)
@@ -344,14 +362,13 @@ export async function deleteComment(
   commentId: string,
   now = new Date(),
 ): Promise<CoreResult> {
+  const t = await getT();
   const row = await findComment(viewer, target, commentId);
-  if (!row) return fail("not_found", "Comment not found.");
+  if (!row) return fail("not_found", t("notify.commentNotFound"));
   if (!canDeleteComment(row, viewer, now)) {
     return fail(
       "forbidden",
-      row.authorUserId === viewer.userId
-        ? "Comments can only be deleted for 15 minutes after posting."
-        : "You can only delete your own comments.",
+      row.authorUserId === viewer.userId ? t("notify.commentDeleteWindow") : t("notify.commentDeleteOwnOnly"),
     );
   }
   await db.delete(comments).where(eq(comments.id, commentId));

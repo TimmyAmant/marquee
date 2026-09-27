@@ -11,6 +11,8 @@ import type { TmdbMovieDetails, TmdbTvDetails } from "@/lib/tmdb/client";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { permissionMap } from "@/lib/users/permissions";
 import { getAccess } from "@/lib/users/access";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translator";
 
 // "Request all N missing" on a franchise row, for household members — the
 // admin's "Add all" counterpart. The set is worked out again here from the
@@ -31,15 +33,15 @@ export type RequestAllOutcome = {
 };
 
 /** The result in words: every refusal reason once, most common first. Pure. */
-export function requestAllMessage(total: number, requested: number, refusals: { error: string }[]): string {
-  if (total === 0) return "Nothing left to request here.";
-  if (refusals.length === 0) return requested === 1 ? "Requested it." : `Requested all ${requested}.`;
+export function requestAllMessage(t: Translator, total: number, requested: number, refusals: { error: string }[]): string {
+  if (total === 0) return t("notify.requestAllNothing");
+  if (refusals.length === 0) return t("notify.requestAllDone", { count: requested });
   const counts = new Map<string, number>();
   for (const { error } of refusals) counts.set(error, (counts.get(error) ?? 0) + 1);
   const reasons = [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([error]) => (/[.!?]$/.test(error) ? error : `${error}.`));
-  const head = requested === 0 ? `Couldn't request any of the ${total}.` : `Requested ${requested} of ${total}.`;
+  const head = requested === 0 ? t("notify.requestAllNone", { total }) : t("notify.requestAllSome", { requested, total });
   return [head, ...reasons].join(" ");
 }
 
@@ -48,17 +50,18 @@ export async function requestAllMissing(
   mediaType: MediaType,
   tmdbId: number,
 ): Promise<CoreResult<RequestAllOutcome>> {
-  if (viewer.isAdmin) return fail("forbidden", "The admin adds titles straight to the library — use Add all.");
+  const t = await getT();
+  if (viewer.isAdmin) return fail("forbidden", t("notify.requestAllAdmin"));
 
   const title = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
-  if (!title) return fail("not_found", "No such title on TMDb.");
+  if (!title) return fail("not_found", t("notify.noSuchTitle"));
   const raw = title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
 
   const [franchise, blockedKeys] = await Promise.all([
     loadFranchise(viewer, mediaType, tmdbId, raw),
     getBlockedTitleKeys().catch(() => new Set<string>()),
   ]);
-  if (!franchise.franchiseTitle) return fail("not_found", "This title isn't part of a collection.");
+  if (!franchise.franchiseTitle) return fail("not_found", t("notify.notInCollection"));
 
   const wanted = franchiseRequestableItems(
     franchise.franchiseItems,
@@ -89,7 +92,7 @@ export async function requestAllMissing(
       title: name,
       posterPath: item?.posterPath ?? null,
       quiet: true,
-    }).catch(() => ({ ok: false as const, code: "internal" as const, error: "Something went wrong." }));
+    }).catch(() => ({ ok: false as const, code: "internal" as const, error: t("common.somethingWentWrong") }));
     if (result.ok) {
       requestIds.push(result.requestId);
     } else {
@@ -106,6 +109,6 @@ export async function requestAllMissing(
     total: wanted.length,
     requested: requestIds.length,
     refused,
-    message: requestAllMessage(wanted.length, requestIds.length, refused),
+    message: requestAllMessage(t, wanted.length, requestIds.length, refused),
   };
 }

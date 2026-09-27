@@ -1,0 +1,4708 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About_AboutHeading.Text" xml:space="preserve">
+    <value>Sobre</value>
+  </data>
+  <data name="About_AppVersion" xml:space="preserve">
+    <value>Marquee para Windows {0}</value>
+  </data>
+  <data name="About_ChangeServer.Content" xml:space="preserve">
+    <value>Trocar de servidor</value>
+  </data>
+  <data name="About_CheckForUpdates.Content" xml:space="preserve">
+    <value>Procurar atualizações</value>
+  </data>
+  <data name="About_ColorsHeading.Text" xml:space="preserve">
+    <value>O que as cores significam</value>
+  </data>
+  <data name="About_ColorsNote.Text" xml:space="preserve">
+    <value>A faixa colorida sob um pôster e o selo de status de um título mostram a situação dele na sua biblioteca. Elas seguem as cores do Radarr e do Sonarr.</value>
+  </data>
+  <data name="About_DownloadManually.Content" xml:space="preserve">
+    <value>Baixar manualmente</value>
+  </data>
+  <data name="About_FactMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="About_FactTimeZone" xml:space="preserve">
+    <value>Fuso horário</value>
+  </data>
+  <data name="About_FactTotalRequests" xml:space="preserve">
+    <value>Total de pedidos</value>
+  </data>
+  <data name="About_FactTracked" xml:space="preserve">
+    <value>Acompanhados (ainda não disponíveis)</value>
+  </data>
+  <data name="About_FactTvShows" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="About_FactVersion" xml:space="preserve">
+    <value>Versão</value>
+  </data>
+  <data name="About_InstallUpdate.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Baixa o instalador, verifica, e então o Marquee fecha, atualiza e abre de novo</value>
+  </data>
+  <data name="About_ReportIssue" xml:space="preserve">
+    <value>Relatar um problema</value>
+  </data>
+  <data name="About_ServerHeading.Text" xml:space="preserve">
+    <value>Servidor</value>
+  </data>
+  <data name="About_ServerNote.Text" xml:space="preserve">
+    <value>Sair revoga só a sessão deste PC; os outros dispositivos continuam conectados. Trocar de servidor esquece este servidor e volta à tela de conexão.</value>
+  </data>
+  <data name="About_ServerOutdated" xml:space="preserve">
+    <value>Seu servidor está na versão {0}; a {1} já saiu. Atualize baixando a nova imagem Docker (no Unraid: aba Docker › Check for Updates e depois aplique a atualização).</value>
+  </data>
+  <data name="About_ServerUpToDate" xml:space="preserve">
+    <value>Seu servidor está atualizado (Marquee {0}).</value>
+  </data>
+  <data name="About_SignedInTo.Text" xml:space="preserve">
+    <value>Este PC está conectado a</value>
+  </data>
+  <data name="About_SignOut.Content" xml:space="preserve">
+    <value>Sair</value>
+  </data>
+  <data name="About_Subtitle.Text" xml:space="preserve">
+    <value>Versão, estatísticas da biblioteca e onde conseguir ajuda.</value>
+  </data>
+  <data name="About_Title.Text" xml:space="preserve">
+    <value>Sobre o Marquee</value>
+  </data>
+  <data name="About_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="About_WhatsNew.Content" xml:space="preserve">
+    <value>Novidades</value>
+  </data>
+  <data name="Account_AddAddress.Header" xml:space="preserve">
+    <value>Endereço de e-mail</value>
+  </data>
+  <data name="Account_AddAddress.PlaceholderText" xml:space="preserve">
+    <value>voce@exemplo.com</value>
+  </data>
+  <data name="Account_AddChannelKind.Header" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="Account_AddChannelName.Header" xml:space="preserve">
+    <value>Nome (opcional)</value>
+  </data>
+  <data name="Account_AddChannelName.PlaceholderText" xml:space="preserve">
+    <value>Meu celular</value>
+  </data>
+  <data name="Account_AddChannelTitle.Text" xml:space="preserve">
+    <value>Adicionar um canal</value>
+  </data>
+  <data name="Account_AddChatId.Header" xml:space="preserve">
+    <value>ID do chat do Telegram</value>
+  </data>
+  <data name="Account_AddMember.Content" xml:space="preserve">
+    <value>Adicionar membro</value>
+  </data>
+  <data name="Account_AddTopic.Header" xml:space="preserve">
+    <value>Tópico</value>
+  </data>
+  <data name="Account_AddTopic.PlaceholderText" xml:space="preserve">
+    <value>marquee-seunome</value>
+  </data>
+  <data name="Account_AddUserKey.Header" xml:space="preserve">
+    <value>Chave de usuário do Pushover</value>
+  </data>
+  <data name="Account_AddWebhook.Header" xml:space="preserve">
+    <value>URL do webhook do Discord</value>
+  </data>
+  <data name="Account_AddWebhook.PlaceholderText" xml:space="preserve">
+    <value>https://discord.com/api/webhooks/…</value>
+  </data>
+  <data name="Account_AdminTag" xml:space="preserve">
+    <value>Administrador</value>
+  </data>
+  <data name="Account_BlockKeyword.Header" xml:space="preserve">
+    <value>Bloquear uma palavra-chave ou gênero</value>
+  </data>
+  <data name="Account_BlockKeyword.PlaceholderText" xml:space="preserve">
+    <value>ex.: anime, reality, terror</value>
+  </data>
+  <data name="Account_BlockKeywordNote.Text" xml:space="preserve">
+    <value>Nenhum título com essa palavra-chave ou gênero do TMDb pode ser pedido (você ainda pode adicioná-lo por conta própria).</value>
+  </data>
+  <data name="Account_BlocklistBody.Text" xml:space="preserve">
+    <value>Títulos e palavras-chave que ninguém pode pedir. Bloqueie um título específico na página dele.</value>
+  </data>
+  <data name="Account_BlocklistEmpty.Text" xml:space="preserve">
+    <value>Nada bloqueado. Bloqueie um título na página dele ou uma palavra-chave abaixo.</value>
+  </data>
+  <data name="Account_BlocklistRemove.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Account_BlocklistTitle.Text" xml:space="preserve">
+    <value>Lista de bloqueio de pedidos</value>
+  </data>
+  <data name="Account_BlockReason.Header" xml:space="preserve">
+    <value>Motivo (opcional, mostrado a quem pedir)</value>
+  </data>
+  <data name="Account_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Account_ChannelCode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Código de 6 dígitos</value>
+  </data>
+  <data name="Account_ChannelCode.PlaceholderText" xml:space="preserve">
+    <value>Código de 6 dígitos</value>
+  </data>
+  <data name="Account_ChannelConfirm.Content" xml:space="preserve">
+    <value>Confirmar</value>
+  </data>
+  <data name="Account_ChannelRemove.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Account_ChannelRemoveBody" xml:space="preserve">
+    <value>Ele deixa de receber suas notificações. Você pode adicioná-lo de novo depois.</value>
+  </data>
+  <data name="Account_ChannelRemoveTitle" xml:space="preserve">
+    <value>Remover {0}?</value>
+  </data>
+  <data name="Account_ChannelResend.Content" xml:space="preserve">
+    <value>Enviar um novo código</value>
+  </data>
+  <data name="Account_ChannelsBody.Text" xml:space="preserve">
+    <value>Lugares onde só você recebe notificações: seu próprio chat do Telegram, caixa de entrada, Discord, tópico do ntfy, Pushover ou webhook.</value>
+  </data>
+  <data name="Account_ChannelsEmpty.Text" xml:space="preserve">
+    <value>Nenhum canal ainda. Adicione um abaixo.</value>
+  </data>
+  <data name="Account_ChannelsTitle.Text" xml:space="preserve">
+    <value>Seus canais</value>
+  </data>
+  <data name="Account_ChannelSwitch.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_ChannelSwitch.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_ChannelTest.Content" xml:space="preserve">
+    <value>Enviar um teste</value>
+  </data>
+  <data name="Account_Checking" xml:space="preserve">
+    <value>Verificando…</value>
+  </data>
+  <data name="Account_CheckNow" xml:space="preserve">
+    <value>Verificar agora</value>
+  </data>
+  <data name="Account_ConfirmPassword.Header" xml:space="preserve">
+    <value>Confirmar nova senha</value>
+  </data>
+  <data name="Account_CurrentPassword.Header" xml:space="preserve">
+    <value>Senha atual</value>
+  </data>
+  <data name="Account_CurrentPassword.PlaceholderText" xml:space="preserve">
+    <value>Necessária só ao definir uma nova senha</value>
+  </data>
+  <data name="Account_CurrentPasswordMissing" xml:space="preserve">
+    <value>Digite sua senha atual para definir uma nova.</value>
+  </data>
+  <data name="Account_ForReviewers.Text" xml:space="preserve">
+    <value>Para revisores</value>
+  </data>
+  <data name="Account_Imported_One" xml:space="preserve">
+    <value>{0} membro importado.</value>
+  </data>
+  <data name="Account_Imported_Other" xml:space="preserve">
+    <value>{0} membros importados.</value>
+  </data>
+  <data name="Account_ImportFrom" xml:space="preserve">
+    <value>Importar do {0}</value>
+  </data>
+  <data name="Account_ImportPlex.Content" xml:space="preserve">
+    <value>Importar do Plex</value>
+  </data>
+  <data name="Account_ImportSkipped_One" xml:space="preserve">
+    <value>{1} {0} ignorado (já era membro ou não foi possível adicionar).</value>
+  </data>
+  <data name="Account_ImportSkipped_Other" xml:space="preserve">
+    <value>{1} {0} ignorados (já eram membros ou não foi possível adicionar).</value>
+  </data>
+  <data name="Account_JellyfinUnlink.Content" xml:space="preserve">
+    <value>Desvincular</value>
+  </data>
+  <data name="Account_LinkedNotice" xml:space="preserve">
+    <value>Sua conta do {0} está vinculada.</value>
+  </data>
+  <data name="Account_LinkedStatus" xml:space="preserve">
+    <value>Vinculada: você pode entrar com sua conta do {0}.</value>
+  </data>
+  <data name="Account_LinkedTitle.Text" xml:space="preserve">
+    <value>Contas vinculadas</value>
+  </data>
+  <data name="Account_LinkPlex.Content" xml:space="preserve">
+    <value>Vincular Plex</value>
+  </data>
+  <data name="Account_LinkServer" xml:space="preserve">
+    <value>Vincular {0}</value>
+  </data>
+  <data name="Account_MediaServerMembersTitle" xml:space="preserve">
+    <value>Membros do Plex e do {0}</value>
+  </data>
+  <data name="Account_MediaServerSignupExplanation" xml:space="preserve">
+    <value>Quando alguém que pode usar seu servidor Plex ou {0} entra sem conta no Marquee, uma conta de membro é criada para essa pessoa. Isso inclui quem você remover aqui, que pode voltar direto. A tela de login orienta quem chega a entrar dessa forma. Desativado: só as pessoas que você importar (ou que vincularem a conta) podem entrar dessa forma.</value>
+  </data>
+  <data name="Account_MediaServerSignupHeader" xml:space="preserve">
+    <value>Novas contas ao entrar com Plex/{0}</value>
+  </data>
+  <data name="Account_MemberCreated" xml:space="preserve">
+    <value>Conta criada. {0} já pode entrar.</value>
+  </data>
+  <data name="Account_MemberEdit.Content" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Account_MemberPasswordChanged" xml:space="preserve">
+    <value>A senha de {0} foi alterada, o que fez a pessoa sair de todos os dispositivos.</value>
+  </data>
+  <data name="Account_MemberRemove.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Account_MemberRemoveTitle" xml:space="preserve">
+    <value>Remover {0}?</value>
+  </data>
+  <data name="Account_MembersCaptionAdmin" xml:space="preserve">
+    <value>Todos com conta neste servidor Marquee. Não há cadastro público: adicione aqui as contas do resto da sua casa.</value>
+  </data>
+  <data name="Account_MembersCaptionMember" xml:space="preserve">
+    <value>Só o administrador vê e gerencia todas as contas. A sua está abaixo.</value>
+  </data>
+  <data name="Account_MembersRetry.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Account_MembersTitle.Text" xml:space="preserve">
+    <value>Membros da casa</value>
+  </data>
+  <data name="Account_MenuBottom" xml:space="preserve">
+    <value>Embaixo</value>
+  </data>
+  <data name="Account_MenuCaption.Text" xml:space="preserve">
+    <value>Esquerda é o padrão. Em cima e Embaixo colocam os ícones em fila ao longo dessa borda. Os outros dispositivos mantêm a própria escolha.</value>
+  </data>
+  <data name="Account_MenuLeft" xml:space="preserve">
+    <value>Esquerda</value>
+  </data>
+  <data name="Account_MenuPicker.Header" xml:space="preserve">
+    <value>Onde fica a barra de navegação neste PC</value>
+  </data>
+  <data name="Account_MenuRight" xml:space="preserve">
+    <value>Direita</value>
+  </data>
+  <data name="Account_MenuTitle.Text" xml:space="preserve">
+    <value>Posição do menu</value>
+  </data>
+  <data name="Account_MenuTop" xml:space="preserve">
+    <value>Em cima</value>
+  </data>
+  <data name="Account_NameBox.Header" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Account_NameBox.PlaceholderText" xml:space="preserve">
+    <value>Como a casa vê você</value>
+  </data>
+  <data name="Account_NewPassword.Header" xml:space="preserve">
+    <value>Nova senha</value>
+  </data>
+  <data name="Account_NewPassword.PlaceholderText" xml:space="preserve">
+    <value>Deixe em branco para manter a senha atual</value>
+  </data>
+  <data name="Account_NoMediaServers" xml:space="preserve">
+    <value>Conecte o Plex ou o {0} na aba Integrações para importar os membros da casa e deixar que entrem com essas contas.</value>
+  </data>
+  <data name="Account_NoPasswordNote.Text" xml:space="preserve">
+    <value>Sua conta não tem senha do Marquee, então só entra com uma conta vinculada. Defina uma acima para entrar também com nome de usuário e senha.</value>
+  </data>
+  <data name="Account_NotificationsBlocked" xml:space="preserve">
+    <value>O Windows está configurado para ocultar as notificações do Marquee. Ative-as em Configurações do Windows › Sistema › Notificações.</value>
+  </data>
+  <data name="Account_NotificationsBody.Text" xml:space="preserve">
+    <value>Quando algo começa a baixar, fica pronto para assistir ou um pedido é aprovado ou recusado, o Windows mostra enquanto o Marquee está aberto. Vem direto do seu servidor Marquee; nada passa por um serviço externo.</value>
+  </data>
+  <data name="Account_NotificationsServerTooOld" xml:space="preserve">
+    <value>Seu servidor Marquee é antigo demais para enviar notificações. Atualize-o para recebê-las aqui.</value>
+  </data>
+  <data name="Account_NotificationsSwitch.Header" xml:space="preserve">
+    <value>Mostrar notificações neste PC</value>
+  </data>
+  <data name="Account_NotificationsSwitch.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_NotificationsSwitch.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_NotificationsTitle.Text" xml:space="preserve">
+    <value>Notificações</value>
+  </data>
+  <data name="Account_NotificationsUnavailable" xml:space="preserve">
+    <value>As notificações do Windows não estão disponíveis para esta cópia do Marquee.</value>
+  </data>
+  <data name="Account_NotLinked" xml:space="preserve">
+    <value>Não vinculada.</value>
+  </data>
+  <data name="Account_PasswordChanged" xml:space="preserve">
+    <value>Sua senha foi alterada, o que fez todos os dispositivos saírem. Entre de novo com a nova senha.</value>
+  </data>
+  <data name="Account_PasswordsDiffer" xml:space="preserve">
+    <value>As senhas não coincidem.</value>
+  </data>
+  <data name="Account_PasswordWarning" xml:space="preserve">
+    <value>Definir uma nova senha faz você sair de todos os dispositivos, inclusive deste PC.</value>
+  </data>
+  <data name="Account_PasswordWarningText.Text" xml:space="preserve">
+    <value>Definir uma nova senha faz você sair de todos os dispositivos, inclusive deste PC.</value>
+  </data>
+  <data name="Account_PlexCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Account_PlexUnlink.Content" xml:space="preserve">
+    <value>Desvincular</value>
+  </data>
+  <data name="Account_PlexWaiting.Text" xml:space="preserve">
+    <value>Aguardando o Plex… Termine de entrar na janela do navegador que acabou de abrir.</value>
+  </data>
+  <data name="Account_PreferencesBody.Text" xml:space="preserve">
+    <value>Sino: a lista sob o sino. Dispositivos: banners neste PC e nos seus outros dispositivos. Cada canal recebe só o que estiver marcado.</value>
+  </data>
+  <data name="Account_PreferencesTitle.Text" xml:space="preserve">
+    <value>Sobre o que você é avisado</value>
+  </data>
+  <data name="Account_Remove" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Account_RemoveMemberConsequence" xml:space="preserve">
+    <value>Os favoritos, pedidos e notificações dessa pessoa são removidos junto com a conta.</value>
+  </data>
+  <data name="Account_RoleLabel.Text" xml:space="preserve">
+    <value>Função</value>
+  </data>
+  <data name="Account_SaveChanges" xml:space="preserve">
+    <value>Salvar alterações</value>
+  </data>
+  <data name="Account_Saved" xml:space="preserve">
+    <value>Salvo.</value>
+  </data>
+  <data name="Account_Saving" xml:space="preserve">
+    <value>Salvando…</value>
+  </data>
+  <data name="Account_ServerNotConnected" xml:space="preserve">
+    <value>O {0} não está conectado a este servidor.</value>
+  </data>
+  <data name="Account_SignupSwitch.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_SignupSwitch.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_SingleSignOn" xml:space="preserve">
+    <value>Login único</value>
+  </data>
+  <data name="Account_SsoCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Account_SsoNotSetUp" xml:space="preserve">
+    <value>O login único não está configurado neste servidor.</value>
+  </data>
+  <data name="Account_SsoUnlink.Content" xml:space="preserve">
+    <value>Desvincular</value>
+  </data>
+  <data name="Account_SsoWaiting" xml:space="preserve">
+    <value>Aguardando {0}… Termine de entrar na janela do navegador que acabou de abrir.</value>
+  </data>
+  <data name="Account_TelegramCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Account_Title.Text" xml:space="preserve">
+    <value>Conta</value>
+  </data>
+  <data name="Account_TraktLink.Header" xml:space="preserve">
+    <value>Link de uma watchlist ou lista do Trakt</value>
+  </data>
+  <data name="Account_TraktLink.PlaceholderText" xml:space="preserve">
+    <value>https://trakt.tv/users/alguem/watchlist</value>
+  </data>
+  <data name="Account_TraktNewMovies.Header" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Account_TraktNewMovies.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_TraktNewMovies.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_TraktNewTv.Header" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Account_TraktNewTv.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_TraktNewTv.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_TraktRemove.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Account_TraktRemoveBody" xml:space="preserve">
+    <value>Os títulos novos nela não serão mais pedidos. O que já foi pedido continua.</value>
+  </data>
+  <data name="Account_TraktRemoveTitle" xml:space="preserve">
+    <value>Parar de sincronizar {0}?</value>
+  </data>
+  <data name="Account_TraktRowMovies.Header" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Account_TraktRowMovies.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_TraktRowMovies.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_TraktRowTv.Header" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Account_TraktRowTv.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_TraktRowTv.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_TraktTitle.Text" xml:space="preserve">
+    <value>Listas do Trakt</value>
+  </data>
+  <data name="Account_UnlinkedNotice" xml:space="preserve">
+    <value>Sua conta do {0} foi desvinculada.</value>
+  </data>
+  <data name="Account_UsernameLabel.Text" xml:space="preserve">
+    <value>Nome de usuário</value>
+  </data>
+  <data name="Account_WatchlistBody.Text" xml:space="preserve">
+    <value>Filmes e séries novos que você adicionar à sua Watchlist no Plex são pedidos para você, como se tivesse tocado em Pedir. O Marquee mantém um login do Plex para isso até você desativar.</value>
+  </data>
+  <data name="Account_WatchlistCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Account_WatchlistMovies.Header" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Account_WatchlistMovies.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_WatchlistMovies.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_WatchlistOn" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_WatchlistTitle.Text" xml:space="preserve">
+    <value>Pedir da minha Plex Watchlist</value>
+  </data>
+  <data name="Account_WatchlistTurnOff.Content" xml:space="preserve">
+    <value>Desativar</value>
+  </data>
+  <data name="Account_WatchlistTurnOn.Content" xml:space="preserve">
+    <value>Ativar</value>
+  </data>
+  <data name="Account_WatchlistTv.Header" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Account_WatchlistTv.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Account_WatchlistTv.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Account_WatchlistWaiting.Text" xml:space="preserve">
+    <value>Aguardando o Plex… termine no navegador.</value>
+  </data>
+  <data name="Account_YouTag" xml:space="preserve">
+    <value>Você</value>
+  </data>
+  <data name="Activity_Empty.Text" xml:space="preserve">
+    <value>Nada ainda.</value>
+  </data>
+  <data name="Activity_Subtitle.Text" xml:space="preserve">
+    <value>Quem pediu o quê e quem analisou, do mais recente ao mais antigo.</value>
+  </data>
+  <data name="Activity_Title.Text" xml:space="preserve">
+    <value>Atividade</value>
+  </data>
+  <data name="Activity_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Api_AvatarTooBig" xml:space="preserve">
+    <value>Essa foto é grande demais. Escolha uma com menos de 15 MB.</value>
+  </data>
+  <data name="Api_Cancelled" xml:space="preserve">
+    <value>A solicitação foi cancelada.</value>
+  </data>
+  <data name="Api_CommentNotFound" xml:space="preserve">
+    <value>Comentário não encontrado.</value>
+  </data>
+  <data name="Api_CommentTooOld" xml:space="preserve">
+    <value>Os comentários só podem ser alterados nos 15 minutos após a publicação.</value>
+  </data>
+  <data name="Api_Conflict" xml:space="preserve">
+    <value>Isso entra em conflito com algo que já está no seu servidor.</value>
+  </data>
+  <data name="Api_Forbidden" xml:space="preserve">
+    <value>Só um administrador pode fazer isso.</value>
+  </data>
+  <data name="Api_InvalidCredentials" xml:space="preserve">
+    <value>Nome de usuário ou senha incorretos.</value>
+  </data>
+  <data name="Api_InvalidRequest" xml:space="preserve">
+    <value>A solicitação era inválida.</value>
+  </data>
+  <data name="Api_NetworkOther" xml:space="preserve">
+    <value>Não foi possível acessar seu servidor Marquee: {0}</value>
+  </data>
+  <data name="Api_NotFound" xml:space="preserve">
+    <value>Isso não foi encontrado no seu servidor Marquee.</value>
+  </data>
+  <data name="Api_NotMarquee" xml:space="preserve">
+    <value>O servidor não respondeu como um servidor Marquee. Talvez ele precise ser atualizado para a versão {0} ou posterior.</value>
+  </data>
+  <data name="Api_OnlyRequesterCancels" xml:space="preserve">
+    <value>Só quem fez o pedido pode cancelá-lo. Recuse-o em vez disso.</value>
+  </data>
+  <data name="Api_PhotoUnreadable" xml:space="preserve">
+    <value>Não foi possível ler a foto: {0}</value>
+  </data>
+  <data name="Api_PlexSignInExpired" xml:space="preserve">
+    <value>O login com Plex expirou. Tente de novo.</value>
+  </data>
+  <data name="Api_QuickConnectExpired" xml:space="preserve">
+    <value>Esse código do Quick Connect expirou. Tente de novo.</value>
+  </data>
+  <data name="Api_RateLimited" xml:space="preserve">
+    <value>Tentativas demais. Tente de novo em alguns minutos.</value>
+  </data>
+  <data name="Api_RequestNotFound" xml:space="preserve">
+    <value>Pedido não encontrado.</value>
+  </data>
+  <data name="Api_Server" xml:space="preserve">
+    <value>Seu servidor Marquee teve um problema. Tente de novo em instantes.</value>
+  </data>
+  <data name="Api_SetupComplete" xml:space="preserve">
+    <value>A configuração deste servidor já foi concluída. Entre na sua conta.</value>
+  </data>
+  <data name="Api_SignInRefused" xml:space="preserve">
+    <value>Esta conta não pode entrar neste servidor Marquee.</value>
+  </data>
+  <data name="Api_SsoSignInExpired" xml:space="preserve">
+    <value>Esse login expirou. Tente de novo.</value>
+  </data>
+  <data name="Api_TelegramLinkExpired" xml:space="preserve">
+    <value>O link do Telegram expirou. Tente de novo.</value>
+  </data>
+  <data name="Api_Timeout" xml:space="preserve">
+    <value>Seu servidor Marquee demorou demais para responder.</value>
+  </data>
+  <data name="Api_Unauthorized" xml:space="preserve">
+    <value>Sua sessão terminou. Entre novamente.</value>
+  </data>
+  <data name="Api_UnknownError" xml:space="preserve">
+    <value>erro desconhecido</value>
+  </data>
+  <data name="Api_Unreachable" xml:space="preserve">
+    <value>Não foi possível acessar seu servidor Marquee. Verifique se ele está ligado e na sua rede.</value>
+  </data>
+  <data name="Api_UnreadableResponse" xml:space="preserve">
+    <value>Seu servidor Marquee enviou uma resposta que esta versão do app não consegue ler.</value>
+  </data>
+  <data name="Api_Upstream" xml:space="preserve">
+    <value>Um serviço conectado ao seu servidor Marquee não respondeu.</value>
+  </data>
+  <data name="ApiKeys_Copied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="ApiKeys_Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="ApiKeys_CreateKey" xml:space="preserve">
+    <value>Criar chave</value>
+  </data>
+  <data name="ApiKeys_Creating" xml:space="preserve">
+    <value>Criando…</value>
+  </data>
+  <data name="ApiKeys_Empty" xml:space="preserve">
+    <value>Nenhuma chave ainda.</value>
+  </data>
+  <data name="ApiKeys_Expired" xml:space="preserve">
+    <value>Expirada</value>
+  </data>
+  <data name="App_CredentialStoreUnreadable" xml:space="preserve">
+    <value>Não foi possível ler seu login salvo no cofre de credenciais do Windows. Entre novamente ou toque em Tentar de novo.</value>
+  </data>
+  <data name="App_SessionEnded" xml:space="preserve">
+    <value>Sua sessão terminou. Entre novamente.</value>
+  </data>
+  <data name="Arr_AddRadarr.Content" xml:space="preserve">
+    <value>Adicionar servidor do Radarr</value>
+  </data>
+  <data name="Arr_AddServer" xml:space="preserve">
+    <value>Adicionar servidor</value>
+  </data>
+  <data name="Arr_AddServerTitle" xml:space="preserve">
+    <value>Adicionar servidor do {0}</value>
+  </data>
+  <data name="Arr_AddSonarr.Content" xml:space="preserve">
+    <value>Adicionar servidor do Sonarr</value>
+  </data>
+  <data name="Arr_Confirm" xml:space="preserve">
+    <value>Confirmar</value>
+  </data>
+  <data name="Arr_ConnectedSuccessfully" xml:space="preserve">
+    <value>Conectado com sucesso.</value>
+  </data>
+  <data name="Arr_ConnectedVersion" xml:space="preserve">
+    <value>Conectado ao {0} {1}.</value>
+  </data>
+  <data name="Arr_Copied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="Arr_Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Arr_DefaultBadge" xml:space="preserve">
+    <value>Padrão</value>
+  </data>
+  <data name="Arr_Editor4k.Header" xml:space="preserve">
+    <value>Servidor 4K</value>
+  </data>
+  <data name="Arr_Editor4k.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Arr_Editor4k.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Arr_Editor4kHelp.Text" xml:space="preserve">
+    <value>Pedidos em 4K e “Adicionar em 4K” vão para um servidor 4K, e ele não conta como parte da biblioteca.</value>
+  </data>
+  <data name="Arr_EditorAnimeIntro.Text" xml:space="preserve">
+    <value>Para séries de anime (o tipo de série Anime é usado automaticamente):</value>
+  </data>
+  <data name="Arr_EditorAnimeQualityProfile.Header" xml:space="preserve">
+    <value>Perfil de qualidade para anime</value>
+  </data>
+  <data name="Arr_EditorAnimeRootFolder.Header" xml:space="preserve">
+    <value>Pasta raiz para anime</value>
+  </data>
+  <data name="Arr_EditorAnimeTags.Text" xml:space="preserve">
+    <value>Tags para anime (nenhuma marcada: as de cima)</value>
+  </data>
+  <data name="Arr_EditorApiKey.Header" xml:space="preserve">
+    <value>Chave de API</value>
+  </data>
+  <data name="Arr_EditorCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Arr_EditorDefault.Header" xml:space="preserve">
+    <value>Servidor padrão</value>
+  </data>
+  <data name="Arr_EditorDefault.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Arr_EditorDefault.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Arr_EditorDefaultHelp.Text" xml:space="preserve">
+    <value>Para onde vão os títulos quando ninguém escolhe um servidor. Para mudar, torne outro servidor o padrão.</value>
+  </data>
+  <data name="Arr_EditorName.Header" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Arr_EditorName.PlaceholderText" xml:space="preserve">
+    <value>Deixe em branco para usar o nome do tipo, como “Radarr 2”</value>
+  </data>
+  <data name="Arr_EditorQualityProfile.Header" xml:space="preserve">
+    <value>Perfil de qualidade</value>
+  </data>
+  <data name="Arr_EditorRootFolder.Header" xml:space="preserve">
+    <value>Pasta raiz</value>
+  </data>
+  <data name="Arr_EditorSeasonFolders.Header" xml:space="preserve">
+    <value>Pastas por temporada</value>
+  </data>
+  <data name="Arr_EditorSeasonFolders.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Arr_EditorSeasonFolders.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Arr_EditorSeriesType.Header" xml:space="preserve">
+    <value>Tipo de série</value>
+  </data>
+  <data name="Arr_EditorTags.Text" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Arr_EditorTestHelp.Text" xml:space="preserve">
+    <value>Teste a conexão para escolher um perfil de qualidade, uma pasta raiz e tags.</value>
+  </data>
+  <data name="Arr_EditorUrl.Header" xml:space="preserve">
+    <value>URL do servidor</value>
+  </data>
+  <data name="Arr_EditorUsedWhenAdding.Text" xml:space="preserve">
+    <value>Usado ao adicionar títulos:</value>
+  </data>
+  <data name="Arr_EditServerTitle" xml:space="preserve">
+    <value>Editar {0}</value>
+  </data>
+  <data name="Arr_MakeDefault" xml:space="preserve">
+    <value>Tornar padrão</value>
+  </data>
+  <data name="Arr_NeedsSetup" xml:space="preserve">
+    <value>Precisa de configuração</value>
+  </data>
+  <data name="Arr_NoRadarr.Text" xml:space="preserve">
+    <value>Nenhum servidor do Radarr ainda.</value>
+  </data>
+  <data name="Arr_NoSonarr.Text" xml:space="preserve">
+    <value>Nenhum servidor do Sonarr ainda.</value>
+  </data>
+  <data name="Arr_Regenerating" xml:space="preserve">
+    <value>Gerando de novo…</value>
+  </data>
+  <data name="Arr_Remove" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Arr_RemovePrompt" xml:space="preserve">
+    <value>Remover {0}?</value>
+  </data>
+  <data name="Arr_Removing" xml:space="preserve">
+    <value>Removendo…</value>
+  </data>
+  <data name="Arr_RowCancelRegenerate.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Arr_RowCancelRemove.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Arr_RowEdit.Content" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Arr_RowRegenerate.Content" xml:space="preserve">
+    <value>Gerar de novo</value>
+  </data>
+  <data name="Arr_RowRegeneratePrompt.Text" xml:space="preserve">
+    <value>Gerar de novo? A URL acima para de funcionar na hora.</value>
+  </data>
+  <data name="Arr_RowRemove.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Arr_RowWebhookHelp.Text" xml:space="preserve">
+    <value>Cole em Settings → Connect → Add → Webhook deste servidor (método POST, em Grab e em Import/Download).</value>
+  </data>
+  <data name="Arr_RowWebhookLabel.Text" xml:space="preserve">
+    <value>URL do webhook</value>
+  </data>
+  <data name="Arr_SameAsAbove" xml:space="preserve">
+    <value>Igual ao de cima</value>
+  </data>
+  <data name="Arr_Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Arr_Saving" xml:space="preserve">
+    <value>Salvando…</value>
+  </data>
+  <data name="Arr_ServersIntro.Text" xml:space="preserve">
+    <value>Adicione quantos servidores Sonarr e Radarr quiser. Os títulos vão para o padrão, a menos que outro servidor seja escolhido em Avançado ao aprovar ou adicionar.</value>
+  </data>
+  <data name="Arr_Test" xml:space="preserve">
+    <value>Testar</value>
+  </data>
+  <data name="Arr_Testing" xml:space="preserve">
+    <value>Testando…</value>
+  </data>
+  <data name="Blocklist_Block" xml:space="preserve">
+    <value>Bloquear</value>
+  </data>
+  <data name="Blocklist_Blocking" xml:space="preserve">
+    <value>Bloqueando…</value>
+  </data>
+  <data name="Blocklist_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Blocklist_Dialog.PrimaryButtonText" xml:space="preserve">
+    <value>Bloquear</value>
+  </data>
+  <data name="Blocklist_Dialog.Title" xml:space="preserve">
+    <value>Bloquear pedidos</value>
+  </data>
+  <data name="Blocklist_DialogText.Text" xml:space="preserve">
+    <value>Ninguém poderá pedir este título (você ainda pode adicioná-lo). Os membros verão seu motivo no lugar de Pedir.</value>
+  </data>
+  <data name="Blocklist_Empty" xml:space="preserve">
+    <value>Nada bloqueado. Bloqueie um título na página dele ou uma palavra-chave abaixo.</value>
+  </data>
+  <data name="Blocklist_Reason.Header" xml:space="preserve">
+    <value>Motivo (opcional)</value>
+  </data>
+  <data name="Blocklist_Reason.PlaceholderText" xml:space="preserve">
+    <value>Por quê, para quem pedir</value>
+  </data>
+  <data name="Browse_AllGenres" xml:space="preserve">
+    <value>Todos os gêneros</value>
+  </data>
+  <data name="Browse_AllYears" xml:space="preserve">
+    <value>Todos os anos</value>
+  </data>
+  <data name="Browse_BecauseYouWatched" xml:space="preserve">
+    <value>Porque você assistiu a {0}</value>
+  </data>
+  <data name="Browse_ClearNetwork.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Limpar o filtro de emissora</value>
+  </data>
+  <data name="Browse_EmptyHeading.Text" xml:space="preserve">
+    <value>Não sobrou nada aqui</value>
+  </data>
+  <data name="Browse_EmptyText.Text" xml:space="preserve">
+    <value>Tente outro gênero ou ano, ou desative “Ocultar títulos que você já acompanha”.</value>
+  </data>
+  <data name="Browse_ErrorMovies" xml:space="preserve">
+    <value>Não foi possível carregar os filmes</value>
+  </data>
+  <data name="Browse_ErrorSeries" xml:space="preserve">
+    <value>Não foi possível carregar as séries</value>
+  </data>
+  <data name="Browse_GenreBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gênero</value>
+  </data>
+  <data name="Browse_HideOwned" xml:space="preserve">
+    <value>Ocultar títulos que você já acompanha</value>
+  </data>
+  <data name="Browse_HidingOwned" xml:space="preserve">
+    <value>✓ Ocultando títulos que você já acompanha</value>
+  </data>
+  <data name="Browse_LoadingMore.Text" xml:space="preserve">
+    <value>Carregando mais…</value>
+  </data>
+  <data name="Browse_LoadingMovies" xml:space="preserve">
+    <value>Carregando filmes…</value>
+  </data>
+  <data name="Browse_LoadingSeries" xml:space="preserve">
+    <value>Carregando séries…</value>
+  </data>
+  <data name="Browse_LoadMore.Content" xml:space="preserve">
+    <value>Carregar mais</value>
+  </data>
+  <data name="Browse_Network" xml:space="preserve">
+    <value>Emissora</value>
+  </data>
+  <data name="Browse_NetworkChip" xml:space="preserve">
+    <value>{0} ✕</value>
+  </data>
+  <data name="Browse_OpenSettings.Content" xml:space="preserve">
+    <value>Abrir Configurações</value>
+  </data>
+  <data name="Browse_PageError.Text" xml:space="preserve">
+    <value>Não foi possível carregar mais</value>
+  </data>
+  <data name="Browse_Picking" xml:space="preserve">
+    <value>Escolhendo…</value>
+  </data>
+  <data name="Browse_Retry.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Browse_SortBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ordenar</value>
+  </data>
+  <data name="Browse_SurpriseMe" xml:space="preserve">
+    <value>🎲 Me surpreenda</value>
+  </data>
+  <data name="Browse_TmdbMissingHeading.Text" xml:space="preserve">
+    <value>Conecte o TMDb para começar a explorar</value>
+  </data>
+  <data name="Browse_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Browse_YearBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ano</value>
+  </data>
+  <data name="Calendar_ConnectIntegration.Content" xml:space="preserve">
+    <value>Conectar uma integração</value>
+  </data>
+  <data name="Calendar_EmptyMonth" xml:space="preserve">
+    <value>Nada programado para {0}.</value>
+  </data>
+  <data name="Calendar_EntryAccessibleName" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Calendar_ErrorText.Text" xml:space="preserve">
+    <value>Não foi possível carregar o calendário</value>
+  </data>
+  <data name="Calendar_LoadingText.Text" xml:space="preserve">
+    <value>Carregando o calendário…</value>
+  </data>
+  <data name="Calendar_More" xml:space="preserve">
+    <value>+{0} a mais</value>
+  </data>
+  <data name="Calendar_Next.Content" xml:space="preserve">
+    <value>Próximo →</value>
+  </data>
+  <data name="Calendar_NotConfiguredAdmin" xml:space="preserve">
+    <value>Conecte o Sonarr ou o Radarr para ver aqui os próximos lançamentos e datas de exibição.</value>
+  </data>
+  <data name="Calendar_NotConfiguredMember" xml:space="preserve">
+    <value>O administrador da casa ainda não conectou o Sonarr ou o Radarr.</value>
+  </data>
+  <data name="Calendar_NotConfiguredTitle.Text" xml:space="preserve">
+    <value>Calendário</value>
+  </data>
+  <data name="Calendar_Prev.Content" xml:space="preserve">
+    <value>← Anterior</value>
+  </data>
+  <data name="Calendar_Title.Text" xml:space="preserve">
+    <value>Calendário</value>
+  </data>
+  <data name="Calendar_Today.Content" xml:space="preserve">
+    <value>Hoje</value>
+  </data>
+  <data name="Calendar_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Card_AddFavorite" xml:space="preserve">
+    <value>Adicionar aos favoritos</value>
+  </data>
+  <data name="Card_Adding" xml:space="preserve">
+    <value>Adicionando…</value>
+  </data>
+  <data name="Card_RemoveFavorite" xml:space="preserve">
+    <value>Remover dos favoritos</value>
+  </data>
+  <data name="Card_Request" xml:space="preserve">
+    <value>Pedir</value>
+  </data>
+  <data name="Card_Requested" xml:space="preserve">
+    <value>Pedido</value>
+  </data>
+  <data name="Card_Requesting" xml:space="preserve">
+    <value>Pedindo…</value>
+  </data>
+  <data name="Card_StatusKeyAccessibleName" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Card_TypeMovie" xml:space="preserve">
+    <value>FILME</value>
+  </data>
+  <data name="Card_TypeSeries" xml:space="preserve">
+    <value>SÉRIE</value>
+  </data>
+  <data name="Channels_Connected" xml:space="preserve">
+    <value>Conectado</value>
+  </data>
+  <data name="Channels_EmailSuccess" xml:space="preserve">
+    <value>Conectado — confira o e-mail de teste na caixa de entrada.</value>
+  </data>
+  <data name="Channels_KeepSavedPlaceholder" xml:space="preserve">
+    <value>•••••••••••••••• (deixe em branco para manter)</value>
+  </data>
+  <data name="Channels_PortMissing" xml:space="preserve">
+    <value>Digite a porta SMTP, por exemplo 587.</value>
+  </data>
+  <data name="Channels_PushoverSuccess" xml:space="preserve">
+    <value>Conectado — uma notificação de teste está a caminho.</value>
+  </data>
+  <data name="Channels_RemoveEmail" xml:space="preserve">
+    <value>Remover e-mail</value>
+  </data>
+  <data name="Channels_RemovePushover" xml:space="preserve">
+    <value>Remover Pushover</value>
+  </data>
+  <data name="Channels_RemoveTelegram" xml:space="preserve">
+    <value>Remover Telegram</value>
+  </data>
+  <data name="Channels_Removing" xml:space="preserve">
+    <value>Removendo…</value>
+  </data>
+  <data name="Channels_TelegramSuccess" xml:space="preserve">
+    <value>Conectado — confira a mensagem de teste no chat.</value>
+  </data>
+  <data name="Channels_TestAndSave" xml:space="preserve">
+    <value>Testar e salvar</value>
+  </data>
+  <data name="Channels_Testing" xml:space="preserve">
+    <value>Testando…</value>
+  </data>
+  <data name="Comments_CancelEdit.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Comments_Delete.Content" xml:space="preserve">
+    <value>Excluir</value>
+  </data>
+  <data name="Comments_DraftBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Escreva um comentário</value>
+  </data>
+  <data name="Comments_DraftBox.PlaceholderText" xml:space="preserve">
+    <value>Escreva um comentário</value>
+  </data>
+  <data name="Comments_Edit.Content" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Comments_Empty.Text" xml:space="preserve">
+    <value>Nenhum comentário ainda.</value>
+  </data>
+  <data name="Comments_Loading.Text" xml:space="preserve">
+    <value>Carregando…</value>
+  </data>
+  <data name="Comments_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Company_EmptyTitles" xml:space="preserve">
+    <value>Nenhum título encontrado para este estúdio ainda.</value>
+  </data>
+  <data name="Company_ErrorHeading.Text" xml:space="preserve">
+    <value>Não foi possível carregar este estúdio</value>
+  </data>
+  <data name="Company_Loading.Text" xml:space="preserve">
+    <value>Carregando o catálogo…</value>
+  </data>
+  <data name="Company_TitlesInCatalog_One" xml:space="preserve">
+    <value>{0} título no catálogo</value>
+  </data>
+  <data name="Company_TitlesInCatalog_Other" xml:space="preserve">
+    <value>{0} títulos no catálogo</value>
+  </data>
+  <data name="Company_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Connect_AddressBox.Header" xml:space="preserve">
+    <value>Endereço IP ou URL</value>
+  </data>
+  <data name="Connect_CancelBrowser.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Connect_CancelQuickConnect.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Connect_ChangeServerButton.Content" xml:space="preserve">
+    <value>Trocar de servidor</value>
+  </data>
+  <data name="Connect_ChangeServerLink.Content" xml:space="preserve">
+    <value>Alterar</value>
+  </data>
+  <data name="Connect_Check" xml:space="preserve">
+    <value>Verificar</value>
+  </data>
+  <data name="Connect_Checking" xml:space="preserve">
+    <value>Verificando…</value>
+  </data>
+  <data name="Connect_Connecting" xml:space="preserve">
+    <value>Conectando…</value>
+  </data>
+  <data name="Connect_CreateAccount.Content" xml:space="preserve">
+    <value>Criar uma conta</value>
+  </data>
+  <data name="Connect_CreateAdminAccount" xml:space="preserve">
+    <value>Criar conta de administrador</value>
+  </data>
+  <data name="Connect_CreatingAccount" xml:space="preserve">
+    <value>Criando a conta…</value>
+  </data>
+  <data name="Connect_DegradedBar.Message" xml:space="preserve">
+    <value>Seu servidor não consegue acessar o banco de dados agora, então talvez não seja possível entrar.</value>
+  </data>
+  <data name="Connect_FinishInBrowser.Text" xml:space="preserve">
+    <value>Termine de entrar na janela do navegador que acabou de abrir.</value>
+  </data>
+  <data name="Connect_HaveAccount.Text" xml:space="preserve">
+    <value>Já tem uma conta?</value>
+  </data>
+  <data name="Connect_IncompatibleExplanation" xml:space="preserve">
+    <value>Seu servidor Marquee é mais novo que este app. Atualize o Marquee para Windows e tente de novo.</value>
+  </data>
+  <data name="Connect_Intro.Text" xml:space="preserve">
+    <value>Digite o endereço IP ou a URL do computador que executa o Marquee. A porta geralmente é 3000.</value>
+  </data>
+  <data name="Connect_Launching.Text" xml:space="preserve">
+    <value>Conectando ao seu servidor…</value>
+  </data>
+  <data name="Connect_LegacyExplanation" xml:space="preserve">
+    <value>Seu servidor Marquee está em uma versão antiga. Atualize-o e tente de novo.</value>
+  </data>
+  <data name="Connect_LocalNetworkExplanation" xml:space="preserve">
+    <value>O Windows está bloqueando o acesso do Marquee à sua rede doméstica. Permita nas configurações de rede do app e tente de novo.</value>
+  </data>
+  <data name="Connect_LocalNetworkTitle" xml:space="preserve">
+    <value>Permita o acesso à rede local</value>
+  </data>
+  <data name="Connect_LogIn.Content" xml:space="preserve">
+    <value>Entrar</value>
+  </data>
+  <data name="Connect_NewToMarquee.Text" xml:space="preserve">
+    <value>Novo no Marquee?</value>
+  </data>
+  <data name="Connect_NotMarqueeExplanation" xml:space="preserve">
+    <value>Outra coisa está respondendo no endereço do seu servidor. O endereço IP dele pode ter mudado.</value>
+  </data>
+  <data name="Connect_NotMarqueeTitle" xml:space="preserve">
+    <value>Esse não é o seu servidor Marquee</value>
+  </data>
+  <data name="Connect_Or.Text" xml:space="preserve">
+    <value>ou</value>
+  </data>
+  <data name="Connect_Password" xml:space="preserve">
+    <value>Senha</value>
+  </data>
+  <data name="Connect_PasswordJellyfin" xml:space="preserve">
+    <value>Senha do {0}</value>
+  </data>
+  <data name="Connect_QuickConnectGettingCode" xml:space="preserve">
+    <value>Obtendo um código…</value>
+  </data>
+  <data name="Connect_QuickConnectHelp.Text" xml:space="preserve">
+    <value>Em um app do Jellyfin em que você está conectado, abra seu perfil → Quick Connect e digite este código</value>
+  </data>
+  <data name="Connect_QuickConnectWaiting" xml:space="preserve">
+    <value>Aguardando aprovação…</value>
+  </data>
+  <data name="Connect_Retry" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Connect_SetupChangeServerLink.Content" xml:space="preserve">
+    <value>Alterar</value>
+  </data>
+  <data name="Connect_SetupIntro.Text" xml:space="preserve">
+    <value>Crie a primeira conta deste servidor. Ela será a de administrador, e as contas dos outros membros da casa podem ser adicionadas depois nas Configurações.</value>
+  </data>
+  <data name="Connect_SetupNameBox.Header" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Connect_SetupPasswordBox.Header" xml:space="preserve">
+    <value>Senha</value>
+  </data>
+  <data name="Connect_SetupTitle.Text" xml:space="preserve">
+    <value>Configurar o Marquee</value>
+  </data>
+  <data name="Connect_SetupUsernameBox.Header" xml:space="preserve">
+    <value>Nome de usuário</value>
+  </data>
+  <data name="Connect_SignIn" xml:space="preserve">
+    <value>Entrar</value>
+  </data>
+  <data name="Connect_SigningIn" xml:space="preserve">
+    <value>Entrando…</value>
+  </data>
+  <data name="Connect_SignInPageUnopened" xml:space="preserve">
+    <value>Não foi possível abrir a página de login do {0} no seu navegador.</value>
+  </data>
+  <data name="Connect_SignInWith" xml:space="preserve">
+    <value>Entrar com {0}</value>
+  </data>
+  <data name="Connect_SignInWithMarquee" xml:space="preserve">
+    <value>Entrar com uma conta do Marquee</value>
+  </data>
+  <data name="Connect_SignInWithPlex.Content" xml:space="preserve">
+    <value>Entrar com o Plex</value>
+  </data>
+  <data name="Connect_SsoFallbackName" xml:space="preserve">
+    <value>login único</value>
+  </data>
+  <data name="Connect_SubtitleJellyfin" xml:space="preserve">
+    <value>Entre com sua conta do {0}.</value>
+  </data>
+  <data name="Connect_SubtitleMarquee" xml:space="preserve">
+    <value>Entre na sua conta do Marquee.</value>
+  </data>
+  <data name="Connect_Title.Text" xml:space="preserve">
+    <value>Conecte-se ao seu servidor</value>
+  </data>
+  <data name="Connect_UnreachableExplanation" xml:space="preserve">
+    <value>Verifique se o computador que executa o Marquee está ligado e conectado à sua rede e tente de novo.</value>
+  </data>
+  <data name="Connect_UnreachableTitle" xml:space="preserve">
+    <value>Não foi possível acessar seu servidor</value>
+  </data>
+  <data name="Connect_UpdateNeededTitle" xml:space="preserve">
+    <value>Atualização necessária</value>
+  </data>
+  <data name="Connect_UseQuickConnect.Content" xml:space="preserve">
+    <value>Usar o Quick Connect</value>
+  </data>
+  <data name="Connect_Username" xml:space="preserve">
+    <value>Nome de usuário</value>
+  </data>
+  <data name="Connect_UsernameJellyfin" xml:space="preserve">
+    <value>Nome de usuário do {0}</value>
+  </data>
+  <data name="Connect_WaitingFor" xml:space="preserve">
+    <value>Aguardando {0}…</value>
+  </data>
+  <data name="Connect_WelcomeBack.Text" xml:space="preserve">
+    <value>Que bom ver você de novo</value>
+  </data>
+  <data name="Decline_CustomReasonBox.PlaceholderText" xml:space="preserve">
+    <value>Diga o motivo</value>
+  </data>
+  <data name="Decline_DefaultNoCopy" xml:space="preserve">
+    <value>Não foi possível encontrar uma boa cópia</value>
+  </data>
+  <data name="Decline_DefaultNoSpace" xml:space="preserve">
+    <value>Não há espaço suficiente no servidor agora</value>
+  </data>
+  <data name="Decline_DefaultNotAFit" xml:space="preserve">
+    <value>Não combina com a biblioteca da casa</value>
+  </data>
+  <data name="Decline_DefaultStreaming" xml:space="preserve">
+    <value>Já está disponível em um serviço de streaming que temos</value>
+  </data>
+  <data name="Decline_DefaultUnreleased" xml:space="preserve">
+    <value>Ainda não foi lançado, peça de novo quando sair</value>
+  </data>
+  <data name="Decline_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Decline_Dialog.PrimaryButtonText" xml:space="preserve">
+    <value>Recusar</value>
+  </data>
+  <data name="Decline_Dialog.Title" xml:space="preserve">
+    <value>Recusar pedido</value>
+  </data>
+  <data name="Decline_Explanation" xml:space="preserve">
+    <value>Diga a {0} por que “{1}” não será adicionado. A pessoa verá isso em Recusados na página Pedidos e na notificação.</value>
+  </data>
+  <data name="Decline_OtherChoice" xml:space="preserve">
+    <value>Outro</value>
+  </data>
+  <data name="Decline_ReasonButtons.Header" xml:space="preserve">
+    <value>Motivo</value>
+  </data>
+  <data name="Discover_EmptyHeading.Text" xml:space="preserve">
+    <value>Nada para mostrar ainda</value>
+  </data>
+  <data name="Discover_EmptyText.Text" xml:space="preserve">
+    <value>Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Integrações e recarregue (F5).</value>
+  </data>
+  <data name="Discover_ErrorHeading.Text" xml:space="preserve">
+    <value>Não foi possível carregar Descobrir</value>
+  </data>
+  <data name="Discover_ListEmptyHeading.Text" xml:space="preserve">
+    <value>Nada aqui no momento</value>
+  </data>
+  <data name="Discover_ListEmptyRecentlyAdded" xml:space="preserve">
+    <value>Nada foi adicionado à sua biblioteca do Plex ou Jellyfin ainda.</value>
+  </data>
+  <data name="Discover_ListEmptyTmdb" xml:space="preserve">
+    <value>Nada aqui no momento — o TMDb não retornou nada.</value>
+  </data>
+  <data name="Discover_ListError" xml:space="preserve">
+    <value>Não foi possível carregar {0}</value>
+  </data>
+  <data name="Discover_ListLoading" xml:space="preserve">
+    <value>Carregando {0}…</value>
+  </data>
+  <data name="Discover_ListLoadingMore.Text" xml:space="preserve">
+    <value>Carregando mais…</value>
+  </data>
+  <data name="Discover_ListLoadMore.Content" xml:space="preserve">
+    <value>Carregar mais</value>
+  </data>
+  <data name="Discover_ListOpenSettings.Content" xml:space="preserve">
+    <value>Abrir Configurações</value>
+  </data>
+  <data name="Discover_ListPageError.Text" xml:space="preserve">
+    <value>Não foi possível carregar mais</value>
+  </data>
+  <data name="Discover_ListRetry.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Discover_ListTmdbMissingTitle.Text" xml:space="preserve">
+    <value>Conecte o TMDb para começar a explorar</value>
+  </data>
+  <data name="Discover_ListTryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Discover_Loading.Text" xml:space="preserve">
+    <value>Carregando Descobrir…</value>
+  </data>
+  <data name="Discover_OpenSettings.Content" xml:space="preserve">
+    <value>Abrir Configurações</value>
+  </data>
+  <data name="Discover_Title.Text" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
+    <value>Cada pôster, resultado de busca e página de título vem do TMDb. Adicione uma chave de API gratuita ou um token de acesso de leitura em Configurações → Integrações.</value>
+  </data>
+  <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
+    <value>Conecte o TMDb para começar a explorar</value>
+  </data>
+  <data name="Discover_TmdbMissingMember" xml:space="preserve">
+    <value>O administrador da casa ainda não conectou o TMDb.</value>
+  </data>
+  <data name="Discover_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="DiscoverSettings_Added" xml:space="preserve">
+    <value>“{0}” adicionada ao fim do Descobrir.</value>
+  </data>
+  <data name="DiscoverSettings_Adding" xml:space="preserve">
+    <value>Adicionando…</value>
+  </data>
+  <data name="DiscoverSettings_AddRow" xml:space="preserve">
+    <value>Adicionar fileira</value>
+  </data>
+  <data name="DiscoverSettings_AddRowHeading.Text" xml:space="preserve">
+    <value>Adicionar fileira</value>
+  </data>
+  <data name="DiscoverSettings_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="DiscoverSettings_CustomCount_One" xml:space="preserve">
+    <value>{1} de {0} fileira própria</value>
+  </data>
+  <data name="DiscoverSettings_CustomCount_Other" xml:space="preserve">
+    <value>{1} de {0} fileiras próprias</value>
+  </data>
+  <data name="DiscoverSettings_Description" xml:space="preserve">
+    <value>Organize o Descobrir para todos: mova fileiras para cima ou para baixo, oculte as que não quiser e adicione as suas.</value>
+  </data>
+  <data name="DiscoverSettings_Kind.Header" xml:space="preserve">
+    <value>O que mostra</value>
+  </data>
+  <data name="DiscoverSettings_MediaType.Header" xml:space="preserve">
+    <value>Filmes ou séries</value>
+  </data>
+  <data name="DiscoverSettings_MoveDown.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mover para baixo</value>
+  </data>
+  <data name="DiscoverSettings_MoveRowDown" xml:space="preserve">
+    <value>Mover {0} para baixo</value>
+  </data>
+  <data name="DiscoverSettings_MoveRowUp" xml:space="preserve">
+    <value>Mover {0} para cima</value>
+  </data>
+  <data name="DiscoverSettings_MoveUp.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mover para cima</value>
+  </data>
+  <data name="DiscoverSettings_NewTitle.Header" xml:space="preserve">
+    <value>Nome (opcional)</value>
+  </data>
+  <data name="DiscoverSettings_NewTitle.PlaceholderText" xml:space="preserve">
+    <value>Nomeada pelo que mostra</value>
+  </data>
+  <data name="DiscoverSettings_Picked" xml:space="preserve">
+    <value>Escolhido: {0}</value>
+  </data>
+  <data name="DiscoverSettings_Remove.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="DiscoverSettings_RemoveConfirm" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="DiscoverSettings_RemoveMessage" xml:space="preserve">
+    <value>Ela sai do Descobrir para todos. Você pode adicioná-la de novo depois.</value>
+  </data>
+  <data name="DiscoverSettings_RemoveTitle" xml:space="preserve">
+    <value>Remover {0}?</value>
+  </data>
+  <data name="DiscoverSettings_Rename.Content" xml:space="preserve">
+    <value>Renomear</value>
+  </data>
+  <data name="DiscoverSettings_RenameName" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="DiscoverSettings_RenameSave" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="DiscoverSettings_RenameTitle" xml:space="preserve">
+    <value>Renomear fileira</value>
+  </data>
+  <data name="DiscoverSettings_Reset.Content" xml:space="preserve">
+    <value>Restaurar padrão</value>
+  </data>
+  <data name="DiscoverSettings_ResetConfirm" xml:space="preserve">
+    <value>Restaurar</value>
+  </data>
+  <data name="DiscoverSettings_ResetMessage" xml:space="preserve">
+    <value>As fileiras padrão voltam à ordem de sempre, todas visíveis. Suas próprias fileiras continuam, depois delas.</value>
+  </data>
+  <data name="DiscoverSettings_ResetTitle" xml:space="preserve">
+    <value>Restaurar o Descobrir?</value>
+  </data>
+  <data name="DiscoverSettings_SearchGenre" xml:space="preserve">
+    <value>Gênero</value>
+  </data>
+  <data name="DiscoverSettings_SearchKeyword" xml:space="preserve">
+    <value>Palavra-chave</value>
+  </data>
+  <data name="DiscoverSettings_SearchNetwork" xml:space="preserve">
+    <value>Emissora</value>
+  </data>
+  <data name="DiscoverSettings_SearchStudio" xml:space="preserve">
+    <value>Estúdio</value>
+  </data>
+  <data name="DiscoverSettings_ServerTooOld" xml:space="preserve">
+    <value>Este servidor ainda não tem configurações do Descobrir. Atualize o Marquee no servidor para organizar o Descobrir.</value>
+  </data>
+  <data name="DiscoverSettings_ShowSwitch.OffContent" xml:space="preserve">
+    <value>Oculta</value>
+  </data>
+  <data name="DiscoverSettings_ShowSwitch.OnContent" xml:space="preserve">
+    <value>Visível</value>
+  </data>
+  <data name="DiscoverSettings_Title.Text" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="DiscoverSettings_TmdbLinkHeader" xml:space="preserve">
+    <value>Número ou link de lista do TMDb</value>
+  </data>
+  <data name="DiscoverSettings_TmdbLinkPlaceholder" xml:space="preserve">
+    <value>8136, ou https://www.themoviedb.org/list/8136</value>
+  </data>
+  <data name="DiscoverSettings_TraktLinkHeader" xml:space="preserve">
+    <value>Link de lista ou watchlist do Trakt</value>
+  </data>
+  <data name="DiscoverSettings_TraktNote" xml:space="preserve">
+    <value>O Trakt não está conectado, então esta fileira vai ficar vazia até o administrador conectá-lo em Configurações → Integrações.</value>
+  </data>
+  <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Enum_ColorKeyFootnote" xml:space="preserve">
+    <value>As mesmas cores do Radarr e do Sonarr.</value>
+  </data>
+  <data name="Enum_MediaMovie" xml:space="preserve">
+    <value>Filme</value>
+  </data>
+  <data name="Enum_MediaMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Enum_MediaSeries" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Enum_MediaTv" xml:space="preserve">
+    <value>Série</value>
+  </data>
+  <data name="Enum_NotifTitleComment" xml:space="preserve">
+    <value>Novo comentário</value>
+  </data>
+  <data name="Enum_NotifTitleDownloaded" xml:space="preserve">
+    <value>Pronto para assistir</value>
+  </data>
+  <data name="Enum_NotifTitleGrabbed" xml:space="preserve">
+    <value>Baixando</value>
+  </data>
+  <data name="Enum_NotifTitleIssueReported" xml:space="preserve">
+    <value>Problema relatado</value>
+  </data>
+  <data name="Enum_NotifTitleIssueResolved" xml:space="preserve">
+    <value>Problema resolvido</value>
+  </data>
+  <data name="Enum_NotifTitleRequestApproved" xml:space="preserve">
+    <value>Pedido aprovado</value>
+  </data>
+  <data name="Enum_NotifTitleRequestNotFound" xml:space="preserve">
+    <value>Não encontrado</value>
+  </data>
+  <data name="Enum_NotifTitleRequestRejected" xml:space="preserve">
+    <value>Pedido recusado</value>
+  </data>
+  <data name="Enum_NotifTitleTitleShared" xml:space="preserve">
+    <value>Compartilhado com você</value>
+  </data>
+  <data name="Enum_ProviderEmail" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Enum_RoleAdmin" xml:space="preserve">
+    <value>Administrador</value>
+  </data>
+  <data name="Enum_RoleMember" xml:space="preserve">
+    <value>Membro</value>
+  </data>
+  <data name="Enum_RoleTrusted" xml:space="preserve">
+    <value>Confiável</value>
+  </data>
+  <data name="Enum_SeriesTypeAnime" xml:space="preserve">
+    <value>Anime</value>
+  </data>
+  <data name="Enum_SeriesTypeDaily" xml:space="preserve">
+    <value>Diária</value>
+  </data>
+  <data name="Enum_SeriesTypeStandard" xml:space="preserve">
+    <value>Padrão</value>
+  </data>
+  <data name="Enum_SortNewest" xml:space="preserve">
+    <value>Mais recentes</value>
+  </data>
+  <data name="Enum_SortPopular" xml:space="preserve">
+    <value>Populares</value>
+  </data>
+  <data name="Enum_SortTopRated" xml:space="preserve">
+    <value>Mais bem avaliados</value>
+  </data>
+  <data name="Enum_StatusCompactComingSoon" xml:space="preserve">
+    <value>Em breve</value>
+  </data>
+  <data name="Enum_StatusCompactOwned" xml:space="preserve">
+    <value>Na biblioteca</value>
+  </data>
+  <data name="Enum_StatusCompactTrackedDownloading" xml:space="preserve">
+    <value>Baixando</value>
+  </data>
+  <data name="Enum_StatusCompactTrackedMonitored" xml:space="preserve">
+    <value>Faltando</value>
+  </data>
+  <data name="Enum_StatusCompactTrackedUnmonitored" xml:space="preserve">
+    <value>Não monitorado</value>
+  </data>
+  <data name="Enum_StatusCompactUntracked" xml:space="preserve">
+    <value>Fora da biblioteca</value>
+  </data>
+  <data name="Enum_StatusLabelComingSoon" xml:space="preserve">
+    <value>Em breve</value>
+  </data>
+  <data name="Enum_StatusLabelOwned" xml:space="preserve">
+    <value>Já está na sua biblioteca</value>
+  </data>
+  <data name="Enum_StatusLabelTrackedDownloading" xml:space="preserve">
+    <value>Baixando</value>
+  </data>
+  <data name="Enum_StatusLabelTrackedMonitored" xml:space="preserve">
+    <value>Faltando</value>
+  </data>
+  <data name="Enum_StatusLabelTrackedUnmonitored" xml:space="preserve">
+    <value>Não monitorado</value>
+  </data>
+  <data name="Enum_StatusLabelUntracked" xml:space="preserve">
+    <value>Não está na sua biblioteca</value>
+  </data>
+  <data name="Enum_StatusMeaningComingSoon" xml:space="preserve">
+    <value>Adicionado, mas ainda não foi lançado.</value>
+  </data>
+  <data name="Enum_StatusMeaningOwned" xml:space="preserve">
+    <value>O arquivo está na sua biblioteca, pronto para assistir.</value>
+  </data>
+  <data name="Enum_StatusMeaningTrackedDownloading" xml:space="preserve">
+    <value>Está baixando ou na fila agora mesmo.</value>
+  </data>
+  <data name="Enum_StatusMeaningTrackedMonitored" xml:space="preserve">
+    <value>Monitorado, mas o Sonarr/Radarr ainda não encontrou uma cópia — continua procurando.</value>
+  </data>
+  <data name="Enum_StatusMeaningTrackedUnmonitored" xml:space="preserve">
+    <value>No Sonarr/Radarr, mas não monitorado — não vai baixar sozinho.</value>
+  </data>
+  <data name="Enum_StatusMeaningUntracked" xml:space="preserve">
+    <value>Ainda não adicionado. Os pôsteres ficam sem faixa colorida.</value>
+  </data>
+  <data name="Enum_StatusNameComingSoon" xml:space="preserve">
+    <value>Em breve</value>
+  </data>
+  <data name="Enum_StatusNameOwned" xml:space="preserve">
+    <value>Na sua biblioteca</value>
+  </data>
+  <data name="Enum_StatusNameTrackedDownloading" xml:space="preserve">
+    <value>Baixando</value>
+  </data>
+  <data name="Enum_StatusNameTrackedMonitored" xml:space="preserve">
+    <value>Faltando</value>
+  </data>
+  <data name="Enum_StatusNameTrackedUnmonitored" xml:space="preserve">
+    <value>Não monitorado</value>
+  </data>
+  <data name="Enum_StatusNameUntracked" xml:space="preserve">
+    <value>Não está na sua biblioteca</value>
+  </data>
+  <data name="Enum_SuggestionActor" xml:space="preserve">
+    <value>Ator</value>
+  </data>
+  <data name="Favorites_Collections.Text" xml:space="preserve">
+    <value>Coleções</value>
+  </data>
+  <data name="Favorites_EmptyHeading.Text" xml:space="preserve">
+    <value>Nenhum favorito ainda</value>
+  </data>
+  <data name="Favorites_EmptyText.Text" xml:space="preserve">
+    <value>Marque qualquer item com estrela na página ou no card dele para vê-lo aqui.</value>
+  </data>
+  <data name="Favorites_ErrorHeading.Text" xml:space="preserve">
+    <value>Não foi possível carregar seus favoritos</value>
+  </data>
+  <data name="Favorites_Loading.Text" xml:space="preserve">
+    <value>Carregando seus favoritos…</value>
+  </data>
+  <data name="Favorites_Movies.Text" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Favorites_People.Text" xml:space="preserve">
+    <value>Pessoas</value>
+  </data>
+  <data name="Favorites_Studios.Text" xml:space="preserve">
+    <value>Estúdios</value>
+  </data>
+  <data name="Favorites_Title.Text" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Favorites_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Favorites_TvShows.Text" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Format_DateAndTime" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Format_DayAndTime" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Format_LongDatePattern" xml:space="preserve">
+    <value>d 'de' MMMM 'de' yyyy</value>
+  </data>
+  <data name="Format_MonthDayPattern" xml:space="preserve">
+    <value>d 'de' MMM</value>
+  </data>
+  <data name="Format_ShortDatePattern" xml:space="preserve">
+    <value>d 'de' MMM 'de' yyyy</value>
+  </data>
+  <data name="Integrations_ApiKeyAccess.Header" xml:space="preserve">
+    <value>Acesso</value>
+  </data>
+  <data name="Integrations_ApiKeyActAs.Header" xml:space="preserve">
+    <value>Agir como</value>
+  </data>
+  <data name="Integrations_ApiKeyCreateTitle.Text" xml:space="preserve">
+    <value>Criar uma chave</value>
+  </data>
+  <data name="Integrations_ApiKeyDone.Content" xml:space="preserve">
+    <value>Concluído</value>
+  </data>
+  <data name="Integrations_ApiKeyExpires.Header" xml:space="preserve">
+    <value>Expira</value>
+  </data>
+  <data name="Integrations_ApiKeyName.Header" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Integrations_ApiKeyName.PlaceholderText" xml:space="preserve">
+    <value>Homepage</value>
+  </data>
+  <data name="Integrations_ApiKeyNew.Text" xml:space="preserve">
+    <value>Sua nova chave</value>
+  </data>
+  <data name="Integrations_ApiKeyRevoke.Content" xml:space="preserve">
+    <value>Revogar</value>
+  </data>
+  <data name="Integrations_ApiKeysEmpty.Text" xml:space="preserve">
+    <value>Nenhuma chave ainda.</value>
+  </data>
+  <data name="Integrations_ApiKeysHeading.Text" xml:space="preserve">
+    <value>Chaves de API</value>
+  </data>
+  <data name="Integrations_ArrApiKey.Header" xml:space="preserve">
+    <value>Chave de API</value>
+  </data>
+  <data name="Integrations_ArrDefaultsIntro.Text" xml:space="preserve">
+    <value>Padrões usados ao adicionar novos títulos:</value>
+  </data>
+  <data name="Integrations_ArrDefaultsSaved.Text" xml:space="preserve">
+    <value>Salvo.</value>
+  </data>
+  <data name="Integrations_ArrNeedsDefaults.Text" xml:space="preserve">
+    <value>Escolha uma pasta raiz e um perfil de qualidade antes de adicionar títulos; teste a conexão para carregá-los.</value>
+  </data>
+  <data name="Integrations_ArrQualityProfile.Header" xml:space="preserve">
+    <value>Perfil de qualidade</value>
+  </data>
+  <data name="Integrations_ArrRootFolder.Header" xml:space="preserve">
+    <value>Pasta raiz</value>
+  </data>
+  <data name="Integrations_ArrServerUrl.Header" xml:space="preserve">
+    <value>URL do servidor</value>
+  </data>
+  <data name="Integrations_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Integrations_Checking.Text" xml:space="preserve">
+    <value>Verificando suas integrações…</value>
+  </data>
+  <data name="Integrations_Confirm" xml:space="preserve">
+    <value>Confirmar</value>
+  </data>
+  <data name="Integrations_Connected" xml:space="preserve">
+    <value>Conectado</value>
+  </data>
+  <data name="Integrations_ConnectedSuccessfully" xml:space="preserve">
+    <value>Conectado com sucesso.</value>
+  </data>
+  <data name="Integrations_Copied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="Integrations_Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Integrations_Disconnect.Content" xml:space="preserve">
+    <value>Desconectar</value>
+  </data>
+  <data name="Integrations_DisconnectCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Integrations_Disconnecting" xml:space="preserve">
+    <value>Desconectando…</value>
+  </data>
+  <data name="Integrations_DisconnectPrompt" xml:space="preserve">
+    <value>Desconectar {0}?</value>
+  </data>
+  <data name="Integrations_DiscordBlurb" xml:space="preserve">
+    <value>Publica uma mensagem em um canal do Discord sempre que algo é capturado ou baixado, ou um pedido é aprovado ou recusado.</value>
+  </data>
+  <data name="Integrations_DiscordConnected" xml:space="preserve">
+    <value>Conectado: confira a mensagem de teste no canal.</value>
+  </data>
+  <data name="Integrations_DiscordPlaceholder" xml:space="preserve">
+    <value>Em Integrações → Webhooks nas configurações de um canal do Discord</value>
+  </data>
+  <data name="Integrations_DiscordTitle" xml:space="preserve">
+    <value>Notificações do Discord</value>
+  </data>
+  <data name="Integrations_DownloadClients.Text" xml:space="preserve">
+    <value>Clientes de download</value>
+  </data>
+  <data name="Integrations_EmailFrom.Header" xml:space="preserve">
+    <value>Endereço do remetente</value>
+  </data>
+  <data name="Integrations_EmailFrom.PlaceholderText" xml:space="preserve">
+    <value>marquee@example.com</value>
+  </data>
+  <data name="Integrations_EmailHost.Header" xml:space="preserve">
+    <value>Servidor SMTP</value>
+  </data>
+  <data name="Integrations_EmailHost.PlaceholderText" xml:space="preserve">
+    <value>smtp.gmail.com</value>
+  </data>
+  <data name="Integrations_EmailIntro.Text" xml:space="preserve">
+    <value>Envia um e-mail para um ou mais endereços pelo seu próprio servidor de e-mail (SMTP) sempre que algo é capturado ou baixado, ou um pedido é aprovado ou recusado.</value>
+  </data>
+  <data name="Integrations_EmailPassword.Header" xml:space="preserve">
+    <value>Senha</value>
+  </data>
+  <data name="Integrations_EmailPasswordHelp.Text" xml:space="preserve">
+    <value>Para o Gmail, uma senha de app (myaccount.google.com/apppasswords), não a sua senha normal.</value>
+  </data>
+  <data name="Integrations_EmailPort.Header" xml:space="preserve">
+    <value>Porta</value>
+  </data>
+  <data name="Integrations_EmailPortHelp.Text" xml:space="preserve">
+    <value>587 para a maioria dos servidores; 465 com “Conexão segura” ativada.</value>
+  </data>
+  <data name="Integrations_EmailSecure.Content" xml:space="preserve">
+    <value>Conexão segura desde o início (TLS, geralmente porta 465)</value>
+  </data>
+  <data name="Integrations_EmailTitle.Text" xml:space="preserve">
+    <value>Notificações por e-mail</value>
+  </data>
+  <data name="Integrations_EmailTo.Header" xml:space="preserve">
+    <value>Enviar para</value>
+  </data>
+  <data name="Integrations_EmailTo.PlaceholderText" xml:space="preserve">
+    <value>voce@example.com, parceiro@example.com</value>
+  </data>
+  <data name="Integrations_EmailToHelp.Text" xml:space="preserve">
+    <value>Um ou mais endereços, separados por vírgulas.</value>
+  </data>
+  <data name="Integrations_EmailUsername.Header" xml:space="preserve">
+    <value>Nome de usuário</value>
+  </data>
+  <data name="Integrations_EmailUsername.PlaceholderText" xml:space="preserve">
+    <value>Deixe em branco se o servidor não exigir</value>
+  </data>
+  <data name="Integrations_Heading.Text" xml:space="preserve">
+    <value>Integrações</value>
+  </data>
+  <data name="Integrations_HouseholdChannels.Text" xml:space="preserve">
+    <value>Canais da casa</value>
+  </data>
+  <data name="Integrations_Import" xml:space="preserve">
+    <value>Importar</value>
+  </data>
+  <data name="Integrations_Importing" xml:space="preserve">
+    <value>Importando…</value>
+  </data>
+  <data name="Integrations_Intro.Text" xml:space="preserve">
+    <value>Conecte Plex, Jellyfin, Sonarr e Radarr para o Marquee saber o que você já tem e mandar o resto direto para sua fila de downloads. As credenciais ficam criptografadas no seu servidor e só são usadas em seu nome.</value>
+  </data>
+  <data name="Integrations_JellyfinApiKey.Header" xml:space="preserve">
+    <value>Chave de API</value>
+  </data>
+  <data name="Integrations_JellyfinDescription" xml:space="preserve">
+    <value>O Emby fala a mesma língua do Jellyfin, então qualquer um funciona aqui.</value>
+  </data>
+  <data name="Integrations_JellyfinDescriptionConnected" xml:space="preserve">
+    <value>O Emby fala a mesma língua do Jellyfin, então qualquer um funciona aqui. Conectado ao {0}.</value>
+  </data>
+  <data name="Integrations_JellyfinKeyHelp.Text" xml:space="preserve">
+    <value>Gere uma chave de API no painel: Administration → API Keys no Jellyfin, ou Advanced → API Keys no Emby.</value>
+  </data>
+  <data name="Integrations_JellyfinTitle.Text" xml:space="preserve">
+    <value>Jellyfin ou Emby</value>
+  </data>
+  <data name="Integrations_JellyfinUrl.Header" xml:space="preserve">
+    <value>URL do servidor</value>
+  </data>
+  <data name="Integrations_JellyfinUrl.PlaceholderText" xml:space="preserve">
+    <value>http://localhost:8096</value>
+  </data>
+  <data name="Integrations_Listening" xml:space="preserve">
+    <value>Escutando</value>
+  </data>
+  <data name="Integrations_MediaLibraries.Text" xml:space="preserve">
+    <value>Bibliotecas de mídia</value>
+  </data>
+  <data name="Integrations_MetadataSources.Text" xml:space="preserve">
+    <value>Fontes de metadados</value>
+  </data>
+  <data name="Integrations_NtfyBlurb" xml:space="preserve">
+    <value>Envia uma notificação push pelo ntfy.sh (ou um servidor ntfy próprio) para os mesmos eventos.</value>
+  </data>
+  <data name="Integrations_NtfyConnected" xml:space="preserve">
+    <value>Conectado: confira a mensagem de teste no tópico.</value>
+  </data>
+  <data name="Integrations_NtfyField" xml:space="preserve">
+    <value>URL do tópico</value>
+  </data>
+  <data name="Integrations_NtfyTitle" xml:space="preserve">
+    <value>Notificações do ntfy</value>
+  </data>
+  <data name="Integrations_PickDefaults" xml:space="preserve">
+    <value>Escolha uma pasta raiz e um perfil de qualidade.</value>
+  </data>
+  <data name="Integrations_PlexConnect" xml:space="preserve">
+    <value>Conectar Plex</value>
+  </data>
+  <data name="Integrations_PlexFinishInBrowser.Text" xml:space="preserve">
+    <value>Termine de entrar na janela do navegador que acabou de abrir.</value>
+  </data>
+  <data name="Integrations_PlexIntro.Text" xml:space="preserve">
+    <value>Entre com sua conta do Plex para ver o que já está na sua biblioteca.</value>
+  </data>
+  <data name="Integrations_PlexTimedOut" xml:space="preserve">
+    <value>O tempo para entrar no Plex se esgotou. Tente de novo.</value>
+  </data>
+  <data name="Integrations_PlexWaiting" xml:space="preserve">
+    <value>Aguardando o Plex…</value>
+  </data>
+  <data name="Integrations_PushoverAppToken.Header" xml:space="preserve">
+    <value>Token do aplicativo</value>
+  </data>
+  <data name="Integrations_PushoverAppTokenHelp.Text" xml:space="preserve">
+    <value>Crie um aplicativo em pushover.net/apps/build e copie o token de API dele.</value>
+  </data>
+  <data name="Integrations_PushoverIntro.Text" xml:space="preserve">
+    <value>Envia uma notificação push pelo Pushover sempre que algo é capturado ou baixado, ou um pedido é aprovado ou recusado.</value>
+  </data>
+  <data name="Integrations_PushoverTitle.Text" xml:space="preserve">
+    <value>Notificações do Pushover</value>
+  </data>
+  <data name="Integrations_PushoverUserKey.Header" xml:space="preserve">
+    <value>Chave de usuário ou de grupo</value>
+  </data>
+  <data name="Integrations_PushoverUserKeyHelp.Text" xml:space="preserve">
+    <value>Sua chave de usuário fica no topo do seu painel do pushover.net.</value>
+  </data>
+  <data name="Integrations_Radarr4kBlurb" xml:space="preserve">
+    <value>Um segundo Radarr para cópias em 4K. Depois de configurado, os membros podem pedir filmes em 4K, e aprová-los os adiciona aqui em vez de no Radarr principal.</value>
+  </data>
+  <data name="Integrations_Radarr4kTitle" xml:space="preserve">
+    <value>Radarr 4K (opcional)</value>
+  </data>
+  <data name="Integrations_Radarr4kWebhookUrl" xml:space="preserve">
+    <value>URL do webhook do Radarr 4K</value>
+  </data>
+  <data name="Integrations_RadarrWebhookUrl" xml:space="preserve">
+    <value>URL do webhook do Radarr</value>
+  </data>
+  <data name="Integrations_Regenerating" xml:space="preserve">
+    <value>Gerando de novo…</value>
+  </data>
+  <data name="Integrations_RemoveSavedClientId" xml:space="preserve">
+    <value>Remover ID do cliente salvo</value>
+  </data>
+  <data name="Integrations_RemoveSavedKey" xml:space="preserve">
+    <value>Remover chave salva</value>
+  </data>
+  <data name="Integrations_RemoveSavedToken" xml:space="preserve">
+    <value>Remover token salvo</value>
+  </data>
+  <data name="Integrations_RemoveSavedTopic" xml:space="preserve">
+    <value>Remover tópico salvo</value>
+  </data>
+  <data name="Integrations_RemoveSavedWebhook" xml:space="preserve">
+    <value>Remover webhook salvo</value>
+  </data>
+  <data name="Integrations_Removing" xml:space="preserve">
+    <value>Removendo…</value>
+  </data>
+  <data name="Integrations_ReplacePlaceholder" xml:space="preserve">
+    <value>•••••••••••••••• (digite para substituir)</value>
+  </data>
+  <data name="Integrations_RevokeKeyConfirm" xml:space="preserve">
+    <value>Revogar</value>
+  </data>
+  <data name="Integrations_RevokeKeyMessage" xml:space="preserve">
+    <value>Tudo o que usa esta chave para de funcionar na hora. Não é possível desfazer.</value>
+  </data>
+  <data name="Integrations_RevokeKeyTitle" xml:space="preserve">
+    <value>Revogar {0}?</value>
+  </data>
+  <data name="Integrations_SaveDefaults" xml:space="preserve">
+    <value>Salvar padrões</value>
+  </data>
+  <data name="Integrations_Saving" xml:space="preserve">
+    <value>Salvando…</value>
+  </data>
+  <data name="Integrations_SignInHeading.Text" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Integrations_Sonarr4kBlurb" xml:space="preserve">
+    <value>Um segundo Sonarr para cópias em 4K. Depois de configurado, os membros podem pedir séries em 4K, e aprová-las as adiciona aqui em vez de no Sonarr principal.</value>
+  </data>
+  <data name="Integrations_Sonarr4kTitle" xml:space="preserve">
+    <value>Sonarr 4K (opcional)</value>
+  </data>
+  <data name="Integrations_Sonarr4kWebhookUrl" xml:space="preserve">
+    <value>URL do webhook do Sonarr 4K</value>
+  </data>
+  <data name="Integrations_SonarrWebhookUrl" xml:space="preserve">
+    <value>URL do webhook do Sonarr</value>
+  </data>
+  <data name="Integrations_SsoAllowSignup.Header" xml:space="preserve">
+    <value>Novas contas pelo login único</value>
+  </data>
+  <data name="Integrations_SsoAllowSignup.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Integrations_SsoAllowSignup.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Integrations_SsoAllowSignupHelp.Text" xml:space="preserve">
+    <value>Qualquer pessoa que seu provedor deixar entrar ganha uma conta de membro no primeiro login. Desativado: só as contas que o vincularam podem usá-lo.</value>
+  </data>
+  <data name="Integrations_SsoButtonName.Header" xml:space="preserve">
+    <value>Nome do botão</value>
+  </data>
+  <data name="Integrations_SsoButtonName.PlaceholderText" xml:space="preserve">
+    <value>Authentik</value>
+  </data>
+  <data name="Integrations_SsoButtonNameHelp.Text" xml:space="preserve">
+    <value>O botão diz “Entrar com &lt;nome&gt;”.</value>
+  </data>
+  <data name="Integrations_SsoClearSecret.Content" xml:space="preserve">
+    <value>Remover o segredo salvo (cliente público)</value>
+  </data>
+  <data name="Integrations_SsoClientId.Header" xml:space="preserve">
+    <value>ID do cliente</value>
+  </data>
+  <data name="Integrations_SsoClientSecret.Header" xml:space="preserve">
+    <value>Segredo do cliente</value>
+  </data>
+  <data name="Integrations_SsoGroupsClaim.Header" xml:space="preserve">
+    <value>Claim de grupos</value>
+  </data>
+  <data name="Integrations_SsoIntro.Text" xml:space="preserve">
+    <value>Adiciona “Entrar com …” para o seu próprio provedor de identidade (Authentik, Authelia, Pocket ID, Keycloak, Google ou qualquer outro que fale OpenID Connect) no site e nos apps para Mac e Windows.</value>
+  </data>
+  <data name="Integrations_SsoIssuer.Header" xml:space="preserve">
+    <value>URL do emissor</value>
+  </data>
+  <data name="Integrations_SsoIssuer.PlaceholderText" xml:space="preserve">
+    <value>https://auth.example.com/application/o/marquee/</value>
+  </data>
+  <data name="Integrations_SsoIssuerHelp.Text" xml:space="preserve">
+    <value>O emissor do provedor, ou o endereço …/.well-known/openid-configuration dele.</value>
+  </data>
+  <data name="Integrations_SsoMatchEmail.Header" xml:space="preserve">
+    <value>Associar contas existentes pelo e-mail verificado</value>
+  </data>
+  <data name="Integrations_SsoMatchEmail.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Integrations_SsoMatchEmail.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Integrations_SsoMatchEmailHelp.Text" xml:space="preserve">
+    <value>O primeiro login vincula uma conta cujo nome de usuário é o e-mail da pessoa, só quando o provedor diz que o e-mail está verificado, e nunca a conta de administrador.</value>
+  </data>
+  <data name="Integrations_SsoPublicUrl.Header" xml:space="preserve">
+    <value>Endereço do Marquee</value>
+  </data>
+  <data name="Integrations_SsoPublicUrl.PlaceholderText" xml:space="preserve">
+    <value>https://marquee.example.com</value>
+  </data>
+  <data name="Integrations_SsoPublicUrlHelp.Text" xml:space="preserve">
+    <value>O endereço que as pessoas usam para acessar o Marquee de fora.</value>
+  </data>
+  <data name="Integrations_SsoRedirectUri.Text" xml:space="preserve">
+    <value>URI de redirecionamento: adicione exatamente assim no provedor</value>
+  </data>
+  <data name="Integrations_SsoRequiredGroup.Header" xml:space="preserve">
+    <value>Grupo obrigatório (opcional)</value>
+  </data>
+  <data name="Integrations_SsoRequiredGroup.PlaceholderText" xml:space="preserve">
+    <value>marquee-users</value>
+  </data>
+  <data name="Integrations_SsoRequiredGroupHelp.Text" xml:space="preserve">
+    <value>Só pessoas deste grupo podem entrar com ele.</value>
+  </data>
+  <data name="Integrations_SsoScopes.Header" xml:space="preserve">
+    <value>Escopos</value>
+  </data>
+  <data name="Integrations_SsoScopesHelp.Text" xml:space="preserve">
+    <value>Adicione “groups” para Authelia e Pocket ID se você usar grupos abaixo.</value>
+  </data>
+  <data name="Integrations_SsoTitle.Text" xml:space="preserve">
+    <value>Login único</value>
+  </data>
+  <data name="Integrations_SsoTrustedGroup.Header" xml:space="preserve">
+    <value>Grupo confiável (opcional)</value>
+  </data>
+  <data name="Integrations_SsoTrustedGroup.PlaceholderText" xml:space="preserve">
+    <value>marquee-trusted</value>
+  </data>
+  <data name="Integrations_SsoTrustedGroupHelp.Text" xml:space="preserve">
+    <value>Membros deste grupo passam a ser confiáveis quando entram. Ninguém vira administrador desse jeito.</value>
+  </data>
+  <data name="Integrations_Synced" xml:space="preserve">
+    <value>Sincronizado.</value>
+  </data>
+  <data name="Integrations_Syncing" xml:space="preserve">
+    <value>Sincronizando…</value>
+  </data>
+  <data name="Integrations_SyncNow" xml:space="preserve">
+    <value>Sincronizar agora</value>
+  </data>
+  <data name="Integrations_TelegramBotToken.Header" xml:space="preserve">
+    <value>Token do bot</value>
+  </data>
+  <data name="Integrations_TelegramBotTokenHelp.Text" xml:space="preserve">
+    <value>Mande uma mensagem para @BotFather no Telegram, envie /newbot e cole o token que ele der.</value>
+  </data>
+  <data name="Integrations_TelegramChatId.Header" xml:space="preserve">
+    <value>ID do chat</value>
+  </data>
+  <data name="Integrations_TelegramChatId.PlaceholderText" xml:space="preserve">
+    <value>123456789, -100… ou @nomedocanal</value>
+  </data>
+  <data name="Integrations_TelegramChatIdHelp.Text" xml:space="preserve">
+    <value>Mande uma mensagem para o seu bot (ou adicione-o ao grupo) e abra api.telegram.org/bot&lt;token&gt;/getUpdates para achar o ID do chat.</value>
+  </data>
+  <data name="Integrations_TelegramIntro.Text" xml:space="preserve">
+    <value>Publica em um chat, grupo ou canal do Telegram pelo seu próprio bot sempre que algo é capturado ou baixado, ou um pedido é aprovado ou recusado.</value>
+  </data>
+  <data name="Integrations_TelegramTitle.Text" xml:space="preserve">
+    <value>Notificações do Telegram</value>
+  </data>
+  <data name="Integrations_TestAndSave" xml:space="preserve">
+    <value>Testar e salvar</value>
+  </data>
+  <data name="Integrations_Testing" xml:space="preserve">
+    <value>Testando…</value>
+  </data>
+  <data name="Integrations_TmdbBlurb" xml:space="preserve">
+    <value>Compartilhado por todos neste servidor: cada pôster, busca e página de título vem daqui.</value>
+  </data>
+  <data name="Integrations_TmdbEnvNote" xml:space="preserve">
+    <value>Usando a variável de ambiente TMDB_ACCESS_TOKEN definida no seu servidor. Salvar um token aqui a substitui.</value>
+  </data>
+  <data name="Integrations_TmdbField" xml:space="preserve">
+    <value>Chave de API ou token de acesso</value>
+  </data>
+  <data name="Integrations_TmdbPlaceholder" xml:space="preserve">
+    <value>Chave de API v3 ou token de acesso v4, de themoviedb.org/settings/api</value>
+  </data>
+  <data name="Integrations_TraktBlurb" xml:space="preserve">
+    <value>Importe uma lista pública ou watchlist do Trakt como pedidos: não precisa entrar no Trakt, só de um app de API gratuito.</value>
+  </data>
+  <data name="Integrations_TraktField" xml:space="preserve">
+    <value>ID do cliente</value>
+  </data>
+  <data name="Integrations_TraktImportHelp.Text" xml:space="preserve">
+    <value>Também funciona com a URL de uma watchlist (…/users/username/watchlist). A lista precisa ser pública no Trakt. Títulos correspondentes que você ainda não tem nem foram pedidos entram na sua fila de pedidos pendentes.</value>
+  </data>
+  <data name="Integrations_TraktImportList.Header" xml:space="preserve">
+    <value>Importar uma lista</value>
+  </data>
+  <data name="Integrations_TraktImportList.PlaceholderText" xml:space="preserve">
+    <value>https://trakt.tv/users/username/lists/best-of-2024</value>
+  </data>
+  <data name="Integrations_TraktPlaceholder" xml:space="preserve">
+    <value>De um app de API do Trakt em trakt.tv/oauth/applications</value>
+  </data>
+  <data name="Integrations_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Integrations_TvdbBlurb" xml:space="preserve">
+    <value>Preenche o pôster e a sinopse de séries quando o TMDb ainda não os tem; os metadados do próprio Sonarr também vêm daqui.</value>
+  </data>
+  <data name="Integrations_TvdbField" xml:space="preserve">
+    <value>Chave de API</value>
+  </data>
+  <data name="Integrations_TvdbPlaceholder" xml:space="preserve">
+    <value>De thetvdb.com/dashboard/account/apikey</value>
+  </data>
+  <data name="Integrations_UsingEnvironment" xml:space="preserve">
+    <value>Usando variável de ambiente</value>
+  </data>
+  <data name="Integrations_WebhookBlurb" xml:space="preserve">
+    <value>Envia um JSON ({{ event, title, message }}) para qualquer URL nos mesmos eventos, para suas automações ou um gateway de notificações.</value>
+  </data>
+  <data name="Integrations_WebhookConnected" xml:space="preserve">
+    <value>Conectado: confira a requisição de teste no seu endpoint.</value>
+  </data>
+  <data name="Integrations_WebhooksCancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Integrations_WebhooksIntro.Text" xml:space="preserve">
+    <value>Seu servidor escuta estes endereços para que o Radarr/Sonarr avisem assim que algo começar ou terminar de baixar. Cole-os em Radarr/Sonarr → Settings → Connect → Add → Webhook (método POST, gatilhos Grab + Download).</value>
+  </data>
+  <data name="Integrations_WebhooksRegenerate.Content" xml:space="preserve">
+    <value>Gerar novo segredo</value>
+  </data>
+  <data name="Integrations_WebhooksRegeneratePrompt.Text" xml:space="preserve">
+    <value>Gerar de novo? As URLs acima param de funcionar na hora.</value>
+  </data>
+  <data name="Integrations_WebhooksTitle.Text" xml:space="preserve">
+    <value>Webhooks do Sonarr / Radarr</value>
+  </data>
+  <data name="Integrations_WebhookTitle" xml:space="preserve">
+    <value>Webhook personalizado</value>
+  </data>
+  <data name="Integrations_WebhookUrlField" xml:space="preserve">
+    <value>URL do webhook</value>
+  </data>
+  <data name="Issue_AnythingElse" xml:space="preserve">
+    <value>Mais alguma coisa? (opcional)</value>
+  </data>
+  <data name="Issue_Fixed" xml:space="preserve">
+    <value>Resolvido</value>
+  </data>
+  <data name="Issue_FixedWithNote" xml:space="preserve">
+    <value>Resolvido: {0}</value>
+  </data>
+  <data name="Issue_KeepUnder" xml:space="preserve">
+    <value>Use menos de {0} caracteres.</value>
+  </data>
+  <data name="Issue_KindAudio" xml:space="preserve">
+    <value>Problema de áudio</value>
+  </data>
+  <data name="Issue_KindOther" xml:space="preserve">
+    <value>Outra coisa</value>
+  </data>
+  <data name="Issue_KindSubtitles" xml:space="preserve">
+    <value>Legendas faltando ou erradas</value>
+  </data>
+  <data name="Issue_KindVideo" xml:space="preserve">
+    <value>Qualidade de vídeo ruim</value>
+  </data>
+  <data name="Issue_KindWontPlay" xml:space="preserve">
+    <value>Não reproduz</value>
+  </data>
+  <data name="Issue_KindWrongTitle" xml:space="preserve">
+    <value>Filme ou episódio errado</value>
+  </data>
+  <data name="Issue_PickWhatsWrong" xml:space="preserve">
+    <value>Escolha qual é o problema.</value>
+  </data>
+  <data name="Issue_SayWhatsWrong" xml:space="preserve">
+    <value>Diga qual é o problema.</value>
+  </data>
+  <data name="Issue_Season" xml:space="preserve">
+    <value>Temporada {0}</value>
+  </data>
+  <data name="Issue_Specials" xml:space="preserve">
+    <value>Especiais</value>
+  </data>
+  <data name="Issue_WhatsWrong" xml:space="preserve">
+    <value>Qual é o problema?</value>
+  </data>
+  <data name="Issue_WholeNumbers" xml:space="preserve">
+    <value>Temporada e episódio são números inteiros.</value>
+  </data>
+  <data name="Issue_WholeShow" xml:space="preserve">
+    <value>Série inteira</value>
+  </data>
+  <data name="Jobs_Done.Text" xml:space="preserve">
+    <value>Concluído.</value>
+  </data>
+  <data name="Jobs_Empty.Text" xml:space="preserve">
+    <value>Este servidor não informa tarefas programadas.</value>
+  </data>
+  <data name="Jobs_RanFromThisPc" xml:space="preserve">
+    <value>Executada neste PC {0}</value>
+  </data>
+  <data name="Jobs_Running" xml:space="preserve">
+    <value>Executando…</value>
+  </data>
+  <data name="Jobs_RunNow" xml:space="preserve">
+    <value>Executar agora</value>
+  </data>
+  <data name="Jobs_Subtitle.Text" xml:space="preserve">
+    <value>Seu servidor Marquee executa estas tarefas de manutenção de forma programada; você também pode iniciar uma manualmente abaixo. Executar uma tarefa agora não muda a programação dela.</value>
+  </data>
+  <data name="Jobs_Title.Text" xml:space="preserve">
+    <value>Tarefas</value>
+  </data>
+  <data name="Jobs_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Language_Automatic" xml:space="preserve">
+    <value>Automático (idioma do sistema)</value>
+  </data>
+  <data name="Language_Caption.Text" xml:space="preserve">
+    <value>Fica salvo na sua conta, então o site e seus outros dispositivos também usam. Automático segue o idioma de cada dispositivo.</value>
+  </data>
+  <data name="Language_Picker.Header" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="Language_Restart.Content" xml:space="preserve">
+    <value>Reiniciar</value>
+  </data>
+  <data name="Language_RestartFailed" xml:space="preserve">
+    <value>Não foi possível reiniciar o Marquee. O novo idioma aparecerá na próxima vez que você abri-lo.</value>
+  </data>
+  <data name="Language_RestartNote.Text" xml:space="preserve">
+    <value>Entra em vigor quando o Marquee reiniciar.</value>
+  </data>
+  <data name="Library_AlsoRequestedBy" xml:space="preserve">
+    <value>Também pedido por {0}</value>
+  </data>
+  <data name="Library_FourKComingSoon" xml:space="preserve">
+    <value>4K em breve</value>
+  </data>
+  <data name="Library_FourKDownloading" xml:space="preserve">
+    <value>4K baixando</value>
+  </data>
+  <data name="Library_FourKMissing" xml:space="preserve">
+    <value>4K faltando</value>
+  </data>
+  <data name="Library_FourKNotMonitored" xml:space="preserve">
+    <value>4K não monitorado</value>
+  </data>
+  <data name="Library_FourKOwned" xml:space="preserve">
+    <value>Em 4K</value>
+  </data>
+  <data name="Library_RequestedSeasonsWaiting" xml:space="preserve">
+    <value>Pedido: {0}, aguardando aprovação</value>
+  </data>
+  <data name="Library_RequestedWaiting" xml:space="preserve">
+    <value>Pedido, aguardando aprovação</value>
+  </data>
+  <data name="Lifecycle_AddedByHand" xml:space="preserve">
+    <value>Adicionado manualmente</value>
+  </data>
+  <data name="Lifecycle_AddedByHandTooltip" xml:space="preserve">
+    <value>Marcar como aprovado sem o Sonarr/Radarr — depois de conseguir de outro jeito.</value>
+  </data>
+  <data name="Lifecycle_AskInCommentsHint" xml:space="preserve">
+    <value>Precisa de uma mudança? Peça nos comentários.</value>
+  </data>
+  <data name="Lifecycle_Cancelling" xml:space="preserve">
+    <value>Cancelando…</value>
+  </data>
+  <data name="Lifecycle_CancelQuestion" xml:space="preserve">
+    <value>Cancelar?</value>
+  </data>
+  <data name="Lifecycle_CancelRequest" xml:space="preserve">
+    <value>Cancelar pedido</value>
+  </data>
+  <data name="Lifecycle_ChangedSinceAsking" xml:space="preserve">
+    <value>Alterado desde o pedido</value>
+  </data>
+  <data name="Lifecycle_CharactersLeft_One" xml:space="preserve">
+    <value>Resta {0}</value>
+  </data>
+  <data name="Lifecycle_CharactersLeft_Other" xml:space="preserve">
+    <value>Restam {0}</value>
+  </data>
+  <data name="Lifecycle_Comment" xml:space="preserve">
+    <value>Comentar</value>
+  </data>
+  <data name="Lifecycle_CommentPlaceholder" xml:space="preserve">
+    <value>Escreva um comentário</value>
+  </data>
+  <data name="Lifecycle_CommentSave" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Lifecycle_CommentsCount" xml:space="preserve">
+    <value>Comentários ({0})</value>
+  </data>
+  <data name="Lifecycle_CommentSend" xml:space="preserve">
+    <value>Enviar</value>
+  </data>
+  <data name="Lifecycle_CommentSending" xml:space="preserve">
+    <value>Enviando…</value>
+  </data>
+  <data name="Lifecycle_CommentsLoadFailed" xml:space="preserve">
+    <value>Não foi possível carregar a conversa.</value>
+  </data>
+  <data name="Lifecycle_ConfirmCancel" xml:space="preserve">
+    <value>Sim, cancelar</value>
+  </data>
+  <data name="Lifecycle_Edit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Lifecycle_Edited" xml:space="preserve">
+    <value>editado</value>
+  </data>
+  <data name="Lifecycle_EditHeading" xml:space="preserve">
+    <value>Alterar pedido</value>
+  </data>
+  <data name="Lifecycle_FourK" xml:space="preserve">
+    <value>Em 4K</value>
+  </data>
+  <data name="Lifecycle_FourKWholeShow" xml:space="preserve">
+    <value>Em 4K (sempre a série inteira)</value>
+  </data>
+  <data name="Lifecycle_HideComments" xml:space="preserve">
+    <value>Ocultar comentários</value>
+  </data>
+  <data name="Lifecycle_JustTheseSeasons" xml:space="preserve">
+    <value>Só estas temporadas</value>
+  </data>
+  <data name="Lifecycle_Keep" xml:space="preserve">
+    <value>Manter</value>
+  </data>
+  <data name="Lifecycle_KeepUnderCharacters" xml:space="preserve">
+    <value>Use menos de {0} caracteres.</value>
+  </data>
+  <data name="Lifecycle_LineApproved" xml:space="preserve">
+    <value>Seu pedido foi aprovado</value>
+  </data>
+  <data name="Lifecycle_LineDeclined" xml:space="preserve">
+    <value>Seu pedido foi recusado</value>
+  </data>
+  <data name="Lifecycle_LineDetailApproved" xml:space="preserve">
+    <value>Seu pedido ({0}) foi aprovado</value>
+  </data>
+  <data name="Lifecycle_LineDetailDeclined" xml:space="preserve">
+    <value>Seu pedido ({0}) foi recusado</value>
+  </data>
+  <data name="Lifecycle_LineDetailOther" xml:space="preserve">
+    <value>Seu pedido ({0}): {1}</value>
+  </data>
+  <data name="Lifecycle_LineDetailWaiting" xml:space="preserve">
+    <value>Seu pedido ({0}) está aguardando análise</value>
+  </data>
+  <data name="Lifecycle_LineOther" xml:space="preserve">
+    <value>Seu pedido: {0}</value>
+  </data>
+  <data name="Lifecycle_LineWaiting" xml:space="preserve">
+    <value>Seu pedido está aguardando análise</value>
+  </data>
+  <data name="Lifecycle_Loading" xml:space="preserve">
+    <value>Carregando…</value>
+  </data>
+  <data name="Lifecycle_NoComments" xml:space="preserve">
+    <value>Nenhum comentário ainda.</value>
+  </data>
+  <data name="Lifecycle_NoteDeclined" xml:space="preserve">
+    <value>Recusado</value>
+  </data>
+  <data name="Lifecycle_NoteMarkedFixed" xml:space="preserve">
+    <value>Marcado como resolvido</value>
+  </data>
+  <data name="Lifecycle_NoteReported" xml:space="preserve">
+    <value>Relatado</value>
+  </data>
+  <data name="Lifecycle_NothingToChange" xml:space="preserve">
+    <value>Não há nada para alterar: o 4K não está configurado neste servidor.</value>
+  </data>
+  <data name="Lifecycle_Retry" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Lifecycle_Retrying" xml:space="preserve">
+    <value>Tentando de novo…</value>
+  </data>
+  <data name="Lifecycle_SaveChanges" xml:space="preserve">
+    <value>Salvar alterações</value>
+  </data>
+  <data name="Lifecycle_Saving" xml:space="preserve">
+    <value>Salvando…</value>
+  </data>
+  <data name="Lifecycle_StatusApproved" xml:space="preserve">
+    <value>aprovado</value>
+  </data>
+  <data name="Lifecycle_StatusDeclined" xml:space="preserve">
+    <value>recusado</value>
+  </data>
+  <data name="Lifecycle_StatusWaiting" xml:space="preserve">
+    <value>aguardando análise</value>
+  </data>
+  <data name="Lifecycle_TagAdmin" xml:space="preserve">
+    <value>Administrador</value>
+  </data>
+  <data name="Lifecycle_TagReviewer" xml:space="preserve">
+    <value>Revisor</value>
+  </data>
+  <data name="Lifecycle_WholeSeries" xml:space="preserve">
+    <value>A série inteira</value>
+  </data>
+  <data name="Lifecycle_WriteSomethingFirst" xml:space="preserve">
+    <value>Escreva algo primeiro.</value>
+  </data>
+  <data name="Media_CreditCount_One" xml:space="preserve">
+    <value>{0} crédito</value>
+  </data>
+  <data name="Media_CreditCount_Other" xml:space="preserve">
+    <value>{0} créditos</value>
+  </data>
+  <data name="Media_NoMatches.Text" xml:space="preserve">
+    <value>Nenhum título corresponde a estes filtros.</value>
+  </data>
+  <data name="Media_SearchBox.PlaceholderText" xml:space="preserve">
+    <value>Buscar nestes títulos…</value>
+  </data>
+  <data name="Media_TitleCount_One" xml:space="preserve">
+    <value>{0} título</value>
+  </data>
+  <data name="Media_TitleCount_Other" xml:space="preserve">
+    <value>{0} títulos</value>
+  </data>
+  <data name="Media_TypeAll" xml:space="preserve">
+    <value>Todos</value>
+  </data>
+  <data name="Media_TypeMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Media_TypeTv" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Member_AddDialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Member_AddDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Criar conta</value>
+  </data>
+  <data name="Member_AddDialog.Title" xml:space="preserve">
+    <value>Adicionar um membro da casa</value>
+  </data>
+  <data name="Member_AddIntro.Text" xml:space="preserve">
+    <value>Não há cadastro público. Crie aqui as contas das outras pessoas da sua casa; elas entram com o nome de usuário e a senha que você escolher.</value>
+  </data>
+  <data name="Member_AddName.Header" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Member_AddName.PlaceholderText" xml:space="preserve">
+    <value>Opcional: como a casa vê a pessoa</value>
+  </data>
+  <data name="Member_AddPassword.Header" xml:space="preserve">
+    <value>Senha</value>
+  </data>
+  <data name="Member_AddPassword.PlaceholderText" xml:space="preserve">
+    <value>Pelo menos 8 caracteres</value>
+  </data>
+  <data name="Member_AddPhoto" xml:space="preserve">
+    <value>Adicionar foto</value>
+  </data>
+  <data name="Member_AddUsername.Header" xml:space="preserve">
+    <value>Nome de usuário</value>
+  </data>
+  <data name="Member_AddUsername.PlaceholderText" xml:space="preserve">
+    <value>De 3 a 32 letras, números, _ . -</value>
+  </data>
+  <data name="Member_AdminOnlyNote.Text" xml:space="preserve">
+    <value>Configurações, integrações, contas da casa, chaves de API e login continuam só com você.</value>
+  </data>
+  <data name="Member_AlreadyMember" xml:space="preserve">
+    <value>Já é membro</value>
+  </data>
+  <data name="Member_AutoApproveMovies.Content" xml:space="preserve">
+    <value>Aprovar automaticamente pedidos de filmes</value>
+  </data>
+  <data name="Member_AutoApproveTv.Content" xml:space="preserve">
+    <value>Aprovar automaticamente pedidos de séries</value>
+  </data>
+  <data name="Member_ChangePhoto" xml:space="preserve">
+    <value>Trocar foto</value>
+  </data>
+  <data name="Member_CheckLimits" xml:space="preserve">
+    <value>Confira os limites de pedidos.</value>
+  </data>
+  <data name="Member_CreateAccount" xml:space="preserve">
+    <value>Criar conta</value>
+  </data>
+  <data name="Member_Creating" xml:space="preserve">
+    <value>Criando…</value>
+  </data>
+  <data name="Member_EditCurrentPassword.Header" xml:space="preserve">
+    <value>Senha atual</value>
+  </data>
+  <data name="Member_EditCurrentPassword.PlaceholderText" xml:space="preserve">
+    <value>Necessária só ao definir uma nova senha</value>
+  </data>
+  <data name="Member_EditDialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Member_EditDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Member_EditName.Header" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Member_EditName.PlaceholderText" xml:space="preserve">
+    <value>Deixe em branco para manter o nome atual</value>
+  </data>
+  <data name="Member_EditNewPassword.Header" xml:space="preserve">
+    <value>Nova senha</value>
+  </data>
+  <data name="Member_EditNewPassword.PlaceholderText" xml:space="preserve">
+    <value>Deixe em branco para manter a senha atual</value>
+  </data>
+  <data name="Member_EditTitle" xml:space="preserve">
+    <value>Editar {0}</value>
+  </data>
+  <data name="Member_EditUsername.Header" xml:space="preserve">
+    <value>Nome de usuário</value>
+  </data>
+  <data name="Member_Import" xml:space="preserve">
+    <value>Importar</value>
+  </data>
+  <data name="Member_ImportCount" xml:space="preserve">
+    <value>Importar {0}</value>
+  </data>
+  <data name="Member_ImportDialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Member_ImportDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Importar</value>
+  </data>
+  <data name="Member_ImportEmpty" xml:space="preserve">
+    <value>Nenhum usuário do {0} para importar.</value>
+  </data>
+  <data name="Member_Importing" xml:space="preserve">
+    <value>Importando…</value>
+  </data>
+  <data name="Member_ImportIntro" xml:space="preserve">
+    <value>Cada pessoa escolhida ganha uma conta de membro vinculada à conta dela no {0}, para poder entrar com ela.</value>
+  </data>
+  <data name="Member_ImportTitle" xml:space="preserve">
+    <value>Importar do {0}</value>
+  </data>
+  <data name="Member_LimitMovies.Text" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Member_LimitTv.Text" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Member_Link" xml:space="preserve">
+    <value>Vincular</value>
+  </data>
+  <data name="Member_LinkDialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Member_LinkDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Vincular</value>
+  </data>
+  <data name="Member_Linking" xml:space="preserve">
+    <value>Vinculando…</value>
+  </data>
+  <data name="Member_LinkIntro" xml:space="preserve">
+    <value>Entre com sua conta do {0} para usá-la também no Marquee.</value>
+  </data>
+  <data name="Member_LinkPassword" xml:space="preserve">
+    <value>Senha do {0}</value>
+  </data>
+  <data name="Member_LinkTitle" xml:space="preserve">
+    <value>Vincular {0}</value>
+  </data>
+  <data name="Member_LinkUsername" xml:space="preserve">
+    <value>Nome de usuário do {0}</value>
+  </data>
+  <data name="Member_MovieDays.Text" xml:space="preserve">
+    <value>dias</value>
+  </data>
+  <data name="Member_MovieDaysBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Dias do limite de filmes</value>
+  </data>
+  <data name="Member_MovieEvery.Text" xml:space="preserve">
+    <value>a cada</value>
+  </data>
+  <data name="Member_MovieLimitBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Limite de pedidos de filmes</value>
+  </data>
+  <data name="Member_MovieLimitBox.PlaceholderText" xml:space="preserve">
+    <value>Sem limite</value>
+  </data>
+  <data name="Member_PasswordNoteOther" xml:space="preserve">
+    <value>Definir uma nova senha faz {0} sair de todos os dispositivos.</value>
+  </data>
+  <data name="Member_PhotoNote.Text" xml:space="preserve">
+    <value>Salva assim que você escolhe uma. O servidor a recorta em quadrado e não a compartilha.</value>
+  </data>
+  <data name="Member_PickerFailed" xml:space="preserve">
+    <value>Não foi possível abrir o seletor de arquivos: {0}</value>
+  </data>
+  <data name="Member_Preset.Header" xml:space="preserve">
+    <value>O que a pessoa pode fazer</value>
+  </data>
+  <data name="Member_PresetCustom.Content" xml:space="preserve">
+    <value>Personalizado</value>
+  </data>
+  <data name="Member_PresetMember.Content" xml:space="preserve">
+    <value>Membro — faz pedidos e relata problemas</value>
+  </data>
+  <data name="Member_PresetTrusted.Content" xml:space="preserve">
+    <value>Confiável — também revisa pedidos e relatos de problemas</value>
+  </data>
+  <data name="Member_ReadFailed" xml:space="preserve">
+    <value>Não foi possível ler {0}: {1}</value>
+  </data>
+  <data name="Member_RemovePhoto.Content" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Member_Role.Header" xml:space="preserve">
+    <value>Função</value>
+  </data>
+  <data name="Member_Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Member_Saving" xml:space="preserve">
+    <value>Salvando…</value>
+  </data>
+  <data name="Member_TvDays.Text" xml:space="preserve">
+    <value>dias</value>
+  </data>
+  <data name="Member_TvDaysBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Dias do limite de séries</value>
+  </data>
+  <data name="Member_TvEvery.Text" xml:space="preserve">
+    <value>a cada</value>
+  </data>
+  <data name="Member_TvLimitBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Limite de pedidos de séries</value>
+  </data>
+  <data name="Member_TvLimitBox.PlaceholderText" xml:space="preserve">
+    <value>Sem limite</value>
+  </data>
+  <data name="Model_ApiKeyActAs" xml:space="preserve">
+    <value>como {0}</value>
+  </data>
+  <data name="Model_ApiKeyAdminChoice" xml:space="preserve">
+    <value>Administrador (você)</value>
+  </data>
+  <data name="Model_ApiKeyBlankName" xml:space="preserve">
+    <value>Dê um nome à chave, como Homepage.</value>
+  </data>
+  <data name="Model_ApiKeyCopyNow" xml:space="preserve">
+    <value>Copie esta chave agora: ela não será mostrada de novo.</value>
+  </data>
+  <data name="Model_ApiKeyCreated" xml:space="preserve">
+    <value>Criada em {0}</value>
+  </data>
+  <data name="Model_ApiKeyExpired" xml:space="preserve">
+    <value>Expirada</value>
+  </data>
+  <data name="Model_ApiKeyExpires" xml:space="preserve">
+    <value>Expira em {0}</value>
+  </data>
+  <data name="Model_ApiKeyExpiryDays_One" xml:space="preserve">
+    <value>{0} dia</value>
+  </data>
+  <data name="Model_ApiKeyExpiryDays_Other" xml:space="preserve">
+    <value>{0} dias</value>
+  </data>
+  <data name="Model_ApiKeyExpiryNever" xml:space="preserve">
+    <value>Nunca</value>
+  </data>
+  <data name="Model_ApiKeyExpiryYear" xml:space="preserve">
+    <value>1 ano</value>
+  </data>
+  <data name="Model_ApiKeyMemberGone" xml:space="preserve">
+    <value>Esse membro da casa não existe mais.</value>
+  </data>
+  <data name="Model_ApiKeyNeverExpires" xml:space="preserve">
+    <value>Nunca expira</value>
+  </data>
+  <data name="Model_ApiKeyNeverUsed" xml:space="preserve">
+    <value>Nunca usada</value>
+  </data>
+  <data name="Model_ApiKeyOnlyAdmin" xml:space="preserve">
+    <value>Só o administrador pode gerenciar chaves de API.</value>
+  </data>
+  <data name="Model_ApiKeyScopeFull" xml:space="preserve">
+    <value>Acesso total</value>
+  </data>
+  <data name="Model_ApiKeyScopeRead" xml:space="preserve">
+    <value>Somente leitura</value>
+  </data>
+  <data name="Model_ApiKeysDescription" xml:space="preserve">
+    <value>Permita que painéis como Homepage ou Homarr, scripts e outros apps usem o Marquee. Uma chave funciona como um login, então mantenha-a em segredo.</value>
+  </data>
+  <data name="Model_ApiKeyUsedDaysAgo_One" xml:space="preserve">
+    <value>Usada pela última vez há {0} dia</value>
+  </data>
+  <data name="Model_ApiKeyUsedDaysAgo_Other" xml:space="preserve">
+    <value>Usada pela última vez há {0} dias</value>
+  </data>
+  <data name="Model_ApiKeyUsedHoursAgo_One" xml:space="preserve">
+    <value>Usada pela última vez há {0} hora</value>
+  </data>
+  <data name="Model_ApiKeyUsedHoursAgo_Other" xml:space="preserve">
+    <value>Usada pela última vez há {0} horas</value>
+  </data>
+  <data name="Model_ApiKeyUsedJustNow" xml:space="preserve">
+    <value>Usada agora mesmo</value>
+  </data>
+  <data name="Model_ApiKeyUsedMinutesAgo_One" xml:space="preserve">
+    <value>Usada pela última vez há {0} minuto</value>
+  </data>
+  <data name="Model_ApiKeyUsedMinutesAgo_Other" xml:space="preserve">
+    <value>Usada pela última vez há {0} minutos</value>
+  </data>
+  <data name="Model_ApiKeyUsedOn" xml:space="preserve">
+    <value>Usada pela última vez em {0}</value>
+  </data>
+  <data name="Model_ApiKeyUsedYesterday" xml:space="preserve">
+    <value>Usada pela última vez ontem</value>
+  </data>
+  <data name="Model_ArrKeyAgain" xml:space="preserve">
+    <value>Digite a chave de API de novo para alterar a URL.</value>
+  </data>
+  <data name="Model_ArrNotResponding" xml:space="preserve">
+    <value>{0} (não responde)</value>
+  </data>
+  <data name="Model_ArrSavedKeyPlaceholder" xml:space="preserve">
+    <value>Salva: digite outra para substituir</value>
+  </data>
+  <data name="Model_BlockKeywordLabel" xml:space="preserve">
+    <value>Palavra-chave: {0}</value>
+  </data>
+  <data name="Model_BlockKeywordLine" xml:space="preserve">
+    <value>Pedidos bloqueados por “{0}”</value>
+  </data>
+  <data name="Model_BlockMemberLine" xml:space="preserve">
+    <value>Os pedidos estão fechados para este título</value>
+  </data>
+  <data name="Model_BlockMemberLineReason" xml:space="preserve">
+    <value>Os pedidos estão fechados para este título: {0}</value>
+  </data>
+  <data name="Model_ChannelEmail" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Model_CodeSentEmail" xml:space="preserve">
+    <value>Enviamos um código de 6 dígitos para {0}.</value>
+  </data>
+  <data name="Model_CodeSentOther" xml:space="preserve">
+    <value>Um código de 6 dígitos foi enviado para {0}.</value>
+  </data>
+  <data name="Model_CodeSentTelegram" xml:space="preserve">
+    <value>O bot enviou um código de 6 dígitos para seu chat do Telegram.</value>
+  </data>
+  <data name="Model_ColumnBell" xml:space="preserve">
+    <value>Sino</value>
+  </data>
+  <data name="Model_ColumnDevices" xml:space="preserve">
+    <value>Dispositivos</value>
+  </data>
+  <data name="Model_DiscoverCustomRow" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Model_DiscoverRecentlyAdded" xml:space="preserve">
+    <value>Adicionados recentemente</value>
+  </data>
+  <data name="Model_DiscoverTrending" xml:space="preserve">
+    <value>Em alta</value>
+  </data>
+  <data name="Model_DiscoverUpcomingMovies" xml:space="preserve">
+    <value>Próximos filmes</value>
+  </data>
+  <data name="Model_DiscoverUpcomingSeries" xml:space="preserve">
+    <value>Próximas séries</value>
+  </data>
+  <data name="Model_LibraryAutoSync" xml:space="preserve">
+    <value>Sua biblioteca é sincronizada automaticamente.</value>
+  </data>
+  <data name="Model_LibraryLastSynced" xml:space="preserve">
+    <value>Última sincronização: {0} · sincronizada automaticamente.</value>
+  </data>
+  <data name="Model_LibraryMovies_One" xml:space="preserve">
+    <value>{0} filme</value>
+  </data>
+  <data name="Model_LibraryMovies_Other" xml:space="preserve">
+    <value>{0} filmes</value>
+  </data>
+  <data name="Model_LibraryShows_One" xml:space="preserve">
+    <value>{0} série</value>
+  </data>
+  <data name="Model_LibraryShows_Other" xml:space="preserve">
+    <value>{0} séries</value>
+  </data>
+  <data name="Model_MenuPositionBottom" xml:space="preserve">
+    <value>Base</value>
+  </data>
+  <data name="Model_MenuPositionLeft" xml:space="preserve">
+    <value>Esquerda</value>
+  </data>
+  <data name="Model_MenuPositionRight" xml:space="preserve">
+    <value>Direita</value>
+  </data>
+  <data name="Model_MenuPositionTop" xml:space="preserve">
+    <value>Topo</value>
+  </data>
+  <data name="Model_OrderNewestFirst" xml:space="preserve">
+    <value>Mais recentes primeiro</value>
+  </data>
+  <data name="Model_OrderOldestFirst" xml:space="preserve">
+    <value>Mais antigos primeiro</value>
+  </data>
+  <data name="Model_ReleaseDaysAgo_One" xml:space="preserve">
+    <value>há {0} dia</value>
+  </data>
+  <data name="Model_ReleaseDaysAgo_Other" xml:space="preserve">
+    <value>há {0} dias</value>
+  </data>
+  <data name="Model_ReleaseLabel" xml:space="preserve">
+    <value>Versão v{0}</value>
+  </data>
+  <data name="Model_ReleaseToday" xml:space="preserve">
+    <value>Hoje</value>
+  </data>
+  <data name="Model_ShareLinkImdb" xml:space="preserve">
+    <value>IMDb: qualquer pessoa pode abrir</value>
+  </data>
+  <data name="Model_ShareLinkMarquee" xml:space="preserve">
+    <value>Marquee: a pessoa precisará entrar</value>
+  </data>
+  <data name="Model_ShareLinkTmdb" xml:space="preserve">
+    <value>TMDb: qualquer pessoa pode abrir</value>
+  </data>
+  <data name="Model_ShareNoOneElse" xml:space="preserve">
+    <value>Ninguém mais tem uma conta aqui ainda.</value>
+  </data>
+  <data name="Model_ShareNoteTooLong" xml:space="preserve">
+    <value>A nota deve ter menos de {0} caracteres.</value>
+  </data>
+  <data name="Model_ShareOlderServer" xml:space="preserve">
+    <value>Para enviar a alguém daqui é preciso um servidor Marquee mais novo.</value>
+  </data>
+  <data name="Model_ShareOnMarquee" xml:space="preserve">
+    <value>{0} no Marquee</value>
+  </data>
+  <data name="Model_SharePickSomeone" xml:space="preserve">
+    <value>Escolha com quem compartilhar.</value>
+  </data>
+  <data name="Model_ShareRecipientGone" xml:space="preserve">
+    <value>Alguém que você escolheu não está mais nesta casa.</value>
+  </data>
+  <data name="Model_ShareSentTo" xml:space="preserve">
+    <value>Enviado para {0}.</value>
+  </data>
+  <data name="Model_ShareSentToPeople_One" xml:space="preserve">
+    <value>Enviado para {0} pessoa.</value>
+  </data>
+  <data name="Model_ShareSentToPeople_Other" xml:space="preserve">
+    <value>Enviado para {0} pessoas.</value>
+  </data>
+  <data name="Model_ShareTooMany" xml:space="preserve">
+    <value>Compartilhe com no máximo {0} pessoas por vez.</value>
+  </data>
+  <data name="Model_ShortDatePattern" xml:space="preserve">
+    <value>d MMM yyyy</value>
+  </data>
+  <data name="Model_SignupHint" xml:space="preserve">
+    <value>É novo por aqui? Use Entrar com {0} e sua conta será criada para você.</value>
+  </data>
+  <data name="Model_SignupHintAlternatives" xml:space="preserve">
+    <value>{0} (ou {1})</value>
+  </data>
+  <data name="Model_SignupHintOr" xml:space="preserve">
+    <value>{0} ou {1}</value>
+  </data>
+  <data name="Model_SyncChecked" xml:space="preserve">
+    <value>Verificada {0}</value>
+  </data>
+  <data name="Model_SyncRequestedSoFar_One" xml:space="preserve">
+    <value>{1} · {0} título pedido até agora</value>
+  </data>
+  <data name="Model_SyncRequestedSoFar_Other" xml:space="preserve">
+    <value>{1} · {0} títulos pedidos até agora</value>
+  </data>
+  <data name="Model_TimeAgoDays" xml:space="preserve">
+    <value>há {0} d</value>
+  </data>
+  <data name="Model_TimeAgoHours" xml:space="preserve">
+    <value>há {0} h</value>
+  </data>
+  <data name="Model_TimeAgoJustNow" xml:space="preserve">
+    <value>agora mesmo</value>
+  </data>
+  <data name="Model_TimeAgoMinutes" xml:space="preserve">
+    <value>há {0} min</value>
+  </data>
+  <data name="Model_TraktBlankLink" xml:space="preserve">
+    <value>Cole o link de uma lista ou watchlist pública do Trakt, como https://trakt.tv/users/someone/watchlist.</value>
+  </data>
+  <data name="Model_TraktDescription" xml:space="preserve">
+    <value>Mantenha uma watchlist ou lista pública do Trakt sincronizada: filmes e séries novos nela são pedidos para você a cada poucas horas.</value>
+  </data>
+  <data name="Model_TraktEmpty" xml:space="preserve">
+    <value>Nenhuma lista do Trakt ainda.</value>
+  </data>
+  <data name="Model_TraktImported_One" xml:space="preserve">
+    <value>{0} título importado.</value>
+  </data>
+  <data name="Model_TraktImported_Other" xml:space="preserve">
+    <value>{0} títulos importados.</value>
+  </data>
+  <data name="Model_TraktImportedSkipped_One" xml:space="preserve">
+    <value>{0} título importado ({1} ignorados: já na biblioteca ou pedidos).</value>
+  </data>
+  <data name="Model_TraktImportedSkipped_Other" xml:space="preserve">
+    <value>{0} títulos importados ({1} ignorados: já na biblioteca ou pedidos).</value>
+  </data>
+  <data name="Model_TraktNoKinds" xml:space="preserve">
+    <value>Escolha filmes, séries ou ambos.</value>
+  </data>
+  <data name="Model_TraktNotChecked" xml:space="preserve">
+    <value>Ainda não verificada</value>
+  </data>
+  <data name="Model_TraktOwnerLine" xml:space="preserve">
+    <value>Pede como {0}</value>
+  </data>
+  <data name="Model_TraktRequestExisting" xml:space="preserve">
+    <value>Pedir também o que já está nela</value>
+  </data>
+  <data name="Model_TraktUnavailable" xml:space="preserve">
+    <value>O Trakt não está conectado. O administrador pode conectá-lo em Configurações → Integrações.</value>
+  </data>
+  <data name="Model_WatchlistChecking" xml:space="preserve">
+    <value>Verificando sua lista…</value>
+  </data>
+  <data name="Nav_Calendar" xml:space="preserve">
+    <value>Calendário</value>
+  </data>
+  <data name="Nav_Discover" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Nav_Favorites" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Nav_Movies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Nav_PlaceholderPerson" xml:space="preserve">
+    <value>Pessoa {0}</value>
+  </data>
+  <data name="Nav_PlaceholderSearch" xml:space="preserve">
+    <value>Resultados da busca por “{0}”</value>
+  </data>
+  <data name="Nav_PlaceholderStudio" xml:space="preserve">
+    <value>Estúdio {0}</value>
+  </data>
+  <data name="Nav_Requests" xml:space="preserve">
+    <value>Pedidos</value>
+  </data>
+  <data name="Nav_Search" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Nav_Series" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Nav_SettingsTabAbout" xml:space="preserve">
+    <value>Sobre</value>
+  </data>
+  <data name="Nav_SettingsTabAccount" xml:space="preserve">
+    <value>Conta</value>
+  </data>
+  <data name="Nav_SettingsTabActivity" xml:space="preserve">
+    <value>Atividade</value>
+  </data>
+  <data name="Nav_SettingsTabDiscover" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Nav_SettingsTabIntegrations" xml:space="preserve">
+    <value>Integrações</value>
+  </data>
+  <data name="Nav_SettingsTabJobs" xml:space="preserve">
+    <value>Tarefas</value>
+  </data>
+  <data name="Notifications_Empty.Text" xml:space="preserve">
+    <value>Nenhuma notificação ainda.</value>
+  </data>
+  <data name="Notifications_EmptyMessage" xml:space="preserve">
+    <value>Nenhuma notificação ainda.</value>
+  </data>
+  <data name="Notifications_MarkAllRead.Content" xml:space="preserve">
+    <value>Marcar tudo como lido</value>
+  </data>
+  <data name="Notifications_NoteLine" xml:space="preserve">
+    <value>“{0}”</value>
+  </data>
+  <data name="Notifications_Title.Text" xml:space="preserve">
+    <value>Notificações</value>
+  </data>
+  <data name="Notifications_UnreadRow" xml:space="preserve">
+    <value>Não lida: {0}</value>
+  </data>
+  <data name="Overrides_NoServers" xml:space="preserve">
+    <value>Ainda não há nenhum {0} configurado para isso.</value>
+  </data>
+  <data name="Overrides_NoServers4k" xml:space="preserve">
+    <value>Ainda não há nenhum {0} 4K configurado para isso.</value>
+  </data>
+  <data name="Permission_AdvancedRequests" xml:space="preserve">
+    <value>Opções avançadas de pedido</value>
+  </data>
+  <data name="Permission_AdvancedRequestsHelp" xml:space="preserve">
+    <value>Escolher o servidor, o perfil de qualidade, a pasta e as tags ao pedir ou aprovar um título.</value>
+  </data>
+  <data name="Permission_AutoApprove4kMovies" xml:space="preserve">
+    <value>Filmes em 4K</value>
+  </data>
+  <data name="Permission_AutoApprove4kMoviesHelp" xml:space="preserve">
+    <value>Os pedidos de filmes em 4K pulam a fila de análise.</value>
+  </data>
+  <data name="Permission_AutoApprove4kTv" xml:space="preserve">
+    <value>Séries em 4K</value>
+  </data>
+  <data name="Permission_AutoApprove4kTvHelp" xml:space="preserve">
+    <value>Os pedidos de séries em 4K pulam a fila de análise.</value>
+  </data>
+  <data name="Permission_AutoApproveMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Permission_AutoApproveMoviesHelp" xml:space="preserve">
+    <value>Os pedidos de filmes pulam a fila de análise.</value>
+  </data>
+  <data name="Permission_AutoApproveTv" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Permission_AutoApproveTvHelp" xml:space="preserve">
+    <value>Os pedidos de séries pulam a fila de análise.</value>
+  </data>
+  <data name="Permission_BypassLimits" xml:space="preserve">
+    <value>Sem limite de pedidos</value>
+  </data>
+  <data name="Permission_BypassLimitsHelp" xml:space="preserve">
+    <value>Os limites de pedidos não se aplicam.</value>
+  </data>
+  <data name="Permission_CustomChoice" xml:space="preserve">
+    <value>Personalizado</value>
+  </data>
+  <data name="Permission_Footer" xml:space="preserve">
+    <value>Configurações, integrações, contas da casa, chaves de API e login continuam só com você.</value>
+  </data>
+  <data name="Permission_GroupAutoApprove" xml:space="preserve">
+    <value>Aprovados na hora</value>
+  </data>
+  <data name="Permission_GroupHelping" xml:space="preserve">
+    <value>Ajudar a administrar</value>
+  </data>
+  <data name="Permission_GroupRequests" xml:space="preserve">
+    <value>Pedidos</value>
+  </data>
+  <data name="Permission_ManageBlocklist" xml:space="preserve">
+    <value>Gerenciar a lista de bloqueio</value>
+  </data>
+  <data name="Permission_ManageBlocklistHelp" xml:space="preserve">
+    <value>Escolher títulos que ninguém pode pedir.</value>
+  </data>
+  <data name="Permission_ManageIssues" xml:space="preserve">
+    <value>Cuidar dos relatos de problemas</value>
+  </data>
+  <data name="Permission_ManageIssuesHelp" xml:space="preserve">
+    <value>Ver os relatos de problemas de todos e marcá-los como resolvidos.</value>
+  </data>
+  <data name="Permission_MemberChoice" xml:space="preserve">
+    <value>Membro — faz pedidos e relata problemas</value>
+  </data>
+  <data name="Permission_PresetHeader" xml:space="preserve">
+    <value>O que pode fazer</value>
+  </data>
+  <data name="Permission_ReportIssues" xml:space="preserve">
+    <value>Relatar problemas</value>
+  </data>
+  <data name="Permission_ReportIssuesHelp" xml:space="preserve">
+    <value>Avisar você quando algo estiver errado com um título.</value>
+  </data>
+  <data name="Permission_Request4kMovies" xml:space="preserve">
+    <value>Pedir filmes em 4K</value>
+  </data>
+  <data name="Permission_Request4kMoviesHelp" xml:space="preserve">
+    <value>Pedir a cópia em 4K de um filme, quando houver um Radarr 4K.</value>
+  </data>
+  <data name="Permission_Request4kTv" xml:space="preserve">
+    <value>Pedir séries em 4K</value>
+  </data>
+  <data name="Permission_Request4kTvHelp" xml:space="preserve">
+    <value>Pedir a cópia em 4K de uma série, quando houver um Sonarr 4K.</value>
+  </data>
+  <data name="Permission_RequestMovies" xml:space="preserve">
+    <value>Pedir filmes</value>
+  </data>
+  <data name="Permission_RequestMoviesHelp" xml:space="preserve">
+    <value>Pedir que filmes sejam adicionados.</value>
+  </data>
+  <data name="Permission_RequestTv" xml:space="preserve">
+    <value>Pedir séries</value>
+  </data>
+  <data name="Permission_RequestTvHelp" xml:space="preserve">
+    <value>Pedir que séries, ou algumas temporadas delas, sejam adicionadas.</value>
+  </data>
+  <data name="Permission_ReviewRequests" xml:space="preserve">
+    <value>Analisar pedidos</value>
+  </data>
+  <data name="Permission_ReviewRequestsHelp" xml:space="preserve">
+    <value>Aprovar, recusar e alterar os pedidos dos outros, e cuidar de “Não encontrado” e “Não foi possível adicionar”.</value>
+  </data>
+  <data name="Permission_TrustedChoice" xml:space="preserve">
+    <value>Confiável — também analisa pedidos e relatos de problemas</value>
+  </data>
+  <data name="Permission_ViewLockedNote" xml:space="preserve">
+    <value>Vem junto com analisar pedidos.</value>
+  </data>
+  <data name="Permission_ViewRequests" xml:space="preserve">
+    <value>Ver os pedidos de todos</value>
+  </data>
+  <data name="Permission_ViewRequestsHelp" xml:space="preserve">
+    <value>A página Pedidos lista o que todo mundo pediu.</value>
+  </data>
+  <data name="Person_Born" xml:space="preserve">
+    <value>Nascimento: {0}</value>
+  </data>
+  <data name="Person_Died" xml:space="preserve">
+    <value>Falecimento: {0}</value>
+  </data>
+  <data name="Person_EmptyCredits" xml:space="preserve">
+    <value>Nenhuma filmografia processada encontrada para esta pessoa ainda.</value>
+  </data>
+  <data name="Person_ErrorHeading.Text" xml:space="preserve">
+    <value>Não foi possível carregar esta pessoa</value>
+  </data>
+  <data name="Person_Loading.Text" xml:space="preserve">
+    <value>Carregando esta pessoa…</value>
+  </data>
+  <data name="Person_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Personal_AddedTestArrived" xml:space="preserve">
+    <value>{0} adicionado. A mensagem de teste chegou.</value>
+  </data>
+  <data name="Personal_CodeSentEnterIt" xml:space="preserve">
+    <value>{0} Digite-o em Seus canais.</value>
+  </data>
+  <data name="Personal_ConnectTelegram" xml:space="preserve">
+    <value>Conectar com o Telegram</value>
+  </data>
+  <data name="Personal_EnterCode" xml:space="preserve">
+    <value>Digite o código de 6 dígitos.</value>
+  </data>
+  <data name="Personal_FailedAt" xml:space="preserve">
+    <value>Falhou {0}: {1}</value>
+  </data>
+  <data name="Personal_HintDiscord" xml:space="preserve">
+    <value>No Discord: Configurações do servidor › Integrações › Webhooks › Novo webhook e depois Copiar URL do webhook.</value>
+  </data>
+  <data name="Personal_HintEmail" xml:space="preserve">
+    <value>Vamos enviar um código de 6 dígitos por e-mail para confirmar o endereço. Nada mais é enviado até que ele seja confirmado.</value>
+  </data>
+  <data name="Personal_HintNtfy" xml:space="preserve">
+    <value>A URL completa do seu tópico do ntfy.</value>
+  </data>
+  <data name="Personal_HintNtfyInternet" xml:space="preserve">
+    <value>A URL completa do seu tópico do ntfy. O endereço precisa estar na internet, não na sua rede doméstica.</value>
+  </data>
+  <data name="Personal_HintNtfyServer" xml:space="preserve">
+    <value>Escolha um tópico em {0} ou informe a URL completa de um tópico em outro servidor ntfy.</value>
+  </data>
+  <data name="Personal_HintNtfyServerInternet" xml:space="preserve">
+    <value>Escolha um tópico em {0} ou informe a URL completa de um tópico em outro servidor ntfy. O endereço precisa estar na internet, não na sua rede doméstica.</value>
+  </data>
+  <data name="Personal_HintPushover" xml:space="preserve">
+    <value>Sua chave de usuário fica no topo do seu painel do pushover.net.</value>
+  </data>
+  <data name="Personal_HintTelegram" xml:space="preserve">
+    <value>Envie /start para o bot do Telegram da casa e depois digite aqui o ID do seu chat: o bot envia um código de 6 dígitos para confirmar que é seu.</value>
+  </data>
+  <data name="Personal_HintTelegramBot" xml:space="preserve">
+    <value>Conecte com um toque, ou mande uma mensagem para @{0} no Telegram, envie /start e digite aqui o ID do seu chat: o bot então envia um código de 6 dígitos para confirmar que é seu.</value>
+  </data>
+  <data name="Personal_HintWebhook" xml:space="preserve">
+    <value>O Marquee envia cada notificação para esta URL.</value>
+  </data>
+  <data name="Personal_HintWebhookInternet" xml:space="preserve">
+    <value>O Marquee envia cada notificação para esta URL. O endereço precisa estar na internet, não na sua rede doméstica.</value>
+  </data>
+  <data name="Personal_LastDelivered" xml:space="preserve">
+    <value>Última entrega {0}</value>
+  </data>
+  <data name="Personal_MissingDiscord" xml:space="preserve">
+    <value>Digite a URL do webhook do Discord.</value>
+  </data>
+  <data name="Personal_MissingEmail" xml:space="preserve">
+    <value>Digite um endereço de e-mail.</value>
+  </data>
+  <data name="Personal_MissingNtfy" xml:space="preserve">
+    <value>Digite um tópico ou a URL de um tópico.</value>
+  </data>
+  <data name="Personal_MissingPushover" xml:space="preserve">
+    <value>Digite sua chave de usuário do Pushover.</value>
+  </data>
+  <data name="Personal_MissingTelegram" xml:space="preserve">
+    <value>Digite o ID do seu chat do Telegram.</value>
+  </data>
+  <data name="Personal_MissingWebhook" xml:space="preserve">
+    <value>Digite a URL do webhook.</value>
+  </data>
+  <data name="Personal_NewCodeSent" xml:space="preserve">
+    <value>Novo código enviado. {0}</value>
+  </data>
+  <data name="Personal_NothingDelivered" xml:space="preserve">
+    <value>Nada entregue ainda</value>
+  </data>
+  <data name="Personal_OffStatus" xml:space="preserve">
+    <value>Desativado · {0}</value>
+  </data>
+  <data name="Personal_SendCode" xml:space="preserve">
+    <value>Enviar código</value>
+  </data>
+  <data name="Personal_Sending" xml:space="preserve">
+    <value>Enviando…</value>
+  </data>
+  <data name="Personal_StatusUnknownKind" xml:space="preserve">
+    <value>Esta versão do Marquee para Windows não consegue alterar este tipo de canal.</value>
+  </data>
+  <data name="Personal_StatusWaitingCode" xml:space="preserve">
+    <value>Aguardando o código de 6 dígitos. Nada mais é enviado para cá até a confirmação.</value>
+  </data>
+  <data name="Personal_TelegramUnopened" xml:space="preserve">
+    <value>Não foi possível abrir o Telegram. Digite o ID do seu chat.</value>
+  </data>
+  <data name="Personal_TelegramWaiting" xml:space="preserve">
+    <value>Aguardando o Telegram… Toque em Iniciar no chat que acabou de abrir.</value>
+  </data>
+  <data name="Personal_TelegramWaitingBot" xml:space="preserve">
+    <value>Aguardando o Telegram… Toque em Iniciar no seu chat com @{0}.</value>
+  </data>
+  <data name="Personal_TestAndAdd" xml:space="preserve">
+    <value>Testar e adicionar</value>
+  </data>
+  <data name="Personal_Testing" xml:space="preserve">
+    <value>Testando…</value>
+  </data>
+  <data name="Personal_TestSent" xml:space="preserve">
+    <value>Teste enviado. Ele chegou.</value>
+  </data>
+  <data name="Personal_UrlHeaderOtherServer" xml:space="preserve">
+    <value>Ou a URL completa de um tópico em outro servidor</value>
+  </data>
+  <data name="Personal_UrlHeaderTopic" xml:space="preserve">
+    <value>URL do tópico</value>
+  </data>
+  <data name="Personal_UrlHeaderWebhook" xml:space="preserve">
+    <value>URL do webhook</value>
+  </data>
+  <data name="Poster_Request.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pedir</value>
+  </data>
+  <data name="Poster_Requested.Text" xml:space="preserve">
+    <value>Pedido</value>
+  </data>
+  <data name="Rail_ScrollLeft.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Rolar para a esquerda</value>
+  </data>
+  <data name="Rail_ScrollLeft.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Rolar para a esquerda</value>
+  </data>
+  <data name="Rail_ScrollRight.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Rolar para a direita</value>
+  </data>
+  <data name="Rail_ScrollRight.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Rolar para a direita</value>
+  </data>
+  <data name="Rail_SeeAll" xml:space="preserve">
+    <value>Ver tudo: {0}</value>
+  </data>
+  <data name="Relink_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Relink_Dialog.PrimaryButtonText" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Relink_Dialog.Title" xml:space="preserve">
+    <value>Corrigir a correspondência deste título</value>
+  </data>
+  <data name="Relink_ImdbBox.Header" xml:space="preserve">
+    <value>ID do IMDb (tt…)</value>
+  </data>
+  <data name="Relink_Intro.Text" xml:space="preserve">
+    <value>Preencha o ID que você tiver. Assim sua biblioteca sincronizada aponta para o título certo, sem precisar corrigir a correspondência no Plex, Jellyfin ou Sonarr.</value>
+  </data>
+  <data name="Relink_TmdbBox.Header" xml:space="preserve">
+    <value>ID do TMDb</value>
+  </data>
+  <data name="Relink_TvdbBox.Header" xml:space="preserve">
+    <value>ID do TVDB</value>
+  </data>
+  <data name="Report_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Report_Dialog.PrimaryButtonText" xml:space="preserve">
+    <value>Enviar relato</value>
+  </data>
+  <data name="Report_Dialog.Title" xml:space="preserve">
+    <value>Relatar um problema</value>
+  </data>
+  <data name="Report_Episode.Header" xml:space="preserve">
+    <value>Episódio</value>
+  </data>
+  <data name="Report_Intro.Text" xml:space="preserve">
+    <value>O administrador é avisado, e você recebe uma resposta quando estiver resolvido.</value>
+  </data>
+  <data name="Report_Kind.Header" xml:space="preserve">
+    <value>Qual é o problema?</value>
+  </data>
+  <data name="Report_Note.Header" xml:space="preserve">
+    <value>Mais alguma coisa? (opcional)</value>
+  </data>
+  <data name="Report_Note.PlaceholderText" xml:space="preserve">
+    <value>ex.: O áudio sai de sincronia depois de uns 20 minutos.</value>
+  </data>
+  <data name="Report_PickKind" xml:space="preserve">
+    <value>Escolha qual é o problema.</value>
+  </data>
+  <data name="Report_Season.Header" xml:space="preserve">
+    <value>Temporada (opcional)</value>
+  </data>
+  <data name="Report_Send" xml:space="preserve">
+    <value>Enviar relato</value>
+  </data>
+  <data name="Report_Sending" xml:space="preserve">
+    <value>Enviando…</value>
+  </data>
+  <data name="RequestActions_CancelIt.Text" xml:space="preserve">
+    <value>Cancelar?</value>
+  </data>
+  <data name="RequestActions_CancelRequest.Content" xml:space="preserve">
+    <value>Cancelar pedido</value>
+  </data>
+  <data name="RequestActions_KeepIt.Content" xml:space="preserve">
+    <value>Manter</value>
+  </data>
+  <data name="RequestModel_AddedTo" xml:space="preserve">
+    <value>Adicionado ao {0}</value>
+  </data>
+  <data name="RequestModel_AgeDays_One" xml:space="preserve">
+    <value>{0} dia</value>
+  </data>
+  <data name="RequestModel_AgeDays_Other" xml:space="preserve">
+    <value>{0} dias</value>
+  </data>
+  <data name="RequestModel_AgeHours_One" xml:space="preserve">
+    <value>{0} hora</value>
+  </data>
+  <data name="RequestModel_AgeHours_Other" xml:space="preserve">
+    <value>{0} horas</value>
+  </data>
+  <data name="RequestModel_AgeUnderHour" xml:space="preserve">
+    <value>menos de uma hora</value>
+  </data>
+  <data name="RequestModel_CantFindFor" xml:space="preserve">
+    <value>não encontrado há {0} (desde {1})</value>
+  </data>
+  <data name="RequestModel_CouldntAddExplanation" xml:space="preserve">
+    <value>Aprovados, mas o Sonarr/Radarr estava fora do ar ou não os aceitou. Tente de novo quando ele voltar.</value>
+  </data>
+  <data name="RequestModel_CouldntAddHeading" xml:space="preserve">
+    <value>Não foi possível adicionar</value>
+  </data>
+  <data name="RequestModel_CouldntAddLine" xml:space="preserve">
+    <value>{0} · aprovado em {1} · última tentativa: {2}</value>
+  </data>
+  <data name="RequestModel_EveryoneEmpty" xml:space="preserve">
+    <value>Ninguém mais pediu nada ainda.</value>
+  </data>
+  <data name="RequestModel_EveryoneHeading" xml:space="preserve">
+    <value>Pedidos de todos</value>
+  </data>
+  <data name="RequestModel_In4k" xml:space="preserve">
+    <value>Em 4K</value>
+  </data>
+  <data name="RequestModel_LimitLeft" xml:space="preserve">
+    <value>{0}: restam {1} de {2} pedidos (a cada {3} dias)</value>
+  </data>
+  <data name="RequestModel_LimitMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="RequestModel_LimitNoneLeft" xml:space="preserve">
+    <value>{0}: nenhum restante</value>
+  </data>
+  <data name="RequestModel_LimitNoneLeftUntil" xml:space="preserve">
+    <value>{0}: nenhum restante até {1:d MMM}</value>
+  </data>
+  <data name="RequestModel_LimitTv" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="RequestModel_NotFoundExplanation_One" xml:space="preserve">
+    <value>Aprovados e lançados, mas o Sonarr/Radarr ainda não tem nada {0} hora ou mais após a aprovação. Quase sempre nenhum indexador tem uma cópia ainda.</value>
+  </data>
+  <data name="RequestModel_NotFoundExplanation_Other" xml:space="preserve">
+    <value>Aprovados e lançados, mas o Sonarr/Radarr ainda não tem nada {0} horas ou mais após a aprovação. Quase sempre nenhum indexador tem uma cópia ainda.</value>
+  </data>
+  <data name="RequestModel_NotFoundHintMovie" xml:space="preserve">
+    <value>No Radarr, a busca interativa do filme lista todos os lançamentos dos indexadores, para você escolher um manualmente.</value>
+  </data>
+  <data name="RequestModel_NotFoundHintTv" xml:space="preserve">
+    <value>No Sonarr, a busca interativa de uma temporada ou episódio lista todos os lançamentos dos indexadores, para você escolher um manualmente.</value>
+  </data>
+  <data name="RequestModel_OpenIn" xml:space="preserve">
+    <value>Abrir no {0}</value>
+  </data>
+  <data name="RequestModel_SearchingAgain" xml:space="preserve">
+    <value>{0} está buscando de novo…</value>
+  </data>
+  <data name="RequestModel_SeasonOne" xml:space="preserve">
+    <value>Temporada {0}</value>
+  </data>
+  <data name="RequestModel_SeasonsMany" xml:space="preserve">
+    <value>Temporadas {0}</value>
+  </data>
+  <data name="RequestModel_Specials" xml:space="preserve">
+    <value>Especiais</value>
+  </data>
+  <data name="RequestModel_WaitingForReview" xml:space="preserve">
+    <value>Aguardando análise</value>
+  </data>
+  <data name="Requests_AddInSonarr.Content" xml:space="preserve">
+    <value>Adicionar manualmente no Sonarr</value>
+  </data>
+  <data name="Requests_AdvLoading.Text" xml:space="preserve">
+    <value>Verificando seus servidores do Sonarr e do Radarr…</value>
+  </data>
+  <data name="Requests_AdvQualityProfile.Header" xml:space="preserve">
+    <value>Perfil de qualidade</value>
+  </data>
+  <data name="Requests_AdvRootFolder.Header" xml:space="preserve">
+    <value>Pasta raiz</value>
+  </data>
+  <data name="Requests_AdvSeriesType.Header" xml:space="preserve">
+    <value>Tipo de série</value>
+  </data>
+  <data name="Requests_AdvServer.Header" xml:space="preserve">
+    <value>Servidor</value>
+  </data>
+  <data name="Requests_AdvServerDown.Text" xml:space="preserve">
+    <value>Este servidor não está respondendo agora, então as listas dele não podem ser mostradas. As configurações salvas dele serão usadas.</value>
+  </data>
+  <data name="Requests_AdvServerResets.Text" xml:space="preserve">
+    <value>Escolher outro servidor redefine o resto para os padrões desse servidor.</value>
+  </data>
+  <data name="Requests_AdvTags.Text" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Requests_AdvTryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Requests_Approve" xml:space="preserve">
+    <value>Aprovar</value>
+  </data>
+  <data name="Requests_ApproveAll" xml:space="preserve">
+    <value>Aprovar todos</value>
+  </data>
+  <data name="Requests_ApproveAllDone" xml:space="preserve">
+    <value>Aprovados: {0}.</value>
+  </data>
+  <data name="Requests_ApproveAllFailed_One" xml:space="preserve">
+    <value>Não foi possível aprovar {0} pedido.</value>
+  </data>
+  <data name="Requests_ApproveAllFailed_Other" xml:space="preserve">
+    <value>Não foi possível aprovar {0} pedidos.</value>
+  </data>
+  <data name="Requests_Approving" xml:space="preserve">
+    <value>Aprovando…</value>
+  </data>
+  <data name="Requests_CouldntAddAdvanced.Header" xml:space="preserve">
+    <value>Opções avançadas</value>
+  </data>
+  <data name="Requests_CouldntAddHeading.Text" xml:space="preserve">
+    <value>Não foi possível adicionar</value>
+  </data>
+  <data name="Requests_CouldntAddManual.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Marque como aprovado sem o Sonarr/Radarr, depois de conseguir de outro jeito.</value>
+  </data>
+  <data name="Requests_CouldntOpenArr" xml:space="preserve">
+    <value>Não foi possível abrir o {0}.</value>
+  </data>
+  <data name="Requests_EveryoneRequestedByHeader.Text" xml:space="preserve">
+    <value>Pedido por</value>
+  </data>
+  <data name="Requests_EveryoneRequestedHeader.Text" xml:space="preserve">
+    <value>Pedido em</value>
+  </data>
+  <data name="Requests_EveryoneStatusHeader.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Requests_EveryoneTitleHeader.Text" xml:space="preserve">
+    <value>Título</value>
+  </data>
+  <data name="Requests_HideFixed" xml:space="preserve">
+    <value>Ocultar resolvidos</value>
+  </data>
+  <data name="Requests_IssueMarkFixed.Content" xml:space="preserve">
+    <value>Marcar como resolvido</value>
+  </data>
+  <data name="Requests_IssueNote.PlaceholderText" xml:space="preserve">
+    <value>Nota para a pessoa (opcional), ex.: Arquivo substituído</value>
+  </data>
+  <data name="Requests_IssueRemove" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Requests_IssueSearching" xml:space="preserve">
+    <value>Procurando outra cópia…</value>
+  </data>
+  <data name="Requests_IssuesHeadingAll" xml:space="preserve">
+    <value>Problemas relatados</value>
+  </data>
+  <data name="Requests_IssuesHeadingMine" xml:space="preserve">
+    <value>Seus relatos de problemas</value>
+  </data>
+  <data name="Requests_IssuesNoneOpen.Text" xml:space="preserve">
+    <value>Nada em aberto no momento.</value>
+  </data>
+  <data name="Requests_IssueWithdraw" xml:space="preserve">
+    <value>Retirar</value>
+  </data>
+  <data name="Requests_ManuallyApprove" xml:space="preserve">
+    <value>Aprovar manualmente</value>
+  </data>
+  <data name="Requests_MarkAsFound" xml:space="preserve">
+    <value>Marcar como encontrado</value>
+  </data>
+  <data name="Requests_MarkFixed" xml:space="preserve">
+    <value>Marcar como resolvido</value>
+  </data>
+  <data name="Requests_MemberEmpty" xml:space="preserve">
+    <value>Você ainda não pediu nada. Encontre um título e clique em Pedir.</value>
+  </data>
+  <data name="Requests_MineEmptyText.Text" xml:space="preserve">
+    <value>Você ainda não pediu nada. Encontre um título e clique em Pedir.</value>
+  </data>
+  <data name="Requests_MineError.Text" xml:space="preserve">
+    <value>Não foi possível carregar seus pedidos</value>
+  </data>
+  <data name="Requests_MineLoading.Text" xml:space="preserve">
+    <value>Carregando seus pedidos…</value>
+  </data>
+  <data name="Requests_MineRequestedHeader.Text" xml:space="preserve">
+    <value>Pedido em</value>
+  </data>
+  <data name="Requests_MineStatusHeader.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Requests_MineTitleHeader.Text" xml:space="preserve">
+    <value>Título</value>
+  </data>
+  <data name="Requests_MineTryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Requests_NotFoundHeading.Text" xml:space="preserve">
+    <value>Não encontrado</value>
+  </data>
+  <data name="Requests_PageTitle.Text" xml:space="preserve">
+    <value>Pedidos</value>
+  </data>
+  <data name="Requests_PastHeading.Text" xml:space="preserve">
+    <value>Pedidos anteriores</value>
+  </data>
+  <data name="Requests_PastNotFoundBadge.Text" xml:space="preserve">
+    <value>Não encontrado</value>
+  </data>
+  <data name="Requests_PastRequestedByHeader.Text" xml:space="preserve">
+    <value>Pedido por</value>
+  </data>
+  <data name="Requests_PastRequestedHeader.Text" xml:space="preserve">
+    <value>Pedido em</value>
+  </data>
+  <data name="Requests_PastStatusHeader.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Requests_PastTitleHeader.Text" xml:space="preserve">
+    <value>Título</value>
+  </data>
+  <data name="Requests_PendingAdvanced.Header" xml:space="preserve">
+    <value>Opções avançadas</value>
+  </data>
+  <data name="Requests_PendingManualTip.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Marque como aprovado sem adicionar pelo Sonarr. Use depois de baixar por conta própria.</value>
+  </data>
+  <data name="Requests_QueueActionsHeader.Text" xml:space="preserve">
+    <value>Ações</value>
+  </data>
+  <data name="Requests_QueueEmpty" xml:space="preserve">
+    <value>Nenhum pedido pendente.</value>
+  </data>
+  <data name="Requests_QueueEmptyText.Text" xml:space="preserve">
+    <value>Nenhum pedido pendente.</value>
+  </data>
+  <data name="Requests_QueueError.Text" xml:space="preserve">
+    <value>Não foi possível carregar a fila de pedidos</value>
+  </data>
+  <data name="Requests_QueueLoading" xml:space="preserve">
+    <value>Comparando os pedidos com a sua biblioteca…</value>
+  </data>
+  <data name="Requests_QueueLoadingText.Text" xml:space="preserve">
+    <value>Comparando os pedidos com a sua biblioteca…</value>
+  </data>
+  <data name="Requests_QueueRequestedByHeader.Text" xml:space="preserve">
+    <value>Pedido por</value>
+  </data>
+  <data name="Requests_QueueRequestedHeader.Text" xml:space="preserve">
+    <value>Pedido em</value>
+  </data>
+  <data name="Requests_QueueTitleHeader.Text" xml:space="preserve">
+    <value>Título</value>
+  </data>
+  <data name="Requests_QueueTryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Requests_QuotedMessage" xml:space="preserve">
+    <value>“{0}”</value>
+  </data>
+  <data name="Requests_ReasonLine" xml:space="preserve">
+    <value>Motivo: {0}</value>
+  </data>
+  <data name="Requests_Reject" xml:space="preserve">
+    <value>Recusar</value>
+  </data>
+  <data name="Requests_Rejecting" xml:space="preserve">
+    <value>Recusando…</value>
+  </data>
+  <data name="Requests_Saving" xml:space="preserve">
+    <value>Salvando…</value>
+  </data>
+  <data name="Requests_SearchAgain" xml:space="preserve">
+    <value>Buscar de novo</value>
+  </data>
+  <data name="Requests_Searching" xml:space="preserve">
+    <value>Buscando…</value>
+  </data>
+  <data name="Requests_ShowFixed" xml:space="preserve">
+    <value>Mostrar resolvidos ({0})</value>
+  </data>
+  <data name="Rows_BuiltInRow" xml:space="preserve">
+    <value>Fileira padrão</value>
+  </data>
+  <data name="Rows_FilterGenres" xml:space="preserve">
+    <value>Filtrar gêneros</value>
+  </data>
+  <data name="Rows_KindGenre" xml:space="preserve">
+    <value>Gênero</value>
+  </data>
+  <data name="Rows_KindKeyword" xml:space="preserve">
+    <value>Palavra-chave do TMDb</value>
+  </data>
+  <data name="Rows_KindLibrary" xml:space="preserve">
+    <value>Adicionados recentemente ao Plex/Jellyfin</value>
+  </data>
+  <data name="Rows_KindNetwork" xml:space="preserve">
+    <value>Emissora</value>
+  </data>
+  <data name="Rows_KindStudio" xml:space="preserve">
+    <value>Estúdio</value>
+  </data>
+  <data name="Rows_KindTmdbList" xml:space="preserve">
+    <value>Lista do TMDb</value>
+  </data>
+  <data name="Rows_KindTraktList" xml:space="preserve">
+    <value>Lista do Trakt</value>
+  </data>
+  <data name="Rows_MediaAll" xml:space="preserve">
+    <value>Filmes e séries</value>
+  </data>
+  <data name="Rows_MediaMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Rows_MediaSeries" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Rows_MovieGenres" xml:space="preserve">
+    <value>Gêneros de filmes</value>
+  </data>
+  <data name="Rows_NameTooLong" xml:space="preserve">
+    <value>O nome da fileira deve ter menos de {0} caracteres.</value>
+  </data>
+  <data name="Rows_NeedTmdbList" xml:space="preserve">
+    <value>Informe o número da lista do TMDb ou o link themoviedb.org/list dela.</value>
+  </data>
+  <data name="Rows_NeedTraktLink" xml:space="preserve">
+    <value>Cole o link de uma lista pública ou watchlist do Trakt, como https://trakt.tv/users/someone/lists/favourites.</value>
+  </data>
+  <data name="Rows_Networks" xml:space="preserve">
+    <value>Emissoras</value>
+  </data>
+  <data name="Rows_PickGenre" xml:space="preserve">
+    <value>Escolha um gênero.</value>
+  </data>
+  <data name="Rows_PickKeyword" xml:space="preserve">
+    <value>Escolha uma palavra-chave.</value>
+  </data>
+  <data name="Rows_PickNetwork" xml:space="preserve">
+    <value>Escolha uma emissora.</value>
+  </data>
+  <data name="Rows_PickStudio" xml:space="preserve">
+    <value>Escolha um estúdio.</value>
+  </data>
+  <data name="Rows_PickWhat" xml:space="preserve">
+    <value>Escolha o que a fileira mostra.</value>
+  </data>
+  <data name="Rows_PopularMovies" xml:space="preserve">
+    <value>Filmes populares</value>
+  </data>
+  <data name="Rows_PopularSeries" xml:space="preserve">
+    <value>Séries populares</value>
+  </data>
+  <data name="Rows_RecentlyAdded" xml:space="preserve">
+    <value>Adicionados recentemente</value>
+  </data>
+  <data name="Rows_SearchKeywords" xml:space="preserve">
+    <value>Buscar palavras-chave do TMDb, como anime</value>
+  </data>
+  <data name="Rows_SearchNetworks" xml:space="preserve">
+    <value>Buscar emissoras, como Netflix</value>
+  </data>
+  <data name="Rows_SearchStudios" xml:space="preserve">
+    <value>Buscar estúdios, como A24</value>
+  </data>
+  <data name="Rows_SeriesGenres" xml:space="preserve">
+    <value>Gêneros de séries</value>
+  </data>
+  <data name="Rows_Studios" xml:space="preserve">
+    <value>Estúdios</value>
+  </data>
+  <data name="Rows_Trending" xml:space="preserve">
+    <value>Em alta</value>
+  </data>
+  <data name="Rows_UpcomingMovies" xml:space="preserve">
+    <value>Próximos filmes</value>
+  </data>
+  <data name="Rows_UpcomingSeries" xml:space="preserve">
+    <value>Próximas séries</value>
+  </data>
+  <data name="Search_Box.PlaceholderText" xml:space="preserve">
+    <value>Busque um ator, um estúdio, um título…</value>
+  </data>
+  <data name="Search_ErrorHeading.Text" xml:space="preserve">
+    <value>Não foi possível buscar</value>
+  </data>
+  <data name="Search_Intro.Text" xml:space="preserve">
+    <value>Encontre um ator, um estúdio ou um título. Todos os resultados vêm do TMDb pelo seu servidor.</value>
+  </data>
+  <data name="Search_NoResults" xml:space="preserve">
+    <value>Nenhum resultado para “{0}”.</value>
+  </data>
+  <data name="Search_OpenSettings.Content" xml:space="preserve">
+    <value>Abrir Configurações</value>
+  </data>
+  <data name="Search_People.Text" xml:space="preserve">
+    <value>Pessoas</value>
+  </data>
+  <data name="Search_ResultsFor" xml:space="preserve">
+    <value>Resultados para “{0}”</value>
+  </data>
+  <data name="Search_Searching.Text" xml:space="preserve">
+    <value>Buscando…</value>
+  </data>
+  <data name="Search_Studios.Text" xml:space="preserve">
+    <value>Estúdios</value>
+  </data>
+  <data name="Search_ThemeTitle" xml:space="preserve">
+    <value>{0}: filmes e séries</value>
+  </data>
+  <data name="Search_Title" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Search_Titles.Text" xml:space="preserve">
+    <value>Títulos</value>
+  </data>
+  <data name="Search_TmdbMissingHeading.Text" xml:space="preserve">
+    <value>Conecte o TMDb para começar a explorar</value>
+  </data>
+  <data name="Search_TryAgain.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Season_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Season_Dialog.PrimaryButtonText" xml:space="preserve">
+    <value>Pedir temporadas</value>
+  </data>
+  <data name="Season_Dialog.Title" xml:space="preserve">
+    <value>Pedir temporadas</value>
+  </data>
+  <data name="Season_EpisodeCount_One" xml:space="preserve">
+    <value>{0} episódio</value>
+  </data>
+  <data name="Season_EpisodeCount_Other" xml:space="preserve">
+    <value>{0} episódios</value>
+  </data>
+  <data name="Season_Explanation" xml:space="preserve">
+    <value>Escolha as temporadas de “{0}” que você quer adicionar. As que já estão na biblioteca ou a caminho não podem ser escolhidas de novo.</value>
+  </data>
+  <data name="Season_FourK.Content" xml:space="preserve">
+    <value>Em 4K</value>
+  </data>
+  <data name="Season_JustThese.Content" xml:space="preserve">
+    <value>Só estas temporadas</value>
+  </data>
+  <data name="Season_Requesting" xml:space="preserve">
+    <value>Pedindo…</value>
+  </data>
+  <data name="Season_SelectAll.Content" xml:space="preserve">
+    <value>Selecionar tudo</value>
+  </data>
+  <data name="Season_WholeSeries.Content" xml:space="preserve">
+    <value>A série inteira</value>
+  </data>
+  <data name="Server_AddressEmpty" xml:space="preserve">
+    <value>Digite o endereço IP ou a URL do seu servidor.</value>
+  </data>
+  <data name="Server_AddressInvalid" xml:space="preserve">
+    <value>Isso não parece um endereço.</value>
+  </data>
+  <data name="Server_AddressInvalidExample" xml:space="preserve">
+    <value>Isso não parece um endereço. Tente algo como 192.168.1.20:3000.</value>
+  </data>
+  <data name="Server_AddressPort" xml:space="preserve">
+    <value>A porta deve ser um número entre 1 e 65535.</value>
+  </data>
+  <data name="Server_AddressScheme" xml:space="preserve">
+    <value>Os servidores Marquee usam http ou https, não {0}.</value>
+  </data>
+  <data name="Server_EnterCredentials" xml:space="preserve">
+    <value>Digite seu nome de usuário e sua senha.</value>
+  </data>
+  <data name="Server_EnterJellyfinCredentials" xml:space="preserve">
+    <value>Digite seu nome de usuário e sua senha do Jellyfin.</value>
+  </data>
+  <data name="Server_ProbeLegacy" xml:space="preserve">
+    <value>O Marquee foi encontrado em {0}, mas o servidor precisa ser atualizado para a versão {1} ou posterior para funcionar com o app para Windows.</value>
+  </data>
+  <data name="Server_ProbeLocalNetworkDenied" xml:space="preserve">
+    <value>O Windows impediu o Marquee de acessar sua rede local. Verifique as permissões de rede do app nas Configurações.</value>
+  </data>
+  <data name="Server_ProbeNoResponse" xml:space="preserve">
+    <value>Não foi possível acessar {0}. Verifique o endereço e se o servidor está ligado.</value>
+  </data>
+  <data name="Server_ProbeNotMarquee" xml:space="preserve">
+    <value>{0} respondeu, mas não é um servidor Marquee. Verifique o endereço e a porta.</value>
+  </data>
+  <data name="Server_ProbeOther" xml:space="preserve">
+    <value>Não foi possível conectar a {0}: {1}</value>
+  </data>
+  <data name="Server_ProbeRefused" xml:space="preserve">
+    <value>Nada está respondendo na porta {0} em {1}. Verifique a porta e se o Marquee está em execução.</value>
+  </data>
+  <data name="Server_ProbeServerError" xml:space="preserve">
+    <value>o servidor retornou um erro ({0}).</value>
+  </data>
+  <data name="Server_ProbeTooNew" xml:space="preserve">
+    <value>O servidor em {0} executa o Marquee {1}, mais novo do que este app suporta. Atualize o Marquee para Windows.</value>
+  </data>
+  <data name="Server_ProbeUnknownHost" xml:space="preserve">
+    <value>Não foi possível encontrar {0} na sua rede. Tente o endereço IP.</value>
+  </data>
+  <data name="Settings_AboutTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Sobre</value>
+  </data>
+  <data name="Settings_AboutTabLabel.Text" xml:space="preserve">
+    <value>Sobre</value>
+  </data>
+  <data name="Settings_AccountTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Conta</value>
+  </data>
+  <data name="Settings_AccountTabLabel.Text" xml:space="preserve">
+    <value>Conta</value>
+  </data>
+  <data name="Settings_ActivityTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Atividade</value>
+  </data>
+  <data name="Settings_ActivityTabLabel.Text" xml:space="preserve">
+    <value>Atividade</value>
+  </data>
+  <data name="Settings_DiscoverTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Settings_DiscoverTabLabel.Text" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Settings_IntegrationsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Integrações</value>
+  </data>
+  <data name="Settings_IntegrationsTabLabel.Text" xml:space="preserve">
+    <value>Integrações</value>
+  </data>
+  <data name="Settings_JobsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tarefas</value>
+  </data>
+  <data name="Settings_JobsTabLabel.Text" xml:space="preserve">
+    <value>Tarefas</value>
+  </data>
+  <data name="Settings_Title.Text" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Share_ClipboardBusy" xml:space="preserve">
+    <value>Outro app está usando a área de transferência. Tente de novo.</value>
+  </data>
+  <data name="Share_Copied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="Share_CopyLink" xml:space="preserve">
+    <value>Copiar link</value>
+  </data>
+  <data name="Share_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Concluído</value>
+  </data>
+  <data name="Share_Heading" xml:space="preserve">
+    <value>Compartilhar “{0}”</value>
+  </data>
+  <data name="Share_LinkHeader.Text" xml:space="preserve">
+    <value>Compartilhar um link</value>
+  </data>
+  <data name="Share_Loading.Text" xml:space="preserve">
+    <value>Carregando…</value>
+  </data>
+  <data name="Share_Note.Header" xml:space="preserve">
+    <value>Adicionar uma nota (opcional)</value>
+  </data>
+  <data name="Share_Note.PlaceholderText" xml:space="preserve">
+    <value>ex.: Você vai adorar este</value>
+  </data>
+  <data name="Share_PanelFailed" xml:space="preserve">
+    <value>Não foi possível abrir o painel Compartilhar. Copie o link.</value>
+  </data>
+  <data name="Share_Send" xml:space="preserve">
+    <value>Enviar</value>
+  </data>
+  <data name="Share_SendHeader.Text" xml:space="preserve">
+    <value>Enviar para alguém da casa</value>
+  </data>
+  <data name="Share_Sending" xml:space="preserve">
+    <value>Enviando…</value>
+  </data>
+  <data name="Share_ShareButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Email, Teams, Compartilhamento por proximidade e outros apps deste PC.</value>
+  </data>
+  <data name="Share_ShareButton.Content" xml:space="preserve">
+    <value>Compartilhar…</value>
+  </data>
+  <data name="Share_WhichLink.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Qual link</value>
+  </data>
+  <data name="Shell_AccountLabel" xml:space="preserve">
+    <value>Conta e configurações</value>
+  </data>
+  <data name="Shell_AccountLabelNamed" xml:space="preserve">
+    <value>{0}: conta e configurações</value>
+  </data>
+  <data name="Shell_AskNotificationsMessage" xml:space="preserve">
+    <value>O Marquee pode avisar quando algo começar a baixar, quando estiver pronto para assistir e quando um pedido for aprovado ou recusado. Os avisos vêm direto do seu servidor Marquee enquanto o app está aberto; nada passa por um serviço externo. Você pode mudar isso nas Configurações.</value>
+  </data>
+  <data name="Shell_AskNotificationsNotNow" xml:space="preserve">
+    <value>Agora não</value>
+  </data>
+  <data name="Shell_AskNotificationsTitle" xml:space="preserve">
+    <value>Receber notificações neste PC?</value>
+  </data>
+  <data name="Shell_AskNotificationsTurnOn" xml:space="preserve">
+    <value>Ativar</value>
+  </data>
+  <data name="Shell_AuthUpdateButton.Content" xml:space="preserve">
+    <value>Atualizar</value>
+  </data>
+  <data name="Shell_BackButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Voltar</value>
+  </data>
+  <data name="Shell_BackButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Voltar (Alt+Esquerda)</value>
+  </data>
+  <data name="Shell_CrashIntro" xml:space="preserve">
+    <value>O Marquee encontrou um problema e precisa fechar.</value>
+  </data>
+  <data name="Shell_CrashLogIntro" xml:space="preserve">
+    <value>Os detalhes foram salvos em:</value>
+  </data>
+  <data name="Shell_DownloadButton" xml:space="preserve">
+    <value>Baixar</value>
+  </data>
+  <data name="Shell_NothingToShare" xml:space="preserve">
+    <value>Não há nada para compartilhar.</value>
+  </data>
+  <data name="Shell_NotificationsButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Notificações</value>
+  </data>
+  <data name="Shell_NotificationsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Notificações</value>
+  </data>
+  <data name="Shell_NotificationsLabel" xml:space="preserve">
+    <value>Notificações</value>
+  </data>
+  <data name="Shell_NotificationsUnread_One" xml:space="preserve">
+    <value>Notificações, {0} não lida</value>
+  </data>
+  <data name="Shell_NotificationsUnread_Other" xml:space="preserve">
+    <value>Notificações, {0} não lidas</value>
+  </data>
+  <data name="Shell_PlaceholderBody.Text" xml:space="preserve">
+    <value>Esta parte do Marquee para Windows ainda está em construção.</value>
+  </data>
+  <data name="Shell_ProfileButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Conta e configurações</value>
+  </data>
+  <data name="Shell_ProfileButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Shell_RailCalendarButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Calendário</value>
+  </data>
+  <data name="Shell_RailCalendarButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Calendário</value>
+  </data>
+  <data name="Shell_RailDiscoverButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Shell_RailDiscoverButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Descobrir</value>
+  </data>
+  <data name="Shell_RailFavoritesButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Shell_RailFavoritesButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Shell_RailMoviesButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Shell_RailMoviesButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Shell_RailRequestsButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pedidos</value>
+  </data>
+  <data name="Shell_RailRequestsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Pedidos</value>
+  </data>
+  <data name="Shell_RailSearchButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Shell_RailSearchButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Shell_RailSeriesButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Shell_RailSeriesButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Shell_RailUpdateButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Atualizar o Marquee</value>
+  </data>
+  <data name="Shell_RailUpdateButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Atualizar o Marquee</value>
+  </data>
+  <data name="Shell_RequestsLabel" xml:space="preserve">
+    <value>Pedidos</value>
+  </data>
+  <data name="Shell_RequestsWaiting_One" xml:space="preserve">
+    <value>Pedidos, {0} pendente</value>
+  </data>
+  <data name="Shell_RequestsWaiting_Other" xml:space="preserve">
+    <value>Pedidos, {0} pendentes</value>
+  </data>
+  <data name="Shell_SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Shell_SearchBox.PlaceholderText" xml:space="preserve">
+    <value>Busque um ator, um estúdio, um título…</value>
+  </data>
+  <data name="Shell_SettingsTooltip" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Shell_UpdateButton" xml:space="preserve">
+    <value>Atualizar</value>
+  </data>
+  <data name="Shell_UpdatingMarquee" xml:space="preserve">
+    <value>Atualizando o Marquee…</value>
+  </data>
+  <data name="Sso_Checking" xml:space="preserve">
+    <value>Verificando…</value>
+  </data>
+  <data name="Sso_Copied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="Sso_Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Sso_Found" xml:space="preserve">
+    <value>Encontrado: {0}</value>
+  </data>
+  <data name="Sso_On" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Sso_PublicClientPlaceholder" xml:space="preserve">
+    <value>Deixe vazio para um cliente público</value>
+  </data>
+  <data name="Sso_SavedNotice" xml:space="preserve">
+    <value>Salvo. O botão de entrar já está ativo.</value>
+  </data>
+  <data name="Sso_SavedSecretPlaceholder" xml:space="preserve">
+    <value>(salvo — digite para substituir)</value>
+  </data>
+  <data name="Sso_Test" xml:space="preserve">
+    <value>Testar</value>
+  </data>
+  <data name="Sso_TestAndSave" xml:space="preserve">
+    <value>Testar e salvar</value>
+  </data>
+  <data name="Sso_Testing" xml:space="preserve">
+    <value>Testando…</value>
+  </data>
+  <data name="Sso_TurningOff" xml:space="preserve">
+    <value>Desativando…</value>
+  </data>
+  <data name="Sso_TurnOff" xml:space="preserve">
+    <value>Desativar o login único</value>
+  </data>
+  <data name="Status_KeyButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Legenda de cores: o que as cores significam?</value>
+  </data>
+  <data name="Status_KeyButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>O que as cores significam?</value>
+  </data>
+  <data name="Status_KeyHeading.Text" xml:space="preserve">
+    <value>O que as cores significam?</value>
+  </data>
+  <data name="Status_KeyLabel.Text" xml:space="preserve">
+    <value>Legenda de cores</value>
+  </data>
+  <data name="Title_AddAllBody" xml:space="preserve">
+    <value>Cada título é adicionado com seu Sonarr ou Radarr, um de cada vez.</value>
+  </data>
+  <data name="Title_AddAllConfirm" xml:space="preserve">
+    <value>Adicionar todos</value>
+  </data>
+  <data name="Title_AddAllDone_One" xml:space="preserve">
+    <value>{0} adicionado</value>
+  </data>
+  <data name="Title_AddAllDone_Other" xml:space="preserve">
+    <value>Todos os {0} adicionados</value>
+  </data>
+  <data name="Title_AddAllMissing_One" xml:space="preserve">
+    <value>Adicionar {0} título que falta</value>
+  </data>
+  <data name="Title_AddAllMissing_Other" xml:space="preserve">
+    <value>Adicionar os {0} que faltam</value>
+  </data>
+  <data name="Title_AddAllPartial" xml:space="preserve">
+    <value>{0} de {1} adicionados, {2} falharam</value>
+  </data>
+  <data name="Title_AddAllQuestion_One" xml:space="preserve">
+    <value>Adicionar {0} título que falta ao Sonarr/Radarr?</value>
+  </data>
+  <data name="Title_AddAllQuestion_Other" xml:space="preserve">
+    <value>Adicionar os {0} títulos que faltam ao Sonarr/Radarr?</value>
+  </data>
+  <data name="Title_Adding" xml:space="preserve">
+    <value>Adicionando…</value>
+  </data>
+  <data name="Title_AddTo" xml:space="preserve">
+    <value>Adicionar ao {0}</value>
+  </data>
+  <data name="Title_AddToFourK" xml:space="preserve">
+    <value>Adicionar ao {0} 4K</value>
+  </data>
+  <data name="Title_Advanced.Header" xml:space="preserve">
+    <value>Avançado</value>
+  </data>
+  <data name="Title_AdvancedFourK.Header" xml:space="preserve">
+    <value>Avançado (4K)</value>
+  </data>
+  <data name="Title_AdvancedQualityProfile.Header" xml:space="preserve">
+    <value>Perfil de qualidade</value>
+  </data>
+  <data name="Title_AdvancedRetry.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Title_AdvancedRootFolder.Header" xml:space="preserve">
+    <value>Pasta raiz</value>
+  </data>
+  <data name="Title_AdvancedSeriesType.Header" xml:space="preserve">
+    <value>Tipo de série</value>
+  </data>
+  <data name="Title_AdvancedServer.Header" xml:space="preserve">
+    <value>Servidor</value>
+  </data>
+  <data name="Title_AdvancedTags.Text" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Title_BlockedByKeyword.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Remova a palavra-chave em Configurações › Lista de bloqueio de pedidos para permitir pedidos de novo.</value>
+  </data>
+  <data name="Title_BlockRequests.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ninguém poderá pedir este título; você ainda pode adicioná-lo.</value>
+  </data>
+  <data name="Title_BlockRequests.Content" xml:space="preserve">
+    <value>Bloquear pedidos</value>
+  </data>
+  <data name="Title_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Title_CantFind.Text" xml:space="preserve">
+    <value>Não encontrado</value>
+  </data>
+  <data name="Title_CastHeader.Text" xml:space="preserve">
+    <value>Elenco</value>
+  </data>
+  <data name="Title_CheckingServers.Text" xml:space="preserve">
+    <value>Verificando seus servidores Sonarr e Radarr…</value>
+  </data>
+  <data name="Title_ConnectArr" xml:space="preserve">
+    <value>Conecte o {0} para adicionar este título</value>
+  </data>
+  <data name="Title_CopyPath.Content" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Title_EpisodeCount_One" xml:space="preserve">
+    <value>{0} episódio</value>
+  </data>
+  <data name="Title_EpisodeCount_Other" xml:space="preserve">
+    <value>{0} episódios</value>
+  </data>
+  <data name="Title_EpisodesHeader.Text" xml:space="preserve">
+    <value>Episódios</value>
+  </data>
+  <data name="Title_ErrorTitle" xml:space="preserve">
+    <value>Não foi possível carregar este título</value>
+  </data>
+  <data name="Title_FactFirstAirDate" xml:space="preserve">
+    <value>Primeira exibição</value>
+  </data>
+  <data name="Title_FactNetwork" xml:space="preserve">
+    <value>Emissora</value>
+  </data>
+  <data name="Title_FactNextEpisode" xml:space="preserve">
+    <value>Próximo episódio</value>
+  </data>
+  <data name="Title_FactOriginalLanguage" xml:space="preserve">
+    <value>Idioma original</value>
+  </data>
+  <data name="Title_FactProductionCountry" xml:space="preserve">
+    <value>País de produção</value>
+  </data>
+  <data name="Title_FactReleaseDate" xml:space="preserve">
+    <value>Data de lançamento</value>
+  </data>
+  <data name="Title_FactStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Title_Favorite.Text" xml:space="preserve">
+    <value>Favorito</value>
+  </data>
+  <data name="Title_FileAdded" xml:space="preserve">
+    <value>Adicionado</value>
+  </data>
+  <data name="Title_FileAudio" xml:space="preserve">
+    <value>Áudio</value>
+  </data>
+  <data name="Title_FileBitrate" xml:space="preserve">
+    <value>Taxa de bits</value>
+  </data>
+  <data name="Title_FileContainer" xml:space="preserve">
+    <value>Contêiner</value>
+  </data>
+  <data name="Title_FileDetails.Text" xml:space="preserve">
+    <value>Detalhes do arquivo</value>
+  </data>
+  <data name="Title_FileDynamicRange" xml:space="preserve">
+    <value>Faixa dinâmica</value>
+  </data>
+  <data name="Title_FileEdition" xml:space="preserve">
+    <value>Edição</value>
+  </data>
+  <data name="Title_FileQualityProfile" xml:space="preserve">
+    <value>Perfil de qualidade</value>
+  </data>
+  <data name="Title_FileReleaseGroup" xml:space="preserve">
+    <value>Grupo de lançamento</value>
+  </data>
+  <data name="Title_FileResolution" xml:space="preserve">
+    <value>Resolução</value>
+  </data>
+  <data name="Title_FileRuntime" xml:space="preserve">
+    <value>Duração</value>
+  </data>
+  <data name="Title_FileSize" xml:space="preserve">
+    <value>Tamanho</value>
+  </data>
+  <data name="Title_FileVideo" xml:space="preserve">
+    <value>Vídeo</value>
+  </data>
+  <data name="Title_FixId.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Correspondência errada? Aponte este título para o ID certo.</value>
+  </data>
+  <data name="Title_FixId.Content" xml:space="preserve">
+    <value>Corrigir ID</value>
+  </data>
+  <data name="Title_FixIdFailed" xml:space="preserve">
+    <value>Não foi possível corrigir a correspondência</value>
+  </data>
+  <data name="Title_FourKRequested.Text" xml:space="preserve">
+    <value>4K pedido</value>
+  </data>
+  <data name="Title_HaveIt" xml:space="preserve">
+    <value>Você tem</value>
+  </data>
+  <data name="Title_LoadFailed.Text" xml:space="preserve">
+    <value>Não foi possível carregar este título</value>
+  </data>
+  <data name="Title_Loading.Text" xml:space="preserve">
+    <value>Carregando este título…</value>
+  </data>
+  <data name="Title_Location.Text" xml:space="preserve">
+    <value>LOCAL</value>
+  </data>
+  <data name="Title_Missing" xml:space="preserve">
+    <value>Faltando</value>
+  </data>
+  <data name="Title_MoreLikeThis.Text" xml:space="preserve">
+    <value>Mais como este</value>
+  </data>
+  <data name="Title_NoEpisodeData.Text" xml:space="preserve">
+    <value>Não há dados de episódios para esta temporada.</value>
+  </data>
+  <data name="Title_NotFoundTooltip" xml:space="preserve">
+    <value>O Sonarr/Radarr não encontra desde {0}. Veja “Não encontrado” na página Pedidos.</value>
+  </data>
+  <data name="Title_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Title_OpenInBrowser.Content" xml:space="preserve">
+    <value>Abrir no navegador</value>
+  </data>
+  <data name="Title_OverviewHeader.Text" xml:space="preserve">
+    <value>Sinopse</value>
+  </data>
+  <data name="Title_ProblemReported.Text" xml:space="preserve">
+    <value>Problema relatado</value>
+  </data>
+  <data name="Title_ReportAnother" xml:space="preserve">
+    <value>Relatar outro</value>
+  </data>
+  <data name="Title_ReportButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Vídeo ou áudio ruim, legendas faltando, não reproduz: o administrador é avisado.</value>
+  </data>
+  <data name="Title_ReportProblem" xml:space="preserve">
+    <value>Relatar um problema</value>
+  </data>
+  <data name="Title_Request" xml:space="preserve">
+    <value>Pedir</value>
+  </data>
+  <data name="Title_RequestAllBody" xml:space="preserve">
+    <value>Cada título é pedido separadamente, então seus limites de pedidos continuam valendo.</value>
+  </data>
+  <data name="Title_RequestAllConfirm" xml:space="preserve">
+    <value>Pedir todos</value>
+  </data>
+  <data name="Title_RequestFourK" xml:space="preserve">
+    <value>Pedir em 4K</value>
+  </data>
+  <data name="Title_Requesting" xml:space="preserve">
+    <value>Pedindo…</value>
+  </data>
+  <data name="Title_RequestMoreSeasons.Content" xml:space="preserve">
+    <value>Pedir mais temporadas</value>
+  </data>
+  <data name="Title_Retry.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Title_Searching" xml:space="preserve">
+    <value>Buscando…</value>
+  </data>
+  <data name="Title_SearchNow" xml:space="preserve">
+    <value>Buscar agora</value>
+  </data>
+  <data name="Title_SearchQueued" xml:space="preserve">
+    <value>Busca na fila.</value>
+  </data>
+  <data name="Title_ServerDown.Text" xml:space="preserve">
+    <value>Este servidor não está respondendo agora, então as listas dele não podem ser mostradas. As configurações salvas dele serão usadas.</value>
+  </data>
+  <data name="Title_ServerResetHint.Text" xml:space="preserve">
+    <value>Escolher outro servidor redefine o resto para os padrões desse servidor.</value>
+  </data>
+  <data name="Title_ShareButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Compartilhar</value>
+  </data>
+  <data name="Title_ShareButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Envie para alguém da casa ou compartilhe um link.</value>
+  </data>
+  <data name="Title_ShareLabel.Text" xml:space="preserve">
+    <value>Compartilhar</value>
+  </data>
+  <data name="Title_StartMonitoring" xml:space="preserve">
+    <value>Começar a monitorar</value>
+  </data>
+  <data name="Title_StopMonitoring" xml:space="preserve">
+    <value>Parar de monitorar</value>
+  </data>
+  <data name="Title_StreamingOn.Text" xml:space="preserve">
+    <value>DISPONÍVEL AGORA EM</value>
+  </data>
+  <data name="Title_StudioHeader.Text" xml:space="preserve">
+    <value>Estúdio</value>
+  </data>
+  <data name="Title_Trailer" xml:space="preserve">
+    <value>▶ Trailer</value>
+  </data>
+  <data name="Title_Unblocking" xml:space="preserve">
+    <value>Desbloqueando…</value>
+  </data>
+  <data name="Title_UnblockRequests" xml:space="preserve">
+    <value>Desbloquear pedidos</value>
+  </data>
+  <data name="Title_Updating" xml:space="preserve">
+    <value>Atualizando…</value>
+  </data>
+  <data name="Title_UserScore.Text" xml:space="preserve">
+    <value>Nota dos usuários do TMDb</value>
+  </data>
+  <data name="TitleModel_AddToRadarr" xml:space="preserve">
+    <value>+ Adicionar ao Radarr</value>
+  </data>
+  <data name="TitleModel_AddToSonarr" xml:space="preserve">
+    <value>+ Adicionar ao Sonarr</value>
+  </data>
+  <data name="TitleModel_RequestAllConfirm_One" xml:space="preserve">
+    <value>Pedir {0} título que falta?</value>
+  </data>
+  <data name="TitleModel_RequestAllConfirm_Other" xml:space="preserve">
+    <value>Pedir os {0} títulos que faltam?</value>
+  </data>
+  <data name="TitleModel_RequestAllMissing_One" xml:space="preserve">
+    <value>Pedir {0} que falta</value>
+  </data>
+  <data name="TitleModel_RequestAllMissing_Other" xml:space="preserve">
+    <value>Pedir os {0} que faltam</value>
+  </data>
+  <data name="TitleModel_Requesting" xml:space="preserve">
+    <value>Pedindo…</value>
+  </data>
+  <data name="TitleModel_RequestNSeasons_One" xml:space="preserve">
+    <value>Pedir {0} temporada</value>
+  </data>
+  <data name="TitleModel_RequestNSeasons_Other" xml:space="preserve">
+    <value>Pedir {0} temporadas</value>
+  </data>
+  <data name="TitleModel_RequestSeasons" xml:space="preserve">
+    <value>Pedir temporadas</value>
+  </data>
+  <data name="TitleModel_TagInLibrary" xml:space="preserve">
+    <value>Na biblioteca</value>
+  </data>
+  <data name="TitleModel_TagMonitored" xml:space="preserve">
+    <value>Monitorada</value>
+  </data>
+  <data name="TitleModel_TagRequested" xml:space="preserve">
+    <value>Pedida</value>
+  </data>
+  <data name="Trakt_Adding" xml:space="preserve">
+    <value>Adicionando…</value>
+  </data>
+  <data name="Trakt_Checking" xml:space="preserve">
+    <value>Verificando…</value>
+  </data>
+  <data name="Trakt_CheckNow" xml:space="preserve">
+    <value>Verificar agora</value>
+  </data>
+  <data name="Trakt_KeepInSync" xml:space="preserve">
+    <value>Manter sincronizada</value>
+  </data>
+  <data name="Update_DownloadFailed" xml:space="preserve">
+    <value>O download não terminou. Verifique sua conexão com a internet e tente de novo.</value>
+  </data>
+  <data name="Update_Failed" xml:space="preserve">
+    <value>O Marquee não conseguiu se atualizar.</value>
+  </data>
+  <data name="Update_LaunchFailed" xml:space="preserve">
+    <value>O Marquee não conseguiu iniciar o instalador.</value>
+  </data>
+  <data name="Update_Mismatch" xml:space="preserve">
+    <value>O download não corresponde ao que o GitHub informa, então o Marquee não o instalou.</value>
+  </data>
+  <data name="Update_NoDownload" xml:space="preserve">
+    <value>A versão mais recente ainda não tem download para Windows. Tente de novo em alguns minutos.</value>
+  </data>
+  <data name="Update_UnknownHost" xml:space="preserve">
+    <value>um host desconhecido</value>
+  </data>
+  <data name="Update_Unreachable" xml:space="preserve">
+    <value>Não foi possível acessar o GitHub para procurar atualizações. Verifique sua conexão com a internet e tente de novo.</value>
+  </data>
+  <data name="Update_UnreadableRelease" xml:space="preserve">
+    <value>Não foi possível ler a resposta do GitHub sobre a versão mais recente. Tente de novo mais tarde.</value>
+  </data>
+  <data name="Update_UntrustedHost" xml:space="preserve">
+    <value>O download foi redirecionado para um lugar inesperado ({0}), então o Marquee o interrompeu.</value>
+  </data>
+  <data name="Update_WhatsNewTitle" xml:space="preserve">
+    <value>Novidades do Marquee {0}</value>
+  </data>
+  <data name="Updater_Available" xml:space="preserve">
+    <value>O Marquee {0} está disponível. Você tem a {1}.</value>
+  </data>
+  <data name="Updater_AvailableNotInstalled" xml:space="preserve">
+    <value>O Marquee {0} está disponível. Esta cópia do Marquee não é a instalada, então baixe a nova versão no GitHub.</value>
+  </data>
+  <data name="Updater_Checking" xml:space="preserve">
+    <value>Procurando atualizações…</value>
+  </data>
+  <data name="Updater_Daily" xml:space="preserve">
+    <value>O Marquee procura atualizações uma vez por dia.</value>
+  </data>
+  <data name="Updater_Downloading" xml:space="preserve">
+    <value>Baixando o Marquee {0}… {1}%</value>
+  </data>
+  <data name="Updater_Failed" xml:space="preserve">
+    <value>Não foi possível atualizar o Marquee.</value>
+  </data>
+  <data name="Updater_Installing" xml:space="preserve">
+    <value>Instalando. O Marquee vai fechar e abrir de novo sozinho.</value>
+  </data>
+  <data name="Updater_UpdateMarquee" xml:space="preserve">
+    <value>Atualizar o Marquee</value>
+  </data>
+  <data name="Updater_UpdateTo" xml:space="preserve">
+    <value>Atualizar para o Marquee {0}</value>
+  </data>
+  <data name="Updater_UpToDate" xml:space="preserve">
+    <value>Você está com a versão mais recente.</value>
+  </data>
+  <data name="User_ActiveDaysAgo_One" xml:space="preserve">
+    <value>Ativo há {0} dia</value>
+  </data>
+  <data name="User_ActiveDaysAgo_Other" xml:space="preserve">
+    <value>Ativo há {0} dias</value>
+  </data>
+  <data name="User_ActiveHoursAgo_One" xml:space="preserve">
+    <value>Ativo há {0} hora</value>
+  </data>
+  <data name="User_ActiveHoursAgo_Other" xml:space="preserve">
+    <value>Ativo há {0} horas</value>
+  </data>
+  <data name="User_ActiveMinutesAgo_One" xml:space="preserve">
+    <value>Ativo há {0} minuto</value>
+  </data>
+  <data name="User_ActiveMinutesAgo_Other" xml:space="preserve">
+    <value>Ativo há {0} minutos</value>
+  </data>
+  <data name="User_ActiveNow" xml:space="preserve">
+    <value>Ativo agora</value>
+  </data>
+  <data name="User_ActiveYesterday" xml:space="preserve">
+    <value>Ativo ontem</value>
+  </data>
+  <data name="User_DaysInvalid" xml:space="preserve">
+    <value>O número de dias vai de 1 a 365.</value>
+  </data>
+  <data name="User_LastActiveOn" xml:space="preserve">
+    <value>Última atividade: {0:d MMM yyyy}</value>
+  </data>
+  <data name="User_LimitsHeader" xml:space="preserve">
+    <value>Limites de pedidos (vazio para nenhum; membros confiáveis não têm)</value>
+  </data>
+  <data name="User_MemberChoice" xml:space="preserve">
+    <value>Membro</value>
+  </data>
+  <data name="User_MovieLimitInvalid" xml:space="preserve">
+    <value>O limite de filmes é um número de 1 a 1000, ou vazio para sem limite.</value>
+  </data>
+  <data name="User_NeverSignedIn" xml:space="preserve">
+    <value>Nunca entrou</value>
+  </data>
+  <data name="User_TagCustom" xml:space="preserve">
+    <value>Personalizado</value>
+  </data>
+  <data name="User_TagTrusted" xml:space="preserve">
+    <value>Confiável</value>
+  </data>
+  <data name="User_TrustedChoice" xml:space="preserve">
+    <value>Confiável — pode aprovar pedidos e cuidar dos relatos de problemas</value>
+  </data>
+  <data name="User_TvLimitInvalid" xml:space="preserve">
+    <value>O limite de séries é um número de 1 a 1000, ou vazio para sem limite.</value>
+  </data>
+  <data name="WhatsNew_AndMore" xml:space="preserve">
+    <value>E mais em versões anteriores.</value>
+  </data>
+  <data name="WhatsNew_Installed" xml:space="preserve">
+    <value>O Marquee para Windows {0} está instalado.</value>
+  </data>
+  <data name="WhatsNew_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="WhatsNew_ReleaseNotes" xml:space="preserve">
+    <value>Ler as notas da versão no GitHub</value>
+  </data>
+  <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
+    <value>Ver todas as mudanças</value>
+  </data>
+</root>

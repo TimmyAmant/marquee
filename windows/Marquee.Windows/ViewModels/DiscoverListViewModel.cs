@@ -3,6 +3,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -18,8 +19,6 @@ namespace Marquee.Windows.ViewModels;
 /// </summary>
 public sealed partial class DiscoverListViewModel : ObservableObject
 {
-    public const string EmptyTitle = "Nothing here right now";
-
     /// <summary>A run of pages that were all repeats: keep asking, bounded, so scrolling never dead-ends.</summary>
     private const int MaxEmptyBatches = 5;
 
@@ -81,13 +80,13 @@ public sealed partial class DiscoverListViewModel : ObservableObject
 
     public ObservableCollection<PosterItem> Cards { get; } = [];
 
-    public string LoadingLabel => $"Loading {Title}…";
-    public string ErrorTitle => $"Couldn't load {Title}";
+    public string LoadingLabel => Loc.Format("Discover_ListLoading", Title);
+    public string ErrorTitle => Loc.Format("Discover_ListError", Title);
 
     /// <summary>The website's empty line: the library for Recently Added, TMDb for the rest.</summary>
     public string EmptyMessage => List == DiscoverListKind.RecentlyAdded
-        ? "Nothing added to your Plex or Jellyfin library yet."
-        : "Nothing here right now — TMDb didn't send anything back.";
+        ? Loc.Get("Discover_ListEmptyRecentlyAdded")
+        : Loc.Get("Discover_ListEmptyTmdb");
 
     public bool ShowsError => ErrorMessage != null && !HasCards;
     public bool HasPageError => PageError != null;
@@ -101,8 +100,8 @@ public sealed partial class DiscoverListViewModel : ObservableObject
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
     public string TmdbMissingMessage => IsAdmin
-        ? "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations."
-        : "The household admin hasn't connected TMDb yet.";
+        ? Loc.Get("Discover_TmdbMissingAdmin")
+        : Loc.Get("Discover_TmdbMissingMember");
 
     public bool CanOpenSettings => IsTmdbMissing && IsAdmin;
 

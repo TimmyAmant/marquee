@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiUser } from "@/lib/api/auth";
 import { invalid } from "@/lib/api/request";
 import { localDateString } from "@/lib/api/mappers";
@@ -15,7 +16,7 @@ export const GET = withApi(async (request): Promise<CalendarResponse> => {
   const ctx = await requireApiUser(request);
   const monthQuery = new URL(request.url).searchParams.get("month");
   if (monthQuery && !/^\d{4}-(0[1-9]|1[0-2])$/.test(monthQuery)) {
-    throw invalid('"month" must look like 2026-09.');
+    throw invalid(msg("server.monthFormat"));
   }
 
   const libraryOwnerId = await ctx.libraryOwnerId();

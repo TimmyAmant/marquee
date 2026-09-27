@@ -18,20 +18,20 @@
 
     <StackPanel Spacing="20">
         <StackPanel Spacing="4">
-            <TextBlock Text="About Marquee" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock x:Uid="About_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
             <TextBlock
-                Text="Version, library stats, and where to get help."
+                x:Uid="About_Subtitle"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap" />
         </StackPanel>
 
         <!-- Server -->
-        <TextBlock Text="Server" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock x:Uid="About_ServerHeading" Style="{StaticResource SubtitleTextBlockStyle}" />
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="14">
                 <StackPanel Spacing="2">
-                    <TextBlock Text="This PC is signed in to" Style="{StaticResource FieldLabel}" />
+                    <TextBlock x:Uid="About_SignedInTo" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" IsTextSelectionEnabled="True" />
                     <TextBlock
                         Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
@@ -39,19 +39,19 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
                 <TextBlock
-                    Text="Sign out revokes this PC's session only; other devices stay signed in. Change server forgets this server and starts over at the connect screen."
+                    x:Uid="About_ServerNote"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Sign out" Command="{x:Bind ViewModel.SignOutCommand}" />
-                    <Button Content="Change server" Command="{x:Bind ViewModel.ChangeServerCommand}" />
+                    <Button x:Uid="About_SignOut" Command="{x:Bind ViewModel.SignOutCommand}" />
+                    <Button x:Uid="About_ChangeServer" Command="{x:Bind ViewModel.ChangeServerCommand}" />
                 </StackPanel>
             </StackPanel>
         </Border>
 
         <!-- About -->
-        <TextBlock Text="About" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock x:Uid="About_AboutHeading" Style="{StaticResource SubtitleTextBlockStyle}" />
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="12">
                 <TextBlock Text="{x:Bind ViewModel.AppVersionLabel}" Style="{StaticResource BodyStrongTextBlockStyle}" />
@@ -85,21 +85,21 @@
                         Visibility="{x:Bind Updater.IsInstalling, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button
-                            Content="Check for updates"
+                            x:Uid="About_CheckForUpdates"
                             Click="OnCheckForUpdatesClick"
                             Visibility="{x:Bind Updater.CanCheck, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <Button
                             Content="{x:Bind Updater.UpdateLabel, Mode=OneWay}"
                             Style="{StaticResource AccentButtonStyle}"
                             Click="OnInstallUpdateClick"
-                            ToolTipService.ToolTip="Downloads the installer, checks it, then Marquee closes, updates and reopens"
+                            x:Uid="About_InstallUpdate"
                             Visibility="{x:Bind Updater.CanInstall, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <Button
-                            Content="What's new"
+                            x:Uid="About_WhatsNew"
                             Click="OnReleaseNotesClick"
                             Visibility="{x:Bind Updater.ShowsUpdate, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <Button
-                            Content="Download manually"
+                            x:Uid="About_DownloadManually"
                             Click="OnReleaseNotesClick"
                             Visibility="{x:Bind Updater.ShowsManualDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
@@ -116,7 +116,7 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                         TextWrapping="Wrap" />
-                    <Button Content="Try again" Command="{x:Bind ViewModel.LoadAboutCommand}" />
+                    <Button x:Uid="About_TryAgain" Command="{x:Bind ViewModel.LoadAboutCommand}" />
                 </StackPanel>
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.AboutRows, Mode=OneWay}">
                     <ItemsRepeater.Layout>
@@ -159,11 +159,11 @@
         </Border>
 
         <!-- What the colors mean: the same list as the Color key pill's flyout, always here to look up. -->
-        <TextBlock Text="What the colors mean" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock x:Uid="About_ColorsHeading" Style="{StaticResource SubtitleTextBlockStyle}" />
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="12">
                 <TextBlock
-                    Text="The colored strip under a poster and the status badge on a title show where it stands in your library. They match Radarr's and Sonarr's own colors."
+                    x:Uid="About_ColorsNote"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />

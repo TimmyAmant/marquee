@@ -1,6 +1,7 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiAdmin, requireApiPermission } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
+import { msg, type ApiMessage } from "@/lib/api/errors";
 import { parseUuidSegment } from "@/lib/api/request";
 import type { CoreResult } from "@/lib/core-result";
 import type { Ok } from "@/lib/api/types";
@@ -10,7 +11,7 @@ import type { Ok } from "@/lib/api/types";
  * reason from the body. */
 export function reviewRequestHandler(
   review: (requestId: string, adminUserId: string) => Promise<CoreResult>,
-  forbiddenMessage: string,
+  forbiddenMessage: ApiMessage,
   /** Manual approval means the admin adds it by hand, so only the admin may
    * promise that; approving is open to trusted members too. */
   adminOnly = false,
@@ -19,7 +20,7 @@ export function reviewRequestHandler(
     const ctx = adminOnly
       ? await requireApiAdmin(request, forbiddenMessage)
       : await requireApiPermission(request, "reviewRequests", forbiddenMessage);
-    const requestId = parseUuidSegment(params.id, "Request not found or already reviewed.");
+    const requestId = parseUuidSegment(params.id, msg("server.requestNotFoundOrReviewed"));
     unwrap(await review(requestId, ctx.user.id));
     return { ok: true };
   });

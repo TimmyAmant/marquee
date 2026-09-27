@@ -21,7 +21,7 @@ struct BlocklistSettingsSection: View {
     var body: some View {
         if !unsupported {
             VStack(alignment: .leading, spacing: 14) {
-                SettingsSectionLabel(text: "Request blocklist")
+                SettingsSectionLabel(text: String(localized: "Request blocklist"))
                 Text("Titles and keywords nobody can request. You can still add them yourself.")
                     .font(.system(size: 12.5))
                     .foregroundStyle(Theme.textSecondary)
@@ -79,8 +79,8 @@ struct BlocklistSettingsSection: View {
                     .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
                     .font(.system(size: 13.5))
                 } else {
-                    (Text("Keyword: ").foregroundStyle(Theme.textPrimary)
-                        + Text(entry.keyword ?? "").fontWeight(.medium).foregroundStyle(Theme.textPrimary))
+                    Text("Keyword: \(Text(entry.keyword ?? "").fontWeight(.medium))")
+                        .foregroundStyle(Theme.textPrimary)
                         .font(.system(size: 13.5))
                 }
                 if let reason = entry.reason.nonBlank {
@@ -103,13 +103,13 @@ struct BlocklistSettingsSection: View {
     private var form: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                SettingsField(label: "Block a keyword or genre", text: $keyword, placeholder: "e.g. anime, reality, horror")
+                SettingsField(label: String(localized: "Block a keyword or genre"), text: $keyword, placeholder: String(localized: "e.g. anime, reality, horror"))
                 Text("Any title with this TMDb keyword or genre can't be requested (you can still add it yourself).")
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            SettingsField(label: "Reason (optional, shown to whoever asks)", text: $reason)
+            SettingsField(label: String(localized: "Reason (optional, shown to whoever asks)"), text: $reason)
                 .onChange(of: reason) { _, value in
                     if value.count > API.BlockTitleRequest.maxReasonLength {
                         reason = String(value.prefix(API.BlockTitleRequest.maxReasonLength))

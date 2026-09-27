@@ -2,6 +2,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Marquee.Core.Api;
+using Marquee.Core.Localization;
 using Marquee.Core.Models;
 using Marquee.Windows.Services;
 
@@ -22,7 +23,7 @@ public sealed class NotificationRow
         SenderLabel = item.SharedBy?.Label ?? "";
         SenderAvatarUrl = item.SharedBy?.AvatarUrl ?? "";
         HasSender = item.SharedBy != null;
-        NoteLine = item.Note.NonBlank() is { } note ? $"“{note}”" : "";
+        NoteLine = item.Note.NonBlank() is { } note ? Loc.Format("Notifications_NoteLine", note) : "";
         Open = open;
     }
 
@@ -72,7 +73,7 @@ public sealed class NotificationRow
     public bool IsUnread { get; }
 
     /// <summary>What a screen reader says for the row.</summary>
-    public string AccessibleName => IsUnread ? $"Unread: {Message}" : Message;
+    public string AccessibleName => IsUnread ? Loc.Format("Notifications_UnreadRow", Message) : Message;
 
     /// <summary>The same row shown as read, for the optimistic "Mark all read".</summary>
     public NotificationRow AsRead() => IsUnread ? new NotificationRow(this, isUnread: false) : this;
@@ -86,7 +87,7 @@ public sealed class NotificationRow
 /// </summary>
 public sealed partial class NotificationsViewModel : ObservableObject
 {
-    public const string EmptyMessage = "No notifications yet.";
+    public static string EmptyMessage => Loc.Get("Notifications_EmptyMessage");
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;

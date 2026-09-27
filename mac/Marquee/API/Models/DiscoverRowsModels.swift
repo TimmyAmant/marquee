@@ -77,9 +77,9 @@ extension API {
         /// "Movies" / "Series" / "Both".
         var label: String {
             switch self {
-            case .movie: return "Movies"
-            case .tv: return "Series"
-            case .all: return "Both"
+            case .movie: return String(localized: "Movies")
+            case .tv: return String(localized: "Series")
+            case .all: return String(localized: "Both")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -114,13 +114,13 @@ extension API {
         /// The website's label for the kind.
         var label: String {
             switch self {
-            case .keyword: return "TMDb keyword"
-            case .genre: return "Genre"
-            case .company: return "Studio"
-            case .network: return "Network"
-            case .tmdbList: return "TMDb list"
-            case .traktList: return "Trakt list"
-            case .library: return "Recently added to Plex/Jellyfin"
+            case .keyword: return String(localized: "TMDb keyword")
+            case .genre: return String(localized: "Genre")
+            case .company: return String(localized: "Studio")
+            case .network: return String(localized: "Network")
+            case .tmdbList: return String(localized: "TMDb list")
+            case .traktList: return String(localized: "Trakt list")
+            case .library: return String(localized: "Recently added to Plex/Jellyfin")
             case let .unknown(raw): return raw
             }
         }

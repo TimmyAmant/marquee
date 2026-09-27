@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { msg } from "@/lib/api/errors";
 import { requireApiAdmin } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { readJsonBody } from "@/lib/api/request";
@@ -6,7 +7,7 @@ import { ssoSettingsDto } from "@/lib/api/routes/sso";
 import { getSsoSettingsView, removeSsoSettings, testAndSaveSsoSettings } from "@/lib/auth/sso/config";
 import type { SsoSettings } from "@/lib/api/types";
 
-const FORBIDDEN = "Only the admin can change sign-in settings.";
+const FORBIDDEN = msg("server.onlyAdminSignInSettings");
 
 /** Single sign-on settings (admin). Never includes the client secret —
  * `hasClientSecret` says whether one is saved. */

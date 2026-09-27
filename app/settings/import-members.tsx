@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImportCandidate } from "@/lib/auth/media-signin";
 import { importMembersAction, listImportCandidatesAction, setMediaServerSignupAction } from "./media-actions";
+import { useT } from "@/lib/i18n/client";
 
 const LABEL = { plex: "Plex", jellyfin: "Jellyfin" } as const;
 type Provider = keyof typeof LABEL;
@@ -22,6 +23,7 @@ function ImportDialog({
   labels: Record<Provider, string>;
   onClose: (message?: string) => void;
 }) {
+  const t = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [candidates, setCandidates] = useState<ImportCandidate[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -60,7 +62,7 @@ function ImportDialog({
       return;
     }
     const created = result.created ?? 0;
-    onClose(created === 1 ? "Added 1 household member." : `Added ${created} household members.`);
+    onClose(t("settings.importedMembers", { count: created }));
   }
 
   return (
@@ -70,15 +72,13 @@ function ImportDialog({
       className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-bg-1 p-0 text-text-primary backdrop:bg-black/60"
     >
       <div className="p-6">
-        <h3 className="font-display text-xl">Import from {labels[provider]}</h3>
-        <p className="mt-1 text-sm text-text-secondary">
-          Each person gets a member account and signs in with {labels[provider]}.
-        </p>
+        <h3 className="font-display text-xl">{t("settings.importFrom", { server: labels[provider] })}</h3>
+        <p className="mt-1 text-sm text-text-secondary">{t("settings.importDialogHelp", { server: labels[provider] })}</p>
 
         <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-border">
-          {candidates === null && !error && <p className="px-4 py-3 text-sm text-text-muted">Loading…</p>}
+          {candidates === null && !error && <p className="px-4 py-3 text-sm text-text-muted">{t("common.loading")}</p>}
           {candidates?.length === 0 && (
-            <p className="px-4 py-3 text-sm text-text-muted">Nobody else has access to your {labels[provider]} server.</p>
+            <p className="px-4 py-3 text-sm text-text-muted">{t("settings.importNobody", { server: labels[provider] })}</p>
           )}
           {candidates && candidates.length > 0 && (
             <ul className="divide-y divide-border">
@@ -96,7 +96,7 @@ function ImportDialog({
                       <span className="block truncate">{c.displayName || c.username}</span>
                       {c.displayName && <span className="block truncate text-text-muted">{c.username}</span>}
                     </span>
-                    {c.alreadyMember && <span className="text-xs text-text-muted">Already a member</span>}
+                    {c.alreadyMember && <span className="text-xs text-text-muted">{t("settings.alreadyMember")}</span>}
                   </label>
                 </li>
               ))}
@@ -108,7 +108,7 @@ function ImportDialog({
 
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={() => dialogRef.current?.close()} className={buttonClass}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -116,7 +116,7 @@ function ImportDialog({
             onClick={handleImport}
             className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
           >
-            {busy ? "Importing…" : selected.size > 0 ? `Import ${selected.size}` : "Import"}
+            {busy ? t("settings.importing") : selected.size > 0 ? t("settings.importCount", { count: selected.size }) : t("settings.import")}
           </button>
         </div>
       </div>
@@ -136,6 +136,7 @@ export function ImportMembers({
   /** "Emby" when that's the connected server (lib/jellyfin/product.ts). */
   jellyfinName?: string;
 }) {
+  const t = useT();
   const labels: Record<Provider, string> = { ...LABEL, jellyfin: jellyfinName };
   const router = useRouter();
   const [open, setOpen] = useState<Provider | null>(null);
@@ -158,7 +159,7 @@ export function ImportMembers({
             }}
             className={buttonClass}
           >
-            Import from {labels[provider]}
+            {t("settings.importFrom", { server: labels[provider] })}
           </button>
         ))}
       </div>
@@ -181,12 +182,8 @@ export function ImportMembers({
           className="mt-0.5 h-4 w-4 rounded border-border accent-accent"
         />
         <span>
-          New accounts from {providers.map((p) => labels[p]).join("/")} sign-in
-          <span className="mt-0.5 block text-xs text-text-muted">
-            Anyone who can use your server gets a member account the first time they sign in, including anyone you
-            remove here, who can come straight back. The sign-in screen tells newcomers to sign in that way. Off:
-            only the people you import (or who link their account) can sign in that way.
-          </span>
+          {t("settings.mediaServerSignup", { server: providers.map((p) => labels[p]).join("/") })}
+          <span className="mt-0.5 block text-xs text-text-muted">{t("settings.mediaServerSignupHelp")}</span>
         </span>
       </label>
       {signupError && <p className="text-sm text-red-400">{signupError}</p>}

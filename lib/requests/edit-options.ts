@@ -1,4 +1,5 @@
 import { and, eq, ne } from "drizzle-orm";
+import { getT } from "@/lib/i18n/server";
 import { db } from "@/lib/db/client";
 import { requests } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
@@ -28,10 +29,10 @@ export async function getRequestEditOptions(
 ): Promise<CoreResult<{ options: RequestEditOptions }>> {
   const [request] = await db.select().from(requests).where(eq(requests.id, requestId)).limit(1);
   if (!request || (request.requestedByUserId !== actor.userId && !can(actor, "reviewRequests"))) {
-    return fail("not_found", "Request not found.");
+    return fail("not_found", (await getT())("notify.requestNotFound"));
   }
   if (request.status !== "pending") {
-    return fail("conflict", "It's already been reviewed, so it can't be changed. Ask in its comments instead.");
+    return fail("conflict", (await getT())("notify.editAlreadyReviewed"));
   }
 
   const adminUserId = await getAdminUserId();
@@ -44,7 +45,7 @@ export async function getRequestEditOptions(
   let seasonRows: RequestEditOptions["seasonRows"] = [];
   if (request.mediaType === "tv") {
     const title = await getOrFetchTitle("tv", request.tmdbId).catch(() => null);
-    if (!title) return fail("upstream", "Couldn't check this show's seasons with TMDb right now.");
+    if (!title) return fail("upstream", (await getT())("notify.tmdbSeasonsFailed"));
     const seasons = seasonsNewestFirst((title.rawTmdb as TmdbTvDetails | null)?.seasons ?? []);
     const libraryOwnerId = await getLibraryOwnerUserId(request.requestedByUserId);
     const [library, others] = await Promise.all([

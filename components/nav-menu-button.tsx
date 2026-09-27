@@ -1,16 +1,18 @@
 "use client";
 
 import { OPEN_NAV_EVENT } from "@/components/nav-menu";
+import { useT } from "@/lib/i18n/client";
 
 /** The header's menu button on narrow screens, where the rail is hidden.
  * The menu itself lives in the root layout (components/nav-menu.tsx), so
  * this only asks it to open. */
 export function NavMenuButton() {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_NAV_EVENT))}
-      aria-label="Open menu"
+      aria-label={t("nav.openMenu")}
       aria-controls="nav-menu-panel"
       className="flex h-9 w-9 items-center justify-center rounded-full border border-border-strong text-text-secondary transition-colors hover:border-accent hover:text-accent md:hidden"
     >

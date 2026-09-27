@@ -1,7 +1,7 @@
 import { withApi } from "@/lib/api/handler";
 import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { queryInt } from "@/lib/api/request";
 import { titleCard } from "@/lib/api/mappers";
 import { DISCOVER_LISTS } from "@/lib/discover/lists";
@@ -15,10 +15,7 @@ export const GET = withApi<{ list: string }>(async (request, params): Promise<Di
   const ctx = await requireApiUser(request);
   const resolved = await resolveDiscoverList(params.list);
   if (!resolved) {
-    throw ApiError.of(
-      "not_found",
-      `No Discover list "${params.list}" (one of ${DISCOVER_LISTS.join(", ")}, or a Discover row's id).`,
-    );
+    throw ApiError.of("not_found", msg("server.noDiscoverList", { list: params.list, lists: DISCOVER_LISTS.join(", ") }));
   }
   const page = queryInt(new URL(request.url), "page", { min: 1, max: resolved.maxPage }) ?? 1;
   // Recently Added comes from the library, not TMDb.

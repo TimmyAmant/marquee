@@ -75,9 +75,13 @@ struct ServerInfo: Codable, Equatable, Hashable, Sendable {
         if signIn.signup, signIn.plex { names.append("Plex") }
         if signIn.signup, signIn.jellyfin { names.append(jellyfinName) }
         guard let first = names.first else { return nil }
-        let rest = names.dropFirst()
-        let label = rest.isEmpty ? first : "\(first) (or \(rest.joined(separator: " or ")))"
-        return "New here? Use Sign in with \(label) — your account is made for you."
+        let rest = Array(names.dropFirst())
+        if rest.isEmpty {
+            return String(localized: "New here? Use Sign in with \(first) — your account is made for you.")
+        }
+        // "Plex or Jellyfin", in the app's language.
+        let others = rest.formatted(.list(type: .or))
+        return String(localized: "New here? Use Sign in with \(first) (or \(others)) — your account is made for you.")
     }
 
     /// A media server's user-facing name, with Emby called Emby.
@@ -210,23 +214,23 @@ enum ProbeOutcome: Equatable, Hashable, Sendable {
         case .marquee:
             return nil
         case .legacy:
-            return "Found Marquee at \(name), but the server needs updating to \(ServerInfo.minimumServerVersion) or later to work with the Mac app."
+            return String(localized: "Found Marquee at \(name), but the server needs updating to \(ServerInfo.minimumServerVersion) or later to work with the Mac app.")
         case let .incompatible(info):
-            return "The server at \(name) runs Marquee \(info.version), which is newer than this app supports. Update Marquee for Mac."
+            return String(localized: "The server at \(name) runs Marquee \(info.version), which is newer than this app supports. Update Marquee for Mac.")
         case .notMarquee:
-            return "\(name) responded, but it isn't a Marquee server. Check the address and port."
+            return String(localized: "\(name) responded, but it isn't a Marquee server. Check the address and port.")
         case let .unreachable(reason):
             switch reason {
             case .refused:
-                return "Nothing is answering on port \(address.effectivePort) at \(address.host). Check the port and that Marquee is running."
+                return String(localized: "Nothing is answering on port \(String(address.effectivePort)) at \(address.host). Check the port and that Marquee is running.")
             case .noResponse:
-                return "Couldn't reach \(name). Check the address and that the server is on."
+                return String(localized: "Couldn't reach \(name). Check the address and that the server is on.")
             case .unknownHost:
-                return "Couldn't find \(address.host) on your network. Try its IP address instead."
+                return String(localized: "Couldn't find \(address.host) on your network. Try its IP address instead.")
             case .localNetworkDenied:
-                return "Marquee doesn't have Local Network access. Turn it on in System Settings › Privacy & Security › Local Network."
+                return String(localized: "Marquee doesn't have Local Network access. Turn it on in System Settings › Privacy & Security › Local Network.")
             case let .failed(message):
-                return "Couldn't connect to \(name): \(message)"
+                return String(localized: "Couldn't connect to \(name): \(message)")
             }
         }
     }
@@ -280,7 +284,7 @@ enum ServerProbe {
     static func fetchInfo(_ address: ServerAddress, timeout: TimeInterval) async -> ProbeOutcome {
         guard let url = URL(string: address.baseURLString + infoPath) else { return .notMarquee }
         var request = URLRequest(url: url, timeoutInterval: timeout)
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Accept") // i18n-ignore
         do {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else { return .notMarquee }
@@ -309,7 +313,7 @@ enum ServerProbe {
         if apiHeader != nil {
             // A v1 server that failed to answer server-info (it's meant to
             // return 200 even when degraded) — it's ours, but not usable now.
-            return .unreachable(.failed("the server returned an error (\(statusCode))."))
+            return .unreachable(.failed(String(localized: "the server returned an error (\(statusCode)).")))
         }
         return .notMarquee
     }

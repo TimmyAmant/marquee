@@ -5,9 +5,10 @@ import {
   errorToApiError,
   jsonError,
   apiJson,
+  msg,
   statusForCode,
-  TMDB_NOT_CONFIGURED_API_MESSAGE,
 } from "./errors";
+import { englishT, translatorFor } from "@/lib/i18n/catalog";
 import { withApi } from "./handler";
 import { fail } from "@/lib/core-result";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
@@ -28,6 +29,19 @@ describe("statusForCode", () => {
   });
 });
 
+describe("ApiError messages", () => {
+  it("are English in .message and translated by messageIn", () => {
+    const err = ApiError.of("not_found", msg("server.invalidId", { label: "id", value: "x" }));
+    expect(err.message).toBe('Invalid id "x".');
+    expect(err.messageIn(englishT())).toBe('Invalid id "x".');
+    expect(err.messageIn(translatorFor("es"))).toBe('id no válido: "x".');
+  });
+
+  it("keeps a message that's already written for the reader", () => {
+    expect(ApiError.of("conflict", "Déjà fait.").messageIn(translatorFor("de"))).toBe("Déjà fait.");
+  });
+});
+
 describe("ApiError.fromFailure", () => {
   it("keeps the shared core's message and code", () => {
     const err = ApiError.fromFailure(fail("conflict", "You've already requested this."));
@@ -38,6 +52,14 @@ describe("ApiError.fromFailure", () => {
 });
 
 describe("errorToApiError", () => {
+  it("carries a shared core's reason onto the error body", async () => {
+    const error = ApiError.fromFailure({ ok: false, code: "conflict", error: "Sonarr no puede resolver esta serie.", apiReason: "sonarr_unresolved" });
+    expect(error.reason).toBe("sonarr_unresolved");
+    const response = jsonError(error.status, error.code, error.message, error.reason);
+    expect(await response.json()).toEqual({ error: "Sonarr no puede resolver esta serie.", code: "conflict", reason: "sonarr_unresolved" });
+    expect(await jsonError(404, "not_found", "Nope").json()).toEqual({ error: "Nope", code: "not_found" });
+  });
+
   it("passes ApiError through", () => {
     const original = ApiError.of("forbidden", "Only the admin can do this.");
     expect(errorToApiError(original)).toEqual({ error: original, unexpected: false });
@@ -47,7 +69,12 @@ describe("errorToApiError", () => {
     const { error, unexpected } = errorToApiError(new TmdbNotConfiguredError());
     expect(error.status).toBe(502);
     expect(error.code).toBe("upstream");
-    expect(error.message).toBe(TMDB_NOT_CONFIGURED_API_MESSAGE);
+    expect(error.message).toBe(
+      "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.",
+    );
+    expect(error.messageIn(translatorFor("de"))).toContain("TMDb ist auf diesem Server nicht eingerichtet");
+    // What an app checks for, since the message follows the reader's language.
+    expect(error.reason).toBe("tmdb_not_configured");
     expect(unexpected).toBe(false);
   });
 
@@ -105,6 +132,20 @@ describe("withApi", () => {
     const res = await handler(new Request("http://localhost/api/v1/x"), ctx);
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Sign in again", code: "unauthorized" });
+  });
+
+  it("answers in the request's Accept-Language, English without one", async () => {
+    const handler = withApi(async () => {
+      throw ApiError.of("not_found", msg("server.notificationNotFound"));
+    });
+    const french = await handler(
+      new Request("http://localhost/api/v1/x", { headers: { "accept-language": "fr-CA,fr;q=0.9,en;q=0.5" } }),
+      ctx,
+    );
+    expect(french.status).toBe(404);
+    expect(await french.json()).toEqual({ error: "Notification introuvable.", code: "not_found" });
+    const english = await handler(new Request("http://localhost/api/v1/x"), ctx);
+    expect(await english.json()).toEqual({ error: "Notification not found.", code: "not_found" });
   });
 
   it("logs and hides unexpected errors", async () => {

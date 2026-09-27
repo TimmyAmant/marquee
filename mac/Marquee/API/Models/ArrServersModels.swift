@@ -56,9 +56,9 @@ extension API {
 
         var label: String {
             switch self {
-            case .standard: return "Standard"
-            case .daily: return "Daily"
-            case .anime: return "Anime"
+            case .standard: return String(localized: "Standard")
+            case .daily: return String(localized: "Daily")
+            case .anime: return String(localized: "Anime")
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -298,7 +298,7 @@ extension API {
         let defaults: AddDefaults
 
         /// "Radarr 2", or "Radarr 2 (not responding)".
-        var pickerLabel: String { reachable ? name : "\(name) (not responding)" }
+        var pickerLabel: String { reachable ? name : String(localized: "\(name) (not responding)") }
     }
 
     struct AddDefaults: Codable, Hashable, Sendable {

@@ -1,4 +1,4 @@
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { parseIdSegment, parseMediaType } from "@/lib/api/request";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { TmdbError } from "@/lib/tmdb/client";
@@ -17,7 +17,7 @@ export async function requireTitle(mediaType: MediaType, tmdbId: number) {
     return await getOrFetchTitle(mediaType, tmdbId);
   } catch (err) {
     if (err instanceof TmdbError && err.status === 404) {
-      throw ApiError.of("not_found", "No such title on TMDb.");
+      throw ApiError.of("not_found", msg("server.noSuchTitle"));
     }
     throw err;
   }

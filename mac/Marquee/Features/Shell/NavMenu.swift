@@ -87,7 +87,7 @@ private struct NavRail: View {
             notifications
             RailHairline()
 
-            NavRailButton(systemImage: "magnifyingglass", label: "Search", focus: focus, item: .search, action: onSearch)
+            NavRailButton(systemImage: "magnifyingglass", label: String(localized: "Search"), focus: focus, item: .search, action: onSearch)
             section(.discover)
             RailHairline()
             section(.movies)
@@ -135,8 +135,8 @@ private struct NavRail: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .modifier(RailLabeled(label: viewer == nil ? "Sign in" : "Settings", focus: focus, item: .profile))
-        .accessibilityLabel(viewer.map { "\($0.label): account and settings" } ?? "Sign in")
+        .modifier(RailLabeled(label: viewer == nil ? String(localized: "Sign in") : String(localized: "Settings"), focus: focus, item: .profile))
+        .accessibilityLabel(viewer.map { String(localized: "\($0.label): account and settings") } ?? String(localized: "Sign in"))
         .accessibilityAddTraits(model.selection == .settings ? .isSelected : [])
     }
 
@@ -144,7 +144,7 @@ private struct NavRail: View {
     /// Settings › About, where "Update" and the progress are.
     private var updateButton: some View {
         let version = model.updater.update?.version.description ?? ""
-        let label = model.updater.isInstalling ? "Updating Marquee…" : "Update to Marquee \(version)"
+        let label = model.updater.isInstalling ? String(localized: "Updating Marquee…") : String(localized: "Update to Marquee \(version)")
         return NavRailButton(
             systemImage: "arrow.down.circle",
             label: label,
@@ -159,10 +159,10 @@ private struct NavRail: View {
     /// unread; the list opens beside the rail, on the page's side.
     private var notifications: some View {
         let unread = model.unreadCount
-        let label = model.live.badges.bellLabel.map { "Notifications, \($0) unread" } ?? "Notifications"
+        let label = model.live.badges.bellLabel.map { String(localized: "Notifications, \($0) unread") } ?? String(localized: "Notifications")
         return NavRailButton(
             systemImage: unread > 0 ? "bell.badge" : "bell",
-            label: "Notifications",
+            label: String(localized: "Notifications"),
             focus: focus,
             item: .notifications,
             current: showingNotifications,
@@ -190,7 +190,7 @@ private struct NavRail: View {
         ) {
             onSelect(item)
         }
-        .accessibilityLabel(pending > 0 ? "\(item.title), \(pending) pending" : item.title)
+        .accessibilityLabel(pending > 0 ? String(localized: "\(item.title), \(pending) pending") : item.title)
     }
 }
 

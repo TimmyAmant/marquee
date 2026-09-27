@@ -148,7 +148,7 @@ private struct MemberRequestsList: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
                 } else {
-                    TableCard(columns: ["Title", "Requested", "Status"]) {
+                    TableCard(columns: [String(localized: "Title"), String(localized: "Requested"), String(localized: "Status")]) {
                         ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
                             MyRequestRow(row: row)
@@ -284,7 +284,7 @@ private struct AdminRequestsList: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
                 } else {
-                    TableCard(columns: ["Title", "Requested by", "Requested", "Actions"]) {
+                    TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Actions")]) {
                         ForEach(Array(pending.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
                             RequestReviewRow(
@@ -299,7 +299,7 @@ private struct AdminRequestsList: View {
             } else if let loadError {
                 InlineMessage(text: loadError)
             } else {
-                LoadingView(label: "Checking requests against your library…")
+                LoadingView(label: String(localized: "Checking requests against your library…"))
             }
 
             // "Couldn't add" and "Can't find" (0.46+), then problem reports,
@@ -317,15 +317,15 @@ private struct AdminRequestsList: View {
             IssuesSection(isAdmin: model.viewer?.can(.manageIssues) == true, topPadding: 28)
 
             if past.isEmpty, let historyError {
-                SectionTitle(text: "Past requests")
+                SectionTitle(text: String(localized: "Past requests"))
                     .padding(.top, 28)
                 InlineMessage(text: historyError)
             }
 
             if !past.isEmpty {
-                SectionTitle(text: "Past requests")
+                SectionTitle(text: String(localized: "Past requests"))
                     .padding(.top, 28)
-                TableCard(columns: ["Title", "Requested by", "Requested", "Status"]) {
+                TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Status")]) {
                     ForEach(Array(past.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { Divider().overlay(Theme.border) }
                         PastRequestRow(row: row)
@@ -374,8 +374,8 @@ private struct AdminRequestsList: View {
             do {
                 let result = try await api.requests.approveAll()
                 approveAllMessage = result.failedCount > 0
-                    ? (result.message ?? "\(result.failedCount) request(s) couldn't be approved.", true)
-                    : ("Approved \(result.approvedCount).", false)
+                    ? (result.message ?? String(localized: "\(result.failedCount) requests couldn't be approved."), true)
+                    : (String(localized: "Approved \(result.approvedCount)."), false)
             } catch {
                 approveAllMessage = (error.localizedDescription, true)
             }
@@ -416,7 +416,7 @@ private struct PastRequestRow: View {
                         TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
                         // 0.46+: Sonarr/Radarr hasn't found it (listed under "Can't find").
                         if row.isNotFound, let since = row.notFoundSince {
-                            TonePill(text: "Can't find", tone: .missing)
+                            TonePill(text: String(localized: "Can't find"), tone: .missing)
                                 .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
                         }
                     }
@@ -455,14 +455,14 @@ private struct EveryonesRequestsList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            SectionTitle(text: "Everyone's requests")
+            SectionTitle(text: String(localized: "Everyone's requests"))
             if let rows {
                 if rows.isEmpty {
                     Text("Nobody else has asked for anything yet.")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
                 } else {
-                    TableCard(columns: ["Title", "Requested by", "Requested", "Status"]) {
+                    TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Status")]) {
                         ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
                             HStack(alignment: .top, spacing: 0) {
@@ -532,7 +532,7 @@ private struct CouldntAddSection: View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    SectionTitle(text: "Couldn't add")
+                    SectionTitle(text: String(localized: "Couldn't add"))
                     TonePill(text: "\(rows.count)", tone: .missing)
                 }
                 Text("Approved, but Sonarr/Radarr couldn't be reached or didn't take them. Retry once it's back.")
@@ -700,7 +700,7 @@ private struct IssuesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let list, !list.results.isEmpty {
-                SectionTitle(text: isAdmin ? "Reported problems" : "Your problem reports")
+                SectionTitle(text: isAdmin ? String(localized: "Reported problems") : String(localized: "Your problem reports"))
                 if open.isEmpty {
                     Text("Nothing open right now.")
                         .font(.system(size: 13))
@@ -709,7 +709,7 @@ private struct IssuesSection: View {
                     issueCard(open)
                 }
                 if !fixed.isEmpty {
-                    Button(showFixed ? "Hide fixed" : "Show fixed (\(fixed.count))") { showFixed.toggle() }
+                    Button(showFixed ? String(localized: "Hide fixed") : String(localized: "Show fixed (\(fixed.count))")) { showFixed.toggle() }
                         .buttonStyle(QuietButtonStyle(color: Theme.textSecondary))
                         .font(.system(size: 12))
                     if showFixed {
@@ -718,7 +718,7 @@ private struct IssuesSection: View {
                     }
                 }
             } else if list == nil, let error {
-                SectionTitle(text: isAdmin ? "Reported problems" : "Your problem reports")
+                SectionTitle(text: isAdmin ? String(localized: "Reported problems") : String(localized: "Your problem reports"))
                 InlineMessage(text: error)
             }
         }
@@ -899,7 +899,7 @@ private struct IssueRow: View {
     }
 
     private func searchAgain() {
-        run("search", after: "Searching for another copy…") { try await $0.issues.searchAgain(issue.id) }
+        run("search", after: String(localized: "Searching for another copy…")) { try await $0.issues.searchAgain(issue.id) }
     }
 
     private func resolve() {
@@ -936,7 +936,7 @@ private struct NotFoundSection: View {
             if let list, !rows.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
-                        SectionTitle(text: "Can't find")
+                        SectionTitle(text: String(localized: "Can't find"))
                         TonePill(text: "\(rows.count)", tone: .missing)
                     }
                     Text(list.blurb)
@@ -953,7 +953,7 @@ private struct NotFoundSection: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
             } else if list == nil, let error {
-                SectionTitle(text: "Can't find")
+                SectionTitle(text: String(localized: "Can't find"))
                 InlineMessage(text: error)
             }
         }
@@ -1286,7 +1286,7 @@ private struct DeclineRequestSheet: View {
 
     /// The free-text choice. Only the chooser's label: what gets sent is the
     /// admin's own words, never this word itself.
-    static let other = "Other"
+    static let other = String(localized: "Other")
     /// The server's cap, counted in Unicode scalars the way the server counts
     /// code points (not Characters, which would let a run of emoji through
     /// that the server then shortens), so what's typed is what's stored.

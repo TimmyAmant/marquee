@@ -1,10 +1,11 @@
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, msg } from "@/lib/api/errors";
 import { userDto } from "@/lib/api/users";
 import { getLinkState } from "@/lib/auth/media-signin";
 import type { ApiContext } from "@/lib/api/auth";
 import type { Me, RequestQuota } from "@/lib/api/types";
 import { getQuotas, type QuotaState } from "@/lib/requests/quota";
 import { can } from "@/lib/users/permissions";
+import { storedLanguage } from "@/lib/users/language";
 
 export function quotaDto(quota: QuotaState | null): RequestQuota | null {
   return quota ? { ...quota, nextSlotAt: quota.nextSlotAt?.toISOString() ?? null } : null;
@@ -19,7 +20,7 @@ export async function meDto(ctx: ApiContext): Promise<Me> {
     getLinkState(user.id),
     getQuotas(user.id),
   ]);
-  if (!links) throw ApiError.of("unauthorized", "Sign in again — this session is missing, expired or revoked.");
+  if (!links) throw ApiError.of("unauthorized", msg("server.sessionInvalid"));
   return {
     ...userDto(user, libraryOwnerId),
     // From before permissions: the same as `permissions.autoApproveMovies` / `…Tv`.
@@ -29,5 +30,6 @@ export async function meDto(ctx: ApiContext): Promise<Me> {
     linked: links.linked,
     hasPassword: links.hasPassword,
     requestLimits: { movie: quotaDto(quotas.movie), tv: quotaDto(quotas.tv) },
+    language: storedLanguage(user.language),
   };
 }

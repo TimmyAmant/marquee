@@ -1,4 +1,5 @@
 import { withApi } from "@/lib/api/handler";
+import { getT } from "@/lib/i18n/server";
 import { requireApiUser } from "@/lib/api/auth";
 import { myRequest } from "@/lib/api/mappers";
 import { getMyRequests } from "@/lib/requests/query";
@@ -12,5 +13,6 @@ export const GET = withApi(async (request): Promise<ListResponse<MyRequest>> => 
   const ctx = await requireApiUser(request);
   const rows = await getMyRequests(ctx.user.id, await ctx.libraryOwnerId());
   const comments = await countComments("request", rows.map((r) => r.id));
-  return { results: rows.map((row) => myRequest(row, comments.get(row.id) ?? 0)) };
+  const t = await getT();
+  return { results: rows.map((row) => myRequest(t, row, comments.get(row.id) ?? 0)) };
 });

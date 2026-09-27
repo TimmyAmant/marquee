@@ -1,29 +1,38 @@
+import type { Metadata } from "next";
 import { API_OPERATIONS, type ApiAuthLevel, type ApiOperation } from "@/lib/api/openapi/registry";
 import { keyAccessFor } from "@/lib/api/key-policy";
 import { permissionLabel } from "@/lib/users/permissions";
+import { getT } from "@/lib/i18n/server";
+import { rich } from "@/lib/i18n/rich";
+import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
-export const metadata = { title: "API reference — Marquee" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("help.apiMetaTitle") };
+}
 
 // Public, like /api/v1/openapi.json it's built from the same registry: it
 // describes the endpoints and holds nothing secret. A plain table rather than
-// a hosted viewer, so there's no outside script to load.
+// a hosted viewer, so there's no outside script to load. The endpoint
+// summaries come from the registry, which (like the OpenAPI document) is
+// written in English.
 
-const AUTH_LABELS: Record<"public" | "user" | "admin", string> = {
-  public: "Public",
-  user: "Any account",
-  admin: "Admin",
+const AUTH_LABELS: Record<"public" | "user" | "admin", MessageKey> = {
+  public: "help.apiAuthPublic",
+  user: "help.apiAuthUser",
+  admin: "help.apiAuthAdmin",
 };
 
 /** A permission's label ("Review requests") for the rest (lib/users/permissions.ts). */
-function authLabel(auth: ApiAuthLevel): string {
-  return auth === "public" || auth === "user" || auth === "admin" ? AUTH_LABELS[auth] : permissionLabel(auth);
+function authLabel(auth: ApiAuthLevel, t: Translator): string {
+  return auth === "public" || auth === "user" || auth === "admin" ? t(AUTH_LABELS[auth]) : permissionLabel(auth, t);
 }
 
-const KEY_LABELS = {
-  read: "Any key",
-  full: "Full key",
-  none: "No keys",
-} as const;
+const KEY_LABELS: Record<"read" | "full" | "none", MessageKey> = {
+  read: "help.apiKeyRead",
+  full: "help.apiKeyFull",
+  none: "help.apiKeyNone",
+};
 
 const METHOD_COLORS: Record<ApiOperation["method"], string> = {
   GET: "text-owned",
@@ -33,41 +42,35 @@ const METHOD_COLORS: Record<ApiOperation["method"], string> = {
   DELETE: "text-red-400",
 };
 
+const ERROR_SHAPE = `{"error": "…", "code": "…"}`;
+
 function groups(): [string, ApiOperation[]][] {
   const byTag = new Map<string, ApiOperation[]>();
   for (const op of API_OPERATIONS) byTag.set(op.tag, [...(byTag.get(op.tag) ?? []), op]);
   return [...byTag.entries()];
 }
 
-export default function ApiDocsPage() {
+const code = (chunks: React.ReactNode) => <code className="font-mono text-text-primary">{chunks}</code>;
+
+export default async function ApiDocsPage() {
+  const t = await getT();
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-12">
-      <h1 className="font-display text-3xl text-text-primary">API reference</h1>
+      <h1 className="font-display text-3xl text-text-primary">{t("help.apiTitle")}</h1>
       <p className="mt-2 text-sm text-text-secondary">
-        Everything Marquee&apos;s Mac and Windows apps do goes through this JSON API, and dashboards, scripts and other
-        tools can use it too. The machine-readable description is{" "}
-        <a href="/api/v1/openapi.json" className="text-accent hover:underline">
-          /api/v1/openapi.json
-        </a>{" "}
-        (OpenAPI 3.1) — import it into Postman, Insomnia or any OpenAPI viewer.
+        {rich(t("help.apiIntro"), {
+          link: (chunks) => (
+            <a href="/api/v1/openapi.json" className="text-accent hover:underline">
+              {chunks}
+            </a>
+          ),
+        })}
       </p>
 
       <div className="mt-6 rounded-2xl border border-border bg-bg-1 p-5 text-sm text-text-secondary">
-        <h2 className="font-display text-lg text-text-primary">Signing in</h2>
-        <p className="mt-2">
-          Every path below starts with <code className="font-mono text-text-primary">/api/v1</code>. Tools use an API key
-          the admin creates under Settings › Integrations › API keys, sent as{" "}
-          <code className="font-mono text-text-primary">X-Api-Key: mq_…</code> or{" "}
-          <code className="font-mono text-text-primary">Authorization: Bearer mq_…</code> — never in the URL. A read-only
-          key can call the endpoints marked &ldquo;Any key&rdquo;; a full key also those marked &ldquo;Full key&rdquo;.
-          No key can reach the ones marked &ldquo;No keys&rdquo;. A key does what the account it acts as may do: the
-          admin&apos;s, or a household member&apos;s.
-        </p>
-        <p className="mt-2">
-          Errors are <code className="font-mono text-text-primary">{`{"error": "…", "code": "…"}`}</code> with the
-          matching status: 401 for a missing, expired or revoked key, 403 outside its scope, 429 after too many wrong
-          keys.
-        </p>
+        <h2 className="font-display text-lg text-text-primary">{t("help.apiSigningInTitle")}</h2>
+        <p className="mt-2">{rich(t("help.apiSigningInBody"), { code })}</p>
+        <p className="mt-2">{rich(t("help.apiErrorsBody", { shape: ERROR_SHAPE }), { code })}</p>
       </div>
 
       <div className="mt-10 flex flex-col gap-10">
@@ -78,10 +81,10 @@ export default function ApiDocsPage() {
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead className="text-xs uppercase tracking-wider text-text-muted">
                   <tr className="border-b border-border">
-                    <th className="px-4 py-2.5 font-medium">Endpoint</th>
-                    <th className="px-4 py-2.5 font-medium">What it does</th>
-                    <th className="px-4 py-2.5 font-medium">Who</th>
-                    <th className="px-4 py-2.5 font-medium">API keys</th>
+                    <th className="px-4 py-2.5 font-medium">{t("help.apiColEndpoint")}</th>
+                    <th className="px-4 py-2.5 font-medium">{t("help.apiColWhat")}</th>
+                    <th className="px-4 py-2.5 font-medium">{t("help.apiColWho")}</th>
+                    <th className="px-4 py-2.5 font-medium">{t("help.apiColKeys")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -92,9 +95,9 @@ export default function ApiDocsPage() {
                         <span className="text-text-primary">{op.path}</span>
                       </td>
                       <td className="px-4 py-2.5 text-text-secondary">{op.summary}</td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-text-secondary">{authLabel(op.auth)}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-text-secondary">{authLabel(op.auth, t)}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-text-secondary">
-                        {op.auth === "public" ? "—" : KEY_LABELS[keyAccessFor(op.method, op.path)]}
+                        {op.auth === "public" ? "—" : t(KEY_LABELS[keyAccessFor(op.method, op.path)])}
                       </td>
                     </tr>
                   ))}

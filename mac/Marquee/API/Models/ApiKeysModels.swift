@@ -25,8 +25,8 @@ extension API {
         /// "Read-only" / "Full access", as the website shows it.
         var label: String {
             switch self {
-            case .read: return "Read-only"
-            case .full: return "Full access"
+            case .read: return String(localized: "Read-only")
+            case .full: return String(localized: "Full access")
             case let .unknown(raw): return raw.capitalized
             }
         }

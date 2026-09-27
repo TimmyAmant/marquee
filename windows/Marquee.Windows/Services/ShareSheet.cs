@@ -1,4 +1,5 @@
 using global::Windows.ApplicationModel.DataTransfer;
+using Marquee.Core.Localization;
 
 namespace Marquee.Windows.Services;
 
@@ -69,7 +70,7 @@ public static class ShareSheet
     {
         if (pending is not { } offer)
         {
-            args.Request.FailWithDisplayText("There's nothing to share.");
+            args.Request.FailWithDisplayText(Loc.Get("Shell_NothingToShare"));
             return;
         }
         var data = args.Request.Data;

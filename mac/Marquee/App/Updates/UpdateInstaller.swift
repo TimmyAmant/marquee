@@ -33,7 +33,7 @@ enum UpdateInstaller {
            let near = try? fileManager.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: bundle, create: true) {
             return near
         }
-        let fallback = fileManager.temporaryDirectory.appendingPathComponent("Marquee-update-\(UUID().uuidString)")
+        let fallback = fileManager.temporaryDirectory.appendingPathComponent("Marquee-update-\(UUID().uuidString)") // i18n-ignore
         do {
             try fileManager.createDirectory(at: fallback, withIntermediateDirectories: true)
         } catch {
@@ -68,21 +68,24 @@ enum UpdateInstaller {
         let app = folder.appendingPathComponent(appName)
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: app.path, isDirectory: &isDirectory), isDirectory.boolValue else {
-            throw UpdateError.invalidApp("there's no \(appName) in it")
+            throw UpdateError.invalidApp(String(localized: "there's no \(appName) in it"))
         }
-        let infoURL = app.appendingPathComponent("Contents/Info.plist")
+        let infoURL = app.appendingPathComponent("Contents/Info.plist") // i18n-ignore
         guard let data = try? Data(contentsOf: infoURL),
               let info = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
-        else { throw UpdateError.invalidApp("it has no Info.plist") }
+        else { throw UpdateError.invalidApp(String(localized: "it has no Info.plist")) }
         guard info["CFBundleIdentifier"] as? String == bundleIdentifier else {
-            throw UpdateError.invalidApp("it's a different app")
+            throw UpdateError.invalidApp(String(localized: "it's a different app"))
         }
         let found = (info["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init)
         guard let found, found == version else {
-            throw UpdateError.invalidApp("it's version \(found?.description ?? "unknown"), not \(version)")
+            if let found {
+                throw UpdateError.invalidApp(String(localized: "it's version \(found.description), not \(version.description)"))
+            }
+            throw UpdateError.invalidApp(String(localized: "it's version unknown, not \(version.description)"))
         }
         guard verifySignature(app) else {
-            throw UpdateError.invalidApp("its code signature doesn't check out")
+            throw UpdateError.invalidApp(String(localized: "its code signature doesn't check out"))
         }
         return app
     }
@@ -122,6 +125,7 @@ enum UpdateInstaller {
     /// (`$2`) aside, moves the new one (`$3`) into its place, and opens it. If
     /// the new one can't go in, the old one goes back and opens instead.
     /// `MARQUEE_UPDATE_OPEN` stands in for `open` in tests.
+    // i18n-ignore-next (a shell script, not UI text)
     static let swapScript = """
         #!/bin/sh
         # Marquee's updater (mac/Marquee/App/Updates/UpdateInstaller.swift).
@@ -190,7 +194,7 @@ enum UpdateInstaller {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
         process.arguments = [
-            "-c", #"nohup /bin/sh "$0" "$1" "$2" "$3" >>"$4" 2>&1 </dev/null &"#,
+            "-c", #"nohup /bin/sh "$0" "$1" "$2" "$3" >>"$4" 2>&1 </dev/null &"#, // i18n-ignore
             script.path, String(pid), current.path, new.path, log.path,
         ]
         do {

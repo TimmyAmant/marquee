@@ -3,6 +3,8 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { appSettings, plexServers, users } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { failT } from "@/lib/core-failure";
+import { getT } from "@/lib/i18n/server";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { withLoginBudget } from "@/lib/auth/password-login";
 import {
@@ -24,8 +26,6 @@ import {
   importedDisplayName,
   isUniqueViolation,
   MEDIA_PROVIDER_LABEL,
-  noAccountMessage,
-  PLEX_NO_ACCESS_MESSAGE,
   sanitizeUsername,
   uniqueUsername,
   unlinkWouldLockOut,
@@ -137,8 +137,6 @@ export async function getSignInMethods(): Promise<SignInMethods> {
   };
 }
 
-const PLEX_NOT_CONNECTED = "Plex sign-in isn't set up on this server.";
-const JELLYFIN_NOT_CONNECTED = "Jellyfin sign-in isn't set up on this server.";
 
 // ── The sign-up setting ────────────────────────────────────────────────────
 
@@ -256,6 +254,7 @@ async function resolveSignIn(
     admin: admin ? { id: admin.id, linked: admin.plexUserId !== null } : null,
     signupAllowed,
     providerName,
+    t: await getT(),
   });
 
   switch (decision.action) {
@@ -275,7 +274,7 @@ async function resolveSignIn(
         });
       if (updated) return { ok: true, user: updated };
       const relinked = await findLinkedUser(provider, identity.externalId);
-      return relinked ? { ok: true, user: relinked } : fail("forbidden", noAccountMessage(providerName));
+      return relinked ? { ok: true, user: relinked } : await failT("forbidden", "server.noAccountForMedia", { name: providerName });
     }
     case "create": {
       const { user } = await createLinkedMember(provider, identity.externalId, identity.username, identity.title);
@@ -302,8 +301,6 @@ const PIN_POLL_WINDOW_MS = 10 * 60 * 1000;
 
 export type PlexPinStart = { handle: string; authUrl: string; expiresAt: Date };
 
-const TOO_MANY_WAITING = "Too many Plex sign-ins are waiting right now. Try again in a few minutes.";
-
 /** Starts a Plex PIN for signing in (or, with `link`, for linking the
  * signed-in account) and returns the handle to poll with. */
 export async function startPlexPin(
@@ -313,22 +310,22 @@ export async function startPlexPin(
   const allowed = ip
     ? checkRateLimit(`plex-pin:start:${ip}`, PIN_START_LIMIT, PIN_START_WINDOW_MS)
     : checkRateLimit("plex-pin:start:shared", PIN_START_SHARED_LIMIT, PIN_START_WINDOW_MS);
-  if (!allowed) return fail("rate_limited", "Too many attempts. Try again in a few minutes.");
+  if (!allowed) return await failT("rate_limited", "server.tooManyAttempts");
 
   const plex = await getPlexContext();
-  if (!plex) return fail("conflict", PLEX_NOT_CONNECTED);
+  if (!plex) return await failT("conflict", "server.plexSignInNotSetUp");
 
   const owner = ip ?? SHARED_PIN_OWNER;
-  if (!hasPlexPinCapacity(owner)) return fail("rate_limited", TOO_MANY_WAITING);
+  if (!hasPlexPinCapacity(owner)) return await failT("rate_limited", "server.tooManyPlexWaiting");
 
   let pin;
   try {
     pin = await createPin(plex.clientId);
   } catch {
-    return fail("upstream", "Couldn't start Plex sign-in. Try again.");
+    return await failT("upstream", "server.plexStartFailed");
   }
   const created = createPlexPinHandle({ pinId: pin.id, clientId: plex.clientId, purpose, owner });
-  if (!created) return fail("rate_limited", TOO_MANY_WAITING);
+  if (!created) return await failT("rate_limited", "server.tooManyPlexWaiting");
   const { handle, expiresAt } = created;
   return { ok: true, handle, authUrl: buildPlexAuthUrl(plex.clientId, pin.code), expiresAt: new Date(expiresAt) };
 }
@@ -359,7 +356,7 @@ async function pollPlexPin(
   // plex.tv is asked at most every 2 s per handle, and at most
   // MAX_LIVE_PLEX_PINS handles exist at once.
   if (ip && !checkRateLimit(`plex-pin:poll:${ip}`, PIN_POLL_LIMIT, PIN_POLL_WINDOW_MS)) {
-    return { status: "done", ...fail("rate_limited", "Too many attempts. Try again in a few minutes.") };
+    return { status: "done", ...(await failT("rate_limited", "server.tooManyAttempts")) };
   }
 
   const lookup = getPlexPin(handle, purpose);
@@ -374,7 +371,7 @@ async function pollPlexPin(
   if (!claimPlexPin(handle as string)) return { status: "expired" };
 
   const plex = await getPlexContext();
-  if (!plex) return { status: "done", ...fail("conflict", PLEX_NOT_CONNECTED) };
+  if (!plex) return { status: "done", ...(await failT("conflict", "server.plexSignInNotSetUp")) };
 
   try {
     const [account, resources, adminAccount] = await Promise.all([
@@ -382,7 +379,7 @@ async function pollPlexPin(
       getServerResources(entry.clientId, pin.authToken),
       getAdminPlexAccount(plex),
     ]);
-    if (!account) return { status: "done", ...fail("upstream", "Plex didn't say which account this is. Try again.") };
+    if (!account) return { status: "done", ...(await failT("upstream", "server.plexNoAccountId")) };
     // "Owner" — the one Plex identity that may become the Marquee admin —
     // is exactly the Plex account connected in Settings → Integrations, by
     // plex.tv's own id for that token. Not the `owned` flag in the member's
@@ -399,7 +396,7 @@ async function pollPlexPin(
       grant: { authToken: pin.authToken, clientId: entry.clientId },
     };
   } catch {
-    return { status: "done", ...fail("upstream", "Couldn't reach Plex. Try again.") };
+    return { status: "done", ...(await failT("upstream", "server.serverUnreachable", { name: "Plex" })) };
   }
 }
 
@@ -427,7 +424,7 @@ export async function pollPlexSignIn(handle: unknown, ip: string | null): Promis
   const poll = await pollPlexPin(handle, { kind: "sign_in" }, ip);
   if (poll.status !== "done") return poll;
   if (!poll.ok) return poll;
-  if (!poll.access.access) return { status: "done", ...fail("forbidden", PLEX_NO_ACCESS_MESSAGE) };
+  if (!poll.access.access) return { status: "done", ...(await failT("forbidden", "server.plexNoAccess")) };
   const result = await resolveSignIn(
     "plex",
     {
@@ -457,20 +454,18 @@ export async function pollPlexLink(
   if (!poll.ok) return poll;
   // Linking an account that couldn't sign in anyway would only look like it
   // worked.
-  if (!poll.access.access) return { status: "done", ...fail("forbidden", PLEX_NO_ACCESS_MESSAGE) };
+  if (!poll.access.access) return { status: "done", ...(await failT("forbidden", "server.plexNoAccess")) };
   return { status: "done", ...(await linkAccount(userId, "plex", poll.account.id)) };
 }
 
 // ── Plex Watchlist ─────────────────────────────────────────────────────────
 
-const WATCHLIST_NEEDS_LINK = "Link your Plex account first.";
-
 /** Starts the plex.tv approval that turns on "request what's on my Plex
  * Watchlist" for the signed-in account, which must have Plex linked. */
 export async function startPlexWatchlist(userId: string, ip: string | null) {
   const state = await getLinkState(userId);
-  if (!state) return fail("not_found", "Account not found.");
-  if (!state.linked.plex) return fail("conflict", WATCHLIST_NEEDS_LINK);
+  if (!state) return await failT("not_found", "server.accountNotFound");
+  if (!state.linked.plex) return await failT("conflict", "server.linkPlexFirst");
   return startPlexPin({ kind: "watchlist", userId }, ip);
 }
 
@@ -486,11 +481,11 @@ export async function pollPlexWatchlist(
   if (poll.status !== "done") return poll;
   if (!poll.ok) return poll;
   const [user] = await db.select({ plexUserId: users.plexUserId }).from(users).where(eq(users.id, userId)).limit(1);
-  if (!user?.plexUserId) return { status: "done", ...fail("conflict", WATCHLIST_NEEDS_LINK) };
+  if (!user?.plexUserId) return { status: "done", ...(await failT("conflict", "server.linkPlexFirst")) };
   if (user.plexUserId !== poll.account.id) {
     return {
       status: "done",
-      ...fail("forbidden", "That's a different Plex account from the one linked here. Sign in to plex.tv as that one."),
+      ...(await failT("forbidden", "server.differentPlexAccount")),
     };
   }
   await enableWatchlist(userId, { plexUserId: poll.account.id, ...poll.grant });
@@ -510,7 +505,7 @@ async function verifyJellyfinUser(
   ip: string | null,
 ): Promise<CoreResult<{ jellyfin: JellyfinContext; jellyfinUser: { id: string; name: string } }>> {
   const jellyfin = await getJellyfinContext();
-  if (!jellyfin) return fail("conflict", JELLYFIN_NOT_CONNECTED);
+  if (!jellyfin) return await failT("conflict", "server.jellyfinSignInNotSetUp");
 
   let outcome;
   try {
@@ -519,12 +514,12 @@ async function verifyJellyfinUser(
       return result.ok ? { jellyfinUser: result.user } : null;
     });
   } catch {
-    return fail("upstream", `Couldn't reach ${jellyfin.name}. Try again.`);
+    return await failT("upstream", "server.serverUnreachable", { name: jellyfin.name });
   }
   if (!outcome.ok) {
     return outcome.reason === "rate_limited"
-      ? fail("rate_limited", "Too many attempts. Try again in a few minutes.")
-      : fail("invalid_credentials", `Incorrect ${jellyfin.name} username or password`);
+      ? await failT("rate_limited", "server.tooManyAttempts")
+      : await failT("invalid_credentials", "server.incorrectServerCredentials", { name: jellyfin.name });
   }
   return { ok: true, jellyfin, jellyfinUser: outcome.jellyfinUser };
 }
@@ -549,35 +544,31 @@ export async function signInWithJellyfin(username: string, password: string, ip:
 
 export type QuickConnectStart = { handle: string; code: string; expiresAt: Date };
 
-const QUICK_CONNECT_OFF =
-  "Quick Connect is turned off on this Jellyfin server. The admin can turn it on in Jellyfin's Dashboard → General.";
-
 /** Starts a Quick Connect sign-in: the code to approve in a Jellyfin app,
  * and a handle to poll with. Rate-limited like Plex PINs; Emby has none. */
 export async function startQuickConnect(ip: string | null): Promise<CoreResult<QuickConnectStart>> {
   const allowed = ip
     ? checkRateLimit(`quick-connect:start:${ip}`, PIN_START_LIMIT, PIN_START_WINDOW_MS)
     : checkRateLimit("quick-connect:start:shared", PIN_START_SHARED_LIMIT, PIN_START_WINDOW_MS);
-  if (!allowed) return fail("rate_limited", "Too many attempts. Try again in a few minutes.");
+  if (!allowed) return await failT("rate_limited", "server.tooManyAttempts");
 
   const jellyfin = await getJellyfinContext();
-  if (!jellyfin) return fail("conflict", JELLYFIN_NOT_CONNECTED);
-  if (jellyfin.name !== MEDIA_SERVER_PRODUCT_NAME.jellyfin) return fail("conflict", `${jellyfin.name} doesn't have Quick Connect.`);
+  if (!jellyfin) return await failT("conflict", "server.jellyfinSignInNotSetUp");
+  if (jellyfin.name !== MEDIA_SERVER_PRODUCT_NAME.jellyfin) return await failT("conflict", "server.noQuickConnect", { name: jellyfin.name });
 
   const owner = ip ?? SHARED_PIN_OWNER;
-  const waiting = "Too many Quick Connect sign-ins are waiting right now. Try again in a few minutes.";
-  if (!hasQuickConnectCapacity(owner)) return fail("rate_limited", waiting);
+  if (!hasQuickConnectCapacity(owner)) return await failT("rate_limited", "server.tooManyQuickConnectWaiting");
 
   const deviceId = `marquee-qc-${randomUUID()}`;
   let request;
   try {
     request = await initiateQuickConnect(jellyfin.baseUrl, deviceId);
   } catch (err) {
-    if (err instanceof QuickConnectUnavailable) return fail("conflict", QUICK_CONNECT_OFF);
-    return fail("upstream", "Couldn't reach Jellyfin. Try again.");
+    if (err instanceof QuickConnectUnavailable) return await failT("conflict", "server.quickConnectOff");
+    return await failT("upstream", "server.serverUnreachable", { name: "Jellyfin" });
   }
   const created = createQuickConnectHandle({ secret: request.secret, code: request.code, deviceId, owner });
-  if (!created) return fail("rate_limited", waiting);
+  if (!created) return await failT("rate_limited", "server.tooManyQuickConnectWaiting");
   return { ok: true, handle: created.handle, code: request.code, expiresAt: new Date(created.expiresAt) };
 }
 
@@ -586,7 +577,7 @@ export async function startQuickConnect(ip: string | null): Promise<CoreResult<Q
  * decided exactly like a Jellyfin password sign-in. */
 export async function pollQuickConnect(handle: unknown, ip: string | null): Promise<PlexPinPoll<{ user: UserRow }>> {
   if (ip && !checkRateLimit(`quick-connect:poll:${ip}`, PIN_POLL_LIMIT, PIN_POLL_WINDOW_MS)) {
-    return { status: "done", ...fail("rate_limited", "Too many attempts. Try again in a few minutes.") };
+    return { status: "done", ...(await failT("rate_limited", "server.tooManyAttempts")) };
   }
   const entry = getQuickConnect(handle);
   if (!entry) return { status: "expired" };
@@ -595,7 +586,7 @@ export async function pollQuickConnect(handle: unknown, ip: string | null): Prom
   const jellyfin = await getJellyfinContext();
   if (!jellyfin) {
     claimQuickConnect(handle as string);
-    return { status: "done", ...fail("conflict", JELLYFIN_NOT_CONNECTED) };
+    return { status: "done", ...(await failT("conflict", "server.jellyfinSignInNotSetUp")) };
   }
   let approved: boolean | null;
   try {
@@ -615,9 +606,9 @@ export async function pollQuickConnect(handle: unknown, ip: string | null): Prom
   try {
     jellyfinUser = await authenticateWithQuickConnect(jellyfin.baseUrl, entry.secret, entry.deviceId);
   } catch {
-    return { status: "done", ...fail("upstream", "Couldn't reach Jellyfin. Try again.") };
+    return { status: "done", ...(await failT("upstream", "server.serverUnreachable", { name: "Jellyfin" })) };
   }
-  if (!jellyfinUser) return { status: "done", ...fail("forbidden", "Jellyfin didn't accept that Quick Connect code. Try again.") };
+  if (!jellyfinUser) return { status: "done", ...(await failT("forbidden", "server.quickConnectRejected")) };
   const result = await resolveSignIn(
     "jellyfin",
     { externalId: jellyfinUser.id, username: jellyfinUser.name, title: jellyfinUser.name, ownsServer: false },
@@ -644,7 +635,7 @@ async function linkAccount(userId: string, provider: MediaProvider, externalId: 
   const label = MEDIA_PROVIDER_LABEL[provider];
   const existing = await findLinkedUser(provider, externalId);
   if (existing && existing.id !== userId) {
-    return fail("conflict", `This ${label} account is already linked to another Marquee account.`);
+    return await failT("conflict", "server.alreadyLinkedElsewhere", { name: label });
   }
   if (existing) return { ok: true };
 
@@ -657,14 +648,14 @@ async function linkAccount(userId: string, provider: MediaProvider, externalId: 
       if (isUniqueViolation(err)) return null;
       throw err;
     });
-  if (updated === null) return fail("conflict", `This ${label} account is already linked to another Marquee account.`);
-  if (updated.length === 0) return fail("not_found", "Account not found.");
+  if (updated === null) return await failT("conflict", "server.alreadyLinkedElsewhere", { name: label });
+  if (updated.length === 0) return await failT("not_found", "server.accountNotFound");
   return { ok: true };
 }
 
 export async function unlinkAccount(userId: string, provider: MediaProvider): Promise<CoreResult> {
   const state = await getLinkState(userId);
-  if (!state) return fail("not_found", "Account not found.");
+  if (!state) return await failT("not_found", "server.accountNotFound");
   if (!state.linked[provider]) return { ok: true };
   if (
     unlinkWouldLockOut(provider, {
@@ -674,10 +665,7 @@ export async function unlinkAccount(userId: string, provider: MediaProvider): Pr
       ssoLinked: state.linked.sso,
     })
   ) {
-    return fail(
-      "conflict",
-      `Set a password first — without ${MEDIA_PROVIDER_LABEL[provider]}, there'd be no way to sign in to this account.`,
-    );
+    return await failT("conflict", "server.setPasswordFirst", { name: MEDIA_PROVIDER_LABEL[provider] });
   }
   await db
     .update(users)
@@ -707,7 +695,7 @@ type ImportSource = { id: string; username: string; title: string | null; thumb:
 async function importSources(provider: MediaProvider): Promise<CoreResult<{ sources: ImportSource[] }>> {
   if (provider === "plex") {
     const plex = await getPlexContext();
-    if (!plex) return fail("conflict", "Connect Plex in Settings first.");
+    if (!plex) return await failT("conflict", "server.connectInSettingsFirst", { name: "Plex" });
     try {
       const shared = importablePlexUsers(await getPlexSharedUsers(plex.clientId, plex.authToken), plex.machineIds);
       return {
@@ -715,12 +703,12 @@ async function importSources(provider: MediaProvider): Promise<CoreResult<{ sour
         sources: shared.map((u) => ({ id: u.id, username: u.username || u.title, title: u.title, thumb: u.thumb })),
       };
     } catch {
-      return fail("upstream", "Couldn't reach Plex. Try again.");
+      return await failT("upstream", "server.serverUnreachable", { name: "Plex" });
     }
   }
 
   const jellyfin = await getJellyfinContext();
-  if (!jellyfin) return fail("conflict", "Connect Jellyfin in Settings first.");
+  if (!jellyfin) return await failT("conflict", "server.connectInSettingsFirst", { name: "Jellyfin" });
   try {
     const list = await listJellyfinUsers(jellyfin);
     return {
@@ -730,7 +718,7 @@ async function importSources(provider: MediaProvider): Promise<CoreResult<{ sour
         .map((u) => ({ id: u.id, username: u.name, title: u.name, thumb: jellyfinUserImageUrl(jellyfin.baseUrl, u) })),
     };
   } catch {
-    return fail("upstream", `Couldn't reach ${jellyfin.name}. Try again.`);
+    return await failT("upstream", "server.serverUnreachable", { name: jellyfin.name });
   }
 }
 
@@ -768,11 +756,11 @@ export async function importMediaUsers(
   ids: unknown,
 ): Promise<CoreResult<{ createdIds: string[]; skipped: number }>> {
   if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string")) {
-    return fail("invalid", '"ids" must be a list of ids.');
+    return await failT("invalid", "server.idsMustBeList");
   }
   const wanted = [...new Set(ids as string[])];
-  if (wanted.length === 0) return fail("invalid", "Choose at least one person to import.");
-  if (wanted.length > MAX_IMPORT_IDS) return fail("invalid", `Import at most ${MAX_IMPORT_IDS} people at a time.`);
+  if (wanted.length === 0) return await failT("invalid", "server.chooseSomeoneToImport");
+  if (wanted.length > MAX_IMPORT_IDS) return await failT("invalid", "server.importAtMost", { count: MAX_IMPORT_IDS });
 
   const result = await importSources(provider);
   if (!result.ok) return result;

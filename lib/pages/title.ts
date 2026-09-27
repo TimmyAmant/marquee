@@ -35,6 +35,8 @@ import { canRequestSeasons, seasonRequestStates, summarizeViewerRequests } from 
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbSeasonSummary, TmdbTvDetails } from "@/lib/tmdb/client";
+import { getT } from "@/lib/i18n/server";
+import { regionName } from "@/lib/i18n/format";
 
 /**
  * The title page's library status plus this viewer's state for it (favorite,
@@ -263,6 +265,7 @@ export async function loadFranchise(
 export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmdbId: number) {
   const title = await getOrFetchTitle(type, tmdbId).catch(() => undefined);
   if (!title) return null;
+  const t = await getT();
 
   const year = (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null;
 
@@ -368,8 +371,8 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     runtimeMinutes === null
       ? null
       : type === "movie"
-        ? formatRuntime(runtimeMinutes)
-        : `~${formatRuntime(runtimeMinutes)}/episode`;
+        ? formatRuntime(t, runtimeMinutes)
+        : t("title.runtimePerEpisode", { runtime: formatRuntime(t, runtimeMinutes) });
 
   const endYear =
     type === "tv" ? (raw as TmdbTvDetails | null)?.last_air_date?.slice(0, 4) || null : null;
@@ -378,14 +381,15 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     ratingPercent: raw?.vote_average ? Math.round(raw.vote_average * 10) : null,
     genres: (raw?.genres ?? []).map((g) => g.name).slice(0, 3),
     yearRange: computeYearRange(year, endYear),
-    statusLabel: relabelTvStatus(raw?.status ?? null),
+    statusLabel: relabelTvStatus(t, raw?.status ?? null),
     network: type === "tv" ? ((raw as TmdbTvDetails | null)?.networks?.[0]?.name ?? null) : null,
   };
 
   const credits =
     type === "movie"
-      ? extractMovieCredits((raw as TmdbMovieDetails | null)?.credits?.crew ?? [])
+      ? extractMovieCredits(t, (raw as TmdbMovieDetails | null)?.credits?.crew ?? [])
       : extractTvCredits(
+          t,
           (raw as TmdbTvDetails | null)?.created_by ?? [],
           (raw as TmdbTvDetails | null)?.credits?.crew ?? [],
         );
@@ -403,11 +407,13 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
   const productionCountryRaw = raw?.production_countries?.[0];
   const nextAirDate = type === "tv" ? ((raw as TmdbTvDetails | null)?.next_episode_to_air?.air_date ?? null) : null;
   const titleSidebar: TitleSidebarData = {
-    releaseDateLabel: formatDateLabel(title.releaseDate || title.firstAirDate),
-    nextAirDateLabel: type === "tv" ? formatDateLabel(nextAirDate) : null,
-    originalLanguageLabel: languageLabel(raw?.original_language),
+    releaseDateLabel: formatDateLabel(t, title.releaseDate || title.firstAirDate),
+    nextAirDateLabel: type === "tv" ? formatDateLabel(t, nextAirDate) : null,
+    originalLanguageLabel: languageLabel(t, raw?.original_language),
     productionCountry: productionCountryRaw
-      ? { name: productionCountryRaw.name, flag: countryCodeToFlagEmoji(productionCountryRaw.iso_3166_1) }
+      ? {
+          name: regionName(t, productionCountryRaw.iso_3166_1) ?? productionCountryRaw.name,           flag: countryCodeToFlagEmoji(productionCountryRaw.iso_3166_1),
+        }
       : null,
     watchProviders,
   };

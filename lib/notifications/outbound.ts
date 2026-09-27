@@ -2,6 +2,8 @@ import { lookup as dnsLookup, type LookupAddress } from "dns";
 import http from "http";
 import https from "https";
 import { isIP, type LookupFunction } from "net";
+import { englishT } from "@/lib/i18n/catalog";
+import type { Translator } from "@/lib/i18n/translator";
 
 // Posting to an address a member typed in (their own webhook, their own
 // ntfy server). The Marquee server usually sits inside a home network, so
@@ -108,32 +110,33 @@ export type OutboundPolicy = { allowPrivate: boolean };
 /** Checks a URL someone typed in before it's saved. Null when it's fine,
  * else the message to show. Only the form; the address is checked on
  * every connection (see safeLookup). Pure; unit tested. */
-export function outboundUrlError(raw: string, policy: OutboundPolicy): string | null {
+/** `t`: whoever reads the message (English when not given). */
+export function outboundUrlError(raw: string, policy: OutboundPolicy, t: Translator = englishT()): string | null {
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    return "Enter a full URL, starting with https:// or http://.";
+    return t("notify.urlNotFull");
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") {
-    return "Enter a full URL, starting with https:// or http://.";
+    return t("notify.urlNotFull");
   }
-  if (url.username || url.password) return "Leave the user name and password out of the URL.";
-  if (raw.length > 2000) return "That URL is too long.";
+  if (url.username || url.password) return t("notify.urlHasCredentials");
+  if (raw.length > 2000) return t("notify.urlTooLong");
   if (policy.allowPrivate) return null;
   const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
   if (isIP(host)) {
-    return isPrivateAddress(host) ? "Marquee only sends to addresses on the internet, not the home network." : null;
+    return isPrivateAddress(host) ? t("notify.urlHomeNetwork") : null;
   }
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal") || !host.includes(".")) {
-    return "Marquee only sends to addresses on the internet, not the home network.";
+    return t("notify.urlHomeNetwork");
   }
   return null;
 }
 
 class BlockedAddressError extends Error {
   constructor() {
-    super("That address is on the home network, which Marquee doesn't send members' notifications to.");
+    super("blocked private address");
   }
 }
 
@@ -163,8 +166,10 @@ export async function postOutbound(
   rawUrl: string,
   request: { headers: Record<string, string>; body: string },
   policy: OutboundPolicy,
+  /** Whoever reads the reason (English when not given). */
+  t: Translator = englishT(),
 ): Promise<OutboundResult> {
-  const invalid = outboundUrlError(rawUrl, policy);
+  const invalid = outboundUrlError(rawUrl, policy, t);
   if (invalid) return { ok: false, error: invalid };
   const url = new URL(rawUrl);
   const hostIsIp = isIP(url.hostname.replace(/^\[|\]$/g, ""));
@@ -196,7 +201,7 @@ export async function postOutbound(
         });
         res.on("close", () => {
           if (status >= 200 && status < 300) finish({ ok: true });
-          else if (status >= 300 && status < 400) finish({ ok: false, error: `It answered with a redirect (HTTP ${status}); use the final address.` });
+          else if (status >= 300 && status < 400) finish({ ok: false, error: t("notify.outboundRedirect", { status }) });
           else finish({ ok: false, error: `HTTP ${status}` });
         });
         res.resume();
@@ -204,12 +209,15 @@ export async function postOutbound(
     );
     req.on("timeout", () => {
       req.destroy();
-      finish({ ok: false, error: "It didn't answer in time." });
+      finish({ ok: false, error: t("notify.outboundTimeout") });
     });
     req.on("error", (err) => {
       finish({
         ok: false,
-        error: err instanceof BlockedAddressError ? err.message : `Couldn't reach it (${(err as NodeJS.ErrnoException).code ?? err.message}).`,
+        error:
+          err instanceof BlockedAddressError
+            ? t("notify.outboundBlocked")
+            : t("notify.outboundUnreachable", { reason: (err as NodeJS.ErrnoException).code ?? err.message }),
       });
     });
     req.end(payload);

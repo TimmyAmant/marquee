@@ -2,8 +2,10 @@
 
 import { useActionState } from "react";
 import { syncNowAction } from "@/app/settings/integrations/sync-actions";
+import { useT } from "@/lib/i18n/client";
 
 export function SyncNowButton() {
+  const t = useT();
   const [state, formAction, isPending] = useActionState(syncNowAction, undefined);
 
   return (
@@ -13,9 +15,9 @@ export function SyncNowButton() {
         disabled={isPending}
         className="rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
       >
-        {isPending ? "Syncing…" : "Sync now"}
+        {isPending ? t("admin.syncing") : t("admin.syncNow")}
       </button>
-      {state?.success && <span className="text-xs text-owned">Synced.</span>}
+      {state?.success && <span className="text-xs text-owned">{t("admin.synced")}</span>}
       {state?.error && <span className="text-xs text-red-400">{state.error}</span>}
     </form>
   );

@@ -7,6 +7,7 @@ import type { ApiKey as ApiKeyDto, ApiKeyCreated } from "@/lib/api/types";
 import { requestPerson } from "@/lib/api/mappers";
 import type { AuthenticatedToken } from "@/lib/api/token-store";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { getT } from "@/lib/i18n/server";
 import {
   apiKeyExpiresAt,
   apiKeyHint,
@@ -91,7 +92,7 @@ export async function createApiKey(
   const actAsUserId = input.actAsUserId === createdByUserId ? null : input.actAsUserId;
   if (actAsUserId) {
     const [member] = await db.select({ id: users.id }).from(users).where(eq(users.id, actAsUserId)).limit(1);
-    if (!member) return fail("not_found", "That household member doesn't exist any more.");
+    if (!member) return fail("not_found", (await getT())("server.memberGone"));
   }
 
   const key = generateApiKey();
@@ -151,6 +152,7 @@ export async function authenticateApiKey(key: string, now = new Date()): Promise
       permissions: users.permissions,
       avatarUpdatedAt: users.avatarUpdatedAt,
       createdAt: users.createdAt,
+      language: users.language,
     })
     .from(apiKeys)
     .innerJoin(users, sql`${users.id} = coalesce(${apiKeys.actAsUserId}, ${apiKeys.createdByUserId})`)
@@ -185,6 +187,7 @@ export async function authenticateApiKey(key: string, now = new Date()): Promise
       permissions: row.permissions,
       avatarUpdatedAt: row.avatarUpdatedAt,
       createdAt: row.createdAt,
+      language: row.language,
     },
   };
 }

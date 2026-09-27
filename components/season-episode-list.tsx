@@ -7,6 +7,8 @@ import { getSeasonEpisodesAction, type SeasonEpisodesResult } from "@/app/title/
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb/client";
 import type { SeasonCompleteness } from "@/lib/integrations/status";
 import { seasonsNewestFirst } from "@/lib/title-meta";
+import { useT } from "@/lib/i18n/client";
+import { formatDate } from "@/lib/i18n/format";
 
 export function SeasonAccordion({
   seasons,
@@ -19,6 +21,7 @@ export function SeasonAccordion({
   tvdbId: number | null;
   completeness?: SeasonCompleteness[];
 }) {
+  const t = useT();
   // Newest season first, matching Sonarr's own series-detail page.
   const real = seasonsNewestFirst(seasons);
 
@@ -84,7 +87,7 @@ export function SeasonAccordion({
               <div className="border-t border-border p-3">
                 {!data ? (
                   <p className="p-4 text-center text-sm text-text-muted">
-                    {isPending ? "Loading…" : "No episode data for this season."}
+                    {isPending ? t("common.loading") : t("title.noEpisodeData")}
                   </p>
                 ) : (
                   <EpisodeList
@@ -108,8 +111,9 @@ export function EpisodeList({
   episodes: TmdbEpisode[];
   hasFileMap?: Map<number, boolean>;
 }) {
+  const t = useT();
   if (episodes.length === 0) {
-    return <p className="text-sm text-text-muted">No episode data for this season.</p>;
+    return <p className="text-sm text-text-muted">{t("title.noEpisodeData")}</p>;
   }
 
   return (
@@ -127,7 +131,7 @@ export function EpisodeList({
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
                 <p className="min-w-0 text-sm font-medium text-text-primary">
-                  {episode.episode_number}. {episode.name}
+                  {t("title.episodeNumbered", { number: episode.episode_number, name: episode.name })}
                 </p>
                 {hasFile !== undefined && (
                   <span
@@ -137,12 +141,12 @@ export function EpisodeList({
                         : "border-border text-text-muted"
                     }`}
                   >
-                    {hasFile ? "Have it" : "Missing"}
+                    {hasFile ? t("title.haveIt") : t("title.statusMissingName")}
                   </span>
                 )}
               </div>
               {episode.air_date && (
-                <p className="mt-0.5 text-xs text-text-muted">{episode.air_date}</p>
+                <p className="mt-0.5 text-xs text-text-muted">{formatDate(t, episode.air_date, "medium", "UTC")}</p>
               )}
               {episode.overview && (
                 <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
