@@ -63,11 +63,11 @@
   "quoted": "“{text}”",
   "serverVersion": "Marquee {version}",
   "typeStudio": "Estúdio",
-  "typeNetwork": "Canal",
+  "typeNetwork": "Emissora",
   "groupMovies": "Filmes",
   "groupTv": "Séries",
   "groupPeople": "Pessoas",
-  "groupStudiosNetworks": "Estúdios e canais",
+  "groupStudiosNetworks": "Estúdios e emissoras",
   "searchSuggestions": "Sugestões de busca",
   "searchAllResults": "Ver todos os resultados para “{query}”"
 }

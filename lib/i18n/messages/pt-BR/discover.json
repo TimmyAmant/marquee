@@ -146,9 +146,9 @@
   "searchMovies": "Filmes",
   "searchSeries": "Séries",
   "searchPeople": "Pessoas",
-  "searchStudiosNetworks": "Estúdios e canais",
+  "searchStudiosNetworks": "Estúdios e emissoras",
   "searchStudio": "Estúdio",
-  "searchNetwork": "Canal",
+  "searchNetwork": "Emissora",
   "searchBackToAll": "← Todos os resultados para “{query}”",
   "searchSectionFor": "{section} para “{query}”",
   "noResultsHint": "Confira a ortografia ou tente um título mais curto, o nome de uma pessoa ou um estúdio."

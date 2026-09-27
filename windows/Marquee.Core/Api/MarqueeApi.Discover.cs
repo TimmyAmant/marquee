@@ -85,9 +85,44 @@ public sealed class SearchEndpoints(MarqueeApi.Transport transport)
     public Task<SearchResults> ResultsAsync(string query, CancellationToken ct = default) =>
         transport.GetAsync<SearchResults>("/search", new Dictionary<string, string?> { ["q"] = query }, MarqueeApi.Timeouts.Tmdb, ct);
 
-    /// <summary><c>GET /search/suggest?q=</c>: type-ahead; under 2 characters is always empty.</summary>
+    /// <summary>
+    /// <c>GET /search/suggest?q=&amp;include=company,network</c>: type-ahead,
+    /// grouped movies, series, people, studios &amp; networks (an older server
+    /// ignores <c>include</c> and sends no studios or networks); under 2
+    /// characters is always empty.
+    /// </summary>
     public Task<IReadOnlyList<SearchSuggestion>> SuggestionsAsync(string query, CancellationToken ct = default) =>
-        transport.GetListAsync<SearchSuggestion>("/search/suggest", new Dictionary<string, string?> { ["q"] = query }, ct: ct);
+        transport.GetListAsync<SearchSuggestion>(
+            "/search/suggest",
+            new Dictionary<string, string?> { ["q"] = query, ["include"] = "company,network" },
+            ct: ct);
+
+    /// <summary><c>GET /search/{movies|series}?q=&amp;page=</c> (0.54+): a title section's See all.</summary>
+    public Task<Paginated<TitleCard>> TitlesAsync(SearchSectionName section, string query, int page, CancellationToken ct = default) =>
+        transport.GetAsync<Paginated<TitleCard>>(SectionPath(section), SectionQuery(query, page), MarqueeApi.Timeouts.Tmdb, ct);
+
+    /// <summary><c>GET /search/people?q=&amp;page=</c> (0.54+): People's See all.</summary>
+    public Task<Paginated<PersonCard>> PeopleAsync(string query, int page, CancellationToken ct = default) =>
+        transport.GetAsync<Paginated<PersonCard>>(SectionPath(SearchSectionName.People), SectionQuery(query, page), MarqueeApi.Timeouts.Tmdb, ct);
+
+    /// <summary><c>GET /search/studios?q=&amp;page=</c> (0.54+): Studios &amp; Networks' See all.</summary>
+    public Task<Paginated<SearchCompanyCard>> StudiosAsync(string query, int page, CancellationToken ct = default) =>
+        transport.GetAsync<Paginated<SearchCompanyCard>>(SectionPath(SearchSectionName.Studios), SectionQuery(query, page), MarqueeApi.Timeouts.Tmdb, ct);
+
+    /// <summary>The section's path: <c>/search/movies</c>, <c>/search/series</c>, <c>/search/people</c>, <c>/search/studios</c>.</summary>
+    public static string SectionPath(SearchSectionName section) => section switch
+    {
+        SearchSectionName.Movies => "/search/movies",
+        SearchSectionName.Series => "/search/series",
+        SearchSectionName.People => "/search/people",
+        _ => "/search/studios",
+    };
+
+    private static Dictionary<string, string?> SectionQuery(string query, int page) => new()
+    {
+        ["q"] = query,
+        ["page"] = page.ToString(CultureInfo.InvariantCulture),
+    };
 }
 
 /// <summary>

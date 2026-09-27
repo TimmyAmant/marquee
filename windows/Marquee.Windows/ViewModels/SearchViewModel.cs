@@ -9,8 +9,9 @@ using Marquee.Windows.Services;
 namespace Marquee.Windows.ViewModels;
 
 /// <summary>
-/// app/search/page.tsx: the results for one query, grouped people, studios,
-/// titles, then the genre/keyword theme row. Without a query (the Search
+/// app/search/page.tsx: the results for one query in sections, always
+/// Movies, TV Shows, People, then Studios &amp; Networks (each with its total
+/// and See all), and the genre/keyword theme row first or last. Without a query (the Search
 /// section itself) the page only offers the search box.
 /// </summary>
 public sealed partial class SearchViewModel : ObservableObject
@@ -32,28 +33,22 @@ public sealed partial class SearchViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanOpenSettings))]
     private bool isTmdbMissing;
 
-    /// <summary>All four sections came back empty.</summary>
+    /// <summary>Every section, and the theme row, came back empty.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAnyResults))]
     private bool isEmpty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasPeople))]
-    private IReadOnlyList<PersonItem> people = [];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasStudios))]
-    private IReadOnlyList<ChipItem> studios = [];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasTitles))]
-    [NotifyPropertyChangedFor(nameof(HasResults))]
-    [NotifyPropertyChangedFor(nameof(ShowsError))]
-    private IReadOnlyList<PosterItem> titles = [];
 
     /// <summary>"Science Fiction movies &amp; TV", the theme row's heading.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasTheme))]
+    [NotifyPropertyChangedFor(nameof(ThemeFirst))]
+    [NotifyPropertyChangedFor(nameof(ThemeLast))]
     private string? themeTitle;
+
+    /// <summary>The query is the theme itself ("horror"): its row leads the page.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ThemeFirst))]
+    [NotifyPropertyChangedFor(nameof(ThemeLast))]
+    private bool themeLeads;
 
     [ObservableProperty]
     private IReadOnlyList<PosterItem> themeItems = [];
@@ -61,6 +56,7 @@ public sealed partial class SearchViewModel : ObservableObject
     /// <summary>True once an answer arrived: the sections (or the empty state) may draw.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasResults))]
+    [NotifyPropertyChangedFor(nameof(HasAnyResults))]
     [NotifyPropertyChangedFor(nameof(ShowsError))]
     private bool hasAnswer;
 
@@ -74,7 +70,19 @@ public sealed partial class SearchViewModel : ObservableObject
     public SearchViewModel(AppModel model)
     {
         this.model = model;
+        Movies = new SearchTitleSectionViewModel(model, SearchSectionName.Movies, () => Query, OpenTitleCommand);
+        Series = new SearchTitleSectionViewModel(model, SearchSectionName.Series, () => Query, OpenTitleCommand);
+        People = new SearchPeopleSectionViewModel(model, () => Query);
+        Studios = new SearchStudioSectionViewModel(model, () => Query);
     }
+
+    // The page's sections, always in this order (SearchPageLayout); the XAML
+    // stacks them top to bottom and hides the empty ones.
+
+    public SearchTitleSectionViewModel Movies { get; }
+    public SearchTitleSectionViewModel Series { get; }
+    public SearchPeopleSectionViewModel People { get; }
+    public SearchStudioSectionViewModel Studios { get; }
 
     public bool HasQuery => Query.Length > 0;
 
@@ -86,10 +94,9 @@ public sealed partial class SearchViewModel : ObservableObject
     public bool HasError => ErrorMessage != null;
     public bool HasResults => HasAnswer;
     public bool ShowsError => HasError && !HasAnswer;
-    public bool HasPeople => People.Count > 0;
-    public bool HasStudios => Studios.Count > 0;
-    public bool HasTitles => Titles.Count > 0;
-    public bool HasTheme => ThemeTitle != null;
+    public bool ThemeFirst => ThemeTitle != null && ThemeLeads;
+    public bool ThemeLast => ThemeTitle != null && !ThemeLeads;
+    public bool HasAnyResults => HasAnswer && !IsEmpty;
 
     private bool IsAdmin => model.Viewer?.IsAdmin == true;
 
@@ -120,11 +127,13 @@ public sealed partial class SearchViewModel : ObservableObject
             IsEmpty = false;
             IsTmdbMissing = false;
             ErrorMessage = null;
-            People = [];
-            Studios = [];
-            Titles = [];
+            Movies.Reset([], 0, 0);
+            Series.Reset([], 0, 0);
+            People.Reset([], 0, 0);
+            Studios.Reset([], 0, 0);
             ThemeItems = [];
             ThemeTitle = null;
+            ThemeLeads = false;
         }
         active = true;
         model.PropertyChanged += OnModelPropertyChanged;
@@ -145,6 +154,10 @@ public sealed partial class SearchViewModel : ObservableObject
         model.PropertyChanged -= OnModelPropertyChanged;
         model.Events.Changed -= OnServerChanged;
         loadCancellation?.Cancel();
+        Movies.Cancel();
+        Series.Cancel();
+        People.Cancel();
+        Studios.Cancel();
     }
 
     // MARK: Loading
@@ -200,24 +213,38 @@ public sealed partial class SearchViewModel : ObservableObject
     private void Apply(SearchResults results)
     {
         IsTmdbMissing = false;
-        People = results.People
-            .Select(person => new PersonItem(model, person.TmdbId, person.Name, person.KnownForDepartment, person.ProfilePath, person.Favorited))
-            .ToList();
-        Studios = results.Studios
-            .Select(studio => new ChipItem(studio.Name, new RelayCommand(() => model.OpenCompany(studio.TmdbId)), studio.ChipLogoUrl()))
-            .ToList();
-        Titles = results.Titles.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
+        // An older server has no sections: SectionsOf splits its titles into
+        // movies and series, so the order is the same either way.
+        var sections = SearchPageLayout.SectionsOf(results);
+        Movies.Reset(
+            sections.Movies.Results.Select(card => new PosterItem(model, card, OpenTitleCommand)),
+            sections.Movies.TotalResults,
+            sections.Movies.TotalPages);
+        Series.Reset(
+            sections.Series.Results.Select(card => new PosterItem(model, card, OpenTitleCommand)),
+            sections.Series.TotalResults,
+            sections.Series.TotalPages);
+        People.Reset(
+            sections.People.Results.Select(person => SearchPeopleSectionViewModel.Item(model, person)),
+            sections.People.TotalResults,
+            sections.People.TotalPages);
+        Studios.Reset(
+            sections.StudiosAndNetworks.Results.Select(company => SearchStudioSectionViewModel.Item(model, company)),
+            sections.StudiosAndNetworks.TotalResults,
+            sections.StudiosAndNetworks.TotalPages);
         if (results.Theme is { Items.Count: > 0 } theme)
         {
-            ThemeItems = theme.Items.Select(card => new PosterItem(model, card, OpenTitleCommand)).ToList();
+            ThemeItems = theme.Items.Select(card => new PosterItem(model, card, OpenTitleCommand, showsTypeLabel: true)).ToList();
             ThemeTitle = Loc.Format("Search_ThemeTitle", theme.Label);
+            ThemeLeads = theme.LeadsPage;
         }
         else
         {
             ThemeItems = [];
             ThemeTitle = null;
+            ThemeLeads = false;
         }
-        IsEmpty = results.IsEmpty;
+        IsEmpty = SearchPageLayout.Blocks(results).Count == 0;
         HasAnswer = true;
     }
 

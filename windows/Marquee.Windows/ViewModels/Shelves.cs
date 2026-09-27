@@ -275,16 +275,21 @@ public sealed class ChipItem
     }
 
     /// <summary>A Discover tile, from Core's <see cref="ShelfTiles"/> mapping.</summary>
-    public ChipItem(ShelfTile tile, ICommand open)
+    /// <param name="key">What makes it unique in a paged list (search's <c>"network-49"</c>).</param>
+    public ChipItem(ShelfTile tile, ICommand open, string? key = null)
     {
         Label = tile.Name;
         Open = open;
         Kind = tile.Kind == ShelfTileKind.Genre ? ChipKind.Genre : ChipKind.Logo;
         imageUrl = tile.ImageUrl;
         tint = tile.Tint;
+        Key = key;
     }
 
     public string Label { get; }
+
+    /// <summary>What makes it unique in a paged list; null where nothing pages.</summary>
+    public string? Key { get; }
     public ICommand Open { get; }
     public ChipKind Kind { get; }
 

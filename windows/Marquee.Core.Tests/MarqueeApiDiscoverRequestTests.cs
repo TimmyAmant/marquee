@@ -55,7 +55,9 @@ public sealed class MarqueeApiDiscoverRequestTests
         new("POST", "/surprise", NoQuery, """{"type":"tv","genreId":18,"hideOwned":false}""", "surprise",
             api => api.Discover.SurpriseAsync(new SurpriseRequest(SurpriseKind.Tv, GenreId: 18, HideOwned: false))),
         new("GET", "/search", Query(("q", "Romeo + Juliet & co")), null, "search", api => api.Search.ResultsAsync("Romeo + Juliet & co")),
-        new("GET", "/search/suggest", Query(("q", "ma")), null, "search-suggest", api => api.Search.SuggestionsAsync("ma")),
+        new("GET", "/search/suggest", Query(("q", "ma"), ("include", "company,network")), null, "search-suggest", api => api.Search.SuggestionsAsync("ma")),
+        new("GET", "/search/movies", Query(("q", "dune"), ("page", "2")), null, "search-section",
+            api => api.Search.TitlesAsync(SearchSectionName.Movies, "dune", 2)),
     ];
 
     public static TheoryData<string> CaseNames
@@ -177,9 +179,10 @@ public sealed class MarqueeApiDiscoverRequestTests
 
         var suggestions = await api.Search.SuggestionsAsync("ma");
 
-        Assert.Equal(4, suggestions.Count);
+        Assert.Equal(5, suggestions.Count);
         Assert.Equal("The Matrix", suggestions[0].Name);
-        Assert.Equal(SuggestionKind.Person, suggestions[1].MediaType);
+        Assert.Equal(SuggestionKind.Person, suggestions[3].MediaType);
+        Assert.Equal(SuggestionKind.Network, suggestions[4].MediaType);
     }
 
     [Fact]

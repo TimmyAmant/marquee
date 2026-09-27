@@ -23,6 +23,7 @@ public sealed class DiscoverFixtureTests
         Fixtures.Decode<TitleId>("surprise");
         Fixtures.Decode<SearchResults>("search");
         Fixtures.Decode<ListResponse<SearchSuggestion>>("search-suggest");
+        Fixtures.Decode<Paginated<TitleCard>>("search-section");
     }
 
     [Fact]
@@ -81,18 +82,20 @@ public sealed class DiscoverFixtureTests
     public void CardsAndSuggestions()
     {
         var suggestions = Fixtures.Decode<ListResponse<SearchSuggestion>>("search-suggest").Results;
-        Assert.Equal(["movie-603", "person-6384", "movie-604", "movie-624860"], suggestions.Select(suggestion => suggestion.StableId));
-        Assert.Equal(["Movie", "Actor", "Movie", "Movie"], suggestions.Select(suggestion => suggestion.MediaType.Label));
+        Assert.Equal(["movie-603", "movie-604", "movie-624860", "person-6384", "network-49"], suggestions.Select(suggestion => suggestion.StableId));
+        Assert.Equal(["Movie", "Movie", "Movie", "Actor", "Network"], suggestions.Select(suggestion => suggestion.MediaType.Label));
         Assert.Equal(new TitleId(MediaType.Movie, 603), suggestions[0].TitleId);
-        Assert.Null(suggestions[1].TitleId);
+        Assert.Null(suggestions[3].TitleId);
+        Assert.Null(suggestions[4].TitleId);
         Assert.Equal("1999", suggestions[0].Subtitle);
-        Assert.Equal("Acting", suggestions[1].Subtitle);
+        Assert.Equal("Acting", suggestions[3].Subtitle);
+        Assert.Null(suggestions[4].Subtitle);
         Assert.Equal(
-            [LibraryStatus.Owned, null, LibraryStatus.TrackedDownloading, LibraryStatus.Untracked],
+            [LibraryStatus.Owned, LibraryStatus.TrackedDownloading, LibraryStatus.Untracked, null, null],
             suggestions.Select(suggestion => suggestion.Status));
         Assert.Equal("Movie · In your library", suggestions[0].KindAccessibleLabel);
-        Assert.Equal("Actor", suggestions[1].KindAccessibleLabel);
-        Assert.Equal("Movie · Downloading", suggestions[2].KindAccessibleLabel);
+        Assert.Equal("Actor", suggestions[3].KindAccessibleLabel);
+        Assert.Equal("Movie · Downloading", suggestions[1].KindAccessibleLabel);
 
         // A server from before suggestion statuses sends no status: neutral.
         var older = Json.Decode<SearchSuggestion>("""{"id":603,"mediaType":"movie","name":"The Matrix","posterPath":null,"subtitle":"1999"}""");
@@ -353,7 +356,7 @@ public sealed class DiscoverFixtureTests
 
         // "No results for "…"." needs all four lists empty; a theme with no
         // items counts as empty too.
-        var empty = results with { People = [], Studios = [], Titles = [], Theme = null };
+        var empty = results with { People = [], Studios = [], Titles = [], Theme = null, Sections = null };
         Assert.True(empty.IsEmpty);
         Assert.True((empty with { Theme = new SearchTheme { Label = "Science Fiction", Items = [] } }).IsEmpty);
         Assert.False((empty with { Theme = results.Theme }).IsEmpty);
