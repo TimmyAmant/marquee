@@ -89,6 +89,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
     private static let readOnlyPosts = [
         "/surprise", "/auth/login", "/auth/setup", "/auth/logout", "/settings/integrations/plex/pin",
         "/settings/arr-servers/test", "/titles/movie/425/share",
+        // Import from Seerr: testing and previewing read; only the run changes anything.
+        "/settings/import/seerr/test", "/settings/import/seerr/preview",
     ]
 
     private var cases: [Case] {
