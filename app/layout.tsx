@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeSync } from "@/components/theme-sync";
+import { ToastHost } from "@/components/toast";
 import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n/client";
@@ -80,6 +81,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <SiteFooter />
           </div>
+          <ToastHost />
         </I18nProvider>
       </body>
     </html>

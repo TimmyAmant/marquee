@@ -199,7 +199,7 @@ export async function TitleHero({
   myRequests?: TitleRequestSummary[];
   /** What the viewer may do here (lib/users/permissions.ts); omitted when
    * signed out. */
-  may?: { request: boolean; advanced: boolean; manageBlocklist: boolean };
+  may?: { request: boolean; advanced: boolean; manageBlocklist: boolean; autoApprove?: boolean };
   /** "Play on Plex" and friends (lib/media-servers/play-links.ts). */
   playLinks?: PlayLink[];
 }) {
@@ -278,6 +278,7 @@ export async function TitleHero({
                     blocked={blocked ?? null}
                     canRequest={may?.request ?? false}
                     advanced={may?.advanced ?? false}
+                    autoApprove={may?.autoApprove ?? false}
                   />
 
                   {playLinks.length > 0 && <PlayButton links={playLinks} />}

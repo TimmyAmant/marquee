@@ -168,6 +168,9 @@ export default async function TitlePage({
                 request: mayRequest[type],
                 advanced: permissions.advancedRequests,
                 manageBlocklist: permissions.manageBlocklist,
+                // "This request will be approved automatically".
+                autoApprove:
+                  viewer.isAdmin || (type === "movie" ? permissions.autoApproveMovies : permissions.autoApproveTv),
               }
             : undefined
         }

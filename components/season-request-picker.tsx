@@ -7,6 +7,7 @@ import { SeasonPickerDialog, type SeasonPickerRow } from "@/components/season-pi
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import type { AddOverrides } from "@/lib/arr/add-options";
 import { useT } from "@/lib/i18n/client";
+import { showToast } from "@/components/toast";
 
 export type { SeasonPickerRow };
 
@@ -23,6 +24,7 @@ export function SeasonRequestPicker({
   rows,
   triggerLabel,
   advanced = false,
+  autoApprove = false,
 }: {
   tmdbId: number;
   showName: string;
@@ -31,6 +33,8 @@ export function SeasonRequestPicker({
   triggerLabel: string;
   /** Offer the Advanced picks (the advancedRequests permission). */
   advanced?: boolean;
+  /** The request will be approved at once (the viewer's permission). */
+  autoApprove?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -47,6 +51,7 @@ export function SeasonRequestPicker({
     const result = await requestSeasonsAction(tmdbId, seasons, overrides ?? undefined);
     if (result.error) return result.error;
     setOpen(false);
+    showToast(t("title.requestedToast", { title: showName }));
     // The pending state comes from the server render, same as the
     // whole-series Request button's after a refresh.
     router.refresh();
@@ -65,17 +70,22 @@ export function SeasonRequestPicker({
         {triggerLabel}
       </button>
 
-      {advanced && (
-        <div className="basis-full">
-          <AddAdvancedOptions mediaType="tv" tmdbId={tmdbId} onChange={setOverrides} />
-        </div>
-      )}
-
       {open && (
         <SeasonPickerDialog
           heading={t("title.requestSeasons")}
           subheading={showName}
           rows={rows}
+          autoApprove={autoApprove}
+          extra={
+            advanced ? (
+              <details className="rounded-xl border border-[var(--marquee-glass-border)] px-3 py-2">
+                <summary className="cursor-pointer text-[13px] font-medium text-text-primary">{t("title.advancedSection")}</summary>
+                <div className="pt-2">
+                  <AddAdvancedOptions mediaType="tv" tmdbId={tmdbId} onChange={setOverrides} />
+                </div>
+              </details>
+            ) : undefined
+          }
           submitLabel={(count, pending) =>
             pending
               ? t("title.requesting")

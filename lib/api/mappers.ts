@@ -239,6 +239,10 @@ export function myRequest(t: Translator, row: {
   libraryStatus: LibraryStatus | null;
   editedAt?: Date | null;
   addFailedAt?: Date | null;
+  backdropPath?: string | null;
+  arrServerName?: string | null;
+  reviewedByName?: string | null;
+  reviewedByUsername?: string | null;
 }, commentCount = 0): Dto.MyRequest {
   const badge = myRequestBadge(t, row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt));
   return {
@@ -261,7 +265,17 @@ export function myRequest(t: Translator, row: {
     canCancel: row.status === "pending",
     editedAt: iso(row.editedAt ?? null),
     commentCount,
+    backdropPath: row.backdropPath ?? null,
+    reviewedBy: reviewer(row),
+    addedToServer: row.status === "approved" && !row.manuallyApproved ? (row.arrServerName ?? null) : null,
   };
+}
+
+/** Who reviewed a request, when someone did (lib/requests/query.ts joins
+ * the reviewer's row). */
+function reviewer(row: { reviewedByUserId?: string | null; reviewedByName?: string | null; reviewedByUsername?: string | null }): Dto.RequestPerson | null {
+  if (!row.reviewedByUsername) return null;
+  return requestPerson({ userId: row.reviewedByUserId ?? null, displayName: row.reviewedByName ?? null, username: row.reviewedByUsername });
 }
 
 /** "Can't find" rows (GET /requests/not-found). */
@@ -312,6 +326,11 @@ export function reviewedRequest(t: Translator, row: {
   notFoundSince?: Date | null;
   addFailedAt?: Date | null;
   addError?: string | null;
+  backdropPath?: string | null;
+  editedAt?: Date | null;
+  reviewedByUserId?: string | null;
+  reviewedByName?: string | null;
+  reviewedByUsername?: string | null;
 }, commentCount = 0): Dto.ReviewedRequest {
   return {
     id: row.id,
@@ -335,6 +354,9 @@ export function reviewedRequest(t: Translator, row: {
         ? { error: row.addError ?? t("notify.arrDidntTakeIt"), since: row.addFailedAt.toISOString() }
         : null,
     commentCount,
+    backdropPath: row.backdropPath ?? null,
+    reviewedBy: reviewer(row),
+    editedAt: iso(row.editedAt ?? null),
   };
 }
 

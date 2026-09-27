@@ -839,6 +839,12 @@ export type MyRequest = {
   editedAt: string | null;
   /** 0.46+: comments in its conversation (the notes aren't counted). */
   commentCount: number;
+  /** 0.51+: the title's backdrop, for a card behind the request. */
+  backdropPath?: string | null;
+  /** 0.51+: who approved or declined it, when someone did by hand. */
+  reviewedBy?: RequestPerson | null;
+  /** 0.51+: the Sonarr/Radarr server approving it added it to, if known. */
+  addedToServer?: string | null;
 };
 
 export type PendingRequest = {
@@ -860,6 +866,8 @@ export type PendingRequest = {
   editedAt: string | null;
   /** 0.46+: comments in its conversation. */
   commentCount: number;
+  /** 0.51+: the title's backdrop, for a card behind the request. */
+  backdropPath?: string | null;
 };
 
 export type PendingRequestsResponse = ListResponse<PendingRequest> & {
@@ -899,6 +907,13 @@ export type ReviewedRequest = {
   addFailed: { error: string; since: string } | null;
   /** 0.46+: comments in its conversation. */
   commentCount: number;
+  /** 0.51+: the title's backdrop, for a card behind the request. */
+  backdropPath?: string | null;
+  /** 0.51+: who approved or declined it; null when nobody did by hand
+   * (auto-approved) or the account is gone. */
+  reviewedBy?: RequestPerson | null;
+  /** 0.51+: when its seasons or 4K were last changed; null if never. */
+  editedAt?: string | null;
 };
 
 /** 0.46+: an approved request Sonarr/Radarr hasn't found (GET /requests/not-found). */

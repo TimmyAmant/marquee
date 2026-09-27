@@ -28,6 +28,7 @@ export function AddToLibraryButton({
   blocked = null,
   canRequest = true,
   advanced = false,
+  autoApprove = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -49,6 +50,8 @@ export function AddToLibraryButton({
   canRequest?: boolean;
   /** A member may pick the server, quality and folder (advancedRequests). */
   advanced?: boolean;
+  /** Their requests are approved at once (autoApproveMovies / autoApproveTv). */
+  autoApprove?: boolean;
   /** A TV show's seasons for a member's season picker; omitted for movies
    * and admins, who keep the whole-title Request/Add buttons. */
   seasonPicker?: {
@@ -101,6 +104,7 @@ export function AddToLibraryButton({
             title={name}
             posterPath={posterPath}
             formId={`request-${mediaType}-${tmdbId}`}
+            autoApprove={autoApprove}
           />
         )}
 
@@ -111,8 +115,9 @@ export function AddToLibraryButton({
             tmdbId={tmdbId}
             showName={name}
             rows={seasonPicker.rows}
-            triggerLabel={open ? t("common.request") : t("title.requestMoreSeasons")}
+            triggerLabel={open ? t("common.request") : t("title.requestMore")}
             advanced={advanced}
+            autoApprove={autoApprove}
           />
         )}
 
