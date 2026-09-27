@@ -9,13 +9,6 @@
       "status": "owned"
     },
     {
-      "id": 6384,
-      "mediaType": "person",
-      "name": "Keanu Reeves",
-      "posterPath": "/8RZL.jpg",
-      "subtitle": "Acting"
-    },
-    {
       "id": 604,
       "mediaType": "movie",
       "name": "The Matrix Reloaded",
@@ -30,6 +23,20 @@
       "posterPath": "/8c4a.jpg",
       "subtitle": "2021",
       "status": "untracked"
+    },
+    {
+      "id": 6384,
+      "mediaType": "person",
+      "name": "Keanu Reeves",
+      "posterPath": "/8RZL.jpg",
+      "subtitle": "Acting"
+    },
+    {
+      "id": 49,
+      "mediaType": "network",
+      "name": "HBO",
+      "posterPath": "/tuom.png",
+      "subtitle": null
     }
   ]
 }

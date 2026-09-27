@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   One row of the shell's search type-ahead (components/search-bar.tsx, the
-  Mac's SearchPanelRow): poster, the name over its subtitle, and the
-  Actor/Movie/TV pill, which wears the title's library status in the poster
+  Mac's SearchPanelRow): the group's label on a group's first row, then a
+  poster (a round photo for a person, a logo on white for a studio or
+  network), the name over its subtitle, and the Movie/TV/Actor/Studio pill, which wears the title's library status in the poster
   badge's palette (TonePill: green in the library, purple downloading, red
   missing, orange not monitored, blue coming soon, neutral otherwise).
 
@@ -19,36 +20,51 @@
     xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d">
 
-    <Grid ColumnSpacing="12" Padding="0,6">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
+    <StackPanel>
+        <!-- The group's small label (Movies, TV Shows, People, Studios and Networks), on its first row only. -->
+        <TextBlock
+            x:Name="GroupText"
+            Visibility="Collapsed"
+            Margin="0,6,0,2"
+            FontSize="10.5"
+            FontWeight="SemiBold"
+            CharacterSpacing="60"
+            Foreground="{ThemeResource MarqueeNavTextSecondaryBrush}" />
 
-        <Border
-            Width="30"
-            Height="44"
-            CornerRadius="4"
-            Background="{ThemeResource NeutralBadgeBackgroundBrush}">
-            <Image x:Name="Poster" Stretch="UniformToFill" />
-        </Border>
+        <Grid ColumnSpacing="12" Padding="0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="44" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-            <TextBlock
-                x:Name="NameText"
-                FontSize="14"
-                FontWeight="Medium"
-                MaxLines="1"
-                TextTrimming="CharacterEllipsis" />
-            <TextBlock
-                x:Name="SubtitleText"
-                FontSize="12"
-                Foreground="{ThemeResource MarqueeNavTextSecondaryBrush}"
-                MaxLines="1"
-                TextTrimming="CharacterEllipsis" />
-        </StackPanel>
+            <!-- A poster, a round photo for a person, or a logo on white for a studio or network (set in code). -->
+            <Border
+                x:Name="PosterFrame"
+                Width="30"
+                Height="44"
+                CornerRadius="4"
+                HorizontalAlignment="Center"
+                Background="{ThemeResource NeutralBadgeBackgroundBrush}">
+                <Image x:Name="Poster" Stretch="UniformToFill" />
+            </Border>
 
-        <controls:TonePill x:Name="KindPill" Grid.Column="2" VerticalAlignment="Center" />
-    </Grid>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                <TextBlock
+                    x:Name="NameText"
+                    FontSize="14"
+                    FontWeight="Medium"
+                    MaxLines="1"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    x:Name="SubtitleText"
+                    FontSize="12"
+                    Foreground="{ThemeResource MarqueeNavTextSecondaryBrush}"
+                    MaxLines="1"
+                    TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <controls:TonePill x:Name="KindPill" Grid.Column="2" VerticalAlignment="Center" />
+        </Grid>
+    </StackPanel>
 </UserControl>

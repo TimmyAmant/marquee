@@ -67,7 +67,22 @@ public sealed record PersonCard
     /// <summary>Null where the website shows no star.</summary>
     public bool? Favorited { get; init; }
 
+    /// <summary>Search only (0.55+): up to three titles they're known for.</summary>
+    public IReadOnlyList<string>? KnownFor { get; init; }
+
     public int Id => TmdbId;
+
+    /// <summary>"Acting · The Matrix, John Wick": search's line under the photo.</summary>
+    public string? KnownForLine
+    {
+        get
+        {
+            var department = string.IsNullOrWhiteSpace(KnownForDepartment) ? null : KnownForDepartment;
+            var titles = string.Join(", ", (KnownFor ?? []).Where(title => !string.IsNullOrWhiteSpace(title)));
+            if (department != null && titles.Length > 0) return $"{department} · {titles}";
+            return department ?? (titles.Length > 0 ? titles : null);
+        }
+    }
 }
 
 /// <summary>A studio (production company).</summary>
@@ -394,9 +409,18 @@ public sealed record SearchTheme
 {
     public required string Label { get; init; }
     public required IReadOnlyList<TitleCard> Items { get; init; }
+
+    /// <summary>
+    /// 0.55+: "first" when the query is that genre/keyword itself ("horror"),
+    /// so its row leads the page; "last", or null from an older server, puts
+    /// it after the other sections.
+    /// </summary>
+    public string? Placement { get; init; }
+
+    public bool LeadsPage => Placement == "first";
 }
 
-/// <summary><c>GET /search?q=</c>: the search results page. All four empty: "No results for "…"."</summary>
+/// <summary><c>GET /search?q=</c>: the search results page. All empty: "No results for "…"."</summary>
 public sealed record SearchResults
 {
     public required string Query { get; init; }
@@ -408,7 +432,184 @@ public sealed record SearchResults
 
     public SearchTheme? Theme { get; init; }
 
-    public bool IsEmpty => People.Count == 0 && Studios.Count == 0 && Titles.Count == 0 && (Theme?.Items.Count ?? 0) == 0;
+    /// <summary>
+    /// 0.55+: the page in the order to show it (movies, series, people,
+    /// studios &amp; networks); null from an older server, where
+    /// <see cref="SearchPageLayout"/> falls back to the fields above.
+    /// </summary>
+    public SearchSections? Sections { get; init; }
+
+    /// <summary>
+    /// 0.55+: the non-empty blocks in the order to show them ("movies",
+    /// "series", "people", "studiosAndNetworks", "theme"); People leads when
+    /// the query names a person. Null from an older server.
+    /// </summary>
+    public IReadOnlyList<string>? Order { get; init; }
+
+    /// <summary>People comes before the titles (the query names a person).</summary>
+    public bool PeopleFirst
+    {
+        get
+        {
+            var blocks = SearchPageLayout.Blocks(this);
+            var people = blocks.ToList().IndexOf(SearchPageLayout.BlockKind.People);
+            var movies = blocks.ToList().IndexOf(SearchPageLayout.BlockKind.Movies);
+            var series = blocks.ToList().IndexOf(SearchPageLayout.BlockKind.Series);
+            return people >= 0 && (movies < 0 || people < movies) && (series < 0 || people < series);
+        }
+    }
+
+    public bool IsEmpty =>
+        People.Count == 0 && Studios.Count == 0 && Titles.Count == 0 && (Theme?.Items.Count ?? 0) == 0
+        && (Sections is null || (Sections.Movies.Results.Count == 0 && Sections.Series.Results.Count == 0
+            && Sections.People.Results.Count == 0 && Sections.StudiosAndNetworks.Results.Count == 0));
+}
+
+/// <summary>One section of the search page (0.55+): TMDb's first page, best match first, and how many in all.</summary>
+public sealed record SearchSection<T> where T : notnull
+{
+    public required int TotalResults { get; init; }
+    public required int TotalPages { get; init; }
+    public required IReadOnlyList<T> Results { get; init; }
+
+    /// <summary>More than the section shows: offer See all.</summary>
+    public bool HasMore => TotalResults > Results.Count;
+}
+
+/// <summary><c>SearchResults.sections</c> (0.55+).</summary>
+public sealed record SearchSections
+{
+    public required SearchSection<TitleCard> Movies { get; init; }
+    public required SearchSection<TitleCard> Series { get; init; }
+    public required SearchSection<PersonCard> People { get; init; }
+    public required SearchSection<SearchCompanyCard> StudiosAndNetworks { get; init; }
+}
+
+/// <summary>
+/// A studio or network in search's Studios &amp; Networks (0.55+): a studio
+/// opens its company page, a network the Series grid filtered to it.
+/// </summary>
+public sealed record SearchCompanyCard
+{
+    /// <summary>"studio" or "network"; anything else reads as a studio.</summary>
+    public required string Kind { get; init; }
+
+    public required int TmdbId { get; init; }
+    public required string Name { get; init; }
+    public ImageRef? LogoPath { get; init; }
+
+    /// <summary>Always null for a network (no star).</summary>
+    public bool? Favorited { get; init; }
+
+    public bool IsNetwork => Kind == "network";
+
+    /// <summary><c>"network-49"</c>: studios and networks share TMDb ids.</summary>
+    public string StableId => $"{Kind}-{TmdbId}";
+
+    /// <summary>An older server's studio.</summary>
+    public static SearchCompanyCard FromStudio(CompanyCard studio) => new()
+    {
+        Kind = "studio",
+        TmdbId = studio.TmdbId,
+        Name = studio.Name,
+        LogoPath = studio.LogoPath,
+        Favorited = studio.Favorited,
+    };
+}
+
+/// <summary><c>GET /search/{section}</c> (0.55+): which section's See all.</summary>
+public enum SearchSectionName
+{
+    Movies,
+    Series,
+    People,
+    Studios,
+}
+
+/// <summary>
+/// app/search/page.tsx's order from a <c>GET /search</c> answer: always
+/// Movies, TV Shows, People, then Studios &amp; Networks, empty ones left out;
+/// a genre/keyword theme leads when the query is that theme ("horror"), else
+/// comes last. An older server (no <c>sections</c>) has its titles split into
+/// movies and series and its studios stand in, with no See all. Pure.
+/// </summary>
+public static class SearchPageLayout
+{
+    public enum BlockKind
+    {
+        Theme,
+        Movies,
+        Series,
+        People,
+        Studios,
+    }
+
+    /// <summary>The blocks, top to bottom.</summary>
+    public static IReadOnlyList<BlockKind> Blocks(SearchResults results)
+    {
+        var sections = SectionsOf(results);
+        var theme = results.Theme is { Items.Count: > 0 } ? results.Theme : null;
+        var blocks = new List<BlockKind>();
+        // The server's order (0.55+: People first when the query names a
+        // person); keys this app doesn't know, and empty sections, skipped.
+        if (results.Order is { } order)
+        {
+            foreach (var key in order)
+            {
+                BlockKind? block = key switch
+                {
+                    "theme" when theme != null => BlockKind.Theme,
+                    "movies" when sections.Movies.Results.Count > 0 => BlockKind.Movies,
+                    "series" when sections.Series.Results.Count > 0 => BlockKind.Series,
+                    "people" when sections.People.Results.Count > 0 => BlockKind.People,
+                    "studiosAndNetworks" when sections.StudiosAndNetworks.Results.Count > 0 => BlockKind.Studios,
+                    _ => null,
+                };
+                if (block is { } kind && !blocks.Contains(kind))
+                {
+                    blocks.Add(kind);
+                }
+            }
+            return blocks;
+        }
+        if (theme is { LeadsPage: true })
+        {
+            blocks.Add(BlockKind.Theme);
+        }
+        if (sections.Movies.Results.Count > 0)
+        {
+            blocks.Add(BlockKind.Movies);
+        }
+        if (sections.Series.Results.Count > 0)
+        {
+            blocks.Add(BlockKind.Series);
+        }
+        if (sections.People.Results.Count > 0)
+        {
+            blocks.Add(BlockKind.People);
+        }
+        if (sections.StudiosAndNetworks.Results.Count > 0)
+        {
+            blocks.Add(BlockKind.Studios);
+        }
+        if (theme is { LeadsPage: false })
+        {
+            blocks.Add(BlockKind.Theme);
+        }
+        return blocks;
+    }
+
+    /// <summary>The server's sections, or an older server's flat answer as sections (no See all).</summary>
+    public static SearchSections SectionsOf(SearchResults results) => results.Sections ?? new SearchSections
+    {
+        Movies = Whole(results.Titles.Where(card => card.MediaType == MediaType.Movie).ToList()),
+        Series = Whole(results.Titles.Where(card => card.MediaType == MediaType.Tv).ToList()),
+        People = Whole(results.People),
+        StudiosAndNetworks = Whole(results.Studios.Select(SearchCompanyCard.FromStudio).ToList()),
+    };
+
+    private static SearchSection<T> Whole<T>(IReadOnlyList<T> items) where T : notnull =>
+        new() { TotalResults = items.Count, TotalPages = 1, Results = items };
 }
 
 /// <summary><c>GET /search/suggest?q=</c>: header type-ahead, at most 7 people/movies/series.</summary>

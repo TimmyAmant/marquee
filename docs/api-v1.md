@@ -174,6 +174,16 @@ where the real server needed something the core contract didn't spell out.
     `GET` / `PUT /settings/discover/locale` (§2). A server older than this
     omits the new fields — hide what they drive — and answers `404` on the
     new endpoints.
+22. **Search in sections (0.55+, additive).** `GET /search` gains
+    `sections` — movies, series, people, studios & networks, in the order
+    to show them, each ranked with its total — and `theme.placement`; the
+    older `people`/`studios`/`titles` stay. `SearchCompanyCard` adds
+    networks (`kind`), people gain `knownFor`. New: `GET /search/{section}`,
+    a section's See all (§2). `GET /search/suggest` now groups its results
+    (movies, series, people) and, with `?include=company,network`, adds
+    studios and networks. A server older than this omits `sections` — fall
+    back to the old fields — answers `404` on `/search/{section}` (hide See
+    all), and ignores `include`.
 
 ---
 
@@ -303,6 +313,11 @@ request turns monitoring back on — and admins get "Start monitoring"
 ```
 
 `favorited` is null where the website shows no star (Discover's Studios shelf).
+
+On the search page (0.55+) a person may also carry `knownFor` — up to three
+titles, best known first — and a studio or network is a `SearchCompanyCard`:
+a `CompanyCard` plus `kind`, `"studio"` (opens `GET /companies/{id}`) or
+`"network"` (opens `GET /series?network={id}`; `favorited` is always null).
 
 #### `RequestPerson`
 
@@ -1083,37 +1098,98 @@ The search results page. `q` is required (`400` if blank).
 ```json
 {
   "query": "keanu",
-  "people": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false } ],
+  "people": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false, "knownFor": ["The Matrix", "John Wick", "Speed"] } ],
   "studios": [ { "tmdbId": 420, "name": "Marvel Studios", "logoPath": "/hUze.png", "favorited": false } ],
   "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ],
   "theme": {
     "label": "Science Fiction",
-    "items": [ /* TitleCard — section heading on the website: "<label> movies & TV" */ ]
-  }
+    "items": [ /* TitleCard — section heading on the website: "<label> movies & TV" */ ],
+    "placement": "last"
+  },
+  "sections": {
+    "movies": { "totalResults": 57, "totalPages": 3, "results": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ] },
+    "series": { "totalResults": 4, "totalPages": 1, "results": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ] },
+    "people": { "totalResults": 12, "totalPages": 1, "results": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false, "knownFor": ["The Matrix", "John Wick", "Speed"] } ] },
+    "studiosAndNetworks": { "totalResults": 1, "totalPages": 1, "results": [ { "kind": "network", "tmdbId": 49, "name": "HBO", "logoPath": "/tuom.png", "favorited": null } ] }
+  },
+  "order": ["movies", "series", "people", "studiosAndNetworks", "theme"]
 }
 ```
 
+`sections` (0.55+) is the page: **Movies, TV Shows (`series`), People,
+Studios & Networks**. `order` (0.55+) lists the non-empty blocks in the
+order to show them — that order, except that People comes first when the
+query names a well-known person ("tom hanks": the best person match has
+exactly that name and no title with exactly that name is more popular), and
+`theme` first or last (see `placement`). Skip keys you don't know; without
+`order` (an older server) use the fixed order. Each section holds TMDb's
+first page, best match first: an exact title (or name) counts for more the
+more popular it is next to the section's most popular result, so an
+obscure film called exactly "Dune" doesn't outrank "Dune: Part Two";
+relevance blends with popularity after that; and a year at the end of the
+query ("dune 2021", "dune (1984)") lifts that year's title — TMDb is
+searched without the year. People without a photo whom hardly anyone looks
+up, and studios without a logo that aren't exactly what was typed, are left
+out here (they're still in See all); a section left with nothing is empty.
+`totalResults` is the heading's count, everything TMDb has; more than
+`results` holds → offer See all (`GET /search/{section}`). Studios &
+Networks mixes TMDb's studios with the networks Discover knows whose name
+matches (TMDb has no network search): `kind` says which.
+
 `theme` is non-null when the query (minus words like "movies"/"shows") names a
-TMDb genre or keyword. All four empty → the website shows "No results for "…"."
+TMDb genre or keyword. `placement` (0.55+) is where its shelf goes: `"first"`
+when the query is that genre ("horror") or keyword with nothing else named
+exactly that ("natural disaster"), `"last"` otherwise (missing on an older
+server: after the titles). Everything empty → the website shows "No results
+for "…"."
+
+`people`, `studios` (studios only) and `titles` (movies then series) repeat
+the sections for apps before 0.55.
+
+### `GET /search/{section}?q=&page=` — user (0.55+)
+
+A search section's See all, paged like any list. `section` is `movies`,
+`series`, `people` or `studios` (studios and networks — the networks only on
+page 1); page 1 is the section `GET /search` returned. Results are
+`TitleCard`s (with status, favorited and the quick action), people
+(`PersonCard` + `knownFor`) or `SearchCompanyCard`s. Titles can repeat
+across pages as TMDb's order shifts — skip ones already shown.
+
+```json
+{ "page": 2, "totalPages": 3, "totalResults": 57, "results": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ] }
+```
+
+Errors: `400 invalid` (blank `q`, bad `page`); `404 not_found` — "No search
+section "…" (one of movies, series, people, studios)."
 
 ### `GET /search/suggest?q=` — user
 
-Header type-ahead: up to 7 people/movies/series. `q` shorter than 2 characters
-→ `{"results": []}` without calling TMDb (and without the TMDb check).
+Header type-ahead, grouped in the search page's order: up to 4 movies, 3
+series, 3 people and — only with `?include=company,network` (0.55+; older
+apps never see these kinds) — 2 studios/networks. Each group is ranked and trimmed like
+the page's sections, and people come first when the query names a
+well-known person. `q` shorter than 2 characters → `{"results": []}`
+without calling TMDb (and without the TMDb check).
 
 ```json
 {
   "results": [
     { "id": 603, "mediaType": "movie", "name": "The Matrix", "posterPath": "/aOIu.jpg", "subtitle": "1999", "status": "owned" },
-    { "id": 6384, "mediaType": "person", "name": "Keanu Reeves", "posterPath": "/8RZL.jpg", "subtitle": "Acting" },
     { "id": 604, "mediaType": "movie", "name": "The Matrix Reloaded", "posterPath": "/9TGH.jpg", "subtitle": "2003", "status": "tracked_downloading" },
-    { "id": 624860, "mediaType": "movie", "name": "The Matrix Resurrections", "posterPath": "/8c4a.jpg", "subtitle": "2021", "status": "untracked" }
+    { "id": 624860, "mediaType": "movie", "name": "The Matrix Resurrections", "posterPath": "/8c4a.jpg", "subtitle": "2021", "status": "untracked" },
+    { "id": 6384, "mediaType": "person", "name": "Keanu Reeves", "posterPath": "/8RZL.jpg", "subtitle": "Acting" },
+    { "id": 49, "mediaType": "network", "name": "HBO", "posterPath": "/tuom.png", "subtitle": null }
   ]
 }
 ```
 
-`subtitle` is the year for titles and the known-for department for people.
-Website labels: person → "Actor", movie → "Movie", tv → "TV".
+`subtitle` is the year for titles, the known-for department for people, null
+for studios and networks (`posterPath` is their logo). Website labels: movie →
+"Movie", tv → "TV", person → "Actor", company → "Studio", network →
+"Network", under group headings "Movies", "TV Shows", "People", "Studios &
+Networks". A `company` opens `GET /companies/{id}`, a `network` the series
+grid filtered to it. Treat `mediaType` as an open set: skip kinds you can't
+open.
 
 `status` (movies and series only; absent for people) is the
 viewer's library status — the same `LibraryStatus` values as elsewhere
@@ -4571,6 +4647,7 @@ see free space per root folder here."
 | | `POST /surprise` | user |
 | | `GET /search` | user |
 | | `GET /search/suggest` | user |
+| | `GET /search/{section}` | user |
 | Title | `GET /titles/{type}/{tmdbId}` | user |
 | | `GET /titles/tv/{tmdbId}/seasons/{season}` | user |
 | | `POST /titles/{type}/{tmdbId}/share` | user |

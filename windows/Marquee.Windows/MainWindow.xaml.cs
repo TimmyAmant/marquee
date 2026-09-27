@@ -592,7 +592,7 @@ public sealed partial class MainWindow : Window, INavigator
             var suggestions = await model.Api.Search.SuggestionsAsync(query, token);
             if (!token.IsCancellationRequested)
             {
-                sender.ItemsSource = suggestions.Select(suggestion => new SuggestionItem(suggestion)).ToList();
+                sender.ItemsSource = SuggestionItem.Grouped(suggestions);
             }
         }
         catch (OperationCanceledException)

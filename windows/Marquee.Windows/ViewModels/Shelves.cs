@@ -275,16 +275,33 @@ public sealed class ChipItem
     }
 
     /// <summary>A Discover tile, from Core's <see cref="ShelfTiles"/> mapping.</summary>
-    public ChipItem(ShelfTile tile, ICommand open)
+    /// <param name="key">What makes it unique in a paged list (search's <c>"network-49"</c>).</param>
+    /// <param name="caption">A line under a logo tile (search's "Studio" / "Network"); the tile then shows initials, not the name, when there's no logo.</param>
+    public ChipItem(ShelfTile tile, ICommand open, string? key = null, string? caption = null)
     {
         Label = tile.Name;
         Open = open;
         Kind = tile.Kind == ShelfTileKind.Genre ? ChipKind.Genre : ChipKind.Logo;
         imageUrl = tile.ImageUrl;
         tint = tile.Tint;
+        Key = key;
+        Caption = caption;
     }
 
     public string Label { get; }
+
+    /// <summary>"Studio" / "Network" under a search logo tile; null elsewhere.</summary>
+    public string? Caption { get; }
+
+    public bool HasCaption => Caption != null;
+
+    /// <summary>What a logo-less tile shows: initials when the name is in the caption below, else the name.</summary>
+    public string Fallback => Caption == null
+        ? Label
+        : string.Concat(Label.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpperInvariant(word[0])));
+
+    /// <summary>What makes it unique in a paged list; null where nothing pages.</summary>
+    public string? Key { get; }
     public ICommand Open { get; }
     public ChipKind Kind { get; }
 

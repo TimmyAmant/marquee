@@ -230,5 +230,6 @@
   "seerrImportRunning": "Une importation est déjà en cours. Attendez qu’elle se termine.",
   "seerrImportNotFound": "Cette importation n’existe plus.",
   "seerrNothingChosen": "Choisissez au moins un élément à importer.",
-  "onlyOwnProfile": "Vous ne pouvez voir que votre propre profil."
+  "onlyOwnProfile": "Vous ne pouvez voir que votre propre profil.",
+  "noSearchSection": "Aucune section de recherche \"{section}\" (utilisez l’une de {sections})."
 }

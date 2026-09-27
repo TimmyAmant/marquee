@@ -61,5 +61,13 @@
   "notFoundBody": "That page doesn't exist — the link may be wrong, or TMDb no longer has this title.",
   "backToDiscover": "Back to Discover",
   "quoted": "“{text}”",
-  "serverVersion": "Marquee {version}"
+  "serverVersion": "Marquee {version}",
+  "typeStudio": "Studio",
+  "typeNetwork": "Network",
+  "groupMovies": "Movies",
+  "groupTv": "TV Shows",
+  "groupPeople": "People",
+  "groupStudiosNetworks": "Studios & Networks",
+  "searchSuggestions": "Search suggestions",
+  "searchAllResults": "See all results for “{query}”"
 }

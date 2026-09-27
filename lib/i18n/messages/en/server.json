@@ -230,5 +230,6 @@
   "seerrImportRunning": "An import is already running. Wait for it to finish.",
   "seerrImportNotFound": "That import doesn't exist any more.",
   "seerrNothingChosen": "Choose at least one thing to import.",
-  "onlyOwnProfile": "You can only see your own profile."
+  "onlyOwnProfile": "You can only see your own profile.",
+  "noSearchSection": "No search section \"{section}\" (one of {sections})."
 }

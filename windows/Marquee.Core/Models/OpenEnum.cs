@@ -436,23 +436,98 @@ public readonly record struct RequestTone(string Value) : IOpenEnum<RequestTone>
     public override string ToString() => Value;
 }
 
-/// <summary><c>SearchSuggestion.mediaType</c>: a person or a title.</summary>
+/// <summary>
+/// <c>SearchSuggestion.mediaType</c>: a title, a person, or (0.55+, only when
+/// the app asks with <c>include=</c>) a studio or network.
+/// </summary>
 public readonly record struct SuggestionKind(string Value) : IOpenEnum<SuggestionKind>
 {
     public static readonly SuggestionKind Person = new("person");
     public static readonly SuggestionKind Movie = new("movie");
     public static readonly SuggestionKind Tv = new("tv");
+    public static readonly SuggestionKind Company = new("company");
+    public static readonly SuggestionKind Network = new("network");
 
-    public static IReadOnlyList<SuggestionKind> Known { get; } = [Person, Movie, Tv];
+    public static IReadOnlyList<SuggestionKind> Known { get; } = [Person, Movie, Tv, Company, Network];
     public static SuggestionKind FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
 
-    /// <summary>The website's pill: "Actor", "Movie", "TV".</summary>
-    public string Label => this == Person ? Loc.Get("Enum_SuggestionActor") : this == Movie ? Loc.Get("Enum_MediaMovie") : this == Tv ? Loc.Get("Enum_MediaTv") : OpenEnum.Capitalized(Value);
+    /// <summary>The website's pill: "Movie", "TV", "Actor", "Studio", "Network".</summary>
+    public string Label =>
+        this == Person ? Loc.Get("Enum_SuggestionActor")
+        : this == Movie ? Loc.Get("Enum_MediaMovie")
+        : this == Tv ? Loc.Get("Enum_MediaTv")
+        : this == Company ? Loc.Get("Enum_SuggestionStudio")
+        : this == Network ? Loc.Get("Enum_SuggestionNetwork")
+        : OpenEnum.Capitalized(Value);
 
-    /// <summary>The title's media type, null for a person (or an unknown kind).</summary>
+    /// <summary>The title's media type, null for anything else.</summary>
     public MediaType? MediaType => this == Movie ? Models.MediaType.Movie : this == Tv ? Models.MediaType.Tv : null;
+
+    /// <summary>The type-ahead's group, in the search page's order; null for a kind this app can't open.</summary>
+    public SuggestionGroup? Group =>
+        this == Movie ? SuggestionGroup.Movies
+        : this == Tv ? SuggestionGroup.Series
+        : this == Person ? SuggestionGroup.People
+        : this == Company || this == Network ? SuggestionGroup.Studios
+        : null;
+}
+
+/// <summary>The type-ahead's groups, in the search page's order.</summary>
+public enum SuggestionGroup
+{
+    Movies,
+    Series,
+    People,
+    Studios,
+}
+
+/// <summary>
+/// The type-ahead grouped like the website's dropdown: Movies, TV Shows,
+/// People, Studios &amp; Networks, each group's rows in the order the server
+/// sent them (an older server mixes kinds), kinds this app can't open left
+/// out. Pure.
+/// </summary>
+public static class SuggestionGroups
+{
+    /// <summary>The suggestions in group order, each with its group and whether it starts that group.</summary>
+    public static IReadOnlyList<(SearchSuggestion Suggestion, SuggestionGroup Group, bool StartsGroup)> Arrange(IEnumerable<SearchSuggestion> suggestions)
+    {
+        var entries = suggestions
+            .Select((suggestion, index) => (suggestion, index, group: suggestion.MediaType.Group))
+            .Where(entry => entry.group != null)
+            .ToList();
+        // Groups in the order the server sent them (People first when the
+        // query names a person); a stray row joins its group where it first appears.
+        var firstSeen = new Dictionary<SuggestionGroup, int>();
+        foreach (var entry in entries)
+        {
+            firstSeen.TryAdd(entry.group!.Value, entry.index);
+        }
+        var ordered = entries
+            .OrderBy(entry => firstSeen[entry.group!.Value])
+            .ThenBy(entry => entry.index)
+            .ToList();
+        var arranged = new List<(SearchSuggestion Suggestion, SuggestionGroup Group, bool StartsGroup)>(ordered.Count);
+        SuggestionGroup? previous = null;
+        foreach (var entry in ordered)
+        {
+            var group = entry.group!.Value;
+            arranged.Add((entry.suggestion, group, previous != group));
+            previous = group;
+        }
+        return arranged;
+    }
+
+    /// <summary>The small label over a group.</summary>
+    public static string Label(SuggestionGroup group) => group switch
+    {
+        SuggestionGroup.Movies => Loc.Get("Search_GroupMovies"),
+        SuggestionGroup.Series => Loc.Get("Search_GroupSeries"),
+        SuggestionGroup.People => Loc.Get("Search_GroupPeople"),
+        _ => Loc.Get("Search_GroupStudios"),
+    };
 }
 
 /// <summary><c>FileDetails.resolutionTier</c>, derived from the quality name (lib/quality.ts).</summary>

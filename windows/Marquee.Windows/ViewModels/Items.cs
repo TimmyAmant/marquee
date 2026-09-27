@@ -248,9 +248,11 @@ public sealed class SuggestionItem
     private readonly Uri? imageUrl;
     private ImageSource? image;
 
-    public SuggestionItem(SearchSuggestion suggestion)
+    /// <param name="groupLabel">"Movies", "TV Shows", "People" or "Studios &amp; Networks" on the first row of its group, else null.</param>
+    public SuggestionItem(SearchSuggestion suggestion, string? groupLabel = null)
     {
         Suggestion = suggestion;
+        GroupLabel = groupLabel;
         Name = suggestion.Name;
         Subtitle = suggestion.Subtitle.NonBlank();
         KindLabel = suggestion.MediaType.Label;
@@ -259,10 +261,31 @@ public sealed class SuggestionItem
         // downloading, red missing, orange not monitored, blue coming soon;
         // not in the library, a person or an unknown status stays neutral.
         KindTone = suggestion.Status is { IsKnown: true } status ? PosterItem.ToneFor(status) : BadgeTone.Neutral;
-        imageUrl = suggestion.PosterPath.Url(ImageSize.W92);
+        IsPerson = suggestion.MediaType == SuggestionKind.Person;
+        IsLogo = suggestion.MediaType == SuggestionKind.Company || suggestion.MediaType == SuggestionKind.Network;
+        imageUrl = suggestion.PosterPath.Url(IsLogo || IsPerson ? ImageSize.W185 : ImageSize.W92);
     }
 
+    /// <summary>
+    /// The type-ahead's rows in the website's order (Movies, TV Shows, People,
+    /// Studios &amp; Networks), the first of each group carrying its label.
+    /// </summary>
+    public static IReadOnlyList<SuggestionItem> Grouped(IEnumerable<SearchSuggestion> suggestions) =>
+        SuggestionGroups.Arrange(suggestions)
+            .Select(entry => new SuggestionItem(entry.Suggestion, entry.StartsGroup ? SuggestionGroups.Label(entry.Group) : null))
+            .ToList();
+
     public SearchSuggestion Suggestion { get; }
+
+    /// <summary>The group's small label, on its first row only.</summary>
+    public string? GroupLabel { get; }
+
+    /// <summary>A round photo rather than a poster.</summary>
+    public bool IsPerson { get; }
+
+    /// <summary>A studio or network: its logo on white.</summary>
+    public bool IsLogo { get; }
+
     public string Name { get; }
     public string? Subtitle { get; }
 
@@ -286,7 +309,7 @@ public sealed class SuggestionItem
     public override string ToString() =>
         Subtitle == null ? $"{Name} · {KindLabel}" : $"{Name} ({Subtitle}) · {KindLabel}";
 
-    /// <summary>Opens the title or the person; an unknown kind does nothing.</summary>
+    /// <summary>Opens the title, the person, the studio, or Series filtered to the network; an unknown kind does nothing.</summary>
     public void Open(AppModel model)
     {
         if (Suggestion.TitleId is { } title)
@@ -296,6 +319,14 @@ public sealed class SuggestionItem
         else if (Suggestion.MediaType == SuggestionKind.Person)
         {
             model.OpenPerson(Suggestion.Id);
+        }
+        else if (Suggestion.MediaType == SuggestionKind.Company)
+        {
+            model.OpenCompany(Suggestion.Id);
+        }
+        else if (Suggestion.MediaType == SuggestionKind.Network)
+        {
+            model.Browse(MediaType.Tv, networkId: Suggestion.Id);
         }
     }
 }

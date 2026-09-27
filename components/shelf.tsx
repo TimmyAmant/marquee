@@ -15,10 +15,16 @@ export function ShelfHead({
   onScroll,
   atStart,
   atEnd,
+  count,
+  seeAllText,
   children,
 }: {
   title: string;
   seeAllHref?: string;
+  /** A muted number after the title (search's section totals). */
+  count?: string;
+  /** A worded "See all ›" button instead of the small arrow circle. */
+  seeAllText?: boolean;
   /** Shelf pages have no right page padding, so the arrows carry the 28px
    * gutter themselves. Rows that already sit inside a padded column (the
    * title page's cast carousel) pass this to align them flush instead. */
@@ -38,7 +44,19 @@ export function ShelfHead({
       <h2 className="font-display text-[20px] font-semibold leading-none tracking-[-0.005em] text-text-primary">
         {title}
       </h2>
-      {seeAllHref && (
+      {count && <span className="text-[13px] tabular-nums leading-none text-text-muted">{count}</span>}
+      {seeAllHref && seeAllText ? (
+        <Link
+          href={seeAllHref}
+          aria-label={t("discover.seeAllOf", { title })}
+          className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-border-strong px-2.5 py-1 text-[12px] leading-none text-text-secondary transition-colors hover:border-accent hover:text-accent"
+        >
+          {t("common.seeAll")}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-[10px] w-[10px]" aria-hidden>
+            <path d="M9.5 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      ) : seeAllHref && (
         <Link
           href={seeAllHref}
           aria-label={t("discover.seeAllOf", { title })}
@@ -104,9 +122,16 @@ export function Shelf({
   flushRight,
   gap = "poster",
   headAction,
+  count,
+  seeAllText,
+  id,
   children,
 }: {
   title: string;
+  count?: string;
+  seeAllText?: boolean;
+  /** An anchor for the section (search's sections). */
+  id?: string;
   /** When provided, renders a small circular arrow next to the title linking
    * to the full list (every Discover shelf has one — lib/discover/lists.ts).
    * Omitted for rows with no fuller listing (a title's cast, Because you
@@ -140,9 +165,11 @@ export function Shelf({
   }
 
   return (
-    <section>
+    <section id={id}>
       <ShelfHead
         title={title}
+        count={count}
+        seeAllText={seeAllText}
         seeAllHref={seeAllHref}
         flushRight={flushRight}
         onScroll={scrollByAmount}

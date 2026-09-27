@@ -391,40 +391,74 @@ extension API {
         }
     }
 
-    /// `SearchSuggestion.mediaType`: a person or a title.
+    /// `SearchSuggestion.mediaType`: a title, a person, or (0.55+, only when
+    /// the app asks with `include=`) a studio or network.
     enum SuggestionKind: OpenEnum {
         case person
         case movie
         case tv
+        case company
+        case network
         case unknown(String)
 
-        static let knownCases: [SuggestionKind] = [.person, .movie, .tv]
+        static let knownCases: [SuggestionKind] = [.person, .movie, .tv, .company, .network]
 
         var rawValue: String {
             switch self {
             case .person: return "person"
             case .movie: return "movie"
             case .tv: return "tv"
+            case .company: return "company"
+            case .network: return "network"
             case let .unknown(raw): return raw
             }
         }
 
-        /// The website's pill: "Actor", "Movie", "TV".
+        /// The website's pill: "Movie", "TV", "Actor", "Studio", "Network".
         var label: String {
             switch self {
             case .person: return String(localized: "Actor")
             case .movie: return String(localized: "Movie")
             case .tv: return String(localized: "TV")
+            case .company: return String(localized: "Studio")
+            case .network: return String(localized: "Network")
             case let .unknown(raw): return raw.capitalized
             }
         }
 
-        /// The title's media type, nil for a person.
+        /// The title's media type, nil for anything else.
         var mediaType: MediaType? {
             switch self {
             case .movie: return .movie
             case .tv: return .tv
-            case .person, .unknown: return nil
+            case .person, .company, .network, .unknown: return nil
+            }
+        }
+
+        /// The type-ahead's group, in the search page's order; nil for a
+        /// kind this app can't open (it's left out).
+        var group: SuggestionGroup? {
+            switch self {
+            case .movie: return .movies
+            case .tv: return .series
+            case .person: return .people
+            case .company, .network: return .studios
+            case .unknown: return nil
+            }
+        }
+    }
+
+    /// The type-ahead's groups, in the search page's order.
+    enum SuggestionGroup: Int, CaseIterable, Hashable, Sendable {
+        case movies, series, people, studios
+
+        /// The small label over the group.
+        var label: String {
+            switch self {
+            case .movies: return String(localized: "Movies")
+            case .series: return String(localized: "TV Shows")
+            case .people: return String(localized: "People")
+            case .studios: return String(localized: "Studios & Networks")
             }
         }
     }

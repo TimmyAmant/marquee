@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { loadMoreDiscoverItems, loadMoreDiscoverList } from "@/app/discover/actions";
+import { loadMoreSearchSection } from "@/app/search/actions";
 import type { DiscoverCardData, DiscoverFetchParams } from "@/app/discover/fetch-items";
 import { useT } from "@/lib/i18n/client";
 
@@ -29,6 +30,7 @@ export function InfiniteResultsGrid({
   initialHasNextPage,
   fetchParams,
   list,
+  search,
   signedIn,
   showTypeLabel = false,
   emptyMessage,
@@ -39,6 +41,8 @@ export function InfiniteResultsGrid({
   fetchParams?: Omit<DiscoverFetchParams, "page">;
   /** A Discover list (lib/discover/lists.ts), paged by loadMoreDiscoverList. */
   list?: string;
+  /** A search section's See all (/search?q=&type=), paged by loadMoreSearchSection. */
+  search?: { query: string; type: "movie" | "tv" };
   signedIn: boolean;
   /** The MOVIE/SERIES pill, for lists that mix the two. */
   showTypeLabel?: boolean;
@@ -64,7 +68,12 @@ export function InfiniteResultsGrid({
             ? await loadMoreDiscoverList(list, page)
             : fetchParams
               ? await loadMoreDiscoverItems({ ...fetchParams, page })
-              : { items: [], hasNextPage: false };
+              : search
+                ? await loadMoreSearchSection(search.query, search.type, page).then(({ section, hasNextPage }) => ({
+                    items: section && (section.kind === "movie" || section.kind === "tv") ? section.items : [],
+                    hasNextPage,
+                  }))
+                : { items: [], hasNextPage: false };
           setItems((prev) => {
             // TMDb's popularity ranking shifts between separate requests, so
             // a title already shown in an earlier batch can reappear at the
@@ -85,7 +94,7 @@ export function InfiniteResultsGrid({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasNextPage, isPending, fetchParams, list]);
+  }, [hasNextPage, isPending, fetchParams, list, search]);
 
   if (items.length === 0) {
     return (

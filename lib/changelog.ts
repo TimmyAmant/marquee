@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.55.0",
+    date: "2026-09-27",
+    changes: [
+      "Search results come in sections, in this order: Movies, TV Shows, People, then Studios & Networks, each with its count and \"See all\". Searching a person's name (\"tom hanks\") puts People first.",
+      "Better ranking: popular exact matches come first, and adding a year (\"dune 1984\") picks that version. Obscure people and studios without a photo or logo are left out of the page (still in See all).",
+      "People show as round photos with what they're known for; studios and networks as their logos. Networks can be searched too (\"hbo\", \"disney plus\").",
+      "Suggestions while you type are grouped the same way under small labels, with studios and networks included, and the arrow keys move through all of them.",
+      "The same search sections and suggestions in the Mac and Windows apps.",
+    ],
+  },
+  {
     version: "0.54.1",
     date: "2026-09-27",
     changes: [

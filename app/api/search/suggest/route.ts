@@ -11,6 +11,6 @@ export async function GET(request: Request) {
   if (!viewer.session) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const results = await getSearchSuggestions(searchParams.get("q"), viewer.libraryOwnerId);
+  const results = await getSearchSuggestions(searchParams.get("q"), viewer.libraryOwnerId, { includeCompanies: true });
   return NextResponse.json({ results });
 }

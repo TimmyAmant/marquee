@@ -14,10 +14,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Width="224"
-    Height="112">
+    Width="224">
 
+    <StackPanel Spacing="6">
     <Button
+        Height="112"
         x:Name="TileButton"
         Command="{x:Bind Item.Open, Mode=OneWay}"
         Padding="0"
@@ -43,9 +44,9 @@
                     VerticalAlignment="Center" />
             </Border>
 
-            <!-- No logo: the name, like the website's text fallback. -->
+            <!-- No logo: the name, like the website's text fallback (initials in search, where the caption below has the name). -->
             <TextBlock
-                Text="{x:Bind Item.Label, Mode=OneWay}"
+                Text="{x:Bind Item.Fallback, Mode=OneWay}"
                 Visibility="{x:Bind Item.HasImage, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
                 FontSize="13"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -72,4 +73,20 @@
                 IsHitTestVisible="False" />
         </Grid>
     </Button>
+
+    <!-- Search's caption: the name, and Studio or Network. -->
+    <StackPanel Spacing="1" Visibility="{x:Bind Item.HasCaption, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+        <TextBlock
+            Text="{x:Bind Item.Label, Mode=OneWay}"
+            FontSize="12.5"
+            FontWeight="Medium"
+            MaxLines="1"
+            TextTrimming="CharacterEllipsis" />
+        <TextBlock
+            Text="{x:Bind Item.Caption, Mode=OneWay}"
+            FontSize="11"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            MaxLines="1" />
+    </StackPanel>
+    </StackPanel>
 </UserControl>

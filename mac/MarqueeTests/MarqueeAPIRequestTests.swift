@@ -141,7 +141,10 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 _ = try await $0.discover.surprise(API.SurpriseRequest(type: .tv, genreId: 18, hideOwned: false))
             },
             Case(method: "GET", path: "/search", query: ["q": "Romeo + Juliet & co"], response: "search") { _ = try await $0.search.results("Romeo + Juliet & co") },
-            Case(method: "GET", path: "/search/suggest", query: ["q": "ma"], response: "search-suggest") { _ = try await $0.search.suggestions("ma") },
+            Case(method: "GET", path: "/search/suggest", query: ["q": "ma", "include": "company,network"], response: "search-suggest") { _ = try await $0.search.suggestions("ma") },
+            Case(method: "GET", path: "/search/movies", query: ["q": "dune", "page": "2"], response: "search-section") {
+                _ = try await $0.search.titles(.movies, query: "dune", page: 2)
+            },
             // Title, library & arr actions
             Case(method: "GET", path: "/titles/movie/603", response: "title-detail") { _ = try await $0.titles.detail(.movie, id: 603) },
             Case(method: "GET", path: "/titles/tv/1399/seasons/1", response: "season-episodes") { _ = try await $0.titles.season(1, ofShow: 1399) },
@@ -489,8 +492,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 169, "docs/api-v1.md documents 168 endpoints; GET /library is covered twice, with and without filters")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 168, "Each documented endpoint is covered")
+        XCTAssertEqual(cases.count, 170, "docs/api-v1.md documents 169 endpoints; GET /library is covered twice, with and without filters")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 169, "Each documented endpoint is covered")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

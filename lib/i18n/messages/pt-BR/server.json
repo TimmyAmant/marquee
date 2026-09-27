@@ -230,5 +230,6 @@
   "seerrImportRunning": "Já há uma importação em andamento. Aguarde ela terminar.",
   "seerrImportNotFound": "Essa importação não existe mais.",
   "seerrNothingChosen": "Escolha pelo menos uma coisa para importar.",
-  "onlyOwnProfile": "Você só pode ver o seu próprio perfil."
+  "onlyOwnProfile": "Você só pode ver o seu próprio perfil.",
+  "noSearchSection": "Não há nenhuma seção de busca \"{section}\" (use uma de {sections})."
 }

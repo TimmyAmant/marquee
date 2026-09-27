@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  app/search/page.tsx: "Results for …" with People, Studios, Titles and the
-  theme row, each a poster grid (studios are chips). Opened from the shell's
+  app/search/page.tsx: "Results for …" in sections, Movies, TV Shows,
+  People, then Studios and Networks, each with its total and See all, and
+  the genre/keyword theme row first or last. Opened from the shell's
   search box with a query, or as the Search section with none, in which case
   only the search box on the page shows.
 -->
@@ -34,55 +35,34 @@
                         QuerySubmitted="OnQuerySubmitted" />
                 </StackPanel>
 
-                <!-- Results. -->
-                <StackPanel Spacing="28" Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock
-                        Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                        Style="{StaticResource BodyTextBlockStyle}"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasPeople, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock x:Uid="Search_People" Style="{StaticResource SubtitleTextBlockStyle}" />
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.People, Mode=OneWay}">
-                            <ItemsRepeater.Layout>
-                                <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
-                            </ItemsRepeater.Layout>
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PersonItem">
-                                    <controls:PersonCard Item="{x:Bind}" />
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
+                <!--
+                  Results, always in the website's order: Movies, TV Shows,
+                  People, then Studios and Networks (SearchPageLayout); empty
+                  sections hide. The genre/keyword row leads when the query is
+                  that theme ("horror") and comes last otherwise, so it is
+                  here twice and only one of the two shows.
+                -->
+                <StackPanel Spacing="36" Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            x:Uid="Search_NoResultsHint"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
                     </StackPanel>
 
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasStudios, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <Grid MinHeight="28">
-                            <TextBlock x:Uid="Search_Studios" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
-                            <controls:RailArrows Target="{x:Bind StudiosRail}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                        </Grid>
-                        <ScrollViewer
-                            x:Name="StudiosRail"
-                            controls:RailScroll.IsRail="True">
-                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.Studios, Mode=OneWay}" Margin="0,0,0,8">
-                                <ItemsRepeater.Layout>
-                                    <StackLayout Orientation="Horizontal" Spacing="8" />
-                                </ItemsRepeater.Layout>
-                                <ItemsRepeater.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ChipItem">
-                                        <controls:StudioChip Item="{x:Bind}" />
-                                    </DataTemplate>
-                                </ItemsRepeater.ItemTemplate>
-                            </ItemsRepeater>
-                        </ScrollViewer>
-                    </StackPanel>
+                    <controls:StatusColorKey
+                        HorizontalAlignment="Left"
+                        Visibility="{x:Bind ViewModel.HasAnyResults, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
 
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasTitles, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock x:Uid="Search_Titles" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
-                            <controls:StatusColorKey />
-                        </StackPanel>
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Titles, Mode=OneWay}">
+                    <!-- The theme row, when the query is that theme. -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ThemeFirst, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{x:Bind ViewModel.ThemeTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.ThemeItems, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
                             </ItemsRepeater.Layout>
@@ -94,7 +74,162 @@
                         </ItemsRepeater>
                     </StackPanel>
 
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasTheme, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <!-- People first, when the query names a person ("tom hanks"); the same section as below, only one of the two shows. -->
+                    <StackPanel Visibility="{x:Bind ViewModel.PeopleFirst, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.People.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="{x:Bind ViewModel.People.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Bind ViewModel.People.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.People.Items}">
+                                <ItemsRepeater.Layout>
+                                    <UniformGridLayout MinItemWidth="132" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PersonItem">
+                                        <controls:SearchPersonTile Item="{x:Bind}" />
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button
+                                    Content="{x:Bind ViewModel.People.SeeMoreLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.People.SeeMoreCommand}"
+                                    Visibility="{x:Bind ViewModel.People.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.People.IsLoadingMore, Mode=OneWay}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.People.PageError, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.People.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Movies. -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Movies.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="{x:Bind ViewModel.Movies.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock Text="{x:Bind ViewModel.Movies.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Movies.Items}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PosterItem">
+                                    <controls:PosterCard Item="{x:Bind}" FillsColumn="True" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button
+                                Content="{x:Bind ViewModel.Movies.SeeMoreLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Movies.SeeMoreCommand}"
+                                Visibility="{x:Bind ViewModel.Movies.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.Movies.IsLoadingMore, Mode=OneWay}" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Movies.PageError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Movies.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- TV Shows. -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Series.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="{x:Bind ViewModel.Series.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock Text="{x:Bind ViewModel.Series.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Series.Items}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="150" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="Uniform" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PosterItem">
+                                    <controls:PosterCard Item="{x:Bind}" FillsColumn="True" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button
+                                Content="{x:Bind ViewModel.Series.SeeMoreLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Series.SeeMoreCommand}"
+                                Visibility="{x:Bind ViewModel.Series.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.Series.IsLoadingMore, Mode=OneWay}" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Series.PageError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Series.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- People, after the titles. -->
+                    <StackPanel Visibility="{x:Bind ViewModel.PeopleFirst, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}">
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.People.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="{x:Bind ViewModel.People.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Bind ViewModel.People.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.People.Items}">
+                                <ItemsRepeater.Layout>
+                                    <UniformGridLayout MinItemWidth="132" MinColumnSpacing="14" MinRowSpacing="18" ItemsStretch="None" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PersonItem">
+                                        <controls:SearchPersonTile Item="{x:Bind}" />
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button
+                                    Content="{x:Bind ViewModel.People.SeeMoreLabel, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.People.SeeMoreCommand}"
+                                    Visibility="{x:Bind ViewModel.People.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.People.IsLoadingMore, Mode=OneWay}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.People.PageError, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.People.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Studios and Networks: Discover's logo tiles. -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Studios.HasItems, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="{x:Bind ViewModel.Studios.Title}" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <TextBlock Text="{x:Bind ViewModel.Studios.CountText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Studios.Items}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="224" MinColumnSpacing="16" MinRowSpacing="16" ItemsStretch="None" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ChipItem">
+                                    <controls:LogoTile Item="{x:Bind}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button
+                                Content="{x:Bind ViewModel.Studios.SeeMoreLabel, Mode=OneWay}"
+                                Command="{x:Bind ViewModel.Studios.SeeMoreCommand}"
+                                Visibility="{x:Bind ViewModel.Studios.CanSeeMore, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.Studios.IsLoadingMore, Mode=OneWay}" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Studios.PageError, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Studios.HasPageError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- The theme row, otherwise. -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ThemeLast, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="{x:Bind ViewModel.ThemeTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.ThemeItems, Mode=OneWay}">
                             <ItemsRepeater.Layout>

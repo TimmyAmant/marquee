@@ -1729,6 +1729,12 @@
   <data name="Enum_SuggestionActor" xml:space="preserve">
     <value>Actor</value>
   </data>
+  <data name="Enum_SuggestionNetwork" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="Enum_SuggestionStudio" xml:space="preserve">
+    <value>Studio</value>
+  </data>
   <data name="Favorites_Collections.Text" xml:space="preserve">
     <value>Collections</value>
   </data>
@@ -4002,17 +4008,35 @@
   <data name="Search_ErrorHeading.Text" xml:space="preserve">
     <value>Couldn't search</value>
   </data>
+  <data name="Search_GroupMovies" xml:space="preserve">
+    <value>Movies</value>
+  </data>
+  <data name="Search_GroupPeople" xml:space="preserve">
+    <value>People</value>
+  </data>
+  <data name="Search_GroupSeries" xml:space="preserve">
+    <value>TV Shows</value>
+  </data>
+  <data name="Search_GroupStudios" xml:space="preserve">
+    <value>Studios &amp; Networks</value>
+  </data>
   <data name="Search_Intro.Text" xml:space="preserve">
     <value>Find an actor, a studio, or a title. Every result comes from TMDb through your server.</value>
+  </data>
+  <data name="Search_Movies" xml:space="preserve">
+    <value>Movies</value>
   </data>
   <data name="Search_NoResults" xml:space="preserve">
     <value>No results for “{0}”.</value>
     <comment>{0} is what the person typed.</comment>
   </data>
+  <data name="Search_NoResultsHint.Text" xml:space="preserve">
+    <value>Check the spelling, or try a shorter title, a person's name or a studio.</value>
+  </data>
   <data name="Search_OpenSettings.Content" xml:space="preserve">
     <value>Open Settings</value>
   </data>
-  <data name="Search_People.Text" xml:space="preserve">
+  <data name="Search_PeopleHeading" xml:space="preserve">
     <value>People</value>
   </data>
   <data name="Search_ResultsFor" xml:space="preserve">
@@ -4022,8 +4046,17 @@
   <data name="Search_Searching.Text" xml:space="preserve">
     <value>Searching…</value>
   </data>
-  <data name="Search_Studios.Text" xml:space="preserve">
-    <value>Studios</value>
+  <data name="Search_SeeAll" xml:space="preserve">
+    <value>See all</value>
+  </data>
+  <data name="Search_Series" xml:space="preserve">
+    <value>TV Shows</value>
+  </data>
+  <data name="Search_ShowMore" xml:space="preserve">
+    <value>Show more</value>
+  </data>
+  <data name="Search_StudiosNetworks" xml:space="preserve">
+    <value>Studios &amp; Networks</value>
   </data>
   <data name="Search_ThemeTitle" xml:space="preserve">
     <value>{0} movies &amp; TV</value>
@@ -4031,9 +4064,6 @@
   </data>
   <data name="Search_Title" xml:space="preserve">
     <value>Search</value>
-  </data>
-  <data name="Search_Titles.Text" xml:space="preserve">
-    <value>Titles</value>
   </data>
   <data name="Search_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Connect TMDb to start browsing</value>

@@ -96,6 +96,7 @@ export interface TmdbSearchResult {
   release_date?: string;
   first_air_date?: string;
   known_for_department?: string;
+  popularity?: number;
 }
 
 export interface TmdbSearchMultiResponse {
@@ -109,6 +110,46 @@ export function searchMulti(query: string, page = 1) {
   return tmdbFetch<TmdbSearchMultiResponse>("/search/multi", { query, page, include_adult: "false" });
 }
 
+export interface TmdbTitleSearchResult {
+  id: number;
+  title?: string;
+  name?: string;
+  original_title?: string;
+  original_name?: string;
+  poster_path: string | null;
+  overview?: string;
+  release_date?: string;
+  first_air_date?: string;
+  popularity?: number;
+  vote_average?: number;
+  vote_count?: number;
+}
+
+export interface TmdbPersonSearchResult {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  known_for_department?: string;
+  popularity?: number;
+  known_for?: { media_type?: string; title?: string; name?: string }[];
+}
+
+export type TmdbPagedSearch<T> = { page: number; results: T[]; total_pages: number; total_results: number };
+
+/** One kind of result at a time, for the search page's sections and their
+ * "See all" lists (search/multi mixes them and can't be paged per kind). */
+export function searchMovies(query: string, page = 1) {
+  return tmdbFetch<TmdbPagedSearch<TmdbTitleSearchResult>>("/search/movie", { query, page, include_adult: "false" });
+}
+
+export function searchTv(query: string, page = 1) {
+  return tmdbFetch<TmdbPagedSearch<TmdbTitleSearchResult>>("/search/tv", { query, page, include_adult: "false" });
+}
+
+export function searchPeople(query: string, page = 1) {
+  return tmdbFetch<TmdbPagedSearch<TmdbPersonSearchResult>>("/search/person", { query, page, include_adult: "false" });
+}
+
 export interface TmdbCompanySearchResult {
   id: number;
   name: string;
@@ -117,7 +158,7 @@ export interface TmdbCompanySearchResult {
 }
 
 export function searchCompany(query: string, page = 1) {
-  return tmdbFetch<{ results: TmdbCompanySearchResult[]; total_pages: number }>(
+  return tmdbFetch<{ results: TmdbCompanySearchResult[]; total_pages: number; total_results?: number }>(
     "/search/company",
     { query, page },
   );

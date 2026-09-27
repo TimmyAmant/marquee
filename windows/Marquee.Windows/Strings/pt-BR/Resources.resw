@@ -1666,6 +1666,12 @@
   <data name="Enum_SuggestionActor" xml:space="preserve">
     <value>Ator</value>
   </data>
+  <data name="Enum_SuggestionNetwork" xml:space="preserve">
+    <value>Emissora</value>
+  </data>
+  <data name="Enum_SuggestionStudio" xml:space="preserve">
+    <value>Estúdio</value>
+  </data>
   <data name="Favorites_Collections.Text" xml:space="preserve">
     <value>Coleções</value>
   </data>
@@ -3844,16 +3850,34 @@
   <data name="Search_ErrorHeading.Text" xml:space="preserve">
     <value>Não foi possível buscar</value>
   </data>
+  <data name="Search_GroupMovies" xml:space="preserve">
+    <value>Filmes</value>
+  </data>
+  <data name="Search_GroupPeople" xml:space="preserve">
+    <value>Pessoas</value>
+  </data>
+  <data name="Search_GroupSeries" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Search_GroupStudios" xml:space="preserve">
+    <value>Estúdios e emissoras</value>
+  </data>
   <data name="Search_Intro.Text" xml:space="preserve">
     <value>Encontre um ator, um estúdio ou um título. Todos os resultados vêm do TMDb pelo seu servidor.</value>
+  </data>
+  <data name="Search_Movies" xml:space="preserve">
+    <value>Filmes</value>
   </data>
   <data name="Search_NoResults" xml:space="preserve">
     <value>Nenhum resultado para “{0}”.</value>
   </data>
+  <data name="Search_NoResultsHint.Text" xml:space="preserve">
+    <value>Confira a ortografia ou tente um título mais curto, o nome de uma pessoa ou um estúdio.</value>
+  </data>
   <data name="Search_OpenSettings.Content" xml:space="preserve">
     <value>Abrir Configurações</value>
   </data>
-  <data name="Search_People.Text" xml:space="preserve">
+  <data name="Search_PeopleHeading" xml:space="preserve">
     <value>Pessoas</value>
   </data>
   <data name="Search_ResultsFor" xml:space="preserve">
@@ -3862,17 +3886,23 @@
   <data name="Search_Searching.Text" xml:space="preserve">
     <value>Buscando…</value>
   </data>
-  <data name="Search_Studios.Text" xml:space="preserve">
-    <value>Estúdios</value>
+  <data name="Search_SeeAll" xml:space="preserve">
+    <value>Ver tudo</value>
+  </data>
+  <data name="Search_Series" xml:space="preserve">
+    <value>Séries</value>
+  </data>
+  <data name="Search_ShowMore" xml:space="preserve">
+    <value>Mostrar mais</value>
+  </data>
+  <data name="Search_StudiosNetworks" xml:space="preserve">
+    <value>Estúdios e emissoras</value>
   </data>
   <data name="Search_ThemeTitle" xml:space="preserve">
     <value>{0}: filmes e séries</value>
   </data>
   <data name="Search_Title" xml:space="preserve">
     <value>Buscar</value>
-  </data>
-  <data name="Search_Titles.Text" xml:space="preserve">
-    <value>Títulos</value>
   </data>
   <data name="Search_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Conecte o TMDb para começar a explorar</value>

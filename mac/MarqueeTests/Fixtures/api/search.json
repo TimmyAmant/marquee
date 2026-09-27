@@ -6,7 +6,12 @@
       "name": "Keanu Reeves",
       "profilePath": "/8RZL.jpg",
       "knownForDepartment": "Acting",
-      "favorited": false
+      "favorited": false,
+      "knownFor": [
+        "The Matrix",
+        "John Wick",
+        "Speed"
+      ]
     }
   ],
   "studios": [
@@ -52,6 +57,89 @@
         "canQuickAdd": false,
         "canRequest": false
       }
-    ]
-  }
+    ],
+    "placement": "last"
+  },
+  "sections": {
+    "movies": {
+      "totalResults": 57,
+      "totalPages": 3,
+      "results": [
+        {
+          "mediaType": "movie",
+          "tmdbId": 603,
+          "name": "The Matrix",
+          "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+          "year": "1999",
+          "subtitle": null,
+          "overview": null,
+          "rating": null,
+          "status": null,
+          "favorited": false,
+          "requested": null,
+          "canQuickAdd": false,
+          "canRequest": false
+        }
+      ]
+    },
+    "series": {
+      "totalResults": 4,
+      "totalPages": 1,
+      "results": [
+        {
+          "mediaType": "movie",
+          "tmdbId": 603,
+          "name": "The Matrix",
+          "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+          "year": "1999",
+          "subtitle": null,
+          "overview": null,
+          "rating": null,
+          "status": null,
+          "favorited": false,
+          "requested": null,
+          "canQuickAdd": false,
+          "canRequest": false
+        }
+      ]
+    },
+    "people": {
+      "totalResults": 12,
+      "totalPages": 1,
+      "results": [
+        {
+          "tmdbId": 6384,
+          "name": "Keanu Reeves",
+          "profilePath": "/8RZL.jpg",
+          "knownForDepartment": "Acting",
+          "favorited": false,
+          "knownFor": [
+            "The Matrix",
+            "John Wick",
+            "Speed"
+          ]
+        }
+      ]
+    },
+    "studiosAndNetworks": {
+      "totalResults": 1,
+      "totalPages": 1,
+      "results": [
+        {
+          "kind": "network",
+          "tmdbId": 49,
+          "name": "HBO",
+          "logoPath": "/tuom.png",
+          "favorited": null
+        }
+      ]
+    }
+  },
+  "order": [
+    "movies",
+    "series",
+    "people",
+    "studiosAndNetworks",
+    "theme"
+  ]
 }

@@ -58,10 +58,31 @@ extension MarqueeAPI {
             try await transport.get("/search", query: ["q": query], timeout: Timeout.tmdb)
         }
 
-        /// `GET /search/suggest?q=` — type-ahead; under 2 characters is always empty.
+        /// `GET /search/suggest?q=&include=company,network` — type-ahead,
+        /// grouped movies, series, people, studios & networks (an older server
+        /// ignores `include` and sends no studios or networks); under 2
+        /// characters is always empty.
         func suggestions(_ query: String) async throws -> [API.SearchSuggestion] {
-            let list: API.ListResponse<API.SearchSuggestion> = try await transport.get("/search/suggest", query: ["q": query])
+            let list: API.ListResponse<API.SearchSuggestion> = try await transport.get(
+                "/search/suggest",
+                query: ["q": query, "include": "company,network"]
+            )
             return list.results
+        }
+
+        /// `GET /search/{movies|series}?q=&page=` (0.55+) — a title section's See all.
+        func titles(_ section: API.SearchSectionName, query: String, page: Int) async throws -> Paginated<API.TitleCard> {
+            try await transport.get("/search/\(section.rawValue)", query: ["q": query, "page": String(page)], timeout: Timeout.tmdb)
+        }
+
+        /// `GET /search/people?q=&page=` (0.55+) — People's See all.
+        func people(query: String, page: Int) async throws -> Paginated<API.PersonCard> {
+            try await transport.get("/search/people", query: ["q": query, "page": String(page)], timeout: Timeout.tmdb)
+        }
+
+        /// `GET /search/studios?q=&page=` (0.55+) — Studios & Networks' See all.
+        func studios(query: String, page: Int) async throws -> Paginated<API.SearchCompanyCard> {
+            try await transport.get("/search/studios", query: ["q": query, "page": String(page)], timeout: Timeout.tmdb)
         }
     }
 }
