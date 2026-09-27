@@ -190,6 +190,7 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["POST", "/users", "admin", "Add a household member.", { created: true }],
     ["PATCH", "/users/{id}", "user", "Change an account (yourself, or anyone as the admin)."],
     ["DELETE", "/users/{id}", "admin", "Remove a household member."],
+    ["GET", "/users/{id}/profile", "user", "A member's profile: request counts, limits and Plex Watchlist (yours, or anyone's as the admin)."],
     ["GET", "/users/{id}/avatar", "user", "A profile photo."],
     ["PUT", "/users/{id}/avatar", "user", "Set a profile photo (yours, or anyone's as the admin)."],
     ["DELETE", "/users/{id}/avatar", "user", "Remove a profile photo."],

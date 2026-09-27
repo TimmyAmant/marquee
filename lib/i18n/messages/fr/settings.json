@@ -265,5 +265,18 @@
   "activityVerbDeclined": "a refusé",
   "activityVerbManuallyApproved": "a approuvé manuellement",
   "menuLabelsLabel": "Afficher les libellés du menu",
-  "menuLabelsHelp": "Les noms à côté des icônes du menu, et la version du serveur à la fin."
+  "menuLabelsHelp": "Les noms à côté des icônes du menu, et la version du serveur à la fin.",
+  "profileUnlimited": "Illimitées",
+  "profileRemainingOf": "{remaining} sur {limit}",
+  "profileEveryDays": "{days, plural, one {Chaque jour} other {Tous les # jours}}",
+  "profileJoined": "Inscrit le {date}",
+  "profileEditAccount": "Modifier le compte",
+  "profileManageMembers": "Réglages du foyer",
+  "profileTotalRequests": "Demandes au total",
+  "profileRequestSplit": "{movies, plural, one {# film} other {# films}} · {series, plural, one {# série} other {# séries}}",
+  "profileMovieRequestsLeft": "Demandes de films restantes",
+  "profileSeriesRequestsLeft": "Demandes de séries restantes",
+  "profilePlexWatchlist": "Plex Watchlist",
+  "profileWatchlistEmpty": "Rien dans la Watchlist pour l'instant.",
+  "profileView": "Voir le profil"
 }

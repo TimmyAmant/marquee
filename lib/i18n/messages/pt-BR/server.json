@@ -229,5 +229,6 @@
   "seerrTmdbRequired": "Conecte o TMDb em Configurações → Integrações antes de importar pedidos ou relatos de problema — o Marquee precisa dele para os títulos e pôsteres.",
   "seerrImportRunning": "Já há uma importação em andamento. Aguarde ela terminar.",
   "seerrImportNotFound": "Essa importação não existe mais.",
-  "seerrNothingChosen": "Escolha pelo menos uma coisa para importar."
+  "seerrNothingChosen": "Escolha pelo menos uma coisa para importar.",
+  "onlyOwnProfile": "Você só pode ver o seu próprio perfil."
 }

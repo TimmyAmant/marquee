@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserAvatar } from "@/components/user-avatar";
@@ -320,7 +321,16 @@ export function HouseholdMembersList({
             <div className="flex min-w-0 items-center gap-3">
               <UserAvatar label={member.displayName || member.username} src={avatarPath(member, "/api")} size={36} />
               <div className="min-w-0">
-                <p className="truncate text-text-primary">{member.displayName || member.username}</p>
+                {isAdmin || member.id === currentUserId ? (
+                  <Link
+                    href={`/profile/${member.id}`}
+                    className="block truncate text-text-primary underline-offset-2 hover:text-accent hover:underline"
+                  >
+                    {member.displayName || member.username}
+                  </Link>
+                ) : (
+                  <p className="truncate text-text-primary">{member.displayName || member.username}</p>
+                )}
                 {member.displayName && <p className="mt-0.5 truncate text-text-muted">{member.username}</p>}
                 {/* The admin's view of who still uses Marquee; relative to
                     the viewer's clock, so the server's render may differ. */}

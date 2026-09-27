@@ -5,7 +5,7 @@ import { readJsonBody } from "@/lib/api/request";
 import { DISCOVER_SETTINGS_FORBIDDEN } from "@/lib/api/routes/discover-settings";
 import { getDiscoverLocaleSettings, saveDiscoverLocaleSettings, type DiscoverLocaleSettings } from "@/lib/discover/locale-settings";
 
-/** Settings › Discover › Region & language (0.51+): the country
+/** Settings › Discover › Region & language (0.53+): the country
  * "Currently streaming on" is for, and the region / original language
  * TMDb's Popular and Upcoming rows are filtered to. */
 export const GET = withApi(async (request): Promise<DiscoverLocaleSettings> => {
