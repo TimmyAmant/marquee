@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.52.2",
+    date: "2026-09-27",
+    changes: [
+      "Library › Duplicates no longer lists the same file seen through different Docker folder mappings (Radarr's /movies/… and Plex's /data/Movies/… are one file), or a title just because both Plex and Jellyfin have it. Real duplicates — two different files, or two Plex or two Jellyfin servers listing it — still show.",
+      "The Duplicates list's Server, Location, Size and Quality columns now line up from one title to the next.",
+    ],
+  },
+  {
     version: "0.52.1",
     date: "2026-09-27",
     changes: [

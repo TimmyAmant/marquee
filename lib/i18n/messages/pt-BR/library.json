@@ -41,7 +41,7 @@
   "columnServer": "Servidor",
   "collectionsEmpty": "Nada incompleto — cada coleção da qual você tem uma parte está completa, ou nenhum dos seus títulos pertence a uma ainda.",
   "missingCount": "{count, plural, one {# faltando} other {# faltando}}",
-  "duplicatesIntro": "Títulos que estão em mais de um servidor ou em mais de um arquivo. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho.",
+  "duplicatesIntro": "Títulos com mais de um arquivo, ou listados em dois servidores Plex ou dois Jellyfin. O mesmo arquivo visto por mapeamentos de pasta diferentes (como /movies e /data/Movies) não conta. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho.",
   "duplicatesEmpty": "Sem duplicados — cada título está em um servidor, em um arquivo.",
   "reasonPaths": "Arquivos diferentes",
   "reasonServers": "Em vários servidores",
