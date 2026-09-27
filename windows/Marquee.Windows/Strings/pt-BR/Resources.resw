@@ -4705,6 +4705,249 @@
   <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
     <value>Ver todas as mudanças</value>
   </data>
+  <data name="Nav_Library" xml:space="preserve">
+    <value>Biblioteca</value>
+  </data>
+  <data name="Shell_RailLibraryButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Biblioteca</value>
+  </data>
+  <data name="Shell_RailLibraryButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Biblioteca</value>
+  </data>
+  <data name="Library_Title.Text" xml:space="preserve">
+    <value>Biblioteca</value>
+  </data>
+  <data name="Library_TabAll.Content" xml:space="preserve">
+    <value>Todos os títulos</value>
+  </data>
+  <data name="Library_TabCollections.Content" xml:space="preserve">
+    <value>Faltando nas coleções</value>
+  </data>
+  <data name="Library_TabDuplicates.Content" xml:space="preserve">
+    <value>Duplicados</value>
+  </data>
+  <data name="Library_TabStorage.Content" xml:space="preserve">
+    <value>Armazenamento</value>
+  </data>
+  <data name="Library_SearchBox.PlaceholderText" xml:space="preserve">
+    <value>Buscar na sua biblioteca…</value>
+  </data>
+  <data name="Library_TypeBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="Library_StatusBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Library_SourceBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Origem</value>
+  </data>
+  <data name="Library_ResolutionBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Resolução</value>
+  </data>
+  <data name="Library_CodecBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Codec</value>
+  </data>
+  <data name="Library_GenreBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gênero</value>
+  </data>
+  <data name="Library_YearBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ano</value>
+  </data>
+  <data name="Library_SortBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ordenar</value>
+  </data>
+  <data name="Library_HdrOnly.Content" xml:space="preserve">
+    <value>Só HDR</value>
+  </data>
+  <data name="Library_GridButton.Content" xml:space="preserve">
+    <value>Grade</value>
+  </data>
+  <data name="Library_TableButton.Content" xml:space="preserve">
+    <value>Tabela</value>
+  </data>
+  <data name="Library_ClearFilters.Content" xml:space="preserve">
+    <value>Limpar filtros</value>
+  </data>
+  <data name="Library_StillSyncing.Text" xml:space="preserve">
+    <value>Ainda sincronizando — volte daqui a pouco.</value>
+  </data>
+  <data name="Library_OpenSettings.Content" xml:space="preserve">
+    <value>Conectar uma integração</value>
+  </data>
+  <data name="Library_ColumnTitle.Text" xml:space="preserve">
+    <value>Título</value>
+  </data>
+  <data name="Library_ColumnYear.Text" xml:space="preserve">
+    <value>Ano</value>
+  </data>
+  <data name="Library_ColumnQuality.Text" xml:space="preserve">
+    <value>Qualidade</value>
+  </data>
+  <data name="Library_ColumnSize.Text" xml:space="preserve">
+    <value>Tamanho</value>
+  </data>
+  <data name="Library_ColumnStatus.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Library_ColumnSource.Text" xml:space="preserve">
+    <value>Origem</value>
+  </data>
+  <data name="Library_ColumnLocation.Text" xml:space="preserve">
+    <value>Local</value>
+  </data>
+  <data name="Library_ColumnActions.Text" xml:space="preserve">
+    <value>Ações</value>
+  </data>
+  <data name="Library_ColumnServer.Text" xml:space="preserve">
+    <value>Servidor</value>
+  </data>
+  <data name="Library_CollectionsEmpty.Text" xml:space="preserve">
+    <value>Nada incompleto — cada coleção da qual você tem uma parte está completa, ou nenhum dos seus títulos pertence a uma ainda.</value>
+  </data>
+  <data name="Library_DuplicatesIntro.Text" xml:space="preserve">
+    <value>Títulos que estão em mais de um servidor ou em mais de um arquivo. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho.</value>
+  </data>
+  <data name="Library_DuplicatesEmpty.Text" xml:space="preserve">
+    <value>Sem duplicados — cada título está em um servidor, em um arquivo.</value>
+  </data>
+  <data name="Library_StorageTitle.Text" xml:space="preserve">
+    <value>Armazenamento</value>
+  </data>
+  <data name="Library_LoadingLabel.Text" xml:space="preserve">
+    <value>Carregando sua biblioteca…</value>
+  </data>
+  <data name="Library_ErrorHeading.Text" xml:space="preserve">
+    <value>Não foi possível carregar sua biblioteca</value>
+  </data>
+  <data name="Library_AllTypes" xml:space="preserve">
+    <value>Filmes e séries</value>
+  </data>
+  <data name="Library_AllStatuses" xml:space="preserve">
+    <value>Qualquer status</value>
+  </data>
+  <data name="Library_AllSources" xml:space="preserve">
+    <value>Qualquer origem</value>
+  </data>
+  <data name="Library_AllResolutions" xml:space="preserve">
+    <value>Qualquer resolução</value>
+  </data>
+  <data name="Library_AllCodecs" xml:space="preserve">
+    <value>Qualquer codec</value>
+  </data>
+  <data name="Library_SortRecent" xml:space="preserve">
+    <value>Adicionados recentemente</value>
+  </data>
+  <data name="Library_SortTitle" xml:space="preserve">
+    <value>Título</value>
+  </data>
+  <data name="Library_SortYear" xml:space="preserve">
+    <value>Ano</value>
+  </data>
+  <data name="Library_SortSize" xml:space="preserve">
+    <value>Tamanho</value>
+  </data>
+  <data name="Library_SortRating" xml:space="preserve">
+    <value>Avaliação</value>
+  </data>
+  <data name="Library_ConnectAdmin" xml:space="preserve">
+    <value>Conecte o Plex, o Jellyfin, o Sonarr ou o Radarr para ver tudo o que você já tem em um só lugar.</value>
+  </data>
+  <data name="Library_ConnectMember" xml:space="preserve">
+    <value>O administrador da casa ainda não conectou o Plex, o Jellyfin, o Sonarr nem o Radarr.</value>
+  </data>
+  <data name="Library_OnDisk" xml:space="preserve">
+    <value>{0} em disco</value>
+  </data>
+  <data name="Library_ReasonPaths" xml:space="preserve">
+    <value>Arquivos diferentes</value>
+  </data>
+  <data name="Library_ReasonServers" xml:space="preserve">
+    <value>Em vários servidores</value>
+  </data>
+  <data name="Library_StorageEmpty" xml:space="preserve">
+    <value>Conecte o Sonarr ou o Radarr para ver aqui o espaço livre por pasta raiz.</value>
+  </data>
+  <data name="Library_StorageEmptyMember" xml:space="preserve">
+    <value>O administrador da casa ainda não conectou o Sonarr nem o Radarr.</value>
+  </data>
+  <data name="Library_StorageFree" xml:space="preserve">
+    <value>{0} livres</value>
+  </data>
+  <data name="Library_StorageFullOn" xml:space="preserve">
+    <value>Por volta de {0}.</value>
+  </data>
+  <data name="Library_StorageFullToday" xml:space="preserve">
+    <value>Cheio hoje no ritmo atual ({0}/dia).</value>
+  </data>
+  <data name="Library_StorageLive" xml:space="preserve">
+    <value>Lido dos seus servidores agora mesmo.</value>
+  </data>
+  <data name="Library_StorageNoForecast" xml:space="preserve">
+    <value>Ainda sem previsão — são necessários alguns dias de leituras do registro diário de espaço em disco.</value>
+  </data>
+  <data name="Library_StorageSnapshot" xml:space="preserve">
+    <value>Do último registro diário, {0}.</value>
+  </data>
+  <data name="Library_UpgradeAvailable" xml:space="preserve">
+    <value>Atualização disponível</value>
+  </data>
+  <data name="Library_CountMovies_One" xml:space="preserve">
+    <value>{0} filme</value>
+  </data>
+  <data name="Library_CountMovies_Other" xml:space="preserve">
+    <value>{0} filmes</value>
+  </data>
+  <data name="Library_CountSeries_One" xml:space="preserve">
+    <value>{0} série</value>
+  </data>
+  <data name="Library_CountSeries_Other" xml:space="preserve">
+    <value>{0} séries</value>
+  </data>
+  <data name="Library_CountEpisodes_One" xml:space="preserve">
+    <value>{0} episódio</value>
+  </data>
+  <data name="Library_CountEpisodes_Other" xml:space="preserve">
+    <value>{0} episódios</value>
+  </data>
+  <data name="Library_MissingCount_One" xml:space="preserve">
+    <value>{0} faltando</value>
+  </data>
+  <data name="Library_MissingCount_Other" xml:space="preserve">
+    <value>{0} faltando</value>
+  </data>
+  <data name="Library_StorageFullIn_One" xml:space="preserve">
+    <value>Cheio em cerca de {0} dia no ritmo atual ({1}/dia).</value>
+  </data>
+  <data name="Library_StorageFullIn_Other" xml:space="preserve">
+    <value>Cheio em cerca de {0} dias no ritmo atual ({1}/dia).</value>
+  </data>
+  <data name="Library_TrackedNote_One" xml:space="preserve">
+    <value>+ {0} a mais baixando, não encontrado ou em breve, não contado acima</value>
+  </data>
+  <data name="Library_TrackedNote_Other" xml:space="preserve">
+    <value>+ {0} a mais baixando, não encontrados ou em breve, não contados acima</value>
+  </data>
+  <data name="Library_TryAgainAll.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Library_TryAgainCollections.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Library_TryAgainDuplicates.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Library_TryAgainStorage.Content" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="Library_CopyLocation.Text" xml:space="preserve">
+    <value>Local</value>
+  </data>
+  <data name="Library_CopySize.Text" xml:space="preserve">
+    <value>Tamanho</value>
+  </data>
+  <data name="Library_CopyQuality.Text" xml:space="preserve">
+    <value>Qualidade</value>
+  </data>
   <data name="Integrations_SeerrHeading.Text" xml:space="preserve">
     <value>Vindo do Seerr?</value>
   </data>

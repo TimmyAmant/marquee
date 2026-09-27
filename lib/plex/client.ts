@@ -314,20 +314,24 @@ export async function getShowFileInfo(
   serverUri: string,
   token: string,
   ratingKey: string,
-): Promise<{ sizeBytes: number | null; folderPath: string | null; detail: MediaDetail }> {
+): Promise<{ sizeBytes: number | null; folderPath: string | null; episodeCount: number | null; detail: MediaDetail }> {
   const res = await fetch(`${serverUri}/library/metadata/${ratingKey}/allLeaves`, {
     headers: { Accept: "application/json", "X-Plex-Token": token },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
-  if (!res.ok) return { sizeBytes: null, folderPath: null, detail: { ...EMPTY_MEDIA_DETAIL } };
+  if (!res.ok) return { sizeBytes: null, folderPath: null, episodeCount: null, detail: { ...EMPTY_MEDIA_DETAIL } };
   const body = await res.json();
   const episodes: PlexMetadataItem[] = body.MediaContainer?.Metadata ?? [];
   const total = episodes.reduce((sum, ep) => sum + (getFileSize(ep) ?? 0), 0);
   const episodePaths = episodes.map((ep) => getFilePath(ep)).filter((p): p is string => p !== null);
+  const withFiles = episodes.filter((ep) => ep.Media?.length);
   return {
     sizeBytes: total > 0 ? total : null,
     folderPath: commonFolder(episodePaths),
-    detail: aggregateMediaDetail(episodes.filter((ep) => ep.Media?.length).map(parseMediaDetail)),
+    // Every leaf Plex lists carries a file, so this is the episode files on
+    // disk — what the Library page counts as episodes.
+    episodeCount: withFiles.length,
+    detail: aggregateMediaDetail(withFiles.map(parseMediaDetail)),
   };
 }
 

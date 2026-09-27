@@ -35,8 +35,10 @@ native **Mac** and **Windows** apps.
 
 **Your library, not just a search box**
 - Live status on every poster in the same colors as Radarr and Sonarr — owned, downloading, missing, not monitored, coming soon.
+- A **Library** page with everything in Plex, Jellyfin, Sonarr and Radarr in one grid or table: filter by type, status, server, resolution, HDR, codec, genre and year; sort by date added, title, year, size or rating; search; Search now and monitoring on every row.
 - File details on every title: resolution, codec, HDR, audio, size and where it lives.
-- Collections you only partly own, with **Add all** / **Request all missing**.
+- Collections you only partly own, with **Add all** / **Request all missing** — on each title and all together on the Library page.
+- **Duplicates** (a title on several servers or in several files) and a **Storage** card: free space per root folder and a "full in N days" forecast.
 - **Fix ID** for titles matched wrongly, Search now and monitoring without opening Sonarr/Radarr.
 - A release **calendar** from Sonarr and Radarr.
 
@@ -61,6 +63,7 @@ native **Mac** and **Windows** apps.
 |---|:---:|:---:|
 | Plex **and** Jellyfin/Emby at the same time | ✅ | one server |
 | File quality (4K, HDR, codec, audio) on every title | ✅ | ❌ |
+| One library view across all your servers, with duplicates and a disk-space forecast | ✅ | ❌ |
 | Release calendar | ✅ | ❌ |
 | Fix a wrong match, Search now, monitoring toggle | ✅ | ❌ |
 | Approve or decline from the notification | ✅ | ❌ |

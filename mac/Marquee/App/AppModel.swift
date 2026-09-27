@@ -14,6 +14,8 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     case discover
     case movies
     case series
+    /// Everything the household owns (0.51+).
+    case library
     case favorites
     case calendar
     case requests
@@ -21,7 +23,7 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     /// rail section or a Go menu item of its own.
     case settings
 
-    /// The sections the Go menu lists (⌘1…⌘6).
+    /// The sections the Go menu lists (⌘1…⌘7).
     static var sections: [SidebarItem] { allCases.filter { $0 != .settings } }
 
     var id: String { rawValue }
@@ -31,6 +33,7 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
         case .discover: return String(localized: "Discover")
         case .movies: return String(localized: "Movies")
         case .series: return String(localized: "Series")
+        case .library: return String(localized: "Library")
         case .favorites: return String(localized: "Favorites")
         case .calendar: return String(localized: "Calendar")
         case .requests: return String(localized: "Requests")
@@ -43,6 +46,7 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
         case .discover: return "safari"
         case .movies: return "film"
         case .series: return "tv"
+        case .library: return "books.vertical"
         case .favorites: return "heart"
         case .calendar: return "calendar"
         case .requests: return "list.bullet"
@@ -55,9 +59,10 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
         case .discover: return "1"
         case .movies: return "2"
         case .series: return "3"
-        case .favorites: return "4"
-        case .calendar: return "5"
-        case .requests: return "6"
+        case .library: return "4"
+        case .favorites: return "5"
+        case .calendar: return "6"
+        case .requests: return "7"
         case .settings: return ","
         }
     }

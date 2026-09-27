@@ -4,13 +4,15 @@ import { requireTmdbConfigured } from "@/lib/api/guards";
 import { ApiError, msg } from "@/lib/api/errors";
 import { queryInt } from "@/lib/api/request";
 import { titleCard } from "@/lib/api/mappers";
+import { posterActions } from "@/lib/api/poster-actions";
+import { loadPosterActionRules } from "@/lib/api/poster-action-rules";
 import { DISCOVER_LISTS } from "@/lib/discover/lists";
 import { fetchResolvedListPage, resolveDiscoverList } from "@/lib/pages/discover-lists";
 import type { DiscoverListResults } from "@/lib/api/types";
 
 /** A Discover shelf's full list ("See all" on Recently Added, Trending, the
  * Upcoming shelves, and each row the admin added — by its id), paged, with
- * status, favorited and canQuickAdd. */
+ * status, favorited and the viewer's quick action (lib/api/poster-actions.ts). */
 export const GET = withApi<{ list: string }>(async (request, params): Promise<DiscoverListResults> => {
   const ctx = await requireApiUser(request);
   const resolved = await resolveDiscoverList(params.list);
@@ -25,6 +27,7 @@ export const GET = withApi<{ list: string }>(async (request, params): Promise<Di
   if (!fromLibrary) await requireTmdbConfigured();
 
   const result = await fetchResolvedListPage(resolved, page, await ctx.viewer());
+  const rules = await loadPosterActionRules(ctx.user, result.items);
   return {
     list: result.list,
     title: result.title,
@@ -35,7 +38,7 @@ export const GET = withApi<{ list: string }>(async (request, params): Promise<Di
       titleCard(item, {
         status: item.status ?? null,
         favorited: item.favorited,
-        canQuickAdd: item.canQuickAdd,
+        ...posterActions(rules, item.mediaType, item.tmdbId, item.status),
       }),
     ),
   };

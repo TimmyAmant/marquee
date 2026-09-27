@@ -1271,3 +1271,125 @@ export type StatsSummary = {
   /** Titles Sonarr/Radarr are downloading right now. */
   downloading: number;
 };
+
+// ── Library page (0.51+) ─────────────────────────────────────────────────────
+
+export type LibraryResolution = "4K" | "1080p" | "720p" | "SD";
+export type LibrarySort = "recent" | "title" | "year" | "size" | "rating";
+
+/** One title in the household library: a TitleCard plus what's known about
+ * its file. `status` is never null here. */
+export type LibraryEntry = TitleCard & {
+  /** TheTVDB id (series), for clients that show it. */
+  tvdbId: number | null;
+  /** Where the row came from; a media server wins over Sonarr/Radarr for a
+   * title both have (unless it's downloading). */
+  source: LibraryProvider;
+  sizeBytes: number | null;
+  /** When the media server added it; null for a Sonarr/Radarr-only title. */
+  addedAt: string | null;
+  genres: string[];
+  /** The file's tier; "SD" below 720p; null when nothing describes a file. */
+  resolution: LibraryResolution | null;
+  /** "HDR10", "HDR10+", "Dolby Vision"…; null for SDR or unknown. */
+  hdr: string | null;
+  videoCodec: string | null;
+  audioCodec: string | null;
+  /** Radarr's quality profile name for the file ("Bluray-1080p"). */
+  quality: string | null;
+  filePath: string | null;
+  /** Series: episode files on disk; null when unknown. */
+  episodeCount: number | null;
+  /** Radarr: the file is below the quality cutoff. */
+  upgradeAvailable: boolean;
+  /** Sonarr/Radarr and the media server report different paths. */
+  possibleDuplicate: boolean;
+  /** For the admin: Radarr/Sonarr has it (Search now, Stop/Start monitoring). Null otherwise. */
+  arrTracking: ArrTracking | null;
+};
+
+export type LibrarySummary = {
+  movies: number;
+  series: number;
+  /** Episode files on disk (Sonarr and Plex report them; Jellyfin doesn't). */
+  episodes: number;
+  totalBytes: number;
+  /** Titles that aren't on disk yet: downloading, missing, coming soon. */
+  tracked: number;
+};
+
+/** What the filter pickers offer: only values present in this library. */
+export type LibraryFilters = {
+  sources: LibraryProvider[];
+  genres: string[];
+  codecs: string[];
+  years: number[];
+  resolutions: LibraryResolution[];
+  hasHdr: boolean;
+};
+
+export type LibraryPage = Paginated<LibraryEntry> & {
+  pageSize: number;
+  summary: LibrarySummary;
+  filters: LibraryFilters;
+  /** Plex, Jellyfin, Sonarr or Radarr is connected. False: the website's
+   * "Connect an integration" empty state. */
+  connected: boolean;
+};
+
+/** A franchise the library has part of. */
+export type LibraryCollection = {
+  key: string;
+  title: string;
+  /** The TMDb collection (movies); null for a hand-curated TV group. */
+  collectionId: number | null;
+  collectionFavorited: boolean | null;
+  /** Every part, in release order, with the library status of each. */
+  items: TitleCard[];
+  missingCount: number;
+  /** The admin's "Add all N missing" set; empty for members. */
+  addAllMissing: { mediaType: MediaType; tmdbId: number }[];
+  /** A member's "Request all N missing" set; empty for the admin. */
+  requestAllMissing: { mediaType: MediaType; tmdbId: number }[];
+  /** An owned part, for POST /titles/{type}/{id}/request-all-missing. */
+  requestAllTarget: { mediaType: MediaType; tmdbId: number };
+};
+
+export type LibraryCopy = {
+  source: LibraryProvider;
+  /** The server's name in Settings. */
+  server: string;
+  filePath: string | null;
+  sizeBytes: number | null;
+  /** A media server's resolution or the arr's quality profile. */
+  quality: string | null;
+};
+
+export type LibraryDuplicate = {
+  mediaType: MediaType;
+  tmdbId: number;
+  name: string;
+  posterPath: string | null;
+  year: string | null;
+  /** "paths": two or more different files; "servers": on more than one media server. */
+  reason: "paths" | "servers";
+  copies: LibraryCopy[];
+};
+
+export type LibraryStorageFolder = {
+  path: string;
+  freeBytes: number;
+  /** The Sonarr/Radarr servers with this root folder. */
+  servers: string[];
+};
+
+export type LibraryStorage = {
+  folders: LibraryStorageFolder[];
+  totalFreeBytes: number;
+  /** When the figures were read; null when there's nothing. */
+  measuredAt: string | null;
+  /** True: read from the servers just now; false: the newest daily snapshot. */
+  live: boolean;
+  /** Null until two days of snapshots show free space shrinking. */
+  forecast: { daysRemaining: number; bytesPerDay: number; fullOn: string } | null;
+};

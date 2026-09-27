@@ -11,6 +11,22 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.52.0",
+    date: "2026-09-27",
+    changes: [
+      "The Library page is back, on the website and in the Mac and Windows apps: everything in Plex, Jellyfin/Emby, Sonarr and Radarr in one place, with filters (type, status, source, 4K/1080p/720p, HDR, codec, genre, year), sorting, search, and a grid or table view.",
+      "Missing from collections: franchises you only partly own, with Add all or Request all missing. Duplicates (admin): the same title on several servers or with several files.",
+      "Storage: free space per disk and a forecast of when it fills up at the current rate.",
+    ],
+  },
+  {
+    version: "0.51.1",
+    date: "2026-09-27",
+    changes: [
+      "Quick add on posters now works in the Mac and Windows apps everywhere, including Discover: the admin gets \"+ Add to Radarr/Sonarr\", members get \"Request\" (following their permissions and the blocklist), and titles they already asked for show \"Requested\". No app update needed.",
+    ],
+  },
+  {
     version: "0.51.0",
     date: "2026-09-27",
     changes: [

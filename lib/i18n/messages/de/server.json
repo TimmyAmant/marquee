@@ -219,6 +219,7 @@
   "regionInvalid": "{field} muss null oder ein zweistelliger Ländercode sein, den Marquee kennt.",
   "discoverLanguageInvalid": "discoverLanguage muss null, „any“ oder ein zweistelliger Sprachcode sein, den Marquee kennt.",
   "nothingToChange": "Sende mindestens eines von streamingRegion, discoverRegion oder discoverLanguage.",
+  "onlyAdminDuplicates": "Nur der Admin kann Duplikate sehen.",
   "onlyAdminSeerrImport": "Nur der Admin kann aus Seerr importieren.",
   "seerrKeyRequired": "Gib den API-Schlüssel von Seerr ein (Einstellungen → Allgemein in Seerr).",
   "seerrKeyRejected": "Seerr hat diesen API-Schlüssel nicht akzeptiert. Kopiere ihn aus Einstellungen → Allgemein in Seerr.",

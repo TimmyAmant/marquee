@@ -114,6 +114,12 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["GET", "/people/{id}", "user", "A person's page: biography and credits."],
     ["GET", "/companies/{id}", "user", "A studio's or network's page and titles."],
   ]),
+  ...group("Library", [
+    ["GET", "/library", "user", "The Library page: everything in Plex, Jellyfin, Sonarr and Radarr, with filters, sort and paging (?type, ?status, ?source, ?resolution, ?hdr, ?codec, ?genre, ?year, ?q, ?sort, ?page).", { response: "LibraryPage" }],
+    ["GET", "/library/collections-missing", "user", "Franchises the library has part of, with the missing parts to add or request.", { response: "LibraryCollectionList" }],
+    ["GET", "/library/duplicates", "admin", "Titles on more than one server or in more than one file.", { response: "LibraryDuplicateList" }],
+    ["GET", "/library/storage", "user", "Free space per root folder and the \"full in N days\" forecast.", { response: "LibraryStorage" }],
+  ]),
   ...group("Favorites", [
     ["GET", "/favorites", "user", "The signed-in account's favorites."],
     ["GET", "/favorites/{entityType}/{tmdbId}", "user", "Whether one title, person or company is a favorite."],

@@ -27,6 +27,12 @@ vi.mock("@/lib/api/token-store", () => ({
   },
 }));
 vi.mock("@/lib/integrations/library-owner", () => ({ getLibraryOwnerUserId: async () => null }));
+// The admin's Radarr and Sonarr, fully set up (quality profile and root
+// folder picked), so their Discover cards offer "+ Add".
+vi.mock("@/lib/integrations/credentials", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/integrations/credentials")>()),
+  getArrCredential: async () => ({ baseUrl: "http://arr", apiKey: "k", qualityProfileId: 1, rootFolderPath: "/media" }),
+}));
 vi.mock("@/lib/integrations/app-settings", () => ({
   getTraktClientId: async () => "client",
   getTmdbAccessToken: async () => "token",
@@ -62,8 +68,9 @@ vi.mock("@/lib/trakt/client", async () => ({
   getTraktItemsPage: async () => ({ items: [], pageCount: 1, itemCount: 0 }),
 }));
 
+import { eq } from "drizzle-orm";
 import { resetTestDatabase, testDatabase } from "@/lib/test/pglite";
-import { users } from "@/lib/db/schema";
+import { requestBlocklist, requests, users } from "@/lib/db/schema";
 import { presetPermissions } from "@/lib/users/permissions";
 import * as discoverRoute from "@/app/api/v1/discover/route";
 import * as listRoute from "@/app/api/v1/discover/lists/[list]/route";
@@ -193,6 +200,59 @@ describe("Settings › Discover", () => {
     const res = await call(shelvesRoute.POST as Handler, { method: "POST", body: { kind: "traktList", url: "http://169.254.169.254/latest" } });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("invalid");
+  });
+});
+
+describe("Discover quick actions", () => {
+  // The Mac and Windows apps pick a poster's button from these three fields
+  // alone (lib/api/poster-actions.ts), so every shelf must carry them.
+  const actions = (card: { canQuickAdd: boolean; canRequest: boolean; requested: boolean | null }) => ({
+    canQuickAdd: card.canQuickAdd,
+    canRequest: card.canRequest,
+    requested: card.requested,
+  });
+
+  it("offers the admin Add on every shelf, built-in and custom", async () => {
+    const added = await call(shelvesRoute.POST as Handler, { method: "POST", body: { kind: "keyword", tmdbId: 210024 } });
+    const discover = await call(discoverRoute.GET as Handler);
+    expect(discover.status).toBe(200);
+    for (const key of ["trending", "popularMovies", "popularSeries"] as const) {
+      expect(actions(discover.body[key][0])).toEqual({ canQuickAdd: true, canRequest: false, requested: false });
+    }
+    const custom = discover.body.shelves.find((s: { id: string }) => s.id === added.body.id);
+    expect(custom.results.map(actions)).toEqual([
+      { canQuickAdd: true, canRequest: false, requested: false },
+      { canQuickAdd: true, canRequest: false, requested: false },
+    ]);
+  });
+
+  it("offers a member Request instead — not for a blocked title, and Requested once they've asked", async () => {
+    const { db } = await testDatabase();
+    const anna = who.tokens.get(ANNA)!;
+    await db.insert(requestBlocklist).values({ kind: "title", mediaType: "movie", tmdbId: 2, title: "Movie 2" });
+    await db.insert(requests).values({ requestedByUserId: anna.id, mediaType: "tv", tmdbId: 3, title: "Show 3" });
+
+    const discover = await call(discoverRoute.GET as Handler, { token: ANNA });
+    expect(discover.status).toBe(200);
+    expect(actions(discover.body.trending[0])).toEqual({ canQuickAdd: false, canRequest: true, requested: false });
+    expect(actions(discover.body.popularMovies[0])).toEqual({ canQuickAdd: false, canRequest: false, requested: false });
+    expect(actions(discover.body.popularSeries[0])).toEqual({ canQuickAdd: false, canRequest: false, requested: true });
+
+    // Its See all carries the same answer.
+    const list = await call(listRoute.GET as Handler, { token: ANNA, params: { list: "trending" } });
+    expect(actions(list.body.results[0])).toEqual({ canQuickAdd: false, canRequest: true, requested: false });
+  });
+
+  it("holds a member to their request permissions", async () => {
+    const { db } = await testDatabase();
+    const ben = who.tokens.get(BEN)!;
+    const permissions = ben.permissions.filter((p) => p !== "requestTv");
+    await db.update(users).set({ permissions }).where(eq(users.id, ben.id));
+    who.tokens.set(BEN, { ...ben, permissions });
+
+    const discover = await call(discoverRoute.GET as Handler, { token: BEN });
+    expect(actions(discover.body.popularMovies[0])).toEqual({ canQuickAdd: false, canRequest: true, requested: false });
+    expect(actions(discover.body.popularSeries[0])).toEqual({ canQuickAdd: false, canRequest: false, requested: false });
   });
 });
 

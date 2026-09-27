@@ -112,6 +112,10 @@ BLOCKS = [
     ("`GET /settings/api-keys`", ["api-keys"]),
     ("`POST /settings/api-keys`", ["api-key-created"]),
     ("`GET /stats/summary`", ["stats-summary"]),
+    ("`GET /library`", ["library-page"]),
+    ("`GET /library/collections-missing`", ["library-collections-missing"]),
+    ("`GET /library/duplicates`", ["library-duplicates"]),
+    ("`GET /library/storage`", ["library-storage"]),
 ]
 
 # Prose examples that aren't in a code block.

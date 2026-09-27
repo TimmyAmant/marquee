@@ -38,6 +38,13 @@ const ICONS = {
   series: (
     <path d="M4 5h16v11H4V5ZM9 20h6M4 16l3-3M20 16l-3-3" strokeLinecap="round" strokeLinejoin="round" />
   ),
+  library: (
+    <path
+      d="M4 5.5A1.5 1.5 0 0 1 5.5 4h2A1.5 1.5 0 0 1 9 5.5v13A1.5 1.5 0 0 1 7.5 20h-2A1.5 1.5 0 0 1 4 18.5v-13ZM10.5 5.5A1.5 1.5 0 0 1 12 4h2a1.5 1.5 0 0 1 1.5 1.5v13A1.5 1.5 0 0 1 14 20h-2a1.5 1.5 0 0 1-1.5-1.5v-13ZM16.6 7.2l1.9-.5a1.5 1.5 0 0 1 1.8 1.1l2.6 10a1.5 1.5 0 0 1-1.1 1.8l-1.9.5a1.5 1.5 0 0 1-1.8-1.1l-2.6-10a1.5 1.5 0 0 1 1.1-1.8Z"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
   favorites: (
     <path
       d="m12 19-7-6.1C2.5 10.5 3 6.5 6.5 5.5c2-.6 3.8.2 5.5 2.3 1.7-2.1 3.5-2.9 5.5-2.3 3.5 1 4 5 1.5 7.4L12 19Z"
@@ -83,6 +90,7 @@ const BROWSE: Destination[] = [
   { href: "/series", label: "common.series", icon: "series" },
 ];
 const LIBRARY: Destination[] = [
+  { href: "/library", label: "nav.library", icon: "library" },
   { href: "/favorites", label: "nav.favorites", icon: "favorites" },
   { href: "/calendar", label: "nav.calendar", icon: "calendar" },
   { href: "/requests", label: "nav.requests", icon: "requests" },

@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "reason": "paths",
+      "copies": [
+        {
+          "source": "radarr",
+          "server": "Radarr",
+          "filePath": "/movies/The Matrix (1999)/The Matrix (1999) Bluray-2160p.mkv",
+          "sizeBytes": 31234567890,
+          "quality": "Bluray-2160p"
+        },
+        {
+          "source": "plex",
+          "server": "Tower",
+          "filePath": "/movies/The Matrix (1999)/The Matrix (1999) WEBDL-1080p.mkv",
+          "sizeBytes": 8123456789,
+          "quality": "1080p"
+        }
+      ]
+    }
+  ]
+}

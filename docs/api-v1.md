@@ -155,6 +155,12 @@ where the real server needed something the core contract didn't spell out.
     else the request's `Accept-Language`, else English; codes never change.
     A server older than this sends no `language` — follow the system
     language — and answers `405` on `PATCH /me`: hide the picker.
+20. **Library page (0.51+, additive).** The household library in one place
+    (§17): `GET /library` lists everything Plex, Jellyfin, Sonarr and Radarr
+    have, with filters, sort and paging; `/library/collections-missing`,
+    `/library/duplicates` (admin) and `/library/storage` are its other
+    tabs. A server older than this answers `404` on all four: hide the
+    Library section.
 
 ---
 
@@ -250,9 +256,15 @@ computed against `libraryOwnerId` (from `/me`), exactly like the website.
 | `overview`, `rating` | string \| null, number \| null | Movies/Series grid only (`rating` = TMDb vote average 0–10) |
 | `status` | `LibraryStatus` \| null | null = not in the library (the website shows no badge) |
 | `favorited` | bool \| null | null where the website shows no favorite star on that list |
-| `requested` | bool \| null | You already have a pending or approved request (franchise/similar rows); null elsewhere |
-| `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`) |
-| `canRequest` | bool | Show the "Request" quick action — unless `requested` is true, then show "Requested" |
+| `requested` | bool \| null | You already have a pending or approved request; null on lists that offer no quick action (Favorites) |
+| `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`): the admin, with Radarr/Sonarr set up for the type, on a title not in the library |
+| `canRequest` | bool | Show the "Request" quick action: a member with the request permission for the type, on a title not in the library, not blocked, not already requested — when `requested` is true, show "Requested" instead |
+
+Every list that returns TitleCards fills these three in the same way (newer servers;
+older servers left them false/null on Discover's shelves and never sent
+`canRequest` outside the title page), so a card's button is read from the
+card alone: `canQuickAdd` → Add, else `requested` → Requested, else
+`canRequest` → Request, else nothing.
 
 `LibraryStatus`: `"owned"` (badge "Owned" / "Already in your library"),
 `"tracked_downloading"` ("Downloading"), `"tracked_monitored"` ("Missing"),
@@ -724,8 +736,9 @@ All endpoints in this section need TMDb (`502 upstream` otherwise — deviation 
 
 ### `GET /discover` — user
 
-The Discover landing page, shelves in page order. Cards carry `status` only
-(the website shows no favorite/add buttons on these shelves). Empty shelves
+The Discover landing page, shelves in page order. Cards carry `status` and
+the viewer's quick action (`canQuickAdd` / `canRequest` / `requested`; newer servers)
+but no `favorited` (the website shows no favorite star on these shelves). Empty shelves
 are empty arrays — the website hides them. Genre tiles link to
 `/movies?genre=` / `/series?genre=`; studio logos to `/companies/{id}`;
 network logos to `/series?network=`.
@@ -735,7 +748,7 @@ network logos to `/series?network=`.
   "recentlyAdded": [ /* TitleCard, from Plex/Jellyfin, newest first, max 20 */ ],
   "trending": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
-      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": false, "canQuickAdd": true, "canRequest": false }
   ],
   "popularMovies": [ /* TitleCard ×20 */ ],
   "movieGenres": [ { "id": 28, "name": "Action", "backdropPath": "/qeQJ.jpg" } ],
@@ -824,7 +837,8 @@ drops re-releases whose release date has passed, so its pages can run short.
 its `totalPages` / `totalResults` only look one page ahead (it is empty
 without a connected media server). Continue while `page < totalPages`, skip
 titles already shown, as on the Movies grid. Cards carry `status`,
-`favorited` and `canQuickAdd`; `trending` and `recently-added` mix movies and
+`favorited` and the quick action (`canQuickAdd` / `canRequest` /
+`requested`); `trending` and `recently-added` mix movies and
 series.
 
 ```json
@@ -836,7 +850,7 @@ series.
   "totalResults": 1000,
   "results": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
-      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": null, "canQuickAdd": true, "canRequest": false }
+      "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
   ]
 }
 ```
@@ -958,7 +972,7 @@ TMDb's ranking shifts; skip ones you already show (as the website does).
     { "mediaType": "movie", "tmdbId": 502, "name": "Fail Safe", "posterPath": "/qrsj.jpg", "year": "1964",
       "subtitle": "Thriller",
       "overview": "Because of a technical defect an American bomber team mistakenly orders the destruction of Moscow…",
-      "rating": 7.832, "status": null, "favorited": false, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "rating": 7.832, "status": null, "favorited": false, "requested": false, "canQuickAdd": false, "canRequest": true }
   ]
 }
 ```
@@ -985,7 +999,7 @@ active network chip, and the "Because you watched …" row.
   "network": { "tmdbId": 213, "name": "Netflix", "logoPath": "/wwem.png" },
   "becauseYouWatched": {
     "title": "Severance",
-    "items": [ /* TitleCard ×≤12 with status, favorited, canQuickAdd */ ]
+    "items": [ /* TitleCard ×≤12 with status, favorited, requested, canQuickAdd, canRequest */ ]
   }
 }
 ```
@@ -1022,7 +1036,7 @@ The search results page. `q` is required (`400` if blank).
   "query": "keanu",
   "people": [ { "tmdbId": 6384, "name": "Keanu Reeves", "profilePath": "/8RZL.jpg", "knownForDepartment": "Acting", "favorited": false } ],
   "studios": [ { "tmdbId": 420, "name": "Marvel Studios", "logoPath": "/hUze.png", "favorited": false } ],
-  "titles": [ /* TitleCard with status, favorited, canQuickAdd */ ],
+  "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ],
   "theme": {
     "label": "Science Fiction",
     "items": [ /* TitleCard — section heading on the website: "<label> movies & TV" */ ]
@@ -1576,7 +1590,7 @@ the corrected title may already be linked to something else in your library.".
   "credits": [
     { "mediaType": "movie", "tmdbId": 1638103, "name": "Constantine 2", "posterPath": "/aAcC.jpg", "year": null,
       "subtitle": "John Constantine", "overview": null, "rating": null, "status": null,
-      "favorited": false, "requested": null, "canQuickAdd": false, "canRequest": false }
+      "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
   ]
 }
 ```
@@ -1598,7 +1612,7 @@ for this person yet." Errors: `404` (unknown person), `502 upstream`.
   "logoPath": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png",
   "titleCount": 137,
   "favorited": false,
-  "titles": [ /* TitleCard with status, favorited, canQuickAdd */ ]
+  "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ]
 }
 ```
 
@@ -4183,6 +4197,196 @@ reference. The website shows it at `/api-docs`.
 
 ---
 
+## 17. Library (0.51+)
+
+The website's **Library** page: everything the household owns, across Plex,
+Jellyfin (or Emby), Sonarr and Radarr, plus the franchises it has part of,
+the admin's duplicates and the disks. Every call sees the household library
+(`libraryOwnerId`), as everywhere else. A read-only API key is enough for
+all four. A server older than 0.51 answers `404` on each — hide the section.
+
+### `GET /library` — user (0.51+)
+
+One page of the library, filtered and sorted. Each row is a `TitleCard`
+(with `status` always set and `favorited` filled in) plus what's known about
+its file. The whole library is merged first (a title on several servers is
+one row: a media server's copy wins over Sonarr/Radarr's unless it's
+downloading), so the counts and filter choices describe all of it, not the
+page.
+
+| Query | Type | Default | |
+|---|---|---|---|
+| `type` | `movie` \| `tv` | — | |
+| `status` | `LibraryStatus` | — | `owned`, `tracked_downloading`, `tracked_monitored`, `tracked_unmonitored`, `coming_soon` (never `untracked`) |
+| `source` | `plex` \| `jellyfin` \| `sonarr` \| `radarr` | — | which server the row came from |
+| `resolution` | `4K` \| `1080p` \| `720p` \| `SD` | — | the file's tier (`SD` = known, below 720p) |
+| `hdr` | `true`/`false`/`1`/`0` | — | only files with HDR or Dolby Vision |
+| `codec` | string | — | a video codec as the media server spells it (`HEVC`), case-insensitive |
+| `genre` | string | — | a TMDb genre name, case-insensitive |
+| `year` | int 1800–3000 | — | |
+| `q` | string | — | title contains (case-insensitive) |
+| `sort` | `recent` \| `title` \| `year` \| `size` \| `rating` | `recent` | `recent`: newest `addedAt` first, then Sonarr/Radarr-only rows by year; the rest descending, nulls last (title A–Z) |
+| `page` | int ≥ 1 | 1 | |
+| `pageSize` | int 1–200 | 60 | |
+
+```json
+{
+  "page": 1,
+  "pageSize": 60,
+  "totalPages": 14,
+  "totalResults": 812,
+  "results": [
+    { "mediaType": "movie", "tmdbId": 603, "name": "The Matrix", "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg", "year": "1999",
+      "subtitle": null, "overview": null, "rating": null, "status": "owned", "favorited": true, "requested": null,
+      "canQuickAdd": false, "canRequest": false,
+      "tvdbId": null, "source": "plex", "sizeBytes": 31234567890, "addedAt": "2026-09-20T18:04:11.000Z",
+      "genres": ["Action", "Science Fiction"], "resolution": "4K", "hdr": "Dolby Vision",
+      "videoCodec": "HEVC", "audioCodec": "TrueHD Atmos", "quality": "Bluray-2160p",
+      "filePath": "/movies/The Matrix (1999)/The Matrix (1999) Bluray-2160p.mkv", "episodeCount": null,
+      "upgradeAvailable": false, "possibleDuplicate": false, "arrTracking": { "arrId": 12, "monitored": true } },
+    { "mediaType": "tv", "tmdbId": 1399, "name": "Game of Thrones", "posterPath": "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg", "year": "2011",
+      "subtitle": null, "overview": null, "rating": null, "status": "tracked_downloading", "favorited": false, "requested": null,
+      "canQuickAdd": false, "canRequest": false,
+      "tvdbId": 121361, "source": "sonarr", "sizeBytes": 98765432100, "addedAt": null,
+      "genres": ["Drama", "Sci-Fi & Fantasy"], "resolution": null, "hdr": null,
+      "videoCodec": null, "audioCodec": null, "quality": null,
+      "filePath": "/tv/Game of Thrones", "episodeCount": 61,
+      "upgradeAvailable": false, "possibleDuplicate": false, "arrTracking": { "arrId": 7, "monitored": true } }
+  ],
+  "summary": { "movies": 640, "series": 172, "episodes": 9840, "totalBytes": 48000000000000, "tracked": 23 },
+  "filters": {
+    "sources": ["plex", "sonarr", "radarr"],
+    "genres": ["Action", "Drama", "Science Fiction", "Sci-Fi & Fantasy"],
+    "codecs": ["AV1", "H264", "HEVC"],
+    "years": [2026, 2025, 2011, 1999],
+    "resolutions": ["4K", "1080p", "SD"],
+    "hasHdr": true
+  },
+  "connected": true
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `source` | Where the row came from. |
+| `sizeBytes`, `addedAt` | The file's size; when the media server added it (null for a Sonarr/Radarr-only row). |
+| `resolution` | The file's tier from Radarr's quality profile or the media server's own reading; `SD` below 720p; null when nothing describes a file (a monitored-only title). |
+| `hdr` | `HDR10`, `HDR10+`, `Dolby Vision`…; null for SDR or unknown. |
+| `videoCodec`, `audioCodec`, `quality` | The media server's codecs and Radarr's quality profile name; null where unknown. |
+| `filePath` | **The admin only**; null for members. |
+| `episodeCount` | Series: episode files on disk (Sonarr or Plex; Jellyfin doesn't report it). |
+| `upgradeAvailable` | Radarr: the file is below the quality cutoff. |
+| `possibleDuplicate` | Sonarr/Radarr and the media server report different paths (see `/library/duplicates`). |
+| `arrTracking` | **The admin only**: Radarr/Sonarr has the title, so `POST /titles/{type}/{id}/search` and `PUT …/monitored` apply (`monitored` is its flag there). Null for members and for a media-server-only title. |
+| `summary` | The header counts: owned movies and series, episode files on disk, bytes on disk, and `tracked` — rows not on disk yet (downloading, missing, coming soon). |
+| `filters` | What the pickers offer: only values present in this library. |
+| `connected` | False when neither Plex, Jellyfin, Sonarr nor Radarr is connected: the website shows "Connect Plex, Jellyfin, Sonarr or Radarr to see everything you already own in one place." (the admin gets a link to Settings › Integrations; a member reads "The household admin hasn't connected Plex, Jellyfin, Sonarr or Radarr yet."). |
+
+Errors: `400 invalid` (an unknown `type`, `status`, `source`, `resolution`,
+`sort` or `hdr`; a non-integer or out-of-range `year`, `page` or `pageSize`).
+
+Empty `results` with filters set: the website says "No titles match these
+filters."; with none, "Still syncing — check back in a moment."
+
+### `GET /library/collections-missing` — user (0.51+)
+
+The "Missing from collections" tab: every franchise the library has part of
+but not all of — a TMDb collection for movies, a hand-curated crossover
+group for TV (the same groups a title page's franchise row uses), A–Z. Each
+part is a `TitleCard` with its `status` (null = missing), `favorited`,
+`requested`, and `canQuickAdd` (the admin) or `canRequest` (a member who
+may request that type, unless the title is blocked). TMDb collections are
+fetched live, so allow the TMDb timeout.
+
+```json
+{
+  "results": [
+    {
+      "key": "collection-2344",
+      "title": "The Matrix Collection",
+      "collectionId": 2344,
+      "collectionFavorited": false,
+      "items": [ /* TitleCard × 4, in release order */ ],
+      "missingCount": 2,
+      "addAllMissing": [ { "mediaType": "movie", "tmdbId": 605 }, { "mediaType": "movie", "tmdbId": 624860 } ],
+      "requestAllMissing": [],
+      "requestAllTarget": { "mediaType": "movie", "tmdbId": 603 }
+    }
+  ]
+}
+```
+
+`addAllMissing` is the admin's "Add all N missing" set (each through
+`POST /titles/{type}/{id}/add`); `requestAllMissing` a member's "Request all
+N missing" set, which the app sends as one
+`POST /titles/{type}/{id}/request-all-missing` to `requestAllTarget` (an
+owned part — the server works the set out again). `collectionId` and
+`collectionFavorited` are null for a TV group.
+
+Empty `results`: "Nothing incomplete — every franchise you own part of is
+fully owned, or none of your titles belongs to one yet."
+
+### `GET /library/duplicates` — admin (0.51+)
+
+The Duplicates tab: titles the library has in more than one file or on more
+than one media server, A–Z, with every copy. `reason` is `paths` (two or
+more copies name different files — a stale grab left behind after an
+upgrade, most often) or `servers` (two media servers list it, whether or
+not the paths are known). Sonarr/Radarr and a media server agreeing on one
+path is the normal case and never listed. Members get `403 forbidden`
+"Only the admin can see duplicates.".
+
+```json
+{
+  "results": [
+    {
+      "mediaType": "movie", "tmdbId": 603, "name": "The Matrix", "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg", "year": "1999",
+      "reason": "paths",
+      "copies": [
+        { "source": "radarr", "server": "Radarr", "filePath": "/movies/The Matrix (1999)/The Matrix (1999) Bluray-2160p.mkv", "sizeBytes": 31234567890, "quality": "Bluray-2160p" },
+        { "source": "plex", "server": "Tower", "filePath": "/movies/The Matrix (1999)/The Matrix (1999) WEBDL-1080p.mkv", "sizeBytes": 8123456789, "quality": "1080p" }
+      ]
+    }
+  ]
+}
+```
+
+`server` is the server's name in Settings. Marquee deletes nothing itself;
+the website says so above the list ("Check the paths before deleting
+anything"). Empty `results`: "No duplicates — every title is on one server,
+in one file."
+
+### `GET /library/storage` — user (0.51+)
+
+The Storage card: free space per Sonarr/Radarr root folder (a disk shared
+by a movies and a TV folder is listed once per path), which servers use
+it, and the forecast from the daily `disk-space-snapshot` job.
+
+```json
+{
+  "folders": [
+    { "path": "/movies", "freeBytes": 812000000000, "servers": ["Radarr", "4K Radarr"] },
+    { "path": "/tv", "freeBytes": 812000000000, "servers": ["Sonarr"] }
+  ],
+  "totalFreeBytes": 1624000000000,
+  "measuredAt": "2026-09-26T21:10:00.000Z",
+  "live": true,
+  "forecast": { "daysRemaining": 42, "bytesPerDay": 12300000000, "fullOn": "2026-11-07" }
+}
+```
+
+`live` is true when the servers answered just now; when none did (or none
+is connected) the newest snapshot per path stands in, `measuredAt` is its
+time and `servers` is empty. `forecast` is null until two days of snapshots
+show free space shrinking by at least 100 MB a day; the website then says
+"Full in about 42 days at the current rate (11.5 GB/day). Around November 7,
+2026." — or "No forecast yet — it needs a couple of days of readings from
+the daily disk-space snapshot." Nothing connected and no snapshots: empty
+`folders`, null `measuredAt`; the website says "Connect Sonarr or Radarr to
+see free space per root folder here."
+
+---
+
 ## Endpoint index
 
 | Group | Method & path | Auth |
@@ -4223,6 +4427,10 @@ reference. The website shows it at `/api-docs`.
 | | `PUT /favorites/{entityType}/{tmdbId}` | user |
 | | `DELETE /favorites/{entityType}/{tmdbId}` | user |
 | | `POST /favorites/{entityType}/{tmdbId}/toggle` | user |
+| Library | `GET /library` | user |
+| | `GET /library/collections-missing` | user |
+| | `GET /library/duplicates` | admin |
+| | `GET /library/storage` | user |
 | Requests | `POST /titles/{type}/{tmdbId}/request` | user |
 | | `POST /titles/{type}/{tmdbId}/request-all-missing` | user |
 | | `GET /requests/mine` | user |
@@ -4308,5 +4516,4 @@ reference. The website shows it at `/api-docs`.
 
 - **Theme (light/dark)** — a per-browser preference stored in `localStorage`; nothing server-side.
 - **`/api/webhooks/{provider}/{userId}`** and **`/api/webhooks/servers/{serverId}`** — inbound Sonarr/Radarr webhooks, not a client API (their URLs are in `GET /settings/integrations` and each `ArrServer`).
-- **Disk-space summary/forecast** — computed in `lib/integrations/disk-space.ts` but not shown on any page; only the daily snapshot job is exposed (`POST /settings/jobs/disk-space-snapshot/run`).
 - **Device/token management** — the website has no UI for it; `POST /auth/logout` revokes the current token and a password change revokes all of an account's tokens. (Admin-issued API keys are managed under §16.)

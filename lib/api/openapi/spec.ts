@@ -107,6 +107,191 @@ const SCHEMAS: Record<string, Json> = {
       downloading: { type: "integer", description: "Titles Sonarr/Radarr are downloading now." },
     },
   },
+  TitleRef: {
+    type: "object",
+    required: ["mediaType", "tmdbId"],
+    properties: { mediaType: { type: "string", enum: ["movie", "tv"] }, tmdbId: { type: "integer" } },
+  },
+  TitleCard: {
+    type: "object",
+    required: ["mediaType", "tmdbId", "name", "posterPath", "year", "subtitle", "overview", "rating", "status", "favorited", "requested", "canQuickAdd", "canRequest"],
+    properties: {
+      mediaType: { type: "string", enum: ["movie", "tv"] },
+      tmdbId: { type: "integer" },
+      name: { type: "string" },
+      posterPath: { type: ["string", "null"], description: "A TMDb path, or a full URL (see docs/api-v1.md, deviation 1)." },
+      year: { type: ["string", "null"] },
+      subtitle: { type: ["string", "null"] },
+      overview: { type: ["string", "null"] },
+      rating: { type: ["number", "null"] },
+      status: { type: ["string", "null"], description: "A LibraryStatus; null when not in the library." },
+      favorited: { type: ["boolean", "null"] },
+      requested: { type: ["boolean", "null"] },
+      canQuickAdd: { type: "boolean" },
+      canRequest: { type: "boolean" },
+    },
+  },
+  LibraryEntry: {
+    allOf: [
+      { $ref: "#/components/schemas/TitleCard" },
+      {
+        type: "object",
+        required: ["tvdbId", "source", "sizeBytes", "addedAt", "genres", "resolution", "hdr", "videoCodec", "audioCodec", "quality", "filePath", "episodeCount", "upgradeAvailable", "possibleDuplicate", "arrTracking"],
+        properties: {
+          tvdbId: { type: ["integer", "null"] },
+          source: { type: "string", enum: ["plex", "jellyfin", "sonarr", "radarr"] },
+          sizeBytes: { type: ["integer", "null"] },
+          addedAt: { type: ["string", "null"], format: "date-time" },
+          genres: { type: "array", items: { type: "string" } },
+          resolution: { type: ["string", "null"], enum: ["4K", "1080p", "720p", "SD", null] },
+          hdr: { type: ["string", "null"], description: "HDR10, HDR10+, Dolby Vision…; null for SDR." },
+          videoCodec: { type: ["string", "null"] },
+          audioCodec: { type: ["string", "null"] },
+          quality: { type: ["string", "null"], description: "Radarr's quality profile name for the file." },
+          filePath: { type: ["string", "null"], description: "The admin only; null for members." },
+          episodeCount: { type: ["integer", "null"], description: "Series: episode files on disk." },
+          upgradeAvailable: { type: "boolean" },
+          possibleDuplicate: { type: "boolean" },
+          arrTracking: {
+            oneOf: [
+              { type: "object", required: ["arrId", "monitored"], properties: { arrId: { type: "integer" }, monitored: { type: "boolean" } } },
+              { type: "null" },
+            ],
+            description: "The admin only: Radarr/Sonarr has the title.",
+          },
+        },
+      },
+    ],
+  },
+  LibraryPage: {
+    type: "object",
+    required: ["page", "pageSize", "totalPages", "totalResults", "results", "summary", "filters", "connected"],
+    properties: {
+      page: { type: "integer" },
+      pageSize: { type: "integer" },
+      totalPages: { type: "integer" },
+      totalResults: { type: "integer" },
+      results: { type: "array", items: { $ref: "#/components/schemas/LibraryEntry" } },
+      summary: {
+        type: "object",
+        required: ["movies", "series", "episodes", "totalBytes", "tracked"],
+        properties: {
+          movies: { type: "integer" },
+          series: { type: "integer" },
+          episodes: { type: "integer", description: "Episode files on disk." },
+          totalBytes: { type: "integer" },
+          tracked: { type: "integer", description: "Titles not on disk yet: downloading, missing, coming soon." },
+        },
+      },
+      filters: {
+        type: "object",
+        required: ["sources", "genres", "codecs", "years", "resolutions", "hasHdr"],
+        properties: {
+          sources: { type: "array", items: { type: "string" } },
+          genres: { type: "array", items: { type: "string" } },
+          codecs: { type: "array", items: { type: "string" } },
+          years: { type: "array", items: { type: "integer" } },
+          resolutions: { type: "array", items: { type: "string" } },
+          hasHdr: { type: "boolean" },
+        },
+      },
+      connected: { type: "boolean", description: "Plex, Jellyfin, Sonarr or Radarr is connected." },
+    },
+  },
+  LibraryCollectionList: {
+    type: "object",
+    required: ["results"],
+    properties: {
+      results: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["key", "title", "collectionId", "collectionFavorited", "items", "missingCount", "addAllMissing", "requestAllMissing", "requestAllTarget"],
+          properties: {
+            key: { type: "string" },
+            title: { type: "string" },
+            collectionId: { type: ["integer", "null"] },
+            collectionFavorited: { type: ["boolean", "null"] },
+            items: { type: "array", items: { $ref: "#/components/schemas/TitleCard" } },
+            missingCount: { type: "integer" },
+            addAllMissing: { type: "array", items: { $ref: "#/components/schemas/TitleRef" } },
+            requestAllMissing: { type: "array", items: { $ref: "#/components/schemas/TitleRef" } },
+            requestAllTarget: { $ref: "#/components/schemas/TitleRef" },
+          },
+        },
+      },
+    },
+  },
+  LibraryDuplicateList: {
+    type: "object",
+    required: ["results"],
+    properties: {
+      results: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["mediaType", "tmdbId", "name", "posterPath", "year", "reason", "copies"],
+          properties: {
+            mediaType: { type: "string", enum: ["movie", "tv"] },
+            tmdbId: { type: "integer" },
+            name: { type: "string" },
+            posterPath: { type: ["string", "null"] },
+            year: { type: ["string", "null"] },
+            reason: { type: "string", enum: ["paths", "servers"] },
+            copies: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["source", "server", "filePath", "sizeBytes", "quality"],
+                properties: {
+                  source: { type: "string", enum: ["plex", "jellyfin", "sonarr", "radarr"] },
+                  server: { type: "string" },
+                  filePath: { type: ["string", "null"] },
+                  sizeBytes: { type: ["integer", "null"] },
+                  quality: { type: ["string", "null"] },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  LibraryStorage: {
+    type: "object",
+    required: ["folders", "totalFreeBytes", "measuredAt", "live", "forecast"],
+    properties: {
+      folders: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["path", "freeBytes", "servers"],
+          properties: {
+            path: { type: "string" },
+            freeBytes: { type: "integer" },
+            servers: { type: "array", items: { type: "string" }, description: "The Sonarr/Radarr servers with this root folder." },
+          },
+        },
+      },
+      totalFreeBytes: { type: "integer" },
+      measuredAt: { type: ["string", "null"], format: "date-time" },
+      live: { type: "boolean", description: "Read from the servers just now, or the newest daily snapshot." },
+      forecast: {
+        oneOf: [
+          {
+            type: "object",
+            required: ["daysRemaining", "bytesPerDay", "fullOn"],
+            properties: {
+              daysRemaining: { type: "integer" },
+              bytesPerDay: { type: "integer" },
+              fullOn: { type: "string", format: "date", description: "The day the disks run out at the current rate." },
+            },
+          },
+          { type: "null" },
+        ],
+      },
+    },
+  },
 };
 
 function pathParameters(path: string): Json[] {
