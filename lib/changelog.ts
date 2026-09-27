@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.54.0",
+    date: "2026-09-27",
+    changes: [
+      "Title pages use the whole screen: poster on the left, details in the middle, facts and File details on the right, with the rows below lined up to the same edges. Bigger posters and text on wide screens.",
+      "The artwork now fills the top of the page and fades smoothly into it, with no hard edge, and stays readable even on bright pictures. Where TMDb has one, the title's own logo is shown instead of plain text (dark theme).",
+      "The buttons sit on one tidy row, all the same height: Play and Add / Request first, \"Advanced\" as a small arrow joined to Add, and Search now, Stop monitoring, Block requests and Fix ID in a new \"…\" menu.",
+      "Keywords wrap onto a second line instead of being cut off.",
+      "The Mac and Windows apps' title pages get the same full-width layout, artwork and button row.",
+    ],
+  },
+  {
     version: "0.53.0",
     date: "2026-09-27",
     changes: [
