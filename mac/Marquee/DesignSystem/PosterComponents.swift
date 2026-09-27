@@ -635,6 +635,8 @@ struct GenreCard: View {
 struct LogoCard: View {
     let name: String
     let logoPath: API.ImageRef?
+    /// The shelf's fixed 224pt; nil fills the grid cell (search's See all).
+    var width: CGFloat? = 224
     let action: () -> Void
     @State private var hovering = false
 
@@ -653,7 +655,8 @@ struct LogoCard: View {
                         .padding(.horizontal, 16)
                 }
             }
-            .frame(width: 224, height: 112)
+            .frame(width: width, height: 112)
+            .frame(maxWidth: width == nil ? .infinity : nil)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(hovering ? Theme.borderStrong : Theme.border))
         }

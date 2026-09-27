@@ -435,6 +435,34 @@
         }
       }
     },
+    "%@ for “%@”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ für „%@“"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ para «%@»"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pour « %@ »"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ para “%@”"
+          }
+        }
+      }
+    },
     "%@ free" : {
       "localizations" : {
         "es" : {
@@ -8523,6 +8551,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar agora"
+          }
+        }
+      }
+    },
+    "Check the spelling, or try a shorter title, a person's name or a studio." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfe die Schreibweise oder versuche einen kürzeren Titel, einen Namen oder ein Studio."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa la ortografía o prueba con un título más corto, el nombre de una persona o un estudio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifiez l’orthographe, ou essayez un titre plus court, le nom d’une personne ou un studio."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confira a ortografia ou tente um título mais curto, o nome de uma pessoa ou um estúdio."
           }
         }
       }
@@ -30925,6 +30981,34 @@
         }
       }
     },
+    "Studios & Networks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Studios & Sender"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estudios y cadenas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Studios et chaînes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estúdios e canais"
+          }
+        }
+      }
+    },
     "Subtitles missing or wrong" : {
       "localizations" : {
         "de" : {
@@ -38748,6 +38832,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "•••••••••••••••• (deixe em branco para manter)"
+          }
+        }
+      }
+    },
+    "← All results for “%@”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "← Alle Ergebnisse für „%@“"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "← Todos los resultados para «%@»"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "← Tous les résultats pour « %@ »"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "← Todos os resultados para “%@”"
           }
         }
       }

@@ -47,8 +47,21 @@ extension API {
         let knownForDepartment: String?
         /// nil where the website shows no star.
         let favorited: Bool?
+        /// Search only (0.54+): up to three titles they're known for.
+        var knownFor: [String]?
 
         var id: Int { tmdbId }
+
+        /// "Acting · The Matrix, John Wick" — search's line under the photo.
+        var knownForLine: String? {
+            let titles = (knownFor ?? []).filter { !$0.isEmpty }.joined(separator: ", ")
+            switch (knownForDepartment?.nonBlank, titles.isEmpty ? nil : titles) {
+            case let (department?, titles?): return "\(department) · \(titles)" // i18n-ignore
+            case let (department?, nil): return department
+            case let (nil, titles?): return titles
+            case (nil, nil): return nil
+            }
+        }
     }
 
     /// A studio (production company).
@@ -411,12 +424,38 @@ extension API {
         }
     }
 
-    /// `GET /search?q=`: the search results page. All four empty → "No results for "…"."
+    /// `GET /search?q=`: the search results page. All empty → "No results for "…"."
     struct SearchResults: Codable, Hashable, Sendable {
         /// A genre or keyword the query named: "{label} movies & TV".
         struct Theme: Codable, Hashable, Sendable {
             let label: String
             let items: [TitleCard]
+            /// 0.54+: "first" when the query is that genre/keyword itself
+            /// ("horror"), so its shelf leads the page; "last" (or nil, from an
+            /// older server) puts it after the other sections.
+            var placement: String?
+
+            var leadsPage: Bool { placement == "first" }
+        }
+
+        /// One section (0.54+): TMDb's first page, best match first, and
+        /// how many there are in all — the heading's count.
+        struct Section<Item: Codable & Hashable & Sendable>: Codable, Hashable, Sendable {
+            let totalResults: Int
+            let totalPages: Int
+            let results: [Item]
+
+            /// More than the section shows: offer See all.
+            var hasMore: Bool { totalResults > results.count }
+        }
+
+        /// 0.54+: the page in the order to show it — movies, series, people,
+        /// studios & networks.
+        struct Sections: Codable, Hashable, Sendable {
+            let movies: Section<TitleCard>
+            let series: Section<TitleCard>
+            let people: Section<PersonCard>
+            let studiosAndNetworks: Section<SearchCompanyCard>
         }
 
         let query: String
@@ -425,9 +464,59 @@ extension API {
         /// With status, favorited and canQuickAdd.
         let titles: [TitleCard]
         let theme: Theme?
+        /// nil from a server before 0.54 (SearchPageLayout falls back to the
+        /// fields above).
+        var sections: Sections?
 
         var isEmpty: Bool {
-            people.isEmpty && studios.isEmpty && titles.isEmpty && (theme?.items.isEmpty ?? true)
+            let sectionsEmpty = sections.map {
+                $0.movies.results.isEmpty && $0.series.results.isEmpty && $0.people.results.isEmpty
+                    && $0.studiosAndNetworks.results.isEmpty
+            } ?? true
+            return sectionsEmpty && people.isEmpty && studios.isEmpty && titles.isEmpty && (theme?.items.isEmpty ?? true)
+        }
+    }
+
+    /// A studio or network in search's Studios & Networks (0.54+): a studio
+    /// opens its company page, a network the Series grid filtered to it.
+    struct SearchCompanyCard: Codable, Hashable, Sendable, Identifiable {
+        /// "studio" or "network"; anything else is treated as a studio.
+        let kind: String
+        let tmdbId: Int
+        let name: String
+        let logoPath: ImageRef?
+        /// Always nil for a network (no star).
+        let favorited: Bool?
+
+        var isNetwork: Bool { kind == "network" }
+        var id: String { "\(kind)-\(tmdbId)" }
+
+        init(kind: String, tmdbId: Int, name: String, logoPath: ImageRef?, favorited: Bool?) {
+            self.kind = kind
+            self.tmdbId = tmdbId
+            self.name = name
+            self.logoPath = logoPath
+            self.favorited = favorited
+        }
+
+        /// An older server's studio.
+        init(studio: CompanyCard) {
+            self.init(kind: "studio", tmdbId: studio.tmdbId, name: studio.name, logoPath: studio.logoPath, favorited: studio.favorited)
+        }
+    }
+
+    /// `GET /search/{section}` (0.54+): which section's See all.
+    enum SearchSectionName: String, Hashable, Sendable, CaseIterable {
+        case movies, series, people, studios
+
+        /// The section's heading, as on the website.
+        var title: String {
+            switch self {
+            case .movies: return String(localized: "Movies")
+            case .series: return String(localized: "TV Shows")
+            case .people: return String(localized: "People")
+            case .studios: return String(localized: "Studios & Networks")
+            }
         }
     }
 

@@ -73,6 +73,8 @@ enum Route: Hashable {
     case person(Int)
     case company(Int)
     case search(String)
+    /// One search section's See all (0.54+).
+    case searchSection(String, API.SearchSectionName)
     /// A Discover shelf's full list (its "See all").
     case discoverList(API.DiscoverList)
     case errorReference
@@ -89,7 +91,7 @@ extension Route {
         case let .person(id): return "person/\(id)"
         case let .company(id): return "company/\(id)"
         case let .discoverList(list): return "discover/\(list.rawValue)"
-        case .search, .errorReference, .changelog: return nil
+        case .search, .searchSection, .errorReference, .changelog: return nil
         }
     }
 }

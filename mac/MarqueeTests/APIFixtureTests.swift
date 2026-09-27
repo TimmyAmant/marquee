@@ -50,6 +50,7 @@ final class APIFixtureTests: XCTestCase {
         "surprise": decodes(API.TitleID.self),
         "search": decodes(API.SearchResults.self),
         "search-suggest": decodes(API.ListResponse<API.SearchSuggestion>.self),
+        "search-section": decodes(Paginated<API.TitleCard>.self),
         "title-detail": decodes(API.TitleDetail.self),
         "title-season": decodes(API.TitleDetail.SeasonSummary.self),
         "season-episodes": decodes(API.SeasonEpisodes.self),
@@ -129,7 +130,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 97, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 98, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -415,11 +416,12 @@ final class APIFixtureTests: XCTestCase {
 
     func testCardsAndSuggestions() throws {
         let suggestions = try decode(API.ListResponse<API.SearchSuggestion>.self, "search-suggest").results
-        XCTAssertEqual(suggestions.map(\.stableId), ["movie-603", "person-6384", "movie-604", "movie-624860"])
-        XCTAssertEqual(suggestions.map(\.mediaType.label), ["Movie", "Actor", "Movie", "Movie"])
+        XCTAssertEqual(suggestions.map(\.stableId), ["movie-603", "movie-604", "movie-624860", "person-6384", "network-49"])
+        XCTAssertEqual(suggestions.map(\.mediaType.label), ["Movie", "Movie", "Movie", "Actor", "Network"])
         XCTAssertEqual(suggestions.first?.titleID, API.TitleID(.movie, 603))
-        XCTAssertNil(suggestions[1].titleID)
-        XCTAssertEqual(suggestions.map(\.status), [.owned, nil, .trackedDownloading, .untracked])
+        XCTAssertNil(suggestions[3].titleID)
+        XCTAssertNil(suggestions[4].titleID)
+        XCTAssertEqual(suggestions.map(\.status), [.owned, .trackedDownloading, .untracked, nil, nil])
 
         let page = try decode(API.BrowsePage.self, "browse-page")
         XCTAssertTrue(page.hasMorePages)
