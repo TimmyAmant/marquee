@@ -128,5 +128,7 @@
   "viewTable": "Table",
   "creditCount": "{count, plural, one {# credit} other {# credits}}",
   "emptyStudio": "No titles found for this studio yet.",
-  "emptyPerson": "No processed filmography found for this person yet."
+  "emptyPerson": "No processed filmography found for this person yet.",
+  "shelfWatchlist": "Your Watchlist",
+  "emptyWatchlist": "Nothing from your Plex Watchlist yet — the next check will bring it in."
 }

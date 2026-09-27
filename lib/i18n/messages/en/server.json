@@ -211,5 +211,12 @@
   "plexWatchlistRejected": "Plex stopped accepting Marquee's access to your watchlist (for example after signing out of all devices). Turn it on again to reconnect.",
   "plexWatchlistLimited": "You've reached your request limit, so the rest of your watchlist waits until you have requests left.",
   "plexWatchlistUnreachable": "Couldn't reach Plex to read your watchlist. Marquee will try again shortly.",
-  "pushTestBody": "Notifications are working on this device."
+  "pushTestBody": "Notifications are working on this device.",
+  "enterOmdbKey": "Enter an OMDb API key.",
+  "omdbUnreachable": "Couldn't reach OMDb to check the key. Try again in a moment.",
+  "omdbKeyInvalid": "OMDb didn't accept this key. Check it and try again.",
+  "publicUrlInvalid": "The public URL must start with http:// or https://.",
+  "regionInvalid": "{field} must be null or a two-letter country code Marquee knows.",
+  "discoverLanguageInvalid": "discoverLanguage must be null, \"any\" or a two-letter language code Marquee knows.",
+  "nothingToChange": "Send at least one of streamingRegion, discoverRegion or discoverLanguage."
 }

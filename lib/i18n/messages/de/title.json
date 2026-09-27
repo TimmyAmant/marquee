@@ -230,5 +230,18 @@
   "originalLanguage": "Originalsprache",
   "productionCountry": "Produktionsland",
   "network": "Sender",
-  "streamingOn": "Aktuell im Stream bei"
+  "streamingOn": "Aktuell im Stream bei",
+  "playOnPlex": "Auf Plex abspielen",
+  "playOnJellyfin": "Auf Jellyfin abspielen",
+  "playOnEmby": "Auf Emby abspielen",
+  "play": "Abspielen",
+  "originalTitle": "Originaltitel",
+  "theatricalRelease": "Kinostart",
+  "digitalRelease": "Digitale Veröffentlichung",
+  "budget": "Budget",
+  "revenue": "Einspielergebnis",
+  "studio": "Studio",
+  "imdbRating": "IMDb-Bewertung",
+  "rottenTomatoesCritics": "Rotten-Tomatoes-Kritikerwertung",
+  "metacriticScore": "Metacritic-Wertung"
 }

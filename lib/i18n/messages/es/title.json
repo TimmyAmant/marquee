@@ -230,5 +230,18 @@
   "originalLanguage": "Idioma original",
   "productionCountry": "País de producción",
   "network": "Cadena",
-  "streamingOn": "Disponible en streaming en"
+  "streamingOn": "Disponible en streaming en",
+  "playOnPlex": "Reproducir en Plex",
+  "playOnJellyfin": "Reproducir en Jellyfin",
+  "playOnEmby": "Reproducir en Emby",
+  "play": "Reproducir",
+  "originalTitle": "Título original",
+  "theatricalRelease": "Estreno en cines",
+  "digitalRelease": "Estreno digital",
+  "budget": "Presupuesto",
+  "revenue": "Recaudación",
+  "studio": "Estudio",
+  "imdbRating": "Puntuación en IMDb",
+  "rottenTomatoesCritics": "Puntuación de la crítica en Rotten Tomatoes",
+  "metacriticScore": "Puntuación en Metacritic"
 }

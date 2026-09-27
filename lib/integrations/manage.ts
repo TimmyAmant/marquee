@@ -23,6 +23,7 @@ import {
   setTmdbAccessToken,
   setTraktClientId,
   setTvdbApiKey,
+  setOmdbApiKey,
   setDiscordWebhookUrl,
   setGenericWebhookUrl,
   setNtfyUrl,
@@ -35,6 +36,7 @@ import { syncArrLibrary } from "@/lib/arr/sync";
 import { verifyTmdbAccessToken } from "@/lib/tmdb/client";
 import { verifyTraktClientId } from "@/lib/trakt/client";
 import { verifyTvdbApiKey } from "@/lib/tvdb/client";
+import { verifyOmdbApiKey } from "@/lib/ratings/omdb";
 import { verifyDiscordWebhook } from "@/lib/discord/client";
 import { verifyNtfyUrl } from "@/lib/ntfy/client";
 import { verifyWebhookUrl } from "@/lib/webhook/client";
@@ -158,12 +160,17 @@ export async function disconnectIntegration(adminUserId: string, provider: Integ
 
 export async function testAndSaveJellyfinConnection(
   adminUserId: string,
-  input: { baseUrl: string; apiKey: string },
+  input: { baseUrl: string; apiKey: string; publicUrl?: string | null },
 ): Promise<CoreResult> {
   const baseUrl = normalizeServerUrl(input.baseUrl);
   const apiKey = input.apiKey.trim();
   if (!baseUrl || !apiKey) {
     return await failT("invalid", "server.urlAndKeyRequired");
+  }
+  // Optional: where "Play on Jellyfin" opens, when that isn't `baseUrl`.
+  const publicUrl = input.publicUrl ? normalizeServerUrl(input.publicUrl) : null;
+  if (publicUrl && !/^https?:\/\/\S+$/.test(publicUrl)) {
+    return await failT("invalid", "server.publicUrlInvalid");
   }
 
   try {
@@ -172,7 +179,7 @@ export async function testAndSaveJellyfinConnection(
     return await failT("upstream", "server.couldNotConnect");
   }
 
-  await upsertJellyfinCredential(adminUserId, { baseUrl, apiKey });
+  await upsertJellyfinCredential(adminUserId, { baseUrl, apiKey, publicUrl: publicUrl || null });
   revalidateIntegrations();
   return { ok: true };
 }
@@ -267,6 +274,25 @@ export async function testAndSaveTvdbApiKey(rawApiKey: string): Promise<CoreResu
   if (!valid) return await failT("invalid", "server.tvdbKeyInvalid");
 
   await setTvdbApiKey(apiKey);
+  revalidateIntegrations();
+  return { ok: true };
+}
+
+/** Settings › Integrations › OMDb (ratings): the key is tried against OMDb
+ * before it's saved. */
+export async function testAndSaveOmdbApiKey(rawApiKey: string): Promise<CoreResult> {
+  const apiKey = rawApiKey.trim();
+  if (!apiKey) return await failT("invalid", "server.enterOmdbKey");
+
+  let valid: boolean;
+  try {
+    valid = await verifyOmdbApiKey(apiKey);
+  } catch {
+    return await failT("upstream", "server.omdbUnreachable");
+  }
+  if (!valid) return await failT("invalid", "server.omdbKeyInvalid");
+
+  await setOmdbApiKey(apiKey);
   revalidateIntegrations();
   return { ok: true };
 }

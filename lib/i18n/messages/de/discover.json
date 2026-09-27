@@ -128,5 +128,7 @@
   "viewTable": "Tabelle",
   "creditCount": "{count, plural, one {# Mitwirkung} other {# Mitwirkungen}}",
   "emptyStudio": "Für dieses Studio wurden noch keine Titel gefunden.",
-  "emptyPerson": "Für diese Person gibt es noch keine verarbeitete Filmografie."
+  "emptyPerson": "Für diese Person gibt es noch keine verarbeitete Filmografie.",
+  "shelfWatchlist": "Deine Watchlist",
+  "emptyWatchlist": "Noch nichts aus deiner Plex-Watchlist – die nächste Prüfung holt es."
 }

@@ -10,7 +10,7 @@ export function JellyfinConnectCard({
   summary,
   name,
 }: {
-  existing: { baseUrl: string; hasApiKey: boolean } | null;
+  existing: { baseUrl: string; publicUrl?: string | null; hasApiKey: boolean } | null;
   /** "Jellyfin" or "Emby" once connected and synced; null before. */
   name?: string | null;
   summary: {
@@ -64,6 +64,17 @@ export function JellyfinConnectCard({
             placeholder="http://localhost:8096" // i18n-ignore
             className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
           />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
+          {t("integrations.publicUrl")}
+          <input
+            type="url"
+            name="publicUrl"
+            defaultValue={existing?.publicUrl ?? ""}
+            placeholder="https://jellyfin.example.com" // i18n-ignore
+            className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
+          />
+          <span className="text-xs text-text-muted">{t("integrations.publicUrlHelp")}</span>
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
           {t("integrations.apiKey")}

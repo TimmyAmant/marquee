@@ -173,6 +173,7 @@ export default async function TitlePage({
         }
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
+        playLinks={viewer.session ? data.playLinks : []}
         cast={
           <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
         }

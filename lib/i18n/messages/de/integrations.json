@@ -253,5 +253,21 @@
   "reset": "Zurücksetzen",
   "resetToDefault": "Auf Standard zurücksetzen",
   "maxCustomRows": "{count, plural, one {Entdecken hat # eigene Reihe, mehr geht nicht. Entferne sie, um eine andere hinzuzufügen.} other {Entdecken hat # eigene Reihen, mehr geht nicht. Entferne eine, um eine andere hinzuzufügen.}}",
-  "tmdbListPlaceholder": "https://www.themoviedb.org/list/8136 oder 8136"
+  "tmdbListPlaceholder": "https://www.themoviedb.org/list/8136 oder 8136",
+  "omdbTitle": "OMDb (Bewertungen)",
+  "omdbIntro": "Optional. Mit einem Schlüssel zeigen Titelseiten die Bewertungen von IMDb, Rotten Tomatoes und Metacritic neben der von TMDb.",
+  "omdbPlaceholder": "Von omdbapi.com/apikey.aspx",
+  "publicUrl": "Öffentliche URL (optional)",
+  "publicUrlHelp": "Was „Auf Jellyfin abspielen“ öffnet, wenn Leute den Server unter einer anderen Adresse erreichen als Marquee.",
+  "regionLanguageTitle": "Region und Sprache",
+  "regionLanguageIntro": "Für welches Land Streaming-Anbieter und Starttermine gelten und woher und in welcher Sprache die TMDb-Reihen Beliebt und Demnächst kommen.",
+  "streamingRegionLabel": "Streaming-Region",
+  "streamingRegionHelp": "„Derzeit im Stream bei“ und Kinostart und digitale Veröffentlichung eines Films gelten für dieses Land.",
+  "regionAutomatic": "Automatisch – {region}",
+  "discoverRegionLabel": "Entdecken-Region",
+  "discoverRegionWorldwide": "Weltweit",
+  "discoverRegionHelp": "Beliebte Filme und Demnächst im Kino werden für dieses Land ausgewählt.",
+  "discoverLanguageLabel": "Entdecken-Sprache",
+  "discoverLanguageHelp": "Die Originalsprache, auf die Beliebt, Demnächst und die Seiten Filme und Serien beschränkt sind. „Alle Sprachen“ hebt die Beschränkung auf.",
+  "anyLanguage": "Alle Sprachen"
 }

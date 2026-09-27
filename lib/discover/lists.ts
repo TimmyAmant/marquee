@@ -8,13 +8,14 @@ import type { MessageKey } from "@/lib/i18n/translator";
 
 /** The shelves with no browse page of their own: "See all" opens the whole
  * list as a paged grid (/discover/{list} on the website). */
-export const DISCOVER_LISTS = ["recently-added", "trending", "upcoming-movies", "upcoming-series"] as const;
+export const DISCOVER_LISTS = ["recently-added", "watchlist", "trending", "upcoming-movies", "upcoming-series"] as const;
 
 export type DiscoverList = (typeof DISCOVER_LISTS)[number];
 
 /** Each list's name, in the reader's language: `t(DISCOVER_LIST_TITLES[list])`. */
 export const DISCOVER_LIST_TITLES: Record<DiscoverList, MessageKey> = {
   "recently-added": "discover.shelfRecentlyAdded",
+  watchlist: "discover.shelfWatchlist",
   trending: "discover.shelfTrending",
   "upcoming-movies": "discover.shelfUpcomingMovies",
   "upcoming-series": "discover.shelfUpcomingSeries",
@@ -27,6 +28,7 @@ export function parseDiscoverList(value: string | null | undefined): DiscoverLis
 /** The keys of GET /discover's shelves, in page order. */
 export const DISCOVER_SHELF_KEYS = [
   "recentlyAdded",
+  "watchlist",
   "trending",
   "popularMovies",
   "movieGenres",
@@ -56,6 +58,7 @@ const browse = (mediaType: "movie" | "tv"): SeeAllTarget => ({ type: "browse", l
  * catalog; the rest open their own list. */
 export const DISCOVER_SEE_ALL: Record<DiscoverShelfKey, SeeAllTarget> = {
   recentlyAdded: list("recently-added"),
+  watchlist: list("watchlist"),
   trending: list("trending"),
   popularMovies: browse("movie"),
   movieGenres: browse("movie"),
@@ -85,7 +88,9 @@ export const RECENTLY_ADDED_MAX_PAGE = 25;
 
 /** The highest `page` the lists endpoint accepts. */
 export function discoverListMaxPage(name: DiscoverList): number {
-  return name === "recently-added" ? RECENTLY_ADDED_MAX_PAGE : Math.floor(TMDB_MAX_PAGE / LIST_TMDB_BATCH);
+  return name === "recently-added" || name === "watchlist"
+    ? RECENTLY_ADDED_MAX_PAGE
+    : Math.floor(TMDB_MAX_PAGE / LIST_TMDB_BATCH);
 }
 
 /** The TMDb pages behind list page `page` (1-based). */

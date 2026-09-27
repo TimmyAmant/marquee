@@ -128,5 +128,7 @@
   "viewTable": "Tabla",
   "creditCount": "{count, plural, one {# crédito} other {# créditos}}",
   "emptyStudio": "Todavía no se encontraron títulos de este estudio.",
-  "emptyPerson": "Todavía no hay filmografía procesada para esta persona."
+  "emptyPerson": "Todavía no hay filmografía procesada para esta persona.",
+  "shelfWatchlist": "Tu Watchlist",
+  "emptyWatchlist": "Todavía no hay nada de tu Watchlist de Plex: la próxima comprobación lo traerá."
 }

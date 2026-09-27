@@ -21,7 +21,10 @@ import { CapsLabel } from "@/components/caps-label";
 import type { ArrTrackingInfo, FileInfo } from "@/lib/integrations/status";
 import type { CreditEntry } from "@/lib/title-meta";
 import { getT } from "@/lib/i18n/server";
-import { formatDate } from "@/lib/i18n/format";
+import { formatDate, formatNumber } from "@/lib/i18n/format";
+import { hasAnyRating, imdbTitleUrl, type TitleRatings } from "@/lib/ratings/omdb";
+import type { PlayLink } from "@/lib/media-servers/play-links";
+import { PlayButton } from "@/components/play-button";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -42,6 +45,22 @@ export type TitleSidebarData = {
   originalLanguageLabel: string | null;
   productionCountry: { name: string; flag: string } | null;
   watchProviders: { name: string; logoPath: string | null }[];
+  /** The country the providers (and a movie's release dates) are for. */
+  streamingRegion: string;
+  /** TMDb's (JustWatch) "where to watch" page for that country. */
+  streamingLink: string | null;
+  /** Only when it differs from the name shown. */
+  originalTitle: string | null;
+  theatricalReleaseLabel: string | null;
+  digitalReleaseLabel: string | null;
+  budgetLabel: string | null;
+  revenueLabel: string | null;
+  /** A movie's first studio (a show has its network instead). */
+  studio: string | null;
+  /** IMDb / Rotten Tomatoes / Metacritic (lib/ratings); null without an
+   * OMDb key or when nothing is known. */
+  ratings: TitleRatings | null;
+  imdbId: string | null;
 };
 
 /** A 38px fact row in the right rail's facts card — label left, value right,
@@ -52,6 +71,50 @@ function SidebarRow({ label, value }: { label: string; value: string | null }) {
     <div className="flex min-h-[38px] items-center justify-between gap-2.5 border-t border-border py-1.5 text-[12.5px]">
       <span className="text-text-secondary">{label}</span>
       <span className="text-right font-medium text-text-primary">{value}</span>
+    </div>
+  );
+}
+
+/** IMDb, Rotten Tomatoes and Metacritic (lib/ratings/omdb.ts) under the
+ * TMDb score, each a small badge; IMDb's links to the title there. */
+async function RatingsRow({ ratings, imdbId }: { ratings: TitleRatings; imdbId: string | null }) {
+  const t = await getT();
+  const badge = "inline-flex h-[26px] items-center gap-1.5 rounded-full border border-border px-2.5 text-[12px] font-medium text-text-primary";
+  const mark = "font-display text-[10px] font-bold tracking-wide";
+  const imdb =
+    ratings.imdbRating !== null ? (
+      <span className={badge} title={t("title.imdbRating")}>
+        <span className={`${mark} rounded-[3px] bg-[#f5c518] px-1 text-black`}>IMDb</span>
+        {formatNumber(t, ratings.imdbRating, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+        {ratings.imdbVotes !== null && (
+          <span className="text-[11px] text-text-muted">
+            ({formatNumber(t, ratings.imdbVotes, { notation: "compact", maximumFractionDigits: 1 })})
+          </span>
+        )}
+      </span>
+    ) : null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-t border-border py-2.5" data-testid="ratings-row">
+      {imdb && imdbId ? (
+        <a href={imdbTitleUrl(imdbId)} target="_blank" rel="noreferrer" className="hover:opacity-80">
+          {imdb}
+        </a>
+      ) : (
+        imdb
+      )}
+      {ratings.rottenTomatoesCritics !== null && (
+        <span className={badge} title={t("title.rottenTomatoesCritics")}>
+          <span aria-hidden>🍅</span>
+          {t("title.ratingPercent", { percent: ratings.rottenTomatoesCritics })}
+        </span>
+      )}
+      {ratings.metacritic !== null && (
+        <span className={badge} title={t("title.metacriticScore")}>
+          {/* i18n-ignore */}
+          <span className={`${mark} rounded-[3px] bg-[#66cc33] px-1 text-black`}>MC</span>
+          {ratings.metacritic}
+        </span>
+      )}
     </div>
   );
 }
@@ -88,6 +151,7 @@ export async function TitleHero({
   share,
   myRequests = [],
   may,
+  playLinks = [],
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -136,6 +200,8 @@ export async function TitleHero({
   /** What the viewer may do here (lib/users/permissions.ts); omitted when
    * signed out. */
   may?: { request: boolean; advanced: boolean; manageBlocklist: boolean };
+  /** "Play on Plex" and friends (lib/media-servers/play-links.ts). */
+  playLinks?: PlayLink[];
 }) {
   const t = await getT();
   // Rating/status/network live in the sidebar instead — this line is just
@@ -213,6 +279,8 @@ export async function TitleHero({
                     canRequest={may?.request ?? false}
                     advanced={may?.advanced ?? false}
                   />
+
+                  {playLinks.length > 0 && <PlayButton links={playLinks} />}
 
                   {notFoundSince && (
                     <Link
@@ -327,30 +395,43 @@ export async function TitleHero({
                   <span className="text-[11px] text-text-muted">{t("title.tmdbUserScore")}</span>
                 </div>
               )}
-              <div className={meta.ratingPercent === null ? "[&>div:first-child]:border-t-0" : ""}>
+              {sidebar.ratings && hasAnyRating(sidebar.ratings) && (
+                <RatingsRow ratings={sidebar.ratings} imdbId={sidebar.imdbId} />
+              )}
+              <div className={meta.ratingPercent === null && !(sidebar.ratings && hasAnyRating(sidebar.ratings)) ? "[&>div:first-child]:border-t-0" : ""}>
                 <SidebarRow label={t("title.sidebarStatus")} value={meta.statusLabel} />
+                <SidebarRow label={t("title.originalTitle")} value={sidebar.originalTitle} />
                 <SidebarRow
                   label={mediaType === "movie" ? t("title.releaseDate") : t("title.firstAirDate")}
                   value={sidebar.releaseDateLabel}
                 />
+                {sidebar.theatricalReleaseLabel && sidebar.theatricalReleaseLabel !== sidebar.releaseDateLabel && (
+                  <SidebarRow label={t("title.theatricalRelease")} value={sidebar.theatricalReleaseLabel} />
+                )}
+                <SidebarRow label={t("title.digitalRelease")} value={sidebar.digitalReleaseLabel} />
                 <SidebarRow label={t("title.nextAirDate")} value={sidebar.nextAirDateLabel} />
+                <SidebarRow label={t("title.budget")} value={sidebar.budgetLabel} />
+                <SidebarRow label={t("title.revenue")} value={sidebar.revenueLabel} />
                 <SidebarRow label={t("title.originalLanguage")} value={sidebar.originalLanguageLabel} />
                 <SidebarRow
                   label={t("title.productionCountry")}
                   value={sidebar.productionCountry ? `${sidebar.productionCountry.flag} ${sidebar.productionCountry.name}` : null}
                 />
+                <SidebarRow label={t("title.studio")} value={sidebar.studio} />
                 <SidebarRow label={t("title.network")} value={meta.network} />
               </div>
 
               {sidebar.watchProviders.length > 0 && (
                 <div className="border-t border-border pt-[14px]">
-                  <CapsLabel>{t("title.streamingOn")}</CapsLabel>
+                  <div className="flex items-center justify-between gap-2">
+                    <CapsLabel>{t("title.streamingOn")}</CapsLabel>
+                    <span className="text-[11px] text-text-muted">{sidebar.streamingRegion}</span>
+                  </div>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {sidebar.watchProviders.map((provider) => {
                       const logo = tmdbImageUrl(provider.logoPath, "w92");
-                      return (
+                      const tile = (
                         <div
-                          key={provider.name}
                           title={provider.name}
                           className="h-9 w-9 shrink-0 overflow-hidden rounded-[9px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
                         >
@@ -364,6 +445,13 @@ export async function TitleHero({
                             />
                           )}
                         </div>
+                      );
+                      return sidebar.streamingLink ? (
+                        <a key={provider.name} href={sidebar.streamingLink} target="_blank" rel="noreferrer">
+                          {tile}
+                        </a>
+                      ) : (
+                        <div key={provider.name}>{tile}</div>
                       );
                     })}
                   </div>

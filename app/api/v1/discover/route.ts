@@ -21,6 +21,7 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
 
   const fixed = {
     recentlyAdded: data.recentlyAdded.map((item) => titleCard(item, { status: item.status ?? null })),
+    watchlist: data.watchlist.map((item) => titleCard(item, { status: item.status ?? null })),
     trending: data.trendingItems.map((item) => {
       const mediaType = item.media_type as MediaType;
       return titleCard(

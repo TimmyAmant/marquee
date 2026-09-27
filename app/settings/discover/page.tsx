@@ -2,14 +2,20 @@ import { redirect } from "next/navigation";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { getDiscoverLayout } from "@/lib/discover/layout";
 import { getTraktClientId } from "@/lib/integrations/app-settings";
+import { getDiscoverLocaleSettings } from "@/lib/discover/locale-settings";
 import { MAX_CUSTOM_SHELVES } from "@/lib/discover/shelves";
 import { DiscoverSettingsEditor } from "./discover-settings";
+import { RegionLanguageSettings } from "./region-language-settings";
 import { getT } from "@/lib/i18n/server";
 
 export default async function DiscoverSettingsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session || !viewer.isAdmin) redirect("/settings");
-  const [shelves, traktClientId] = await Promise.all([getDiscoverLayout(), getTraktClientId().catch(() => null)]);
+  const [shelves, traktClientId, locale] = await Promise.all([
+    getDiscoverLayout(),
+    getTraktClientId().catch(() => null),
+    getDiscoverLocaleSettings(),
+  ]);
   const t = await getT();
 
   return (
@@ -21,6 +27,7 @@ export default async function DiscoverSettingsPage() {
         traktConfigured={Boolean(traktClientId)}
         maxCustomShelves={MAX_CUSTOM_SHELVES}
       />
+      <RegionLanguageSettings initial={locale} />
     </div>
   );
 }

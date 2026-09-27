@@ -53,6 +53,18 @@ export default async function DiscoverPage() {
             status: item.status ?? undefined,
           })),
         );
+      case "watchlist":
+        return posters(
+          data.watchlist.map((item) => ({
+            key: `${item.mediaType}-${item.tmdbId}`,
+            mediaType: item.mediaType,
+            tmdbId: item.tmdbId,
+            name: item.name,
+            posterPath: item.posterPath,
+            year: item.year,
+            status: item.status,
+          })),
+        );
       case "trending":
         return posters(
           data.trendingItems.map((item) => ({

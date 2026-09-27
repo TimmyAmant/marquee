@@ -338,6 +338,10 @@ export type GenreTile = Genre & { backdropPath: string | null };
 
 export type DiscoverShelves = {
   recentlyAdded: TitleCard[];
+  /** 0.51+ (an older server omits it): the viewer's own Plex Watchlist,
+   * newest first, for a viewer with "Request from my Plex Watchlist" on;
+   * empty otherwise. */
+  watchlist?: TitleCard[];
   trending: TitleCard[];
   popularMovies: TitleCard[];
   movieGenres: GenreTile[];
@@ -627,6 +631,27 @@ export type SeasonSummary = {
   requestable: boolean;
 };
 
+export type TitleRatingsDto = {
+  /** 0–10, one decimal. */
+  imdbRating: number | null;
+  imdbVotes: number | null;
+  /** The Tomatometer, 0–100. */
+  rottenTomatoesCritics: number | null;
+  /** The Metascore, 0–100. */
+  metacritic: number | null;
+  /** The title's IMDb page, when it has an IMDb id. */
+  imdbUrl: string | null;
+};
+
+export type PlayLinkDto = {
+  server: "plex" | "jellyfin" | "emby";
+  serverName: string | null;
+  /** "Play on Plex", in the reader's language. */
+  label: string;
+  url: string;
+  appUrl: string | null;
+};
+
 export type TitleDetail = {
   mediaType: MediaType;
   tmdbId: number;
@@ -655,7 +680,35 @@ export type TitleDetail = {
     originalLanguageLabel: string | null;
     productionCountry: { code: string; name: string; flag: string } | null;
     watchProviders: { name: string; logoPath: string | null }[];
+    /** 0.51+ (an older server omits these). The country `watchProviders`
+     * and the release dates are for (Settings › Discover › Region &
+     * language), and TMDb's "where to watch" page there. */
+    streamingRegion?: string;
+    streamingLink?: string | null;
+    /** Only when it differs from `name`. */
+    originalTitle?: string | null;
+    /** A movie's release dates in `streamingRegion` (ISO days), and the
+     * same as labels in the reader's language. */
+    theatricalRelease?: string | null;
+    theatricalReleaseLabel?: string | null;
+    digitalRelease?: string | null;
+    digitalReleaseLabel?: string | null;
+    /** US dollars, and the same formatted; null when TMDb doesn't know. */
+    budget?: number | null;
+    budgetLabel?: string | null;
+    revenue?: number | null;
+    revenueLabel?: string | null;
+    /** A movie's first studio (a show's network is `network`). */
+    studio?: string | null;
+    /** IMDb / Rotten Tomatoes / Metacritic from OMDb (Settings ›
+     * Integrations › OMDb); null without a key or when nothing is known. */
+    ratings?: TitleRatingsDto | null;
   };
+  /** 0.51+: where the title can be played now — one entry per household
+   * media server that has it (Plex first). Empty when it's in none, or
+   * no media server is connected. `url` opens in a browser; `appUrl` is
+   * the server's own scheme (Plex's `plex://`) for devices with its app. */
+  play?: PlayLinkDto[];
   credits: { role: string; name: string }[];
   keywords: string[];
   links: {
@@ -1064,6 +1117,8 @@ export type IntegrationsSettings = {
     /** 0.40+: "Jellyfin", or "Emby" when the connected server is Emby. */
     name: string;
     baseUrl: string | null;
+    /** 0.51+: the address "Play on Jellyfin" opens, when set (else `baseUrl`). */
+    publicUrl?: string | null;
     hasApiKey: boolean;
     servers: SyncedServer[];
     movieCount: number;
@@ -1078,6 +1133,8 @@ export type IntegrationsSettings = {
   tmdb: { connected: boolean; savedInSettings: boolean; configuredFromEnv: boolean };
   trakt: { connected: boolean };
   tvdb: { connected: boolean };
+  /** 0.51+: OMDb, for IMDb / Rotten Tomatoes / Metacritic ratings. */
+  omdb?: { connected: boolean };
   discord: { connected: boolean };
   ntfy: { connected: boolean };
   /** No token is ever returned; chatId shows where messages go. */

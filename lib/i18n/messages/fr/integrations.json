@@ -253,5 +253,21 @@
   "reset": "Réinitialiser",
   "resetToDefault": "Rétablir par défaut",
   "maxCustomRows": "{count, plural, one {Découvrir a # rangée personnalisée, le maximum possible. Supprimez-la pour en ajouter une autre.} other {Découvrir a # rangées personnalisées, le maximum possible. Supprimez-en une pour en ajouter une autre.}}",
-  "tmdbListPlaceholder": "https://www.themoviedb.org/list/8136 ou 8136"
+  "tmdbListPlaceholder": "https://www.themoviedb.org/list/8136 ou 8136",
+  "omdbTitle": "OMDb (notes)",
+  "omdbIntro": "Facultatif. Avec une clé, les pages de titre affichent les notes IMDb, Rotten Tomatoes et Metacritic à côté de celle de TMDb.",
+  "omdbPlaceholder": "Depuis omdbapi.com/apikey.aspx",
+  "publicUrl": "URL publique (facultative)",
+  "publicUrlHelp": "Ce qu’ouvre « Lire sur Jellyfin » lorsque les gens joignent le serveur à une autre adresse que Marquee.",
+  "regionLanguageTitle": "Région et langue",
+  "regionLanguageIntro": "Le pays des services de streaming et des dates de sortie, et d’où et dans quelle langue sont choisies les rangées Populaires et À venir de TMDb.",
+  "streamingRegionLabel": "Région de streaming",
+  "streamingRegionHelp": "« Actuellement en streaming sur » et les dates de sortie en salles et numérique d’un film concernent ce pays.",
+  "regionAutomatic": "Automatique : {region}",
+  "discoverRegionLabel": "Région de Découvrir",
+  "discoverRegionWorldwide": "Monde entier",
+  "discoverRegionHelp": "Films populaires et Films à venir sont choisis pour ce pays.",
+  "discoverLanguageLabel": "Langue de Découvrir",
+  "discoverLanguageHelp": "La langue originale à laquelle se limitent Populaires, À venir et les pages Films et Séries. « Toutes les langues » lève la limite.",
+  "anyLanguage": "Toutes les langues"
 }

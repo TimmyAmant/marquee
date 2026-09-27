@@ -130,7 +130,7 @@ describe("Settings › Discover", () => {
   it("reorders, hides and adds rows, and Discover follows", async () => {
     const initial = await call(settingsRoute.GET as Handler);
     expect(initial.status).toBe(200);
-    expect(initial.body.shelves).toHaveLength(10);
+    expect(initial.body.shelves).toHaveLength(11);
     expect(initial.body).toMatchObject({ traktConfigured: true, maxCustomShelves: 30 });
 
     const lookup = await call(lookupRoute.GET as Handler, { query: "?type=keyword&q=anime" });

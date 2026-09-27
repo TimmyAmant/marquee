@@ -230,5 +230,18 @@
   "originalLanguage": "Original Language",
   "productionCountry": "Production Country",
   "network": "Network",
-  "streamingOn": "Currently Streaming On"
+  "streamingOn": "Currently Streaming On",
+  "playOnPlex": "Play on Plex",
+  "playOnJellyfin": "Play on Jellyfin",
+  "playOnEmby": "Play on Emby",
+  "play": "Play",
+  "originalTitle": "Original Title",
+  "theatricalRelease": "Theatrical Release",
+  "digitalRelease": "Digital Release",
+  "budget": "Budget",
+  "revenue": "Revenue",
+  "studio": "Studio",
+  "imdbRating": "IMDb rating",
+  "rottenTomatoesCritics": "Rotten Tomatoes critics score",
+  "metacriticScore": "Metacritic score"
 }
