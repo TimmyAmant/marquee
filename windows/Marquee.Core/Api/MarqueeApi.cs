@@ -3,7 +3,7 @@ using Marquee.Core.Models;
 namespace Marquee.Core.Api;
 
 // The typed /api/v1 layer: one async method per endpoint in docs/api-v1.md
-// (all 81), namespaced by area, the same shape as the Mac app's MarqueeAPI:
+// (all 85), namespaced by area, the same shape as the Mac app's MarqueeAPI:
 //
 //     var detail = await api.Titles.DetailAsync(MediaType.Movie, 603);
 //     await api.Requests.ApproveAsync(request.Id);
