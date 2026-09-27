@@ -6,6 +6,7 @@ import { pruneOldRecords } from "@/lib/jobs/cleanup";
 import { syncAllPlexWatchlists } from "@/lib/plex/watchlist";
 import { syncAllTraktSyncs } from "@/lib/trakt/sync";
 import { checkNotFoundRequests } from "@/lib/requests/not-found";
+import { checkCompletedRequests } from "@/lib/requests/complete";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { getT } from "@/lib/i18n/server";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
@@ -98,10 +99,21 @@ export function jobDefinitions(t: Translator): JobDefinition[] {
   });
 }
 
+/** A library sync, then the "ready to watch" check (lib/requests/complete.ts)
+ * against what it found. */
+function thenCheckComplete(sync: () => Promise<void>): () => Promise<void> {
+  return async () => {
+    await sync();
+    await checkCompletedRequests().catch((err) => {
+      console.error("[complete-check] check after sync failed:", err);
+    });
+  };
+}
+
 const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
-  "plex-sync": syncAllConnectedPlexUsers,
-  "jellyfin-sync": syncAllConnectedJellyfinUsers,
-  "arr-sync": syncAllConnectedArrUsers,
+  "plex-sync": thenCheckComplete(syncAllConnectedPlexUsers),
+  "jellyfin-sync": thenCheckComplete(syncAllConnectedJellyfinUsers),
+  "arr-sync": thenCheckComplete(syncAllConnectedArrUsers),
   "plex-watchlist": syncAllPlexWatchlists,
   "trakt-sync": syncAllTraktSyncs,
   "not-found-check": () => checkNotFoundRequests(),
