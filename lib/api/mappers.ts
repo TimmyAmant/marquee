@@ -189,6 +189,8 @@ export function titleViewerState(input: {
     openReports: input.openReports ?? 0,
     blocked,
     notFoundSince: iso(input.notFoundSince ?? null),
+    // "This request will be approved automatically" in the request dialog.
+    autoApprove: input.isAdmin || input.permissions[input.mediaType === "movie" ? "autoApproveMovies" : "autoApproveTv"],
     myRequests: (input.myRequests ?? []).map((r) => ({
       id: r.id,
       status: r.status,

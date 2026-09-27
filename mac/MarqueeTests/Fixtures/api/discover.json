@@ -16,6 +16,23 @@
       "canRequest": false
     }
   ],
+  "watchlist": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 603,
+      "name": "The Matrix",
+      "posterPath": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+      "year": "1999",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": false,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": false
+    }
+  ],
   "trending": [
     {
       "mediaType": "tv",
@@ -28,8 +45,8 @@
       "rating": null,
       "status": null,
       "favorited": null,
-      "requested": null,
-      "canQuickAdd": false,
+      "requested": false,
+      "canQuickAdd": true,
       "canRequest": false
     }
   ],
@@ -134,6 +151,11 @@
     "recentlyAdded": {
       "type": "list",
       "list": "recently-added",
+      "mediaType": null
+    },
+    "watchlist": {
+      "type": "list",
+      "list": "watchlist",
       "mediaType": null
     },
     "trending": {

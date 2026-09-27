@@ -552,6 +552,11 @@ export type TitleViewerState = {
    * newest five), for Cancel / Edit and the conversation. Empty when there
    * are none; an older server omits it. */
   myRequests: TitleRequestSummary[];
+  /** 0.53+: the viewer's requests of this type are approved at once (the
+   * admin, or autoApproveMovies / autoApproveTv) — the request dialog says
+   * "This request will be approved automatically". An older server omits
+   * it. */
+  autoApprove?: boolean;
 };
 
 /** 0.46+: GET /requests/{id}/edit-options — what "Edit" on a pending

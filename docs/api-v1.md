@@ -161,6 +161,19 @@ where the real server needed something the core contract didn't spell out.
     `/library/duplicates` (admin) and `/library/storage` are its other
     tabs. A server older than this answers `404` on all four: hide the
     Library section.
+21. **Title page, Discover and profiles, after Seerr (0.53+, additive).**
+    `GET /titles/{type}/{tmdbId}` gains `play` ("Play on Plex / Jellyfin /
+    Emby" links), `facts.ratings` (IMDb / Rotten Tomatoes / Metacritic, with
+    an OMDb key — `PUT /settings/integrations/omdb`), more facts (original
+    title, theatrical and digital release, budget, revenue, studio), the
+    streaming region with TMDb's "where to watch" link, and
+    `viewer.autoApprove`. `GET /discover` gains `watchlist` ("Your
+    Watchlist", from the Plex Watchlist sync; See all is
+    `GET /discover/lists/watchlist`). Request DTOs gain `backdropPath` and
+    who reviewed them (`reviewedBy`). New: `GET /users/{id}/profile` (§11),
+    `GET` / `PUT /settings/discover/locale` (§2). A server older than this
+    omits the new fields — hide what they drive — and answers `404` on the
+    new endpoints.
 
 ---
 
@@ -746,6 +759,7 @@ network logos to `/series?network=`.
 ```json
 {
   "recentlyAdded": [ /* TitleCard, from Plex/Jellyfin, newest first, max 20 */ ],
+  "watchlist": [ /* TitleCard, your Plex Watchlist, newest first, max 20 */ ],
   "trending": [
     { "mediaType": "tv", "tmdbId": 299939, "name": "Monster: The Lizzie Borden Story", "posterPath": "/57XS.jpg", "year": "2026",
       "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": false, "canQuickAdd": true, "canRequest": false }
@@ -760,6 +774,7 @@ network logos to `/series?network=`.
   "networks": [ { "tmdbId": 213, "name": "Netflix", "logoPath": "/wwem.png" } ],
   "seeAll": {
     "recentlyAdded": { "type": "list", "list": "recently-added", "mediaType": null },
+    "watchlist": { "type": "list", "list": "watchlist", "mediaType": null },
     "trending": { "type": "list", "list": "trending", "mediaType": null },
     "popularMovies": { "type": "browse", "list": null, "mediaType": "movie" },
     "movieGenres": { "type": "browse", "list": null, "mediaType": "movie" },
@@ -804,6 +819,12 @@ row, and skips the row when `results` is null.** Custom rows' cards carry
 The fixed keys stay for older apps: a hidden built-in row is an empty
 array there, and custom rows only appear in `shelves`.
 
+`watchlist` (0.53+; an older server omits it): "Your Watchlist" — the
+viewer's own Plex Watchlist as the sync has seen it (Settings › Account ›
+Request from my Plex Watchlist), newest first. Empty unless the viewer has
+that sync on; it's a built-in row like the others (`kind` `watchlist` in
+`shelves`, which the admin can hide or move).
+
 `seeAll` (0.42.4+; an older server omits it, and then only Popular Movies/Series
 and the genre shelves have a "See all", to the Movies/Series grid): where each
 shelf's "See all" chevron goes, keyed like the shelves. Every shelf has one.
@@ -815,7 +836,8 @@ unknown `type` or `list` as no "See all".
 ### `GET /discover/lists/{list}` — user
 
 0.42.4+. A Discover shelf's full list, paged (the website's `/discover/{list}`,
-infinite scroll). `list` is one of `recently-added`, `trending`,
+infinite scroll). `list` is one of `recently-added`, `watchlist` (0.53+,
+your own Plex Watchlist, 40 a page like `recently-added`), `trending`,
 `upcoming-movies`, `upcoming-series`, or (0.49+) a custom row's `id` from
 `GET /discover`'s `shelves` (anything else: `404 not_found`). For a custom
 row, `list` in the answer is its id and `title` its name.
@@ -945,6 +967,33 @@ can't reach them.
 ```
 
 `detail` tells same-named ones apart (a company's country); null otherwise.
+
+#### `GET /settings/discover/locale` · `PUT` — admin (0.53+)
+
+Settings › Discover › Region & language: the country "Currently streaming
+on" and a movie's release dates are for (`streamingRegion`), and the region
+and original language TMDb's Popular and Upcoming rows are limited to
+(`discoverRegion`, `discoverLanguage`). Null is the default: the server's
+own country (else US) for `streamingRegion`, worldwide for
+`discoverRegion`, English for `discoverLanguage` (`"any"`: no limit).
+`effective` is what that comes to; `regions` and `languages` are the codes
+that may be chosen (ISO 3166-1 and ISO 639-1).
+
+`PUT` body: any of `{ "streamingRegion": "GB", "discoverRegion": null,
+"discoverLanguage": "any" }` — only what's sent changes, null or `""` puts
+it back to the default. Answers as `GET`. `400 invalid` for a code that
+isn't in the lists, or a body with none of the three.
+
+```json
+{
+  "streamingRegion": "GB",
+  "discoverRegion": null,
+  "discoverLanguage": null,
+  "effective": { "streamingRegion": "GB", "discoverRegion": null, "discoverLanguage": "en" },
+  "regions": ["AR", "AT", "AU", "GB", "US"],
+  "languages": ["any", "en", "es", "fr", "de"]
+}
+```
 
 ### `GET /movies` and `GET /series` — user
 
@@ -1112,8 +1161,32 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "originalLanguage": "en",
     "originalLanguageLabel": "English",
     "productionCountry": { "code": "US", "name": "United States of America", "flag": "🇺🇸" },
-    "watchProviders": [ { "name": "YouTube TV", "logoPath": "/48bV.png" } ]
+    "watchProviders": [ { "name": "YouTube TV", "logoPath": "/48bV.png" } ],
+    "streamingRegion": "US",
+    "streamingLink": "https://www.themoviedb.org/movie/603-the-matrix/watch?locale=US",
+    "originalTitle": null,
+    "theatricalRelease": "1999-03-31",
+    "theatricalReleaseLabel": "March 31, 1999",
+    "digitalRelease": "1999-09-21",
+    "digitalReleaseLabel": "September 21, 1999",
+    "budget": 63000000,
+    "budgetLabel": "$63,000,000",
+    "revenue": 463517383,
+    "revenueLabel": "$463,517,383",
+    "studio": "Village Roadshow Pictures",
+    "ratings": {
+      "imdbRating": 8.7,
+      "imdbVotes": 2180000,
+      "rottenTomatoesCritics": 83,
+      "metacritic": 73,
+      "imdbUrl": "https://www.imdb.com/title/tt0133093"
+    }
   },
+  "play": [
+    { "server": "plex", "serverName": "Living room", "label": "Play on Plex",
+      "url": "https://app.plex.tv/desktop/#!/server/5f1c…/details?key=%2Flibrary%2Fmetadata%2F4127",
+      "appUrl": "plex://preplay/?metadataKey=%2Flibrary%2Fmetadata%2F4127&metadataType=1&server=5f1c…" }
+  ],
   "credits": [ { "role": "Director", "name": "Lana Wachowski" }, { "role": "Director", "name": "Lilly Wachowski" } ],
   "keywords": ["man vs machine", "martial arts", "cyberpunk"],
   "links": {
@@ -1167,7 +1240,8 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "openReports": 0,
     "blocked": null,
     "notFoundSince": null,
-    "myRequests": []
+    "myRequests": [],
+    "autoApprove": true
   },
   "seasons": [],
   "cast": [
@@ -1197,7 +1271,30 @@ Field notes:
   `nextAirDate` are the raw TMDb dates). Website sidebar labels: "Status",
   "Release Date" (movie) / "First Air Date" (TV), "Next Air Date", "Original
   Language", "Production Country" (flag + name), "Network", "Currently
-  Streaming On" (US flat-rate providers).
+  Streaming On" (flat-rate providers).
+- 0.53+ (an older server omits these): `streamingRegion` is the country
+  `watchProviders` and the release dates are for (Settings › Discover ›
+  Region & language; `GET /settings/discover/locale`), shown beside
+  "Currently Streaming On"; `streamingLink` is TMDb's "where to watch" page
+  there (the provider logos link to it), null when TMDb has none.
+  `originalTitle` only when it differs from `name`. A movie's
+  `theatricalRelease` / `digitalRelease` in that region (raw days and
+  labels), `budget` / `revenue` (US dollars, null when TMDb has 0) and
+  `studio` (its first production company) — the website's rows "Original
+  Title", "Theatrical Release", "Digital Release", "Budget", "Revenue",
+  "Studio", each hidden when null. `ratings`: IMDb (0–10, with votes),
+  Rotten Tomatoes (critics, 0–100) and Metacritic (0–100) from OMDb — only
+  with an OMDb key in Settings › Integrations, cached a day; null otherwise
+  or when OMDb knows none of them. The website shows them as small badges
+  under the TMDb score, IMDb's linking to `imdbUrl`.
+- `play` (0.53+; an older server omits it): where the title can be played
+  now — one entry per household media server whose library sync found it,
+  Plex first; empty when none has it. The website shows a "Play on Plex"
+  button beside the request/status row (a menu when there are several).
+  `url` opens the server's web app (Plex's is app.plex.tv, so it works from
+  anywhere; Jellyfin/Emby use the server's public URL — Settings ›
+  Integrations › Jellyfin — else its address); `appUrl` is the server's own
+  scheme (`plex://`) for a device with its app, null for Jellyfin/Emby.
 - `credits`: Director + Screenplay/Writer (movies) or Creator + Executive
   Producer (TV), max 6.
 - `links.external` is the ordered button row after the "▶ Trailer" button
@@ -1270,6 +1367,16 @@ Field notes:
     library" (complete in Sonarr), "Monitored" (`monitored`), or "Requested"
     (`requested`). "Select all" checks every requestable row; the button reads
     "Request N season(s)" and sends `POST …/request` with `{"seasons": [...]}`.
+  - `autoApprove` (0.53+; an older server omits it — treat as false): your
+    requests of this type are approved at once (the admin, or the
+    autoApproveMovies / autoApproveTv permission). The website's request
+    dialog then says "This request will be approved automatically." The
+    0.53 season dialog is a table — a select-all switch, then each season's
+    switch, name, episode count and a status pill: "Not requested"
+    (`requestable`), "Requested" (`requested`), "Available" (complete),
+    "Monitored" — and the button reads "Request 1 season" / "Request N
+    seasons". Afterwards a toast says "<title> requested", and once the
+    show is tracked the button reads "Request more".
   - `requestedSeasons`: the seasons of your pending request (null when nothing
     is pending or it's for the whole series). With it, the pending text reads
     "Requested Seasons 1–3 — waiting for approval" (format it the way
@@ -1806,7 +1913,10 @@ Your own requests, newest first.
       "canEdit": false,
       "canCancel": false,
       "editedAt": null,
-      "commentCount": 2
+      "commentCount": 2,
+      "backdropPath": "/lrtSb1skJayPydZk0OSMAKjBOVe.jpg",
+      "reviewedBy": null,
+      "addedToServer": "Radarr"
     },
     {
       "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
@@ -1833,6 +1943,15 @@ Your own requests, newest first.
   ]
 }
 ```
+
+0.53+ (an older server omits these — null): `backdropPath` is the title's
+backdrop, faded behind the website's request cards; `reviewedBy` who
+approved or declined it by hand (null when it was approved automatically);
+`addedToServer` the Sonarr/Radarr server it went to, when known. The card
+reads "Requested 3 hours ago by <avatar> Anna" and, once reviewed or
+edited, "Modified 1 hour ago by <avatar> Tim". `/requests/pending` rows
+carry `backdropPath` too, and `/requests/history` rows `backdropPath`,
+`reviewedBy` and `editedAt`.
 
 `libraryStatus` is live for approved requests only (null otherwise).
 `statusLabel`/`statusTone`: `pending` "Pending review", `declined` "Declined",
@@ -1894,7 +2013,8 @@ in Sonarr — the show itself being in the library doesn't count.
       "requestedBy": { "userId": "83c55a49-6153-4cb9-ae22-4a42d48f4cf3", "displayName": null, "username": "member1", "label": "member1" },
       "createdAt": "2026-09-17T17:12:41.415Z",
       "editedAt": null,
-      "commentCount": 1
+      "commentCount": 1,
+      "backdropPath": "/lrtSb1skJayPydZk0OSMAKjBOVe.jpg"
     },
     {
       "id": "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44",
@@ -1954,7 +2074,10 @@ under "Couldn't add" (0.46+), however old, which come first.
       "addedTo": null,
       "notFoundSince": null,
       "addFailed": { "error": "Couldn't add this movie to Radarr.", "since": "2026-09-17T19:02:00.000Z" },
-      "commentCount": 0
+      "commentCount": 0,
+      "backdropPath": "/2S5Nr2aJTMwVJXw2XHN6Y7hHJXW.jpg",
+      "reviewedBy": { "userId": "5d7e3c1a-2b4f-4a6e-8c9d-0e1f2a3b4c5d", "displayName": "Tim", "username": "tim", "label": "Tim" },
+      "editedAt": null
     },
     {
       "id": "28713d50-27f2-4230-9c95-c1e6a000f6c0",
@@ -3067,6 +3190,32 @@ incorrect."), `429 rate_limited` "Too many attempts. Try again in a few
 minutes." (5 wrong current passwords per account per 15 minutes), `409
 conflict` "An account with that username already exists".
 
+### `GET /users/{id}/profile` — user (self) / admin (anyone) (0.53+)
+
+A member's profile page, after Seerr's: the account, how many requests it
+has made (declined ones left out), what's left of its request limits, and
+its Plex Watchlist (the newest 20, as the sync has seen them; null when it
+doesn't sync one). The website opens yours from your photo in Settings ›
+Account, and the admin anyone's from the household list. Stat cards: "Total
+requests" (`requests.total`, "2 movies · 1 series" under it), "Movie
+requests left" / "Series requests left" (`remaining` of `limit`, "Every 7
+days" under it; "Unlimited" when null).
+
+```json
+{
+  "user": { /* HouseholdMember */ },
+  "requests": { "total": 3, "movie": 2, "tv": 1 },
+  "requestLimits": {
+    "movie": { "limit": 5, "days": 7, "used": 2, "remaining": 3, "nextSlotAt": null },
+    "tv": null
+  },
+  "watchlist": [ /* TitleCard */ ]
+}
+```
+
+Errors: `403` "You can only see your own profile.", `404` "Account not
+found.".
+
 ### `DELETE /users/{id}` — admin
 
 Removes a member and everything of theirs (favorites, requests, tokens…).
@@ -3425,7 +3574,7 @@ take a few seconds.
     "movieCount": 812, "tvCount": 143, "totalBytes": 9123456789012
   },
   "jellyfin": {
-    "connected": false, "name": "Jellyfin", "baseUrl": null, "hasApiKey": false,
+    "connected": false, "name": "Jellyfin", "baseUrl": null, "publicUrl": null, "hasApiKey": false,
     "servers": [], "movieCount": 0, "tvCount": 0, "totalBytes": 0
   },
   "sonarr": {
@@ -3447,6 +3596,7 @@ take a few seconds.
   "tmdb": { "connected": true, "savedInSettings": false, "configuredFromEnv": true },
   "trakt": { "connected": false },
   "tvdb": { "connected": true },
+  "omdb": { "connected": false },
   "discord": { "connected": false },
   "ntfy": { "connected": false },
   "telegram": { "connected": true, "chatId": "-1001234567890" },
@@ -3767,7 +3917,10 @@ Disconnect Plex and delete its synced library. `{ "ok": true }`.
 
 #### `PUT /settings/integrations/jellyfin` — admin
 
-Body: `{ "baseUrl": "http://192.168.1.10:8096", "apiKey": "…" }`. `{ "ok": true }`.
+Body: `{ "baseUrl": "http://192.168.1.10:8096", "apiKey": "…" }`, plus
+(0.53+, optional) `"publicUrl": "https://jellyfin.example.com"` — the
+address "Play on Jellyfin" opens when it isn't `baseUrl` (null or `""`
+clears it). `{ "ok": true }`.
 Errors: `400` "URL and API key are required.", `502` "Couldn't connect. Check
 the URL and API key and try again.".
 
@@ -3784,6 +3937,7 @@ value. All respond `{ "ok": true }`.
 |---|---|---|
 | `/settings/integrations/tmdb` | `{ "accessToken": "…" }` — v4 read access token or v3 API key | "Enter an access token.", "Couldn't verify this token with TMDb. Check it and try again." |
 | `/settings/integrations/trakt` | `{ "clientId": "…" }` — from trakt.tv/oauth/applications | "Enter a Trakt client id.", "Couldn't verify this client id with Trakt. Check it and try again." |
+| `/settings/integrations/omdb` (0.53+) | `{ "apiKey": "…" }` — from omdbapi.com; IMDb / Rotten Tomatoes / Metacritic ratings on title pages | "Enter an OMDb API key.", "OMDb didn't accept this key. Check it and try again." |
 | `/settings/integrations/tvdb` | `{ "apiKey": "…" }` | "Enter a TheTVDB API key.", "Couldn't verify this key with TheTVDB. Check it and try again." |
 | `/settings/integrations/discord` | `{ "webhookUrl": "https://discord.com/api/webhooks/…" }` | "Enter a Discord webhook URL.", "That doesn't look like a Discord webhook URL.", "Couldn't post a test message to that webhook. Check it and try again." |
 | `/settings/integrations/ntfy` | `{ "topicUrl": "https://ntfy.sh/my-topic" }` | "Enter your ntfy topic URL.", "Enter a full URL, e.g. https://ntfy.sh/your-topic-name.", "Couldn't post a test message to that topic. Check it and try again." |

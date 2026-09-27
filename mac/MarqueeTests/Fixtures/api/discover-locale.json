@@ -1,0 +1,24 @@
+{
+  "streamingRegion": "GB",
+  "discoverRegion": null,
+  "discoverLanguage": null,
+  "effective": {
+    "streamingRegion": "GB",
+    "discoverRegion": null,
+    "discoverLanguage": "en"
+  },
+  "regions": [
+    "AR",
+    "AT",
+    "AU",
+    "GB",
+    "US"
+  ],
+  "languages": [
+    "any",
+    "en",
+    "es",
+    "fr",
+    "de"
+  ]
+}
