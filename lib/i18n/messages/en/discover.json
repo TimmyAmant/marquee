@@ -130,5 +130,16 @@
   "emptyStudio": "No titles found for this studio yet.",
   "emptyPerson": "No processed filmography found for this person yet.",
   "shelfWatchlist": "Your Watchlist",
-  "emptyWatchlist": "Nothing from your Plex Watchlist yet — the next check will bring it in."
+  "emptyWatchlist": "Nothing from your Plex Watchlist yet — the next check will bring it in.",
+  "editDiscover": "Edit Discover",
+  "editingDiscover": "Editing Discover: show, hide and move rows",
+  "editReset": "Reset",
+  "editSave": "Save",
+  "editSaving": "Saving…",
+  "editStop": "Stop editing",
+  "editSaved": "Discover saved",
+  "editHidden": "Hidden",
+  "editShowRow": "Show {title}",
+  "editMoveUp": "Move {title} up",
+  "editMoveDown": "Move {title} down"
 }

@@ -11,6 +11,8 @@ import { DISCOVER_SEE_ALL, seeAllHref, type DiscoverShelfKey } from "@/lib/disco
 import { isBuiltInShelf } from "@/lib/discover/shelves";
 import type { MediaType } from "@/lib/db/schema";
 import { getT } from "@/lib/i18n/server";
+import { DiscoverEditMode } from "@/components/discover-edit-mode";
+import { getDiscoverLayout } from "@/lib/discover/layout";
 
 type PosterItem = {
   key: string;
@@ -170,6 +172,11 @@ export default async function DiscoverPage() {
   // The color key sits beside the first poster shelf's header, for anyone
   // signed in (only they see status colors).
   const colorKeyRow = viewer.session ? rows.find((row) => row.kind === "posters")?.id : undefined;
+  // The admin's inline edit mode works on every row, hidden ones too.
+  const editable = Boolean(viewer.session && viewer.isAdmin);
+  const allShelves = editable
+    ? (await getDiscoverLayout()).map(({ id, title, hidden }) => ({ id, title, hidden }))
+    : [];
 
   return (
     // Reaches back under the nav rail's 72px margin (.rail-bleed) (and pads the shelves
@@ -185,58 +192,64 @@ export default async function DiscoverPage() {
       />
 
       <div className="flex flex-col gap-12 pl-4 pr-0 py-6 sm:pl-7 sm:py-7">
-        {rows.map((row) => {
-          if (row.kind === "genres") {
-            return (
-              <Shelf key={row.id} title={row.title} seeAllHref={row.seeAll}>
-                {row.items.map((genre, i) => (
-                  <GenreCard
-                    key={genre.id}
-                    name={genre.name}
-                    href={`/${row.mediaType === "movie" ? "movies" : "series"}?genre=${genre.id}`}
-                    backdropPath={genre.backdropPath}
-                    colorClass={genreColorClass(genre.id, i)}
-                  />
-                ))}
-              </Shelf>
-            );
-          }
-          if (row.kind === "logos") {
-            return (
-              <Shelf key={row.id} title={row.title} seeAllHref={row.seeAll}>
-                {row.items.map((logo) => (
-                  <LogoCard key={logo.id} href={logo.href} name={logo.name} logoPath={logo.logoPath} />
-                ))}
-              </Shelf>
-            );
-          }
-          return (
-            <Shelf
-              key={row.id}
-              title={row.title}
-              seeAllHref={row.seeAll}
-              headAction={row.id === colorKeyRow ? <StatusLegend /> : undefined}
-            >
-              {row.items.map((item) => (
-                <PosterRowItem key={item.key}>
-                  <PosterCard
-                    href={`/title/${item.mediaType}/${item.tmdbId}`}
-                    posterPath={item.posterPath}
-                    name={item.name}
-                    year={item.year ?? undefined}
-                    typeLabel={{
-                      mediaType: item.mediaType,
-                      text: item.mediaType === "movie" ? t("common.movie") : t("common.series"),
-                    }}
-                    badge={item.status && <StatusBadge status={item.status} compact />}
-                    status={item.status}
-                  />
-                </PosterRowItem>
-              ))}
-            </Shelf>
-          );
-        })}
+        <DiscoverEditMode
+          editable={editable}
+          shelves={allShelves}
+          rendered={rows.map((row) => ({ id: row.id, node: renderRow(row) }))}
+        />
       </div>
     </div>
   );
+
+  function renderRow(row: Row) {
+    if (row.kind === "genres") {
+      return (
+        <Shelf key={row.id} title={row.title} seeAllHref={row.seeAll}>
+          {row.items.map((genre, i) => (
+            <GenreCard
+              key={genre.id}
+              name={genre.name}
+              href={`/${row.mediaType === "movie" ? "movies" : "series"}?genre=${genre.id}`}
+              backdropPath={genre.backdropPath}
+              colorClass={genreColorClass(genre.id, i)}
+            />
+          ))}
+        </Shelf>
+      );
+    }
+    if (row.kind === "logos") {
+      return (
+        <Shelf key={row.id} title={row.title} seeAllHref={row.seeAll}>
+          {row.items.map((logo) => (
+            <LogoCard key={logo.id} href={logo.href} name={logo.name} logoPath={logo.logoPath} />
+          ))}
+        </Shelf>
+      );
+    }
+    return (
+      <Shelf
+        key={row.id}
+        title={row.title}
+        seeAllHref={row.seeAll}
+        headAction={row.id === colorKeyRow ? <StatusLegend /> : undefined}
+      >
+        {row.items.map((item) => (
+          <PosterRowItem key={item.key}>
+            <PosterCard
+              href={`/title/${item.mediaType}/${item.tmdbId}`}
+              posterPath={item.posterPath}
+              name={item.name}
+              year={item.year ?? undefined}
+              typeLabel={{
+                mediaType: item.mediaType,
+                text: item.mediaType === "movie" ? t("common.movie") : t("common.series"),
+              }}
+              badge={item.status && <StatusBadge status={item.status} compact />}
+              status={item.status}
+            />
+          </PosterRowItem>
+        ))}
+      </Shelf>
+    );
+  }
 }
