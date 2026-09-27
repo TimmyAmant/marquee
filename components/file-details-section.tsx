@@ -88,7 +88,7 @@ export function FileDetailsSection({
   ].filter((cell): cell is { label: MessageKey; value: string } => cell.value !== "");
 
   return (
-    <div className="@container rounded-2xl border border-border bg-bg-1/85 px-[18px] pb-[18px] pt-[15px] backdrop-blur-[20px]">
+    <div className="rounded-2xl border border-border bg-bg-1/95 px-[18px] pb-[18px] pt-[15px] backdrop-blur-[20px]">
       <h2 className="mb-3 font-display text-[16px] font-semibold leading-[22px] text-text-primary">
         {t("title.fileDetails")}
       </h2>
@@ -116,7 +116,7 @@ export function FileDetailsSection({
       )}
 
       {cells.length > 0 && (
-        <div className="mt-3.5 grid grid-cols-2 gap-x-3.5 gap-y-3 @md:grid-cols-3 @2xl:grid-cols-5">
+        <div className="mt-3.5 grid grid-cols-2 gap-x-3.5 gap-y-3">
           {cells.map((cell) => (
             <DetailCell key={cell.label} label={t(cell.label)} value={cell.value} />
           ))}

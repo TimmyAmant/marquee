@@ -454,14 +454,6 @@ export async function TitleHero({
               <div className="mt-3.5">
                 <ExternalLinks links={links} />
               </div>
-
-              {/* In the main column rather than under the facts card, where
-                  a tall card beside a short column left a hole. */}
-              {file && (
-                <div className="mt-6">
-                  <FileDetailsSection file={file} runtimeLabel={runtimeLabel ?? null} />
-                </div>
-              )}
             </div>
           </div>
 
@@ -539,6 +531,12 @@ export async function TitleHero({
               )}
             </div>
 
+
+            {file && (
+              <div className="mt-4">
+                <FileDetailsSection file={file} runtimeLabel={runtimeLabel ?? null} />
+              </div>
+            )}
           </aside>
         </div>
       </div>
