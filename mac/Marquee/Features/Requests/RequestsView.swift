@@ -1380,7 +1380,7 @@ private struct DeclineRequestSheet: View {
                     Text(option).tag(Optional(option))
                 }
             }
-            .pickerStyle(.radioGroup)
+            .choicePickerStyle()
             .labelsHidden()
             .font(.system(size: 13))
 

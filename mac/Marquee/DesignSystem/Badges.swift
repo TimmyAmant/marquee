@@ -317,8 +317,7 @@ struct CopyField: View {
 
     private var copyButton: some View {
         Button(copied ? "Copied" : "Copy") {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(value, forType: .string)
+            Platform.copy(value)
             copied = true
             Task {
                 try? await Task.sleep(for: .seconds(1.5))

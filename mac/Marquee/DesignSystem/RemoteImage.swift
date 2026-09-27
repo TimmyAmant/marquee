@@ -1,13 +1,17 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// Memory + disk cached image loading for TMDb/TVDB artwork.
 actor ImagePipeline {
     static let shared = ImagePipeline()
 
     // NSCache is internally synchronized, so the nonisolated fast path is safe.
-    nonisolated(unsafe) private let memory = NSCache<NSURL, NSImage>()
-    private var inFlight: [URL: Task<NSImage?, Never>] = [:]
+    nonisolated(unsafe) private let memory = NSCache<NSURL, PlatformImage>()
+    private var inFlight: [URL: Task<PlatformImage?, Never>] = [:]
     private let session: URLSession
 
     /// Decoded bytes kept in memory. A w342 poster is ~0.5 MB decoded and a
@@ -25,19 +29,19 @@ actor ImagePipeline {
         session = URLSession(configuration: configuration)
     }
 
-    nonisolated func cached(_ url: URL) -> NSImage? {
+    nonisolated func cached(_ url: URL) -> PlatformImage? {
         memory.object(forKey: url as NSURL)
     }
 
-    func image(for url: URL) async -> NSImage? {
+    func image(for url: URL) async -> PlatformImage? {
         if let hit = memory.object(forKey: url as NSURL) { return hit }
         if let task = inFlight[url] { return await task.value }
 
         let session = self.session
-        let task = Task<NSImage?, Never> {
+        let task = Task<PlatformImage?, Never> {
             guard let result = try? await session.data(from: url),
                   let http = result.1 as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
-            return NSImage(data: result.0)
+            return PlatformImage(data: result.0)
         }
         inFlight[url] = task
         let image = await task.value
@@ -48,9 +52,14 @@ actor ImagePipeline {
 
     /// Roughly what the image costs once drawn: its largest bitmap at 4 bytes
     /// a pixel (the compressed JPEG is a small fraction of that).
-    nonisolated static func decodedByteCost(of image: NSImage) -> Int {
+    nonisolated static func decodedByteCost(of image: PlatformImage) -> Int {
+        #if os(macOS)
         let pixels = image.representations.map { $0.pixelsWide * $0.pixelsHigh }.max() ?? 0
         let fallback = Int(image.size.width * image.size.height)
+        #else
+        let pixels = image.cgImage.map { $0.width * $0.height } ?? 0
+        let fallback = Int(image.size.width * image.scale * image.size.height * image.scale)
+        #endif
         return max(pixels, fallback) * 4
     }
 }
@@ -62,7 +71,7 @@ struct RemoteImage: View {
     var contentMode: ContentMode = .fill
     var showsShimmer = true
 
-    @State private var image: NSImage?
+    @State private var image: PlatformImage?
     @State private var failed = false
 
     init(url: URL?, contentMode: ContentMode = .fill, showsShimmer: Bool = true) {
@@ -79,7 +88,7 @@ struct RemoteImage: View {
     var body: some View {
         ZStack {
             if let image {
-                Image(nsImage: image)
+                Image(platformImage: image)
                     .resizable()
                     .interpolation(.high)
                     .aspectRatio(contentMode: contentMode)

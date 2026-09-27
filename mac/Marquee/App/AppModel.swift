@@ -1,6 +1,10 @@
 import SwiftUI
 import Observation
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import Network
 import UserNotifications
 
@@ -136,8 +140,10 @@ final class AppModel {
     /// Whether the signed-in account wants banners on this Mac, and the
     /// "Get notifications on this Mac?" card that asks.
     let notificationConsent: NotificationConsent
+    #if os(macOS)
     /// Newer Marquee releases, and installing one.
     let updater = Updater()
+    #endif
     /// "What's new" after the server or this app is upgraded.
     let whatsNew = WhatsNewModel()
     /// Profile photos, by `avatarUrl`.
@@ -178,7 +184,16 @@ final class AppModel {
     private(set) var isRetryingConnection = false
 
     var selection: SidebarItem = .discover
+    /// The pages pushed on the visible section (on iPhone, the visible tab).
     var path: [Route] = []
+    #if os(iOS)
+    /// The iPhone app's tab bar (MarqueeiOS/App/PhoneTab.swift).
+    var tab: PhoneTab = .discover
+    /// Each other tab's pages, kept while it's in the background.
+    var tabPaths: [PhoneTab: [Route]] = [:]
+    /// The section open under More (Movies, Favorites, Settings…), if any.
+    var moreSection: SidebarItem?
+    #endif
     var movieFilters = API.BrowseQuery()
     var seriesFilters = API.BrowseQuery()
 
@@ -188,8 +203,10 @@ final class AppModel {
     /// The search panel (`SearchPanel`), opened by the rail's Search and
     /// Edit › Find (⌘F).
     var isSearchOpen = false
+    #if os(macOS)
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
+    #endif
     /// Where Settings was opened from, for its Back button; nil once you've
     /// left Settings some other way.
     var settingsReturn: SettingsReturn?
@@ -205,7 +222,9 @@ final class AppModel {
     /// Retries the can't-reach card when the network comes back or the Mac
     /// wakes; see `startReconnectTriggers()`.
     @ObservationIgnored private var pathMonitor: NWPathMonitor?
+    #if os(macOS)
     @ObservationIgnored private var wakeObserver: NSObjectProtocol?
+    #endif
     @ObservationIgnored private var autoRetryTask: Task<Void, Never>?
 
     /// How long a network change or wake settles before the automatic retry,
@@ -217,7 +236,12 @@ final class AppModel {
         let events = ServerEvents()
         self.events = events
         let live = LiveUpdates(events: events) { label in
+            #if os(macOS)
             NSApp.dockTile.badgeLabel = label
+            #else
+            // The Home Screen badge. Only shown once notifications are allowed.
+            UNUserNotificationCenter.current().setBadgeCount(Int(label ?? "") ?? 0)
+            #endif
         }
         self.live = live
         self.notificationConsent = notificationConsent
@@ -230,9 +254,11 @@ final class AppModel {
         session.onUnauthorized = { [weak self] in
             self?.sessionEnded()
         }
+        #if os(macOS)
         updater.onNewUpdate = { [weak self] update in
             self?.flash(String(localized: "Marquee \(update.version.description) is available. Update it from the rail or Settings › About."))
         }
+        #endif
     }
 
     /// Unread notifications from the server's `/badges`, polled by `live`.
@@ -241,12 +267,14 @@ final class AppModel {
     var pendingRequestCount: Int { live.pendingRequestCount }
 
     func showMainWindow() {
+        #if os(macOS)
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix("main") == true && $0.isVisible }) {
             window.makeKeyAndOrderFront(nil)
         } else {
             openMainWindow?()
         }
         NSApp.activate(ignoringOtherApps: true)
+        #endif
     }
 
     // MARK: Session
@@ -255,10 +283,12 @@ final class AppModel {
         guard phase == .launching, !bootstrapped else { return }
         bootstrapped = true
         startReconnectTriggers()
+        #if os(macOS)
         // A pinned (automated) run stays off GitHub; Check for Updates… still works.
         if session.pinned == nil {
             updater.startAutomaticChecks()
         }
+        #endif
         Task {
             await connectToSavedServer()
         }
@@ -347,11 +377,13 @@ final class AppModel {
         monitor.start(queue: DispatchQueue(label: "com.timmyamant.Marquee.path-monitor"))
         pathMonitor = monitor
 
+        #if os(macOS)
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.connectivityMayHaveReturned() }
         }
+        #endif
     }
 
     /// Debounced: several triggers in a row (wake, then Wi-Fi rejoining) make
@@ -418,6 +450,9 @@ final class AppModel {
         connectionProblem = nil
         selection = .discover
         path = []
+        #if os(iOS)
+        resetPhoneNavigation()
+        #endif
         movieFilters = API.BrowseQuery()
         seriesFilters = API.BrowseQuery()
         phase = .ready
@@ -477,6 +512,9 @@ final class AppModel {
         titleState.clear()
         viewer = nil
         path = []
+        #if os(iOS)
+        resetPhoneNavigation()
+        #endif
         isSearchOpen = false
     }
 
@@ -536,9 +574,13 @@ final class AppModel {
         if item != .settings {
             settingsReturn = nil
         }
+        #if os(iOS)
+        showOnPhone(item)
+        #endif
         path = []
     }
 
+    #if os(macOS)
     /// Settings, in the main window, on `tab`.
     func openSettings(_ tab: SettingsTab = .account) {
         settingsTab = tab
@@ -558,6 +600,7 @@ final class AppModel {
         select(back.selection, resetFilters: false)
         path = back.path
     }
+    #endif
 
     func open(_ route: Route) {
         if path.last != route {
@@ -649,10 +692,7 @@ final class AppModel {
     }
 
     func copyLink(_ url: URL) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(url.absoluteString, forType: .URL)
-        pasteboard.setString(url.absoluteString, forType: .string)
+        Platform.copy(url.absoluteString, asURL: true)
         flash(String(localized: "Link copied."))
     }
 

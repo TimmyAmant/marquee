@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import ImageIO
 import UniformTypeIdentifiers
 
@@ -8,17 +12,17 @@ import UniformTypeIdentifiers
 /// emptied on sign-out.
 @MainActor
 final class AvatarImageStore {
-    private var images: [String: NSImage] = [:]
+    private var images: [String: PlatformImage] = [:]
     /// One request per URL, however many avatars are waiting on it.
     private var loading: [String: Task<Data?, Never>] = [:]
 
-    func cachedImage(for avatarUrl: String) -> NSImage? {
+    func cachedImage(for avatarUrl: String) -> PlatformImage? {
         images[avatarUrl]
     }
 
     /// nil when there's no photo to show (a 404, or it couldn't be read):
     /// the initials stay.
-    func image(for avatarUrl: String, api: MarqueeAPI) async -> NSImage? {
+    func image(for avatarUrl: String, api: MarqueeAPI) async -> PlatformImage? {
         if let image = images[avatarUrl] { return image }
         let task: Task<Data?, Never>
         if let running = loading[avatarUrl] {
@@ -30,7 +34,7 @@ final class AvatarImageStore {
         let data = await task.value
         loading[avatarUrl] = nil
         if let cached = images[avatarUrl] { return cached }
-        guard let data, let image = NSImage(data: data) else { return nil }
+        guard let data, let image = PlatformImage(data: data) else { return nil }
         images[avatarUrl] = image
         return image
     }

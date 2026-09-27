@@ -1,4 +1,9 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 /// components/user-avatar.tsx — a round profile picture: the account's photo
 /// when it has one (fetched with the session's token, see `AvatarImageStore`),
@@ -12,7 +17,7 @@ struct UserAvatarView: View {
     let size: CGFloat
 
     @Environment(AppModel.self) private var model
-    @State private var photo: NSImage?
+    @State private var photo: PlatformImage?
     /// Which URL `photo` is, so a new photo (a new `?v=`) never shows the old one.
     @State private var photoURL: String?
 
@@ -26,7 +31,7 @@ struct UserAvatarView: View {
                 .font(.system(size: size * 0.38, weight: .semibold))
                 .foregroundStyle(Theme.bg0)
             if let image {
-                Image(nsImage: image)
+                Image(platformImage: image)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFill()

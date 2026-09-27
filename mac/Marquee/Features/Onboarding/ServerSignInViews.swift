@@ -268,9 +268,11 @@ struct SignInForm: View {
             }
         }
         .onDisappear { cancelWaiting() }
+        #if os(macOS)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
             cancelWaiting()
         }
+        #endif
     }
 
     /// Plex or single sign-on: finishing in the browser.

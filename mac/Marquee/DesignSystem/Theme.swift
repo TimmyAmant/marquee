@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// Marquee's color tokens from app/globals.css, resolved per window
 /// appearance so light/dark (and the in-app Appearance override) just work.
@@ -43,9 +47,9 @@ enum Theme {
 
     /// `--marquee-glass*`: the navigation rail and menu's frosted glass
     /// (components/nav-menu.tsx), laid over a material by `glassSurface(_:)`.
-    static let glass = dynamic(light: NSColor(hex: 0xFFFFFF, alpha: 0.74), dark: NSColor(hex: 0x1E1D25, alpha: 0.68))
-    static let glassBorder = dynamic(light: NSColor(hex: 0x211F1A, alpha: 0.10), dark: NSColor(hex: 0xFFFFFF, alpha: 0.09))
-    static let glassShadow = dynamic(light: NSColor(hex: 0x3C2D14, alpha: 0.16), dark: NSColor(hex: 0x000000, alpha: 0.5))
+    static let glass = dynamic(light: PlatformColor(hex: 0xFFFFFF, alpha: 0.74), dark: PlatformColor(hex: 0x1E1D25, alpha: 0.68))
+    static let glassBorder = dynamic(light: PlatformColor(hex: 0x211F1A, alpha: 0.10), dark: PlatformColor(hex: 0xFFFFFF, alpha: 0.09))
+    static let glassShadow = dynamic(light: PlatformColor(hex: 0x3C2D14, alpha: 0.16), dark: PlatformColor(hex: 0x000000, alpha: 0.5))
 
     /// The far end of the profile avatar's gradient (nav-menu.tsx `Avatar`).
     static let avatarRust = hex(0xC2583A)
@@ -75,28 +79,33 @@ enum Theme {
     static let grainOpacity: Double = 0.05
 
     static func dynamic(light: UInt32, dark: UInt32) -> Color {
-        dynamic(light: NSColor(hex: light), dark: NSColor(hex: dark))
+        dynamic(light: PlatformColor(hex: light), dark: PlatformColor(hex: dark))
     }
 
-    static func dynamic(light: NSColor, dark: NSColor) -> Color {
+    static func dynamic(light: PlatformColor, dark: PlatformColor) -> Color {
+        #if os(macOS)
         Color(nsColor: NSColor(name: nil) { appearance in
             appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
         })
+        #else
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? dark : light
+        })
+        #endif
     }
 
     static func hex(_ value: UInt32) -> Color {
-        Color(nsColor: NSColor(hex: value))
+        Color(platformColor: PlatformColor(hex: value))
     }
 }
 
-extension NSColor {
-    convenience init(hex: UInt32, alpha: CGFloat = 1) {
-        self.init(
-            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
-            alpha: alpha
-        )
+extension Color {
+    init(platformColor: PlatformColor) {
+        #if os(macOS)
+        self.init(nsColor: platformColor)
+        #else
+        self.init(uiColor: platformColor)
+        #endif
     }
 }
 
@@ -124,6 +133,7 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
 
     static let storageKey = "marquee-theme"
 
+    #if os(macOS)
     @MainActor
     func apply() {
         switch self {
@@ -132,6 +142,16 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
         case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
         }
     }
+    #else
+    /// iOS: applied with `.preferredColorScheme` at the root.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+    #endif
 }
 
 // MARK: - Layout

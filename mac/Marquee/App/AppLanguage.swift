@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import Foundation
 
 /// The languages Marquee ships (Resources/Localizable.xcstrings; words per
@@ -119,6 +123,7 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         return AppLanguage(code: pick) ?? .english
     }
 
+    #if os(macOS)
     /// Quits and opens Marquee again, so a new language applies everywhere.
     @MainActor
     static func relaunch() {
@@ -139,4 +144,5 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
             NSApp.terminate(nil)
         }
     }
+    #endif
 }

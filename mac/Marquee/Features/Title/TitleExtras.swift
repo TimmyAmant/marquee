@@ -167,6 +167,7 @@ struct TrailerSheet: View {
     }
 }
 
+#if os(macOS)
 private struct YouTubePlayer: NSViewRepresentable {
     let videoKey: String
 
@@ -184,8 +185,33 @@ private struct YouTubePlayer: NSViewRepresentable {
     static func dismantleNSView(_ nsView: WKWebView, coordinator: ()) {
         nsView.loadHTMLString("", baseURL: nil)
     }
+}
+#else
+private struct YouTubePlayer: UIViewRepresentable {
+    let videoKey: String
 
-    private func load(into view: WKWebView) {
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        configuration.allowsInlineMediaPlayback = true
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        view.isOpaque = false
+        view.backgroundColor = .black
+        view.scrollView.isScrollEnabled = false
+        load(into: view)
+        return view
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: ()) {
+        uiView.loadHTMLString("", baseURL: nil)
+    }
+}
+#endif
+
+extension YouTubePlayer {
+    fileprivate func load(into view: WKWebView) {
         // YouTube's embed player needs a real https origin + referrer policy.
         let html = """
         <!doctype html><html><head><meta name="referrer" content="strict-origin-when-cross-origin">

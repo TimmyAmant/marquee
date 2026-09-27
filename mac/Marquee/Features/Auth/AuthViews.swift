@@ -17,7 +17,11 @@ struct RootView: View {
             case .unreachable:
                 AuthScreen { ServerUnreachableView() }
             case .ready:
+                #if os(macOS)
                 MainWindowView()
+                #else
+                PhoneRootView()
+                #endif
             }
         }
         .background(Theme.bg0)
@@ -124,7 +128,7 @@ struct AuthField: View {
     @Binding var text: String
     var secure = false
     var placeholder: String?
-    var contentType: NSTextContentType?
+    var contentType: PlatformTextContentType?
     /// Focus this field when the card appears.
     var autofocus = false
     @FocusState private var focused: Bool

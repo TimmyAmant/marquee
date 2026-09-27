@@ -129,13 +129,13 @@ struct RequestEditSheet: View {
                     Text("The whole series").tag(true)
                     Text("Just these seasons").tag(false)
                 }
-                .pickerStyle(.radioGroup)
+                .choicePickerStyle()
                 .labelsHidden()
                 .disabled(current.fourK || saving)
             }
             if current.options.fourKAvailable {
                 Toggle(current.fourKLabel, isOn: formBinding(\.fourK))
-                    .toggleStyle(.checkbox)
+                    .checkboxToggleStyle()
                     .disabled(saving)
             } else if !current.isTV {
                 Text("There's nothing to change: 4K isn't set up on this server.")

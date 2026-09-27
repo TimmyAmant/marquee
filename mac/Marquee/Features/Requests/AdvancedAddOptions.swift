@@ -281,7 +281,7 @@ struct AddOptionsPanel: View {
                             get: { current.tags.contains(tag.id) },
                             set: { selection.wrappedValue.setTag(tag.id, on: $0) }
                         ))
-                        .toggleStyle(.checkbox)
+                        .checkboxToggleStyle()
                         .font(.system(size: 12))
                     }
                 }

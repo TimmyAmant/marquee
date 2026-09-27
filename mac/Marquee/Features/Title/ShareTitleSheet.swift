@@ -125,7 +125,7 @@ struct ShareTitleSheet: View {
                         Text(kind.label).tag(kind)
                     }
                 }
-                .pickerStyle(.radioGroup)
+                .choicePickerStyle()
                 .labelsHidden()
                 .font(.system(size: 13))
             }

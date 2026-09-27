@@ -1,6 +1,8 @@
 // Renders Marquee's app icon (gold serif "M" + accent dot on the dark theme
 // background, matching the web app's app/icon.tsx) into every size the macOS
-// AppIcon asset catalog needs. Run from the repo root:
+// AppIcon asset catalog needs, plus the iPhone app's single 1024px icon
+// (MarqueeiOS; full-bleed and opaque — iOS rounds the corners itself).
+// Run from mac/:
 //   NODE_PATH=../node_modules node Scripts/generate-app-icon.mjs   (sharp comes from the server app)
 import { createRequire } from "node:module";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -60,3 +62,23 @@ writeFileSync(
   JSON.stringify({ images, info: { author: "xcode", version: 1 } }, null, 2) + "\n",
 );
 console.log(`Wrote ${images.length} icon sizes to ${outDir}`);
+
+// iOS: the same tile cropped to its edge (no drop shadow, no rounded corners,
+// no border), with no transparency — App Store icons can't have any.
+const iosSvg = svg
+  .replace('width="1024" height="1024" viewBox="0 0 1024 1024"', 'width="1024" height="1024" viewBox="100 100 824 824"')
+  .replace(/<g filter="url\(#shadow\)">[\s\S]*?<\/g>/, `
+  <rect x="100" y="100" width="824" height="824" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" fill="url(#glow)"/>`);
+const iosDir = path.resolve("MarqueeiOS/Resources/Assets.xcassets/AppIcon.appiconset");
+mkdirSync(iosDir, { recursive: true });
+await sharp(Buffer.from(iosSvg)).resize(1024, 1024).flatten({ background: "#0a0a0c" }).removeAlpha().png()
+  .toFile(path.join(iosDir, "icon_1024.png"));
+writeFileSync(
+  path.join(iosDir, "Contents.json"),
+  JSON.stringify({
+    images: [{ filename: "icon_1024.png", idiom: "universal", platform: "ios", size: "1024x1024" }],
+    info: { author: "xcode", version: 1 },
+  }, null, 2) + "\n",
+);
+console.log(`Wrote the iOS icon to ${iosDir}`);

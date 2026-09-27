@@ -1,6 +1,10 @@
 import SwiftUI
 import Observation
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// State for the find-your-server flow: Welcome → Searching → (Local Network
 /// denied) → Manual entry. Picking a server hands it to `AppModel` via `onSelect`.
@@ -132,7 +136,7 @@ final class ConnectModel {
             "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork",
         ]
         for candidate in candidates {
-            if let url = URL(string: candidate), NSWorkspace.shared.open(url) {
+            if let url = URL(string: candidate), Platform.open(url) {
                 return
             }
         }

@@ -71,7 +71,7 @@ struct ReportProblemSheet: View {
                     Text(kind.label).tag(Optional(kind))
                 }
             }
-            .pickerStyle(.radioGroup)
+            .choicePickerStyle()
             .labelsHidden()
             .font(.system(size: 13))
             .disabled(pending)

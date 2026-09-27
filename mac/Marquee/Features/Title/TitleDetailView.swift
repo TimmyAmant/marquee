@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 /// app/title/[type]/[id]/page.tsx + components/title-hero.tsx.
@@ -1377,7 +1381,7 @@ private struct PlayOnServerButton: View {
     /// The app first when one is installed for its scheme.
     private func open(_ link: API.TitleDetail.PlayLink) {
         if let app = link.appUrl.nonBlank.flatMap(URL.init(string:)),
-           NSWorkspace.shared.urlForApplication(toOpen: app) != nil {
+           Platform.hasApp(toOpen: app) {
             openURL(app)
         } else if let web = link.link {
             openURL(web)
