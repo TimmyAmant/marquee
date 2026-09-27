@@ -386,6 +386,28 @@ final class MarqueeAPIRequestTests: XCTestCase {
                 try await $0.apiKeys.revoke("6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10")
             },
             Case(method: "GET", path: "/stats/summary", response: "stats-summary") { _ = try await $0.stats.summary() },
+
+            // Library (0.51+)
+            Case(method: "GET", path: "/library", response: "library-page") { _ = try await $0.library.page() },
+            Case(
+                method: "GET", path: "/library",
+                query: [
+                    "type": "movie", "status": "owned", "source": "plex", "resolution": "4K", "hdr": "1", "codec": "HEVC",
+                    "genre": "Action", "year": "1999", "q": "matrix", "sort": "size", "page": "2",
+                ],
+                response: "library-page"
+            ) {
+                let query = API.LibraryQuery(
+                    type: .movie, status: .owned, source: .plex, resolution: .uhd, hdr: true, codec: "HEVC", genre: "Action",
+                    year: 1999, q: "matrix", sort: .size
+                )
+                _ = try await $0.library.page(query, page: 2)
+            },
+            Case(method: "GET", path: "/library/collections-missing", response: "library-collections-missing") {
+                _ = try await $0.library.collectionsMissing()
+            },
+            Case(method: "GET", path: "/library/duplicates", response: "library-duplicates") { _ = try await $0.library.duplicates() },
+            Case(method: "GET", path: "/library/storage", response: "library-storage") { _ = try await $0.library.storage() },
             // Settings › Discover (0.49+)
             Case(method: "GET", path: "/settings/discover", response: "discover-settings") { _ = try await $0.discoverSettings.load() },
             Case(

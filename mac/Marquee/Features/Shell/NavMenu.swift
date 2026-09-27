@@ -63,7 +63,7 @@ private enum RailItem: Hashable {
 }
 
 /// Every destination, in the menu's order: your photo and notifications,
-/// then Search and Discover, Movies and Series, and Favorites, Calendar and
+/// then Search and Discover, Movies, Series and Library, and Favorites, Calendar and
 /// Requests, with a short hairline between the groups (and before the update
 /// button, when there's an update).
 private struct NavRail: View {
@@ -92,6 +92,7 @@ private struct NavRail: View {
             RailHairline()
             section(.movies)
             section(.series)
+            section(.library)
             RailHairline()
             section(.favorites)
             section(.calendar)

@@ -147,6 +147,34 @@ final class LiveContractTests: XCTestCase {
         // Lists
         _ = try await admin.favorites.all()
         _ = try await admin.favorites.isFavorited(.movie, id: 603)
+
+        // The Library page (0.51+): the whole library, then one filtered page.
+        let library = try await admin.library.page()
+        XCTAssertEqual(library.page, 1)
+        XCTAssertGreaterThanOrEqual(library.summary.movies + library.summary.series + library.summary.tracked, library.results.count)
+        XCTAssertTrue(library.results.allSatisfy { $0.status != nil }, "Every library row carries its status")
+        XCTAssertTrue(library.results.allSatisfy { $0.status != .untracked }, "The library never lists what isn't in it")
+        let sized = try await admin.library.page(API.LibraryQuery(type: .movie, sort: .size))
+        XCTAssertTrue(sized.results.allSatisfy { $0.mediaType == .movie })
+        let sizes = sized.results.map { $0.sizeBytes ?? 0 }
+        XCTAssertEqual(sizes, sizes.sorted(by: >), "Sorted by size, largest first")
+        let nothing = try await admin.library.page(API.LibraryQuery(q: "no title is called this \(UUID().uuidString)"))
+        XCTAssertTrue(nothing.results.isEmpty)
+        XCTAssertEqual(nothing.summary, library.summary, "The counts describe the whole library, not the page")
+        // `400 invalid` for a year out of range (the message is the server's).
+        await assertThrowsAPIError(nil) {
+            _ = try await self.admin.library.page(API.LibraryQuery(year: 1))
+        }
+        let collections = try await admin.library.collectionsMissing()
+        XCTAssertTrue(collections.allSatisfy { $0.missingCount > 0 && !$0.items.isEmpty })
+        XCTAssertEqual(collections.map(\.title), collections.map(\.title).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }, "A–Z")
+        let duplicates = try await admin.library.duplicates()
+        XCTAssertTrue(duplicates.allSatisfy { $0.copies.count >= 2 && $0.reason.isKnown })
+        let storage = try await admin.library.storage()
+        XCTAssertEqual(storage.totalFreeBytes, storage.folders.reduce(0) { $0 + $1.freeBytes })
+        if storage.folders.isEmpty {
+            XCTAssertTrue(storage.isEmpty || !storage.live)
+        }
         _ = try await admin.requests.mine()
         _ = try await admin.requests.pending()
         _ = try await admin.requests.history()
@@ -822,6 +850,7 @@ final class LiveContractTests: XCTestCase {
             AdminOnlyCall(label: "jobs.list") { _ = try await api.jobs.list() },
             AdminOnlyCall(label: "jobs.run") { try await api.jobs.run("plex-sync") },
             AdminOnlyCall(label: "requests.notFound") { _ = try await api.requests.notFound() },
+            AdminOnlyCall(label: "library.duplicates") { _ = try await api.library.duplicates() },
             AdminOnlyCall(label: "requests.dismissNotFound") { try await api.requests.dismissNotFound(UUID()) },
             AdminOnlyCall(label: "jobs.notFoundSettings") { _ = try await api.jobs.notFoundSettings() },
             AdminOnlyCall(label: "titles.searchNow") { try await api.titles.searchNow(.movie, id: 603) },
@@ -874,6 +903,7 @@ final class RecordingURLProtocol: URLProtocol {
         ("GET", "/people/{id}"), ("GET", "/companies/{id}"),
         ("GET", "/favorites"), ("GET", "/favorites/{entityType}/{id}"), ("PUT", "/favorites/{entityType}/{id}"),
         ("DELETE", "/favorites/{entityType}/{id}"), ("POST", "/favorites/{entityType}/{id}/toggle"),
+        ("GET", "/library"), ("GET", "/library/collections-missing"), ("GET", "/library/duplicates"), ("GET", "/library/storage"),
         ("GET", "/requests/mine"), ("GET", "/requests/pending"), ("GET", "/requests/history"),
         ("GET", "/requests/pending-count"), ("POST", "/requests/{uuid}/approve"), ("POST", "/requests/{uuid}/manual-approve"),
         ("POST", "/requests/{uuid}/reject"), ("POST", "/requests/approve-all"),

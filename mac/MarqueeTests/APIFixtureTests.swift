@@ -114,6 +114,10 @@ final class APIFixtureTests: XCTestCase {
         "api-keys": decodes(API.ListResponse<API.ApiKey>.self),
         "api-key-created": decodes(API.ApiKeyCreated.self),
         "stats-summary": decodes(API.StatsSummary.self),
+        "library-page": decodes(API.LibraryPageResponse.self),
+        "library-collections-missing": decodes(API.ListResponse<API.LibraryCollection>.self),
+        "library-duplicates": decodes(API.ListResponse<API.LibraryDuplicate>.self),
+        "library-storage": decodes(API.LibraryStorage.self),
     ] }
 
     func testEveryDocExampleDecodes() throws {
