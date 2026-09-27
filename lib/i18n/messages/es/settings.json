@@ -263,5 +263,7 @@
   "activityVerbRequested": "solicitó",
   "activityVerbApproved": "aprobó",
   "activityVerbDeclined": "rechazó",
-  "activityVerbManuallyApproved": "aprobó manualmente"
+  "activityVerbManuallyApproved": "aprobó manualmente",
+  "menuLabelsLabel": "Mostrar etiquetas del menú",
+  "menuLabelsHelp": "Nombres junto a los iconos del menú y la versión del servidor al final."
 }

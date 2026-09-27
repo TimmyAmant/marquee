@@ -3,13 +3,17 @@ import { auth } from "@/auth";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { NavMenuButton } from "@/components/nav-menu-button";
 import { BackButton } from "@/components/back-button";
+import { SearchBar } from "@/components/search-bar";
 
 /**
  * Slim top bar: the wordmark. Navigation, search and notifications are on
  * the floating rail (components/nav-menu.tsx); below md the rail is hidden,
  * so here the bell and the menu button (which opens the same menu as a
  * drawer, with search) stand in for it, and a back button on pages below
- * the top level, since a Home Screen app has no browser back button.
+ * the top level, since a Home Screen app has no browser back button. On
+ * desktop a search box stays at the top right, like Seerr's (the rail's
+ * Search opens the same box as a panel); not with the rail as a bar along
+ * the top, which has Search in it already (.header-search in globals.css).
  */
 export async function SiteHeader() {
   const session = await auth();
@@ -41,6 +45,10 @@ export async function SiteHeader() {
             <span className="absolute -right-2.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-accent" />
           </span>
         </Link>
+
+        <div className="header-search ml-auto w-[min(380px,40vw)]">
+          <SearchBar variant="compact" />
+        </div>
 
         <div className="ml-auto flex items-center gap-3 md:hidden">
           {session?.user && <NotificationsBell />}

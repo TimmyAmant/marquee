@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeSync } from "@/components/theme-sync";
 import { ToastHost } from "@/components/toast";
-import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
+import { parseRailLabels, parseRailPosition, RAIL_COOKIE, RAIL_LABELS_COOKIE } from "@/lib/rail-position";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n/client";
 import { messagesFor } from "@/lib/i18n/catalog";
@@ -43,7 +43,10 @@ export default async function RootLayout({
   // Which edge the nav rail sits on, this device's choice (Settings ›
   // Account › Appearance). Rendered here so the first paint already has it;
   // the rail and everything that makes room for it follow data-rail in CSS.
-  const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
+  const cookieStore = await cookies();
+  const railPosition = parseRailPosition(cookieStore.get(RAIL_COOKIE)?.value);
+  // "Show menu labels", the same way: names beside the rail's icons.
+  const railLabels = parseRailLabels(cookieStore.get(RAIL_LABELS_COOKIE)?.value);
   // The account's language, else the browser's (lib/i18n/server.ts). Client
   // Components get it, with just that language's messages, from the
   // provider below.
@@ -56,6 +59,7 @@ export default async function RootLayout({
       lang={locale}
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
       data-rail={railPosition}
+      data-rail-labels={railLabels ? "on" : undefined}
       suppressHydrationWarning
     >
       <body className="min-h-full flex bg-bg-0 text-text-primary">

@@ -263,5 +263,7 @@
   "activityVerbRequested": "hat angefragt",
   "activityVerbApproved": "hat genehmigt",
   "activityVerbDeclined": "hat abgelehnt",
-  "activityVerbManuallyApproved": "hat manuell genehmigt"
+  "activityVerbManuallyApproved": "hat manuell genehmigt",
+  "menuLabelsLabel": "Menübeschriftungen anzeigen",
+  "menuLabelsHelp": "Namen neben den Symbolen des Menüs und die Serverversion am Ende."
 }

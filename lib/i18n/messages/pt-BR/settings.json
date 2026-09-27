@@ -263,5 +263,7 @@
   "activityVerbRequested": "pediu",
   "activityVerbApproved": "aprovou",
   "activityVerbDeclined": "recusou",
-  "activityVerbManuallyApproved": "aprovou manualmente"
+  "activityVerbManuallyApproved": "aprovou manualmente",
+  "menuLabelsLabel": "Mostrar rótulos do menu",
+  "menuLabelsHelp": "Nomes ao lado dos ícones do menu e a versão do servidor no final."
 }

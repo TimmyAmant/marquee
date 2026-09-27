@@ -6,10 +6,10 @@ import { HouseholdMembersList } from "./household-members-list";
 import { SignOutButton } from "./sign-out-button";
 import { PushSettings } from "./push-settings";
 import { PersonalNotifications } from "./personal-notifications";
-import { RailPositionSetting } from "./rail-position-setting";
+import { RailLabelsSetting, RailPositionSetting } from "./rail-position-setting";
 import { LanguageSetting } from "./language-setting";
 import { storedLanguage } from "@/lib/users/language";
-import { parseRailPosition, RAIL_COOKIE } from "@/lib/rail-position";
+import { parseRailLabels, parseRailPosition, RAIL_COOKIE, RAIL_LABELS_COOKIE } from "@/lib/rail-position";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
 import { ImportMembers } from "./import-members";
@@ -48,7 +48,9 @@ export default async function AccountSettingsPage({
     loadTraktSyncs(session.user),
   ]);
   const blocklist = blocklistRows.map(blocklistEntryDto);
-  const railPosition = parseRailPosition((await cookies()).get(RAIL_COOKIE)?.value);
+  const cookieStore = await cookies();
+  const railPosition = parseRailPosition(cookieStore.get(RAIL_COOKIE)?.value);
+  const railLabels = parseRailLabels(cookieStore.get(RAIL_LABELS_COOKIE)?.value);
   const available = { plex: methods.plex, jellyfin: methods.jellyfin };
   // Back from linking single sign-on: "linked", or a fixed error code.
   const ssoParam = (await searchParams).sso;
@@ -132,6 +134,9 @@ export default async function AccountSettingsPage({
       <p className="mt-2 text-sm text-text-secondary">{t("settings.appearanceIntro")}</p>
       <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
         <RailPositionSetting initial={railPosition} />
+        <div className="border-t border-border">
+          <RailLabelsSetting initial={railLabels} />
+        </div>
         <div className="border-t border-border">
           <LanguageSetting initial={storedLanguage(session.user.language)} />
         </div>

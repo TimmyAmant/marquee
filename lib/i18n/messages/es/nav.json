@@ -60,5 +60,6 @@
   "notFoundTitle": "Aquí no hay nada",
   "notFoundBody": "Esa página no existe: puede que el enlace sea incorrecto o que TMDb ya no tenga este título.",
   "backToDiscover": "Volver a Descubrir",
-  "quoted": "«{text}»"
+  "quoted": "«{text}»",
+  "serverVersion": "Marquee {version}"
 }

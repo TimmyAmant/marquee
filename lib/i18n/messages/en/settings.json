@@ -263,5 +263,7 @@
   "activityVerbRequested": "requested",
   "activityVerbApproved": "approved",
   "activityVerbDeclined": "declined",
-  "activityVerbManuallyApproved": "manually approved"
+  "activityVerbManuallyApproved": "manually approved",
+  "menuLabelsLabel": "Show menu labels",
+  "menuLabelsHelp": "Names beside the menu's icons, and the server's version at the end."
 }
