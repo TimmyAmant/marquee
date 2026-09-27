@@ -4805,7 +4805,7 @@
     <value>Nada incompleto — cada coleção da qual você tem uma parte está completa, ou nenhum dos seus títulos pertence a uma ainda.</value>
   </data>
   <data name="Library_DuplicatesIntro.Text" xml:space="preserve">
-    <value>Títulos que estão em mais de um servidor ou em mais de um arquivo. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho.</value>
+    <value>Títulos com mais de um arquivo, ou listados em dois servidores Plex ou dois Jellyfin. O mesmo arquivo visto por mapeamentos de pasta diferentes (como /movies e /data/Movies) não conta. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho.</value>
   </data>
   <data name="Library_DuplicatesEmpty.Text" xml:space="preserve">
     <value>Sem duplicados — cada título está em um servidor, em um arquivo.</value>

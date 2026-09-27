@@ -4805,7 +4805,7 @@
     <value>Nichts Unvollständiges – jede Sammlung, von der du einen Teil hast, ist vollständig, oder noch keiner deiner Titel gehört zu einer.</value>
   </data>
   <data name="Library_DuplicatesIntro.Text" xml:space="preserve">
-    <value>Titel, die auf mehreren Servern oder in mehreren Dateien liegen. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts.</value>
+    <value>Titel mit mehr als einer Datei oder auf zwei Plex- bzw. zwei Jellyfin-Servern. Dieselbe Datei unter verschiedenen Ordnerzuordnungen (etwa /movies und /data/Movies) zählt nicht. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts.</value>
   </data>
   <data name="Library_DuplicatesEmpty.Text" xml:space="preserve">
     <value>Keine Duplikate – jeder Titel liegt auf einem Server, in einer Datei.</value>

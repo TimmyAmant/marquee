@@ -41,7 +41,7 @@
   "columnServer": "Server",
   "collectionsEmpty": "Nichts Unvollständiges – jede Sammlung, von der du einen Teil hast, ist vollständig, oder noch keiner deiner Titel gehört zu einer.",
   "missingCount": "{count, plural, one {# fehlt} other {# fehlen}}",
-  "duplicatesIntro": "Titel, die auf mehreren Servern oder in mehreren Dateien liegen. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts.",
+  "duplicatesIntro": "Titel mit mehr als einer Datei oder auf zwei Plex- bzw. zwei Jellyfin-Servern. Dieselbe Datei unter verschiedenen Ordnerzuordnungen (etwa /movies und /data/Movies) zählt nicht. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts.",
   "duplicatesEmpty": "Keine Duplikate – jeder Titel liegt auf einem Server, in einer Datei.",
   "reasonPaths": "Verschiedene Dateien",
   "reasonServers": "Auf mehreren Servern",

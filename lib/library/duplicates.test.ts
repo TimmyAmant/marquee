@@ -21,16 +21,30 @@ describe("findDuplicates", () => {
     expect(findDuplicates([{ copies: [copy("sonarr", "/tv/a"), copy("plex", "\\tv\\a")] }])).toEqual([]);
   });
 
-  it("lists a title two media servers both have, even without paths", () => {
+  it("lists a title two servers of the same kind both have, even without paths", () => {
     const groups = findDuplicates([
-      { copies: [copy("plex", null, "Tower"), copy("jellyfin", null, "Jelly")] },
-      { copies: [copy("plex", "/a", "Tower"), copy("plex", "/a", "Attic")] },
+      { copies: [copy("plex", null, "Tower"), copy("plex", null, "Attic")] },
+      { copies: [copy("jellyfin", "/a", "Jelly"), copy("jellyfin", "/a", "Emby")] },
     ]);
     expect(groups.map((g) => g.reason)).toEqual(["servers", "servers"]);
   });
 
+  it("does not list Plex and Jellyfin both having the same file", () => {
+    expect(findDuplicates([{ copies: [copy("plex", "/data/Movies/a/a.mkv"), copy("jellyfin", "/media/movies/a/a.mkv")] }])).toEqual([]);
+  });
+
+  it("treats the same file under different container mounts as one file", () => {
+    expect(
+      findDuplicates([
+        { copies: [copy("radarr", "/movies/2012 (2009)/2012 (2009).mp4"), copy("plex", "/data/Movies/2012 (2009)/2012 (2009).mp4")] },
+        { copies: [copy("sonarr", "/tv/1923 (2022)/"), copy("plex", "/data/Tv Shows/1923 (2022)")] },
+        { copies: [copy("radarr", "/movies/A/A.MKV"), copy("plex", "/data/movies/a/a.mkv")] },
+      ]),
+    ).toEqual([]);
+  });
+
   it("prefers the paths reason when both apply", () => {
-    const groups = findDuplicates([{ copies: [copy("plex", "/a", "Tower"), copy("jellyfin", "/b", "Jelly")] }]);
+    const groups = findDuplicates([{ copies: [copy("plex", "/a", "Tower"), copy("plex", "/b", "Attic")] }]);
     expect(groups[0].reason).toBe("paths");
   });
 

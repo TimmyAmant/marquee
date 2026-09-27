@@ -4993,7 +4993,7 @@
     <value>Nothing incomplete — every franchise you own part of is fully owned, or none of your titles belongs to one yet.</value>
   </data>
   <data name="Library_DuplicatesIntro.Text" xml:space="preserve">
-    <value>Titles that are on more than one server or in more than one file. Check the paths before deleting anything — Marquee deletes nothing itself.</value>
+    <value>Titles with more than one file, or listed by two Plex or two Jellyfin servers. The same file seen through different folder mappings (like /movies and /data/Movies) doesn't count. Check the paths before deleting anything — Marquee deletes nothing itself.</value>
   </data>
   <data name="Library_DuplicatesEmpty.Text" xml:space="preserve">
     <value>No duplicates — every title is on one server, in one file.</value>

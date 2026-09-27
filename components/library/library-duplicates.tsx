@@ -43,7 +43,15 @@ export function LibraryDuplicates({ groups }: { groups: DuplicateGroup[] }) {
                     </span>
                   </div>
                   <div className="mt-3 overflow-x-auto">
-                    <table className="w-full min-w-[520px] text-left text-sm">
+                    {/* Fixed column widths, so Server, Location, Size and Quality
+                        line up from one title to the next. */}
+                    <table className="w-full min-w-[560px] table-fixed text-left text-sm">
+                      <colgroup>
+                        <col className="w-44" />
+                        <col />
+                        <col className="w-24" />
+                        <col className="w-32" />
+                      </colgroup>
                       <thead className="text-xs text-text-muted">
                         <tr>
                           <th className="pb-1.5 pr-4 font-medium">{t("library.columnServer")}</th>
@@ -55,11 +63,11 @@ export function LibraryDuplicates({ groups }: { groups: DuplicateGroup[] }) {
                       <tbody className="divide-y divide-border">
                         {group.copies.map((copy, index) => (
                           <tr key={index}>
-                            <td className="py-1.5 pr-4 text-text-primary">
+                            <td className="truncate py-1.5 pr-4 text-text-primary">
                               {copy.server}
                               <span className="ml-1.5 text-xs text-text-muted">{SOURCE_LABELS[copy.source]}</span>
                             </td>
-                            <td className="max-w-md py-1.5 pr-4 font-mono text-xs text-text-secondary">
+                            <td className="py-1.5 pr-4 font-mono text-xs text-text-secondary">
                               <div className="truncate" title={copy.filePath ?? undefined}>
                                 {copy.filePath || "—"}
                               </div>

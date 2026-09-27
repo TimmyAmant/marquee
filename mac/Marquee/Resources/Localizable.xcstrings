@@ -33445,30 +33445,30 @@
         }
       }
     },
-    "Titles that are on more than one server or in more than one file. Check the paths before deleting anything — Marquee deletes nothing itself." : {
+    "Titles with more than one file, or listed by two Plex or two Jellyfin servers. The same file seen through different folder mappings (like /movies and /data/Movies) doesn't count. Check the paths before deleting anything — Marquee deletes nothing itself." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Títulos que están en más de un servidor o en más de un archivo. Comprueba las rutas antes de borrar nada: Marquee no borra nada por sí mismo."
+            "value" : "Títulos con más de un archivo, o que aparecen en dos servidores de Plex o dos de Jellyfin. El mismo archivo visto a través de rutas distintas (como /movies y /data/Movies) no cuenta. Revisa las rutas antes de borrar nada: Marquee no borra nada por sí mismo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Titres présents sur plusieurs serveurs ou dans plusieurs fichiers. Vérifiez les chemins avant de supprimer quoi que ce soit : Marquee ne supprime rien lui-même."
+            "value" : "Les titres qui ont plus d'un fichier, ou qui figurent sur deux serveurs Plex ou deux serveurs Jellyfin. Un même fichier vu à travers des dossiers montés différemment (comme /movies et /data/Movies) ne compte pas. Vérifiez les chemins avant de supprimer quoi que ce soit — Marquee ne supprime rien lui-même."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Titel, die auf mehreren Servern oder in mehreren Dateien liegen. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts."
+            "value" : "Titel mit mehr als einer Datei oder auf zwei Plex- bzw. zwei Jellyfin-Servern. Dieselbe Datei unter verschiedenen Ordnerzuordnungen (etwa /movies und /data/Movies) zählt nicht. Prüfe die Pfade, bevor du etwas löschst – Marquee löscht selbst nichts."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Títulos que estão em mais de um servidor ou em mais de um arquivo. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho."
+            "value" : "Títulos com mais de um arquivo, ou listados em dois servidores Plex ou dois Jellyfin. O mesmo arquivo visto por mapeamentos de pasta diferentes (como /movies e /data/Movies) não conta. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho."
           }
         }
       }

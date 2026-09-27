@@ -41,7 +41,7 @@
   "columnServer": "Serveur",
   "collectionsEmpty": "Rien d’incomplet : chaque collection dont vous possédez une partie est complète, ou aucun de vos titres n’appartient encore à une collection.",
   "missingCount": "{count, plural, one {# manquant} other {# manquants}}",
-  "duplicatesIntro": "Titres présents sur plusieurs serveurs ou dans plusieurs fichiers. Vérifiez les chemins avant de supprimer quoi que ce soit : Marquee ne supprime rien lui-même.",
+  "duplicatesIntro": "Les titres qui ont plus d'un fichier, ou qui figurent sur deux serveurs Plex ou deux serveurs Jellyfin. Un même fichier vu à travers des dossiers montés différemment (comme /movies et /data/Movies) ne compte pas. Vérifiez les chemins avant de supprimer quoi que ce soit — Marquee ne supprime rien lui-même.",
   "duplicatesEmpty": "Aucun doublon : chaque titre est sur un seul serveur, dans un seul fichier.",
   "reasonPaths": "Fichiers différents",
   "reasonServers": "Sur plusieurs serveurs",
