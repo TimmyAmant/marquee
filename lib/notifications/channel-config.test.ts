@@ -7,7 +7,9 @@ import { pushoverConfigError } from "@/lib/pushover/client";
 import { emailConfigError, parseRecipients, type EmailConfig } from "@/lib/email/client";
 
 describe("telegramConfigError", () => {
-  const botToken = "123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw";
+  // Shaped like a BotFather token but built at run time, so secret scanners
+  // don't mistake the fixture for a real one.
+  const botToken = `123456789:${"T".repeat(35)}`;
   it("takes a BotFather token with a numeric chat id or @channel", () => {
     expect(telegramConfigError({ botToken, chatId: "123456789" })).toBeNull();
     expect(telegramConfigError({ botToken, chatId: "-1001234567890" })).toBeNull();
