@@ -379,6 +379,13 @@
       "when": 1790463150713,
       "tag": "0053_add_user_language",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1790475430642,
+      "tag": "0054_add_ratings_regions_play_links",
+      "breakpoints": true
     }
   ]
 }

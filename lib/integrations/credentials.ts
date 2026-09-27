@@ -101,6 +101,9 @@ export async function getPlexCredential(userId: string): Promise<PlexCredential 
 export type JellyfinCredential = {
   baseUrl: string;
   apiKey: string;
+  /** The address people open the server at from a browser, when the
+   * admin gave one (Settings › Integrations); null: `baseUrl`. */
+  publicUrl: string | null;
 };
 
 /** Unlike Plex (OAuth token) and like Sonarr/Radarr, Jellyfin auths via a
@@ -125,12 +128,12 @@ export async function getJellyfinCredential(userId: string): Promise<JellyfinCre
     tag: row.apiKeyTag,
   });
 
-  return { baseUrl: row.baseUrl, apiKey };
+  return { baseUrl: row.baseUrl, apiKey, publicUrl: row.publicUrl ?? null };
 }
 
 export async function upsertJellyfinCredential(
   userId: string,
-  fields: { baseUrl: string; apiKey: string },
+  fields: { baseUrl: string; apiKey: string; publicUrl?: string | null },
 ) {
   const encrypted = encryptSecret(fields.apiKey);
 
@@ -140,6 +143,7 @@ export async function upsertJellyfinCredential(
       userId,
       provider: "jellyfin",
       baseUrl: fields.baseUrl,
+      publicUrl: fields.publicUrl ?? null,
       apiKeyEnc: encrypted.ciphertext,
       apiKeyIv: encrypted.iv,
       apiKeyTag: encrypted.tag,
@@ -148,6 +152,7 @@ export async function upsertJellyfinCredential(
       target: [integrationCredentials.userId, integrationCredentials.provider],
       set: {
         baseUrl: fields.baseUrl,
+        publicUrl: fields.publicUrl ?? null,
         apiKeyEnc: encrypted.ciphertext,
         apiKeyIv: encrypted.iv,
         apiKeyTag: encrypted.tag,

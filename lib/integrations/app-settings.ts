@@ -375,3 +375,92 @@ export async function clearNtfyUrl(): Promise<void> {
   }
   ntfyCached = null;
 }
+
+let omdbCached: { value: string | null; expiresAt: number } | null = null;
+
+/** The OMDb API key (Settings › Integrations › OMDb), or null: ratings
+ * beyond TMDb's are off. */
+export async function getOmdbApiKey(): Promise<string | null> {
+  if (omdbCached && Date.now() < omdbCached.expiresAt) return omdbCached.value;
+
+  const row = await getRow();
+  const value =
+    row?.omdbApiKeyEnc && row.omdbApiKeyIv && row.omdbApiKeyTag
+      ? decryptSecret({ ciphertext: row.omdbApiKeyEnc, iv: row.omdbApiKeyIv, tag: row.omdbApiKeyTag })
+      : null;
+
+  omdbCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+export async function setOmdbApiKey(apiKey: string): Promise<void> {
+  const encrypted = encryptSecret(apiKey);
+  const existing = await getRow();
+
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({
+        omdbApiKeyEnc: encrypted.ciphertext,
+        omdbApiKeyIv: encrypted.iv,
+        omdbApiKeyTag: encrypted.tag,
+        updatedAt: new Date(),
+      })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values({
+      omdbApiKeyEnc: encrypted.ciphertext,
+      omdbApiKeyIv: encrypted.iv,
+      omdbApiKeyTag: encrypted.tag,
+    });
+  }
+
+  omdbCached = null;
+}
+
+export async function clearOmdbApiKey(): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({ omdbApiKeyEnc: null, omdbApiKeyIv: null, omdbApiKeyTag: null, updatedAt: new Date() })
+      .where(eq(appSettings.id, existing.id));
+  }
+  omdbCached = null;
+}
+
+/** Settings › Discover › Region & language, as stored (null: the default;
+ * lib/discover/locale.ts turns these into what TMDb is asked). */
+export type StoredDiscoverLocale = {
+  streamingRegion: string | null;
+  discoverRegion: string | null;
+  discoverLanguage: string | null;
+};
+
+let localeCached: { value: StoredDiscoverLocale; expiresAt: number } | null = null;
+
+export async function getStoredDiscoverLocale(): Promise<StoredDiscoverLocale> {
+  if (localeCached && Date.now() < localeCached.expiresAt) return localeCached.value;
+  const row = await getRow();
+  const value = {
+    streamingRegion: row?.streamingRegion ?? null,
+    discoverRegion: row?.discoverRegion ?? null,
+    discoverLanguage: row?.discoverLanguage ?? null,
+  };
+  localeCached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  return value;
+}
+
+/** Only the fields given change. */
+export async function setStoredDiscoverLocale(patch: Partial<StoredDiscoverLocale>): Promise<void> {
+  const existing = await getRow();
+  if (existing) {
+    await db
+      .update(appSettings)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(appSettings.id, existing.id));
+  } else {
+    await db.insert(appSettings).values(patch);
+  }
+  localeCached = null;
+}
