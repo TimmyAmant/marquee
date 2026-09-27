@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import { useT } from "@/lib/i18n/client";
 import { testAndSaveDiscordWebhook, disconnectDiscord } from "@/app/settings/integrations/discord-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function DiscordConnectCard({ connected }: { connected: boolean }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveDiscordWebhook, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(
     disconnectDiscord,
     undefined,

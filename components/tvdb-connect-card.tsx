@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import { useT } from "@/lib/i18n/client";
 import { testAndSaveTvdbApiKey, disconnectTvdb } from "@/app/settings/integrations/tvdb-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function TvdbConnectCard({ connected }: { connected: boolean }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveTvdbApiKey, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(
     disconnectTvdb,
     undefined,

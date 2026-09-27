@@ -4,10 +4,12 @@ import { useActionState } from "react";
 import { createUserAction } from "./users-actions";
 import { useT } from "@/lib/i18n/client";
 import { rich } from "@/lib/i18n/rich";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function CreateUserForm() {
   const t = useT();
   const [state, formAction, isPending] = useActionState(createUserAction, undefined);
+  useResultToast(state, t("common.saved"));
 
   if (state?.success) {
     return (

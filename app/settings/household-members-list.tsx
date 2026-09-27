@@ -11,6 +11,7 @@ import { PERMISSION_PRESET_LABELS, presetFor } from "@/lib/users/permissions";
 import { useT } from "@/lib/i18n/client";
 import { rich } from "@/lib/i18n/rich";
 import { PermissionsEditor } from "./permissions-editor";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 /** Longest side of what the browser sends. The server crops to a 512px
  * square anyway; this just keeps a 12-megapixel phone photo from being a
@@ -172,6 +173,7 @@ function EditMemberForm({
 }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(updateHouseholdMemberAction, undefined);
+  useResultToast(state, t("common.saved"));
 
   useEffect(() => {
     if (state?.success) onSaved();

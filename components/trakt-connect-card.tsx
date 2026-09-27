@@ -7,10 +7,12 @@ import {
   disconnectTrakt,
   importTraktListAction,
 } from "@/app/settings/integrations/trakt-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function TraktConnectCard({ connected }: { connected: boolean }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveTraktClientId, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(
     disconnectTrakt,
     undefined,

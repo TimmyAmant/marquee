@@ -5,6 +5,7 @@ import { removeChannelAction, saveChannelAction } from "@/app/settings/integrati
 import type { ChannelSummaries } from "@/lib/notifications/channels";
 import type { NotificationChannelKind } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -43,6 +44,7 @@ function ChannelCard({
 }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(saveChannelAction, undefined);
+  useResultToast(state, successText);
   const [removeState, removeAction, isRemoving] = useActionState(removeChannelAction, undefined);
   // The newer of the two outcomes wins: a save after a remove is connected.
   const [lastAction, setLastAction] = useState<"save" | "remove" | null>(null);
@@ -112,12 +114,21 @@ function ChannelCard({
   );
 }
 
-export function NotificationChannelCards({ channels }: { channels: ChannelSummaries }) {
+/** The household's Telegram, Pushover and email; `only` picks one
+ * (Settings › Notifications has a tab for each). */
+export function NotificationChannelCards({
+  channels,
+  only,
+}: {
+  channels: ChannelSummaries;
+  only?: NotificationChannelKind;
+}) {
   const t = useT();
   const { telegram, pushover, email } = channels;
+  const shows = (kind: NotificationChannelKind) => !only || only === kind;
   return (
     <>
-      <ChannelCard
+      {shows("telegram") && <ChannelCard
         kind="telegram"
         title={t("integrations.channelTelegramTitle")}
         shortName="Telegram"
@@ -143,8 +154,8 @@ export function NotificationChannelCards({ channels }: { channels: ChannelSummar
             hint: t("integrations.chatIdHint", { url: "api.telegram.org/bot<token>/getUpdates" }),
           },
         ]}
-      />
-      <ChannelCard
+      />}
+      {shows("pushover") && <ChannelCard
         kind="pushover"
         title={t("integrations.channelPushoverTitle")}
         shortName="Pushover"
@@ -168,8 +179,8 @@ export function NotificationChannelCards({ channels }: { channels: ChannelSummar
             hint: t("integrations.userKeyHint"),
           },
         ]}
-      />
-      <ChannelCard
+      />}
+      {shows("email") && <ChannelCard
         kind="email"
         title={t("integrations.channelEmailTitle")}
         shortName={t("integrations.channelEmailShort")}
@@ -214,7 +225,7 @@ export function NotificationChannelCards({ channels }: { channels: ChannelSummar
           <input type="checkbox" name="secure" defaultChecked={email.secure} className="h-4 w-4 rounded border-border accent-accent" />
           {t("integrations.secureConnection")}
         </label>
-      </ChannelCard>
+      </ChannelCard>}
     </>
   );
 }

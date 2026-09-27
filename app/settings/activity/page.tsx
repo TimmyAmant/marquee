@@ -7,6 +7,7 @@ import { getT } from "@/lib/i18n/server";
 import { formatDate } from "@/lib/i18n/format";
 import { rich } from "@/lib/i18n/rich";
 import type { MessageKey } from "@/lib/i18n/translator";
+import { SettingsHeader, SettingsSection } from "@/components/settings/settings-ui";
 
 /** "Anna requested Dune" — who did it and the title marked up by the
  * message, so each language puts them where its grammar wants. */
@@ -27,17 +28,17 @@ export default async function ActivitySettingsPage() {
 
   return (
     <div>
-      <h2 className="font-display text-xl text-text-primary">{t("admin.activityTitle")}</h2>
-      <p className="mt-2 text-sm text-text-secondary">{t("admin.activityIntro")}</p>
+      <SettingsHeader title={t("admin.activityTitle")} description={t("admin.activityIntro")} />
 
-      <div className="mt-6 flex flex-col gap-2">
+      <SettingsSection>
+      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-bg-1">
         {events.length === 0 ? (
-          <p className="text-sm text-text-muted">{t("admin.activityNothingYet")}</p>
+          <p className="px-5 py-4 text-sm text-text-muted">{t("admin.activityNothingYet")}</p>
         ) : (
           events.map((event) => (
             <div
               key={event.id}
-              className="flex items-center justify-between gap-4 rounded-xl border border-border bg-bg-1 px-4 py-3 text-sm"
+              className="flex flex-col gap-1 px-5 py-3.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
             >
               <p className="text-text-secondary">
                 {rich(
@@ -63,6 +64,7 @@ export default async function ActivitySettingsPage() {
           ))
         )}
       </div>
+      </SettingsSection>
     </div>
   );
 }

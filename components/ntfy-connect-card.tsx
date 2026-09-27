@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import { useT } from "@/lib/i18n/client";
 import { testAndSaveNtfy, disconnectNtfy } from "@/app/settings/integrations/ntfy-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function NtfyConnectCard({ connected }: { connected: boolean }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveNtfy, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(disconnectNtfy, undefined);
 
   const isConnected = state?.success ? true : disconnectState?.success ? false : connected;

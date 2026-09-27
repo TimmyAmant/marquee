@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { LEGACY_SETTINGS_REDIRECTS } from "./lib/settings/tabs";
 
 const nextConfig: NextConfig = {
   images: {
@@ -20,6 +21,11 @@ const nextConfig: NextConfig = {
         hostname: "artworks.thetvdb.com",
       },
     ],
+  },
+  // Settings' pages that moved when it was regrouped into tabs
+  // (lib/settings/tabs.ts): bookmarks and the apps' links still land.
+  async redirects() {
+    return LEGACY_SETTINGS_REDIRECTS.map((entry) => ({ ...entry, permanent: false }));
   },
   // Every /api/v1 route handler sets X-Marquee-API itself; this also covers
   // the responses Next.js generates on its own for those paths (405 Method

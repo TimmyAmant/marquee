@@ -16,9 +16,10 @@ import type { ArrPickerOptions } from "@/lib/arr/add-options-server";
 import type { ArrProvider, SonarrSeriesType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
+import { showToast } from "@/components/toast";
 
-// Settings → Integrations → Download Clients: every Sonarr and Radarr
-// server, each with its own defaults and webhook URL (lib/arr/servers.ts).
+// Settings › Services: every Sonarr and Radarr server as a tile, each with
+// its own defaults and webhook URL (lib/arr/servers.ts).
 
 const INPUT =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -216,8 +217,10 @@ function ServerEditor({
       const result = await saveArrServerAction(server?.id ?? null, body);
       if (!result.ok) {
         setMessage({ tone: "error", text: result.error });
+        showToast(result.error, "error");
         return;
       }
+      showToast(t("common.saved"));
       onDone();
       router.refresh();
     });
@@ -236,7 +239,10 @@ function ServerEditor({
   const canSave = server ? true : Boolean(options);
 
   return (
-    <div className="mt-3 flex flex-col gap-3 rounded-xl border border-border bg-bg-0/40 p-4">
+    <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-accent/50 bg-bg-1 p-5">
+      <h4 className="text-sm font-semibold text-text-primary">
+        {server ? server.name : t("integrations.addArrServer", { app: kindName(kind) })}
+      </h4>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={LABEL}>
           {t("integrations.name")}
@@ -441,82 +447,95 @@ function ServerEditor({
   );
 }
 
-function ServerRow({ server, editing, onEdit, onDone }: { server: ArrServerDto; editing: boolean; onEdit: () => void; onDone: () => void }) {
+/** One server as a tile (Seerr's service cards): name and address, whether
+ * it's ready, its Default / 4K badges, and Edit / Remove. */
+function ServerTile({ server, editing, onEdit }: { server: ArrServerDto; editing: boolean; onEdit: () => void }) {
   const t = useT();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function run(action: () => Promise<{ ok: boolean; error?: string }>) {
+  function run(action: () => Promise<{ ok: boolean; error?: string }>, doneText: string) {
     setError(null);
     startTransition(async () => {
       const result = await action();
       if (!result.ok) {
-        setError(result.error ?? t("common.somethingWentWrong"));
+        const text = result.error ?? t("common.somethingWentWrong");
+        setError(text);
+        showToast(text, "error");
         return;
       }
       setConfirming(false);
+      showToast(doneText);
       router.refresh();
     });
   }
 
   return (
-    <li className="rounded-xl border border-border bg-bg-1 px-4 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <li
+      className={`flex min-w-0 flex-col rounded-2xl border bg-bg-1 p-4 transition-colors ${
+        editing ? "border-accent" : "border-border"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-text-primary">{server.name}</span>
-            {server.isDefault && <Badge tone="accent">{t("integrations.defaultBadge")}</Badge>}
-            {server.is4k && <Badge>{/* i18n-ignore */}4K</Badge>}
-            {!server.fullyConfigured && <Badge tone="warn">{t("integrations.needsProfileAndFolder")}</Badge>}
-          </div>
+          <p className="truncate font-medium text-text-primary">{server.name}</p>
           <p className="mt-0.5 truncate text-xs text-text-muted">{server.baseUrl}</p>
         </div>
-        {!editing && (
-          <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`flex shrink-0 items-center gap-1.5 text-xs ${server.fullyConfigured ? "text-owned" : "text-amber-300"}`}
+        >
+          <span aria-hidden className={`h-2 w-2 rounded-full ${server.fullyConfigured ? "bg-owned" : "bg-amber-300"}`} />
+          {server.fullyConfigured ? t("integrations.serverReady") : t("integrations.needsProfileAndFolder")}
+        </span>
+      </div>
+      <div className="mt-3 flex min-h-[22px] flex-wrap gap-1.5">
+        {server.isDefault && <Badge tone="accent">{t("integrations.defaultBadge")}</Badge>}
+        {server.is4k && <Badge>{/* i18n-ignore */}4K</Badge>}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+        {confirming ? (
+          <>
+            <span className="text-xs text-text-secondary">{t("integrations.removeServerConfirm", { name: server.name })}</span>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => run(() => deleteArrServerAction(server.id), t("integrations.serverRemoved"))}
+              className="rounded-full border border-red-400/60 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-60"
+            >
+              {isPending ? t("integrations.removing") : t("common.remove")}
+            </button>
+            <button type="button" onClick={() => setConfirming(false)} className={SMALL_BUTTON}>
+              {t("integrations.keep")}
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" onClick={onEdit} disabled={editing} className={SMALL_BUTTON}>
+              {t("common.edit")}
+            </button>
             {!server.isDefault && (
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() => run(() => makeDefaultArrServerAction(server.id))}
+                onClick={() => run(() => makeDefaultArrServerAction(server.id), t("common.saved"))}
                 className={SMALL_BUTTON}
               >
                 {t("integrations.makeDefault")}
               </button>
             )}
-            <button type="button" onClick={onEdit} className={SMALL_BUTTON}>
-              {t("common.edit")}
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="ml-auto text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline"
+            >
+              {t("common.remove")}
             </button>
-            {confirming ? (
-              <>
-                <span className="text-xs text-text-secondary">{t("integrations.removeServerConfirm", { name: server.name })}</span>
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => run(() => deleteArrServerAction(server.id))}
-                  className="rounded-full border border-red-400/60 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-60"
-                >
-                  {isPending ? t("integrations.removing") : t("common.remove")}
-                </button>
-                <button type="button" onClick={() => setConfirming(false)} className={SMALL_BUTTON}>
-                  {t("integrations.keep")}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirming(true)}
-                className="text-xs text-text-secondary underline-offset-2 hover:text-red-400 hover:underline"
-              >
-                {t("common.remove")}
-              </button>
-            )}
-          </div>
+          </>
         )}
       </div>
       {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-      {editing && <ServerEditor kind={server.kind} server={server} onDone={onDone} />}
     </li>
   );
 }
@@ -534,58 +553,66 @@ function KindSection({
 }) {
   const t = useT();
   const adding = editing === `new:${kind}`;
+  const editingServer = servers.find((server) => server.id === editing) ?? null;
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-text-primary">{kindName(kind)}</h4>
-        {!adding && (
-          <button type="button" onClick={() => setEditing(`new:${kind}`)} className={SMALL_BUTTON}>
-            {t("integrations.addArrServer", { app: kindName(kind) })}
-          </button>
-        )}
-      </div>
-      {servers.length === 0 && !adding && (
-        <p className="mt-2 text-sm text-text-muted">
+    <section>
+      <h3 className="text-base font-semibold text-text-primary">{t("integrations.arrServersHeading", { app: kindName(kind) })}</h3>
+      {servers.length === 0 && (
+        <p className="mt-1 text-sm text-text-secondary">
           {kind === "sonarr" ? t("integrations.noSonarrYet") : t("integrations.noRadarrYet")}
         </p>
       )}
-      <ul className="mt-3 flex flex-col gap-2">
+      <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {servers.map((server) => (
-          <ServerRow
+          <ServerTile
             key={server.id}
             server={server}
             editing={editing === server.id}
             onEdit={() => setEditing(server.id)}
-            onDone={() => setEditing(null)}
           />
         ))}
+        <li>
+          <button
+            type="button"
+            onClick={() => setEditing(`new:${kind}`)}
+            disabled={adding}
+            className={`flex h-full min-h-[132px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-4 text-sm transition-colors ${
+              adding
+                ? "border-accent text-text-primary"
+                : "border-border-strong text-text-secondary hover:border-accent hover:text-accent"
+            }`}
+          >
+            <span aria-hidden className="text-2xl leading-none">
+              +
+            </span>
+            {t("integrations.addArrServer", { app: kindName(kind) })}
+          </button>
+        </li>
       </ul>
+      {editingServer && (
+        <ServerEditor key={editingServer.id} kind={kind} server={editingServer} onDone={() => setEditing(null)} />
+      )}
       {adding && <ServerEditor kind={kind} server={null} onDone={() => setEditing(null)} />}
-    </div>
+    </section>
   );
 }
 
+/** Settings › Services: a section of tiles for Sonarr, then Radarr, with
+ * an "Add server" tile; the one being edited or added opens its form
+ * under the tiles. */
 export function ArrServersCard({ servers }: { servers: ArrServerDto[] }) {
-  const t = useT();
   const [editing, setEditing] = useState<string | null>(null);
   return (
-    <div className="rounded-2xl border border-border bg-bg-1 p-6">
-      <h3 className="font-display text-xl text-text-primary">
-        {/* i18n-ignore */}
-        Sonarr &amp; Radarr
-      </h3>
-      <p className="mt-1 text-sm text-text-secondary">{t("integrations.arrIntro")}</p>
-      <div className="mt-5 flex flex-col gap-6">
-        {(["sonarr", "radarr"] as const).map((kind) => (
-          <KindSection
-            key={kind}
-            kind={kind}
-            servers={servers.filter((s) => s.kind === kind)}
-            editing={editing}
-            setEditing={setEditing}
-          />
-        ))}
-      </div>
+    <div className="mt-9 flex flex-col gap-10">
+      {(["sonarr", "radarr"] as const).map((kind) => (
+        <KindSection
+          key={kind}
+          kind={kind}
+          servers={servers.filter((s) => s.kind === kind)}
+          editing={editing}
+          setEditing={setEditing}
+        />
+      ))}
     </div>
   );
 }

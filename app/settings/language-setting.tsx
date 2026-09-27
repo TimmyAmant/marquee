@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useT } from "@/lib/i18n/client";
 import { LOCALE_NAMES, LOCALES, type Locale } from "@/lib/i18n/locales";
 import { setLanguageAction } from "./language-actions";
+import { SettingRow } from "@/components/settings/settings-ui";
 
 /**
  * Settings › Account › Appearance: the language this account reads Marquee
@@ -35,17 +36,26 @@ export function LanguageSetting({ initial }: { initial: Locale | null }) {
   }
 
   return (
-    <div className="p-6">
-      <label htmlFor="language-select" className="text-sm font-medium text-text-primary">
-        {t("settings.languageLabel")}
-      </label>
-      <p className="mt-1 text-sm text-text-secondary">{t("settings.languageHelp")}</p>
+    <SettingRow
+      label={t("settings.languageLabel")}
+      help={
+        <>
+          {t("settings.languageHelp")}
+          {error && (
+            <span role="alert" className="mt-1 block text-red-400">
+              {error}
+            </span>
+          )}
+        </>
+      }
+      htmlFor="language-select"
+    >
       <select
         id="language-select"
         value={value}
         disabled={pending}
         onChange={(event) => choose(event.target.value)}
-        className="mt-4 w-full rounded-xl border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none disabled:opacity-60"
+        className="w-full rounded-xl border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none disabled:opacity-60 sm:w-64"
       >
         <option value="">{t("settings.languageAutomatic")}</option>
         {LOCALES.map((locale) => (
@@ -54,11 +64,6 @@ export function LanguageSetting({ initial }: { initial: Locale | null }) {
           </option>
         ))}
       </select>
-      {error && (
-        <p role="alert" className="mt-2 text-sm text-red-400">
-          {error}
-        </p>
-      )}
-    </div>
+    </SettingRow>
   );
 }

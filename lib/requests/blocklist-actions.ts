@@ -38,7 +38,7 @@ export async function blockKeywordAction(_prev: BlocklistActionState | undefined
   if (!admin.ok) return { error: admin.error };
   const result = await blockKeyword(formData.get("keyword"), formData.get("reason"));
   if (!result.ok) return { error: result.error };
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
 
@@ -47,6 +47,6 @@ export async function removeBlocklistEntryAction(id: string): Promise<BlocklistA
   if (!admin.ok) return { error: admin.error };
   const result = await removeBlocklistEntry(id);
   if (!result.ok) return { error: result.error };
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }

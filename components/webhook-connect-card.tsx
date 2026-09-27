@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import { useT } from "@/lib/i18n/client";
 import { testAndSaveGenericWebhook, disconnectGenericWebhook } from "@/app/settings/integrations/webhook-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function WebhookConnectCard({ connected }: { connected: boolean }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveGenericWebhook, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(
     disconnectGenericWebhook,
     undefined,

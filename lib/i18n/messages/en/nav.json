@@ -69,5 +69,19 @@
   "groupPeople": "People",
   "groupStudiosNetworks": "Studios & Networks",
   "searchSuggestions": "Search suggestions",
-  "searchAllResults": "See all results for “{query}”"
+  "searchAllResults": "See all results for “{query}”",
+  "settingsGeneral": "General",
+  "settingsMembers": "Members",
+  "settingsMediaServers": "Media servers",
+  "settingsServices": "Services",
+  "settingsNotifications": "Notifications",
+  "settingsBlocklist": "Blocklist",
+  "notificationsPersonal": "Personal",
+  "notificationsHousehold": "Household events",
+  "notificationsDiscord": "Discord",
+  "notificationsNtfy": "ntfy",
+  "notificationsTelegram": "Telegram",
+  "notificationsPushover": "Pushover",
+  "notificationsEmail": "Email",
+  "notificationsWebhook": "Webhook"
 }

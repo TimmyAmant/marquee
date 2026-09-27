@@ -3,12 +3,14 @@
 import { useActionState } from "react";
 import { useT } from "@/lib/i18n/client";
 import { testAndSaveOmdbApiKey, disconnectOmdb } from "@/app/settings/integrations/omdb-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 /** Settings › Integrations › "OMDb (ratings)": an optional key that adds
  * IMDb, Rotten Tomatoes and Metacritic scores to title pages. */
 export function OmdbConnectCard({ connected }: { connected: boolean }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveOmdbApiKey, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(disconnectOmdb, undefined);
 
   const isConnected = state?.success ? true : disconnectState?.success ? false : connected;

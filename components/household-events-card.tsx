@@ -4,6 +4,7 @@ import { useState } from "react";
 import { saveHouseholdEventsAction } from "@/app/settings/notification-actions";
 import type { HouseholdNotificationEvents } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
+import { showToast } from "@/components/toast";
 
 /** Settings › Integrations › Household channels: which events Discord,
  * ntfy, Telegram, Pushover, email and the webhook below post. Everyone's
@@ -22,6 +23,8 @@ export function HouseholdEventsCard({ initial }: { initial: HouseholdNotificatio
     setSaving(false);
     if (result.data) setEvents(result.data.events);
     if (result.error) setError(result.error);
+    if (result.error) showToast(result.error, "error");
+    else showToast(t("common.saved"));
   }
 
   return (

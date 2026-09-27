@@ -70,7 +70,7 @@ describe("errorToApiError", () => {
     expect(error.status).toBe(502);
     expect(error.code).toBe("upstream");
     expect(error.message).toBe(
-      "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.",
+      "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → General.",
     );
     expect(error.messageIn(translatorFor("de"))).toContain("TMDb ist auf diesem Server nicht eingerichtet");
     // What an app checks for, since the message follows the reader's language.

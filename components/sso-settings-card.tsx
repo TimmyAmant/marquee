@@ -8,6 +8,7 @@ import {
 } from "@/app/settings/integrations/sso-actions";
 import type { SsoSettingsView, SsoTestResult } from "@/lib/auth/sso/config";
 import { useT } from "@/lib/i18n/client";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -41,6 +42,7 @@ function Toggle({ name, defaultChecked, label, hint }: { name: string; defaultCh
 export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSettingsView | null; defaultPublicUrl: string }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(saveSsoSettingsAction, undefined);
+  useResultToast(state, t("common.saved"));
   const [removed, setRemoved] = useState(false);
   const [removing, setRemoving] = useState(false);
   const saved = removed ? null : (state?.settings ?? initial);

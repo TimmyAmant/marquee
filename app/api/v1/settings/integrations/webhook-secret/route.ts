@@ -11,7 +11,7 @@ import type { IntegrationsSettings } from "@/lib/api/types";
 export const POST = withApi(async (request): Promise<IntegrationsSettings["arrWebhooks"]> => {
   const ctx = await requireApiAdmin(request, INTEGRATIONS_FORBIDDEN);
   const secret = await regenerateWebhookSecret(ctx.user.id);
-  revalidatePath("/settings/integrations");
+  revalidatePath("/settings", "layout");
   const urls = arrWebhookUrls(webhookBaseUrl(request.headers), ctx.user.id, secret);
   return {
     secret,

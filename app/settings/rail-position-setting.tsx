@@ -5,6 +5,7 @@ import { useState } from "react";
 import { RAIL_POSITIONS, railLabelsCookie, railPositionCookie, type RailPosition } from "@/lib/rail-position";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
+import { SettingRow } from "@/components/settings/settings-ui";
 
 const LABELS: Record<RailPosition, MessageKey> = {
   left: "settings.menuPositionLeft",
@@ -47,12 +48,8 @@ export function RailPositionSetting({ initial }: { initial: RailPosition }) {
   }
 
   return (
-    <div className="p-6">
-      <p id="rail-position-label" className="text-sm font-medium text-text-primary">
-        {t("settings.menuPositionLabel")}
-      </p>
-      <p className="mt-1 text-sm text-text-secondary">{t("settings.menuPositionHelp")}</p>
-      <div role="radiogroup" aria-labelledby="rail-position-label" className="mt-4 grid grid-cols-4 gap-2">
+    <SettingRow label={t("settings.menuPositionLabel")} help={t("settings.menuPositionHelp")} labelId="rail-position-label" wideControl>
+      <div role="radiogroup" aria-labelledby="rail-position-label" className="grid w-full grid-cols-4 gap-2">
         {RAIL_POSITIONS.map((option) => {
           const selected = option === position;
           const bar = BAR[option];
@@ -78,7 +75,7 @@ export function RailPositionSetting({ initial }: { initial: RailPosition }) {
           );
         })}
       </div>
-    </div>
+    </SettingRow>
   );
 }
 
@@ -103,26 +100,20 @@ export function RailLabelsSetting({ initial }: { initial: boolean }) {
   }
 
   return (
-    <div className="flex items-start justify-between gap-4 p-6">
-      <div>
-        <p id="rail-labels-label" className="text-sm font-medium text-text-primary">
-          {t("settings.menuLabelsLabel")}
-        </p>
-        <p className="mt-1 text-sm text-text-secondary">{t("settings.menuLabelsHelp")}</p>
-      </div>
+    <SettingRow label={t("settings.menuLabelsLabel")} help={t("settings.menuLabelsHelp")} labelId="rail-labels-label">
       <button
         type="button"
         role="switch"
         aria-checked={on}
         aria-labelledby="rail-labels-label"
         onClick={toggle}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-accent" : "bg-text-primary/20"}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-accent" : "bg-text-primary/20"}`}
       >
         <span
           aria-hidden
           className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${on ? "left-[22px]" : "left-0.5"}`}
         />
       </button>
-    </div>
+    </SettingRow>
   );
 }

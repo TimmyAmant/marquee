@@ -158,7 +158,7 @@ export function AddToLibraryButton({
 
       {open && isAdmin !== false && !configured && (
         <Link
-          href="/settings/integrations"
+          href="/settings/services"
           className={`${PILL_NOTE} border-dashed hover:border-accent hover:text-accent`}
         >
           {t("title.connectToAdd", { app: arrName })}

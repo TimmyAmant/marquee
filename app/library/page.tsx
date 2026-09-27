@@ -54,7 +54,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         </p>
         {viewer.libraryOwnerId === viewer.userId && (
           <Link
-            href="/settings/integrations"
+            href="/settings/media-servers"
             className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
           >
             {t("discover.connectIntegration")}
@@ -127,7 +127,7 @@ async function AllTab({
           {viewer.isAdmin
             ? rich(t("library.stillSyncingAdmin"), {
                 link: (chunks) => (
-                  <Link href="/settings/integrations" className="text-accent hover:text-accent-hover">
+                  <Link href="/settings/media-servers" className="text-accent hover:text-accent-hover">
                     {chunks}
                   </Link>
                 ),

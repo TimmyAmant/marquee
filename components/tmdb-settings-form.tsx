@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useT } from "@/lib/i18n/client";
 import { testAndSaveTmdbToken, disconnectTmdb } from "@/app/settings/integrations/tmdb-actions";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function TmdbSettingsForm({
   savedInSettings,
@@ -13,6 +14,7 @@ export function TmdbSettingsForm({
 }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(testAndSaveTmdbToken, undefined);
+  useResultToast(state, t("common.saved"));
   const [disconnectState, disconnectAction, isDisconnecting] = useActionState(
     disconnectTmdb,
     undefined,

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { testAndSaveJellyfinConnection, type JellyfinConnectionState } from "@/app/settings/integrations/jellyfin-actions";
 import { DisconnectButton } from "@/components/disconnect-button";
 import { useT } from "@/lib/i18n/client";
+import { useResultToast } from "@/components/settings/use-result-toast";
 
 export function JellyfinConnectCard({
   existing,
@@ -24,6 +25,7 @@ export function JellyfinConnectCard({
     testAndSaveJellyfinConnection,
     undefined,
   );
+  useResultToast(state, t("common.saved"));
 
   return (
     <div className="rounded-2xl border border-border bg-bg-1 p-6">

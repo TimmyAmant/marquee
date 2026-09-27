@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { saveNotFoundAfterHoursAction } from "@/app/settings/jobs/actions";
 import { useT } from "@/lib/i18n/client";
+import { showToast } from "@/components/toast";
 import { rich } from "@/lib/i18n/rich";
 
 /** Settings › Jobs, under the Can't Find Check: how many hours after
@@ -19,8 +20,11 @@ export function NotFoundHoursSetting({ initial }: { initial: number }) {
     setMessage(null);
     const result = await saveNotFoundAfterHoursAction(Number(value));
     setBusy(false);
-    if (result.error) setMessage({ error: result.error });
-    else if (result.afterHours !== undefined) {
+    if (result.error) {
+      setMessage({ error: result.error });
+      showToast(result.error, "error");
+    } else if (result.afterHours !== undefined) {
+      showToast(t("common.saved"));
       setSaved(result.afterHours);
       setValue(String(result.afterHours));
       setMessage({ ok: t("common.saved") });

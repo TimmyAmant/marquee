@@ -96,7 +96,7 @@ export function PushSettings() {
     "rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
 
   return (
-    <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6 text-sm">
+    <div className="rounded-2xl border border-border bg-bg-1 p-6 text-sm">
       <p className="text-text-secondary">{status}</p>
       <p className="mt-2 text-xs text-text-muted">{t("settings.pushHelp")}</p>
 

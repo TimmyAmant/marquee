@@ -54,7 +54,7 @@ function isArrInstance(provider: IntegrationProvider): provider is ArrInstance {
 }
 
 export function revalidateIntegrations() {
-  revalidatePath("/settings/integrations");
+  revalidatePath("/settings", "layout");
 }
 
 export { normalizeServerUrl } from "@/lib/arr/server-input";
