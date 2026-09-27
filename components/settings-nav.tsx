@@ -71,7 +71,9 @@ export function SettingsNav({ isAdmin, children }: { isAdmin: boolean; children:
   const t = useT();
   const pathname = usePathname();
   const tabs = ALL_TABS.filter((tab) => isAdmin || !tab.adminOnly);
-  const activeTab = tabs.find((tab) => tab.href === pathname);
+  // A page under a tab (Integrations › Import from Seerr) keeps that tab lit.
+  const isActive = (href: string) => href === pathname || (href !== "/settings" && pathname.startsWith(`${href}/`));
+  const activeTab = tabs.find((tab) => isActive(tab.href));
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -79,7 +81,7 @@ export function SettingsNav({ isAdmin, children }: { isAdmin: boolean; children:
       <div className="mt-8 flex flex-col gap-8 sm:flex-row">
         <nav className="flex shrink-0 gap-2 sm:w-44 sm:flex-col">
           {tabs.map((tab) => {
-            const active = tab.href === pathname;
+            const active = isActive(tab.href);
             return (
               <Link
                 key={tab.href}

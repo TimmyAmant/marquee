@@ -95,6 +95,11 @@ struct IntegrationsSettingsView: View {
                         remove: { try await $0.integrations.webhook.remove() }
                     )
                 }
+                // 0.51+: the website's Import from Seerr; the card only
+                // links there, so it shows for any server.
+                section(String(localized: "Coming from Seerr?")) {
+                    SeerrImportCard()
+                }
                 // 0.47+: keys for dashboards and scripts; nothing at all
                 // from an older server.
                 ApiKeysSection()
@@ -177,6 +182,31 @@ struct IntegrationsSettingsView: View {
             content()
         }
         .padding(.top, 8)
+    }
+}
+
+/// components/seerr-import-card.tsx: the way to the website's importer
+/// (app/settings/integrations/import-seerr), which does the connect →
+/// preview → import steps. Opened in the browser on the server's own
+/// address, signed in there.
+private struct SeerrImportCard: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+
+    private var importerURL: URL? {
+        model.session.server?.baseURL.appending(path: "settings/integrations/import-seerr") // i18n-ignore
+    }
+
+    var body: some View {
+        IntegrationCard(
+            title: String(localized: "Import from Seerr"),
+            description: String(localized: "Switching from Seerr, Overseerr or Jellyseerr? Bring your household's accounts, requests, problem reports and blocklist over from its API. Nothing is sent to Sonarr or Radarr, and running it again only picks up what's new. The importer runs on the website.")
+        ) {
+            if let importerURL {
+                Button(String(localized: "Open the importer in your browser")) { openURL(importerURL) }
+                    .buttonStyle(OutlineButtonStyle())
+            }
+        }
     }
 }
 

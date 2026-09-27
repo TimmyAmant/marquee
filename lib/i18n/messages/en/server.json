@@ -218,5 +218,15 @@
   "publicUrlInvalid": "The public URL must start with http:// or https://.",
   "regionInvalid": "{field} must be null or a two-letter country code Marquee knows.",
   "discoverLanguageInvalid": "discoverLanguage must be null, \"any\" or a two-letter language code Marquee knows.",
-  "nothingToChange": "Send at least one of streamingRegion, discoverRegion or discoverLanguage."
+  "nothingToChange": "Send at least one of streamingRegion, discoverRegion or discoverLanguage.",
+  "onlyAdminSeerrImport": "Only the admin can import from Seerr.",
+  "seerrKeyRequired": "Enter the Seerr API key (Settings → General in Seerr).",
+  "seerrKeyRejected": "Seerr didn't accept that API key. Copy it from Settings → General in Seerr.",
+  "seerrKeyNotAdmin": "That API key isn't an admin's. Use the key from Settings → General in Seerr.",
+  "seerrUnreachable": "Couldn't reach Seerr at that address. Check it, and that the Marquee server can see it.",
+  "seerrNotSeerr": "That address doesn't answer like Seerr, Overseerr or Jellyseerr. Check the URL (for example http://192.168.1.20:5055).",
+  "seerrTmdbRequired": "Connect TMDb in Settings → Integrations before importing requests or problem reports — Marquee needs it for their titles and posters.",
+  "seerrImportRunning": "An import is already running. Wait for it to finish.",
+  "seerrImportNotFound": "That import doesn't exist any more.",
+  "seerrNothingChosen": "Choose at least one thing to import."
 }
