@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.52.1",
+    date: "2026-09-27",
+    changes: [
+      "Housekeeping: a test used Telegram's documentation example bot token, which GitHub's secret scanning flagged. It was never a real token; the tests now build a fake one at run time.",
+    ],
+  },
+  {
     version: "0.52.0",
     date: "2026-09-27",
     changes: [
