@@ -28,7 +28,7 @@
   "blocklistHeading": "Anfrage-Sperrliste",
   "blocklistIntro": "Titel und Stichwörter, die niemand anfragen kann. Einen einzelnen Titel sperrst du auf seiner Seite.",
   "menuPositionLabel": "Menüposition",
-  "menuPositionHelp": "Wo das Menü auf diesem Gerät sitzt. In einem Fenster in Handygröße bleibt es hinter der Menütaste und gleitet bei „Rechts“ von rechts herein, sonst von links.",
+  "menuPositionHelp": "Wo das Menü auf diesem Gerät sitzt, auf größeren Bildschirmen. In einem Fenster in Handygröße ist das Menü immer eine Tableiste am unteren Rand.",
   "menuPositionLeft": "Links",
   "menuPositionRight": "Rechts",
   "menuPositionTop": "Oben",

@@ -11,11 +11,10 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "0.59.1",
+    version: "0.59.0",
     date: "2026-09-27",
     changes: [
-      "iPhone app: no more big gap at the top; page titles sit in the bar with the bell or the Back button.",
-      "iPhone app: requests are full-width cards with Approve and Decline buttons; the calendar has Day, Week and Month views; the Library, Releases, person and studio pages are rebuilt to fit the phone; sheets fill the screen.",
+      "On phones the website has a tab bar along the bottom, like the iPhone app: Discover, Search, Requests (with the number waiting for review), Calendar and More. More holds Movies, Series, Library, Favorites, Settings and Releases. Computers and tablets are unchanged.",
     ],
   },
   {

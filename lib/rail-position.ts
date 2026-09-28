@@ -5,8 +5,8 @@
  * data-rail on <html> and the page never paints with the rail in the wrong
  * place. Everything that depends on it (the rail's own layout, the content
  * offset, popovers) keys off that attribute in CSS — see the rail-*
- * variants in app/globals.css. Narrow screens use the drawer whatever this
- * says.
+ * variants in app/globals.css. Phone-sized windows use the tab bar along the
+ * bottom whatever this says (components/phone-tab-bar.tsx).
  */
 export const RAIL_POSITIONS = ["left", "right", "top", "bottom"] as const;
 
