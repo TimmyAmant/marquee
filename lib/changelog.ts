@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.60.1",
+    date: "2026-09-27",
+    changes: [
+      "\"All features\" in Settings › About › Getting Support (and the website footer, the Mac Help menu and the iPhone More tab) opens a guide describing everything Marquee can do.",
+    ],
+  },
+  {
     version: "0.60.0",
     date: "2026-09-27",
     changes: [

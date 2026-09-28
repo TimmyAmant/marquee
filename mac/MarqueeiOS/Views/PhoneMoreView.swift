@@ -4,6 +4,7 @@ import SwiftUI
 struct PhoneMoreView: View {
     @Binding var showsNotifications: Bool
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
 
     private static let sections: [SidebarItem] = [.movies, .series, .library, .favorites]
 
@@ -28,6 +29,9 @@ struct PhoneMoreView: View {
                 }
                 row(String(localized: "Error Reference"), systemImage: "exclamationmark.bubble") {
                     model.open(.errorReference)
+                }
+                row(String(localized: "All Features"), systemImage: "list.bullet.rectangle") {
+                    openURL(AppInfo.featuresURL)
                 }
             }
         }

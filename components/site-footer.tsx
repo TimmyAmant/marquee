@@ -21,6 +21,14 @@ export async function SiteFooter() {
             {t("nav.errorReference")}
           </Link>
           <a
+            href={`${REPO_URL}/blob/main/docs/features.md`}
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-text-primary"
+          >
+            {t("nav.allFeatures")}
+          </a>
+          <a
             href={REPO_URL}
             target="_blank"
             rel="noreferrer"

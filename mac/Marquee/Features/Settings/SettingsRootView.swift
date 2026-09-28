@@ -782,6 +782,9 @@ struct AboutSettingsView: View {
 
                 SettingsSectionTitle(text: String(localized: "Getting Support"))
                 VStack(spacing: 0) {
+                    linkRow(String(localized: "All features")) {
+                        openURL(info.repoURL?.appending(path: "blob/main/docs/features.md") ?? AppInfo.featuresURL)
+                    }
                     linkRow(String(localized: "Releases")) { openWindow(id: "changelog") }
                     linkRow(String(localized: "What the colors mean")) { openWindow(id: "status-colors") }
                     linkRow(String(localized: "Error reference")) { openWindow(id: "error-reference") }

@@ -23,39 +23,16 @@ native **Mac** and **Windows** apps.
 <img src="docs/screenshots/web-discover-rail.jpg" alt="Marquee's Discover page" />
 </p>
 
-## Current Features
+## Features
 
-**Requests**
-- Request whole titles, single seasons or 4K; members can edit or cancel while it's pending.
-- Approve or decline from the Requests page — or straight from the push notification.
-- Per-member permission switches, request limits, auto-approve, a trusted-member preset and a blocklist.
-- Comment threads on requests and problem reports; "Report a problem" with search-again.
-- **Can't find** alerts when Sonarr/Radarr still hasn't found a release, and a retry when it's unreachable.
-- Plex Watchlist and Trakt lists that keep requesting automatically.
+- **Requests with approvals**: whole titles, single seasons or 4K, with per-member limits, permissions, a trusted role and a blocklist; approve straight from the notification.
+- **Your library, not just a search box**: live status on every poster, file quality (4K, HDR, codec, audio) on every title, one Library view across Plex, Jellyfin/Emby, Sonarr and Radarr, duplicates and a disk-space forecast.
+- **Everyone signs in their way**: local accounts, Plex, Jellyfin/Emby (with Quick Connect) and single sign-on (Authentik, Authelia, Pocket ID, Keycloak, Google…).
+- **Notifications that matter**: bell, Web Push and app alerts, plus Discord, ntfy, Telegram, Pushover, email, Gotify, Slack, Pushbullet and webhooks, for the household and for each person.
+- **Any number of Sonarr and Radarr servers**, 4K included, with override rules, a release calendar and "Can't find" alerts.
+- **Website, Mac, Windows and iPhone apps**, in five languages.
 
-**Your library, not just a search box**
-- Live status on every poster in the same colors as Radarr and Sonarr — owned, downloading, missing, not monitored, coming soon.
-- A **Library** page with everything in Plex, Jellyfin, Sonarr and Radarr in one grid or table: filter by type, status, server, resolution, HDR, codec, genre and year; sort by date added, title, year, size or rating; search; Search now and monitoring on every row.
-- File details on every title: resolution, codec, HDR, audio, size and where it lives.
-- Collections you only partly own, with **Add all** / **Request all missing** — on each title and all together on the Library page.
-- **Duplicates** (a title on several servers or in several files) and a **Storage** card: free space per root folder and a "full in N days" forecast.
-- **Fix ID** for titles matched wrongly, Search now and monitoring without opening Sonarr/Radarr.
-- A release **calendar** from Sonarr and Radarr.
-
-**Everyone signs in their way**
-- Local accounts, **Plex**, **Jellyfin / Emby** (with Quick Connect), and **single sign-on** (Authentik, Authelia, Pocket ID, Keycloak, Google…).
-- Import household members from Plex or Jellyfin; optional self sign-up.
-
-**Notifications**
-- In-app bell, Web Push, and live alerts in the Mac and Windows apps.
-- Discord, ntfy, Telegram, Pushover, email and webhooks — for the household *and* for each person, with their own event choices.
-
-**And**
-- A customizable **Discover** page: reorder rows and add your own (a keyword, studio, network, genre or list).
-- Share a title with someone in the household or anywhere else.
-- Five languages, a "What's new" note after every update, and a menu that sits left, right, top or bottom.
-- API keys, an OpenAPI description at `/api-docs`, and a widget summary for Homepage and Homarr.
-- One Docker image with its database inside; migrations run on every start.
+**See every feature → [docs/features.md](docs/features.md)**
 
 ## Why Marquee
 
@@ -94,7 +71,7 @@ off: point it at the same Plex/Jellyfin/Emby and Sonarr/Radarr, import your
 household from Plex or Jellyfin, and let people sign in with the accounts they
 already have.
 
-When you're ready to switch, **Settings › Integrations › Import from Seerr**
+When you're ready to switch, **Settings › General › Coming from Seerr?**
 brings everything over from the running Seerr's API with its admin key:
 accounts (matched to existing ones by Plex/Jellyfin id, email or username),
 permissions and request limits, every request with its seasons and 4K flag,
@@ -112,6 +89,7 @@ Every install serves its API description at `http://<your-server>:3000/api-docs`
 ## Support
 
 - Read the [Getting started guide](docs/getting-started.md) and the in-app Help first.
+- Wondering whether Marquee can do something? [Every feature, explained](docs/features.md).
 - Bug reports and feature requests: [GitHub Issues](https://github.com/TimmyAmant/marquee/issues).
 - Locked out? See [resetting the admin password](docs/getting-started.md#locked-out).
 

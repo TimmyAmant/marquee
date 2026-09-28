@@ -99,6 +99,7 @@ struct PhoneSettingsView: View {
                     model.select(.discover)
                     model.open(.changelog)
                 }
+                Link("All features", destination: AppInfo.featuresURL)
                 Link(destination: AppInfo.repositoryURL) {
                     Text(verbatim: "GitHub")
                 }
