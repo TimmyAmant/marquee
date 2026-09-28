@@ -33,7 +33,9 @@ export async function EntityHero({
 
   return (
     <div className={ENTITY_HERO_FRAME} data-testid="entity-hero">
-      <TitleBackdrop>
+      {/* Faded out at the bottom, grain and all: unlike a title page's,
+          nothing below covers the band's lower edge. */}
+      <TitleBackdrop className="[mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
         {backdrop && (
           <MediaImage
             src={backdrop}
