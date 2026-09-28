@@ -3,6 +3,7 @@ import { getStoredDiscoverLocale, getTmdbAccessToken } from "@/lib/integrations/
 import { resolveDiscoverLocale, type DiscoverLocale } from "@/lib/discover/locale";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
 import { trimTitleImages, type TmdbTitleImages } from "@/lib/tmdb/logo";
+import type { TmdbPersonExternalIds } from "@/lib/tmdb/entity-links";
 
 /** Logos (lib/tmdb/logo.ts) in English or with no text at all. */
 const TITLE_IMAGE_LANGUAGES = "en,null";
@@ -187,10 +188,14 @@ export interface TmdbPersonDetails {
   deathday: string | null;
   place_of_birth: string | null;
   profile_path: string | null;
+  known_for_department?: string | null;
+  homepage?: string | null;
+  /** From append_to_response=external_ids (lib/tmdb/entity-links.ts). */
+  external_ids?: TmdbPersonExternalIds;
 }
 
 export function getPersonDetails(id: number) {
-  return tmdbFetch<TmdbPersonDetails>(`/person/${id}`);
+  return tmdbFetch<TmdbPersonDetails>(`/person/${id}`, { append_to_response: "external_ids" });
 }
 
 export interface TmdbCreditItem {
@@ -204,6 +209,9 @@ export interface TmdbCreditItem {
   episode_count?: number;
   order?: number;
   poster_path: string | null;
+  backdrop_path?: string | null;
+  vote_count?: number;
+  genre_ids?: number[];
   overview?: string;
   release_date?: string;
   first_air_date?: string;
@@ -225,6 +233,7 @@ export interface TmdbCompanyDetails {
   logo_path: string | null;
   origin_country: string;
   parent_company: { id: number; name: string } | null;
+  homepage?: string | null;
 }
 
 export function getCompanyDetails(id: number) {
@@ -242,6 +251,7 @@ export interface TmdbDiscoverResult {
   first_air_date?: string;
   popularity?: number;
   vote_average?: number;
+  vote_count?: number;
   genre_ids?: number[];
 }
 

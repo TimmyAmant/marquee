@@ -337,7 +337,7 @@ struct TitleHeroMetrics: Equatable {
 /// under the window's toolbar, film grain over it, and soft fades into bg0:
 /// under the toolbar, at the bottom, from the left behind the text, and a
 /// light veil over all of it so a bright image reads like a dark one.
-private struct TitleBackdrop: View, Equatable {
+struct TitleBackdrop: View, Equatable {
     let backdropPath: API.ImageRef?
     /// Keeps the film grain identical across re-renders.
     let seed: UInt64

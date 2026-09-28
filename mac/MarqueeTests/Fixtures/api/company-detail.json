@@ -5,6 +5,18 @@
   "logoPath": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png",
   "titleCount": 137,
   "favorited": false,
+  "knownForTitle": {
+    "mediaType": "movie",
+    "tmdbId": 299536,
+    "name": "Avengers: Infinity War",
+    "backdropPath": "/mDfJG3LC3Dqb67AZ52x3Z0jU0uB.jpg"
+  },
+  "externalLinks": [
+    {
+      "kind": "homepage",
+      "url": "https://www.marvel.com/movies"
+    }
+  ],
   "titles": [
     {
       "mediaType": "movie",

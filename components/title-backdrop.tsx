@@ -27,9 +27,19 @@ const FADES = [
  * shows until its artwork fades in, and a title with no backdrop looks like
  * one whose backdrop is still on its way.
  */
-export function TitleBackdrop({ children }: { children?: ReactNode }) {
+export function TitleBackdrop({
+  children,
+  className = "",
+}: {
+  children?: ReactNode;
+  /** Extra classes on the band (the person and studio hero fades its grain
+   * out at the bottom, where no rows cover the band's lower edge). */
+  className?: string;
+}) {
   return (
-    <div className="grain-overlay rail-under pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--hero-h)] overflow-hidden bg-bg-1">
+    <div
+      className={`grain-overlay rail-under pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--hero-h)] overflow-hidden bg-bg-1 ${className}`.trim()}
+    >
       {children}
       <div className="absolute inset-0" style={{ background: FADES }} />
     </div>

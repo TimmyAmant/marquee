@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.61.0",
+    date: "2026-09-27",
+    changes: [
+      "Person pages have a full-width backdrop from the title they're best known for (How I Met Your Mother for Neil Patrick Harris), with a \"From …\" link to it, and their official links: IMDb, Instagram, X, Facebook, TikTok, YouTube and their website.",
+      "Studio and network pages get a backdrop from their most popular title, plus a Website link when there is one. On the website, Mac, Windows and iPhone.",
+    ],
+  },
+  {
     version: "0.60.1",
     date: "2026-09-27",
     changes: [

@@ -10,6 +10,22 @@
   "placeOfBirth": "Beirut, Lebanon",
   "profilePath": "/8RZLOyYGsoRe9p44q3xin9QkMHv.jpg",
   "favorited": true,
+  "knownForTitle": {
+    "mediaType": "movie",
+    "tmdbId": 603,
+    "name": "The Matrix",
+    "backdropPath": "/tlm8UkiQsitc8rSuIAscQDCnP8d.jpg"
+  },
+  "externalLinks": [
+    {
+      "kind": "imdb",
+      "url": "https://www.imdb.com/name/nm0000206"
+    },
+    {
+      "kind": "instagram",
+      "url": "https://www.instagram.com/keanureeves"
+    }
+  ],
   "credits": [
     {
       "mediaType": "movie",

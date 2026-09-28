@@ -48,6 +48,16 @@ public sealed partial class CompanyViewModel : ObservableObject
     [ObservableProperty]
     private MediaListViewModel? titles;
 
+    /// <summary>The best-known title's backdrop behind the header, with "From …"; null keeps the plain header.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasHero))]
+    private EntityHeroItem? hero;
+
+    /// <summary>IMDb, socials, website: pills under the text (components/external-links.tsx).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLinks))]
+    private IReadOnlyList<LinkItem> links = [];
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FavoriteGlyph))]
     [NotifyPropertyChangedFor(nameof(FavoriteLabel))]
@@ -78,6 +88,8 @@ public sealed partial class CompanyViewModel : ObservableObject
     public bool HasDescription => Description.Length > 0;
     public bool HasLogo => logoUrl != null;
     public ImageSource? Logo => logoUrl == null ? null : logo ??= new BitmapImage(logoUrl);
+    public bool HasHero => Hero != null;
+    public bool HasLinks => Links.Count > 0;
     public string FavoriteGlyph => FavoriteGlyphs.For(IsFavorited);
     public string FavoriteLabel => FavoriteGlyphs.Label(IsFavorited);
 
@@ -100,6 +112,8 @@ public sealed partial class CompanyViewModel : ObservableObject
             logoUrl = null;
             logo = null;
             Titles = null;
+            Hero = null;
+            Links = [];
             IsFavorited = false;
             ErrorMessage = null;
             Company = null;
@@ -148,6 +162,8 @@ public sealed partial class CompanyViewModel : ObservableObject
             logo = null;
             IsFavorited = fresh.Favorited;
             Titles = new MediaListViewModel(model, fresh.Titles, MediaListNoun.Title, EmptyTitles);
+            Hero = EntityHeroItem.For(model, fresh.KnownForTitle);
+            Links = EntityLinkItems.From(fresh.Links);
             Company = fresh;
         }
         catch (ApiException error)

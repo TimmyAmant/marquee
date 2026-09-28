@@ -10,72 +10,153 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Marquee.Windows.Controls"
+    xmlns:vm="using:Marquee.Windows.ViewModels"
     mc:Ignorable="d">
 
     <Grid>
         <ScrollViewer Visibility="{x:Bind ViewModel.HasPerson, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <StackPanel Padding="28,20,28,40" Spacing="36">
-                <Grid ColumnSpacing="28">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+            <StackPanel Padding="0,0,0,40" Spacing="36">
+                <!--
+                  components/entity-hero.tsx: with a title they're best known
+                  for, its backdrop runs full width behind the header, under
+                  the title page's fades (the code-behind sizes it and moves
+                  the header down onto it), with "From {title}" at its bottom
+                  right, or above the header's right end in a narrow window.
+                -->
+                <Grid>
                     <Grid
-                        Grid.Column="0"
-                        Width="192"
-                        Height="288"
+                        x:Name="BackdropHost"
+                        Height="300"
                         VerticalAlignment="Top"
-                        CornerRadius="12"
-                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                        BorderThickness="1">
-                        <Image Source="{x:Bind ViewModel.Photo, Mode=OneWay}" Stretch="UniformToFill" />
-                        <FontIcon
-                            Glyph="&#xE77B;"
-                            FontSize="48"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Visibility="{x:Bind ViewModel.HasPhoto, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
+                        Visibility="{x:Bind ViewModel.HasHero, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Image Source="{x:Bind ViewModel.Hero.Backdrop, Mode=OneWay}" Stretch="UniformToFill" VerticalAlignment="Top" />
+                        <Rectangle Fill="{ThemeResource SolidBackgroundFillColorBaseBrush}" Opacity="0.22" />
+                        <Rectangle Opacity="0.9">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
+                                    <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.28" />
+                                    <GradientStop Color="Transparent" Offset="0.92" />
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle Opacity="0.7">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
+                                    <GradientStop Color="Transparent" Offset="0.28" />
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle>
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="Transparent" Offset="0.24" />
+                                    <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.94" />
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
                     </Grid>
+                    <Button
+                        x:Name="KnownForButton"
+                        Content="{x:Bind ViewModel.Hero.FromLine, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.Hero.Open, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind ViewModel.Hero.FromLabel, Mode=OneWay}"
+                        ToolTipService.ToolTip="{x:Bind ViewModel.Hero.FromLine, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.HasHero, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        MaxWidth="320"
+                        Padding="12,3"
+                        CornerRadius="14"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Margin="0,0,28,0" />
+                    <Grid x:Name="HeaderGrid" Margin="28,20,28,0" ColumnSpacing="28">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid
+                            Grid.Column="0"
+                            Width="192"
+                            Height="288"
+                            VerticalAlignment="Top"
+                            CornerRadius="12"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                            <Image Source="{x:Bind ViewModel.Photo, Mode=OneWay}" Stretch="UniformToFill" />
+                            <FontIcon
+                                Glyph="&#xE77B;"
+                                FontSize="48"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Visibility="{x:Bind ViewModel.HasPhoto, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
+                        </Grid>
 
-                    <StackPanel Grid.Column="1" Spacing="10" MaxWidth="760" HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel Grid.Column="1" Spacing="10" MaxWidth="760" HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.Name, Mode=OneWay}"
+                                    Style="{StaticResource TitleLargeTextBlockStyle}"
+                                    TextWrapping="Wrap"
+                                    IsTextSelectionEnabled="True"
+                                    VerticalAlignment="Center" />
+                                <Button
+                                    Command="{x:Bind ViewModel.ToggleFavoriteCommand}"
+                                    Padding="8,4"
+                                    VerticalAlignment="Center"
+                                    ToolTipService.ToolTip="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}"
+                                    AutomationProperties.Name="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}">
+                                    <FontIcon Glyph="{x:Bind ViewModel.FavoriteGlyph, Mode=OneWay}" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                </Button>
+                            </StackPanel>
                             <TextBlock
-                                Text="{x:Bind ViewModel.Name, Mode=OneWay}"
-                                Style="{StaticResource TitleLargeTextBlockStyle}"
+                                Text="{x:Bind ViewModel.LifeLine, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.HasLifeLine, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource BodyTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.Biography, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.HasBiography, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                Style="{StaticResource BodyTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap"
-                                IsTextSelectionEnabled="True"
-                                VerticalAlignment="Center" />
-                            <Button
-                                Command="{x:Bind ViewModel.ToggleFavoriteCommand}"
-                                Padding="8,4"
-                                VerticalAlignment="Center"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}"
-                                AutomationProperties.Name="{x:Bind ViewModel.FavoriteLabel, Mode=OneWay}">
-                                <FontIcon Glyph="{x:Bind ViewModel.FavoriteGlyph, Mode=OneWay}" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                            </Button>
+                                IsTextSelectionEnabled="True" />
+                            <!-- components/external-links.tsx: the title page's link pills. -->
+                            <Grid
+                                ColumnSpacing="8"
+                                Margin="0,4,0,0"
+                                Visibility="{x:Bind ViewModel.HasLinks, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ScrollViewer x:Name="LinksRail" controls:RailScroll.IsRail="True">
+                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Links, Mode=OneWay}" Margin="0,0,0,6">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Horizontal" Spacing="8" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:LinkItem">
+                                                <Button Content="{x:Bind Label}" Command="{x:Bind Open}" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
+                                <controls:RailArrows Grid.Column="1" Target="{x:Bind LinksRail}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                            </Grid>
+                            <InfoBar
+                                IsOpen="{x:Bind ViewModel.ShowsInlineError, Mode=OneWay}"
+                                Severity="Error"
+                                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                                IsClosable="False" />
                         </StackPanel>
-                        <TextBlock
-                            Text="{x:Bind ViewModel.LifeLine, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.HasLifeLine, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            Style="{StaticResource BodyTextBlockStyle}"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Text="{x:Bind ViewModel.Biography, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.HasBiography, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            Style="{StaticResource BodyTextBlockStyle}"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            TextWrapping="Wrap"
-                            IsTextSelectionEnabled="True" />
-                        <InfoBar
-                            IsOpen="{x:Bind ViewModel.ShowsInlineError, Mode=OneWay}"
-                            Severity="Error"
-                            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                            IsClosable="False" />
-                    </StackPanel>
+                    </Grid>
                 </Grid>
 
-                <controls:MediaList List="{x:Bind ViewModel.Credits, Mode=OneWay}" />
+                <controls:MediaList Margin="28,0" List="{x:Bind ViewModel.Credits, Mode=OneWay}" />
             </StackPanel>
         </ScrollViewer>
 

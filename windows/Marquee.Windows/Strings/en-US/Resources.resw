@@ -3016,6 +3016,9 @@
   <data name="Model_OrderOldestFirst" xml:space="preserve">
     <value>Oldest first</value>
   </data>
+  <data name="Model_LinkWebsite" xml:space="preserve">
+    <value>Website</value>
+  </data>
   <data name="Model_ReleaseDaysAgo_One" xml:space="preserve">
     <value>{0} day ago</value>
   </data>
@@ -3358,6 +3361,12 @@
   </data>
   <data name="Person_EmptyCredits" xml:space="preserve">
     <value>No processed filmography found for this person yet.</value>
+  </data>
+  <data name="Person_KnownForFrom" xml:space="preserve">
+    <value>From {0}</value>
+  </data>
+  <data name="Person_KnownForFromLabel" xml:space="preserve">
+    <value>Background from {0}. Open its page</value>
   </data>
   <data name="Person_ErrorHeading.Text" xml:space="preserve">
     <value>Couldn't load this person</value>

@@ -7,28 +7,13 @@ struct PersonDetailView: View {
     @Environment(AppModel.self) private var model
     @State private var person: API.PersonDetail?
     @State private var error: String?
-    #if os(iOS)
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    #endif
-
-    /// An iPhone: the photo beside the name, the rest under both.
-    private var isPhone: Bool {
-        #if os(iOS)
-        horizontalSizeClass == .compact
-        #else
-        false
-        #endif
-    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: isPhone ? 28 : 44) {
-                if let person {
-                    if isPhone {
-                        phoneHeader(person)
-                    } else {
-                        header(person)
-                    }
+        Group {
+            if let person {
+                EntityPage(knownFor: person.knownForTitle, tmdbId: person.tmdbId) { compact in
+                    header(person, compact: compact)
+                } rows: {
                     MediaListView(
                         cards: person.credits,
                         subtitleLabel: String(localized: "Role"),
@@ -37,23 +22,28 @@ struct PersonDetailView: View {
                         showSearch: true,
                         emptyMessage: String(localized: "No processed filmography found for this person yet.")
                     )
-                } else if let error {
-                    EmptyStateView(
-                        title: String(localized: "Couldn't load this person"),
-                        message: error,
-                        systemImage: "person.crop.circle.badge.exclamationmark",
-                        actionTitle: String(localized: "Try again"),
-                        action: { model.reload() }
-                    )
-                } else {
-                    LoadingView()
                 }
+            } else {
+                ScrollView {
+                    Group {
+                        if let error {
+                            EmptyStateView(
+                                title: String(localized: "Couldn't load this person"),
+                                message: error,
+                                systemImage: "person.crop.circle.badge.exclamationmark",
+                                actionTitle: String(localized: "Try again"),
+                                action: { model.reload() }
+                            )
+                        } else {
+                            LoadingView()
+                        }
+                    }
+                    .padding(Metrics.pagePadding)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .scrollsUnderNavRail()
             }
-            .padding(.horizontal, Metrics.pagePadding)
-            .padding(.vertical, Metrics.pagePadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle(person?.name ?? "")
         .toolbar {
@@ -84,6 +74,15 @@ struct PersonDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func header(_ person: API.PersonDetail, compact: Bool) -> some View {
+        if compact {
+            phoneHeader(person)
+        } else {
+            wideHeader(person)
+        }
+    }
+
     private func photo(_ person: API.PersonDetail, width: CGFloat) -> some View {
         ZStack {
             Theme.bg2
@@ -98,10 +97,12 @@ struct PersonDetailView: View {
         .frame(width: width, height: width * 1.5)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+        // Lifts it off a backdrop; barely there on the plain page.
+        .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
     }
 
     /// At phone width: the photo and the name, dates and Favorite side by
-    /// side, the biography across the page under them.
+    /// side, the biography and links across the page under them.
     private func phoneHeader(_ person: API.PersonDetail) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 16) {
@@ -143,24 +144,13 @@ struct PersonDetailView: View {
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            EntityLinksRow(links: person.links)
         }
     }
 
-    private func header(_ person: API.PersonDetail) -> some View {
+    private func wideHeader(_ person: API.PersonDetail) -> some View {
         HStack(alignment: .top, spacing: 32) {
-            ZStack {
-                Theme.bg2
-                if person.profilePath.url(.w342) != nil {
-                    RemoteImage(person.profilePath, size: .w342)
-                } else {
-                    Image(systemName: "person.fill")
-                        .font(.system(size: Metrics.text(48)))
-                        .foregroundStyle(Theme.textMuted)
-                }
-            }
-            .frame(width: 192, height: 288)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+            photo(person, width: 192)
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 14) {
@@ -168,6 +158,7 @@ struct PersonDetailView: View {
                         .font(.marqueeDisplay(40))
                         .foregroundStyle(Theme.textPrimary)
                         .textSelection(.enabled)
+                        .shadow(color: .black.opacity(0.25), radius: 10, y: 2)
                     FavoriteButton(target: FavoriteTarget(.person, person.tmdbId, favorited: person.favorited))
                 }
                 HStack(spacing: 18) {
@@ -194,6 +185,8 @@ struct PersonDetailView: View {
                         .frame(maxWidth: 720, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                EntityLinksRow(links: person.links)
+                    .padding(.top, 4)
             }
         }
     }
@@ -219,51 +212,41 @@ struct CompanyDetailView: View {
     @Environment(AppModel.self) private var model
     @State private var company: API.CompanyDetail?
     @State private var error: String?
-    #if os(iOS)
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    #endif
-
-    /// An iPhone: the logo beside the name, the description under both.
-    private var isPhone: Bool {
-        #if os(iOS)
-        horizontalSizeClass == .compact
-        #else
-        false
-        #endif
-    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: isPhone ? 28 : 44) {
-                if let company {
-                    if isPhone {
-                        phoneHeader(company)
-                    } else {
-                        header(company)
-                    }
+        Group {
+            if let company {
+                EntityPage(knownFor: company.knownForTitle, tmdbId: company.tmdbId) { compact in
+                    header(company, compact: compact)
+                } rows: {
                     MediaListView(
                         cards: company.titles,
                         showTypeFilter: true,
                         showSearch: true,
                         emptyMessage: String(localized: "No titles found for this studio yet.")
                     )
-                } else if let error {
-                    EmptyStateView(
-                        title: String(localized: "Couldn't load this studio"),
-                        message: error,
-                        systemImage: "building.2",
-                        actionTitle: String(localized: "Try again"),
-                        action: { model.reload() }
-                    )
-                } else {
-                    LoadingView(label: String(localized: "Loading the catalog…"))
                 }
+            } else {
+                ScrollView {
+                    Group {
+                        if let error {
+                            EmptyStateView(
+                                title: String(localized: "Couldn't load this studio"),
+                                message: error,
+                                systemImage: "building.2",
+                                actionTitle: String(localized: "Try again"),
+                                action: { model.reload() }
+                            )
+                        } else {
+                            LoadingView(label: String(localized: "Loading the catalog…"))
+                        }
+                    }
+                    .padding(Metrics.pagePadding)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .scrollsUnderNavRail()
             }
-            .padding(.horizontal, Metrics.pagePadding)
-            .padding(.vertical, Metrics.pagePadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle(company?.name ?? "")
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
@@ -271,8 +254,17 @@ struct CompanyDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func header(_ company: API.CompanyDetail, compact: Bool) -> some View {
+        if compact {
+            phoneHeader(company)
+        } else {
+            wideHeader(company)
+        }
+    }
+
     /// At phone width: the logo beside the name and Favorite, the
-    /// description under both.
+    /// description and website under both.
     private func phoneHeader(_ company: API.CompanyDetail) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 14) {
@@ -291,6 +283,7 @@ struct CompanyDetailView: View {
                 .frame(width: 112, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+                .shadow(color: .black.opacity(0.3), radius: 14, y: 6)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(company.name)
@@ -312,10 +305,11 @@ struct CompanyDetailView: View {
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            EntityLinksRow(links: company.links)
         }
     }
 
-    private func header(_ company: API.CompanyDetail) -> some View {
+    private func wideHeader(_ company: API.CompanyDetail) -> some View {
         HStack(alignment: .top, spacing: 28) {
             ZStack {
                 if company.logoPath.url(.w342) != nil {
@@ -333,12 +327,14 @@ struct CompanyDetailView: View {
             .frame(width: 176, height: 110)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.border))
+            .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 14) {
                     Text(company.name)
                         .font(.marqueeDisplay(38))
                         .foregroundStyle(Theme.textPrimary)
+                        .shadow(color: .black.opacity(0.25), radius: 10, y: 2)
                     FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
                 }
                 Text("\(company.titleCount) titles in the catalog")
@@ -351,6 +347,8 @@ struct CompanyDetailView: View {
                         .frame(maxWidth: 720, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                EntityLinksRow(links: company.links)
+                    .padding(.top, 4)
             }
         }
     }
@@ -365,6 +363,194 @@ struct CompanyDetailView: View {
             return
         } catch {
             if company == nil { self.error = error.localizedDescription }
+        }
+    }
+}
+
+// MARK: - Hero
+
+/// components/entity-hero.tsx — a person's or studio's page. With a title
+/// they're best known for, its artwork runs full-bleed behind the header
+/// (the title page's band, fades and veil: `TitleBackdrop`) with a small
+/// "From {title}" link to it; without one, the header in the page's usual
+/// gutters. `rows` is the list under the header.
+struct EntityPage<Header: View, Rows: View>: View {
+    let knownFor: API.KnownForTitle?
+    /// The person's or studio's: keeps the film grain the same speckle on
+    /// every render.
+    let tmdbId: Int
+    @ViewBuilder let header: (_ compact: Bool) -> Header
+    @ViewBuilder let rows: () -> Rows
+
+    @Environment(\.navRailInsets) private var navRailInsets
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    private var seed: UInt64 {
+        UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: tmdbId)))
+    }
+
+    private var compact: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
+
+    var body: some View {
+        if let knownFor, knownFor.backdropPath.url(.w1280) != nil {
+            if compact {
+                phoneHero(knownFor)
+            } else {
+                wideHero(knownFor)
+            }
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: compact ? 28 : 44) {
+                    header(compact)
+                    rows()
+                }
+                .padding(.horizontal, Metrics.pagePadding)
+                .padding(.vertical, Metrics.pagePadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollsUnderNavRail()
+        }
+    }
+
+    /// The Mac and iPad: a band a little over half the window tall (a
+    /// person's header is shorter than a title's), the header over its lower
+    /// part, "From …" at its bottom right once the window is wide enough to
+    /// keep it clear of the text, above the header's right end otherwise.
+    private func wideHero(_ knownFor: API.KnownForTitle) -> some View {
+        GeometryReader { proxy in
+            let width = max(proxy.size.width, 1)
+            let height = max(360, min(proxy.size.height * 0.58, width * 0.42))
+            let headerTop = height * 0.36
+            let leading = navRailInsets.leading + Metrics.pagePadding
+            let trailing = navRailInsets.trailing + Metrics.titleRightGutter
+            let roomy = width >= 1200
+            ScrollView {
+                VStack(alignment: .leading, spacing: 44) {
+                    ZStack(alignment: .topLeading) {
+                        TitleBackdrop(
+                            backdropPath: knownFor.backdropPath,
+                            seed: seed,
+                            height: height,
+                            wide: width > 1400,
+                            sideFade: true
+                        )
+                        .equatable()
+                        .overlay(alignment: roomy ? .bottomTrailing : .topTrailing) {
+                            KnownForLink(knownFor: knownFor)
+                                .padding(.trailing, trailing)
+                                .padding(.bottom, roomy ? 34 : 0)
+                                .padding(.top, roomy ? 0 : headerTop - 42)
+                        }
+
+                        header(false)
+                            .padding(.leading, leading)
+                            .padding(.trailing, trailing)
+                            .padding(.top, headerTop)
+                    }
+
+                    rows()
+                        .padding(.leading, leading)
+                        .padding(.trailing, navRailInsets.trailing + Metrics.pagePadding)
+                        .padding(.bottom, Metrics.pagePadding)
+                }
+            }
+        }
+        .ignoresSafeArea(.container, edges: [.top, .horizontal])
+    }
+
+    /// How far the iPhone's header rises onto the artwork.
+    private static var phoneOverlap: CGFloat { 64 }
+
+    /// The iPhone: the artwork across the top, the header over its lower
+    /// edge with "From …" just above it, then one column.
+    private func phoneHero(_ knownFor: API.KnownForTitle) -> some View {
+        GeometryReader { proxy in
+            let height = max(220, proxy.size.width * 0.62)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TitleBackdrop(
+                        backdropPath: knownFor.backdropPath,
+                        seed: seed,
+                        height: height + proxy.safeAreaInsets.top,
+                        wide: false,
+                        sideFade: false
+                    )
+                    .equatable()
+                    // Above where the header starts, so it never sits on
+                    // the name beside the photo.
+                    .overlay(alignment: .bottomTrailing) {
+                        KnownForLink(knownFor: knownFor)
+                            .padding(.bottom, Self.phoneOverlap + 10)
+                    }
+
+                    header(true)
+                        .padding(.top, -Self.phoneOverlap)
+
+                    rows()
+                        .padding(.top, 28)
+                        .padding(.bottom, 40)
+                }
+                .padding(.horizontal, Metrics.pagePadding)
+            }
+            .ignoresSafeArea(.container, edges: .top)
+        }
+    }
+}
+
+/// The "From {title}" capsule on the band: opens the title the artwork is from.
+private struct KnownForLink: View {
+    let knownFor: API.KnownForTitle
+    @Environment(AppModel.self) private var model
+    @State private var hovering = false
+
+    var body: some View {
+        Button {
+            model.openTitle(knownFor.id)
+        } label: {
+            Text("From \(knownFor.name)")
+                .font(.system(size: Metrics.text(12)))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .foregroundStyle(hovering ? Theme.accent : Theme.textSecondary)
+                .padding(.horizontal, 12)
+                .frame(height: 28)
+                .background(Capsule().fill(Theme.bg0.opacity(0.4)))
+                .background(.ultraThinMaterial, in: Capsule())
+                .overlay(Capsule().strokeBorder(hovering ? Theme.accent : Theme.border))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(Text("Open \(knownFor.name)"))
+        .accessibilityLabel(Text("Background from \(knownFor.name). Open its page"))
+    }
+}
+
+/// components/external-links.tsx `EntityLinks` — IMDb, socials, website, as
+/// the title page's link pills.
+struct EntityLinksRow: View {
+    let links: [API.ExternalLink]
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        if !links.isEmpty {
+            FlowLayout(spacing: 8, lineSpacing: 8) {
+                ForEach(links, id: \.url) { link in
+                    if let url = link.link {
+                        Button(link.label) { openURL(url) }
+                            .buttonStyle(OutlineButtonStyle(pill: .medium))
+                            .help(url.absoluteString)
+                    }
+                }
+            }
         }
     }
 }

@@ -498,6 +498,38 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNil(try decode(API.AvatarResult.self, "avatar-removed").avatarUrl)
     }
 
+    /// Person and studio headers: the best-known title's artwork and the
+    /// official links; a server older than them leaves both out.
+    func testPersonAndStudioHeaders() throws {
+        let person = try decode(API.PersonDetail.self, "person-detail")
+        XCTAssertEqual(person.knownForTitle?.id, API.TitleID(.movie, 603))
+        XCTAssertEqual(person.knownForTitle?.name, "The Matrix")
+        XCTAssertNotNil(person.knownForTitle?.backdropPath.url(.w1280))
+        XCTAssertEqual(person.links.map(\.label), ["IMDb", "Instagram"])
+        XCTAssertEqual(person.links.first?.link?.absoluteString, "https://www.imdb.com/name/nm0000206")
+
+        let studio = try decode(API.CompanyDetail.self, "company-detail")
+        XCTAssertEqual(studio.knownForTitle?.tmdbId, 299536)
+        XCTAssertEqual(studio.links.map(\.kind), ["homepage"])
+        XCTAssertEqual(studio.links.first?.label, String(localized: "Website"))
+
+        let older = try APIClient.decoder.decode(
+            API.PersonDetail.self,
+            from: Data(#"{"tmdbId":1,"name":"X","alsoKnownAs":[],"biography":null,"birthday":null,"deathday":null,"placeOfBirth":null,"profilePath":null,"favorited":false,"credits":[]}"#.utf8)
+        )
+        XCTAssertNil(older.knownForTitle)
+        XCTAssertEqual(older.links, [])
+
+        // A kind this app doesn't know yet is labelled by its address; a
+        // link that isn't a web address is dropped.
+        let links = try APIClient.decoder.decode(
+            [API.ExternalLink].self,
+            from: Data(#"[{"kind":"bluesky","url":"https://bsky.app/profile/x"},{"kind":"imdb","url":"javascript:alert(1)"}]"#.utf8)
+        )
+        XCTAssertEqual(links[0].label, "bsky.app")
+        XCTAssertNil(links[1].link)
+    }
+
     // MARK: 0.53
 
     func testMemberProfileAndDiscoverLocale() throws {

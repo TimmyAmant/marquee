@@ -250,6 +250,10 @@ export const titles = pgTable(
     releaseDate: date("release_date"),
     firstAirDate: date("first_air_date"),
     status: text("status"),
+    /** TMDb's vote count as last seen in a list (a person's credits, a
+     * studio's catalog): how a studio's best-known title is picked
+     * (lib/tmdb/known-for.ts). */
+    voteCount: integer("vote_count"),
     rawTmdb: jsonb("raw_tmdb"),
     rawTvdb: jsonb("raw_tvdb"),
     refreshedAt: timestamp("refreshed_at", { withTimezone: true }).defaultNow().notNull(),
@@ -270,6 +274,10 @@ export const people = pgTable("people", {
   deathday: date("deathday"),
   placeOfBirth: text("place_of_birth"),
   profilePath: text("profile_path"),
+  /** The title they're best known for (lib/tmdb/known-for.ts), picked from
+   * their credits on each refresh: the artwork behind their page's header.
+   * Null when nothing qualifies. */
+  knownForTitleId: uuid("known_for_title_id").references((): AnyPgColumn => titles.id, { onDelete: "set null" }),
   rawTmdb: jsonb("raw_tmdb"),
   refreshedAt: timestamp("refreshed_at", { withTimezone: true }).defaultNow().notNull(),
 });

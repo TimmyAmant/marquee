@@ -6,6 +6,7 @@ import * as tmdb from "./client";
 import * as tvdb from "@/lib/tvdb/client";
 import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 import { isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
+import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
 
 const CATALOG_MAX_PAGES = 5;
 
@@ -18,6 +19,7 @@ export type LightTitleInput = {
   backdropPath?: string | null;
   releaseDate?: string | null;
   firstAirDate?: string | null;
+  voteCount?: number | null;
 };
 
 export async function upsertTitleLight(input: LightTitleInput) {
@@ -30,6 +32,7 @@ export async function upsertTitleLight(input: LightTitleInput) {
     backdropPath: input.backdropPath ?? null,
     releaseDate: input.releaseDate || null,
     firstAirDate: input.firstAirDate || null,
+    voteCount: input.voteCount ?? null,
     refreshedAt: new Date(),
   };
   const [row] = await db
@@ -50,6 +53,8 @@ export async function upsertTitleLight(input: LightTitleInput) {
         backdropPath: sql`coalesce(excluded.backdrop_path, ${titles.backdropPath})`,
         releaseDate: sql`coalesce(excluded.release_date, ${titles.releaseDate})`,
         firstAirDate: sql`coalesce(excluded.first_air_date, ${titles.firstAirDate})`,
+        // Votes only grow, so the latest list's count wins.
+        voteCount: sql`coalesce(excluded.vote_count, ${titles.voteCount})`,
       },
     })
     .returning();
@@ -179,10 +184,33 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
   }
 }
 
+/** A person cached before their details carried external_ids (and the
+ * best-known title picked alongside them) is refreshed once, so the header's
+ * artwork and links show up without waiting out the TTL. */
+function predatesKnownFor(rawTmdb: unknown): boolean {
+  return !rawTmdb || typeof rawTmdb !== "object" || !("external_ids" in rawTmdb);
+}
+
+function knownForCredit(item: tmdb.TmdbCreditItem): KnownForCredit {
+  return {
+    mediaType: item.media_type,
+    tmdbId: item.id,
+    name: item.title || item.name || "Untitled",
+    backdropPath: item.backdrop_path ?? null,
+    voteCount: item.vote_count ?? null,
+    order: item.order ?? null,
+    episodeCount: item.episode_count ?? null,
+    character: item.character ?? null,
+    department: item.department ?? null,
+    job: item.job ?? null,
+    genreIds: item.genre_ids ?? null,
+  };
+}
+
 export async function getOrFetchPersonWithCredits(tmdbId: number) {
   const [cachedPerson] = await db.select().from(people).where(eq(people.tmdbId, tmdbId)).limit(1);
 
-  if (!cachedPerson || isStale(cachedPerson.refreshedAt)) {
+  if (!cachedPerson || isStale(cachedPerson.refreshedAt) || predatesKnownFor(cachedPerson.rawTmdb)) {
     const [details, combinedCredits] = await Promise.all([
       tmdb.getPersonDetails(tmdbId),
       tmdb.getPersonCombinedCredits(tmdbId),
@@ -224,11 +252,10 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
     await db.delete(credits).where(and(eq(credits.personId, personRow.id), eq(credits.department, "Acting")));
 
     // Acting credits only (department/character-driven filmography); dedupe by media_type+id.
-    const seen = new Set<string>();
+    const seen = new Map<string, string>();
     for (const item of combinedCredits.cast) {
       const key = `${item.media_type}:${item.id}`;
       if (seen.has(key)) continue;
-      seen.add(key);
 
       const titleRow = await upsertTitleLight({
         mediaType: item.media_type,
@@ -236,9 +263,12 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
         name: item.title || item.name || "Untitled",
         overview: item.overview,
         posterPath: item.poster_path,
+        backdropPath: item.backdrop_path,
         releaseDate: item.release_date,
         firstAirDate: item.first_air_date,
+        voteCount: item.vote_count,
       });
+      seen.set(key, titleRow.id);
 
       await db
         .insert(credits)
@@ -252,6 +282,36 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
         })
         .onConflictDoNothing();
     }
+
+    // The title behind their page's header, from the credits just fetched —
+    // a director's comes from their crew credits, which aren't otherwise
+    // kept, so that one title is saved here.
+    const knownFor = pickPersonKnownFor({
+      personName: details.name,
+      knownForDepartment: details.known_for_department,
+      cast: combinedCredits.cast.map(knownForCredit),
+      crew: combinedCredits.crew.map(knownForCredit),
+    });
+    let knownForTitleId: string | null = null;
+    if (knownFor) {
+      knownForTitleId = seen.get(`${knownFor.mediaType}:${knownFor.tmdbId}`) ?? null;
+      if (!knownForTitleId) {
+        const item = combinedCredits.crew.find((c) => c.media_type === knownFor.mediaType && c.id === knownFor.tmdbId);
+        const titleRow = await upsertTitleLight({
+          mediaType: knownFor.mediaType,
+          tmdbId: knownFor.tmdbId,
+          name: knownFor.name,
+          overview: item?.overview,
+          posterPath: item?.poster_path,
+          backdropPath: knownFor.backdropPath,
+          releaseDate: item?.release_date,
+          firstAirDate: item?.first_air_date,
+          voteCount: knownFor.voteCount,
+        });
+        knownForTitleId = titleRow.id;
+      }
+    }
+    await db.update(people).set({ knownForTitleId }).where(eq(people.id, personRow.id));
 
     return getPersonWithCreditsFromDb(personRow.id);
   }
@@ -267,12 +327,15 @@ async function getPersonWithCreditsFromDb(personId: string) {
     .innerJoin(titles, eq(credits.titleId, titles.id))
     .where(eq(credits.personId, personId))
     .orderBy(desc(sql`coalesce(${titles.releaseDate}, ${titles.firstAirDate})`));
+  const [knownFor] = person?.knownForTitleId
+    ? await db.select().from(titles).where(eq(titles.id, person.knownForTitleId)).limit(1)
+    : [];
 
   // One entry per title, even for rows saved before refreshes replaced them.
   const seenTitles = new Set<string>();
   const unique = filmography.filter(({ title }) => !seenTitles.has(title.id) && seenTitles.add(title.id));
 
-  return { person, filmography: unique };
+  return { person, filmography: unique, knownFor: knownFor ?? null };
 }
 
 export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
@@ -282,13 +345,30 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
     .where(eq(companies.tmdbId, tmdbId))
     .limit(1);
 
-  if (!cachedCompany || isStale(cachedCompany.refreshedAt)) {
-    const details = await tmdb.getCompanyDetails(tmdbId);
+  if (cachedCompany && !isStale(cachedCompany.refreshedAt)) {
+    const cached = await getCompanyWithCatalogFromDb(cachedCompany.id);
+    // A catalog saved before titles kept their vote counts is refreshed
+    // once, so the page can pick its best-known title (lib/tmdb/known-for.ts).
+    if (cached.catalog.length === 0 || cached.catalog.some((title) => title.voteCount !== null)) return cached;
+  }
 
-    const [companyRow] = await db
-      .insert(companies)
-      .values({
-        tmdbId,
+  const details = await tmdb.getCompanyDetails(tmdbId);
+
+  const [companyRow] = await db
+    .insert(companies)
+    .values({
+      tmdbId,
+      name: details.name,
+      description: details.description || null,
+      logoPath: details.logo_path,
+      originCountry: details.origin_country,
+      parentCompanyTmdbId: details.parent_company?.id ?? null,
+      rawTmdb: details,
+      refreshedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: companies.tmdbId,
+      set: {
         name: details.name,
         description: details.description || null,
         logoPath: details.logo_path,
@@ -296,50 +376,37 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
         parentCompanyTmdbId: details.parent_company?.id ?? null,
         rawTmdb: details,
         refreshedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: companies.tmdbId,
-        set: {
-          name: details.name,
-          description: details.description || null,
-          logoPath: details.logo_path,
-          originCountry: details.origin_country,
-          parentCompanyTmdbId: details.parent_company?.id ?? null,
-          rawTmdb: details,
-          refreshedAt: new Date(),
-        },
-      })
-      .returning();
+      },
+    })
+    .returning();
 
-    for (const fetchPage of [tmdb.discoverMoviesByCompany, tmdb.discoverTvByCompany]) {
-      const mediaType: MediaType = fetchPage === tmdb.discoverMoviesByCompany ? "movie" : "tv";
-      for (let page = 1; page <= CATALOG_MAX_PAGES; page++) {
-        const response = await fetchPage(tmdbId, page);
-        for (const item of response.results) {
-          const titleRow = await upsertTitleLight({
-            mediaType,
-            tmdbId: item.id,
-            name: item.title || item.name || "Untitled",
-            overview: item.overview,
-            posterPath: item.poster_path,
-            backdropPath: item.backdrop_path,
-            releaseDate: item.release_date,
-            firstAirDate: item.first_air_date,
-          });
+  for (const fetchPage of [tmdb.discoverMoviesByCompany, tmdb.discoverTvByCompany]) {
+    const mediaType: MediaType = fetchPage === tmdb.discoverMoviesByCompany ? "movie" : "tv";
+    for (let page = 1; page <= CATALOG_MAX_PAGES; page++) {
+      const response = await fetchPage(tmdbId, page);
+      for (const item of response.results) {
+        const titleRow = await upsertTitleLight({
+          mediaType,
+          tmdbId: item.id,
+          name: item.title || item.name || "Untitled",
+          overview: item.overview,
+          posterPath: item.poster_path,
+          backdropPath: item.backdrop_path,
+          releaseDate: item.release_date,
+          firstAirDate: item.first_air_date,
+          voteCount: item.vote_count,
+        });
 
-          await db
-            .insert(companyTitles)
-            .values({ companyId: companyRow.id, titleId: titleRow.id })
-            .onConflictDoNothing();
-        }
-        if (page >= response.total_pages) break;
+        await db
+          .insert(companyTitles)
+          .values({ companyId: companyRow.id, titleId: titleRow.id })
+          .onConflictDoNothing();
       }
+      if (page >= response.total_pages) break;
     }
-
-    return getCompanyWithCatalogFromDb(companyRow.id);
   }
 
-  return getCompanyWithCatalogFromDb(cachedCompany.id);
+  return getCompanyWithCatalogFromDb(companyRow.id);
 }
 
 async function getCompanyWithCatalogFromDb(companyId: string) {

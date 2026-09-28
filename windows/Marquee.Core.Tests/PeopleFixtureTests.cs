@@ -161,6 +161,52 @@ public sealed class PeopleFixtureTests
     }
 
     [Fact]
+    public void PersonAndStudioHeadersDecode()
+    {
+        // The Mac's testPersonAndStudioHeaders: the best-known title's
+        // artwork and the official links.
+        var person = Fixtures.Decode<PersonDetail>("person-detail");
+        Assert.NotNull(person.KnownForTitle);
+        Assert.Equal(new TitleId(MediaType.Movie, 603), person.KnownForTitle!.Id);
+        Assert.Equal("The Matrix", person.KnownForTitle.Name);
+        Assert.NotNull(person.KnownForTitle.BackdropPath.Url(ImageSize.W1280));
+        Assert.Equal(["IMDb", "Instagram"], person.Links.Select(link => link.Label));
+        Assert.Equal("https://www.imdb.com/name/nm0000206", person.Links[0].Link?.AbsoluteUri);
+
+        var studio = Fixtures.Decode<CompanyDetail>("company-detail");
+        Assert.Equal(299536, studio.KnownForTitle?.TmdbId);
+        var website = Assert.Single(studio.Links);
+        Assert.Equal("homepage", website.Kind);
+        Assert.Equal("Website", website.Label);
+    }
+
+    [Fact]
+    public void OlderServerHasNoHeaderExtras()
+    {
+        var person = Json.Decode<PersonDetail>(
+            """
+            {"tmdbId":1,"name":"X","alsoKnownAs":[],"biography":null,"birthday":null,"deathday":null,
+             "placeOfBirth":null,"profilePath":null,"favorited":false,"credits":[]}
+            """);
+        Assert.Null(person.KnownForTitle);
+        Assert.Empty(person.Links);
+    }
+
+    [Fact]
+    public void ExternalLinksKeepOnlyHttpsAndLabelUnknownKinds()
+    {
+        var links = Json.Decode<List<EntityLink>>(
+            """
+            [{"kind":"bluesky","url":"https://bsky.app/profile/x"},
+             {"kind":"imdb","url":"javascript:alert(1)"},
+             {"kind":"homepage","url":"http://example.com"}]
+            """);
+        Assert.Equal("bsky.app", links[0].Label);
+        Assert.Null(links[1].Link);
+        Assert.Null(links[2].Link);
+    }
+
+    [Fact]
     public void ListOrderLabels()
     {
         Assert.Equal(["Newest first", "Oldest first", "A–Z"], TitleListOrderExtensions.All.Select(order => order.Label()));

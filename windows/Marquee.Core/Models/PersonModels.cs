@@ -25,6 +25,16 @@ public sealed record PersonDetail
     public required bool Favorited { get; init; }
 
     /// <summary>
+    /// The title they're best known for: its backdrop goes behind the
+    /// header, with a "From {name}" link to it. Null when nothing they're
+    /// known for has artwork, and from a server older than this field.
+    /// </summary>
+    public KnownForTitle? KnownForTitle { get; init; }
+
+    /// <summary>IMDb, socials, their website. Null from a server older than this field; read <see cref="Links"/>.</summary>
+    public IReadOnlyList<EntityLink>? ExternalLinks { get; init; }
+
+    /// <summary>
     /// The acting filmography (<c>Subtitle</c> = character) with status,
     /// favorites and quick-add. Empty: "No processed filmography found for
     /// this person yet."
@@ -32,6 +42,9 @@ public sealed record PersonDetail
     public required IReadOnlyList<TitleCard> Credits { get; init; }
 
     public int Id => TmdbId;
+
+    /// <summary>The official links this app can open, in the server's order.</summary>
+    public IReadOnlyList<EntityLink> Links => (ExternalLinks ?? []).Where(link => link.Link != null).ToList();
 
     /// <summary>Age today, or at death. Null without a birthday.</summary>
     public int? Age => AgeOn(DateOnly.FromDateTime(DateTime.Now));
@@ -76,10 +89,19 @@ public sealed record CompanyDetail
 
     public required bool Favorited { get; init; }
 
+    /// <summary>Its most-voted title with artwork, as on a person's page.</summary>
+    public KnownForTitle? KnownForTitle { get; init; }
+
+    /// <summary>Only ever its website. Null from a server older than this field.</summary>
+    public IReadOnlyList<EntityLink>? ExternalLinks { get; init; }
+
     /// <summary>With status, favorited and canQuickAdd. Empty: "No titles found for this studio yet."</summary>
     public required IReadOnlyList<TitleCard> Titles { get; init; }
 
     public int Id => TmdbId;
+
+    /// <summary>The official links this app can open, in the server's order.</summary>
+    public IReadOnlyList<EntityLink> Links => (ExternalLinks ?? []).Where(link => link.Link != null).ToList();
 
     /// <summary>The website truncates the description at 400 characters; null for a blank one.</summary>
     public string? ShortDescription =>
@@ -99,6 +121,49 @@ public sealed record CompanyDetail
         }
         return info.SubstringByTextElements(0, limit).Trim() + "…";
     }
+}
+
+/// <summary>The title a person or studio is best known for (components/entity-hero.tsx).</summary>
+public sealed record KnownForTitle
+{
+    public required MediaType MediaType { get; init; }
+    public required int TmdbId { get; init; }
+    public required string Name { get; init; }
+    public ImageRef? BackdropPath { get; init; }
+
+    public TitleId Id => new(MediaType, TmdbId);
+}
+
+/// <summary>One official link on a person's or studio's page, in display order.</summary>
+public sealed record EntityLink
+{
+    /// <summary>
+    /// <c>imdb</c>, <c>instagram</c>, <c>twitter</c>, <c>facebook</c>,
+    /// <c>tiktok</c>, <c>youtube</c> or <c>homepage</c>; a kind this app
+    /// doesn't know yet is labelled by its address.
+    /// </summary>
+    public required string Kind { get; init; }
+
+    public required string Url { get; init; }
+
+    /// <summary>The address when it's an https one this app opens (as the title page's links); null otherwise.</summary>
+    public Uri? Link =>
+        Uri.TryCreate(Url, UriKind.Absolute, out var uri) && string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            ? uri
+            : null;
+
+    /// <summary>The brand's own name, or "Website" (lib/tmdb/entity-links.ts).</summary>
+    public string Label => Kind switch
+    {
+        "imdb" => "IMDb",
+        "instagram" => "Instagram",
+        "twitter" => "X / Twitter",
+        "facebook" => "Facebook",
+        "tiktok" => "TikTok",
+        "youtube" => "YouTube",
+        "homepage" => Loc.Get("Model_LinkWebsite"),
+        _ => Link?.Host ?? Url,
+    };
 }
 
 /// <summary>The person/studio list's client-side sorts.</summary>
