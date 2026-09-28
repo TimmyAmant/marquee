@@ -191,6 +191,10 @@ enum UnreachableReason: Equatable, Hashable, Sendable {
     case unknownHost
     /// macOS blocked the connection: Marquee lacks Local Network access.
     case localNetworkDenied
+    /// The server (or the reverse proxy in front of it) answered with a
+    /// 5xx: a Marquee server that errored, or a 502/503/504 from a proxy
+    /// whose Marquee is down, which is what a restarting container looks like.
+    case serverError(Int)
     /// Anything else (TLS failure, …), with the system's message.
     case failed(String)
 }
@@ -213,9 +217,25 @@ enum ProbeOutcome: Equatable, Hashable, Sendable {
         return nil
     }
 
-    /// The inline error for manual entry and saved-server checks; nil for a usable server.
-    func problemMessage(for address: ServerAddress) -> String? {
+    /// What a server that's restarting or updating looks like from here:
+    /// nothing listening yet, no answer, or an error page while it boots.
+    /// For a saved server this means "wait for it", not "check the address".
+    var isTemporaryOutage: Bool {
+        switch self {
+        case .unreachable(.refused), .unreachable(.noResponse), .unreachable(.serverError): true
+        default: false
+        }
+    }
+
+    /// The inline error for manual entry and saved-server checks; nil for a
+    /// usable server.
+    /// - Parameter saved: The address is the saved server, which worked
+    ///   before: an outage isn't blamed on the port or the address.
+    func problemMessage(for address: ServerAddress, saved: Bool = false) -> String? {
         let name = address.displayName
+        if saved, isTemporaryOutage {
+            return String(localized: "Marquee isn't answering at \(name). If it's restarting or updating, this clears by itself.")
+        }
         switch self {
         case .marquee:
             return nil
@@ -235,6 +255,8 @@ enum ProbeOutcome: Equatable, Hashable, Sendable {
                 return String(localized: "Couldn't find \(address.host) on your network. Try its IP address instead.")
             case .localNetworkDenied:
                 return PlatformText.localNetworkDenied
+            case let .serverError(status):
+                return String(localized: "\(name) answered with an error (\(String(status))). If Marquee is starting up, try again in a moment.")
             case let .failed(message):
                 return String(localized: "Couldn't connect to \(name): \(message)")
             }
@@ -319,9 +341,22 @@ enum ServerProbe {
         if apiHeader != nil {
             // A v1 server that failed to answer server-info (it's meant to
             // return 200 even when degraded) — it's ours, but not usable now.
+            if statusCode >= 500 { return .unreachable(.serverError(statusCode)) }
             return .unreachable(.failed(String(localized: "the server returned an error (\(statusCode)).")))
         }
+        if isGatewayOutage(statusCode) {
+            // A reverse proxy answering for a Marquee that's down (a container
+            // restarting after an update): no X-Marquee-API, but not "some
+            // other app" either.
+            return .unreachable(.serverError(statusCode))
+        }
         return .notMarquee
+    }
+
+    /// 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout: what a
+    /// proxy says while the app behind it is down.
+    static func isGatewayOutage(_ statusCode: Int) -> Bool {
+        (502...504).contains(statusCode)
     }
 
     /// Legacy servers answer every unknown route with the web app's HTML,

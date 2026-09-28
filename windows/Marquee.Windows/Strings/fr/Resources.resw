@@ -2060,7 +2060,7 @@
     <value>Claim des groupes</value>
   </data>
   <data name="Integrations_SsoIntro.Text" xml:space="preserve">
-    <value>Ajoute « Se connecter avec … » pour votre propre fournisseur d’identité (Authentik, Authelia, Pocket ID, Keycloak, Google ou tout autre fournisseur compatible OpenID Connect) sur le site web et dans les apps Mac et Windows.</value>
+    <value>Ajoute « Se connecter avec … » pour votre propre fournisseur d’identité (Authentik, Authelia, Pocket ID, Keycloak, Google ou tout autre fournisseur compatible OpenID Connect) sur le site web et dans les apps Mac, iPhone et Windows.</value>
   </data>
   <data name="Integrations_SsoIssuer.Header" xml:space="preserve">
     <value>URL de l’émetteur</value>

@@ -246,8 +246,59 @@ final class ServerProbeClassificationTests: XCTestCase {
 
     func testV1ServerErrorIsNotMistakenForAnotherApp() {
         let outcome = classify(500, #"{"error":"boom","code":"internal"}"#)
-        guard case .unreachable(.failed) = outcome else {
-            return XCTFail("Expected unreachable(.failed), got \(outcome)")
+        XCTAssertEqual(outcome, .unreachable(.serverError(500)))
+        XCTAssertTrue(outcome.isTemporaryOutage, "A 5xx from Marquee is waited out")
+        guard case .unreachable(.failed) = classify(404, #"{"error":"nope","code":"not_found"}"#) else {
+            return XCTFail("A v1 4xx on server-info is still a plain failure")
+        }
+    }
+
+    func testProxyGatewayErrorsAreAnOutageNotAnotherApp() {
+        // nginx / Caddy / Traefik while the Marquee container restarts: no
+        // X-Marquee-API, an HTML error page.
+        let page = "<html><head><title>502 Bad Gateway</title></head><body>nginx</body></html>"
+        for status in [502, 503, 504] {
+            let outcome = classify(status, page, contentType: "text/html", apiHeader: nil)
+            XCTAssertEqual(outcome, .unreachable(.serverError(status)))
+            XCTAssertTrue(outcome.isTemporaryOutage)
+        }
+        // Other errors from something that isn't Marquee still aren't ours.
+        XCTAssertEqual(classify(500, page, contentType: "text/html", apiHeader: nil), .notMarquee)
+        XCTAssertEqual(classify(401, "Unauthorized", contentType: "text/plain", apiHeader: nil), .notMarquee)
+    }
+
+    func testWhichOutcomesAreTemporary() {
+        XCTAssertTrue(ProbeOutcome.unreachable(.refused).isTemporaryOutage)
+        XCTAssertTrue(ProbeOutcome.unreachable(.noResponse).isTemporaryOutage)
+        XCTAssertFalse(ProbeOutcome.unreachable(.unknownHost).isTemporaryOutage)
+        XCTAssertFalse(ProbeOutcome.unreachable(.localNetworkDenied).isTemporaryOutage)
+        XCTAssertFalse(ProbeOutcome.unreachable(.failed("TLS")).isTemporaryOutage)
+        XCTAssertFalse(ProbeOutcome.notMarquee.isTemporaryOutage)
+        XCTAssertFalse(ProbeOutcome.legacy.isTemporaryOutage)
+    }
+
+    func testSavedServerOutageDoesNotBlameThePort() {
+        let address = ServerAddress(host: "192.168.1.20")
+        for reason in [UnreachableReason.refused, .noResponse, .serverError(502)] {
+            let message = ProbeOutcome.unreachable(reason).problemMessage(for: address, saved: true) ?? ""
+            XCTAssertTrue(message.contains("restarting or updating"), message)
+            XCTAssertFalse(message.contains("port"), message)
+            XCTAssertTrue(message.contains("192.168.1.20"), message)
+        }
+        // A typed address still gets the port advice.
+        XCTAssertTrue(ProbeOutcome.unreachable(.refused).problemMessage(for: address)?.contains("port 3000") == true)
+        // Problems that aren't an outage keep their own message.
+        XCTAssertTrue(
+            ProbeOutcome.unreachable(.localNetworkDenied).problemMessage(for: address, saved: true)?.contains("Local Network") == true
+        )
+    }
+
+    func testMeFailingRightAfterServerInfoIsAnOutage() {
+        XCTAssertEqual(ServerSession.outageReason(for: .server(nil)), .serverError(500))
+        XCTAssertEqual(ServerSession.outageReason(for: .notMarquee), .serverError(502))
+        XCTAssertEqual(ServerSession.outageReason(for: .network(URLError(.cannotConnectToHost))), .refused)
+        guard case .failed = ServerSession.outageReason(for: .forbidden) else {
+            return XCTFail("Other errors keep their message")
         }
     }
 
@@ -265,7 +316,7 @@ final class ServerProbeClassificationTests: XCTestCase {
         let outcomes: [ProbeOutcome] = [
             .legacy, .notMarquee, .incompatible(ServerInfo(apiVersion: 2, version: "1.0.0", setupComplete: true)),
             .unreachable(.refused), .unreachable(.noResponse), .unreachable(.unknownHost),
-            .unreachable(.localNetworkDenied), .unreachable(.failed("TLS")),
+            .unreachable(.localNetworkDenied), .unreachable(.serverError(503)), .unreachable(.failed("TLS")),
         ]
         for outcome in outcomes {
             XCTAssertNotNil(outcome.problemMessage(for: address), "\(outcome)")

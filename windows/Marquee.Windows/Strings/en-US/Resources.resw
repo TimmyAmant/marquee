@@ -2134,7 +2134,7 @@
     <value>Groups claim</value>
   </data>
   <data name="Integrations_SsoIntro.Text" xml:space="preserve">
-    <value>Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps.</value>
+    <value>Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac, iPhone and Windows apps.</value>
   </data>
   <data name="Integrations_SsoIssuer.Header" xml:space="preserve">
     <value>Issuer URL</value>

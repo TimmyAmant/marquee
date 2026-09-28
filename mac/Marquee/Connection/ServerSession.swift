@@ -263,7 +263,7 @@ final class ServerSession {
             return .signedOut
         }
 
-        let outcome = await ServerProbe.probe(server, connectTimeout: .seconds(3))
+        let outcome = await probe(server)
         guard server == self.server else { return .signedOut }
         guard case let .marquee(info) = outcome else { return .unreachable(outcome) }
 
@@ -277,7 +277,19 @@ final class ServerSession {
                 clearToken(for: server)
                 return .signedOut
             }
-            return .unreachable(.unreachable(.failed(retryError.localizedDescription)))
+            return .unreachable(.unreachable(Self.outageReason(for: retryError)))
+        }
+    }
+
+    /// Why `/me` failed right after server-info answered: a server still
+    /// booting (a 5xx, a dropped connection) is an outage to wait out, not a
+    /// new problem to explain.
+    static func outageReason(for error: APIError) -> UnreachableReason {
+        switch error {
+        case .server: .serverError(500)
+        case .notMarquee: .serverError(502)
+        case let .network(urlError): ServerProbe.unreachableReason(for: urlError)
+        default: .failed(error.localizedDescription)
         }
     }
 
@@ -362,7 +374,7 @@ final class ServerSession {
             guard case let .network(urlError) = error, Self.neverReachedServer.contains(urlError.code) else { throw error }
             Self.logger.info("\(path, privacy: .public) failed to connect (\(error.localizedDescription, privacy: .public)); checking the server")
             let outcome = await refreshInfo()
-            if let problem = outcome.problemMessage(for: server) {
+            if let problem = outcome.problemMessage(for: server, saved: true) {
                 throw SignInConnectionError(message: problem)
             }
             guard retries else { throw error }

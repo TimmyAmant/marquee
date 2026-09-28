@@ -117,6 +117,10 @@ final class AppModel {
         case connect
         /// A server is chosen; sign in (or create its first account).
         case signIn
+        /// The saved server, which worked before, isn't answering — most
+        /// likely restarting or updating. Retried on `reconnectSchedule`
+        /// (the token is kept); `connectionProblem` says what was seen.
+        case waiting
         /// The saved server couldn't be used; `connectionProblem` says why.
         case unreachable
         case ready
@@ -161,6 +165,7 @@ final class AppModel {
     var phase: Phase = .launching {
         didSet {
             if phase == .ready, oldValue != .ready { replayPendingURL() }
+            if phase != .waiting, phase != .unreachable { endOutage() }
         }
     }
     /// The signed-in account, exactly as the server reports it.
@@ -179,7 +184,7 @@ final class AppModel {
     var authForm: AuthForm = .signIn
     /// A note on the sign-in card, e.g. after the server ended the session.
     var authNotice: String?
-    /// Why `.unreachable` couldn't use the saved server.
+    /// Why `.waiting` / `.unreachable` couldn't use the saved server.
     var connectionProblem: ProbeOutcome?
     private(set) var isRetryingConnection = false
 
@@ -226,6 +231,15 @@ final class AppModel {
     @ObservationIgnored private var wakeObserver: NSObjectProtocol?
     #endif
     @ObservationIgnored private var autoRetryTask: Task<Void, Never>?
+
+    /// The "Waiting for your server…" retries; tests shorten it.
+    @ObservationIgnored var reconnectSchedule = ReconnectSchedule.standard
+    /// When the saved server was first found down; nil while it isn't.
+    @ObservationIgnored private var outageStarted: ContinuousClock.Instant?
+    /// Automatic attempts made since `outageStarted`.
+    @ObservationIgnored private var reconnectAttempt = 0
+    /// The next automatic attempt, while `.waiting`.
+    @ObservationIgnored private var reconnectTask: Task<Void, Never>?
 
     /// How long a network change or wake settles before the automatic retry,
     /// so a flapping Wi-Fi join doesn't fire a burst of probes.
@@ -297,7 +311,7 @@ final class AppModel {
     /// No saved server → onboarding. A saved token → `/me`, landing signed in,
     /// at sign-in on a 401, or on the can't-reach card. No token → sign-in,
     /// after a server-info probe so the card knows whether setup is done.
-    private func connectToSavedServer() async {
+    func connectToSavedServer() async {
         // A Change Server… (or another server picked) while this is out
         // makes its answer stale; it must not pull the app back to it.
         connectGeneration &+= 1
@@ -350,14 +364,62 @@ final class AppModel {
         phase = .signIn
     }
 
+    /// A saved server that's restarting or updating (refused, no answer, a
+    /// 5xx or a proxy's 502–504) gets the waiting card and retries by itself
+    /// for a couple of minutes, keeping the token; anything else, or an
+    /// outage that outlasts the wait, gets the can't-reach card.
     private func showUnreachable(_ outcome: ProbeOutcome) {
         connectionProblem = outcome
-        phase = .unreachable
+        guard outcome.isTemporaryOutage else {
+            outageStarted = nil
+            phase = .unreachable
+            return
+        }
+        if outageStarted == nil {
+            outageStarted = .now
+            reconnectAttempt = 0
+        } else if phase != .waiting {
+            // Already waited this outage out: a Retry that fails stays on the card.
+            phase = .unreachable
+            return
+        }
+        scheduleReconnect()
     }
 
-    /// "Retry" on the can't-reach card.
+    /// Queues the next automatic attempt, or gives up on waiting once the
+    /// schedule runs out.
+    private func scheduleReconnect() {
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        guard let started = outageStarted,
+              let wait = reconnectSchedule.delay(beforeAttempt: reconnectAttempt, elapsed: started.duration(to: .now))
+        else {
+            phase = .unreachable
+            return
+        }
+        reconnectAttempt += 1
+        phase = .waiting
+        reconnectTask = Task { [weak self] in
+            try? await Task.sleep(for: wait)
+            guard !Task.isCancelled, let self, self.phase == .waiting else { return }
+            self.retryConnection()
+        }
+    }
+
+    /// The server answered, or another one was picked: no more waiting.
+    private func endOutage() {
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        outageStarted = nil
+        reconnectAttempt = 0
+    }
+
+    /// "Retry" on the can't-reach card, "Retry now" while waiting, and the
+    /// automatic attempts.
     func retryConnection() {
-        guard phase == .unreachable, !isRetryingConnection else { return }
+        guard phase == .unreachable || phase == .waiting, !isRetryingConnection else { return }
+        reconnectTask?.cancel()
+        reconnectTask = nil
         isRetryingConnection = true
         Task {
             await connectToSavedServer()
@@ -393,7 +455,7 @@ final class AppModel {
             try? await Task.sleep(for: Self.autoRetryDelay)
             guard !Task.isCancelled, let self else { return }
             switch phase {
-            case .unreachable: retryConnection()
+            case .unreachable, .waiting: retryConnection()
             case .ready: refreshCounts()
             default: break
             }
@@ -550,6 +612,12 @@ final class AppModel {
     /// The app came to the front: catch up on counts (and banners) right away,
     /// and pick up a change made in System Settings › Notifications.
     func applicationDidBecomeActive() {
+        // Back from another app (or the Home Screen): a server that was down
+        // may be back, so try it now rather than on the next tick.
+        if phase == .unreachable || phase == .waiting {
+            retryConnection()
+            return
+        }
         refreshCounts()
         guard phase == .ready else { return }
         let consent = notificationConsent

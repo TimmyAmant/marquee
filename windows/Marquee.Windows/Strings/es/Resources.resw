@@ -2060,7 +2060,7 @@
     <value>Claim de grupos</value>
   </data>
   <data name="Integrations_SsoIntro.Text" xml:space="preserve">
-    <value>Añade “Iniciar sesión con …” para tu propio proveedor de identidad (Authentik, Authelia, Pocket ID, Keycloak, Google o cualquier otro que hable OpenID Connect) en el sitio web y en las apps de Mac y Windows.</value>
+    <value>Añade “Iniciar sesión con …” para tu propio proveedor de identidad (Authentik, Authelia, Pocket ID, Keycloak, Google o cualquier otro que hable OpenID Connect) en el sitio web y en las apps de Mac, iPhone y Windows.</value>
   </data>
   <data name="Integrations_SsoIssuer.Header" xml:space="preserve">
     <value>URL del emisor</value>
