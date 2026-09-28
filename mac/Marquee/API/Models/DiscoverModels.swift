@@ -31,6 +31,10 @@ extension API {
         var canQuickAdd: Bool
         /// Show "Request", or "Requested" when `requested` is true.
         let canRequest: Bool
+        /// Series in the library only: aired episodes on disk against aired
+        /// episodes, specials left out ("96/96"). nil for a movie, a show the
+        /// library doesn't have, and from servers older than the field.
+        var episodes: EpisodeCounts? = nil
 
         var id: TitleID { TitleID(mediaType, tmdbId) }
 
@@ -38,6 +42,21 @@ extension API {
         var footerLine: String {
             [subtitle, year].compactMap(\.nonBlank).joined(separator: " · ")
         }
+    }
+
+    /// A series poster's "have/total" (`TitleCard.episodes`).
+    struct EpisodeCounts: Codable, Hashable, Sendable {
+        /// Aired episodes with a file on disk.
+        let have: Int
+        /// Episodes aired so far.
+        let total: Int
+
+        /// Every aired episode is on disk.
+        var isComplete: Bool { have >= total }
+        /// "120/125", what the poster shows.
+        var shortLabel: String { "\(have)/\(total)" } // i18n-ignore
+        /// "120 of 125 episodes", what VoiceOver reads.
+        var spokenLabel: String { String(localized: "\(have) of \(total) episodes") }
     }
 
     struct PersonCard: Codable, Hashable, Sendable, Identifiable {

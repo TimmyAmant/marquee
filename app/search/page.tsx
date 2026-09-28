@@ -90,6 +90,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         }
         badge={item.status && <StatusBadge status={item.status} compact />}
         status={item.status}
+        episodes={item.episodes}
         favoriteAction={
           signedIn && (
             <FavoriteButton entityType={item.mediaType} tmdbId={item.tmdbId} initialFavorited={item.favorited} compact />

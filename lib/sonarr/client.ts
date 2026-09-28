@@ -89,6 +89,8 @@ export interface SonarrSeasonStats {
     episodeCount: number;
     /** Every episode of the season, monitored or not, aired or not. */
     totalEpisodeCount?: number;
+    /** The season's next monitored episode's air date, if one is due. */
+    nextAiring?: string | null;
   };
 }
 

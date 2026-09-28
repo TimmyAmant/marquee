@@ -25,6 +25,6 @@ export const GET = withApi<{ id: string }>(async (request, params): Promise<Memb
     user: householdMember(profile.member, ctx.user.id),
     requests: profile.requests,
     requestLimits: { movie: quotaDto(profile.limits.movie), tv: quotaDto(profile.limits.tv) },
-    watchlist: profile.watchlist?.map((item) => titleCard(item, { status: item.status ?? null })) ?? null,
+    watchlist: profile.watchlist?.map((item) => titleCard(item, { status: item.status ?? null, episodes: item.episodes })) ?? null,
   };
 });

@@ -8,6 +8,7 @@
   "countMovies": "{count, plural, one {film} other {films}}",
   "countSeries": "{count, plural, one {série} other {séries}}",
   "countEpisodes": "{count, plural, one {# épisode} other {# épisodes}}",
+  "episodesOfTotal": "{have} sur {total, plural, one {# épisode} other {# épisodes}}",
   "episodesLabel": "{count, plural, one {épisode} other {épisodes}}",
   "onDisk": "sur disque",
   "trackedNote": "{count, plural, one {+ # de plus en téléchargement, introuvable ou à venir, non compté ci-dessus} other {+ # de plus en téléchargement, introuvables ou à venir, non comptés ci-dessus}}",

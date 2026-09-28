@@ -60,6 +60,7 @@ export function browseResultsHandler(lockedType: MediaType) {
           rating: item.rating,
           status: item.status ?? null,
           favorited: item.favorited,
+          episodes: item.episodes,
           ...posterActions(rules, item.mediaType, item.tmdbId, item.status),
         }),
       ),
@@ -96,6 +97,7 @@ export function browseExtrasHandler(lockedType: MediaType) {
               return titleCard(item, {
                 status,
                 favorited: byw.favoritedIds.has(item.tmdbId),
+                episodes: byw.episodeCounts.get(statusKey(item.mediaType, item.tmdbId)),
                 ...posterActions(rules, item.mediaType, item.tmdbId, status),
               });
             }),

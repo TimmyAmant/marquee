@@ -11,7 +11,8 @@ import {
   type TmdbGenre,
 } from "@/lib/tmdb/client";
 import { CURATED_STUDIO_IDS, CURATED_NETWORK_IDS } from "@/lib/tmdb/curated-companies";
-import { getLibraryStatusMap, getRecentlyAdded } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap, getRecentlyAdded } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType } from "@/lib/db/schema";
@@ -151,6 +152,17 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
       ])
     : new Map();
 
+  // Every series poster's have/total, whichever row it's on.
+  const episodeCounts: Map<string, EpisodeCounts> = viewer.libraryOwnerId
+    ? await getEpisodeCountMap(viewer.libraryOwnerId, [
+        ...recentlyAdded,
+        ...trendingItems.map((i) => ({ mediaType: i.media_type as MediaType, tmdbId: i.id })),
+        ...popularSeriesItems.map((i) => ({ mediaType: "tv" as MediaType, tmdbId: i.id })),
+        ...upcomingSeriesItems.map((i) => ({ mediaType: "tv" as MediaType, tmdbId: i.id })),
+        ...customPages.flat(),
+      ])
+    : new Map();
+
   const studioItems = studios.filter((s): s is NonNullable<typeof s> => s !== null);
   const networkItems = networks.filter((n): n is NonNullable<typeof n> => n !== null);
 
@@ -174,5 +186,7 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
     /** Each custom row's first titles, by row id. */
     customItems,
     statusMap,
+    /** Series posters' have/total aired episodes ("tv:1407"). */
+    episodeCounts,
   };
 }

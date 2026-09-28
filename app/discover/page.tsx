@@ -13,6 +13,7 @@ import type { MediaType } from "@/lib/db/schema";
 import { getT } from "@/lib/i18n/server";
 import { DiscoverEditMode } from "@/components/discover-edit-mode";
 import { getDiscoverLayout } from "@/lib/discover/layout";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 
 type PosterItem = {
   key: string;
@@ -22,6 +23,7 @@ type PosterItem = {
   posterPath: string | null;
   year: string | null | undefined;
   status: LibraryStatus | undefined;
+  episodes?: EpisodeCounts | null;
 };
 
 /** One row as the page draws it: posters, genre tiles or logos. */
@@ -65,6 +67,7 @@ export default async function DiscoverPage() {
             posterPath: item.posterPath,
             year: item.year,
             status: item.status,
+            episodes: item.episodes,
           })),
         );
       case "trending":
@@ -246,6 +249,7 @@ export default async function DiscoverPage() {
               }}
               badge={item.status && <StatusBadge status={item.status} compact />}
               status={item.status}
+              episodes={item.episodes ?? data.episodeCounts.get(`${item.mediaType}:${item.tmdbId}`)}
             />
           </PosterRowItem>
         ))}

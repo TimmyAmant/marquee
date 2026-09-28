@@ -146,6 +146,9 @@ extension API {
         let filePath: String?
         /// Series: episode files on disk; nil when unknown.
         let episodeCount: Int?
+        /// Series: aired episodes on disk against aired episodes (the poster's
+        /// "96/96"); nil for movies and from older servers.
+        var episodes: EpisodeCounts?
         /// Radarr: the file is below the quality cutoff.
         let upgradeAvailable: Bool
         /// Sonarr/Radarr and the media server report different paths.
@@ -161,7 +164,7 @@ extension API {
             TitleCard(
                 mediaType: mediaType, tmdbId: tmdbId, name: name, posterPath: posterPath, year: year,
                 subtitle: subtitle, overview: overview, rating: rating, status: status, favorited: favorited,
-                requested: requested, canQuickAdd: canQuickAdd, canRequest: canRequest
+                requested: requested, canQuickAdd: canQuickAdd, canRequest: canRequest, episodes: episodes
             )
         }
 

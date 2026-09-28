@@ -27,6 +27,27 @@ public sealed class DiscoverFixtureTests
     }
 
     [Fact]
+    public void EpisodeCountsAreOptional()
+    {
+        // null in the doc's example, and left out entirely by an older server.
+        Assert.Null(Fixtures.Decode<TitleCard>("title-card").Episodes);
+        var older = Json.Decode<TitleCard>("""
+            {"mediaType":"tv","tmdbId":1407,"name":"Homeland","posterPath":null,"year":"2011","subtitle":null,
+             "overview":null,"rating":null,"status":"owned","favorited":null,"requested":null,"canQuickAdd":false,"canRequest":false}
+            """);
+        Assert.Null(older.Episodes);
+
+        var complete = Json.Decode<TitleCard>("""
+            {"mediaType":"tv","tmdbId":1407,"name":"Homeland","posterPath":null,"year":"2011","subtitle":null,
+             "overview":null,"rating":null,"status":"owned","favorited":null,"requested":null,"canQuickAdd":false,"canRequest":false,
+             "episodes":{"have":96,"total":96}}
+            """);
+        Assert.Equal("96/96", complete.Episodes?.ShortLabel);
+        Assert.True(complete.Episodes?.IsComplete);
+        Assert.Equal("96 of 96 episodes", complete.Episodes?.SpokenLabel);
+    }
+
+    [Fact]
     public void TitleCardValues()
     {
         var card = Fixtures.Decode<TitleCard>("title-card");

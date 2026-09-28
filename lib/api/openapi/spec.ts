@@ -129,6 +129,21 @@ const SCHEMAS: Record<string, Json> = {
       requested: { type: ["boolean", "null"] },
       canQuickAdd: { type: "boolean" },
       canRequest: { type: "boolean" },
+      episodes: {
+        oneOf: [
+          {
+            type: "object",
+            required: ["have", "total"],
+            properties: {
+              have: { type: "integer", description: "Aired episodes with a file on disk." },
+              total: { type: "integer", description: "Episodes aired so far." },
+            },
+          },
+          { type: "null" },
+        ],
+        description:
+          "Series in the library only: aired episodes on disk against episodes aired, specials left out (the poster's \"96/96\"). Null for a movie or a show the library doesn't have; left out by older servers.",
+      },
     },
   },
   LibraryEntry: {

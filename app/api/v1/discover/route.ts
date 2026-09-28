@@ -37,7 +37,11 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
   ]);
   const withActions = (mediaType: MediaType, tmdbId: number, known?: LibraryStatus | null) => {
     const resolved = known ?? status(mediaType, tmdbId);
-    return { status: resolved, ...posterActions(rules, mediaType, tmdbId, resolved) };
+    return {
+      status: resolved,
+      episodes: data.episodeCounts.get(statusKey(mediaType, tmdbId)),
+      ...posterActions(rules, mediaType, tmdbId, resolved),
+    };
   };
 
   const fixed = {
@@ -45,7 +49,7 @@ export const GET = withApi(async (request): Promise<DiscoverShelves> => {
       titleCard(item, withActions(item.mediaType, item.tmdbId, item.status ?? null)),
     ),
     watchlist: data.watchlist.map((item) =>
-      titleCard(item, withActions(item.mediaType, item.tmdbId, item.status ?? null)),
+      titleCard(item, { ...withActions(item.mediaType, item.tmdbId, item.status ?? null), episodes: item.episodes }),
     ),
     trending: data.trendingItems.map((item) => {
       const mediaType = item.media_type as MediaType;

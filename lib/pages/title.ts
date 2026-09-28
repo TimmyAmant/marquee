@@ -19,7 +19,8 @@ import {
   getArrTrackingInfo,
 } from "@/lib/integrations/status";
 import type { TitleLibraryStatus } from "@/lib/integrations/status";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { findTrailer, getCollection } from "@/lib/tmdb/client";
 import { findTvFranchiseGroup } from "@/lib/tmdb/tv-franchise-groups";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
@@ -359,6 +360,10 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     franchiseFavoritedIds,
     collectionFavorited,
   } = await loadFranchise(viewer, type, tmdbId, raw);
+  // The similar and franchise rows' series posters' have/total, in one read.
+  const episodeCounts = viewer.libraryOwnerId
+    ? await getEpisodeCountMap(viewer.libraryOwnerId, [...similarItems, ...franchiseItems])
+    : new Map<string, EpisodeCounts>();
 
   const seasonCompleteness = seasonLibrary ? seasonCompletenessOf(seasonLibrary) : null;
 
@@ -474,6 +479,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     similarStatusMap,
     similarRequestStatusMap,
     similarFavoritedIds,
+    episodeCounts,
     franchiseTitle,
     franchiseItems,
     collectionId,

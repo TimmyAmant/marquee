@@ -12,6 +12,12 @@ import type { MediaType } from "@/lib/db/schema";
 import type { LibraryStatus } from "@/components/status-badge";
 import { toYear, arrRowStatus, isDroppedArrRow, isPossibleDuplicate } from "@/lib/library/query-policy";
 import { statusRank } from "@/lib/arr/fan-out";
+import {
+  pickEpisodeCounts,
+  tmdbAiredEpisodeCount,
+  type EpisodeCounts,
+  type TmdbAiringInfo,
+} from "@/lib/library/episode-counts";
 
 export type LibrarySource = "plex" | "jellyfin" | "sonarr" | "radarr";
 
@@ -636,5 +642,112 @@ export async function getLibraryStatusMap(
     }
   }
 
+  return map;
+}
+
+/**
+ * A series poster's "have/total" for each show in `items` the library has
+ * ("tv:1407" → { have, total }) — movies never get one. Like
+ * getLibraryStatusMap, it reads only what the syncs stored: Sonarr's counts
+ * where it tracks the show, else the media servers' episode files against
+ * TMDb's aired episodes (lib/library/episode-counts.ts). A show with
+ * neither has no entry.
+ */
+export async function getEpisodeCountMap(
+  userId: string,
+  items: { mediaType: MediaType; tmdbId: number }[],
+): Promise<Map<string, EpisodeCounts>> {
+  const map = new Map<string, EpisodeCounts>();
+  const tvIds = [...new Set(items.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId))];
+  if (tvIds.length === 0) return map;
+
+  const [sonarrRows, plexServerRows, jellyfinServerRows] = await Promise.all([
+    db
+      .select({
+        tmdbId: arrStatusCache.externalId,
+        have: arrStatusCache.episodesHave,
+        aired: arrStatusCache.episodesAired,
+      })
+      .from(arrStatusCache)
+      .where(
+        and(
+          eq(arrStatusCache.userId, userId),
+          eq(arrStatusCache.provider, "sonarr"),
+          inArray(arrStatusCache.externalId, tvIds),
+        ),
+      ),
+    db.select({ id: plexServers.id }).from(plexServers).where(eq(plexServers.userId, userId)),
+    db.select({ id: jellyfinServers.id }).from(jellyfinServers).where(eq(jellyfinServers.userId, userId)),
+  ]);
+
+  const sonarr = new Map(sonarrRows.map((r) => [r.tmdbId, { have: r.have, total: r.aired }]));
+  const fromSonarr = (tmdbId: number) =>
+    pickEpisodeCounts({ sonarr: sonarr.get(tmdbId) ?? null, mediaServerHave: null, tmdbAired: null });
+  const rest = tvIds.filter((id) => !fromSonarr(id));
+
+  // Media-server files, the most any one server has, for the shows Sonarr
+  // doesn't count.
+  const mediaServerHave = new Map<number, number>();
+  const plexServerIds = plexServerRows.map((r) => r.id);
+  const jellyfinServerIds = jellyfinServerRows.map((r) => r.id);
+  if (rest.length > 0) {
+    const [plexRows, jellyfinRows] = await Promise.all([
+      plexServerIds.length === 0
+        ? []
+        : db
+            .select({ tmdbId: plexLibraryItems.tmdbId, have: plexLibraryItems.episodesHave })
+            .from(plexLibraryItems)
+            .where(
+              and(
+                inArray(plexLibraryItems.plexServerId, plexServerIds),
+                eq(plexLibraryItems.mediaType, "tv"),
+                inArray(plexLibraryItems.tmdbId, rest),
+              ),
+            ),
+      jellyfinServerIds.length === 0
+        ? []
+        : db
+            .select({ tmdbId: jellyfinLibraryItems.tmdbId, have: jellyfinLibraryItems.episodesHave })
+            .from(jellyfinLibraryItems)
+            .where(
+              and(
+                inArray(jellyfinLibraryItems.jellyfinServerId, jellyfinServerIds),
+                eq(jellyfinLibraryItems.mediaType, "tv"),
+                inArray(jellyfinLibraryItems.tmdbId, rest),
+              ),
+            ),
+    ]);
+    for (const row of [...plexRows, ...jellyfinRows]) {
+      if (row.tmdbId == null || row.have == null) continue;
+      mediaServerHave.set(row.tmdbId, Math.max(row.have, mediaServerHave.get(row.tmdbId) ?? 0));
+    }
+  }
+
+  // TMDb's aired count, only for the shows that need it — two small pieces
+  // of the cached record, picked out in SQL rather than loading the JSON.
+  const needAired = [...mediaServerHave.keys()];
+  const airedRows =
+    needAired.length === 0
+      ? []
+      : await db
+          .select({
+            tmdbId: titles.tmdbId,
+            seasons: sql<TmdbAiringInfo["seasons"]>`${titles.rawTmdb}->'seasons'`,
+            lastEpisode: sql<TmdbAiringInfo["last_episode_to_air"]>`${titles.rawTmdb}->'last_episode_to_air'`,
+          })
+          .from(titles)
+          .where(and(eq(titles.mediaType, "tv"), inArray(titles.tmdbId, needAired)));
+  const aired = new Map(
+    airedRows.map((r) => [r.tmdbId, tmdbAiredEpisodeCount({ seasons: r.seasons, last_episode_to_air: r.lastEpisode })]),
+  );
+
+  for (const tmdbId of tvIds) {
+    const counts = pickEpisodeCounts({
+      sonarr: sonarr.get(tmdbId) ?? null,
+      mediaServerHave: mediaServerHave.get(tmdbId) ?? null,
+      tmdbAired: aired.get(tmdbId) ?? null,
+    });
+    if (counts) map.set(`tv:${tmdbId}`, counts);
+  }
   return map;
 }

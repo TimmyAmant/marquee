@@ -52,6 +52,7 @@ export function titleDetailDto(
     return titleCard(item, {
       status,
       favorited: maps.favorited.has(item.tmdbId),
+      episodes: data.episodeCounts.get(key),
       ...posterActions(rules, item.mediaType, item.tmdbId, status),
     });
   };

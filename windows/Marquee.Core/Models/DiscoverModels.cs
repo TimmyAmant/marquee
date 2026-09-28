@@ -7,6 +7,25 @@ namespace Marquee.Core.Models;
 // section 2), plus the card shapes every list shares (the doc's "Shared
 // shapes"). Mirrors mac/Marquee/API/Models/DiscoverModels.swift.
 
+/// <summary>A series poster's "have/total" (<see cref="TitleCard.Episodes"/>).</summary>
+public sealed record EpisodeCounts
+{
+    /// <summary>Aired episodes with a file on disk.</summary>
+    public required int Have { get; init; }
+
+    /// <summary>Episodes aired so far.</summary>
+    public required int Total { get; init; }
+
+    /// <summary>Every aired episode is on disk.</summary>
+    public bool IsComplete => Have >= Total;
+
+    /// <summary>"120/125", what the poster shows.</summary>
+    public string ShortLabel => string.Create(CultureInfo.InvariantCulture, $"{Have}/{Total}");
+
+    /// <summary>"120 of 125 episodes", what a screen reader says.</summary>
+    public string SpokenLabel => Loc.Format("Card_EpisodesOfTotal", Have, Total);
+}
+
 /// <summary>
 /// A poster card. Fields a list doesn't compute on the website are null
 /// (<see cref="Favorited"/>, <see cref="Requested"/>) or false
@@ -50,6 +69,13 @@ public sealed record TitleCard
 
     /// <summary>Show "Request", or "Requested" when <see cref="Requested"/> is true.</summary>
     public required bool CanRequest { get; init; }
+
+    /// <summary>
+    /// Series in the library only: aired episodes on disk against aired
+    /// episodes, specials left out (the poster's "96/96"). Null for a movie,
+    /// a show the library doesn't have, and from servers older than the field.
+    /// </summary>
+    public EpisodeCounts? Episodes { get; init; }
 
     public TitleId Id => new(MediaType, TmdbId);
 

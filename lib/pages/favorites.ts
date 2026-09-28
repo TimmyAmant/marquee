@@ -6,9 +6,13 @@ import {
 } from "@/lib/favorites/query";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import { getCollection } from "@/lib/tmdb/client";
+import { getEpisodeCountMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 
-/** Everything /favorites shows — shared with GET /api/v1/favorites. */
-export async function loadFavoritesPage(userId: string) {
+/** Everything /favorites shows — shared with GET /api/v1/favorites.
+ * `libraryOwnerId` is the household library the viewer sees, for the
+ * favorited series' episode counts. */
+export async function loadFavoritesPage(userId: string, libraryOwnerId?: string | null) {
   const [favoritePeople, favoriteCompanies, favoriteMovies, favoriteShows, collectionIds] =
     await Promise.all([
       getFavoritePeople(userId),
@@ -33,6 +37,11 @@ export async function loadFavoritesPage(userId: string) {
     favoriteCompanies.map((c) => ({ id: c.tmdbId, name: c.name, logo_path: c.logoPath })),
   );
 
+  // The favorited series' have/total, where the library has them.
+  const episodeCounts = libraryOwnerId
+    ? await getEpisodeCountMap(libraryOwnerId, favoriteShows.map((s) => ({ mediaType: "tv" as const, tmdbId: s.tmdbId })))
+    : new Map<string, EpisodeCounts>();
+
   const hasFavorites =
     favoritePeople.length > 0 ||
     dedupedCompanies.length > 0 ||
@@ -40,7 +49,7 @@ export async function loadFavoritesPage(userId: string) {
     favoriteShows.length > 0 ||
     collections.length > 0;
 
-  return { favoritePeople, dedupedCompanies, favoriteMovies, favoriteShows, collections, hasFavorites };
+  return { favoritePeople, dedupedCompanies, favoriteMovies, favoriteShows, collections, hasFavorites, episodeCounts };
 }
 
 /** The movie a favorited collection's card links to — its earliest release. */

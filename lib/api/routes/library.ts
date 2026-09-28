@@ -29,9 +29,12 @@ function rawQuery(url: URL): RawLibraryQuery {
 
 /** A library row for the API. The file path and the arr handle are for the
  * admin: a member's copy has neither. */
-export function libraryEntry(item: LibraryItem, extra: { favorited: boolean; isAdmin: boolean }): Dto.LibraryEntry {
+export function libraryEntry(
+  item: LibraryItem,
+  extra: { favorited: boolean; isAdmin: boolean; episodes?: Dto.EpisodeCounts | null },
+): Dto.LibraryEntry {
   return {
-    ...titleCard(item, { status: item.status, favorited: extra.favorited }),
+    ...titleCard(item, { status: item.status, favorited: extra.favorited, episodes: extra.episodes }),
     tvdbId: item.tvdbId,
     source: item.source,
     sizeBytes: item.sizeBytes,
@@ -67,7 +70,11 @@ export const libraryPageHandler = withApi(async (request): Promise<Dto.LibraryPa
     totalPages: data.page.totalPages,
     totalResults: data.page.totalResults,
     results: data.page.results.map((item) =>
-      libraryEntry(item, { favorited: data.favoritedKeys.has(statusKey(item.mediaType, item.tmdbId)), isAdmin: viewer.isAdmin }),
+      libraryEntry(item, {
+        favorited: data.favoritedKeys.has(statusKey(item.mediaType, item.tmdbId)),
+        isAdmin: viewer.isAdmin,
+        episodes: data.episodeCounts.get(statusKey(item.mediaType, item.tmdbId)),
+      }),
     ),
     summary: {
       movies: data.summary.movieCount,
@@ -106,6 +113,7 @@ export const libraryCollectionsHandler = withApi(async (request): Promise<Dto.Li
         return titleCard(item, {
           status,
           favorited: collection.favoritedIds.has(item.tmdbId),
+          episodes: collection.episodeCounts.get(statusKey(item.mediaType, item.tmdbId)),
           ...posterActions(rules, item.mediaType, item.tmdbId, status),
         });
       }),

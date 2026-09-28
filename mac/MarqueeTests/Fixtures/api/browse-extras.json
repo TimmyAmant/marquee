@@ -26,7 +26,8 @@
         "favorited": false,
         "requested": null,
         "canQuickAdd": false,
-        "canRequest": false
+        "canRequest": false,
+        "episodes": null
       }
     ]
   }
