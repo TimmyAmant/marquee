@@ -172,19 +172,33 @@ enum Metrics {
     static let contentLeading: CGFloat = 72
 
     // Shelf pages (Discover, Movies, Series, search, person, studio).
+    // On iOS the same pages at phone scale: a 16pt gutter (the system's)
+    // and posters sized so a shelf shows two and a half.
+    #if os(macOS)
     /// `.page{padding:28px 0 28px 28px}` — 0 on the right so cards bleed off.
     static let pagePadding: CGFloat = 28
     /// `.shelf{margin-bottom:48px}`.
     static let shelfSpacing: CGFloat = 48
+    #else
+    static let pagePadding: CGFloat = 16
+    static let shelfSpacing: CGFloat = 32
+    #endif
     /// `.shelf-head{height:28px;margin-bottom:12px}`.
     static let shelfHeadHeight: CGFloat = 28
     static let shelfHeadGap: CGFloat = 12
+    #if os(macOS)
     /// `.row{gap:20px}` for poster cards, 16 for genre tiles and cast.
     static let posterGap: CGFloat = 20
     static let tileGap: CGFloat = 16
     /// `.card{width:156px}` / `.art{height:234px}`.
     static let posterWidth: CGFloat = 156
     static let posterHeight: CGFloat = 234
+    #else
+    static let posterGap: CGFloat = 12
+    static let tileGap: CGFloat = 12
+    static let posterWidth: CGFloat = 128
+    static let posterHeight: CGFloat = 192
+    #endif
 
     // Title page.
     /// `.tp-poster{left:48px}` — the page's left gutter.

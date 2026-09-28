@@ -335,8 +335,7 @@ final class AppModel {
     @ObservationIgnored private var connectGeneration = 0
 
     /// Shown when the saved sign-in couldn't be read.
-    static let savedSignInUnreadableNotice =
-        String(localized: "Couldn't read your saved sign-in. Sign in again, or reload (⌘R) to retry.")
+    static let savedSignInUnreadableNotice = PlatformText.savedSignInUnreadable
 
     private func showSignIn(notice: String? = nil, generation: Int) async {
         let outcome = await session.refreshInfo()
@@ -637,7 +636,8 @@ final class AppModel {
         open(.search(trimmed))
     }
 
-    /// marquee://title/movie/603, marquee://person/287, marquee://company/420
+    /// marquee://title/movie/603, marquee://person/287, marquee://company/420,
+    /// marquee://settings
     ///
     /// Before the session is ready (a cold launch from a notification click,
     /// or while signing in) the newest link waits in `pendingURL` and opens
@@ -667,6 +667,8 @@ final class AppModel {
                 select(.discover)
                 open(.discoverList(list))
             }
+        case "settings":
+            openSettings()
         case "search":
             if let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "q" })?.value {
                 search(query)

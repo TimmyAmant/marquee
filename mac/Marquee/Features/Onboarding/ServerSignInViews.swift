@@ -114,6 +114,8 @@ struct SignInForm: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
+    /// Shows the Plex / single sign-on page (a sheet over the app on iOS).
+    @State private var browser = SignInBrowser()
     @State private var method: Method = .password
     @State private var username = ""
     @State private var password = ""
@@ -356,7 +358,7 @@ struct SignInForm: View {
             guard let url = start.url else {
                 throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
             }
-            openURL(url)
+            browser.open(url, openURL: openURL)
             return try await session.finishPlexSignIn(start)
         }
     }
@@ -369,7 +371,7 @@ struct SignInForm: View {
             guard let url = start.url(server: session.server?.baseURL) else {
                 throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
             }
-            openURL(url)
+            browser.open(url, openURL: openURL)
             return try await session.finishSsoSignIn(start)
         }
     }
@@ -392,6 +394,7 @@ struct SignInForm: View {
         error = nil
         waiting = state
         waitTask = Task {
+            defer { browser.close() }
             do {
                 let user = try await signIn()
                 waiting = nil
@@ -409,6 +412,7 @@ struct SignInForm: View {
     }
 
     private func cancelWaiting() {
+        browser.close()
         waitTask?.cancel()
         waitTask = nil
         waiting = nil
@@ -435,7 +439,7 @@ struct ServerUnreachableView: View {
                     Button {
                         ConnectModel.openLocalNetworkSettings()
                     } label: {
-                        Text("Open System Settings").frame(maxWidth: .infinity)
+                        Text(PlatformText.openSystemSettings).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(OutlineButtonStyle())
                 }
@@ -473,11 +477,11 @@ struct ServerUnreachableView: View {
         case .legacy:
             return String(localized: "Your Marquee server is running an older version. Update it, then try again.")
         case .incompatible:
-            return String(localized: "Your Marquee server is newer than this app. Update Marquee for Mac, then try again.")
+            return PlatformText.updateThisAppAndRetry
         case .notMarquee:
             return String(localized: "Something else is answering at your server's address now. Its IP address may have changed.")
         case .unreachable(.localNetworkDenied):
-            return String(localized: "macOS is blocking Marquee from your home network. Turn it on in System Settings, then try again.")
+            return PlatformText.localNetworkBlocked
         default:
             return String(localized: "Make sure the computer running Marquee is on and connected to your network, then try again.")
         }

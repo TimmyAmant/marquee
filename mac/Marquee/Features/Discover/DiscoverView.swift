@@ -77,7 +77,7 @@ struct DiscoverView: View {
         if layout.isEmpty {
             EmptyStateView(
                 title: String(localized: "Nothing to show yet"),
-                message: String(localized: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (⌘R)."),
+                message: PlatformText.tmdbUnreachable,
                 systemImage: "wifi.exclamationmark"
             )
             .padding(.trailing, Metrics.pagePadding)

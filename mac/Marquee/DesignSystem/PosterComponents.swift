@@ -413,8 +413,10 @@ struct Shelf<Content: View>: View {
                 }
                 if let trailing { trailing }
                 Spacer(minLength: 8)
+                #if os(macOS)
                 chevron("chevron.left", label: String(localized: "Scroll left"), dimmed: (position ?? 0) == 0) { page(-1) }
                 chevron("chevron.right", label: String(localized: "Scroll right"), dimmed: atEnd) { page(1) }
+                #endif
             }
             .frame(height: Metrics.shelfHeadHeight)
             .padding(.trailing, headInset)

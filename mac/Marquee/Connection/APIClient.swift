@@ -33,7 +33,7 @@ struct APIClient: Sendable {
         configuration.httpCookieAcceptPolicy = .never
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        configuration.httpAdditionalHeaders = ["User-Agent": "Marquee-macOS/\(AppInfo.version)"]
+        configuration.httpAdditionalHeaders = ["User-Agent": AppInfo.userAgent]
         return URLSession(configuration: configuration)
     }()
 
@@ -52,7 +52,7 @@ struct APIClient: Sendable {
         configuration.httpCookieAcceptPolicy = .never
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        configuration.httpAdditionalHeaders = ["User-Agent": "Marquee-macOS/\(AppInfo.version)"]
+        configuration.httpAdditionalHeaders = ["User-Agent": AppInfo.userAgent]
         return URLSession(configuration: configuration)
     }()
 

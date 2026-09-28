@@ -129,6 +129,15 @@ extension View {
         #endif
     }
 
+    /// A text link: `.link` on the Mac, the tinted plain button on iOS.
+    func linkButtonStyle() -> some View {
+        #if os(macOS)
+        buttonStyle(.link)
+        #else
+        buttonStyle(.plain).foregroundStyle(Theme.accent)
+        #endif
+    }
+
     /// Escape on the Mac; nothing on iOS (sheets close by swiping or Done).
     func onExitCommandIfAvailable(perform action: @escaping () -> Void) -> some View {
         #if os(macOS)

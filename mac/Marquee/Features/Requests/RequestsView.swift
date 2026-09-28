@@ -6,6 +6,9 @@ import SwiftUI
 /// (0.48+; the role on an older server).
 struct RequestsView: View {
     @Environment(AppModel.self) private var model
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     var body: some View {
         ScrollView {
@@ -23,14 +26,17 @@ struct RequestsView: View {
                     IssuesSection(isAdmin: model.viewer?.can(.manageIssues) == true)
                 }
             }
-            .padding(.horizontal, 32)
-            .padding(.vertical, 32)
+            .padding(.horizontal, TableMetrics.pagePadding)
+            .padding(.vertical, TableMetrics.pagePadding)
             .frame(maxWidth: 1080, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Requests")
+        #if os(iOS)
+        .environment(\.stacksTableColumns, horizontalSizeClass == .compact)
+        #endif
     }
 }
 
@@ -44,6 +50,11 @@ private struct RequestBackdrop: ViewModifier {
         content.background {
             if let path {
                 RemoteImage(path, size: .w780, showsShimmer: false)
+                    // Filled to the row, never past it: a narrow row would
+                    // otherwise get a taller-than-the-row image over its
+                    // neighbours.
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
                     .opacity(0.3)
                     .overlay {
                         LinearGradient(
@@ -98,12 +109,66 @@ private struct RequestPoster: View {
     }
 }
 
+/// The request tables' sizes: the website's on the Mac; on a phone the
+/// columns stack under the title (`TableRowStack`) and the header row goes.
+private enum TableMetrics {
+    #if os(macOS)
+    static let pagePadding: CGFloat = 32
+    #else
+    static let pagePadding: CGFloat = 16
+    #endif
+}
+
+extension EnvironmentValues {
+    /// A phone-width table: rows stack their columns.
+    @Entry var stacksTableColumns = false
+}
+
+/// A table row: title | requester | date | actions side by side, or stacked
+/// under the title at phone width.
+private struct TableRowStack<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+    @Environment(\.stacksTableColumns) private var stacked
+
+    var body: some View {
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 0))
+        layout { content() }
+    }
+}
+
+private struct TableColumn: ViewModifier {
+    let top: CGFloat
+    @Environment(\.stacksTableColumns) private var stacked
+
+    func body(content: Content) -> some View {
+        if stacked {
+            // Lined up with the title, past the poster.
+            content.padding(.leading, 52)
+        } else {
+            content
+                .frame(width: 170, alignment: .leading)
+                .padding(.top, top)
+        }
+    }
+}
+
+extension View {
+    /// One of a table row's fixed columns (170 wide, lined up with the title).
+    fileprivate func tableColumn(top: CGFloat) -> some View {
+        modifier(TableColumn(top: top))
+    }
+}
+
 private struct TableCard<Content: View>: View {
     let columns: [String]
     @ViewBuilder let content: () -> Content
+    @Environment(\.stacksTableColumns) private var stacked
 
     var body: some View {
         VStack(spacing: 0) {
+            if !stacked {
             HStack(spacing: 0) {
                 ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
                     Text(column)
@@ -116,6 +181,7 @@ private struct TableCard<Content: View>: View {
             .padding(.vertical, 10)
             .background(Theme.bg1)
             Divider().overlay(Theme.border)
+            }
             content()
         }
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -241,7 +307,7 @@ private struct MyRequestRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 0) {
+            TableRowStack {
                 titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
                     if let count = row.commentCount {
                         CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
@@ -251,8 +317,7 @@ private struct MyRequestRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text(Format.shortDate(row.createdAt))
                     .foregroundStyle(Theme.textSecondary)
-                    .frame(width: 170, alignment: .leading)
-                    .padding(.top, 18)
+                    .tableColumn(top: 18)
                 VStack(alignment: .leading, spacing: 4) {
                     TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
                     // The admin's reason, under "Declined" like the web page.
@@ -272,8 +337,7 @@ private struct MyRequestRow: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .frame(width: 170, alignment: .leading)
-                .padding(.top, 16)
+                .tableColumn(top: 16)
             }
             if showsComments {
                 RowThread(parent: .request(row.id)) { shownCount = $0 }
@@ -449,7 +513,7 @@ private struct PastRequestRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 0) {
+            TableRowStack {
                 titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
                     if let count = row.commentCount {
                         CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
@@ -459,12 +523,10 @@ private struct PastRequestRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text(row.requestedBy.label)
                     .foregroundStyle(Theme.textSecondary)
-                    .frame(width: 170, alignment: .leading)
-                    .padding(.top, 18)
+                    .tableColumn(top: 18)
                 Text(Format.shortDate(row.createdAt))
                     .foregroundStyle(Theme.textSecondary)
-                    .frame(width: 170, alignment: .leading)
-                    .padding(.top, 18)
+                    .tableColumn(top: 18)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
@@ -488,8 +550,7 @@ private struct PastRequestRow: View {
                         ReviewerLine(person: reviewer)
                     }
                 }
-                .frame(width: 170, alignment: .leading)
-                .padding(.top, 16)
+                .tableColumn(top: 16)
             }
             if showsComments {
                 RowThread(parent: .request(row.id)) { shownCount = $0 }
@@ -524,20 +585,17 @@ private struct EveryonesRequestsList: View {
                     TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Status")]) {
                         ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
-                            HStack(alignment: .top, spacing: 0) {
+                            TableRowStack {
                                 titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) })
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 Text(row.requestedBy)
                                     .foregroundStyle(Theme.textSecondary)
-                                    .frame(width: 170, alignment: .leading)
-                                    .padding(.top, 18)
+                                    .tableColumn(top: 18)
                                 Text(Format.shortDate(row.createdAt))
                                     .foregroundStyle(Theme.textSecondary)
-                                    .frame(width: 170, alignment: .leading)
-                                    .padding(.top, 18)
+                                    .tableColumn(top: 18)
                                 TonePill(text: row.statusLabel, tone: row.tone)
-                                    .frame(width: 170, alignment: .leading)
-                                    .padding(.top, 16)
+                                    .tableColumn(top: 16)
                             }
                             .font(.system(size: 13))
                             .padding(.horizontal, 16)
@@ -1218,7 +1276,7 @@ private struct RequestReviewRow: View {
     }
 
     private var mainRow: some View {
-        HStack(alignment: .top, spacing: 0) {
+        TableRowStack {
             titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
                 // 0.46+: the requester (or a reviewer) changed it after asking.
                 if row.wasChanged, let editedAt = row.editedAt {
@@ -1241,12 +1299,10 @@ private struct RequestReviewRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(row.requestedBy.label)
                 .foregroundStyle(Theme.textSecondary)
-                .frame(width: 170, alignment: .leading)
-                .padding(.top, 18)
+                .tableColumn(top: 18)
             Text(Format.shortDate(row.createdAt))
                 .foregroundStyle(Theme.textSecondary)
-                .frame(width: 170, alignment: .leading)
-                .padding(.top, 18)
+                .tableColumn(top: 18)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
                     Button(busy == "reject" ? "Rejecting…" : "Reject") { choosingReason = true }
@@ -1280,8 +1336,7 @@ private struct RequestReviewRow: View {
                     }
                 }
             }
-            .frame(width: 170, alignment: .leading)
-            .padding(.top, 12)
+            .tableColumn(top: 12)
         }
     }
 

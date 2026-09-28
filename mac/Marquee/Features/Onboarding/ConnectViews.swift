@@ -28,7 +28,7 @@ private struct WelcomeStep: View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
                 title: String(localized: "Find your Marquee server"),
-                message: String(localized: "Marquee for Mac connects to the Marquee server running on your home network, like the one on your Unraid box.")
+                message: PlatformText.connectIntro
             )
             VStack(alignment: .leading, spacing: 14) {
                 ConnectPoint(
@@ -39,7 +39,7 @@ private struct WelcomeStep: View {
                 ConnectPoint(
                     systemImage: "lock.shield",
                     title: String(localized: "Allow Local Network access"),
-                    text: String(localized: "macOS will ask for permission first. Click Allow so Marquee can reach your server.")
+                    text: PlatformText.localNetworkWillAsk
                 )
             }
             .padding(.vertical, 2)
@@ -112,7 +112,7 @@ private struct SearchingStep: View {
 
             if discovery.state == .checkingAccess {
                 AuthNotice(
-                    text: String(localized: "If macOS asks to find devices on your local network, click Allow."),
+                    text: PlatformText.localNetworkIfAsked,
                     systemImage: "lock.shield"
                 )
             }
@@ -172,7 +172,7 @@ private struct SearchingStep: View {
         }
         if usableCount > 0 { return String(localized: "Select your Marquee server to sign in.") }
         if !discovery.found.isEmpty {
-            return String(localized: "Marquee is running on your network, but the Mac app needs server version \(ServerInfo.minimumServerVersion) or later.")
+            return PlatformText.foundOnlyOldServers
         }
         return String(localized: "No Marquee server turned up before the search was stopped.")
     }
@@ -277,9 +277,9 @@ private struct FoundServerRow: View {
         case .current:
             return nil
         case .legacy:
-            return String(localized: "Update this server to Marquee \(ServerInfo.minimumServerVersion) or later to use it with the Mac app.")
+            return PlatformText.updateOldServer
         case .incompatible:
-            return String(localized: "This server is newer than this app supports. Update Marquee for Mac to connect.")
+            return PlatformText.updateThisApp
         }
     }
 }
@@ -293,11 +293,11 @@ private struct LocalNetworkDeniedStep: View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
                 title: String(localized: "Allow Local Network access"),
-                message: String(localized: "Marquee needs permission to look for your server on your home network. If macOS just asked, click Allow and the search continues on its own.")
+                message: PlatformText.localNetworkNeeded
             )
 
             VStack(alignment: .leading, spacing: 10) {
-                SettingsStepRow(number: 1, text: String(localized: "Open System Settings › Privacy & Security › Local Network."))
+                SettingsStepRow(number: 1, text: PlatformText.localNetworkSettingsStep)
                 SettingsStepRow(number: 2, text: String(localized: "Turn on Marquee."))
                 SettingsStepRow(number: 3, text: String(localized: "Come back here. The search picks up again by itself."))
             }
@@ -306,7 +306,7 @@ private struct LocalNetworkDeniedStep: View {
                 Button {
                     ConnectModel.openLocalNetworkSettings()
                 } label: {
-                    Text("Open System Settings").frame(maxWidth: .infinity)
+                    Text(PlatformText.openSystemSettings).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(AccentButtonStyle())
                 .keyboardShortcut(.defaultAction)
@@ -378,7 +378,7 @@ private struct ManualEntryStep: View {
                 Button {
                     ConnectModel.openLocalNetworkSettings()
                 } label: {
-                    Text("Open System Settings").frame(maxWidth: .infinity)
+                    Text(PlatformText.openSystemSettings).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(OutlineButtonStyle())
             }

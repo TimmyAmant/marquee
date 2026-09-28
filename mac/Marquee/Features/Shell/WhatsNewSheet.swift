@@ -10,6 +10,14 @@ struct WhatsNewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
+    private static func installedMessage(_ version: String) -> String {
+        #if os(macOS)
+        String(localized: "Marquee for Mac \(version) is installed.")
+        #else
+        String(localized: "Marquee for iPhone \(version) is installed.")
+        #endif
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("What's new in Marquee \(content.version)")
@@ -24,12 +32,12 @@ struct WhatsNewSheet: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if let installed = content.installedAppVersion {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Marquee for Mac \(installed) is installed.")
+                            Text(Self.installedMessage(installed))
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                             if let url = content.releaseNotesURL {
                                 Button("Read the release notes on GitHub") { openURL(url) }
-                                    .buttonStyle(.link)
+                                    .linkButtonStyle()
                                     .font(.system(size: 12.5))
                             }
                         }
@@ -73,10 +81,12 @@ struct WhatsNewSheet: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 14)
         }
+        #if os(macOS)
         .frame(width: 520)
         .frame(minHeight: 260, maxHeight: 600)
+        #endif
         .background(Theme.bg1)
-        .onExitCommand { dismiss() }
+        .onExitCommandIfAvailable { dismiss() }
     }
 
     private func release(_ entry: API.ChangelogEntry) -> some View {

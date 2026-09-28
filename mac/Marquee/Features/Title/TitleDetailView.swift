@@ -12,6 +12,9 @@ struct TitleDetailView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
     @Environment(\.navRailInsets) private var navRailInsets
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     @State private var screen: TitleDetailModel
     @State private var showingTrailer = false
     @State private var showingRelink = false
@@ -109,7 +112,66 @@ struct TitleDetailView: View {
         }
     }
 
+    @ViewBuilder
     private func content(_ detail: API.TitleDetail) -> some View {
+        #if os(iOS)
+        if horizontalSizeClass == .compact {
+            phoneContent(detail)
+        } else {
+            wideContent(detail)
+        }
+        #else
+        wideContent(detail)
+        #endif
+    }
+
+    /// The iPhone's title page (0.54's design at phone width): the artwork
+    /// across the top, the poster over its lower edge, then one column —
+    /// title, action row, overview, the facts card — and the same rows below.
+    private func phoneContent(_ detail: API.TitleDetail) -> some View {
+        GeometryReader { proxy in
+            let backdropHeight = max(220, proxy.size.width * 0.66)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TitleBackdrop(
+                        backdropPath: detail.backdropPath,
+                        seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
+                        height: backdropHeight + proxy.safeAreaInsets.top,
+                        wide: false,
+                        sideFade: false
+                    )
+                    .equatable()
+
+                    TitlePoster(posterPath: detail.posterPath, width: 116)
+                        .equatable()
+                        .padding(.top, -120)
+
+                    TitleMainColumn(
+                        screen: screen,
+                        detail: detail,
+                        compact: true,
+                        onTrailer: { showingTrailer = true },
+                        onRelink: { showingRelink = true },
+                        onPickSeasons: { showingSeasonPicker = true },
+                        onReportProblem: { showingReportProblem = true },
+                        onShare: { showingShare = true }
+                    )
+                    .padding(.top, 16)
+
+                    TitleSidebarColumn(detail: detail)
+                        .padding(.top, 28)
+
+                    lowerSections(detail)
+                        .padding(.top, 36)
+                        .padding(.bottom, 40)
+                }
+                .padding(.horizontal, Metrics.pagePadding)
+            }
+            .ignoresSafeArea(.container, edges: .top)
+        }
+    }
+
+    private func wideContent(_ detail: API.TitleDetail) -> some View {
         // The page is measured from the window's top edge, with the toolbar
         // floating over the artwork, so the page starts under the top bar
         // rather than below it. The backdrop also runs under the navigation
@@ -127,7 +189,8 @@ struct TitleDetailView: View {
                             backdropPath: detail.backdropPath,
                             seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
                             height: hero.backdropHeight,
-                            wide: hero.wide
+                            wide: hero.wide,
+                            sideFade: true
                         )
                         .equatable()
 
@@ -160,53 +223,7 @@ struct TitleDetailView: View {
                         .padding(.top, hero.posterTop)
                     }
 
-                    VStack(alignment: .leading, spacing: 44) {
-                        if !detail.seasons.isEmpty {
-                            VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                                SectionTitle(text: String(localized: "Episodes"))
-                                SeasonAccordion(screen: screen, seasons: detail.seasons)
-                            }
-                        }
-                        if !detail.cast.isEmpty {
-                            Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
-                                ForEach(detail.cast) { member in
-                                    PersonCard(
-                                        profilePath: member.profilePath,
-                                        name: member.name,
-                                        character: member.character,
-                                        favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
-                                        link: .person(member.tmdbId)
-                                    ) {
-                                        model.open(.person(member.tmdbId))
-                                    }
-                                }
-                            }
-                        }
-                        if let franchise = detail.franchise, !franchise.items.isEmpty {
-                            FranchiseSection(screen: screen, franchise: franchise)
-                        }
-                        if !detail.studios.isEmpty {
-                            VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                                SectionTitle(text: String(localized: "Studio"))
-                                FlowLayout(spacing: 10, lineSpacing: 10) {
-                                    ForEach(detail.studios) { studio in
-                                        StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
-                                    }
-                                }
-                            }
-                        }
-                        if !detail.similar.isEmpty {
-                            Shelf(title: String(localized: "More like this"), headInset: 0) {
-                                ForEach(detail.similar) { card in
-                                    ShelfItem {
-                                        PosterCard(card: card, showsTypeLabel: true) {
-                                            model.openTitle(card.id)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    lowerSections(detail)
                     .padding(.leading, leading)
                     .padding(.trailing, trailing)
                     .padding(.top, 44)
@@ -215,6 +232,57 @@ struct TitleDetailView: View {
             }
         }
         .ignoresSafeArea(.container, edges: [.top, .horizontal])
+    }
+
+    /// Episodes, cast, the franchise, studios and "More like this".
+    private func lowerSections(_ detail: API.TitleDetail) -> some View {
+        VStack(alignment: .leading, spacing: 44) {
+            if !detail.seasons.isEmpty {
+                VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
+                    SectionTitle(text: String(localized: "Episodes"))
+                    SeasonAccordion(screen: screen, seasons: detail.seasons)
+                }
+            }
+            if !detail.cast.isEmpty {
+                Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
+                    ForEach(detail.cast) { member in
+                        PersonCard(
+                            profilePath: member.profilePath,
+                            name: member.name,
+                            character: member.character,
+                            favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
+                            link: .person(member.tmdbId)
+                        ) {
+                            model.open(.person(member.tmdbId))
+                        }
+                    }
+                }
+            }
+            if let franchise = detail.franchise, !franchise.items.isEmpty {
+                FranchiseSection(screen: screen, franchise: franchise)
+            }
+            if !detail.studios.isEmpty {
+                VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
+                    SectionTitle(text: String(localized: "Studio"))
+                    FlowLayout(spacing: 10, lineSpacing: 10) {
+                        ForEach(detail.studios) { studio in
+                            StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
+                        }
+                    }
+                }
+            }
+            if !detail.similar.isEmpty {
+                Shelf(title: String(localized: "More like this"), headInset: 0) {
+                    ForEach(detail.similar) { card in
+                        ShelfItem {
+                            PosterCard(card: card, showsTypeLabel: true) {
+                                model.openTitle(card.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// `.tp-poster{left:48px}`, measured from the content area rather than
@@ -263,6 +331,9 @@ private struct TitleBackdrop: View, Equatable {
     let seed: UInt64
     let height: CGFloat
     let wide: Bool
+    /// The fade from the left behind the title (the wide page's text sits
+    /// on the artwork; the phone's doesn't).
+    let sideFade: Bool
 
     var body: some View {
         // w1280 is plenty up to a 1400pt window; past that the original, so
@@ -305,6 +376,7 @@ private struct TitleBackdrop: View, Equatable {
                         startPoint: .top,
                         endPoint: .bottom
                     )
+                    if sideFade {
                     LinearGradient(
                         stops: [
                             .init(color: Theme.bg0.opacity(0.94), location: 0),
@@ -316,6 +388,7 @@ private struct TitleBackdrop: View, Equatable {
                         startPoint: .leading,
                         endPoint: .trailing
                     )
+                    }
                 }
                 .frame(height: height + Metrics.topBar)
                 .clipped()
@@ -326,6 +399,7 @@ private struct TitleBackdrop: View, Equatable {
 /// `.tp-poster` — 224×336, radius 12, a borderStrong ring and a deep shadow.
 private struct TitlePoster: View, Equatable {
     let posterPath: API.ImageRef?
+    var width: CGFloat = Metrics.titlePosterWidth
 
     var body: some View {
         ZStack {
@@ -334,7 +408,7 @@ private struct TitlePoster: View, Equatable {
                 RemoteImage(posterPath, size: .w500)
             }
         }
-        .frame(width: Metrics.titlePosterWidth, height: Metrics.titlePosterHeight)
+        .frame(width: width, height: width * 1.5)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.borderStrong))
         .shadow(color: .black.opacity(0.65), radius: 32, y: 14)
@@ -388,6 +462,8 @@ private struct SplitMix64: RandomNumberGenerator {
 private struct TitleMainColumn: View {
     let screen: TitleDetailModel
     let detail: API.TitleDetail
+    /// The phone's single column: a smaller title and credits in two columns.
+    var compact = false
     let onTrailer: () -> Void
     let onRelink: () -> Void
     let onPickSeasons: () -> Void
@@ -398,8 +474,8 @@ private struct TitleMainColumn: View {
         VStack(alignment: .leading, spacing: 0) {
             // .tp-title — serif 48/54, 700, −0.015em.
             Text(detail.name)
-                .font(.marqueeDisplay(48, weight: .bold))
-                .tracking(-0.72)
+                .font(.marqueeDisplay(compact ? 32 : 48, weight: .bold))
+                .tracking(compact ? -0.4 : -0.72)
                 .foregroundStyle(Theme.textPrimary)
                 .shadow(color: .black.opacity(0.4), radius: 10, y: 2)
                 .textSelection(.enabled)
@@ -464,7 +540,7 @@ private struct TitleMainColumn: View {
             if !detail.credits.isEmpty {
                 // .credits — 3 equal columns, name over role.
                 LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 16, alignment: .topLeading), count: 3),
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 16, alignment: .topLeading), count: compact ? 2 : 3),
                     alignment: .leading,
                     spacing: 16
                 ) {

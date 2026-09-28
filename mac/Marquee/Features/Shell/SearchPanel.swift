@@ -199,7 +199,7 @@ struct SearchPanel: View {
 }
 
 /// A suggestion: poster, name over its subtitle, and its kind.
-private struct SearchPanelRow: View {
+struct SearchPanelRow: View {
     let suggestion: API.SearchSuggestion
     let highlighted: Bool
     let action: () -> Void

@@ -95,8 +95,11 @@ struct AuthScreen<Content: View>: View {
                 VStack(spacing: 28) {
                     MarqueeWordmark(size: 34)
                     content()
-                        .frame(width: 380)
+                        .frame(maxWidth: 380)
                         .cardSurface(padding: 28, radius: 20)
+                        #if os(iOS)
+                        .padding(.horizontal, 16)
+                        #endif
                 }
                 .padding(.vertical, 60)
                 .frame(maxWidth: .infinity)
@@ -147,6 +150,10 @@ struct AuthField: View {
             }
             .textFieldStyle(.plain)
             .textContentType(contentType)
+            #if os(iOS)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            #endif
             .font(.system(size: 13.5))
             .focused($focused)
             .padding(.horizontal, 12)
@@ -155,7 +162,11 @@ struct AuthField: View {
             .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Theme.border))
         }
         .onAppear {
+            // Not on iOS, where the keyboard would cover the other ways to
+            // sign in (Plex, Jellyfin, single sign-on) until dismissed.
+            #if os(macOS)
             if autofocus { focused = true }
+            #endif
         }
     }
 
