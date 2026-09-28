@@ -374,7 +374,7 @@ final class ServerSession {
             guard case let .network(urlError) = error, Self.neverReachedServer.contains(urlError.code) else { throw error }
             Self.logger.info("\(path, privacy: .public) failed to connect (\(error.localizedDescription, privacy: .public)); checking the server")
             let outcome = await refreshInfo()
-            if let problem = outcome.problemMessage(for: server, saved: true) {
+            if let problem = outcome.problemMessage(for: server) {
                 throw SignInConnectionError(message: problem)
             }
             guard retries else { throw error }
