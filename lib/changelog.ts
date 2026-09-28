@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.57.0",
+    date: "2026-09-27",
+    changes: [
+      "A first iPhone (and iPad) app, built from the Mac app: sign in with your server, Plex, Jellyfin or single sign-on; Discover, Search, Requests (approve and decline), Calendar and More tabs; the new title pages with Request and the season picker. For now it's installed from Xcode — it isn't on the App Store or TestFlight yet, and alerts arrive while the app is open.",
+      "Phones and tablets show up in your device list by model, like \"iPhone 17 Pro (Marquee)\".",
+    ],
+  },
+  {
     version: "0.56.0",
     date: "2026-09-27",
     changes: [
