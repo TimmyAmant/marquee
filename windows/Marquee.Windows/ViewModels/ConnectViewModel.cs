@@ -29,6 +29,10 @@ public sealed partial class ConnectViewModel : ObservableObject
         nameof(IsSignInStep),
         nameof(IsSetupStep),
         nameof(IsUnreachable),
+        nameof(IsWaiting),
+        nameof(WaitingExplanation),
+        nameof(WaitingStatus),
+        nameof(RetryNowLabel),
         nameof(ServerLabel),
         nameof(ServerVersionLabel),
         nameof(AuthNotice),
@@ -174,6 +178,9 @@ public sealed partial class ConnectViewModel : ObservableObject
     public bool IsSetupStep => model.Phase == AppPhase.SignIn && model.AuthForm == AuthForm.Setup;
     public bool IsUnreachable => model.Phase == AppPhase.Unreachable;
 
+    /// <summary>The saved server is restarting or updating: the waiting card, which retries by itself.</summary>
+    public bool IsWaiting => model.Phase == AppPhase.Waiting;
+
     // MARK: The chosen server
 
     /// <summary>"192.168.1.20:3000", or the full URL for HTTPS.</summary>
@@ -195,6 +202,15 @@ public sealed partial class ConnectViewModel : ObservableObject
 
     public bool IsRetrying => model.IsRetryingConnection;
     public string RetryLabel => IsRetrying ? Loc.Get("Connect_Connecting") : Loc.Get("Connect_Retry");
+
+    // MARK: Waiting card
+
+    /// <summary>"Marquee at 192.168.1.20:3000 isn't answering right now…", naming the server.</summary>
+    public string WaitingExplanation => Loc.Format("Connect_WaitingExplanation", ServerLabel);
+
+    public string WaitingStatus => IsRetrying ? Loc.Get("Connect_Connecting") : Loc.Get("Connect_WaitingStatus");
+
+    public string RetryNowLabel => IsRetrying ? Loc.Get("Connect_Connecting") : Loc.Get("Connect_RetryNow");
 
     // MARK: Plex / Jellyfin / single sign-on (server-info.signIn; an older server sends none, so no buttons)
 
@@ -277,7 +293,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     };
 
     /// <summary>The specific inline message for this server, e.g. which port nothing answers on.</summary>
-    public string? UnreachableDetail => model.Session.Server is { } server ? Problem.ProblemMessage(server) : null;
+    public string? UnreachableDetail => model.Session.Server is { } server ? Problem.ProblemMessage(server, saved: true) : null;
 
     public bool HasUnreachableDetail => UnreachableDetail != null;
 

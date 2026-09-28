@@ -47,4 +47,7 @@ public sealed partial class AboutSettingsView : UserControl, ISettingsTabView
 
     /// <summary>"What's new" and "Download manually": the release's page on GitHub.</summary>
     private void OnReleaseNotesClick(object sender, RoutedEventArgs e) => _ = ExternalLinks.OpenAsync(Updater.ReleasePage);
+
+    /// <summary>The error reference (the Mac's Help › Error Reference): what each message means.</summary>
+    private void OnErrorReferenceClick(object sender, RoutedEventArgs e) => AppServices.Model.Open(new Route.ErrorReference());
 }

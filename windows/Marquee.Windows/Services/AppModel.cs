@@ -20,6 +20,13 @@ public enum AppPhase
     /// <summary>A server is chosen; sign in (or create its first account).</summary>
     SignIn,
 
+    /// <summary>
+    /// The saved server, which worked before, isn't answering: most likely
+    /// restarting or updating. Retried on <see cref="ReconnectSchedule.Standard"/>
+    /// (the token is kept); <see cref="AppModel.ConnectionProblem"/> says what was seen.
+    /// </summary>
+    Waiting,
+
     /// <summary>The saved server couldn't be used; <see cref="AppModel.ConnectionProblem"/> says why.</summary>
     Unreachable,
 
@@ -100,6 +107,16 @@ public sealed partial class AppModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsSignedIn))]
     private AppPhase phase = AppPhase.Launching;
 
+    /// <summary>Leaving the waiting and can't-reach cards (signed in, another server, sign-in) ends the outage.</summary>
+    partial void OnPhaseChanged(AppPhase value)
+    {
+        if (value is not (AppPhase.Waiting or AppPhase.Unreachable))
+        {
+            reconnect.Reset();
+            StopReconnectTimer();
+        }
+    }
+
     /// <summary>The signed-in account, exactly as the server reports it.</summary>
     [ObservableProperty]
     private User? viewer;
@@ -146,7 +163,7 @@ public sealed partial class AppModel : ObservableObject
     [ObservableProperty]
     private string? authNotice;
 
-    /// <summary>Why <see cref="AppPhase.Unreachable"/> couldn't use the saved server.</summary>
+    /// <summary>Why <see cref="AppPhase.Waiting"/> / <see cref="AppPhase.Unreachable"/> couldn't use the saved server.</summary>
     [ObservableProperty]
     private ProbeOutcome? connectionProblem;
 
@@ -197,6 +214,18 @@ public sealed partial class AppModel : ObservableObject
 
     private bool bootstrapped;
     private DispatcherQueueTimer? badgeTimer;
+
+    /// <summary>The "Waiting for your server…" card's retries.</summary>
+    private readonly ReconnectTracker reconnect = new(ReconnectSchedule.Standard);
+
+    /// <summary>The next automatic attempt while <see cref="AppPhase.Waiting"/>.</summary>
+    private DispatcherQueueTimer? reconnectTimer;
+
+    /// <summary>Debounces network changes: several in a row (Wi-Fi rejoining) make one attempt after things settle.</summary>
+    private DispatcherQueueTimer? networkTimer;
+
+    /// <summary>How long a network change settles before the automatic retry.</summary>
+    private static readonly TimeSpan NetworkSettleDelay = TimeSpan.FromSeconds(2);
     private int badgeGeneration;
     private Badges? lastBadges;
     private bool refreshingBadges;
@@ -232,6 +261,7 @@ public sealed partial class AppModel : ObservableObject
             return;
         }
         bootstrapped = true;
+        global::Windows.Networking.Connectivity.NetworkInformation.NetworkStatusChanged += OnNetworkStatusChanged;
         await ConnectToSavedServerAsync();
     }
 
@@ -293,19 +323,101 @@ public sealed partial class AppModel : ObservableObject
         Phase = AppPhase.SignIn;
     }
 
+    /// <summary>
+    /// A saved server that's restarting or updating (refused, no answer, a
+    /// 5xx or a proxy's 502-504) gets the waiting card and retries by itself
+    /// for a couple of minutes, keeping the token; anything else, or an
+    /// outage that outlasts the wait, gets the can't-reach card.
+    /// </summary>
     private void ShowUnreachable(ProbeOutcome outcome)
     {
         ConnectionProblem = outcome;
-        Phase = AppPhase.Unreachable;
+        if (reconnect.Next(outcome, waiting: Phase == AppPhase.Waiting) is { } delay)
+        {
+            Phase = AppPhase.Waiting;
+            ScheduleReconnect(delay);
+        }
+        else
+        {
+            StopReconnectTimer();
+            Phase = AppPhase.Unreachable;
+        }
     }
 
-    /// <summary>"Retry" on the can't-reach card, and on the sign-in card's credential-store notice.</summary>
+    private void ScheduleReconnect(TimeSpan delay)
+    {
+        StopReconnectTimer();
+        var timer = Dispatcher.CreateTimer();
+        timer.Interval = delay;
+        timer.IsRepeating = false;
+        timer.Tick += OnReconnectTick;
+        timer.Start();
+        reconnectTimer = timer;
+    }
+
+    private void StopReconnectTimer()
+    {
+        if (reconnectTimer != null)
+        {
+            reconnectTimer.Stop();
+            reconnectTimer.Tick -= OnReconnectTick;
+            reconnectTimer = null;
+        }
+    }
+
+    private void OnReconnectTick(DispatcherQueueTimer sender, object args)
+    {
+        StopReconnectTimer();
+        if (Phase == AppPhase.Waiting)
+        {
+            _ = RetryConnectionAsync();
+        }
+    }
+
+    /// <summary>
+    /// The window came to the front, or the network came back: a server that
+    /// was down may be back, so try it now rather than on the next tick.
+    /// </summary>
+    public void RetryIfDown()
+    {
+        if (Phase is AppPhase.Waiting or AppPhase.Unreachable)
+        {
+            _ = RetryConnectionAsync();
+        }
+    }
+
+    /// <summary>
+    /// <c>NetworkInformation.NetworkStatusChanged</c> (any thread): after the
+    /// network settles, retry a server that was down, or catch up on counts
+    /// while signed in.
+    /// </summary>
+    private void OnNetworkStatusChanged(object? sender) =>
+        Dispatcher.TryEnqueue(() =>
+        {
+            networkTimer?.Stop();
+            if (networkTimer == null)
+            {
+                networkTimer = Dispatcher.CreateTimer();
+                networkTimer.IsRepeating = false;
+                networkTimer.Interval = NetworkSettleDelay;
+                networkTimer.Tick += (_, _) =>
+                {
+                    networkTimer?.Stop();
+                    RetryIfDown();
+                    RefreshCounts();
+                };
+            }
+            networkTimer.Start();
+        });
+
+    /// <summary>"Retry" on the can't-reach card, "Retry now" while waiting, the automatic attempts, and the sign-in card's credential-store notice.</summary>
     public async Task RetryConnectionAsync()
     {
-        if (IsRetryingConnection || Phase is not (AppPhase.Unreachable or AppPhase.SignIn))
+        if (IsRetryingConnection || Phase is not (AppPhase.Waiting or AppPhase.Unreachable or AppPhase.SignIn))
         {
             return;
         }
+        StopReconnectTimer();
         IsRetryingConnection = true;
         try
         {

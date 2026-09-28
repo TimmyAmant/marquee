@@ -82,6 +82,9 @@
   <data name="About_DownloadManually.Content" xml:space="preserve">
     <value>Télécharger manuellement</value>
   </data>
+  <data name="About_ErrorReference.Content" xml:space="preserve">
+    <value>Référence des erreurs</value>
+  </data>
   <data name="About_FactMovies" xml:space="preserve">
     <value>Films</value>
   </data>
@@ -1225,6 +1228,9 @@
   <data name="Connect_Retry" xml:space="preserve">
     <value>Réessayer</value>
   </data>
+  <data name="Connect_RetryNow" xml:space="preserve">
+    <value>Réessayer maintenant</value>
+  </data>
   <data name="Connect_SetupChangeServerLink.Content" xml:space="preserve">
     <value>Changer</value>
   </data>
@@ -1291,8 +1297,20 @@
   <data name="Connect_UsernameJellyfin" xml:space="preserve">
     <value>Nom d’utilisateur {0}</value>
   </data>
+  <data name="Connect_WaitingChangeServer.Content" xml:space="preserve">
+    <value>Changer de serveur</value>
+  </data>
+  <data name="Connect_WaitingExplanation" xml:space="preserve">
+    <value>Marquee à {0} ne répond pas pour le moment. S’il redémarre ou se met à jour, la connexion reviendra toute seule.</value>
+  </data>
   <data name="Connect_WaitingFor" xml:space="preserve">
     <value>En attente de {0}…</value>
+  </data>
+  <data name="Connect_WaitingStatus" xml:space="preserve">
+    <value>Nouvel essai dans un instant…</value>
+  </data>
+  <data name="Connect_WaitingTitle.Text" xml:space="preserve">
+    <value>En attente du retour de votre serveur…</value>
   </data>
   <data name="Connect_WelcomeBack.Text" xml:space="preserve">
     <value>Bon retour</value>
@@ -1398,6 +1416,30 @@
   </data>
   <data name="Discover_TryAgain.Content" xml:space="preserve">
     <value>Réessayer</value>
+  </data>
+  <data name="DiscoverLocale_AnyLanguage" xml:space="preserve">
+    <value>Toutes les langues</value>
+  </data>
+  <data name="DiscoverLocale_Automatic" xml:space="preserve">
+    <value>Automatique : {0}</value>
+  </data>
+  <data name="DiscoverLocale_DiscoverLanguage" xml:space="preserve">
+    <value>Langue de Découvrir</value>
+  </data>
+  <data name="DiscoverLocale_DiscoverRegion" xml:space="preserve">
+    <value>Région de Découvrir</value>
+  </data>
+  <data name="DiscoverLocale_Intro" xml:space="preserve">
+    <value>Le pays des services de streaming et des dates de sortie, et d’où et dans quelle langue sont choisies les rangées Populaires et À venir de TMDb.</value>
+  </data>
+  <data name="DiscoverLocale_StreamingRegion" xml:space="preserve">
+    <value>Région de streaming</value>
+  </data>
+  <data name="DiscoverLocale_Title" xml:space="preserve">
+    <value>Région et langue</value>
+  </data>
+  <data name="DiscoverLocale_Worldwide" xml:space="preserve">
+    <value>Monde entier</value>
   </data>
   <data name="DiscoverSettings_Added" xml:space="preserve">
     <value>« {0} » ajoutée à la fin de Découvrir.</value>
@@ -1677,6 +1719,18 @@
   </data>
   <data name="Enum_SuggestionStudio" xml:space="preserve">
     <value>Studio</value>
+  </data>
+  <data name="Errors_Empty" xml:space="preserve">
+    <value>Votre serveur n’a renvoyé aucune référence des erreurs.</value>
+  </data>
+  <data name="Errors_Intro" xml:space="preserve">
+    <value>Ce que signifie vraiment chaque message d’erreur de Marquee, et que faire. Si le texte exact que vous avez vu n’est pas ci-dessous, il s’agit très probablement d’un message transmis tel quel par Sonarr, Radarr, Plex ou Jellyfin — consultez les journaux de ce service.</value>
+  </data>
+  <data name="Errors_Title" xml:space="preserve">
+    <value>Référence des erreurs</value>
+  </data>
+  <data name="Errors_WhatToDo" xml:space="preserve">
+    <value>Que faire :</value>
   </data>
   <data name="Favorites_Collections.Text" xml:space="preserve">
     <value>Collections</value>
@@ -2286,6 +2340,27 @@
   </data>
   <data name="Jobs_Empty.Text" xml:space="preserve">
     <value>Ce serveur n’indique aucune tâche planifiée.</value>
+  </data>
+  <data name="Jobs_NotFoundAfter" xml:space="preserve">
+    <value>heures sans résultat</value>
+  </data>
+  <data name="Jobs_NotFoundBefore" xml:space="preserve">
+    <value>Signaler une demande après</value>
+  </data>
+  <data name="Jobs_NotFoundHeading" xml:space="preserve">
+    <value>Introuvable</value>
+  </data>
+  <data name="Jobs_NotFoundHours" xml:space="preserve">
+    <value>Heures</value>
+  </data>
+  <data name="Jobs_NotFoundSave" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="Jobs_NotFoundSaved" xml:space="preserve">
+    <value>Enregistré.</value>
+  </data>
+  <data name="Jobs_NotFoundSaving" xml:space="preserve">
+    <value>Enregistrement…</value>
   </data>
   <data name="Jobs_RanFromThisPc" xml:space="preserve">
     <value>Lancée depuis ce PC {0}</value>
@@ -3847,6 +3922,9 @@
   <data name="Rows_UpcomingSeries" xml:space="preserve">
     <value>Séries à venir</value>
   </data>
+  <data name="Rules_MoreGenres" xml:space="preserve">
+    <value>+{0} de plus</value>
+  </data>
   <data name="Search_Box.PlaceholderText" xml:space="preserve">
     <value>Rechercher un acteur, un studio, un titre…</value>
   </data>
@@ -3985,8 +4063,14 @@
   <data name="Server_ProbeRefused" xml:space="preserve">
     <value>Rien ne répond sur le port {0} à l’adresse {1}. Vérifiez le port et que Marquee est en marche.</value>
   </data>
+  <data name="Server_ProbeSavedOutage" xml:space="preserve">
+    <value>Marquee ne répond pas à {0}. S’il redémarre ou se met à jour, cela va se régler tout seul.</value>
+  </data>
   <data name="Server_ProbeServerError" xml:space="preserve">
     <value>le serveur a renvoyé une erreur ({0}).</value>
+  </data>
+  <data name="Server_ProbeServerErrorStatus" xml:space="preserve">
+    <value>{0} a répondu par une erreur ({1}). Si Marquee est en train de démarrer, réessayez dans un instant.</value>
   </data>
   <data name="Server_ProbeTooNew" xml:space="preserve">
     <value>Le serveur à l’adresse {0} exécute Marquee {1}, une version plus récente que celles prises en charge par cette app. Mettez à jour Marquee pour Windows.</value>
@@ -4267,8 +4351,11 @@
   <data name="Title_AddToFourK" xml:space="preserve">
     <value>Ajouter à {0} 4K</value>
   </data>
-  <data name="Title_AdvancedFourK.Header" xml:space="preserve">
-    <value>Avancé (4K)</value>
+  <data name="Title_AdvancedFourKToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Options avancées (4K)</value>
+  </data>
+  <data name="Title_AdvancedFourKToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Options avancées (4K)</value>
   </data>
   <data name="Title_AdvancedQualityProfile.Header" xml:space="preserve">
     <value>Profil de qualité</value>

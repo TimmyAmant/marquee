@@ -83,6 +83,12 @@ public sealed partial class TitlePage : Page
         ViewModel.AddAdvanced.IsExpanded = !ViewModel.AddAdvanced.IsExpanded;
     }
 
+    /// <summary>The chevron on "Add to 4K …": that add's own Advanced panel.</summary>
+    private void OnAdvancedFourKToggleClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.AddFourKAdvanced.IsExpanded = !ViewModel.AddFourKAdvanced.IsExpanded;
+    }
+
     /// <summary>The title this page shows; null only when navigated to without a parameter.</summary>
     public TitleId? Id { get; private set; }
 
@@ -171,13 +177,18 @@ public sealed partial class TitlePage : Page
     /// 0.58+): asks first, with "Also delete the files" off, then takes the
     /// title off every server that has it.
     /// </summary>
-    private async void OnRemoveFromArrClick(object sender, RoutedEventArgs e)
+    private void OnRemoveFromArrClick(object sender, RoutedEventArgs e) => ConfirmRemoveFromArr(fourK: false);
+
+    /// <summary>"Remove from Radarr 4K": the same, for the 4K servers.</summary>
+    private void OnRemoveFromArrFourKClick(object sender, RoutedEventArgs e) => ConfirmRemoveFromArr(fourK: true);
+
+    private async void ConfirmRemoveFromArr(bool fourK)
     {
         if (Id is not { } title)
         {
             return;
         }
-        var arr = title.MediaType.ArrName;
+        var arr = fourK ? ViewModel.FourKArrName : title.MediaType.ArrName;
         var deleteFiles = new CheckBox { Content = Loc.Get("Title_RemoveDeleteFiles") };
         var body = new StackPanel { Spacing = 12 };
         body.Children.Add(new TextBlock { Text = Loc.Format("Title_RemoveFromArrBody", arr), TextWrapping = TextWrapping.Wrap });
@@ -203,7 +214,7 @@ public sealed partial class TitlePage : Page
         {
             return;
         }
-        await ViewModel.RemoveFromArrAsync(deleteFiles.IsChecked == true);
+        await ViewModel.RemoveFromArrAsync(deleteFiles.IsChecked == true, fourK);
     }
 
     /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>

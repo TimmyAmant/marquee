@@ -471,6 +471,10 @@
                                                         Click="OnRemoveFromArrClick"
                                                         Visibility="{x:Bind ViewModel.CanRemoveFromArr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                                     <MenuFlyoutItem
+                                                        Text="{x:Bind ViewModel.RemoveFromArrFourKLabel, Mode=OneWay}"
+                                                        Click="OnRemoveFromArrFourKClick"
+                                                        Visibility="{x:Bind ViewModel.CanRemoveFromArrFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                                    <MenuFlyoutItem
                                                         x:Uid="Title_FixId"
                                                         Click="OnFixIdClick"
                                                         Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
@@ -539,26 +543,54 @@
                                             Content="{x:Bind ViewModel.RequestFourKLabel, Mode=OneWay}"
                                             Command="{x:Bind ViewModel.RequestFourKCommand}"
                                             Visibility="{x:Bind ViewModel.CanRequestFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            Content="{x:Bind ViewModel.AddFourKLabel, Mode=OneWay}"
-                                            Command="{x:Bind ViewModel.AddFourKCommand}"
-                                            Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                        <!-- Add to 4K, with its own "Advanced" chevron joined to its right like the main Add; a plain button on an older server. -->
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="1"
+                                            VerticalAlignment="Center"
+                                            Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                            <Button
+                                                Content="{x:Bind ViewModel.AddFourKLabel, Mode=OneWay}"
+                                                Command="{x:Bind ViewModel.AddFourKCommand}"
+                                                Visibility="{x:Bind ViewModel.AddFourKAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}"
+                                                Style="{StaticResource TitlePillButton}" />
+                                            <StackPanel
+                                                Orientation="Horizontal"
+                                                Spacing="1"
+                                                Visibility="{x:Bind ViewModel.AddFourKAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                                <Button
+                                                    Content="{x:Bind ViewModel.AddFourKLabel, Mode=OneWay}"
+                                                    Command="{x:Bind ViewModel.AddFourKCommand}"
+                                                    CornerRadius="16,0,0,16"
+                                                    Style="{StaticResource TitlePillButton}" />
+                                                <Button
+                                                    x:Uid="Title_AdvancedFourKToggle"
+                                                    Click="OnAdvancedFourKToggleClick"
+                                                    CornerRadius="0,16,16,0"
+                                                    Padding="10,0"
+                                                    Style="{StaticResource TitlePillButton}">
+                                                    <FontIcon Glyph="&#xE70D;" FontSize="10" />
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
                                     </StackPanel>
-                                    <!-- 0.43+: which 4K server and settings "Add to 4K …" uses. -->
+                                    <!-- 0.43+: which 4K server and settings "Add to 4K …" uses, opened by the chevron on Add to 4K. -->
                                     <StackPanel Visibility="{x:Bind ViewModel.CanAddFourK, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                        <Expander
-                                            x:Uid="Title_AdvancedFourK"
+                                        <Border
                                             MaxWidth="600"
-                                            IsExpanded="{x:Bind ViewModel.AddFourKAdvanced.IsExpanded, Mode=TwoWay}"
-                                            Visibility="{x:Bind ViewModel.AddFourKAdvanced.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Stretch">
+                                            HorizontalAlignment="Left"
+                                            Padding="14,12"
+                                            CornerRadius="12"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                            Visibility="{x:Bind ViewModel.AddFourKAdvanced.IsExpanded, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                             <ContentControl
                                                 Content="{x:Bind ViewModel.AddFourKAdvanced}"
                                                 ContentTemplate="{StaticResource AddOverridesTemplate}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch" />
-                                        </Expander>
+                                        </Border>
                                     </StackPanel>
                                     <TextBlock
                                         Text="{x:Bind ViewModel.FourKError, Mode=OneWay}"
