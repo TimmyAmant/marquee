@@ -59,6 +59,7 @@ final class APIFixtureTests: XCTestCase {
         "title-search": decodes(API.OK.self),
         "title-monitored": decodes(API.MonitoredResult.self),
         "title-relink": decodes(API.RelinkResult.self),
+        "title-remove-from-arr": decodes(API.RemoveFromArrResult.self),
         "person-detail": decodes(API.PersonDetail.self),
         "company-detail": decodes(API.CompanyDetail.self),
         "favorites": decodes(API.FavoritesResponse.self),
@@ -103,6 +104,7 @@ final class APIFixtureTests: XCTestCase {
         "arr-options": decodes(API.ArrOptions.self),
         "arr-servers": decodes(API.ListResponse<API.ArrServer>.self),
         "arr-server-test": decodes(API.ArrServerTestResult.self),
+        "override-rules": decodes(API.ListResponse<API.OverrideRule>.self),
         "add-options": decodes(API.AddOptions.self),
         "plex-pin-start": decodes(API.PlexPinStart.self),
         "plex-pin-waiting": decodes(API.PlexPinStatus.self),
@@ -112,6 +114,7 @@ final class APIFixtureTests: XCTestCase {
         "seerr-preview": decodes(API.SeerrImportPreview.self),
         "seerr-job": decodes(API.SeerrImportJob.self),
         "jobs": decodes(API.ListResponse<API.Job>.self),
+        "logs": decodes(API.LogsResponse.self),
         "not-found-settings": decodes(API.NotFoundSettings.self),
         "about": decodes(API.AboutInfo.self),
         "changelog": decodes(API.ListResponse<API.ChangelogEntry>.self),
@@ -130,7 +133,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 98, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 101, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -145,6 +148,39 @@ final class APIFixtureTests: XCTestCase {
     }
 
     // MARK: Decoded values
+
+    func testAdminToolsValues() throws {
+        let jobs = try decode(API.ListResponse<API.Job>.self, "jobs").results
+        XCTAssertEqual(jobs.first?.interval, .hours(2))
+        XCTAssertEqual(jobs.first?.defaultInterval, .hours(1))
+        XCTAssertNotNil(jobs.first?.nextRunAt)
+        XCTAssertNil(jobs.last?.interval, "Older rows without the 0.58 fields still decode")
+
+        let logs = try decode(API.LogsResponse.self, "logs")
+        XCTAssertEqual(logs.latestId, 42)
+        XCTAssertEqual(logs.results.last?.level, .error)
+        XCTAssertEqual(logs.results.last?.source, "arr-sync")
+
+        let rules = try decode(API.ListResponse<API.OverrideRule>.self, "override-rules").results
+        XCTAssertEqual(rules.first?.keywords.first?.id, 210024)
+        XCTAssertEqual(rules.first?.tags, [3])
+
+        let options = try decode(API.AddOptions.self, "add-options")
+        XCTAssertEqual(options.rule?.name, "Anime to the anime folder")
+        XCTAssertEqual(AddOptionsSelection(options).server?.id, options.rule?.serverId)
+
+        let removed = try decode(API.RemoveFromArrResult.self, "title-remove-from-arr")
+        XCTAssertEqual(removed.removedFrom, ["Radarr"])
+    }
+
+    func testJobIntervalsRoundTrip() throws {
+        for interval in API.JobInterval.menuChoices + [.daily(hour: 4, minute: 15)] {
+            let data = try JSONEncoder().encode(interval)
+            XCTAssertEqual(try JSONDecoder().decode(API.JobInterval.self, from: data), interval)
+        }
+        let body = try JSONEncoder().encode(API.JobIntervalBody(interval: nil))
+        XCTAssertEqual(String(decoding: body, as: UTF8.self), #"{"interval":null}"#)
+    }
 
     func testTitleDetailValues() throws {
         let detail = try decode(API.TitleDetail.self, "title-detail")

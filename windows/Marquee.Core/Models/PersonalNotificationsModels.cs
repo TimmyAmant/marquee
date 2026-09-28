@@ -22,8 +22,14 @@ public readonly record struct NotificationChannelKind(string Value) : IOpenEnum<
     public static readonly NotificationChannelKind Ntfy = new("ntfy");
     public static readonly NotificationChannelKind Webhook = new("webhook");
 
+    /// <summary>0.58+.</summary>
+    public static readonly NotificationChannelKind Slack = new("slack");
+    public static readonly NotificationChannelKind Gotify = new("gotify");
+    public static readonly NotificationChannelKind Pushbullet = new("pushbullet");
+
     /// <summary>In the order the website's "Add a channel" offers them.</summary>
-    public static IReadOnlyList<NotificationChannelKind> Known { get; } = [Telegram, Pushover, Email, Discord, Ntfy, Webhook];
+    public static IReadOnlyList<NotificationChannelKind> Known { get; } =
+        [Telegram, Pushover, Email, Discord, Ntfy, Slack, Gotify, Pushbullet, Webhook];
     public static NotificationChannelKind FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -38,6 +44,9 @@ public readonly record struct NotificationChannelKind(string Value) : IOpenEnum<
             if (this == Discord) return "Discord";
             if (this == Ntfy) return "ntfy";
             if (this == Webhook) return "Webhook";
+            if (this == Slack) return "Slack";
+            if (this == Gotify) return "Gotify";
+            if (this == Pushbullet) return "Pushbullet";
             return OpenEnum.Capitalized(Value);
         }
     }
@@ -151,8 +160,20 @@ public sealed record NotificationChannelConfig
     /// <summary>ntfy: a topic on the household server.</summary>
     public string? Topic { get; init; }
 
-    /// <summary>ntfy: a full topic URL; webhook: its URL.</summary>
+    /// <summary>ntfy: a full topic URL; webhook: its URL; Gotify: its server.</summary>
     public string? Url { get; init; }
+
+    /// <summary>Gotify (0.58+): an application token.</summary>
+    public string? AppToken { get; init; }
+
+    /// <summary>Gotify: 0 to 10; left out for 5.</summary>
+    public int? Priority { get; init; }
+
+    /// <summary>Pushbullet (0.58+): an access token.</summary>
+    public string? AccessToken { get; init; }
+
+    /// <summary>Pushbullet: one of your channels, instead of your devices.</summary>
+    public string? ChannelTag { get; init; }
 
     /// <summary>
     /// The <c>config</c> for <paramref name="kind"/> from the form's fields,
@@ -160,8 +181,32 @@ public sealed record NotificationChannelConfig
     /// is given, else the full URL.
     /// </summary>
     public static NotificationChannelConfig? FromForm(
-        NotificationChannelKind kind, string chatId, string userKey, string address, string webhookUrl, string topic, string url)
+        NotificationChannelKind kind, string chatId, string userKey, string address, string webhookUrl, string topic, string url,
+        string appToken = "", string priority = "", string accessToken = "", string channelTag = "")
     {
+        if (kind == NotificationChannelKind.Slack)
+        {
+            return webhookUrl.Trim().NonBlank() is { } value ? new NotificationChannelConfig { WebhookUrl = value } : null;
+        }
+        if (kind == NotificationChannelKind.Gotify)
+        {
+            if (url.Trim().NonBlank() is not { } server || appToken.Trim().NonBlank() is not { } token)
+            {
+                return null;
+            }
+            return new NotificationChannelConfig
+            {
+                Url = server,
+                AppToken = token,
+                Priority = int.TryParse(priority.Trim(), out var level) ? level : null,
+            };
+        }
+        if (kind == NotificationChannelKind.Pushbullet)
+        {
+            return accessToken.Trim().NonBlank() is { } value
+                ? new NotificationChannelConfig { AccessToken = value, ChannelTag = channelTag.Trim().NonBlank() }
+                : null;
+        }
         if (kind == NotificationChannelKind.Telegram)
         {
             return chatId.Trim().NonBlank() is { } value ? new NotificationChannelConfig { ChatId = value } : null;

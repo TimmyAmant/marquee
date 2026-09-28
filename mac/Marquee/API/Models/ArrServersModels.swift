@@ -281,6 +281,16 @@ extension API {
         let isAnime: Bool
         /// Default first. Empty when none is set up for this type.
         let servers: [AddOptionsServer]
+        /// The override rule (Settings › Services, 0.58+) the request goes by:
+        /// its server is first in `servers`, with the rule's picks as its
+        /// `defaults`. nil when none applies, or from an older server.
+        var rule: AddOptionsRule? = nil
+    }
+
+    struct AddOptionsRule: Codable, Hashable, Sendable {
+        let id: String
+        let name: String
+        let serverId: String
     }
 
     struct AddOptionsServer: Codable, Hashable, Sendable, Identifiable {

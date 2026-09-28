@@ -42,9 +42,33 @@ extension MarqueeAPI {
         /// — the servers "Advanced" can pick, default first, with their lists
         /// and defaults. `is4k` lists the 4K servers instead. `.notFound` from
         /// an older server: hide "Advanced".
-        func addOptions(_ type: API.MediaType, id tmdbId: Int, is4k: Bool = false) async throws -> API.AddOptions {
+        /// `requestId` (the request being reviewed) or `forRequest` (one being
+        /// made) apply the override rules (0.58+, `rule`); an older server
+        /// ignores them.
+        func addOptions(
+            _ type: API.MediaType,
+            id tmdbId: Int,
+            is4k: Bool = false,
+            requestId: String? = nil,
+            forRequest: Bool = false
+        ) async throws -> API.AddOptions {
             try await transport.get(
-                Self.path(type, tmdbId) + "/add-options", query: ["is4k": is4k ? "true" : nil], timeout: Timeout.integrations
+                Self.path(type, tmdbId) + "/add-options",
+                query: ["is4k": is4k ? "true" : nil, "requestId": requestId, "forRequest": forRequest ? "true" : nil],
+                timeout: Timeout.integrations
+            )
+        }
+
+        /// `POST /titles/{type}/{tmdbId}/remove-from-arr` (admin, 0.58+) —
+        /// "Remove from Radarr/Sonarr", with its files when `deleteFiles`. The
+        /// approved requests for it are marked removed. `.notFound` from an
+        /// older server; `.conflict("Not tracked in Radarr/Sonarr.")`.
+        @discardableResult
+        func removeFromArr(_ type: API.MediaType, id tmdbId: Int, deleteFiles: Bool, is4k: Bool = false) async throws -> API.RemoveFromArrResult {
+            try await transport.mutate(
+                .post, Self.path(type, tmdbId) + "/remove-from-arr",
+                body: API.RemoveFromArrBody(deleteFiles: deleteFiles, is4k: is4k ? true : nil),
+                timeout: Timeout.integrations, changes: [.library, .requests]
             )
         }
 

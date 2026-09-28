@@ -59,6 +59,11 @@ extension MarqueeAPI {
         var telegram: TelegramEndpoints { TelegramEndpoints(transport: transport) }
         /// Body `{appToken, userKey}`: sends a test notification before saving.
         var pushover: PushoverEndpoints { PushoverEndpoints(transport: transport) }
+        /// Gotify, Slack and Pushbullet (0.58+): `PUT` tests and saves the
+        /// request body, `DELETE` removes.
+        var gotify: ChannelEndpoints { ChannelEndpoints(transport: transport, name: "gotify") }
+        var slack: ChannelEndpoints { ChannelEndpoints(transport: transport, name: "slack") }
+        var pushbullet: ChannelEndpoints { ChannelEndpoints(transport: transport, name: "pushbullet") }
         /// Body `{host, port, secure, username, password, from, to}`: sends a test email before saving.
         var email: EmailEndpoints { EmailEndpoints(transport: transport) }
         /// The generic JSON webhook. Body `{webhookUrl}`: posts a test request before saving.

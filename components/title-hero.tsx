@@ -26,6 +26,7 @@ import { hasAnyRating, imdbTitleUrl, type TitleRatings } from "@/lib/ratings/omd
 import type { PlayLink } from "@/lib/media-servers/play-links";
 import { PlayButton } from "@/components/play-button";
 import { TitleMoreMenu } from "@/components/title-more-menu";
+import { RemoveFromArrButton } from "@/components/remove-from-arr-button";
 import { PILL } from "@/components/pill-styles";
 
 export type TitleMeta = {
@@ -396,6 +397,9 @@ export async function TitleHero({
                     <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={null} variant="menu" />
                   )}
                   {menuRelink && <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} variant="menu" />}
+                  {menuTracking && (
+                    <RemoveFromArrButton mediaType={mediaType} tmdbId={tmdbId} tvdbId={tvdbId ?? null} name={name} />
+                  )}
                 </TitleMoreMenu>
               )}
             </div>

@@ -93,6 +93,18 @@
       "partner@example.com"
     ]
   },
+  "gotify": {
+    "connected": true,
+    "url": "https://gotify.example.com",
+    "priority": 5
+  },
+  "slack": {
+    "connected": false
+  },
+  "pushbullet": {
+    "connected": false,
+    "channelTag": null
+  },
   "genericWebhook": {
     "connected": false
   },

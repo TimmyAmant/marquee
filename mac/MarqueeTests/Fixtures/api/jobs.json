@@ -3,8 +3,19 @@
     {
       "id": "plex-sync",
       "name": "Plex Library Sync",
-      "schedule": "Every hour",
-      "description": "Pulls the latest library state from every connected Plex server."
+      "schedule": "Every 2 hours",
+      "description": "Pulls the latest library state from every connected Plex server.",
+      "interval": {
+        "every": "hours",
+        "count": 2
+      },
+      "defaultInterval": {
+        "every": "hours",
+        "count": 1
+      },
+      "nextRunAt": "2026-09-27T22:00:00.000Z",
+      "lastRunAt": "2026-09-27T20:00:04.000Z",
+      "running": false
     },
     {
       "id": "jellyfin-sync",

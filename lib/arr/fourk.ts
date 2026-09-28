@@ -81,6 +81,18 @@ export async function getFourKStatus(
   return { configured, status: best?.status ?? "untracked" };
 }
 
+/** Every 4K server's entry for the title (Remove from 4K Radarr/Sonarr). */
+export async function fourKCopies(
+  adminUserId: string,
+  mediaType: MediaType,
+  tmdbId: number,
+  tvdbId: number | null,
+): Promise<{ server: ArrServer; arrId: number }[]> {
+  const servers = await fourKServers(adminUserId, mediaType);
+  if (servers.length === 0) return [];
+  return findFourKCopies(servers, mediaType, tmdbId, tvdbId);
+}
+
 /** Asks every 4K server that has the title to search for it again; null
  * when none has it (or there's no 4K server). */
 export async function searchFourK(

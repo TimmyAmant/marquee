@@ -18,6 +18,7 @@ export type SettingsTabId =
   | "discover"
   | "blocklist"
   | "jobs"
+  | "logs"
   | "activity"
   | "about";
 
@@ -42,6 +43,7 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
   { id: "discover", href: "/settings/discover", label: "nav.settingsDiscover", access: "admin" },
   { id: "blocklist", href: "/settings/blocklist", label: "nav.settingsBlocklist", access: "manageBlocklist" },
   { id: "jobs", href: "/settings/jobs", label: "nav.settingsJobs", access: "admin" },
+  { id: "logs", href: "/settings/logs", label: "nav.settingsLogs", access: "admin" },
   { id: "activity", href: "/settings/activity", label: "nav.settingsActivity", access: "admin" },
   { id: "about", href: "/settings/about", label: "nav.settingsAbout", access: "everyone" },
 ];
@@ -75,7 +77,17 @@ export function settingsTabForPath(pathname: string, tabs: readonly SettingsTab[
 // Notifications' sub-tabs (Seerr's per-agent tabs): your own first, then
 // the household's channels, the admin's.
 
-export type NotificationAgentId = "household" | "discord" | "ntfy" | "telegram" | "pushover" | "email" | "webhook";
+export type NotificationAgentId =
+  | "household"
+  | "discord"
+  | "ntfy"
+  | "telegram"
+  | "pushover"
+  | "email"
+  | "gotify"
+  | "slack"
+  | "pushbullet"
+  | "webhook";
 
 export type NotificationSubTab = {
   id: "personal" | NotificationAgentId;
@@ -91,6 +103,9 @@ export const NOTIFICATION_AGENTS: readonly NotificationAgentId[] = [
   "telegram",
   "pushover",
   "email",
+  "gotify",
+  "slack",
+  "pushbullet",
   "webhook",
 ];
 
@@ -101,6 +116,9 @@ const AGENT_LABELS: Record<NotificationAgentId, MessageKey> = {
   telegram: "nav.notificationsTelegram",
   pushover: "nav.notificationsPushover",
   email: "nav.notificationsEmail",
+  gotify: "nav.notificationsGotify",
+  slack: "nav.notificationsSlack",
+  pushbullet: "nav.notificationsPushbullet",
   webhook: "nav.notificationsWebhook",
 };
 

@@ -83,5 +83,9 @@
   "notificationsTelegram": "Telegram",
   "notificationsPushover": "Pushover",
   "notificationsEmail": "E-Mail",
-  "notificationsWebhook": "Webhook"
+  "notificationsWebhook": "Webhook",
+  "settingsLogs": "Protokolle",
+  "notificationsGotify": "Gotify",
+  "notificationsSlack": "Slack",
+  "notificationsPushbullet": "Pushbullet"
 }

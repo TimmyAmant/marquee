@@ -19,4 +19,18 @@ public sealed record Job
     public required string Schedule { get; init; }
 
     public required string Description { get; init; }
+
+    /// <summary>0.58+ (null from an older server, which can't change it): how often it runs.</summary>
+    public JobInterval? Interval { get; init; }
+
+    public JobInterval? DefaultInterval { get; init; }
+
+    /// <summary>When it runs on its own next (0.58+).</summary>
+    public DateTimeOffset? NextRunAt { get; init; }
+
+    /// <summary>When it last finished since the server started (0.58+); null before its first run.</summary>
+    public DateTimeOffset? LastRunAt { get; init; }
+
+    /// <summary>Running now (0.58+).</summary>
+    public bool? Running { get; init; }
 }

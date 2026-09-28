@@ -749,7 +749,7 @@ private struct CouldntAddRow: View {
                 }
             }
             if advanced.isExpanded && offersAdvanced {
-                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
+                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true, requestId: row.id.uuidString.lowercased())
                     .padding(.leading, 52)
             }
             if showsComments {
@@ -1258,7 +1258,7 @@ private struct RequestReviewRow: View {
         VStack(alignment: .leading, spacing: 10) {
             mainRow
             if advanced.isExpanded && offersAdvanced && !showManualApprove {
-                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
+                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true, requestId: row.id.uuidString.lowercased())
                     .padding(.leading, 52)
             }
             if showsComments {

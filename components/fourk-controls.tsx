@@ -65,7 +65,7 @@ export function FourKControls({
   const requested = requestedNow || fourK.requestStatus === "pending";
   const showRequest = !requested && fourK.canRequest;
   const showAdd = !addedNow && fourK.canAdd;
-  const requestAdvanced = useAddAdvancedOptions({ mediaType, tmdbId, is4k: true, onChange: setOverrides });
+  const requestAdvanced = useAddAdvancedOptions({ mediaType, tmdbId, is4k: true, onChange: setOverrides, forRequest: true });
   const addAdvanced = useAddAdvancedOptions({ mediaType, tmdbId, is4k: true, onChange: setOverrides });
   const button = `${PILL} border border-accent px-4 font-semibold text-accent hover:bg-accent hover:text-bg-0`;
 

@@ -791,6 +791,33 @@
                             PlaceholderText="{x:Bind ViewModel.Personal.UrlPlaceholder, Mode=OneWay}"
                             Text="{x:Bind ViewModel.Personal.AddUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </controls:SettingsRow>
+                    <!-- 0.58+: Slack, Gotify and Pushbullet. -->
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsSlackWebhook, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddSlackWebhook"
+                            Text="{x:Bind ViewModel.Personal.AddWebhookUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsAppToken, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddAppToken"
+                            Text="{x:Bind ViewModel.Personal.AddAppToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsPriority, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddPriority"
+                            PlaceholderText="5"
+                            Text="{x:Bind ViewModel.Personal.AddPriority, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsAccessToken, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddAccessToken"
+                            Text="{x:Bind ViewModel.Personal.AddAccessToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsChannelTag, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddChannelTag"
+                            Text="{x:Bind ViewModel.Personal.AddChannelTag, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
                     <InfoBar
                         IsOpen="{x:Bind ViewModel.Personal.HasAddError, Mode=OneWay}"
                         Visibility="{x:Bind ViewModel.Personal.HasAddError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

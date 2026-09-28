@@ -60,6 +60,12 @@ public sealed partial class AddOverridesViewModel : ObservableObject
         this.is4k = is4k;
     }
 
+    /// <summary>
+    /// The request being reviewed (0.58+): the override rule that applies to
+    /// it is picked first. Null for the admin's own Add.
+    /// </summary>
+    public string? RequestId { get; init; }
+
     /// <summary>Called once when the server turned out not to have add options (older than 0.43).</summary>
     public Action? Unsupported { get; set; }
 
@@ -164,7 +170,9 @@ public sealed partial class AddOverridesViewModel : ObservableObject
         Error = null;
         try
         {
-            var options = await api().Titles.AddOptionsAsync(mediaType, tmdbId, is4k, token);
+            var options = RequestId is { } requestId
+                ? await api().AdminTools.AddOptionsForRequestAsync(mediaType, tmdbId, is4k, requestId, token)
+                : await api().Titles.AddOptionsAsync(mediaType, tmdbId, is4k, token);
             if (token.IsCancellationRequested)
             {
                 return;

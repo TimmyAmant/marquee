@@ -194,6 +194,7 @@ public sealed partial class PendingRow : ObservableObject
         Open = openTitle;
         Advanced = new AddOverridesViewModel(() => owner.Api, request.MediaType, request.TmdbId, request.Is4k)
         {
+            RequestId = request.Id.ToString("D"),
             Unsupported = owner.AdvancedIsUnsupported,
             IsUnsupported = owner.HidesAdvanced,
         };
@@ -663,6 +664,7 @@ public sealed partial class CouldntAddRow : ObservableObject
         Thread = thread;
         Advanced = new AddOverridesViewModel(() => owner.Api, request.MediaType, request.TmdbId, request.Is4k)
         {
+            RequestId = request.Id.ToString("D"),
             Unsupported = owner.AdvancedIsUnsupported,
             IsUnsupported = owner.HidesAdvanced,
         };

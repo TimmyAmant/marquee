@@ -29,7 +29,8 @@ async function sonarrFetch<T>(
     throw new Error(`Sonarr request failed: ${path} (${res.status})`);
   }
 
-  if (res.status === 204) return undefined as T;
+  // A delete answers with nothing to read (or an empty object).
+  if (res.status === 204 || options.method === "DELETE") return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -202,6 +203,12 @@ export async function searchSeries(config: ArrConfig, seriesId: number): Promise
     method: "POST",
     body: { name: "SeriesSearch", seriesId },
   });
+}
+
+/** Removes the series from Sonarr (the title page's "Remove from Sonarr"),
+ * and its files too when `deleteFiles`. */
+export async function deleteSeries(config: ArrConfig, seriesId: number, deleteFiles: boolean): Promise<void> {
+  await sonarrFetch(config, `/series/${seriesId}?deleteFiles=${deleteFiles}&addImportListExclusion=false`, { method: "DELETE" });
 }
 
 export interface SonarrEpisode {
