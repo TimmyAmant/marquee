@@ -9092,6 +9092,35 @@
         }
       }
     },
+    "Choose what you're notified about" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswählen, worüber du benachrichtigt wirst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige de qué recibes notificaciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir ce qui vous est notifié"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher sobre o que você é notificado"
+          }
+        }
+      }
+    },
     "Choose where each kind of notification goes. The bell is the list at the top of every page; devices are the browsers, Macs and PCs you turned notifications on for." : {
       "localizations" : {
         "de" : {
@@ -29819,6 +29848,35 @@
         }
       }
     },
+    "Server settings" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servereinstellungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres du serveur"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurações do servidor"
+          }
+        }
+      }
+    },
     "Services" : {
       "localizations" : {
         "es" : {
@@ -33906,6 +33964,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não há nada para alterar: o 4K não está configurado neste servidor."
+          }
+        }
+      }
+    },
+    "These open on your Marquee server's website." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie öffnen sich auf der Website deines Marquee-Servers."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se abren en el sitio web de tu servidor de Marquee."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ils s’ouvrent sur le site web de votre serveur Marquee."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elas abrem no site do seu servidor do Marquee."
           }
         }
       }

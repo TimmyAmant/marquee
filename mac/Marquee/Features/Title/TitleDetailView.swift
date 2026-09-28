@@ -490,7 +490,7 @@ private struct TitleMainColumn: View {
                 ].compactMap(\.nonBlank)
                 if !parts.isEmpty {
                     Text(parts.joined(separator: " · "))
-                        .font(.system(size: 14))
+                        .font(.system(size: Metrics.text(14)))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 FavoriteButton(
@@ -516,7 +516,7 @@ private struct TitleMainColumn: View {
 
             if let tagline = detail.tagline.nonBlank {
                 Text(tagline)
-                    .font(.system(size: 13.5))
+                    .font(.system(size: Metrics.text(13.5)))
                     .italic()
                     .foregroundStyle(Theme.textMuted)
                     .padding(.top, 18)
@@ -529,7 +529,7 @@ private struct TitleMainColumn: View {
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 26)
                 Text(overview)
-                    .font(.system(size: 14))
+                    .font(.system(size: Metrics.text(14)))
                     .lineSpacing(5)
                     .foregroundStyle(Theme.textSecondary)
                     .textSelection(.enabled)
@@ -547,11 +547,11 @@ private struct TitleMainColumn: View {
                     ForEach(Array(detail.credits.enumerated()), id: \.offset) { _, credit in
                         VStack(alignment: .leading, spacing: 1) {
                             Text(credit.name)
-                                .font(.system(size: 13.5, weight: .semibold))
+                                .font(.system(size: Metrics.text(13.5), weight: .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                                 .lineLimit(2)
                             Text(credit.role)
-                                .font(.system(size: 12))
+                                .font(.system(size: Metrics.text(12)))
                                 .foregroundStyle(Theme.textMuted)
                                 .lineLimit(1)
                         }
@@ -566,7 +566,7 @@ private struct TitleMainColumn: View {
                 FlowLayout(spacing: 6, lineSpacing: 6) {
                     ForEach(detail.keywords.prefix(12), id: \.self) { keyword in
                         Text(keyword)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
                             .fixedSize()
@@ -655,7 +655,7 @@ private struct TitleActionRow: View {
 
                 if viewer.alreadyRequested {
                     Text(viewer.pendingRequestLine)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: Metrics.text(13), weight: .semibold))
                         .foregroundStyle(Theme.info)
                         .padding(.horizontal, 14)
                         .frame(height: 32)
@@ -670,7 +670,7 @@ private struct TitleActionRow: View {
                         model.select(.requests)
                     } label: {
                         Text("Can't find")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.missing)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -687,7 +687,7 @@ private struct TitleActionRow: View {
                 // manages it gets Unblock instead).
                 if !managesBlocklist, let block = viewer.block {
                     Text(block.closedLine)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.horizontal, 14)
                         .frame(minHeight: 32)
@@ -700,7 +700,7 @@ private struct TitleActionRow: View {
                 if let fourK = viewer.fourK {
                     if let label = fourK.statusLabel {
                         Text(label)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.accent)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -708,7 +708,7 @@ private struct TitleActionRow: View {
                     }
                     if fourK.isRequestPending {
                         Text("4K requested")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.info)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -732,7 +732,7 @@ private struct TitleActionRow: View {
                 if viewer.showsReportProblem(reportsIssues: model.viewer?.can(.reportIssues) == true) {
                     if screen.hasReportedProblem {
                         Text("Problem reported")
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -797,7 +797,7 @@ private struct TitleActionRow: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: Metrics.text(13), weight: .semibold))
                             .frame(width: 32, height: 32)
                             .contentShape(Circle())
                     }
@@ -814,7 +814,7 @@ private struct TitleActionRow: View {
                         model.openSettings(.services)
                     }
                     .buttonStyle(QuietButtonStyle(color: Theme.accent))
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .frame(height: 32)
                 }
             }
@@ -823,7 +823,7 @@ private struct TitleActionRow: View {
 
             if let line = viewer.otherRequestersLine {
                 Text(line)
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             }
             if let error = screen.addError {
@@ -899,7 +899,7 @@ private struct TitleActionRow: View {
     private func blockControl(_ block: API.TitleBlock?) -> some View {
         if let keyword = block?.keyword.nonBlank {
             Text("Requests blocked by “\(keyword)”")
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textMuted)
                 .padding(.horizontal, 14)
                 .frame(height: 32)
@@ -928,7 +928,7 @@ private struct TitleActionRow: View {
         HStack(spacing: 8) {
             TextField("Why, for whoever asks (optional)", text: $blockReason)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .padding(.horizontal, 14)
                 .frame(height: 32)
                 .background(Theme.bg0, in: Capsule())
@@ -945,7 +945,7 @@ private struct TitleActionRow: View {
                 .disabled(screen.isBlockBusy)
             Button("Cancel") { askingBlockReason = false }
                 .buttonStyle(QuietButtonStyle())
-                .font(.system(size: 12))
+                .font(.system(size: Metrics.text(12)))
         }
     }
 
@@ -967,7 +967,7 @@ private struct TitleActionRow: View {
             setAdvancedExpanded(!advanced.isExpanded, viewer)
         } label: {
             Image(systemName: "chevron.down")
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: Metrics.text(10), weight: .bold))
                 .rotationEffect(.degrees(advanced.isExpanded ? 180 : 0))
                 .frame(width: filled ? 28 : 32, height: 32)
                 .foregroundStyle(filled ? Theme.bg0 : Theme.accent)
@@ -990,7 +990,7 @@ private struct TitleActionRow: View {
     private func pillLabel(_ symbol: String, _ title: String, size: CGFloat) -> some View {
         HStack(spacing: PillSize.large.iconGap) {
             Image(systemName: symbol)
-                .font(.system(size: size - 1))
+                .font(.system(size: Metrics.text(size - 1)))
                 .foregroundStyle(Theme.textSecondary)
             Text(title)
         }
@@ -1035,7 +1035,7 @@ private struct ExternalLinksRow: View {
                     Button(action: onTrailer) {
                         HStack(spacing: PillSize.medium.iconGap) {
                             Image(systemName: "play.fill")
-                                .font(.system(size: 10))
+                                .font(.system(size: Metrics.text(10)))
                                 .foregroundStyle(Theme.accent)
                             Text("Trailer")
                         }
@@ -1105,7 +1105,7 @@ private struct TitleSidebarColumn: View {
                         .foregroundStyle(Theme.accent)
                     Spacer(minLength: 8)
                     Text("TMDb user score")
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                 }
                 .frame(height: 50)
@@ -1134,7 +1134,7 @@ private struct TitleSidebarColumn: View {
                         // 0.53+: the country they're for (Settings › Discover).
                         if let region = detail.facts.streamingRegion.nonBlank {
                             Text(verbatim: region)
-                                .font(.system(size: 11))
+                                .font(.system(size: Metrics.text(11)))
                                 .foregroundStyle(Theme.textMuted)
                         }
                     }
@@ -1197,7 +1197,7 @@ private struct TitleSidebarColumn: View {
                 .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.system(size: 12.5))
+        .font(.system(size: Metrics.text(12.5)))
         .padding(.vertical, 6)
         .frame(minHeight: 38)
         .overlay(alignment: .top) {
@@ -1257,11 +1257,11 @@ private struct FileDetailsCard: View {
                 ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(cell.label)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textMuted)
                             .lineLimit(1)
                         Text(cell.value)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -1305,7 +1305,7 @@ private struct FranchiseSection: View {
                 }
                 if let result = screen.addAllResult {
                     Text(result)
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textSecondary)
                 } else if missingCount > 0 {
                     Button(screen.isAddingAll ? "Adding…" : "Add all \(missingCount) missing") { confirmingAddAll = true }
@@ -1314,7 +1314,7 @@ private struct FranchiseSection: View {
                 }
                 if let result = screen.requestAllResult {
                     Text(result)
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textSecondary)
                 } else if requestableCount > 0 {
                     Button(screen.isRequestingAll ? "Requesting…" : "Request all \(requestableCount) missing") {
@@ -1366,7 +1366,7 @@ private struct TitleRatingsRow: View {
                     if let votes = ratings.imdbVotes {
                         Text("(\(votes.formatted(.number.notation(.compactName))))")
                             .foregroundStyle(Theme.textMuted)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                     }
                 }
                 .help("IMDb rating")
@@ -1404,17 +1404,17 @@ private struct RatingBadge<Score: View>: View {
         HStack(spacing: 5) {
             if let markColor {
                 Text(verbatim: mark)
-                    .font(.system(size: 9.5, weight: .heavy))
+                    .font(.system(size: Metrics.text(9.5), weight: .heavy))
                     .foregroundStyle(.black)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 3).fill(markColor))
             } else {
-                Text(verbatim: mark).font(.system(size: 11))
+                Text(verbatim: mark).font(.system(size: Metrics.text(11)))
             }
             score()
         }
-        .font(.system(size: 12, weight: .medium))
+        .font(.system(size: Metrics.text(12), weight: .medium))
         .foregroundStyle(Theme.textPrimary)
         .padding(.horizontal, 9)
         .frame(height: 26)
@@ -1449,7 +1449,7 @@ private struct PlayOnServerButton: View {
 
     private func label(_ text: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: "play.fill").font(.system(size: 10))
+            Image(systemName: "play.fill").font(.system(size: Metrics.text(10)))
             Text(text)
         }
     }

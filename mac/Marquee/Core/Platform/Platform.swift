@@ -97,9 +97,17 @@ enum Platform {
         #if os(macOS)
         return Host.current().localizedName ?? "Mac"
         #else
-        // iOS 16+ reports only the model ("iPhone") without an entitlement.
-        return UIDevice.current.name
+        // iOS 16+ gives apps only "iPhone" for the device's own name, so the
+        // model says which one it is: "iPhone 17 Pro (Marquee)".
+        let model = DeviceModels.currentIdentifier.flatMap { DeviceModels.names[$0] } ?? UIDevice.current.model
+        return deviceName(model: model)
         #endif
+    }
+
+    /// "iPhone 17 Pro (Marquee)": the server's device list shows the Marquee
+    /// app beside the browsers signed in on the same phone.
+    static func deviceName(model: String) -> String {
+        "\(model) (Marquee)" // i18n-ignore (a device name, not UI text)
     }
 }
 
@@ -126,6 +134,22 @@ extension View {
         toggleStyle(.checkbox)
         #else
         toggleStyle(.switch)
+        #endif
+    }
+
+    /// For a page that opens with its own serif heading ("Requests",
+    /// "Library"…): on the iPhone the navigation bar leaves its title out,
+    /// so the name isn't said twice. `navigationTitle` still names the page
+    /// for Back and VoiceOver. Nothing changes on the Mac.
+    func headingIsThePageTitle() -> some View {
+        #if os(iOS)
+        toolbar {
+            ToolbarItem(placement: .principal) {
+                Color.clear.frame(width: 1, height: 1).accessibilityHidden(true)
+            }
+        }
+        #else
+        self
         #endif
     }
 

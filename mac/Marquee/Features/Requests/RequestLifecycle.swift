@@ -105,7 +105,7 @@ struct RequestEditSheet: View {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text("Loading…")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textMuted)
             }
         case let .failed(message):
@@ -120,7 +120,7 @@ struct RequestEditSheet: View {
     @ViewBuilder
     private func loaded(_ current: RequestEditForm) -> some View {
         Text(current.options.title)
-            .font(.system(size: 13, weight: .medium))
+            .font(.system(size: Metrics.text(13), weight: .medium))
             .foregroundStyle(Theme.textSecondary)
 
         VStack(alignment: .leading, spacing: 6) {
@@ -139,12 +139,12 @@ struct RequestEditSheet: View {
                     .disabled(saving)
             } else if !current.isTV {
                 Text("There's nothing to change: 4K isn't set up on this server.")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
 
         if current.isTV, !current.rows.isEmpty {
             SeasonPickerList(
@@ -206,7 +206,7 @@ struct EditRequestButton: View {
     var body: some View {
         Button("Edit") { editing = true }
             .buttonStyle(QuietButtonStyle())
-            .font(.system(size: 11.5))
+            .font(.system(size: Metrics.text(11.5)))
             .help("Change the seasons or 4K before it's reviewed.")
             .sheet(isPresented: $editing) {
                 RequestEditSheet(requestId: requestId, onSaved: onSaved)
@@ -247,7 +247,7 @@ struct CancelRequestControl: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .font(.system(size: 11.5))
+        .font(.system(size: Metrics.text(11.5)))
     }
 
     private func cancel() {
@@ -301,7 +301,7 @@ private struct MyTitleRequestRow: View {
         VStack(alignment: .leading, spacing: 6) {
             FlowLayout(spacing: 12, lineSpacing: 4) {
                 Text(request.sentence)
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 if request.canEdit {

@@ -50,11 +50,11 @@ struct SearchPanel: View {
     private var field: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: .medium))
+                .font(.system(size: Metrics.text(18), weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
             TextField("Search an actor, a studio, a title…", text: $query)
                 .textFieldStyle(.plain)
-                .font(.system(size: 19))
+                .font(.system(size: Metrics.text(19)))
                 .foregroundStyle(Theme.textPrimary)
                 .focused($fieldFocused)
                 .onSubmit(submit)
@@ -66,7 +66,7 @@ struct SearchPanel: View {
                     fieldFocused = true
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 15))
+                        .font(.system(size: Metrics.text(15)))
                         .foregroundStyle(Theme.textMuted)
                 }
                 .buttonStyle(.plain)
@@ -86,7 +86,7 @@ struct SearchPanel: View {
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(Self.groups(suggestions), id: \.group) { run in
                         Text(run.group.label)
-                            .font(.system(size: 10.5, weight: .semibold))
+                            .font(.system(size: Metrics.text(10.5), weight: .semibold))
                             .textCase(.uppercase)
                             .kerning(0.6)
                             .foregroundStyle(Theme.textMuted)
@@ -211,12 +211,12 @@ struct SearchPanelRow: View {
                     .frame(width: 44, height: 44)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(suggestion.name)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: Metrics.text(14), weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     if let subtitle = suggestion.subtitle {
                         Text(subtitle)
-                            .font(.system(size: 12))
+                            .font(.system(size: Metrics.text(12)))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
                     }
@@ -247,7 +247,7 @@ struct SearchPanelRow: View {
                     RemoteImage(suggestion.posterPath, size: .w185, showsShimmer: false)
                 } else {
                     Image(systemName: "person.fill")
-                        .font(.system(size: 16))
+                        .font(.system(size: Metrics.text(16)))
                         .foregroundStyle(Theme.textMuted)
                 }
             }
@@ -261,7 +261,7 @@ struct SearchPanelRow: View {
                         .padding(4)
                 } else {
                     Image(systemName: suggestion.mediaType == .network ? "tv" : "building.2")
-                        .font(.system(size: 14))
+                        .font(.system(size: Metrics.text(14)))
                         .foregroundStyle(Color.black.opacity(0.55))
                 }
             }
@@ -301,7 +301,7 @@ struct SuggestionKindPill: View {
         let colors = Self.colors(for: status)
         let text = Self.accessibilityText(kind: kind, status: status)
         Text(kind.label)
-            .font(.system(size: 10.5, weight: .medium))
+            .font(.system(size: Metrics.text(10.5), weight: .medium))
             .foregroundStyle(colors?.foreground ?? Theme.textSecondary)
             .padding(.horizontal, 7)
             .padding(.vertical, 2)

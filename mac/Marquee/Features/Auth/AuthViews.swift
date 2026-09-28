@@ -55,7 +55,7 @@ private struct PinnedServerBadge: View {
 
     var body: some View {
         Text("TEST RUN · \(server)")
-            .font(.system(size: 10, weight: .semibold))
+            .font(.system(size: Metrics.text(10), weight: .semibold))
             .foregroundStyle(Theme.bg0)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -74,7 +74,7 @@ private struct LaunchingView: View {
                 ProgressView()
                 if let server = model.session.server {
                     Text("Connecting to \(server.displayName)…")
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
@@ -119,7 +119,7 @@ struct AuthHeading: View {
                 .font(.marqueeDisplay(26))
                 .foregroundStyle(Theme.textPrimary)
             Text(message)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -139,7 +139,7 @@ struct AuthField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 .foregroundStyle(Theme.textSecondary)
             Group {
                 if secure {
@@ -154,7 +154,7 @@ struct AuthField: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             #endif
-            .font(.system(size: 13.5))
+            .font(.system(size: Metrics.text(13.5)))
             .focused($focused)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
@@ -182,7 +182,7 @@ struct AuthDivider: View {
         HStack(spacing: 10) {
             Rectangle().fill(Theme.border).frame(height: 1)
             Text("or")
-                .font(.system(size: 11.5))
+                .font(.system(size: Metrics.text(11.5)))
                 .foregroundStyle(Theme.textMuted)
             Rectangle().fill(Theme.border).frame(height: 1)
         }
@@ -202,7 +202,7 @@ struct AuthLink: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 12.5, weight: .medium))
+                .font(.system(size: Metrics.text(12.5), weight: .medium))
         }
         .buttonStyle(QuietButtonStyle())
         .frame(maxWidth: .infinity)
@@ -224,7 +224,7 @@ struct AuthNotice: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .font(.system(size: 12))
+        .font(.system(size: Metrics.text(12)))
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
         .background(Theme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
@@ -241,18 +241,18 @@ struct ServerChip: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "server.rack")
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 1) {
                 Text(address.displayName)
-                    .font(.system(size: 12.5, weight: .medium))
+                    .font(.system(size: Metrics.text(12.5), weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if let version {
                     Text("Marquee \(version)")
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                 }
             }
@@ -260,7 +260,7 @@ struct ServerChip: View {
             if let onChange {
                 Button("Change", action: onChange)
                     .buttonStyle(QuietButtonStyle(color: Theme.accent))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: Metrics.text(12), weight: .medium))
                     .help("Connect to a different Marquee server")
             }
         }

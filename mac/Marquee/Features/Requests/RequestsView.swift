@@ -34,6 +34,7 @@ struct RequestsView: View {
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Requests")
+        .headingIsThePageTitle()
         #if os(iOS)
         .environment(\.stacksTableColumns, horizontalSizeClass == .compact)
         #endif
@@ -96,7 +97,7 @@ private struct ReviewerLine: View {
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
         }
-        .font(.system(size: 11.5))
+        .font(.system(size: Metrics.text(11.5)))
     }
 }
 
@@ -176,7 +177,7 @@ private struct TableCard<Content: View>: View {
             HStack(spacing: 0) {
                 ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
                     Text(column)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: Metrics.text(12), weight: .medium))
                         .foregroundStyle(Theme.textMuted)
                         .frame(maxWidth: index == 0 ? .infinity : 170, alignment: .leading)
                 }
@@ -213,10 +214,10 @@ private func titleCell<Footer: View>(
         VStack(alignment: .leading, spacing: 2) {
             Button(title, action: action)
                 .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: Metrics.text(13), weight: .medium))
             if let detail {
                 Text(detail)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textSecondary)
             }
             footer()
@@ -250,7 +251,7 @@ private struct MemberRequestsList: View {
         VStack(alignment: .leading, spacing: 16) {
             if let limitsLine {
                 Text(limitsLine)
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textSecondary)
             }
             list
@@ -268,7 +269,7 @@ private struct MemberRequestsList: View {
             if let rows {
                 if rows.isEmpty {
                     Text("You haven't requested anything yet — find a title and hit Request.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else {
                     TableCard(columns: [String(localized: "Title"), String(localized: "Requested"), String(localized: "Status")]) {
@@ -336,7 +337,7 @@ private struct MyRequestRow: View {
                     }
                     if row.showsAskInCommentsHint {
                         Text("Need a change? Ask in its comments.")
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textMuted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -347,7 +348,7 @@ private struct MyRequestRow: View {
                 RowThread(parent: .request(row.id)) { shownCount = $0 }
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .requestBackdrop(row.backdropPath)
@@ -403,7 +404,7 @@ private struct AdminRequestsList: View {
 
                 if pending.isEmpty {
                     Text("No pending requests.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else {
                     TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Actions")]) {
@@ -546,7 +547,7 @@ private struct PastRequestRow: View {
                     // 0.43+: "Added to Radarr 2", like the web page.
                     if let addedTo = row.addedToLine {
                         Text(addedTo)
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .foregroundStyle(Theme.textMuted)
                     }
                     // 0.53+: who reviewed it, as on the website's cards.
@@ -560,7 +561,7 @@ private struct PastRequestRow: View {
                 RowThread(parent: .request(row.id)) { shownCount = $0 }
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .requestBackdrop(row.backdropPath)
@@ -583,7 +584,7 @@ private struct EveryonesRequestsList: View {
             if let rows {
                 if rows.isEmpty {
                     Text("Nobody else has asked for anything yet.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else {
                     TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Status")]) {
@@ -601,7 +602,7 @@ private struct EveryonesRequestsList: View {
                                 TonePill(text: row.statusLabel, tone: row.tone)
                                     .tableColumn(top: 16)
                             }
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
                         }
@@ -657,7 +658,7 @@ private struct CouldntAddSection: View {
                     TonePill(text: "\(rows.count)", tone: .missing)
                 }
                 Text("Approved, but Sonarr/Radarr couldn't be reached or didn't take them. Retry once it's back.")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -698,21 +699,21 @@ private struct CouldntAddRow: View {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Button(row.title) { model.openTitle(row.titleID) }
                             .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                         if let detail = row.detailLine {
                             Text(detail)
-                                .font(.system(size: 11.5))
+                                .font(.system(size: Metrics.text(11.5)))
                                 .foregroundStyle(Theme.textMuted)
                         }
                     }
                     if let line = row.couldntAddLine {
                         Text(line)
-                            .font(.system(size: 12.5))
+                            .font(.system(size: Metrics.text(12.5)))
                             .foregroundStyle(Theme.textSecondary)
                     }
                     if let message = error ?? row.addFailed?.error {
                         Text(message)
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .foregroundStyle(Theme.danger)
                             .fixedSize(horizontal: false, vertical: true)
                             .textSelection(.enabled)
@@ -737,13 +738,13 @@ private struct CouldntAddRow: View {
                     if isAdmin {
                         Button(busy == "manual" ? "Saving…" : "Added it by hand") { manuallyApprove() }
                             .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .disabled(busy != nil)
                             .help("Mark it approved without Sonarr/Radarr — once you've got it some other way.")
                     }
                     Button(busy == "reject" ? "Declining…" : "Decline") { choosingReason = true }
                         .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .disabled(busy != nil)
                 }
             }
@@ -756,7 +757,7 @@ private struct CouldntAddRow: View {
                     .padding(.leading, 52)
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .onChange(of: row.commentCount) { _, _ in shownCount = nil }
@@ -824,7 +825,7 @@ private struct IssuesSection: View {
                 SectionTitle(text: isAdmin ? String(localized: "Reported problems") : String(localized: "Your problem reports"))
                 if open.isEmpty {
                     Text("Nothing open right now.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else {
                     issueCard(open)
@@ -832,7 +833,7 @@ private struct IssuesSection: View {
                 if !fixed.isEmpty {
                     Button(showFixed ? String(localized: "Hide fixed") : String(localized: "Show fixed (\(fixed.count))")) { showFixed.toggle() }
                         .buttonStyle(QuietButtonStyle(color: Theme.textSecondary))
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                     if showFixed {
                         issueCard(fixed)
                             .opacity(0.8)
@@ -903,7 +904,7 @@ private struct IssueRow: View {
                     .padding(.leading, 52)
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .onChange(of: issue.commentCount) { _, _ in shownCount = nil }
@@ -916,26 +917,26 @@ private struct IssueRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Button(issue.title) { model.openTitle(issue.titleID) }
                         .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: Metrics.text(13), weight: .medium))
                     if let label = issue.episodeLabel.nonBlank {
                         Text(label)
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .foregroundStyle(Theme.textMuted)
                     }
                 }
                 Text(issue.summaryLine(showingReporter: isAdmin))
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textSecondary)
                 if let message = issue.message.nonBlank {
                     Text("“\(message)”")
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
                 }
                 if let fixedLine = issue.fixedLine {
                     Text(fixedLine)
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .foregroundStyle(Theme.owned)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -943,7 +944,7 @@ private struct IssueRow: View {
                     HStack(spacing: 8) {
                         TextField("Note for them (optional), e.g. Replaced the file", text: $note)
                             .textFieldStyle(.roundedBorder)
-                            .font(.system(size: 12.5))
+                            .font(.system(size: Metrics.text(12.5)))
                             .onSubmit { resolve() }
                             .onChange(of: note) { _, value in
                                 let scalars = value.unicodeScalars
@@ -959,13 +960,13 @@ private struct IssueRow: View {
                 }
                 if let error {
                     Text(error)
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.danger)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let info {
                     Text(info)
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.owned)
                 }
                 // 0.46+: its conversation with the reporter.
@@ -988,7 +989,7 @@ private struct IssueRow: View {
                     if issue.isMine || isAdmin {
                         Button(issue.isMine && !isAdmin ? "Withdraw" : "Remove") { remove() }
                             .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .disabled(busy != nil)
                     }
                 }
@@ -1061,7 +1062,7 @@ private struct NotFoundSection: View {
                         TonePill(text: "\(rows.count)", tone: .missing)
                     }
                     Text(list.blurb)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1121,36 +1122,36 @@ private struct NotFoundRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Button(row.title) { model.openTitle(row.titleID) }
                         .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: Metrics.text(13), weight: .medium))
                     if let detail = row.detailLine {
                         Text(detail)
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .foregroundStyle(Theme.textMuted)
                     }
                 }
                 // Re-render each minute so "can't find for 3 hours" stays current.
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     Text(row.summaryLine(now: context.date))
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .help("Since \(Format.dateTime(row.notFoundSince))")
                 }
                 if let hint = row.hint.nonBlank {
                     Text(hint)
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .foregroundStyle(Theme.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 2)
                 }
                 if let error {
                     Text(error)
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.danger)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let info {
                     Text(info)
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.owned)
                 }
             }
@@ -1167,12 +1168,12 @@ private struct NotFoundRow: View {
                 }
                 Button(busy == "dismiss" ? "Saving…" : "Mark as found") { dismiss() }
                     .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .disabled(busy != nil)
                     .help("Take it off this list for good. The request stays approved.")
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
@@ -1219,7 +1220,7 @@ private struct RejectionReasonLine: View {
 
     var body: some View {
         Text("Reason: \(reason)")
-            .font(.system(size: 11))
+            .font(.system(size: Metrics.text(11)))
             .foregroundStyle(Theme.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -1265,7 +1266,7 @@ private struct RequestReviewRow: View {
                     .padding(.leading, 52)
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .requestBackdrop(row.backdropPath)
@@ -1285,7 +1286,7 @@ private struct RequestReviewRow: View {
                 // 0.46+: the requester (or a reviewer) changed it after asking.
                 if row.wasChanged, let editedAt = row.editedAt {
                     Text("Changed since asking")
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                         .help("Changed \(Format.dateTime(editedAt))")
                 }
@@ -1329,13 +1330,13 @@ private struct RequestReviewRow: View {
                 if let error = approveError ?? otherError {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(error)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.danger)
                             .fixedSize(horizontal: false, vertical: true)
                         if sonarrUnresolved, let manualSonarrURL {
                             Button("Add manually in Sonarr") { openURL(manualSonarrURL) }
                                 .buttonStyle(QuietButtonStyle(color: Theme.accent))
-                                .font(.system(size: 11))
+                                .font(.system(size: Metrics.text(11)))
                         }
                     }
                 }
@@ -1430,7 +1431,7 @@ private struct DeclineRequestSheet: View {
             Text("Decline request")
                 .font(.marqueeDisplay(22))
             Text("Let \(requester) know why \"\(title)\" isn't being added. They'll see it under Declined on their Requests page and in the notification.")
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -1441,12 +1442,12 @@ private struct DeclineRequestSheet: View {
             }
             .choicePickerStyle()
             .labelsHidden()
-            .font(.system(size: 13))
+            .font(.system(size: Metrics.text(13)))
 
             if choice == Self.other {
                 TextField("Tell them why", text: $customReason)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .onChange(of: customReason) { _, value in
                         let scalars = value.unicodeScalars
                         if scalars.count > Self.maxReasonLength {

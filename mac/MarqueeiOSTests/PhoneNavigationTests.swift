@@ -100,7 +100,10 @@ struct PhoneNavigationTests {
     }
 
     @Test func adminSettingsPagesAreTheWebsites() {
-        #expect(SettingsTab.integrations.webPath == "settings/integrations")
+        #expect(SettingsTab.services.webPath == "settings/services")
+        #expect(SettingsTab.mediaServers.webPath == "settings/media-servers")
+        #expect(!SettingsTab.general.isOnPhone)
+        #expect(SettingsTab.notifications.isOnPhone)
         #expect(SettingsTab.account.webPath == "settings")
     }
 }

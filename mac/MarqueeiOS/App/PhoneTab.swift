@@ -42,21 +42,67 @@ enum PhoneTab: String, Hashable, CaseIterable, Identifiable {
     }
 }
 
-/// The Settings pages a shared screen can ask for ("Connect an integration").
-/// On the phone only Account has a screen of its own; the admin pages open
-/// the server's website.
-enum SettingsTab: String, Hashable {
-    case account, integrations, discover, activity, jobs, about
+/// The Settings pages a shared screen can ask for ("Connect an integration"),
+/// the same tabs as the Mac's and the website's (0.56+). On the phone,
+/// Account, Notifications and About are the More tab's Settings screen; the
+/// admin's pages open on the website, which has room for them.
+enum SettingsTab: String, Hashable, CaseIterable {
+    case account, general, members, mediaServers, services, notifications, discover, blocklist, jobs, activity, about
 
     /// The page on the website (app/settings/…), relative to its root.
     var webPath: String {
         switch self {
         case .account: return "settings"
-        case .integrations: return "settings/integrations"
+        case .general: return "settings/general"
+        case .members: return "settings/members"
+        case .mediaServers: return "settings/media-servers"
+        case .services: return "settings/services"
+        case .notifications: return "settings/notifications"
         case .discover: return "settings/discover"
-        case .activity: return "settings/activity"
+        case .blocklist: return "settings/blocklist"
         case .jobs: return "settings/jobs"
+        case .activity: return "settings/activity"
         case .about: return "settings/about"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .account: return String(localized: "Account")
+        case .general: return String(localized: "General")
+        case .members: return String(localized: "Members")
+        case .mediaServers: return String(localized: "Media servers")
+        case .services: return String(localized: "Services")
+        case .notifications: return String(localized: "Notifications")
+        case .discover: return String(localized: "Discover")
+        case .blocklist: return String(localized: "Blocklist")
+        case .jobs: return String(localized: "Jobs")
+        case .activity: return String(localized: "Activity")
+        case .about: return String(localized: "About")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .account: return "person.crop.circle"
+        case .general: return "gearshape"
+        case .members: return "person.2"
+        case .mediaServers: return "server.rack"
+        case .services: return "powerplug"
+        case .notifications: return "bell"
+        case .discover: return "safari"
+        case .blocklist: return "hand.raised"
+        case .jobs: return "arrow.triangle.2.circlepath"
+        case .activity: return "clock"
+        case .about: return "info.circle"
+        }
+    }
+
+    /// Covered by the phone's own Settings screen.
+    var isOnPhone: Bool {
+        switch self {
+        case .account, .notifications, .about: return true
+        default: return false
         }
     }
 }
@@ -110,7 +156,7 @@ extension AppModel {
     /// admin's pages (Integrations, Discover, Activity, Jobs) are the
     /// website's, which has room for them.
     func openSettings(_ tab: SettingsTab = .account) {
-        if tab == .account || tab == .about {
+        if tab.isOnPhone {
             select(.settings)
             return
         }

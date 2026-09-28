@@ -49,12 +49,12 @@ struct ShareTitleSheet: View {
                 ProgressView().controlSize(.small)
             case let .unavailable(message):
                 Text(message)
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
             case let .loaded(users) where users.isEmpty:
                 Text("No one else has an account here yet.")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textMuted)
             case let .loaded(users):
                 memberList(users)
@@ -83,11 +83,11 @@ struct ShareTitleSheet: View {
             TextField("Add a note (optional)", text: $share.note, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .disabled(share.sendState == .sending)
             if let count = share.noteCountLabel {
                 Text(count)
-                    .font(.system(size: 11).monospacedDigit())
+                    .font(.system(size: Metrics.text(11)).monospacedDigit())
                     .foregroundStyle(Theme.textMuted)
             }
         }
@@ -127,11 +127,11 @@ struct ShareTitleSheet: View {
                 }
                 .choicePickerStyle()
                 .labelsHidden()
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
             }
             if let url = share.linkURL {
                 Text(url.absoluteString)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textMuted)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -155,7 +155,7 @@ struct ShareTitleSheet: View {
 
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: Metrics.text(13), weight: .semibold))
             .foregroundStyle(Theme.textPrimary)
     }
 }
@@ -173,17 +173,17 @@ private struct MemberToggleRow: View {
                 UserAvatarView(label: user.label, avatarUrl: user.avatarUrl, size: 28)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(user.label)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: Metrics.text(13), weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
                     if user.label != user.username {
                         Text(user.username)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textMuted)
                     }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: isOn ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 16))
+                    .font(.system(size: Metrics.text(16)))
                     .foregroundStyle(isOn ? Theme.accent : Theme.textMuted)
             }
             .padding(.horizontal, 8)

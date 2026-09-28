@@ -67,16 +67,16 @@ private struct ConnectPoint: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: Metrics.text(13), weight: .medium))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 30, height: 30)
                 .background(Theme.accent.opacity(0.12), in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: Metrics.text(13), weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                 Text(text)
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -104,7 +104,7 @@ private struct SearchingStep: View {
                             .progressViewStyle(.linear)
                     }
                     Text(progressLabel)
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .foregroundStyle(Theme.textMuted)
                         .monospacedDigit()
                 }
@@ -211,18 +211,18 @@ private struct FoundServerRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "server.rack")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(server.isUsable ? Theme.accent : Theme.textMuted)
                     .frame(width: 30, height: 30)
                     .background((server.isUsable ? Theme.accent.opacity(0.12) : Theme.bg2), in: RoundedRectangle(cornerRadius: 8))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(server.address.displayName)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: Metrics.text(13), weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Text(detail)
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                 }
@@ -230,7 +230,7 @@ private struct FoundServerRow: View {
                 switch server.kind {
                 case .current:
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: Metrics.text(11), weight: .semibold))
                         .foregroundStyle(hovering ? Theme.accent : Theme.textMuted)
                 case .legacy:
                     TonePill(text: String(localized: "Update required"), tone: .accent, small: true)
@@ -240,7 +240,7 @@ private struct FoundServerRow: View {
             }
             if let explanation {
                 Text(explanation)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -333,12 +333,12 @@ private struct SettingsStepRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("\(number)")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: Metrics.text(11), weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 20, height: 20)
                 .background(Theme.accent.opacity(0.12), in: Circle())
             Text(text)
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }

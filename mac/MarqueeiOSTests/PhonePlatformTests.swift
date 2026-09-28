@@ -55,6 +55,15 @@ struct PhonePlatformTests {
         #expect(PlatformText.openSystemSettings == "Open Settings")
     }
 
+    @MainActor
+    @Test func theDeviceListNamesTheModel() {
+        #expect(DeviceModels.names["iPhone18,1"] == "iPhone 17 Pro")
+        #expect(DeviceModels.names["iPhone11,8"] == "iPhone XR")
+        #expect(Platform.deviceName(model: "iPhone 17 Pro") == "iPhone 17 Pro (Marquee)")
+        #expect(Platform.deviceName.hasSuffix(" (Marquee)"))
+        #expect(Platform.deviceName.hasPrefix("iP"))
+    }
+
     @Test func requestsIdentifyTheIOSApp() {
         #expect(AppInfo.userAgent.hasPrefix("Marquee-iOS/"))
     }

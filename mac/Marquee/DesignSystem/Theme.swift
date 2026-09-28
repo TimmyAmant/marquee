@@ -112,7 +112,7 @@ extension Color {
 extension Font {
     /// Fraunces stands in as the system serif (New York) — no bundled fonts.
     static func marqueeDisplay(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .serif)
+        .system(size: Metrics.text(size), weight: weight, design: .serif)
     }
 }
 
@@ -222,6 +222,26 @@ enum Metrics {
     static let titleRailWidth: CGFloat = 288
     /// The cast carousel sits 40 below the main column (mockup.html's own JS).
     static let titleSectionGap: CGFloat = 40
+
+    /// A text size from the mockup (Mac points), for this platform. The Mac
+    /// uses it as it is. On iPhone and iPad text is read at arm's length and
+    /// should follow the reader's Dynamic Type setting, so the small sizes
+    /// (captions, labels, body text under 17pt) are a step larger, and the
+    /// result scales with the system text size (to at most 1.35×, so fixed
+    /// pills and cards still hold it).
+    static func text(_ size: CGFloat) -> CGFloat {
+        #if os(macOS)
+        return size
+        #else
+        let phone: CGFloat = switch size {
+        case ..<11: size + 0.5
+        case ..<17: (size * 1.12 * 2).rounded() / 2
+        default: size
+        }
+        let dynamic = UIFontMetrics.default.scaledValue(for: phone)
+        return min(max(dynamic, phone * 0.85), phone * 1.35)
+        #endif
+    }
 
     /// `.person{width:112px}` / `.portrait{height:124px}` — cast cards.
     static let castWidth: CGFloat = 112
@@ -358,7 +378,7 @@ struct AccentButtonStyle: ButtonStyle {
         configuration.label
             // .addbtn — height 26, 11.5/650 — on cards; the page-level
             // buttons keep their padded size.
-            .font(.system(size: compact ? 11.5 : 12.5, weight: .semibold))
+            .font(.system(size: Metrics.text(compact ? 11.5 : 12.5), weight: .semibold))
             .foregroundStyle(Theme.bg0)
             .padding(.horizontal, compact ? 10 : 16)
             .padding(.vertical, compact || height != nil ? 0 : 7)
@@ -426,7 +446,7 @@ private struct OutlineButtonBody: View {
     var body: some View {
         let active = hovering || configuration.isPressed
         configuration.label
-            .font(.system(size: pill?.fontSize ?? (compact ? 11 : 12.5), weight: .medium))
+            .font(.system(size: Metrics.text(pill?.fontSize ?? (compact ? 11 : 12.5)), weight: .medium))
             .foregroundStyle(tint ?? (active ? Theme.accent : Theme.textPrimary))
             .padding(.leading, pill?.leading ?? (compact ? 10 : 14))
             .padding(.trailing, pill?.trailing ?? (compact ? 10 : 14))

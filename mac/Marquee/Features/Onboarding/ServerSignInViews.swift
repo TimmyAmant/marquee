@@ -54,7 +54,7 @@ struct SetupForm: View {
             AuthDivider()
             VStack(spacing: 8) {
                 Text("Already have an account?")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textSecondary)
                 Button {
                     model.showAuthForm(.signIn)
@@ -242,7 +242,7 @@ struct SignInForm: View {
                 // that's how a newcomer gets in — there's no other sign-up.
                 if let hint = info?.signupHint {
                     Text(hint)
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -256,7 +256,7 @@ struct SignInForm: View {
                 AuthDivider()
                 VStack(spacing: 8) {
                     Text("New to Marquee?")
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                     Button {
                         model.showAuthForm(.setup)
@@ -283,7 +283,7 @@ struct SignInForm: View {
             HStack(spacing: 10) {
                 ProgressView().controlSize(.small)
                 Text("Waiting for \(name)…")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button("Cancel") { cancelWaiting() }
@@ -291,7 +291,7 @@ struct SignInForm: View {
                     .keyboardShortcut(.cancelAction)
             }
             Text("Finish signing in in the browser window that just opened.")
-                .font(.system(size: 12))
+                .font(.system(size: Metrics.text(12)))
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -303,11 +303,11 @@ struct SignInForm: View {
         VStack(alignment: .leading, spacing: 12) {
             if let code {
                 Text("In a Jellyfin app you're signed in to, open your profile → Quick Connect and enter this code:")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(code)
-                    .font(.system(size: 34, weight: .semibold, design: .monospaced))
+                    .font(.system(size: Metrics.text(34), weight: .semibold, design: .monospaced))
                     .tracking(8)
                     .foregroundStyle(Theme.textPrimary)
                     .textSelection(.enabled)
@@ -317,7 +317,7 @@ struct SignInForm: View {
             HStack(spacing: 10) {
                 ProgressView().controlSize(.small)
                 Text(code == nil ? "Getting a code…" : "Waiting for approval…")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textMuted)
                 Spacer()
                 Button("Cancel") { cancelWaiting() }

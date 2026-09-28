@@ -29,7 +29,7 @@ struct SearchSectionView: View {
                         model.open(.search(query))
                     } label: {
                         Text("← All results for “\(query)”")
-                            .font(.system(size: 12))
+                            .font(.system(size: Metrics.text(12)))
                             .foregroundStyle(Theme.textMuted)
                     }
                     .buttonStyle(.plain)
@@ -58,6 +58,7 @@ struct SearchSectionView: View {
         .marqueeGlow()
         .background(Theme.bg0)
         .navigationTitle(heading)
+        .headingIsThePageTitle()
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
             await reset()
         }
@@ -84,7 +85,7 @@ struct SearchSectionView: View {
                     Spacer()
                     if loadingPage {
                         ProgressView().controlSize(.small)
-                        Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
+                        Text("Loading more…").font(.system(size: Metrics.text(12))).foregroundStyle(Theme.textMuted)
                     } else if let pageError {
                         InlineMessage(text: String(localized: "Couldn't load more"))
                             .help(pageError.localizedDescription)

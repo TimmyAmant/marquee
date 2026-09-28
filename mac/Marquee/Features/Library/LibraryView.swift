@@ -59,6 +59,7 @@ struct LibraryView: View {
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Library")
+        .headingIsThePageTitle()
         .onAppear { screen.attach(model.api) }
         // The All titles list starts over with its filters, ⌘R, and when
         // the server's library changes.
@@ -137,11 +138,11 @@ private struct LibraryAllTitlesTab: View {
     private func countsCard(_ summary: API.LibrarySummary) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(summary.line)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textPrimary)
             if let note = summary.trackedNote {
                 Text(note)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textMuted)
             }
         }
@@ -314,13 +315,13 @@ private struct LibraryAllTitlesTab: View {
             VStack(alignment: .leading, spacing: 10) {
                 if screen.isEmptyWithFilters {
                     Text("No titles match these filters.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else {
                     Text(isAdmin
                         ? String(localized: "Still syncing your library — check back in a moment, or review your integrations.")
                         : String(localized: "Still syncing — check back in a moment."))
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                     if isAdmin {
                         Button(String(localized: "Review integrations")) { model.openSettings(.mediaServers) }
@@ -340,7 +341,7 @@ private struct LibraryAllTitlesTab: View {
                     Spacer()
                     if screen.loadingPage {
                         ProgressView().controlSize(.small)
-                        Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
+                        Text("Loading more…").font(.system(size: Metrics.text(12))).foregroundStyle(Theme.textMuted)
                     } else if let pageError = screen.pageError {
                         InlineMessage(text: String(localized: "Couldn't load more"))
                             .help(pageError.localizedDescription)
@@ -407,7 +408,7 @@ private struct LibraryAllTitlesTab: View {
             TableColumn("Location") { entry in
                 if let path = entry.filePath.nonBlank {
                     Text(path)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(.system(size: Metrics.text(11), design: .monospaced))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -450,7 +451,7 @@ private struct LibraryQualityCell: View {
             }
             if entry.upgradeAvailable {
                 Text("Upgrade available")
-                    .font(.system(size: 11))
+                    .font(.system(size: Metrics.text(11)))
                     .foregroundStyle(Theme.info)
             }
             if entry.qualityLabel == nil, !entry.upgradeAvailable {
@@ -484,7 +485,7 @@ private struct LibraryRowActions: View {
                 }
                 if let message = screen.rowMessages[entry.id] {
                     Text(message.text)
-                        .font(.system(size: 10.5))
+                        .font(.system(size: Metrics.text(10.5)))
                         .foregroundStyle(message.isError ? Theme.danger : Theme.owned)
                         .lineLimit(2)
                 }
@@ -506,7 +507,7 @@ private struct LibraryCollectionsTab: View {
         if let collections = screen.collections {
             if collections.isEmpty {
                 Text("Nothing incomplete — every franchise you own part of is fully owned, or none of your titles belongs to one yet.")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textMuted)
                     .padding(.vertical, 24)
             } else {
@@ -553,7 +554,7 @@ private struct LibraryCollectionSection: View {
                 }
                 if let result = screen.collectionResults[collection.key] {
                     Text(result)
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textSecondary)
                 } else if addCount > 0 {
                     Button(busy ? String(localized: "Adding…") : String(localized: "Add all \(addCount) missing")) { confirmingAddAll = true }
@@ -598,14 +599,14 @@ private struct LibraryDuplicatesTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Titles with more than one file, or listed by two Plex or two Jellyfin servers. The same file seen through different folder mappings (like /movies and /data/Movies) doesn't count. Check the paths before deleting anything — Marquee deletes nothing itself.")
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let duplicates = screen.duplicates {
                 if duplicates.isEmpty {
                     Text("No duplicates — every title is on one server, in one file.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.vertical, 12)
                 } else {
@@ -644,10 +645,10 @@ private struct LibraryDuplicateGroup: View {
             HStack(spacing: 10) {
                 Button(group.name) { model.openTitle(group.id) }
                     .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: Metrics.text(15), weight: .medium))
                 if let year = group.year.nonBlank {
                     Text(year)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 if group.reason.isKnown {
@@ -659,7 +660,7 @@ private struct LibraryDuplicateGroup: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(row.copy.server).foregroundStyle(Theme.textPrimary)
                         Text(row.copy.source.displayName)
-                            .font(.system(size: 10.5))
+                            .font(.system(size: Metrics.text(10.5)))
                             .foregroundStyle(Theme.textMuted)
                     }
                 }
@@ -667,7 +668,7 @@ private struct LibraryDuplicateGroup: View {
                 TableColumn("Location") { row in
                     if let path = row.copy.filePath.nonBlank {
                         Text(path)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.system(size: Metrics.text(11), design: .monospaced))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -736,7 +737,7 @@ private struct LibraryStorageTab: View {
                 Text(isAdmin
                     ? String(localized: "Connect Sonarr or Radarr to see free space per root folder here.")
                     : String(localized: "The household admin hasn't connected Sonarr or Radarr yet."))
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textSecondary)
                 if isAdmin {
                     Button("Connect an integration") { model.openSettings(.services) }
@@ -749,20 +750,20 @@ private struct LibraryStorageTab: View {
                             HStack(alignment: .center, spacing: 16) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(folder.path)
-                                        .font(.system(size: 12, design: .monospaced))
+                                        .font(.system(size: Metrics.text(12), design: .monospaced))
                                         .foregroundStyle(Theme.textPrimary)
                                         .lineLimit(1)
                                         .truncationMode(.middle)
                                         .help(folder.path)
                                     if !folder.servers.isEmpty {
                                         Text(folder.servers.joined(separator: " · "))
-                                            .font(.system(size: 11))
+                                            .font(.system(size: Metrics.text(11)))
                                             .foregroundStyle(Theme.textMuted)
                                     }
                                 }
                                 Spacer()
                                 Text("\(Format.bytes(folder.freeBytes)) free")
-                                    .font(.system(size: 13))
+                                    .font(.system(size: Metrics.text(13)))
                                     .foregroundStyle(Theme.textSecondary)
                             }
                             .padding(.vertical, 10)
@@ -776,17 +777,17 @@ private struct LibraryStorageTab: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
                         Text(storage.forecastLine)
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                             .foregroundStyle(Theme.textSecondary)
                         if let fullOn = storage.fullOnLine() {
                             Text(fullOn)
-                                .font(.system(size: 13))
+                                .font(.system(size: Metrics.text(13)))
                                 .foregroundStyle(Theme.textMuted)
                         }
                     }
                     if let measured = storage.measuredLine {
                         Text(measured)
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .foregroundStyle(Theme.textMuted)
                     }
                 }

@@ -48,6 +48,7 @@ struct DiscoverListView: View {
         .marqueeGlow()
         .background(Theme.bg0)
         .navigationTitle(heading)
+        .headingIsThePageTitle()
         .task(id: DiscoverListKey(
             list: list,
             revision: model.events.remoteRevision(of: .library) &+ model.events.revision(of: .catalog),
@@ -92,7 +93,7 @@ struct DiscoverListView: View {
                     Spacer()
                     if loadingPage {
                         ProgressView().controlSize(.small)
-                        Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
+                        Text("Loading more…").font(.system(size: Metrics.text(12))).foregroundStyle(Theme.textMuted)
                     } else if let pageError {
                         InlineMessage(text: String(localized: "Couldn't load more"))
                             .help(pageError.localizedDescription)

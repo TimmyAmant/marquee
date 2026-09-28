@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 
 /// The iPhone app's compact Settings: the account, the server, notifications,
-/// appearance, language and About. Everything an admin configures
-/// (integrations, members, Discover, jobs) stays on the website, one tap away.
+/// appearance, language and About. Everything an admin configures (the
+/// General, Members, Media servers and Services tabs) opens on the website.
 struct PhoneSettingsView: View {
     @Environment(AppModel.self) private var model
     @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
@@ -43,13 +43,22 @@ struct PhoneSettingsView: View {
                     Link(destination: server.baseURL) {
                         Label("Open in Browser", systemImage: "safari")
                     }
-                    if model.viewer?.isAdmin == true {
-                        Link(destination: server.baseURL.appending(path: SettingsTab.integrations.webPath)) {
-                            Label("Integrations", systemImage: "powerplug")
-                        }
-                    }
                 }
                 Button("Change Server…") { confirmingChangeServer = true }
+            }
+
+            if model.viewer?.isAdmin == true, let server = model.session.server {
+                Section {
+                    ForEach(Self.adminTabs, id: \.self) { tab in
+                        Link(destination: server.baseURL.appending(path: tab.webPath)) {
+                            Label(tab.title, systemImage: tab.systemImage)
+                        }
+                    }
+                } header: {
+                    Text("Server settings")
+                } footer: {
+                    Text("These open on your Marquee server's website.")
+                }
             }
 
             Section {
@@ -59,6 +68,13 @@ struct PhoneSettingsView: View {
                         if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
                             Platform.open(url)
                         }
+                    }
+                }
+                if let server = model.session.server {
+                    // Which kinds go where, and personal channels (the
+                    // website's Notifications tab).
+                    Link(destination: server.baseURL.appending(path: SettingsTab.notifications.webPath)) {
+                        Text("Choose what you're notified about")
                     }
                 }
             } header: {
@@ -104,6 +120,9 @@ struct PhoneSettingsView: View {
             Text("You'll be signed out of this server.")
         }
     }
+
+    /// The website's admin tabs (0.56+), in its order.
+    private static let adminTabs: [SettingsTab] = [.general, .mediaServers, .services, .members]
 
     private var notificationsOn: Binding<Bool> {
         let consent = model.notificationConsent

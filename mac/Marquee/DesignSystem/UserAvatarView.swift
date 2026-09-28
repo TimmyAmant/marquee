@@ -28,7 +28,7 @@ struct UserAvatarView: View {
         ZStack {
             Circle().fill(Theme.avatarGradient)
             Text(Self.initials(of: label))
-                .font(.system(size: size * 0.38, weight: .semibold))
+                .font(.system(size: Metrics.text(size * 0.38), weight: .semibold))
                 .foregroundStyle(Theme.bg0)
             if let image {
                 Image(platformImage: image)

@@ -26,12 +26,12 @@ struct NotificationsPopover: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("Notifications")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: Metrics.text(13), weight: .semibold))
                 Spacer()
                 if items.contains(where: { !$0.read }) {
                     Button("Mark all read") { markAllRead() }
                         .buttonStyle(QuietButtonStyle())
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                 }
             }
             .padding(12)
@@ -47,7 +47,7 @@ struct NotificationsPopover: View {
                     .padding(28)
             } else if items.isEmpty {
                 Text("No notifications yet.")
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(28)
@@ -124,7 +124,7 @@ private struct NotificationRow: View {
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(item.message)
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(item.read ? Theme.textSecondary : Theme.textPrimary)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -132,14 +132,14 @@ private struct NotificationRow: View {
                     // repeats it in quotes underneath, so it reads as theirs.
                     if item.eventType == .titleShared, let note = item.note.nonBlank {
                         Text("“\(note)”")
-                            .font(.system(size: 12))
+                            .font(.system(size: Metrics.text(12)))
                             .italic()
                             .foregroundStyle(Theme.textSecondary)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Text(item.timeAgo())
-                        .font(.system(size: 10.5))
+                        .font(.system(size: Metrics.text(10.5)))
                         .foregroundStyle(Theme.textMuted)
                 }
                 Spacer(minLength: 0)

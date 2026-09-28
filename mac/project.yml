@@ -156,6 +156,10 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
+        # Play (0.53+) opens the media server's app when it's installed: the
+        # server sends plex:// links today; the others are listed so a
+        # Jellyfin/Emby/Infuse link can be detected once it sends them.
+        LSApplicationQueriesSchemes: [plex, jellyfin, emby, infuse, swiftfin]
         NSLocalNetworkUsageDescription: "Marquee looks for your Marquee server on your home network (such as the one on your Unraid box) and connects to it, so you can browse your library and send requests from this iPhone."
         # A home server is usually plain http:// on the LAN or a custom domain.
         NSAppTransportSecurity:
