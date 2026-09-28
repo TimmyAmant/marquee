@@ -119,6 +119,22 @@ MARQUEE_PINNED_TOKEN=<token from /auth/login> \
 
 Environment variables don't survive `open`, so run the binary directly.
 
+## iPhone app
+
+`project.yml` also has **Marquee iOS**, an iPhone (and iPad) app built from these same sources: the API client, models, `AppModel`, design system, localisation and most screens are shared, with AppKit kept behind `#if os(macOS)` and the few platform calls in `Marquee/Core/Platform/`. `MarqueeiOS/` holds what's only the phone's: the tab bar (Discover, Search, Requests, Calendar, More), a compact Settings screen, and the Keychain token store. It needs iOS 18 (the same iPhones as iOS 17: XS/XR and later).
+
+```bash
+xcodegen generate
+xcodebuild -project Marquee.xcodeproj -scheme "Marquee iOS" -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath build/DerivedDataiOS test
+```
+
+Simulator builds sign to run locally, so no Apple Developer account is needed. Running on a real iPhone, TestFlight or the App Store needs one: set `DEVELOPMENT_TEAM` on the target and give it a bundle identifier you own.
+
+Notifications arrive while the app is open (the same server stream the Mac uses), with the unread count on the app icon. The server sends Web Push, not Apple Push Notifications, so there are no alerts while the app is closed; a personal channel (ntfy, Pushover, Telegram…) covers that.
+
+For screenshot runs, the Debug build also reads `MARQUEE_TAB` (a tab to open on) and `MARQUEE_OPEN` (a `marquee://` link to open) from its environment, alongside `MARQUEE_PINNED_SERVER`/`MARQUEE_PINNED_TOKEN` (`xcrun simctl launch` passes them as `SIMCTL_CHILD_…`).
+
 ## License
 
 MIT.

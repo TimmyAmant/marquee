@@ -59,6 +59,42 @@ jobs:
             exit 1
           fi
 
+  ios:
+    name: iPhone app (build and tests)
+    # The same sources as the Mac app (mac/project.yml's "Marquee iOS"
+    # target), built for the iOS Simulator: no signing, no device.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version
+      - run: brew install xcodegen
+      - name: Generate project
+        working-directory: mac
+        run: xcodegen generate
+      - name: Pick a simulator
+        id: simulator
+        # The newest iOS runtime's first iPhone, whatever this image calls it.
+        run: |
+          udid=$(xcrun simctl list devices available -j | jq -r '
+            [.devices | to_entries[] | select(.key | test("iOS")) ]
+            | sort_by(.key | capture("iOS-(?<major>[0-9]+)-(?<minor>[0-9]+)") | [(.major | tonumber), (.minor | tonumber)])
+            | reverse | map(.value[] | select(.name | startswith("iPhone"))) | .[0].udid')
+          test -n "$udid" && test "$udid" != "null"
+          echo "Using simulator $udid"
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+      - name: Build and test
+        working-directory: mac
+        run: |
+          set -o pipefail
+          xcodebuild -project Marquee.xcodeproj -scheme "Marquee iOS" -sdk iphonesimulator \
+            -destination "id=${{ steps.simulator.outputs.udid }}" -derivedDataPath build/DerivedDataiOS \
+            test | tee xcodebuild.log
+          if grep -Eq '\.swift:[0-9]+:[0-9]+: warning:' xcodebuild.log; then
+            echo "::error::The iPhone build has compiler warnings — it's kept at zero."
+            grep -E '\.swift:[0-9]+:[0-9]+: warning:' xcodebuild.log | sort -u
+            exit 1
+          fi
+
   windows:
     name: Windows app (Core tests and build)
     # Marquee.Core and its tests are platform neutral and would run on Linux,

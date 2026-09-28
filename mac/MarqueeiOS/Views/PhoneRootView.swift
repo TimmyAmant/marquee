@@ -35,7 +35,7 @@ struct PhoneRootView: View {
         .sheet(isPresented: notificationPrompt) {
             PhoneNotificationPrompt()
                 .environment(model)
-                .presentationDetents([.medium])
+                .presentationDetents([.height(380)])
         }
         .sheet(item: $whatsNew.content, onDismiss: { model.whatsNew.dismiss() }) { content in
             PhoneWhatsNewView(content: content)

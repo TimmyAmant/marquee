@@ -177,10 +177,12 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.timmyamant.Marquee.ios
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-        # No distribution signing yet: simulator builds and CI need none.
+        # Simulator builds (and CI) are signed to run locally, which is all
+        # the Keychain needs there. A device build needs a team: set
+        # DEVELOPMENT_TEAM (Automatic signing) for TestFlight/App Store.
         CODE_SIGN_STYLE: Automatic
-        CODE_SIGNING_ALLOWED: NO
         DEVELOPMENT_TEAM: ""
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
@@ -211,6 +213,42 @@ targets:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Marquee.app/Contents/MacOS/Marquee"
         BUNDLE_LOADER: "$(TEST_HOST)"
 
+  # The iPhone app's tests: the shared model/API tests that don't touch
+  # Mac-only code, run against the iOS build, plus MarqueeiOSTests/ (the tab
+  # bar's navigation, the Keychain token store, platform wording).
+  MarqueeiOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MarqueeiOSTests
+      - path: MarqueeTests
+        excludes:
+          - Fixtures
+          - Fixtures/**
+          # Mac-only: the sessions file, the updater, the rail, and Settings
+          # screens the iPhone app doesn't have.
+          - FileTokenStoreTests.swift
+          - UpdaterTests.swift
+          - NavRailPositionTests.swift
+          - PermissionsTests.swift
+          - DiscoverRowsTests.swift
+          - ApiKeysTests.swift
+          - PersonalNotificationsTests.swift
+          - ArrServersTests.swift
+      - path: MarqueeTests/Fixtures
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: Marquee iOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.timmyamant.MarqueeiOSTests
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Marquee.app/Marquee"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 schemes:
   Marquee:
     build:
@@ -228,6 +266,25 @@ schemes:
         "-AppleLanguages (en)": true
       targets:
         - MarqueeTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+  Marquee iOS:
+    build:
+      targets:
+        Marquee iOS: all
+        MarqueeiOSTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      commandLineArguments:
+        "-AppleLanguages (en)": true
+      targets:
+        - MarqueeiOSTests
     profile:
       config: Release
     analyze:
