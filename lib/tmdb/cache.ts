@@ -218,6 +218,11 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
       })
       .returning();
 
+    // Replaced wholesale on each refresh: TMDb renames characters ("Mr.
+    // Fantastic" → "Mister Fantastic"), and the unique key includes the
+    // character, so keeping the old rows listed the same title twice.
+    await db.delete(credits).where(and(eq(credits.personId, personRow.id), eq(credits.department, "Acting")));
+
     // Acting credits only (department/character-driven filmography); dedupe by media_type+id.
     const seen = new Set<string>();
     for (const item of combinedCredits.cast) {
@@ -263,7 +268,11 @@ async function getPersonWithCreditsFromDb(personId: string) {
     .where(eq(credits.personId, personId))
     .orderBy(desc(sql`coalesce(${titles.releaseDate}, ${titles.firstAirDate})`));
 
-  return { person, filmography };
+  // One entry per title, even for rows saved before refreshes replaced them.
+  const seenTitles = new Set<string>();
+  const unique = filmography.filter(({ title }) => !seenTitles.has(title.id) && seenTitles.add(title.id));
+
+  return { person, filmography: unique };
 }
 
 export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
