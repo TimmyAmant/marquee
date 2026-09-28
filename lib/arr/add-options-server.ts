@@ -1,8 +1,13 @@
-import type { MediaType } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { requests, type MediaType } from "@/lib/db/schema";
+import { can, type PermissionSubject } from "@/lib/users/permissions";
+import { UUID_PATTERN } from "@/lib/arr/servers";
 import { getT } from "@/lib/i18n/server";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { isAnime, type AnimeSignals } from "@/lib/arr/anime";
-import { kindForMediaType, serverDefaults, type AddDefaults } from "@/lib/arr/add-options";
+import { kindForMediaType, resolveAdd, serverDefaults, type AddDefaults } from "@/lib/arr/add-options";
+import { ruleForRequest } from "@/lib/arr/override-rules-server";
 import { arrConfig, getArrServer, listArrServers, type ArrServer } from "@/lib/arr/servers";
 import { askEachServer } from "@/lib/arr/fan-out";
 import * as sonarr from "@/lib/sonarr/client";
@@ -76,38 +81,73 @@ export type AddOptions = {
   tmdbId: number;
   is4k: boolean;
   isAnime: boolean;
+  /** The override rule (Settings › Services) a request would go by: its
+   * server comes first in `servers`, with the rule's picks as its
+   * defaults. Null when none applies, or for the admin's own Add. */
+  rule: { id: string; name: string; serverId: string } | null;
   servers: AddOptionsServer[];
 };
 
+/** Whose request the Advanced options are for: the one being reviewed
+ * (`requestId`, for someone who may review requests), or the viewer's own
+ * (`forRequest`). Undefined for the admin's own Add, where no override rule
+ * applies. */
+export async function requesterForOptions(
+  viewer: PermissionSubject & { id: string },
+  context: { requestId?: string | null; forRequest?: boolean } | undefined,
+): Promise<{ requesterId: string | null } | undefined> {
+  if (context?.requestId) {
+    if (!UUID_PATTERN.test(context.requestId) || !can(viewer, "reviewRequests")) return undefined;
+    const [row] = await db
+      .select({ requesterId: requests.requestedByUserId })
+      .from(requests)
+      .where(eq(requests.id, context.requestId))
+      .limit(1);
+    return row ? { requesterId: row.requesterId } : undefined;
+  }
+  return context?.forRequest ? { requesterId: viewer.id } : undefined;
+}
+
 /** What the Advanced section of Approve / Add offers for this title: every
  * server of its kind and 4K-ness (default first), each asked in parallel
- * for its pickers. */
+ * for its pickers. With `forRequest` (whose request it is), the override
+ * rule that applies puts its server first, with its picks. */
 export async function getAddOptions(
   ownerId: string,
   mediaType: MediaType,
   tmdbId: number,
   fourK: boolean,
+  forRequest?: { requesterId: string | null },
 ): Promise<AddOptions> {
-  const [servers, anime] = await Promise.all([
+  const [servers, anime, applied] = await Promise.all([
     listArrServers(ownerId, { kind: kindForMediaType(mediaType), fourK }),
     titleIsAnime(mediaType, tmdbId),
+    forRequest
+      ? ruleForRequest(ownerId, { mediaType, tmdbId, is4k: fourK, requesterId: forRequest.requesterId })
+      : Promise.resolve(null),
   ]);
   const answers = await askEachServer(servers, (server) => fetchPickerOptions(server), null);
+  const options: AddOptionsServer[] = answers.map(({ server, value }) => ({
+    id: server.id,
+    name: server.name,
+    isDefault: server.isDefault,
+    is4k: server.is4k,
+    reachable: value !== null,
+    qualityProfiles: value?.qualityProfiles ?? [],
+    rootFolders: value?.rootFolders ?? [],
+    tags: value?.tags ?? [],
+    defaults:
+      applied && applied.rule.serverId === server.id
+        ? resolveAdd(server, anime, applied.overrides)
+        : serverDefaults(server, anime),
+  }));
+  const ruleServer = applied ? options.find((s) => s.id === applied.rule.serverId) : undefined;
   return {
     mediaType,
     tmdbId,
     is4k: fourK,
     isAnime: anime,
-    servers: answers.map(({ server, value }) => ({
-      id: server.id,
-      name: server.name,
-      isDefault: server.isDefault,
-      is4k: server.is4k,
-      reachable: value !== null,
-      qualityProfiles: value?.qualityProfiles ?? [],
-      rootFolders: value?.rootFolders ?? [],
-      tags: value?.tags ?? [],
-      defaults: serverDefaults(server, anime),
-    })),
+    rule: applied && ruleServer ? { id: applied.rule.id, name: applied.rule.name, serverId: ruleServer.id } : null,
+    servers: ruleServer ? [ruleServer, ...options.filter((s) => s !== ruleServer)] : options,
   };
 }

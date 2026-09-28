@@ -69,7 +69,7 @@ vi.mock("@/lib/arr/servers", async (importOriginal) => ({
 const mutate = vi.hoisted(() => ({ approveRequest: vi.fn() }));
 vi.mock("@/lib/requests/mutate", () => mutate);
 
-const addOptions = vi.hoisted(() => ({ getAddOptions: vi.fn() }));
+const addOptions = vi.hoisted(() => ({ getAddOptions: vi.fn(), requesterForOptions: vi.fn(async () => undefined) }));
 vi.mock("@/lib/arr/add-options-server", () => addOptions);
 
 const titleActions = vi.hoisted(() => ({ addTitleToLibrary: vi.fn() }));
@@ -285,7 +285,7 @@ describe("GET /titles/{type}/{id}/add-options", () => {
       url: "http://marquee.local:3000/api/v1/titles/movie/603/add-options?is4k=true",
     });
     expect(res.status).toBe(200);
-    expect(addOptions.getAddOptions).toHaveBeenCalledWith(ADMIN_ID, "movie", 603, true);
+    expect(addOptions.getAddOptions).toHaveBeenCalledWith(ADMIN_ID, "movie", 603, true, undefined);
   });
 
   it("is forbidden to members and rejects a bad is4k", async () => {

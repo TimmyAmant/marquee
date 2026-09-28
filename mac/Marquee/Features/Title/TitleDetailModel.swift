@@ -33,6 +33,8 @@ final class TitleDetailModel {
     /// The Sonarr/Radarr tracking row.
     private(set) var isSearching = false
     private(set) var isTogglingMonitor = false
+    /// "Remove from Radarr/Sonarr" (0.58+) in flight.
+    private(set) var isRemovingFromArr = false
     private(set) var trackingMessage: (text: String, isError: Bool)?
     /// "Add all N missing".
     private(set) var isAddingAll = false
@@ -233,6 +235,26 @@ final class TitleDetailModel {
                 trackingMessage = (error.localizedDescription, true)
             }
             isSearching = false
+        }
+    }
+
+    /// "Remove from Radarr/Sonarr" (admin, 0.58+): off every server that has
+    /// it, with its files when `deleteFiles`; its approved requests are
+    /// marked removed, so it can be requested again.
+    func removeFromArr(deleteFiles: Bool) {
+        guard let api, !isRemovingFromArr else { return }
+        isRemovingFromArr = true
+        trackingMessage = nil
+        let arrName = id.mediaType.arrName
+        Task {
+            do {
+                try await api.titles.removeFromArr(id.mediaType, id: id.tmdbId, deleteFiles: deleteFiles)
+                trackingMessage = (String(localized: "Removed from \(arrName)"), false)
+                await refreshStatus()
+            } catch {
+                trackingMessage = (error.localizedDescription, true)
+            }
+            isRemovingFromArr = false
         }
     }
 

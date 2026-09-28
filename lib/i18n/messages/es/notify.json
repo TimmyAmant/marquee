@@ -290,5 +290,22 @@
   "fieldMustBeNumber": "\"{field}\" debe ser un número.",
   "fieldMustBeNumberList": "\"{field}\" debe ser una lista de números.",
   "seriesTypeInvalid": "\"seriesType\" debe ser standard, daily o anime.",
-  "fieldMustBeString": "\"{field}\" debe ser una cadena de texto."
+  "fieldMustBeString": "\"{field}\" debe ser una cadena de texto.",
+  "ruleNameMissing": "Ponle un nombre a la regla.",
+  "ruleNameTooLong": "El nombre de una regla puede tener como máximo {max} caracteres.",
+  "ruleServerMissing": "Elige uno de tus servidores de Sonarr o Radarr para la regla.",
+  "ruleBadList": "El campo «{field}» de la regla no es correcto.",
+  "ruleTooMany": "Una regla puede tener como máximo {max} de cada.",
+  "ruleUnknownMember": "Uno de los miembros de la regla ya no está en el hogar.",
+  "ruleNotFound": "Esa regla de anulación no existe.",
+  "removeFromArrFailed": "{server} no lo quitó. Comprueba que se pueda acceder y vuelve a intentarlo.",
+  "blockEnterRegion": "Elige el país cuyas clasificaciones se usarán.",
+  "blockEnterCertification": "Escribe una clasificación, como NC-17 o TV-MA.",
+  "blockKindInvalid": "\"kind\" debe ser keyword, certification o adult.",
+  "gotifyEnterUrl": "Escribe la dirección de tu servidor de Gotify.",
+  "gotifyEnterToken": "Escribe un token de aplicación de Gotify (Apps › Create application).",
+  "gotifyPriority": "La prioridad es un número del 0 al 10.",
+  "slackEnterUrl": "Escribe la dirección del webhook entrante.",
+  "pushbulletEnterToken": "Escribe tu token de acceso de Pushbullet (Settings › Account › Create access token).",
+  "pushbulletBadChannel": "La etiqueta de canal solo lleva letras, números, - y _."
 }

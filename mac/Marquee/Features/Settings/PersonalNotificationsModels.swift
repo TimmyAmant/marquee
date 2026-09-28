@@ -21,6 +21,8 @@ struct ChannelForm: Equatable {
         var hint: String?
         /// Webhook URLs, topic URLs and keys are secrets.
         var secure = false
+        /// May be left blank (Gotify's priority, a Pushbullet channel).
+        var optional = false
 
         var id: String { key }
     }
@@ -85,6 +87,24 @@ struct ChannelForm: Equatable {
                 hint: [payload, Self.internetHint(channels)].compactMap { $0 }.joined(separator: " "),
                 secure: true
             )]
+        case .slack:
+            return [Field(
+                key: "webhookUrl", label: String(localized: "Incoming webhook URL"), placeholder: "https://hooks.slack.com/services/…",
+                hint: [String(localized: "From Slack's Incoming Webhooks app, or Mattermost's or Rocket.Chat's."), Self.internetHint(channels)]
+                    .compactMap { $0 }.joined(separator: " "),
+                secure: true
+            )]
+        case .gotify:
+            return [
+                Field(key: "url", label: String(localized: "Gotify server"), placeholder: "https://gotify.example.com", hint: Self.internetHint(channels)),
+                Field(key: "appToken", label: String(localized: "Application token"), hint: String(localized: "In Gotify, Apps › Create application."), secure: true),
+                Field(key: "priority", label: String(localized: "Priority"), placeholder: "5", hint: String(localized: "0 to 10 (5 if left blank)."), optional: true),
+            ]
+        case .pushbullet:
+            return [
+                Field(key: "accessToken", label: String(localized: "Access token"), hint: String(localized: "On pushbullet.com, Settings › Account › Create access token."), secure: true),
+                Field(key: "channelTag", label: String(localized: "Channel tag (optional)"), hint: String(localized: "Leave blank to push to all your devices."), optional: true),
+            ]
         case .unknown:
             return []
         }
@@ -106,6 +126,7 @@ struct ChannelForm: Equatable {
         var config: [String: String] = [:]
         for field in fields(channels) {
             let value = value(field).trimmingCharacters(in: .whitespacesAndNewlines)
+            if value.isEmpty && field.optional { continue }
             guard !value.isEmpty else { throw APIError.invalid(String(localized: "\(field.label) is needed.")) }
             if let problem = Self.problem(with: value, in: field) { throw APIError.invalid(problem) }
             config[field.key] = value

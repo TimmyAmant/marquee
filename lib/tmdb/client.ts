@@ -422,6 +422,8 @@ export interface TmdbWatchProviders {
 export interface TmdbReleaseDate {
   type: number;
   release_date: string;
+  /** That release's rating there ("PG-13", "12"), often blank. */
+  certification?: string;
 }
 
 export interface TmdbReleaseDates {
@@ -554,11 +556,14 @@ export interface TmdbTvDetails {
   "watch/providers"?: TmdbWatchProviders;
   /** Trimmed to the one logo the title page shows (lib/tmdb/logo.ts). */
   images?: TmdbTitleImages;
+  /** Each country's rating ("TV-MA"), for the blocklist's certification rules. */
+  content_ratings?: { results?: { iso_3166_1: string; rating: string }[] };
+  adult?: boolean;
 }
 
 export function getTvDetails(id: number) {
   return tmdbFetch<TmdbTvDetails>(`/tv/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,images",
+    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,images,content_ratings",
     include_image_language: TITLE_IMAGE_LANGUAGES,
   }).then(trimTitleImages);
 }

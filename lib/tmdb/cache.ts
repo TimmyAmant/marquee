@@ -172,7 +172,7 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
     // better result than a hard failure for those.
     if (err instanceof tmdb.TmdbError && err.status === 404) throw err;
     if (cached && cached.rawTmdb) {
-      console.error(`[tmdb-cache] refresh failed for ${mediaType}/${tmdbId}, serving stale cache:`, err);
+      console.error("[tmdb-cache] refresh failed for %s/%s, serving stale cache:", mediaType, tmdbId, err);
       return cached;
     }
     throw err;

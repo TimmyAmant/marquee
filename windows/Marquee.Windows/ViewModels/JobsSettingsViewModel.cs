@@ -26,6 +26,119 @@ public sealed partial class JobRow : ObservableObject
         Description = job.Description;
         Schedule = job.Schedule;
         ShowsDivider = showsDivider;
+        ShowsInterval = job.Interval != null;
+        Apply(job);
+    }
+
+    // MARK: How often (0.58+)
+
+    private JobInterval? saved;
+    private JobInterval? defaultInterval;
+    private DateTimeOffset? nextRunAt;
+    private DateTimeOffset? lastRunAt;
+    private bool applying;
+
+    /// <summary>The server sends the schedule as something the admin can change (0.58+).</summary>
+    public bool ShowsInterval { get; }
+
+    /// <summary>"Every 5 minutes" … "Every 12 hours", "Once a day".</summary>
+    public IReadOnlyList<string> IntervalChoices { get; } = JobInterval.MenuChoices.Select(choice => choice.MenuTitle).ToList();
+
+    /// <summary>Two-way bound to the menu.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsDailyTime))]
+    [NotifyPropertyChangedFor(nameof(CanSaveInterval))]
+    [NotifyPropertyChangedFor(nameof(ShowsReset))]
+    private int intervalIndex = -1;
+
+    /// <summary>Two-way bound to the time picker, when "Once a day" is picked.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSaveInterval))]
+    [NotifyPropertyChangedFor(nameof(ShowsReset))]
+    private TimeSpan dailyTime = new(3, 0, 0);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSaveInterval))]
+    private bool isSavingInterval;
+
+    /// <summary>"Next run Sep 27, 10:00 PM · last ran Sep 27, 8:00 PM".</summary>
+    [ObservableProperty]
+    private string nextRunLine = "";
+
+    public bool ShowsDailyTime => Draft?.IsDaily == true;
+
+    /// <summary>Save shows once the pick differs from what's saved.</summary>
+    public bool CanSaveInterval => !IsSavingInterval && Draft is { } draft && !draft.SameAs(saved);
+
+    /// <summary>"Back to the default": nothing changed, and the saved schedule isn't the default.</summary>
+    public bool ShowsReset => Draft is { } draft && draft.SameAs(saved) && defaultInterval != null && !defaultInterval.SameAs(saved);
+
+    private JobInterval? Draft
+    {
+        get
+        {
+            if (IntervalIndex < 0 || IntervalIndex >= JobInterval.MenuChoices.Count)
+            {
+                return null;
+            }
+            var choice = JobInterval.MenuChoices[IntervalIndex];
+            return choice.IsDaily ? JobInterval.Daily(DailyTime.Hours, DailyTime.Minutes) : choice;
+        }
+    }
+
+    private void Apply(Job job)
+    {
+        saved = job.Interval;
+        defaultInterval = job.DefaultInterval;
+        nextRunAt = job.NextRunAt;
+        lastRunAt = job.LastRunAt;
+        applying = true;
+        if (saved != null)
+        {
+            IntervalIndex = JobInterval.MenuChoices.ToList().FindIndex(choice => choice.MenuKey == saved.MenuKey);
+            if (saved.DailyAt is { } time)
+            {
+                DailyTime = new TimeSpan(time.Hour, time.Minute, 0);
+            }
+        }
+        applying = false;
+        NextRunLine = nextRunAt is not { } next
+            ? ""
+            : lastRunAt is { } last
+                ? Loc.Format("Jobs_NextAndLastRun", Format.MonthDayTime(next), Format.MonthDayTime(last))
+                : Loc.Format("Jobs_NextRun", Format.MonthDayTime(next));
+        OnPropertyChanged(nameof(CanSaveInterval));
+        OnPropertyChanged(nameof(ShowsReset));
+    }
+
+    [RelayCommand]
+    private Task SaveIntervalAsync() => SetIntervalAsync(Draft);
+
+    [RelayCommand]
+    private Task ResetIntervalAsync() => SetIntervalAsync(null);
+
+    /// <summary><c>PUT /settings/jobs/{id}</c>: the job moves to it straight away (null: its default).</summary>
+    private async Task SetIntervalAsync(JobInterval? interval)
+    {
+        if (IsSavingInterval || applying)
+        {
+            return;
+        }
+        IsSavingInterval = true;
+        Error = null;
+        try
+        {
+            var job = await model.Api.AdminTools.SetJobIntervalAsync(Id, interval);
+            Apply(job);
+        }
+        catch (ApiException failure)
+        {
+            Error = failure.Message;
+        }
+        finally
+        {
+            IsSavingInterval = false;
+        }
     }
 
     // Internal: JobId is a Core type the XAML never binds.

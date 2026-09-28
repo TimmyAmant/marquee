@@ -51,14 +51,20 @@ extension API {
     enum BlocklistKind: OpenEnum {
         case title
         case keyword
+        /// A rating in a country (0.58+): `keyword` is the rating, `region` the country.
+        case certification
+        /// Everything TMDb marks adult (0.58+).
+        case adult
         case unknown(String)
 
-        static let knownCases: [BlocklistKind] = [.title, .keyword]
+        static let knownCases: [BlocklistKind] = [.title, .keyword, .certification, .adult]
 
         var rawValue: String {
             switch self {
             case .title: return "title"
             case .keyword: return "keyword"
+            case .certification: return "certification"
+            case .adult: return "adult"
             case let .unknown(raw): return raw
             }
         }
@@ -74,8 +80,10 @@ extension API {
         let tmdbId: Int?
         /// The title's name when it was blocked.
         let title: String?
-        /// Keywords only, lower-case.
+        /// Keywords only, lower-case; for a certification, the rating.
         let keyword: String?
+        /// A certification's country (0.58+).
+        var region: String? = nil
         let reason: String?
         let createdAt: Date
 
@@ -90,8 +98,17 @@ extension API {
             if titleID != nil, let tmdbId {
                 return title.nonBlank ?? "#\(tmdbId)"
             }
-            let word = keyword ?? ""
-            return String(localized: "Keyword: \(word)")
+            switch kind {
+            case .certification:
+                let rating = keyword ?? ""
+                let country = region.flatMap { Locale.current.localizedString(forRegionCode: $0) } ?? region ?? ""
+                return String(localized: "Rated \(rating) in \(country)")
+            case .adult:
+                return String(localized: "Adult titles (as TMDb marks them)")
+            default:
+                let word = keyword ?? ""
+                return String(localized: "Keyword: \(word)")
+            }
         }
     }
 

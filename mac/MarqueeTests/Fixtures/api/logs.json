@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "id": 41,
+      "time": "2026-09-27T21:00:00.412Z",
+      "level": "info",
+      "source": "jobs",
+      "message": "plex-sync rescheduled"
+    },
+    {
+      "id": 42,
+      "time": "2026-09-27T21:00:03.118Z",
+      "level": "error",
+      "source": "arr-sync",
+      "message": "scheduled run failed: Error: Radarr request failed: /movie?apikey=[redacted] (401)"
+    }
+  ],
+  "latestId": 42
+}

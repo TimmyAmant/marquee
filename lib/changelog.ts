@@ -11,6 +11,33 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.59.1",
+    date: "2026-09-27",
+    changes: [
+      "iPhone app: no more big gap at the top; page titles sit in the bar with the bell or the Back button.",
+      "iPhone app: requests are full-width cards with Approve and Decline buttons; the calendar has Day, Week and Month views; the Library, Releases, person and studio pages are rebuilt to fit the phone; sheets fill the screen.",
+    ],
+  },
+  {
+    version: "0.58.0",
+    date: "2026-09-27",
+    changes: [
+      "Override rules (Settings › Services): send requests to a chosen Sonarr/Radarr server, quality profile, folder and tags based on genre, original language, keyword or who asked. The Advanced panel shows which rule picked them; choices made by hand still win.",
+      "Gotify, Slack and Pushbullet notifications, both for the household (Settings › Notifications) and as your own channel.",
+      "Job schedules (Settings › Jobs): change how often each job runs, or run it once a day at a set time, and see when it runs next.",
+      "Logs (Settings › Logs): the server's log with level and text filters, auto-refresh, copy and download. Keys and tokens are masked.",
+      "Blocklist by age rating (in your country) or TMDb's adult flag, with a preview of what it would block and which pending requests it affects.",
+      "Remove from Radarr / Sonarr in a title's … menu, with the option to delete the files too. The title can then be requested again.",
+    ],
+  },
+  {
+    version: "0.57.1",
+    date: "2026-09-27",
+    changes: [
+      "Mac and Windows: Settings' tabs wrap onto a second line in a narrower window, so Activity and About (where updates are) are always visible instead of hidden off the right edge.",
+    ],
+  },
+  {
     version: "0.57.0",
     date: "2026-09-27",
     changes: [

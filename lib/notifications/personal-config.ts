@@ -2,6 +2,15 @@ import type { UserNotificationChannelKind } from "@/lib/db/schema";
 import { isEmailAddress } from "@/lib/email/client";
 import { outboundUrlError, type OutboundPolicy } from "@/lib/notifications/outbound";
 import type { Translator } from "@/lib/i18n/translator";
+import {
+  maskedService,
+  parseGotify,
+  parsePushbullet,
+  parseSlack,
+  type GotifyConfig,
+  type PushbulletConfig,
+  type SlackConfig,
+} from "@/lib/notifications/services";
 
 // What each kind of personal channel keeps, how what someone typed becomes
 // that, and the masked form Settings shows. Pure; unit tested
@@ -15,7 +24,10 @@ export type PersonalChannelConfig =
   /** `topic`: on the household's ntfy server; `url`: anywhere else. */
   | { kind: "ntfy"; topic: string; url?: undefined }
   | { kind: "ntfy"; url: string; topic?: undefined }
-  | { kind: "webhook"; url: string };
+  | { kind: "webhook"; url: string }
+  | ({ kind: "slack" } & SlackConfig)
+  | ({ kind: "gotify" } & GotifyConfig)
+  | ({ kind: "pushbullet" } & PushbulletConfig);
 
 export type ConfigContext = {
   /** The household ntfy server (its address without the topic), or null. */
@@ -110,6 +122,18 @@ export function parsePersonalConfig(
       if (invalid) return fail(invalid);
       return { ok: true, config: { kind, url } };
     }
+    case "slack": {
+      const parsed = parseSlack(input, same?.kind === "slack" ? same : null, context.policy, t);
+      return parsed.ok ? { ok: true, config: { kind, ...parsed.config } } : parsed;
+    }
+    case "gotify": {
+      const parsed = parseGotify(input, same?.kind === "gotify" ? same : null, context.policy, t);
+      return parsed.ok ? { ok: true, config: { kind, ...parsed.config } } : parsed;
+    }
+    case "pushbullet": {
+      const parsed = parsePushbullet(input, same?.kind === "pushbullet" ? same : null, t);
+      return parsed.ok ? { ok: true, config: { kind, ...parsed.config } } : parsed;
+    }
   }
 }
 
@@ -153,6 +177,10 @@ export function maskedTarget(config: PersonalChannelConfig): string {
       return config.topic ? `Topic ${config.topic.slice(0, 2)}${DOTS}` : maskUrl(config.url ?? "");
     case "webhook":
       return maskUrl(config.url);
+    case "slack":
+    case "gotify":
+    case "pushbullet":
+      return maskedService(config.kind, config);
   }
 }
 
@@ -173,6 +201,12 @@ export function destinationKey(config: PersonalChannelConfig, ntfyServer: string
       return `ntfy:${ntfyUrlFor(config, ntfyServer) ?? config.topic ?? ""}`;
     case "webhook":
       return `webhook:${config.url}`;
+    case "slack":
+      return `slack:${config.webhookUrl}`;
+    case "gotify":
+      return `gotify:${config.url}#${config.appToken}`;
+    case "pushbullet":
+      return `pushbullet:${config.accessToken}#${config.channelTag ?? ""}`;
   }
 }
 
@@ -184,4 +218,7 @@ export const CONFIG_FIELDS: Record<UserNotificationChannelKind, string[]> = {
   discord: ["webhookUrl"],
   ntfy: ["topic", "url"],
   webhook: ["url"],
+  slack: ["webhookUrl"],
+  gotify: ["url", "appToken", "priority"],
+  pushbullet: ["accessToken", "channelTag"],
 };

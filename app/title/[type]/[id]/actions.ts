@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { addTitleToLibrary, relinkTitle, searchTitle, setTitleMonitored } from "@/lib/arr/title-actions";
 import { parseAddOverrides, parseAddOverridesForm } from "@/lib/arr/add-options";
 import { getT } from "@/lib/i18n/server";
+import { removeTitleFromArr } from "@/lib/arr/remove";
 
 // Thin form/session wrappers — the logic lives in lib/arr/title-actions.ts,
 // shared with /api/v1/titles/*.
@@ -93,6 +94,25 @@ export async function searchTitleAction(
 
   const result = await searchTitle(admin.userId, mediaType, tmdbId, tvdbId);
   return result.ok ? { success: true } : { error: result.error };
+}
+
+/** "Remove from Radarr/Sonarr" — see removeTitleFromArr. */
+export async function removeFromArrAction(
+  mediaType: MediaType,
+  tmdbId: number,
+  tvdbId: number | null,
+  deleteFiles: boolean,
+): Promise<ArrCommandState & { removedFrom?: string[] }> {
+  const admin = await requireAdmin((await getT())("title.onlyAdminRemoveFromArr"));
+  if (!admin.ok) return { error: admin.error };
+  if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
+    return { error: (await getT())("notify.titleNotFound") };
+  }
+  const result = await removeTitleFromArr(admin.userId, mediaType, tmdbId, tvdbId, {
+    deleteFiles: deleteFiles === true,
+    fourK: false,
+  });
+  return result.ok ? { success: true, removedFrom: result.removedFrom } : { error: result.error };
 }
 
 /** Toggles monitored on/off directly from the title page — see setTitleMonitored. */

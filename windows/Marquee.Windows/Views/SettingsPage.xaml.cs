@@ -83,11 +83,6 @@ public sealed partial class SettingsPage : Page
         {
             button.Style = tab == current ? currentTabStyle : tabStyle;
         }
-        if (tabButtons.TryGetValue(current, out var currentButton))
-        {
-            // On a narrow window the row scrolls: keep the current tab in view.
-            currentButton.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false });
-        }
     }
 
     /// <summary>Puts <see cref="SettingsViewModel.CurrentTab"/> on screen and marks its pill.</summary>
@@ -124,12 +119,18 @@ public sealed partial class SettingsPage : Page
             new AccountSettingsView(SettingsPart.Members),
             new IntegrationsSettingsView(SettingsPart.SignIn)),
         SettingsTab.MediaServers => new IntegrationsSettingsView(SettingsPart.MediaServers),
-        SettingsTab.Services => new IntegrationsSettingsView(SettingsPart.Services),
+        // 0.58+: override rules under the servers (hidden on an older server).
+        SettingsTab.Services => new CompositeSettingsView(
+            new IntegrationsSettingsView(SettingsPart.Services),
+            new OverrideRulesView()),
         SettingsTab.Notifications => new NotificationsSettingsView(),
         SettingsTab.Discover => new DiscoverSettingsView(),
-        SettingsTab.Blocklist => new AccountSettingsView(SettingsPart.Blocklist),
+        SettingsTab.Blocklist => new CompositeSettingsView(
+            new AccountSettingsView(SettingsPart.Blocklist),
+            new AutoBlockView()),
         SettingsTab.Activity => new ActivitySettingsView(),
         SettingsTab.Jobs => new JobsSettingsView(),
+        SettingsTab.Logs => new LogsSettingsView(),
         SettingsTab.About => new AboutSettingsView(),
         _ => new AccountSettingsView(SettingsPart.Account),
     };

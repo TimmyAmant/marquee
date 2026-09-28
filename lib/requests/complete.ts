@@ -93,6 +93,8 @@ export async function checkCompletedRequests(scope?: CompletionScope, now = new 
       and(
         inArray(requests.status, ["pending", "approved"]),
         isNull(requests.notifiedCompleteAt),
+        // Taken off Sonarr/Radarr on purpose (lib/arr/remove.ts).
+        isNull(requests.removedAt),
         ...(scope
           ? [eq(requests.mediaType, scope.mediaType), eq(requests.tmdbId, scope.tmdbId), eq(requests.is4k, scope.is4k)]
           : []),

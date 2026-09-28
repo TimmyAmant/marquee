@@ -665,6 +665,11 @@ export const requests = pgTable(
     // anyone (it may have been in the library for years); seeing it
     // incomplete first arms it, so its completion is announced as usual.
     completeNoticeArmed: boolean("complete_notice_armed").notNull().default(true),
+    // "Remove from Sonarr/Radarr" on the title page (lib/arr/remove.ts):
+    // when the title this approved request added was taken off the server
+    // again. It no longer counts as an open request, so the title can be
+    // asked for again, and the can't-find and ready-to-watch checks leave it.
+    removedAt: timestamp("removed_at", { withTimezone: true }),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),
@@ -827,6 +832,10 @@ export const appSettings = pgTable("app_settings", {
   // the English-only filter Discover has always applied; "any" for none).
   discoverRegion: text("discover_region"),
   discoverLanguage: text("discover_language"),
+  // Settings › Jobs: how often each scheduled job runs, where the admin
+  // changed it (lib/jobs/schedule.ts) — { "plex-sync": { "every": "hours",
+  // "count": 2 } }. A job not in it keeps its built-in schedule.
+  jobSchedules: jsonb("job_schedules").$type<Record<string, unknown>>(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -1038,7 +1047,7 @@ export const plexWatchlistItems = pgTable(
   ],
 );
 
-export const notificationChannelKindValues = ["telegram", "pushover", "email"] as const;
+export const notificationChannelKindValues = ["telegram", "pushover", "email", "gotify", "slack", "pushbullet"] as const;
 export type NotificationChannelKind = (typeof notificationChannelKindValues)[number];
 
 /** Telegram, Pushover and email: household-wide relays like Discord and
@@ -1055,10 +1064,20 @@ export const notificationChannels = pgTable(
     configTag: bytea("config_tag").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [check("notification_channels_kind_check", sql`${table.kind} in ('telegram','pushover','email')`)],
+  (table) => [check("notification_channels_kind_check", sql`${table.kind} in ('telegram','pushover','email','gotify','slack','pushbullet')`)],
 );
 
-export const userNotificationChannelKindValues = ["telegram", "pushover", "email", "discord", "ntfy", "webhook"] as const;
+export const userNotificationChannelKindValues = [
+  "telegram",
+  "pushover",
+  "email",
+  "discord",
+  "ntfy",
+  "webhook",
+  "slack",
+  "gotify",
+  "pushbullet",
+] as const;
 export type UserNotificationChannelKind = (typeof userNotificationChannelKindValues)[number];
 
 /** A member's own notification channels (Settings › Account ›
@@ -1100,7 +1119,7 @@ export const userNotificationChannels = pgTable(
     index("user_notification_channels_user_idx").on(table.userId),
     check(
       "user_notification_channels_kind_check",
-      sql`${table.kind} in ('telegram','pushover','email','discord','ntfy','webhook')`,
+      sql`${table.kind} in ('telegram','pushover','email','discord','ntfy','webhook','slack','gotify','pushbullet')`,
     ),
   ],
 );
@@ -1183,7 +1202,7 @@ export const comments = pgTable(
   ],
 );
 
-export const blocklistKindValues = ["title", "keyword"] as const;
+export const blocklistKindValues = ["title", "keyword", "certification", "adult"] as const;
 export type BlocklistKind = (typeof blocklistKindValues)[number];
 
 /** What nobody may request (lib/requests/blocklist.ts): one title, or every
@@ -1198,16 +1217,23 @@ export const requestBlocklist = pgTable(
     tmdbId: integer("tmdb_id"),
     /** A title's name as it was when blocked, for the list. */
     title: text("title"),
-    /** For a keyword: lower-case, trimmed. */
+    /** For a keyword: lower-case, trimmed. For a certification: the rating
+     * as the region writes it ("R", "TV-MA", "18"), upper-case. */
     keyword: text("keyword"),
+    /** For a certification: whose ratings (ISO 3166-1, "US"). */
+    region: text("region"),
     /** Shown to whoever tries to request it. */
     reason: text("reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    check("request_blocklist_kind_check", sql`${table.kind} in ('title','keyword')`),
+    check("request_blocklist_kind_check", sql`${table.kind} in ('title','keyword','certification','adult')`),
     uniqueIndex("request_blocklist_title_idx").on(table.mediaType, table.tmdbId).where(sql`${table.kind} = 'title'`),
     uniqueIndex("request_blocklist_keyword_idx").on(table.keyword).where(sql`${table.kind} = 'keyword'`),
+    uniqueIndex("request_blocklist_certification_idx")
+      .on(table.region, table.keyword)
+      .where(sql`${table.kind} = 'certification'`),
+    uniqueIndex("request_blocklist_adult_idx").on(table.kind).where(sql`${table.kind} = 'adult'`),
   ],
 );
 
@@ -1321,4 +1347,39 @@ export const traktSyncItems = pgTable(
     primaryKey({ columns: [table.userId, table.mediaType, table.tmdbId] }),
     check("trakt_sync_items_outcome_check", sql`${table.outcome} in ('requested','skipped','existing')`),
   ],
+);
+
+/** Settings › Services › Override rules (lib/arr/override-rules.ts, like
+ * Seerr's): a request whose title and requester match every condition set
+ * here goes to `serverId` with this profile, folder and tags instead of the
+ * server's defaults — decided when it's approved, and shown as the default
+ * in the Advanced panel. A reviewer's own picks still win. Empty lists are
+ * "any". The server says which kind (Sonarr/Radarr) and whether the rule is
+ * for 4K requests. */
+export const arrOverrideRules = pgTable(
+  "arr_override_rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    serverId: uuid("server_id")
+      .notNull()
+      .references(() => arrServers.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    /** TMDb genre ids. */
+    genres: integer("genres").array().notNull().default(sql`'{}'::integer[]`),
+    /** ISO 639-1 original languages ("ja"). */
+    languages: text("languages").array().notNull().default(sql`'{}'::text[]`),
+    /** TMDb keywords, with their names for the list. */
+    keywords: jsonb("keywords").$type<{ id: number; name: string }[]>().notNull().default([]),
+    /** Requesting members' ids. */
+    userIds: uuid("user_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    /** What it's added with; null keeps the server's default. */
+    qualityProfileId: integer("quality_profile_id"),
+    rootFolderPath: text("root_folder_path"),
+    tags: integer("tags").array(),
+    position: integer("position").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("arr_override_rules_server_idx").on(table.serverId)],
 );

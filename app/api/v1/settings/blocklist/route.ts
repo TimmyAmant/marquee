@@ -4,7 +4,7 @@ import { requireApiPermission } from "@/lib/api/auth";
 import { unwrap } from "@/lib/api/guards";
 import { readJsonBody } from "@/lib/api/request";
 import { blocklistEntryDto } from "@/lib/api/mappers";
-import { blockKeyword, listBlocklist } from "@/lib/requests/blocklist";
+import { blockByRule, listBlocklist, parseBlockRule } from "@/lib/requests/blocklist";
 import type { BlocklistEntry, ListResponse, Ok } from "@/lib/api/types";
 
 const FORBIDDEN = msg("server.onlyAdminBlocklist");
@@ -15,10 +15,15 @@ export const GET = withApi(async (request): Promise<ListResponse<BlocklistEntry>
   return { results: (await listBlocklist()).map(blocklistEntryDto) };
 });
 
-/** Blocks a TMDb keyword or genre: `{ "keyword": "anime", "reason": "…" }`. */
+/** Blocks automatically: a TMDb keyword or genre (`{ "keyword": "anime" }`,
+ * or `"kind": "keyword"`), a rating in a country (`{ "kind":
+ * "certification", "region": "US", "certification": "NC-17" }`) or
+ * everything TMDb marks adult (`{ "kind": "adult" }`), each with an optional
+ * `reason`. */
 export const POST = withApi(async (request): Promise<Ok> => {
   await requireApiPermission(request, "manageBlocklist", FORBIDDEN);
   const body = await readJsonBody(request);
-  unwrap(await blockKeyword(body.keyword, body.reason));
+  const { rule } = unwrap(await parseBlockRule(body));
+  unwrap(await blockByRule(rule, body.reason));
   return { ok: true };
 });

@@ -7,6 +7,18 @@ import { telegramConfigError, verifyTelegram, type TelegramConfig } from "@/lib/
 import { pushoverConfigError, verifyPushover, type PushoverConfig } from "@/lib/pushover/client";
 import { emailConfigError, parseRecipients, verifyEmail, type EmailConfig } from "@/lib/email/client";
 import { getT } from "@/lib/i18n/server";
+import {
+  gotifyRequest,
+  parseGotify,
+  parsePushbullet,
+  parseSlack,
+  pushbulletRequest,
+  send,
+  slackRequest,
+  type GotifyConfig,
+  type PushbulletConfig,
+  type SlackConfig,
+} from "@/lib/notifications/services";
 
 import type { TestOptions } from "@/lib/integrations/manage";
 
@@ -16,7 +28,14 @@ import type { TestOptions } from "@/lib/integrations/manage";
 // ntfy. A blank secret on a later save keeps the saved one, so changing the
 // chat or the recipients doesn't mean digging the token out again.
 
-type Configs = { telegram: TelegramConfig; pushover: PushoverConfig; email: EmailConfig };
+type Configs = {
+  telegram: TelegramConfig;
+  pushover: PushoverConfig;
+  email: EmailConfig;
+  gotify: GotifyConfig;
+  slack: SlackConfig;
+  pushbullet: PushbulletConfig;
+};
 
 // Same short cache as the other settings (lib/integrations/app-settings.ts):
 // every notification reads all three.
@@ -139,6 +158,50 @@ export async function testAndSaveEmail(
   return { ok: true };
 }
 
+// Gotify, Slack and Pushbullet (lib/notifications/services.ts): the admin's
+// own addresses, so the home network is allowed, like the other household
+// channels. Each sends a test before it's saved.
+
+const HOUSEHOLD_POLICY = { allowPrivate: true };
+
+async function testAndSave<K extends "gotify" | "slack" | "pushbullet">(
+  kind: K,
+  parsed: { ok: true; config: Configs[K] } | { ok: false; error: string },
+  test: (config: Configs[K], line: string) => ReturnType<typeof send>,
+  options: TestOptions,
+): Promise<CoreResult> {
+  const t = await getT();
+  if (!parsed.ok) return fail("invalid", parsed.error);
+  const result = await test(parsed.config, `✅ ${t("notify.connectedChat")}`);
+  if (!result.ok) return fail("invalid", t("notify.channelTestFailed", { error: result.error }));
+  if (options.dryRun) return { ok: true };
+  await saveChannelConfig(kind, parsed.config);
+  return { ok: true };
+}
+
+export async function testAndSaveGotify(input: Record<string, unknown>, options: TestOptions = {}): Promise<CoreResult> {
+  const t = await getT();
+  const parsed = parseGotify(input, await getChannelConfig("gotify"), HOUSEHOLD_POLICY, t);
+  return testAndSave("gotify", parsed, (config, line) => send(gotifyRequest(config, "Marquee", line), HOUSEHOLD_POLICY, t), options);
+}
+
+export async function testAndSaveSlack(input: Record<string, unknown>, options: TestOptions = {}): Promise<CoreResult> {
+  const t = await getT();
+  const parsed = parseSlack(input, await getChannelConfig("slack"), HOUSEHOLD_POLICY, t);
+  return testAndSave("slack", parsed, (config, line) => send(slackRequest(config, line), HOUSEHOLD_POLICY, t), options);
+}
+
+export async function testAndSavePushbullet(input: Record<string, unknown>, options: TestOptions = {}): Promise<CoreResult> {
+  const t = await getT();
+  const parsed = parsePushbullet(input, await getChannelConfig("pushbullet"), t);
+  return testAndSave(
+    "pushbullet",
+    parsed,
+    (config, line) => send(pushbulletRequest(config, "Marquee", line), { allowPrivate: false }, t),
+    options,
+  );
+}
+
 /** What Settings shows about each, without any secret. */
 export type ChannelSummaries = {
   telegram: { connected: boolean; chatId: string | null };
@@ -152,13 +215,19 @@ export type ChannelSummaries = {
     from: string | null;
     to: string[];
   };
+  gotify: { connected: boolean; url: string | null; priority: number | null };
+  slack: { connected: boolean };
+  pushbullet: { connected: boolean; channelTag: string | null };
 };
 
 export async function getChannelSummaries(): Promise<ChannelSummaries> {
-  const [telegram, pushover, email] = await Promise.all([
+  const [telegram, pushover, email, gotify, slack, pushbullet] = await Promise.all([
     getChannelConfig("telegram"),
     getChannelConfig("pushover"),
     getChannelConfig("email"),
+    getChannelConfig("gotify"),
+    getChannelConfig("slack"),
+    getChannelConfig("pushbullet"),
   ]);
   return {
     telegram: { connected: Boolean(telegram), chatId: telegram?.chatId ?? null },
@@ -172,5 +241,8 @@ export async function getChannelSummaries(): Promise<ChannelSummaries> {
       from: email?.from ?? null,
       to: email?.to ?? [],
     },
+    gotify: { connected: Boolean(gotify), url: gotify?.url ?? null, priority: gotify?.priority ?? null },
+    slack: { connected: Boolean(slack) },
+    pushbullet: { connected: Boolean(pushbullet), channelTag: pushbullet?.channelTag ?? null },
   };
 }

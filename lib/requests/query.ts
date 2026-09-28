@@ -296,7 +296,7 @@ export async function getActiveRequestStatus(
   fourK = false,
 ): Promise<RequestStatus | null> {
   const [row] = await db
-    .select({ status: requests.status })
+    .select({ status: requests.status, removedAt: requests.removedAt })
     .from(requests)
     .where(
       and(
@@ -309,7 +309,8 @@ export async function getActiveRequestStatus(
     .orderBy(desc(requests.createdAt))
     .limit(1);
 
-  if (!row || row.status === "rejected") return null;
+  // Removed from Sonarr/Radarr since (lib/arr/remove.ts): free to ask again.
+  if (!row || row.status === "rejected" || row.removedAt) return null;
   return row.status;
 }
 
@@ -329,14 +330,20 @@ export async function getActiveRequestStatusMap(
   const tmdbIds = [...new Set(items.map((i) => i.tmdbId))];
 
   const rows = await db
-    .select({ mediaType: requests.mediaType, tmdbId: requests.tmdbId, status: requests.status, createdAt: requests.createdAt })
+    .select({
+      mediaType: requests.mediaType,
+      tmdbId: requests.tmdbId,
+      status: requests.status,
+      createdAt: requests.createdAt,
+      removedAt: requests.removedAt,
+    })
     .from(requests)
     .where(and(eq(requests.requestedByUserId, userId), inArray(requests.tmdbId, tmdbIds), eq(requests.is4k, false)))
     .orderBy(desc(requests.createdAt));
 
   for (const row of rows) {
     const key = `${row.mediaType}:${row.tmdbId}`;
-    if (map.has(key) || row.status === "rejected" || !wanted.has(key)) continue;
+    if (map.has(key) || row.status === "rejected" || row.removedAt || !wanted.has(key)) continue;
     map.set(key, row.status);
   }
   return map;

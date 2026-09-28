@@ -36,6 +36,11 @@ extension API {
         var arrServers: [ArrServer]? = nil
         /// 0.53+: OMDb, for ratings; nil from an older server, which hides the card.
         var omdb: ConnectionState? = nil
+        /// 0.58+: Gotify, Slack and Pushbullet; nil from an older server,
+        /// which hides their tabs.
+        var gotify: GotifySettings? = nil
+        var slack: ConnectionState? = nil
+        var pushbullet: PushbulletSettings? = nil
 
         /// nil only for a 4K instance an older server doesn't know about.
         func arr(_ provider: ArrProvider) -> ArrSettings? {
@@ -121,6 +126,37 @@ extension API {
         let username: String?
         let from: String?
         let to: [String]
+    }
+
+    /// Gotify as saved (never the token).
+    struct GotifySettings: Codable, Hashable, Sendable {
+        let connected: Bool
+        let url: String?
+        let priority: Int?
+    }
+
+    /// Pushbullet as saved (never the token).
+    struct PushbulletSettings: Codable, Hashable, Sendable {
+        let connected: Bool
+        let channelTag: String?
+    }
+
+    /// `PUT …/gotify` body. `appToken` `""` keeps the saved one for the same server.
+    struct GotifyRequest: Encodable, Hashable, Sendable {
+        let url: String
+        let appToken: String
+        let priority: Int
+    }
+
+    /// `PUT …/slack` body. `""` keeps the saved webhook.
+    struct SlackRequest: Encodable, Hashable, Sendable {
+        let webhookUrl: String
+    }
+
+    /// `PUT …/pushbullet` body. `accessToken` `""` keeps the saved one.
+    struct PushbulletRequest: Encodable, Hashable, Sendable {
+        let accessToken: String
+        let channelTag: String
     }
 
     /// `PUT …/telegram` body. `botToken` `""` keeps the saved one.

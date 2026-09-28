@@ -255,5 +255,15 @@
   "seasonAvailable": "Available",
   "seasonUnavailable": "Unavailable",
   "moreActions": "More actions",
-  "advancedOptions": "Advanced options"
+  "advancedOptions": "Advanced options",
+  "overrideRuleApplies": "Picked by the override rule “{name}”.",
+  "onlyAdminRemoveFromArr": "Only the admin can remove titles from Sonarr or Radarr.",
+  "removeFromArr": "Remove from {app}",
+  "removeFromArrTitle": "Remove {name} from {app}?",
+  "removeFromArrBody": "{app} stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again.",
+  "removeFromArrDeleteFiles": "Also delete the files",
+  "removeFromArrDeleteFilesHelp": "Gone from the disk for good — Plex and Jellyfin lose it too.",
+  "removingFromArr": "Removing…",
+  "removeAndDelete": "Remove and delete files",
+  "removedFromArr": "Removed from {app}"
 }
