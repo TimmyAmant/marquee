@@ -18,6 +18,13 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    version: "0.59.0",
+    date: "2026-09-27",
+    changes: [
+      "On phones the website has a tab bar along the bottom, like the iPhone app: Discover, Search, Requests (with the number waiting for review), Calendar and More. More holds Movies, Series, Library, Favorites, Settings and Releases. Computers and tablets are unchanged.",
+    ],
+  },
+  {
     version: "0.58.0",
     date: "2026-09-27",
     changes: [
