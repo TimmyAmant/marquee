@@ -11,11 +11,11 @@ import { messagesFor } from "@/lib/i18n/catalog";
 
 function render(props: Partial<Parameters<typeof PosterCard>[0]>) {
   return renderToStaticMarkup(
-    createElement(
-      I18nProvider,
-      { locale: "en", messages: messagesFor("en") },
-      createElement(PosterCard, { href: "/title/tv/1407", posterPath: null, name: "Homeland", ...props }),
-    ),
+    createElement(I18nProvider, {
+      locale: "en",
+      messages: messagesFor("en"),
+      children: createElement(PosterCard, { href: "/title/tv/1407", posterPath: null, name: "Homeland", ...props }),
+    }),
   );
 }
 
