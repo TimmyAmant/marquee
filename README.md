@@ -14,7 +14,7 @@
 **Marquee** is a free and open source, self-hosted app for requesting movies and
 shows **and** knowing exactly what you already have. It works with
 [Plex](https://plex.tv), [Jellyfin](https://jellyfin.org) and
-[Emby](https://emby.media) — even two at once — and with
+[Emby](https://emby.media) even two at once and with
 **[Sonarr](https://sonarr.tv)** and **[Radarr](https://radarr.video)**, as many
 servers as you run, 4K included. Use it in any browser, on your phone, or in the
 native **Mac** and **Windows** apps.
