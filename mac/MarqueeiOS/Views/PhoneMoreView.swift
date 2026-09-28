@@ -45,7 +45,14 @@ struct PhoneMoreView: View {
     }
 
     private var section: Binding<SidebarItem?> {
-        Binding(get: { model.moreSection }, set: { model.moreSection = $0 })
+        Binding(
+            get: { model.moreSection },
+            set: { section in
+                model.moreSection = section
+                // Back out of Settings: its pushed tab goes with it.
+                if section != .settings { model.phoneSettingsTab = nil }
+            }
+        )
     }
 
     private func row(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
@@ -77,7 +84,7 @@ struct PhoneSectionView: View {
         case .series: BrowseView(mediaType: .tv)
         case .library: LibraryView()
         case .favorites: FavoritesView()
-        case .settings: PhoneSettingsView()
+        case .settings: PhoneSettingsScreen()
         case .discover: DiscoverView()
         case .calendar: PhoneCalendarView()
         case .requests: RequestsView()

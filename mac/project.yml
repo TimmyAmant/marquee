@@ -97,8 +97,9 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
 
   # The iPhone (and iPad) app: the Mac app's API client, models, design
-  # system and most screens, compiled for iOS, with its own shell (tab bar,
-  # sign-in, compact Settings) in MarqueeiOS/. Mac-only files are left out
+  # system and screens (Settings too), compiled for iOS, with its own shell
+  # (tab bar or iPad sidebar, sign-in, the iPhone's list of Settings tabs)
+  # in MarqueeiOS/. Mac-only files are left out
   # here; shared files keep AppKit behind `#if os(macOS)`.
   Marquee iOS:
     type: application
@@ -115,14 +116,12 @@ targets:
           - Core/Security/CodeIdentity.swift
           - Core/Security/Keychain.swift
           - App/Updates/**
-          - Features/Settings/**
           - Features/Shell/**
           - Resources/Assets.xcassets/**
           - Resources/Info.plist
           - Resources/InfoPlist.xcstrings
       # The few Mac-folder files the iPhone app needs from excluded folders.
       - path: Marquee/App/Updates/UpdateModels.swift
-      - path: Marquee/Features/Settings/LastActiveLabel.swift
       - path: Marquee/Features/Shell/SearchPanel.swift
       - path: Marquee/Features/Shell/WhatsNewSheet.swift
       - path: MarqueeiOS
@@ -224,17 +223,10 @@ targets:
         excludes:
           - Fixtures
           - Fixtures/**
-          # Mac-only: the sessions file, the updater, the rail, and Settings
-          # screens the iPhone app doesn't have.
+          # Mac-only: the sessions file, the updater and the rail.
           - FileTokenStoreTests.swift
           - UpdaterTests.swift
           - NavRailPositionTests.swift
-          - PermissionsTests.swift
-          - DiscoverRowsTests.swift
-          - ApiKeysTests.swift
-          - PersonalNotificationsTests.swift
-          - ArrServersTests.swift
-          - SettingsTabsTests.swift
       - path: MarqueeTests/Fixtures
         type: folder
         buildPhase: resources

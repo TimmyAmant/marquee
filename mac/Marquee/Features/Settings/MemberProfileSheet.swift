@@ -33,7 +33,8 @@ struct MemberProfileSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 640)
+        .scrollsOnPhone()
+        .sheetWidth(640)
         .background(Theme.bg1)
         .task {
             do {

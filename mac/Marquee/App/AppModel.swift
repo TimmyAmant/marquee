@@ -200,6 +200,9 @@ final class AppModel {
     var tabPaths: [PhoneTab: [Route]] = [:]
     /// The section open under More (Movies, Favorites, Settings…), if any.
     var moreSection: SidebarItem?
+    /// The Settings tab pushed over the iPhone's list of them, if any (the
+    /// iPad at full width shows `settingsTab` in the Mac's row instead).
+    var phoneSettingsTab: SettingsTab?
     #endif
     var movieFilters = API.BrowseQuery()
     var seriesFilters = API.BrowseQuery()
@@ -210,10 +213,8 @@ final class AppModel {
     /// The search panel (`SearchPanel`), opened by the rail's Search and
     /// Edit › Find (⌘F).
     var isSearchOpen = false
-    #if os(macOS)
     /// Which Settings tab opens next — "Connect …" links jump to Integrations.
     var settingsTab: SettingsTab = .account
-    #endif
     /// Where Settings was opened from, for its Back button; nil once you've
     /// left Settings some other way.
     var settingsReturn: SettingsReturn?

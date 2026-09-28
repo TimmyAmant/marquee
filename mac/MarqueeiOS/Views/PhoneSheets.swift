@@ -31,7 +31,7 @@ struct PhoneNotificationPrompt: View {
             Image(systemName: "bell.badge")
                 .font(.system(size: 34))
                 .foregroundStyle(Theme.accent)
-            Text("Get notifications on this iPhone?")
+            Text(PlatformText.getNotificationsHere)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.textPrimary)
                 .accessibilityAddTraits(.isHeader)

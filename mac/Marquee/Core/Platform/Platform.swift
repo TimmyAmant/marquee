@@ -91,6 +91,16 @@ enum Platform {
         #endif
     }
 
+    /// Posted as the app quits (to stop a sign-in poll that's under way).
+    @MainActor
+    static var willTerminateNotification: Notification.Name {
+        #if os(macOS)
+        NSApplication.willTerminateNotification
+        #else
+        UIApplication.willTerminateNotification
+        #endif
+    }
+
     /// This device's name for the server's device list.
     @MainActor
     static var deviceName: String {
@@ -125,6 +135,16 @@ extension View {
         pickerStyle(.radioGroup)
         #else
         pickerStyle(.menu)
+        #endif
+    }
+
+    /// `choicePickerStyle()`'s radio buttons side by side on the Mac; the
+    /// iOS menu has no layout to choose.
+    func horizontalChoiceLayout() -> some View {
+        #if os(macOS)
+        horizontalRadioGroupLayout()
+        #else
+        self
         #endif
     }
 
@@ -167,6 +187,27 @@ extension View {
         #else
         frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
             .presentationDragIndicator(.visible)
+        #endif
+    }
+
+    /// A sheet's content, scrolling on iOS, where it may be taller than the
+    /// screen; the Mac's sheet is as tall as its content.
+    @ViewBuilder
+    func scrollsOnPhone() -> some View {
+        #if os(macOS)
+        self
+        #else
+        ScrollView { self.frame(maxWidth: .infinity, alignment: .leading) }
+        #endif
+    }
+
+    /// A sheet's fixed size on the Mac; on iOS, the screen's, like
+    /// `sheetWidth(_:)`.
+    func sheetSize(width: CGFloat, height: CGFloat) -> some View {
+        #if os(macOS)
+        frame(width: width, height: height)
+        #else
+        sheetWidth(width)
         #endif
     }
 

@@ -42,71 +42,6 @@ enum PhoneTab: String, Hashable, CaseIterable, Identifiable {
     }
 }
 
-/// The Settings pages a shared screen can ask for ("Connect an integration"),
-/// the same tabs as the Mac's and the website's (0.56+). On the phone,
-/// Account, Notifications and About are the More tab's Settings screen; the
-/// admin's pages open on the website, which has room for them.
-enum SettingsTab: String, Hashable, CaseIterable {
-    case account, general, members, mediaServers, services, notifications, discover, blocklist, jobs, activity, about
-
-    /// The page on the website (app/settings/…), relative to its root.
-    var webPath: String {
-        switch self {
-        case .account: return "settings"
-        case .general: return "settings/general"
-        case .members: return "settings/members"
-        case .mediaServers: return "settings/media-servers"
-        case .services: return "settings/services"
-        case .notifications: return "settings/notifications"
-        case .discover: return "settings/discover"
-        case .blocklist: return "settings/blocklist"
-        case .jobs: return "settings/jobs"
-        case .activity: return "settings/activity"
-        case .about: return "settings/about"
-        }
-    }
-
-    var title: String {
-        switch self {
-        case .account: return String(localized: "Account")
-        case .general: return String(localized: "General")
-        case .members: return String(localized: "Members")
-        case .mediaServers: return String(localized: "Media servers")
-        case .services: return String(localized: "Services")
-        case .notifications: return String(localized: "Notifications")
-        case .discover: return String(localized: "Discover")
-        case .blocklist: return String(localized: "Blocklist")
-        case .jobs: return String(localized: "Jobs")
-        case .activity: return String(localized: "Activity")
-        case .about: return String(localized: "About")
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .account: return "person.crop.circle"
-        case .general: return "gearshape"
-        case .members: return "person.2"
-        case .mediaServers: return "server.rack"
-        case .services: return "powerplug"
-        case .notifications: return "bell"
-        case .discover: return "safari"
-        case .blocklist: return "hand.raised"
-        case .jobs: return "arrow.triangle.2.circlepath"
-        case .activity: return "clock"
-        case .about: return "info.circle"
-        }
-    }
-
-    /// Covered by the phone's own Settings screen.
-    var isOnPhone: Bool {
-        switch self {
-        case .account, .notifications, .about: return true
-        default: return false
-        }
-    }
-}
-
 extension AppModel {
     /// Moves to `section`'s tab (under More for the ones without a tab),
     /// keeping the tab being left where it was.
@@ -116,6 +51,7 @@ extension AppModel {
         if target == .more {
             moreSection = section
         }
+        if section != .settings { phoneSettingsTab = nil }
     }
 
     /// The tab bar's selection: each tab keeps its own pushed pages.
@@ -143,24 +79,26 @@ extension AppModel {
     /// Tapping the visible tab again goes back to its first page.
     func popToRoot(_ tab: PhoneTab) {
         setPath([], for: tab)
-        if tab == .more { moreSection = nil }
+        if tab == .more {
+            moreSection = nil
+            phoneSettingsTab = nil
+        }
     }
 
     func resetPhoneNavigation() {
         tab = .discover
         tabPaths = [:]
         moreSection = nil
+        phoneSettingsTab = nil
+        settingsTab = .account
     }
 
-    /// Settings on the phone: Account is the More tab's Settings screen; the
-    /// admin's pages (Integrations, Discover, Activity, Jobs) are the
-    /// website's, which has room for them.
+    /// Settings on iPhone and iPad, on `tab`: the More tab's Settings with
+    /// that tab pushed over the list (on the iPad's full width, chosen in
+    /// the Mac's row of tabs). Account, the default, is the list itself.
     func openSettings(_ tab: SettingsTab = .account) {
-        if tab.isOnPhone {
-            select(.settings)
-            return
-        }
-        guard let server = session.server else { return }
-        Platform.open(server.baseURL.appending(path: tab.webPath))
+        select(.settings)
+        settingsTab = tab
+        phoneSettingsTab = tab == .account ? nil : tab
     }
 }

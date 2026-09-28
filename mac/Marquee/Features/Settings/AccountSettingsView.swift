@@ -1,5 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(iOS)
+import UIKit
+#endif
 
 /// Settings › Account (app/settings/page.tsx), everyone's: who you are, your
 /// own row of the household list, linked accounts, Trakt lists, and how
@@ -7,10 +10,13 @@ import UniformTypeIdentifiers
 struct AccountSettingsView: View {
     @Environment(AppModel.self) private var model
     @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
-    /// Settings › Menu position (`NavRailPosition`), per Mac.
+    #if os(macOS)
+    /// Settings › Menu position (`NavRailPosition`), per Mac. (The iPhone
+    /// and iPad have a tab bar or a sidebar instead of the menu.)
     @AppStorage(NavRailPosition.storageKey) private var menuPosition = NavRailPosition.left.rawValue
     /// Settings › Show menu labels, per Mac.
     @AppStorage(NavRailPosition.labelsStorageKey) private var menuLabels = false
+    #endif
 
     @State private var watchlist: API.PlexWatchlist?
 
@@ -28,7 +34,7 @@ struct AccountSettingsView: View {
                         SettingsRow(label: String(localized: "Server")) { SettingsValue(text: model.session.server?.displayName ?? "—") }
                         SettingsRow(
                             label: String(localized: "Sign out"),
-                            help: String(localized: "Signs you out of Marquee on this Mac.")
+                            help: PlatformText.signsOutHere
                         ) {
                             Button("Sign out") { model.signOut() }
                                 .buttonStyle(OutlineButtonStyle())
@@ -77,6 +83,7 @@ struct AccountSettingsView: View {
                             .labelsHidden()
                             .frame(width: 210)
                         }
+                        #if os(macOS)
                         SettingsRow(
                             label: String(localized: "Menu position"),
                             help: String(localized: "Which edge of the window the menu sits on.")
@@ -98,6 +105,7 @@ struct AccountSettingsView: View {
                                 .toggleStyle(.switch)
                                 .labelsHidden()
                         }
+                        #endif
                         // 0.50+: the account's language, the same one the
                         // website uses; an older server can't keep one.
                         if viewer.sendsLanguage {
@@ -360,8 +368,11 @@ private struct LanguagePicker: View {
                     Text("Takes effect when Marquee restarts.")
                         .font(.system(size: 11.5))
                         .foregroundStyle(Theme.textMuted)
+                    #if os(macOS)
+                    // An iPhone app can't reopen itself; it's the next launch.
                     Button("Restart") { AppLanguage.relaunch() }
                         .buttonStyle(OutlineButtonStyle(compact: true))
+                    #endif
                 }
             }
             if let error { InlineMessage(text: error) }
@@ -390,21 +401,26 @@ struct NotificationSettingsCard: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
 
-    /// System Settings › Notifications › Marquee.
-    private static let systemSettingsURL = URL(
-        string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(Bundle.main.bundleIdentifier ?? "com.timmyamant.Marquee")"
-    )!
+    /// System Settings › Notifications › Marquee (on iOS, the Settings
+    /// app's page for Marquee).
+    private static var systemSettingsURL: URL {
+        #if os(macOS)
+        URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(Bundle.main.bundleIdentifier ?? "com.timmyamant.Marquee")")!
+        #else
+        URL(string: UIApplication.openNotificationSettingsURLString)!
+        #endif
+    }
 
     var body: some View {
         let consent = model.notificationConsent
 
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Show notifications on this Mac")
+                Text(PlatformText.showNotificationsHere)
                     .font(.system(size: 13.5))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Toggle("Show notifications on this Mac", isOn: Binding(
+                Toggle(PlatformText.showNotificationsHere, isOn: Binding(
                     get: { consent.isEnabled },
                     set: { on in
                         if on {
@@ -425,11 +441,11 @@ struct NotificationSettingsCard: View {
 
             if consent.choice == .on, consent.authorization == .denied {
                 HStack(spacing: 10) {
-                    Text("Notifications for Marquee are turned off in System Settings.")
+                    Text(PlatformText.notificationsOffInSystem)
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.danger)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Open System Settings") { openURL(Self.systemSettingsURL) }
+                    Button(PlatformText.openSystemSettings) { openURL(Self.systemSettingsURL) }
                         .buttonStyle(OutlineButtonStyle(compact: true))
                 }
             }
@@ -643,8 +659,8 @@ private struct EditMemberSheet: View {
             }
             .padding([.horizontal, .bottom], 24)
         }
-        .toggleStyle(.checkbox)
-        .frame(width: 460)
+        .checkboxToggleStyle()
+        .sheetWidth(460)
         .background(Theme.bg1)
         .onAppear {
             displayName = member.displayName ?? ""
@@ -691,7 +707,7 @@ private struct EditMemberSheet: View {
             }
 
             if member.isCurrentUser {
-                Text("Setting a new password signs you out of every device, including this Mac.")
+                Text(PlatformText.newPasswordSignsOut)
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)

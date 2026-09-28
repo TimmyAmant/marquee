@@ -289,7 +289,8 @@ struct AddDiscoverRowSheet: View {
         }
         .font(.system(size: 12.5))
         .padding(24)
-        .frame(width: 480)
+        .scrollsOnPhone()
+        .sheetWidth(480)
         .background(Theme.bg1)
         .task(id: LookupKey(kind: draft.kind, query: draft.query, mediaType: draft.kind == .genre ? draft.genreMediaType : nil)) {
             await lookUp()

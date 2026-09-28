@@ -99,11 +99,71 @@ struct PhoneNavigationTests {
         #expect(PhoneTab(section: .settings) == .more)
     }
 
-    @Test func adminSettingsPagesAreTheWebsites() {
+    @Test func everySettingsTabHasItsWebsitePage() {
+        #expect(SettingsTab.account.webPath == "settings")
         #expect(SettingsTab.services.webPath == "settings/services")
         #expect(SettingsTab.mediaServers.webPath == "settings/media-servers")
-        #expect(!SettingsTab.general.isOnPhone)
-        #expect(SettingsTab.notifications.isOnPhone)
-        #expect(SettingsTab.account.webPath == "settings")
+        #expect(SettingsTab.logs.webPath == "settings/logs")
+        for tab in SettingsTab.allCases where tab != .account {
+            #expect(tab.webPath.hasPrefix("settings/"))
+        }
+        #expect(Set(SettingsTab.allCases.map(\.webPath)).count == SettingsTab.allCases.count)
+    }
+
+    @Test func settingsLinksOpenTheirTabNatively() {
+        let model = makeModel()
+        model.switchTab(to: .search)
+        model.openSettings(.services)
+        #expect(model.tab == .more)
+        #expect(model.moreSection == .settings)
+        #expect(model.phoneSettingsTab == .services, "Pushed over the iPhone's list")
+        #expect(model.settingsTab == .services, "Chosen in the iPad's row")
+    }
+
+    @Test func accountIsTheSettingsListItself() {
+        let model = makeModel()
+        model.openSettings(.logs)
+        model.openSettings()
+        #expect(model.moreSection == .settings)
+        #expect(model.phoneSettingsTab == nil)
+        #expect(model.settingsTab == .account)
+    }
+
+    @Test func leavingSettingsForgetsTheOpenTab() {
+        let model = makeModel()
+        model.openSettings(.jobs)
+        model.select(.favorites)
+        #expect(model.moreSection == .favorites)
+        #expect(model.phoneSettingsTab == nil)
+
+        model.openSettings(.activity)
+        model.popToRoot(.more)
+        #expect(model.moreSection == nil)
+        #expect(model.phoneSettingsTab == nil)
+
+        model.openSettings(.members)
+        model.signOut()
+        #expect(model.phoneSettingsTab == nil)
+        #expect(model.settingsTab == .account)
+    }
+
+    @Test func theIPhonesListHasTheMacsTabsForTheSamePeople() {
+        // PhoneSettingsView lists `SettingsTab.visible`, like the Mac's row.
+        #expect(SettingsTab.visible(isAdmin: true, canManageBlocklist: true) == SettingsTab.allCases)
+        #expect(SettingsTab.visible(isAdmin: false, canManageBlocklist: false) == [.account, .notifications, .about])
+        #expect(SettingsTab.visible(isAdmin: false, canManageBlocklist: true) == [.account, .notifications, .blocklist, .about])
+        #expect(!SettingsTab.visible(isAdmin: true, canManageBlocklist: true, hasDiscover: false).contains(.discover))
+        for tab in SettingsTab.allCases {
+            #expect(!tab.systemImage.isEmpty)
+            #expect(!tab.title.isEmpty)
+        }
+    }
+
+    @Test func settingsRowsStackWhenTheControlLeavesTooLittleRoom() {
+        // An iPhone's card (about 340 points) keeps a switch beside its label…
+        #expect(SettingsRowLayout.isSideBySide(width: 340, controlWidth: 51))
+        // …but puts a 280-point picker under it; an iPad keeps it beside.
+        #expect(!SettingsRowLayout.isSideBySide(width: 340, controlWidth: 280))
+        #expect(SettingsRowLayout.isSideBySide(width: 900, controlWidth: 280))
     }
 }

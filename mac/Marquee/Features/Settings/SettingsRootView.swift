@@ -24,6 +24,42 @@ extension SettingsTab {
         }
     }
 
+    /// The page on the website (app/settings/…), relative to its root.
+    var webPath: String {
+        switch self {
+        case .account: return "settings"
+        case .general: return "settings/general"
+        case .members: return "settings/members"
+        case .mediaServers: return "settings/media-servers"
+        case .services: return "settings/services"
+        case .notifications: return "settings/notifications"
+        case .discover: return "settings/discover"
+        case .blocklist: return "settings/blocklist"
+        case .jobs: return "settings/jobs"
+        case .logs: return "settings/logs"
+        case .activity: return "settings/activity"
+        case .about: return "settings/about"
+        }
+    }
+
+    /// Its icon in the iPhone's list of tabs.
+    var systemImage: String {
+        switch self {
+        case .account: return "person.crop.circle"
+        case .general: return "gearshape"
+        case .members: return "person.2"
+        case .mediaServers: return "server.rack"
+        case .services: return "powerplug"
+        case .notifications: return "bell"
+        case .discover: return "safari"
+        case .blocklist: return "hand.raised"
+        case .jobs: return "arrow.triangle.2.circlepath"
+        case .logs: return "doc.text.magnifyingglass"
+        case .activity: return "clock"
+        case .about: return "info.circle"
+        }
+    }
+
     /// Who sees it: everyone, the admin, or (Blocklist) whoever may manage
     /// the blocklist — the admin, or a member it was handed to.
     func isVisible(isAdmin: Bool, canManageBlocklist: Bool) -> Bool {
@@ -105,7 +141,8 @@ struct SettingsRootView: View {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 14) {
                     // Opened from a page ("Connect Radarr…" on a title, say):
-                    // the way back to it.
+                    // the way back to it. (On the iPad, the sidebar is.)
+                    #if os(macOS)
                     if let back = model.settingsReturn {
                         Button {
                             model.returnFromSettings()
@@ -116,10 +153,12 @@ struct SettingsRootView: View {
                         .buttonStyle(QuietButtonStyle())
                         .keyboardShortcut("[", modifiers: .command)
                     }
+                    #endif
                     Text("Settings")
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
+                        .macPageHeading()
                     VStack(spacing: 10) {
                         // One line like the website's; a narrower window
                         // first tightens the pills, and only wraps them onto a
@@ -141,28 +180,23 @@ struct SettingsRootView: View {
                 .frame(maxWidth: SettingsLayout.columnWidth, alignment: .leading)
                 .frame(maxWidth: .infinity)
 
-                Group {
-                    switch current {
-                    case .account: AccountSettingsView()
-                    case .general: IntegrationsSettingsView(part: .general)
-                    case .members: MembersSettingsView()
-                    case .mediaServers: IntegrationsSettingsView(part: .mediaServers)
-                    case .services: IntegrationsSettingsView(part: .services)
-                    case .notifications: NotificationsSettingsView()
-                    case .discover: DiscoverSettingsView()
-                    case .blocklist: BlocklistSettingsView()
-                    case .jobs: JobsSettingsView()
-                    case .logs: LogsSettingsView()
-                    case .activity: ActivitySettingsView()
-                    case .about: AboutSettingsView()
-                    }
-                }
-                .environment(\.settingsPaneScrolls, false)
+                SettingsTabContent(tab: current)
+                    .environment(\.settingsPaneScrolls, false)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.bg0)
         .tint(Theme.accent)
+        #if os(iOS)
+        // The iPad's full width: the title in the bar, the Mac's row of tabs
+        // under it, and the website's page for the tab a tap away.
+        .navigationTitle("Settings")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                SettingsWebsiteButton(tab: current)
+            }
+        }
+        #endif
         .task(id: isAdmin) {
             // Only the admin sees the tab; an older server has none.
             guard isAdmin else { return }
@@ -189,6 +223,46 @@ struct SettingsRootView: View {
         }
     }
 }
+
+/// A Settings tab's page: the same panes in the Mac's Settings, the iPad's
+/// (`SettingsRootView`) and each page the iPhone pushes from its list.
+struct SettingsTabContent: View {
+    let tab: SettingsTab
+
+    var body: some View {
+        switch tab {
+        case .account: AccountSettingsView()
+        case .general: IntegrationsSettingsView(part: .general)
+        case .members: MembersSettingsView()
+        case .mediaServers: IntegrationsSettingsView(part: .mediaServers)
+        case .services: IntegrationsSettingsView(part: .services)
+        case .notifications: NotificationsSettingsView()
+        case .discover: DiscoverSettingsView()
+        case .blocklist: BlocklistSettingsView()
+        case .jobs: JobsSettingsView()
+        case .logs: LogsSettingsView()
+        case .activity: ActivitySettingsView()
+        case .about: AboutSettingsView()
+        }
+    }
+}
+
+#if os(iOS)
+/// The tab's page on the server's website, for what the app leaves to it
+/// (the Seerr importer, say) or a bigger screen.
+struct SettingsWebsiteButton: View {
+    let tab: SettingsTab
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        if let server = model.session.server {
+            Link(destination: server.baseURL.appending(path: tab.webPath)) {
+                Label("Open on the website", systemImage: "safari")
+            }
+        }
+    }
+}
+#endif
 
 /// One of the tabs: a pill, solid for the current one. Notifications' own
 /// tabs use the smaller, outlined `small` kind.
@@ -239,6 +313,10 @@ extension EnvironmentValues {
     /// False inside `SettingsRootView`, whose one scroll view holds the
     /// header and the pane together.
     @Entry var settingsPaneScrolls = true
+    /// True on a page the iPhone pushed from its list of tabs: the
+    /// navigation bar shows the tab's name, so the pane leaves its own
+    /// heading out and keeps the line under it.
+    @Entry var settingsPaneTitleInBar = false
 }
 
 /// A titled group of settings (components/settings/settings-ui.tsx's
@@ -295,25 +373,93 @@ struct SettingsRow<Control: View>: View {
     @ViewBuilder let control: () -> Control
 
     var body: some View {
+        #if os(macOS)
         HStack(alignment: .center, spacing: 24) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(label)
-                    .font(.system(size: 13.5, weight: .medium))
-                    .foregroundStyle(Theme.textPrimary)
-                if let help {
-                    Text(help)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            caption
+                .frame(maxWidth: .infinity, alignment: .leading)
             control()
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 13)
+        #else
+        // Side by side while the label keeps a readable width beside the
+        // control; on a phone's width, the control under the label.
+        SettingsRowLayout {
+            caption
+            control()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        #endif
+    }
+
+    private var caption: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 13.5, weight: .medium))
+                .foregroundStyle(Theme.textPrimary)
+            if let help {
+                Text(help)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
+
+#if os(iOS)
+/// `SettingsRow`'s two parts, the label (first) and the control: in a row,
+/// the control at its own width on the right, while that leaves the label
+/// `minimumLabelWidth`; otherwise stacked, the control under the label.
+struct SettingsRowLayout: Layout {
+    var spacing: CGFloat = 24
+    var lineSpacing: CGFloat = 10
+    var minimumLabelWidth: CGFloat = 150
+
+    /// Whether a row `width` wide keeps the label and a control
+    /// `controlWidth` wide side by side.
+    static func isSideBySide(width: CGFloat, controlWidth: CGFloat, spacing: CGFloat = 24, minimumLabelWidth: CGFloat = 150) -> Bool {
+        width - controlWidth - spacing >= minimumLabelWidth
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard subviews.count == 2 else { return .zero }
+        let label = subviews[0], control = subviews[1]
+        let controlSize = control.sizeThatFits(.unspecified)
+        guard let width = proposal.width, width.isFinite else {
+            let labelSize = label.sizeThatFits(.unspecified)
+            return CGSize(width: labelSize.width + spacing + controlSize.width, height: max(labelSize.height, controlSize.height))
+        }
+        if Self.isSideBySide(width: width, controlWidth: controlSize.width, spacing: spacing, minimumLabelWidth: minimumLabelWidth) {
+            let labelSize = label.sizeThatFits(ProposedViewSize(width: width - controlSize.width - spacing, height: nil))
+            return CGSize(width: width, height: max(labelSize.height, controlSize.height))
+        }
+        let labelSize = label.sizeThatFits(ProposedViewSize(width: width, height: nil))
+        let stackedControl = control.sizeThatFits(ProposedViewSize(width: width, height: nil))
+        return CGSize(width: width, height: labelSize.height + lineSpacing + stackedControl.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 2 else { return }
+        let label = subviews[0], control = subviews[1]
+        let controlSize = control.sizeThatFits(.unspecified)
+        if Self.isSideBySide(width: bounds.width, controlWidth: controlSize.width, spacing: spacing, minimumLabelWidth: minimumLabelWidth) {
+            let labelWidth = bounds.width - controlSize.width - spacing
+            label.place(at: CGPoint(x: bounds.minX, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(width: labelWidth, height: nil))
+            control.place(at: CGPoint(x: bounds.maxX, y: bounds.midY), anchor: .trailing, proposal: ProposedViewSize(controlSize))
+        } else {
+            let labelSize = label.sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+            label.place(at: CGPoint(x: bounds.minX, y: bounds.minY), anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: nil))
+            control.place(
+                at: CGPoint(x: bounds.minX, y: bounds.minY + labelSize.height + lineSpacing),
+                anchor: .topLeading,
+                proposal: ProposedViewSize(width: bounds.width, height: nil)
+            )
+        }
+    }
+}
+#endif
 
 /// A read-only value on the right of a row.
 struct SettingsValue: View {
@@ -336,6 +482,10 @@ struct SettingsPane<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     @Environment(\.settingsPaneScrolls) private var scrolls
+    @Environment(\.settingsPaneTitleInBar) private var titleInBar
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     var body: some View {
         if scrolls {
@@ -346,13 +496,24 @@ struct SettingsPane<Content: View>: View {
         }
     }
 
+    /// The Mac's margin; a phone's width keeps a narrower one.
+    private var margin: CGFloat {
+        #if os(iOS)
+        horizontalSizeClass == .compact ? 16 : 28
+        #else
+        28
+        #endif
+    }
+
     private var column: some View {
         VStack(alignment: .leading, spacing: 24) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(title)
-                        .font(.marqueeDisplay(24))
-                        .foregroundStyle(Theme.textPrimary)
+                    if !titleInBar {
+                        Text(title)
+                            .font(.marqueeDisplay(24))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
                     if let subtitle {
                         Text(subtitle)
                             .font(.system(size: 12.5))
@@ -365,7 +526,7 @@ struct SettingsPane<Content: View>: View {
             }
             content()
         }
-        .padding(28)
+        .padding(margin)
         // The page's column, centered; the scroll view stays full width
         // so its scroll bar sits at the window's edge.
         .frame(maxWidth: SettingsLayout.columnWidth, alignment: .leading)
@@ -634,7 +795,7 @@ struct JobsSettingsView: View {
                     HStack(spacing: 10) {
                         Text(job.schedule)
                         if let finishedAt = run?.finishedAt {
-                            Text("Ran from this Mac \(Format.timeAgo(finishedAt))")
+                            Text(PlatformText.ranHere(Format.timeAgo(finishedAt)))
                         }
                     }
                     .font(.system(size: 11.5))
@@ -747,7 +908,12 @@ private struct NotFoundHoursSetting: View {
 
 struct AboutSettingsView: View {
     @Environment(AppModel.self) private var model
+    #if os(macOS)
     @Environment(\.openWindow) private var openWindow
+    #else
+    /// "What the colors mean", which the Mac opens in a window of its own.
+    @State private var showsStatusColors = false
+    #endif
     @Environment(\.openURL) private var openURL
 
     @State private var info: API.AboutInfo?
@@ -755,6 +921,9 @@ struct AboutSettingsView: View {
 
     var body: some View {
         SettingsPane(title: String(localized: "About Marquee"), subtitle: String(localized: "Version, library stats, and where to get help.")) {
+            #if os(macOS)
+            // The Mac updates itself; iPhone and iPad apps update through
+            // the App Store or TestFlight.
             SettingsSectionTitle(text: String(localized: "Updates"))
             VStack(alignment: .leading, spacing: 14) {
                 UpdateStatusView(style: .settings)
@@ -766,6 +935,7 @@ struct AboutSettingsView: View {
                 )
             }
             .cardSurface(padding: 18)
+            #endif
 
             if let info {
                 VStack(spacing: 0) {
@@ -785,9 +955,15 @@ struct AboutSettingsView: View {
                     linkRow(String(localized: "All features")) {
                         openURL(info.repoURL?.appending(path: "blob/main/docs/features.md") ?? AppInfo.featuresURL)
                     }
+                    #if os(macOS)
                     linkRow(String(localized: "Releases")) { openWindow(id: "changelog") }
                     linkRow(String(localized: "What the colors mean")) { openWindow(id: "status-colors") }
                     linkRow(String(localized: "Error reference")) { openWindow(id: "error-reference") }
+                    #else
+                    linkRow(String(localized: "Releases")) { model.open(.changelog) }
+                    linkRow(String(localized: "What the colors mean")) { showsStatusColors = true }
+                    linkRow(String(localized: "Error reference")) { model.open(.errorReference) }
+                    #endif
                     if let repo = info.repoURL {
                         linkRow("GitHub") { openURL(repo) }
                     }
@@ -802,6 +978,19 @@ struct AboutSettingsView: View {
                 LoadingView()
             }
         }
+        #if os(iOS)
+        .sheet(isPresented: $showsStatusColors) {
+            NavigationStack {
+                StatusColorsHelpView()
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showsStatusColors = false }
+                        }
+                    }
+            }
+        }
+        #endif
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .requests]))) {
             do {
                 let fresh = try await model.api.about.info()

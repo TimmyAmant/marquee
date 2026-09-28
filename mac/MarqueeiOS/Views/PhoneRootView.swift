@@ -78,6 +78,13 @@ struct PhoneRootView: View {
             case nil:
                 break
             }
+            // …and SIMCTL_CHILD_MARQUEE_SETTINGS=mediaServers opens one of
+            // Settings' tabs (`SettingsTab`'s raw values).
+            if let raw = ProcessInfo.processInfo.environment["MARQUEE_SETTINGS"], let tab = SettingsTab(rawValue: raw) {
+                model.openSettings(tab)
+                // Account too, rather than the list it heads.
+                model.phoneSettingsTab = tab
+            }
             #endif
         }
     }

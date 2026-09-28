@@ -1,9 +1,80 @@
 import Foundation
+#if os(iOS)
+import UIKit
+#endif
 
 /// Shared messages that name the device or its settings: "the Mac app" and
 /// System Settings on the Mac, "the iPhone app" and the Settings app on iOS.
 /// Each keeps its own catalog entry, so every language says it naturally.
 enum PlatformText {
+    #if os(iOS)
+    /// Whether this is an iPad, for the messages that say "this iPad"
+    /// rather than "this iPhone".
+    @MainActor
+    static var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+    #endif
+
+    /// Settings › Notifications' switch for this device's banners.
+    @MainActor
+    static var showNotificationsHere: String {
+        #if os(macOS)
+        String(localized: "Show notifications on this Mac")
+        #else
+        isPad ? String(localized: "Show notifications on this iPad") : String(localized: "Show notifications on this iPhone")
+        #endif
+    }
+
+    /// The card that asks, the first time you sign in on this device.
+    @MainActor
+    static var getNotificationsHere: String {
+        #if os(macOS)
+        String(localized: "Get notifications on this Mac?")
+        #else
+        isPad ? String(localized: "Get notifications on this iPad?") : String(localized: "Get notifications on this iPhone?")
+        #endif
+    }
+
+    /// Settings › Account › Sign out's help.
+    @MainActor
+    static var signsOutHere: String {
+        #if os(macOS)
+        String(localized: "Signs you out of Marquee on this Mac.")
+        #else
+        isPad ? String(localized: "Signs you out of Marquee on this iPad.") : String(localized: "Signs you out of Marquee on this iPhone.")
+        #endif
+    }
+
+    /// Changing your own password, in the member editor.
+    @MainActor
+    static var newPasswordSignsOut: String {
+        #if os(macOS)
+        String(localized: "Setting a new password signs you out of every device, including this Mac.")
+        #else
+        isPad
+            ? String(localized: "Setting a new password signs you out of every device, including this iPad.")
+            : String(localized: "Setting a new password signs you out of every device, including this iPhone.")
+        #endif
+    }
+
+    /// Settings › Jobs, under a job run from this device.
+    @MainActor
+    static func ranHere(_ timeAgo: String) -> String {
+        #if os(macOS)
+        String(localized: "Ran from this Mac \(timeAgo)")
+        #else
+        isPad ? String(localized: "Ran from this iPad \(timeAgo)") : String(localized: "Ran from this iPhone \(timeAgo)")
+        #endif
+    }
+
+    /// Banners for Marquee are off in the system's settings.
+    static var notificationsOffInSystem: String {
+        #if os(macOS)
+        String(localized: "Notifications for Marquee are turned off in System Settings.")
+        #else
+        String(localized: "Notifications for Marquee are off in the Settings app.")
+        #endif
+    }
+
     static func serverTooOld(_ name: String) -> String {
         #if os(macOS)
         String(localized: "Found Marquee at \(name), but the server needs updating to \(ServerInfo.minimumServerVersion) or later to work with the Mac app.")
