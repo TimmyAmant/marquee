@@ -21,6 +21,7 @@ struct LibraryView: View {
                 Text("Library")
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
+                    .macPageHeading()
 
                 if screen.unsupported {
                     EmptyStateView(
