@@ -11,6 +11,20 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.59.2",
+    date: "2026-09-27",
+    changes: [
+      "Website: on posters, the MOVIE / SERIES label and the status pill (Owned, Downloading, Coming soon…) now sit on the same line.",
+    ],
+  },
+  {
+    version: "0.59.2",
+    date: "2026-09-27",
+    changes: [
+      "Website: on posters, the MOVIE / SERIES label and the status pill (Owned, Downloading, Coming soon…) now sit on the same line.",
+    ],
+  },
+  {
     version: "0.59.1",
     date: "2026-09-27",
     changes: [
