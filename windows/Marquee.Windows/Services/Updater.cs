@@ -55,7 +55,6 @@ public sealed partial class Updater : ObservableObject
     private readonly UpdateService service;
     private readonly DispatcherQueue dispatcher;
     private DispatcherQueueTimer? timer;
-    private CancellationTokenSource? installCancellation;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsInstalling), nameof(StatusText), nameof(CanCheck), nameof(CanInstall), nameof(IsProgressIndeterminate), nameof(HasFailed), nameof(ShowsManualDownload))]
@@ -277,18 +276,15 @@ public sealed partial class Updater : ObservableObject
         {
             return;
         }
-        installCancellation?.Dispose();
-        installCancellation = new CancellationTokenSource();
-        var token = installCancellation.Token;
         ErrorMessage = null;
         Progress = 0;
         Phase = UpdatePhase.Downloading;
         try
         {
-            var expected = await service.ExpectedSha256Async(available, token);
+            var expected = await service.ExpectedSha256Async(available, CancellationToken.None);
             var installer = Path.Combine(DownloadFolder, $"Marquee-Setup-{available.Version}.exe");
             var reporter = new global::System.Progress<double>(value => Progress = value);
-            await service.DownloadAsync(available, expected, installer, reporter, token);
+            await service.DownloadAsync(available, expected, installer, reporter, CancellationToken.None);
 
             Phase = UpdatePhase.Installing;
             Launch(installer);
@@ -307,9 +303,6 @@ public sealed partial class Updater : ObservableObject
             Phase = UpdatePhase.Available;
         }
     }
-
-    /// <summary>Stops a download in progress.</summary>
-    public void CancelInstall() => installCancellation?.Cancel();
 
     private static void Launch(string installer)
     {

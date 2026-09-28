@@ -2350,20 +2350,11 @@
   <data name="Lifecycle_AddedByHand" xml:space="preserve">
     <value>Añadida a mano</value>
   </data>
-  <data name="Lifecycle_AddedByHandTooltip" xml:space="preserve">
-    <value>Márcala como aprobada sin Sonarr/Radarr, cuando la hayas conseguido de otra forma.</value>
-  </data>
   <data name="Lifecycle_AskInCommentsHint" xml:space="preserve">
     <value>¿Necesitas un cambio? Pídelo en los comentarios.</value>
   </data>
   <data name="Lifecycle_Cancelling" xml:space="preserve">
     <value>Cancelando…</value>
-  </data>
-  <data name="Lifecycle_CancelQuestion" xml:space="preserve">
-    <value>¿Cancelarla?</value>
-  </data>
-  <data name="Lifecycle_CancelRequest" xml:space="preserve">
-    <value>Cancelar solicitud</value>
   </data>
   <data name="Lifecycle_ChangedSinceAsking" xml:space="preserve">
     <value>Cambiada desde que se pidió</value>
@@ -2415,12 +2406,6 @@
   </data>
   <data name="Lifecycle_HideComments" xml:space="preserve">
     <value>Ocultar comentarios</value>
-  </data>
-  <data name="Lifecycle_JustTheseSeasons" xml:space="preserve">
-    <value>Solo estas temporadas</value>
-  </data>
-  <data name="Lifecycle_Keep" xml:space="preserve">
-    <value>Mantenerla</value>
   </data>
   <data name="Lifecycle_KeepUnderCharacters" xml:space="preserve">
     <value>Que no pase de {0} caracteres.</value>
@@ -2493,9 +2478,6 @@
   </data>
   <data name="Lifecycle_TagReviewer" xml:space="preserve">
     <value>Revisor</value>
-  </data>
-  <data name="Lifecycle_WholeSeries" xml:space="preserve">
-    <value>La serie completa</value>
   </data>
   <data name="Lifecycle_WriteSomethingFirst" xml:space="preserve">
     <value>Escribe algo primero.</value>
@@ -3031,39 +3013,6 @@
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Comprobando tu lista…</value>
   </data>
-  <data name="Nav_Calendar" xml:space="preserve">
-    <value>Calendario</value>
-  </data>
-  <data name="Nav_Discover" xml:space="preserve">
-    <value>Descubrir</value>
-  </data>
-  <data name="Nav_Favorites" xml:space="preserve">
-    <value>Favoritos</value>
-  </data>
-  <data name="Nav_Movies" xml:space="preserve">
-    <value>Películas</value>
-  </data>
-  <data name="Nav_PlaceholderPerson" xml:space="preserve">
-    <value>Persona {0}</value>
-  </data>
-  <data name="Nav_PlaceholderSearch" xml:space="preserve">
-    <value>Resultados de búsqueda de «{0}»</value>
-  </data>
-  <data name="Nav_PlaceholderStudio" xml:space="preserve">
-    <value>Estudio {0}</value>
-  </data>
-  <data name="Nav_Requests" xml:space="preserve">
-    <value>Solicitudes</value>
-  </data>
-  <data name="Nav_Search" xml:space="preserve">
-    <value>Buscar</value>
-  </data>
-  <data name="Nav_Series" xml:space="preserve">
-    <value>Series</value>
-  </data>
-  <data name="Nav_Settings" xml:space="preserve">
-    <value>Ajustes</value>
-  </data>
   <data name="Nav_SettingsTabAbout" xml:space="preserve">
     <value>Acerca de</value>
   </data>
@@ -3168,9 +3117,6 @@
   </data>
   <data name="Permission_MemberChoice" xml:space="preserve">
     <value>Miembro: solicita e informa de problemas</value>
-  </data>
-  <data name="Permission_PresetHeader" xml:space="preserve">
-    <value>Qué puede hacer</value>
   </data>
   <data name="Permission_ReportIssues" xml:space="preserve">
     <value>Informar de problemas</value>
@@ -3472,9 +3418,6 @@
   <data name="RequestModel_CouldntAddExplanation" xml:space="preserve">
     <value>Aprobadas, pero no se pudo conectar con Sonarr/Radarr o no las aceptó. Reintenta cuando vuelva a funcionar.</value>
   </data>
-  <data name="RequestModel_CouldntAddHeading" xml:space="preserve">
-    <value>No se pudo añadir</value>
-  </data>
   <data name="RequestModel_CouldntAddLine" xml:space="preserve">
     <value>{0} · aprobada el {1} · último intento: {2}</value>
   </data>
@@ -3640,9 +3583,6 @@
   <data name="Requests_MarkFixed" xml:space="preserve">
     <value>Marcar como resuelto</value>
   </data>
-  <data name="Requests_MemberEmpty" xml:space="preserve">
-    <value>Aún no has solicitado nada. Busca un título y pulsa Solicitar.</value>
-  </data>
   <data name="Requests_MineEmptyText.Text" xml:space="preserve">
     <value>Aún no has solicitado nada. Busca un título y pulsa Solicitar.</value>
   </data>
@@ -3697,17 +3637,11 @@
   <data name="Requests_QueueActionsHeader.Text" xml:space="preserve">
     <value>Acciones</value>
   </data>
-  <data name="Requests_QueueEmpty" xml:space="preserve">
-    <value>No hay solicitudes pendientes.</value>
-  </data>
   <data name="Requests_QueueEmptyText.Text" xml:space="preserve">
     <value>No hay solicitudes pendientes.</value>
   </data>
   <data name="Requests_QueueError.Text" xml:space="preserve">
     <value>No se pudo cargar la cola de solicitudes</value>
-  </data>
-  <data name="Requests_QueueLoading" xml:space="preserve">
-    <value>Comparando las solicitudes con tu biblioteca…</value>
   </data>
   <data name="Requests_QueueLoadingText.Text" xml:space="preserve">
     <value>Comparando las solicitudes con tu biblioteca…</value>
@@ -3928,9 +3862,6 @@
   <data name="Season_EpisodeCount_Other" xml:space="preserve">
     <value>{0} episodios</value>
   </data>
-  <data name="Season_Explanation" xml:space="preserve">
-    <value>Elige las temporadas de «{0}» que quieres añadir. Las que ya están en la biblioteca o en camino no se pueden volver a elegir.</value>
-  </data>
   <data name="Season_FourK.Content" xml:space="preserve">
     <value>En 4K</value>
   </data>
@@ -4098,9 +4029,6 @@
   </data>
   <data name="Shell_NotificationsUnread_Other" xml:space="preserve">
     <value>Notificaciones, {0} sin leer</value>
-  </data>
-  <data name="Shell_PlaceholderBody.Text" xml:space="preserve">
-    <value>Esta parte de Marquee para Windows aún está en construcción.</value>
   </data>
   <data name="Shell_ProfileButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Cuenta y ajustes</value>
@@ -4710,9 +4638,6 @@
   </data>
   <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
     <value>Ver todos los cambios</value>
-  </data>
-  <data name="Nav_Library" xml:space="preserve">
-    <value>Biblioteca</value>
   </data>
   <data name="Shell_RailLibraryButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Biblioteca</value>

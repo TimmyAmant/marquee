@@ -23,13 +23,6 @@ public sealed class NotificationsEndpoints(MarqueeApi.Transport transport)
             new Dictionary<string, string?> { ["limit"] = limit?.ToString(CultureInfo.InvariantCulture) },
             ct: ct);
 
-    /// <summary><c>GET /notifications/unread-count</c> (<c>BadgesAsync</c> has it too).</summary>
-    public async Task<int> UnreadCountAsync(CancellationToken ct = default)
-    {
-        var count = await transport.GetAsync<CountResponse>("/notifications/unread-count", ct: ct).ConfigureAwait(false);
-        return count.Count;
-    }
-
     /// <summary><c>POST /notifications/read-all</c>: "Mark all read".</summary>
     public Task MarkAllReadAsync(CancellationToken ct = default) =>
         transport.MutateAsync<OK>(HttpMethod.Post, "/notifications/read-all", changes: ServerChange.Notifications, ct: ct);

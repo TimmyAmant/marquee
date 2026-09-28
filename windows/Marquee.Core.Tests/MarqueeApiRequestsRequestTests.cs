@@ -40,7 +40,6 @@ public sealed class MarqueeApiRequestsRequestTests
         new("GET", "/requests/mine", null, "requests-mine", ServerChange.None, api => api.Requests.MineAsync()),
         new("GET", "/requests/pending", null, "requests-pending", ServerChange.None, api => api.Requests.PendingAsync()),
         new("GET", "/requests/history", null, "requests-history", ServerChange.None, api => api.Requests.HistoryAsync()),
-        new("GET", "/requests/pending-count", null, "requests-pending-count", ServerChange.None, api => api.Requests.PendingCountAsync()),
         new("POST", "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/approve", null, "ok", Added,
             api => api.Requests.ApproveAsync(RequestId)),
         new("POST", "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/approve",
@@ -160,7 +159,6 @@ public sealed class MarqueeApiRequestsRequestTests
             "/api/v1/requests/mine" => StubHttpMessageHandler.Fixture("requests-mine"),
             "/api/v1/requests/pending" => StubHttpMessageHandler.Fixture("requests-pending"),
             "/api/v1/requests/history" => StubHttpMessageHandler.Fixture("requests-history"),
-            "/api/v1/requests/pending-count" => StubHttpMessageHandler.Fixture("requests-pending-count"),
             _ => StubHttpMessageHandler.Fixture("requests-approve-all"),
         });
         var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub));
@@ -176,8 +174,6 @@ public sealed class MarqueeApiRequestsRequestTests
         Assert.Equal(3, history.Count);
         Assert.Equal(RequestStatus.Rejected, history[1].Status);
         Assert.Equal("Added to Radarr 2", history[2].AddedToLine);
-
-        Assert.Equal(3, await api.Requests.PendingCountAsync());
 
         var approved = await api.Requests.ApproveAllAsync();
         Assert.Equal(4, approved.ApprovedCount);

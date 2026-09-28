@@ -1,4 +1,3 @@
-using Marquee.Core.Localization;
 using Marquee.Core.Models;
 
 namespace Marquee.Windows.Services;
@@ -25,21 +24,6 @@ public static class SectionExtensions
     /// <summary>The menu row's <c>Tag</c> in MainWindow.xaml.</summary>
     public static string Tag(this Section section) => section.ToString().ToLowerInvariant();
 
-    /// <summary>The label in the menu and the page heading.</summary>
-    public static string Title(this Section section) => section switch
-    {
-        Section.Discover => Loc.Get("Nav_Discover"),
-        Section.Movies => Loc.Get("Nav_Movies"),
-        Section.Series => Loc.Get("Nav_Series"),
-        Section.Library => Loc.Get("Nav_Library"),
-        Section.Search => Loc.Get("Nav_Search"),
-        Section.Requests => Loc.Get("Nav_Requests"),
-        Section.Favorites => Loc.Get("Nav_Favorites"),
-        Section.Calendar => Loc.Get("Nav_Calendar"),
-        Section.Settings => Loc.Get("Nav_Settings"),
-        _ => section.ToString(),
-    };
-
     public static Section? FromTag(string? tag)
     {
         foreach (var section in Enum.GetValues<Section>())
@@ -55,9 +39,7 @@ public static class SectionExtensions
 
 /// <summary>
 /// A page pushed on top of a section (the Mac app's <c>Route</c>). The
-/// window maps each case to a page type; a route without a page yet lands
-/// on the placeholder, so navigation never throws while the app is being
-/// built out.
+/// window maps each case to a page type.
 /// </summary>
 public abstract record Route
 {
@@ -93,17 +75,6 @@ public abstract record Route
         Company company => $"company/{company.TmdbId}",
         DiscoverList list => $"discover/{Uri.EscapeDataString(list.List.Value)}",
         _ => null,
-    };
-
-    /// <summary>What the placeholder page prints until the real page exists.</summary>
-    public string Description => this switch
-    {
-        Title title => $"{title.Id.MediaType.Label} {title.Id.TmdbId}",
-        Person person => Loc.Format("Nav_PlaceholderPerson", person.TmdbId),
-        Company company => Loc.Format("Nav_PlaceholderStudio", company.TmdbId),
-        Search search => Loc.Format("Nav_PlaceholderSearch", search.Query),
-        DiscoverList list => list.Heading ?? list.List.Title,
-        _ => ToString(),
     };
 }
 

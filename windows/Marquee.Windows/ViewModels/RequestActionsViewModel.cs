@@ -64,7 +64,6 @@ public sealed partial class RequestActionsViewModel : ObservableObject
     /// <summary>"Comments (N)" and the thread; null hides them.</summary>
     public CommentThreadViewModel? Thread { get; }
 
-    public bool HasThread => Thread != null;
 
     public string EditLabel => IsLoadingEdit ? RequestLifecycle.EditLoadingLabel : RequestLifecycle.EditLabel;
 

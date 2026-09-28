@@ -21,15 +21,11 @@ public static class RequestLifecycle
 
     public static string EditLabel => Loc.Get("Lifecycle_Edit");
     public static string EditLoadingLabel => Loc.Get("Lifecycle_Loading");
-    public static string CancelLabel => Loc.Get("Lifecycle_CancelRequest");
-    public static string CancelQuestion => Loc.Get("Lifecycle_CancelQuestion");
     public static string ConfirmCancelLabel => Loc.Get("Lifecycle_ConfirmCancel");
     public static string CancellingLabel => Loc.Get("Lifecycle_Cancelling");
-    public static string KeepLabel => Loc.Get("Lifecycle_Keep");
     public static string RetryLabel => Loc.Get("Lifecycle_Retry");
     public static string RetryingLabel => Loc.Get("Lifecycle_Retrying");
     public static string AddedByHandLabel => Loc.Get("Lifecycle_AddedByHand");
-    public static string AddedByHandTooltip => Loc.Get("Lifecycle_AddedByHandTooltip");
 }
 
 /// <summary>
@@ -155,8 +151,6 @@ public sealed record RequestEditOptions
 public sealed class RequestEditForm
 {
     public static string Heading => Loc.Get("Lifecycle_EditHeading");
-    public static string WholeSeriesLabel => Loc.Get("Lifecycle_WholeSeries");
-    public static string JustTheseLabel => Loc.Get("Lifecycle_JustTheseSeasons");
     public static string SaveLabel => Loc.Get("Lifecycle_SaveChanges");
     public static string SavingLabel => Loc.Get("Lifecycle_Saving");
     public static string NothingToChangeMessage => Loc.Get("Lifecycle_NothingToChange");

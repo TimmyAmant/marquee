@@ -28,7 +28,6 @@ public sealed class MarqueeApiAuthRequestTests
             api => api.Auth.LoginAsync("timmy", "pw", "PC")),
         new("POST", "/auth/setup", """{"username":"timmy","password":"pw","displayName":"Timmy","deviceName":"PC"}""", "auth-login",
             api => api.Auth.SetupAsync("timmy", "pw", "Timmy", "PC")),
-        new("POST", "/auth/logout", null, "ok", api => api.Auth.LogoutAsync()),
         new("GET", "/me", null, "me", api => api.MeAsync()),
         new("GET", "/badges", null, "badges", api => api.BadgesAsync()),
     ];

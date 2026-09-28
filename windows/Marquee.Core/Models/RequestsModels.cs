@@ -386,7 +386,6 @@ public sealed record AddFailed
 /// </summary>
 public static class RequestHistory
 {
-    public static string CouldntAddHeading => Loc.Get("RequestModel_CouldntAddHeading");
     public static string CouldntAddExplanation => Loc.Get("RequestModel_CouldntAddExplanation");
 
     /// <summary>The "Couldn't add" rows, in the server's order.</summary>

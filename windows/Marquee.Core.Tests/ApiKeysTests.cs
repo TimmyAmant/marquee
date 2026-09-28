@@ -72,18 +72,6 @@ public sealed class ApiKeysTests
     }
 
     [Fact]
-    public void StatsSummaryFixtureDecodes()
-    {
-        var stats = Fixtures.Decode<StatsSummary>("stats-summary");
-        Assert.Equal(3, stats.PendingRequests);
-        Assert.Equal(1, stats.OpenIssues);
-        Assert.Equal(2, stats.CantFind);
-        Assert.Equal(812, stats.Movies);
-        Assert.Equal(164, stats.Series);
-        Assert.Equal(4, stats.Downloading);
-    }
-
-    [Fact]
     public void AnUnknownScopeDecodes()
     {
         var json = Fixtures.Read("api-keys").Replace("\"scope\": \"full\"", "\"scope\": \"admin\"");
@@ -175,7 +163,6 @@ public sealed class ApiKeysTests
             Label: "POST api-keys acting as a member, expiring"),
         new("DELETE", "/settings/api-keys/b3a9e0d4-8c1f-4e2b-a7d6-5f0e9c8b7a61", null, "ok", ServerChange.Integrations,
             api => api.ApiKeys.RevokeAsync(KeyId)),
-        new("GET", "/stats/summary", null, "stats-summary", ServerChange.None, api => api.Stats.SummaryAsync()),
     ];
 
     public static TheoryData<string> CaseNames

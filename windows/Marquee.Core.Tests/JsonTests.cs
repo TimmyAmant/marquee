@@ -46,6 +46,11 @@ public sealed class JsonTests
 
     private sealed record Body(string? A, int B);
 
+    private sealed record Counted
+    {
+        public required int Count { get; init; }
+    }
+
     // MARK: Dates
 
     [Fact]
@@ -185,7 +190,7 @@ public sealed class JsonTests
     {
         Assert.Throws<JsonException>(() => Json.Decode<Detail>("""{"name":"The Matrix","credits":["Keanu Reeves",null]}"""));
         Assert.Throws<JsonException>(() => Json.Decode<WithList>("""{"items":[null]}"""));
-        Assert.Throws<JsonException>(() => Json.Decode<ListResponse<CountResponse>>("""{"results":[null]}"""));
+        Assert.Throws<JsonException>(() => Json.Decode<ListResponse<Counted>>("""{"results":[null]}"""));
         Assert.Throws<JsonException>(() => Json.Decode<Paginated<TitleCard>>("""{"page":1,"totalPages":1,"totalResults":1,"results":[null]}"""));
 
         // A list declared with nullable elements keeps them.
@@ -393,7 +398,7 @@ public sealed class JsonTests
         Assert.True(page.HasMorePages);
         Assert.Equal(new TitleId(MediaType.Movie, 603), Assert.Single(page.Results));
 
-        var list = Json.Decode<ListResponse<CountResponse>>("""{"results":[{"count":3}]}""");
+        var list = Json.Decode<ListResponse<Counted>>("""{"results":[{"count":3}]}""");
         Assert.Equal(3, Assert.Single(list.Results).Count);
     }
 }

@@ -16,13 +16,6 @@ public sealed class FavoritesEndpoints(MarqueeApi.Transport transport)
     public Task<FavoritesResponse> AllAsync(CancellationToken ct = default) =>
         transport.GetAsync<FavoritesResponse>("/favorites", timeout: MarqueeApi.Timeouts.Tmdb, ct: ct);
 
-    /// <summary><c>GET /favorites/{entityType}/{tmdbId}</c>.</summary>
-    public async Task<bool> IsFavoritedAsync(FavoriteEntityType type, int tmdbId, CancellationToken ct = default)
-    {
-        var state = await transport.GetAsync<FavoriteState>(Path(type, tmdbId), ct: ct).ConfigureAwait(false);
-        return state.Favorited;
-    }
-
     /// <summary>
     /// <c>PUT /favorites/{entityType}/{tmdbId}</c>: favorite (idempotent).
     /// The server also caches the entity from TMDb so it shows on
@@ -42,15 +35,6 @@ public sealed class FavoritesEndpoints(MarqueeApi.Transport transport)
         var state = await transport.MutateAsync<FavoriteState>(
             HttpMethod.Delete, Path(type, tmdbId),
             changes: ServerChange.Favorites, ct: ct).ConfigureAwait(false);
-        return state.Favorited;
-    }
-
-    /// <summary><c>POST /favorites/{entityType}/{tmdbId}/toggle</c>: the star button. Returns the new state.</summary>
-    public async Task<bool> ToggleAsync(FavoriteEntityType type, int tmdbId, CancellationToken ct = default)
-    {
-        var state = await transport.MutateAsync<FavoriteState>(
-            HttpMethod.Post, Path(type, tmdbId) + "/toggle",
-            timeout: MarqueeApi.Timeouts.Tmdb, changes: ServerChange.Favorites, ct: ct).ConfigureAwait(false);
         return state.Favorited;
     }
 

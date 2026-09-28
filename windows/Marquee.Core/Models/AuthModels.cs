@@ -302,12 +302,6 @@ public sealed record OK
 /// <summary>For calls whose body the caller doesn't need (or a 204). An empty body decodes to it without parsing.</summary>
 public readonly record struct EmptyResponse;
 
-/// <summary><c>{"count": 3}</c> from <c>/requests/pending-count</c> and <c>/notifications/unread-count</c>.</summary>
-public sealed record CountResponse
-{
-    public required int Count { get; init; }
-}
-
 // Both list wrappers constrain T to notnull: an entry is never null on the
 // wire, and the constraint is what lets Json's null check read that off the
 // element type (an unconstrained T is annotated as maybe-null in metadata).

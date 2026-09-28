@@ -28,7 +28,6 @@
         <TextBox
             x:Name="CustomReasonBox"
             x:Uid="Decline_CustomReasonBox"
-            MaxLength="200"
             Visibility="Collapsed"
             TextChanged="OnCustomReasonChanged" />
     </StackPanel>

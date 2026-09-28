@@ -3,16 +3,14 @@ using Marquee.Core.Models;
 namespace Marquee.Core.Api;
 
 // API keys (api-v1.md section 16, admin, 0.47+): the "API keys" card under
-// Settings › Integrations. Only a signed-in admin (a device token) may manage
+// Settings › General. Only a signed-in admin (a device token) may manage
 // them, never a key. Creating or revoking one is a Settings change like the
 // webhook secret, so these record ServerChange.Integrations (the Mac's
-// .settings). GET /stats/summary, for dashboard widgets, is here too.
+// .settings).
 
 public sealed partial class MarqueeApi
 {
     public ApiKeysEndpoints ApiKeys => new(transport);
-
-    public StatsEndpoints Stats => new(transport);
 }
 
 public sealed class ApiKeysEndpoints(MarqueeApi.Transport transport)
@@ -53,11 +51,4 @@ public sealed class ApiKeysEndpoints(MarqueeApi.Transport transport)
     /// </summary>
     public Task RevokeAsync(Guid id, CancellationToken ct = default) =>
         transport.MutateAsync<OK>(HttpMethod.Delete, $"{Path}/{MarqueeApi.Segment(id)}", changes: ServerChange.Integrations, ct: ct);
-}
-
-public sealed class StatsEndpoints(MarqueeApi.Transport transport)
-{
-    /// <summary><c>GET /stats/summary</c> (user, 0.47+): the counts dashboard widgets show.</summary>
-    public Task<StatsSummary> SummaryAsync(CancellationToken ct = default) =>
-        transport.GetAsync<StatsSummary>("/stats/summary", ct: ct);
 }

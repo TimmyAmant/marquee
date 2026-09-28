@@ -117,12 +117,6 @@ public sealed class NotificationsFixtureTests
     }
 
     [Fact]
-    public void UnreadCountDecodes()
-    {
-        Assert.Equal(1, Fixtures.Decode<CountResponse>("notifications-unread-count").Count);
-    }
-
-    [Fact]
     public void EmptyListIsNoNotificationsYet()
     {
         var list = Json.Decode<NotificationList>("""{"unreadCount":0,"results":[]}""");

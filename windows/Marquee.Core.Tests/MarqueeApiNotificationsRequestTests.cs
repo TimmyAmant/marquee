@@ -45,8 +45,6 @@ public sealed class MarqueeApiNotificationsRequestTests
             api => api.Notifications.ListAsync(limit: 5)),
         new("GET", "/notifications", NoQuery, "notifications", ServerChange.None,
             api => api.Notifications.ListAsync(), Label: "GET /notifications with the server's default limit"),
-        new("GET", "/notifications/unread-count", NoQuery, "notifications-unread-count", ServerChange.None,
-            api => api.Notifications.UnreadCountAsync()),
         new("POST", "/notifications/read-all", NoQuery, "ok", ServerChange.Notifications,
             api => api.Notifications.MarkAllReadAsync()),
         new("POST", "/notifications/bedcb20b-fa30-4683-b000-42affc320087/read", NoQuery, "ok", ServerChange.Notifications,
@@ -117,7 +115,6 @@ public sealed class MarqueeApiNotificationsRequestTests
         stub.Answer(request => request.Path switch
         {
             "/api/v1/notifications" => StubHttpMessageHandler.Fixture("notifications"),
-            "/api/v1/notifications/unread-count" => StubHttpMessageHandler.Fixture("notifications-unread-count"),
             _ => StubHttpMessageHandler.Fixture("ok"),
         });
         var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub));
@@ -132,11 +129,9 @@ public sealed class MarqueeApiNotificationsRequestTests
         Assert.Equal(NotificationEventType.TitleShared, list.Results[2].EventType);
         Assert.False(item.Read);
 
-        Assert.Equal(1, await api.Notifications.UnreadCountAsync());
-
         await api.Notifications.MarkReadAsync(item.Id);
         await api.Notifications.MarkAllReadAsync();
-        Assert.Equal(4, stub.Requests.Count);
+        Assert.Equal(3, stub.Requests.Count);
     }
 
     [Fact]

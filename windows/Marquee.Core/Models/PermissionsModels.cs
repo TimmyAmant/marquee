@@ -214,7 +214,6 @@ public sealed record Permissions
 /// </summary>
 public sealed class MemberPermissionsEditor : INotifyPropertyChanged
 {
-    public static string PresetHeader => Loc.Get("Permission_PresetHeader");
     public static string MemberChoice => Loc.Get("Permission_MemberChoice");
     public static string TrustedChoice => Loc.Get("Permission_TrustedChoice");
     public static string CustomChoice => Loc.Get("Permission_CustomChoice");
