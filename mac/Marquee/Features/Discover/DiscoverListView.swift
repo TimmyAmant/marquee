@@ -30,6 +30,7 @@ struct DiscoverListView: View {
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
+                        .macPageHeading()
                     Spacer(minLength: 0)
                     StatusColorKey()
                 }

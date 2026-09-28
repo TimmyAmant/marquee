@@ -54,6 +54,20 @@ struct PhoneRootView: View {
             if let raw = ProcessInfo.processInfo.environment["MARQUEE_OPEN"], let url = URL(string: raw) {
                 model.handle(url: url)
             }
+            // …and SIMCTL_CHILD_MARQUEE_SECTION=library opens one of More's
+            // pages (a rail section, or "changelog" / "errors").
+            switch ProcessInfo.processInfo.environment["MARQUEE_SECTION"] {
+            case "changelog"?:
+                model.switchTab(to: .more)
+                model.open(.changelog)
+            case "errors"?:
+                model.switchTab(to: .more)
+                model.open(.errorReference)
+            case let raw?:
+                if let item = SidebarItem(rawValue: raw) { model.showOnPhone(item) }
+            case nil:
+                break
+            }
             #endif
         }
     }
@@ -100,9 +114,10 @@ private struct PhoneTabStack: View {
     var body: some View {
         NavigationStack(path: path) {
             root
-                // The shared pages carry their own serif heading, so the bar
-                // keeps a small title rather than a second large one.
-                .navigationBarTitleDisplayMode(tab == .discover || tab == .more ? .large : .inline)
+                // A compact header: the page's title in large type inside
+                // the bar itself, beside the bell, rather than a large-title
+                // band under it.
+                .toolbarTitleDisplayMode(.inlineLarge)
                 .toolbar {
                     if tab != .more {
                         ToolbarItem(placement: .topBarTrailing) {
@@ -112,7 +127,6 @@ private struct PhoneTabStack: View {
                 }
                 .navigationDestination(for: Route.self) { route in
                     PhoneRouteView(route: route)
-                        .navigationBarTitleDisplayMode(.inline)
                 }
         }
     }
@@ -130,7 +144,7 @@ private struct PhoneTabStack: View {
         case .discover: DiscoverView()
         case .search: PhoneSearchView()
         case .requests: RequestsView()
-        case .calendar: CalendarScreen()
+        case .calendar: PhoneCalendarView()
         case .more: PhoneMoreView(showsNotifications: $showsNotifications)
         }
     }
@@ -141,16 +155,20 @@ struct PhoneRouteView: View {
     let route: Route
 
     var body: some View {
-        switch route {
-        case let .title(id): TitleDetailView(id: id)
-        case let .person(id): PersonDetailView(tmdbId: id)
-        case let .company(id): CompanyDetailView(tmdbId: id)
-        case let .search(query): SearchResultsView(query: query)
-        case let .searchSection(query, section): SearchSectionView(query: query, section: section)
-        case let .discoverList(list): DiscoverListView(list: list)
-        case .errorReference: ErrorReferenceView()
-        case .changelog: ChangelogView()
+        Group {
+            switch route {
+            case let .title(id): TitleDetailView(id: id)
+            case let .person(id): PersonDetailView(tmdbId: id)
+            case let .company(id): CompanyDetailView(tmdbId: id)
+            case let .search(query): SearchResultsView(query: query)
+            case let .searchSection(query, section): SearchSectionView(query: query, section: section)
+            case let .discoverList(list): DiscoverListView(list: list)
+            case .errorReference: ErrorReferenceView()
+            case .changelog: ChangelogView()
+            }
         }
+        // A pushed page's title sits small in the bar, beside Back.
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

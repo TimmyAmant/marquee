@@ -13,6 +13,18 @@ struct MediaListView: View {
     var emptyMessage = String(localized: "Nothing found.")
 
     @Environment(AppModel.self) private var model
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// An iPhone: the controls in rows that fit, the list as simple rows.
+    private var isPhone: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     enum TypeFilter: String, CaseIterable, Identifiable {
         case all, movie, tv
@@ -62,14 +74,20 @@ struct MediaListView: View {
                 .foregroundStyle(Theme.textMuted)
         } else {
             let rows = visible
-            VStack(alignment: .leading, spacing: 20) {
-                controls(count: rows.count)
+            VStack(alignment: .leading, spacing: isPhone ? 14 : 20) {
+                if isPhone {
+                    phoneControls(count: rows.count)
+                } else {
+                    controls(count: rows.count)
+                }
                 if rows.isEmpty {
                     Text("No titles match these filters.")
                         .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else if layout == .grid {
                     grid(rows)
+                } else if isPhone {
+                    phoneList(rows)
                 } else {
                     table(rows)
                 }
@@ -113,6 +131,110 @@ struct MediaListView: View {
                 StatusColorKey()
             }
         }
+    }
+
+    /// At phone width: the search field and the grid/list switch, then the
+    /// type and the order, then the count.
+    private func phoneControls(count: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                if showSearch {
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(Theme.textMuted)
+                        TextField("Search these titles…", text: $query)
+                            .textFieldStyle(.plain)
+                            .autocorrectionDisabled()
+                    }
+                    .font(.system(size: Metrics.text(14)))
+                    .padding(.horizontal, 12)
+                    .frame(height: 38)
+                    .background(Theme.bg1, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.border))
+                } else {
+                    Spacer(minLength: 0)
+                }
+                Picker("Layout", selection: $layout) {
+                    Image(systemName: "square.grid.2x2").tag(Layout.grid)
+                        .accessibilityLabel(Text("Grid"))
+                    Image(systemName: "list.bullet").tag(Layout.table)
+                        .accessibilityLabel(Text("List"))
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 96)
+            }
+            HStack(spacing: 10) {
+                if showTypeFilter {
+                    Picker("Type", selection: $typeFilter) {
+                        ForEach(TypeFilter.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                Spacer(minLength: 0)
+                Picker("Sort", selection: $order) {
+                    ForEach(API.TitleListOrder.allCases) { Text($0.label).tag($0) }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
+            HStack(spacing: 10) {
+                Text(countLabel(count))
+                    .font(.system(size: Metrics.text(13)))
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer(minLength: 0)
+                if layout == .grid {
+                    StatusColorKey()
+                }
+            }
+        }
+    }
+
+    /// The list at phone width: one title per row, the table's columns
+    /// under its name.
+    private func phoneList(_ rows: [API.TitleCard]) -> some View {
+        LazyVStack(spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.element.id) { index, card in
+                if index > 0 { Divider().overlay(Theme.border).padding(.leading, 64) }
+                Button {
+                    model.openTitle(card.id)
+                } label: {
+                    HStack(spacing: 12) {
+                        RemoteImage(card.posterPath, size: .w92, showsShimmer: false)
+                            .frame(width: 40, height: 60)
+                            .background(Theme.bg2)
+                            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(card.name)
+                                .font(.system(size: Metrics.text(14), weight: .medium))
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                            let detail = subtitleLabel == nil ? card.mediaType.label : card.subtitle
+                            Text([detail, card.year].compactMap(\.nonBlank).joined(separator: " · "))
+                                .font(.system(size: Metrics.text(12)))
+                                .foregroundStyle(Theme.textSecondary)
+                                .lineLimit(1)
+                            if let status = card.status, status.isKnown {
+                                StatusBadge(status: status, compact: true)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(Theme.bg1, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
     }
 
     private func grid(_ rows: [API.TitleCard]) -> some View {

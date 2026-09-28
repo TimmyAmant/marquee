@@ -24,18 +24,21 @@ struct NotificationsPopover: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("Notifications")
-                    .font(.system(size: Metrics.text(13), weight: .semibold))
-                Spacer()
-                if items.contains(where: { !$0.read }) {
-                    Button("Mark all read") { markAllRead() }
-                        .buttonStyle(QuietButtonStyle())
-                        .font(.system(size: Metrics.text(11.5)))
+            // The iPhone sheet names itself in its navigation bar instead.
+            if !fillsSpace {
+                HStack {
+                    Text("Notifications")
+                        .font(.system(size: Metrics.text(13), weight: .semibold))
+                    Spacer()
+                    if items.contains(where: { !$0.read }) {
+                        Button("Mark all read") { markAllRead() }
+                            .buttonStyle(QuietButtonStyle())
+                            .font(.system(size: Metrics.text(11.5)))
+                    }
                 }
+                .padding(12)
+                Divider()
             }
-            .padding(12)
-            Divider()
             if let error {
                 InlineMessage(text: error)
                     .padding(16)
@@ -65,6 +68,16 @@ struct NotificationsPopover: View {
             if fillsSpace { Spacer(minLength: 0) }
         }
         .frame(width: fillsSpace ? nil : 420)
+        #if os(iOS)
+        .navigationTitle("Notifications")
+        .toolbar {
+            if fillsSpace, items.contains(where: { !$0.read }) {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Mark all read") { markAllRead() }
+                }
+            }
+        }
+        #endif
         .task(id: model.events.remoteRevision(of: .notifications)) {
             await load()
         }
