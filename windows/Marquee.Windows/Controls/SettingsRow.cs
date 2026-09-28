@@ -76,7 +76,7 @@ public sealed partial class SettingsRow : UserControl
     private void Layout(bool stack)
     {
         stacked = stack;
-        var caption = grid.Children[0];
+        var caption = (FrameworkElement)grid.Children[0];
         Grid.SetRow(caption, 0);
         Grid.SetColumn(caption, 0);
         Grid.SetColumnSpan(caption, stack ? 2 : 1);
