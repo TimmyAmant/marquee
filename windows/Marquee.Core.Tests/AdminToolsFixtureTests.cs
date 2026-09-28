@@ -23,6 +23,23 @@ public sealed class AdminToolsFixtureTests
     }
 
     [Fact]
+    public void RuleTilesNameTheirGenres()
+    {
+        var names = new Dictionary<int, string> { [28] = "Action", [35] = "Comedy", [18] = "Drama", [27] = "Horror", [16] = "Animation" };
+        OverrideRule Rule(params int[] genres) => new() { ServerId = "s1", Name = "Kids", Genres = genres };
+
+        Assert.Empty(Rule().GenreLabels(names)!);
+        Assert.Equal(["Animation", "Comedy"], Rule(16, 35).GenreLabels(names));
+        // Four fit; a "+1 more" would take the same room as the name.
+        Assert.Equal(["Action", "Comedy", "Drama", "Horror"], Rule(28, 35, 18, 27).GenreLabels(names));
+        Assert.Equal(["Action", "Comedy", "Drama", "+2 more"], Rule(28, 35, 18, 27, 16).GenreLabels(names));
+        // A genre TMDb no longer lists keeps its id, like the website.
+        Assert.Equal(["Action", "#10770"], Rule(28, 10770).GenreLabels(names));
+        // Names that couldn't be loaded: the caller falls back to "N genres".
+        Assert.Null(Rule(28).GenreLabels(new Dictionary<int, string>()));
+    }
+
+    [Fact]
     public void AnIntervalGoesOutAsTheServerTakesIt()
     {
         Assert.Equal("""{"interval":{"every":"minutes","count":15}}""", Json.EncodeBodyToString(new JobIntervalBody { Interval = JobInterval.Minutes(15) }));

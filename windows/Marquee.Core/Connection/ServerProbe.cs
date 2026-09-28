@@ -1,4 +1,5 @@
 using Marquee.Core.Localization;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -21,6 +22,14 @@ public enum UnreachableReasonKind
     /// <summary>Windows blocked the connection: the app lacks local network access.</summary>
     LocalNetworkDenied,
 
+    /// <summary>
+    /// The server (or the reverse proxy in front of it) answered with a 5xx:
+    /// a Marquee server that errored, or a 502/503/504 from a proxy whose
+    /// Marquee is down, which is what a restarting container looks like.
+    /// <see cref="UnreachableReason.Detail"/> is the status code.
+    /// </summary>
+    ServerError,
+
     /// <summary>Anything else (TLS failure, ...), with the system's message.</summary>
     Failed,
 }
@@ -34,6 +43,9 @@ public sealed record UnreachableReason(UnreachableReasonKind Kind, string? Detai
     public static readonly UnreachableReason LocalNetworkDenied = new(UnreachableReasonKind.LocalNetworkDenied);
 
     public static UnreachableReason Failed(string message) => new(UnreachableReasonKind.Failed, message);
+
+    public static UnreachableReason ServerError(int statusCode) =>
+        new(UnreachableReasonKind.ServerError, statusCode.ToString(CultureInfo.InvariantCulture));
 }
 
 /// <summary>What answered at an address.</summary>
@@ -62,10 +74,28 @@ public abstract record ProbeOutcome
 
     public ServerInfo? ServerInfo => this is Marquee marquee ? marquee.Info : null;
 
+    /// <summary>
+    /// What a server that's restarting or updating looks like from here:
+    /// nothing listening yet, no answer, or an error page while it boots.
+    /// For a saved server this means "wait for it", not "check the address".
+    /// </summary>
+    public bool IsTemporaryOutage => this is Unreachable
+    {
+        Reason.Kind: UnreachableReasonKind.Refused or UnreachableReasonKind.NoResponse or UnreachableReasonKind.ServerError,
+    };
+
     /// <summary>The inline error for manual entry and saved-server checks; null for a usable server.</summary>
-    public string? ProblemMessage(ServerAddress address)
+    /// <param name="saved">
+    /// The address is the saved server, which worked before: an outage isn't
+    /// blamed on the port or the address.
+    /// </param>
+    public string? ProblemMessage(ServerAddress address, bool saved = false)
     {
         var name = address.DisplayName;
+        if (saved && IsTemporaryOutage)
+        {
+            return Loc.Format("Server_ProbeSavedOutage", name);
+        }
         return this switch
         {
             Marquee => null,
@@ -78,6 +108,7 @@ public abstract record ProbeOutcome
                 UnreachableReasonKind.NoResponse => Loc.Format("Server_ProbeNoResponse", name),
                 UnreachableReasonKind.UnknownHost => Loc.Format("Server_ProbeUnknownHost", address.Host),
                 UnreachableReasonKind.LocalNetworkDenied => Loc.Get("Server_ProbeLocalNetworkDenied"),
+                UnreachableReasonKind.ServerError => Loc.Format("Server_ProbeServerErrorStatus", name, unreachable.Reason.Detail),
                 _ => Loc.Format("Server_ProbeOther", name, unreachable.Reason.Detail),
             },
             _ => null,
@@ -168,10 +199,22 @@ public static class ServerProbe
         {
             // A v1 server that failed to answer server-info (it's meant to
             // return 200 even when degraded): it's ours, but not usable now.
-            return new ProbeOutcome.Unreachable(UnreachableReason.Failed(Loc.Format("Server_ProbeServerError", statusCode)));
+            return statusCode >= 500
+                ? new ProbeOutcome.Unreachable(UnreachableReason.ServerError(statusCode))
+                : new ProbeOutcome.Unreachable(UnreachableReason.Failed(Loc.Format("Server_ProbeServerError", statusCode)));
+        }
+        if (IsGatewayOutage(statusCode))
+        {
+            // A reverse proxy answering for a Marquee that's down (a container
+            // restarting after an update): no X-Marquee-API, but not "some
+            // other app" either.
+            return new ProbeOutcome.Unreachable(UnreachableReason.ServerError(statusCode));
         }
         return new ProbeOutcome.NotMarquee();
     }
+
+    /// <summary>502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout: what a proxy says while the app behind it is down.</summary>
+    public static bool IsGatewayOutage(int statusCode) => statusCode is >= 502 and <= 504;
 
     /// <summary>
     /// Legacy servers answer every unknown route with the web app's HTML,

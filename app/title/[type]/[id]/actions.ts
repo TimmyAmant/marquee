@@ -96,12 +96,13 @@ export async function searchTitleAction(
   return result.ok ? { success: true } : { error: result.error };
 }
 
-/** "Remove from Radarr/Sonarr" — see removeTitleFromArr. */
+/** "Remove from Radarr/Sonarr" (or, with `fourK`, the 4K servers) — see removeTitleFromArr. */
 export async function removeFromArrAction(
   mediaType: MediaType,
   tmdbId: number,
   tvdbId: number | null,
   deleteFiles: boolean,
+  fourK = false,
 ): Promise<ArrCommandState & { removedFrom?: string[] }> {
   const admin = await requireAdmin((await getT())("title.onlyAdminRemoveFromArr"));
   if (!admin.ok) return { error: admin.error };
@@ -110,7 +111,7 @@ export async function removeFromArrAction(
   }
   const result = await removeTitleFromArr(admin.userId, mediaType, tmdbId, tvdbId, {
     deleteFiles: deleteFiles === true,
-    fourK: false,
+    fourK: fourK === true,
   });
   return result.ok ? { success: true, removedFrom: result.removedFrom } : { error: result.error };
 }

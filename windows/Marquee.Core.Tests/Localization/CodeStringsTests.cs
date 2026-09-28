@@ -43,6 +43,7 @@ public sealed partial class CodeStringsTests
         "CrashReporter.cs: The details are saved in:",
         "CrashReporter.cs: UI thread",
         "CrashReporter.cs: Unobserved task",
+        "ErrorReferencePage.cs: Consolas",
         "LibraryModels.cs: Dolby Vision",
         "LibraryModels.cs: {…} Mbps",
         "LogsSettingsView.cs: Consolas",

@@ -155,6 +155,8 @@
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
+                <!-- What every error message means (GET /help/errors), in the app. -->
+                <HyperlinkButton x:Uid="About_ErrorReference" Click="OnErrorReferenceClick" />
             </StackPanel>
         </Border>
 

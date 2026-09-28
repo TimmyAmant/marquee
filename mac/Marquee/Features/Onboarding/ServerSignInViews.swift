@@ -419,6 +419,52 @@ struct SignInForm: View {
     }
 }
 
+/// A saved server that stopped answering: restarting after an update,
+/// usually. Retries by itself (`AppModel.reconnectSchedule`) and keeps the
+/// saved sign-in; after a couple of minutes `ServerUnreachableView` takes over.
+struct ServerWaitingView: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let name = model.session.server?.displayName ?? ""
+        VStack(alignment: .leading, spacing: 18) {
+            AuthHeading(
+                title: String(localized: "Waiting for your server to come back…"),
+                message: String(localized: "Marquee at \(name) isn't answering right now. If it's restarting or updating, this reconnects by itself.")
+            )
+            if let server = model.session.server {
+                ServerChip(address: server, version: model.session.serverInfo?.version)
+            }
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(model.isRetryingConnection ? "Connecting…" : "Trying again in a moment…")
+                    .font(.system(size: Metrics.text(12.5)))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .accessibilityElement(children: .combine)
+
+            VStack(spacing: 10) {
+                Button {
+                    model.retryConnection()
+                } label: {
+                    Text("Retry now").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(AccentButtonStyle())
+                .keyboardShortcut(.defaultAction)
+                .disabled(model.isRetryingConnection)
+
+                Button {
+                    model.changeServer()
+                } label: {
+                    Text("Change server").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(OutlineButtonStyle())
+            }
+        }
+    }
+}
+
 /// A saved server that couldn't be used at launch (or on Retry).
 struct ServerUnreachableView: View {
     @Environment(AppModel.self) private var model
@@ -429,7 +475,7 @@ struct ServerUnreachableView: View {
             AuthHeading(title: title(problem), message: explanation(problem))
             if let server = model.session.server {
                 ServerChip(address: server, version: model.session.serverInfo?.version)
-                if let detail = problem.problemMessage(for: server) {
+                if let detail = problem.problemMessage(for: server, saved: true) {
                     InlineMessage(text: detail)
                 }
             }

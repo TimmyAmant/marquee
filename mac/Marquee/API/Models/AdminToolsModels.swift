@@ -170,6 +170,17 @@ extension API {
         }
 
         var hasConditions: Bool { !(genres.isEmpty && languages.isEmpty && keywords.isEmpty && userIds.isEmpty) }
+
+        /// The genres on the rule's tile by name, as the website shows them:
+        /// up to `limit` names, then "+N more". Nil when the names couldn't
+        /// be loaded, for the tile's "N genres".
+        func genreLabels(names: [Int: String], limit: Int = 3) -> [String]? {
+            guard !genres.isEmpty else { return [] }
+            guard !names.isEmpty else { return nil }
+            let labels = genres.map { names[$0] ?? "#\($0)" }
+            guard labels.count > limit + 1 else { return labels }
+            return Array(labels.prefix(limit)) + [String(localized: "+\(labels.count - limit) more")]
+        }
     }
 
     /// The body of `POST /settings/override-rules` and `PUT …/{id}`.

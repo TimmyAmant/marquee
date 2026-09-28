@@ -33,6 +33,8 @@ public sealed partial class OverrideRulesView : UserControl, ISettingsTabView
     private IReadOnlyList<OverrideRule> rules = [];
     private IReadOnlyList<ArrServer> servers = [];
     private IReadOnlyList<HouseholdMember> members = [];
+    /// <summary>TMDb's movie and TV genre names, for the tiles; empty if they couldn't be loaded.</summary>
+    private IReadOnlyDictionary<int, string> genreNames = new Dictionary<int, string>();
     private OverrideRule? editing;
 
     // The editor's controls, rebuilt for each rule.
@@ -110,6 +112,10 @@ public sealed partial class OverrideRulesView : UserControl, ISettingsTabView
             rules = await api.OverrideRules.ListAsync();
             servers = (await api.Integrations.OverviewAsync()).ArrServers ?? [];
             members = await api.Users.ListAsync();
+            if (genreNames.Count == 0)
+            {
+                genreNames = await LoadGenreNamesAsync(api);
+            }
             Show(error, null);
             Visibility = Visibility.Visible;
             ShowList();
@@ -126,6 +132,27 @@ public sealed partial class OverrideRulesView : UserControl, ISettingsTabView
                 Show(error, failure.Message);
             }
         }
+    }
+
+    /// <summary>Movie and TV genres by id; empty when TMDb isn't reachable, so the tiles say "N genres".</summary>
+    private static async Task<IReadOnlyDictionary<int, string>> LoadGenreNamesAsync(MarqueeApi api)
+    {
+        var names = new Dictionary<int, string>();
+        try
+        {
+            foreach (var type in new[] { ShelfMediaType.Movie, ShelfMediaType.Tv })
+            {
+                foreach (var genre in await api.DiscoverSettings.LookupAsync(DiscoverLookupKind.Genre, "", type))
+                {
+                    names.TryAdd(genre.TmdbId, genre.Name);
+                }
+            }
+        }
+        catch (ApiException)
+        {
+            return new Dictionary<int, string>();
+        }
+        return names;
     }
 
     private string ServerLabel(string id)
@@ -162,7 +189,11 @@ public sealed partial class OverrideRulesView : UserControl, ISettingsTabView
         foreach (var rule in rules)
         {
             var conditions = new List<string>();
-            if (rule.Genres.Count > 0)
+            if (rule.GenreLabels(genreNames) is { } genres)
+            {
+                conditions.AddRange(genres);
+            }
+            else
             {
                 conditions.Add(Loc.Plural("Rules_GenreCount", rule.Genres.Count));
             }

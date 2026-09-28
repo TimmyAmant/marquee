@@ -13,6 +13,8 @@ struct OverrideRulesSection: View {
     @State private var loadError: String?
     @State private var editing: EditTarget?
     @State private var members: [API.HouseholdMember] = []
+    /// TMDb's movie and TV genre names, for the tiles; empty if they couldn't be loaded.
+    @State private var genreNames: [Int: String] = [:]
 
     private struct EditTarget: Identifiable {
         let id = UUID()
@@ -34,7 +36,9 @@ struct OverrideRulesSection: View {
                 } else if let rules {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
                         ForEach(rules) { rule in
-                            OverrideRuleTile(rule: rule, server: servers.first { $0.id == rule.serverId }, members: members) {
+                            OverrideRuleTile(
+                                rule: rule, server: servers.first { $0.id == rule.serverId }, members: members, genreNames: genreNames
+                            ) {
                                 editing = EditTarget(rule: rule)
                             } onRemoved: {
                                 self.rules?.removeAll { $0.id == rule.id }
@@ -85,12 +89,30 @@ struct OverrideRulesSection: View {
             rules = fresh
             loadError = nil
             if members.isEmpty { members = (try? await model.api.users.list()) ?? [] }
+            if genreNames.isEmpty { genreNames = await loadGenreNames() }
         } catch APIError.notFound {
             unsupported = true
         } catch let failure as APIError where failure.isCancellation {
             return
         } catch {
             if rules == nil { loadError = error.localizedDescription }
+        }
+    }
+
+    /// Movie and TV genres by id; empty when TMDb isn't reachable, so the
+    /// tiles say "N genres".
+    private func loadGenreNames() async -> [Int: String] {
+        let api = model.api
+        do {
+            async let movie = api.overrideRules.genres(.movie)
+            async let tv = api.overrideRules.genres(.tv)
+            var names: [Int: String] = [:]
+            for genre in try await movie + tv where names[genre.id] == nil {
+                names[genre.id] = genre.name
+            }
+            return names
+        } catch {
+            return [:]
         }
     }
 }
@@ -116,6 +138,7 @@ private struct OverrideRuleTile: View {
     let rule: API.OverrideRule
     let server: API.ArrServer?
     let members: [API.HouseholdMember]
+    let genreNames: [Int: String]
     let onEdit: () -> Void
     let onRemoved: () -> Void
 
@@ -154,7 +177,11 @@ private struct OverrideRuleTile: View {
                 if !rule.hasConditions {
                     Text("Every request").font(.system(size: 11.5)).foregroundStyle(Theme.textMuted)
                 }
-                if !rule.genres.isEmpty {
+                if let genres = rule.genreLabels(names: genreNames) {
+                    ForEach(genres, id: \.self) { genre in
+                        TonePill(text: genre, small: true)
+                    }
+                } else {
                     TonePill(text: String(localized: "\(rule.genres.count) genres"), small: true)
                 }
                 ForEach(conditions, id: \.self) { condition in

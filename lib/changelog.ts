@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.62.0",
+    date: "2026-09-27",
+    changes: [
+      "Mac, iPhone and Windows apps: when your server is restarting or updating, the app shows \"Waiting for your server to come back…\" and reconnects on its own (for about 2 minutes) instead of saying nothing is answering on the port. It also retries when you switch back to the app, and never signs you out.",
+      "Remove from Radarr 4K / Sonarr 4K in a title's … menu, with the option to delete the files, on the website and every app.",
+      "Windows: Add to 4K has the Advanced arrow like the Mac; Settings › Discover has Region & language; Settings › Jobs has the \"Can't find\" hours setting; and Settings › About opens the Error reference.",
+      "Override rule tiles on Mac and Windows show the genre names instead of a count.",
+    ],
+  },
+  {
     version: "0.61.0",
     date: "2026-09-27",
     changes: [

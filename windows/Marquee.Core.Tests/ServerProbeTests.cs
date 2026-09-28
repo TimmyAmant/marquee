@@ -91,9 +91,72 @@ public sealed class ServerProbeTests
     public void V1ServerErrorIsNotMistakenForAnotherApp()
     {
         var outcome = Classify(500, """{"error":"boom","code":"internal"}""");
-        var unreachable = Assert.IsType<ProbeOutcome.Unreachable>(outcome);
-        Assert.Equal(UnreachableReasonKind.Failed, unreachable.Reason.Kind);
-        Assert.Contains("500", unreachable.Reason.Detail);
+        Assert.Equal(new ProbeOutcome.Unreachable(UnreachableReason.ServerError(500)), outcome);
+        // A 5xx from Marquee is waited out.
+        Assert.True(outcome.IsTemporaryOutage);
+
+        // A v1 4xx on server-info is still a plain failure.
+        var notFound = Assert.IsType<ProbeOutcome.Unreachable>(Classify(404, """{"error":"nope","code":"not_found"}"""));
+        Assert.Equal(UnreachableReasonKind.Failed, notFound.Reason.Kind);
+        Assert.Contains("404", notFound.Reason.Detail);
+    }
+
+    [Theory]
+    [InlineData(502)]
+    [InlineData(503)]
+    [InlineData(504)]
+    public void ProxyGatewayErrorsAreAnOutageNotAnotherApp(int status)
+    {
+        // nginx / Caddy / Traefik while the Marquee container restarts: no
+        // X-Marquee-API, an HTML error page.
+        const string page = "<html><head><title>502 Bad Gateway</title></head><body>nginx</body></html>";
+        var outcome = Classify(status, page, contentType: "text/html", apiHeader: false);
+        Assert.Equal(new ProbeOutcome.Unreachable(UnreachableReason.ServerError(status)), outcome);
+        Assert.True(outcome.IsTemporaryOutage);
+    }
+
+    [Fact]
+    public void OtherErrorsFromSomethingElseStillArentOurs()
+    {
+        const string page = "<html><head><title>Oops</title></head></html>";
+        Assert.Equal(new ProbeOutcome.NotMarquee(), Classify(500, page, contentType: "text/html", apiHeader: false));
+        Assert.Equal(new ProbeOutcome.NotMarquee(), Classify(401, "Unauthorized", contentType: "text/plain", apiHeader: false));
+    }
+
+    [Fact]
+    public void WhichOutcomesAreTemporary()
+    {
+        Assert.True(new ProbeOutcome.Unreachable(UnreachableReason.Refused).IsTemporaryOutage);
+        Assert.True(new ProbeOutcome.Unreachable(UnreachableReason.NoResponse).IsTemporaryOutage);
+        Assert.False(new ProbeOutcome.Unreachable(UnreachableReason.UnknownHost).IsTemporaryOutage);
+        Assert.False(new ProbeOutcome.Unreachable(UnreachableReason.LocalNetworkDenied).IsTemporaryOutage);
+        Assert.False(new ProbeOutcome.Unreachable(UnreachableReason.Failed("TLS")).IsTemporaryOutage);
+        Assert.False(new ProbeOutcome.NotMarquee().IsTemporaryOutage);
+        Assert.False(new ProbeOutcome.Legacy().IsTemporaryOutage);
+    }
+
+    [Fact]
+    public void SavedServerOutageDoesNotBlameThePort()
+    {
+        foreach (var reason in new[] { UnreachableReason.Refused, UnreachableReason.NoResponse, UnreachableReason.ServerError(502) })
+        {
+            var message = new ProbeOutcome.Unreachable(reason).ProblemMessage(Address, saved: true) ?? "";
+            Assert.Contains("restarting or updating", message);
+            Assert.DoesNotContain("port", message);
+            Assert.Contains("192.168.1.20", message);
+        }
+        // A typed address still gets the port advice.
+        Assert.Contains("port 3000", new ProbeOutcome.Unreachable(UnreachableReason.Refused).ProblemMessage(Address));
+        // Problems that aren't an outage keep their own message.
+        Assert.Contains("local network", new ProbeOutcome.Unreachable(UnreachableReason.LocalNetworkDenied).ProblemMessage(Address, saved: true));
+    }
+
+    [Fact]
+    public void MeFailingRightAfterServerInfoIsAnOutage()
+    {
+        Assert.Equal(UnreachableReason.ServerError(500), ServerSession.OutageReason(ApiException.Server("boom", 500, hasApiHeader: true)));
+        Assert.Equal(UnreachableReason.Refused, ServerSession.OutageReason(ApiException.Network(NetworkFailure.Refused)));
+        Assert.Equal(UnreachableReasonKind.Failed, ServerSession.OutageReason(ApiException.Forbidden(403, hasApiHeader: true)).Kind);
     }
 
     [Fact]
@@ -122,6 +185,7 @@ public sealed class ServerProbeTests
             new ProbeOutcome.Unreachable(UnreachableReason.NoResponse),
             new ProbeOutcome.Unreachable(UnreachableReason.UnknownHost),
             new ProbeOutcome.Unreachable(UnreachableReason.LocalNetworkDenied),
+            new ProbeOutcome.Unreachable(UnreachableReason.ServerError(503)),
             new ProbeOutcome.Unreachable(UnreachableReason.Failed("TLS")),
         ];
         foreach (var outcome in outcomes)

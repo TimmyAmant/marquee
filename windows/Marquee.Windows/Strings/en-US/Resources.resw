@@ -83,6 +83,9 @@
   <data name="About_DownloadManually.Content" xml:space="preserve">
     <value>Download manually</value>
   </data>
+  <data name="About_ErrorReference.Content" xml:space="preserve">
+    <value>Error reference</value>
+  </data>
   <data name="About_FactMovies" xml:space="preserve">
     <value>Movies</value>
   </data>
@@ -1261,6 +1264,9 @@
   <data name="Connect_Retry" xml:space="preserve">
     <value>Retry</value>
   </data>
+  <data name="Connect_RetryNow" xml:space="preserve">
+    <value>Retry now</value>
+  </data>
   <data name="Connect_SetupChangeServerLink.Content" xml:space="preserve">
     <value>Change</value>
   </data>
@@ -1332,9 +1338,23 @@
     <value>{0} username</value>
     <comment>{0}: Jellyfin or Emby.</comment>
   </data>
+  <data name="Connect_WaitingChangeServer.Content" xml:space="preserve">
+    <value>Change server</value>
+  </data>
+  <data name="Connect_WaitingExplanation" xml:space="preserve">
+    <value>Marquee at {0} isn't answering right now. If it's restarting or updating, this reconnects by itself.</value>
+    <comment>{0} is the saved server address.</comment>
+  </data>
   <data name="Connect_WaitingFor" xml:space="preserve">
     <value>Waiting for {0}…</value>
     <comment>{0}: Plex, or the single sign-on provider's name.</comment>
+  </data>
+  <data name="Connect_WaitingStatus" xml:space="preserve">
+    <value>Trying again in a moment…</value>
+    <comment>Beside the spinner while the app retries on its own.</comment>
+  </data>
+  <data name="Connect_WaitingTitle.Text" xml:space="preserve">
+    <value>Waiting for your server to come back…</value>
   </data>
   <data name="Connect_WelcomeBack.Text" xml:space="preserve">
     <value>Welcome back</value>
@@ -1450,6 +1470,31 @@
   </data>
   <data name="Discover_TryAgain.Content" xml:space="preserve">
     <value>Try again</value>
+  </data>
+  <data name="DiscoverLocale_AnyLanguage" xml:space="preserve">
+    <value>Any language</value>
+  </data>
+  <data name="DiscoverLocale_Automatic" xml:space="preserve">
+    <value>Automatic — {0}</value>
+    <comment>{0} is the region it comes to, e.g. "United Kingdom (GB)".</comment>
+  </data>
+  <data name="DiscoverLocale_DiscoverLanguage" xml:space="preserve">
+    <value>Discover language</value>
+  </data>
+  <data name="DiscoverLocale_DiscoverRegion" xml:space="preserve">
+    <value>Discover region</value>
+  </data>
+  <data name="DiscoverLocale_Intro" xml:space="preserve">
+    <value>Which country streaming providers and release dates are for, and where and in what language TMDb's Popular and Upcoming rows are picked from.</value>
+  </data>
+  <data name="DiscoverLocale_StreamingRegion" xml:space="preserve">
+    <value>Streaming region</value>
+  </data>
+  <data name="DiscoverLocale_Title" xml:space="preserve">
+    <value>Region &amp; language</value>
+  </data>
+  <data name="DiscoverLocale_Worldwide" xml:space="preserve">
+    <value>Worldwide</value>
   </data>
   <data name="DiscoverSettings_Added" xml:space="preserve">
     <value>Added "{0}" at the end of Discover.</value>
@@ -1741,6 +1786,18 @@
   </data>
   <data name="Enum_SuggestionStudio" xml:space="preserve">
     <value>Studio</value>
+  </data>
+  <data name="Errors_Empty" xml:space="preserve">
+    <value>Your server didn't return an error reference.</value>
+  </data>
+  <data name="Errors_Intro" xml:space="preserve">
+    <value>What every error message in Marquee actually means, and what to do about it. If the exact wording you saw isn't below, it's most likely a message passed straight through from Sonarr, Radarr, Plex, or Jellyfin themselves — check that service's own logs.</value>
+  </data>
+  <data name="Errors_Title" xml:space="preserve">
+    <value>Error reference</value>
+  </data>
+  <data name="Errors_WhatToDo" xml:space="preserve">
+    <value>What to do:</value>
   </data>
   <data name="Favorites_Collections.Text" xml:space="preserve">
     <value>Collections</value>
@@ -2134,7 +2191,7 @@
     <value>Groups claim</value>
   </data>
   <data name="Integrations_SsoIntro.Text" xml:space="preserve">
-    <value>Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps.</value>
+    <value>Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac, iPhone and Windows apps.</value>
   </data>
   <data name="Integrations_SsoIssuer.Header" xml:space="preserve">
     <value>Issuer URL</value>
@@ -2364,6 +2421,31 @@
   </data>
   <data name="Jobs_Empty.Text" xml:space="preserve">
     <value>This server reports no scheduled jobs.</value>
+  </data>
+  <data name="Jobs_NotFoundAfter" xml:space="preserve">
+    <value>hours without a find</value>
+    <comment>After the number of hours.</comment>
+  </data>
+  <data name="Jobs_NotFoundBefore" xml:space="preserve">
+    <value>Flag a request after</value>
+    <comment>Before the number of hours: "Flag a request after [24] hours without a find".</comment>
+  </data>
+  <data name="Jobs_NotFoundHeading" xml:space="preserve">
+    <value>Can't find</value>
+    <comment>The Requests page's Can't find section, whose wait this sets.</comment>
+  </data>
+  <data name="Jobs_NotFoundHours" xml:space="preserve">
+    <value>Hours</value>
+    <comment>The number box's accessible name.</comment>
+  </data>
+  <data name="Jobs_NotFoundSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Jobs_NotFoundSaved" xml:space="preserve">
+    <value>Saved.</value>
+  </data>
+  <data name="Jobs_NotFoundSaving" xml:space="preserve">
+    <value>Saving…</value>
   </data>
   <data name="Jobs_RanFromThisPc" xml:space="preserve">
     <value>Ran from this PC {0}</value>
@@ -4006,6 +4088,10 @@
   <data name="Rows_UpcomingSeries" xml:space="preserve">
     <value>Upcoming Series</value>
   </data>
+  <data name="Rules_MoreGenres" xml:space="preserve">
+    <value>+{0} more</value>
+    <comment>After the first few genre names on an override rule tile. {0} is a count.</comment>
+  </data>
   <data name="Search_Box.PlaceholderText" xml:space="preserve">
     <value>Search an actor, a studio, a title…</value>
   </data>
@@ -4152,9 +4238,17 @@
     <value>Nothing is answering on port {0} at {1}. Check the port and that Marquee is running.</value>
     <comment>{0} is a port number, {1} a host name or IP address.</comment>
   </data>
+  <data name="Server_ProbeSavedOutage" xml:space="preserve">
+    <value>Marquee isn't answering at {0}. If it's restarting or updating, this clears by itself.</value>
+    <comment>The saved server, which worked before, stopped answering. {0} is its address.</comment>
+  </data>
   <data name="Server_ProbeServerError" xml:space="preserve">
     <value>the server returned an error ({0}).</value>
     <comment>Follows 'Couldn't connect to …:', so it starts lower-case. {0} is an HTTP status code.</comment>
+  </data>
+  <data name="Server_ProbeServerErrorStatus" xml:space="preserve">
+    <value>{0} answered with an error ({1}). If Marquee is starting up, try again in a moment.</value>
+    <comment>{0} is the server address, {1} an HTTP status code such as 502.</comment>
   </data>
   <data name="Server_ProbeTooNew" xml:space="preserve">
     <value>The server at {0} runs Marquee {1}, which is newer than this app supports. Update Marquee for Windows.</value>
@@ -4443,8 +4537,11 @@
   <data name="Title_AddToFourK" xml:space="preserve">
     <value>Add to 4K {0}</value>
   </data>
-  <data name="Title_AdvancedFourK.Header" xml:space="preserve">
-    <value>Advanced (4K)</value>
+  <data name="Title_AdvancedFourKToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Advanced options (4K)</value>
+  </data>
+  <data name="Title_AdvancedFourKToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Advanced options (4K)</value>
   </data>
   <data name="Title_AdvancedQualityProfile.Header" xml:space="preserve">
     <value>Quality profile</value>

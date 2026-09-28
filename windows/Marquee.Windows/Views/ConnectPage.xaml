@@ -287,6 +287,43 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- The saved server is restarting or updating: retries by itself, keeping the sign-in. -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsWaiting, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock x:Uid="Connect_WaitingTitle" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="Wrap" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.WaitingExplanation, Mode=OneWay}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <StackPanel>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ServerLabel, Mode=OneWay}"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ServerVersionLabel, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <ProgressRing IsActive="{x:Bind ViewModel.IsWaiting, Mode=OneWay}" Width="16" Height="16" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.WaitingStatus, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+                <Button
+                    Content="{x:Bind ViewModel.RetryNowLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.RetryCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Stretch" />
+                <Button
+                    x:Uid="Connect_WaitingChangeServer"
+                    Command="{x:Bind ViewModel.ChangeServerCommand}"
+                    HorizontalAlignment="Stretch" />
+            </StackPanel>
+
             <!-- Can't reach the saved server. -->
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsUnreachable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="{x:Bind ViewModel.UnreachableTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />

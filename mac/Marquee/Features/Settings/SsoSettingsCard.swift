@@ -74,7 +74,7 @@ struct SsoSettingsCard: View {
     var body: some View {
         IntegrationCard(
             title: String(localized: "Single sign-on"),
-            description: String(localized: "Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps."),
+            description: String(localized: "Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac, iPhone and Windows apps."),
             connected: saved.configured,
             connectedLabel: String(localized: "On")
         ) {
