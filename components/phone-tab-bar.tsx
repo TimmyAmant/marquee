@@ -81,7 +81,7 @@ export function PhoneTabBar({
       <div
         aria-hidden
         onClick={() => setMoreOpen(false)}
-        className={`fixed inset-0 z-40 bg-black/45 transition-opacity duration-200 md:hidden ${
+        className={`fixed inset-0 z-[52] bg-black/45 transition-opacity duration-200 md:hidden ${
           moreOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -92,7 +92,7 @@ export function PhoneTabBar({
         role="dialog"
         aria-label={t("nav.more")}
         inert={!moreOpen}
-        className={`nav-glass fixed inset-x-3 bottom-[calc(84px+env(safe-area-inset-bottom))] z-50 flex max-h-[calc(100dvh-84px-env(safe-area-inset-bottom)-72px)] origin-bottom flex-col overflow-hidden rounded-[26px] transition-[opacity,transform] duration-200 ease-out md:hidden ${
+        className={`nav-glass fixed inset-x-3 bottom-[calc(84px+env(safe-area-inset-bottom))] z-[55] flex max-h-[calc(100dvh-84px-env(safe-area-inset-bottom)-72px)] origin-bottom flex-col overflow-hidden rounded-[26px] transition-[opacity,transform] duration-200 ease-out md:hidden ${
           moreOpen ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-3 scale-[0.98] opacity-0"
         }`}
       >
@@ -143,7 +143,7 @@ export function PhoneTabBar({
 
       <nav
         aria-label={t("nav.mainNav")}
-        className="phone-tab-bar nav-glass fixed inset-x-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-50 mx-auto grid max-w-[480px] grid-cols-5 rounded-full p-1.5 md:hidden"
+        className="phone-tab-bar nav-glass fixed inset-x-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-[55] mx-auto grid max-w-[480px] grid-cols-5 rounded-full p-1.5 md:hidden"
       >
         {tabs.map((tab) => {
           const current = active === tab.id;
