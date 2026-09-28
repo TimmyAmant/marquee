@@ -8,6 +8,27 @@ export type EntityLinkKind = (typeof entityLinkKinds)[number];
 
 export type EntityLink = { kind: EntityLinkKind; url: string };
 
+/** The pill's label: the brand's own name, which isn't translated, or null
+ * for `homepage` — the caller's translated "Website". */
+export function entityLinkBrand(kind: EntityLinkKind): string | null {
+  switch (kind) {
+    case "imdb":
+      return "IMDb";
+    case "instagram":
+      return "Instagram";
+    case "twitter":
+      return "X / Twitter";
+    case "facebook":
+      return "Facebook";
+    case "tiktok":
+      return "TikTok";
+    case "youtube":
+      return "YouTube";
+    case "homepage":
+      return null;
+  }
+}
+
 /** TMDb's person external_ids (append_to_response=external_ids). */
 export type TmdbPersonExternalIds = {
   imdb_id?: string | null;

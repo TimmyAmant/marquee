@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { PersonHeader } from "@/components/person-header";
+import { EntityHero } from "@/components/entity-hero";
 import { FavoriteButton } from "@/components/favorite-button";
 import { MediaList } from "@/components/media-list";
 import { getViewerContext } from "@/lib/integrations/library-owner";
@@ -27,33 +28,39 @@ export default async function PersonPage({
   ]);
   if (!data) notFound();
 
-  const { person, entries, favorited, favoritedKeys, arrConfigured } = data;
+  const { person, knownFor, links, entries, favorited, favoritedKeys, arrConfigured } = data;
 
   return (
-    <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
-      <PersonHeader
-        name={person.name}
-        biography={person.biography}
-        birthday={person.birthday}
-        placeOfBirth={person.placeOfBirth}
-        profilePath={person.profilePath}
-        favoriteAction={
-          viewer.session && (
-            <>
-              <FavoriteButton entityType="person" tmdbId={tmdbId} initialFavorited={favorited} />
-              {/* Links only: a person can't be sent to a household member. */}
-              <ShareButton
-                name={person.name}
-                path={`/person/${tmdbId}`}
-                publicBase={publicBase}
-                links={{ tmdb: `https://www.themoviedb.org/person/${tmdbId}`, imdb: null }}
-              />
-            </>
-          )
-        }
-      />
+    <div className="pb-6 sm:pb-7">
+      <EntityHero knownFor={knownFor}>
+        <PersonHeader
+          name={person.name}
+          biography={person.biography}
+          birthday={person.birthday}
+          placeOfBirth={person.placeOfBirth}
+          profilePath={person.profilePath}
+          links={links}
+          favoriteAction={
+            viewer.session && (
+              <>
+                <FavoriteButton entityType="person" tmdbId={tmdbId} initialFavorited={favorited} />
+                {/* Links only: a person can't be sent to a household member. */}
+                <ShareButton
+                  name={person.name}
+                  path={`/person/${tmdbId}`}
+                  publicBase={publicBase}
+                  links={{
+                    tmdb: `https://www.themoviedb.org/person/${tmdbId}`,
+                    imdb: links.find((link) => link.kind === "imdb")?.url ?? null,
+                  }}
+                />
+              </>
+            )
+          }
+        />
+      </EntityHero>
 
-      <div className="mt-12">
+      <div className="mt-12 px-4 sm:px-7">
         <Suspense>
           <MediaList
             entries={entries}

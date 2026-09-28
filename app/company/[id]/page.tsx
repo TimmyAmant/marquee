@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { CompanyHeader } from "@/components/company-header";
+import { EntityHero } from "@/components/entity-hero";
 import { FavoriteButton } from "@/components/favorite-button";
 import { MediaList } from "@/components/media-list";
 import { getViewerContext } from "@/lib/integrations/library-owner";
@@ -22,23 +23,26 @@ export default async function CompanyPage({
   const data = await loadCompanyPage(viewer, tmdbId);
   if (!data) notFound();
 
-  const { company, entries, favorited, favoritedKeys, arrConfigured } = data;
+  const { company, knownFor, links, entries, favorited, favoritedKeys, arrConfigured } = data;
 
   return (
-    <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
-      <CompanyHeader
-        name={company.name}
-        description={company.description}
-        logoPath={company.logoPath}
-        count={company.count}
-        favoriteAction={
-          viewer.session && (
-            <FavoriteButton entityType="company" tmdbId={tmdbId} initialFavorited={favorited} />
-          )
-        }
-      />
+    <div className="pb-6 sm:pb-7">
+      <EntityHero knownFor={knownFor}>
+        <CompanyHeader
+          name={company.name}
+          description={company.description}
+          logoPath={company.logoPath}
+          count={company.count}
+          links={links}
+          favoriteAction={
+            viewer.session && (
+              <FavoriteButton entityType="company" tmdbId={tmdbId} initialFavorited={favorited} />
+            )
+          }
+        />
+      </EntityHero>
 
-      <div className="mt-12">
+      <div className="mt-12 px-4 sm:px-7">
         <Suspense>
           <MediaList
             entries={entries}
