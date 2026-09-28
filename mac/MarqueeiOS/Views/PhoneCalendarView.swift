@@ -408,7 +408,7 @@ private struct PhoneMonthCell: View {
                     }
                 }
                 .frame(height: 24)
-                Text(entries.count > Self.maxPosters ? "+\(entries.count - Self.maxPosters)" : " ")
+                Text(verbatim: entries.count > Self.maxPosters ? "+\(entries.count - Self.maxPosters)" : " ")
                     .font(.system(size: Metrics.text(10), weight: .medium))
                     .foregroundStyle(Theme.textSecondary)
                     .monospacedDigit()
@@ -429,6 +429,7 @@ private struct PhoneMonthCell: View {
 
     private var accessibilityText: String {
         let date = day.date()?.formatted(.dateTime.weekday(.wide).month(.wide).day()) ?? day.string
-        return entries.isEmpty ? date : String(localized: "\(date), \(entries.count) releases")
+        // "Sunday, September 27, Dune: Part Two, Severance".
+        return ListFormatter.localizedString(byJoining: [date] + entries.map(\.name))
     }
 }

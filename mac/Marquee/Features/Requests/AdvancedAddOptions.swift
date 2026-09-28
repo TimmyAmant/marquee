@@ -228,12 +228,14 @@ struct AddOptionsPanel: View {
 
     @ViewBuilder
     private func pickers(_ current: AddOptionsSelection) -> some View {
-        Picker("Server", selection: Binding(
-            get: { current.serverId ?? "" },
-            set: { selection.wrappedValue.selectServer($0) }
-        )) {
-            ForEach(current.options.servers) { server in
-                Text(server.pickerLabel).tag(server.id)
+        phoneLabeled(Text("Server")) {
+            Picker("Server", selection: Binding(
+                get: { current.serverId ?? "" },
+                set: { selection.wrappedValue.selectServer($0) }
+            )) {
+                ForEach(current.options.servers) { server in
+                    Text(server.pickerLabel).tag(server.id)
+                }
             }
         }
         if let server = current.server, !server.reachable {
@@ -243,28 +245,51 @@ struct AddOptionsPanel: View {
                 .fixedSize(horizontal: false, vertical: true)
         } else {
             if !current.qualityProfileChoices.isEmpty {
-                Picker("Quality profile", selection: selection.qualityProfileId) {
-                    ForEach(current.qualityProfileChoices) { profile in
-                        Text(profile.name).tag(Optional(profile.id))
+                phoneLabeled(Text("Quality profile")) {
+                    Picker("Quality profile", selection: selection.qualityProfileId) {
+                        ForEach(current.qualityProfileChoices) { profile in
+                            Text(profile.name).tag(Optional(profile.id))
+                        }
                     }
                 }
             }
             if !current.rootFolderChoices.isEmpty {
-                Picker("Root folder", selection: selection.rootFolderPath) {
-                    ForEach(current.rootFolderChoices, id: \.self) { path in
-                        Text(path).tag(Optional(path))
+                phoneLabeled(Text("Root folder")) {
+                    Picker("Root folder", selection: selection.rootFolderPath) {
+                        ForEach(current.rootFolderChoices, id: \.self) { path in
+                            Text(path).tag(Optional(path))
+                        }
                     }
                 }
             }
             tagsField(current)
         }
         if current.isTV {
-            Picker("Series type", selection: selection.seriesType) {
-                ForEach(API.SeriesType.knownCases, id: \.self) { type in
-                    Text(type.label).tag(Optional(type))
+            phoneLabeled(Text("Series type")) {
+                Picker("Series type", selection: selection.seriesType) {
+                    ForEach(API.SeriesType.knownCases, id: \.self) { type in
+                        Text(type.label).tag(Optional(type))
+                    }
                 }
             }
         }
+    }
+
+    /// On iOS a menu picker outside a form shows only its value, so the
+    /// label goes beside it; the Mac's picker labels itself.
+    @ViewBuilder
+    private func phoneLabeled<P: View>(_ title: Text, @ViewBuilder _ picker: () -> P) -> some View {
+        #if os(iOS)
+        LabeledContent {
+            picker().labelsHidden()
+        } label: {
+            title
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .font(.system(size: Metrics.text(13)))
+        #else
+        picker()
+        #endif
     }
 
     @ViewBuilder

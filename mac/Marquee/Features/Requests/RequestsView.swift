@@ -1771,6 +1771,38 @@ private struct DeclineRequestSheet: View {
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            #if os(iOS)
+            // A menu with nothing chosen yet shows no label on iOS: the
+            // reasons are listed as rows to tap instead.
+            VStack(spacing: 0) {
+                ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                    if index > 0 { Divider().overlay(Theme.border) }
+                    Button {
+                        choice = option
+                    } label: {
+                        HStack {
+                            Text(option)
+                                .foregroundStyle(Theme.textPrimary)
+                                .multilineTextAlignment(.leading)
+                            Spacer(minLength: 8)
+                            if choice == option {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                        }
+                        .font(.system(size: Metrics.text(14)))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(choice == option ? .isSelected : [])
+                }
+            }
+            .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+            #else
             Picker("Reason", selection: $choice) {
                 ForEach(options, id: \.self) { option in
                     Text(option).tag(Optional(option))
@@ -1779,6 +1811,7 @@ private struct DeclineRequestSheet: View {
             .choicePickerStyle()
             .labelsHidden()
             .font(.system(size: Metrics.text(13)))
+            #endif
 
             if choice == Self.other {
                 TextField("Tell them why", text: $customReason)
@@ -1808,7 +1841,7 @@ private struct DeclineRequestSheet: View {
         .frame(width: 460)
         #else
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
         #endif
         .background(Theme.bg1)
     }
