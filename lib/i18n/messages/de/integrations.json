@@ -387,5 +387,7 @@
   "pushbulletToken": "Zugriffstoken",
   "pushbulletTokenHint": "Auf pushbullet.com unter Settings › Account › Create access token. Leer gelassen, bleibt das gespeicherte.",
   "pushbulletChannel": "Kanal-Tag (optional)",
-  "pushbulletChannelHint": "An einen eigenen Kanal senden statt an deine Geräte."
+  "pushbulletChannelHint": "An einen eigenen Kanal senden statt an deine Geräte.",
+  "arrPublicUrl": "Öffentliche URL (für Links)",
+  "arrPublicUrlHelp": "Wohin „In {app} öffnen“ auf einer Titelseite führt, wenn die Adresse oben nur für Marquee funktioniert. Leer lassen, um diese zu verwenden."
 }

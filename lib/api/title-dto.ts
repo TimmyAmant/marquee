@@ -144,6 +144,7 @@ export function titleDetailDto(
       blocked: data.blocked,
       notFoundSince: data.notFoundSince,
       myRequests: data.myRequests,
+      arrLinks: data.arrLinks,
     }),
     seasons: seasonsNewestFirst(data.seasons).map((season) => {
       const stats = seasonCompleteness.get(season.season_number);

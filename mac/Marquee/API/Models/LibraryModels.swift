@@ -65,6 +65,23 @@ extension API {
         }
     }
 
+    /// `viewer.arrLinks` (0.63+): one server's page for the title. Labelled
+    /// "Open in Radarr" / "Open in Radarr 4K", or "Open in {serverName}"
+    /// when several of that kind and 4K-ness have it.
+    struct ArrLink: Codable, Hashable, Sendable {
+        let kind: ArrKind
+        let serverName: String
+        let is4k: Bool
+        let url: String
+    }
+
+    /// An `ArrLink` with its button's title.
+    struct TitledArrLink: Hashable, Sendable, Identifiable {
+        let link: ArrLink
+        let title: String
+        var id: String { "\(link.serverName)\n\(link.url)" }
+    }
+
     /// Radarr/Sonarr has the title (admin only).
     struct ArrTracking: Codable, Hashable, Sendable {
         /// The movie/series id inside Radarr/Sonarr.
@@ -123,6 +140,20 @@ extension API {
         /// (the admin, or the auto-approve permission) — "This request will
         /// be approved automatically". nil from an older server.
         var autoApprove: Bool? = nil
+        /// 0.63+: "Open in Radarr" / "Open in Sonarr" — the title's page on
+        /// each server that has it, for the admin and whoever may review
+        /// requests. Empty for everyone else; nil from an older server.
+        var arrLinks: [ArrLink]? = nil
+
+        /// The "Open in …" buttons, labelled; empty from an older server.
+        var openInArrLinks: [TitledArrLink] {
+            let links = arrLinks ?? []
+            return links.map { link in
+                let siblings = links.filter { $0.kind == link.kind && $0.is4k == link.is4k }.count
+                let name = siblings > 1 ? link.serverName : (link.is4k ? "\(link.kind.displayName) 4K" : link.kind.displayName)
+                return TitledArrLink(link: link, title: String(localized: "Open in \(name)"))
+            }
+        }
 
         /// Your requests to list under the actions ("Your request (Season 2)
         /// is waiting for review"); empty from an older server.

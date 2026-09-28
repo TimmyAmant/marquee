@@ -222,6 +222,43 @@ public sealed class PlayItem
     public ICommand Open { get; }
 }
 
+/// <summary>
+/// "Open in Radarr" / "Open in Sonarr" on the title page (0.63+,
+/// components/open-in-arr.tsx): the title's page on one server, in the
+/// default browser, with a dot in Radarr's yellow or Sonarr's blue.
+/// </summary>
+public sealed class ArrLinkItem
+{
+    private Brush? dotBrush;
+    private readonly bool sonarr;
+
+    public ArrLinkItem(TitledArrLink item)
+    {
+        Label = item.Title;
+        Url = item.Link.Url;
+        sonarr = item.Link.Kind == ArrProvider.Sonarr;
+        Open = new AsyncRelayCommand(async () =>
+        {
+            if (Uri.TryCreate(item.Link.Url, UriKind.Absolute, out var web)
+                && (web.Scheme == Uri.UriSchemeHttps || web.Scheme == Uri.UriSchemeHttp))
+            {
+                await global::Windows.System.Launcher.LaunchUriAsync(web);
+            }
+        });
+    }
+
+    public string Label { get; }
+
+    /// <summary>The address, as the button's tooltip.</summary>
+    public string Url { get; }
+
+    public ICommand Open { get; }
+
+    public Brush DotBrush => dotBrush ??= new SolidColorBrush(sonarr
+        ? global::Windows.UI.Color.FromArgb(0xFF, 0x35, 0xC5, 0xF4)
+        : global::Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xC2, 0x30));
+}
+
 /// <summary>A label and its value: the title page's facts card, file details and the About rows.</summary>
 public sealed record FactRow(string Label, string Value);
 

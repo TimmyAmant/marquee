@@ -307,5 +307,6 @@
   "gotifyPriority": "La prioridad es un número del 0 al 10.",
   "slackEnterUrl": "Escribe la dirección del webhook entrante.",
   "pushbulletEnterToken": "Escribe tu token de acceso de Pushbullet (Settings › Account › Create access token).",
-  "pushbulletBadChannel": "La etiqueta de canal solo lleva letras, números, - y _."
+  "pushbulletBadChannel": "La etiqueta de canal solo lleva letras, números, - y _.",
+  "arrPublicUrlNotFull": "Introduce la URL pública completa, empezando por http:// o https://, o déjala en blanco."
 }

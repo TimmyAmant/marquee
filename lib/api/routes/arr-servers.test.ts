@@ -111,6 +111,7 @@ const savedServer: ArrServer = {
   kind: "radarr",
   name: "Radarr 2",
   baseUrl: "http://192.168.1.10:7878",
+  publicUrl: null,
   apiKey: "the-real-api-key",
   is4k: false,
   isDefault: false,

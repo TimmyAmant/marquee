@@ -263,5 +263,6 @@
   "removeFromArrDeleteFilesHelp": "Sai do disco de vez — o Plex e o Jellyfin também o perdem.",
   "removingFromArr": "Removendo…",
   "removeAndDelete": "Remover e apagar arquivos",
-  "removedFromArr": "Removido do {app}"
+  "removedFromArr": "Removido do {app}",
+  "openIn": "Abrir no {name}"
 }

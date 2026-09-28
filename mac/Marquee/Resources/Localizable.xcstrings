@@ -26972,6 +26972,34 @@
         }
       }
     },
+    "Public URL (for links)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffentliche URL (für Links)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL pública (para enlaces)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL publique (pour les liens)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL pública (para links)"
+          }
+        }
+      }
+    },
     "Pushbullet" : {
       "localizations" : {
         "es" : {
@@ -40469,6 +40497,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Para onde vão os pedidos que correspondem. Regras de um servidor 4K valem para pedidos em 4K."
+          }
+        }
+      }
+    },
+    "Where “Open in %@” on a title page takes you, when the address above only works for Marquee. Leave it blank to use that one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wohin „In %@ öffnen“ auf einer Titelseite führt, wenn die Adresse oben nur für Marquee funktioniert. Leer lassen, um diese zu verwenden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adónde lleva “Abrir en %@” en la página de un título, cuando la dirección de arriba solo funciona para Marquee. Déjala en blanco para usar esa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Là où mène « Ouvrir dans %@ » sur la page d’un titre, quand l’adresse ci-dessus ne fonctionne que pour Marquee. Laissez vide pour utiliser celle-ci."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para onde “Abrir no %@” leva na página de um título, quando o endereço acima só funciona para o Marquee. Deixe em branco para usar esse."
           }
         }
       }

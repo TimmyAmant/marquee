@@ -263,5 +263,6 @@
   "removeFromArrDeleteFilesHelp": "Gone from the disk for good — Plex and Jellyfin lose it too.",
   "removingFromArr": "Removing…",
   "removeAndDelete": "Remove and delete files",
-  "removedFromArr": "Removed from {app}"
+  "removedFromArr": "Removed from {app}",
+  "openIn": "Open in {name}"
 }

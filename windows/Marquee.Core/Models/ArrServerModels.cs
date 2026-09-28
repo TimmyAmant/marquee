@@ -34,6 +34,12 @@ public sealed record ArrServer
 
     public required string BaseUrl { get; init; }
 
+    /// <summary>
+    /// 0.63+: "Public URL (for links)", where "Open in Radarr/Sonarr" points
+    /// instead of <see cref="BaseUrl"/>. Null when unset, and from an older server.
+    /// </summary>
+    public string? PublicUrl { get; init; }
+
     /// <summary>Always true: a server can't be saved without its key.</summary>
     public bool HasApiKey { get; init; } = true;
 
@@ -127,6 +133,9 @@ public sealed record ArrServerCreateRequest
     public required string BaseUrl { get; init; }
     public required string ApiKey { get; init; }
 
+    /// <summary>0.63+: "Public URL (for links)"; null = none.</summary>
+    public string? PublicUrl { get; init; }
+
     /// <summary>Blank = "Sonarr" / "Radarr" / "4K Sonarr" / "4K Radarr", numbered when taken.</summary>
     public string? Name { get; init; }
 
@@ -152,6 +161,10 @@ public sealed record ArrServerUpdateRequest
 {
     public string? Name { get; init; }
     public string? BaseUrl { get; init; }
+
+    /// <summary>0.63+: "Public URL (for links)"; an explicit null clears it.</summary>
+    public ClearableString? PublicUrl { get; init; }
+
     public string? ApiKey { get; init; }
     public bool? Is4k { get; init; }
     public bool? IsDefault { get; init; }
@@ -239,6 +252,7 @@ public sealed class ArrServerDraft
         Saved = saved;
         Name = saved.Name;
         BaseUrl = saved.BaseUrl;
+        PublicUrl = saved.PublicUrl ?? "";
         Is4k = saved.Is4k;
         IsDefault = saved.IsDefault;
         QualityProfileId = saved.QualityProfileId;
@@ -261,6 +275,9 @@ public sealed class ArrServerDraft
 
     public string Name { get; set; } = "";
     public string BaseUrl { get; set; } = "";
+
+    /// <summary>"Public URL (for links)" (0.63+): blank = links use <see cref="BaseUrl"/>.</summary>
+    public string PublicUrl { get; set; } = "";
 
     /// <summary>Blank while editing keeps the saved key.</summary>
     public string ApiKey { get; set; } = "";
@@ -299,6 +316,9 @@ public sealed class ArrServerDraft
     public bool NeedsKeyAgain => UrlChanged && !HasNewKey;
 
     private static string Trimmed(string url) => url.Trim().TrimEnd('/');
+
+    /// <summary>The public URL as sent: trailing slashes off, null when blank (clears it).</summary>
+    public string? TrimmedPublicUrl => Trimmed(PublicUrl).NonBlank();
 
     /// <summary>
     /// "Test": the typed key, or while editing without one the saved
@@ -346,6 +366,7 @@ public sealed class ArrServerDraft
         Kind = Kind,
         BaseUrl = BaseUrl.Trim(),
         ApiKey = ApiKey.Trim(),
+        PublicUrl = TrimmedPublicUrl,
         Name = Name.Trim().NonBlank(),
         Is4k = Is4k,
         IsDefault = IsDefault ? true : null,
@@ -369,6 +390,7 @@ public sealed class ArrServerDraft
         Name = Name.Trim().NonBlank(),
         BaseUrl = BaseUrl.Trim(),
         ApiKey = ApiKey.Trim().NonBlank(),
+        PublicUrl = new ClearableString(TrimmedPublicUrl),
         Is4k = Is4k,
         IsDefault = Saved?.IsDefault == IsDefault ? null : IsDefault,
         QualityProfileId = QualityProfileId,

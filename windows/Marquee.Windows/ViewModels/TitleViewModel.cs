@@ -231,6 +231,8 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(HasMoreActions),
         nameof(MyRequests),
         nameof(HasMyRequests),
+        nameof(ArrLinkItems),
+        nameof(HasArrLinks),
     ];
 
     private readonly AppModel model;
@@ -425,6 +427,10 @@ public sealed partial class TitleViewModel : ObservableObject
         ? current.Play.Where(link => link.Link != null).Select(link => new PlayItem(link, current.Play.Count > 1)).ToList()
         : [];
     public bool HasPlayItems => PlayItems.Count > 0;
+
+    /// <summary>0.63+: "Open in Radarr/Sonarr", for the admin and whoever reviews requests.</summary>
+    public IReadOnlyList<ArrLinkItem> ArrLinkItems => detail?.Viewer.OpenInArrLinks.Select(item => new ArrLinkItem(item)).ToList() ?? [];
+    public bool HasArrLinks => ArrLinkItems.Count > 0;
 
     /// <summary>0.53+: "This request will be approved automatically" in the season dialog.</summary>
     public bool AutoApprove => detail?.Viewer.AutoApprove == true;

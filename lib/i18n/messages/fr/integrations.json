@@ -387,5 +387,7 @@
   "pushbulletToken": "Jeton d’accès",
   "pushbulletTokenHint": "Sur pushbullet.com, Settings › Account › Create access token. Laissé vide, celui enregistré est conservé.",
   "pushbulletChannel": "Identifiant de chaîne (facultatif)",
-  "pushbulletChannelHint": "Publier sur une chaîne dont vous êtes propriétaire plutôt que sur vos appareils."
+  "pushbulletChannelHint": "Publier sur une chaîne dont vous êtes propriétaire plutôt que sur vos appareils.",
+  "arrPublicUrl": "URL publique (pour les liens)",
+  "arrPublicUrlHelp": "Là où mène « Ouvrir dans {app} » sur la page d’un titre, quand l’adresse ci-dessus ne fonctionne que pour Marquee. Laissez vide pour utiliser celle-ci."
 }

@@ -77,6 +77,10 @@ extension API {
         /// Shown everywhere a server is named ("Radarr 2").
         let name: String
         let baseUrl: String
+        /// 0.63+: "Public URL (for links)" — where "Open in Radarr/Sonarr"
+        /// points instead of `baseUrl`. nil when unset, and from an older
+        /// server.
+        let publicUrl: String?
         let hasApiKey: Bool
         /// 4K requests and "Add in 4K" go here.
         let is4k: Bool
@@ -101,7 +105,7 @@ extension API {
         let webhookUrl: String
 
         init(
-            id: String, kind: ArrKind, name: String, baseUrl: String, hasApiKey: Bool = true,
+            id: String, kind: ArrKind, name: String, baseUrl: String, publicUrl: String? = nil, hasApiKey: Bool = true,
             is4k: Bool = false, isDefault: Bool = false, qualityProfileId: Int? = nil, rootFolderPath: String? = nil,
             tags: [Int] = [], seriesType: SeriesType? = nil, seasonFolders: Bool? = nil,
             animeQualityProfileId: Int? = nil, animeRootFolderPath: String? = nil, animeTags: [Int] = [],
@@ -111,6 +115,7 @@ extension API {
             self.kind = kind
             self.name = name
             self.baseUrl = baseUrl
+            self.publicUrl = publicUrl
             self.hasApiKey = hasApiKey
             self.is4k = is4k
             self.isDefault = isDefault
@@ -134,6 +139,7 @@ extension API {
             kind = try container.decode(ArrKind.self, forKey: .kind)
             name = try container.decode(String.self, forKey: .name)
             baseUrl = try container.decode(String.self, forKey: .baseUrl)
+            publicUrl = try container.decodeIfPresent(String.self, forKey: .publicUrl)
             hasApiKey = try container.decodeIfPresent(Bool.self, forKey: .hasApiKey) ?? true
             is4k = try container.decodeIfPresent(Bool.self, forKey: .is4k) ?? false
             isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
@@ -150,7 +156,7 @@ extension API {
         }
 
         private enum CodingKeys: String, CodingKey {
-            case id, kind, name, baseUrl, hasApiKey, is4k, isDefault, qualityProfileId, rootFolderPath, tags
+            case id, kind, name, baseUrl, publicUrl, hasApiKey, is4k, isDefault, qualityProfileId, rootFolderPath, tags
             case seriesType, seasonFolders, animeQualityProfileId, animeRootFolderPath, animeTags, fullyConfigured, webhookUrl
         }
     }
@@ -214,6 +220,8 @@ extension API {
         var kind: ArrKind?
         var name: String?
         var baseUrl: String?
+        /// 0.63+: `.some(nil)` clears it (sent as null); nil leaves it out.
+        var publicUrl: String?? = nil
         var apiKey: String?
         var is4k: Bool?
         var isDefault: Bool?
@@ -232,7 +240,7 @@ extension API {
         }
 
         private enum CodingKeys: String, CodingKey {
-            case kind, name, baseUrl, apiKey, is4k, isDefault, qualityProfileId, rootFolderPath, tags
+            case kind, name, baseUrl, publicUrl, apiKey, is4k, isDefault, qualityProfileId, rootFolderPath, tags
             case seriesType, seasonFolders, animeQualityProfileId, animeRootFolderPath, animeTags
         }
 
@@ -241,6 +249,7 @@ extension API {
             try container.encodeIfPresent(kind, forKey: .kind)
             try container.encodeIfPresent(name, forKey: .name)
             try container.encodeIfPresent(baseUrl, forKey: .baseUrl)
+            if let publicUrl { try container.encode(publicUrl, forKey: .publicUrl) }
             try container.encodeIfPresent(apiKey, forKey: .apiKey)
             try container.encodeIfPresent(is4k, forKey: .is4k)
             try container.encodeIfPresent(isDefault, forKey: .isDefault)

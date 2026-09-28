@@ -607,6 +607,21 @@ export type TitleViewerState = {
    * "This request will be approved automatically". An older server omits
    * it. */
   autoApprove?: boolean;
+  /** 0.63+: "Open in Radarr" / "Open in Sonarr" — the title's page on each
+   * server that has it (standard and 4K), in Settings order, at the
+   * server's "Public URL (for links)" when set. Only for the admin and
+   * whoever may review requests; empty for everyone else, and omitted by an
+   * older server. Label each "Open in Radarr" / "Open in Radarr 4K", or
+   * "Open in {serverName}" when several of that kind and 4K-ness have it. */
+  arrLinks?: ArrLink[];
+};
+
+/** 0.63+: one of TitleViewerState.arrLinks. */
+export type ArrLink = {
+  kind: "radarr" | "sonarr";
+  serverName: string;
+  is4k: boolean;
+  url: string;
 };
 
 /** 0.46+: GET /requests/{id}/edit-options — what "Edit" on a pending

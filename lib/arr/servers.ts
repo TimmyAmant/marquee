@@ -19,6 +19,8 @@ export type ArrServer = {
   kind: ArrProvider;
   name: string;
   baseUrl: string;
+  /** Where a browser opens it ("Open in Radarr"), when not baseUrl. */
+  publicUrl: string | null;
   /** Decrypted — never leaves the server (see toArrServerDto). */
   apiKey: string;
   is4k: boolean;
@@ -44,6 +46,7 @@ export function toArrServer(row: ArrServerRow): ArrServer {
     kind: row.kind,
     name: row.name,
     baseUrl: row.baseUrl,
+    publicUrl: row.publicUrl ?? null,
     apiKey: decryptSecret({ ciphertext: row.apiKeyEnc, iv: row.apiKeyIv, tag: row.apiKeyTag }),
     is4k: row.is4k,
     isDefault: row.isDefault,
@@ -179,6 +182,8 @@ export type ArrServerDto = {
   kind: ArrProvider;
   name: string;
   baseUrl: string;
+  /** 0.63+: "Public URL (for links)" — null when links use baseUrl. */
+  publicUrl: string | null;
   hasApiKey: true;
   is4k: boolean;
   isDefault: boolean;
@@ -201,6 +206,7 @@ export function toArrServerDto(server: ArrServer, webhookBaseUrl: string): ArrSe
     kind: server.kind,
     name: server.name,
     baseUrl: server.baseUrl,
+    publicUrl: server.publicUrl,
     hasApiKey: true,
     is4k: server.is4k,
     isDefault: server.isDefault,

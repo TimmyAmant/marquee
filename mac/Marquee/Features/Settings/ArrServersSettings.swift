@@ -12,6 +12,8 @@ struct ArrServerForm: Hashable, Sendable {
 
     var name = ""
     var baseUrl = ""
+    /// "Public URL (for links)", 0.63+: blank = links use `baseUrl`.
+    var publicUrl = ""
     /// Blank while editing keeps the saved key.
     var apiKey = ""
     var is4k = false
@@ -42,6 +44,7 @@ struct ArrServerForm: Hashable, Sendable {
         editing = server
         name = server.name
         baseUrl = server.baseUrl
+        publicUrl = server.publicUrl ?? ""
         is4k = server.is4k
         isDefault = server.isDefault
         qualityProfileId = server.qualityProfileId
@@ -61,6 +64,13 @@ struct ArrServerForm: Hashable, Sendable {
         var url = baseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         while url.hasSuffix("/") { url.removeLast() }
         return url
+    }
+
+    /// Trailing slashes off; nil when blank (clears it).
+    private var trimmedPublicURL: String? {
+        var url = publicUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        while url.hasSuffix("/") { url.removeLast() }
+        return url.nonBlank
     }
 
     private var enteredKey: String? { apiKey.nonBlank.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } }
@@ -107,6 +117,7 @@ struct ArrServerForm: Hashable, Sendable {
             kind: isEditing ? nil : kind,
             name: name.nonBlank.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) },
             baseUrl: urlChanged ? trimmedURL : nil,
+            publicUrl: .some(trimmedPublicURL),
             apiKey: enteredKey,
             is4k: is4k,
             // Only to take the default over: it can't be switched off here.
@@ -416,6 +427,15 @@ private struct ArrServerSheet: View {
     private var connectionFields: some View {
         SettingsField(label: String(localized: "Name"), text: $form.name, placeholder: form.is4k ? "4K \(kindName)" : kindName)
         SettingsField(label: String(localized: "Server URL"), text: $form.baseUrl, placeholder: "http://localhost:\(form.kind.defaultPort)")
+        // 0.63+: where "Open in Radarr/Sonarr" on a title page goes.
+        VStack(alignment: .leading, spacing: 5) {
+            SettingsField(
+                label: String(localized: "Public URL (for links)"),
+                text: $form.publicUrl,
+                placeholder: "https://\(form.kind.rawValue).example.com"
+            )
+            hint(String(localized: "Where “Open in \(kindName)” on a title page takes you, when the address above only works for Marquee. Leave it blank to use that one."))
+        }
         VStack(alignment: .leading, spacing: 5) {
             SettingsField(
                 label: String(localized: "API key"),

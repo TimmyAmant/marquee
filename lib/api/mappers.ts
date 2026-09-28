@@ -153,6 +153,9 @@ export function titleViewerState(input: {
   notFoundSince?: Date | null;
   /** The language of myRequests' seasonsLabel; English when omitted. */
   t?: Translator;
+  /** "Open in Radarr/Sonarr" (loadTitleStatus, already limited to whoever
+   * may see them). */
+  arrLinks?: Dto.ArrLink[];
   /** The viewer's own requests for the title (loadTitleStatus). */
   myRequests?: {
     id: string;
@@ -203,6 +206,7 @@ export function titleViewerState(input: {
       commentCount: r.commentCount,
       createdAt: isoRequired(r.createdAt),
     })),
+    arrLinks: input.arrLinks ?? [],
   };
 }
 

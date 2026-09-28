@@ -6,6 +6,7 @@ import type { MediaType } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
 import { mapWithLimit } from "@/lib/async/map-limit";
 import { arrConfig, getArrServerById, getDefaultArrServer, type ArrServer } from "@/lib/arr/servers";
+import { arrLinkBase } from "@/lib/arr/links";
 import * as radarr from "@/lib/radarr/client";
 import * as sonarr from "@/lib/sonarr/client";
 import { getPlexFileInfo } from "@/lib/plex/sync";
@@ -417,7 +418,7 @@ export async function getNotFoundRequests(): Promise<NotFoundRow[]> {
         requestedByName: row.requestedByName,
         requestedByUsername: row.requestedByUsername,
         server: { id: server?.id ?? row.arrServerId, name: server?.name ?? row.arrServerName, kind },
-        arrUrl: arrTitleUrl(server?.baseUrl, row.notFoundArrPath),
+        arrUrl: arrTitleUrl(server ? arrLinkBase(server) : null, row.notFoundArrPath),
       };
     }),
   );

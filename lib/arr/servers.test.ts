@@ -11,6 +11,7 @@ function server(overrides: Partial<ArrServer> = {}): ArrServer {
     kind: "sonarr",
     name: "Sonarr",
     baseUrl: "http://192.168.1.10:8989",
+    publicUrl: null,
     apiKey: "super-secret-api-key",
     is4k: false,
     isDefault: true,

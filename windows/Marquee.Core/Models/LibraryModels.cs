@@ -141,6 +141,26 @@ public sealed record FileDetails
     }
 }
 
+/// <summary>
+/// <c>viewer.arrLinks</c> (0.63+): one server's page for the title. Labelled
+/// "Open in Radarr" / "Open in Radarr 4K", or "Open in {serverName}" when
+/// several of that kind and 4K-ness have it.
+/// </summary>
+public sealed record ArrLink
+{
+    /// <summary><see cref="ArrProvider.Radarr"/> or <see cref="ArrProvider.Sonarr"/>.</summary>
+    public required ArrProvider Kind { get; init; }
+
+    public required string ServerName { get; init; }
+
+    public bool Is4k { get; init; }
+
+    public required string Url { get; init; }
+}
+
+/// <summary>An <see cref="ArrLink"/> with its button's text.</summary>
+public sealed record TitledArrLink(ArrLink Link, string Title);
+
 /// <summary>Radarr/Sonarr has the title (admin only).</summary>
 public sealed record ArrTracking
 {
@@ -229,6 +249,25 @@ public sealed record TitleViewerState
     /// approved automatically". Null from an older server.
     /// </summary>
     public bool? AutoApprove { get; init; }
+
+    /// <summary>
+    /// 0.63+: "Open in Radarr" / "Open in Sonarr", the title's page on each
+    /// server that has it, for the admin and whoever may review requests.
+    /// Empty for everyone else, and from an older server.
+    /// </summary>
+    public IReadOnlyList<ArrLink> ArrLinks { get; init; } = [];
+
+    /// <summary>The "Open in …" buttons, labelled (see <see cref="ArrLink"/>).</summary>
+    [JsonIgnore]
+    public IReadOnlyList<TitledArrLink> OpenInArrLinks =>
+        ArrLinks
+            .Select(link =>
+            {
+                var siblings = ArrLinks.Count(l => l.Kind == link.Kind && l.Is4k == link.Is4k);
+                var name = siblings > 1 ? link.ServerName : link.Is4k ? link.Kind.DisplayName + " 4K" : link.Kind.DisplayName;
+                return new TitledArrLink(link, Loc.Format("Title_OpenIn", name));
+            })
+            .ToList();
 
     /// <summary>
     /// On the admin's request blocklist (0.41+): the can-request flags are

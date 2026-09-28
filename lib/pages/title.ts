@@ -5,6 +5,8 @@ import { getTitleNotFoundSince } from "@/lib/requests/not-found";
 import { can, NO_PERMISSIONS, permissionMap } from "@/lib/users/permissions";
 import { getAccess } from "@/lib/users/access";
 import { getFourKStatus } from "@/lib/arr/fourk";
+import { getArrLinks } from "@/lib/arr/title-links";
+import { seesArrLinks, type ArrLink } from "@/lib/arr/links";
 import type { SimilarTitle } from "@/components/similar-titles-row";
 import type { FranchiseItem } from "@/components/franchise-row";
 import type { LibraryStatus } from "@/components/status-badge";
@@ -119,13 +121,18 @@ export async function loadTitleStatus(
   });
   // The 4K copy (lib/arr/fourk.ts): what the 4K instance has, and this
   // viewer's 4K request. Null when there's no 4K instance for this type.
-  const [fourKLibrary, fourKRequestStatus] =
+  // "Open in Radarr/Sonarr" (lib/arr/links.ts): only for the admin and
+  // whoever reviews requests, asked alongside the 4K servers.
+  const [fourKLibrary, fourKRequestStatus, arrLinks] =
     viewer.userId && viewer.libraryOwnerId
       ? await Promise.all([
           getFourKStatus(viewer.libraryOwnerId, type, tmdbId, tvdbId).catch(() => null),
           getActiveRequestStatus(viewer.userId, type, tmdbId, true),
+          seesArrLinks(access)
+            ? getArrLinks(viewer.libraryOwnerId, type, tmdbId, tvdbId).catch(() => [] as ArrLink[])
+            : ([] as ArrLink[]),
         ])
-      : [null, null];
+      : [null, null, [] as ArrLink[]];
   const fourK = fourKLibrary ? { ...fourKLibrary, requestStatus: fourKRequestStatus } : null;
   const openReports = viewer.userId ? await getOpenIssuesFor(viewer.userId, type, tmdbId) : 0;
   const blocked = viewer.userId ? await findBlock(type, tmdbId).catch(() => null) : null;
@@ -162,6 +169,7 @@ export async function loadTitleStatus(
     notFoundSince,
     myRequests,
     permissions,
+    arrLinks,
   };
 }
 
@@ -292,6 +300,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     notFoundSince,
     myRequests,
     permissions,
+    arrLinks,
   } = await loadTitleStatus(viewer, type, tmdbId, title.tvdbId, seasons);
 
   const raw =title.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null;
@@ -495,6 +504,7 @@ export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmd
     blocked,
     notFoundSince,
     myRequests,
+    arrLinks,
     // Blocked single titles, for the Request buttons on the franchise and
     // similar-titles rows. (A keyword block there is still refused by the
     // server when pressed.)

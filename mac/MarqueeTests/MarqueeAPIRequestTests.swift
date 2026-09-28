@@ -727,7 +727,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
         XCTAssertEqual(
             try Self.jsonObject(Self.body(of: patch)),
             try Self.jsonObject(Data(#"""
-            {"name":"Sonarr 2","is4k":false,"qualityProfileId":4,"rootFolderPath":"/tv","tags":[],
+            {"name":"Sonarr 2","publicUrl":null,"is4k":false,"qualityProfileId":4,"rootFolderPath":"/tv","tags":[],
              "seriesType":"standard","seasonFolders":true,"animeQualityProfileId":null,"animeRootFolderPath":null,"animeTags":[]}
             """#.utf8))
         )

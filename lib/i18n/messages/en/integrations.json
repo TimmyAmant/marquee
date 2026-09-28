@@ -387,5 +387,7 @@
   "pushbulletToken": "Access token",
   "pushbulletTokenHint": "On pushbullet.com, Settings › Account › Create access token. Left blank, the saved one is kept.",
   "pushbulletChannel": "Channel tag (optional)",
-  "pushbulletChannelHint": "Post to a channel you own instead of your own devices."
+  "pushbulletChannelHint": "Post to a channel you own instead of your own devices.",
+  "arrPublicUrl": "Public URL (for links)",
+  "arrPublicUrlHelp": "Where \"Open in {app}\" on a title page takes you, when the address above only works for Marquee. Leave it blank to use that one."
 }

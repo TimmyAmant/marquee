@@ -52,6 +52,7 @@ final class ArrServersTests: XCTestCase {
 
         let list = try decode(API.ListResponse<API.ArrServer>.self, "arr-servers").results
         XCTAssertEqual(list.map(\.kind), [.sonarr])
+        XCTAssertNil(list.first?.publicUrl, "0.63+: null — links use baseUrl")
 
         let test = try decode(API.ArrServerTestResult.self, "arr-server-test")
         XCTAssertEqual(test.version, "5.26.2.10099")
@@ -256,7 +257,23 @@ final class ArrServersTests: XCTestCase {
         form.isDefault = false
         XCTAssertNil(body.sonarr, "Radarr sends no Sonarr settings")
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: APIClient.encoder.encode(body)) as? [String: Any])
-        XCTAssertEqual(Set(json.keys), ["kind", "baseUrl", "apiKey", "is4k", "tags"])
+        XCTAssertEqual(Set(json.keys), ["kind", "baseUrl", "publicUrl", "apiKey", "is4k", "tags"])
+        XCTAssertTrue(json["publicUrl"] is NSNull, "Blank: no public URL")
+    }
+
+    func testPublicURLIsTrimmedSentAndCleared() throws {
+        var form = ArrServerForm(editing: API.ArrServer(
+            id: "r1", kind: .radarr, name: "Radarr", baseUrl: "http://radarr:7878", publicUrl: "https://radarr.example.com"
+        ))
+        XCTAssertEqual(form.publicUrl, "https://radarr.example.com")
+        form.publicUrl = " https://movies.example.com/radarr/ "
+        XCTAssertEqual(form.saveRequest.publicUrl, .some("https://movies.example.com/radarr"))
+        form.publicUrl = "  "
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: APIClient.encoder.encode(form.saveRequest)) as? [String: Any])
+        XCTAssertTrue(json["publicUrl"] is NSNull, "Blank clears it")
+        // "Make default" alone doesn't touch it.
+        let other = try XCTUnwrap(JSONSerialization.jsonObject(with: APIClient.encoder.encode(API.ArrServerRequest(isDefault: true))) as? [String: Any])
+        XCTAssertNil(other["publicUrl"])
     }
 
     func testEditingKeepsTheSavedKeyUnlessTheURLChanges() {

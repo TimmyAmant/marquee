@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.63.0",
+    date: "2026-09-27",
+    changes: [
+      "Open in Radarr / Open in Sonarr on every movie and show page (one per server, 4K included), for the admin and anyone allowed to review requests. On phones it's in the … menu. On the website, Mac, Windows and iPhone.",
+      "Settings › Services: each Sonarr/Radarr server has an optional Public URL used for these links, for when the server's own address only works inside your network.",
+    ],
+  },
+  {
     version: "0.62.1",
     date: "2026-09-27",
     changes: [

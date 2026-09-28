@@ -74,6 +74,29 @@ describe("parseArrServerInput", () => {
   });
 });
 
+describe("publicUrl (Open in Radarr/Sonarr)", () => {
+  it("trims trailing slashes and keeps a path", () => {
+    expect(parseArrServerInput({ publicUrl: " https://arr.example.com/radarr/ " })).toEqual({
+      ok: true,
+      input: { publicUrl: "https://arr.example.com/radarr" },
+    });
+  });
+
+  it("clears it with null or a blank", () => {
+    expect(parseArrServerInput({ publicUrl: null })).toEqual({ ok: true, input: { publicUrl: null } });
+    expect(parseArrServerInput({ publicUrl: "   " })).toEqual({ ok: true, input: { publicUrl: null } });
+    expect(parseArrServerInput({})).toEqual({ ok: true, input: {} });
+  });
+
+  it("wants a full http(s) address", () => {
+    expect(parseArrServerInput({ publicUrl: "radarr.example.com" })).toEqual({
+      ok: false,
+      error: "Enter the public URL in full, starting with http:// or https://, or leave it blank.",
+    });
+    expect(parseArrServerInput({ publicUrl: 7 })).toEqual({ ok: false, error: '"publicUrl" must be a string.' });
+  });
+});
+
 describe("small helpers", () => {
   it("trims URLs", () => {
     expect(normalizeServerUrl("  https://arr.example.com/radarr/  ")).toBe("https://arr.example.com/radarr");
