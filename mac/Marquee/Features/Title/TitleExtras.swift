@@ -162,7 +162,7 @@ struct TrailerSheet: View {
                 .aspectRatio(16.0 / 9.0, contentMode: .fit)
                 .background(Color.black)
         }
-        .frame(width: 960)
+        .sheetWidth(960, alignment: .center)
         .background(Theme.bg1)
     }
 }
@@ -279,7 +279,7 @@ struct RelinkTitleSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 460)
+        .sheetWidth(460)
         .background(Theme.bg1)
     }
 

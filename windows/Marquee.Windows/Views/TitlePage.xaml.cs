@@ -25,6 +25,7 @@ public sealed partial class TitlePage : Page
         ViewModel = new TitleViewModel(AppServices.Model);
         InitializeComponent();
         SizeChanged += OnPageSizeChanged;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     /// <summary>
@@ -44,6 +45,36 @@ public sealed partial class TitlePage : Page
         var backdrop = Math.Max(300, Math.Min(height * 0.7, width * 0.5625));
         BackdropHost.Height = backdrop;
         HeroColumns.Margin = new Thickness(28, -Math.Round(backdrop * 0.47), 28, 0);
+        // The loading page lines up with the page that replaces it.
+        SkeletonBackdrop.Height = backdrop;
+        SkeletonColumns.Margin = HeroColumns.Margin;
+    }
+
+    /// <summary>The artwork has decoded: fade it in over the backdrop's surface.</summary>
+    private void OnBackdropOpened(object sender, RoutedEventArgs e)
+    {
+        BackdropImage.Opacity = 1;
+    }
+
+    /// <summary>The artwork the image was last given; a reload hands back the same one.</summary>
+    private object? shownBackdrop;
+
+    /// <summary>
+    /// Another title's artwork starts hidden again, until it has decoded too.
+    /// The same image again (a reload) stays as it is: it won't open twice.
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(TitleViewModel.Backdrop) && !string.IsNullOrEmpty(e.PropertyName))
+        {
+            return;
+        }
+        var current = ViewModel.Backdrop;
+        if (!ReferenceEquals(current, shownBackdrop))
+        {
+            shownBackdrop = current;
+            BackdropImage.Opacity = 0;
+        }
     }
 
     /// <summary>The chevron on Add: opens or closes "Advanced" (the first opening loads the options).</summary>

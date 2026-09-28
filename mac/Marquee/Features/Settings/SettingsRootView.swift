@@ -76,9 +76,9 @@ enum NotificationsSubTab: String, Hashable, CaseIterable {
 }
 
 /// How wide Settings' column is: the header and every tab share it, centered
-/// in the window.
+/// in the window. The website's (max-w-5xl), so every tab fits on one line.
 enum SettingsLayout {
-    static let columnWidth: CGFloat = 820
+    static let columnWidth: CGFloat = 1024
 }
 
 /// app/settings/layout.tsx with components/settings-nav.tsx: Settings as a
@@ -121,14 +121,15 @@ struct SettingsRootView: View {
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                     VStack(spacing: 10) {
-                        // Wraps onto a second line rather than scrolling:
-                        // a sideways-scrolling row hid Activity and About
-                        // off the right edge with nothing to say they were there.
-                        FlowLayout(spacing: 2, lineSpacing: 6, centersLines: true) {
-                            ForEach(tabs, id: \.self) { tab in
-                                SettingsTabButton(title: tab.title, current: tab == current) {
-                                    model.settingsTab = tab
-                                }
+                        // One line like the website's; a narrower window
+                        // first tightens the pills, and only wraps them onto a
+                        // second line when even that doesn't fit, so no tab
+                        // is ever hidden off the edge.
+                        ViewThatFits(in: .horizontal) {
+                            tabRow(tabs, current: current, compact: false)
+                            tabRow(tabs, current: current, compact: true)
+                            FlowLayout(spacing: 2, lineSpacing: 6, centersLines: true) {
+                                tabButtons(tabs, current: current, compact: true)
                             }
                         }
                         Divider().overlay(Theme.border)
@@ -175,6 +176,18 @@ struct SettingsRootView: View {
             }
         }
     }
+
+    private func tabRow(_ tabs: [SettingsTab], current: SettingsTab, compact: Bool) -> some View {
+        HStack(spacing: 2) { tabButtons(tabs, current: current, compact: compact) }
+    }
+
+    private func tabButtons(_ tabs: [SettingsTab], current: SettingsTab, compact: Bool) -> some View {
+        ForEach(tabs, id: \.self) { tab in
+            SettingsTabButton(title: tab.title, current: tab == current, compact: compact) {
+                model.settingsTab = tab
+            }
+        }
+    }
 }
 
 /// One of the tabs: a pill, solid for the current one. Notifications' own
@@ -183,6 +196,8 @@ struct SettingsTabButton: View {
     let title: String
     let current: Bool
     var small = false
+    /// Tighter padding, for a window too narrow for the full row.
+    var compact = false
     let action: () -> Void
     @State private var hovering = false
 
@@ -192,8 +207,8 @@ struct SettingsTabButton: View {
                 .font(.system(size: small ? 12 : 13, weight: .medium))
                 .lineLimit(1)
                 .fixedSize()
-                .padding(.horizontal, small ? 11 : 12)
-                .frame(height: small ? 26 : 30)
+                .padding(.horizontal, small ? 11 : (compact ? 8 : 12))
+                .frame(height: small ? 26 : 32)
                 .foregroundStyle(foreground)
                 .background(Capsule().fill(fill))
                 .overlay {

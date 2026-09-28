@@ -13,6 +13,7 @@ struct FavoritesView: View {
                 Text("Favorites")
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
+                    .macPageHeading()
 
                 if let favorites {
                     if favorites.isEmpty {

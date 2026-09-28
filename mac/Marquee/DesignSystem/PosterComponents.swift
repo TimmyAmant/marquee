@@ -589,7 +589,12 @@ struct PersonCard: View {
 /// grid page never leaves a dead strip on the right. Shelf rows stay at
 /// exactly 156.
 struct PosterGrid<Content: View>: View {
+    #if os(macOS)
     var minimum: CGFloat = Metrics.posterWidth
+    #else
+    /// Three across an iPhone, filling its width between the 16pt margins.
+    var minimum: CGFloat = 100
+    #endif
     @ViewBuilder let content: () -> Content
 
     var body: some View {

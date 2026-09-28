@@ -66,6 +66,15 @@ final class TitleDetailModel {
     func load(_ api: MarqueeAPI) async {
         self.api = api
         do {
+            #if DEBUG
+            // MARQUEE_TITLE_DELAY=3 holds the loading state on screen for
+            // three seconds, to look at it without a slow server.
+            if detail == nil, let raw = ProcessInfo.processInfo.environment["MARQUEE_TITLE_DELAY"],
+               let seconds = Double(raw), seconds > 0 {
+                try? await Task.sleep(for: .seconds(seconds))
+                if Task.isCancelled { return }
+            }
+            #endif
             let fresh = try await api.titles.detail(id.mediaType, id: id.tmdbId)
             if Task.isCancelled { return }
             detail = fresh

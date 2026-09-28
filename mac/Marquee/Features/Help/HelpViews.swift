@@ -14,6 +14,7 @@ struct ErrorReferenceView: View {
                     Text("Error reference")
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
+                        .macPageHeading()
                     Text("What every error message in Marquee actually means, and what to do about it. If the exact wording you saw isn't below, it's most likely a message passed straight through from Sonarr, Radarr, Plex, or Jellyfin themselves — check that service's own logs.")
                         .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
@@ -54,7 +55,7 @@ struct ErrorReferenceView: View {
                     LoadingView()
                 }
             }
-            .padding(32)
+            .padding(HelpMetrics.pagePadding)
             .frame(maxWidth: 820, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -88,6 +89,7 @@ struct StatusColorsHelpView: View {
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
+                        .macPageHeading()
                     Text("Posters get a colored strip along the bottom, and title pages a badge, showing where each title stands in your library. They use the same colors as Radarr and Sonarr, so a title looks the same everywhere.")
                         .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
@@ -122,7 +124,7 @@ struct StatusColorsHelpView: View {
                     .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             }
-            .padding(32)
+            .padding(HelpMetrics.pagePadding)
             .frame(maxWidth: 680, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -147,6 +149,7 @@ struct ChangelogView: View {
                     Text("Releases")
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
+                        .macPageHeading()
                     Text("What's changed, release by release.")
                         .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
@@ -161,27 +164,7 @@ struct ChangelogView: View {
                         VStack(spacing: 0) {
                             ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                                 if index > 0 { Divider().overlay(Theme.border) }
-                                HStack(spacing: 14) {
-                                    Text(entry.daysAgo())
-                                        .font(.system(size: Metrics.text(12)))
-                                        .foregroundStyle(Theme.textMuted)
-                                        .frame(width: 90, alignment: .leading)
-                                    Text("Release v\(entry.version)")
-                                        .font(.system(size: Metrics.text(14), weight: .medium))
-                                        .foregroundStyle(Theme.textPrimary)
-                                    if index == 0 {
-                                        TonePill(text: String(localized: "Latest"), tone: .accent, small: true)
-                                    }
-                                    Spacer()
-                                    Button {
-                                        openEntry = entry
-                                    } label: {
-                                        Label("View Changelog", systemImage: "doc.text")
-                                    }
-                                    .buttonStyle(OutlineButtonStyle(compact: true))
-                                }
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 14)
+                                ReleaseRow(entry: entry, isLatest: index == 0) { openEntry = entry }
                             }
                         }
                         .cardSurface(padding: 0)
@@ -192,7 +175,7 @@ struct ChangelogView: View {
                     LoadingView()
                 }
             }
-            .padding(32)
+            .padding(HelpMetrics.pagePadding)
             .frame(maxWidth: 760, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -242,8 +225,90 @@ struct ChangelogView: View {
                 }
             }
             .padding(24)
+            #if os(macOS)
             .frame(width: 560, height: 460)
+            #else
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            #endif
             .background(Theme.bg1)
         }
     }
+}
+
+/// One release: "1 day ago · Release v0.57.0 · Latest · View Changelog" in a
+/// row on the Mac; on iOS the version and "Latest" over the date, the whole
+/// row opening the changelog.
+private struct ReleaseRow: View {
+    let entry: API.ChangelogEntry
+    let isLatest: Bool
+    let open: () -> Void
+
+    var body: some View {
+        #if os(macOS)
+        HStack(spacing: 14) {
+            Text(entry.daysAgo())
+                .font(.system(size: Metrics.text(12)))
+                .foregroundStyle(Theme.textMuted)
+                .frame(width: 90, alignment: .leading)
+            Text("Release v\(entry.version)")
+                .font(.system(size: Metrics.text(14), weight: .medium))
+                .foregroundStyle(Theme.textPrimary)
+            if isLatest {
+                TonePill(text: String(localized: "Latest"), tone: .accent, small: true)
+            }
+            Spacer()
+            Button(action: open) {
+                Label("View Changelog", systemImage: "doc.text")
+            }
+            .buttonStyle(OutlineButtonStyle(compact: true))
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        #else
+        Button(action: open) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text("Release v\(entry.version)")
+                            .font(.system(size: Metrics.text(15), weight: .medium))
+                            .foregroundStyle(Theme.textPrimary)
+                            .lineLimit(1)
+                        if isLatest {
+                            TonePill(text: String(localized: "Latest"), tone: .accent, small: true)
+                                .fixedSize()
+                        }
+                    }
+                    Text(entry.daysAgo())
+                        .font(.system(size: Metrics.text(12)))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                Spacer(minLength: 8)
+                Label("Changelog", systemImage: "doc.text")
+                    .font(.system(size: Metrics.text(12.5), weight: .medium))
+                    .foregroundStyle(Theme.accent)
+                    .lineLimit(1)
+                    .fixedSize()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(Text("Opens the changelog"))
+        #endif
+    }
+}
+
+private enum HelpMetrics {
+    /// Around the Help pages: the Mac's 32, the iPhone's 16pt gutter.
+    #if os(macOS)
+    static let pagePadding: CGFloat = 32
+    #else
+    static let pagePadding: CGFloat = 16
+    #endif
 }

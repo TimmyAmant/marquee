@@ -158,10 +158,23 @@ struct CommentsToggle: View {
     @Binding var isOpen: Bool
 
     var body: some View {
+        #if os(macOS)
         Button(CommentThreadModel.toggleLabel(count: count, isOpen: isOpen)) { isOpen.toggle() }
             .buttonStyle(QuietButtonStyle())
             .font(.system(size: Metrics.text(11.5)))
             .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
+        #else
+        // On iOS it reads as a button, not as a stray word: a speech bubble
+        // in the accent color.
+        Button {
+            isOpen.toggle()
+        } label: {
+            Label(CommentThreadModel.toggleLabel(count: count, isOpen: isOpen), systemImage: isOpen ? "bubble.left.fill" : "bubble.left")
+        }
+        .buttonStyle(QuietButtonStyle(color: Theme.accent))
+        .font(.system(size: Metrics.text(12), weight: .medium))
+        .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
+        #endif
     }
 }
 

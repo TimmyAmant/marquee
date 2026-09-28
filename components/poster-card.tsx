@@ -89,7 +89,7 @@ export function PosterCard({
 
         {typeLabel ? (
           <div
-            className={`pointer-events-none absolute left-[7px] top-[7px] z-10 rounded-[4px] px-[5px] py-[3px] text-[9px] font-bold uppercase leading-none tracking-[0.05em] text-white shadow-[0_1px_3px_rgba(0,0,0,0.35)] ${
+            className={`pointer-events-none absolute left-[7px] top-[7px] z-10 flex h-[17px] items-center rounded-[4px] px-[5px] text-[9px] font-bold uppercase leading-none tracking-[0.05em] text-white shadow-[0_1px_3px_rgba(0,0,0,0.35)] ${
               typeLabel.mediaType === "movie" ? "bg-blue-600" : "bg-fuchsia-600"
             }`}
           >
@@ -104,7 +104,9 @@ export function PosterCard({
             </div>
           )
         )}
-        {badge && <div className="pointer-events-none absolute right-1.5 top-1.5 z-10">{badge}</div>}
+        {/* A flex box, not a block: a block's line box pushed the pill below the
+            type label on the left. Same top and height, so their centres line up. */}
+        {badge && <div className="pointer-events-none absolute right-[7px] top-[7px] z-10 flex">{badge}</div>}
         {/* A thin colored strip across the bottom of the art, Sonarr-style —
             readable at a glance across a whole grid. Same tone as the badge
             (lib/library/status-tone.ts); titles not in the library get none. */}
