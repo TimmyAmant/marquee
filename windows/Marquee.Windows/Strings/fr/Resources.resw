@@ -1042,6 +1042,9 @@
   <data name="Card_StatusKeyAccessibleName" xml:space="preserve">
     <value>{0} : {1}</value>
   </data>
+  <data name="Card_EpisodesOfTotal" xml:space="preserve">
+    <value>{0} sur {1} épisodes</value>
+  </data>
   <data name="Card_TypeMovie" xml:space="preserve">
     <value>FILM</value>
   </data>

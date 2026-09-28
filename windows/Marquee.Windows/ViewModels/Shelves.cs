@@ -87,6 +87,7 @@ public sealed partial class PosterItem : ObservableObject
         Year = card.Year.NonBlank();
         Subtitle = card.Subtitle.NonBlank();
         FooterLine = card.FooterLine;
+        Episodes = card.MediaType == MediaType.Tv ? card.Episodes : null;
         TypeLabel = showsTypeLabel ? PosterBadges.TypeLabel(card.MediaType) : null;
         var typeStyle = PosterBadges.TypeBadgeStyle(card.MediaType);
         IsMovieTypeBadge = TypeLabel != null && typeStyle == TypeBadgeStyle.Movie;
@@ -108,6 +109,15 @@ public sealed partial class PosterItem : ObservableObject
 
     /// <summary>"Neo · 1999", or empty.</summary>
     public string FooterLine { get; }
+
+    /// <summary>Series in the library: "96/96" right of the name; null for anything else.</summary>
+    public EpisodeCounts? Episodes { get; }
+    public string? EpisodesLabel => Episodes?.ShortLabel;
+    public string? EpisodesSpokenLabel => Episodes?.SpokenLabel;
+
+    /// <summary>Muted when every aired episode is on disk, the Downloading tone while some are missing.</summary>
+    public bool IsEpisodesComplete => Episodes is { IsComplete: true };
+    public bool IsEpisodesPartial => Episodes is { IsComplete: false };
 
     /// <summary>"MOVIE" / "SERIES", or null when the row is a single media type.</summary>
     public string? TypeLabel { get; }
@@ -148,6 +158,7 @@ public sealed partial class PosterItem : ObservableObject
     {
         Name,
         Year,
+        EpisodesSpokenLabel,
         Status?.Label,
         QuickAction == PosterQuickAction.Requested ? Loc.Get("Card_Requested") : null,
     }.OfType<string>());

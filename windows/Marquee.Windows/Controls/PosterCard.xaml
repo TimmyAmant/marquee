@@ -305,11 +305,41 @@
                     </Grid>
                 </Grid>
 
-                <TextBlock
-                    Text="{x:Bind Item.Name, Mode=OneWay}"
-                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                    TextTrimming="CharacterEllipsis"
-                    MaxLines="1" />
+                <!--
+                  The name, and on a series in the library its episode count
+                  right-aligned on the same line ("96/96"): muted when every
+                  aired episode is on disk, the Downloading tone while some
+                  are missing. The name trims to make room.
+                -->
+                <Grid ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Text="{x:Bind Item.Name, Mode=OneWay}"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        TextTrimming="CharacterEllipsis"
+                        MaxLines="1" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{x:Bind Item.EpisodesLabel, Mode=OneWay}"
+                        Visibility="{x:Bind Item.IsEpisodesComplete, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        FontSize="11"
+                        FontWeight="Medium"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.EpisodesSpokenLabel, Mode=OneWay}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{x:Bind Item.EpisodesLabel, Mode=OneWay}"
+                        Visibility="{x:Bind Item.IsEpisodesPartial, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        FontSize="11"
+                        FontWeight="Medium"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource DownloadingBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.EpisodesSpokenLabel, Mode=OneWay}" />
+                </Grid>
                 <TextBlock
                     Text="{x:Bind Item.FooterLine, Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"

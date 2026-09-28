@@ -124,6 +124,9 @@ public sealed record LibraryEntry
     /// <summary>Series: episode files on disk; null when unknown (Jellyfin doesn't report it).</summary>
     public int? EpisodeCount { get; init; }
 
+    /// <summary>Series: aired episodes on disk against aired episodes (the poster's "96/96"); null for movies and from older servers.</summary>
+    public EpisodeCounts? Episodes { get; init; }
+
     /// <summary>Radarr: the file is below the quality cutoff.</summary>
     public bool UpgradeAvailable { get; init; }
 
@@ -151,6 +154,7 @@ public sealed record LibraryEntry
         Requested = Requested,
         CanQuickAdd = CanQuickAdd,
         CanRequest = CanRequest,
+        Episodes = Episodes,
     };
 
     /// <summary>"29.1 GB", or null without a size.</summary>
