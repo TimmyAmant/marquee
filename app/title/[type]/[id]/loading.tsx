@@ -10,8 +10,10 @@ import {
   TitleBackdrop,
 } from "@/components/title-backdrop";
 
-/** A quiet placeholder bar that breathes (still, with reduced motion). */
-const BAR = "rounded-md bg-bg-2 motion-safe:animate-pulse";
+/** A quiet placeholder bar that breathes (still, with reduced motion): the
+ * text colour at a whisper, so it reads on the backdrop's surface and on the
+ * page in both themes. */
+const BAR = "rounded-md bg-text-primary/[0.08] motion-safe:animate-pulse";
 
 /**
  * A title page while it loads: the loaded page's own shape — the backdrop's
