@@ -194,7 +194,7 @@
     <value>Any title with this TMDb keyword or genre can’t be requested (you can still add it yourself).</value>
   </data>
   <data name="Account_BlocklistBody.Text" xml:space="preserve">
-    <value>Titles and keywords nobody can request. Block a single title from its page.</value>
+    <value>Titles and keywords nobody can request. Block a single title from its page, or use the automatic rules below to block by age rating or TMDb's adult flag.</value>
   </data>
   <data name="Account_BlocklistEmpty.Text" xml:space="preserve">
     <value>Nothing blocked. Block a title from its page, or a keyword below.</value>
@@ -2464,7 +2464,7 @@
     <value>Run now</value>
   </data>
   <data name="Jobs_Subtitle.Text" xml:space="preserve">
-    <value>Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule.</value>
+    <value>Your Marquee server runs these maintenance tasks on a schedule. Change how often each one runs or give it a time of day, or run one now — that doesn't change its schedule. What they did, and any errors, shows up in Settings › Logs.</value>
   </data>
   <data name="Jobs_Title.Text" xml:space="preserve">
     <value>Jobs</value>

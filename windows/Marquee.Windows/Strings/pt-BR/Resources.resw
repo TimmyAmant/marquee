@@ -191,7 +191,7 @@
     <value>Nenhum título com essa palavra-chave ou gênero do TMDb pode ser pedido (você ainda pode adicioná-lo por conta própria).</value>
   </data>
   <data name="Account_BlocklistBody.Text" xml:space="preserve">
-    <value>Títulos e palavras-chave que ninguém pode pedir. Bloqueie um título específico na página dele.</value>
+    <value>Títulos e palavras-chave que ninguém pode pedir. Bloqueie um título específico na página dele, ou use as regras automáticas abaixo para bloquear por classificação indicativa ou pela marcação de conteúdo adulto do TMDb.</value>
   </data>
   <data name="Account_BlocklistEmpty.Text" xml:space="preserve">
     <value>Nada bloqueado. Bloqueie um título na página dele ou uma palavra-chave abaixo.</value>
@@ -2378,7 +2378,7 @@
     <value>Executar agora</value>
   </data>
   <data name="Jobs_Subtitle.Text" xml:space="preserve">
-    <value>Seu servidor Marquee executa estas tarefas de manutenção de forma programada; você também pode iniciar uma manualmente abaixo. Executar uma tarefa agora não muda a programação dela.</value>
+    <value>Seu servidor do Marquee executa estas tarefas de manutenção de forma programada. Mude a frequência de cada uma ou defina um horário do dia, ou execute uma agora — isso não muda a programação dela. O que elas fizeram, e qualquer erro, aparece em Configurações › Logs.</value>
   </data>
   <data name="Jobs_Title.Text" xml:space="preserve">
     <value>Tarefas</value>

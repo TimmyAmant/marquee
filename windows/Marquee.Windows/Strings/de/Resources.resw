@@ -191,7 +191,7 @@
     <value>Titel mit diesem TMDb-Stichwort oder -Genre können nicht angefragt werden (du kannst sie aber selbst hinzufügen).</value>
   </data>
   <data name="Account_BlocklistBody.Text" xml:space="preserve">
-    <value>Titel und Stichwörter, die niemand anfragen kann. Einen einzelnen Titel sperrst du auf seiner Seite.</value>
+    <value>Titel und Stichwörter, die niemand anfragen kann. Einen einzelnen Titel sperrst du auf seiner Seite; mit den automatischen Regeln unten sperrst du nach Altersfreigabe oder TMDbs Erwachsenen-Kennzeichnung.</value>
   </data>
   <data name="Account_BlocklistEmpty.Text" xml:space="preserve">
     <value>Nichts gesperrt. Sperr einen Titel auf seiner Seite oder unten ein Stichwort.</value>
@@ -2378,7 +2378,7 @@
     <value>Jetzt ausführen</value>
   </data>
   <data name="Jobs_Subtitle.Text" xml:space="preserve">
-    <value>Dein Marquee-Server führt diese Wartungsaufgaben nach Zeitplan aus – du kannst eine auch unten manuell starten. Eine Aufgabe jetzt auszuführen ändert ihren Zeitplan nicht.</value>
+    <value>Dein Marquee-Server führt diese Wartungsaufgaben nach Zeitplan aus. Du kannst einstellen, wie oft jede läuft oder zu welcher Uhrzeit, oder eine sofort starten – das ändert ihren Zeitplan nicht. Was sie getan haben und etwaige Fehler stehen unter Einstellungen › Protokolle.</value>
   </data>
   <data name="Jobs_Title.Text" xml:space="preserve">
     <value>Aufgaben</value>

@@ -191,7 +191,7 @@
     <value>Ningún título con esta palabra clave o género de TMDb se puede solicitar (aunque tú puedes añadirlo igualmente).</value>
   </data>
   <data name="Account_BlocklistBody.Text" xml:space="preserve">
-    <value>Títulos y palabras clave que nadie puede solicitar. Bloquea un título concreto desde su página.</value>
+    <value>Títulos y palabras clave que nadie puede solicitar. Bloquea un título concreto desde su página, o usa las reglas automáticas de abajo para bloquear por clasificación por edades o por la marca de adultos de TMDb.</value>
   </data>
   <data name="Account_BlocklistEmpty.Text" xml:space="preserve">
     <value>No hay nada bloqueado. Bloquea un título desde su página o una palabra clave abajo.</value>
@@ -2378,7 +2378,7 @@
     <value>Ejecutar ahora</value>
   </data>
   <data name="Jobs_Subtitle.Text" xml:space="preserve">
-    <value>Tu servidor de Marquee ejecuta estas tareas de mantenimiento según una programación; también puedes lanzar una manualmente aquí abajo. Ejecutar una tarea ahora no cambia su programación.</value>
+    <value>Tu servidor de Marquee ejecuta estas tareas de mantenimiento de forma programada. Cambia cada cuánto se ejecuta cada una o fíjale una hora del día, o lanza una ahora; eso no cambia su programación. Lo que hicieron, y cualquier error, aparece en Ajustes › Registros.</value>
   </data>
   <data name="Jobs_Title.Text" xml:space="preserve">
     <value>Tareas</value>
