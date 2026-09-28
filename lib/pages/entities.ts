@@ -9,6 +9,11 @@ import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, titles } from "@/lib/db/schema";
 import { pickCatalogKnownFor } from "@/lib/tmdb/known-for";
 import { buildEntityLinks, type EntityLink, type TmdbPersonExternalIds } from "@/lib/tmdb/entity-links";
+import { getLocale } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/locales";
+import { contentLanguageFor, getLocalizedPerson } from "@/lib/tmdb/client";
+import { getSavedTranslations, saveLightTranslations } from "@/lib/tmdb/translations";
+import { overlayCard, pick, type TitleTranslation } from "@/lib/tmdb/language";
 
 // Person (/person/[id]) and studio (/company/[id]) page data — shared with
 // GET /api/v1/people/[id] and GET /api/v1/companies/[id].
@@ -42,6 +47,52 @@ export type KnownForTitle = {
 function knownForTitle(title: TitleRow | null | undefined): KnownForTitle | null {
   if (!title?.backdropPath) return null;
   return { mediaType: title.mediaType, tmdbId: title.tmdbId, name: title.name, backdropPath: title.backdropPath };
+}
+
+type CardTranslation = Pick<TitleTranslation, "name" | "posterPath">;
+
+/**
+ * A person's biography and credits in the viewer's language: one TMDb call
+ * (its answer cached an hour like every other), whose names and posters
+ * are also saved as light translations for the database's own lists. Null
+ * for English; when TMDb can't be reached, whatever translations are
+ * saved already.
+ */
+async function personInLanguage(
+  locale: Locale,
+  tmdbId: number,
+  filmography: { title: TitleRow }[],
+): Promise<{ biography: string | null; cards: Map<string, CardTranslation> } | null> {
+  if (locale === "en") return null;
+  const localized = await contentLanguageFor(locale)
+    .then((language) => getLocalizedPerson(tmdbId, language))
+    .catch(() => null);
+  if (!localized) {
+    const saved = await getSavedTranslations(
+      filmography.map(({ title }) => title.id),
+      locale,
+    ).catch(() => new Map<string, TitleTranslation>());
+    return { biography: null, cards: saved };
+  }
+  const byKey = new Map(
+    [...(localized.combined_credits?.cast ?? []), ...(localized.combined_credits?.crew ?? [])].map((item) => [
+      `${item.media_type}:${item.id}`,
+      item,
+    ]),
+  );
+  const cards = new Map<string, CardTranslation>();
+  const light: { titleId: string; name: string | null; overview: string | null; posterPath: string | null }[] = [];
+  for (const { title } of filmography) {
+    const item = byKey.get(`${title.mediaType}:${title.tmdbId}`);
+    if (!item) continue;
+    const translation = { name: item.title || item.name || null, posterPath: item.poster_path };
+    cards.set(title.id, translation);
+    light.push({ titleId: title.id, ...translation, overview: item.overview || null });
+  }
+  await saveLightTranslations(locale, light).catch((err) =>
+    console.error("[tmdb-translations] couldn't save a person's credits in %s:", locale, err),
+  );
+  return { biography: localized.biography || null, cards };
 }
 
 /** TMDb's homepage and external_ids as saved in a person's or company's
@@ -95,6 +146,8 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
 
   if (!person) return null;
 
+  const inLanguage = await personInLanguage(await getLocale(), tmdbId, filmography);
+
   const [statusMap, radarrCredential, sonarrCredential, favorited] = viewer.libraryOwnerId
     ? await Promise.all([
         getLibraryStatusMap(
@@ -107,22 +160,33 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
       ])
     : [new Map<string, LibraryStatus>(), null, null, false];
 
-  const entries: EntityMediaEntry[] = filmography.map(({ credit, title }) => ({
-    titleId: title.id,
-    mediaType: title.mediaType,
-    tmdbId: title.tmdbId,
-    name: title.name,
-    posterPath: title.posterPath,
-    year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
-    subtitle: credit.characterName,
-    status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
-  }));
+  const entries: EntityMediaEntry[] = filmography.map(({ credit, title }) =>
+    overlayCard(
+      {
+        titleId: title.id,
+        mediaType: title.mediaType,
+        tmdbId: title.tmdbId,
+        name: title.name,
+        posterPath: title.posterPath,
+        year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
+        subtitle: credit.characterName,
+        status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
+      },
+      inLanguage?.cards.get(title.id),
+    ),
+  );
 
   const favoritedKeys = await enrichEntries(viewer, entries);
+  const shownKnownFor = knownForTitle(knownFor);
 
   return {
-    person,
-    knownFor: knownForTitle(knownFor),
+    // The biography in the viewer's language when TMDb has one; the rest of
+    // the person (name, dates, links) is the same in every language.
+    person: inLanguage?.biography ? { ...person, biography: inLanguage.biography } : person,
+    knownFor:
+      shownKnownFor && knownFor
+        ? { ...shownKnownFor, name: pick(inLanguage?.cards.get(knownFor.id)?.name, shownKnownFor.name) }
+        : shownKnownFor,
     links: linksFromRaw(person.rawTmdb),
     entries,
     favorited: favorited as boolean,
@@ -181,6 +245,14 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
     catalog = solo.catalog;
   }
 
+  // The names and posters saved in the viewer's language (a studio's
+  // catalog is too long to ask TMDb for title by title); English for the
+  // rest. The order stays the English catalog's.
+  const translations = await getSavedTranslations(
+    catalog.map((title) => title.id),
+    await getLocale(),
+  ).catch(() => new Map<string, TitleTranslation>());
+
   const [statusMap, radarrCredential, sonarrCredential, favorited] = viewer.libraryOwnerId
     ? await Promise.all([
         getLibraryStatusMap(
@@ -193,21 +265,31 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
       ])
     : [new Map<string, LibraryStatus>(), null, null, false];
 
-  const entries: EntityMediaEntry[] = catalog.map((title) => ({
-    titleId: title.id,
-    mediaType: title.mediaType,
-    tmdbId: title.tmdbId,
-    name: title.name,
-    posterPath: title.posterPath,
-    year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
-    status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
-  }));
+  const entries: EntityMediaEntry[] = catalog.map((title) =>
+    overlayCard(
+      {
+        titleId: title.id,
+        mediaType: title.mediaType,
+        tmdbId: title.tmdbId,
+        name: title.name,
+        posterPath: title.posterPath,
+        year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
+        status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
+      },
+      translations.get(title.id),
+    ),
+  );
 
   const favoritedKeys = await enrichEntries(viewer, entries);
+  const catalogKnownFor = pickCatalogKnownFor(catalog);
+  const shownKnownFor = knownForTitle(catalogKnownFor);
 
   return {
     company: { name, description, logoPath, count: catalog.length },
-    knownFor: knownForTitle(pickCatalogKnownFor(catalog)),
+    knownFor:
+      shownKnownFor && catalogKnownFor
+        ? { ...shownKnownFor, name: pick(translations.get(catalogKnownFor.id)?.name, shownKnownFor.name) }
+        : shownKnownFor,
     // A studio has no socials on TMDb; only its own website, when listed.
     links: linksFromRaw(rawTmdb).filter((link) => link.kind === "homepage"),
     entries,

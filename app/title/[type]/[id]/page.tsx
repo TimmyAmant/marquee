@@ -88,7 +88,9 @@ export default async function TitlePage({
     titleSidebar,
   } = data;
   const mayRequest = { movie: permissions.requestMovies, tv: permissions.requestTv };
-  const titleLogo = pickTitleLogo(raw?.images);
+  // A logo in the reader's language first (the title's translation keeps
+  // one when TMDb has it), then English.
+  const titleLogo = pickTitleLogo(raw?.images, t.locale.split("-")[0]);
 
   return (
     <div>

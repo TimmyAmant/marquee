@@ -6,6 +6,7 @@ import {
   searchKeyword,
   getMovieGenres,
   getTvGenres,
+  viewerContentLanguage,
   getNetworkDetails,
   discoverMovies,
   discoverTv,
@@ -278,12 +279,24 @@ type Theme = { label: string; isGenre: boolean; items: RawTitle[] };
 async function findTheme(query: string): Promise<Theme | null> {
   const normalized = normalizeForThemeMatch(query);
   if (!normalized) return null;
-  const [movieGenres, tvGenres] = await Promise.all([
-    getMovieGenres().catch(() => ({ genres: [] })),
-    getTvGenres().catch(() => ({ genres: [] })),
+  // Genres by their name in the viewer's language ("terror"), and by their
+  // English one too ("horror") — the label is always the viewer's.
+  const language = await viewerContentLanguage();
+  const noGenres = { genres: [] as { id: number; name: string }[] };
+  const [movieGenres, tvGenres, englishMovieGenres, englishTvGenres] = await Promise.all([
+    getMovieGenres(language).catch(() => noGenres),
+    getTvGenres(language).catch(() => noGenres),
+    language === "en-US" ? noGenres : getMovieGenres().catch(() => noGenres),
+    language === "en-US" ? noGenres : getTvGenres().catch(() => noGenres),
   ]);
-  const movieGenreMatch = findGenreMatch(movieGenres.genres, normalized);
-  const tvGenreMatch = findGenreMatch(tvGenres.genres, normalized);
+  const inViewerLanguage = (genres: { id: number; name: string }[], match: { id: number; name: string } | null) =>
+    match ? (genres.find((genre) => genre.id === match.id) ?? match) : null;
+  const movieGenreMatch =
+    findGenreMatch(movieGenres.genres, normalized) ??
+    inViewerLanguage(movieGenres.genres, findGenreMatch(englishMovieGenres.genres, normalized));
+  const tvGenreMatch =
+    findGenreMatch(tvGenres.genres, normalized) ??
+    inViewerLanguage(tvGenres.genres, findGenreMatch(englishTvGenres.genres, normalized));
 
   if (movieGenreMatch || tvGenreMatch) {
     const [movieRes, tvRes] = await Promise.all([
