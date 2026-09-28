@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.59.5",
+    date: "2026-09-27",
+    changes: [
+      "Opening a movie or show no longer flashes a grey wash with a dark \"Loading…\" band. The page shows a calm outline of the title page in its normal colours while it loads, then the artwork fades in — on the website, Mac, Windows and iPhone.",
+    ],
+  },
+  {
     version: "0.59.4",
     date: "2026-09-27",
     changes: [
