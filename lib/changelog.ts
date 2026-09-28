@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.67.0",
+    date: "2026-09-28",
+    changes: [
+      "Title pages: Episodes and the cast now start right under the overview, beside the facts and file details card, instead of below it, so there's no big empty gap under the artwork. On the website and the Mac, iPad and Windows apps.",
+      "Title, person and studio pages: the artwork behind the top of the page is brighter.",
+      "Windows: the artwork now fades into the page properly instead of looking washed out and cut off.",
+    ],
+  },
+  {
     version: "0.66.0",
     date: "2026-09-27",
     changes: [

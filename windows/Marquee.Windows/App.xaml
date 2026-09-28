@@ -104,6 +104,31 @@
                         <GradientStop Color="#B3791F" Offset="0.45" />
                         <GradientStop Color="#C2583A" Offset="1" />
                     </LinearGradientBrush>
+                    <!--
+                      The fades over a title's, person's or studio's artwork
+                      (components/title-backdrop.tsx): named brushes, because a
+                      ThemeResource on a GradientStop's Color doesn't resolve and left the
+                      wash and the bottom fade transparent.
+                    -->
+                    <SolidColorBrush x:Key="HeroVeilBrush" Color="#1AF3F3F3" />
+                    <LinearGradientBrush x:Key="HeroSideFadeBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#D1F3F3F3" Offset="0" />
+                        <GradientStop Color="#A8F3F3F3" Offset="0.3" />
+                        <GradientStop Color="#66F3F3F3" Offset="0.52" />
+                        <GradientStop Color="#1FF3F3F3" Offset="0.74" />
+                        <GradientStop Color="#00F3F3F3" Offset="0.92" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="HeroTopFadeBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#B3F3F3F3" Offset="0" />
+                        <GradientStop Color="#40F3F3F3" Offset="0.14" />
+                        <GradientStop Color="#00F3F3F3" Offset="0.28" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="HeroBottomFadeBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#00F3F3F3" Offset="0.24" />
+                        <GradientStop Color="#80F3F3F3" Offset="0.54" />
+                        <GradientStop Color="#E0F3F3F3" Offset="0.78" />
+                        <GradientStop Color="#FFF3F3F3" Offset="0.94" />
+                    </LinearGradientBrush>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Default">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="#4CAF7D" />
@@ -165,6 +190,31 @@
                         <GradientStop Color="#E0A63E" Offset="0.45" />
                         <GradientStop Color="#C2583A" Offset="1" />
                     </LinearGradientBrush>
+                    <!--
+                      The fades over a title's, person's or studio's artwork
+                      (components/title-backdrop.tsx): named brushes, because a
+                      ThemeResource on a GradientStop's Color doesn't resolve and left the
+                      wash and the bottom fade transparent.
+                    -->
+                    <SolidColorBrush x:Key="HeroVeilBrush" Color="#1A202020" />
+                    <LinearGradientBrush x:Key="HeroSideFadeBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#D1202020" Offset="0" />
+                        <GradientStop Color="#A8202020" Offset="0.3" />
+                        <GradientStop Color="#66202020" Offset="0.52" />
+                        <GradientStop Color="#1F202020" Offset="0.74" />
+                        <GradientStop Color="#00202020" Offset="0.92" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="HeroTopFadeBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#B3202020" Offset="0" />
+                        <GradientStop Color="#40202020" Offset="0.14" />
+                        <GradientStop Color="#00202020" Offset="0.28" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="HeroBottomFadeBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#00202020" Offset="0.24" />
+                        <GradientStop Color="#80202020" Offset="0.54" />
+                        <GradientStop Color="#E0202020" Offset="0.78" />
+                        <GradientStop Color="#FF202020" Offset="0.94" />
+                    </LinearGradientBrush>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
                     <SolidColorBrush x:Key="OwnedBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
@@ -213,6 +263,10 @@
                     <SolidColorBrush x:Key="MarqueeAvatarRingBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="MarqueeDotRingBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="MarqueeAvatarBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="HeroVeilBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="HeroSideFadeBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="HeroTopFadeBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="HeroBottomFadeBrush" Color="{ThemeResource SystemColorWindowColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 

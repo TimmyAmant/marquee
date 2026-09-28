@@ -197,32 +197,10 @@
                             <ScalarTransition Duration="0:0:0.45" />
                         </Image.OpacityTransition>
                     </Image>
-                    <Rectangle Fill="{ThemeResource SolidBackgroundFillColorBaseBrush}" Opacity="0.22" />
-                    <Rectangle Opacity="0.9">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.28" />
-                                <GradientStop Color="Transparent" Offset="0.92" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                    <Rectangle Opacity="0.7">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
-                                <GradientStop Color="Transparent" Offset="0.28" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                    <Rectangle>
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="Transparent" Offset="0.24" />
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.94" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
+                    <Rectangle Fill="{ThemeResource HeroVeilBrush}" />
+                    <Rectangle Fill="{ThemeResource HeroSideFadeBrush}" />
+                    <Rectangle Fill="{ThemeResource HeroTopFadeBrush}" />
+                    <Rectangle Fill="{ThemeResource HeroBottomFadeBrush}" />
                 </Grid>
 
                 <!--
@@ -1083,32 +1061,10 @@
             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel>
                 <Grid x:Name="SkeletonBackdrop" Height="300" Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
-                    <Rectangle Fill="{ThemeResource SolidBackgroundFillColorBaseBrush}" Opacity="0.22" />
-                    <Rectangle Opacity="0.9">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.28" />
-                                <GradientStop Color="Transparent" Offset="0.92" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                    <Rectangle Opacity="0.7">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0" />
-                                <GradientStop Color="Transparent" Offset="0.28" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                    <Rectangle>
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="Transparent" Offset="0.24" />
-                                <GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="0.94" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
+                    <Rectangle Fill="{ThemeResource HeroVeilBrush}" />
+                    <Rectangle Fill="{ThemeResource HeroSideFadeBrush}" />
+                    <Rectangle Fill="{ThemeResource HeroTopFadeBrush}" />
+                    <Rectangle Fill="{ThemeResource HeroBottomFadeBrush}" />
                 </Grid>
 
                 <Grid x:Name="SkeletonColumns" Margin="28,-140,28,0" ColumnSpacing="28">
