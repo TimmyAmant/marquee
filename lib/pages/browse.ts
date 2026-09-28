@@ -1,6 +1,7 @@
 import {
   getMovieGenres,
   getTvGenres,
+  viewerContentLanguage,
   getNetworkDetails,
   type TmdbMovieDetails,
   type TmdbTvDetails,
@@ -29,7 +30,10 @@ export function parseDiscoverSort(value: string | undefined | null): DiscoverSor
 /** Genre dropdown options, plus the network chip when filtering by one (TV only). */
 export async function loadBrowseFilters(lockedType: MediaType, networkId: number | undefined) {
   const [genresForFilter, network] = await Promise.all([
-    (lockedType === "movie" ? getMovieGenres() : getTvGenres()).then((r) => r.genres).catch(() => []),
+    viewerContentLanguage()
+      .then((language) => (lockedType === "movie" ? getMovieGenres(language) : getTvGenres(language)))
+      .then((r) => r.genres)
+      .catch(() => []),
     networkId ? getNetworkDetails(networkId).catch(() => null) : Promise.resolve(null),
   ]);
   return { genresForFilter, network };

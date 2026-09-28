@@ -200,6 +200,19 @@ where the real server needed something the core contract didn't spell out.
     (`/settings/arr-servers`) gains an optional `publicUrl` ("Public URL
     (for links)") the links use instead of `baseUrl`. A server older than
     this omits both — show no links and no field.
+25. **TMDb's words in the reader's language (additive, no new fields).**
+    What comes from TMDb — titles, overviews, taglines, genres, season and
+    episode names, posters and logos with text, trailers, a person's
+    biography and credits, Discover rows, search results — follows the same
+    language as the server's own text (the account's `language`, else
+    `Accept-Language`, else English). Anything TMDb hasn't translated falls
+    back to English field by field; search matches names in either. Ids,
+    dates, `year`, order and `originalTitle` never change with the
+    language, so cache and sort on those — and refetch a title after
+    `PATCH /me` changes the language. Lists read from the server's own
+    records (requests, library, favorites, notifications) keep English
+    names unless a translation has been saved already. A server older than
+    this answers in English whatever the language.
 
 ---
 

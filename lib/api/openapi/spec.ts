@@ -445,7 +445,9 @@ export function buildOpenApiSpec(version: string): Json {
       description:
         "The JSON API behind Marquee's Mac and Windows apps, also open to dashboards, scripts and other tools. " +
         "Sign in with a device token (POST /auth/login) or use an API key an admin created under " +
-        "Settings › General › API access. Full reference: docs/api-v1.md in the Marquee repository.",
+        "Settings › General › API access. Text — the server's own and TMDb's titles, overviews and genres — " +
+        "is in the account's language, else the request's Accept-Language, else English. " +
+        "Full reference: docs/api-v1.md in the Marquee repository.",
     },
     servers: [{ url: "/api/v1" }],
     tags: tags.map((name) => (TAG_DESCRIPTIONS[name] ? { name, description: TAG_DESCRIPTIONS[name] } : { name })),

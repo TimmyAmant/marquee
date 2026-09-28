@@ -41,6 +41,7 @@ vi.mock("@/lib/integrations/app-settings", () => ({
 const tmdbResult = (id: number) => ({ id, title: `Movie ${id}`, name: `Show ${id}`, overview: "", poster_path: null, backdrop_path: null, popularity: id });
 vi.mock("@/lib/tmdb/client", () => ({
   isTmdbConfigured: async () => true,
+  viewerContentLanguage: async () => "en-US",
   TmdbNotConfiguredError: class extends Error {},
   getTrendingAll: async () => ({ results: [{ ...tmdbResult(1), media_type: "movie" }] }),
   getUpcomingMovies: async () => ({ results: [] }),

@@ -6,6 +6,7 @@ import {
   discoverTv,
   getMovieGenres,
   getTvGenres,
+  viewerContentLanguage,
   getCompanyDetails,
   getNetworkDetails,
   type TmdbGenre,
@@ -65,6 +66,9 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
   const noResults = { results: [] };
   const noGenres = { genres: [] as TmdbGenre[] };
   const customShelves = visible.filter((shelf) => shelf.custom);
+  // The genre tiles in the viewer's language; the rows' titles come back
+  // in it on their own (lib/tmdb/client.ts).
+  const language = await viewerContentLanguage();
 
   const [
     recentlyAdded,
@@ -92,8 +96,8 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
     when("upcomingMovies", () => getUpcomingMovies().catch(() => noResults), noResults),
     when("popularSeries", () => discoverTv({ sort: "popularity", page: 1 }).catch(() => noResults), noResults),
     when("upcomingSeries", () => getUpcomingTv().catch(() => noResults), noResults),
-    when("movieGenres", () => getMovieGenres().catch(() => noGenres), noGenres),
-    when("seriesGenres", () => getTvGenres().catch(() => noGenres), noGenres),
+    when("movieGenres", () => getMovieGenres(language).catch(() => noGenres), noGenres),
+    when("seriesGenres", () => getTvGenres(language).catch(() => noGenres), noGenres),
     when(
       "studios",
       () => Promise.all(CURATED_STUDIO_IDS.map((id) => getCompanyDetails(id).catch(() => null))),

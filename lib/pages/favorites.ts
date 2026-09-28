@@ -6,6 +6,8 @@ import {
 } from "@/lib/favorites/query";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import { getCollection } from "@/lib/tmdb/client";
+import { withSavedTranslations } from "@/lib/tmdb/translations";
+import { getLocale } from "@/lib/i18n/server";
 import { getEpisodeCountMap } from "@/lib/library/query";
 import type { EpisodeCounts } from "@/lib/library/episode-counts";
 
@@ -13,12 +15,15 @@ import type { EpisodeCounts } from "@/lib/library/episode-counts";
  * `libraryOwnerId` is the household library the viewer sees, for the
  * favorited series' episode counts. */
 export async function loadFavoritesPage(userId: string, libraryOwnerId?: string | null) {
+  const locale = await getLocale();
   const [favoritePeople, favoriteCompanies, favoriteMovies, favoriteShows, collectionIds] =
     await Promise.all([
       getFavoritePeople(userId),
       getFavoriteCompanies(userId),
-      getFavoriteTitles(userId, "movie"),
-      getFavoriteTitles(userId, "tv"),
+      // In the viewer's language where a translation is saved (most were
+      // favorited from their title page, which saves one).
+      getFavoriteTitles(userId, "movie").then((rows) => withSavedTranslations(rows, locale)),
+      getFavoriteTitles(userId, "tv").then((rows) => withSavedTranslations(rows, locale)),
       getFavoriteCollectionIds(userId),
     ]);
 

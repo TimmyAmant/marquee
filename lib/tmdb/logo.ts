@@ -19,24 +19,25 @@ export interface TmdbTitleImages {
 }
 
 /**
- * The best English (or language-less) logo, or null. Only PNGs: TMDb also
+ * The best logo in `language` (ISO 639-1, English when left out), else
+ * English, else language-less — or null. Only PNGs: TMDb also
  * holds SVG logos, which next/image won't optimize and which can carry
  * scripts. Very tall artwork (a stacked logo taller than it is wide) is
  * skipped too — it would take over the hero instead of standing in for one
  * line of title text.
  */
-export function pickTitleLogo(images: TmdbTitleImages | null | undefined): TmdbLogoImage | null {
+export function pickTitleLogo(images: TmdbTitleImages | null | undefined, language = "en"): TmdbLogoImage | null {
   const usable = (images?.logos ?? []).filter(
     (logo) =>
       typeof logo.file_path === "string" &&
       /\.png$/i.test(logo.file_path) &&
-      (logo.iso_639_1 === "en" || logo.iso_639_1 === null) &&
+      (logo.iso_639_1 === language || logo.iso_639_1 === "en" || logo.iso_639_1 === null) &&
       logo.aspect_ratio >= 1,
   );
   if (usable.length === 0) return null;
-  // English first (a language-less logo is usually a symbol, not the name),
-  // then TMDb's own ranking by votes.
-  const rank = (logo: TmdbLogoImage) => (logo.iso_639_1 === "en" ? 1 : 0);
+  // The reader's language first, then English (a language-less logo is
+  // usually a symbol, not the name), then TMDb's own ranking by votes.
+  const rank = (logo: TmdbLogoImage) => (logo.iso_639_1 === language ? 2 : logo.iso_639_1 === "en" ? 1 : 0);
   return [...usable].sort(
     (a, b) =>
       rank(b) - rank(a) ||
