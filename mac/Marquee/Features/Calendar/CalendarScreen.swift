@@ -67,6 +67,7 @@ struct CalendarScreen: View {
                 Text("Calendar")
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
+                    .macPageHeading()
                 Text(page.month.label)
                     .font(.system(size: Metrics.text(14)))
                     .foregroundStyle(Theme.textSecondary)

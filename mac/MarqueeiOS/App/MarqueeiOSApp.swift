@@ -15,6 +15,7 @@ struct MarqueeiOSApp: App {
         let model = AppModel()
         _model = State(initialValue: model)
         PhoneAppDelegate.model = model
+        PhoneNavigationBar.applyStyle()
     }
 
     var body: some Scene {
