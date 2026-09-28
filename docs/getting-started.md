@@ -57,7 +57,7 @@ Fill in `POSTGRES_PASSWORD` and the other fields; the rest has sensible
 defaults. The template is [`unraid-templates/marquee.xml`](../unraid-templates/marquee.xml).
 Prefer Compose? Point the **Compose Manager** plugin at `docker-compose.yml`.
 
-## Mac and Windows apps
+## Mac, Windows and iPhone apps
 
 Native apps that talk to your server and update themselves from each
 [release](https://github.com/TimmyAmant/marquee/releases/latest). The Mac app
@@ -70,6 +70,9 @@ They need a server running 0.22.0 or later.
 - **Windows** (10 1809+ or 11, preview): run the installer; no admin rights
   needed. It isn't code-signed yet, so SmartScreen may need **More info › Run
   anyway**. Details: [`windows/README.md`](../windows/README.md).
+- **iPhone and iPad** (iOS 18+, preview): built from the Mac project in Xcode
+  for now; it isn't on the App Store or TestFlight yet, and it doesn't update
+  itself. Details: [`mac/README.md`](../mac/README.md#iphone-app).
 
 | | |
 |---|---|

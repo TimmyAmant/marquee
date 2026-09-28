@@ -7,7 +7,7 @@
 <a href="https://github.com/TimmyAmant/marquee/releases/latest"><img src="https://img.shields.io/github/v/release/TimmyAmant/marquee?include_prereleases&label=release" alt="Latest release"></a>
 <a href="https://hub.docker.com/r/timmyamant/marquee"><img src="https://img.shields.io/docker/pulls/timmyamant/marquee" alt="Docker pulls"></a>
 <a href="https://github.com/TimmyAmant/marquee/blob/main/LICENSE"><img src="https://img.shields.io/github/license/TimmyAmant/marquee" alt="MIT license"></a>
-<img src="https://img.shields.io/badge/apps-web%20%7C%20macOS%20%7C%20Windows-e0a63e" alt="Web, macOS and Windows">
+<img src="https://img.shields.io/badge/apps-web%20%7C%20macOS%20%7C%20Windows%20%7C%20iPhone-e0a63e" alt="Web, macOS, Windows and iPhone">
 <img src="https://img.shields.io/badge/languages-EN%20%7C%20ES%20%7C%20FR%20%7C%20DE%20%7C%20PT--BR-4caf7d" alt="Languages">
 </p>
 
@@ -17,7 +17,7 @@ shows **and** knowing exactly what you already have. It works with
 [Emby](https://emby.media) even two at once and with
 **[Sonarr](https://sonarr.tv)** and **[Radarr](https://radarr.video)**, as many
 servers as you run, 4K included. Use it in any browser, on your phone, or in the
-native **Mac** and **Windows** apps.
+native **Mac**, **Windows** and **iPhone** apps.
 
 <p align="center">
 <img src="docs/screenshots/web-discover-rail.jpg" alt="Marquee's Discover page" />
@@ -45,7 +45,7 @@ native **Mac** and **Windows** apps.
 | Fix a wrong match, Search now, monitoring toggle | ✅ | ❌ |
 | Approve or decline from the notification | ✅ | ❌ |
 | "Can't find" alerts after approval | ✅ | ❌ |
-| Native Mac and Windows apps | ✅ | ❌ |
+| Native Mac, Windows and iPhone apps | ✅ | ❌ |
 
 ## Getting Started
 
@@ -55,7 +55,7 @@ docker pull timmyamant/marquee:latest
 
 Or search **marquee** in Unraid's Apps tab. The
 **[Getting started guide](docs/getting-started.md)** covers Docker Compose,
-Unraid, the Mac and Windows apps, remote access and development.
+Unraid, the Mac, Windows and iPhone apps, remote access and development.
 
 ## Preview
 
