@@ -124,6 +124,7 @@ export function InfiniteResultsGrid({
             }
             badge={item.status && <StatusBadge status={item.status} compact />}
             status={item.status}
+            episodes={item.episodes}
             favoriteAction={
               signedIn && (
                 <FavoriteButton

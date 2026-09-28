@@ -5,6 +5,7 @@ import { MediaImage } from "@/components/media-image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { statusText, statusClasses, type LibraryStatus } from "@/lib/library/status-tone";
 import { useT } from "@/lib/i18n/client";
+import { isEpisodeCountComplete, type EpisodeCounts } from "@/lib/library/episode-counts";
 
 export function PosterCard({
   href,
@@ -21,6 +22,7 @@ export function PosterCard({
   favoriteAction,
   filePath,
   typeLabel,
+  episodes,
 }: {
   href: string;
   posterPath: string | null;
@@ -52,6 +54,10 @@ export function PosterCard({
    * opening it; single-type rows/grids elsewhere have no need for it. Shares
    * the top-left corner with `rating`, so pass at most one of the two. */
   typeLabel?: { mediaType: "movie" | "tv"; text: string };
+  /** Series in the library only: episodes on disk against episodes aired
+   * (lib/library/episode-counts.ts), right-aligned on the title line —
+   * muted when complete, the Downloading tone while some are missing. */
+  episodes?: EpisodeCounts | null;
 }) {
   const t = useT();
   const src = tmdbImageUrl(posterPath, "w342");
@@ -60,6 +66,7 @@ export function PosterCard({
   // the whole poster's tooltip leads with it, since 3px is hard to hover.
   const stripName = stripClass && status ? statusText(t, status).name : null;
   const posterTitle = [stripName, filePath].filter(Boolean).join(" — ") || undefined;
+  const episodesLabel = episodes ? t("library.episodesOfTotal", { have: episodes.have, total: episodes.total }) : null;
 
   return (
     <div className="group">
@@ -138,8 +145,21 @@ export function PosterCard({
       </div>
 
       <div className="px-0.5 pt-2">
-        <Link href={href} className="block">
-          <p className="truncate text-[13px] font-medium leading-[17px] text-text-primary">{name}</p>
+        <Link href={href} className="flex items-baseline gap-1.5">
+          <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-[17px] text-text-primary">{name}</p>
+          {episodes && (
+            <span
+              className={`shrink-0 text-[11px] font-medium leading-[17px] tabular-nums ${
+                isEpisodeCountComplete(episodes) ? "text-text-muted" : "text-downloading"
+              }`}
+              title={episodesLabel ?? undefined}
+            >
+              <span aria-hidden="true">
+                {episodes.have}/{episodes.total}
+              </span>
+              <span className="sr-only">{episodesLabel}</span>
+            </span>
+          )}
         </Link>
         <div className="mt-px flex items-center justify-between gap-1.5">
           <Link href={href} className="min-w-0 flex-1">

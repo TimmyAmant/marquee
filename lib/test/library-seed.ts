@@ -119,8 +119,8 @@ export async function seedLibrary() {
       audioCodec: "TrueHD Atmos",
     },
     { userId: admin.id, provider: "radarr", externalId: 27205, arrId: 13, status: "tracked_monitored", monitored: true, filePath: "/movies/Inception (2010)" },
-    { userId: admin.id, provider: "sonarr", externalId: 1399, arrId: 7, status: "owned", monitored: true, sizeBytes: 90 * GB, filePath: "/tv/Game of Thrones", episodeCount: 61 },
-    { userId: admin.id, provider: "sonarr", externalId: 95396, arrId: 8, status: "tracked_downloading", monitored: true, sizeBytes: 4 * GB, filePath: "/tv/Severance", episodeCount: 3 },
+    { userId: admin.id, provider: "sonarr", externalId: 1399, arrId: 7, status: "owned", monitored: true, sizeBytes: 90 * GB, filePath: "/tv/Game of Thrones", episodeCount: 61, episodesHave: 73, episodesAired: 73 },
+    { userId: admin.id, provider: "sonarr", externalId: 95396, arrId: 8, status: "tracked_downloading", monitored: true, sizeBytes: 4 * GB, filePath: "/tv/Severance", episodeCount: 3, episodesHave: 3, episodesAired: 19 },
   ]);
   await db.insert(diskSpaceSnapshots).values([
     { userId: admin.id, path: "/movies", freeBytes: 1000 * GB, capturedAt: new Date("2026-09-01T03:00:00Z") },

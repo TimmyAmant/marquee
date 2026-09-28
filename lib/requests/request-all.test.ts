@@ -325,6 +325,7 @@ describe("the title DTO's franchise", () => {
       similarStatusMap: new Map(),
       similarRequestStatusMap: new Map(),
       similarFavoritedIds: new Set(),
+      episodeCounts: new Map(),
       ...franchiseData(),
     } as unknown as Parameters<typeof titleDetailDto>[3];
   }

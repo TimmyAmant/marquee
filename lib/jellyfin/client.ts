@@ -124,6 +124,42 @@ export async function getLibraryItems(config: JellyfinConfig): Promise<JellyfinI
   return body.Items ?? [];
 }
 
+export interface JellyfinEpisodeItem {
+  SeriesId?: string;
+  ParentIndexNumber?: number;
+  LocationType?: string;
+}
+
+/** Episodes with a file on disk per series id, specials (season 0) left
+ * out — a series poster's "have" (lib/library/episode-counts.ts). One
+ * listing of every episode, trimmed to the few fields it needs; a missing
+ * episode Jellyfin only knows from metadata ("Virtual") doesn't count. */
+export async function getEpisodeFileCountsBySeries(config: JellyfinConfig): Promise<Map<string, number>> {
+  const params = new URLSearchParams({
+    Recursive: "true",
+    IncludeItemTypes: "Episode",
+    IsMissing: "false",
+    Fields: "",
+    EnableImages: "false",
+    EnableUserData: "false",
+  });
+  const body = await jellyfinFetch<{ Items: JellyfinEpisodeItem[] }>(
+    config,
+    `/Items?${params.toString()}`,
+    LIBRARY_TIMEOUT_MS,
+  );
+  return countEpisodeFilesBySeries(body.Items ?? []);
+}
+
+export function countEpisodeFilesBySeries(items: readonly JellyfinEpisodeItem[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    if (!item.SeriesId || item.LocationType === "Virtual" || item.ParentIndexNumber === 0) continue;
+    counts.set(item.SeriesId, (counts.get(item.SeriesId) ?? 0) + 1);
+  }
+  return counts;
+}
+
 export function getFileSize(item: JellyfinItem): number | null {
   return item.MediaSources?.[0]?.Size ?? null;
 }

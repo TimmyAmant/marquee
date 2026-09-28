@@ -17,6 +17,7 @@ export function searchTitleDto(rules: PosterActionRules, card: SearchTitleCard):
     rating: card.rating,
     status,
     favorited: card.favorited,
+    episodes: card.episodes,
     ...posterActions(rules, card.mediaType, card.tmdbId, status),
   });
 }

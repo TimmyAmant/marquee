@@ -8,6 +8,7 @@
   "countMovies": "{count, plural, one {movie} other {movies}}",
   "countSeries": "{count, plural, one {series} other {series}}",
   "countEpisodes": "{count, plural, one {# episode} other {# episodes}}",
+  "episodesOfTotal": "{have} of {total, plural, one {# episode} other {# episodes}}",
   "episodesLabel": "{count, plural, one {episode} other {episodes}}",
   "onDisk": "on disk",
   "trackedNote": "{count, plural, one {+ # more downloading, missing or coming soon, not counted above} other {+ # more downloading, missing or coming soon, not counted above}}",

@@ -311,6 +311,18 @@ export type TitleCard = {
   requested: boolean | null;
   canQuickAdd: boolean;
   canRequest: boolean;
+  /** Series in the library only: episodes on disk against episodes
+   * aired, specials left out — the poster's "96/96". Null for a movie, a
+   * show the library doesn't have, or when no source counts it. Older
+   * servers leave the field out. */
+  episodes: EpisodeCounts | null;
+};
+
+export type EpisodeCounts = {
+  /** Aired episodes with a file on disk. */
+  have: number;
+  /** Aired episodes. */
+  total: number;
 };
 
 export type PersonCard = {

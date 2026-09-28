@@ -8,6 +8,7 @@ import { AddAllButton } from "@/components/add-all-button";
 import { RequestAllButton } from "@/components/request-all-button";
 import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { franchiseMissingItems, franchiseRequestableItems } from "@/lib/title-meta";
 
 export type FranchiseItem = {
@@ -22,6 +23,7 @@ export function FranchiseRow({
   title,
   items,
   statusMap,
+  episodeCounts,
   requestStatusMap,
   blockedKeys,
   favoritedIds,
@@ -36,6 +38,8 @@ export function FranchiseRow({
   title: string;
   items: FranchiseItem[];
   statusMap: Map<string, LibraryStatus>;
+  /** Series in the library: have/total aired episodes ("tv:1407"). */
+  episodeCounts?: Map<string, EpisodeCounts>;
   /** This viewer's own non-rejected request per title, if any — so a title
    * already requested shows "Requested" instead of the button again. Absent
    * when signed out (members never see the request button then anyway). */
@@ -103,6 +107,7 @@ export function FranchiseRow({
               year={item.year}
               badge={status && <StatusBadge status={status} compact />}
               status={status}
+              episodes={episodeCounts?.get(`${item.mediaType}:${item.tmdbId}`)}
               favoriteAction={
                 showFavorite && (
                   <FavoriteButton

@@ -8,9 +8,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db/client", async () => (await import("@/lib/test/pglite")).testDatabase());
 
-import { resetTestDatabase } from "@/lib/test/pglite";
+import { resetTestDatabase, testDatabase } from "@/lib/test/pglite";
 import { GB, seedLibrary } from "@/lib/test/library-seed";
-import { getUserLibrary, summarizeLibrary } from "@/lib/library/query";
+import { getEpisodeCountMap, getUserLibrary, summarizeLibrary } from "@/lib/library/query";
+import { jellyfinLibraryItems, jellyfinServers, plexLibraryItems, plexServers, titles, users } from "@/lib/db/schema";
 import { getLibraryDuplicates } from "@/lib/library/duplicates";
 import { DEFAULT_PAGE_SIZE, queryLibrary } from "@/lib/library/list";
 import { forecastDiskSpace } from "@/lib/integrations/disk-space-logic";
@@ -102,5 +103,57 @@ describe("getDiskSpaceForecast", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("getEpisodeCountMap", () => {
+  it("reads Sonarr's counts, else a media server's files against TMDb's aired episodes, for series only", async () => {
+    const { db } = await testDatabase();
+    const [plex] = await db.select({ id: plexServers.id }).from(plexServers);
+    const [jellyfin] = await db.select({ id: jellyfinServers.id }).from(jellyfinServers);
+    const aired = (seasons: number[], last: [number, number]) => ({
+      seasons: [{ season_number: 0, episode_count: 5 }, ...seasons.map((count, i) => ({ season_number: i + 1, episode_count: count }))],
+      last_episode_to_air: { season_number: last[0], episode_number: last[1] },
+    });
+    await db.insert(titles).values([
+      { mediaType: "tv", tmdbId: 1407, name: "Homeland", rawTmdb: aired([12, 12, 12, 12, 12, 12, 12, 12], [8, 12]) },
+      { mediaType: "tv", tmdbId: 66732, name: "Stranger Things", rawTmdb: aired([8, 9, 8, 9], [4, 9]) },
+      { mediaType: "tv", tmdbId: 1100, name: "Old Show", rawTmdb: aired([10], [1, 10]) },
+    ]);
+    await db.insert(plexLibraryItems).values([
+      { plexServerId: plex.id, ratingKey: "hl", mediaType: "tv", tmdbId: 1407, title: "Homeland", episodeCount: 99, episodesHave: 96 },
+      { plexServerId: plex.id, ratingKey: "st", mediaType: "tv", tmdbId: 66732, title: "Stranger Things", episodesHave: 20 },
+      // A Plex row from a sync older than the column: no count.
+      { plexServerId: plex.id, ratingKey: "old", mediaType: "tv", tmdbId: 1100, title: "Old Show", episodeCount: 10 },
+    ]);
+    // The same show on Jellyfin with more of it: the most any server has.
+    await db.insert(jellyfinLibraryItems).values([
+      { jellyfinServerId: jellyfin.id, itemId: "st", mediaType: "tv", tmdbId: 66732, title: "Stranger Things", episodesHave: 30 },
+    ]);
+
+    const counts = await getEpisodeCountMap(adminId, [
+      // Game of Thrones is on Plex too, but Sonarr's count wins.
+      { mediaType: "tv", tmdbId: 1399 },
+      { mediaType: "tv", tmdbId: 95396 },
+      { mediaType: "tv", tmdbId: 1407 },
+      { mediaType: "tv", tmdbId: 66732 },
+      { mediaType: "tv", tmdbId: 1100 },
+      // Not in the library.
+      { mediaType: "tv", tmdbId: 4242 },
+      { mediaType: "movie", tmdbId: 603 },
+    ]);
+    expect(Object.fromEntries(counts)).toEqual({
+      "tv:1399": { have: 73, total: 73 },
+      "tv:95396": { have: 3, total: 19 },
+      "tv:1407": { have: 96, total: 96 },
+      "tv:66732": { have: 30, total: 34 },
+    });
+  });
+
+  it("is empty without a series asked about, and for someone with no library", async () => {
+    expect((await getEpisodeCountMap(adminId, [{ mediaType: "movie", tmdbId: 603 }])).size).toBe(0);
+    const { db } = await testDatabase();
+    const [stranger] = await db.insert(users).values({ username: "stranger", role: "member", permissions: [] }).returning({ id: users.id });
+    expect((await getEpisodeCountMap(stranger.id, [{ mediaType: "tv", tmdbId: 1399 }])).size).toBe(0);
   });
 });

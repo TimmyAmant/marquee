@@ -6,11 +6,12 @@ import {
 } from "@/lib/integrations/credentials";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import { getStorageOverview, type StorageOverview } from "@/lib/integrations/disk-space";
-import { getUserLibrary, getLibraryStatusMap, summarizeLibrary, type LibraryItem, type LibrarySummary } from "@/lib/library/query";
+import { getUserLibrary, getLibraryStatusMap, getEpisodeCountMap, summarizeLibrary, type LibraryItem, type LibrarySummary } from "@/lib/library/query";
 import { getIncompleteCollections, type IncompleteCollection } from "@/lib/library/collections";
 import { getLibraryDuplicates, type DuplicateGroup } from "@/lib/library/duplicates";
 import { libraryFilterOptions, queryLibrary, type LibraryFilterOptions, type LibraryPage, type LibraryQuery } from "@/lib/library/list";
 import type { LibraryStatus } from "@/lib/library/status-tone";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { getFavoritedTmdbIds, isFavorited } from "@/lib/favorites/query";
 import { getActiveRequestStatusMap } from "@/lib/requests/query";
 import { getBlockedTitleKeys } from "@/lib/requests/blocklist";
@@ -60,6 +61,8 @@ export type LibraryPageData = {
   connections: LibraryConnections;
   /** Which of the page's titles the viewer has favorited ("movie:603"). */
   favoritedKeys: Set<string>;
+  /** The page's series' have/total episode counts ("tv:1407"). */
+  episodeCounts: Map<string, EpisodeCounts>;
 };
 
 /** The main tab: the filtered, sorted page plus the header counts and the
@@ -70,19 +73,28 @@ export async function loadLibraryPage(viewer: SignedIn, query: LibraryQuery): Pr
     loadLibraryConnections(viewer.libraryOwnerId),
   ]);
   const page = queryLibrary(library, query);
-  const [movieFavorites, tvFavorites] = await Promise.all([
+  const [movieFavorites, tvFavorites, episodeCounts] = await Promise.all([
     getFavoritedTmdbIds(viewer.userId, "movie", page.results.filter((i) => i.mediaType === "movie").map((i) => i.tmdbId)),
     getFavoritedTmdbIds(viewer.userId, "tv", page.results.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId)),
+    getEpisodeCountMap(viewer.libraryOwnerId, page.results),
   ]);
   const favoritedKeys = new Set([
     ...[...movieFavorites].map((id) => `movie:${id}`),
     ...[...tvFavorites].map((id) => `tv:${id}`),
   ]);
-  return { page, summary: summarizeLibrary(library), filters: libraryFilterOptions(library), connections, favoritedKeys };
+  return {
+    page,
+    summary: summarizeLibrary(library),
+    filters: libraryFilterOptions(library),
+    connections,
+    favoritedKeys,
+    episodeCounts,
+  };
 }
 
 export type CollectionWithState = IncompleteCollection & {
   statusMap: Map<string, LibraryStatus>;
+  episodeCounts: Map<string, EpisodeCounts>;
   requestStatusMap: Map<string, RequestStatus>;
   favoritedIds: Set<number>;
   collectionFavorited: boolean;
@@ -110,13 +122,14 @@ export async function loadLibraryCollections(viewer: SignedIn): Promise<LibraryC
     collections.map(async (collection): Promise<CollectionWithState> => {
       const refs = collection.items.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId }));
       const mediaType = collection.items[0]?.mediaType ?? "movie";
-      const [statusMap, requestStatusMap, favoritedIds, collectionFavorited] = await Promise.all([
+      const [statusMap, episodeCounts, requestStatusMap, favoritedIds, collectionFavorited] = await Promise.all([
         getLibraryStatusMap(viewer.libraryOwnerId, refs),
+        getEpisodeCountMap(viewer.libraryOwnerId, refs),
         getActiveRequestStatusMap(viewer.userId, refs),
         getFavoritedTmdbIds(viewer.userId, mediaType, collection.items.map((i) => i.tmdbId)),
         collection.collectionId !== undefined ? isFavorited(viewer.userId, "collection", collection.collectionId) : Promise.resolve(false),
       ]);
-      return { ...collection, statusMap, requestStatusMap, favoritedIds, collectionFavorited };
+      return { ...collection, statusMap, episodeCounts, requestStatusMap, favoritedIds, collectionFavorited };
     }),
   );
   return { collections: withState, connections, permissions, blockedKeys };

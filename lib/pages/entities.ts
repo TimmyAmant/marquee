@@ -1,6 +1,7 @@
 import { getOrFetchPersonWithCredits, getOrFetchCompanyWithCatalog } from "@/lib/tmdb/cache";
 import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
@@ -23,9 +24,17 @@ export type EntityMediaEntry = {
   year: string | null;
   subtitle?: string | null;
   status?: LibraryStatus;
+  /** Series in the library: have/total aired episodes. */
+  episodes?: EpisodeCounts | null;
 };
 
+/** Fills in each series' episode count, and returns which entries the
+ * viewer has favorited ("movie:603"). */
 async function enrichEntries(viewer: ViewerIdentity, entries: EntityMediaEntry[]) {
+  if (viewer.libraryOwnerId) {
+    const episodeCounts = await getEpisodeCountMap(viewer.libraryOwnerId, entries);
+    for (const entry of entries) entry.episodes = episodeCounts.get(`${entry.mediaType}:${entry.tmdbId}`) ?? null;
+  }
   const [favoritedMovieIds, favoritedTvIds] = viewer.userId
     ? await Promise.all([
         getFavoritedTmdbIds(

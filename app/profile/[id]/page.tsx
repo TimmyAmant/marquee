@@ -112,6 +112,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
                     }}
                     badge={item.status && <StatusBadge status={item.status} compact />}
                     status={item.status}
+                    episodes={item.episodes}
                   />
                 </PosterRowItem>
               ))}
