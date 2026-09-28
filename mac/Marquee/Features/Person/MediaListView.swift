@@ -58,7 +58,7 @@ struct MediaListView: View {
     var body: some View {
         if cards.isEmpty {
             Text(emptyMessage)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textMuted)
         } else {
             let rows = visible
@@ -66,7 +66,7 @@ struct MediaListView: View {
                 controls(count: rows.count)
                 if rows.isEmpty {
                     Text("No titles match these filters.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                 } else if layout == .grid {
                     grid(rows)
@@ -80,7 +80,7 @@ struct MediaListView: View {
     private func controls(count: Int) -> some View {
         FlowLayout(spacing: 10, lineSpacing: 10) {
             Text(countLabel(count))
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.trailing, 8)
 

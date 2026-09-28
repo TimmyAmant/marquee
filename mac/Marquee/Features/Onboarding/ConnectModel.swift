@@ -1,6 +1,10 @@
 import SwiftUI
 import Observation
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// State for the find-your-server flow: Welcome → Searching → (Local Network
 /// denied) → Manual entry. Picking a server hands it to `AppModel` via `onSelect`.
@@ -125,16 +129,23 @@ final class ConnectModel {
         }
     }
 
-    /// System Settings › Privacy & Security › Local Network.
+    /// System Settings › Privacy & Security › Local Network (on iOS, the
+    /// Settings app's page for Marquee, which has the Local Network switch).
     static func openLocalNetworkSettings() {
+        #if os(iOS)
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            Platform.open(url)
+        }
+        #else
         let candidates = [
             "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_LocalNetwork",
             "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork",
         ]
         for candidate in candidates {
-            if let url = URL(string: candidate), NSWorkspace.shared.open(url) {
+            if let url = URL(string: candidate), Platform.open(url) {
                 return
             }
         }
+        #endif
     }
 }

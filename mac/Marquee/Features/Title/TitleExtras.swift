@@ -42,14 +42,14 @@ struct SeasonAccordion: View {
         } label: {
             HStack {
                 Text(season.name)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: Metrics.text(14), weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 if let label = season.completenessLabel {
                     TonePill(text: label, tone: season.isComplete ? .owned : .info, small: true)
                 }
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: Metrics.text(11), weight: .semibold))
                     .foregroundStyle(Theme.textMuted)
                     .rotationEffect(.degrees(isOpen ? 180 : 0))
             }
@@ -69,7 +69,7 @@ struct SeasonAccordion: View {
                     EpisodeList(season: loaded)
                 } else {
                     Text(screen.loadingSeasons.contains(season.seasonNumber) ? "Loading…" : "No episode data for this season.")
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(18)
@@ -86,7 +86,7 @@ private struct EpisodeList: View {
     var body: some View {
         if season.episodes.isEmpty {
             Text("No episode data for this season.")
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 .foregroundStyle(Theme.textMuted)
                 .padding(18)
         } else {
@@ -105,7 +105,7 @@ private struct EpisodeList: View {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(alignment: .firstTextBaseline, spacing: 8) {
                                 Text("\(episode.episodeNumber). \(episode.name)")
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.system(size: Metrics.text(13), weight: .medium))
                                     .foregroundStyle(Theme.textPrimary)
                                 Spacer(minLength: 8)
                                 if let hasFile = episode.hasFile {
@@ -118,11 +118,11 @@ private struct EpisodeList: View {
                                     Text(airDate.mediumLabel)
                                 }
                             }
-                            .font(.system(size: 11.5))
+                            .font(.system(size: Metrics.text(11.5)))
                             .foregroundStyle(Theme.textMuted)
                             if let overview = episode.shortOverview {
                                 Text(overview)
-                                    .font(.system(size: 12))
+                                    .font(.system(size: Metrics.text(12)))
                                     .foregroundStyle(Theme.textSecondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -167,6 +167,7 @@ struct TrailerSheet: View {
     }
 }
 
+#if os(macOS)
 private struct YouTubePlayer: NSViewRepresentable {
     let videoKey: String
 
@@ -184,8 +185,33 @@ private struct YouTubePlayer: NSViewRepresentable {
     static func dismantleNSView(_ nsView: WKWebView, coordinator: ()) {
         nsView.loadHTMLString("", baseURL: nil)
     }
+}
+#else
+private struct YouTubePlayer: UIViewRepresentable {
+    let videoKey: String
 
-    private func load(into view: WKWebView) {
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        configuration.allowsInlineMediaPlayback = true
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        view.isOpaque = false
+        view.backgroundColor = .black
+        view.scrollView.isScrollEnabled = false
+        load(into: view)
+        return view
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: ()) {
+        uiView.loadHTMLString("", baseURL: nil)
+    }
+}
+#endif
+
+extension YouTubePlayer {
+    fileprivate func load(into view: WKWebView) {
         // YouTube's embed player needs a real https origin + referrer policy.
         let html = """
         <!doctype html><html><head><meta name="referrer" content="strict-origin-when-cross-origin">
@@ -225,7 +251,7 @@ struct RelinkTitleSheet: View {
             Text("Fix this title's match")
                 .font(.marqueeDisplay(22))
             Text("Fill in whichever id you have — this repoints your synced library to the correct title without needing to fix the match in Plex/Jellyfin/Sonarr itself.")
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 

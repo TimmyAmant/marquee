@@ -55,7 +55,7 @@ struct FavoriteButton: View {
         } label: {
             if compact {
                 Image(systemName: isOn ? "star.fill" : "star")
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(isOn ? Theme.accent : Theme.textMuted)
                     .frame(width: 20, height: 20)
                     .contentShape(Rectangle())
@@ -64,7 +64,7 @@ struct FavoriteButton: View {
                     Image(systemName: isOn ? "star.fill" : "star")
                     Text(isOn ? "Favorited" : "Favorite")
                 }
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: Metrics.text(12), weight: .medium))
                 .foregroundStyle(isOn ? Theme.accent : Theme.textSecondary)
                 .padding(.horizontal, 13)
                 .padding(.vertical, 6)
@@ -121,7 +121,7 @@ struct QuickAddButton: View {
                 .disabled(pending)
                 if let error {
                     Text(error)
-                        .font(.system(size: 9))
+                        .font(.system(size: Metrics.text(9)))
                         .foregroundStyle(Theme.danger)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
@@ -161,7 +161,7 @@ struct RequestButton: View {
     var body: some View {
         if requested || alreadyRequested {
             Text(compact ? "Requested" : "Requested — waiting for approval")
-                .font(.system(size: compact ? 10 : 12, weight: .medium))
+                .font(.system(size: Metrics.text(compact ? 10 : 12), weight: .medium))
                 .foregroundStyle(Theme.info)
                 .padding(.horizontal, compact ? 8 : 14)
                 .padding(.vertical, compact ? 4 : 6)
@@ -179,7 +179,7 @@ struct RequestButton: View {
                 .disabled(pending)
                 if let error {
                     Text(error)
-                        .font(.system(size: compact ? 9 : 12))
+                        .font(.system(size: Metrics.text(compact ? 9 : 12)))
                         .foregroundStyle(Theme.danger)
                         .lineLimit(3)
                 }

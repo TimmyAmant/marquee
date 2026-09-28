@@ -2856,6 +2856,35 @@
         }
       }
     },
+    "%lld unread" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ungelesen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sin leer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld non lues"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld não lidas"
+          }
+        }
+      }
+    },
     "%lld%%" : {
       "shouldTranslate" : false
     },
@@ -9063,6 +9092,35 @@
         }
       }
     },
+    "Choose what you're notified about" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswählen, worüber du benachrichtigt wirst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige de qué recibes notificaciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir ce qui vous est notifié"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher sobre o que você é notificado"
+          }
+        }
+      }
+    },
     "Choose where each kind of notification goes. The bell is the list at the top of every page; devices are the browsers, Macs and PCs you turned notifications on for." : {
       "localizations" : {
         "de" : {
@@ -11355,6 +11413,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível ler seu login salvo. Entre de novo ou recarregue (⌘R) para tentar de novo."
+          }
+        }
+      }
+    },
+    "Couldn't read your saved sign-in. Sign in again." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine gespeicherte Anmeldung konnte nicht gelesen werden. Melde dich erneut an."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer tu sesión guardada. Vuelve a iniciar sesión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire votre connexion enregistrée. Reconnectez-vous."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler seu login salvo. Entre de novo."
           }
         }
       }
@@ -14693,6 +14780,35 @@
         }
       }
     },
+    "Found Marquee at %@, but the server needs updating to %@ or later to work with the iPhone app." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee unter %1$@ gefunden, aber der Server muss auf %2$@ oder neuer aktualisiert werden, damit er mit der iPhone-App funktioniert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se encontró Marquee en %1$@, pero hay que actualizar el servidor a la versión %2$@ o posterior para usarlo con la app de iPhone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee a été trouvé à %1$@, mais le serveur doit être mis à jour en version %2$@ ou ultérieure pour fonctionner avec l’app iPhone."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee foi encontrado em %1$@, mas o servidor precisa ser atualizado para a versão %2$@ ou mais recente para funcionar com o app para iPhone."
+          }
+        }
+      }
+    },
     "Found your server" : {
       "localizations" : {
         "de" : {
@@ -15225,6 +15341,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Receber notificações neste Mac?"
+          }
+        }
+      }
+    },
+    "Get notifications on this iPhone?" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen auf diesem iPhone erhalten?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Recibir notificaciones en este iPhone?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recevoir des notifications sur cet iPhone ?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receber notificações neste iPhone?"
           }
         }
       }
@@ -15953,6 +16098,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Endereço IP ou URL"
+          }
+        }
+      }
+    },
+    "If iOS asks to find devices on your local network, tap Allow." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn iOS fragt, ob Geräte im lokalen Netzwerk gesucht werden dürfen, tippe auf „Erlauben“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si iOS pide buscar dispositivos en tu red local, toca Permitir."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si iOS demande à rechercher des appareils sur votre réseau local, touchez Autoriser."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se o iOS pedir para encontrar dispositivos na sua rede local, toque em Permitir."
           }
         }
       }
@@ -19209,6 +19383,35 @@
         }
       }
     },
+    "Marquee doesn't have Local Network access. Turn it on in Settings › Privacy & Security › Local Network." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee hat keinen Zugriff auf das lokale Netzwerk. Schalte ihn in Einstellungen › Datenschutz & Sicherheit › Lokales Netzwerk ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee no tiene acceso a la red local. Actívalo en Ajustes › Privacidad y seguridad › Red local."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee n’a pas accès au réseau local. Activez-le dans Réglages › Confidentialité et sécurité › Réseau local."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee não tem acesso à Rede Local. Ative em Ajustes › Privacidade e Segurança › Rede Local."
+          }
+        }
+      }
+    },
     "Marquee doesn't have Local Network access. Turn it on in System Settings › Privacy & Security › Local Network." : {
       "localizations" : {
         "de" : {
@@ -19293,6 +19496,93 @@
         }
       }
     },
+    "Marquee for iPhone" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee für iPhone"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee para iPhone"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee pour iPhone"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee para iPhone"
+          }
+        }
+      }
+    },
+    "Marquee for iPhone %@ is installed." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee für iPhone %@ ist installiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee para iPhone %@ está instalado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee pour iPhone %@ est installé."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee para iPhone %@ está instalado."
+          }
+        }
+      }
+    },
+    "Marquee for iPhone connects to the Marquee server running on your home network, like the one on your Unraid box." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee für iPhone verbindet sich mit dem Marquee-Server in deinem Heimnetz, etwa dem auf deinem Unraid-Rechner."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee para iPhone se conecta al servidor Marquee de tu red doméstica, como el de tu equipo Unraid."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee pour iPhone se connecte au serveur Marquee qui tourne sur votre réseau local, comme celui de votre machine Unraid."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee para iPhone se conecta ao servidor Marquee rodando na sua rede doméstica, como o do seu Unraid."
+          }
+        }
+      }
+    },
     "Marquee is running on your network, but the Mac app needs server version %@ or later." : {
       "localizations" : {
         "de" : {
@@ -19317,6 +19607,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O Marquee está rodando na sua rede, mas o app para Mac precisa da versão %@ ou mais recente do servidor."
+          }
+        }
+      }
+    },
+    "Marquee is running on your network, but the iPhone app needs server version %@ or later." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee läuft in deinem Netzwerk, aber die iPhone-App braucht die Serverversion %@ oder neuer."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee está funcionando en tu red, pero la app de iPhone necesita la versión %@ o posterior del servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee tourne sur votre réseau, mais l’app iPhone nécessite la version %@ ou ultérieure du serveur."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee está rodando na sua rede, mas o app para iPhone precisa da versão %@ ou mais recente do servidor."
+          }
+        }
+      }
+    },
+    "Marquee needs permission to look for your server on your home network. If iOS just asked, tap Allow and the search continues on its own." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee braucht die Erlaubnis, in deinem Heimnetz nach deinem Server zu suchen. Wenn iOS gerade gefragt hat, tippe auf „Erlauben“ – die Suche läuft dann von allein weiter."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee necesita permiso para buscar tu servidor en tu red doméstica. Si iOS acaba de preguntar, toca Permitir y la búsqueda seguirá sola."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee a besoin d’une autorisation pour rechercher votre serveur sur votre réseau local. Si iOS vient de le demander, touchez Autoriser et la recherche reprendra d’elle-même."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee precisa de permissão para procurar seu servidor na sua rede doméstica. Se o iOS acabou de perguntar, toque em Permitir e a busca continua sozinha."
           }
         }
       }
@@ -19961,6 +20309,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monitorado, mas o Sonarr/Radarr ainda não encontrou uma cópia — continua procurando."
+          }
+        }
+      }
+    },
+    "More" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais"
           }
         }
       }
@@ -22317,6 +22694,35 @@
         }
       }
     },
+    "Notifications for Marquee are off in the Settings app." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitteilungen für Marquee sind in der Einstellungen-App ausgeschaltet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las notificaciones de Marquee están desactivadas en la app Ajustes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notifications de Marquee sont désactivées dans l’app Réglages."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As notificações do Marquee estão desativadas no app Ajustes."
+          }
+        }
+      }
+    },
     "Notifications for Marquee are turned off in System Settings." : {
       "localizations" : {
         "de" : {
@@ -22789,6 +23195,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Configurações"
+          }
+        }
+      }
+    },
+    "Open Settings › Privacy & Security › Local Network." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffne Einstellungen › Datenschutz & Sicherheit › Lokales Netzwerk."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre Ajustes › Privacidad y seguridad › Red local."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrez Réglages › Confidentialité et sécurité › Réseau local."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abra Ajustes › Privacidade e Segurança › Rede Local."
           }
         }
       }
@@ -29413,6 +29848,35 @@
         }
       }
     },
+    "Server settings" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servereinstellungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres du serveur"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurações do servidor"
+          }
+        }
+      }
+    },
     "Services" : {
       "localizations" : {
         "es" : {
@@ -30001,6 +30465,35 @@
         }
       }
     },
+    "Show notifications on this iPhone" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen auf diesem iPhone anzeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar notificaciones en este iPhone"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les notifications sur cet iPhone"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar notificações neste iPhone"
+          }
+        }
+      }
+    },
     "Shown — turn off to hide it" : {
       "localizations" : {
         "de" : {
@@ -30361,6 +30854,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sair"
+          }
+        }
+      }
+    },
+    "Sign out of Marquee?" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von Marquee abmelden?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cerrar sesión en Marquee?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter de Marquee ?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sair do Marquee?"
           }
         }
       }
@@ -33109,6 +33631,35 @@
         }
       }
     },
+    "The server at %@ runs Marquee %@, which is newer than this app supports. Update Marquee for iPhone." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Server unter %1$@ läuft mit Marquee %2$@, das ist neuer, als diese App unterstützt. Aktualisiere Marquee für iPhone."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El servidor en %1$@ ejecuta Marquee %2$@, una versión más nueva de la que admite esta app. Actualiza Marquee para iPhone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le serveur à l’adresse %1$@ exécute Marquee %2$@, une version plus récente que celles prises en charge par cette application. Mettez à jour Marquee pour iPhone."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O servidor em %1$@ roda o Marquee %2$@, mais novo do que este app suporta. Atualize o Marquee para iPhone."
+          }
+        }
+      }
+    },
     "The server didn't answer like a Marquee server. It may need updating to %@ or later." : {
       "localizations" : {
         "de" : {
@@ -33417,6 +33968,35 @@
         }
       }
     },
+    "These open on your Marquee server's website." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie öffnen sich auf der Website deines Marquee-Servers."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se abren en el sitio web de tu servidor de Marquee."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ils s’ouvrent sur le site web de votre serveur Marquee."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elas abrem no site do seu servidor do Marquee."
+          }
+        }
+      }
+    },
     "This account can't sign in to this Marquee server." : {
       "localizations" : {
         "de" : {
@@ -33609,6 +34189,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este servidor é mais novo do que este app suporta. Atualize o Marquee para Mac para conectar."
+          }
+        }
+      }
+    },
+    "This server is newer than this app supports. Update Marquee for iPhone to connect." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server ist neuer, als diese App unterstützt. Aktualisiere Marquee für iPhone, um dich zu verbinden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor es más nuevo de lo que admite esta app. Actualiza Marquee para iPhone para conectarte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce serveur est plus récent que ce que cette application prend en charge. Mettez à jour Marquee pour iPhone pour vous connecter."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor é mais novo do que este app suporta. Atualize o Marquee para iPhone para conectar."
           }
         }
       }
@@ -35125,6 +35734,35 @@
         }
       }
     },
+    "Update this server to Marquee %@ or later to use it with the iPhone app." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualisiere diesen Server auf Marquee %@ oder neuer, um ihn mit der iPhone-App zu nutzen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualiza este servidor a Marquee %@ o posterior para usarlo con la app de iPhone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettez ce serveur à jour vers Marquee %@ ou une version ultérieure pour l’utiliser avec l’application iPhone."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualize este servidor para o Marquee %@ ou mais recente para usá-lo com o app para iPhone."
+          }
+        }
+      }
+    },
     "Update to Marquee %@" : {
       "localizations" : {
         "de" : {
@@ -36553,6 +37191,35 @@
         }
       }
     },
+    "While Marquee is open, from your Marquee server. The bell keeps them either way; for alerts when the app is closed, add a personal channel (ntfy, Pushover, Telegram…) on the website." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solange Marquee geöffnet ist, direkt von deinem Marquee-Server. Die Glocke behält sie so oder so; für Hinweise bei geschlossener App füge auf der Website einen persönlichen Kanal hinzu (ntfy, Pushover, Telegram …)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mientras Marquee está abierto, desde tu servidor de Marquee. La campana las guarda de todos modos; para recibir avisos con la app cerrada, añade un canal personal (ntfy, Pushover, Telegram…) en el sitio web."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tant que Marquee est ouvert, depuis votre serveur Marquee. La cloche les conserve dans tous les cas ; pour être alerté quand l’app est fermée, ajoutez un canal personnel (ntfy, Pushover, Telegram…) sur le site web."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enquanto o Marquee está aberto, direto do seu servidor do Marquee. O sino guarda tudo de qualquer forma; para receber alertas com o app fechado, adicione um canal pessoal (ntfy, Pushover, Telegram…) no site."
+          }
+        }
+      }
+    },
     "Who requested what, and who reviewed it — most recent first." : {
       "localizations" : {
         "de" : {
@@ -36945,6 +37612,35 @@
         }
       }
     },
+    "You'll be signed out of this server." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du wirst von diesem Server abgemeldet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se cerrará tu sesión en este servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous serez déconnecté de ce serveur."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você vai sair deste servidor."
+          }
+        }
+      }
+    },
     "You're up to date" : {
       "localizations" : {
         "de" : {
@@ -37081,6 +37777,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seu servidor do Marquee é mais novo que este app. Atualize o Marquee para Mac e tente de novo."
+          }
+        }
+      }
+    },
+    "Your Marquee server is newer than this app. Update Marquee for iPhone, then try again." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Marquee-Server ist neuer als diese App. Aktualisiere Marquee für iPhone und versuch es dann noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu servidor de Marquee es más nuevo que esta app. Actualiza Marquee para iPhone e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre serveur Marquee est plus récent que cette application. Mettez à jour Marquee pour iPhone, puis réessayez."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu servidor do Marquee é mais novo que este app. Atualize o Marquee para iPhone e tente de novo."
           }
         }
       }
@@ -37925,6 +38650,35 @@
         }
       }
     },
+    "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then try again." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Server hat von TMDb nichts zurückbekommen. Prüf seine Internetverbindung oder die TMDb-Zugangsdaten unter Einstellungen → Integrationen und versuch es dann noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu servidor no obtuvo nada de TMDb. Comprueba su conexión a internet o la credencial de TMDb en Ajustes → Integraciones e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Intégrations, puis réessayez."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Integrações e tente de novo."
+          }
+        }
+      }
+    },
     "Your server didn't return a changelog." : {
       "localizations" : {
         "de" : {
@@ -38593,6 +39347,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "horas sem ser encontrado"
+          }
+        }
+      }
+    },
+    "iOS is blocking Marquee from your home network. Turn it on in Settings, then try again." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS blockiert den Zugriff von Marquee auf dein Heimnetz. Schalte ihn in den Einstellungen ein und versuch es dann noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS está bloqueando el acceso de Marquee a tu red doméstica. Actívalo en Ajustes e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS empêche Marquee d’accéder à votre réseau domestique. Activez-le dans Réglages, puis réessayez."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iOS está bloqueando o acesso do Marquee à sua rede doméstica. Ative nos Ajustes e tente de novo."
+          }
+        }
+      }
+    },
+    "iOS will ask for permission first. Tap Allow so Marquee can reach your server." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS fragt zuerst nach deiner Erlaubnis. Tippe auf „Erlauben“, damit Marquee deinen Server erreichen kann."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS pedirá permiso primero. Toca Permitir para que Marquee pueda acceder a tu servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS vous demandera d’abord l’autorisation. Touchez Autoriser pour que Marquee puisse joindre votre serveur."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iOS vai pedir permissão primeiro. Toque em Permitir para o Marquee acessar seu servidor."
           }
         }
       }

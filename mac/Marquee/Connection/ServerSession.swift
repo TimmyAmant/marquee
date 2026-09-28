@@ -99,6 +99,16 @@ final class ServerSession {
     }
 
     static let serverDefaultsKey = "marquee.server.baseURL"
+
+    /// Where this platform keeps session tokens: a private file on the Mac
+    /// (see `FileTokenStore`), the Keychain on iOS (`KeychainTokenStore`).
+    nonisolated static func defaultTokenStore() -> TokenStore {
+        #if os(macOS)
+        FileTokenStore()
+        #else
+        KeychainTokenStore()
+        #endif
+    }
     static let restoreTimeout: TimeInterval = 6
 
     /// Non-nil when this launch is pinned to one server (automated runs).
@@ -118,7 +128,7 @@ final class ServerSession {
     @ObservationIgnored var onUnauthorized: (() -> Void)?
 
     /// Shown in the server's device list; `name` on the token row.
-    @ObservationIgnored private(set) lazy var deviceName: String = Host.current().localizedName ?? "Mac"
+    @ObservationIgnored private(set) lazy var deviceName: String = Platform.deviceName
 
     @ObservationIgnored private var token: String?
     @ObservationIgnored private var tokenLoaded = false
@@ -133,7 +143,7 @@ final class ServerSession {
 
     init(
         defaults: UserDefaults = .standard,
-        tokenStore: TokenStore = FileTokenStore(),
+        tokenStore: TokenStore = ServerSession.defaultTokenStore(),
         urlSession: URLSession = APIClient.defaultSession,
         deviceName: String? = nil,
         pinned: PinnedServer? = PinnedServer.resolve(),

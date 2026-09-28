@@ -160,7 +160,7 @@ struct CommentsToggle: View {
     var body: some View {
         Button(CommentThreadModel.toggleLabel(count: count, isOpen: isOpen)) { isOpen.toggle() }
             .buttonStyle(QuietButtonStyle())
-            .font(.system(size: 11.5))
+            .font(.system(size: Metrics.text(11.5)))
             .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
     }
 }
@@ -186,13 +186,13 @@ struct CommentThreadPanel: View {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
                     Text("Loading…")
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textMuted)
                 }
             } else {
                 if thread.comments.isEmpty {
                     Text("No comments yet.")
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textMuted)
                 } else {
                     VStack(alignment: .leading, spacing: 12) {
@@ -223,7 +223,7 @@ struct CommentThreadPanel: View {
             HStack {
                 if let remaining = thread.remainingLabel {
                     Text(remaining)
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                 }
                 Spacer()
@@ -262,7 +262,7 @@ private struct CommentItemView: View {
                     editor
                 } else {
                     Text(comment.body)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
@@ -281,12 +281,12 @@ private struct CommentItemView: View {
                                 .disabled(thread.busyCommentId != nil)
                             }
                         }
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                     }
                 }
                 if let error = thread.commentErrors[comment.id] {
                     Text(error)
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.danger)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -298,10 +298,10 @@ private struct CommentItemView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(comment.author.label)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: Metrics.text(12), weight: .medium))
                 .foregroundStyle(Theme.textPrimary)
             Text(comment.headerParts.joined(separator: " · "))
-                .font(.system(size: 11.5))
+                .font(.system(size: Metrics.text(11.5)))
                 .foregroundStyle(Theme.textMuted)
                 .help(comment.editedAt.map { String(localized: "Edited \(Format.dateTime($0))") } ?? "")
         }
@@ -334,7 +334,7 @@ private struct CommentTextEditor: View {
 
     var body: some View {
         TextEditor(text: $text)
-            .font(.system(size: 13))
+            .font(.system(size: Metrics.text(13)))
             .scrollContentBackground(.hidden)
             .padding(.horizontal, 5)
             .padding(.vertical, 6)
@@ -344,7 +344,7 @@ private struct CommentTextEditor: View {
             .overlay(alignment: .topLeading) {
                 if text.isEmpty, !placeholder.isEmpty {
                     Text(placeholder)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)

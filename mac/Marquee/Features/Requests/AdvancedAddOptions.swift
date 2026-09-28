@@ -152,11 +152,11 @@ struct AdvancedAddToggle: View {
             HStack(spacing: 3) {
                 Text("Advanced")
                 Image(systemName: advanced.isExpanded ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: Metrics.text(9), weight: .semibold))
             }
         }
         .buttonStyle(QuietButtonStyle())
-        .font(.system(size: 11.5))
+        .font(.system(size: Metrics.text(11.5)))
         .help("Pick the server, quality profile, root folder and tags it's added with.")
     }
 }
@@ -194,7 +194,7 @@ struct AddOptionsPanel: View {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text("Checking your \(mediaType.arrName) servers…")
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             }
         case let .failed(message):
@@ -211,7 +211,7 @@ struct AddOptionsPanel: View {
                 Text(is4k
                     ? "No 4K \(mediaType.arrName) server is set up for this yet."
                     : "No \(mediaType.arrName) server is set up for this yet.")
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             } else {
                 pickers(selection)
@@ -238,7 +238,7 @@ struct AddOptionsPanel: View {
         }
         if let server = current.server, !server.reachable {
             Text("This server isn't responding, so its lists can't be shown. It will use its saved choices.")
-                .font(.system(size: 11.5))
+                .font(.system(size: Metrics.text(11.5)))
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
         } else {
@@ -273,7 +273,7 @@ struct AddOptionsPanel: View {
         if !available.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Tags")
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textSecondary)
                 FlowLayout(spacing: 12, lineSpacing: 6) {
                     ForEach(available) { tag in
@@ -281,8 +281,8 @@ struct AddOptionsPanel: View {
                             get: { current.tags.contains(tag.id) },
                             set: { selection.wrappedValue.setTag(tag.id, on: $0) }
                         ))
-                        .toggleStyle(.checkbox)
-                        .font(.system(size: 12))
+                        .checkboxToggleStyle()
+                        .font(.system(size: Metrics.text(12)))
                     }
                 }
             }

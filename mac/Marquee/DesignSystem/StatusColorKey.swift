@@ -26,7 +26,7 @@ struct StatusColorKey: View {
                     }
                 }
                 Text("Color key")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: Metrics.text(11), weight: .medium))
                     .foregroundStyle(active ? Theme.accent : Theme.textSecondary)
             }
             .padding(.horizontal, 9)
@@ -60,7 +60,7 @@ struct StatusColorKeyList: View {
         VStack(alignment: .leading, spacing: rowSpacing) {
             if showsHeading {
                 Text("What do the colors mean?")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: Metrics.text(12), weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
             }
             ForEach(API.LibraryStatus.knownCases, id: \.rawValue) { status in
@@ -69,10 +69,10 @@ struct StatusColorKeyList: View {
                         .padding(.top, 2)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(status.name)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: Metrics.text(12), weight: .medium))
                             .foregroundStyle(Theme.textPrimary)
                         Text(status.meaning)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -80,7 +80,7 @@ struct StatusColorKeyList: View {
                 .accessibilityElement(children: .combine)
             }
             Text(Self.footnote)
-                .font(.system(size: 10.5))
+                .font(.system(size: Metrics.text(10.5)))
                 .foregroundStyle(Theme.textMuted)
                 .padding(.top, 2)
         }

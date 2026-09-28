@@ -125,7 +125,7 @@ struct SeasonPickerList: View {
             Text("Status")
                 .frame(width: 104, alignment: .trailing)
         }
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: Metrics.text(11), weight: .medium))
         .textCase(.uppercase)
         .foregroundStyle(Theme.textMuted)
         .padding(.horizontal, 12)
@@ -146,12 +146,12 @@ struct SeasonPickerList: View {
             .controlSize(.mini)
             .disabled(disabled || !pickable)
             Text(season.name)
-                .font(.system(size: 13, weight: pickable ? .medium : .regular))
+                .font(.system(size: Metrics.text(13), weight: pickable ? .medium : .regular))
                 .foregroundStyle(pickable ? Theme.textPrimary : Theme.textSecondary)
                 .lineLimit(1)
             Spacer(minLength: 8)
             Text(verbatim: "\(season.episodeCount)")
-                .font(.system(size: 12))
+                .font(.system(size: Metrics.text(12)))
                 .foregroundStyle(Theme.textMuted)
                 .frame(width: 64, alignment: .trailing)
                 .accessibilityLabel(season.episodeCountLabel)
@@ -181,7 +181,7 @@ struct SeasonStatusPill: View {
         switch state {
         case .requestable, .unavailable:
             Text(state.pillLabel)
-                .font(.system(size: 10.5, weight: .medium))
+                .font(.system(size: Metrics.text(10.5), weight: .medium))
                 .foregroundStyle(Theme.textMuted)
                 .padding(.horizontal, 8)
                 .frame(height: 20)
@@ -231,13 +231,13 @@ struct SeasonRequestSheet: View {
             Text("Request seasons")
                 .font(.marqueeDisplay(22))
             Text(title)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textSecondary)
                 .lineLimit(1)
 
             if autoApprove {
                 Label("This request will be approved automatically.", systemImage: "info.circle")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.info)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)

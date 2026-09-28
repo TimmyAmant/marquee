@@ -15,7 +15,7 @@ struct ErrorReferenceView: View {
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
                     Text("What every error message in Marquee actually means, and what to do about it. If the exact wording you saw isn't below, it's most likely a message passed straight through from Sonarr, Radarr, Plex, or Jellyfin themselves — check that service's own logs.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -23,7 +23,7 @@ struct ErrorReferenceView: View {
                 if let categories {
                     if categories.isEmpty {
                         Text("Your server didn't return an error reference.")
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                             .foregroundStyle(Theme.textMuted)
                     }
                     ForEach(categories) { category in
@@ -32,15 +32,15 @@ struct ErrorReferenceView: View {
                             ForEach(category.entries) { entry in
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("“\(entry.message)”")
-                                        .font(.system(size: 12.5, design: .monospaced))
+                                        .font(.system(size: Metrics.text(12.5), design: .monospaced))
                                         .foregroundStyle(Theme.danger)
                                         .textSelection(.enabled)
                                     Text(entry.meaning)
-                                        .font(.system(size: 13))
+                                        .font(.system(size: Metrics.text(13)))
                                         .foregroundStyle(Theme.textPrimary)
                                         .fixedSize(horizontal: false, vertical: true)
                                     (Text("What to do: ").foregroundStyle(Theme.textMuted) + Text(entry.whatToDo).foregroundStyle(Theme.textSecondary))
-                                        .font(.system(size: 13))
+                                        .font(.system(size: Metrics.text(13)))
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -61,6 +61,7 @@ struct ErrorReferenceView: View {
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Error Reference")
+        .headingIsThePageTitle()
         .task(id: model.reloadToken) {
             do {
                 let fresh = try await model.api.help.errors()
@@ -88,7 +89,7 @@ struct StatusColorsHelpView: View {
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                     Text("Posters get a colored strip along the bottom, and title pages a badge, showing where each title stands in your library. They use the same colors as Radarr and Sonarr, so a title looks the same everywhere.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -100,10 +101,10 @@ struct StatusColorsHelpView: View {
                             StatusSwatch(status: status, size: 14)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(status.name)
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: Metrics.text(14), weight: .medium))
                                     .foregroundStyle(Theme.textPrimary)
                                 Text(status.meaning)
-                                    .font(.system(size: 12.5))
+                                    .font(.system(size: Metrics.text(12.5)))
                                     .foregroundStyle(Theme.textSecondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -118,7 +119,7 @@ struct StatusColorsHelpView: View {
                 .cardSurface(padding: 0)
 
                 Text(StatusColorKeyList.footnote)
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             }
             .padding(32)
@@ -128,6 +129,7 @@ struct StatusColorsHelpView: View {
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("What the Colors Mean")
+        .headingIsThePageTitle()
     }
 }
 
@@ -146,14 +148,14 @@ struct ChangelogView: View {
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
                     Text("What's changed, release by release.")
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
                 }
 
                 if let entries {
                     if entries.isEmpty {
                         Text("Your server didn't return a changelog.")
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                             .foregroundStyle(Theme.textMuted)
                     } else {
                         VStack(spacing: 0) {
@@ -161,11 +163,11 @@ struct ChangelogView: View {
                                 if index > 0 { Divider().overlay(Theme.border) }
                                 HStack(spacing: 14) {
                                     Text(entry.daysAgo())
-                                        .font(.system(size: 12))
+                                        .font(.system(size: Metrics.text(12)))
                                         .foregroundStyle(Theme.textMuted)
                                         .frame(width: 90, alignment: .leading)
                                     Text("Release v\(entry.version)")
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: Metrics.text(14), weight: .medium))
                                         .foregroundStyle(Theme.textPrimary)
                                     if index == 0 {
                                         TonePill(text: String(localized: "Latest"), tone: .accent, small: true)
@@ -197,6 +199,7 @@ struct ChangelogView: View {
         .scrollsUnderNavRail()
         .background(Theme.bg0)
         .navigationTitle("Releases")
+        .headingIsThePageTitle()
         .task(id: model.reloadToken) {
             do {
                 let fresh = try await model.api.about.changelog()
@@ -216,7 +219,7 @@ struct ChangelogView: View {
                         Text("v\(entry.version) Changelog")
                             .font(.marqueeDisplay(22))
                         Text(entry.date.mediumLabel)
-                            .font(.system(size: 12))
+                            .font(.system(size: Metrics.text(12)))
                             .foregroundStyle(Theme.textMuted)
                     }
                     Spacer()
@@ -233,7 +236,7 @@ struct ChangelogView: View {
                                     .foregroundStyle(Theme.textSecondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                         }
                     }
                 }

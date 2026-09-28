@@ -67,6 +67,7 @@ struct SearchResultsView: View {
         .marqueeGlow()
         .background(Theme.bg0)
         .navigationTitle("Search")
+        .headingIsThePageTitle()
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
             await load()
         }
@@ -148,7 +149,7 @@ struct SearchCount: View {
 
     var body: some View {
         Text(total, format: .number)
-            .font(.system(size: 13))
+            .font(.system(size: Metrics.text(13)))
             .monospacedDigit()
             .foregroundStyle(Theme.textMuted)
     }
@@ -172,7 +173,7 @@ struct SearchPersonTile: View {
                         RemoteImage(person.profilePath, size: .w185)
                     } else {
                         Image(systemName: "person.fill")
-                            .font(.system(size: 30))
+                            .font(.system(size: Metrics.text(30)))
                             .foregroundStyle(Theme.textMuted)
                     }
                 }
@@ -187,11 +188,11 @@ struct SearchPersonTile: View {
                 }
                 VStack(spacing: 2) {
                     Text(person.name)
-                        .font(.system(size: 12.5, weight: .medium))
+                        .font(.system(size: Metrics.text(12.5), weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     Text(person.knownForLine ?? " ")
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
@@ -226,11 +227,11 @@ struct SearchCompanyTile: View {
             Button(action: action) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(company.name)
-                        .font(.system(size: 12.5, weight: .medium))
+                        .font(.system(size: Metrics.text(12.5), weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     Text(company.isNetwork ? String(localized: "Network") : String(localized: "Studio"))
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -54,7 +54,7 @@ struct SetupForm: View {
             AuthDivider()
             VStack(spacing: 8) {
                 Text("Already have an account?")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textSecondary)
                 Button {
                     model.showAuthForm(.signIn)
@@ -114,6 +114,8 @@ struct SignInForm: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
+    /// Shows the Plex / single sign-on page (a sheet over the app on iOS).
+    @State private var browser = SignInBrowser()
     @State private var method: Method = .password
     @State private var username = ""
     @State private var password = ""
@@ -240,7 +242,7 @@ struct SignInForm: View {
                 // that's how a newcomer gets in — there's no other sign-up.
                 if let hint = info?.signupHint {
                     Text(hint)
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -254,7 +256,7 @@ struct SignInForm: View {
                 AuthDivider()
                 VStack(spacing: 8) {
                     Text("New to Marquee?")
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .foregroundStyle(Theme.textSecondary)
                     Button {
                         model.showAuthForm(.setup)
@@ -268,9 +270,11 @@ struct SignInForm: View {
             }
         }
         .onDisappear { cancelWaiting() }
+        #if os(macOS)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
             cancelWaiting()
         }
+        #endif
     }
 
     /// Plex or single sign-on: finishing in the browser.
@@ -279,7 +283,7 @@ struct SignInForm: View {
             HStack(spacing: 10) {
                 ProgressView().controlSize(.small)
                 Text("Waiting for \(name)…")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button("Cancel") { cancelWaiting() }
@@ -287,7 +291,7 @@ struct SignInForm: View {
                     .keyboardShortcut(.cancelAction)
             }
             Text("Finish signing in in the browser window that just opened.")
-                .font(.system(size: 12))
+                .font(.system(size: Metrics.text(12)))
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -299,11 +303,11 @@ struct SignInForm: View {
         VStack(alignment: .leading, spacing: 12) {
             if let code {
                 Text("In a Jellyfin app you're signed in to, open your profile → Quick Connect and enter this code:")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(code)
-                    .font(.system(size: 34, weight: .semibold, design: .monospaced))
+                    .font(.system(size: Metrics.text(34), weight: .semibold, design: .monospaced))
                     .tracking(8)
                     .foregroundStyle(Theme.textPrimary)
                     .textSelection(.enabled)
@@ -313,7 +317,7 @@ struct SignInForm: View {
             HStack(spacing: 10) {
                 ProgressView().controlSize(.small)
                 Text(code == nil ? "Getting a code…" : "Waiting for approval…")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textMuted)
                 Spacer()
                 Button("Cancel") { cancelWaiting() }
@@ -354,7 +358,7 @@ struct SignInForm: View {
             guard let url = start.url else {
                 throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
             }
-            openURL(url)
+            browser.open(url, openURL: openURL)
             return try await session.finishPlexSignIn(start)
         }
     }
@@ -367,7 +371,7 @@ struct SignInForm: View {
             guard let url = start.url(server: session.server?.baseURL) else {
                 throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
             }
-            openURL(url)
+            browser.open(url, openURL: openURL)
             return try await session.finishSsoSignIn(start)
         }
     }
@@ -390,6 +394,7 @@ struct SignInForm: View {
         error = nil
         waiting = state
         waitTask = Task {
+            defer { browser.close() }
             do {
                 let user = try await signIn()
                 waiting = nil
@@ -407,6 +412,7 @@ struct SignInForm: View {
     }
 
     private func cancelWaiting() {
+        browser.close()
         waitTask?.cancel()
         waitTask = nil
         waiting = nil
@@ -433,7 +439,7 @@ struct ServerUnreachableView: View {
                     Button {
                         ConnectModel.openLocalNetworkSettings()
                     } label: {
-                        Text("Open System Settings").frame(maxWidth: .infinity)
+                        Text(PlatformText.openSystemSettings).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(OutlineButtonStyle())
                 }
@@ -471,11 +477,11 @@ struct ServerUnreachableView: View {
         case .legacy:
             return String(localized: "Your Marquee server is running an older version. Update it, then try again.")
         case .incompatible:
-            return String(localized: "Your Marquee server is newer than this app. Update Marquee for Mac, then try again.")
+            return PlatformText.updateThisAppAndRetry
         case .notMarquee:
             return String(localized: "Something else is answering at your server's address now. Its IP address may have changed.")
         case .unreachable(.localNetworkDenied):
-            return String(localized: "macOS is blocking Marquee from your home network. Turn it on in System Settings, then try again.")
+            return PlatformText.localNetworkBlocked
         default:
             return String(localized: "Make sure the computer running Marquee is on and connected to your network, then try again.")
         }

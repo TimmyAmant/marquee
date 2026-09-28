@@ -728,6 +728,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
         XCTAssertEqual(sent.url?.query, "is4k=true")
     }
 
+    // The server form is the Mac Settings screen's (not in the iPhone app).
+    #if os(macOS)
     /// Saving an edited Sonarr server: the anime profile and folder go as
     /// `null` ("Same as above"), and a test without a new key sends `serverId`.
     func testArrServerFormBodies() async throws {
@@ -760,6 +762,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
             try Self.jsonObject(Data(#"{"kind":"sonarr","baseUrl":"http://192.168.1.10:8989","serverId":"4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10"}"#.utf8))
         )
     }
+    #endif
 
     /// A blank reason sends no reason: no body for a title, just the keyword.
     func testBlockingWithoutAReasonSendsNoReason() async throws {

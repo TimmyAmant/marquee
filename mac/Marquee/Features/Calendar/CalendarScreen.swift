@@ -55,6 +55,7 @@ struct CalendarScreen: View {
         }
         .background(Theme.bg0)
         .navigationTitle("Calendar")
+        .headingIsThePageTitle()
         .task(id: CalendarKey(month: month, revision: model.events.remoteRevision(of: .library) &+ model.events.revision(of: .settings), reload: model.reloadToken)) {
             await load()
         }
@@ -67,7 +68,7 @@ struct CalendarScreen: View {
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
                 Text(page.month.label)
-                    .font(.system(size: 14))
+                    .font(.system(size: Metrics.text(14)))
                     .foregroundStyle(Theme.textSecondary)
             }
             if loading {
@@ -90,7 +91,7 @@ struct CalendarScreen: View {
                 // Sunday first, like the server's grid, in the app's language.
                 ForEach(Array(API.CalendarDay.gregorian.shortWeekdaySymbols.enumerated()), id: \.offset) { _, label in
                     Text(label)
-                        .font(.system(size: 11.5, weight: .medium))
+                        .font(.system(size: Metrics.text(11.5), weight: .medium))
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -149,7 +150,7 @@ private struct DayCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("\(day)")
-                .font(.system(size: 11.5, weight: isToday ? .semibold : .regular))
+                .font(.system(size: Metrics.text(11.5), weight: isToday ? .semibold : .regular))
                 .foregroundStyle(isToday ? Theme.bg0 : Theme.textSecondary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 1)
@@ -160,7 +161,7 @@ private struct DayCell: View {
             }
             if entries.count > maxVisible {
                 Text("+\(entries.count - maxVisible) more")
-                    .font(.system(size: 10))
+                    .font(.system(size: Metrics.text(10)))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.leading, 4)
             }
@@ -186,7 +187,7 @@ private struct EntryRow: View {
                     .background(Theme.bg2)
                     .clipShape(RoundedRectangle(cornerRadius: 2))
                 Text(entry.name)
-                    .font(.system(size: 11))
+                    .font(.system(size: Metrics.text(11)))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 Spacer(minLength: 0)

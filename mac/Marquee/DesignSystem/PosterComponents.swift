@@ -153,7 +153,7 @@ struct PosterCard: View {
             artwork
             Button(action: action) {
                 Text(name)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: Metrics.text(13), weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,7 +164,7 @@ struct PosterCard: View {
             HStack(spacing: 6) {
                 let line = [subtitle, year].compactMap(\.nonBlank).joined(separator: " · ")
                 Text(line.isEmpty ? " " : line)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textMuted)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -267,7 +267,7 @@ struct PosterCard: View {
                     VStack(alignment: .leading, spacing: 10) {
                         if let overview {
                             Text(overview)
-                                .font(.system(size: 11))
+                                .font(.system(size: Metrics.text(11)))
                                 .lineSpacing(3)
                                 .foregroundStyle(Theme.textSecondary)
                                 .lineLimit(5)
@@ -293,7 +293,7 @@ struct PosterCard: View {
             .overlay(alignment: .topLeading) {
                 if let typeLabel {
                     Text(typeLabel)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: Metrics.text(9), weight: .bold))
                         .tracking(0.45)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)
@@ -307,10 +307,10 @@ struct PosterCard: View {
                         .padding(7)
                 } else if let rating, rating > 0 {
                     HStack(spacing: 3) {
-                        Image(systemName: "star.fill").font(.system(size: 8))
+                        Image(systemName: "star.fill").font(.system(size: Metrics.text(8)))
                         Text(rating.formatted(.number.precision(.fractionLength(1))))
                     }
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: Metrics.text(10), weight: .medium))
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2.5)
@@ -402,7 +402,7 @@ struct Shelf<Content: View>: View {
                 if let seeAll {
                     Button(action: seeAll) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.system(size: Metrics.text(9), weight: .semibold))
                             .frame(width: 20, height: 20)
                             .overlay(Circle().strokeBorder(Theme.borderStrong))
                             .contentShape(Circle())
@@ -413,8 +413,10 @@ struct Shelf<Content: View>: View {
                 }
                 if let trailing { trailing }
                 Spacer(minLength: 8)
+                #if os(macOS)
                 chevron("chevron.left", label: String(localized: "Scroll left"), dimmed: (position ?? 0) == 0) { page(-1) }
                 chevron("chevron.right", label: String(localized: "Scroll right"), dimmed: atEnd) { page(1) }
+                #endif
             }
             .frame(height: Metrics.shelfHeadHeight)
             .padding(.trailing, headInset)
@@ -445,7 +447,7 @@ struct Shelf<Content: View>: View {
     private func chevron(_ symbol: String, label: String, dimmed: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: Metrics.text(11), weight: .semibold))
                 .foregroundStyle(dimmed ? Theme.borderStrong : Theme.textSecondary)
                 .frame(width: 28, height: 28)
                 .overlay(Circle().strokeBorder(dimmed ? Theme.border.opacity(0.7) : Theme.border))
@@ -491,7 +493,7 @@ struct PersonCard: View {
                     RemoteImage(profilePath, size: .w342)
                 } else {
                     Image(systemName: "person.fill")
-                        .font(.system(size: 26))
+                        .font(.system(size: Metrics.text(26)))
                         .foregroundStyle(Theme.textMuted)
                 }
             }
@@ -514,7 +516,7 @@ struct PersonCard: View {
 
             Button(action: action) {
                 Text(name)
-                    .font(.system(size: 12.5, weight: .medium))
+                    .font(.system(size: Metrics.text(12.5), weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -523,7 +525,7 @@ struct PersonCard: View {
             .padding(.top, 7)
 
             Text(character?.nonBlank ?? " ")
-                .font(.system(size: 11))
+                .font(.system(size: Metrics.text(11)))
                 .foregroundStyle(Theme.textMuted)
                 .lineLimit(1)
         }
@@ -659,7 +661,7 @@ struct LogoCard: View {
                 } else {
                     Theme.bg1
                     Text(name)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textSecondary)
                         .padding(.horizontal, 16)
                 }
@@ -701,7 +703,7 @@ struct StudioChip: View {
                             .background(Color.white, in: RoundedRectangle(cornerRadius: 5))
                     }
                     Text(company.name)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                 }

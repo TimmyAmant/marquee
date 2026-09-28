@@ -133,7 +133,7 @@ struct BrowseView: View {
 
             if let surpriseError {
                 Text(surpriseError)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.danger)
             }
 
@@ -182,7 +182,7 @@ struct BrowseView: View {
                     Spacer()
                     if loadingPage {
                         ProgressView().controlSize(.small)
-                        Text("Loading more…").font(.system(size: 12)).foregroundStyle(Theme.textMuted)
+                        Text("Loading more…").font(.system(size: Metrics.text(12))).foregroundStyle(Theme.textMuted)
                     } else if let pageError {
                         InlineMessage(text: String(localized: "Couldn't load more"))
                             .help(pageError.localizedDescription)

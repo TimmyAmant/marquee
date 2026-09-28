@@ -220,9 +220,9 @@ enum ProbeOutcome: Equatable, Hashable, Sendable {
         case .marquee:
             return nil
         case .legacy:
-            return String(localized: "Found Marquee at \(name), but the server needs updating to \(ServerInfo.minimumServerVersion) or later to work with the Mac app.")
+            return PlatformText.serverTooOld(name)
         case let .incompatible(info):
-            return String(localized: "The server at \(name) runs Marquee \(info.version), which is newer than this app supports. Update Marquee for Mac.")
+            return PlatformText.serverTooNew(name, version: info.version)
         case .notMarquee:
             return String(localized: "\(name) responded, but it isn't a Marquee server. Check the address and port.")
         case let .unreachable(reason):
@@ -234,7 +234,7 @@ enum ProbeOutcome: Equatable, Hashable, Sendable {
             case .unknownHost:
                 return String(localized: "Couldn't find \(address.host) on your network. Try its IP address instead.")
             case .localNetworkDenied:
-                return String(localized: "Marquee doesn't have Local Network access. Turn it on in System Settings › Privacy & Security › Local Network.")
+                return PlatformText.localNetworkDenied
             case let .failed(message):
                 return String(localized: "Couldn't connect to \(name): \(message)")
             }
@@ -258,7 +258,7 @@ enum ServerProbe {
         configuration.httpCookieAcceptPolicy = .never
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        configuration.httpAdditionalHeaders = ["User-Agent": "Marquee-macOS/\(AppInfo.version)"]
+        configuration.httpAdditionalHeaders = ["User-Agent": AppInfo.userAgent]
         return URLSession(configuration: configuration)
     }()
 

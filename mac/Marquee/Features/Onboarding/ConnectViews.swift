@@ -28,7 +28,7 @@ private struct WelcomeStep: View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
                 title: String(localized: "Find your Marquee server"),
-                message: String(localized: "Marquee for Mac connects to the Marquee server running on your home network, like the one on your Unraid box.")
+                message: PlatformText.connectIntro
             )
             VStack(alignment: .leading, spacing: 14) {
                 ConnectPoint(
@@ -39,7 +39,7 @@ private struct WelcomeStep: View {
                 ConnectPoint(
                     systemImage: "lock.shield",
                     title: String(localized: "Allow Local Network access"),
-                    text: String(localized: "macOS will ask for permission first. Click Allow so Marquee can reach your server.")
+                    text: PlatformText.localNetworkWillAsk
                 )
             }
             .padding(.vertical, 2)
@@ -67,16 +67,16 @@ private struct ConnectPoint: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: Metrics.text(13), weight: .medium))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 30, height: 30)
                 .background(Theme.accent.opacity(0.12), in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: Metrics.text(13), weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                 Text(text)
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -104,7 +104,7 @@ private struct SearchingStep: View {
                             .progressViewStyle(.linear)
                     }
                     Text(progressLabel)
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .foregroundStyle(Theme.textMuted)
                         .monospacedDigit()
                 }
@@ -112,7 +112,7 @@ private struct SearchingStep: View {
 
             if discovery.state == .checkingAccess {
                 AuthNotice(
-                    text: String(localized: "If macOS asks to find devices on your local network, click Allow."),
+                    text: PlatformText.localNetworkIfAsked,
                     systemImage: "lock.shield"
                 )
             }
@@ -172,7 +172,7 @@ private struct SearchingStep: View {
         }
         if usableCount > 0 { return String(localized: "Select your Marquee server to sign in.") }
         if !discovery.found.isEmpty {
-            return String(localized: "Marquee is running on your network, but the Mac app needs server version \(ServerInfo.minimumServerVersion) or later.")
+            return PlatformText.foundOnlyOldServers
         }
         return String(localized: "No Marquee server turned up before the search was stopped.")
     }
@@ -211,18 +211,18 @@ private struct FoundServerRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "server.rack")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(server.isUsable ? Theme.accent : Theme.textMuted)
                     .frame(width: 30, height: 30)
                     .background((server.isUsable ? Theme.accent.opacity(0.12) : Theme.bg2), in: RoundedRectangle(cornerRadius: 8))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(server.address.displayName)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: Metrics.text(13), weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Text(detail)
-                        .font(.system(size: 11.5))
+                        .font(.system(size: Metrics.text(11.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                 }
@@ -230,7 +230,7 @@ private struct FoundServerRow: View {
                 switch server.kind {
                 case .current:
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: Metrics.text(11), weight: .semibold))
                         .foregroundStyle(hovering ? Theme.accent : Theme.textMuted)
                 case .legacy:
                     TonePill(text: String(localized: "Update required"), tone: .accent, small: true)
@@ -240,7 +240,7 @@ private struct FoundServerRow: View {
             }
             if let explanation {
                 Text(explanation)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -277,9 +277,9 @@ private struct FoundServerRow: View {
         case .current:
             return nil
         case .legacy:
-            return String(localized: "Update this server to Marquee \(ServerInfo.minimumServerVersion) or later to use it with the Mac app.")
+            return PlatformText.updateOldServer
         case .incompatible:
-            return String(localized: "This server is newer than this app supports. Update Marquee for Mac to connect.")
+            return PlatformText.updateThisApp
         }
     }
 }
@@ -293,11 +293,11 @@ private struct LocalNetworkDeniedStep: View {
         VStack(alignment: .leading, spacing: 18) {
             AuthHeading(
                 title: String(localized: "Allow Local Network access"),
-                message: String(localized: "Marquee needs permission to look for your server on your home network. If macOS just asked, click Allow and the search continues on its own.")
+                message: PlatformText.localNetworkNeeded
             )
 
             VStack(alignment: .leading, spacing: 10) {
-                SettingsStepRow(number: 1, text: String(localized: "Open System Settings › Privacy & Security › Local Network."))
+                SettingsStepRow(number: 1, text: PlatformText.localNetworkSettingsStep)
                 SettingsStepRow(number: 2, text: String(localized: "Turn on Marquee."))
                 SettingsStepRow(number: 3, text: String(localized: "Come back here. The search picks up again by itself."))
             }
@@ -306,7 +306,7 @@ private struct LocalNetworkDeniedStep: View {
                 Button {
                     ConnectModel.openLocalNetworkSettings()
                 } label: {
-                    Text("Open System Settings").frame(maxWidth: .infinity)
+                    Text(PlatformText.openSystemSettings).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(AccentButtonStyle())
                 .keyboardShortcut(.defaultAction)
@@ -333,12 +333,12 @@ private struct SettingsStepRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("\(number)")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: Metrics.text(11), weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 20, height: 20)
                 .background(Theme.accent.opacity(0.12), in: Circle())
             Text(text)
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -378,7 +378,7 @@ private struct ManualEntryStep: View {
                 Button {
                     ConnectModel.openLocalNetworkSettings()
                 } label: {
-                    Text("Open System Settings").frame(maxWidth: .infinity)
+                    Text(PlatformText.openSystemSettings).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(OutlineButtonStyle())
             }

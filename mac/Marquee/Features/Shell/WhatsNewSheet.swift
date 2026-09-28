@@ -10,6 +10,14 @@ struct WhatsNewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
+    private static func installedMessage(_ version: String) -> String {
+        #if os(macOS)
+        String(localized: "Marquee for Mac \(version) is installed.")
+        #else
+        String(localized: "Marquee for iPhone \(version) is installed.")
+        #endif
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("What's new in Marquee \(content.version)")
@@ -24,13 +32,13 @@ struct WhatsNewSheet: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if let installed = content.installedAppVersion {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Marquee for Mac \(installed) is installed.")
-                                .font(.system(size: 13, weight: .semibold))
+                            Text(Self.installedMessage(installed))
+                                .font(.system(size: Metrics.text(13), weight: .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                             if let url = content.releaseNotesURL {
                                 Button("Read the release notes on GitHub") { openURL(url) }
-                                    .buttonStyle(.link)
-                                    .font(.system(size: 12.5))
+                                    .linkButtonStyle()
+                                    .font(.system(size: Metrics.text(12.5)))
                             }
                         }
                         .padding(.bottom, 14)
@@ -44,7 +52,7 @@ struct WhatsNewSheet: View {
                     }
                     if content.hasMore {
                         Text("And more in earlier releases.")
-                            .font(.system(size: 12))
+                            .font(.system(size: Metrics.text(12)))
                             .foregroundStyle(Theme.textMuted)
                             .padding(.bottom, 8)
                     }
@@ -60,7 +68,7 @@ struct WhatsNewSheet: View {
                     seeAll()
                 }
                 .buttonStyle(QuietButtonStyle())
-                .font(.system(size: 12.5))
+                .font(.system(size: Metrics.text(12.5)))
                 Spacer()
                 Button {
                     dismiss()
@@ -73,20 +81,22 @@ struct WhatsNewSheet: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 14)
         }
+        #if os(macOS)
         .frame(width: 520)
         .frame(minHeight: 260, maxHeight: 600)
+        #endif
         .background(Theme.bg1)
-        .onExitCommand { dismiss() }
+        .onExitCommandIfAvailable { dismiss() }
     }
 
     private func release(_ entry: API.ChangelogEntry) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("Marquee \(entry.version)")
-                    .font(.system(size: 13.5, weight: .semibold))
+                    .font(.system(size: Metrics.text(13.5), weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text(entry.date.mediumLabel)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: Metrics.text(11.5)))
                     .foregroundStyle(Theme.textMuted)
             }
             .accessibilityElement(children: .combine)
@@ -96,7 +106,7 @@ struct WhatsNewSheet: View {
                     Text("•").foregroundStyle(Theme.textMuted)
                     // Verbatim: the changelog's quotes and ellipses are text.
                     Text(verbatim: change)
-                        .font(.system(size: 12.5))
+                        .font(.system(size: Metrics.text(12.5)))
                         .lineSpacing(2)
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)

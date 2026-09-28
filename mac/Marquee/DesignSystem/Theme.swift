@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// Marquee's color tokens from app/globals.css, resolved per window
 /// appearance so light/dark (and the in-app Appearance override) just work.
@@ -43,9 +47,9 @@ enum Theme {
 
     /// `--marquee-glass*`: the navigation rail and menu's frosted glass
     /// (components/nav-menu.tsx), laid over a material by `glassSurface(_:)`.
-    static let glass = dynamic(light: NSColor(hex: 0xFFFFFF, alpha: 0.74), dark: NSColor(hex: 0x1E1D25, alpha: 0.68))
-    static let glassBorder = dynamic(light: NSColor(hex: 0x211F1A, alpha: 0.10), dark: NSColor(hex: 0xFFFFFF, alpha: 0.09))
-    static let glassShadow = dynamic(light: NSColor(hex: 0x3C2D14, alpha: 0.16), dark: NSColor(hex: 0x000000, alpha: 0.5))
+    static let glass = dynamic(light: PlatformColor(hex: 0xFFFFFF, alpha: 0.74), dark: PlatformColor(hex: 0x1E1D25, alpha: 0.68))
+    static let glassBorder = dynamic(light: PlatformColor(hex: 0x211F1A, alpha: 0.10), dark: PlatformColor(hex: 0xFFFFFF, alpha: 0.09))
+    static let glassShadow = dynamic(light: PlatformColor(hex: 0x3C2D14, alpha: 0.16), dark: PlatformColor(hex: 0x000000, alpha: 0.5))
 
     /// The far end of the profile avatar's gradient (nav-menu.tsx `Avatar`).
     static let avatarRust = hex(0xC2583A)
@@ -75,35 +79,40 @@ enum Theme {
     static let grainOpacity: Double = 0.05
 
     static func dynamic(light: UInt32, dark: UInt32) -> Color {
-        dynamic(light: NSColor(hex: light), dark: NSColor(hex: dark))
+        dynamic(light: PlatformColor(hex: light), dark: PlatformColor(hex: dark))
     }
 
-    static func dynamic(light: NSColor, dark: NSColor) -> Color {
+    static func dynamic(light: PlatformColor, dark: PlatformColor) -> Color {
+        #if os(macOS)
         Color(nsColor: NSColor(name: nil) { appearance in
             appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
         })
+        #else
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? dark : light
+        })
+        #endif
     }
 
     static func hex(_ value: UInt32) -> Color {
-        Color(nsColor: NSColor(hex: value))
+        Color(platformColor: PlatformColor(hex: value))
     }
 }
 
-extension NSColor {
-    convenience init(hex: UInt32, alpha: CGFloat = 1) {
-        self.init(
-            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
-            alpha: alpha
-        )
+extension Color {
+    init(platformColor: PlatformColor) {
+        #if os(macOS)
+        self.init(nsColor: platformColor)
+        #else
+        self.init(uiColor: platformColor)
+        #endif
     }
 }
 
 extension Font {
     /// Fraunces stands in as the system serif (New York) — no bundled fonts.
     static func marqueeDisplay(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .serif)
+        .system(size: Metrics.text(size), weight: weight, design: .serif)
     }
 }
 
@@ -124,6 +133,7 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
 
     static let storageKey = "marquee-theme"
 
+    #if os(macOS)
     @MainActor
     func apply() {
         switch self {
@@ -132,6 +142,16 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
         case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
         }
     }
+    #else
+    /// iOS: applied with `.preferredColorScheme` at the root.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+    #endif
 }
 
 // MARK: - Layout
@@ -152,19 +172,33 @@ enum Metrics {
     static let contentLeading: CGFloat = 72
 
     // Shelf pages (Discover, Movies, Series, search, person, studio).
+    // On iOS the same pages at phone scale: a 16pt gutter (the system's)
+    // and posters sized so a shelf shows two and a half.
+    #if os(macOS)
     /// `.page{padding:28px 0 28px 28px}` — 0 on the right so cards bleed off.
     static let pagePadding: CGFloat = 28
     /// `.shelf{margin-bottom:48px}`.
     static let shelfSpacing: CGFloat = 48
+    #else
+    static let pagePadding: CGFloat = 16
+    static let shelfSpacing: CGFloat = 32
+    #endif
     /// `.shelf-head{height:28px;margin-bottom:12px}`.
     static let shelfHeadHeight: CGFloat = 28
     static let shelfHeadGap: CGFloat = 12
+    #if os(macOS)
     /// `.row{gap:20px}` for poster cards, 16 for genre tiles and cast.
     static let posterGap: CGFloat = 20
     static let tileGap: CGFloat = 16
     /// `.card{width:156px}` / `.art{height:234px}`.
     static let posterWidth: CGFloat = 156
     static let posterHeight: CGFloat = 234
+    #else
+    static let posterGap: CGFloat = 12
+    static let tileGap: CGFloat = 12
+    static let posterWidth: CGFloat = 128
+    static let posterHeight: CGFloat = 192
+    #endif
 
     // Title page.
     /// `.tp-poster{left:48px}` — the page's left gutter.
@@ -188,6 +222,26 @@ enum Metrics {
     static let titleRailWidth: CGFloat = 288
     /// The cast carousel sits 40 below the main column (mockup.html's own JS).
     static let titleSectionGap: CGFloat = 40
+
+    /// A text size from the mockup (Mac points), for this platform. The Mac
+    /// uses it as it is. On iPhone and iPad text is read at arm's length and
+    /// should follow the reader's Dynamic Type setting, so the small sizes
+    /// (captions, labels, body text under 17pt) are a step larger, and the
+    /// result scales with the system text size (to at most 1.35×, so fixed
+    /// pills and cards still hold it).
+    static func text(_ size: CGFloat) -> CGFloat {
+        #if os(macOS)
+        return size
+        #else
+        let phone: CGFloat = switch size {
+        case ..<11: size + 0.5
+        case ..<17: (size * 1.12 * 2).rounded() / 2
+        default: size
+        }
+        let dynamic = UIFontMetrics.default.scaledValue(for: phone)
+        return min(max(dynamic, phone * 0.85), phone * 1.35)
+        #endif
+    }
 
     /// `.person{width:112px}` / `.portrait{height:124px}` — cast cards.
     static let castWidth: CGFloat = 112
@@ -324,7 +378,7 @@ struct AccentButtonStyle: ButtonStyle {
         configuration.label
             // .addbtn — height 26, 11.5/650 — on cards; the page-level
             // buttons keep their padded size.
-            .font(.system(size: compact ? 11.5 : 12.5, weight: .semibold))
+            .font(.system(size: Metrics.text(compact ? 11.5 : 12.5), weight: .semibold))
             .foregroundStyle(Theme.bg0)
             .padding(.horizontal, compact ? 10 : 16)
             .padding(.vertical, compact || height != nil ? 0 : 7)
@@ -392,7 +446,7 @@ private struct OutlineButtonBody: View {
     var body: some View {
         let active = hovering || configuration.isPressed
         configuration.label
-            .font(.system(size: pill?.fontSize ?? (compact ? 11 : 12.5), weight: .medium))
+            .font(.system(size: Metrics.text(pill?.fontSize ?? (compact ? 11 : 12.5)), weight: .medium))
             .foregroundStyle(tint ?? (active ? Theme.accent : Theme.textPrimary))
             .padding(.leading, pill?.leading ?? (compact ? 10 : 14))
             .padding(.trailing, pill?.trailing ?? (compact ? 10 : 14))

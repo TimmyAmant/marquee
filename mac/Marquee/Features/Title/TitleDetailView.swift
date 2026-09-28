@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 /// app/title/[type]/[id]/page.tsx + components/title-hero.tsx.
@@ -8,6 +12,9 @@ struct TitleDetailView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
     @Environment(\.navRailInsets) private var navRailInsets
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     @State private var screen: TitleDetailModel
     @State private var showingTrailer = false
     @State private var showingRelink = false
@@ -105,7 +112,66 @@ struct TitleDetailView: View {
         }
     }
 
+    @ViewBuilder
     private func content(_ detail: API.TitleDetail) -> some View {
+        #if os(iOS)
+        if horizontalSizeClass == .compact {
+            phoneContent(detail)
+        } else {
+            wideContent(detail)
+        }
+        #else
+        wideContent(detail)
+        #endif
+    }
+
+    /// The iPhone's title page (0.54's design at phone width): the artwork
+    /// across the top, the poster over its lower edge, then one column —
+    /// title, action row, overview, the facts card — and the same rows below.
+    private func phoneContent(_ detail: API.TitleDetail) -> some View {
+        GeometryReader { proxy in
+            let backdropHeight = max(220, proxy.size.width * 0.66)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TitleBackdrop(
+                        backdropPath: detail.backdropPath,
+                        seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
+                        height: backdropHeight + proxy.safeAreaInsets.top,
+                        wide: false,
+                        sideFade: false
+                    )
+                    .equatable()
+
+                    TitlePoster(posterPath: detail.posterPath, width: 116)
+                        .equatable()
+                        .padding(.top, -120)
+
+                    TitleMainColumn(
+                        screen: screen,
+                        detail: detail,
+                        compact: true,
+                        onTrailer: { showingTrailer = true },
+                        onRelink: { showingRelink = true },
+                        onPickSeasons: { showingSeasonPicker = true },
+                        onReportProblem: { showingReportProblem = true },
+                        onShare: { showingShare = true }
+                    )
+                    .padding(.top, 16)
+
+                    TitleSidebarColumn(detail: detail)
+                        .padding(.top, 28)
+
+                    lowerSections(detail)
+                        .padding(.top, 36)
+                        .padding(.bottom, 40)
+                }
+                .padding(.horizontal, Metrics.pagePadding)
+            }
+            .ignoresSafeArea(.container, edges: .top)
+        }
+    }
+
+    private func wideContent(_ detail: API.TitleDetail) -> some View {
         // The page is measured from the window's top edge, with the toolbar
         // floating over the artwork, so the page starts under the top bar
         // rather than below it. The backdrop also runs under the navigation
@@ -123,7 +189,8 @@ struct TitleDetailView: View {
                             backdropPath: detail.backdropPath,
                             seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
                             height: hero.backdropHeight,
-                            wide: hero.wide
+                            wide: hero.wide,
+                            sideFade: true
                         )
                         .equatable()
 
@@ -156,53 +223,7 @@ struct TitleDetailView: View {
                         .padding(.top, hero.posterTop)
                     }
 
-                    VStack(alignment: .leading, spacing: 44) {
-                        if !detail.seasons.isEmpty {
-                            VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                                SectionTitle(text: String(localized: "Episodes"))
-                                SeasonAccordion(screen: screen, seasons: detail.seasons)
-                            }
-                        }
-                        if !detail.cast.isEmpty {
-                            Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
-                                ForEach(detail.cast) { member in
-                                    PersonCard(
-                                        profilePath: member.profilePath,
-                                        name: member.name,
-                                        character: member.character,
-                                        favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
-                                        link: .person(member.tmdbId)
-                                    ) {
-                                        model.open(.person(member.tmdbId))
-                                    }
-                                }
-                            }
-                        }
-                        if let franchise = detail.franchise, !franchise.items.isEmpty {
-                            FranchiseSection(screen: screen, franchise: franchise)
-                        }
-                        if !detail.studios.isEmpty {
-                            VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
-                                SectionTitle(text: String(localized: "Studio"))
-                                FlowLayout(spacing: 10, lineSpacing: 10) {
-                                    ForEach(detail.studios) { studio in
-                                        StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
-                                    }
-                                }
-                            }
-                        }
-                        if !detail.similar.isEmpty {
-                            Shelf(title: String(localized: "More like this"), headInset: 0) {
-                                ForEach(detail.similar) { card in
-                                    ShelfItem {
-                                        PosterCard(card: card, showsTypeLabel: true) {
-                                            model.openTitle(card.id)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    lowerSections(detail)
                     .padding(.leading, leading)
                     .padding(.trailing, trailing)
                     .padding(.top, 44)
@@ -211,6 +232,57 @@ struct TitleDetailView: View {
             }
         }
         .ignoresSafeArea(.container, edges: [.top, .horizontal])
+    }
+
+    /// Episodes, cast, the franchise, studios and "More like this".
+    private func lowerSections(_ detail: API.TitleDetail) -> some View {
+        VStack(alignment: .leading, spacing: 44) {
+            if !detail.seasons.isEmpty {
+                VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
+                    SectionTitle(text: String(localized: "Episodes"))
+                    SeasonAccordion(screen: screen, seasons: detail.seasons)
+                }
+            }
+            if !detail.cast.isEmpty {
+                Shelf(title: String(localized: "Cast"), itemGap: Metrics.tileGap, headInset: 0) {
+                    ForEach(detail.cast) { member in
+                        PersonCard(
+                            profilePath: member.profilePath,
+                            name: member.name,
+                            character: member.character,
+                            favorite: FavoriteTarget(.person, member.tmdbId, favorited: member.favorited),
+                            link: .person(member.tmdbId)
+                        ) {
+                            model.open(.person(member.tmdbId))
+                        }
+                    }
+                }
+            }
+            if let franchise = detail.franchise, !franchise.items.isEmpty {
+                FranchiseSection(screen: screen, franchise: franchise)
+            }
+            if !detail.studios.isEmpty {
+                VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
+                    SectionTitle(text: String(localized: "Studio"))
+                    FlowLayout(spacing: 10, lineSpacing: 10) {
+                        ForEach(detail.studios) { studio in
+                            StudioChip(company: studio) { model.open(.company(studio.tmdbId)) }
+                        }
+                    }
+                }
+            }
+            if !detail.similar.isEmpty {
+                Shelf(title: String(localized: "More like this"), headInset: 0) {
+                    ForEach(detail.similar) { card in
+                        ShelfItem {
+                            PosterCard(card: card, showsTypeLabel: true) {
+                                model.openTitle(card.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// `.tp-poster{left:48px}`, measured from the content area rather than
@@ -259,6 +331,9 @@ private struct TitleBackdrop: View, Equatable {
     let seed: UInt64
     let height: CGFloat
     let wide: Bool
+    /// The fade from the left behind the title (the wide page's text sits
+    /// on the artwork; the phone's doesn't).
+    let sideFade: Bool
 
     var body: some View {
         // w1280 is plenty up to a 1400pt window; past that the original, so
@@ -301,6 +376,7 @@ private struct TitleBackdrop: View, Equatable {
                         startPoint: .top,
                         endPoint: .bottom
                     )
+                    if sideFade {
                     LinearGradient(
                         stops: [
                             .init(color: Theme.bg0.opacity(0.94), location: 0),
@@ -312,6 +388,7 @@ private struct TitleBackdrop: View, Equatable {
                         startPoint: .leading,
                         endPoint: .trailing
                     )
+                    }
                 }
                 .frame(height: height + Metrics.topBar)
                 .clipped()
@@ -322,6 +399,7 @@ private struct TitleBackdrop: View, Equatable {
 /// `.tp-poster` — 224×336, radius 12, a borderStrong ring and a deep shadow.
 private struct TitlePoster: View, Equatable {
     let posterPath: API.ImageRef?
+    var width: CGFloat = Metrics.titlePosterWidth
 
     var body: some View {
         ZStack {
@@ -330,7 +408,7 @@ private struct TitlePoster: View, Equatable {
                 RemoteImage(posterPath, size: .w500)
             }
         }
-        .frame(width: Metrics.titlePosterWidth, height: Metrics.titlePosterHeight)
+        .frame(width: width, height: width * 1.5)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.borderStrong))
         .shadow(color: .black.opacity(0.65), radius: 32, y: 14)
@@ -384,6 +462,8 @@ private struct SplitMix64: RandomNumberGenerator {
 private struct TitleMainColumn: View {
     let screen: TitleDetailModel
     let detail: API.TitleDetail
+    /// The phone's single column: a smaller title and credits in two columns.
+    var compact = false
     let onTrailer: () -> Void
     let onRelink: () -> Void
     let onPickSeasons: () -> Void
@@ -394,8 +474,8 @@ private struct TitleMainColumn: View {
         VStack(alignment: .leading, spacing: 0) {
             // .tp-title — serif 48/54, 700, −0.015em.
             Text(detail.name)
-                .font(.marqueeDisplay(48, weight: .bold))
-                .tracking(-0.72)
+                .font(.marqueeDisplay(compact ? 32 : 48, weight: .bold))
+                .tracking(compact ? -0.4 : -0.72)
                 .foregroundStyle(Theme.textPrimary)
                 .shadow(color: .black.opacity(0.4), radius: 10, y: 2)
                 .textSelection(.enabled)
@@ -410,7 +490,7 @@ private struct TitleMainColumn: View {
                 ].compactMap(\.nonBlank)
                 if !parts.isEmpty {
                     Text(parts.joined(separator: " · "))
-                        .font(.system(size: 14))
+                        .font(.system(size: Metrics.text(14)))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 FavoriteButton(
@@ -436,7 +516,7 @@ private struct TitleMainColumn: View {
 
             if let tagline = detail.tagline.nonBlank {
                 Text(tagline)
-                    .font(.system(size: 13.5))
+                    .font(.system(size: Metrics.text(13.5)))
                     .italic()
                     .foregroundStyle(Theme.textMuted)
                     .padding(.top, 18)
@@ -449,7 +529,7 @@ private struct TitleMainColumn: View {
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 26)
                 Text(overview)
-                    .font(.system(size: 14))
+                    .font(.system(size: Metrics.text(14)))
                     .lineSpacing(5)
                     .foregroundStyle(Theme.textSecondary)
                     .textSelection(.enabled)
@@ -460,18 +540,18 @@ private struct TitleMainColumn: View {
             if !detail.credits.isEmpty {
                 // .credits — 3 equal columns, name over role.
                 LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 16, alignment: .topLeading), count: 3),
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 16, alignment: .topLeading), count: compact ? 2 : 3),
                     alignment: .leading,
                     spacing: 16
                 ) {
                     ForEach(Array(detail.credits.enumerated()), id: \.offset) { _, credit in
                         VStack(alignment: .leading, spacing: 1) {
                             Text(credit.name)
-                                .font(.system(size: 13.5, weight: .semibold))
+                                .font(.system(size: Metrics.text(13.5), weight: .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                                 .lineLimit(2)
                             Text(credit.role)
-                                .font(.system(size: 12))
+                                .font(.system(size: Metrics.text(12)))
                                 .foregroundStyle(Theme.textMuted)
                                 .lineLimit(1)
                         }
@@ -486,7 +566,7 @@ private struct TitleMainColumn: View {
                 FlowLayout(spacing: 6, lineSpacing: 6) {
                     ForEach(detail.keywords.prefix(12), id: \.self) { keyword in
                         Text(keyword)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
                             .fixedSize()
@@ -575,7 +655,7 @@ private struct TitleActionRow: View {
 
                 if viewer.alreadyRequested {
                     Text(viewer.pendingRequestLine)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: Metrics.text(13), weight: .semibold))
                         .foregroundStyle(Theme.info)
                         .padding(.horizontal, 14)
                         .frame(height: 32)
@@ -590,7 +670,7 @@ private struct TitleActionRow: View {
                         model.select(.requests)
                     } label: {
                         Text("Can't find")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.missing)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -607,7 +687,7 @@ private struct TitleActionRow: View {
                 // manages it gets Unblock instead).
                 if !managesBlocklist, let block = viewer.block {
                     Text(block.closedLine)
-                        .font(.system(size: 13))
+                        .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.horizontal, 14)
                         .frame(minHeight: 32)
@@ -620,7 +700,7 @@ private struct TitleActionRow: View {
                 if let fourK = viewer.fourK {
                     if let label = fourK.statusLabel {
                         Text(label)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.accent)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -628,7 +708,7 @@ private struct TitleActionRow: View {
                     }
                     if fourK.isRequestPending {
                         Text("4K requested")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.info)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -652,7 +732,7 @@ private struct TitleActionRow: View {
                 if viewer.showsReportProblem(reportsIssues: model.viewer?.can(.reportIssues) == true) {
                     if screen.hasReportedProblem {
                         Text("Problem reported")
-                            .font(.system(size: 13))
+                            .font(.system(size: Metrics.text(13)))
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.horizontal, 14)
                             .frame(height: 32)
@@ -717,7 +797,7 @@ private struct TitleActionRow: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: Metrics.text(13), weight: .semibold))
                             .frame(width: 32, height: 32)
                             .contentShape(Circle())
                     }
@@ -734,7 +814,7 @@ private struct TitleActionRow: View {
                         model.openSettings(.services)
                     }
                     .buttonStyle(QuietButtonStyle(color: Theme.accent))
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .frame(height: 32)
                 }
             }
@@ -743,7 +823,7 @@ private struct TitleActionRow: View {
 
             if let line = viewer.otherRequestersLine {
                 Text(line)
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             }
             if let error = screen.addError {
@@ -819,7 +899,7 @@ private struct TitleActionRow: View {
     private func blockControl(_ block: API.TitleBlock?) -> some View {
         if let keyword = block?.keyword.nonBlank {
             Text("Requests blocked by “\(keyword)”")
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textMuted)
                 .padding(.horizontal, 14)
                 .frame(height: 32)
@@ -848,7 +928,7 @@ private struct TitleActionRow: View {
         HStack(spacing: 8) {
             TextField("Why, for whoever asks (optional)", text: $blockReason)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .padding(.horizontal, 14)
                 .frame(height: 32)
                 .background(Theme.bg0, in: Capsule())
@@ -865,7 +945,7 @@ private struct TitleActionRow: View {
                 .disabled(screen.isBlockBusy)
             Button("Cancel") { askingBlockReason = false }
                 .buttonStyle(QuietButtonStyle())
-                .font(.system(size: 12))
+                .font(.system(size: Metrics.text(12)))
         }
     }
 
@@ -887,7 +967,7 @@ private struct TitleActionRow: View {
             setAdvancedExpanded(!advanced.isExpanded, viewer)
         } label: {
             Image(systemName: "chevron.down")
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: Metrics.text(10), weight: .bold))
                 .rotationEffect(.degrees(advanced.isExpanded ? 180 : 0))
                 .frame(width: filled ? 28 : 32, height: 32)
                 .foregroundStyle(filled ? Theme.bg0 : Theme.accent)
@@ -910,7 +990,7 @@ private struct TitleActionRow: View {
     private func pillLabel(_ symbol: String, _ title: String, size: CGFloat) -> some View {
         HStack(spacing: PillSize.large.iconGap) {
             Image(systemName: symbol)
-                .font(.system(size: size - 1))
+                .font(.system(size: Metrics.text(size - 1)))
                 .foregroundStyle(Theme.textSecondary)
             Text(title)
         }
@@ -955,7 +1035,7 @@ private struct ExternalLinksRow: View {
                     Button(action: onTrailer) {
                         HStack(spacing: PillSize.medium.iconGap) {
                             Image(systemName: "play.fill")
-                                .font(.system(size: 10))
+                                .font(.system(size: Metrics.text(10)))
                                 .foregroundStyle(Theme.accent)
                             Text("Trailer")
                         }
@@ -1025,7 +1105,7 @@ private struct TitleSidebarColumn: View {
                         .foregroundStyle(Theme.accent)
                     Spacer(minLength: 8)
                     Text("TMDb user score")
-                        .font(.system(size: 11))
+                        .font(.system(size: Metrics.text(11)))
                         .foregroundStyle(Theme.textMuted)
                 }
                 .frame(height: 50)
@@ -1054,7 +1134,7 @@ private struct TitleSidebarColumn: View {
                         // 0.53+: the country they're for (Settings › Discover).
                         if let region = detail.facts.streamingRegion.nonBlank {
                             Text(verbatim: region)
-                                .font(.system(size: 11))
+                                .font(.system(size: Metrics.text(11)))
                                 .foregroundStyle(Theme.textMuted)
                         }
                     }
@@ -1117,7 +1197,7 @@ private struct TitleSidebarColumn: View {
                 .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.system(size: 12.5))
+        .font(.system(size: Metrics.text(12.5)))
         .padding(.vertical, 6)
         .frame(minHeight: 38)
         .overlay(alignment: .top) {
@@ -1177,11 +1257,11 @@ private struct FileDetailsCard: View {
                 ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(cell.label)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                             .foregroundStyle(Theme.textMuted)
                             .lineLimit(1)
                         Text(cell.value)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: Metrics.text(13), weight: .medium))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -1225,7 +1305,7 @@ private struct FranchiseSection: View {
                 }
                 if let result = screen.addAllResult {
                     Text(result)
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textSecondary)
                 } else if missingCount > 0 {
                     Button(screen.isAddingAll ? "Adding…" : "Add all \(missingCount) missing") { confirmingAddAll = true }
@@ -1234,7 +1314,7 @@ private struct FranchiseSection: View {
                 }
                 if let result = screen.requestAllResult {
                     Text(result)
-                        .font(.system(size: 12))
+                        .font(.system(size: Metrics.text(12)))
                         .foregroundStyle(Theme.textSecondary)
                 } else if requestableCount > 0 {
                     Button(screen.isRequestingAll ? "Requesting…" : "Request all \(requestableCount) missing") {
@@ -1286,7 +1366,7 @@ private struct TitleRatingsRow: View {
                     if let votes = ratings.imdbVotes {
                         Text("(\(votes.formatted(.number.notation(.compactName))))")
                             .foregroundStyle(Theme.textMuted)
-                            .font(.system(size: 11))
+                            .font(.system(size: Metrics.text(11)))
                     }
                 }
                 .help("IMDb rating")
@@ -1324,17 +1404,17 @@ private struct RatingBadge<Score: View>: View {
         HStack(spacing: 5) {
             if let markColor {
                 Text(verbatim: mark)
-                    .font(.system(size: 9.5, weight: .heavy))
+                    .font(.system(size: Metrics.text(9.5), weight: .heavy))
                     .foregroundStyle(.black)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 3).fill(markColor))
             } else {
-                Text(verbatim: mark).font(.system(size: 11))
+                Text(verbatim: mark).font(.system(size: Metrics.text(11)))
             }
             score()
         }
-        .font(.system(size: 12, weight: .medium))
+        .font(.system(size: Metrics.text(12), weight: .medium))
         .foregroundStyle(Theme.textPrimary)
         .padding(.horizontal, 9)
         .frame(height: 26)
@@ -1369,7 +1449,7 @@ private struct PlayOnServerButton: View {
 
     private func label(_ text: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: "play.fill").font(.system(size: 10))
+            Image(systemName: "play.fill").font(.system(size: Metrics.text(10)))
             Text(text)
         }
     }
@@ -1377,7 +1457,7 @@ private struct PlayOnServerButton: View {
     /// The app first when one is installed for its scheme.
     private func open(_ link: API.TitleDetail.PlayLink) {
         if let app = link.appUrl.nonBlank.flatMap(URL.init(string:)),
-           NSWorkspace.shared.urlForApplication(toOpen: app) != nil {
+           Platform.hasApp(toOpen: app) {
             openURL(app)
         } else if let web = link.link {
             openURL(web)

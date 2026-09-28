@@ -61,7 +61,7 @@ struct ReportProblemSheet: View {
                 Text("Report a problem")
                     .font(.marqueeDisplay(22))
                 Text("The admin is told, and you'll hear back when it's fixed.")
-                    .font(.system(size: 12.5))
+                    .font(.system(size: Metrics.text(12.5)))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -71,9 +71,9 @@ struct ReportProblemSheet: View {
                     Text(kind.label).tag(Optional(kind))
                 }
             }
-            .pickerStyle(.radioGroup)
+            .choicePickerStyle()
             .labelsHidden()
-            .font(.system(size: 13))
+            .font(.system(size: Metrics.text(13)))
             .disabled(pending)
 
             if mediaType == .tv, !seasonNumbers.isEmpty {
@@ -105,7 +105,7 @@ struct ReportProblemSheet: View {
                 TextField("e.g. The audio drifts out of sync after about 20 minutes.", text: $form.message, axis: .vertical)
                     .lineLimit(3...6)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .disabled(pending)
                     .onChange(of: form.message) { _, value in
                         let scalars = value.unicodeScalars
@@ -138,7 +138,7 @@ struct ReportProblemSheet: View {
 
     private func fieldLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 12.5))
+            .font(.system(size: Metrics.text(12.5)))
             .foregroundStyle(Theme.textSecondary)
     }
 

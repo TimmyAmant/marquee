@@ -1,10 +1,11 @@
 import XCTest
 @testable import Marquee
 
-// The Mac app in every language Marquee ships (Resources/Localizable.xcstrings,
-// docs/i18n-glossary.md): each string translated with the same placeholders,
-// every string the code uses in the catalog, no English prose slipping past
-// localization, and the account's language on /me.
+// The Mac and iPhone apps in every language Marquee ships
+// (Resources/Localizable.xcstrings, shared by both; docs/i18n-glossary.md):
+// each string translated with the same placeholders, every string the code
+// uses in the catalog, no English prose slipping past localization, and the
+// account's language on /me. Runs in both test targets.
 
 final class LocalizationTests: XCTestCase {
     static let languages = ["es", "fr", "de", "pt-BR"]
@@ -92,9 +93,14 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(problems, [], "\(problems.count) catalog problems")
     }
 
+    /// What the catalog marks as the iPhone app's alone (its own screens, and
+    /// the iPhone wording of `PlatformText`): the Mac never looks these up.
+    static let iPhoneOnlyComment = "Marquee for iPhone only."
+
     /// The compiler's own list of what the app looks up (`SWIFT_EMIT_LOC_STRINGS`
     /// writes a .stringsdata beside every object file) against the catalog:
-    /// nothing missing, nothing left over.
+    /// nothing missing, nothing left over. The Mac uses every entry but the
+    /// iPhone-only ones; the iPhone app uses every iPhone-only one.
     func testCatalogHoldsEveryStringTheCodeUses() throws {
         let strings = try Self.strings()
         let objects = try XCTUnwrap(Self.appObjectsDirectory(), "No .stringsdata found for the app target")
@@ -110,14 +116,37 @@ final class LocalizationTests: XCTestCase {
             }
         }
         let missing = used.subtracting(strings.keys).sorted()
-        let unused = Set(strings.keys).subtracting(used).sorted()
+        let iPhoneOnly = Set(strings.filter { ($0.value["comment"] as? String) == Self.iPhoneOnlyComment }.keys)
         XCTAssertEqual(missing, [], "In the code but not in Localizable.xcstrings — run Scripts/sync-strings.sh and translate them")
+        #if os(macOS)
+        let unused = Set(strings.keys).subtracting(used).subtracting(iPhoneOnly).sorted()
         XCTAssertEqual(unused, [], "In Localizable.xcstrings but no longer in the code")
+        XCTAssertEqual(used.intersection(iPhoneOnly).sorted(), [], "Marked \"\(Self.iPhoneOnlyComment)\" but the Mac app uses it")
+        #else
+        let unused = iPhoneOnly.subtracting(used).sorted()
+        XCTAssertEqual(unused, [], "Marked \"\(Self.iPhoneOnlyComment)\" but the iPhone app no longer uses it")
+        #endif
     }
 
     /// Build/Products/Debug/Marquee.app/Contents/PlugIns/MarqueeTests.xctest →
-    /// Build/Intermediates.noindex/Marquee.build/Debug/Marquee.build/Objects-normal/<arch>.
+    /// Build/Intermediates.noindex/Marquee.build/Debug/Marquee.build/Objects-normal/<arch>
+    /// (…/Debug-iphonesimulator/Marquee iOS.build/… for the iPhone app).
     private static func appObjectsDirectory() -> URL? {
+        #if os(iOS)
+        // The test bundle runs from inside the simulator's app container, so
+        // the build folder is found from the source tree instead: the
+        // derived data path CI and mac/README.md use.
+        let objects = macRoot.appendingPathComponent(
+            "build/DerivedDataiOS/Build/Intermediates.noindex/Marquee.build/Debug-iphonesimulator/\(appTargetBuildFolder)/Objects-normal"
+        )
+        #if arch(arm64)
+        let simulatorArch = "arm64"
+        #else
+        let simulatorArch = "x86_64"
+        #endif
+        let simulatorDirectory = objects.appendingPathComponent(simulatorArch)
+        return FileManager.default.fileExists(atPath: simulatorDirectory.path) ? simulatorDirectory : nil
+        #else
         var url = Bundle(for: LocalizationTests.self).bundleURL
         while url.pathComponents.count > 1, url.lastPathComponent != "Products" {
             url = url.deletingLastPathComponent()
@@ -126,7 +155,7 @@ final class LocalizationTests: XCTestCase {
         let configuration = Bundle(for: LocalizationTests.self).bundleURL.pathComponents
             .dropFirst(url.pathComponents.count).first ?? "Debug"
         let objectsNormal = url.deletingLastPathComponent()
-            .appendingPathComponent("Intermediates.noindex/Marquee.build/\(configuration)/Marquee.build/Objects-normal")
+            .appendingPathComponent("Intermediates.noindex/Marquee.build/\(configuration)/\(appTargetBuildFolder)/Objects-normal")
         #if arch(arm64)
         let arch = "arm64"
         #else
@@ -134,7 +163,14 @@ final class LocalizationTests: XCTestCase {
         #endif
         let directory = objectsNormal.appendingPathComponent(arch)
         return FileManager.default.fileExists(atPath: directory.path) ? directory : nil
+        #endif
     }
+
+    #if os(macOS)
+    private static let appTargetBuildFolder = "Marquee.build"
+    #else
+    private static let appTargetBuildFolder = "Marquee iOS.build"
+    #endif
 
     func testTheAppShipsEveryLanguage() {
         let localizations = Set(Bundle.main.localizations)
@@ -176,14 +212,17 @@ final class LocalizationTests: XCTestCase {
     // MARK: Untranslated text in the code
 
     func testNoEnglishProseEscapesLocalization() throws {
-        let source = Self.macRoot.appendingPathComponent("Marquee")
-        let enumerator = try XCTUnwrap(FileManager.default.enumerator(at: source, includingPropertiesForKeys: nil))
         var findings: [String] = []
-        for case let file as URL in enumerator where file.pathExtension == "swift" {
-            if file.path.contains("Preview Content") { continue }
-            let text = try String(contentsOf: file, encoding: .utf8)
-            for finding in UntranslatedTextLint.scan(text) {
-                findings.append("\(file.lastPathComponent):\(finding.line): \"\(finding.text)\"")
+        // The shared sources and the iPhone app's own.
+        for folder in ["Marquee", "MarqueeiOS"] {
+            let source = Self.macRoot.appendingPathComponent(folder)
+            let enumerator = try XCTUnwrap(FileManager.default.enumerator(at: source, includingPropertiesForKeys: nil))
+            for case let file as URL in enumerator where file.pathExtension == "swift" {
+                if file.path.contains("Preview Content") { continue }
+                let text = try String(contentsOf: file, encoding: .utf8)
+                for finding in UntranslatedTextLint.scan(text) {
+                    findings.append("\(file.lastPathComponent):\(finding.line): \"\(finding.text)\"")
+                }
             }
         }
         XCTAssertEqual(findings, [], """

@@ -1,0 +1,21 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "shouldTranslate" : false
+    },
+    "CFBundleName" : {
+      "shouldTranslate" : false
+    },
+    "NSLocalNetworkUsageDescription" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Marquee sucht deinen Marquee-Server in deinem Heimnetz (etwa den auf deinem Unraid-Server) und verbindet sich mit ihm, damit du von diesem iPhone aus deine Mediathek durchsuchen und Anfragen senden kannst." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marquee looks for your Marquee server on your home network (such as the one on your Unraid box) and connects to it, so you can browse your library and send requests from this iPhone." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Marquee busca tu servidor de Marquee en tu red doméstica (como el de tu equipo Unraid) y se conecta a él para que puedas explorar tu biblioteca y enviar solicitudes desde este iPhone." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Marquee recherche votre serveur Marquee sur votre réseau domestique (par exemple celui de votre serveur Unraid) et s’y connecte, pour que vous puissiez parcourir votre bibliothèque et envoyer des demandes depuis cet iPhone." } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "O Marquee procura o seu servidor Marquee na sua rede doméstica (como o do seu Unraid) e se conecta a ele, para que você possa navegar pela sua biblioteca e enviar pedidos deste iPhone." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

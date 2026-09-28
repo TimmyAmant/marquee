@@ -35,6 +35,15 @@ enum AppInfo {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
 
+    /// Sent with every request, like a browser's.
+    static var userAgent: String {
+        #if os(macOS)
+        "Marquee-macOS/\(version)"
+        #else
+        "Marquee-iOS/\(version)"
+        #endif
+    }
+
     /// Launched as the host of the unit tests (XCTest injects this variable).
     static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil

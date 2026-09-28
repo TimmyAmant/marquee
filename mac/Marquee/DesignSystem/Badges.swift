@@ -86,7 +86,7 @@ struct StatusBadge: View {
                     .overlay(Circle().strokeBorder(colors.foreground.opacity(0.18), lineWidth: large ? 3 : 0))
                 Text(compact ? status.compactLabel : status.label)
             }
-            .font(.system(size: large ? 13 : (compact ? 10 : 11.5), weight: compact || large ? .semibold : .medium))
+            .font(.system(size: Metrics.text(large ? 13 : (compact ? 10 : 11.5)), weight: compact || large ? .semibold : .medium))
             .foregroundStyle(colors.foreground)
             .padding(.leading, large ? 12 : (compact ? 5 : 11))
             .padding(.trailing, large ? 14 : (compact ? 6 : 11))
@@ -113,7 +113,7 @@ struct TonePill: View {
     var body: some View {
         let (foreground, background, border) = tone.resolvedPalette
         Text(text)
-            .font(.system(size: small ? 10 : 11.5, weight: .medium))
+            .font(.system(size: Metrics.text(small ? 10 : 11.5), weight: .medium))
             .foregroundStyle(foreground)
             .padding(.horizontal, small ? 7 : 10)
             .padding(.vertical, small ? 2 : 3.5)
@@ -162,7 +162,7 @@ struct CapsLabel: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 10.5, weight: .semibold))
+            .font(.system(size: Metrics.text(10.5), weight: .semibold))
             .tracking(0.84)
             .foregroundStyle(Theme.textMuted)
     }
@@ -173,7 +173,7 @@ struct SettingsSectionLabel: View {
 
     var body: some View {
         Text(text.localizedUppercase)
-            .font(.system(size: 10.5, weight: .semibold))
+            .font(.system(size: Metrics.text(10.5), weight: .semibold))
             .tracking(1)
             .foregroundStyle(Theme.textMuted)
     }
@@ -203,7 +203,7 @@ struct InlineMessage: View {
 
     var body: some View {
         Label(text, systemImage: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-            .font(.system(size: 12))
+            .font(.system(size: Metrics.text(12)))
             .foregroundStyle(isError ? Theme.danger : Theme.owned)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -219,7 +219,7 @@ struct EmptyStateView: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: systemImage)
-                .font(.system(size: 34, weight: .light))
+                .font(.system(size: Metrics.text(34), weight: .light))
                 .foregroundStyle(Theme.textMuted)
             Text(title)
                 .font(.marqueeDisplay(22))
@@ -227,7 +227,7 @@ struct EmptyStateView: View {
                 .multilineTextAlignment(.center)
             if let message {
                 Text(message)
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 440)
@@ -250,7 +250,7 @@ struct LoadingView: View {
         VStack(spacing: 10) {
             ProgressView().controlSize(.regular)
             Text(label)
-                .font(.system(size: 12))
+                .font(.system(size: Metrics.text(12)))
                 .foregroundStyle(Theme.textMuted)
         }
         .frame(maxWidth: .infinity, minHeight: 240)
@@ -276,7 +276,7 @@ struct CopyField: View {
         VStack(alignment: .leading, spacing: 6) {
             if let label {
                 Text(label)
-                    .font(.system(size: 12))
+                    .font(.system(size: Metrics.text(12)))
                     .foregroundStyle(Theme.textMuted)
             }
             switch variant {
@@ -307,7 +307,7 @@ struct CopyField: View {
 
     private var field: some View {
         Text(value)
-            .font(.system(size: variant == .path ? 11 : 11.5, design: .monospaced))
+            .font(.system(size: Metrics.text(variant == .path ? 11 : 11.5), design: .monospaced))
             .foregroundStyle(variant == .path ? Theme.textSecondary : Theme.textPrimary)
             .lineLimit(1)
             .truncationMode(variant == .path ? .tail : .middle)
@@ -317,8 +317,7 @@ struct CopyField: View {
 
     private var copyButton: some View {
         Button(copied ? "Copied" : "Copy") {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(value, forType: .string)
+            Platform.copy(value)
             copied = true
             Task {
                 try? await Task.sleep(for: .seconds(1.5))
@@ -332,7 +331,7 @@ struct CopyField: View {
 private struct CopyChipButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 11, weight: .semibold))
+            .font(.system(size: Metrics.text(11), weight: .semibold))
             .foregroundStyle(Theme.textPrimary)
             .padding(.horizontal, 8)
             .frame(height: 24)

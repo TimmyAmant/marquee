@@ -76,7 +76,7 @@ struct PersonDetailView: View {
                     RemoteImage(person.profilePath, size: .w342)
                 } else {
                     Image(systemName: "person.fill")
-                        .font(.system(size: 48))
+                        .font(.system(size: Metrics.text(48)))
                         .foregroundStyle(Theme.textMuted)
                 }
             }
@@ -105,11 +105,11 @@ struct PersonDetailView: View {
                         Text(place)
                     }
                 }
-                .font(.system(size: 13))
+                .font(.system(size: Metrics.text(13)))
                 .foregroundStyle(Theme.textSecondary)
                 if let bio = person.biography.nonBlank {
                     Text(bio.truncated(to: 600))
-                        .font(.system(size: 13.5))
+                        .font(.system(size: Metrics.text(13.5)))
                         .lineSpacing(4)
                         .foregroundStyle(Theme.textSecondary)
                         .textSelection(.enabled)
@@ -204,11 +204,11 @@ struct CompanyDetailView: View {
                     FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
                 }
                 Text("\(company.titleCount) titles in the catalog")
-                    .font(.system(size: 13))
+                    .font(.system(size: Metrics.text(13)))
                     .foregroundStyle(Theme.textSecondary)
                 if let summary = company.shortDescription {
                     Text(summary)
-                        .font(.system(size: 13.5))
+                        .font(.system(size: Metrics.text(13.5)))
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: 720, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
