@@ -132,6 +132,21 @@ final class LocalizationTests: XCTestCase {
     /// Build/Intermediates.noindex/Marquee.build/Debug/Marquee.build/Objects-normal/<arch>
     /// (…/Debug-iphonesimulator/Marquee iOS.build/… for the iPhone app).
     private static func appObjectsDirectory() -> URL? {
+        #if os(iOS)
+        // The test bundle runs from inside the simulator's app container, so
+        // the build folder is found from the source tree instead: the
+        // derived data path CI and mac/README.md use.
+        let objects = macRoot.appendingPathComponent(
+            "build/DerivedDataiOS/Build/Intermediates.noindex/Marquee.build/Debug-iphonesimulator/\(appTargetBuildFolder)/Objects-normal"
+        )
+        #if arch(arm64)
+        let simulatorArch = "arm64"
+        #else
+        let simulatorArch = "x86_64"
+        #endif
+        let simulatorDirectory = objects.appendingPathComponent(simulatorArch)
+        return FileManager.default.fileExists(atPath: simulatorDirectory.path) ? simulatorDirectory : nil
+        #else
         var url = Bundle(for: LocalizationTests.self).bundleURL
         while url.pathComponents.count > 1, url.lastPathComponent != "Products" {
             url = url.deletingLastPathComponent()
@@ -148,6 +163,7 @@ final class LocalizationTests: XCTestCase {
         #endif
         let directory = objectsNormal.appendingPathComponent(arch)
         return FileManager.default.fileExists(atPath: directory.path) ? directory : nil
+        #endif
     }
 
     #if os(macOS)

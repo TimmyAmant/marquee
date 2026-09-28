@@ -123,13 +123,9 @@ targets:
           - Preview Content/**
       # The few Mac-folder files the iPhone app needs from excluded folders.
       - path: Marquee/App/Updates/UpdateModels.swift
-        group: MarqueeiOS/Shared
       - path: Marquee/Features/Settings/LastActiveLabel.swift
-        group: MarqueeiOS/Shared
       - path: Marquee/Features/Shell/SearchPanel.swift
-        group: MarqueeiOS/Shared
       - path: Marquee/Features/Shell/WhatsNewSheet.swift
-        group: MarqueeiOS/Shared
       - path: MarqueeiOS
       - path: ../lib/changelog.ts
         buildPhase: resources
