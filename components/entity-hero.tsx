@@ -49,11 +49,11 @@ export async function EntityHero({
         )}
       </TitleBackdrop>
 
-      <div className="px-4 pt-[76px] sm:px-7 sm:pt-[120px] md:pt-[calc(var(--hero-h)*0.3)] lg:pt-[calc(var(--hero-h)*0.36)]">
+      <div className="min-h-[calc(var(--hero-h)-24px)] px-4 pt-[76px] sm:px-7 sm:pt-[120px] md:pt-[calc(var(--hero-h)*0.3)] xl:pt-[calc(var(--hero-h)*0.36)]">
         {/* Over the artwork above the header on a phone and a narrow window;
             pinned to the band's bottom right once there's room beside the
             header for it. */}
-        <div className="mb-4 flex justify-end lg:absolute lg:right-10 lg:top-[calc(var(--hero-h)-60px)] lg:mb-0">
+        <div className="mb-4 flex justify-end xl:absolute xl:right-10 xl:top-[calc(var(--hero-h)-60px)] xl:mb-0">
           <Link
             href={`/title/${knownFor.mediaType}/${knownFor.tmdbId}`}
             aria-label={t("discover.knownForFromLabel", { title: knownFor.name })}
