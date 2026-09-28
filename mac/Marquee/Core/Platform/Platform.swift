@@ -158,7 +158,19 @@ extension View {
         #endif
     }
 
-    /// A text link: `.link` on the Mac, the tinted plain button on iOS.
+    /// A sheet's fixed width on the Mac. On iOS a sheet is the screen's
+    /// width already, so its content fills it from the top instead of
+    /// running off both edges.
+    func sheetWidth(_ width: CGFloat, alignment: Alignment = .top) -> some View {
+        #if os(macOS)
+        frame(width: width)
+        #else
+        frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+            .presentationDragIndicator(.visible)
+        #endif
+    }
+
+    /// A text link:`.link` on the Mac, the tinted plain button on iOS.
     func linkButtonStyle() -> some View {
         #if os(macOS)
         buttonStyle(.link)

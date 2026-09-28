@@ -17,7 +17,7 @@ struct SearchResultsView: View {
             VStack(alignment: .leading, spacing: 40) {
                 HStack(spacing: 12) {
                     Text("Results for “\(query)”")
-                        .font(.marqueeDisplay(30))
+                        .font(.marqueeDisplay(Metrics.resultsHeading))
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                     Spacer(minLength: 0)

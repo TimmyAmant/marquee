@@ -93,7 +93,7 @@ struct RequestEditSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 460)
+        .sheetWidth(460)
         .background(Theme.bg1)
         .task { await load() }
     }
