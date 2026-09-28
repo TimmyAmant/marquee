@@ -22,6 +22,9 @@ services:
       TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-0}
     volumes:
       - marquee_postgres_data:/var/lib/postgresql/data
+      # Settings › Logs' rolling log file, kept when the container is recreated.
+      - marquee_logs:/var/log/marquee
 
 volumes:
   marquee_postgres_data:
+  marquee_logs:

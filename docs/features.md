@@ -505,4 +505,4 @@ works in all of them; only the bits below are app-specific.
   Calendar, More) and a back button. On Android the icon's long-press menu
   offers Requests and Search.
 
-Install details are in the [Getting started guide](getting-started.md#mac-and-windows-apps).
+Install details are in the [Getting started guide](getting-started.md#mac-windows-and-iphone-apps).

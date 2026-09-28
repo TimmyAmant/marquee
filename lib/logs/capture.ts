@@ -7,7 +7,9 @@ import { LogBuffer, isLogLevel, type LogEntry, type LogLevel } from "@/lib/logs/
 // (lib/logs/redact.ts), kept in memory for the page and appended to a file
 // (one JSON object a line) so a restart doesn't lose the recent history.
 // The file rolls over at 5 MB, keeping one old one. MARQUEE_LOG_DIR says
-// where; by default the system's temporary folder.
+// where: the Docker image sets /var/log/marquee (a mounted folder in the
+// Unraid template and docker-compose.yml); otherwise the system's temporary
+// folder.
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 /** How much of the file is read back on start. */

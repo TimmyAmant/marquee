@@ -1,32 +1,42 @@
 import SwiftUI
 
 /// The signed-in iPhone app: a tab bar (Discover, Search, Requests, Calendar,
-/// More), each tab with its own navigation stack of the shared `Route`s.
+/// More), each tab with its own navigation stack of the shared `Route`s. On
+/// an iPad's full width, a sidebar with the Mac rail's sections instead
+/// (`PadSplitView`), over the same navigation state, so going to Split View
+/// and back keeps your place.
 struct PhoneRootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var showsNotifications = false
 
     var body: some View {
         @Bindable var whatsNew = model.whatsNew
-        TabView(selection: tabSelection) {
-            ForEach(PhoneTab.allCases) { tab in
-                PhoneTabStack(tab: tab, showsNotifications: $showsNotifications)
-                    .tabItem { Label(tab.title, systemImage: tab.systemImage) }
-                    .tag(tab)
-                    .badge(badge(for: tab))
+        Group {
+            if horizontalSizeClass == .regular {
+                PadSplitView(showsNotifications: $showsNotifications)
+            } else {
+                TabView(selection: tabSelection) {
+                    ForEach(PhoneTab.allCases) { tab in
+                        PhoneTabStack(tab: tab, showsNotifications: $showsNotifications)
+                            .tabItem { Label(tab.title, systemImage: tab.systemImage) }
+                            .tag(tab)
+                            .badge(badge(for: tab))
+                    }
+                }
             }
         }
         .tint(Theme.accent)
         .safeAreaInset(edge: .top, spacing: 0) {
-            if model.live.isOffline {
+            if model.live.isReconnecting {
                 PhoneOfflineStrip()
             }
         }
-        .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
+        .animation(.easeOut(duration: 0.2), value: model.live.isReconnecting)
         .overlay(alignment: .bottom) {
             PhoneBannerView()
-                // Clear of the tab bar.
-                .padding(.bottom, 60)
+                // Clear of the tab bar (the iPad's sidebar has none).
+                .padding(.bottom, horizontalSizeClass == .regular ? 24 : 60)
         }
         .sheet(isPresented: $showsNotifications) {
             PhoneNotificationsView()
@@ -105,9 +115,12 @@ struct PhoneRootView: View {
     }
 }
 
-/// One tab's navigation stack.
+/// One tab's navigation stack. On iPad, `section` is the More section the
+/// sidebar picked (Movies, Library, Settings…), shown as the stack's first
+/// page rather than pushed over the More list.
 private struct PhoneTabStack: View {
     let tab: PhoneTab
+    var section: SidebarItem?
     @Binding var showsNotifications: Bool
     @Environment(AppModel.self) private var model
 
@@ -119,7 +132,7 @@ private struct PhoneTabStack: View {
                 // band under it.
                 .toolbarTitleDisplayMode(.inlineLarge)
                 .toolbar {
-                    if tab != .more {
+                    if tab != .more || section != nil {
                         ToolbarItem(placement: .topBarTrailing) {
                             NotificationBellButton { showsNotifications = true }
                         }
@@ -140,6 +153,15 @@ private struct PhoneTabStack: View {
 
     @ViewBuilder
     private var root: some View {
+        if tab == .more, let section {
+            PhoneSectionView(item: section)
+        } else {
+            tabRoot
+        }
+    }
+
+    @ViewBuilder
+    private var tabRoot: some View {
         switch tab {
         case .discover: DiscoverView()
         case .search: PhoneSearchView()
@@ -147,6 +169,139 @@ private struct PhoneTabStack: View {
         case .calendar: PhoneCalendarView()
         case .more: PhoneMoreView(showsNotifications: $showsNotifications)
         }
+    }
+}
+
+/// The iPad at full width: a sidebar with the Mac rail's sections (Search,
+/// Discover; Movies, Series, Library; Favorites, Calendar, Requests), then
+/// Settings and help, beside the section's navigation stack. The selection is
+/// the phone's own tab state (`AppModel.tab`, and `moreSection` for the
+/// sections the phone keeps under More).
+private struct PadSplitView: View {
+    @Binding var showsNotifications: Bool
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    /// How far the sidebar reaches over the page: the shared screens' scroll
+    /// views run under the side safe areas and take this as content margins
+    /// (`scrollsUnderNavRail()`), as they do beside the Mac's rail.
+    @State private var sidebarInsets = EdgeInsets()
+
+    /// A sidebar row: one of the phone's tabs, or a section it keeps under More.
+    enum Item: Hashable {
+        case tab(PhoneTab)
+        case section(SidebarItem)
+
+        var title: String {
+            switch self {
+            case let .tab(tab): return tab.title
+            case let .section(item): return item.title
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case let .tab(tab): return tab.systemImage
+            case let .section(item): return item.systemImage
+            }
+        }
+    }
+
+    private static let groups: [[Item]] = [
+        [.tab(.search), .tab(.discover)],
+        [.section(.movies), .section(.series), .section(.library)],
+        [.section(.favorites), .tab(.calendar), .tab(.requests)],
+        [.section(.settings)],
+    ]
+
+    var body: some View {
+        NavigationSplitView {
+            List(selection: selection) {
+                ForEach(Array(Self.groups.enumerated()), id: \.offset) { _, group in
+                    Section {
+                        ForEach(group, id: \.self) { item in
+                            Label(item.title, systemImage: item.systemImage)
+                                .badge(item == .tab(.requests) ? model.pendingRequestCount : 0)
+                                .tag(item)
+                        }
+                    }
+                }
+                Section {
+                    Button {
+                        showsNotifications = true
+                    } label: {
+                        Label(String(localized: "Notifications"), systemImage: model.unreadCount > 0 ? "bell.badge" : "bell")
+                    }
+                    .badge(model.unreadCount)
+                    Button {
+                        openHelp(.changelog)
+                    } label: {
+                        Label(String(localized: "Marquee Releases"), systemImage: "sparkles")
+                    }
+                    Button {
+                        openHelp(.errorReference)
+                    } label: {
+                        Label(String(localized: "Error Reference"), systemImage: "exclamationmark.bubble")
+                    }
+                    Button {
+                        openURL(AppInfo.featuresURL)
+                    } label: {
+                        Label(String(localized: "All Features"), systemImage: "list.bullet.rectangle")
+                    }
+                }
+                .foregroundStyle(Theme.textPrimary)
+            }
+            .navigationTitle(Text(verbatim: "Marquee"))
+            .scrollContentBackground(.hidden)
+            .background(Theme.bg1)
+        } detail: {
+            PhoneTabStack(tab: model.tab, section: model.tab == .more ? model.moreSection : nil, showsNotifications: $showsNotifications)
+                // A new stack for each section, like switching tabs.
+                .id(detailID)
+                .environment(\.navRailInsets, sidebarInsets)
+                .onGeometryChange(for: EdgeInsets.self) { proxy in
+                    EdgeInsets(top: 0, leading: proxy.safeAreaInsets.leading, bottom: 0, trailing: proxy.safeAreaInsets.trailing)
+                } action: { insets in
+                    sidebarInsets = insets
+                }
+        }
+        // Beside the page rather than over it.
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    private var detailID: String {
+        model.tab == .more ? "more.\(model.moreSection?.rawValue ?? "")" : model.tab.rawValue
+    }
+
+    /// The row for where the phone state is; nil under More with no section
+    /// (a help page opened from the sidebar).
+    private var selection: Binding<Item?> {
+        Binding(
+            get: {
+                guard model.tab == .more else { return .tab(model.tab) }
+                return model.moreSection.map(Item.section)
+            },
+            set: { item in
+                guard let item else { return }
+                switch item {
+                case let .tab(tab):
+                    // Again on the section you're in: back to its first page.
+                    if tab == model.tab { model.popToRoot(tab) } else { model.switchTab(to: tab) }
+                case let .section(section):
+                    if model.tab == .more, model.moreSection == section {
+                        model.setPath([], for: .more)
+                    } else {
+                        model.select(section)
+                    }
+                }
+            }
+        )
+    }
+
+    /// Releases and the error reference: on the More stack, as on the phone.
+    private func openHelp(_ route: Route) {
+        model.switchTab(to: .more)
+        model.moreSection = nil
+        model.setPath([route], for: .more)
     }
 }
 
@@ -188,12 +343,12 @@ struct NotificationBellButton: View {
     }
 }
 
-/// Badge polling hasn't reached the server for a few minutes.
+/// Signed in, and the server stopped answering (`LiveUpdates.isReconnecting`).
 private struct PhoneOfflineStrip: View {
     var body: some View {
         HStack(spacing: 8) {
             ProgressView().controlSize(.mini)
-            Text("Can't reach your Marquee server — retrying…")
+            Text("Reconnecting to your server…")
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(Theme.textSecondary)
         }

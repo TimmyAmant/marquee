@@ -166,6 +166,8 @@ final class AppModel {
         didSet {
             if phase == .ready, oldValue != .ready { replayPendingURL() }
             if phase != .waiting, phase != .unreachable { endOutage() }
+            if phase == .unreachable, oldValue != .unreachable { startQuietRetries() }
+            if phase != .unreachable { stopQuietRetries() }
         }
     }
     /// The signed-in account, exactly as the server reports it.
@@ -240,6 +242,10 @@ final class AppModel {
     @ObservationIgnored private var reconnectAttempt = 0
     /// The next automatic attempt, while `.waiting`.
     @ObservationIgnored private var reconnectTask: Task<Void, Never>?
+    /// How often the can't-reach card tries again by itself; tests shorten it.
+    @ObservationIgnored var quietRetryInterval = ReconnectSchedule.quietRetryInterval
+    /// The can't-reach card's quiet attempts.
+    @ObservationIgnored private var quietRetryTask: Task<Void, Never>?
 
     /// How long a network change or wake settles before the automatic retry,
     /// so a flapping Wi-Fi join doesn't fire a burst of probes.
@@ -267,6 +273,16 @@ final class AppModel {
         }
         session.onUnauthorized = { [weak self] in
             self?.sessionEnded()
+        }
+        // Signed in and the server went away: "Reconnecting to your
+        // server…" at the top (LiveUpdates) rather than each screen's error,
+        // and everything reloads when it's back.
+        session.onServerUnreachable = { [weak live] in
+            live?.suspectOutage()
+        }
+        live.onReconnected = { [weak self] in
+            self?.refreshViewer()
+            self?.reloadToken &+= 1
         }
         #if os(macOS)
         updater.onNewUpdate = { [weak self] update in
@@ -412,6 +428,27 @@ final class AppModel {
         reconnectTask = nil
         outageStarted = nil
         reconnectAttempt = 0
+    }
+
+    /// Behind the can't-reach card, a try every `quietRetryInterval` without
+    /// the Retry button's spinner, so a server that comes back later (after
+    /// a longer update, or a reboot) is picked up without a click.
+    private func startQuietRetries() {
+        stopQuietRetries()
+        let interval = quietRetryInterval
+        quietRetryTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: interval)
+                guard !Task.isCancelled, let self, self.phase == .unreachable else { return }
+                guard !self.isRetryingConnection else { continue }
+                await self.connectToSavedServer()
+            }
+        }
+    }
+
+    private func stopQuietRetries() {
+        quietRetryTask?.cancel()
+        quietRetryTask = nil
     }
 
     /// "Retry" on the can't-reach card, "Retry now" while waiting, and the

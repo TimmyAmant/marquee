@@ -80,4 +80,72 @@ public sealed class ReconnectTests
         Assert.Null(tracker.Next(new ProbeOutcome.Unreachable(UnreachableReason.UnknownHost), waiting: false));
         Assert.False(tracker.InOutage);
     }
+
+    [Fact]
+    public void SignedInChecksNeverGiveUp()
+    {
+        var schedule = ReconnectSchedule.SignedIn;
+        Assert.Equal(TimeSpan.FromSeconds(1), schedule.DelayBeforeAttempt(0, TimeSpan.Zero));
+        Assert.Equal(TimeSpan.FromSeconds(5), schedule.DelayBeforeAttempt(3, TimeSpan.FromSeconds(6)));
+        Assert.Equal(TimeSpan.FromSeconds(10), schedule.DelayBeforeAttempt(4, TimeSpan.FromSeconds(11)));
+        Assert.Equal(TimeSpan.FromSeconds(10), schedule.DelayBeforeAttempt(500, TimeSpan.FromDays(1)));
+    }
+
+    [Fact]
+    public void TheCantReachCardRetriesEveryThirtySeconds() =>
+        Assert.Equal(TimeSpan.FromSeconds(30), ReconnectSchedule.QuietRetryInterval);
+}
+
+// "Reconnecting to your server…" while signed in: when the strip goes up and
+// comes down (the Mac's SignedInOutageTests).
+
+public sealed class SignedInOutageTests
+{
+    [Fact]
+    public void AFailedCallStartsChecksButShowsNothingYet()
+    {
+        var outage = new SignedInOutage();
+        Assert.Equal(TimeSpan.FromSeconds(1), outage.Suspect());
+        Assert.True(outage.IsChecking);
+        Assert.False(outage.IsReconnecting);
+        // Already checking: another failed call changes nothing.
+        Assert.Null(outage.Suspect());
+    }
+
+    [Fact]
+    public void AFailedCheckPutsTheStripUpAndKeepsChecking()
+    {
+        var outage = new SignedInOutage();
+        outage.Suspect();
+        Assert.Equal(TimeSpan.FromSeconds(2), outage.CheckFailed());
+        Assert.True(outage.IsReconnecting);
+        Assert.Equal(TimeSpan.FromSeconds(3), outage.CheckFailed());
+        Assert.Equal(TimeSpan.FromSeconds(5), outage.CheckFailed());
+        Assert.Equal(TimeSpan.FromSeconds(10), outage.CheckFailed());
+        Assert.Equal(TimeSpan.FromSeconds(10), outage.CheckFailed());
+    }
+
+    [Fact]
+    public void AnAnswerEndsItAndSaysWhetherToReload()
+    {
+        var outage = new SignedInOutage();
+        outage.Suspect();
+        // A blip nobody saw: nothing to reload.
+        Assert.False(outage.Answered());
+        outage.Suspect();
+        outage.CheckFailed();
+        Assert.True(outage.Answered());
+        Assert.False(outage.IsChecking);
+        Assert.False(outage.IsReconnecting);
+        // The next outage starts over.
+        Assert.Equal(TimeSpan.FromSeconds(1), outage.Suspect());
+    }
+
+    [Fact]
+    public void ACheckWithoutAnOutageIsIgnored()
+    {
+        var outage = new SignedInOutage();
+        Assert.Null(outage.CheckFailed());
+        Assert.False(outage.IsReconnecting);
+    }
 }

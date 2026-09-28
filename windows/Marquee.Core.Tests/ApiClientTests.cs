@@ -119,6 +119,26 @@ public sealed class ApiClientTests
     }
 
     [Fact]
+    public async Task NoAnswerTellsTheSessionTheServerMayBeDown()
+    {
+        var unreachable = 0;
+        var client = new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub, onUnreachable: () => unreachable++);
+
+        stub.Fail(StubHttpMessageHandler.ConnectionRefused());
+        await Throws(() => client.GetAsync<Me>("/me"));
+        Assert.Equal(1, unreachable);
+
+        stub.Answer(() => StubHttpMessageHandler.Html(502, "<html>Bad Gateway</html>"));
+        await Throws(() => client.GetAsync<Me>("/me"));
+        Assert.Equal(2, unreachable);
+
+        // An error the server itself sent means it's there.
+        stub.AnswerJson(500, """{"error":"Boom","code":"internal"}""");
+        await Throws(() => client.GetAsync<Me>("/me"));
+        Assert.Equal(2, unreachable);
+    }
+
+    [Fact]
     public async Task JsonErrorWithoutHeaderStillMaps()
     {
         stub.AnswerJson(502, Fixtures.Read("error-upstream"), apiHeader: false);

@@ -11,6 +11,7 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { useT } from "@/lib/i18n/client";
+import { useViewportClamp } from "@/lib/ui/use-viewport-clamp";
 import { RAIL_LABELED_ITEM } from "@/lib/rail-position";
 import { timeAgo } from "@/lib/i18n/format";
 
@@ -77,6 +78,8 @@ export function NotificationsBell({
   const [unreadCount, setUnreadCount] = useState(0);
   const [items, setItems] = useState<NotificationRow[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useViewportClamp(open, panelRef);
 
   const refreshCount = useCallback(() => {
     getUnreadCountAction().then(setUnreadCount).catch(() => undefined);
@@ -164,7 +167,8 @@ export function NotificationsBell({
 
       {open && (
         <div
-          className={`absolute z-50 w-80 rounded-2xl border border-border bg-bg-1 p-2 shadow-xl ${
+          ref={panelRef}
+          className={`absolute z-50 w-80 max-w-[calc(100vw-1rem)] rounded-2xl border border-border bg-bg-1 p-2 shadow-xl ${
             onRail ? "rail-popover" : "right-0 top-11"
           }`}
         >

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PlayLink } from "@/lib/media-servers/play-links";
 import { useT } from "@/lib/i18n/client";
+import { useViewportClamp } from "@/lib/ui/use-viewport-clamp";
 import { PILL as PILL_BASE } from "@/components/pill-styles";
 
 const PILL = `${PILL_BASE} bg-text-primary px-4 font-semibold text-bg-0 hover:bg-text-primary/85`;
@@ -26,6 +27,8 @@ export function PlayButton({ links }: { links: PlayLink[] }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useViewportClamp(open, menuRef);
 
   useEffect(() => {
     if (!open) return;
@@ -64,7 +67,7 @@ export function PlayButton({ links }: { links: PlayLink[] }) {
         </svg>
       </button>
       {open && (
-        <div role="menu" className="nav-glass absolute left-0 top-full z-30 mt-1.5 min-w-[180px] rounded-xl p-1.5">
+        <div ref={menuRef} role="menu" className="nav-glass absolute left-0 top-full z-30 mt-1.5 min-w-[180px] rounded-xl p-1.5">
           {links.map((link) => (
             <a
               key={`${link.server}:${link.url}`}

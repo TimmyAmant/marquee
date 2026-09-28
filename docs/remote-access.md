@@ -59,7 +59,7 @@ is allowed:
 **Important, for the Mac app and for Sonarr/Radarr webhooks.** A login portal
 in front of the whole domain will block anything that isn't a browser:
 
-- **The Mac and Windows apps** sign in with a bearer token on
+- **The Mac, Windows and iPhone apps** sign in with a bearer token on
   `/api/v1`. Exempt that path in your policy (an Authelia `bypass` rule for
   `/api/v1*`, or a Cloudflare Access **service token**), or point the apps at
   the LAN address when you're home. Marquee authenticates those requests

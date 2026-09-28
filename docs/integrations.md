@@ -1,7 +1,7 @@
 # Connecting other tools to Marquee
 
 Dashboards, phone apps and scripts talk to Marquee through the same JSON API
-the Mac and Windows apps use (`/api/v1`), with an **API key** instead of a
+the Mac, Windows and iPhone apps use (`/api/v1`), with an **API key** instead of a
 sign-in. Available from server version 0.47.
 
 - Full reference: [`docs/api-v1.md`](api-v1.md) (§16 covers API keys).

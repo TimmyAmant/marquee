@@ -576,7 +576,7 @@ struct JobsSettingsView: View {
     var body: some View {
         SettingsPane(
             title: String(localized: "Jobs"),
-            subtitle: String(localized: "Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule.")
+            subtitle: String(localized: "Your Marquee server runs these maintenance tasks on a schedule. Change how often each one runs or give it a time of day, or run one now — that doesn't change its schedule. What they did, and any errors, shows up in Settings › Logs.")
         ) {
             if let jobs {
                 if jobs.isEmpty {

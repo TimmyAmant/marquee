@@ -16,6 +16,10 @@ struct APIClient: Sendable {
     /// Awaited before `.unauthorized` is thrown from a call that sent a token,
     /// so the session can drop back to sign-in wherever the 401 came from.
     let onUnauthorized: (@Sendable () async -> Void)?
+    /// Awaited before a JSON call throws because the server couldn't be
+    /// reached at all (refused, no answer, a proxy's 502–504), so the app
+    /// can check whether it's down (`LiveUpdates.suspectOutage()`).
+    let onUnreachable: (@Sendable () async -> Void)?
     private let session: URLSession
 
     private static let logger = Logger(subsystem: "com.timmyamant.Marquee", category: "api")
@@ -60,12 +64,14 @@ struct APIClient: Sendable {
         baseURL: URL,
         token: String? = nil,
         session: URLSession = APIClient.defaultSession,
-        onUnauthorized: (@Sendable () async -> Void)? = nil
+        onUnauthorized: (@Sendable () async -> Void)? = nil,
+        onUnreachable: (@Sendable () async -> Void)? = nil
     ) {
         self.baseURL = baseURL
         self.token = token
         self.session = session
         self.onUnauthorized = onUnauthorized
+        self.onUnreachable = onUnreachable
     }
 
     // MARK: Verbs
@@ -181,7 +187,7 @@ struct APIClient: Sendable {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            throw APIError.wrapping(error)
+            throw await unreachable(APIError.wrapping(error))
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.notMarquee }
 
@@ -192,10 +198,10 @@ struct APIClient: Sendable {
             // not that it's the wrong kind of server. A gateway timeout may
             // have reached it, so it's a timeout (never retried), not "down".
             if http.statusCode == 504 {
-                throw APIError.network(URLError(.timedOut))
+                throw await unreachable(APIError.network(URLError(.timedOut)))
             }
             if (502...503).contains(http.statusCode) {
-                throw APIError.network(URLError(.cannotConnectToHost))
+                throw await unreachable(APIError.network(URLError(.cannotConnectToHost)))
             }
             throw APIError.notMarquee
         }
@@ -203,6 +209,15 @@ struct APIClient: Sendable {
             Self.logger.warning("\(method.rawValue, privacy: .public) \(normalizedPath, privacy: .public) answered without \(Self.apiHeader, privacy: .public)")
         }
         return (http.statusCode, data)
+    }
+
+    /// Tells `onUnreachable` about a call that got no answer (not one that
+    /// was cancelled), and hands back the error to throw.
+    private func unreachable(_ error: APIError) async -> APIError {
+        if !error.isCancellation, let onUnreachable {
+            await onUnreachable()
+        }
+        return error
     }
 
     /// Decodes a response body; a shape this app can't read is `.server`.

@@ -34,6 +34,59 @@ struct ReconnectScheduleTests {
         #expect(attempts == 25)
         #expect(elapsed == .seconds(120))
     }
+
+    @Test func signedInChecksNeverGiveUp() {
+        let schedule = ReconnectSchedule.signedIn
+        #expect(schedule.delay(beforeAttempt: 0, elapsed: .zero) == .seconds(1))
+        #expect(schedule.delay(beforeAttempt: 3, elapsed: .seconds(6)) == .seconds(5))
+        #expect(schedule.delay(beforeAttempt: 4, elapsed: .seconds(11)) == .seconds(10))
+        #expect(schedule.delay(beforeAttempt: 500, elapsed: .seconds(86_400)) == .seconds(10))
+    }
+
+    @Test func theCantReachCardRetriesEveryThirtySeconds() {
+        #expect(ReconnectSchedule.quietRetryInterval == .seconds(30))
+    }
+}
+
+/// "Reconnecting to your server…" while signed in: when the strip goes up
+/// and comes down.
+struct SignedInOutageTests {
+    @Test func aFailedCallStartsChecksButShowsNothingYet() {
+        var outage = SignedInOutage()
+        #expect(outage.suspect() == .seconds(1))
+        #expect(outage.isChecking)
+        #expect(!outage.isReconnecting)
+        #expect(outage.suspect() == nil, "Already checking: another failed call changes nothing")
+    }
+
+    @Test func aFailedCheckPutsTheStripUpAndKeepsChecking() {
+        var outage = SignedInOutage()
+        _ = outage.suspect()
+        #expect(outage.checkFailed() == .seconds(2))
+        #expect(outage.isReconnecting)
+        #expect(outage.checkFailed() == .seconds(3))
+        #expect(outage.checkFailed() == .seconds(5))
+        #expect(outage.checkFailed() == .seconds(10))
+        #expect(outage.checkFailed() == .seconds(10))
+    }
+
+    @Test func anAnswerEndsItAndSaysWhetherToReload() {
+        var outage = SignedInOutage()
+        _ = outage.suspect()
+        #expect(outage.answered() == false, "A blip nobody saw: nothing to reload")
+        _ = outage.suspect()
+        _ = outage.checkFailed()
+        #expect(outage.answered() == true)
+        #expect(!outage.isChecking)
+        #expect(!outage.isReconnecting)
+        #expect(outage.suspect() == .seconds(1), "The next outage starts over")
+    }
+
+    @Test func aCheckWithoutAnOutageIsIgnored() {
+        var outage = SignedInOutage()
+        #expect(outage.checkFailed() == nil)
+        #expect(!outage.isReconnecting)
+    }
 }
 
 /// The app side, with a probe the test answers for and a schedule in
@@ -45,18 +98,23 @@ struct ReconnectStateTests {
     final class ScriptedServer: @unchecked Sendable {
         private let lock = NSLock()
         private var calls = 0
-        let down: Int
+        private var downFor: Int
         let outage: ProbeOutcome
 
         init(down: Int, outage: ProbeOutcome = .unreachable(.refused)) {
-            self.down = down
+            self.downFor = down
             self.outage = outage
         }
 
         var probes: Int { lock.withLock { calls } }
 
+        /// From the next probe on, the server answers.
+        func comeBack() {
+            lock.withLock { downFor = calls }
+        }
+
         func probe() -> ProbeOutcome {
-            let call = lock.withLock { calls += 1; return calls }
+            let (call, down) = lock.withLock { calls += 1; return (calls, downFor) }
             return call <= down ? outage : .marquee(ServerInfo(version: "0.61.0", setupComplete: true))
         }
     }
@@ -124,6 +182,24 @@ struct ReconnectStateTests {
         try? await Task.sleep(for: .milliseconds(100))
         #expect(model.phase == .unreachable)
         #expect(server.probes == attempts + 1)
+    }
+
+    @Test func theCardKeepsTryingQuietlyAndPicksTheServerUp() async {
+        let server = ScriptedServer(down: .max)
+        let (model, _) = makeModel(server)
+        model.quietRetryInterval = .milliseconds(50)
+        await model.connectToSavedServer()
+        #expect(await waitFor(.unreachable, in: model))
+        let attempts = server.probes
+
+        // Still down: each quiet try stays on the card, without the spinner.
+        try? await Task.sleep(for: .milliseconds(180))
+        #expect(model.phase == .unreachable)
+        #expect(!model.isRetryingConnection)
+        #expect(server.probes > attempts, "It kept trying")
+
+        server.comeBack()
+        #expect(await waitFor(.signIn, in: model, timeout: .seconds(2)), "Back without a click")
     }
 
     @Test func otherProblemsGoStraightToTheCard() async {

@@ -327,37 +327,54 @@ final class LiveUpdatesTests: XCTestCase {
 
         XCTAssertEqual(live.unreadCount, 2)
         XCTAssertTrue(live.isRunning)
+        live.stop()
     }
 
-    func testRepeatedUnreachablePollsGoOfflineUntilTheNextAnswer() async {
+    func testAServerThatStopsAnsweringShowsReconnectingUntilItsBack() async {
         let live = makeLive()
+        live.outageSchedule = ReconnectSchedule(steps: [], interval: .milliseconds(80), limit: nil)
+        var reconnected = 0
+        live.onReconnected = { reconnected += 1 }
         await start(live)
         let server = self.server
 
         StubURLProtocol.handler = { _ in throw URLError(.cannotConnectToHost) }
-        for poll in 1...LiveUpdates.offlineThreshold {
-            XCTAssertFalse(live.isOffline, "Not offline after \(poll - 1) failed poll(s)")
-            live.refresh(.poll)
-            await live.settle()
-        }
-        XCTAssertTrue(live.isOffline)
-
-        StubURLProtocol.handler = { request in server.handle(request) }
         live.refresh(.poll)
         await live.settle()
-        XCTAssertFalse(live.isOffline, "The next answer clears it")
+        XCTAssertFalse(live.isReconnecting, "One failed call alone shows nothing")
+        await waitUntil("a check fails too") { live.isReconnecting }
+        XCTAssertEqual(reconnected, 0)
+
+        StubURLProtocol.handler = { request in server.handle(request) }
+        await waitUntil("the server answers again") { !live.isReconnecting }
+        XCTAssertEqual(reconnected, 1, "The screens reload once")
+        live.stop()
     }
 
-    func testAServerErrorIsNotOffline() async {
+    func testAnyScreensFailedCallStartsTheChecks() async {
         let live = makeLive()
+        live.outageSchedule = ReconnectSchedule(steps: [], interval: .milliseconds(20), limit: nil)
+        await start(live)
+
+        StubURLProtocol.handler = { _ in throw URLError(.timedOut) }
+        live.suspectOutage()
+        await waitUntil("a check fails too") { live.isReconnecting }
+        live.stop()
+        XCTAssertFalse(live.isReconnecting, "Signing out clears it")
+    }
+
+    func testAServerErrorIsNotAnOutage() async {
+        let live = makeLive()
+        live.outageSchedule = ReconnectSchedule(steps: [], interval: .milliseconds(20), limit: nil)
         await start(live)
 
         StubURLProtocol.handler = { _ in StubURLProtocol.json(500, #"{"error":"Boom","code":"internal"}"#) }
-        for _ in 0..<LiveUpdates.offlineThreshold {
-            live.refresh(.poll)
-            await live.settle()
-        }
-        XCTAssertFalse(live.isOffline, "A server that answers is reachable")
+        live.refresh(.poll)
+        await live.settle()
+        live.suspectOutage()
+        try? await Task.sleep(for: .milliseconds(150))
+        XCTAssertFalse(live.isReconnecting, "A server that answers is reachable")
+        live.stop()
     }
 
     func testWithBannersOffTheWatermarkStillMoves() async {

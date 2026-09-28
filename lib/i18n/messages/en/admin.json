@@ -19,7 +19,7 @@
   "activityRequestRejected": "<who>{name}</who> declined <title>{title}</title>",
   "activityRequestManuallyApproved": "<who>{name}</who> manually approved <title>{title}</title>",
   "jobsTitle": "Jobs",
-  "jobsIntro": "Marquee runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule.",
+  "jobsIntro": "Marquee runs these maintenance tasks on a schedule. Change how often each one runs or give it a time of day, or run one now — that doesn't change its schedule. What they did, and any errors, shows up in Settings › Logs.",
   "runNow": "Run Now",
   "running": "Running…",
   "onlyAdminRunJobs": "Only the admin can run jobs.",

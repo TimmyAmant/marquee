@@ -25,7 +25,7 @@
   "importHeading": "Von deinem Medienserver importieren",
   "importIntro": "Füge die Leute hinzu, mit denen du deinen Server schon teilst. Sie melden sich mit diesem Konto an – kein Passwort zum Weitergeben.",
   "blocklistHeading": "Anfrage-Sperrliste",
-  "blocklistIntro": "Titel und Stichwörter, die niemand anfragen kann. Einen einzelnen Titel sperrst du auf seiner Seite.",
+  "blocklistIntro": "Titel und Stichwörter, die niemand anfragen kann. Einen einzelnen Titel sperrst du auf seiner Seite; mit den automatischen Regeln unten sperrst du nach Altersfreigabe oder TMDbs Erwachsenen-Kennzeichnung.",
   "menuPositionLabel": "Menüposition",
   "menuPositionHelp": "Wo das Menü auf diesem Gerät sitzt, auf größeren Bildschirmen. In einem Fenster in Handygröße ist das Menü immer eine Tableiste am unteren Rand.",
   "menuPositionLeft": "Links",

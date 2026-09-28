@@ -19,7 +19,7 @@
   "activityRequestRejected": "<who>{name}</who> hat <title>{title}</title> abgelehnt",
   "activityRequestManuallyApproved": "<who>{name}</who> hat <title>{title}</title> manuell genehmigt",
   "jobsTitle": "Aufgaben",
-  "jobsIntro": "Marquee führt diese Wartungsaufgaben nach Zeitplan aus – du kannst unten auch eine manuell starten. Das ändert ihren Zeitplan nicht.",
+  "jobsIntro": "Marquee führt diese Wartungsaufgaben nach Zeitplan aus. Du kannst einstellen, wie oft jede läuft oder zu welcher Uhrzeit, oder eine sofort starten – das ändert ihren Zeitplan nicht. Was sie getan haben und etwaige Fehler stehen unter Einstellungen › Protokolle.",
   "runNow": "Jetzt ausführen",
   "running": "Wird ausgeführt …",
   "onlyAdminRunJobs": "Nur der Admin kann Aufgaben ausführen.",

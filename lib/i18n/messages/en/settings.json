@@ -25,7 +25,7 @@
   "importHeading": "Import from your media server",
   "importIntro": "Add the people you already share your server with. They sign in with that account — no password to hand out.",
   "blocklistHeading": "Request blocklist",
-  "blocklistIntro": "Titles and keywords nobody can request. Block a single title from its page.",
+  "blocklistIntro": "Titles and keywords nobody can request. Block a single title from its page, or use the automatic rules below to block by age rating or TMDb's adult flag.",
   "menuPositionLabel": "Menu position",
   "menuPositionHelp": "Where the menu sits on this device, on larger screens. On a phone-sized window the menu is always a tab bar along the bottom.",
   "menuPositionLeft": "Left",

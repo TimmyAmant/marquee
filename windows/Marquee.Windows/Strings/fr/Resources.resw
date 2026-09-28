@@ -191,7 +191,7 @@
     <value>Aucun titre avec ce mot-clé ou ce genre TMDb ne peut être demandé (vous pouvez toujours l’ajouter vous-même).</value>
   </data>
   <data name="Account_BlocklistBody.Text" xml:space="preserve">
-    <value>Titres et mots-clés que personne ne peut demander. Bloquez un titre précis depuis sa page.</value>
+    <value>Titres et mots-clés que personne ne peut demander. Bloquez un titre précis depuis sa page, ou utilisez les règles automatiques ci-dessous pour bloquer selon la classification par âge ou le marqueur adulte de TMDb.</value>
   </data>
   <data name="Account_BlocklistEmpty.Text" xml:space="preserve">
     <value>Rien n’est bloqué. Bloquez un titre depuis sa page, ou un mot-clé ci-dessous.</value>
@@ -2378,7 +2378,7 @@
     <value>Lancer maintenant</value>
   </data>
   <data name="Jobs_Subtitle.Text" xml:space="preserve">
-    <value>Votre serveur Marquee exécute ces tâches de maintenance selon un planning ; vous pouvez aussi en lancer une manuellement ci-dessous. Lancer une tâche maintenant ne modifie pas son planning.</value>
+    <value>Votre serveur Marquee exécute ces tâches de maintenance selon un calendrier. Changez la fréquence de chacune ou fixez-lui une heure de la journée, ou lancez-en une maintenant – cela ne modifie pas son calendrier. Ce qu'elles ont fait, et les éventuelles erreurs, apparaît dans Paramètres › Journaux.</value>
   </data>
   <data name="Jobs_Title.Text" xml:space="preserve">
     <value>Tâches</value>
@@ -4083,6 +4083,9 @@
   </data>
   <data name="Shell_AskNotificationsTurnOn" xml:space="preserve">
     <value>Activer</value>
+  </data>
+  <data name="Shell_ReconnectingBar.Title" xml:space="preserve">
+    <value>Reconnexion à votre serveur…</value>
   </data>
   <data name="Shell_AuthUpdateButton.Content" xml:space="preserve">
     <value>Mettre à jour</value>

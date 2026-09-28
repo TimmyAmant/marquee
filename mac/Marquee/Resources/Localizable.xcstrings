@@ -855,30 +855,30 @@
         }
       }
     },
-    "%@ stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too." : {
+    "%@ stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again." : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ verfolgt ihn auf keinem Server mehr. Genehmigte Anfragen dafür werden als entfernt markiert, er kann also wieder angefragt werden."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ deja de seguirlo en todos los servidores que lo tienen. Sus solicitudes aprobadas quedan como quitadas, así que se puede volver a pedir. Borrar los archivos los elimina del disco para siempre; Plex y Jellyfin también lo pierden."
+            "value" : "%@ deja de seguirlo en todos los servidores que lo tienen. Sus solicitudes aprobadas quedan como quitadas, así que se puede volver a pedir."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ arrête de le suivre sur tous les serveurs qui l’ont. Ses demandes approuvées sont marquées comme retirées, il peut donc être redemandé. Supprimer les fichiers les efface définitivement du disque — Plex et Jellyfin le perdent aussi."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ verfolgt ihn auf keinem Server mehr. Genehmigte Anfragen dafür werden als entfernt markiert, er kann also wieder angefragt werden. Das Löschen der Dateien entfernt sie endgültig von der Festplatte – auch Plex und Jellyfin verlieren ihn."
+            "value" : "%@ arrête de le suivre sur tous les serveurs qui l’ont. Ses demandes approuvées sont marquées comme retirées, il peut donc être redemandé."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O %@ deixa de acompanhá-lo em todos os servidores que o têm. Os pedidos aprovados ficam como removidos, então ele pode ser pedido de novo. Apagar os arquivos os tira do disco de vez — o Plex e o Jellyfin também o perdem."
+            "value" : "O %@ deixa de acompanhá-lo em todos os servidores que o têm. Os pedidos aprovados ficam como removidos, então ele pode ser pedido de novo."
           }
         }
       }
@@ -6620,6 +6620,34 @@
         }
       }
     },
+    "Also delete the files" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch die Dateien löschen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar también los archivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer aussi les fichiers"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar também os arquivos"
+          }
+        }
+      }
+    },
     "Also request what's on it now" : {
       "localizations" : {
         "de" : {
@@ -8615,34 +8643,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não encontrado"
-          }
-        }
-      }
-    },
-    "Can't reach your Marquee server — retrying…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Marquee-Server ist nicht erreichbar – neuer Versuch …"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se puede conectar con tu servidor Marquee: reintentando…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de joindre votre serveur Marquee — nouvelle tentative…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível acessar seu servidor Marquee — tentando de novo…"
           }
         }
       }
@@ -16611,6 +16611,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir"
+          }
+        }
+      }
+    },
+    "Gone from the disk for good — Plex and Jellyfin lose it too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endgültig von der Festplatte weg – auch Plex und Jellyfin verlieren ihn."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se borra del disco para siempre; Plex y Jellyfin también lo pierden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définitivement supprimé du disque — Plex et Jellyfin le perdent aussi."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sai do disco de vez — o Plex e o Jellyfin também o perdem."
           }
         }
       }
@@ -27622,6 +27650,34 @@
         }
       }
     },
+    "Reconnecting to your server…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbindung zu deinem Server wird wiederhergestellt …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconectando con tu servidor…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnexion à votre serveur…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconectando ao seu servidor…"
+          }
+        }
+      }
+    },
     "Redirect URI — add this to the provider exactly" : {
       "localizations" : {
         "de" : {
@@ -37531,30 +37587,30 @@
         }
       }
     },
-    "Titles and keywords nobody can request. You can still add them yourself." : {
+    "Titles and keywords nobody can request. Block a single title from its page, or use the automatic rules below to block by age rating or TMDb's adult flag." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Titel und Stichwörter, die niemand anfragen kann. Du kannst sie trotzdem selbst hinzufügen."
+            "value" : "Titel und Stichwörter, die niemand anfragen kann. Einen einzelnen Titel sperrst du auf seiner Seite; mit den automatischen Regeln unten sperrst du nach Altersfreigabe oder TMDbs Erwachsenen-Kennzeichnung."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Títulos y palabras clave que nadie puede solicitar. Tú aún puedes añadirlos."
+            "value" : "Títulos y palabras clave que nadie puede solicitar. Bloquea un título concreto desde su página, o usa las reglas automáticas de abajo para bloquear por clasificación por edades o por la marca de adultos de TMDb."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Titres et mots-clés que personne ne peut demander. Vous pouvez toujours les ajouter vous-même."
+            "value" : "Titres et mots-clés que personne ne peut demander. Bloquez un titre précis depuis sa page, ou utilisez les règles automatiques ci-dessous pour bloquer selon la classification par âge ou le marqueur adulte de TMDb."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Títulos e palavras-chave que ninguém pode pedir. Você ainda pode adicioná-los."
+            "value" : "Títulos e palavras-chave que ninguém pode pedir. Bloqueie um título específico na página dele, ou use as regras automáticas abaixo para bloquear por classificação indicativa ou pela marcação de conteúdo adulto do TMDb."
           }
         }
       }
@@ -41294,30 +41350,30 @@
         }
       }
     },
-    "Your Marquee server runs these maintenance tasks on a schedule — you can also trigger one manually below. Running a job now doesn't change its schedule." : {
+    "Your Marquee server runs these maintenance tasks on a schedule. Change how often each one runs or give it a time of day, or run one now — that doesn't change its schedule. What they did, and any errors, shows up in Settings › Logs." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dein Marquee-Server führt diese Wartungsaufgaben nach Zeitplan aus – du kannst unten auch eine manuell starten. Eine Aufgabe jetzt auszuführen ändert ihren Zeitplan nicht."
+            "value" : "Dein Marquee-Server führt diese Wartungsaufgaben nach Zeitplan aus. Du kannst einstellen, wie oft jede läuft oder zu welcher Uhrzeit, oder eine sofort starten – das ändert ihren Zeitplan nicht. Was sie getan haben und etwaige Fehler stehen unter Einstellungen › Protokolle."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu servidor de Marquee ejecuta estas tareas de mantenimiento de forma programada; también puedes lanzar una manualmente aquí abajo. Ejecutar una tarea ahora no cambia su programación."
+            "value" : "Tu servidor de Marquee ejecuta estas tareas de mantenimiento de forma programada. Cambia cada cuánto se ejecuta cada una o fíjale una hora del día, o lanza una ahora; eso no cambia su programación. Lo que hicieron, y cualquier error, aparece en Ajustes › Registros."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre serveur Marquee exécute ces tâches de maintenance selon un calendrier – vous pouvez aussi en lancer une manuellement ci-dessous. Lancer une tâche maintenant ne modifie pas son calendrier."
+            "value" : "Votre serveur Marquee exécute ces tâches de maintenance selon un calendrier. Changez la fréquence de chacune ou fixez-lui une heure de la journée, ou lancez-en une maintenant – cela ne modifie pas son calendrier. Ce qu'elles ont fait, et les éventuelles erreurs, apparaît dans Paramètres › Journaux."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seu servidor do Marquee executa estas tarefas de manutenção de forma agendada — você também pode iniciar uma manualmente abaixo. Executar uma tarefa agora não muda o agendamento dela."
+            "value" : "Seu servidor do Marquee executa estas tarefas de manutenção de forma programada. Mude a frequência de cada uma ou defina um horário do dia, ou execute uma agora — isso não muda a programação dela. O que elas fizeram, e qualquer erro, aparece em Configurações › Logs."
           }
         }
       }

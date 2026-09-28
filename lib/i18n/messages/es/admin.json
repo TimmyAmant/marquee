@@ -19,7 +19,7 @@
   "activityRequestRejected": "<who>{name}</who> rechazó <title>{title}</title>",
   "activityRequestManuallyApproved": "<who>{name}</who> aprobó manualmente <title>{title}</title>",
   "jobsTitle": "Tareas",
-  "jobsIntro": "Marquee ejecuta estas tareas de mantenimiento de forma programada; también puedes lanzar una manualmente aquí abajo. Ejecutar una tarea ahora no cambia su programación.",
+  "jobsIntro": "Marquee ejecuta estas tareas de mantenimiento de forma programada. Cambia cada cuánto se ejecuta cada una o fíjale una hora del día, o lanza una ahora; eso no cambia su programación. Lo que hicieron, y cualquier error, aparece en Ajustes › Registros.",
   "runNow": "Ejecutar ahora",
   "running": "Ejecutando…",
   "onlyAdminRunJobs": "Solo el administrador puede ejecutar tareas.",

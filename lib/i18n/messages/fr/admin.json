@@ -19,7 +19,7 @@
   "activityRequestRejected": "<who>{name}</who> a refusé <title>{title}</title>",
   "activityRequestManuallyApproved": "<who>{name}</who> a approuvé manuellement <title>{title}</title>",
   "jobsTitle": "Tâches",
-  "jobsIntro": "Marquee exécute ces tâches de maintenance selon un calendrier – vous pouvez aussi en lancer une manuellement ci-dessous. Lancer une tâche maintenant ne modifie pas son calendrier.",
+  "jobsIntro": "Marquee exécute ces tâches de maintenance selon un calendrier. Changez la fréquence de chacune ou fixez-lui une heure de la journée, ou lancez-en une maintenant – cela ne modifie pas son calendrier. Ce qu'elles ont fait, et les éventuelles erreurs, apparaît dans Paramètres › Journaux.",
   "runNow": "Lancer maintenant",
   "running": "Exécution…",
   "onlyAdminRunJobs": "Seul l’administrateur peut lancer des tâches.",

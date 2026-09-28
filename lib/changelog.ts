@@ -11,6 +11,18 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.65.0",
+    date: "2026-09-27",
+    changes: [
+      "Mac, iPhone and Windows apps: if your server drops while you're using the app, a slim \"Reconnecting to your server…\" strip appears and clears itself when it's back; the can't-reach screen keeps retrying quietly every 30 seconds.",
+      "iPad: a sidebar like the Mac's instead of the phone's bottom tabs.",
+      "Mac and iPhone: Remove from Radarr/Sonarr has one Remove button and an \"Also delete the files\" switch, like the website and Windows.",
+      "Phones: the … menu, color key, notifications and Play menus stay inside the screen.",
+      "The server log file is kept in its own folder (a new Logs path in the Unraid template), so it survives container updates.",
+      "Studio pages consider a studio's biggest titles, not just its newest, for their backdrop; Blocklist and Jobs settings describe the newer options.",
+    ],
+  },
+  {
     version: "0.64.0",
     date: "2026-09-27",
     changes: [

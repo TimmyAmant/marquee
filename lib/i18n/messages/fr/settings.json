@@ -25,7 +25,7 @@
   "importHeading": "Importer depuis votre serveur multimédia",
   "importIntro": "Ajoutez les personnes avec qui vous partagez déjà votre serveur. Elles se connectent avec ce compte, sans mot de passe à distribuer.",
   "blocklistHeading": "Liste de blocage des demandes",
-  "blocklistIntro": "Titres et mots-clés que personne ne peut demander. Bloquez un titre précis depuis sa page.",
+  "blocklistIntro": "Titres et mots-clés que personne ne peut demander. Bloquez un titre précis depuis sa page, ou utilisez les règles automatiques ci-dessous pour bloquer selon la classification par âge ou le marqueur adulte de TMDb.",
   "menuPositionLabel": "Position du menu",
   "menuPositionHelp": "L’emplacement du menu sur cet appareil, sur les écrans plus grands. Dans une fenêtre de la taille d’un téléphone, le menu est toujours une barre d’onglets en bas.",
   "menuPositionLeft": "Gauche",

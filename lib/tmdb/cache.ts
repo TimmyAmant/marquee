@@ -10,6 +10,14 @@ import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
 
 const CATALOG_MAX_PAGES = 5;
 
+/** Set on a company's cached details once its catalog includes the
+ * most-voted page (below), so catalogs saved before that refresh once. */
+const TOP_VOTED_MARKER = "marquee_top_voted";
+
+function includesTopVoted(rawTmdb: unknown): boolean {
+  return Boolean(rawTmdb && typeof rawTmdb === "object" && TOP_VOTED_MARKER in rawTmdb);
+}
+
 export type LightTitleInput = {
   mediaType: MediaType;
   tmdbId: number;
@@ -347,9 +355,11 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
 
   if (cachedCompany && !isStale(cachedCompany.refreshedAt)) {
     const cached = await getCompanyWithCatalogFromDb(cachedCompany.id);
-    // A catalog saved before titles kept their vote counts is refreshed
-    // once, so the page can pick its best-known title (lib/tmdb/known-for.ts).
-    if (cached.catalog.length === 0 || cached.catalog.some((title) => title.voteCount !== null)) return cached;
+    // A catalog saved before titles kept their vote counts, or before it
+    // included the most-voted page, is refreshed once, so the page can pick
+    // its best-known title (lib/tmdb/known-for.ts).
+    const hasVotes = cached.catalog.length === 0 || cached.catalog.some((title) => title.voteCount !== null);
+    if (hasVotes && includesTopVoted(cachedCompany.rawTmdb)) return cached;
   }
 
   const details = await tmdb.getCompanyDetails(tmdbId);
@@ -363,7 +373,7 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
       logoPath: details.logo_path,
       originCountry: details.origin_country,
       parentCompanyTmdbId: details.parent_company?.id ?? null,
-      rawTmdb: details,
+      rawTmdb: { ...details, [TOP_VOTED_MARKER]: true },
       refreshedAt: new Date(),
     })
     .onConflictDoUpdate({
@@ -374,35 +384,48 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
         logoPath: details.logo_path,
         originCountry: details.origin_country,
         parentCompanyTmdbId: details.parent_company?.id ?? null,
-        rawTmdb: details,
+        rawTmdb: { ...details, [TOP_VOTED_MARKER]: true },
         refreshedAt: new Date(),
       },
     })
     .returning();
 
+  async function save(mediaType: MediaType, results: tmdb.TmdbDiscoverResponse["results"]) {
+    for (const item of results) {
+      const titleRow = await upsertTitleLight({
+        mediaType,
+        tmdbId: item.id,
+        name: item.title || item.name || "Untitled",
+        overview: item.overview,
+        posterPath: item.poster_path,
+        backdropPath: item.backdrop_path,
+        releaseDate: item.release_date,
+        firstAirDate: item.first_air_date,
+        voteCount: item.vote_count,
+      });
+
+      await db
+        .insert(companyTitles)
+        .values({ companyId: companyRow.id, titleId: titleRow.id })
+        .onConflictDoNothing();
+    }
+  }
+
   for (const fetchPage of [tmdb.discoverMoviesByCompany, tmdb.discoverTvByCompany]) {
     const mediaType: MediaType = fetchPage === tmdb.discoverMoviesByCompany ? "movie" : "tv";
+    let totalPages = 0;
     for (let page = 1; page <= CATALOG_MAX_PAGES; page++) {
       const response = await fetchPage(tmdbId, page);
-      for (const item of response.results) {
-        const titleRow = await upsertTitleLight({
-          mediaType,
-          tmdbId: item.id,
-          name: item.title || item.name || "Untitled",
-          overview: item.overview,
-          posterPath: item.poster_path,
-          backdropPath: item.backdrop_path,
-          releaseDate: item.release_date,
-          firstAirDate: item.first_air_date,
-          voteCount: item.vote_count,
-        });
-
-        await db
-          .insert(companyTitles)
-          .values({ companyId: companyRow.id, titleId: titleRow.id })
-          .onConflictDoNothing();
-      }
+      totalPages = response.total_pages;
+      await save(mediaType, response.results);
       if (page >= response.total_pages) break;
+    }
+    // The newest pages miss a long-running studio's classics (A24's are
+    // older than its latest hundred titles), so the most-voted page is kept
+    // too: the best-known pick sees them, and the list shows them. Only
+    // when the newest pages didn't already cover everything.
+    if (totalPages > CATALOG_MAX_PAGES) {
+      await save(mediaType, (await tmdb.discoverTopVotedByCompany(mediaType, tmdbId)).results);
     }
   }
 

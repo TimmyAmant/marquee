@@ -175,7 +175,7 @@ struct BlocklistSettingsView: View {
     var body: some View {
         SettingsPane(
             title: String(localized: "Request blocklist"),
-            subtitle: String(localized: "Titles and keywords nobody can request. You can still add them yourself.")
+            subtitle: String(localized: "Titles and keywords nobody can request. Block a single title from its page, or use the automatic rules below to block by age rating or TMDb's adult flag.")
         ) {
             BlocklistSettingsSection()
         }

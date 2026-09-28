@@ -48,6 +48,13 @@ RUN npm run build && chown -R node:node .next
 ENV NODE_ENV=production
 EXPOSE 3000
 
+# Settings › Logs keeps a rolling copy of the server's log here
+# (lib/logs/capture.ts), so a restart doesn't lose it. Mount a folder on it
+# (Unraid's template and docker-compose.yml do) and it survives the container
+# being recreated too; without one it lasts as long as the container.
+ENV MARQUEE_LOG_DIR=/var/log/marquee
+RUN mkdir -p /var/log/marquee && chown node:node /var/log/marquee
+
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
