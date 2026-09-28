@@ -23,6 +23,17 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOC = os.path.join(os.path.dirname(ROOT), "docs", "api-v1.md")
 OUT = os.path.join(ROOT, "MarqueeTests", "Fixtures", "api")
 
+# Examples of endpoints the apps don't call: there's no DTO to decode them
+# into, so they aren't written.
+UNUSED = {
+    "requests-pending-count",
+    "notifications-unread-count",
+    "seerr-test",
+    "seerr-preview",
+    "seerr-job",
+    "stats-summary",
+}
+
 # One name per ```json block, in document order, with the heading it must sit
 # under (so a doc edit that adds or moves an example fails loudly here).
 BLOCKS = [
@@ -205,6 +216,8 @@ def main():
         with open(os.path.join(OUT, filename), "w", encoding="utf-8") as file:
             file.write(text + "\n\n")
     for name, text in raw.items():
+        if name in UNUSED:
+            continue
         for pattern, replacement in NORMALIZE:
             text = pattern.sub(replacement, text)
         try:
@@ -214,7 +227,7 @@ def main():
         with open(os.path.join(OUT, name + ".json"), "w", encoding="utf-8") as file:
             json.dump(value, file, ensure_ascii=False, indent=2)
             file.write("\n")
-    print(f"Wrote {len(raw) + len(text_blocks)} fixtures to {os.path.relpath(OUT, ROOT)}")
+    print(f"Wrote {len(raw) - len(UNUSED) + len(text_blocks)} fixtures to {os.path.relpath(OUT, ROOT)}")
 
 
 if __name__ == "__main__":

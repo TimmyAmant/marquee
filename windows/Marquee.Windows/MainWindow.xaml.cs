@@ -170,7 +170,7 @@ public sealed partial class MainWindow : Window, INavigator
         Section.Favorites => (typeof(FavoritesPage), null),
         Section.Calendar => (typeof(CalendarPage), null),
         Section.Settings => (typeof(SettingsPage), null),
-        _ => (typeof(PlaceholderPage), section.Title()),
+        _ => throw new ArgumentOutOfRangeException(nameof(section)),
     };
 
     /// <summary>The page and navigation parameter for a route; each page accepts its own record.</summary>
@@ -182,7 +182,7 @@ public sealed partial class MainWindow : Window, INavigator
         Route.Search => (typeof(SearchPage), route),
         Route.DiscoverList => (typeof(DiscoverListPage), route),
         Route.ErrorReference => (typeof(ErrorReferencePage), route),
-        _ => (typeof(PlaceholderPage), route.Description),
+        _ => throw new ArgumentOutOfRangeException(nameof(route)),
     };
 
     /// <summary>
@@ -393,7 +393,7 @@ public sealed partial class MainWindow : Window, INavigator
             NotificationsFlyoutHost.Hide();
             NotificationsPanel.ViewModel.Reset();
             CloseSearch();
-            ContentFrame.Navigate(typeof(PlaceholderPage));
+            ContentFrame.Content = null;
             ContentFrame.BackStack.Clear();
             BackButton.IsEnabled = false;
         }

@@ -71,7 +71,6 @@ final class APIFixtureTests: XCTestCase {
         "requests-pending": decodes(API.PendingRequests.self),
         "requests-history": decodes(API.ListResponse<API.ReviewedRequest>.self),
         "requests-not-found": decodes(API.NotFoundRequests.self),
-        "requests-pending-count": decodes(API.Count.self),
         "requests-approve-all": decodes(API.ApproveAllResult.self),
         "request-edit-options": decodes(API.RequestEditOptions.self),
         "comment-thread": decodes(API.CommentThread.self),
@@ -80,7 +79,6 @@ final class APIFixtureTests: XCTestCase {
         "notifications": decodes(API.NotificationList.self),
         "users-shareable": decodes(API.ShareableUsers.self),
         "share-title-body": decodes(API.ShareTitleRequest.self),
-        "notifications-unread-count": decodes(API.Count.self),
         "notification-channels": decodes(API.PersonalNotificationChannels.self),
         "notification-preferences": decodes(API.NotificationPreferences.self),
         "household-notification-events": decodes(API.HouseholdNotificationEvents.self),
@@ -110,9 +108,6 @@ final class APIFixtureTests: XCTestCase {
         "plex-pin-waiting": decodes(API.PlexPinStatus.self),
         "plex-pin-connected": decodes(API.PlexPinStatus.self),
         "trakt-import": decodes(API.TraktImportResult.self),
-        "seerr-test": decodes(API.SeerrTestResult.self),
-        "seerr-preview": decodes(API.SeerrImportPreview.self),
-        "seerr-job": decodes(API.SeerrImportJob.self),
         "jobs": decodes(API.ListResponse<API.Job>.self),
         "logs": decodes(API.LogsResponse.self),
         "not-found-settings": decodes(API.NotFoundSettings.self),
@@ -122,7 +117,6 @@ final class APIFixtureTests: XCTestCase {
         "error-upstream": decodes(APIError.Body.self),
         "api-keys": decodes(API.ListResponse<API.ApiKey>.self),
         "api-key-created": decodes(API.ApiKeyCreated.self),
-        "stats-summary": decodes(API.StatsSummary.self),
         "library-page": decodes(API.LibraryPageResponse.self),
         "library-collections-missing": decodes(API.ListResponse<API.LibraryCollection>.self),
         "library-duplicates": decodes(API.ListResponse<API.LibraryDuplicate>.self),
@@ -133,7 +127,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 101, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 95, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -273,7 +267,6 @@ final class APIFixtureTests: XCTestCase {
         let notifications = try decode(API.NotificationList.self, "notifications")
         let item = try XCTUnwrap(notifications.results.first)
         XCTAssertEqual(item.eventType, .requestRejected)
-        XCTAssertEqual(item.eventType.emoji, "👎")
         XCTAssertEqual(item.titleID.route.absoluteString, "marquee://title/movie/603")
         XCTAssertEqual(item.alert, true)
         XCTAssertTrue(item.showsBanner)
@@ -281,7 +274,6 @@ final class APIFixtureTests: XCTestCase {
         let comment = try XCTUnwrap(notifications.results.first { $0.eventType == .requestComment })
         XCTAssertEqual(comment.requestId, UUID(uuidString: "5b0f1d8e-8a8c-4f5e-9d51-1f0c7a0e2b44"))
         XCTAssertNil(comment.issueId)
-        XCTAssertEqual(comment.eventType.emoji, "💬")
         XCTAssertEqual(comment.markedRead().requestId, comment.requestId, "Marking read keeps the ids")
 
         let badges = try decode(API.Badges.self, "badges")
@@ -462,7 +454,6 @@ final class APIFixtureTests: XCTestCase {
         let page = try decode(API.BrowsePage.self, "browse-page")
         XCTAssertTrue(page.hasMorePages)
         XCTAssertEqual(page.results.first?.rating, 7.832)
-        XCTAssertEqual(page.results.first?.footerLine, "Thriller · 1964")
 
         let person = try decode(API.PersonDetail.self, "person-detail")
         XCTAssertEqual(person.birthday?.string, "1964-09-02")
@@ -647,11 +638,9 @@ final class APIValueTypeTests: XCTestCase {
     func testImageRefs() {
         let tmdb: API.ImageRef = "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg"
         XCTAssertEqual(tmdb.url(.w342)?.absoluteString, "https://image.tmdb.org/t/p/w342/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg")
-        XCTAssertFalse(tmdb.isAbsolute)
 
         let tvdb: API.ImageRef = "https://artworks.thetvdb.com/banners/posters/81189-10.jpg"
         XCTAssertEqual(tvdb.url(.w92)?.absoluteString, "https://artworks.thetvdb.com/banners/posters/81189-10.jpg")
-        XCTAssertTrue(tvdb.isAbsolute)
 
         let none: API.ImageRef? = nil
         XCTAssertNil(none.url(.original))

@@ -116,9 +116,6 @@ public sealed class ApiException : Exception
     public static ApiException RefusedFromResponse(int statusCode, string body, bool hasApiHeader = false) =>
         Refused(DecodeBody(body)?.Error?.Trim().NonBlank(), statusCode, hasApiHeader);
 
-    public static ApiException PlexSignInExpired(int? statusCode = null, bool hasApiHeader = false) =>
-        SignInExpired(PlexSignInExpiredMessage, statusCode, hasApiHeader);
-
     /// <summary>What a single sign-on sign-in or link that expired says (the server's own wording).</summary>
     public static string SsoSignInExpiredMessage => Loc.Get("Api_SsoSignInExpired");
 

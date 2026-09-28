@@ -54,8 +54,6 @@ extension API {
 
         var description: String { string }
 
-        var yearString: String { String(format: "%04d", year) }
-
         static func < (lhs: CalendarDay, rhs: CalendarDay) -> Bool {
             (lhs.year, lhs.month, lhs.day) < (rhs.year, rhs.month, rhs.day)
         }

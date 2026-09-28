@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Settings › Integrations › Download Clients (0.43+): any number of Sonarr and
+// Settings › Services (0.43+): any number of Sonarr and
 // Radarr servers, each with its own defaults and webhook URL. An older server
 // omits `arrServers` and keeps the four fixed cards instead.
 

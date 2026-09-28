@@ -102,7 +102,6 @@ final class RequestLifecycleTests: XCTestCase {
         XCTAssertEqual(API.NotificationEventType(rawValue: "request_comment"), .requestComment)
         XCTAssertEqual(API.NotificationEventType(rawValue: "issue_comment"), .issueComment)
         XCTAssertEqual(API.NotificationEventType.issueComment.rawValue, "issue_comment")
-        XCTAssertEqual(API.NotificationEventType.issueComment.emoji, "💬")
         XCTAssertTrue(API.NotificationEventType.requestComment.isKnown)
     }
 

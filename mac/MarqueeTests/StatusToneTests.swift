@@ -33,7 +33,6 @@ final class StatusToneTests: XCTestCase {
         let holder = try APIClient.decoder.decode(Holder.self, from: Data(json.utf8))
         XCTAssertEqual(holder.status, .trackedUnmonitored)
         XCTAssertTrue(holder.status.isKnown)
-        XCTAssertTrue(holder.status.isInLibrary)
         XCTAssertEqual(holder.status.label, "Not monitored")
         XCTAssertEqual(holder.status.compactLabel, "Not monitored")
         XCTAssertEqual(holder.status.name, "Not monitored")

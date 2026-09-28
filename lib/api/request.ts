@@ -3,13 +3,9 @@
 // reader's language: see msg() in lib/api/errors.ts).
 import { ApiError, msg, type ApiMessage } from "@/lib/api/errors";
 import {
-  arrProviderValues,
   favoriteEntityTypeValues,
-  integrationProviderValues,
   mediaTypeValues,
-  type ArrProvider,
   type FavoriteEntityType,
-  type IntegrationProvider,
   type MediaType,
 } from "@/lib/db/schema";
 
@@ -77,12 +73,6 @@ export function optionalString(body: Record<string, unknown>, key: string): stri
   return value;
 }
 
-export function requiredString(body: Record<string, unknown>, key: string): string {
-  const value = optionalString(body, key);
-  if (value === undefined) throw invalid(msg("server.fieldRequired", { field: key }));
-  return value;
-}
-
 export function optionalBoolean(body: Record<string, unknown>, key: string): boolean | undefined {
   const value = body[key];
   if (value === undefined || value === null) return undefined;
@@ -110,18 +100,6 @@ function isOneOf<T extends string>(values: readonly T[], value: string): value i
 
 export function parseMediaType(value: string): MediaType {
   if (!isOneOf(mediaTypeValues, value)) throw ApiError.of("not_found", msg("server.unknownMediaType", { value }));
-  return value;
-}
-
-export function parseArrProvider(value: string): ArrProvider {
-  if (!isOneOf(arrProviderValues, value)) throw ApiError.of("not_found", msg("server.unknownProvider", { value }));
-  return value;
-}
-
-export function parseIntegrationProvider(value: string): IntegrationProvider {
-  if (!isOneOf(integrationProviderValues, value)) {
-    throw ApiError.of("not_found", msg("server.unknownIntegration", { value }));
-  }
   return value;
 }
 

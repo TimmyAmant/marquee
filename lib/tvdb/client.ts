@@ -96,23 +96,6 @@ export function getSeriesExtended(apiKey: string, tvdbId: number): Promise<TvdbS
   return tvdbFetch<TvdbSeriesExtended>(apiKey, `/series/${tvdbId}/extended?meta=translations`);
 }
 
-export interface TvdbMovieExtended {
-  id: number;
-  name: string;
-  image: string | null;
-  year: string | null;
-  score: number | null;
-  status: TvdbStatus | null;
-  genres: TvdbGenre[];
-  runtime: number | null;
-  originalLanguage: string | null;
-  overviewTranslations?: string[];
-}
-
-export function getMovieExtended(apiKey: string, tvdbId: number): Promise<TvdbMovieExtended> {
-  return tvdbFetch<TvdbMovieExtended>(apiKey, `/movies/${tvdbId}/extended?meta=translations`);
-}
-
 /** TVDB's own overview data is just an unordered list of translation
  * strings, not language-tagged objects — best-effort take the first one
  * rather than pretending we can reliably pick "English" out of it. */

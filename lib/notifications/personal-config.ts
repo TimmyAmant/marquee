@@ -209,16 +209,3 @@ export function destinationKey(config: PersonalChannelConfig, ntfyServer: string
       return `pushbullet:${config.accessToken}#${config.channelTag ?? ""}`;
   }
 }
-
-/** The pieces of each kind that the API takes, for docs and errors. */
-export const CONFIG_FIELDS: Record<UserNotificationChannelKind, string[]> = {
-  telegram: ["chatId"],
-  pushover: ["userKey"],
-  email: ["address"],
-  discord: ["webhookUrl"],
-  ntfy: ["topic", "url"],
-  webhook: ["url"],
-  slack: ["webhookUrl"],
-  gotify: ["url", "appToken", "priority"],
-  pushbullet: ["accessToken", "channelTag"],
-};

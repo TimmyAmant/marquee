@@ -6,7 +6,6 @@
   "singleSignOn": "Single sign-on",
   "ssoLinked": "{name} is linked. You can sign in with it now.",
   "accountHeading": "Account",
-  "accountIntro": "Your Marquee account details.",
   "nameLabel": "Name",
   "usernameLabel": "Username",
   "linkedAccountsHeading": "Linked accounts",

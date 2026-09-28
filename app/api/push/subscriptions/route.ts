@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isCrossSite } from "@/lib/auth/cross-site";
 import { getVapidKeys, listSubscriptions, removeSubscription, saveSubscription } from "@/lib/push/deliver";
 import { deviceLabel } from "@/lib/push/device-label";
 
@@ -10,11 +11,6 @@ import { deviceLabel } from "@/lib/push/device-label";
 async function userId(): Promise<string | null> {
   const session = await auth();
   return session?.user?.id ?? null;
-}
-
-/** Same guard as the photo routes: these ride on the session cookie. */
-function crossSite(request: Request): boolean {
-  return request.headers.get("sec-fetch-site") === "cross-site";
 }
 
 async function readJson(request: Request): Promise<Record<string, unknown>> {
@@ -44,7 +40,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const id = await userId();
   if (!id) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
-  if (crossSite(request)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  if (isCrossSite(request)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   const body = await readJson(request);
   const result = await saveSubscription(
@@ -60,7 +56,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const id = await userId();
   if (!id) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
-  if (crossSite(request)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  if (isCrossSite(request)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   const body = await readJson(request);
   await removeSubscription(id, body.endpoint);
   return NextResponse.json({ ok: true });

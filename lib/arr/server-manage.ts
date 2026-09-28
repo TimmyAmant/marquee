@@ -7,10 +7,10 @@ import type { ArrProvider } from "@/lib/db/schema";
 import { encryptSecret } from "@/lib/crypto/encryption";
 import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { kindLabel } from "@/lib/arr/instances";
 import {
   defaultServerName,
   getArrServer,
-  kindLabel,
   listArrServers,
   toArrServer,
   type ArrServer,
@@ -22,7 +22,7 @@ import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 
 // Adding, editing and removing Sonarr/Radarr servers — Settings →
-// Integrations on the website and /api/v1/settings/arr-servers. Callers have
+// Services on the website and /api/v1/settings/arr-servers. Callers have
 // already checked the actor is the admin; `ownerId` is that admin.
 
 /** "Server not found.": a message key, for the API routes' msg(). */

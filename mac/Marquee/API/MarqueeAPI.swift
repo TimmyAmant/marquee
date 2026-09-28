@@ -83,8 +83,6 @@ struct MarqueeAPI: Sendable {
     var help: HelpEndpoints { HelpEndpoints(transport: transport) }
     /// API keys (0.47+; `.notFound` from an older server).
     var apiKeys: ApiKeysEndpoints { ApiKeysEndpoints(transport: transport) }
-    /// Dashboard counts (0.47+).
-    var stats: StatsEndpoints { StatsEndpoints(transport: transport) }
     /// Settings › Discover (0.49+, admin; `.notFound` from an older server).
     var discoverSettings: DiscoverSettingsEndpoints { DiscoverSettingsEndpoints(transport: transport) }
     /// Trakt list syncs (0.49+; `.notFound` from an older server).

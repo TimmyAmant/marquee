@@ -64,22 +64,5 @@ extension API {
         var actAsUserId: String? = nil
         /// 1–3650.
         var expiresInDays: Int? = nil
-
-        /// The server's limit on `name`.
-        static let maxNameLength = 80
-    }
-
-    /// `GET /stats/summary`: a few counts for dashboard widgets.
-    struct StatsSummary: Codable, Hashable, Sendable {
-        /// 0 for an account that doesn't review requests (as `/badges`).
-        let pendingRequests: Int
-        let openIssues: Int
-        /// Approved requests Sonarr/Radarr can't find.
-        let cantFind: Int
-        /// Titles in the household library.
-        let movies: Int
-        let series: Int
-        /// Titles Sonarr/Radarr are downloading now.
-        let downloading: Int
     }
 }

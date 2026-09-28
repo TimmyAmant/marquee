@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dismissNotFoundAction, searchNotFoundAgainAction } from "@/lib/requests/actions";
 import { useT } from "@/lib/i18n/client";
+import { kindLabel } from "@/lib/arr/instances";
 import { formatDate } from "@/lib/i18n/format";
 import type { Translator } from "@/lib/i18n/translator";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
@@ -29,7 +30,7 @@ function NotFoundCard({ request }: { request: NotFoundRequest }) {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const src = tmdbImageUrl(request.posterPath, "w92");
-  const kind = request.server.kind === "radarr" ? "Radarr" : "Sonarr";
+  const kind = kindLabel(request.server.kind);
   const since = new Date(request.notFoundSince);
   const extra = [request.seasonsLabel, request.is4k ? t("requests.in4k") : null].filter(Boolean).join(" · ");
 

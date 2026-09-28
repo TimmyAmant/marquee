@@ -21,14 +21,10 @@ public sealed class MarqueeApiFavoritesRequestTests
     private static readonly Case[] Cases =
     [
         new("GET", "/favorites", "favorites", ServerChange.None, api => api.Favorites.AllAsync()),
-        new("GET", "/favorites/collection/2344", "favorite-state", ServerChange.None,
-            api => api.Favorites.IsFavoritedAsync(FavoriteEntityType.Collection, 2344)),
         new("PUT", "/favorites/person/6384", "favorite-toggle", ServerChange.Favorites,
             api => api.Favorites.AddAsync(FavoriteEntityType.Person, 6384)),
         new("DELETE", "/favorites/movie/603", "favorite-state", ServerChange.Favorites,
             api => api.Favorites.RemoveAsync(FavoriteEntityType.Movie, 603)),
-        new("POST", "/favorites/company/420/toggle", "favorite-toggle", ServerChange.Favorites,
-            api => api.Favorites.ToggleAsync(FavoriteEntityType.Company, 420)),
     ];
 
     public static TheoryData<string> CaseNames
@@ -87,15 +83,13 @@ public sealed class MarqueeApiFavoritesRequestTests
         // favorite-state says false, favorite-toggle says true: the return
         // value is what the server answered, never what the caller assumed.
         var stub = new StubHttpMessageHandler();
-        stub.Answer(request => request.Method == HttpMethod.Get || request.Method == HttpMethod.Delete
+        stub.Answer(request => request.Method == HttpMethod.Delete
             ? StubHttpMessageHandler.Fixture("favorite-state")
             : StubHttpMessageHandler.Fixture("favorite-toggle"));
         var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub));
 
-        Assert.False(await api.Favorites.IsFavoritedAsync(FavoriteEntityType.Movie, 603));
         Assert.True(await api.Favorites.AddAsync(FavoriteEntityType.Person, 6384));
         Assert.False(await api.Favorites.RemoveAsync(FavoriteEntityType.Movie, 603));
-        Assert.True(await api.Favorites.ToggleAsync(FavoriteEntityType.Person, 6384));
     }
 
     [Fact]
@@ -131,7 +125,7 @@ public sealed class MarqueeApiFavoritesRequestTests
         var events = new ServerEvents();
         var api = new MarqueeApi(new ApiClient(Base, "mqt_testtesttesttesttesttesttesttesttesttesttes", stub), events);
 
-        var error = await Assert.ThrowsAsync<ApiException>(() => api.Favorites.ToggleAsync(FavoriteEntityType.FromValue("playlist"), 7));
+        var error = await Assert.ThrowsAsync<ApiException>(() => api.Favorites.AddAsync(FavoriteEntityType.FromValue("playlist"), 7));
         Assert.Equal(ApiErrorKind.NotFound, error.Kind);
         Assert.Equal(0, events.Revision(ServerChange.All));
     }

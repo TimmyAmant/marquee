@@ -1,4 +1,3 @@
-import { englishT } from "@/lib/i18n/catalog";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 export type ErrorReferenceEntry = {
@@ -122,6 +121,3 @@ export function errorReference(t: Translator): ErrorReferenceCategory[] {
     })),
   }));
 }
-
-/** The same in English, for callers with no reader to ask. */
-export const ERROR_REFERENCE: ErrorReferenceCategory[] = errorReference(englishT());

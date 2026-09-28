@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import Observation
 
-// Settings › Integrations › API keys (0.47+, api-v1.md §16): keys for
+// Settings › General › API access (0.47+, api-v1.md §16): keys for
 // dashboards like Homepage or Homarr, scripts and other apps. The secret is
 // shown once, right after it's made. An older server (404) shows nothing.
 

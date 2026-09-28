@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { auth } from "@/auth";
+import { isCrossSite } from "@/lib/auth/cross-site";
 import { pushToUser } from "@/lib/push/deliver";
 import { getT } from "@/lib/i18n/server";
 
@@ -10,7 +11,7 @@ import { getT } from "@/lib/i18n/server";
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: (await getT())("server.signInRequired") }, { status: 401 });
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  if (isCrossSite(request)) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 

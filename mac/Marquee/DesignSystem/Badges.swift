@@ -123,27 +123,6 @@ struct TonePill: View {
     }
 }
 
-/// components/resolution-badge.tsx — the 4K / HDR / audio chips for a file the
-/// server described (`library.file` on the title page).
-struct QualityBadges: View {
-    let file: API.FileDetails
-    var showsAudio = false
-
-    var body: some View {
-        HStack(spacing: 4) {
-            if let tier = file.resolutionTier, tier.isKnown {
-                TonePill(text: tier.rawValue, tone: tier == .uhd ? .accent : .neutral, small: true)
-            }
-            if let hdr = file.dynamicRangeLabel {
-                TonePill(text: hdr == "Dolby Vision" ? "DV" : hdr, tone: .owned, small: true)
-            }
-            if showsAudio, let audio = Quality.audioLabel(file.audioCodec) {
-                TonePill(text: audio, tone: .info, small: true)
-            }
-        }
-    }
-}
-
 struct SectionTitle: View {
     let text: String
     var size: CGFloat = 20
@@ -341,53 +320,6 @@ private struct CopyChipButtonStyle: ButtonStyle {
             )
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.borderStrong))
             .contentShape(RoundedRectangle(cornerRadius: 6))
-    }
-}
-
-/// One row that never wraps: every item keeps its natural width and the row
-/// overflows to the right instead of stacking a second line. The caller clips
-/// the row and fades its trailing edge, so an item is cut off cleanly rather
-/// than dropped (the mockup's keyword row).
-struct SingleRowLayout: Layout {
-    var spacing: CGFloat = 6
-
-    /// How much of the trailing edge the fade covers, so a caller can mask a
-    /// cut-off item instead of slicing it in half.
-    static let fadeWidth: CGFloat = 28
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        var width: CGFloat = 0
-        var height: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            width += (width == 0 ? 0 : spacing) + size.width
-            height = max(height, size.height)
-        }
-        return CGSize(width: min(width, proposal.width ?? .infinity), height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            subview.place(at: CGPoint(x: x, y: bounds.minY), proposal: ProposedViewSize(size))
-            x += size.width + spacing
-        }
-    }
-}
-
-extension View {
-    /// Clips a `SingleRowLayout` row and fades its last 28pt, so whatever
-    /// overflows disappears into the background instead of being chopped.
-    func fadingTrailingEdge() -> some View {
-        clipped()
-            .mask(alignment: .leading) {
-                HStack(spacing: 0) {
-                    Rectangle()
-                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
-                        .frame(width: SingleRowLayout.fadeWidth)
-                }
-            }
     }
 }
 

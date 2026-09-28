@@ -40,8 +40,3 @@ function fallback(): I18nValue {
 export function useT(): Translator {
   return (useContext(I18nContext) ?? fallback()).t;
 }
-
-/** This page's language ("en", "fr", …). */
-export function useLocale(): Locale {
-  return (useContext(I18nContext) ?? fallback()).locale;
-}

@@ -169,10 +169,8 @@ public sealed class RequestsFixtureTests
     }
 
     [Fact]
-    public void CountAndApproveAllDecode()
+    public void ApproveAllDecodes()
     {
-        Assert.Equal(3, Fixtures.Decode<CountResponse>("requests-pending-count").Count);
-
         var result = Fixtures.Decode<ApproveAllResult>("requests-approve-all");
         Assert.True(result.Ok);
         Assert.Equal(4, result.ApprovedCount);

@@ -87,10 +87,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     /// POSTs that change nothing the screens show (or that the session owns).
     private static let readOnlyPosts = [
-        "/surprise", "/auth/login", "/auth/setup", "/auth/logout", "/settings/integrations/plex/pin",
+        "/surprise", "/auth/login", "/auth/setup", "/settings/integrations/plex/pin",
         "/settings/arr-servers/test", "/titles/movie/425/share",
-        // Import from Seerr: testing and previewing read; only the run changes anything.
-        "/settings/import/seerr/test", "/settings/import/seerr/preview",
     ]
 
     private var cases: [Case] {
@@ -120,7 +118,6 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/auth/setup", body: #"{"username":"timmy","password":"pw","displayName":"Timmy","deviceName":"Mac"}"#, response: "auth-login") {
                 _ = try await $0.auth.setup(username: "timmy", password: "pw", displayName: "Timmy", deviceName: "Mac")
             },
-            Case(method: "POST", path: "/auth/logout", response: "ok") { try await $0.auth.logout() },
             Case(method: "GET", path: "/me", response: "me") { _ = try await $0.me() },
             Case(method: "PATCH", path: "/me", body: #"{"language":"fr"}"#, response: "me") { _ = try await $0.setLanguage("fr") },
             Case(method: "GET", path: "/badges", response: "badges") { _ = try await $0.badges() },
@@ -163,10 +160,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "GET", path: "/companies/420", response: "company-detail") { _ = try await $0.companies.detail(420) },
             // Favorites
             Case(method: "GET", path: "/favorites", response: "favorites") { _ = try await $0.favorites.all() },
-            Case(method: "GET", path: "/favorites/collection/2344", response: "favorite-state") { _ = try await $0.favorites.isFavorited(.collection, id: 2344) },
             Case(method: "PUT", path: "/favorites/person/6384", response: "favorite-toggle") { try await $0.favorites.add(.person, id: 6384) },
             Case(method: "DELETE", path: "/favorites/movie/603", response: "favorite-state") { try await $0.favorites.remove(.movie, id: 603) },
-            Case(method: "POST", path: "/favorites/company/420/toggle", response: "favorite-toggle") { try await $0.favorites.toggle(.company, id: 420) },
             // Requests
             Case(method: "POST", path: "/titles/tv/1399/request", response: "request-created") { try await $0.requests.create(.tv, id: 1399) },
             Case(method: "POST", path: "/titles/movie/425/request-all-missing", response: "request-all-missing") {
@@ -175,7 +170,6 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "GET", path: "/requests/mine", response: "requests-mine") { _ = try await $0.requests.mine() },
             Case(method: "GET", path: "/requests/pending", response: "requests-pending") { _ = try await $0.requests.pending() },
             Case(method: "GET", path: "/requests/history", response: "requests-history") { _ = try await $0.requests.history() },
-            Case(method: "GET", path: "/requests/pending-count", response: "requests-pending-count") { _ = try await $0.requests.pendingCount() },
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/approve", response: "ok") { try await $0.requests.approve(request) },
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/manual-approve", response: "ok") { try await $0.requests.manuallyApprove(request) },
             Case(method: "POST", path: "/requests/28713d50-27f2-4230-9c95-c1e6a000f6c0/reject", response: "ok") { try await $0.requests.reject(request) },
@@ -259,7 +253,6 @@ final class MarqueeAPIRequestTests: XCTestCase {
             },
             // Notifications
             Case(method: "GET", path: "/notifications", query: ["limit": "5"], response: "notifications") { _ = try await $0.notifications.list(limit: 5) },
-            Case(method: "GET", path: "/notifications/unread-count", response: "notifications-unread-count") { _ = try await $0.notifications.unreadCount() },
             Case(method: "POST", path: "/notifications/read-all", response: "ok") { try await $0.notifications.markAllRead() },
             Case(method: "POST", path: "/notifications/bedcb20b-fa30-4683-b000-42affc320087/read", response: "ok") {
                 try await $0.notifications.markRead(Self.notificationId)
@@ -339,19 +332,6 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "POST", path: "/settings/integrations/trakt/import", body: #"{"url":"https://trakt.tv/users/u/watchlist"}"#, response: "trakt-import") {
                 _ = try await $0.integrations.trakt.importList(url: "https://trakt.tv/users/u/watchlist")
             },
-            // Import from Seerr (0.51+)
-            Case(method: "POST", path: "/settings/import/seerr/test", body: #"{"apiKey":"k","url":"http://seerr.local:5055"}"#, response: "seerr-test") {
-                _ = try await $0.integrations.seerrImport.test(API.SeerrImportRequest(url: "http://seerr.local:5055", apiKey: "k"))
-            },
-            Case(method: "POST", path: "/settings/import/seerr/preview", body: #"{"apiKey":"k","url":"http://seerr.local:5055"}"#, response: "seerr-preview") {
-                _ = try await $0.integrations.seerrImport.preview(API.SeerrImportRequest(url: "http://seerr.local:5055", apiKey: "k"))
-            },
-            Case(method: "POST", path: "/settings/import/seerr/run", body: #"{"apiKey":"k","issues":false,"url":"http://seerr.local:5055"}"#, response: "seerr-job") {
-                _ = try await $0.integrations.seerrImport.run(API.SeerrImportRequest(url: "http://seerr.local:5055", apiKey: "k", issues: false))
-            },
-            Case(method: "GET", path: "/settings/import/seerr/jobs/0d0c0b0a-1111-4222-8333-444455556666", response: "seerr-job") {
-                _ = try await $0.integrations.seerrImport.job("0d0c0b0a-1111-4222-8333-444455556666")
-            },
             Case(method: "PUT", path: "/settings/integrations/tvdb", body: #"{"apiKey":"v"}"#, response: "ok") { try await $0.integrations.tvdb.save("v") },
             Case(method: "PUT", path: "/settings/integrations/omdb", body: #"{"apiKey":"k"}"#, response: "ok") { try await $0.integrations.omdb.save("k") },
             Case(method: "DELETE", path: "/settings/integrations/omdb", response: "ok") { try await $0.integrations.omdb.remove() },
@@ -409,7 +389,6 @@ final class MarqueeAPIRequestTests: XCTestCase {
             Case(method: "DELETE", path: "/settings/api-keys/6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10", response: "ok") {
                 try await $0.apiKeys.revoke("6f0c1c7e-2a57-4a3e-9d0e-6c1f5f4b2a10")
             },
-            Case(method: "GET", path: "/stats/summary", response: "stats-summary") { _ = try await $0.stats.summary() },
 
             // Library (0.51+)
             Case(method: "GET", path: "/library", response: "library-page") { _ = try await $0.library.page() },
@@ -492,8 +471,8 @@ final class MarqueeAPIRequestTests: XCTestCase {
 
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
-        XCTAssertEqual(cases.count, 170, "docs/api-v1.md documents 169 endpoints; GET /library is covered twice, with and without filters")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 169, "Each documented endpoint is covered")
+        XCTAssertEqual(cases.count, 160, "The 159 of docs/api-v1.md's 169 endpoints the app calls; GET /library is covered twice, with and without filters")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 159, "Each endpoint the app calls is covered")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())

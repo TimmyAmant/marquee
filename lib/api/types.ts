@@ -414,7 +414,7 @@ export type DiscoverShelfSetting = {
 /** GET /settings/discover (and the answer of every change to it). */
 export type DiscoverSettings = {
   shelves: DiscoverShelfSetting[];
-  /** Trakt rows need Trakt connected (Settings → Integrations). */
+  /** Trakt rows need Trakt connected (Settings → General). */
   traktConfigured: boolean;
   maxCustomShelves: number;
 };
@@ -455,7 +455,7 @@ export type TraktSync = {
 /** GET /trakt-syncs. */
 export type TraktSyncs = {
   results: TraktSync[];
-  /** Trakt is connected (Settings → Integrations), so syncs can be added. */
+  /** Trakt is connected (Settings → General), so syncs can be added. */
   available: boolean;
   /** The most one account may have. */
   maxPerMember: number;
@@ -756,7 +756,7 @@ export type TitleDetail = {
     /** A movie's first studio (a show's network is `network`). */
     studio?: string | null;
     /** IMDb / Rotten Tomatoes / Metacritic from OMDb (Settings ›
-     * Integrations › OMDb); null without a key or when nothing is known. */
+     * General › OMDb); null without a key or when nothing is known. */
     ratings?: TitleRatingsDto | null;
   };
   /** 0.53+: where the title can be played now — one entry per household

@@ -41,7 +41,6 @@ public readonly record struct DiscoverRowKind(string Value) : IOpenEnum<Discover
     public static IReadOnlyList<DiscoverRowKind> Known { get; } = [.. BuiltInKinds, .. CustomKinds];
     public static DiscoverRowKind FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
-    public bool IsCustomKind => CustomKinds.Contains(this);
     public override string ToString() => Value;
 
     /// <summary>The Add row picker's words (the doc's "Website label").</summary>

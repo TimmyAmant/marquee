@@ -30,13 +30,4 @@ extension MarqueeAPI {
             )
         }
     }
-
-    struct StatsEndpoints: Sendable {
-        let transport: Transport
-
-        /// `GET /stats/summary` — the counts dashboard widgets show.
-        func summary() async throws -> API.StatsSummary {
-            try await transport.get("/stats/summary")
-        }
-    }
 }

@@ -4,6 +4,7 @@ import { arrServers } from "@/lib/db/schema";
 import type { ArrProvider, SonarrSeriesType } from "@/lib/db/schema";
 import { decryptSecret } from "@/lib/crypto/encryption";
 import type { ArrConfig } from "@/lib/radarr/client";
+import { kindLabel } from "@/lib/arr/instances";
 
 // Every Sonarr and Radarr the admin has connected — any number of each,
 // standard or 4K. Titles go to the default server of their kind and 4K-ness
@@ -153,10 +154,6 @@ export async function ownersWithLibraryServers(kind: ArrProvider): Promise<strin
 }
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export function kindLabel(kind: ArrProvider): string {
-  return kind === "sonarr" ? "Sonarr" : "Radarr";
-}
 
 /** A new server's name when none is given: "Radarr", "4K Sonarr", and
  * "Radarr 2", "Radarr 3"… once that's taken. */

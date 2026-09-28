@@ -132,15 +132,12 @@ final class ProblemReportsTests: XCTestCase {
     func testNotificationEventTypes() {
         XCTAssertEqual(API.NotificationEventType(rawValue: "issue_reported"), .issueReported)
         XCTAssertEqual(API.NotificationEventType(rawValue: "issue_resolved"), .issueResolved)
-        XCTAssertEqual(API.NotificationEventType.issueReported.emoji, "⚠️")
-        XCTAssertEqual(API.NotificationEventType.issueResolved.emoji, "🛠️")
         for type in API.NotificationEventType.knownCases {
             XCTAssertEqual(API.NotificationEventType(rawValue: type.rawValue), type)
         }
         let future = API.NotificationEventType(rawValue: "something_new")
         XCTAssertEqual(future, .unknown("something_new"))
         XCTAssertFalse(future.isKnown)
-        XCTAssertEqual(future.emoji, "🔔")
     }
 
     // MARK: Request bodies

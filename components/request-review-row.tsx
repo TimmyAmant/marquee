@@ -50,7 +50,7 @@ export function RequestReviewRow({
   createdAt: string;
   /** The requester (or a reviewer) changed it since asking, when. */
   editedAt?: string | null;
-  /** Admin's connected Sonarr base URL (Settings > Integrations), if any —
+  /** Admin's connected Sonarr base URL (Settings > Services), if any —
    * used to link straight to Sonarr's own "add series" search when Marquee
    * can't resolve this show's TVDB id itself. */
   sonarrUrl: string | null;

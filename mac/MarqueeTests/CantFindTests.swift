@@ -166,7 +166,6 @@ final class CantFindTests: XCTestCase {
     func testRequestNotFoundNotification() {
         XCTAssertEqual(API.NotificationEventType(rawValue: "request_not_found"), .requestNotFound)
         XCTAssertEqual(API.NotificationEventType.requestNotFound.rawValue, "request_not_found")
-        XCTAssertEqual(API.NotificationEventType.requestNotFound.emoji, "🔍")
         XCTAssertTrue(API.NotificationEventType.requestNotFound.isKnown)
     }
 

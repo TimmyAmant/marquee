@@ -9,6 +9,7 @@ import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { storedPermissionFields, type Permission } from "@/lib/users/permissions";
 import { importedDisplayName, isUniqueViolation, uniqueUsername } from "@/lib/auth/media-accounts";
 import { revalidatePathSafely } from "@/lib/cache/revalidate";
+import { kindLabel } from "@/lib/arr/instances";
 import {
   fetchSeerrBlocklist,
   fetchSeerrIssue,
@@ -45,7 +46,7 @@ import {
 } from "@/lib/import/seerr/mapping";
 import type { SeerrArrServer, SeerrBlocklistItem, SeerrIssue, SeerrQuota, SeerrRequest, SeerrUser } from "@/lib/import/seerr/types";
 
-// "Import from Seerr" (Settings › Integrations): everything a household
+// "Import from Seerr" (Settings › General): everything a household
 // built up in Seerr, Overseerr or Jellyseerr — accounts, requests, problem
 // reports with their comments, the blocklist — read from that server's API
 // with its admin key and written into Marquee. Preview first (what would
@@ -409,7 +410,7 @@ export async function previewSeerrImport(adminUserId: string, input: SeerrImport
     ...data.radarr.map((s) => ({ seerr: s, kind: "radarr" as const })),
   ].map(({ seerr, kind }) => {
     const match = matchArrServer(seerr, kind, servers);
-    return { name: seerr.name?.trim() || `${kind === "sonarr" ? "Sonarr" : "Radarr"} ${seerr.id}`, kind, matchedTo: match?.name ?? null };
+    return { name: seerr.name?.trim() || `${kindLabel(kind)} ${seerr.id}`, kind, matchedTo: match?.name ?? null };
   });
   for (const server of seerrServers) if (!server.matchedTo) warnings.push({ code: "arr_server_unmatched", detail: server.name });
 

@@ -1,6 +1,6 @@
 {
   "name": "marquee",
-  "version": "0.62.0",
+  "version": "0.62.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -45,7 +45,7 @@
   },
   "allowScripts": {
     "argon2@0.44.0": true,
-    "sharp@0.34.5": true,
+    "sharp@0.35.4": true,
     "unrs-resolver@1.12.2": true,
     "esbuild@0.18.20": true,
     "esbuild@0.25.12": true,

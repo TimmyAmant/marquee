@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.62.1",
+    date: "2026-09-27",
+    changes: [
+      "Messages in the Mac, iPhone and Windows apps that pointed to \"Settings › Integrations\" now name the current tabs (General, Media servers).",
+      "Behind the scenes: unused code, texts and an old database table removed across the website and apps.",
+    ],
+  },
+  {
     version: "0.62.0",
     date: "2026-09-27",
     changes: [

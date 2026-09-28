@@ -49,8 +49,6 @@ export type LibraryQuery = {
   pageSize: number;
 };
 
-export const DEFAULT_LIBRARY_QUERY: LibraryQuery = { sort: "recent", page: 1, pageSize: DEFAULT_PAGE_SIZE };
-
 /** The resolution to filter and show for a row: the tier of its file where
  * one is known, "SD" for a file whose quality is known but below 720p, null
  * when nothing describes the file (a monitored-only title, say). */

@@ -42,6 +42,7 @@ public sealed partial class DeclineRequestDialog : ContentDialog
         var presets = reasons.Count > 0 ? reasons : DefaultReasons;
         options = presets.Append(Other).ToList();
         InitializeComponent();
+        CustomReasonBox.MaxLength = MaxReasonLength;
         ExplanationText.Text = Loc.Format("Decline_Explanation", requester, title);
         ReasonButtons.ItemsSource = options;
     }

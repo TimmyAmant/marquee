@@ -3065,62 +3065,6 @@
         }
       }
     },
-    "%lldh" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Std."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h"
-          }
-        }
-      }
-    },
-    "%lldh %lldm" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Std. %lld Min."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h %lld min"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h %lld min"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h %lld min"
-          }
-        }
-      }
-    },
     "%lldh ago" : {
       "localizations" : {
         "de" : {
@@ -3145,34 +3089,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "há %lld h"
-          }
-        }
-      }
-    },
-    "%lldm" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Min."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld min"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld min"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld min"
           }
         }
       }
@@ -10613,30 +10529,30 @@
         }
       }
     },
-    "Connect Plex or %@ in Settings › Integrations to import household members from it and let them sign in with those accounts." : {
+    "Connect Plex or %@ in Settings › Media servers to import household members from it and let them sign in with those accounts." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verbinde Plex oder %@ unter Einstellungen › Integrationen, um Haushaltsmitglieder von dort zu importieren und sie sich mit diesen Konten anmelden zu lassen."
+            "value" : "Verbinde Plex oder %@ unter Einstellungen › Medienserver, um Haushaltsmitglieder von dort zu importieren und sie sich mit diesen Konten anmelden zu lassen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Conecta Plex o %@ en Ajustes › Integraciones para importar desde ahí a los miembros del hogar y que inicien sesión con esas cuentas."
+            "value" : "Conecta Plex o %@ en Ajustes › Servidores multimedia para importar desde ahí a los miembros del hogar y que inicien sesión con esas cuentas."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez Plex ou %@ dans Paramètres › Intégrations pour en importer les membres du foyer et leur permettre de se connecter avec ces comptes."
+            "value" : "Connectez Plex ou %@ dans Paramètres › Serveurs multimédias pour en importer les membres du foyer et leur permettre de se connecter avec ces comptes."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Conecte o Plex ou o %@ em Configurações › Integrações para importar de lá os membros da casa e deixá-los entrar com essas contas."
+            "value" : "Conecte o Plex ou o %@ em Configurações › Servidores de mídia para importar de lá os membros da casa e deixá-los entrar com essas contas."
           }
         }
       }
@@ -11309,34 +11225,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contêiner"
-          }
-        }
-      }
-    },
-    "Continuing" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Laufend"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En emisión"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En cours"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Em exibição"
           }
         }
       }
@@ -12574,34 +12462,6 @@
         }
       }
     },
-    "Creator" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Idee"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Creación"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Création"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Criação"
-          }
-        }
-      }
-    },
     "Current password" : {
       "localizations" : {
         "de" : {
@@ -13159,34 +13019,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lançamento digital"
-          }
-        }
-      }
-    },
-    "Director" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Regie"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dirección"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réalisation"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Direção"
           }
         }
       }
@@ -14835,30 +14667,30 @@
         }
       }
     },
-    "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations." : {
+    "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → General." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jedes Poster, jedes Suchergebnis und jede Titelseite kommt von TMDb. Füg in Einstellungen → Integrationen einen kostenlosen API-Schlüssel oder ein Lesezugriffstoken hinzu."
+            "value" : "Jedes Poster, jedes Suchergebnis und jede Titelseite kommt von TMDb. Füg in Einstellungen → Allgemein einen kostenlosen API-Schlüssel oder ein Lesezugriffstoken hinzu."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cada póster, resultado de búsqueda y página de título viene de TMDb. Añade una clave de API gratuita o un token de acceso de lectura en Ajustes → Integraciones."
+            "value" : "Cada póster, resultado de búsqueda y página de título viene de TMDb. Añade una clave de API gratuita o un token de acceso de lectura en Ajustes → General."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chaque affiche, résultat de recherche et page de titre vient de TMDb. Ajoutez une clé d’API gratuite ou un jeton d’accès en lecture dans Paramètres → Intégrations."
+            "value" : "Chaque affiche, résultat de recherche et page de titre vient de TMDb. Ajoutez une clé d’API gratuite ou un jeton d’accès en lecture dans Paramètres → Général."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Todo pôster, resultado de busca e página de título vem do TMDb. Adicione uma chave de API gratuita ou um token de acesso de leitura em Configurações → Integrações."
+            "value" : "Todo pôster, resultado de busca e página de título vem do TMDb. Adicione uma chave de API gratuita ou um token de acesso de leitura em Configurações → Geral."
           }
         }
       }
@@ -14999,34 +14831,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tudo o que o TMDb marca como adulto."
-          }
-        }
-      }
-    },
-    "Executive Producer" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ausführende Produktion"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Producción ejecutiva"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Production exécutive"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Produção executiva"
           }
         }
       }
@@ -31270,34 +31074,6 @@
         }
       }
     },
-    "Screenplay" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drehbuch"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guion"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scénario"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Roteiro"
-          }
-        }
-      }
-    },
     "Scroll left" : {
       "localizations" : {
         "de" : {
@@ -35119,30 +34895,30 @@
         }
       }
     },
-    "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations." : {
+    "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → General." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "TMDb ist auf diesem Server nicht eingerichtet. Ein Admin muss unter Einstellungen → Integrationen ein TMDb-Zugriffstoken hinzufügen."
+            "value" : "TMDb ist auf diesem Server nicht eingerichtet. Ein Admin muss unter Einstellungen → Allgemein ein TMDb-Zugriffstoken hinzufügen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "TMDb no está configurado en este servidor. Un administrador tiene que añadir un token de acceso de TMDb en Ajustes → Integraciones."
+            "value" : "TMDb no está configurado en este servidor. Un administrador tiene que añadir un token de acceso de TMDb en Ajustes → General."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "TMDb n’est pas configuré sur ce serveur. Un administrateur doit ajouter un jeton d’accès TMDb dans Paramètres → Intégrations."
+            "value" : "TMDb n’est pas configuré sur ce serveur. Un administrateur doit ajouter un jeton d’accès TMDb dans Paramètres → Général."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O TMDb não está configurado neste servidor. Um administrador precisa adicionar um token de acesso do TMDb em Configurações → Integrações."
+            "value" : "O TMDb não está configurado neste servidor. Um administrador precisa adicionar um token de acesso do TMDb em Configurações → Geral."
           }
         }
       }
@@ -38091,58 +37867,58 @@
         }
       }
     },
-    "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › Integrations." : {
+    "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › General." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt ist nicht verbunden, deshalb bleibt diese Reihe leer, bis der Admin es unter Einstellungen › Integrationen verbindet."
+            "value" : "Trakt ist nicht verbunden, deshalb bleibt diese Reihe leer, bis der Admin es unter Einstellungen › Allgemein verbindet."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt no está conectado, así que esta fila quedará vacía hasta que el administrador lo conecte en Ajustes › Integraciones."
+            "value" : "Trakt no está conectado, así que esta fila quedará vacía hasta que el administrador lo conecte en Ajustes › General."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt n’est pas connecté : cette rangée restera vide jusqu’à ce que l’administrateur le connecte dans Paramètres › Intégrations."
+            "value" : "Trakt n’est pas connecté : cette rangée restera vide jusqu’à ce que l’administrateur le connecte dans Paramètres › Général."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Trakt não está conectado, então esta fileira fica vazia até o administrador conectá-lo em Configurações › Integrações."
+            "value" : "O Trakt não está conectado, então esta fileira fica vazia até o administrador conectá-lo em Configurações › Geral."
           }
         }
       }
     },
-    "Trakt isn't connected. The admin can connect it in Settings → Integrations." : {
+    "Trakt isn't connected. The admin can connect it in Settings → General." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt ist nicht verbunden. Der Admin kann es unter Einstellungen → Integrationen verbinden."
+            "value" : "Trakt ist nicht verbunden. Der Admin kann es unter Einstellungen → Allgemein verbinden."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt no está conectado. El administrador puede conectarlo en Ajustes → Integraciones."
+            "value" : "Trakt no está conectado. El administrador puede conectarlo en Ajustes → General."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt n’est pas connecté. L’administrateur peut le connecter dans Paramètres → Intégrations."
+            "value" : "Trakt n’est pas connecté. L’administrateur peut le connecter dans Paramètres → Général."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Trakt não está conectado. O administrador pode conectá-lo em Configurações → Integrações."
+            "value" : "O Trakt não está conectado. O administrador pode conectá-lo em Configurações → Geral."
           }
         }
       }
@@ -38231,30 +38007,30 @@
         }
       }
     },
-    "Trakt rows stay empty until Trakt is connected in Settings › Integrations." : {
+    "Trakt rows stay empty until Trakt is connected in Settings › General." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trakt-Reihen bleiben leer, bis Trakt unter Einstellungen › Integrationen verbunden ist."
+            "value" : "Trakt-Reihen bleiben leer, bis Trakt unter Einstellungen › Allgemein verbunden ist."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Las filas de Trakt quedan vacías hasta que Trakt se conecte en Ajustes › Integraciones."
+            "value" : "Las filas de Trakt quedan vacías hasta que Trakt se conecte en Ajustes › General."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les rangées Trakt restent vides tant que Trakt n’est pas connecté dans Paramètres › Intégrations."
+            "value" : "Les rangées Trakt restent vides tant que Trakt n’est pas connecté dans Paramètres › Général."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "As fileiras do Trakt ficam vazias até o Trakt ser conectado em Configurações › Integrações."
+            "value" : "As fileiras do Trakt ficam vazias até o Trakt ser conectado em Configurações › Geral."
           }
         }
       }
@@ -41012,34 +40788,6 @@
         }
       }
     },
-    "Writer" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autor"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guionista"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scénariste"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Roteirista"
-          }
-        }
-      }
-    },
     "Wrong movie or episode" : {
       "localizations" : {
         "de" : {
@@ -42218,59 +41966,59 @@
         }
       }
     },
-    "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (⌘R)." : {
+    "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → General, then reload (⌘R)." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dein Server hat von TMDb nichts zurückbekommen. Prüf seine Internetverbindung oder die TMDb-Zugangsdaten unter Einstellungen → Integrationen und lade dann neu (⌘R)."
+            "value" : "Dein Server hat von TMDb nichts zurückbekommen. Prüf seine Internetverbindung oder die TMDb-Zugangsdaten unter Einstellungen → Allgemein und lade dann neu (⌘R)."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu servidor no obtuvo nada de TMDb. Comprueba su conexión a internet o la credencial de TMDb en Ajustes → Integraciones y vuelve a cargar (⌘R)."
+            "value" : "Tu servidor no obtuvo nada de TMDb. Comprueba su conexión a internet o la credencial de TMDb en Ajustes → General y vuelve a cargar (⌘R)."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Intégrations, puis actualisez (⌘R)."
+            "value" : "Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Général, puis actualisez (⌘R)."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Integrações e recarregue (⌘R)."
+            "value" : "Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Geral e recarregue (⌘R)."
           }
         }
       }
     },
-    "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then try again." : {
+    "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → General, then try again." : {
       "comment" : "Marquee for iPhone only.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dein Server hat von TMDb nichts zurückbekommen. Prüf seine Internetverbindung oder die TMDb-Zugangsdaten unter Einstellungen → Integrationen und versuch es dann noch einmal."
+            "value" : "Dein Server hat von TMDb nichts zurückbekommen. Prüf seine Internetverbindung oder die TMDb-Zugangsdaten unter Einstellungen → Allgemein und versuch es dann noch einmal."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu servidor no obtuvo nada de TMDb. Comprueba su conexión a internet o la credencial de TMDb en Ajustes → Integraciones e inténtalo de nuevo."
+            "value" : "Tu servidor no obtuvo nada de TMDb. Comprueba su conexión a internet o la credencial de TMDb en Ajustes → General e inténtalo de nuevo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Intégrations, puis réessayez."
+            "value" : "Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Général, puis réessayez."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Integrações e tente de novo."
+            "value" : "Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Geral e tente de novo."
           }
         }
       }

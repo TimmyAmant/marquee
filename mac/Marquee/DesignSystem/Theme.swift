@@ -21,7 +21,6 @@ enum Theme {
 
     static let accent = dynamic(light: 0xB3791F, dark: 0xE0A63E)
     static let accentHover = dynamic(light: 0x9C6818, dark: 0xF0B954)
-    static let accentMuted = dynamic(light: 0xF3DFB0, dark: 0x6B5326)
 
     // The library-status tones, named for what they mean and matching
     // Radarr's/Sonarr's own legends (lib/library/status-tone.ts on the
@@ -218,16 +217,10 @@ enum Metrics {
     /// `.tp-poster{top:170px;width:224px;height:336px}`.
     static let titlePosterTop: CGFloat = 170
     static let titlePosterWidth: CGFloat = 224
-    static let titlePosterHeight: CGFloat = 336
     /// `.tp-main{top:246px;width:546px}` — 76 below the poster's top.
     static let titleColumnTop: CGFloat = 246 - 170
-    static let titleTextWidth: CGFloat = 546
-    /// 48 → 850: the poster + main column, and the cast carousel under them.
-    static let titleLeftWidth: CGFloat = 802
     /// `.tp-side{width:288px}`.
     static let titleRailWidth: CGFloat = 288
-    /// The cast carousel sits 40 below the main column (mockup.html's own JS).
-    static let titleSectionGap: CGFloat = 40
 
     /// A text size from the mockup (Mac points), for this platform. The Mac
     /// uses it as it is. On iPhone and iPad text is read at arm's length and

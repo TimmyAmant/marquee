@@ -699,7 +699,6 @@ public sealed partial class CouldntAddRow : ObservableObject
     public bool CanAct => Busy == null;
     public string RetryLabel => Busy == "retry" ? RequestLifecycle.RetryingLabel : RequestLifecycle.RetryLabel;
     public string ManualLabel => Busy == "manual" ? Loc.Get("Requests_Saving") : RequestLifecycle.AddedByHandLabel;
-    public string ManualTooltip => RequestLifecycle.AddedByHandTooltip;
 
     /// <summary><c>POST /requests/{id}/retry</c>, with the "Advanced" picks once they're opened.</summary>
     [RelayCommand]
@@ -753,10 +752,6 @@ public sealed partial class CouldntAddRow : ObservableObject
 /// </summary>
 public sealed partial class RequestsViewModel : ObservableObject
 {
-    public static string MemberEmptyMessage => Loc.Get("Requests_MemberEmpty");
-    public static string QueueEmptyMessage => Loc.Get("Requests_QueueEmpty");
-    public static string QueueLoadingMessage => Loc.Get("Requests_QueueLoading");
-
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
     private bool active;

@@ -45,7 +45,7 @@ export const users = pgTable(
     passwordHash: text("password_hash"),
     displayName: text("display_name"),
     // Shared secret embedded in this user's Sonarr/Radarr webhook URLs
-    // (Settings > Integrations) — lazily generated the same way
+    // (Settings > Services) — lazily generated the same way
     // integrationCredentials.plexClientId is, on first need.
     notificationWebhookSecret: text("notification_webhook_secret"),
     // Admins can approve/reject requests from other household members;
@@ -129,14 +129,6 @@ export const userAvatars = pgTable("user_avatars", {
   image: bytea("image").notNull(),
   contentType: text("content_type").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
-
-export const sessions = pgTable("sessions", {
-  sessionToken: text("session_token").primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { withTimezone: true }).notNull(),
 });
 
 // sonarr4k / radarr4k: the optional second Sonarr and Radarr for 4K copies
@@ -884,7 +876,7 @@ export const titleRatings = pgTable(
 
 // "Sign in with <name>": the admin's OpenID Connect identity provider
 // (Authentik, Authelia, Pocket ID, Keycloak, Google…), set up in Settings →
-// Integrations — lib/auth/sso. Exactly zero or one row; no row means SSO is
+// Members — lib/auth/sso. Exactly zero or one row; no row means SSO is
 // off. The client secret is encrypted at rest like every other credential
 // and never leaves the server.
 export const ssoSettings = pgTable(

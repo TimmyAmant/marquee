@@ -133,7 +133,4 @@ public sealed class AuthEndpoints(MarqueeApi.Transport transport)
         return PlexPoll.Step(raw, ApiException.SsoSignInExpiredMessage) is { } done ? ApiClient.Decode<AuthResponse>(done) : null;
     }
 
-    /// <summary><c>POST /auth/logout</c>: revokes this token only. Nothing on screen changes, so nothing is recorded.</summary>
-    public Task LogoutAsync(CancellationToken ct = default) =>
-        transport.MutateAsync<OK>(HttpMethod.Post, "/auth/logout", ct: ct);
 }

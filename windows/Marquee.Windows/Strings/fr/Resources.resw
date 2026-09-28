@@ -374,7 +374,7 @@
     <value>Laissez vide pour garder le mot de passe actuel</value>
   </data>
   <data name="Account_NoMediaServers" xml:space="preserve">
-    <value>Connectez Plex ou {0} dans l’onglet Intégrations pour en importer les membres du foyer et leur permettre de se connecter avec ces comptes.</value>
+    <value>Connectez Plex ou {0} dans l’onglet Serveurs multimédias pour en importer les membres du foyer et leur permettre de se connecter avec ces comptes.</value>
   </data>
   <data name="Account_NoPasswordNote.Text" xml:space="preserve">
     <value>Votre compte n’a pas de mot de passe Marquee, il se connecte donc uniquement avec un compte associé. Définissez-en un ci-dessus pour vous connecter aussi avec un nom d’utilisateur et un mot de passe.</value>
@@ -1355,7 +1355,7 @@
     <value>Rien à afficher pour l’instant</value>
   </data>
   <data name="Discover_EmptyText.Text" xml:space="preserve">
-    <value>Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Intégrations, puis rechargez (F5).</value>
+    <value>Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Général, puis rechargez (F5).</value>
   </data>
   <data name="Discover_ErrorHeading.Text" xml:space="preserve">
     <value>Impossible de charger Découvrir</value>
@@ -1406,7 +1406,7 @@
     <value>Découvrir</value>
   </data>
   <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
-    <value>Chaque affiche, résultat de recherche et page de titre provient de TMDb. Ajoutez une clé d’API gratuite ou un jeton d’accès en lecture dans Paramètres → Intégrations.</value>
+    <value>Chaque affiche, résultat de recherche et page de titre provient de TMDb. Ajoutez une clé d’API gratuite ou un jeton d’accès en lecture dans Paramètres → Général.</value>
   </data>
   <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Connectez TMDb pour commencer à explorer</value>
@@ -1562,7 +1562,7 @@
     <value>Lien de liste ou de watchlist Trakt</value>
   </data>
   <data name="DiscoverSettings_TraktNote" xml:space="preserve">
-    <value>Trakt n’est pas connecté : cette rangée restera vide tant que l’administrateur ne l’aura pas connecté dans Paramètres → Intégrations.</value>
+    <value>Trakt n’est pas connecté : cette rangée restera vide tant que l’administrateur ne l’aura pas connecté dans Paramètres → Général.</value>
   </data>
   <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
     <value>Réessayer</value>
@@ -2425,20 +2425,11 @@
   <data name="Lifecycle_AddedByHand" xml:space="preserve">
     <value>Ajouté manuellement</value>
   </data>
-  <data name="Lifecycle_AddedByHandTooltip" xml:space="preserve">
-    <value>La marquer comme approuvée sans Sonarr/Radarr — une fois que vous l’avez obtenu autrement.</value>
-  </data>
   <data name="Lifecycle_AskInCommentsHint" xml:space="preserve">
     <value>Besoin d’un changement ? Demandez-le dans les commentaires.</value>
   </data>
   <data name="Lifecycle_Cancelling" xml:space="preserve">
     <value>Annulation…</value>
-  </data>
-  <data name="Lifecycle_CancelQuestion" xml:space="preserve">
-    <value>L’annuler ?</value>
-  </data>
-  <data name="Lifecycle_CancelRequest" xml:space="preserve">
-    <value>Annuler la demande</value>
   </data>
   <data name="Lifecycle_ChangedSinceAsking" xml:space="preserve">
     <value>Modifiée depuis la demande</value>
@@ -2490,12 +2481,6 @@
   </data>
   <data name="Lifecycle_HideComments" xml:space="preserve">
     <value>Masquer les commentaires</value>
-  </data>
-  <data name="Lifecycle_JustTheseSeasons" xml:space="preserve">
-    <value>Seulement ces saisons</value>
-  </data>
-  <data name="Lifecycle_Keep" xml:space="preserve">
-    <value>La garder</value>
   </data>
   <data name="Lifecycle_KeepUnderCharacters" xml:space="preserve">
     <value>Pas plus de {0} caractères.</value>
@@ -2568,9 +2553,6 @@
   </data>
   <data name="Lifecycle_TagReviewer" xml:space="preserve">
     <value>Modérateur</value>
-  </data>
-  <data name="Lifecycle_WholeSeries" xml:space="preserve">
-    <value>Toute la série</value>
   </data>
   <data name="Lifecycle_WriteSomethingFirst" xml:space="preserve">
     <value>Écrivez d’abord quelque chose.</value>
@@ -3101,43 +3083,10 @@
     <value>Demander aussi ce qu’elle contient déjà</value>
   </data>
   <data name="Model_TraktUnavailable" xml:space="preserve">
-    <value>Trakt n’est pas connecté. L’administrateur peut le connecter dans Paramètres → Intégrations.</value>
+    <value>Trakt n’est pas connecté. L’administrateur peut le connecter dans Paramètres → Général.</value>
   </data>
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Vérification de votre liste…</value>
-  </data>
-  <data name="Nav_Calendar" xml:space="preserve">
-    <value>Calendrier</value>
-  </data>
-  <data name="Nav_Discover" xml:space="preserve">
-    <value>Découvrir</value>
-  </data>
-  <data name="Nav_Favorites" xml:space="preserve">
-    <value>Favoris</value>
-  </data>
-  <data name="Nav_Movies" xml:space="preserve">
-    <value>Films</value>
-  </data>
-  <data name="Nav_PlaceholderPerson" xml:space="preserve">
-    <value>Personne {0}</value>
-  </data>
-  <data name="Nav_PlaceholderSearch" xml:space="preserve">
-    <value>Résultats de recherche pour « {0} »</value>
-  </data>
-  <data name="Nav_PlaceholderStudio" xml:space="preserve">
-    <value>Studio {0}</value>
-  </data>
-  <data name="Nav_Requests" xml:space="preserve">
-    <value>Demandes</value>
-  </data>
-  <data name="Nav_Search" xml:space="preserve">
-    <value>Rechercher</value>
-  </data>
-  <data name="Nav_Series" xml:space="preserve">
-    <value>Séries</value>
-  </data>
-  <data name="Nav_Settings" xml:space="preserve">
-    <value>Paramètres</value>
   </data>
   <data name="Nav_SettingsTabAbout" xml:space="preserve">
     <value>À propos</value>
@@ -3243,9 +3192,6 @@
   </data>
   <data name="Permission_MemberChoice" xml:space="preserve">
     <value>Membre — fait des demandes et signale des problèmes</value>
-  </data>
-  <data name="Permission_PresetHeader" xml:space="preserve">
-    <value>Ce qu’il peut faire</value>
   </data>
   <data name="Permission_ReportIssues" xml:space="preserve">
     <value>Signaler des problèmes</value>
@@ -3547,9 +3493,6 @@
   <data name="RequestModel_CouldntAddExplanation" xml:space="preserve">
     <value>Approuvées, mais Sonarr/Radarr était injoignable ou les a refusées. Réessayez quand il sera de retour.</value>
   </data>
-  <data name="RequestModel_CouldntAddHeading" xml:space="preserve">
-    <value>Ajout impossible</value>
-  </data>
   <data name="RequestModel_CouldntAddLine" xml:space="preserve">
     <value>{0} · approuvée le {1} · dernier essai : {2}</value>
   </data>
@@ -3715,9 +3658,6 @@
   <data name="Requests_MarkFixed" xml:space="preserve">
     <value>Marquer comme résolu</value>
   </data>
-  <data name="Requests_MemberEmpty" xml:space="preserve">
-    <value>Vous n’avez encore rien demandé. Trouvez un titre et cliquez sur Demander.</value>
-  </data>
   <data name="Requests_MineEmptyText.Text" xml:space="preserve">
     <value>Vous n’avez encore rien demandé. Trouvez un titre et cliquez sur Demander.</value>
   </data>
@@ -3772,17 +3712,11 @@
   <data name="Requests_QueueActionsHeader.Text" xml:space="preserve">
     <value>Actions</value>
   </data>
-  <data name="Requests_QueueEmpty" xml:space="preserve">
-    <value>Aucune demande en attente.</value>
-  </data>
   <data name="Requests_QueueEmptyText.Text" xml:space="preserve">
     <value>Aucune demande en attente.</value>
   </data>
   <data name="Requests_QueueError.Text" xml:space="preserve">
     <value>Impossible de charger la file des demandes</value>
-  </data>
-  <data name="Requests_QueueLoading" xml:space="preserve">
-    <value>Vérification des demandes dans votre bibliothèque…</value>
   </data>
   <data name="Requests_QueueLoadingText.Text" xml:space="preserve">
     <value>Vérification des demandes dans votre bibliothèque…</value>
@@ -4006,9 +3940,6 @@
   <data name="Season_EpisodeCount_Other" xml:space="preserve">
     <value>{0} épisodes</value>
   </data>
-  <data name="Season_Explanation" xml:space="preserve">
-    <value>Choisissez les saisons de « {0} » à ajouter. Celles déjà dans la bibliothèque ou en route ne peuvent pas être choisies à nouveau.</value>
-  </data>
   <data name="Season_FourK.Content" xml:space="preserve">
     <value>En 4K</value>
   </data>
@@ -4182,9 +4113,6 @@
   </data>
   <data name="Shell_NotificationsUnread_Other" xml:space="preserve">
     <value>Notifications, {0} non lues</value>
-  </data>
-  <data name="Shell_PlaceholderBody.Text" xml:space="preserve">
-    <value>Cette partie de Marquee pour Windows est encore en cours de développement.</value>
   </data>
   <data name="Shell_ProfileButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Compte et paramètres</value>
@@ -4797,9 +4725,6 @@
   </data>
   <data name="WhatsNew_SeeAll.Content" xml:space="preserve">
     <value>Voir toutes les modifications</value>
-  </data>
-  <data name="Nav_Library" xml:space="preserve">
-    <value>Bibliothèque</value>
   </data>
   <data name="Shell_RailLibraryButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Bibliothèque</value>

@@ -10,6 +10,7 @@ import {
 import { getArrServerOptionsAction } from "@/app/settings/integrations/arr-server-actions";
 import { TagChips } from "@/components/arr-servers-card";
 import { showToast } from "@/components/toast";
+import { kindLabel } from "@/lib/arr/instances";
 import {
   AddTile,
   SETTINGS_INPUT,
@@ -74,7 +75,7 @@ function toggle<T>(list: T[], value: T): T[] {
 
 function serverLabel(server: RuleServerOption | undefined): string {
   if (!server) return "";
-  const kind = server.kind === "sonarr" ? "Sonarr" : "Radarr";
+  const kind = kindLabel(server.kind);
   return `${server.name} · ${server.is4k ? `4K ${kind}` : kind}`;
 }
 

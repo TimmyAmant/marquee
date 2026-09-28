@@ -16,7 +16,7 @@ import type { ArrConnectionResult, ArrOptions, Ok } from "@/lib/api/types";
 import type { ArrInstance, IntegrationProvider } from "@/lib/db/schema";
 
 // Handler factories for /api/v1/settings/integrations/* — every one of them
-// admin-only, exactly like Settings → Integrations and its server actions.
+// admin-only, exactly like those Settings tabs and their server actions.
 
 export const INTEGRATIONS_FORBIDDEN = msg("server.onlyAdminIntegrations");
 

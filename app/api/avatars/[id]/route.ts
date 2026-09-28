@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isCrossSite } from "@/lib/auth/cross-site";
 import { auth } from "@/auth";
 import { avatarResponse, readAvatarUpload, removeUserAvatar, setUserAvatar } from "@/lib/users/avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
@@ -23,13 +24,6 @@ function error(status: number, message: string) {
   return NextResponse.json({ error: message }, { status });
 }
 
-/** Changing a photo rides on the session cookie, so refuse a request another
- * site started. (A cross-site PUT or DELETE already needs a CORS preflight
- * this route never grants; this is the belt to that pair of braces.) */
-function crossSite(request: Request): boolean {
-  return request.headers.get("sec-fetch-site") === "cross-site";
-}
-
 export async function GET(request: Request, { params }: Context) {
   const { id } = await params;
   const viewer = await actor();
@@ -42,7 +36,7 @@ export async function PUT(request: Request, { params }: Context) {
   const { id } = await params;
   const viewer = await actor();
   if (!viewer) return error(401, (await getT())("server.signInRequired"));
-  if (crossSite(request)) return error(403, "Forbidden.");
+  if (isCrossSite(request)) return error(403, "Forbidden.");
   if (!UUID.test(id)) return error(404, (await getT())("server.accountNotFound"));
 
   const upload = await readAvatarUpload(request, await getT());
@@ -56,7 +50,7 @@ export async function DELETE(request: Request, { params }: Context) {
   const { id } = await params;
   const viewer = await actor();
   if (!viewer) return error(401, (await getT())("server.signInRequired"));
-  if (crossSite(request)) return error(403, "Forbidden.");
+  if (isCrossSite(request)) return error(403, "Forbidden.");
   if (!UUID.test(id)) return error(404, (await getT())("server.accountNotFound"));
 
   const result = await removeUserAvatar(viewer, id);

@@ -85,7 +85,7 @@ extension API {
         let otherRequesters: [String]
         /// "Add to Radarr/Sonarr" (`titles.add`).
         let canAdd: Bool
-        /// "Connect Radarr/Sonarr to add this title" (admin → Integrations).
+        /// "Connect Radarr/Sonarr to add this title" (admin → Settings › Services).
         let needsArrSetup: Bool
         /// "Request" (`requests.create`).
         let canRequest: Bool

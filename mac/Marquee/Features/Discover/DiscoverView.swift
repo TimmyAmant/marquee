@@ -177,7 +177,7 @@ struct TMDbMissingNotice: View {
         EmptyStateView(
             title: String(localized: "Connect TMDb to start browsing"),
             message: isAdmin
-                ? String(localized: "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations.")
+                ? String(localized: "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → General.")
                 : String(localized: "The household admin hasn't connected TMDb yet."),
             systemImage: "film.stack",
             actionTitle: isAdmin ? String(localized: "Open Settings") : nil,

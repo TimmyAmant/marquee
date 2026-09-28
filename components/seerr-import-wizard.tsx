@@ -19,6 +19,7 @@ import type {
 } from "@/lib/api/types";
 import { permissionLabel, type Permission } from "@/lib/users/permissions";
 import { useT } from "@/lib/i18n/client";
+import { kindLabel } from "@/lib/arr/instances";
 import type { Translator } from "@/lib/i18n/translator";
 
 const inputClass =
@@ -163,7 +164,7 @@ function PreviewSummary({ preview }: { preview: SeerrImportPreview }) {
           <ul className="mt-1 flex flex-col gap-0.5">
             {preview.requests.servers.map((server, i) => (
               <li key={`${server.kind}-${server.name}-${i}`}>
-                {server.name} ({server.kind === "sonarr" ? "Sonarr" : "Radarr"}):{" "}
+                {server.name} ({kindLabel(server.kind)}):{" "}
                 {server.matchedTo ? t("integrations.seerrServerMatched", { name: server.matchedTo }) : t("integrations.seerrServerUnmatched")}
               </li>
             ))}
@@ -243,7 +244,7 @@ function phaseLabel(t: Translator, job: SeerrImportJob): string {
 }
 
 /**
- * Settings › Integrations › Import from Seerr: connect (address + admin
+ * Settings › General › Import from Seerr: connect (address + admin
  * API key, tested), preview what would come over, choose what to import,
  * run with progress, and a summary with a downloadable report. The key
  * stays in this component's state for the session and is sent with each

@@ -8,7 +8,7 @@ import { getT } from "@/lib/i18n/server";
 import { createApiKey, listApiKeys } from "@/lib/api/api-key-store";
 import type { ApiKey, ApiKeyCreated, ListResponse } from "@/lib/api/types";
 
-/** Settings › Integrations › API keys (admin, signed in — never with a key). */
+/** Settings › General › API access (admin, signed in — never with a key). */
 export const GET = withApi(async (request): Promise<ListResponse<ApiKey>> => {
   await requireApiAdminSession(request, msg("server.onlyAdminApiKeys"));
   return { results: await listApiKeys() };

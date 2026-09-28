@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, useTransition, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import {
   addCommentAction,
   deleteCommentAction,
@@ -255,52 +255,5 @@ export function CommentSection({ kind, id, count }: { kind: Kind; id: string; co
         </div>
       )}
     </div>
-  );
-}
-
-type RowThread = { open: boolean; toggle: () => void; count: number };
-const RowThreadContext = createContext<RowThread | null>(null);
-
-/** A table row whose conversation opens in a full-width row under it. Put a
- * <CommentToggle /> in one of its cells. */
-export function ThreadRow({
-  kind,
-  id,
-  count,
-  colSpan,
-  className,
-  children,
-}: {
-  kind: Kind;
-  id: string;
-  count: number;
-  colSpan: number;
-  className?: string;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const [shown, setShown] = useState(count);
-  return (
-    <RowThreadContext.Provider value={{ open, toggle: () => setOpen((v) => !v), count: shown }}>
-      <tr className={className}>{children}</tr>
-      {open && (
-        <tr>
-          <td colSpan={colSpan} className="px-4 pb-4">
-            <CommentPanel kind={kind} id={id} onCountChange={setShown} />
-          </td>
-        </tr>
-      )}
-    </RowThreadContext.Provider>
-  );
-}
-
-export function CommentToggle() {
-  const t = useT();
-  const row = useContext(RowThreadContext);
-  if (!row) return null;
-  return (
-    <button type="button" onClick={row.toggle} aria-expanded={row.open} className={`mt-1 block ${toggleClass}`}>
-      {toggleLabel(t, row.count, row.open)}
-    </button>
   );
 }

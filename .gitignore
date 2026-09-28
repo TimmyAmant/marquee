@@ -52,3 +52,6 @@ mac/Marquee.xcodeproj/
 /scripts/landing/node_modules/
 /scripts/landing/.cache/
 /site/_preview/
+
+# LLVM coverage output from test runs
+*.profraw

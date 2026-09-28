@@ -107,7 +107,6 @@ public sealed class EpisodeItem
 
     public BadgeTone FileTone { get; }
     public string Overview { get; }
-    public bool HasStill => stillUrl != null;
     public ImageSource? Still => stillUrl == null ? null : still ??= new BitmapImage(stillUrl);
 }
 

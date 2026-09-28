@@ -47,7 +47,8 @@ import { failT } from "@/lib/core-failure";
  * message) without saving it. */
 export type TestOptions = { dryRun?: boolean };
 
-// Settings → Integrations operations shared by the web's server actions
+// Settings' integration operations (General, Media servers, Services,
+// Notifications) shared by the web's server actions
 // (app/settings/integrations/*-actions.ts) and /api/v1/settings/integrations/*.
 // Every function here assumes the caller already verified the actor is the
 // admin (except syncNowForUser, which only ever touches the caller's own
@@ -291,7 +292,7 @@ export async function testAndSaveTvdbApiKey(rawApiKey: string, options: TestOpti
   return { ok: true };
 }
 
-/** Settings › Integrations › OMDb (ratings): the key is tried against OMDb
+/** Settings › General › OMDb (ratings): the key is tried against OMDb
  * before it's saved. */
 export async function testAndSaveOmdbApiKey(rawApiKey: string, options: TestOptions = {}): Promise<CoreResult> {
   const apiKey = rawApiKey.trim();

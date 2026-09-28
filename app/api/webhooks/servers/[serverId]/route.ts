@@ -1,7 +1,7 @@
 import { getArrServerById } from "@/lib/arr/servers";
 import { handleArrWebhookEvent, providedSecret, rejectSecret, secretsMatch } from "@/lib/arr/webhook";
 
-// One Sonarr/Radarr server's own webhook URL (Settings → Integrations shows
+// One Sonarr/Radarr server's own webhook URL (Settings → Services shows
 // it on each server): /api/webhooks/servers/{serverId}?secret=… or the
 // secret in an X-Marquee-Secret header. Notifies the admin the server
 // belongs to, "in 4K" for a 4K server, and re-syncs the library.

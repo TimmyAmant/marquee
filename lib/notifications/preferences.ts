@@ -22,7 +22,7 @@ import {
 
 // Settings › Account › Notifications' "what, where" matrix
 // (GET/PUT /api/v1/me/notification-preferences), and the household
-// channels' events (Settings › Integrations, admin). Only choices that
+// channels' events (Settings › Notifications, admin). Only choices that
 // differ from the defaults are stored, so an account nobody touched keeps
 // following the defaults — lib/notifications/events.ts.
 

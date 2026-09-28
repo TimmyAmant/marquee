@@ -20,8 +20,13 @@ export function arrInstanceFor(mediaType: MediaType, fourK: boolean): ArrInstanc
   return fourK ? "sonarr4k" : "sonarr";
 }
 
+/** "Sonarr" or "Radarr". */
+export function kindLabel(kind: ArrProvider): string {
+  return kind === "sonarr" ? "Sonarr" : "Radarr";
+}
+
 /** "Sonarr", "4K Radarr". */
 export function arrInstanceLabel(instance: ArrInstance): string {
-  const name = arrKindOf(instance) === "sonarr" ? "Sonarr" : "Radarr";
+  const name = kindLabel(arrKindOf(instance));
   return isFourK(instance) ? `4K ${name}` : name;
 }

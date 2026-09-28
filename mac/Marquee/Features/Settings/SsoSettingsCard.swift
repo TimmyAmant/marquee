@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Settings › Integrations › Sign-in (0.44+): loads `GET /settings/sso` and
+/// Settings › Members › Sign-in (0.44+): loads `GET /settings/sso` and
 /// shows the single sign-on card. An older server without it (404) shows
 /// nothing at all.
 struct SsoSettingsSection: View {

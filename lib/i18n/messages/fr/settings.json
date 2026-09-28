@@ -6,7 +6,6 @@
   "singleSignOn": "L’authentification unique",
   "ssoLinked": "{name} est associé. Vous pouvez maintenant vous connecter avec.",
   "accountHeading": "Compte",
-  "accountIntro": "Les informations de votre compte Marquee.",
   "nameLabel": "Nom",
   "usernameLabel": "Nom d’utilisateur",
   "linkedAccountsHeading": "Comptes associés",

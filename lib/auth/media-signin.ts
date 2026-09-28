@@ -61,7 +61,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 // admin's "Import from Plex / Jellyfin" — shared by the website (login page
 // and settings server actions) and /api/v1. Everything is judged against
 // the admin's own connected Plex server / Jellyfin server (Settings →
-// Integrations); with neither connected, none of this is offered.
+// Media servers); with neither connected, none of this is offered.
 //
 // Security notes, since this is a way into accounts:
 //  - Accounts are matched only by a stored Plex/Jellyfin user id (see
@@ -381,7 +381,7 @@ async function pollPlexPin(
     ]);
     if (!account) return { status: "done", ...(await failT("upstream", "server.plexNoAccountId")) };
     // "Owner" — the one Plex identity that may become the Marquee admin —
-    // is exactly the Plex account connected in Settings → Integrations, by
+    // is exactly the Plex account connected in Settings → Media servers, by
     // plex.tv's own id for that token. Not the `owned` flag in the member's
     // resource list: that's the member's view of things, and it would also
     // keep pointing at a server the admin has since moved away from.

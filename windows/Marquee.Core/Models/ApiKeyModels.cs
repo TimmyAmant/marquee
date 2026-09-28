@@ -191,24 +191,3 @@ public static class ApiKeyLabels
     public static string ShortDate(DateTimeOffset date) =>
         date.ToUniversalTime().ToString(Loc.Get("Model_ShortDatePattern"), CultureInfo.CurrentCulture);
 }
-
-/// <summary><c>GET /stats/summary</c> (0.47+): a few counts for dashboard widgets.</summary>
-public sealed record StatsSummary
-{
-    /// <summary>0 for an account that doesn't review requests.</summary>
-    public required int PendingRequests { get; init; }
-
-    /// <summary>0 for an account that doesn't review requests.</summary>
-    public required int OpenIssues { get; init; }
-
-    /// <summary>Approved requests Sonarr/Radarr can't find; 0 for an account that doesn't review requests.</summary>
-    public required int CantFind { get; init; }
-
-    /// <summary>Titles in the household library.</summary>
-    public required int Movies { get; init; }
-
-    public required int Series { get; init; }
-
-    /// <summary>Titles Sonarr/Radarr are downloading now.</summary>
-    public required int Downloading { get; init; }
-}

@@ -88,7 +88,6 @@ final class SharingTests: XCTestCase {
     func testTitleSharedEventType() {
         XCTAssertEqual(API.NotificationEventType(rawValue: "title_shared"), .titleShared)
         XCTAssertEqual(API.NotificationEventType.titleShared.rawValue, "title_shared")
-        XCTAssertEqual(API.NotificationEventType.titleShared.emoji, "📨")
         XCTAssertTrue(API.NotificationEventType.titleShared.isKnown)
     }
 

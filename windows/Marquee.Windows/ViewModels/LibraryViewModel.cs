@@ -508,9 +508,6 @@ public sealed partial class LibraryViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void ToggleHdr() => HdrOnly = !HdrOnly;
-
     /// <summary>Back to the plain, recently-added library.</summary>
     [RelayCommand]
     private void ClearFilters()

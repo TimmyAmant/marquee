@@ -1,4 +1,4 @@
-// The words Settings › Integrations › API keys shows for each key (the Mac
+// The words Settings › General › API access shows for each key (the Mac
 // and Windows apps print the same). Pure; unit tested.
 import type { ApiKey } from "@/lib/api/types";
 import { formatDate } from "@/lib/i18n/format";

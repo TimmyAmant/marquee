@@ -33,7 +33,7 @@ Fill in `.env`:
 | `POSTGRES_PASSWORD` | anything; it's only for the database inside the container |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `MASTER_ENCRYPTION_KEY` | `openssl rand -base64 32`. **Back it up**: without it, saved integration credentials can't be read |
-| `TMDB_API_KEY` | your TMDb key (or set it later in Settings › Integrations) |
+| `TMDB_API_KEY` | your TMDb key (or set it later in Settings › General) |
 | `TVDB_API_KEY` / `TVDB_PIN` | your TheTVDB key |
 | `TRUSTED_PROXY_HOPS` | optional, only behind a reverse proxy or tunnel: see [Remote access](remote-access.md#behind-a-proxy-trusted_proxy_hops) |
 
@@ -42,7 +42,9 @@ docker compose up -d
 ```
 
 Open `http://<your-server-ip>:3000`. The first visit creates the admin
-account; then connect your services in **Settings › Integrations**.
+account; then connect your services in **Settings**: TMDb and the
+other metadata sources under **General**, Plex or Jellyfin under **Media
+servers**, Sonarr and Radarr under **Services**.
 
 The image is on [Docker Hub](https://hub.docker.com/r/timmyamant/marquee) and
 [GitHub Packages](https://github.com/TimmyAmant/marquee/pkgs/container/marquee)

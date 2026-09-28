@@ -506,7 +506,7 @@ struct MediaServerMembersCard: View {
 
         VStack(alignment: .leading, spacing: 12) {
             if servers.isEmpty {
-                Text("Connect Plex or \(info.jellyfinName) in Settings › Integrations to import household members from it and let them sign in with those accounts.")
+                Text("Connect Plex or \(info.jellyfinName) in Settings › Media servers to import household members from it and let them sign in with those accounts.")
                     .font(.system(size: 12.5))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

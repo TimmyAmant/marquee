@@ -66,13 +66,6 @@ public sealed class RequestsEndpoints(MarqueeApi.Transport transport)
             HttpMethod.Post, $"/requests/{MarqueeApi.Segment(id)}/not-found/dismiss",
             changes: ServerChange.Requests | ServerChange.Notifications, ct: ct);
 
-    /// <summary><c>GET /requests/pending-count</c>: always 0 for members (<c>BadgesAsync</c> has it too).</summary>
-    public async Task<int> PendingCountAsync(CancellationToken ct = default)
-    {
-        var count = await transport.GetAsync<CountResponse>("/requests/pending-count", ct: ct).ConfigureAwait(false);
-        return count.Count;
-    }
-
     /// <summary>
     /// <c>POST /requests/{id}/approve</c> (admin): adds with the admin's
     /// Radarr/Sonarr and notifies the requester. On a TV request,

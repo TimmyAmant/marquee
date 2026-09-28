@@ -3,41 +3,16 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { CHANGELOG, type ChangelogEntry } from "@/lib/changelog";
 import {
-  compareVersions,
   decideWhatsNew,
-  parseVersion,
   selectWhatsNew,
   whatsNewStorageKey,
   WHATS_NEW_CAP,
 } from "@/lib/whats-new";
+import { compareVersions } from "@/lib/version";
 
 function entry(version: string): ChangelogEntry {
   return { version, date: "2026-09-26", changes: [`Change in ${version}`] };
 }
-
-describe("compareVersions", () => {
-  it("compares numerically, part by part", () => {
-    expect(compareVersions("0.45.10", "0.45.9")).toBe(1);
-    expect(compareVersions("0.45.9", "0.45.10")).toBe(-1);
-    expect(compareVersions("0.46.0", "0.45.99")).toBe(1);
-    expect(compareVersions("1.0", "1.0.0")).toBe(0);
-    expect(compareVersions("v0.45.3", "0.45.3")).toBe(0);
-  });
-
-  it("ignores a pre-release suffix or build metadata", () => {
-    expect(compareVersions("0.46.0-beta.1", "0.46.0")).toBe(0);
-    expect(compareVersions("0.46.0-beta.1", "0.45.3")).toBe(1);
-    expect(compareVersions("0.46.0+abc123", "0.46.0")).toBe(0);
-  });
-
-  it("rejects what isn't a version", () => {
-    expect(parseVersion("latest")).toBeNull();
-    expect(parseVersion("")).toBeNull();
-    expect(parseVersion("1..0")).toBeNull();
-    expect(parseVersion(null)).toBeNull();
-    expect(compareVersions("junk", "0.1.0")).toBe(-1);
-  });
-});
 
 describe("decideWhatsNew", () => {
   it("shows nothing on a device's first run, just remembers", () => {

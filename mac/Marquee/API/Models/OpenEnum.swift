@@ -108,17 +108,6 @@ extension API {
             case let .unknown(raw): return raw.capitalized
             }
         }
-
-        /// Whether the role reviews requests and problem reports (the queue,
-        /// history, approve/reject, "Reported problems"): the admin and
-        /// trusted members (lib/users/roles.ts `canReviewRequests`). An
-        /// unknown role acts as a member.
-        var canReviewRequests: Bool {
-            switch self {
-            case .admin, .trusted: return true
-            case .member, .unknown: return false
-            }
-        }
     }
 
     enum RequestStatus: OpenEnum {
@@ -215,14 +204,6 @@ extension API {
             case .comingSoon: return String(localized: "Added, but it hasn't been released yet.")
             case .untracked: return String(localized: "Not added yet. Posters get no colored strip.")
             case .unknown: return ""
-            }
-        }
-
-        /// In the library in any form (owned or tracked by Sonarr/Radarr).
-        var isInLibrary: Bool {
-            switch self {
-            case .owned, .trackedDownloading, .trackedMonitored, .trackedUnmonitored, .comingSoon: return true
-            case .untracked, .unknown: return false
             }
         }
     }
@@ -327,21 +308,6 @@ extension API {
             case .requestComment: return "request_comment"
             case .issueComment: return "issue_comment"
             case let .unknown(raw): return raw
-            }
-        }
-
-        var emoji: String {
-            switch self {
-            case .grabbed: return "⬇️"
-            case .downloaded: return "✅"
-            case .requestApproved: return "👍"
-            case .requestRejected: return "👎"
-            case .issueReported: return "⚠️"
-            case .issueResolved: return "🛠️"
-            case .titleShared: return "📨"
-            case .requestNotFound: return "🔍"
-            case .requestComment, .issueComment: return "💬"
-            case .unknown: return "🔔"
             }
         }
     }
