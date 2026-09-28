@@ -255,5 +255,15 @@
   "seasonAvailable": "Disponible",
   "seasonUnavailable": "No disponible",
   "moreActions": "Más acciones",
-  "advancedOptions": "Opciones avanzadas"
+  "advancedOptions": "Opciones avanzadas",
+  "overrideRuleApplies": "Elegido por la regla de anulación «{name}».",
+  "onlyAdminRemoveFromArr": "Solo el administrador puede quitar títulos de Sonarr o Radarr.",
+  "removeFromArr": "Quitar de {app}",
+  "removeFromArrTitle": "¿Quitar {name} de {app}?",
+  "removeFromArrBody": "{app} deja de seguirlo en todos los servidores que lo tienen. Sus solicitudes aprobadas quedan como quitadas, así que se puede volver a pedir.",
+  "removeFromArrDeleteFiles": "Borrar también los archivos",
+  "removeFromArrDeleteFilesHelp": "Se borra del disco para siempre; Plex y Jellyfin también lo pierden.",
+  "removingFromArr": "Quitando…",
+  "removeAndDelete": "Quitar y borrar archivos",
+  "removedFromArr": "Quitado de {app}"
 }

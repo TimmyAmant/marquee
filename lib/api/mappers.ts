@@ -490,6 +490,7 @@ export function blocklistEntryDto(row: BlocklistRow): Dto.BlocklistEntry {
     tmdbId: row.tmdbId,
     title: row.title,
     keyword: row.keyword,
+    region: row.region,
     reason: row.reason,
     createdAt: isoRequired(row.createdAt),
   };

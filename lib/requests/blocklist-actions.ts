@@ -3,7 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/require-admin";
 import type { MediaType } from "@/lib/db/schema";
-import { blockKeyword, blockTitle, removeBlocklistEntry, unblockTitle } from "@/lib/requests/blocklist";
+import {
+  blockByRule,
+  blockKeyword,
+  blockTitle,
+  parseBlockRule,
+  previewBlockRule,
+  removeBlocklistEntry,
+  unblockTitle,
+  type BlockPreview,
+} from "@/lib/requests/blocklist";
 import { getT } from "@/lib/i18n/server";
 
 // The website's blocklist controls — the title page's Block / Unblock and
@@ -49,4 +58,28 @@ export async function removeBlocklistEntryAction(id: string): Promise<BlocklistA
   if (!result.ok) return { error: result.error };
   revalidatePath("/settings", "layout");
   return { success: true };
+}
+
+/** Settings › Blocklist's automatic rules: a keyword or genre, a rating in
+ * a country, or adult titles (lib/requests/blocklist.ts). */
+export async function blockRuleAction(body: Record<string, unknown>): Promise<BlocklistActionState> {
+  const admin = await requirePermission("manageBlocklist", (await getT())(FORBIDDEN));
+  if (!admin.ok) return { error: admin.error };
+  const parsed = await parseBlockRule(body && typeof body === "object" ? body : {});
+  if (!parsed.ok) return { error: parsed.error };
+  const result = await blockByRule(parsed.rule, body.reason);
+  if (!result.ok) return { error: result.error };
+  revalidatePath("/settings", "layout");
+  return { success: true };
+}
+
+/** What that rule would block, before it's added. */
+export async function previewBlockRuleAction(
+  body: Record<string, unknown>,
+): Promise<{ preview?: BlockPreview; error?: string }> {
+  const admin = await requirePermission("manageBlocklist", (await getT())(FORBIDDEN));
+  if (!admin.ok) return { error: admin.error };
+  const parsed = await parseBlockRule(body && typeof body === "object" ? body : {});
+  if (!parsed.ok) return { error: parsed.error };
+  return { preview: await previewBlockRule(parsed.rule) };
 }

@@ -173,6 +173,7 @@ export function RequestReviewRow({
               tmdbId={tmdbId}
               is4k={is4k}
               formId={`approve-${id}`}
+              requestId={id}
               disabled={anyPending}
             />
           )}

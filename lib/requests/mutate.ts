@@ -21,6 +21,8 @@ import { clearRequestAlerts, notifyReviewersOfRequest, refreshRequestAlerts } fr
 import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { hasOverrides, type AddOverrides } from "@/lib/arr/add-options";
+import { layerOverrides } from "@/lib/arr/override-rules";
+import { ruleForRequest } from "@/lib/arr/override-rules-server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fail, type CoreFailure, type CoreResult } from "@/lib/core-result";
 import { getT, householdT } from "@/lib/i18n/server";
@@ -380,12 +382,22 @@ export async function approveRequest(
   // The requester's own Advanced picks (advancedRequests), if they made
   // any and the reviewer didn't pick others.
   const [asked] = await db
-    .select({ addOverrides: requests.addOverrides })
+    .select({
+      addOverrides: requests.addOverrides,
+      mediaType: requests.mediaType,
+      tmdbId: requests.tmdbId,
+      is4k: requests.is4k,
+      requesterId: requests.requestedByUserId,
+    })
     .from(requests)
     .where(eq(requests.id, requestId))
     .limit(1);
   const requested = asked?.addOverrides ?? null;
-  const picks = hasOverrides(overrides) ? overrides : (requested ?? {});
+  const manual = hasOverrides(overrides) ? overrides : (requested ?? {});
+  // Settings › Services' override rules (lib/arr/override-rules.ts) go
+  // under whatever was picked by hand, which wins field by field.
+  const applied = asked ? await ruleForRequest(adminUserId, asked, manual.serverId) : null;
+  const picks = layerOverrides(applied?.overrides ?? null, manual);
 
   const claimedAt = new Date();
   const [request] = await db

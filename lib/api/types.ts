@@ -1035,7 +1035,8 @@ export type NotificationItem = {
 /** GET /me/notification-channels (0.45+). */
 export type PersonalNotificationChannel = {
   id: string;
-  kind: "telegram" | "pushover" | "email" | "discord" | "ntfy" | "webhook";
+  /** slack, gotify and pushbullet since 0.57. */
+  kind: "telegram" | "pushover" | "email" | "discord" | "ntfy" | "webhook" | "slack" | "gotify" | "pushbullet";
   name: string | null;
   /** Masked: enough to tell channels apart, never the secret itself. */
   target: string;
@@ -1056,6 +1057,10 @@ export type PersonalNotificationChannels = {
     discord: { available: boolean };
     ntfy: { available: boolean; householdServer: string | null };
     webhook: { available: boolean; homeNetwork: boolean };
+    /** 0.57+. */
+    slack: { available: boolean };
+    gotify: { available: boolean };
+    pushbullet: { available: boolean };
   };
   channels: PersonalNotificationChannel[];
 };
@@ -1257,7 +1262,7 @@ export type {
 } from "@/lib/import/seerr/import";
 export type SeerrTestResult = { ok: true; server: import("@/lib/import/seerr/import").SeerrServerInfo };
 
-export type Job = { id: string; name: string; schedule: string; description: string };
+export type Job = import("@/lib/jobs/registry").JobDefinition;
 
 export type AboutInfo = {
   version: string;
@@ -1280,13 +1285,18 @@ export type ErrorReferenceCategory = {
 /** GET /settings/blocklist (0.41+). */
 export type BlocklistEntry = {
   id: string;
-  kind: "title" | "keyword";
+  /** keyword: a TMDb keyword or genre; certification: a rating in a
+   * country; adult: whatever TMDb marks adult (0.57+ for the last two). */
+  kind: "title" | "keyword" | "certification" | "adult";
   /** A title: which one, and its name when blocked. */
   mediaType: MediaType | null;
   tmdbId: number | null;
   title: string | null;
-  /** A TMDb keyword or genre, lower-case. */
+  /** A TMDb keyword or genre, lower-case; for a certification, the rating
+   * ("NC-17"). */
   keyword: string | null;
+  /** A certification's country (ISO 3166-1, "US"). */
+  region: string | null;
   reason: string | null;
   createdAt: string;
 };

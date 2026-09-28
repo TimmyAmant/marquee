@@ -26,12 +26,13 @@ import type { Translator } from "@/lib/i18n/translator";
 import { eventLabel, isPreferenceEvent } from "@/lib/notifications/events";
 
 // Settings › Account › Notifications, below "this device": the account's own
-// channels (Telegram, Pushover, email, Discord, ntfy, a webhook) and which
+// channels (Telegram, Pushover, email, Discord, ntfy, Slack, Gotify,
+// Pushbullet, a webhook) and which
 // events reach the bell, device push, and each channel.
 
 type Kind = PersonalNotificationChannel["kind"];
 
-const KINDS: Kind[] = ["telegram", "pushover", "email", "discord", "ntfy", "webhook"];
+const KINDS: Kind[] = ["telegram", "pushover", "email", "discord", "ntfy", "slack", "gotify", "pushbullet", "webhook"];
 
 /** Brand names stay as they are; "Email" and "Webhook" are translated. */
 const BRAND_LABEL: Record<Exclude<Kind, "email" | "webhook">, string> = {
@@ -39,6 +40,9 @@ const BRAND_LABEL: Record<Exclude<Kind, "email" | "webhook">, string> = {
   pushover: "Pushover",
   discord: "Discord",
   ntfy: "ntfy",
+  slack: "Slack",
+  gotify: "Gotify",
+  pushbullet: "Pushbullet",
 };
 
 function kindLabel(t: Translator, kind: Kind): string {
@@ -299,12 +303,39 @@ function fieldsFor(
             : t("settings.webhookHintInternet", { shape: WEBHOOK_SHAPE }),
         },
       ];
+    case "slack":
+      return [
+        {
+          name: "webhookUrl",
+          label: t("settings.slackWebhookUrl"),
+          placeholder: "https://hooks.slack.com/services/…",
+          type: "password",
+          hint: t("settings.slackWebhookHint"),
+        },
+      ];
+    case "gotify":
+      return [
+        { name: "url", label: t("settings.gotifyServer"), placeholder: "https://gotify.example.com" },
+        { name: "appToken", label: t("settings.gotifyAppToken"), type: "password", hint: t("settings.gotifyAppTokenHint") },
+        { name: "priority", label: t("settings.gotifyPriority"), placeholder: "5", type: "number", hint: t("settings.gotifyPriorityHint") },
+      ];
+    case "pushbullet":
+      return [
+        {
+          name: "accessToken",
+          label: t("settings.pushbulletToken"),
+          type: "password",
+          hint: t("settings.pushbulletTokenHint"),
+        },
+        { name: "channelTag", label: t("settings.pushbulletChannel"), hint: t("settings.pushbulletChannelHint") },
+      ];
   }
 }
 
 function AddChannel({ available, onAdded }: { available: PersonalNotificationChannels["available"]; onAdded: () => void }) {
   const t = useT();
-  const kinds = KINDS.filter((kind) => available[kind].available);
+  // An older server doesn't list the newer kinds.
+  const kinds = KINDS.filter((kind) => available[kind]?.available);
   const [kind, setKind] = useState<Kind>(kinds[0] ?? "discord");
   const [ntfyMode, setNtfyMode] = useState<"household" | "url">(available.ntfy.householdServer ? "household" : "url");
   const [busy, setBusy] = useState(false);
@@ -316,7 +347,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
 
   useEffect(() => () => void polling.current++, []);
 
-  const missing = KINDS.filter((k) => !available[k].available);
+  const missing = KINDS.filter((k) => available[k] && !available[k].available);
 
   async function submit(form: FormData) {
     setBusy(true);

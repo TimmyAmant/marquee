@@ -30,7 +30,13 @@ const DENIED_PREFIXES = [
   "/users/import",
   // Import from Seerr: takes another server's admin key.
   "/settings/import",
+  // The server's log lines: masked, but a log is still no place for a key.
+  "/settings/logs",
 ];
+
+/** Never reachable with a key either, wherever they sit: taking a title off
+ * Sonarr/Radarr (and maybe deleting its files) is for someone signed in. */
+const DENIED_ENDINGS = ["/remove-from-arr"];
 
 /** The admin settings a key may read (GET only); every other /settings path
  * is refused, and nothing under /settings may be changed with a key. */
@@ -87,6 +93,7 @@ export function apiKeyDecision(method: string, pathname: string, scope: ApiKeySc
   const safe = SAFE_METHODS.has(verb);
 
   if (DENIED_PREFIXES.some((prefix) => under(path, prefix))) return { allowed: false, message: KEY_DENIED_MESSAGE };
+  if (DENIED_ENDINGS.some((ending) => path.endsWith(ending))) return { allowed: false, message: KEY_DENIED_MESSAGE };
   if (under(path, "/settings") && !READABLE_SETTINGS.some((prefix) => under(path, prefix))) {
     return { allowed: false, message: KEY_DENIED_MESSAGE };
   }

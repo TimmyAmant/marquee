@@ -209,6 +209,8 @@ export async function checkNotFoundRequests(now = new Date()): Promise<void> {
     .where(
       and(
         eq(requests.status, "approved"),
+        // Taken off Sonarr/Radarr again on purpose (lib/arr/remove.ts).
+        isNull(requests.removedAt),
         // Approved by hand: the admin is getting it outside Sonarr/Radarr.
         eq(requests.manuallyApproved, false),
         // Never added ("Couldn't add"): nothing to look for yet.

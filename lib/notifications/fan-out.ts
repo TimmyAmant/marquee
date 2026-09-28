@@ -7,6 +7,7 @@ import { sendTelegramMessage } from "@/lib/telegram/client";
 import { sendPushoverMessage } from "@/lib/pushover/client";
 import { sendEmail } from "@/lib/email/client";
 import { getChannelConfig } from "@/lib/notifications/channels";
+import { gotifyRequest, pushbulletRequest, send, slackRequest } from "@/lib/notifications/services";
 import { channelWants, type NotificationPreferenceEvent } from "@/lib/notifications/events";
 import { householdPostsEvent, roleOf } from "@/lib/notifications/preferences";
 import { deliverableChannels, deliverToChannel, type ChannelMessage, type DeliverableChannel } from "@/lib/notifications/personal";
@@ -15,8 +16,8 @@ import { translatorForUser } from "@/lib/i18n/server";
 import { englishT } from "@/lib/i18n/catalog";
 
 // Where a notification goes past the account's own bell and devices: the
-// household channels (the admin's Discord, ntfy, Telegram, Pushover, email
-// and webhook, for the events the admin picked), then the account's own
+// household channels (the admin's Discord, ntfy, Telegram, Pushover, email,
+// Gotify, Slack, Pushbullet and webhook, for the events the admin picked), then the account's own
 // channels for the events it picked. A place that already got it from the
 // household isn't sent it again, and neither is one listed twice. Nothing
 // here throws, and one channel failing never stops the others.
@@ -57,13 +58,16 @@ export async function relayToHousehold(input: OutgoingNotification): Promise<Set
   const title = input.householdTitle ?? input.title;
   const text = input.householdMessage ?? input.message;
   const line = `${EVENT_EMOJI[input.eventType]} ${text}`;
-  const [discord, ntfy, webhook, telegram, pushover, email] = await Promise.all([
+  const [discord, ntfy, webhook, telegram, pushover, email, gotify, slack, pushbullet] = await Promise.all([
     getDiscordWebhookUrl().catch(() => null),
     getNtfyUrl().catch(() => null),
     getGenericWebhookUrl().catch(() => null),
     getChannelConfig("telegram").catch(() => null),
     getChannelConfig("pushover").catch(() => null),
     getChannelConfig("email").catch(() => null),
+    getChannelConfig("gotify").catch(() => null),
+    getChannelConfig("slack").catch(() => null),
+    getChannelConfig("pushbullet").catch(() => null),
   ]);
   if (discord) {
     keys.add(destinationKey({ kind: "discord", webhookUrl: discord }, null));
@@ -84,6 +88,18 @@ export async function relayToHousehold(input: OutgoingNotification): Promise<Set
   if (email) {
     for (const address of email.to) keys.add(destinationKey({ kind: "email", address }, null));
     sendEmail(email, line, `${text}\n\n— Marquee`).catch(() => undefined);
+  }
+  if (gotify) {
+    keys.add(destinationKey({ kind: "gotify", ...gotify }, null));
+    send(gotifyRequest(gotify, title, text), { allowPrivate: true }).catch(() => undefined);
+  }
+  if (slack) {
+    keys.add(destinationKey({ kind: "slack", ...slack }, null));
+    send(slackRequest(slack, line), { allowPrivate: true }).catch(() => undefined);
+  }
+  if (pushbullet) {
+    keys.add(destinationKey({ kind: "pushbullet", ...pushbullet }, null));
+    send(pushbulletRequest(pushbullet, title, text), { allowPrivate: false }).catch(() => undefined);
   }
   if (webhook) {
     keys.add(destinationKey({ kind: "webhook", url: webhook }, null));

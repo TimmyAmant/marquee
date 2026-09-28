@@ -11,72 +11,52 @@ import { fail, type CoreResult } from "@/lib/core-result";
 import { getT } from "@/lib/i18n/server";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
-// The scheduled maintenance jobs (see instrumentation.ts) as listed on
-// Settings → Jobs and GET /api/v1/settings/jobs, plus the manual "Run now".
+import {
+  DEFAULT_JOB_SCHEDULES,
+  JOB_IDS,
+  effectiveSchedule,
+  isJobId,
+  nextRunAfter,
+  type JobId,
+  type JobSchedule,
+} from "@/lib/jobs/schedule";
 
-export const JOB_IDS = [
-  "plex-sync",
-  "jellyfin-sync",
-  "arr-sync",
-  "plex-watchlist",
-  "trakt-sync",
-  "not-found-check",
-  "disk-space-snapshot",
-  "cleanup",
-] as const;
-export type JobId = (typeof JOB_IDS)[number];
+// The scheduled maintenance jobs (lib/jobs/scheduler.ts runs them) as listed
+// on Settings → Jobs and GET /api/v1/settings/jobs, plus the manual "Run now".
 
-export type JobDefinition = { id: JobId; name: string; schedule: string; description: string };
+export { JOB_IDS, isJobId, type JobId };
 
-/** How often a job runs (instrumentation.ts has the cron itself). */
-type JobSchedule = { every: "minutes" | "hours"; count: number } | { dailyAt: { hour: number; minute: number } };
+export type JobDefinition = {
+  id: JobId;
+  name: string;
+  /** How often, in words ("Every 2 hours"). */
+  schedule: string;
+  description: string;
+  /** How often, as the admin can change it (lib/jobs/schedule.ts). */
+  interval: JobSchedule;
+  defaultInterval: JobSchedule;
+  /** ISO 8601; when it'll next run on its own. */
+  nextRunAt: string;
+  /** ISO 8601; when it last finished since the server started, or null. */
+  lastRunAt: string | null;
+  /** Running right now (on its schedule or from Run now). */
+  running: boolean;
+};
 
 // Names and descriptions are message keys, put into words by jobDefinitions
 // in the reader's language; the ids never change.
-const JOB_TEXT: Record<JobId, { name: MessageKey; description: MessageKey; schedule: JobSchedule }> = {
-  "plex-sync": {
-    name: "admin.jobPlexSyncName",
-    description: "admin.jobPlexSyncDescription",
-    schedule: { every: "hours", count: 1 },
-  },
-  "jellyfin-sync": {
-    name: "admin.jobJellyfinSyncName",
-    description: "admin.jobJellyfinSyncDescription",
-    schedule: { every: "hours", count: 1 },
-  },
-  "arr-sync": {
-    name: "admin.jobArrSyncName",
-    description: "admin.jobArrSyncDescription",
-    schedule: { every: "hours", count: 1 },
-  },
-  "plex-watchlist": {
-    name: "admin.jobPlexWatchlistName",
-    description: "admin.jobPlexWatchlistDescription",
-    schedule: { every: "minutes", count: 10 },
-  },
-  "trakt-sync": {
-    name: "admin.jobTraktSyncName",
-    description: "admin.jobTraktSyncDescription",
-    schedule: { every: "hours", count: 3 },
-  },
-  "not-found-check": {
-    name: "admin.jobNotFoundCheckName",
-    description: "admin.jobNotFoundCheckDescription",
-    schedule: { every: "hours", count: 1 },
-  },
-  "disk-space-snapshot": {
-    name: "admin.jobDiskSpaceName",
-    description: "admin.jobDiskSpaceDescription",
-    schedule: { dailyAt: { hour: 3, minute: 0 } },
-  },
-  cleanup: {
-    name: "admin.jobCleanupName",
-    description: "admin.jobCleanupDescription",
-    schedule: { dailyAt: { hour: 3, minute: 30 } },
-  },
+const JOB_TEXT: Record<JobId, { name: MessageKey; description: MessageKey }> = {
+  "plex-sync": { name: "admin.jobPlexSyncName", description: "admin.jobPlexSyncDescription" },
+  "jellyfin-sync": { name: "admin.jobJellyfinSyncName", description: "admin.jobJellyfinSyncDescription" },
+  "arr-sync": { name: "admin.jobArrSyncName", description: "admin.jobArrSyncDescription" },
+  "plex-watchlist": { name: "admin.jobPlexWatchlistName", description: "admin.jobPlexWatchlistDescription" },
+  "trakt-sync": { name: "admin.jobTraktSyncName", description: "admin.jobTraktSyncDescription" },
+  "not-found-check": { name: "admin.jobNotFoundCheckName", description: "admin.jobNotFoundCheckDescription" },
+  "disk-space-snapshot": { name: "admin.jobDiskSpaceName", description: "admin.jobDiskSpaceDescription" },
+  cleanup: { name: "admin.jobCleanupName", description: "admin.jobCleanupDescription" },
 };
 
-function scheduleText(t: Translator, schedule: JobSchedule): string {
+export function scheduleText(t: Translator, schedule: JobSchedule): string {
   if ("dailyAt" in schedule) {
     // A wall-clock time with no date or zone to it: formatted as UTC so the
     // server's own zone can't shift it.
@@ -91,11 +71,36 @@ function scheduleText(t: Translator, schedule: JobSchedule): string {
   });
 }
 
-/** Every job, in `t`'s language, in the order Settings › Jobs lists them. */
-export function jobDefinitions(t: Translator): JobDefinition[] {
+// What's happened since the server started, shared by the scheduler and
+// Run now (one process serves both).
+declare global {
+  var __marqueeJobState: { lastRunAt: Map<JobId, Date>; running: Set<JobId> } | undefined;
+}
+
+function jobState() {
+  globalThis.__marqueeJobState ??= { lastRunAt: new Map(), running: new Set() };
+  return globalThis.__marqueeJobState;
+}
+
+/** Every job, in `t`'s language, in the order Settings › Jobs lists them,
+ * with the schedules the admin chose (`stored`, from
+ * lib/jobs/schedule-store.ts). */
+export function jobDefinitions(t: Translator, stored: Record<string, unknown> = {}, now = new Date()): JobDefinition[] {
+  const state = jobState();
   return JOB_IDS.map((id) => {
     const text = JOB_TEXT[id];
-    return { id, name: t(text.name), schedule: scheduleText(t, text.schedule), description: t(text.description) };
+    const interval = effectiveSchedule(id, stored);
+    return {
+      id,
+      name: t(text.name),
+      schedule: scheduleText(t, interval),
+      description: t(text.description),
+      interval,
+      defaultInterval: DEFAULT_JOB_SCHEDULES[id].schedule,
+      nextRunAt: nextRunAfter(interval, DEFAULT_JOB_SCHEDULES[id].offset, now).toISOString(),
+      lastRunAt: state.lastRunAt.get(id)?.toISOString() ?? null,
+      running: state.running.has(id),
+    };
   });
 }
 
@@ -110,7 +115,7 @@ function thenCheckComplete(sync: () => Promise<void>): () => Promise<void> {
   };
 }
 
-const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
+export const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "plex-sync": thenCheckComplete(syncAllConnectedPlexUsers),
   "jellyfin-sync": thenCheckComplete(syncAllConnectedJellyfinUsers),
   "arr-sync": thenCheckComplete(syncAllConnectedArrUsers),
@@ -121,8 +126,17 @@ const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   cleanup: pruneOldRecords,
 };
 
-export function isJobId(value: string): value is JobId {
-  return (JOB_IDS as readonly string[]).includes(value);
+/** Runs a job and records it, however it was started. Throws what the job
+ * threw. */
+export async function runRecorded(jobId: JobId): Promise<void> {
+  const state = jobState();
+  state.running.add(jobId);
+  try {
+    await JOB_RUNNERS[jobId]();
+  } finally {
+    state.running.delete(jobId);
+    state.lastRunAt.set(jobId, new Date());
+  }
 }
 
 /** Runs one of the scheduled jobs immediately, without waiting for its cron
@@ -130,11 +144,10 @@ export function isJobId(value: string): value is JobId {
  * every call site, since these sync every connected user's data. */
 export async function runJob(jobId: JobId): Promise<CoreResult> {
   const t = await getT();
-  const runner = JOB_RUNNERS[jobId];
-  if (!runner) return fail("not_found", t("admin.unknownJob"));
+  if (!JOB_RUNNERS[jobId]) return fail("not_found", t("admin.unknownJob"));
 
   try {
-    await runner();
+    await runRecorded(jobId);
     return { ok: true };
   } catch (err) {
     console.error("[jobs] manual run of %s failed:", jobId, err);

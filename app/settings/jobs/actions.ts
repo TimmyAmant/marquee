@@ -1,7 +1,9 @@
 "use server";
 
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { runJob, type JobId as RegistryJobId } from "@/lib/jobs/registry";
+import { isJobId, jobDefinitions, runJob, type JobDefinition, type JobId as RegistryJobId } from "@/lib/jobs/registry";
+import { getStoredJobSchedules, saveJobSchedule } from "@/lib/jobs/schedule-store";
+import { rescheduleJob } from "@/lib/jobs/scheduler";
 import { saveNotFoundAfterHours } from "@/lib/requests/not-found";
 import { getT } from "@/lib/i18n/server";
 
@@ -29,4 +31,20 @@ export async function saveNotFoundAfterHoursAction(hours: number): Promise<{ aft
   if (!viewer.session || !viewer.isAdmin) return { error: (await getT())("admin.onlyAdminChange") };
   const result = await saveNotFoundAfterHours(hours);
   return result.ok ? { afterHours: result.afterHours } : { error: result.error };
+}
+
+/** How often a job runs (Settings › Jobs); null puts it back to its
+ * default. Answers with the job as it is now (its next run moved). */
+export async function saveJobScheduleAction(
+  jobId: JobId,
+  interval: unknown,
+): Promise<{ job?: JobDefinition; error?: string }> {
+  const viewer = await getViewerContext();
+  const t = await getT();
+  if (!viewer.session || !viewer.isAdmin) return { error: t("admin.onlyAdminChange") };
+  if (typeof jobId !== "string" || !isJobId(jobId)) return { error: t("admin.unknownJob") };
+  const result = await saveJobSchedule(jobId, interval);
+  if (!result.ok) return { error: result.error };
+  await rescheduleJob(jobId);
+  return { job: jobDefinitions(t, await getStoredJobSchedules()).find((j) => j.id === jobId) };
 }

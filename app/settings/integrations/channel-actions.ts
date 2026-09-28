@@ -5,13 +5,18 @@ import { revalidateIntegrations } from "@/lib/integrations/manage";
 import {
   clearChannel,
   testAndSaveEmail,
+  testAndSaveGotify,
+  testAndSavePushbullet,
   testAndSavePushover,
+  testAndSaveSlack,
   testAndSaveTelegram,
 } from "@/lib/notifications/channels";
+import { notificationChannelKindValues } from "@/lib/db/schema";
 import type { NotificationChannelKind } from "@/lib/db/schema";
 import { getT } from "@/lib/i18n/server";
 
-// Settings → Integrations → Notifications: Telegram, Pushover and email —
+// Settings › Notifications: Telegram, Pushover, email, Gotify, Slack and
+// Pushbullet —
 // the same test-and-save as PUT /api/v1/settings/integrations/{kind}.
 
 /** `values`: what was typed, handed back after a failed test so the form
@@ -24,14 +29,17 @@ export type ChannelState = {
   values?: Record<string, string>;
 };
 
-const SAVE = {
+const SAVE: Record<NotificationChannelKind, (input: Record<string, string>, options: { dryRun?: boolean }) => ReturnType<typeof testAndSaveEmail>> = {
   telegram: testAndSaveTelegram,
   pushover: testAndSavePushover,
   email: testAndSaveEmail,
-} as const;
+  gotify: testAndSaveGotify,
+  slack: testAndSaveSlack,
+  pushbullet: testAndSavePushbullet,
+};
 
 function isKind(value: unknown): value is NotificationChannelKind {
-  return value === "telegram" || value === "pushover" || value === "email";
+  return typeof value === "string" && (notificationChannelKindValues as readonly string[]).includes(value);
 }
 
 export async function saveChannelAction(_prev: ChannelState | undefined, formData: FormData): Promise<ChannelState> {
