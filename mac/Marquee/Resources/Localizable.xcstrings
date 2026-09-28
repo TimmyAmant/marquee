@@ -23997,58 +23997,58 @@
         }
       }
     },
-    "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway." : {
+    "Posts a JSON payload ({ event, title, message }) to any URL for the events picked under Household events — for your own automation or a notification gateway." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sendet für dieselben Ereignisse JSON ({ event, title, message }) an eine beliebige URL – für deine eigenen Automatisierungen oder ein Benachrichtigungs-Gateway."
+            "value" : "Sendet für die unter „Ereignisse im Haushalt“ gewählten Ereignisse JSON ({ event, title, message }) an eine beliebige URL – für deine eigenen Automatisierungen oder ein selbst gehostetes Benachrichtigungs-Gateway."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envía un JSON ({ event, title, message }) a cualquier URL para los mismos eventos: para tus propias automatizaciones o una pasarela de notificaciones."
+            "value" : "Envía un JSON ({ event, title, message }) a cualquier URL para los eventos elegidos en Eventos del hogar: para tus propias automatizaciones o una pasarela de notificaciones propia."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoie un contenu JSON ({ event, title, message }) à n’importe quelle URL pour les mêmes événements — pour vos propres automatisations ou une passerelle de notifications."
+            "value" : "Envoie un contenu JSON ({ event, title, message }) à n’importe quelle URL pour les événements choisis dans Événements du foyer — pour vos propres automatisations ou une passerelle de notifications auto-hébergée."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envia um JSON ({ event, title, message }) para qualquer URL nos mesmos eventos — para suas próprias automações ou um gateway de notificações."
+            "value" : "Envia um JSON ({ event, title, message }) para qualquer URL para os eventos escolhidos em Eventos da casa — para suas próprias automações ou um gateway de notificações próprio."
           }
         }
       }
     },
-    "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected." : {
+    "Posts a message to a Discord channel for the events picked under Household events." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Postet eine Nachricht in einen Discord-Kanal, sobald etwas gegrabbt oder heruntergeladen oder eine Anfrage genehmigt bzw. abgelehnt wird."
+            "value" : "Postet für die unter „Ereignisse im Haushalt“ gewählten Ereignisse eine Nachricht in einen Discord-Kanal."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Publica un mensaje en un canal de Discord cada vez que algo se captura o se descarga, o una solicitud se aprueba o se rechaza."
+            "value" : "Publica un mensaje en un canal de Discord para los eventos elegidos en Eventos del hogar."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Publie un message dans un salon Discord chaque fois qu’un élément est récupéré ou téléchargé, ou qu’une demande est approuvée ou refusée."
+            "value" : "Publie un message dans un salon Discord pour les événements choisis dans Événements du foyer."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Publica uma mensagem num canal do Discord sempre que algo é capturado, baixado ou um pedido é aprovado/recusado."
+            "value" : "Publica uma mensagem num canal do Discord para os eventos escolhidos em Eventos da casa."
           }
         }
       }
@@ -29039,30 +29039,30 @@
         }
       }
     },
-    "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events." : {
+    "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the events picked under Household events." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schickt für dieselben Ereignisse eine Push-Benachrichtigung über ntfy.sh (oder einen selbst gehosteten ntfy-Server)."
+            "value" : "Schickt für die unter „Ereignisse im Haushalt“ gewählten Ereignisse eine Push-Benachrichtigung über ntfy.sh (oder einen eigenen ntfy-Server) an dein Handy oder deinen Computer. Mitglieder können auf diesem Server ihr eigenes Topic wählen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envía una notificación push mediante ntfy.sh (o un servidor ntfy propio) para los mismos eventos."
+            "value" : "Envía una notificación push a tu móvil u ordenador mediante ntfy.sh (o un servidor ntfy propio) para los eventos elegidos en Eventos del hogar. Los miembros pueden elegir su propio tema en este servidor."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoie une notification push via ntfy.sh (ou un serveur ntfy auto-hébergé) pour les mêmes événements."
+            "value" : "Envoie une notification push sur votre téléphone ou votre ordinateur via ntfy.sh (ou un serveur ntfy auto-hébergé) pour les événements choisis dans Événements du foyer. Les membres peuvent choisir leur propre sujet sur ce serveur."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envia uma notificação push pelo ntfy.sh (ou um servidor ntfy próprio) nos mesmos eventos."
+            "value" : "Envia uma notificação push para o seu celular ou computador pelo ntfy.sh (ou um servidor ntfy próprio) para os eventos escolhidos em Eventos da casa. Os membros podem escolher o próprio tópico neste servidor."
           }
         }
       }
@@ -32605,34 +32605,6 @@
         }
       }
     },
-    "The channels below are the household's: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Notifications, using the bot, app and mail server set up here." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Kanäle unten gehören dem Haushalt: Alles, was hier gewählt ist, geht einmal an jeden eingerichteten Kanal. Mitglieder können unter Einstellungen › Benachrichtigungen ihr eigenes Telegram, Pushover, E-Mail, Discord, ntfy oder einen Webhook hinzufügen – mit dem Bot, der App und dem Mailserver, die hier eingerichtet sind."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los canales de abajo son del hogar: todo lo que elijas aquí llega una vez a cada uno que esté configurado. Los miembros pueden añadir su propio Telegram, Pushover, correo, Discord, ntfy o webhook en Ajustes › Notificaciones, usando el bot, la app y el servidor de correo configurados aquí."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les canaux ci-dessous sont ceux du foyer : tout ce qui est choisi ici est envoyé une fois à chacun de ceux qui sont configurés. Les membres peuvent ajouter leur propre Telegram, Pushover, e-mail, Discord, ntfy ou webhook dans Paramètres › Notifications, avec le bot, l’application et le serveur de messagerie configurés ici."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os canais abaixo são da casa: tudo o que for escolhido aqui vai uma vez para cada um que estiver configurado. Os membros podem adicionar o próprio Telegram, Pushover, e-mail, Discord, ntfy ou webhook em Configurações › Notificações, usando o bot, o app e o servidor de e-mail configurados aqui."
-          }
-        }
-      }
-    },
     "The download didn't finish. Check your internet connection and try again." : {
       "localizations" : {
         "de" : {
@@ -32853,6 +32825,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O administrador da casa ainda não conectou o TMDb."
+          }
+        }
+      }
+    },
+    "The household's channels, each on its own tab here: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Notifications, using the bot, app and mail server set up here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kanäle des Haushalts, jeder in seinem Tab: Alles, was hier gewählt ist, geht einmal an jeden eingerichteten Kanal. Mitglieder können unter Einstellungen › Benachrichtigungen ihr eigenes Telegram, Pushover, E-Mail, Discord, ntfy oder einen Webhook hinzufügen – mit dem Bot, der App und dem Mailserver, die hier eingerichtet sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los canales del hogar, cada uno en su pestaña: todo lo que elijas aquí llega una vez a cada uno que esté configurado. Los miembros pueden añadir su propio Telegram, Pushover, correo, Discord, ntfy o webhook en Ajustes › Notificaciones, usando el bot, la app y el servidor de correo configurados aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les canaux du foyer, chacun dans son onglet : tout ce qui est choisi ici est envoyé une fois à chacun de ceux qui sont configurés. Les membres peuvent ajouter leur propre Telegram, Pushover, e-mail, Discord, ntfy ou webhook dans Paramètres › Notifications, avec le bot, l’application et le serveur de messagerie configurés ici."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os canais da casa, cada um na sua aba: tudo o que for escolhido aqui vai uma vez para cada um que estiver configurado. Os membros podem adicionar o próprio Telegram, Pushover, e-mail, Discord, ntfy ou webhook em Configurações › Notificações, usando o bot, o app e o servidor de e-mail configurados aqui."
           }
         }
       }

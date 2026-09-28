@@ -7,10 +7,6 @@ enum SettingsTab: String, Hashable, CaseIterable {
 }
 
 extension SettingsTab {
-    /// Where the old Integrations tab's links go now ("Connect TMDb" from
-    /// Discover, Browse and Search).
-    static var integrations: SettingsTab { .general }
-
     var title: String {
         switch self {
         case .account: return String(localized: "Account")

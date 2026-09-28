@@ -36,10 +36,6 @@ final class SettingsTabsTests: XCTestCase {
         XCTAssertEqual(SettingsTab.current(.notifications, in: member), .notifications)
     }
 
-    func testTheOldIntegrationsLinkOpensGeneral() {
-        XCTAssertEqual(SettingsTab.integrations, .general)
-    }
-
     func testNotificationsSubTabs() {
         XCTAssertEqual(NotificationsSubTab.visible(isAdmin: false), [.personal])
         XCTAssertEqual(

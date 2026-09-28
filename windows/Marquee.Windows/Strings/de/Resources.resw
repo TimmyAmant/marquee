@@ -1808,7 +1808,7 @@
     <value>{0} trennen?</value>
   </data>
   <data name="Integrations_DiscordBlurb" xml:space="preserve">
-    <value>Postet eine Nachricht in einen Discord-Kanal, sobald etwas geholt oder heruntergeladen wird oder eine Anfrage genehmigt bzw. abgelehnt wird.</value>
+    <value>Postet für die unter „Ereignisse im Haushalt“ gewählten Ereignisse eine Nachricht in einen Discord-Kanal.</value>
   </data>
   <data name="Integrations_DiscordConnected" xml:space="preserve">
     <value>Verbunden – im Kanal sollte eine Testnachricht erscheinen.</value>
@@ -1907,7 +1907,7 @@
     <value>Metadatenquellen</value>
   </data>
   <data name="Integrations_NtfyBlurb" xml:space="preserve">
-    <value>Sendet für dieselben Ereignisse eine Push-Benachrichtigung über ntfy.sh (oder einen selbst gehosteten ntfy-Server).</value>
+    <value>Schickt für die unter „Ereignisse im Haushalt“ gewählten Ereignisse eine Push-Benachrichtigung über ntfy.sh (oder einen eigenen ntfy-Server) an dein Handy oder deinen Computer.</value>
   </data>
   <data name="Integrations_NtfyConnected" xml:space="preserve">
     <value>Verbunden – im Topic sollte eine Testnachricht erscheinen.</value>
@@ -2198,7 +2198,7 @@
     <value>Umgebungsvariable aktiv</value>
   </data>
   <data name="Integrations_WebhookBlurb" xml:space="preserve">
-    <value>Sendet für dieselben Ereignisse JSON-Daten ({{ event, title, message }}) an eine beliebige URL – für deine eigene Automatisierung oder ein Benachrichtigungs-Gateway.</value>
+    <value>Sendet für die unter „Ereignisse im Haushalt“ gewählten Ereignisse JSON ({{ event, title, message }}) an eine beliebige URL – für deine eigenen Automatisierungen oder ein selbst gehostetes Benachrichtigungs-Gateway.</value>
   </data>
   <data name="Integrations_WebhookConnected" xml:space="preserve">
     <value>Verbunden – dein Endpunkt sollte eine Testanfrage erhalten haben.</value>

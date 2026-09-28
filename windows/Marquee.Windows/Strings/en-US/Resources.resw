@@ -1877,7 +1877,7 @@
     <comment>{0} is a service name: Plex, Sonarr, Emby…</comment>
   </data>
   <data name="Integrations_DiscordBlurb" xml:space="preserve">
-    <value>Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected.</value>
+    <value>Posts a message to a Discord channel for the events picked under Household events.</value>
   </data>
   <data name="Integrations_DiscordConnected" xml:space="preserve">
     <value>Connected — check the channel for a test message.</value>
@@ -1979,7 +1979,7 @@
     <value>Metadata Sources</value>
   </data>
   <data name="Integrations_NtfyBlurb" xml:space="preserve">
-    <value>Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events.</value>
+    <value>Sends a push notification to your phone or desktop via ntfy.sh (or a self-hosted ntfy server) for the events picked under Household events.</value>
   </data>
   <data name="Integrations_NtfyConnected" xml:space="preserve">
     <value>Connected — check the topic for a test message.</value>
@@ -2273,7 +2273,7 @@
     <value>Using environment variable</value>
   </data>
   <data name="Integrations_WebhookBlurb" xml:space="preserve">
-    <value>Posts a JSON payload ({{ event, title, message }}) to any URL for the same events — for your own automation or a notification gateway.</value>
+    <value>Posts a JSON payload ({{ event, title, message }}) to any URL for the events picked under Household events — for your own automation or a self-hosted notification gateway.</value>
   </data>
   <data name="Integrations_WebhookConnected" xml:space="preserve">
     <value>Connected — check your endpoint for a test request.</value>

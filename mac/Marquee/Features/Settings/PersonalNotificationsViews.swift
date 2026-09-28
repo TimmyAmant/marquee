@@ -588,7 +588,7 @@ struct HouseholdEventsCard: View {
             if let events {
                 IntegrationCard(
                     title: String(localized: "What the household channels post"),
-                    description: String(localized: "The channels below are the household's: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Notifications, using the bot, app and mail server set up here.")
+                    description: String(localized: "The household's channels, each on its own tab here: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Notifications, using the bot, app and mail server set up here.")
                 ) {
                     LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], alignment: .leading, spacing: 8) {
                         ForEach(events) { event in

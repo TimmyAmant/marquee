@@ -1808,7 +1808,7 @@
     <value>¿Desconectar {0}?</value>
   </data>
   <data name="Integrations_DiscordBlurb" xml:space="preserve">
-    <value>Publica un mensaje en un canal de Discord cada vez que algo se captura o se descarga, o una solicitud se aprueba o se rechaza.</value>
+    <value>Publica un mensaje en un canal de Discord para los eventos elegidos en Eventos del hogar.</value>
   </data>
   <data name="Integrations_DiscordConnected" xml:space="preserve">
     <value>Conectado: busca un mensaje de prueba en el canal.</value>
@@ -1907,7 +1907,7 @@
     <value>Fuentes de metadatos</value>
   </data>
   <data name="Integrations_NtfyBlurb" xml:space="preserve">
-    <value>Envía una notificación push mediante ntfy.sh (o un servidor ntfy propio) para los mismos eventos.</value>
+    <value>Envía una notificación push a tu móvil u ordenador mediante ntfy.sh (o un servidor ntfy propio) para los eventos elegidos en Eventos del hogar.</value>
   </data>
   <data name="Integrations_NtfyConnected" xml:space="preserve">
     <value>Conectado: busca un mensaje de prueba en el tema.</value>
@@ -2198,7 +2198,7 @@
     <value>Usando variable de entorno</value>
   </data>
   <data name="Integrations_WebhookBlurb" xml:space="preserve">
-    <value>Envía un JSON ({{ event, title, message }}) a cualquier URL para los mismos eventos, para tus propias automatizaciones o una pasarela de notificaciones.</value>
+    <value>Envía un JSON ({{ event, title, message }}) a cualquier URL para los eventos elegidos en Eventos del hogar: para tus propias automatizaciones o una pasarela de notificaciones propia.</value>
   </data>
   <data name="Integrations_WebhookConnected" xml:space="preserve">
     <value>Conectado: busca una petición de prueba en tu endpoint.</value>

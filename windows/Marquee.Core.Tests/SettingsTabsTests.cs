@@ -47,9 +47,6 @@ public sealed class SettingsTabsTests
     }
 
     [Fact]
-    public void TheOldIntegrationsLinkOpensGeneral() => Assert.Equal(SettingsTab.General, SettingsTab.Integrations);
-
-    [Fact]
     public void NotificationsSubTabs()
     {
         Assert.Equal(new[] { NotificationsSubTab.Personal }, SettingsTabs.VisibleNotificationsSubTabs(isAdmin: false));

@@ -46,7 +46,7 @@ struct SearchSectionView: View {
 
                 if let error, error.isTMDbUnconfigured {
                     TMDbMissingNotice(isAdmin: model.viewer?.isAdmin == true) {
-                        model.openSettings(.integrations)
+                        model.openSettings(.general)
                     }
                 } else {
                     results

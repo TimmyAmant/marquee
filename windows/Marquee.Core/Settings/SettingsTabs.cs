@@ -22,11 +22,6 @@ public enum SettingsTab
     Jobs,
     Activity,
     About,
-
-    /// <summary>Where the old Integrations tab's links go now ("Connect TMDb" from Search).</summary>
-#pragma warning disable CA1069 // A deliberate alias of General.
-    Integrations = General,
-#pragma warning restore CA1069
 }
 
 /// <summary>Notifications' own tabs: yours, then (the admin's) one per household channel.</summary>
@@ -44,7 +39,7 @@ public enum NotificationsSubTab
 
 public static class SettingsTabs
 {
-    /// <summary>Every tab, in order (not <c>Enum.GetValues</c>: Integrations is General again).</summary>
+    /// <summary>Every tab, in order.</summary>
     public static IReadOnlyList<SettingsTab> All { get; } =
     [
         SettingsTab.Account,

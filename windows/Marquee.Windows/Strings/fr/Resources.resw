@@ -1808,7 +1808,7 @@
     <value>Déconnecter {0} ?</value>
   </data>
   <data name="Integrations_DiscordBlurb" xml:space="preserve">
-    <value>Publie un message dans un canal Discord dès qu’un élément est récupéré ou téléchargé, ou qu’une demande est approuvée ou refusée.</value>
+    <value>Publie un message dans un salon Discord pour les événements choisis dans Événements du foyer.</value>
   </data>
   <data name="Integrations_DiscordConnected" xml:space="preserve">
     <value>Connecté : un message de test devrait apparaître dans le canal.</value>
@@ -1907,7 +1907,7 @@
     <value>Sources de métadonnées</value>
   </data>
   <data name="Integrations_NtfyBlurb" xml:space="preserve">
-    <value>Envoie une notification push via ntfy.sh (ou un serveur ntfy auto-hébergé) pour les mêmes événements.</value>
+    <value>Envoie une notification push sur votre téléphone ou votre ordinateur via ntfy.sh (ou un serveur ntfy auto-hébergé) pour les événements choisis dans Événements du foyer.</value>
   </data>
   <data name="Integrations_NtfyConnected" xml:space="preserve">
     <value>Connecté : un message de test devrait apparaître dans le sujet.</value>
@@ -2198,7 +2198,7 @@
     <value>Variable d’environnement utilisée</value>
   </data>
   <data name="Integrations_WebhookBlurb" xml:space="preserve">
-    <value>Envoie un contenu JSON ({{ event, title, message }}) à n’importe quelle URL pour les mêmes événements, pour vos automatisations ou une passerelle de notifications.</value>
+    <value>Envoie un contenu JSON ({{ event, title, message }}) à n’importe quelle URL pour les événements choisis dans Événements du foyer — pour vos propres automatisations ou une passerelle de notifications auto-hébergée.</value>
   </data>
   <data name="Integrations_WebhookConnected" xml:space="preserve">
     <value>Connecté : votre point de terminaison devrait recevoir une requête de test.</value>

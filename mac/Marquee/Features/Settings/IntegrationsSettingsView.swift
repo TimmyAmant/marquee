@@ -157,7 +157,7 @@ struct IntegrationsSettingsView: View {
         case .discord:
             SecretCard(
                 title: String(localized: "Discord notifications"),
-                description: String(localized: "Posts a message to a Discord channel whenever something is grabbed, downloaded, or a request is approved/rejected."),
+                description: String(localized: "Posts a message to a Discord channel for the events picked under Household events."),
                 fieldLabel: String(localized: "Webhook URL"),
                 placeholder: String(localized: "From a channel's Integrations → Webhooks settings in Discord"),
                 successMessage: String(localized: "Connected — check the channel for a test message."),
@@ -169,7 +169,7 @@ struct IntegrationsSettingsView: View {
         case .ntfy:
             SecretCard(
                 title: String(localized: "ntfy notifications"),
-                description: String(localized: "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the same events."),
+                description: String(localized: "Sends a push notification via ntfy.sh (or a self-hosted ntfy server) for the events picked under Household events."),
                 fieldLabel: String(localized: "Topic URL"),
                 placeholder: "https://ntfy.sh/your-topic-name",
                 successMessage: String(localized: "Connected — check the topic for a test message."),
@@ -188,7 +188,7 @@ struct IntegrationsSettingsView: View {
         case .webhook:
             SecretCard(
                 title: String(localized: "Custom webhook"),
-                description: String(localized: "Posts a JSON payload ({ event, title, message }) to any URL for the same events — for your own automation or a notification gateway."),
+                description: String(localized: "Posts a JSON payload ({ event, title, message }) to any URL for the events picked under Household events — for your own automation or a notification gateway."),
                 fieldLabel: String(localized: "Webhook URL"),
                 placeholder: "https://your-endpoint.example.com/hook",
                 successMessage: String(localized: "Connected — check your endpoint for a test request."),
