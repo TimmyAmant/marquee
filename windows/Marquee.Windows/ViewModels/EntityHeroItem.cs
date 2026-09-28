@@ -52,6 +52,6 @@ public sealed class EntityHeroItem
 /// <summary>The official link pills under a person's bio or a studio's description, as the title page's.</summary>
 public static class EntityLinkItems
 {
-    public static IReadOnlyList<LinkItem> From(IEnumerable<ExternalLink> links) =>
+    public static IReadOnlyList<LinkItem> From(IEnumerable<EntityLink> links) =>
         links.Select(link => LinkItem.Https(link.Label, link.Link)).OfType<LinkItem>().ToList();
 }

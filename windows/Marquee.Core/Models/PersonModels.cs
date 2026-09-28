@@ -32,7 +32,7 @@ public sealed record PersonDetail
     public KnownForTitle? KnownForTitle { get; init; }
 
     /// <summary>IMDb, socials, their website. Null from a server older than this field; read <see cref="Links"/>.</summary>
-    public IReadOnlyList<ExternalLink>? ExternalLinks { get; init; }
+    public IReadOnlyList<EntityLink>? ExternalLinks { get; init; }
 
     /// <summary>
     /// The acting filmography (<c>Subtitle</c> = character) with status,
@@ -44,7 +44,7 @@ public sealed record PersonDetail
     public int Id => TmdbId;
 
     /// <summary>The official links this app can open, in the server's order.</summary>
-    public IReadOnlyList<ExternalLink> Links => (ExternalLinks ?? []).Where(link => link.Link != null).ToList();
+    public IReadOnlyList<EntityLink> Links => (ExternalLinks ?? []).Where(link => link.Link != null).ToList();
 
     /// <summary>Age today, or at death. Null without a birthday.</summary>
     public int? Age => AgeOn(DateOnly.FromDateTime(DateTime.Now));
@@ -93,7 +93,7 @@ public sealed record CompanyDetail
     public KnownForTitle? KnownForTitle { get; init; }
 
     /// <summary>Only ever its website. Null from a server older than this field.</summary>
-    public IReadOnlyList<ExternalLink>? ExternalLinks { get; init; }
+    public IReadOnlyList<EntityLink>? ExternalLinks { get; init; }
 
     /// <summary>With status, favorited and canQuickAdd. Empty: "No titles found for this studio yet."</summary>
     public required IReadOnlyList<TitleCard> Titles { get; init; }
@@ -101,7 +101,7 @@ public sealed record CompanyDetail
     public int Id => TmdbId;
 
     /// <summary>The official links this app can open, in the server's order.</summary>
-    public IReadOnlyList<ExternalLink> Links => (ExternalLinks ?? []).Where(link => link.Link != null).ToList();
+    public IReadOnlyList<EntityLink> Links => (ExternalLinks ?? []).Where(link => link.Link != null).ToList();
 
     /// <summary>The website truncates the description at 400 characters; null for a blank one.</summary>
     public string? ShortDescription =>
@@ -135,7 +135,7 @@ public sealed record KnownForTitle
 }
 
 /// <summary>One official link on a person's or studio's page, in display order.</summary>
-public sealed record ExternalLink
+public sealed record EntityLink
 {
     /// <summary>
     /// <c>imdb</c>, <c>instagram</c>, <c>twitter</c>, <c>facebook</c>,

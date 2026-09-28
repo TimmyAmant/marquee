@@ -195,7 +195,7 @@ public sealed class PeopleFixtureTests
     [Fact]
     public void ExternalLinksKeepOnlyHttpsAndLabelUnknownKinds()
     {
-        var links = Json.Decode<List<ExternalLink>>(
+        var links = Json.Decode<List<EntityLink>>(
             """
             [{"kind":"bluesky","url":"https://bsky.app/profile/x"},
              {"kind":"imdb","url":"javascript:alert(1)"},
