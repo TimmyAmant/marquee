@@ -180,6 +180,7 @@ export async function createArrServer(
         kind,
         name,
         baseUrl,
+        publicUrl: input.publicUrl ?? null,
         apiKeyEnc: encrypted.ciphertext,
         apiKeyIv: encrypted.iv,
         apiKeyTag: encrypted.tag,
@@ -244,6 +245,7 @@ export async function updateArrServer(
       .set({
         name: input.name ?? current.name,
         baseUrl,
+        ...(input.publicUrl !== undefined ? { publicUrl: input.publicUrl } : {}),
         ...(encrypted ? { apiKeyEnc: encrypted.ciphertext, apiKeyIv: encrypted.iv, apiKeyTag: encrypted.tag } : {}),
         is4k: fourK,
         isDefault,

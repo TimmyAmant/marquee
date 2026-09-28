@@ -95,6 +95,7 @@ export function TagChips({
 type Draft = {
   name: string;
   baseUrl: string;
+  publicUrl: string;
   apiKey: string;
   is4k: boolean;
   isDefault: boolean;
@@ -112,6 +113,7 @@ function draftFrom(server: ArrServerDto | null, kind: ArrProvider): Draft {
   return {
     name: server?.name ?? "",
     baseUrl: server?.baseUrl ?? "",
+    publicUrl: server?.publicUrl ?? "",
     apiKey: "",
     is4k: server?.is4k ?? false,
     isDefault: server?.isDefault ?? false,
@@ -197,6 +199,8 @@ function ServerEditor({
         kind,
         name: draft.name,
         baseUrl: draft.baseUrl,
+        // Blank clears it: "Open in Radarr" then uses the URL above.
+        publicUrl: draft.publicUrl.trim() || null,
         is4k: draft.is4k,
         qualityProfileId: draft.qualityProfileId,
         rootFolderPath: draft.rootFolderPath,
@@ -276,6 +280,17 @@ function ServerEditor({
           {urlChanged && !draft.apiKey && (
             <span className="text-xs text-amber-300">{t("integrations.arrReenterApiKey")}</span>
           )}
+        </label>
+        <label className={`${LABEL} sm:col-span-2`}>
+          {t("integrations.arrPublicUrl")}
+          <input
+            type="url"
+            value={draft.publicUrl}
+            placeholder={`https://${sonarr ? "sonarr" : "radarr"}.example.com`} // i18n-ignore
+            onChange={(e) => set("publicUrl", e.target.value)}
+            className={INPUT}
+          />
+          <span className="text-xs text-text-muted">{t("integrations.arrPublicUrlHelp", { app: kindLabel(kind) })}</span>
         </label>
       </div>
 

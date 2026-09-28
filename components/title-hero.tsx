@@ -36,6 +36,8 @@ import { PlayButton } from "@/components/play-button";
 import { TitleMoreMenu } from "@/components/title-more-menu";
 import { RemoveFromArrButton } from "@/components/remove-from-arr-button";
 import { PILL } from "@/components/pill-styles";
+import { OpenInArrLinks } from "@/components/open-in-arr";
+import type { ArrLink } from "@/lib/arr/links";
 
 export type TitleMeta = {
   runtimeLabel: string | null;
@@ -163,6 +165,7 @@ export async function TitleHero({
   myRequests = [],
   may,
   playLinks = [],
+  arrLinks = [],
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -212,6 +215,9 @@ export async function TitleHero({
   may?: { request: boolean; advanced: boolean; manageBlocklist: boolean; autoApprove?: boolean };
   /** "Play on Plex" and friends (lib/media-servers/play-links.ts). */
   playLinks?: PlayLink[];
+  /** "Open in Radarr/Sonarr" (lib/arr/links.ts): empty unless the viewer
+   * may see them. */
+  arrLinks?: ArrLink[];
 }) {
   const t = await getT();
   // Rating/status/network live in the sidebar instead — this line is just
@@ -233,6 +239,10 @@ export async function TitleHero({
   const menuRelink = Boolean(isAdmin && !isUnwanted(status));
   // "Remove from Radarr 4K": only while a 4K server has it.
   const menuRemoveFourK = Boolean(isAdmin && fourK && fourK.status !== "untracked");
+  // "Open in Radarr" is a pill from 640px and a row of "…" on a phone;
+  // with nothing else in the menu, the menu itself is phone-only.
+  const menuOthers = menuBlock || menuTracking || menuRelink || menuRemoveFourK;
+  const menuArrLinks = arrLinks.length > 0;
 
   return (
     <div className={TITLE_HERO_FRAME}>
@@ -343,6 +353,8 @@ export async function TitleHero({
 
               {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} advanced={may?.advanced ?? false} />}
 
+              <OpenInArrLinks links={arrLinks} variant="pills" />
+
               {report && (
                 <ReportProblemButton
                   mediaType={mediaType}
@@ -366,8 +378,9 @@ export async function TitleHero({
                 <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked} />
               )}
 
-              {(menuBlock || menuTracking || menuRelink || menuRemoveFourK) && (
-                <TitleMoreMenu>
+              {(menuOthers || menuArrLinks) && (
+                <TitleMoreMenu className={menuOthers ? undefined : "sm:hidden"}>
+                  <OpenInArrLinks links={arrLinks} variant="menu" />
                   {menuTracking && arrTracking && (
                     <ArrTrackingControls
                       mediaType={mediaType}

@@ -44,6 +44,7 @@ export const GET = withApi<TitleParams>(async (request, params): Promise<TitleSt
       blocked: status.blocked,
       notFoundSince: status.notFoundSince,
       myRequests: status.myRequests,
+      arrLinks: status.arrLinks,
     }),
   };
 });

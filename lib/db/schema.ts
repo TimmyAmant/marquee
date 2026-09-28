@@ -189,6 +189,9 @@ export const arrServers = pgTable(
     kind: text("kind").notNull().$type<ArrProvider>(),
     name: text("name").notNull(),
     baseUrl: text("base_url").notNull(),
+    // Optional: the address a browser opens for "Open in Radarr/Sonarr"
+    // (lib/arr/links.ts) when baseUrl is one only Marquee can reach.
+    publicUrl: text("public_url"),
     apiKeyEnc: bytea("api_key_enc").notNull(),
     apiKeyIv: bytea("api_key_iv").notNull(),
     apiKeyTag: bytea("api_key_tag").notNull(),

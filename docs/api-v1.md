@@ -193,6 +193,13 @@ where the real server needed something the core contract didn't spell out.
     link to its page — and `externalLinks` (a person's IMDb, socials and
     website; a studio's website). A server older than this omits both — keep
     the plain header and show no links.
+24. **Open in Radarr / Sonarr (0.63+, additive).** The title's `viewer`
+    gains `arrLinks` — the title's own page on each Radarr/Sonarr server
+    that has it, standard and 4K — for the admin and accounts with
+    `reviewRequests` (empty for everyone else). Each server
+    (`/settings/arr-servers`) gains an optional `publicUrl` ("Public URL
+    (for links)") the links use instead of `baseUrl`. A server older than
+    this omits both — show no links and no field.
 
 ---
 
@@ -1328,7 +1335,10 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "blocked": null,
     "notFoundSince": null,
     "myRequests": [],
-    "autoApprove": true
+    "autoApprove": true,
+    "arrLinks": [
+      { "kind": "radarr", "serverName": "Radarr", "is4k": false, "url": "https://radarr.example.com/movie/603" }
+    ]
   },
   "seasons": [],
   "cast": [
@@ -1472,6 +1482,16 @@ Field notes:
   - `arrTracking` (admin only, non-null when Radarr/Sonarr has the title) →
     "Search now" (`POST …/search`) and "Stop/Start monitoring" (`PUT …/monitored`).
   - `canRelink` (admin, title in library) → "Wrong match? Fix ID" (`POST …/relink`).
+  - `arrLinks` (0.63+; the admin and `reviewRequests` only, empty for
+    everyone else; an older server omits it — treat as empty): "Open in
+    Radarr" / "Open in Sonarr", one per server that has the title, in
+    Settings order — `{ kind, serverName, is4k, url }`. `url` is the
+    title's page there (Radarr `/movie/{titleSlug}`, Sonarr
+    `/series/{titleSlug}`) at the server's `publicUrl` when set, else its
+    `baseUrl`; open it in the browser. Label each "Open in Radarr" /
+    "Open in Radarr 4K", or "Open in {serverName}" when more than one link
+    has the same `kind` and `is4k`. The website shows them as pills after
+    the status (in the "…" menu at phone width).
   - `favorited` → the star (`PUT`/`DELETE /favorites/{type}/{tmdbId}`).
 - `seasons` (TV only, "Episodes" accordion): seasons with episodes, **newest
   first**. `have`/`total` are Sonarr episode-file counts ("3/10" badge, green
@@ -3902,6 +3922,7 @@ server has its own settings, used when a title is added to it:
 | `kind` | string | `"sonarr"` or `"radarr"` |
 | `name` | string | shown everywhere a server is named ("Radarr 2") |
 | `baseUrl` | string | |
+| `publicUrl` | string, nullable | 0.63+: "Public URL (for links)" — where "Open in Radarr/Sonarr" (`viewer.arrLinks`) points instead of `baseUrl`, for a server only Marquee can reach at `baseUrl`; null = `baseUrl` |
 | `hasApiKey` | bool | always true; the key itself is never returned |
 | `is4k` | bool | a 4K server: 4K requests and "Add in 4K" go here, and it isn't part of the library (see the 4K notes above) |
 | `isDefault` | bool | where titles go when nobody picks a server: there's always exactly one default standard and (once any exists) one default 4K server of each kind |
@@ -3920,7 +3941,7 @@ series type `"anime"` unless the reviewer picks another under Advanced.
 #### `GET /settings/arr-servers` — admin
 
 ```json
-{ "results": [ { "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10", "kind": "sonarr", "name": "Sonarr", "baseUrl": "http://192.168.1.10:8989", "hasApiKey": true, "is4k": false, "isDefault": true, "qualityProfileId": 4, "rootFolderPath": "/tv", "tags": [], "seriesType": "standard", "seasonFolders": true, "animeQualityProfileId": null, "animeRootFolderPath": null, "animeTags": [], "fullyConfigured": true, "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e…" } ] }
+{ "results": [ { "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10", "kind": "sonarr", "name": "Sonarr", "baseUrl": "http://192.168.1.10:8989", "publicUrl": null, "hasApiKey": true, "is4k": false, "isDefault": true, "qualityProfileId": 4, "rootFolderPath": "/tv", "tags": [], "seriesType": "standard", "seasonFolders": true, "animeQualityProfileId": null, "animeRootFolderPath": null, "animeTags": [], "fullyConfigured": true, "webhookUrl": "http://marquee.local:3000/api/webhooks/servers/4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10?secret=9b1e…" } ] }
 ```
 
 Sonarr first, then Radarr; within each the standard servers before the 4K
@@ -3959,6 +3980,7 @@ key and try again.".
 |---|---|---|
 | `kind` | string | **required**: `"sonarr"` or `"radarr"` |
 | `baseUrl`, `apiKey` | string | **required** (trailing slashes trimmed) |
+| `publicUrl` | string, nullable | optional (0.63+): blank or null = none; else a full `http(s)://` URL (trailing slashes trimmed) — "Enter the public URL in full, starting with http:// or https://, or leave it blank." |
 | `name` | string | optional, ≤ 60 chars; blank = "Sonarr" / "Radarr" / "4K Sonarr" / "4K Radarr" (numbered when taken: "Radarr 2") |
 | `is4k` | bool | optional, default false |
 | `isDefault` | bool | optional; the first server of its kind and 4K-ness is always the default. `true` takes the default from the current one |

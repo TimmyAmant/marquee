@@ -10,7 +10,7 @@ import { useT } from "@/lib/i18n/client";
  * half-typed Fix ID or a "Search queued" message is still there when it's
  * opened again.
  */
-export function TitleMoreMenu({ children }: { children: React.ReactNode }) {
+export function TitleMoreMenu({ children, className }: { children: React.ReactNode; className?: string }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   // Which way the menu opens: from the button's left edge unless that would
@@ -45,7 +45,7 @@ export function TitleMoreMenu({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={className ? `relative ${className}` : "relative"}>
       <button
         ref={buttonRef}
         type="button"

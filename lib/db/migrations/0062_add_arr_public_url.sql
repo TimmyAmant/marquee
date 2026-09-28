@@ -1,0 +1,1 @@
+ALTER TABLE "arr_servers" ADD COLUMN "public_url" text;

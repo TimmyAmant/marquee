@@ -263,5 +263,6 @@
   "removeFromArrDeleteFilesHelp": "Endgültig von der Festplatte weg – auch Plex und Jellyfin verlieren ihn.",
   "removingFromArr": "Wird entfernt…",
   "removeAndDelete": "Entfernen und Dateien löschen",
-  "removedFromArr": "Aus {app} entfernt"
+  "removedFromArr": "Aus {app} entfernt",
+  "openIn": "In {name} öffnen"
 }

@@ -180,6 +180,7 @@ export default async function TitlePage({
         file={libraryStatus.file}
         runtimeLabel={runtimeLabel}
         playLinks={viewer.session ? data.playLinks : []}
+        arrLinks={viewer.session ? data.arrLinks : []}
         logo={titleLogo ? { path: titleLogo.file_path, aspectRatio: titleLogo.aspect_ratio } : null}
       />
 

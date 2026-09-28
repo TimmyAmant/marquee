@@ -387,5 +387,7 @@
   "pushbulletToken": "Token de acceso",
   "pushbulletTokenHint": "En pushbullet.com, Settings › Account › Create access token. Si lo dejas vacío se conserva el guardado.",
   "pushbulletChannel": "Etiqueta de canal (opcional)",
-  "pushbulletChannelHint": "Publica en un canal tuyo en lugar de en tus dispositivos."
+  "pushbulletChannelHint": "Publica en un canal tuyo en lugar de en tus dispositivos.",
+  "arrPublicUrl": "URL pública (para enlaces)",
+  "arrPublicUrlHelp": "Adónde lleva \"Abrir en {app}\" en la página de un título, cuando la dirección de arriba solo funciona para Marquee. Déjala en blanco para usar esa."
 }

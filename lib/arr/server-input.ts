@@ -12,6 +12,8 @@ export const SERVER_NAME_MAX_LENGTH = 60;
 export type ArrServerInput = {
   name?: string;
   baseUrl?: string;
+  /** Null (or blank) clears it: links then use baseUrl. */
+  publicUrl?: string | null;
   apiKey?: string;
   is4k?: boolean;
   isDefault?: boolean;
@@ -51,6 +53,17 @@ export function parseArrServerInput(body: Record<string, unknown>, t: Translator
   }
   if (input.baseUrl && !/^https?:\/\/[^\s/]+/i.test(input.baseUrl)) {
     return { ok: false, error: t("notify.arrUrlNotFull") };
+  }
+
+  const publicUrl = body.publicUrl;
+  if (publicUrl === null) input.publicUrl = null;
+  else if (publicUrl !== undefined) {
+    if (typeof publicUrl !== "string") return { ok: false, error: t("notify.fieldMustBeString", { field: "publicUrl" }) };
+    const normalized = normalizeServerUrl(publicUrl);
+    if (normalized && !/^https?:\/\/[^\s/]+\S*$/i.test(normalized)) {
+      return { ok: false, error: t("notify.arrPublicUrlNotFull") };
+    }
+    input.publicUrl = normalized || null;
   }
 
   for (const key of ["is4k", "isDefault", "seasonFolders"] as const) {
