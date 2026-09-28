@@ -293,6 +293,7 @@ final class ServerProbeClassificationTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testMeFailingRightAfterServerInfoIsAnOutage() {
         XCTAssertEqual(ServerSession.outageReason(for: .server(nil)), .serverError(500))
         XCTAssertEqual(ServerSession.outageReason(for: .notMarquee), .serverError(502))

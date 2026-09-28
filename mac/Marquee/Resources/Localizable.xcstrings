@@ -379,6 +379,34 @@
         }
       }
     },
+    "%@ answered with an error (%@). If Marquee is starting up, try again in a moment." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat mit einem Fehler geantwortet (%@). Wenn Marquee gerade startet, versuch es gleich noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ respondió con un error (%@). Si Marquee se está iniciando, vuelve a intentarlo en un momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a répondu par une erreur (%@). Si Marquee est en train de démarrer, réessayez dans un instant."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ respondeu com um erro (%@). Se o Marquee estiver iniciando, tente novamente em instantes."
+          }
+        }
+      }
+    },
     "%@ can be added once the admin sets it up for the household." : {
       "localizations" : {
         "de" : {
@@ -20932,6 +20960,34 @@
         }
       }
     },
+    "Marquee at %@ isn't answering right now. If it's restarting or updating, this reconnects by itself." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee unter %@ antwortet gerade nicht. Wenn es neu startet oder aktualisiert wird, verbindet sich die App von selbst wieder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee en %@ no responde en este momento. Si se está reiniciando o actualizando, se volverá a conectar solo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee à %@ ne répond pas pour le moment. S’il redémarre ou se met à jour, la connexion reviendra toute seule."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee em %@ não está respondendo agora. Se ele estiver reiniciando ou atualizando, a conexão volta sozinha."
+          }
+        }
+      }
+    },
     "Marquee checks for updates once a day." : {
       "localizations" : {
         "de" : {
@@ -21325,6 +21381,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O Marquee está rodando na sua rede, mas o app para iPhone precisa da versão %@ ou mais recente do servidor."
+          }
+        }
+      }
+    },
+    "Marquee isn't answering at %@. If it's restarting or updating, this clears by itself." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee antwortet unter %@ nicht. Wenn es gerade neu startet oder aktualisiert wird, erledigt sich das von selbst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee no responde en %@. Si se está reiniciando o actualizando, se resolverá solo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquee ne répond pas à %@. S’il redémarre ou se met à jour, cela va se régler tout seul."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Marquee não está respondendo em %@. Se ele estiver reiniciando ou atualizando, isso se resolve sozinho."
           }
         }
       }
@@ -30318,6 +30402,34 @@
         }
       }
     },
+    "Retry now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt erneut versuchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar ahora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer maintenant"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar agora"
+          }
+        }
+      }
+    },
     "Retrying…" : {
       "localizations" : {
         "de" : {
@@ -38343,6 +38455,34 @@
         }
       }
     },
+    "Trying again in a moment…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Versuch gleich …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se volverá a intentar en un momento…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel essai dans un instant…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentando de novo em instantes…"
+          }
+        }
+      }
+    },
     "Turn off" : {
       "localizations" : {
         "de" : {
@@ -39684,6 +39824,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aguardando o código"
+          }
+        }
+      }
+    },
+    "Waiting for your server to come back…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warten, bis dein Server wieder da ist …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando a que tu servidor vuelva…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du retour de votre serveur…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando seu servidor voltar…"
           }
         }
       }
