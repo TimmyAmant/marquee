@@ -317,6 +317,21 @@ h3,
   backdrop-filter: blur(28px) saturate(1.6);
 }
 
+/* Phone-sized windows, where the tab bar (components/phone-tab-bar.tsx)
+   stands in for the rail along the bottom, whatever the rail's setting:
+   the page ends clear of it (84px: the 62px bar, 10px below it, room to
+   spare), and what floats at the bottom of the window (toasts, the
+   notifications prompt) sits above it. Only while the bar is on the page
+   (not signed out, not on sign-in). */
+@media (max-width: 47.99rem) {
+  :root:has(.phone-tab-bar) .rail-inset {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  :root:has(.phone-tab-bar) .phone-tabs-clear {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Which edge the rail sits on (Settings › Account › Appearance; see
    lib/rail-position.ts): data-rail on <html>, rendered by the root layout
    from a cookie and switched live by the setting. Left is the default and
@@ -334,7 +349,7 @@ h3,
 @custom-variant rail-labeled (&:where([data-rail-labels="on"]:is([data-rail="left"], [data-rail="right"]) *));
 
 /* Everything below only applies where the rail shows (Tailwind's md);
-   narrow screens use the drawer whatever the setting. Plain rules outside
+   narrow screens use the tab bar along the bottom whatever the setting. Plain rules outside
    Tailwind's layers, so they win over the elements' own inset/margin
    utilities without any ordering games. */
 @media (min-width: 48rem) {

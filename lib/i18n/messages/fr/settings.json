@@ -28,7 +28,7 @@
   "blocklistHeading": "Liste de blocage des demandes",
   "blocklistIntro": "Titres et mots-clés que personne ne peut demander. Bloquez un titre précis depuis sa page.",
   "menuPositionLabel": "Position du menu",
-  "menuPositionHelp": "L’emplacement du menu sur cet appareil. Dans une fenêtre de la taille d’un téléphone, il reste derrière le bouton de menu et glisse depuis la droite si vous choisissez Droite, sinon depuis la gauche.",
+  "menuPositionHelp": "L’emplacement du menu sur cet appareil, sur les écrans plus grands. Dans une fenêtre de la taille d’un téléphone, le menu est toujours une barre d’onglets en bas.",
   "menuPositionLeft": "Gauche",
   "menuPositionRight": "Droite",
   "menuPositionTop": "Haut",

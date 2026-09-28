@@ -28,7 +28,7 @@
   "blocklistHeading": "Lista de bloqueo de solicitudes",
   "blocklistIntro": "Títulos y palabras clave que nadie puede solicitar. Bloquea un título concreto desde su página.",
   "menuPositionLabel": "Posición del menú",
-  "menuPositionHelp": "Dónde se coloca el menú en este dispositivo. En una ventana del tamaño de un móvil queda tras el botón de menú y se desliza desde la derecha si eliges Derecha; si no, desde la izquierda.",
+  "menuPositionHelp": "Dónde se coloca el menú en este dispositivo, en pantallas más grandes. En una ventana del tamaño de un móvil, el menú es siempre una barra de pestañas en la parte inferior.",
   "menuPositionLeft": "Izquierda",
   "menuPositionRight": "Derecha",
   "menuPositionTop": "Arriba",
