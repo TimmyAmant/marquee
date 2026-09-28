@@ -40,10 +40,17 @@ struct TitleDetailView: View {
                     action: { model.reload() }
                 )
             } else {
-                LoadingView()
+                // The page's own shape in the page colour, filling the
+                // window, rather than a spinner in a band: a `LoadingView`
+                // is only 240pt tall, and the rest of the window showed
+                // whatever was under it until the title arrived.
+                TitleLoadingView(seed: Self.grainSeed(id.tmdbId))
+                    .transition(.opacity)
             }
         }
-        .background(Theme.bg0)
+        .animation(.easeOut(duration: 0.2), value: screen.detail == nil)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.bg0.ignoresSafeArea())
         .navigationTitle(screen.name)
         .toolbar {
             if let webURL = model.webURL(for: .title(id)) {
@@ -135,7 +142,7 @@ struct TitleDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     TitleBackdrop(
                         backdropPath: detail.backdropPath,
-                        seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
+                        seed: Self.grainSeed(detail.tmdbId),
                         height: backdropHeight + proxy.safeAreaInsets.top,
                         wide: false,
                         sideFade: false
@@ -187,7 +194,7 @@ struct TitleDetailView: View {
                     ZStack(alignment: .topLeading) {
                         TitleBackdrop(
                             backdropPath: detail.backdropPath,
-                            seed: UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: detail.tmdbId))),
+                            seed: Self.grainSeed(detail.tmdbId),
                             height: hero.backdropHeight,
                             wide: hero.wide,
                             sideFade: true
@@ -285,6 +292,11 @@ struct TitleDetailView: View {
         }
     }
 
+    /// Keeps the film grain the same speckle while loading and once loaded.
+    static func grainSeed(_ tmdbId: Int) -> UInt64 {
+        UInt64(UInt32(bitPattern: Int32(truncatingIfNeeded: tmdbId)))
+    }
+
     /// `.tp-poster{left:48px}`, measured from the content area rather than
     /// from the window edge the page now starts at.
     private var leading: CGFloat {
@@ -350,7 +362,10 @@ struct TitleBackdrop: View, Equatable {
                     if backdropPath.url(size) != nil {
                         // Focal point at the top: faces and titles sit
                         // high in most backdrops.
-                        RemoteImage(backdropPath, size: size)
+                        // No shimmer: the artwork fades in over the plain
+                        // surface the loading page shows too, so nothing
+                        // changes under the text until it arrives.
+                        RemoteImage(backdropPath, size: size, showsShimmer: false)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
                     FilmGrain(seed: seed).opacity(Theme.grainOpacity)
@@ -413,6 +428,187 @@ private struct TitlePoster: View, Equatable {
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.borderStrong))
         .shadow(color: .black.opacity(0.65), radius: 32, y: 14)
         .shadow(color: .black.opacity(0.45), radius: 10, y: 4)
+    }
+}
+
+// MARK: - Loading
+
+/// The title page while it loads (app/title/[type]/[id]/loading.tsx): the
+/// same backdrop surface, poster frame, title and text lines and facts card
+/// as the loaded page, as quiet placeholders in the page colour. The
+/// artwork then fades in over the same surface, so nothing jumps.
+private struct TitleLoadingView: View {
+    let seed: UInt64
+
+    @Environment(\.navRailInsets) private var navRailInsets
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    var body: some View {
+        Group {
+            #if os(iOS)
+            if horizontalSizeClass == .compact {
+                phone
+            } else {
+                wide
+            }
+            #else
+            wide
+            #endif
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Theme.bg0.ignoresSafeArea())
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Loading…"))
+    }
+
+    private var wide: some View {
+        GeometryReader { proxy in
+            let hero = TitleHeroMetrics(window: proxy.size)
+            let leading = navRailInsets.leading + Metrics.titleGutter
+            let trailing = navRailInsets.trailing + Metrics.titleRightGutter
+            let room = proxy.size.width - leading - trailing - Metrics.titlePosterWidth - hero.railWidth
+                - Metrics.titleColumnGap * 2
+            let column = min(hero.textWidth, max(160, room))
+            ZStack(alignment: .topLeading) {
+                TitleBackdrop(backdropPath: nil, seed: seed, height: hero.backdropHeight, wide: hero.wide, sideFade: true)
+                    .equatable()
+
+                HStack(alignment: .top, spacing: Metrics.titleColumnGap) {
+                    SkeletonPoster(width: Metrics.titlePosterWidth)
+                    SkeletonMainColumn(width: column, titleHeight: 44)
+                        .padding(.top, Metrics.titleColumnTop)
+                    Spacer(minLength: 0)
+                    SkeletonFactsCard()
+                        .frame(width: hero.railWidth)
+                        .padding(.top, Metrics.titleColumnTop)
+                }
+                .padding(.leading, leading)
+                .padding(.trailing, trailing)
+                .padding(.top, hero.posterTop)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
+            .clipped()
+        }
+        .ignoresSafeArea(.container, edges: [.top, .horizontal])
+    }
+
+    private var phone: some View {
+        GeometryReader { proxy in
+            let backdropHeight = max(220, proxy.size.width * 0.66)
+            VStack(alignment: .leading, spacing: 0) {
+                TitleBackdrop(
+                    backdropPath: nil, seed: seed, height: backdropHeight + proxy.safeAreaInsets.top,
+                    wide: false, sideFade: false
+                )
+                .equatable()
+                SkeletonPoster(width: 116)
+                    .padding(.top, -120)
+                SkeletonMainColumn(width: proxy.size.width - Metrics.pagePadding * 2, titleHeight: 32)
+                    .padding(.top, 16)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, Metrics.pagePadding)
+            .frame(width: proxy.size.width, alignment: .topLeading)
+        }
+        .ignoresSafeArea(.container, edges: .top)
+    }
+}
+
+/// A quiet placeholder block that breathes slowly (still, with Reduce Motion).
+private struct SkeletonBlock: View {
+    var width: CGFloat?
+    var height: CGFloat
+    var radius: CGFloat = 6
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var dim = false
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .fill(Theme.bg2)
+            .frame(width: width, height: height)
+            .opacity(dim ? 0.55 : 1)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
+                    dim = true
+                }
+            }
+    }
+}
+
+/// The poster's frame, ring and shadow, empty.
+private struct SkeletonPoster: View {
+    let width: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(Theme.bg2)
+            .frame(width: width, height: width * 1.5)
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.borderStrong))
+            .shadow(color: .black.opacity(0.45), radius: 24, y: 12)
+    }
+}
+
+/// The title, the meta line, the action pills and the overview, as bars.
+private struct SkeletonMainColumn: View {
+    let width: CGFloat
+    let titleHeight: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SkeletonBlock(width: min(width, 420) * 0.8, height: titleHeight, radius: 8)
+            SkeletonBlock(width: min(width, 260), height: 12)
+                .padding(.top, 16)
+            HStack(spacing: 8) {
+                SkeletonBlock(width: 128, height: 32, radius: 16)
+                SkeletonBlock(width: 96, height: 32, radius: 16)
+                SkeletonBlock(width: 32, height: 32, radius: 16)
+            }
+            .padding(.top, 16)
+            SkeletonBlock(width: 96, height: 16, radius: 5)
+                .padding(.top, 28)
+            VStack(alignment: .leading, spacing: 11) {
+                ForEach([1.0, 0.97, 0.93, 0.62], id: \.self) { fraction in
+                    SkeletonBlock(width: width * fraction, height: 11, radius: 4)
+                }
+            }
+            .padding(.top, 12)
+        }
+        .frame(width: width, alignment: .leading)
+    }
+}
+
+/// `.facts` — the card, with a few label and value bars in its rows.
+private struct SkeletonFactsCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SkeletonBlock(width: 88, height: 18, radius: 5)
+                .frame(height: 50)
+            ForEach(0..<6, id: \.self) { index in
+                HStack {
+                    SkeletonBlock(width: [72, 96, 84, 110, 64, 90][index], height: 10, radius: 4)
+                    Spacer(minLength: 10)
+                    SkeletonBlock(width: [64, 80, 100, 56, 88, 70][index], height: 10, radius: 4)
+                }
+                .frame(height: 38)
+                .overlay(alignment: .top) { Theme.border.frame(height: 1) }
+            }
+        }
+        .padding(.top, 4)
+        .padding(.horizontal, 18)
+        .padding(.bottom, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Theme.bg1.opacity(0.94))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Theme.border, lineWidth: 1)
+        )
     }
 }
 

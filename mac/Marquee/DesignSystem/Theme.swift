@@ -183,6 +183,12 @@ enum Metrics {
     static let pagePadding: CGFloat = 16
     static let shelfSpacing: CGFloat = 32
     #endif
+    /// "Results for “…”": the page's own heading, a step smaller on a phone.
+    #if os(macOS)
+    static let resultsHeading: CGFloat = 30
+    #else
+    static let resultsHeading: CGFloat = 24
+    #endif
     /// `.shelf-head{height:28px;margin-bottom:12px}`.
     static let shelfHeadHeight: CGFloat = 28
     static let shelfHeadGap: CGFloat = 12

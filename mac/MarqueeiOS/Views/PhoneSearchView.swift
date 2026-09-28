@@ -29,7 +29,6 @@ struct PhoneSearchView: View {
             }
         }
         .navigationTitle("Search")
-        .navigationBarTitleDisplayMode(.inline)
         .searchable(
             text: $query,
             placement: .navigationBarDrawer(displayMode: .always),

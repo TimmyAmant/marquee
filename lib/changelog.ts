@@ -11,10 +11,26 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "0.59.2",
+    version: "0.59.5",
     date: "2026-09-27",
     changes: [
-      "Website: on posters, the MOVIE / SERIES label and the status pill (Owned, Downloading, Coming soon…) now sit on the same line.",
+      "Opening a movie or show no longer flashes a grey wash with a dark \"Loading…\" band. The page shows a calm outline of the title page in its normal colours while it loads, then the artwork fades in — on the website, Mac, Windows and iPhone.",
+    ],
+  },
+  {
+    version: "0.59.4",
+    date: "2026-09-27",
+    changes: [
+      "Website on phones: Library's section tabs are one line like Settings', and on Releases the View Changelog button stays on the right with the date under the version.",
+      "Person pages no longer list a movie or show twice when TMDb renamed the character (\"Mr. Fantastic\" and \"Mister Fantastic\").",
+    ],
+  },
+  {
+    version: "0.59.3",
+    date: "2026-09-27",
+    changes: [
+      "iPhone app: no more big gap at the top; page titles sit in the bar with the bell or the Back button.",
+      "iPhone app: requests are full-width cards with Approve and Decline buttons; the calendar has Day, Week and Month views; the Library, Releases, person and studio pages are rebuilt to fit the phone; sheets fill the screen.",
     ],
   },
   {

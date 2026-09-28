@@ -15,17 +15,27 @@ import { useState } from "react";
  * box, so the parent must establish a positioning context (all current callers
  * already do, via `relative`/`absolute` + `bg-bg-2`).
  */
-export function MediaImage({ className, ...props }: ImageProps) {
+export function MediaImage({
+  className,
+  shimmer = true,
+  ...props
+}: ImageProps & {
+  /** false: no skeleton — the image just fades in over whatever its box
+   * already shows (a title's backdrop, over the page's own surface). */
+  shimmer?: boolean;
+}) {
   const [loaded, setLoaded] = useState(false);
 
   return (
     <>
-      <span
-        aria-hidden
-        className={`pointer-events-none absolute inset-0 z-0 bg-shimmer transition-opacity duration-500 ${
-          loaded ? "opacity-0" : "opacity-100"
-        }`}
-      />
+      {shimmer && (
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 z-0 bg-shimmer transition-opacity duration-500 ${
+            loaded ? "opacity-0" : "opacity-100"
+          }`}
+        />
+      )}
       {/* alt is required by ImageProps and supplied by every caller via the
           spread below; the a11y rule just can't see it through {...props}. */}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}

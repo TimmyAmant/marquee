@@ -2,6 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { MediaImage } from "@/components/media-image";
+import {
+  TITLE_FACTS_CARD,
+  TITLE_HERO_FRAME,
+  TITLE_HERO_GRID,
+  TITLE_HERO_GUTTERS,
+  TITLE_POSTER_BOX,
+  TitleBackdrop,
+} from "@/components/title-backdrop";
 import type { LibraryStatus } from "@/components/status-badge";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { AddToLibraryButton } from "@/components/add-to-library-button";
@@ -225,15 +233,12 @@ export async function TitleHero({
   const menuRelink = Boolean(isAdmin && !isUnwanted(status));
 
   return (
-    // --hero-h is the artwork's height: a fixed band on a phone, then
-    // min(70% of the window's height, 16:9 of its width) — the whole
-    // backdrop without letterboxing on a laptop and never more than the
-    // first screen on a wide monitor. -mt lifts the page under the floating
-    // top bar (72px when the nav rail is a bar along the top), so the art
-    // starts at the window's top edge.
-    <div className="relative -mt-[52px] [--hero-h:340px] sm:[--hero-h:440px] md:rail-top:-mt-[72px] md:[--hero-h:max(460px,min(70svh,56.25vw))]">
-      {backdrop && (
-        <div className="grain-overlay rail-under pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--hero-h)] overflow-hidden">
+    <div className={TITLE_HERO_FRAME}>
+      <TitleBackdrop>
+        {backdrop && (
+          // No shimmer: the artwork fades in over the plain surface the
+          // loading page shows too, so nothing changes under the text
+          // until it has arrived.
           <MediaImage
             src={backdrop}
             alt=""
@@ -242,42 +247,19 @@ export async function TitleHero({
             fetchPriority="high"
             sizes="100vw"
             quality={85}
+            shimmer={false}
             className="object-cover object-[50%_25%]"
           />
-          {/* Fades so the artwork has no edges: a scrim under the top
-              bar, a long fall into the page background at the bottom (the
-              rows below continue on the same colour), and a wash from the
-              left behind the poster and the text, over a light veil. */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: [
-                // Under the top bar.
-                "linear-gradient(to bottom, color-mix(in srgb, var(--marquee-bg-0) 70%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 25%, transparent) 14%, transparent 28%)",
-                // Into the page at the bottom, starting high enough that the
-                // links and the rows below never sit on bright artwork.
-                "linear-gradient(to bottom, transparent 24%, color-mix(in srgb, var(--marquee-bg-0) 50%, transparent) 54%, color-mix(in srgb, var(--marquee-bg-0) 88%, transparent) 78%, var(--marquee-bg-0) 100%)",
-                // Behind the poster and the text column, strong enough across
-                // it that a bright or busy frame (a grey sky, faces) never
-                // fights the logo, the pills or the overview, and gone well
-                // before the right edge.
-                "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 94%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 84%, transparent) 30%, color-mix(in srgb, var(--marquee-bg-0) 62%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 26%, transparent) 74%, transparent 92%)",
-                // A light veil over all of it, so a bright image sits at the
-                // same level as a dark one.
-                "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 22%, transparent), color-mix(in srgb, var(--marquee-bg-0) 22%, transparent))",
-              ].join(", "),
-            }}
-          />
-        </div>
-      )}
+        )}
+      </TitleBackdrop>
 
       {/* The same gutters as the rows under the hero (page.tsx), so the
           poster, the Cast row and "More like this" all start on one line and
           the facts card ends where the rows do. Three columns from 1280px:
           poster | the title and everything about it | facts. */}
-      <div className="px-6 xl:pl-12 xl:pr-10">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] 3xl:grid-cols-[264px_minmax(0,1fr)_340px] 3xl:gap-x-12 4xl:grid-cols-[300px_minmax(0,1fr)_380px] 4xl:gap-x-16">
-          <div className="relative h-[240px] w-[160px] overflow-hidden rounded-xl bg-bg-2 shadow-[0_28px_64px_rgba(0,0,0,0.65),0_8px_20px_rgba(0,0,0,0.45)] ring-1 ring-border-strong sm:h-[336px] sm:w-[224px] 3xl:h-[396px] 3xl:w-[264px] 4xl:h-[450px] 4xl:w-[300px]">
+      <div className={TITLE_HERO_GUTTERS}>
+        <div className={TITLE_HERO_GRID}>
+          <div className={TITLE_POSTER_BOX}>
             {poster && (
               <MediaImage
                 src={poster}
@@ -462,7 +444,7 @@ export async function TitleHero({
           </div>
 
           <aside className="min-w-0 sm:col-span-2 xl:col-span-1">
-            <div className="rounded-2xl border border-border bg-bg-1/95 px-[18px] pb-4 pt-1 shadow-[0_18px_40px_rgba(0,0,0,0.35)] backdrop-blur-[20px]">
+            <div className={TITLE_FACTS_CARD}>
               {meta.ratingPercent !== null && (
                 <div className="flex h-[50px] items-center justify-between gap-2.5">
                   <span className="font-display text-[22px] font-bold tracking-[-0.01em] text-accent">
