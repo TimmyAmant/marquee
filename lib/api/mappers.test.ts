@@ -42,7 +42,25 @@ describe("titleCard", () => {
       requested: null,
       canQuickAdd: false,
       canRequest: false,
+      episodes: null,
     });
+  });
+
+  it("carries a series' episode counts, and never a movie's", () => {
+    const counts = { have: 120, total: 125 };
+    const series = titleCard(
+      { mediaType: "tv", tmdbId: 1407, name: "Homeland", posterPath: null, year: "2011" },
+      { episodes: counts },
+    );
+    expect(series.episodes).toEqual(counts);
+    const movie = titleCard(
+      { mediaType: "movie", tmdbId: 603, name: "The Matrix", posterPath: null, year: "1999" },
+      { episodes: counts },
+    );
+    expect(movie.episodes).toBeNull();
+    expect(
+      titleCard({ mediaType: "tv", tmdbId: 1407, name: "Homeland", posterPath: null, year: "2011" }).episodes,
+    ).toBeNull();
   });
 });
 

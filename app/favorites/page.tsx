@@ -6,17 +6,18 @@ import { StudioChip } from "@/components/studio-chip";
 import { FavoriteButton } from "@/components/favorite-button";
 import { firstCollectionPart, loadFavoritesPage } from "@/lib/pages/favorites";
 import { getT } from "@/lib/i18n/server";
+import { getViewerContext } from "@/lib/integrations/library-owner";
 
 export default async function FavoritesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
-  const t = await getT();
+  const [t, viewer] = await Promise.all([getT(), getViewerContext()]);
 
   // Shared with GET /api/v1/favorites.
-  const { favoritePeople, dedupedCompanies, favoriteMovies, favoriteShows, collections, hasFavorites } =
-    await loadFavoritesPage(userId);
+  const { favoritePeople, dedupedCompanies, favoriteMovies, favoriteShows, collections, hasFavorites, episodeCounts } =
+    await loadFavoritesPage(userId, viewer.libraryOwnerId);
 
   return (
     <div className="px-4 py-6 sm:pl-7 sm:pr-7 sm:py-7">
@@ -55,6 +56,7 @@ export default async function FavoritesPage() {
                 posterPath={title.posterPath}
                 name={title.name}
                 year={(title.firstAirDate || "").slice(0, 4) || null}
+                episodes={episodeCounts.get(`tv:${title.tmdbId}`)}
                 favoriteAction={
                   <FavoriteButton entityType="tv" tmdbId={title.tmdbId} initialFavorited compact />
                 }

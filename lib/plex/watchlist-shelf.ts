@@ -1,7 +1,8 @@
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { plexWatchlistItems, plexWatchlists, titles, users, type MediaType } from "@/lib/db/schema";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 
@@ -13,6 +14,8 @@ export type WatchlistShelfItem = {
   posterPath: string | null;
   year: string | null;
   status?: LibraryStatus;
+  /** Series in the library: have/total aired episodes. */
+  episodes?: EpisodeCounts | null;
   /** When the sync first saw it on the watchlist. */
   addedAt: Date;
 };
@@ -61,12 +64,12 @@ export async function getWatchlistShelfItems(
     .orderBy(desc(plexWatchlistItems.createdAt), desc(plexWatchlistItems.tmdbId))
     .limit(limit)
     .offset(offset);
-  const statusMap = viewer.libraryOwnerId
-    ? await getLibraryStatusMap(
-        viewer.libraryOwnerId,
-        rows.map((r) => ({ mediaType: r.mediaType, tmdbId: r.tmdbId })),
-      )
-    : new Map<string, LibraryStatus>();
+  const [statusMap, episodeCounts] = viewer.libraryOwnerId
+    ? await Promise.all([
+        getLibraryStatusMap(viewer.libraryOwnerId, rows),
+        getEpisodeCountMap(viewer.libraryOwnerId, rows),
+      ])
+    : [new Map<string, LibraryStatus>(), new Map<string, EpisodeCounts>()];
   return rows.map((row) => ({
     mediaType: row.mediaType,
     tmdbId: row.tmdbId,
@@ -74,6 +77,7 @@ export async function getWatchlistShelfItems(
     posterPath: row.posterPath,
     year: (row.releaseDate || row.firstAirDate || "").slice(0, 4) || null,
     status: statusMap.get(`${row.mediaType}:${row.tmdbId}`),
+    episodes: episodeCounts.get(`${row.mediaType}:${row.tmdbId}`) ?? null,
     addedAt: row.addedAt,
   }));
 }

@@ -38,6 +38,7 @@ export const GET = withApi<{ list: string }>(async (request, params): Promise<Di
       titleCard(item, {
         status: item.status ?? null,
         favorited: item.favorited,
+        episodes: item.episodes,
         ...posterActions(rules, item.mediaType, item.tmdbId, item.status),
       }),
     ),

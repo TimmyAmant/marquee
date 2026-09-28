@@ -16,7 +16,8 @@ import {
   type TmdbPersonSearchResult,
   type TmdbTitleSearchResult,
 } from "@/lib/tmdb/client";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { dedupeCompanies } from "@/lib/tmdb/company-groups";
 import { CURATED_NETWORKS } from "@/lib/tmdb/curated-companies";
@@ -55,6 +56,8 @@ export type SearchTitleCard = {
   rating: number | null;
   overview: string | null;
   status?: LibraryStatus;
+  /** Series in the library: have/total aired episodes. */
+  episodes?: EpisodeCounts | null;
   favorited: boolean;
   canQuickAdd: boolean;
 };
@@ -212,11 +215,12 @@ async function enrich(
   const studioIds = companies.filter((c) => c.kind === "studio").map((c) => c.tmdbId);
 
   const ownerId = viewer.libraryOwnerId;
-  const [statusMap, radarr, sonarr, favPeople, favCompanies, favMovies, favTv] = viewer.userId
+  const [statusMap, episodeCounts, radarr, sonarr, favPeople, favCompanies, favMovies, favTv] = viewer.userId
     ? await Promise.all([
         ownerId && titles.length > 0
           ? getLibraryStatusMap(ownerId, titles.map((t) => ({ mediaType: t.mediaType, tmdbId: t.tmdbId })))
           : new Map<string, LibraryStatus>(),
+        ownerId && tvIds.length > 0 ? getEpisodeCountMap(ownerId, [...titles]) : new Map<string, EpisodeCounts>(),
         getArrCredential(viewer.userId, "radarr"),
         getArrCredential(viewer.userId, "sonarr"),
         people.length > 0 ? getFavoritedTmdbIds(viewer.userId, "person", people.map((p) => p.tmdbId)) : new Set<number>(),
@@ -224,7 +228,16 @@ async function enrich(
         movieIds.length > 0 ? getFavoritedTmdbIds(viewer.userId, "movie", movieIds) : new Set<number>(),
         tvIds.length > 0 ? getFavoritedTmdbIds(viewer.userId, "tv", tvIds) : new Set<number>(),
       ])
-    : [new Map<string, LibraryStatus>(), null, null, new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>()];
+    : [
+        new Map<string, LibraryStatus>(),
+        new Map<string, EpisodeCounts>(),
+        null,
+        null,
+        new Set<number>(),
+        new Set<number>(),
+        new Set<number>(),
+        new Set<number>(),
+      ];
 
   const arrConfigured: Record<MediaType, boolean> = {
     movie: isArrFullyConfigured(radarr),
@@ -243,6 +256,7 @@ async function enrich(
       rating: item.rating,
       overview: item.overview,
       status,
+      episodes: episodeCounts.get(`${item.mediaType}:${item.tmdbId}`) ?? null,
       favorited: (item.mediaType === "movie" ? favMovies : favTv).has(item.tmdbId),
       canQuickAdd: Boolean(viewer.userId) && arrConfigured[item.mediaType] && isUnwanted(status),
     };

@@ -5,7 +5,8 @@ import {
   getTvGenres,
   type DiscoverSort,
 } from "@/lib/tmdb/client";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
@@ -34,6 +35,8 @@ export type DiscoverCardData = {
   rating: number | null;
   overview: string | null;
   status?: LibraryStatus;
+  /** Series in the library: have/total aired episodes (lib/library/episode-counts.ts). */
+  episodes?: EpisodeCounts | null;
   favorited: boolean;
   canQuickAdd: boolean;
 };
@@ -97,12 +100,13 @@ export async function fetchDiscoverItems(
   const hasNextPage = tmdbPages[tmdbPages.length - 1] < Math.min(maxTotalPages, TMDB_MAX_PAGE);
   const totalResults = Math.max(0, ...responses.map((r) => r.total_results));
 
-  const statusMap = viewer.libraryOwnerId
-    ? await getLibraryStatusMap(
-        viewer.libraryOwnerId,
-        rawItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-      )
-    : new Map<string, LibraryStatus>();
+  const refs = rawItems.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId }));
+  const [statusMap, episodeCounts] = viewer.libraryOwnerId
+    ? await Promise.all([
+        getLibraryStatusMap(viewer.libraryOwnerId, refs),
+        getEpisodeCountMap(viewer.libraryOwnerId, refs),
+      ])
+    : [new Map<string, LibraryStatus>(), new Map<string, EpisodeCounts>()];
 
   const filtered = hideOwned
     ? rawItems.filter((i) => !statusMap.has(`${i.mediaType}:${i.tmdbId}`))
@@ -135,6 +139,7 @@ export async function fetchDiscoverItems(
       rating: item.rating,
       overview: item.overview,
       status,
+      episodes: episodeCounts.get(`${item.mediaType}:${item.tmdbId}`) ?? null,
       favorited: favoritedIds.has(item.tmdbId),
       canQuickAdd: Boolean(viewer.userId) && arrConfigured && isUnwanted(status),
     };

@@ -99,6 +99,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
       const sizeByRatingKey = new Map<string, number | null>();
       const folderPathByRatingKey = new Map<string, string | null>();
       const episodeCountByRatingKey = new Map<string, number | null>();
+      const episodesHaveByRatingKey = new Map<string, number | null>();
       const detailByRatingKey = new Map<string, MediaDetail>();
       await mapWithLimit(
         items,
@@ -113,10 +114,11 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
           }
           const info = await plex
             .getShowFileInfo(serverUri, credential.authToken, item.ratingKey)
-            .catch(() => ({ sizeBytes: null, folderPath: null, episodeCount: null, detail: { ...EMPTY_MEDIA_DETAIL } }));
+            .catch(() => plex.emptyShowFileInfo());
           sizeByRatingKey.set(item.ratingKey, info.sizeBytes);
           folderPathByRatingKey.set(item.ratingKey, info.folderPath);
           episodeCountByRatingKey.set(item.ratingKey, info.episodeCount);
+          episodesHaveByRatingKey.set(item.ratingKey, info.episodesHave);
           detailByRatingKey.set(item.ratingKey, info.detail);
         },
       );
@@ -181,6 +183,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
         const viewCount = item.viewCount ?? null;
         const lastViewedAt = item.lastViewedAt ? new Date(item.lastViewedAt * 1000) : null;
         const episodeCount = mediaType === "tv" ? (episodeCountByRatingKey.get(item.ratingKey) ?? null) : null;
+        const episodesHave = mediaType === "tv" ? (episodesHaveByRatingKey.get(item.ratingKey) ?? null) : null;
 
         await db
           .insert(plexLibraryItems)
@@ -200,6 +203,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
             viewCount,
             lastViewedAt,
             episodeCount,
+            episodesHave,
           })
           .onConflictDoUpdate({
             target: [plexLibraryItems.plexServerId, plexLibraryItems.ratingKey],
@@ -217,6 +221,7 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
               viewCount,
               lastViewedAt,
               episodeCount,
+              episodesHave,
             },
           });
         itemCount++;

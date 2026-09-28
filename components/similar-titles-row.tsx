@@ -7,6 +7,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { QuickAddButton } from "@/components/quick-add-button";
 import { RequestButton } from "@/components/request-button";
 import type { MediaType } from "@/lib/db/schema";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { getT } from "@/lib/i18n/server";
 
 export type SimilarTitle = {
@@ -20,6 +21,7 @@ export type SimilarTitle = {
 export async function SimilarTitlesRow({
   items,
   statusMap,
+  episodeCounts,
   requestStatusMap,
   blockedKeys,
   favoritedIds,
@@ -30,6 +32,8 @@ export async function SimilarTitlesRow({
 }: {
   items: SimilarTitle[];
   statusMap: Map<string, LibraryStatus>;
+  /** Series in the library: have/total aired episodes ("tv:1407"). */
+  episodeCounts?: Map<string, EpisodeCounts>;
   /** This viewer's own non-rejected request per title, if any — so a title
    * already requested shows "Requested" instead of the button again. Absent
    * when signed out (members never see the request button then anyway). */
@@ -71,6 +75,7 @@ export async function SimilarTitlesRow({
               }}
               badge={status && <StatusBadge status={status} compact />}
               status={status}
+              episodes={episodeCounts?.get(`${item.mediaType}:${item.tmdbId}`)}
               favoriteAction={
                 showFavorite && (
                   <FavoriteButton

@@ -13,7 +13,8 @@
       "favorited": false,
       "requested": null,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": false,
+      "episodes": null
     }
   ],
   "watchlist": [
@@ -30,7 +31,8 @@
       "favorited": false,
       "requested": null,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": false,
+      "episodes": null
     }
   ],
   "trending": [
@@ -64,7 +66,8 @@
       "favorited": false,
       "requested": null,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": false,
+      "episodes": null
     }
   ],
   "movieGenres": [
@@ -88,7 +91,8 @@
       "favorited": false,
       "requested": null,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": false,
+      "episodes": null
     }
   ],
   "studios": [
@@ -113,7 +117,8 @@
       "favorited": false,
       "requested": null,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": false,
+      "episodes": null
     }
   ],
   "seriesGenres": [
@@ -137,7 +142,8 @@
       "favorited": false,
       "requested": null,
       "canQuickAdd": false,
-      "canRequest": false
+      "canRequest": false,
+      "episodes": null
     }
   ],
   "networks": [
@@ -224,7 +230,8 @@
           "favorited": false,
           "requested": null,
           "canQuickAdd": false,
-          "canRequest": false
+          "canRequest": false,
+          "episodes": null
         }
       ],
       "genres": null,
@@ -254,7 +261,8 @@
           "favorited": false,
           "requested": null,
           "canQuickAdd": false,
-          "canRequest": false
+          "canRequest": false,
+          "episodes": null
         }
       ],
       "genres": null,

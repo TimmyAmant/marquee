@@ -36,6 +36,7 @@ export const GET = withApi<{ id: string }>(async (request, params): Promise<Pers
       titleCard(entry, {
         subtitle: entry.subtitle ?? null,
         status: entry.status ?? null,
+        episodes: entry.episodes,
         favorited: data.favoritedKeys.has(statusKey(entry.mediaType, entry.tmdbId)),
         ...posterActions(rules, entry.mediaType, entry.tmdbId, entry.status),
       }),

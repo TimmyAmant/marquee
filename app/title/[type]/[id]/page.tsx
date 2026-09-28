@@ -68,6 +68,7 @@ export default async function TitlePage({
     companyFavoritedIds,
     similarItems,
     similarStatusMap,
+    episodeCounts,
     similarRequestStatusMap,
     similarFavoritedIds,
     franchiseTitle,
@@ -206,6 +207,7 @@ export default async function TitlePage({
             title={franchiseTitle}
             items={franchiseItems}
             statusMap={franchiseStatusMap}
+            episodeCounts={episodeCounts}
             requestStatusMap={franchiseRequestStatusMap}
             blockedKeys={blockedKeys}
             favoritedIds={franchiseFavoritedIds}
@@ -222,6 +224,7 @@ export default async function TitlePage({
         <SimilarTitlesRow
           items={similarItems}
           statusMap={similarStatusMap}
+          episodeCounts={episodeCounts}
           requestStatusMap={similarRequestStatusMap}
           blockedKeys={blockedKeys}
           favoritedIds={similarFavoritedIds}

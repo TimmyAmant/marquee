@@ -59,6 +59,9 @@ struct PosterCard: View {
     var overview: String?
     var status: API.LibraryStatus?
     var typeLabel: String?
+    /// Series in the library: "96/96" right of the title, muted when
+    /// complete, the Downloading tone while episodes are missing.
+    var episodes: API.EpisodeCounts?
     var favorite: FavoriteTarget?
     var quickAction: PosterQuickAction = .none
     var imageSize: API.ImageRef.Size = .w342
@@ -110,6 +113,7 @@ struct PosterCard: View {
             overview: showsOverview ? card.overview : nil,
             status: card.status,
             typeLabel: showsTypeLabel ? card.mediaType.typeLabel : nil,
+            episodes: card.mediaType == .tv ? card.episodes : nil,
             favorite: card.favoriteTarget,
             quickAction: card.quickAction,
             link: .title(card.id),
@@ -127,6 +131,7 @@ struct PosterCard: View {
         overview: String? = nil,
         status: API.LibraryStatus? = nil,
         typeLabel: String? = nil,
+        episodes: API.EpisodeCounts? = nil,
         favorite: FavoriteTarget? = nil,
         quickAction: PosterQuickAction = .none,
         imageSize: API.ImageRef.Size = .w342,
@@ -141,6 +146,7 @@ struct PosterCard: View {
         self.overview = overview
         self.status = status
         self.typeLabel = typeLabel
+        self.episodes = episodes
         self.favorite = favorite
         self.quickAction = quickAction
         self.imageSize = imageSize
@@ -152,11 +158,21 @@ struct PosterCard: View {
         VStack(alignment: .leading, spacing: 0) {
             artwork
             Button(action: action) {
-                Text(name)
-                    .font(.system(size: Metrics.text(13), weight: .medium))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(name)
+                        .font(.system(size: Metrics.text(13), weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if let episodes {
+                        Text(verbatim: episodes.shortLabel)
+                            .font(.system(size: Metrics.text(11), weight: .medium).monospacedDigit())
+                            .foregroundStyle(episodes.isComplete ? Theme.textMuted : Theme.downloading)
+                            .lineLimit(1)
+                            .fixedSize()
+                            .help(episodes.spokenLabel)
+                    }
+                }
             }
             .buttonStyle(.plain)
             .padding(.top, 8)
@@ -224,6 +240,7 @@ struct PosterCard: View {
         var parts = [name]
         if let year = year.nonBlank { parts.append(year) }
         if let subtitle = subtitle.nonBlank { parts.append(subtitle) }
+        if let episodes { parts.append(episodes.spokenLabel) }
         if let status = effectiveStatus, status.isKnown { parts.append(status.label) }
         if case .request(_, alreadyRequested: true) = effectiveQuickAction { parts.append(String(localized: "Requested")) }
         if let favorite, model.isFavorited(favorite) { parts.append(String(localized: "Favorite")) }
