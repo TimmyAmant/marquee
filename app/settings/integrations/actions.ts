@@ -14,6 +14,6 @@ export async function regenerateWebhookSecretAction(): Promise<RegenerateWebhook
   if (!admin.ok) return { error: admin.error };
 
   const secret = await regenerateWebhookSecret(admin.userId);
-  revalidatePath("/settings/integrations");
+  revalidatePath("/settings", "layout");
   return { secret };
 }

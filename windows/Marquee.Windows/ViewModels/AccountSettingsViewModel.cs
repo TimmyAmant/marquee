@@ -225,7 +225,11 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     /// <summary>Null until <c>GET /users</c> first answers.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowsMembersError))]
+    [NotifyPropertyChangedFor(nameof(OwnMember))]
     private IReadOnlyList<HouseholdMemberRow>? members;
+
+    /// <summary>Your own row alone, for Settings › Account's "Your account" (the Members tab has everyone's).</summary>
+    public IReadOnlyList<HouseholdMemberRow> OwnMember => Members?.Where(row => row.IsCurrentUser).ToList() ?? [];
 
     [ObservableProperty]
     private bool isMembersLoading;
@@ -483,9 +487,10 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         }
     }
 
-    public AccountSettingsViewModel(AppModel model)
+    public AccountSettingsViewModel(AppModel model, SettingsPart part = SettingsPart.Account)
     {
         this.model = model;
+        Part = part;
         DisplayName = model.Viewer?.DisplayName ?? "";
         IsAdmin = model.Viewer?.IsAdmin == true;
         Blocklist = new BlocklistSettingsViewModel(model);
@@ -494,6 +499,14 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
         SyncMenuPosition();
         SyncLanguage();
     }
+
+    /// <summary>Which Settings tab this is: Account, Members, your Notifications or the Blocklist.</summary>
+    public SettingsPart Part { get; }
+
+    public bool ShowsAccountPart => Part == SettingsPart.Account;
+    public bool ShowsMembersPart => Part == SettingsPart.Members;
+    public bool ShowsNotificationsPart => Part == SettingsPart.Notifications;
+    public bool ShowsBlocklistPart => Part == SettingsPart.Blocklist;
 
     /// <summary>"Trakt lists" (0.49+ servers): keep a public Trakt watchlist or list in sync, for every account.</summary>
     public TraktSyncsViewModel Trakt { get; }

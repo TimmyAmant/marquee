@@ -234,7 +234,7 @@ public sealed partial class DiscoverViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.General);
 
     // MARK: Reload triggers
 

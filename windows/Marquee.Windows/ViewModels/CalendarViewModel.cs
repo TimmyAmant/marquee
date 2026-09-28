@@ -276,7 +276,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.Services);
 
     // MARK: Reload triggers
 

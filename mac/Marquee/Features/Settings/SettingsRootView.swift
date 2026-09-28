@@ -1,50 +1,86 @@
 import SwiftUI
 
+/// Settings' tabs, in the website's order (lib/settings/tabs.ts) and the
+/// Windows app's (Marquee.Core/Settings/SettingsTabs.cs).
 enum SettingsTab: String, Hashable, CaseIterable {
-    case account, integrations, discover, activity, jobs, about
+    case account, general, members, mediaServers, services, notifications, discover, blocklist, jobs, activity, about
 }
 
 extension SettingsTab {
     var title: String {
         switch self {
         case .account: return String(localized: "Account")
-        case .integrations: return String(localized: "Integrations")
+        case .general: return String(localized: "General")
+        case .members: return String(localized: "Members")
+        case .mediaServers: return String(localized: "Media servers")
+        case .services: return String(localized: "Services")
+        case .notifications: return String(localized: "Notifications")
         case .discover: return String(localized: "Discover")
-        case .activity: return String(localized: "Activity")
+        case .blocklist: return String(localized: "Blocklist")
         case .jobs: return String(localized: "Jobs")
+        case .activity: return String(localized: "Activity")
         case .about: return String(localized: "About")
         }
     }
 
-    var systemImage: String {
+    /// Who sees it: everyone, the admin, or (Blocklist) whoever may manage
+    /// the blocklist — the admin, or a member it was handed to.
+    func isVisible(isAdmin: Bool, canManageBlocklist: Bool) -> Bool {
         switch self {
-        case .account: return "person.crop.circle"
-        case .integrations: return "powerplug"
-        case .discover: return "safari"
-        case .activity: return "clock"
-        case .jobs: return "arrow.triangle.2.circlepath"
-        case .about: return "info.circle"
+        case .account, .notifications, .about: return true
+        case .blocklist: return isAdmin || canManageBlocklist
+        case .general, .members, .mediaServers, .services, .discover, .jobs, .activity: return isAdmin
         }
     }
 
-    /// Integrations, Discover, Activity and Jobs are the admin's.
-    var isAdminOnly: Bool {
-        switch self {
-        case .integrations, .discover, .activity, .jobs: return true
-        case .account, .about: return false
+    /// The tabs this viewer gets, in order. Discover also needs a server
+    /// that has it (0.49+).
+    static func visible(isAdmin: Bool, canManageBlocklist: Bool, hasDiscover: Bool = true) -> [SettingsTab] {
+        allCases.filter {
+            $0.isVisible(isAdmin: isAdmin, canManageBlocklist: canManageBlocklist) && ($0 != .discover || hasDiscover)
         }
+    }
+
+    /// The tab to show for `requested`: one the viewer can't see (an old
+    /// link, a demotion) lands on Account.
+    static func current(_ requested: SettingsTab, in tabs: [SettingsTab]) -> SettingsTab {
+        tabs.contains(requested) ? requested : .account
+    }
+}
+
+/// Settings › Notifications' own tabs (the website's per-agent tabs): yours,
+/// then the household's channels, the admin's.
+enum NotificationsSubTab: String, Hashable, CaseIterable {
+    case personal, household, discord, ntfy, telegram, pushover, email, webhook
+
+    var title: String {
+        switch self {
+        case .personal: return String(localized: "Personal")
+        case .household: return String(localized: "Household events")
+        case .discord: return "Discord" // i18n-ignore: brand
+        case .ntfy: return "ntfy" // i18n-ignore: brand
+        case .telegram: return "Telegram" // i18n-ignore: brand
+        case .pushover: return "Pushover" // i18n-ignore: brand
+        case .email: return String(localized: "Email")
+        case .webhook: return String(localized: "Webhook")
+        }
+    }
+
+    static func visible(isAdmin: Bool) -> [NotificationsSubTab] {
+        isAdmin ? allCases : [.personal]
     }
 }
 
 /// How wide Settings' column is: the header and every tab share it, centered
 /// in the window.
 enum SettingsLayout {
-    static let columnWidth: CGFloat = 760
+    static let columnWidth: CGFloat = 820
 }
 
 /// app/settings/layout.tsx with components/settings-nav.tsx: Settings as a
 /// page of the main window (your photo on the rail, ⌘,), the tabs across
-/// the top and the chosen one below.
+/// the top (scrolling sideways when the window is narrow) and the chosen
+/// one below.
 struct SettingsRootView: View {
     @Environment(AppModel.self) private var model
     /// A server older than 0.49 has no Settings › Discover (it answers 404).
@@ -52,11 +88,12 @@ struct SettingsRootView: View {
 
     var body: some View {
         let isAdmin = model.viewer?.isAdmin == true
-        let tabs = SettingsTab.allCases.filter {
-            (isAdmin || !$0.isAdminOnly) && !($0 == .discover && discoverUnavailable)
-        }
-        // A member sent to an admin-only tab (an old link) lands on Account.
-        let current = tabs.contains(model.settingsTab) ? model.settingsTab : .account
+        let tabs = SettingsTab.visible(
+            isAdmin: isAdmin,
+            canManageBlocklist: model.viewer?.can(.manageBlocklist) == true,
+            hasDiscover: !discoverUnavailable
+        )
+        let current = SettingsTab.current(model.settingsTab, in: tabs)
 
         // One scroll view for the header and the tab, so both center on the
         // same width whether or not a scroll bar takes room at the edge.
@@ -79,12 +116,24 @@ struct SettingsRootView: View {
                         .font(.marqueeDisplay(30))
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
-                    HStack(spacing: 6) {
-                        ForEach(tabs, id: \.self) { tab in
-                            SettingsTabButton(tab: tab, current: tab == current) {
-                                model.settingsTab = tab
+                    VStack(spacing: 10) {
+                        ScrollViewReader { proxy in
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 2) {
+                                    ForEach(tabs, id: \.self) { tab in
+                                        SettingsTabButton(title: tab.title, current: tab == current) {
+                                            model.settingsTab = tab
+                                        }
+                                        .id(tab)
+                                    }
+                                }
+                            }
+                            .onAppear { proxy.scrollTo(current) }
+                            .onChange(of: current) { _, tab in
+                                withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(tab) }
                             }
                         }
+                        Divider().overlay(Theme.border)
                     }
                 }
                 .padding(.horizontal, 28)
@@ -96,10 +145,15 @@ struct SettingsRootView: View {
                 Group {
                     switch current {
                     case .account: AccountSettingsView()
-                    case .integrations: IntegrationsSettingsView()
+                    case .general: IntegrationsSettingsView(part: .general)
+                    case .members: MembersSettingsView()
+                    case .mediaServers: IntegrationsSettingsView(part: .mediaServers)
+                    case .services: IntegrationsSettingsView(part: .services)
+                    case .notifications: NotificationsSettingsView()
                     case .discover: DiscoverSettingsView()
-                    case .activity: ActivitySettingsView()
+                    case .blocklist: BlocklistSettingsView()
                     case .jobs: JobsSettingsView()
+                    case .activity: ActivitySettingsView()
                     case .about: AboutSettingsView()
                     }
                 }
@@ -124,23 +178,30 @@ struct SettingsRootView: View {
     }
 }
 
-/// One of the tabs: a pill, solid for the current one.
-private struct SettingsTabButton: View {
-    let tab: SettingsTab
+/// One of the tabs: a pill, solid for the current one. Notifications' own
+/// tabs use the smaller, outlined `small` kind.
+struct SettingsTabButton: View {
+    let title: String
     let current: Bool
+    var small = false
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
-            Label(tab.title, systemImage: tab.systemImage)
-                .font(.system(size: 13, weight: .medium))
-                .padding(.horizontal, 14)
-                .frame(height: 32)
-                .foregroundStyle(current ? Theme.bg0 : (hovering ? Theme.textPrimary : Theme.textSecondary))
-                .background(
-                    Capsule().fill(current ? Theme.textPrimary : (hovering ? Theme.textPrimary.opacity(0.1) : .clear))
-                )
+            Text(title)
+                .font(.system(size: small ? 12 : 13, weight: .medium))
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, small ? 11 : 12)
+                .frame(height: small ? 26 : 30)
+                .foregroundStyle(foreground)
+                .background(Capsule().fill(fill))
+                .overlay {
+                    if small {
+                        Capsule().strokeBorder(current ? Theme.accent : Theme.border)
+                    }
+                }
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -148,12 +209,109 @@ private struct SettingsTabButton: View {
         .animation(.easeOut(duration: 0.15), value: hovering)
         .accessibilityAddTraits(current ? .isSelected : [])
     }
+
+    private var foreground: Color {
+        if small { return current || hovering ? Theme.textPrimary : Theme.textSecondary }
+        return current ? Theme.bg0 : (hovering ? Theme.textPrimary : Theme.textSecondary)
+    }
+
+    private var fill: Color {
+        if small { return current ? Theme.accent.opacity(0.15) : .clear }
+        return current ? Theme.textPrimary : (hovering ? Theme.textPrimary.opacity(0.1) : .clear)
+    }
 }
 
 extension EnvironmentValues {
     /// False inside `SettingsRootView`, whose one scroll view holds the
     /// header and the pane together.
     @Entry var settingsPaneScrolls = true
+}
+
+/// A titled group of settings (components/settings/settings-ui.tsx's
+/// SettingsSection): the title, a line under it, then its content.
+struct SettingsSection<Content: View>: View {
+    let title: String
+    var subtitle: String?
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .accessibilityAddTraits(.isHeader)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            content()
+        }
+        .padding(.top, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Rows in one card with a hairline between each (SettingsGroup on the web).
+struct SettingsGroup<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Group(subviews: content()) { rows in
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                    if index > 0 { Divider().overlay(Theme.border) }
+                    row
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .cardSurface(padding: 0)
+    }
+}
+
+/// One setting: its label and a short help text on the left, the control on
+/// the right (SettingRow on the web).
+struct SettingsRow<Control: View>: View {
+    let label: String
+    var help: String?
+    @ViewBuilder let control: () -> Control
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 24) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(label)
+                    .font(.system(size: 13.5, weight: .medium))
+                    .foregroundStyle(Theme.textPrimary)
+                if let help {
+                    Text(help)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            control()
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 13)
+    }
+}
+
+/// A read-only value on the right of a row.
+struct SettingsValue: View {
+    let text: String
+    var mono = false
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 13, design: mono ? .monospaced : .default))
+            .foregroundStyle(Theme.textPrimary)
+            .textSelection(.enabled)
+    }
 }
 
 /// Shared scaffolding for each settings pane.
@@ -201,32 +359,95 @@ struct SettingsPane<Content: View>: View {
     }
 }
 
-/// Labeled text input styled like the web forms.
+/// A text input as a settings row (the website's SettingRow): the label and
+/// any help on the left, the field on the right — or the label above the
+/// field where the row is too narrow for both (a sheet).
 struct SettingsField: View {
     let label: String
     @Binding var text: String
     var placeholder = ""
     var secure = false
+    var help: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundStyle(Theme.textSecondary)
-            Group {
-                if secure {
-                    SecureField(placeholder, text: $text)
-                } else {
-                    TextField(placeholder, text: $text)
-                }
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 24) {
+                caption
+                    .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                field
+                    .frame(width: 320)
             }
-            .textFieldStyle(.plain)
-            .font(.system(size: 13))
-            .padding(.horizontal, 11)
-            .padding(.vertical, 8)
-            .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border))
+            VStack(alignment: .leading, spacing: 5) {
+                caption
+                field
+            }
         }
+    }
+
+    private var caption: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Theme.textPrimary)
+            if let help {
+                Text(help)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var field: some View {
+        Group {
+            if secure {
+                SecureField(placeholder, text: $text)
+            } else {
+                TextField(placeholder, text: $text)
+            }
+        }
+        .textFieldStyle(.plain)
+        .font(.system(size: 13))
+        .padding(.horizontal, 11)
+        .padding(.vertical, 8)
+        .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border))
+        .accessibilityLabel(label)
+    }
+}
+
+/// A form's one Save, at its foot (the website's SaveBar): what happened on
+/// the left, any other actions, then the main button on the right.
+struct SettingsSaveBar<Secondary: View>: View {
+    let title: String
+    var pendingTitle: String?
+    var pending = false
+    var disabled = false
+    var message: (String, Bool)?
+    let action: () -> Void
+    @ViewBuilder var secondary: () -> Secondary
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Divider().overlay(Theme.border)
+            HStack(spacing: 12) {
+                if let message {
+                    InlineMessage(text: message.0, isError: message.1)
+                }
+                Spacer(minLength: 0)
+                secondary()
+                Button(pending ? (pendingTitle ?? title) : title, action: action)
+                    .buttonStyle(AccentButtonStyle())
+                    .disabled(pending || disabled)
+            }
+        }
+        .padding(.top, 4)
+    }
+}
+
+extension SettingsSaveBar where Secondary == EmptyView {
+    init(title: String, pendingTitle: String? = nil, pending: Bool = false, disabled: Bool = false, message: (String, Bool)? = nil, action: @escaping () -> Void) {
+        self.init(title: title, pendingTitle: pendingTitle, pending: pending, disabled: disabled, message: message, action: action) { EmptyView() }
     }
 }
 
@@ -277,8 +498,9 @@ struct ActivitySettingsView: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
                 } else {
-                    VStack(spacing: 8) {
-                        ForEach(events) { event in
+                    VStack(spacing: 0) {
+                        ForEach(Array(events.enumerated()), id: \.element.id) { index, event in
+                            if index > 0 { Divider().overlay(Theme.border) }
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
                                 (Text(event.actor.label).fontWeight(.medium).foregroundStyle(Theme.textPrimary)
                                     + Text(" \(event.verb)").foregroundStyle(Theme.textSecondary))
@@ -294,9 +516,11 @@ struct ActivitySettingsView: View {
                                     .font(.system(size: 11))
                                     .foregroundStyle(Theme.textMuted)
                             }
-                            .cardSurface(padding: 12, radius: 12)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 12)
                         }
                     }
+                    .cardSurface(padding: 0)
                 }
             } else if let error {
                 InlineMessage(text: error)
@@ -510,7 +734,7 @@ struct AboutSettingsView: View {
 
     var body: some View {
         SettingsPane(title: String(localized: "About Marquee"), subtitle: String(localized: "Version, library stats, and where to get help.")) {
-            SettingsSectionLabel(text: String(localized: "Updates"))
+            SettingsSectionTitle(text: String(localized: "Updates"))
             VStack(alignment: .leading, spacing: 14) {
                 UpdateStatusView(style: .settings)
                 ServerUpdateLine(
@@ -535,7 +759,7 @@ struct AboutSettingsView: View {
                 }
                 .cardSurface(padding: 0)
 
-                SettingsSectionLabel(text: String(localized: "Getting Support"))
+                SettingsSectionTitle(text: String(localized: "Getting Support"))
                 VStack(spacing: 0) {
                     linkRow(String(localized: "Releases")) { openWindow(id: "changelog") }
                     linkRow(String(localized: "What the colors mean")) { openWindow(id: "status-colors") }
@@ -615,5 +839,18 @@ struct ServerUpdateLine: View {
                 .foregroundStyle(Theme.textPrimary)
             }
         }
+    }
+}
+
+/// A settings section's title, where a card brings its own layout
+/// (`SettingsSection` for the rest).
+struct SettingsSectionTitle: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Theme.textPrimary)
+            .accessibilityAddTraits(.isHeader)
     }
 }

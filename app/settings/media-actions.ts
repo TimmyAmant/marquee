@@ -70,7 +70,7 @@ export async function pollPlexLinkAction(
   if (poll.status === "pending") return { status: "pending" };
   if (poll.status === "expired") return { status: "error", error: (await getT())("settings.plexExpired") };
   if (!poll.ok) return { status: "error", error: poll.error };
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { status: "done" };
 }
 
@@ -84,7 +84,7 @@ export async function linkJellyfinAction(_prev: ActionResult | undefined, formDa
   }
   const result = await linkJellyfin(session.user.id, username, password, await clientIp());
   if (!result.ok) return { error: result.error };
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
 
@@ -118,14 +118,14 @@ export async function unlinkAction(provider: string): Promise<ActionResult> {
   if (provider === "sso") {
     const result = await unlinkSso(session.user.id);
     if (!result.ok) return { error: result.error };
-    revalidatePath("/settings");
+    revalidatePath("/settings", "layout");
     return { success: true };
   }
   const parsed = parseProvider(provider);
   if (!parsed) return { error: (await getT())("settings.invalidRequest") };
   const result = await unlinkAccount(session.user.id, parsed);
   if (!result.ok) return { error: result.error };
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
 
@@ -150,7 +150,7 @@ export async function importMembersAction(
   if (!parsed) return { error: (await getT())("settings.invalidRequest") };
   const result = await importMediaUsers(parsed, ids);
   if (!result.ok) return { error: result.error };
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { created: result.createdIds.length, skipped: result.skipped };
 }
 
@@ -159,7 +159,7 @@ export async function setMediaServerSignupAction(value: boolean): Promise<Action
   if (!admin.ok) return { error: admin.error };
   if (typeof value !== "boolean") return { error: (await getT())("settings.invalidRequest") };
   await setMediaServerSignup(value);
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
 

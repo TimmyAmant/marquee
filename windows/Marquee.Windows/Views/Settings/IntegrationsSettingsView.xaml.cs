@@ -7,16 +7,18 @@ using Microsoft.UI.Xaml.Controls;
 namespace Marquee.Windows.Views.Settings;
 
 /// <summary>
-/// Settings › Integrations, the admin's. The view owns the API key Revoke
-/// confirmation, because a ContentDialog needs its XamlRoot.
+/// Settings › General, Media servers and Services, the admin's, plus single
+/// sign-on under Members and one household channel under Notifications:
+/// each tab makes one for its <see cref="SettingsPart"/>. The view owns the
+/// API key Revoke confirmation, because a ContentDialog needs its XamlRoot.
 /// </summary>
 public sealed partial class IntegrationsSettingsView : UserControl, ISettingsTabView
 {
     public IntegrationsSettingsViewModel ViewModel { get; }
 
-    public IntegrationsSettingsView()
+    public IntegrationsSettingsView(SettingsPart part)
     {
-        ViewModel = new IntegrationsSettingsViewModel(AppServices.Model);
+        ViewModel = new IntegrationsSettingsViewModel(AppServices.Model, part);
         ViewModel.ApiKeys.RevokePrompt = ConfirmRevokeKeyAsync;
         InitializeComponent();
         ViewModel.ArrServers.Editor.PropertyChanged += OnArrServerEditorChanged;

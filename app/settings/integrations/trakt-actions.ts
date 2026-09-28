@@ -6,7 +6,7 @@ import { importTraktList } from "@/lib/integrations/trakt-import";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getT } from "@/lib/i18n/server";
 
-export type TraktSettingsState = { error?: string; success?: boolean };
+export type TraktSettingsState = { error?: string; success?: boolean; tested?: boolean };
 
 export async function testAndSaveTraktClientId(
   _prevState: TraktSettingsState | undefined,
@@ -15,8 +15,11 @@ export async function testAndSaveTraktClientId(
   const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
-  const result = await testAndSave(String(formData.get("clientId") || ""));
-  return result.ok ? { success: true } : { error: result.error };
+  // "Test" checks without saving; Save tests, then saves.
+  const dryRun = formData.get("intent") === "test";
+  const result = await testAndSave(String(formData.get("clientId") || ""), { dryRun });
+  if (!result.ok) return { error: result.error };
+  return dryRun ? { tested: true } : { success: true };
 }
 
 export async function disconnectTrakt(

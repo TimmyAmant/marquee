@@ -835,7 +835,8 @@ export async function runSeerrImport(
   warnings.push({ code: "notifications_not_imported" });
   report.finishedAt = new Date().toISOString();
   progress("done", 1, 1);
-  for (const path of ["/requests", "/settings", "/settings/integrations"]) revalidatePathSafely(path);
+  revalidatePathSafely("/requests");
+  revalidatePathSafely("/settings", "layout");
   return { ok: true, report };
 }
 

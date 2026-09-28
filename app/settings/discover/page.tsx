@@ -8,6 +8,7 @@ import { DiscoverSettingsEditor } from "./discover-settings";
 import { RegionLanguageSettings } from "./region-language-settings";
 import { getT } from "@/lib/i18n/server";
 import { languageName, regionName } from "@/lib/i18n/format";
+import { SettingsHeader } from "@/components/settings/settings-ui";
 
 export default async function DiscoverSettingsPage() {
   const viewer = await getViewerContext();
@@ -21,8 +22,7 @@ export default async function DiscoverSettingsPage() {
 
   return (
     <div>
-      <h2 className="font-display text-xl text-text-primary">{t("integrations.discoverTitle")}</h2>
-      <p className="mt-2 text-sm text-text-secondary">{t("integrations.discoverIntro")}</p>
+      <SettingsHeader title={t("integrations.discoverTitle")} description={t("integrations.discoverIntro")} />
       <DiscoverSettingsEditor
         initial={shelves}
         traktConfigured={Boolean(traktClientId)}

@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.56.0",
+    date: "2026-09-27",
+    changes: [
+      "Settings is redesigned, the same on the website, Mac and Windows: one row of tabs (Account, General, Members, Media servers, Services, Notifications, Discover, Blocklist, Jobs, Activity, About). Members only see the tabs that apply to them.",
+      "Every setting sits on its own row, with its name and a short explanation on the left and the control on the right, and each form has one Save button that tells you when it worked.",
+      "Plex, Jellyfin/Emby, Sonarr and Radarr show as tiles with their status and address, plus an \"Add\" tile. On the website \"Test\" now checks a connection without saving it.",
+      "Notifications has a tab for each household channel (Discord, ntfy, Telegram, Pushover, Email, Webhook) next to your own settings.",
+      "About shows whether a newer Marquee is out. Old Settings links still work.",
+    ],
+  },
+  {
     version: "0.55.0",
     date: "2026-09-27",
     changes: [

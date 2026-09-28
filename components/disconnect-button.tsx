@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { disconnectIntegrationAction } from "@/app/settings/integrations/disconnect-actions";
 import type { IntegrationProvider } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { showToast } from "@/components/toast";
 
 export function DisconnectButton({
   provider,
@@ -32,9 +33,11 @@ export function DisconnectButton({
       const result = await disconnectIntegrationAction(provider);
       if (result.error) {
         setError(result.error);
+        showToast(result.error, "error");
         return;
       }
       setConfirming(false);
+      showToast(t("settings.disconnectedToast", { name: label }));
       onSuccess?.();
       router.refresh();
     });

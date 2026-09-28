@@ -1,9 +1,9 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// app/settings/page.tsx + household-members-list.tsx + create-user-form.tsx.
-/// `GET /users` returns every account for an admin and only your own for a
-/// member, so one list covers both.
+/// Settings › Account (app/settings/page.tsx), everyone's: who you are, your
+/// own row of the household list, linked accounts, Trakt lists, and how
+/// Marquee looks on this Mac. The household's accounts are under Members.
 struct AccountSettingsView: View {
     @Environment(AppModel.self) private var model
     @AppStorage(AppearancePreference.storageKey) private var appearance = AppearancePreference.system.rawValue
@@ -12,157 +12,104 @@ struct AccountSettingsView: View {
     /// Settings › Show menu labels, per Mac.
     @AppStorage(NavRailPosition.labelsStorageKey) private var menuLabels = false
 
-    @State private var members: [API.HouseholdMember]?
-    @State private var loadError: String?
-    @State private var editing: API.HouseholdMember?
-    @State private var removing: API.HouseholdMember?
-    @State private var removeError: String?
     @State private var watchlist: API.PlexWatchlist?
-    /// Whose profile is open (0.53+).
-    @State private var profileOf: API.HouseholdMember?
 
     var body: some View {
-        SettingsPane(title: String(localized: "Account"), subtitle: String(localized: "Your Marquee account details.")) {
+        SettingsPane(
+            title: String(localized: "Account"),
+            subtitle: String(localized: "Your profile, how you sign in, and how Marquee looks on this device.")
+        ) {
             if let viewer = model.viewer {
-                VStack(alignment: .leading, spacing: 14) {
-                    detail(String(localized: "Name"), viewer.displayName.nonBlank ?? "—")
-                    detail(String(localized: "Username"), viewer.username)
-                    detail(String(localized: "Role"), viewer.roleLabel)
-                    detail(String(localized: "Server"), model.session.server?.displayName ?? "—")
-                    HStack(alignment: .bottom) {
-                        // This Mac's own look: the theme, and which edge of
-                        // the window the menu floats on.
-                        Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
-                            GridRow {
-                                Text("Appearance")
-                                Picker("Appearance", selection: $appearance) {
-                                    ForEach(AppearancePreference.allCases) { preference in
-                                        Text(preference.label).tag(preference.rawValue)
-                                    }
-                                }
-                                .pickerStyle(.segmented)
-                                .labelsHidden()
-                                .frame(width: 210)
-                            }
-                            GridRow {
-                                Text("Menu position")
-                                Picker("Menu position", selection: $menuPosition) {
-                                    ForEach(NavRailPosition.allCases) { position in
-                                        Text(position.label).tag(position.rawValue)
-                                    }
-                                }
-                                .pickerStyle(.segmented)
-                                .labelsHidden()
-                                .frame(width: 280)
-                            }
-                            GridRow {
-                                Text("Menu labels")
-                                Toggle("Show menu labels", isOn: $menuLabels)
-                                    .help("Names beside the menu's icons, and the server's version at the end.")
-                            }
-                            // 0.50+: the account's language, the same one
-                            // the website uses; an older server can't keep one.
-                            if viewer.sendsLanguage {
-                                GridRow {
-                                    Text("Language")
-                                    LanguagePicker(viewer: viewer)
-                                }
-                            }
-                        }
-                        Spacer()
-                        // 0.53+: your profile (app/profile).
-                        if model.session.serverInfo?.hasProfiles == true, let me = members?.first(where: \.isCurrentUser) {
-                            Button("View profile") { profileOf = me }
+                SettingsSection(title: String(localized: "Profile")) {
+                    SettingsGroup {
+                        SettingsRow(label: String(localized: "Name")) { SettingsValue(text: viewer.displayName.nonBlank ?? "—") }
+                        SettingsRow(label: String(localized: "Username")) { SettingsValue(text: viewer.username) }
+                        SettingsRow(label: String(localized: "Role")) { SettingsValue(text: viewer.roleLabel) }
+                        SettingsRow(label: String(localized: "Server")) { SettingsValue(text: model.session.server?.displayName ?? "—") }
+                        SettingsRow(
+                            label: String(localized: "Sign out"),
+                            help: String(localized: "Signs you out of Marquee on this Mac.")
+                        ) {
+                            Button("Sign out") { model.signOut() }
                                 .buttonStyle(OutlineButtonStyle())
                         }
-                        Button("Sign out") { model.signOut() }
-                            .buttonStyle(OutlineButtonStyle())
                     }
-                    .padding(.top, 4)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .cardSurface()
+
+                SettingsSection(
+                    title: String(localized: "Your account"),
+                    subtitle: String(localized: "Edit your name, username, or password below.")
+                ) {
+                    HouseholdMembersCard(onlyYou: true)
+                }
 
                 // Servers with Plex/Jellyfin sign-in send `linked` on /me.
                 if viewer.linked != nil {
-                    SettingsSectionLabel(text: String(localized: "Linked accounts"))
-                    LinkedAccountsCard(viewer: viewer)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .cardSurface()
-                    if watchlist?.available == true {
-                        PlexWatchlistCard(state: $watchlist)
+                    SettingsSection(title: String(localized: "Linked accounts")) {
+                        LinkedAccountsCard(viewer: viewer)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardSurface()
+                        if watchlist?.available == true {
+                            PlexWatchlistCard(state: $watchlist)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .cardSurface()
+                        }
                     }
                 }
 
                 // 0.49+: keep public Trakt lists in sync (every account).
                 TraktSyncsSection()
 
-                SettingsSectionLabel(text: String(localized: "Notifications"))
-                NotificationSettingsCard()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .cardSurface()
-                // 0.45+: your own channels and what you hear about.
-                PersonalNotificationsSection()
-
-                SettingsSectionLabel(text: viewer.isAdmin ? String(localized: "Household members") : String(localized: "Your account"))
-                Text(viewer.isAdmin
-                     ? "Everyone with an account on this Marquee server."
-                     : "Edit your name, username, or password below.")
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(Theme.textSecondary)
-
-                if let members {
-                    VStack(spacing: 0) {
-                        ForEach(Array(members.enumerated()), id: \.element.id) { index, member in
-                            if index > 0 { Divider().overlay(Theme.border) }
-                            memberRow(member, isAdmin: viewer.isAdmin)
+                // This Mac's own look: the theme, and which edge of the
+                // window the menu floats on.
+                SettingsSection(
+                    title: String(localized: "Appearance"),
+                    subtitle: String(localized: "How Marquee looks on this device.")
+                ) {
+                    SettingsGroup {
+                        SettingsRow(label: String(localized: "Appearance")) {
+                            Picker("Appearance", selection: $appearance) {
+                                ForEach(AppearancePreference.allCases) { preference in
+                                    Text(preference.label).tag(preference.rawValue)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .frame(width: 210)
+                        }
+                        SettingsRow(
+                            label: String(localized: "Menu position"),
+                            help: String(localized: "Which edge of the window the menu sits on.")
+                        ) {
+                            Picker("Menu position", selection: $menuPosition) {
+                                ForEach(NavRailPosition.allCases) { position in
+                                    Text(position.label).tag(position.rawValue)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .frame(width: 280)
+                        }
+                        SettingsRow(
+                            label: String(localized: "Show menu labels"),
+                            help: String(localized: "Names beside the menu's icons, and the server's version at the end.")
+                        ) {
+                            Toggle("Show menu labels", isOn: $menuLabels)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                        }
+                        // 0.50+: the account's language, the same one the
+                        // website uses; an older server can't keep one.
+                        if viewer.sendsLanguage {
+                            SettingsRow(
+                                label: String(localized: "Language"),
+                                help: String(localized: "The language Marquee is shown in for your account, on every device.")
+                            ) {
+                                LanguagePicker(viewer: viewer)
+                            }
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .cardSurface(padding: 0)
-                } else if let loadError {
-                    InlineMessage(text: loadError)
-                } else {
-                    ProgressView().controlSize(.small)
                 }
-
-                if let removeError { InlineMessage(text: removeError) }
-
-                if viewer.isAdmin {
-                    SettingsSectionLabel(text: String(localized: "Add a household member"))
-                    Text("There's no public signup — create accounts for other people in your household here.")
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(Theme.textSecondary)
-                    CreateMemberForm()
-                        .frame(maxWidth: .infinity)
-                        .cardSurface()
-
-                    if viewer.linked != nil {
-                        SettingsSectionLabel(text: String(localized: "Plex and \(model.session.serverInfo.jellyfinName) members"))
-                        MediaServerMembersCard()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .cardSurface()
-                    }
-                }
-
-                // The admin's, or a member's the admin handed it to (0.48+).
-                if viewer.can(.manageBlocklist) {
-                    BlocklistSettingsSection()
-                }
-            }
-        }
-        .task(id: ReloadKey(token: model.reloadToken, local: model.events.revision(of: .users))) {
-            do {
-                let fresh = try await model.api.users.list()
-                if Task.isCancelled { return }
-                members = fresh
-                loadError = nil
-            } catch let failure as APIError where failure.isCancellation {
-                return
-            } catch {
-                if members == nil { loadError = error.localizedDescription }
             }
         }
         .task {
@@ -182,6 +129,108 @@ struct AccountSettingsView: View {
                 // The card stays as it was; nothing else here depends on it.
             }
         }
+    }
+}
+
+/// Settings › Members (the admin's): every account, adding one by hand or
+/// from Plex/Jellyfin, and single sign-on.
+struct MembersSettingsView: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        SettingsPane(
+            title: String(localized: "Household members"),
+            subtitle: String(localized: "Everyone with an account on this Marquee server.")
+        ) {
+            HouseholdMembersCard(onlyYou: false)
+
+            SettingsSection(
+                title: String(localized: "Add a household member"),
+                subtitle: String(localized: "There's no public signup — create accounts for other people in your household here.")
+            ) {
+                CreateMemberForm()
+                    .frame(maxWidth: .infinity)
+                    .cardSurface()
+            }
+
+            if model.viewer?.linked != nil {
+                SettingsSection(title: String(localized: "Plex and \(model.session.serverInfo.jellyfinName) members")) {
+                    MediaServerMembersCard()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .cardSurface()
+                }
+            }
+
+            // 0.44+: single sign-on; nothing at all from an older server.
+            SsoSettingsSection()
+        }
+        .task {
+            await model.session.refreshInfo()
+        }
+    }
+}
+
+/// Settings › Blocklist: the admin's, or a member's it was handed to (0.48+).
+struct BlocklistSettingsView: View {
+    var body: some View {
+        SettingsPane(
+            title: String(localized: "Request blocklist"),
+            subtitle: String(localized: "Titles and keywords nobody can request. You can still add them yourself.")
+        ) {
+            BlocklistSettingsSection()
+        }
+    }
+}
+
+/// household-members-list.tsx: `GET /users` returns every account for an
+/// admin and only your own for a member. `onlyYou` keeps just your own row
+/// (Settings › Account); Members shows them all.
+private struct HouseholdMembersCard: View {
+    let onlyYou: Bool
+
+    @Environment(AppModel.self) private var model
+    @State private var members: [API.HouseholdMember]?
+    @State private var loadError: String?
+    @State private var editing: API.HouseholdMember?
+    @State private var removing: API.HouseholdMember?
+    @State private var removeError: String?
+    /// Whose profile is open (0.53+).
+    @State private var profileOf: API.HouseholdMember?
+
+    var body: some View {
+        let isAdmin = model.viewer?.isAdmin == true
+        let shown = onlyYou ? members?.filter(\.isCurrentUser) : members
+
+        VStack(alignment: .leading, spacing: 12) {
+            if let shown {
+                VStack(spacing: 0) {
+                    ForEach(Array(shown.enumerated()), id: \.element.id) { index, member in
+                        if index > 0 { Divider().overlay(Theme.border) }
+                        memberRow(member, isAdmin: isAdmin)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .cardSurface(padding: 0)
+            } else if let loadError {
+                InlineMessage(text: loadError)
+            } else {
+                ProgressView().controlSize(.small)
+            }
+
+            if let removeError { InlineMessage(text: removeError) }
+        }
+        .task(id: ReloadKey(token: model.reloadToken, local: model.events.revision(of: .users))) {
+            do {
+                let fresh = try await model.api.users.list()
+                if Task.isCancelled { return }
+                members = fresh
+                loadError = nil
+            } catch let failure as APIError where failure.isCancellation {
+                return
+            } catch {
+                if members == nil { loadError = error.localizedDescription }
+            }
+        }
         .sheet(item: $editing) { member in
             EditMemberSheet(member: member)
                 .environment(model)
@@ -199,17 +248,6 @@ struct AccountSettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: { _ in
             Text("Their favorites, requests, and notifications are removed with the account.")
-        }
-    }
-
-    private func detail(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundStyle(Theme.textMuted)
-            Text(value)
-                .font(.system(size: 13.5))
-                .foregroundStyle(Theme.textPrimary)
         }
     }
 
@@ -348,7 +386,7 @@ private struct LanguagePicker: View {
 /// app/settings/push-settings.tsx's switch, for this Mac: banners for this
 /// account's notifications, which come straight from the Marquee server over
 /// `LiveUpdates`' stream. The bell has them either way.
-private struct NotificationSettingsCard: View {
+struct NotificationSettingsCard: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
 
@@ -509,13 +547,14 @@ private struct CreateMemberForm: View {
             SettingsField(label: String(localized: "Name"), text: $displayName)
             SettingsField(label: String(localized: "Username"), text: $username)
             SettingsField(label: String(localized: "Password"), text: $password, secure: true)
-            if let error { InlineMessage(text: error) }
-            if let createdName {
-                InlineMessage(text: String(localized: "Account created — \(createdName) can now sign in."), isError: false)
-            }
-            Button(pending ? "Creating…" : "Create account") { create() }
-                .buttonStyle(AccentButtonStyle())
-                .disabled(pending)
+            SettingsSaveBar(
+                title: String(localized: "Create account"),
+                pendingTitle: String(localized: "Creating…"),
+                pending: pending,
+                message: error.map { ($0, true) }
+                    ?? createdName.map { (String(localized: "Account created — \($0) can now sign in."), false) },
+                action: create
+            )
         }
     }
 

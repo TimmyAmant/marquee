@@ -86,7 +86,7 @@ export function PersonalNotifications() {
 
   if (!data || !prefs) {
     return (
-      <div className="mt-4 max-w-2xl rounded-2xl border border-border bg-bg-1 p-6 text-sm text-text-muted">
+      <div className="mt-9 rounded-2xl border border-border bg-bg-1 p-6 text-sm text-text-muted">
         {error ?? t("common.loading")}
       </div>
     );
@@ -94,9 +94,9 @@ export function PersonalNotifications() {
 
   return (
     <>
-      <h3 className="mt-8 font-display text-lg text-text-primary">{t("settings.yourChannels")}</h3>
+      <h3 className="mt-9 text-base font-semibold text-text-primary">{t("settings.yourChannels")}</h3>
       <p className="mt-1 text-sm text-text-secondary">{t("settings.yourChannelsIntro")}</p>
-      <div className="mt-4 max-w-2xl overflow-hidden rounded-2xl border border-border bg-bg-1">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-bg-1">
         {data.channels.length === 0 && (
           <p className="px-6 pt-5 text-sm text-text-muted">{t("settings.noChannels")}</p>
         )}
@@ -108,7 +108,7 @@ export function PersonalNotifications() {
         <AddChannel available={data.available} onAdded={refresh} />
       </div>
 
-      <h3 className="mt-8 font-display text-lg text-text-primary">{t("settings.whatYouHearAbout")}</h3>
+      <h3 className="mt-9 text-base font-semibold text-text-primary">{t("settings.whatYouHearAbout")}</h3>
       <p className="mt-1 text-sm text-text-secondary">{t("settings.whatYouHearAboutIntro")}</p>
       <PreferenceMatrix rows={prefs} channels={data.channels} onSaved={setPrefs} />
     </>
@@ -530,7 +530,7 @@ function PreferenceMatrix({
   }
 
   return (
-    <div className="mt-4 max-w-2xl overflow-x-auto rounded-2xl border border-border bg-bg-1 text-sm">
+    <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-bg-1 text-sm">
       <table className="w-full min-w-[26rem]">
         <thead>
           <tr>

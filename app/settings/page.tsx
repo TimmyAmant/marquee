@@ -2,32 +2,28 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { CreateUserForm } from "./create-user-form";
 import { HouseholdMembersList } from "./household-members-list";
 import { SignOutButton } from "./sign-out-button";
-import { PushSettings } from "./push-settings";
-import { PersonalNotifications } from "./personal-notifications";
 import { RailLabelsSetting, RailPositionSetting } from "./rail-position-setting";
 import { LanguageSetting } from "./language-setting";
 import { storedLanguage } from "@/lib/users/language";
 import { parseRailLabels, parseRailPosition, RAIL_COOKIE, RAIL_LABELS_COOKIE } from "@/lib/rail-position";
 import { listHouseholdMembers } from "./users-actions";
 import { LinkedAccounts } from "./linked-accounts";
-import { ImportMembers } from "./import-members";
-import { BlocklistSettings } from "./blocklist-settings";
-import { listBlocklist } from "@/lib/requests/blocklist";
-import { blocklistEntryDto } from "@/lib/api/mappers";
 import { PlexWatchlistCard } from "./plex-watchlist";
 import { getWatchlistState } from "@/lib/plex/watchlist";
-import { getMediaServerSignup, getSignInMethods } from "@/lib/auth/media-signin";
+import { getSignInMethods } from "@/lib/auth/media-signin";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
 import { parseSsoErrorCode, ssoErrorMessage } from "@/lib/auth/sso/messages";
-import { can } from "@/lib/users/permissions";
 import { TraktSyncsCard } from "./trakt-syncs";
 import { getT } from "@/lib/i18n/server";
 import { loadTraktSyncs } from "@/lib/trakt/sync";
+import { SettingRow, SettingsGroup, SettingsHeader, SettingsSection, SettingValue } from "@/components/settings/settings-ui";
 
+/** Settings › Account, everyone's: who you are, how you sign in, your
+ * Trakt lists and how Marquee looks here. The household's accounts are
+ * under Members (the admin's); notifications have their own tab. */
 export default async function AccountSettingsPage({
   searchParams,
 }: {
@@ -38,17 +34,12 @@ export default async function AccountSettingsPage({
   const t = await getT();
 
   const isAdmin = session.user.role === "admin";
-  // The blocklist can be handed to a member (lib/users/permissions.ts).
-  const managesBlocklist = can(session.user, "manageBlocklist");
-  const [members, methods, mediaServerSignup, watchlist, blocklistRows, traktSyncs] = await Promise.all([
+  const [members, methods, watchlist, traktSyncs] = await Promise.all([
     listHouseholdMembers(),
     getSignInMethods(),
-    isAdmin ? getMediaServerSignup() : Promise.resolve(true),
     getWatchlistState(session.user.id),
-    managesBlocklist ? listBlocklist() : Promise.resolve([]),
     loadTraktSyncs(session.user),
   ]);
-  const blocklist = blocklistRows.map(blocklistEntryDto);
   const cookieStore = await cookies();
   const railPosition = parseRailPosition(cookieStore.get(RAIL_COOKIE)?.value);
   const railLabels = parseRailLabels(cookieStore.get(RAIL_LABELS_COOKIE)?.value);
@@ -65,49 +56,62 @@ export default async function AccountSettingsPage({
         : null;
   // Your own row is always in the list (members see only theirs).
   const me = members.find((member) => member.id === session.user.id);
+  const showsLinked =
+    me && (available.plex || available.jellyfin || ssoName || me.plexLinked || me.jellyfinLinked || me.ssoLinked);
 
   return (
     <div>
-      <h2 className="font-display text-xl text-text-primary">{t("settings.accountHeading")}</h2>
-      <p className="mt-2 text-sm text-text-secondary">{t("settings.accountIntro")}</p>
+      <SettingsHeader title={t("settings.accountHeading")} description={t("settings.accountPageIntro")} />
 
-      <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
-        <div className="flex flex-col gap-4 text-sm">
-          {/* Your photo opens your profile (app/profile). */}
-          <Link href="/profile" className="flex w-fit items-center gap-3 rounded-full pr-3 hover:bg-text-primary/5">
-            <UserAvatar
-              label={session.user.name || session.user.username || "?"}
-              src={me ? avatarPath(me, "/api") : null}
-              size={56}
+      <SettingsSection title={t("settings.profileHeading")}>
+        <SettingsGroup>
+          <SettingRow label={t("settings.photoLabel")} help={t("settings.photoRowHelp")}>
+            {/* Your photo opens your profile (app/profile). */}
+            <Link href="/profile" className="flex w-fit items-center gap-3 rounded-full pr-3 hover:bg-text-primary/5">
+              <UserAvatar
+                label={session.user.name || session.user.username || "?"}
+                src={me ? avatarPath(me, "/api") : null}
+                size={44}
+              />
+              <span className="text-[13px] font-medium text-accent">{t("settings.profileView")}</span>
+            </Link>
+          </SettingRow>
+          <SettingRow label={t("settings.nameLabel")}>
+            <SettingValue>{session.user.name || "—"}</SettingValue>
+          </SettingRow>
+          <SettingRow label={t("settings.usernameLabel")}>
+            <SettingValue>{session.user.username}</SettingValue>
+          </SettingRow>
+          <SettingRow label={t("settings.signOut")} help={t("settings.signOutHelp")}>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
+            >
+              <SignOutButton />
+            </form>
+          </SettingRow>
+        </SettingsGroup>
+      </SettingsSection>
+
+      {/* Name, username, password and photo: your own row of the household list. */}
+      {me && (
+        <SettingsSection title={t("settings.yourAccountHeading")} description={t("settings.yourAccountIntro")}>
+          <div className="overflow-hidden rounded-2xl border border-border bg-bg-1">
+            <HouseholdMembersList
+              members={[me]}
+              currentUserId={session.user.id}
+              isAdmin={isAdmin}
+              jellyfinName={methods.jellyfinName}
             />
-            <span className="text-[13px] font-medium text-accent">{t("settings.profileView")}</span>
-          </Link>
-          <div>
-            <p className="text-text-muted">{t("settings.nameLabel")}</p>
-            <p className="mt-1 text-text-primary">{session.user.name || "—"}</p>
           </div>
-          <div>
-            <p className="text-text-muted">{t("settings.usernameLabel")}</p>
-            <p className="mt-1 text-text-primary">{session.user.username}</p>
-          </div>
-        </div>
+        </SettingsSection>
+      )}
 
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-          className="mt-6"
-        >
-          <SignOutButton />
-        </form>
-      </div>
-
-      {me && (available.plex || available.jellyfin || ssoName || me.plexLinked || me.jellyfinLinked || me.ssoLinked) && (
-        <>
-          <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.linkedAccountsHeading")}</h2>
-          <p className="mt-2 text-sm text-text-secondary">{t("settings.linkedAccountsIntro")}</p>
-          <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+      {me && showsLinked && (
+        <SettingsSection title={t("settings.linkedAccountsHeading")} description={t("settings.linkedAccountsIntro")}>
+          <div className="overflow-hidden rounded-2xl border border-border bg-bg-1">
             <LinkedAccounts
               linked={{ plex: me.plexLinked, jellyfin: me.jellyfinLinked, sso: me.ssoLinked }}
               available={available}
@@ -117,81 +121,26 @@ export default async function AccountSettingsPage({
             />
           </div>
           {watchlist.available && (
-            <div className="mt-4 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
+            <div className="overflow-hidden rounded-2xl border border-border bg-bg-1">
               <PlexWatchlistCard initial={watchlist} />
             </div>
           )}
-        </>
+        </SettingsSection>
       )}
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.traktListsHeading")}</h2>
-      <p className="mt-2 text-sm text-text-secondary">{t("settings.traktListsIntro")}</p>
-      <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-        <TraktSyncsCard initial={traktSyncs} currentUserId={session.user.id} />
-      </div>
+      <SettingsSection title={t("settings.traktListsHeading")} description={t("settings.traktListsIntro")}>
+        <div className="overflow-hidden rounded-2xl border border-border bg-bg-1">
+          <TraktSyncsCard initial={traktSyncs} currentUserId={session.user.id} />
+        </div>
+      </SettingsSection>
 
-      <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.notificationsHeading")}</h2>
-      <p className="mt-2 text-sm text-text-secondary">{t("settings.notificationsIntro")}</p>
-      <PushSettings />
-      <PersonalNotifications />
-
-      <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.appearanceHeading")}</h2>
-      <p className="mt-2 text-sm text-text-secondary">{t("settings.appearanceIntro")}</p>
-      <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-        <RailPositionSetting initial={railPosition} />
-        <div className="border-t border-border">
+      <SettingsSection title={t("settings.appearanceHeading")} description={t("settings.appearanceIntro")}>
+        <SettingsGroup>
+          <RailPositionSetting initial={railPosition} />
           <RailLabelsSetting initial={railLabels} />
-        </div>
-        <div className="border-t border-border">
           <LanguageSetting initial={storedLanguage(session.user.language)} />
-        </div>
-      </div>
-
-      <h2 className="mt-10 font-display text-xl text-text-primary">
-        {isAdmin ? t("settings.householdMembersHeading") : t("settings.yourAccountHeading")}
-      </h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        {isAdmin
-          ? t("settings.householdMembersIntro")
-          : t("settings.yourAccountIntro")}
-      </p>
-      <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-        <HouseholdMembersList members={members} currentUserId={session.user.id} isAdmin={isAdmin} jellyfinName={methods.jellyfinName} />
-      </div>
-
-      {isAdmin && (
-        <>
-          <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.addMemberHeading")}</h2>
-          <p className="mt-2 text-sm text-text-secondary">{t("settings.addMemberIntro")}</p>
-          <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
-            <CreateUserForm />
-          </div>
-
-          {(available.plex || available.jellyfin) && (
-            <>
-              <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.importHeading")}</h2>
-              <p className="mt-2 text-sm text-text-secondary">{t("settings.importIntro")}</p>
-              <div className="mt-6 max-w-md rounded-2xl border border-border bg-bg-1 p-6">
-                <ImportMembers
-                  available={available}
-                  mediaServerSignup={mediaServerSignup}
-                  jellyfinName={methods.jellyfinName}
-                />
-              </div>
-            </>
-          )}
-        </>
-      )}
-
-      {managesBlocklist && (
-        <>
-          <h2 className="mt-10 font-display text-xl text-text-primary">{t("settings.blocklistHeading")}</h2>
-          <p className="mt-2 text-sm text-text-secondary">{t("settings.blocklistIntro")}</p>
-          <div className="mt-6 max-w-md overflow-hidden rounded-2xl border border-border bg-bg-1">
-            <BlocklistSettings entries={blocklist} />
-          </div>
-        </>
-      )}
+        </SettingsGroup>
+      </SettingsSection>
     </div>
   );
 }

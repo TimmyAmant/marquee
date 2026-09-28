@@ -71,6 +71,12 @@ describe("notification channel settings", () => {
     expect(await getChannelConfig("email")).toBeNull();
   });
 
+  it("Test sends the test message but saves nothing", async () => {
+    expect(await testAndSaveTelegram({ botToken, chatId: "111" }, { dryRun: true })).toEqual({ ok: true });
+    expect(verify.telegram).toHaveBeenCalledTimes(1);
+    expect(await getChannelConfig("telegram")).toBeNull();
+  });
+
   it("keeps a saved token when it's left blank", async () => {
     expect(await testAndSaveTelegram({ botToken, chatId: "111" })).toEqual({ ok: true });
     expect(await testAndSaveTelegram({ botToken: "", chatId: "222" })).toEqual({ ok: true });

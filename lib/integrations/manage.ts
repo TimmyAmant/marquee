@@ -43,6 +43,10 @@ import { verifyWebhookUrl } from "@/lib/webhook/client";
 import type { CoreResult } from "@/lib/core-result";
 import { failT } from "@/lib/core-failure";
 
+/** Settings' "Test" button: check the connection (and send any test
+ * message) without saving it. */
+export type TestOptions = { dryRun?: boolean };
+
 // Settings → Integrations operations shared by the web's server actions
 // (app/settings/integrations/*-actions.ts) and /api/v1/settings/integrations/*.
 // Every function here assumes the caller already verified the actor is the
@@ -54,7 +58,7 @@ function isArrInstance(provider: IntegrationProvider): provider is ArrInstance {
 }
 
 export function revalidateIntegrations() {
-  revalidatePath("/settings/integrations");
+  revalidatePath("/settings", "layout");
 }
 
 export { normalizeServerUrl } from "@/lib/arr/server-input";
@@ -161,6 +165,7 @@ export async function disconnectIntegration(adminUserId: string, provider: Integ
 export async function testAndSaveJellyfinConnection(
   adminUserId: string,
   input: { baseUrl: string; apiKey: string; publicUrl?: string | null },
+  options: TestOptions = {},
 ): Promise<CoreResult> {
   const baseUrl = normalizeServerUrl(input.baseUrl);
   const apiKey = input.apiKey.trim();
@@ -179,6 +184,8 @@ export async function testAndSaveJellyfinConnection(
     return await failT("upstream", "server.couldNotConnect");
   }
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await upsertJellyfinCredential(adminUserId, { baseUrl, apiKey, publicUrl: publicUrl || null });
   revalidateIntegrations();
   return { ok: true };
@@ -242,37 +249,43 @@ export async function syncNowForUser(userId: string): Promise<CoreResult> {
   return failed ? await failT("upstream", "server.someSyncsFailed") : { ok: true };
 }
 
-export async function testAndSaveTmdbToken(rawToken: string): Promise<CoreResult> {
+export async function testAndSaveTmdbToken(rawToken: string, options: TestOptions = {}): Promise<CoreResult> {
   const token = rawToken.trim();
   if (!token) return await failT("invalid", "server.enterAccessToken");
 
   const valid = await verifyTmdbAccessToken(token).catch(() => false);
   if (!valid) return await failT("invalid", "server.tmdbTokenInvalid");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setTmdbAccessToken(token);
   revalidateIntegrations();
   return { ok: true };
 }
 
-export async function testAndSaveTraktClientId(rawClientId: string): Promise<CoreResult> {
+export async function testAndSaveTraktClientId(rawClientId: string, options: TestOptions = {}): Promise<CoreResult> {
   const clientId = rawClientId.trim();
   if (!clientId) return await failT("invalid", "server.enterTraktClientId");
 
   const valid = await verifyTraktClientId(clientId).catch(() => false);
   if (!valid) return await failT("invalid", "server.traktClientIdInvalid");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setTraktClientId(clientId);
   revalidateIntegrations();
   return { ok: true };
 }
 
-export async function testAndSaveTvdbApiKey(rawApiKey: string): Promise<CoreResult> {
+export async function testAndSaveTvdbApiKey(rawApiKey: string, options: TestOptions = {}): Promise<CoreResult> {
   const apiKey = rawApiKey.trim();
   if (!apiKey) return await failT("invalid", "server.enterTvdbKey");
 
   const valid = await verifyTvdbApiKey(apiKey).catch(() => false);
   if (!valid) return await failT("invalid", "server.tvdbKeyInvalid");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setTvdbApiKey(apiKey);
   revalidateIntegrations();
   return { ok: true };
@@ -280,7 +293,7 @@ export async function testAndSaveTvdbApiKey(rawApiKey: string): Promise<CoreResu
 
 /** Settings › Integrations › OMDb (ratings): the key is tried against OMDb
  * before it's saved. */
-export async function testAndSaveOmdbApiKey(rawApiKey: string): Promise<CoreResult> {
+export async function testAndSaveOmdbApiKey(rawApiKey: string, options: TestOptions = {}): Promise<CoreResult> {
   const apiKey = rawApiKey.trim();
   if (!apiKey) return await failT("invalid", "server.enterOmdbKey");
 
@@ -292,12 +305,14 @@ export async function testAndSaveOmdbApiKey(rawApiKey: string): Promise<CoreResu
   }
   if (!valid) return await failT("invalid", "server.omdbKeyInvalid");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setOmdbApiKey(apiKey);
   revalidateIntegrations();
   return { ok: true };
 }
 
-export async function testAndSaveDiscordWebhook(rawUrl: string): Promise<CoreResult> {
+export async function testAndSaveDiscordWebhook(rawUrl: string, options: TestOptions = {}): Promise<CoreResult> {
   const webhookUrl = rawUrl.trim();
   if (!webhookUrl) return await failT("invalid", "server.enterDiscordWebhook");
   if (!webhookUrl.startsWith("https://discord.com/api/webhooks/")) {
@@ -307,12 +322,14 @@ export async function testAndSaveDiscordWebhook(rawUrl: string): Promise<CoreRes
   const valid = await verifyDiscordWebhook(webhookUrl);
   if (!valid) return await failT("invalid", "server.discordTestFailed");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setDiscordWebhookUrl(webhookUrl);
   revalidateIntegrations();
   return { ok: true };
 }
 
-export async function testAndSaveNtfyTopic(rawUrl: string): Promise<CoreResult> {
+export async function testAndSaveNtfyTopic(rawUrl: string, options: TestOptions = {}): Promise<CoreResult> {
   const topicUrl = rawUrl.trim();
   if (!topicUrl) return await failT("invalid", "server.enterNtfyTopic");
   if (!topicUrl.startsWith("http://") && !topicUrl.startsWith("https://")) {
@@ -322,12 +339,14 @@ export async function testAndSaveNtfyTopic(rawUrl: string): Promise<CoreResult> 
   const valid = await verifyNtfyUrl(topicUrl);
   if (!valid) return await failT("invalid", "server.ntfyTestFailed");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setNtfyUrl(topicUrl);
   revalidateIntegrations();
   return { ok: true };
 }
 
-export async function testAndSaveGenericWebhookUrl(rawUrl: string): Promise<CoreResult> {
+export async function testAndSaveGenericWebhookUrl(rawUrl: string, options: TestOptions = {}): Promise<CoreResult> {
   const webhookUrl = rawUrl.trim();
   if (!webhookUrl) return await failT("invalid", "server.enterWebhookUrl");
   if (!webhookUrl.startsWith("http://") && !webhookUrl.startsWith("https://")) {
@@ -337,6 +356,8 @@ export async function testAndSaveGenericWebhookUrl(rawUrl: string): Promise<Core
   const valid = await verifyWebhookUrl(webhookUrl);
   if (!valid) return await failT("invalid", "server.webhookTestFailed");
 
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await setGenericWebhookUrl(webhookUrl);
   revalidateIntegrations();
   return { ok: true };

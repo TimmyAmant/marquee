@@ -7,12 +7,14 @@ namespace Marquee.Windows.ViewModels;
 
 /// <summary>
 /// Settings itself (app/settings/layout.tsx with components/settings-nav.tsx,
-/// the Mac's SettingsRootView): which tabs the viewer gets (Integrations,
-/// Discover, Activity and Jobs are the admin's) and which one shows. The tab
-/// lives on <see cref="AppModel.SettingsTab"/>, so it's remembered while the
-/// app runs and links elsewhere can pick it; each tab has its own view and
-/// model. Discover shows once the server answered <c>GET /settings/discover</c>
-/// (0.49+; an older one answers 404 and the tab stays hidden).
+/// the Mac's SettingsRootView): which tabs the viewer gets
+/// (<see cref="SettingsTabs.Visible"/>: everyone has Account, Notifications
+/// and About; Blocklist whoever may manage it; the rest the admin) and which
+/// one shows. The tab lives on <see cref="AppModel.SettingsTab"/>, so it's
+/// remembered while the app runs and links elsewhere can pick it; each tab
+/// has its own view and model. Discover shows once the server answered
+/// <c>GET /settings/discover</c> (0.49+; an older one answers 404 and the
+/// tab stays hidden).
 /// </summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -26,37 +28,34 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         this.model = model;
         IsAdmin = model.Viewer?.IsAdmin == true;
+        CanManageBlocklist = model.Viewer?.Can?.ManageBlocklist == true;
     }
 
     /// <summary>The admin's tabs show.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentTab))]
-    [NotifyPropertyChangedFor(nameof(ShowsDiscoverTab))]
+    [NotifyPropertyChangedFor(nameof(VisibleTabs))]
     private bool isAdmin;
+
+    /// <summary>The Blocklist tab shows for a member the admin handed it to (0.48+).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentTab))]
+    [NotifyPropertyChangedFor(nameof(VisibleTabs))]
+    private bool canManageBlocklist;
 
     /// <summary>The server has Settings › Discover (0.49+).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentTab))]
-    [NotifyPropertyChangedFor(nameof(ShowsDiscoverTab))]
+    [NotifyPropertyChangedFor(nameof(VisibleTabs))]
     private bool hasDiscoverSettings;
 
-    /// <summary>The Discover tab: the admin's, on a server that has it.</summary>
-    public bool ShowsDiscoverTab => IsAdmin && HasDiscoverSettings;
+    /// <summary>The tabs across the top, in order.</summary>
+    public IReadOnlyList<SettingsTab> VisibleTabs => SettingsTabs.Visible(IsAdmin, CanManageBlocklist, HasDiscoverSettings);
 
-    /// <summary>
-    /// The tab on screen: a member sent to an admin tab lands on Account, and
-    /// so does anyone sent to Discover on a server without it.
-    /// </summary>
-    public SettingsTab CurrentTab
-    {
-        get
-        {
-            var tab = model.SettingsTab.Visible(IsAdmin);
-            return tab == SettingsTab.Discover && !HasDiscoverSettings ? SettingsTab.Account : tab;
-        }
-    }
+    /// <summary>The tab on screen: one the viewer can't see (an old link, a demotion) lands on Account.</summary>
+    public SettingsTab CurrentTab => SettingsTabs.Current(model.SettingsTab, VisibleTabs);
 
-    /// <summary>The page shows <see cref="CurrentTab"/>'s view (already on the UI thread).</summary>
+    /// <summary>The page shows <see cref="CurrentTab"/>'s view and the tab row (already on the UI thread).</summary>
     public event EventHandler? CurrentTabChanged;
 
     /// <summary>A tab button: remembered for the rest of the run.</summary>
@@ -71,6 +70,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         active = true;
         model.PropertyChanged += OnModelPropertyChanged;
         IsAdmin = model.Viewer?.IsAdmin == true;
+        CanManageBlocklist = model.Viewer?.Can?.ManageBlocklist == true;
         _ = ProbeDiscoverSettingsAsync();
     }
 
@@ -89,6 +89,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         CurrentTabChanged?.Invoke(this, EventArgs.Empty);
         _ = ProbeDiscoverSettingsAsync();
     }
+
+    partial void OnCanManageBlocklistChanged(bool value) => CurrentTabChanged?.Invoke(this, EventArgs.Empty);
 
     partial void OnHasDiscoverSettingsChanged(bool value) => CurrentTabChanged?.Invoke(this, EventArgs.Empty);
 
@@ -131,6 +133,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             // A promotion (or demotion) adds or takes away the admin's tabs.
             IsAdmin = viewer.IsAdmin;
+            CanManageBlocklist = viewer.Can?.ManageBlocklist == true;
             _ = ProbeDiscoverSettingsAsync();
         }
     }

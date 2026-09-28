@@ -5,9 +5,10 @@ import { revalidatePath } from "next/cache";
  * request to attach the revalidation to and revalidatePath throws. There's
  * nothing cached to refresh from there anyway: the next page load reads
  * fresh data. */
-export function revalidatePathSafely(path: string): void {
+export function revalidatePathSafely(path: string, type?: "page" | "layout"): void {
   try {
-    revalidatePath(path);
+    if (type) revalidatePath(path, type);
+    else revalidatePath(path);
   } catch (err) {
     if (err instanceof Error && err.message.includes("static generation store missing")) return;
     throw err;

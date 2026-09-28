@@ -5,7 +5,7 @@ import { clearIntegrationSetting, testAndSaveNtfyTopic } from "@/lib/integration
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getT } from "@/lib/i18n/server";
 
-export type NtfySettingsState = { error?: string; success?: boolean };
+export type NtfySettingsState = { error?: string; success?: boolean; tested?: boolean };
 
 export async function testAndSaveNtfy(
   _prevState: NtfySettingsState | undefined,
@@ -14,8 +14,11 @@ export async function testAndSaveNtfy(
   const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
-  const result = await testAndSaveNtfyTopic(String(formData.get("topicUrl") || ""));
-  return result.ok ? { success: true } : { error: result.error };
+  // "Test" checks without saving; Save tests, then saves.
+  const dryRun = formData.get("intent") === "test";
+  const result = await testAndSaveNtfyTopic(String(formData.get("topicUrl") || ""), { dryRun });
+  if (!result.ok) return { error: result.error };
+  return dryRun ? { tested: true } : { success: true };
 }
 
 export async function disconnectNtfy(

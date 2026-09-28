@@ -130,7 +130,7 @@ private struct LibraryAllTitlesTab: View {
                 : String(localized: "The household admin hasn't connected Plex, Jellyfin, Sonarr or Radarr yet."),
             systemImage: "books.vertical",
             actionTitle: isAdmin ? String(localized: "Connect an integration") : nil,
-            action: isAdmin ? { model.openSettings(.integrations) } : nil
+            action: isAdmin ? { model.openSettings(.mediaServers) } : nil
         )
     }
 
@@ -323,7 +323,7 @@ private struct LibraryAllTitlesTab: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
                     if isAdmin {
-                        Button(String(localized: "Review integrations")) { model.openSettings(.integrations) }
+                        Button(String(localized: "Review integrations")) { model.openSettings(.mediaServers) }
                             .buttonStyle(OutlineButtonStyle(compact: true))
                     }
                 }
@@ -739,7 +739,7 @@ private struct LibraryStorageTab: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
                 if isAdmin {
-                    Button("Connect an integration") { model.openSettings(.integrations) }
+                    Button("Connect an integration") { model.openSettings(.services) }
                         .buttonStyle(OutlineButtonStyle(compact: true))
                 }
             } else {

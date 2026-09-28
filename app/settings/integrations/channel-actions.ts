@@ -16,7 +16,13 @@ import { getT } from "@/lib/i18n/server";
 
 /** `values`: what was typed, handed back after a failed test so the form
  * (which React resets after every submission) can show it again. */
-export type ChannelState = { error?: string; success?: boolean; removed?: boolean; values?: Record<string, string> };
+export type ChannelState = {
+  error?: string;
+  success?: boolean;
+  tested?: boolean;
+  removed?: boolean;
+  values?: Record<string, string>;
+};
 
 const SAVE = {
   telegram: testAndSaveTelegram,
@@ -36,8 +42,11 @@ export async function saveChannelAction(_prev: ChannelState | undefined, formDat
   const fields = Object.fromEntries(
     [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
-  const result = await SAVE[kind](fields);
+  // "Test" sends the test message without saving; Save tests, then saves.
+  const dryRun = fields.intent === "test";
+  const result = await SAVE[kind](fields, { dryRun });
   if (!result.ok) return { error: result.error, values: fields };
+  if (dryRun) return { tested: true, values: fields };
   revalidateIntegrations();
   return { success: true };
 }

@@ -69,5 +69,19 @@
   "groupPeople": "Personnes",
   "groupStudiosNetworks": "Studios et chaînes",
   "searchSuggestions": "Suggestions de recherche",
-  "searchAllResults": "Voir tous les résultats pour « {query} »"
+  "searchAllResults": "Voir tous les résultats pour « {query} »",
+  "settingsGeneral": "Général",
+  "settingsMembers": "Membres",
+  "settingsMediaServers": "Serveurs multimédias",
+  "settingsServices": "Services",
+  "settingsNotifications": "Notifications",
+  "settingsBlocklist": "Liste de blocage",
+  "notificationsPersonal": "Personnelles",
+  "notificationsHousehold": "Événements du foyer",
+  "notificationsDiscord": "Discord",
+  "notificationsNtfy": "ntfy",
+  "notificationsTelegram": "Telegram",
+  "notificationsPushover": "Pushover",
+  "notificationsEmail": "E-mail",
+  "notificationsWebhook": "Webhook"
 }

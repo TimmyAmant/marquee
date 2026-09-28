@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// app/settings/blocklist-settings.tsx — Settings › Account (admin), "Request
-/// blocklist": what nobody may request. Titles are blocked from their page;
+/// app/settings/blocklist-settings.tsx — Settings › Blocklist: what nobody may request. Titles are blocked from their page;
 /// keywords and genres here. A server older than 0.41 answers 404, and then
 /// the whole section stays hidden.
 struct BlocklistSettingsSection: View {
@@ -21,11 +20,6 @@ struct BlocklistSettingsSection: View {
     var body: some View {
         if !unsupported {
             VStack(alignment: .leading, spacing: 14) {
-                SettingsSectionLabel(text: String(localized: "Request blocklist"))
-                Text("Titles and keywords nobody can request. You can still add them yourself.")
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(Theme.textSecondary)
-
                 VStack(alignment: .leading, spacing: 0) {
                     list
                     Divider().overlay(Theme.border)

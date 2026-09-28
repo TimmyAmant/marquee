@@ -120,7 +120,7 @@ export async function testArrServerConnection(
 }
 
 function revalidateServers() {
-  revalidatePath("/settings/integrations");
+  revalidatePath("/settings", "layout");
   revalidatePath("/discover");
 }
 

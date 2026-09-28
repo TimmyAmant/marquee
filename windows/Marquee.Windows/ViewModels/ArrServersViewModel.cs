@@ -26,11 +26,21 @@ public sealed partial class ArrServersViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoSonarr))]
+    [NotifyPropertyChangedFor(nameof(SonarrTiles))]
     private IReadOnlyList<ArrServerRow> sonarrServers = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoRadarr))]
+    [NotifyPropertyChangedFor(nameof(RadarrTiles))]
     private IReadOnlyList<ArrServerRow> radarrServers = [];
+
+    /// <summary>The Sonarr tiles: each server, then the "Add Sonarr server" tile (the website's and the Mac's).</summary>
+    public IReadOnlyList<object> SonarrTiles =>
+        [.. SonarrServers, new ArrAddTile(Loc.Get("Arr_AddSonarrTile"), AddSonarrCommand)];
+
+    /// <summary>The Radarr tiles, then "Add Radarr server".</summary>
+    public IReadOnlyList<object> RadarrTiles =>
+        [.. RadarrServers, new ArrAddTile(Loc.Get("Arr_AddRadarrTile"), AddRadarrCommand)];
 
     public bool HasNoSonarr => SonarrServers.Count == 0;
     public bool HasNoRadarr => RadarrServers.Count == 0;
@@ -67,10 +77,14 @@ public sealed partial class ArrServersViewModel : ObservableObject
     internal void Edit(ArrServerRow row) => Editor.OpenEdit(row.Server);
 }
 
+/// <summary>The dashed "Add … server" tile at the end of a kind's tiles.</summary>
+public sealed record ArrAddTile(string Label, System.Windows.Input.ICommand Command);
+
 /// <summary>
-/// One server in the list: its name, URL and badges (Default, 4K, Needs
-/// setup), Edit, Make default and Remove (confirmed in place), and its own
-/// webhook URL with Copy and Regenerate (confirmed in place too).
+/// One server's tile: its name, URL and badges (Default, 4K, Needs setup),
+/// Edit, Make default and Remove (confirmed in place), and — behind
+/// Webhook, like the Mac's tile — its own webhook URL with Copy and
+/// Regenerate (confirmed in place too).
 /// </summary>
 public sealed partial class ArrServerRow : ObservableObject
 {
@@ -156,6 +170,16 @@ public sealed partial class ArrServerRow : ObservableObject
     public string RemovePrompt => Loc.Format("Arr_RemovePrompt", Name);
     public string RemoveConfirmLabel => Busy == "remove" ? Loc.Get("Arr_Removing") : Loc.Get("Arr_Remove");
     public bool ShowsRegenerate => !IsConfirmingRegenerate;
+
+    /// <summary>The webhook URL shows when asked for (Webhook / Hide webhook), like the Mac's tile.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WebhookToggleLabel))]
+    private bool showsWebhook;
+
+    public string WebhookToggleLabel => ShowsWebhook ? Loc.Get("Arr_HideWebhook") : Loc.Get("Arr_ShowWebhook");
+
+    [RelayCommand]
+    private void ToggleWebhook() => ShowsWebhook = !ShowsWebhook;
     public string RegenerateConfirmLabel => Busy == "webhook" ? Loc.Get("Arr_Regenerating") : Loc.Get("Arr_Confirm");
     public bool HasError => Error != null;
 

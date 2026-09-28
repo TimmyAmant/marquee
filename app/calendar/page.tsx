@@ -36,7 +36,7 @@ export default async function CalendarPage({
         </p>
         {isAdmin && (
           <Link
-            href="/settings/integrations"
+            href="/settings/services"
             className="mt-6 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover"
           >
             {t("discover.connectIntegration")}

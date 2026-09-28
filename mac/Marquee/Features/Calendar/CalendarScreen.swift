@@ -23,7 +23,7 @@ struct CalendarScreen: View {
                         : String(localized: "The household admin hasn't connected Sonarr or Radarr yet."),
                     systemImage: "calendar",
                     actionTitle: model.viewer?.isAdmin == true ? String(localized: "Connect an integration") : nil,
-                    action: model.viewer?.isAdmin == true ? { model.openSettings(.integrations) } : nil
+                    action: model.viewer?.isAdmin == true ? { model.openSettings(.services) } : nil
                 )
                 .frame(maxHeight: .infinity)
             } else if let error, page == nil {

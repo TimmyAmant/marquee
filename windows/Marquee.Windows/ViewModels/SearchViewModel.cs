@@ -266,7 +266,7 @@ public sealed partial class SearchViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.General);
 
     /// <summary>The page's own search box: a new query is a new page on the stack, like the website's URL.</summary>
     [RelayCommand]

@@ -1293,7 +1293,7 @@ public sealed partial class TitleViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.Services);
 
     // MARK: Reload triggers
 

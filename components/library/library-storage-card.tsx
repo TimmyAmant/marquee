@@ -36,7 +36,7 @@ export function LibraryStorageCard({
         <h2 className="font-display text-xl text-text-primary">{t("library.storageTitle")}</h2>
         <p className="mt-2 text-sm text-text-secondary">{isAdmin ? t("library.storageEmpty") : t("library.storageEmptyMember")}</p>
         {isAdmin && (
-          <Link href="/settings/integrations" className="mt-3 inline-block text-sm text-accent hover:text-accent-hover">
+          <Link href="/settings/services" className="mt-3 inline-block text-sm text-accent hover:text-accent-hover">
             {t("discover.connectIntegration")}
           </Link>
         )}

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const delivered = await pushToUser(session.user.id, {
     title: "Marquee",
     body: (await getT())("server.pushTestBody"),
-    url: "/settings",
+    url: "/settings/notifications",
     tag: randomUUID(),
   });
   return NextResponse.json({ ok: true, delivered });

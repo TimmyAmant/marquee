@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Settings › Integrations (app/settings/integrations/page.tsx, the Mac's
+  Settings › General, Media servers and Services (app/settings/general, media-servers and services, the Mac's
+  IntegrationsSettingsView), the admin's, each tab its own part (ViewModel.Part), plus single
+  sign-on under Members and one household channel at a time under Notifications. Once it was all one tab:
   IntegrationsSettingsView), the admin's: Media Libraries (Plex, Jellyfin or
   Emby), Sign-in (single sign-on on a 0.44+ server), Download Clients (any number of Sonarr and Radarr servers on a
   0.43+ server; before that Sonarr, Radarr, and the 4K ones on a 0.37+
@@ -78,14 +80,18 @@
                                 Visibility="{x:Bind IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Grid>
-                    <TextBox
-                        x:Uid="Integrations_ArrServerUrl"
-                        PlaceholderText="{x:Bind BaseUrlPlaceholder}"
-                        Text="{x:Bind BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <PasswordBox
-                        x:Uid="Integrations_ArrApiKey"
-                        PlaceholderText="{x:Bind ApiKeyPlaceholder, Mode=OneWay}"
-                        Password="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <controls:SettingsRow>
+                        <TextBox
+                            x:Uid="Integrations_ArrServerUrl"
+                            PlaceholderText="{x:Bind BaseUrlPlaceholder}"
+                            Text="{x:Bind BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow>
+                        <PasswordBox
+                            x:Uid="Integrations_ArrApiKey"
+                            PlaceholderText="{x:Bind ApiKeyPlaceholder, Mode=OneWay}"
+                            Password="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
                     <InfoBar
                         IsOpen="{x:Bind HasError, Mode=OneWay}"
                         Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -108,16 +114,20 @@
                             x:Uid="Integrations_ArrDefaultsIntro"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <ComboBox
-                            x:Uid="Integrations_ArrRootFolder"
-                            MinWidth="260"
-                            ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
-                            SelectedIndex="{x:Bind SelectedRootFolderIndex, Mode=TwoWay}" />
-                        <ComboBox
-                            x:Uid="Integrations_ArrQualityProfile"
-                            MinWidth="260"
-                            ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
-                            SelectedIndex="{x:Bind SelectedQualityProfileIndex, Mode=TwoWay}" />
+                        <controls:SettingsRow>
+                            <ComboBox
+                                x:Uid="Integrations_ArrRootFolder"
+                                MinWidth="260"
+                                ItemsSource="{x:Bind RootFolders, Mode=OneWay}"
+                                SelectedIndex="{x:Bind SelectedRootFolderIndex, Mode=TwoWay}" />
+                        </controls:SettingsRow>
+                        <controls:SettingsRow>
+                            <ComboBox
+                                x:Uid="Integrations_ArrQualityProfile"
+                                MinWidth="260"
+                                ItemsSource="{x:Bind QualityProfiles, Mode=OneWay}"
+                                SelectedIndex="{x:Bind SelectedQualityProfileIndex, Mode=TwoWay}" />
+                        </controls:SettingsRow>
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <Button Content="{x:Bind SaveDefaultsLabel, Mode=OneWay}" Command="{x:Bind SaveDefaultsCommand}" />
                             <TextBlock
@@ -142,25 +152,23 @@
         <DataTemplate x:Key="ArrServerRowTemplate" x:DataType="vm:ArrServerRow">
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel Spacing="12">
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                                <controls:TonePill Text="{x:Bind DefaultBadge, Mode=OneWay}" Tone="{x:Bind DefaultTone}" VerticalAlignment="Center" />
-                                <controls:TonePill Text="{x:Bind FourKBadge, Mode=OneWay}" Tone="{x:Bind FourKTone}" VerticalAlignment="Center" />
-                                <controls:TonePill Text="{x:Bind SetupBadge, Mode=OneWay}" Tone="{x:Bind SetupTone}" VerticalAlignment="Center" />
-                            </StackPanel>
+                    <!-- A tile (Seerr's service cards): name and address, its badges, then its actions. -->
+                    <StackPanel Spacing="10">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                             <TextBlock
                                 Text="{x:Bind BaseUrl, Mode=OneWay}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="Wrap" />
+                                TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:TonePill Text="{x:Bind SetupBadge, Mode=OneWay}" Tone="{x:Bind SetupTone}" VerticalAlignment="Center" />
+                            <controls:TonePill Text="{x:Bind DefaultBadge, Mode=OneWay}" Tone="{x:Bind DefaultTone}" VerticalAlignment="Center" />
+                            <controls:TonePill Text="{x:Bind FourKBadge, Mode=OneWay}" Tone="{x:Bind FourKTone}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <StackPanel
                                 Orientation="Horizontal"
                                 Spacing="8"
@@ -172,6 +180,7 @@
                                     IsEnabled="{x:Bind CanAct, Mode=OneWay}"
                                     Visibility="{x:Bind IsDefault, Mode=OneWay, Converter={StaticResource InvertedBoolToVisibility}}" />
                                 <Button x:Uid="Arr_RowRemove" Command="{x:Bind AskRemoveCommand}" IsEnabled="{x:Bind CanAct, Mode=OneWay}" />
+                                <Button Content="{x:Bind WebhookToggleLabel, Mode=OneWay}" Command="{x:Bind ToggleWebhookCommand}" />
                             </StackPanel>
                             <StackPanel
                                 Orientation="Horizontal"
@@ -186,8 +195,8 @@
                                 <Button x:Uid="Arr_RowCancelRemove" Command="{x:Bind CancelRemoveCommand}" />
                             </StackPanel>
                         </StackPanel>
-                    </Grid>
-                    <StackPanel Spacing="6">
+                    </StackPanel>
+                    <StackPanel Spacing="6" Visibility="{x:Bind ShowsWebhook, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock x:Uid="Arr_RowWebhookLabel" Style="{StaticResource FieldLabel}" />
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -231,6 +240,37 @@
             </Border>
         </DataTemplate>
 
+        <!-- The dashed "Add … server" tile after a kind's servers. -->
+        <DataTemplate x:Key="ArrAddTileTemplate" x:DataType="vm:ArrAddTile">
+            <Grid MinHeight="132">
+                <Rectangle
+                    RadiusX="8"
+                    RadiusY="8"
+                    Stroke="{ThemeResource ControlStrokeColorDefaultBrush}"
+                    StrokeThickness="1"
+                    StrokeDashArray="4,3" />
+                <Button
+                    Command="{x:Bind Command}"
+                    AutomationProperties.Name="{x:Bind Label}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    CornerRadius="8">
+                    <StackPanel Spacing="6">
+                        <FontIcon Glyph="&#xE710;" FontSize="18" />
+                        <TextBlock Text="{x:Bind Label}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </DataTemplate>
+        <controls:ArrTileTemplateSelector
+            x:Key="ArrTileSelector"
+            ServerTemplate="{StaticResource ArrServerRowTemplate}"
+            AddTemplate="{StaticResource ArrAddTileTemplate}" />
+
         <!-- One Sonarr/Radarr tag in a tags picker. -->
         <DataTemplate x:Key="TagChoiceTemplate" x:DataType="vm:TagChoice">
             <CheckBox Content="{x:Bind Label}" IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
@@ -261,10 +301,12 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap" />
-                    <PasswordBox
-                        Header="{x:Bind FieldLabel}"
-                        PlaceholderText="{x:Bind Placeholder, Mode=OneWay}"
-                        Password="{x:Bind Secret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <controls:SettingsRow>
+                        <PasswordBox
+                            Header="{x:Bind FieldLabel}"
+                            PlaceholderText="{x:Bind Placeholder, Mode=OneWay}"
+                            Password="{x:Bind Secret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
                     <InfoBar
                         IsOpen="{x:Bind HasError, Mode=OneWay}"
                         Visibility="{x:Bind HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -294,20 +336,20 @@
 
     <StackPanel Spacing="20">
         <!-- The pane's heading, with Sync now on the right. -->
-        <Grid ColumnSpacing="16">
+        <Grid ColumnSpacing="16" Visibility="{x:Bind ViewModel.ShowsHeading, Converter={StaticResource BoolToVisibility}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock x:Uid="Integrations_Heading" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="{x:Bind ViewModel.Heading}" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    x:Uid="Integrations_Intro"
+                    Text="{x:Bind ViewModel.Intro}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
             </StackPanel>
-            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right">
+            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right" Visibility="{x:Bind ViewModel.ShowsSync, Converter={StaticResource BoolToVisibility}}">
                 <Button
                     Content="{x:Bind ViewModel.SyncLabel, Mode=OneWay}"
                     Command="{x:Bind ViewModel.SyncNowCommand}"
@@ -349,7 +391,7 @@
 
         <StackPanel Spacing="28" Visibility="{x:Bind ViewModel.HasOverview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <!-- Media Libraries -->
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsMediaServersPart, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_MediaLibraries" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                 <!-- components/plex-connect-card.tsx -->
@@ -440,13 +482,17 @@
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
-                        <TextBox
-                            x:Uid="Integrations_JellyfinUrl"
-                            Text="{x:Bind ViewModel.Jellyfin.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <PasswordBox
-                            x:Uid="Integrations_JellyfinApiKey"
-                            PlaceholderText="{x:Bind ViewModel.Jellyfin.ApiKeyPlaceholder, Mode=OneWay}"
-                            Password="{x:Bind ViewModel.Jellyfin.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <controls:SettingsRow>
+                            <TextBox
+                                x:Uid="Integrations_JellyfinUrl"
+                                Text="{x:Bind ViewModel.Jellyfin.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
+                        <controls:SettingsRow>
+                            <PasswordBox
+                                x:Uid="Integrations_JellyfinApiKey"
+                                PlaceholderText="{x:Bind ViewModel.Jellyfin.ApiKeyPlaceholder, Mode=OneWay}"
+                                Password="{x:Bind ViewModel.Jellyfin.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
                         <InfoBar
                             IsOpen="{x:Bind ViewModel.Jellyfin.HasError, Mode=OneWay}"
                             Visibility="{x:Bind ViewModel.Jellyfin.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -473,6 +519,7 @@
               one answers GET /settings/sso with 404). The client secret is
               write-only: the card only knows whether one is saved.
             -->
+            <StackPanel Visibility="{x:Bind ViewModel.ShowsSignInPart, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Sso.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_SignInHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Border Style="{StaticResource SettingsCard}">
@@ -493,10 +540,12 @@
                             <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Sso.OnBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Sso.OnTone}" VerticalAlignment="Center" />
                         </Grid>
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Integrations_SsoButtonName"
-                                MaxLength="40"
-                                Text="{x:Bind ViewModel.Sso.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_SsoButtonName"
+                                    MaxLength="40"
+                                    Text="{x:Bind ViewModel.Sso.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Integrations_SsoButtonNameHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -504,10 +553,12 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Integrations_SsoPublicUrl"
-                                IsSpellCheckEnabled="False"
-                                Text="{x:Bind ViewModel.Sso.PublicUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_SsoPublicUrl"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.Sso.PublicUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Integrations_SsoPublicUrlHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -568,23 +619,29 @@
                                 Foreground="{ThemeResource SystemFillColorCautionBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
-                        <TextBox
-                            x:Uid="Integrations_SsoClientId"
-                            IsSpellCheckEnabled="False"
-                            Text="{x:Bind ViewModel.Sso.ClientId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <PasswordBox
-                            x:Uid="Integrations_SsoClientSecret"
-                            PlaceholderText="{x:Bind ViewModel.Sso.ClientSecretPlaceholder, Mode=OneWay}"
-                            Password="{x:Bind ViewModel.Sso.ClientSecret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <controls:SettingsRow>
+                            <TextBox
+                                x:Uid="Integrations_SsoClientId"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.Sso.ClientId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
+                        <controls:SettingsRow>
+                            <PasswordBox
+                                x:Uid="Integrations_SsoClientSecret"
+                                PlaceholderText="{x:Bind ViewModel.Sso.ClientSecretPlaceholder, Mode=OneWay}"
+                                Password="{x:Bind ViewModel.Sso.ClientSecret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
                         <CheckBox
                             x:Uid="Integrations_SsoClearSecret"
                             IsChecked="{x:Bind ViewModel.Sso.ClearClientSecret, Mode=TwoWay}"
                             Visibility="{x:Bind ViewModel.Sso.HasClientSecret, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Integrations_SsoScopes"
-                                IsSpellCheckEnabled="False"
-                                Text="{x:Bind ViewModel.Sso.Scopes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_SsoScopes"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.Sso.Scopes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Integrations_SsoScopesHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -612,10 +669,12 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Integrations_SsoRequiredGroup"
-                                IsSpellCheckEnabled="False"
-                                Text="{x:Bind ViewModel.Sso.RequiredGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_SsoRequiredGroup"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.Sso.RequiredGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Integrations_SsoRequiredGroupHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -623,20 +682,24 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Integrations_SsoTrustedGroup"
-                                IsSpellCheckEnabled="False"
-                                Text="{x:Bind ViewModel.Sso.TrustedGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_SsoTrustedGroup"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.Sso.TrustedGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Integrations_SsoTrustedGroupHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
-                        <TextBox
-                            x:Uid="Integrations_SsoGroupsClaim"
-                            IsSpellCheckEnabled="False"
-                            Text="{x:Bind ViewModel.Sso.GroupsClaim, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <controls:SettingsRow>
+                            <TextBox
+                                x:Uid="Integrations_SsoGroupsClaim"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.Sso.GroupsClaim, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
                         <InfoBar
                             IsOpen="{x:Bind ViewModel.Sso.HasError, Mode=OneWay}"
                             Visibility="{x:Bind ViewModel.Sso.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -664,13 +727,14 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+            </StackPanel>
 
             <!--
               Download Clients: on a 0.43+ server any number of Sonarr and
               Radarr servers, with one Add/Edit form under the lists; before
               that Sonarr, Radarr, then the 4K ones on a 0.37+ server.
             -->
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsServicesPart, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_DownloadClients" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ItemsRepeater
                     ItemsSource="{x:Bind ViewModel.ArrCards, Mode=OneWay}"
@@ -689,42 +753,28 @@
                         TextWrapping="Wrap" />
 
                     <!-- Sonarr servers -->
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Sonarr" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" x:Uid="Arr_AddSonarr" Command="{x:Bind ViewModel.ArrServers.AddSonarrCommand}" />
-                    </Grid>
+                    <TextBlock Text="Sonarr" Style="{StaticResource BodyStrongTextBlockStyle}" />
                     <TextBlock
                         x:Uid="Arr_NoSonarr"
                         Visibility="{x:Bind ViewModel.ArrServers.HasNoSonarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.SonarrServers, Mode=OneWay}" ItemTemplate="{StaticResource ArrServerRowTemplate}">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.SonarrTiles, Mode=OneWay}" ItemTemplate="{StaticResource ArrTileSelector}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Vertical" Spacing="12" />
+                            <UniformGridLayout MinItemWidth="320" MinColumnSpacing="12" MinRowSpacing="12" ItemsStretch="Fill" />
                         </ItemsRepeater.Layout>
                     </ItemsRepeater>
 
                     <!-- Radarr servers -->
-                    <Grid ColumnSpacing="12" Margin="0,8,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Radarr" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" x:Uid="Arr_AddRadarr" Command="{x:Bind ViewModel.ArrServers.AddRadarrCommand}" />
-                    </Grid>
+                    <TextBlock Text="Radarr" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,8,0,0" />
                     <TextBlock
                         x:Uid="Arr_NoRadarr"
                         Visibility="{x:Bind ViewModel.ArrServers.HasNoRadarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.RadarrServers, Mode=OneWay}" ItemTemplate="{StaticResource ArrServerRowTemplate}">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.RadarrTiles, Mode=OneWay}" ItemTemplate="{StaticResource ArrTileSelector}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Vertical" Spacing="12" />
+                            <UniformGridLayout MinItemWidth="320" MinColumnSpacing="12" MinRowSpacing="12" ItemsStretch="Fill" />
                         </ItemsRepeater.Layout>
                     </ItemsRepeater>
 
@@ -735,19 +785,25 @@
                         Visibility="{x:Bind ViewModel.ArrServers.Editor.IsOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <TextBlock Text="{x:Bind ViewModel.ArrServers.Editor.Title, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBox
-                                x:Uid="Arr_EditorName"
-                                MaxLength="60"
-                                Text="{x:Bind ViewModel.ArrServers.Editor.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBox
-                                x:Uid="Arr_EditorUrl"
-                                PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.BaseUrlPlaceholder, Mode=OneWay}"
-                                Text="{x:Bind ViewModel.ArrServers.Editor.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Arr_EditorName"
+                                    MaxLength="60"
+                                    Text="{x:Bind ViewModel.ArrServers.Editor.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Arr_EditorUrl"
+                                    PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.BaseUrlPlaceholder, Mode=OneWay}"
+                                    Text="{x:Bind ViewModel.ArrServers.Editor.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <StackPanel Spacing="4">
-                                <PasswordBox
-                                    x:Uid="Arr_EditorApiKey"
-                                    PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.ApiKeyPlaceholder, Mode=OneWay}"
-                                    Password="{x:Bind ViewModel.ArrServers.Editor.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <PasswordBox
+                                        x:Uid="Arr_EditorApiKey"
+                                        PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.ApiKeyPlaceholder, Mode=OneWay}"
+                                        Password="{x:Bind ViewModel.ArrServers.Editor.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     Text="{x:Bind ViewModel.ArrServers.Editor.KeyAgainMessage}"
                                     Visibility="{x:Bind ViewModel.ArrServers.Editor.NeedsKeyAgain, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -802,16 +858,20 @@
                                     x:Uid="Arr_EditorUsedWhenAdding"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                <ComboBox
-                                    x:Uid="Arr_EditorQualityProfile"
-                                    MinWidth="260"
-                                    ItemsSource="{x:Bind ViewModel.ArrServers.Editor.QualityProfiles, Mode=OneWay}"
-                                    SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.QualityProfileIndex, Mode=TwoWay}" />
-                                <ComboBox
-                                    x:Uid="Arr_EditorRootFolder"
-                                    MinWidth="260"
-                                    ItemsSource="{x:Bind ViewModel.ArrServers.Editor.RootFolders, Mode=OneWay}"
-                                    SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.RootFolderIndex, Mode=TwoWay}" />
+                                <controls:SettingsRow>
+                                    <ComboBox
+                                        x:Uid="Arr_EditorQualityProfile"
+                                        MinWidth="260"
+                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.QualityProfiles, Mode=OneWay}"
+                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.QualityProfileIndex, Mode=TwoWay}" />
+                                </controls:SettingsRow>
+                                <controls:SettingsRow>
+                                    <ComboBox
+                                        x:Uid="Arr_EditorRootFolder"
+                                        MinWidth="260"
+                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.RootFolders, Mode=OneWay}"
+                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.RootFolderIndex, Mode=TwoWay}" />
+                                </controls:SettingsRow>
                                 <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                     <TextBlock x:Uid="Arr_EditorTags" Style="{StaticResource FieldLabel}" />
                                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.Editor.Tags, Mode=OneWay}" ItemTemplate="{StaticResource TagChoiceTemplate}">
@@ -824,11 +884,13 @@
 
                             <!-- Sonarr only: series type and season folders, then the anime overrides. -->
                             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ArrServers.Editor.IsSonarr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                <ComboBox
-                                    x:Uid="Arr_EditorSeriesType"
-                                    MinWidth="260"
-                                    ItemsSource="{x:Bind ViewModel.ArrServers.Editor.SeriesTypes}"
-                                    SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.SeriesTypeIndex, Mode=TwoWay}" />
+                                <controls:SettingsRow>
+                                    <ComboBox
+                                        x:Uid="Arr_EditorSeriesType"
+                                        MinWidth="260"
+                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.SeriesTypes}"
+                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.SeriesTypeIndex, Mode=TwoWay}" />
+                                </controls:SettingsRow>
                                 <ToggleSwitch
                                     x:Uid="Arr_EditorSeasonFolders"
                                     IsOn="{x:Bind ViewModel.ArrServers.Editor.SeasonFolders, Mode=TwoWay}" />
@@ -838,16 +900,20 @@
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         TextWrapping="Wrap" />
-                                    <ComboBox
-                                        x:Uid="Arr_EditorAnimeQualityProfile"
-                                        MinWidth="260"
-                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfiles, Mode=OneWay}"
-                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfileIndex, Mode=TwoWay}" />
-                                    <ComboBox
-                                        x:Uid="Arr_EditorAnimeRootFolder"
-                                        MinWidth="260"
-                                        ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolders, Mode=OneWay}"
-                                        SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolderIndex, Mode=TwoWay}" />
+                                    <controls:SettingsRow>
+                                        <ComboBox
+                                            x:Uid="Arr_EditorAnimeQualityProfile"
+                                            MinWidth="260"
+                                            ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfiles, Mode=OneWay}"
+                                            SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeQualityProfileIndex, Mode=TwoWay}" />
+                                    </controls:SettingsRow>
+                                    <controls:SettingsRow>
+                                        <ComboBox
+                                            x:Uid="Arr_EditorAnimeRootFolder"
+                                            MinWidth="260"
+                                            ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolders, Mode=OneWay}"
+                                            SelectedIndex="{x:Bind ViewModel.ArrServers.Editor.AnimeRootFolderIndex, Mode=TwoWay}" />
+                                    </controls:SettingsRow>
                                     <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ArrServers.Editor.HasTags, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                                         <TextBlock x:Uid="Arr_EditorAnimeTags" Style="{StaticResource FieldLabel}" />
                                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.Editor.AnimeTags, Mode=OneWay}" ItemTemplate="{StaticResource TagChoiceTemplate}">
@@ -885,7 +951,7 @@
             </StackPanel>
 
             <!-- Metadata Sources -->
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsGeneralPart, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_MetadataSources" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ContentControl
                     Content="{x:Bind ViewModel.Tmdb}"
@@ -901,9 +967,11 @@
                 <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsTraktImport, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Spacing="12">
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Integrations_TraktImportList"
-                                Text="{x:Bind ViewModel.TraktImport.ListUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_TraktImportList"
+                                    Text="{x:Bind ViewModel.TraktImport.ListUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Integrations_TraktImportHelp"
                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -944,14 +1012,42 @@
               household's notifications are posted. Each account adds its
               own under Settings > Account > Notifications.
             -->
-            <StackPanel Spacing="12">
-                <TextBlock x:Uid="Integrations_HouseholdChannels" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsChannelsSection, Converter={StaticResource BoolToVisibility}}">
+                <!-- Notifications › Household events: what the household's channels post (0.45+). -->
+                <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsHouseholdEventsPart, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Uid="HouseholdEvents_Title" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="HouseholdEvents_Intro"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.HouseholdEvents.Rows, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="260" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:HouseholdEventRow">
+                                    <CheckBox Content="{x:Bind Label}" IsChecked="{x:Bind IsEnabled, Mode=TwoWay}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.HouseholdEvents.Status, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
 
                 <!--
                   components/webhook-settings-card.tsx. On a 0.43+ server each
                   Sonarr/Radarr server shows its own webhook under Download
                   Clients instead (the shared URLs keep working).
                 -->
+                <StackPanel Visibility="{x:Bind ViewModel.ShowsServicesPart, Converter={StaticResource BoolToVisibility}}">
                 <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsArrCards, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Spacing="14">
                         <Grid ColumnSpacing="12">
@@ -1013,14 +1109,17 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                </StackPanel>
 
                 <ContentControl
                     Content="{x:Bind ViewModel.Discord}"
+                    Visibility="{x:Bind ViewModel.ShowsDiscordPart, Converter={StaticResource BoolToVisibility}}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
                 <ContentControl
                     Content="{x:Bind ViewModel.Ntfy}"
+                    Visibility="{x:Bind ViewModel.ShowsNtfyPart, Converter={StaticResource BoolToVisibility}}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
@@ -1033,7 +1132,7 @@
                   connected. Admin-only, and only from a 0.36+ server.
                 -->
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Channels.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <Border Style="{StaticResource SettingsCard}">
+                    <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsTelegramPart, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
@@ -1051,10 +1150,12 @@
                                 <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Telegram.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Telegram.ConnectedTone}" VerticalAlignment="Center" />
                             </Grid>
                             <StackPanel Spacing="4">
-                                <PasswordBox
-                                    x:Uid="Integrations_TelegramBotToken"
-                                    PlaceholderText="{x:Bind ViewModel.Channels.Telegram.SecretPlaceholder, Mode=OneWay}"
-                                    Password="{x:Bind ViewModel.Channels.Telegram.BotToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <PasswordBox
+                                        x:Uid="Integrations_TelegramBotToken"
+                                        PlaceholderText="{x:Bind ViewModel.Channels.Telegram.SecretPlaceholder, Mode=OneWay}"
+                                        Password="{x:Bind ViewModel.Channels.Telegram.BotToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_TelegramBotTokenHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1062,9 +1163,11 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <TextBox
-                                    x:Uid="Integrations_TelegramChatId"
-                                    Text="{x:Bind ViewModel.Channels.Telegram.ChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Integrations_TelegramChatId"
+                                        Text="{x:Bind ViewModel.Channels.Telegram.ChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_TelegramChatIdHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1101,7 +1204,7 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource SettingsCard}">
+                    <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsPushoverPart, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
@@ -1119,10 +1222,12 @@
                                 <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Pushover.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Pushover.ConnectedTone}" VerticalAlignment="Center" />
                             </Grid>
                             <StackPanel Spacing="4">
-                                <PasswordBox
-                                    x:Uid="Integrations_PushoverAppToken"
-                                    PlaceholderText="{x:Bind ViewModel.Channels.Pushover.SecretPlaceholder, Mode=OneWay}"
-                                    Password="{x:Bind ViewModel.Channels.Pushover.AppToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <PasswordBox
+                                        x:Uid="Integrations_PushoverAppToken"
+                                        PlaceholderText="{x:Bind ViewModel.Channels.Pushover.SecretPlaceholder, Mode=OneWay}"
+                                        Password="{x:Bind ViewModel.Channels.Pushover.AppToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_PushoverAppTokenHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1130,9 +1235,11 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <PasswordBox
-                                    x:Uid="Integrations_PushoverUserKey"
-                                    Password="{x:Bind ViewModel.Channels.Pushover.UserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <PasswordBox
+                                        x:Uid="Integrations_PushoverUserKey"
+                                        Password="{x:Bind ViewModel.Channels.Pushover.UserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_PushoverUserKeyHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1169,7 +1276,7 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource SettingsCard}">
+                    <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsEmailPart, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
@@ -1187,14 +1294,18 @@
                                 <controls:TonePill Grid.Column="1" Text="{x:Bind ViewModel.Channels.Email.ConnectedBadge, Mode=OneWay}" Tone="{x:Bind ViewModel.Channels.Email.ConnectedTone}" VerticalAlignment="Center" />
                             </Grid>
                             <StackPanel Spacing="4">
-                                <TextBox
-                                    x:Uid="Integrations_EmailHost"
-                                    Text="{x:Bind ViewModel.Channels.Email.Host, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Integrations_EmailHost"
+                                        Text="{x:Bind ViewModel.Channels.Email.Host, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <TextBox
-                                    x:Uid="Integrations_EmailPort"
-                                    Text="{x:Bind ViewModel.Channels.Email.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Integrations_EmailPort"
+                                        Text="{x:Bind ViewModel.Channels.Email.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_EmailPortHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1202,15 +1313,19 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <TextBox
-                                    x:Uid="Integrations_EmailUsername"
-                                    Text="{x:Bind ViewModel.Channels.Email.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Integrations_EmailUsername"
+                                        Text="{x:Bind ViewModel.Channels.Email.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <PasswordBox
-                                    x:Uid="Integrations_EmailPassword"
-                                    PlaceholderText="{x:Bind ViewModel.Channels.Email.SecretPlaceholder, Mode=OneWay}"
-                                    Password="{x:Bind ViewModel.Channels.Email.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <PasswordBox
+                                        x:Uid="Integrations_EmailPassword"
+                                        PlaceholderText="{x:Bind ViewModel.Channels.Email.SecretPlaceholder, Mode=OneWay}"
+                                        Password="{x:Bind ViewModel.Channels.Email.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_EmailPasswordHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1218,14 +1333,18 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <TextBox
-                                    x:Uid="Integrations_EmailFrom"
-                                    Text="{x:Bind ViewModel.Channels.Email.From, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Integrations_EmailFrom"
+                                        Text="{x:Bind ViewModel.Channels.Email.From, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <TextBox
-                                    x:Uid="Integrations_EmailTo"
-                                    Text="{x:Bind ViewModel.Channels.Email.To, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Integrations_EmailTo"
+                                        Text="{x:Bind ViewModel.Channels.Email.To, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
                                 <TextBlock
                                     x:Uid="Integrations_EmailToHelp"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1269,31 +1388,10 @@
 
                 <ContentControl
                     Content="{x:Bind ViewModel.GenericWebhook}"
+                    Visibility="{x:Bind ViewModel.ShowsWebhookPart, Converter={StaticResource BoolToVisibility}}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
-            </StackPanel>
-
-            <!--
-              Coming from Seerr? (0.51+): components/seerr-import-card.tsx.
-              The import itself (connect, preview, run) is the website's
-              page, opened in the browser on the server's own address.
-            -->
-            <StackPanel Spacing="12">
-                <TextBlock x:Uid="Integrations_SeerrHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Border Style="{StaticResource SettingsCard}">
-                    <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Uid="Integrations_SeerrTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Integrations_SeerrBlurb"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                        <Button x:Uid="Integrations_SeerrOpen" Command="{x:Bind ViewModel.OpenSeerrImportCommand}" />
-                    </StackPanel>
-                </Border>
             </StackPanel>
 
             <!--
@@ -1303,6 +1401,7 @@
               once, with Copy, until Done. Only from a 0.47+ server (an
               older one answers GET /settings/api-keys with 404).
             -->
+            <StackPanel Visibility="{x:Bind ViewModel.ShowsGeneralPart, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ApiKeys.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="4">
                     <TextBlock x:Uid="Integrations_ApiKeysHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -1401,31 +1500,62 @@
                             Spacing="12"
                             Visibility="{x:Bind ViewModel.ApiKeys.ShowsForm, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock x:Uid="Integrations_ApiKeyCreateTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBox
-                                x:Uid="Integrations_ApiKeyName"
-                                MaxLength="80"
-                                Text="{x:Bind ViewModel.ApiKeys.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <ComboBox
-                                x:Uid="Integrations_ApiKeyAccess"
-                                MinWidth="260"
-                                ItemsSource="{x:Bind ViewModel.ApiKeys.ScopeChoices}"
-                                SelectedIndex="{x:Bind ViewModel.ApiKeys.ScopeIndex, Mode=TwoWay}" />
-                            <ComboBox
-                                x:Uid="Integrations_ApiKeyActAs"
-                                MinWidth="260"
-                                ItemsSource="{x:Bind ViewModel.ApiKeys.ActAsChoices, Mode=OneWay}"
-                                SelectedIndex="{x:Bind ViewModel.ApiKeys.ActAsIndex, Mode=TwoWay}" />
-                            <ComboBox
-                                x:Uid="Integrations_ApiKeyExpires"
-                                MinWidth="260"
-                                ItemsSource="{x:Bind ViewModel.ApiKeys.ExpiryChoices}"
-                                SelectedIndex="{x:Bind ViewModel.ApiKeys.ExpiryIndex, Mode=TwoWay}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Integrations_ApiKeyName"
+                                    MaxLength="80"
+                                    Text="{x:Bind ViewModel.ApiKeys.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
+                            <controls:SettingsRow>
+                                <ComboBox
+                                    x:Uid="Integrations_ApiKeyAccess"
+                                    MinWidth="260"
+                                    ItemsSource="{x:Bind ViewModel.ApiKeys.ScopeChoices}"
+                                    SelectedIndex="{x:Bind ViewModel.ApiKeys.ScopeIndex, Mode=TwoWay}" />
+                            </controls:SettingsRow>
+                            <controls:SettingsRow>
+                                <ComboBox
+                                    x:Uid="Integrations_ApiKeyActAs"
+                                    MinWidth="260"
+                                    ItemsSource="{x:Bind ViewModel.ApiKeys.ActAsChoices, Mode=OneWay}"
+                                    SelectedIndex="{x:Bind ViewModel.ApiKeys.ActAsIndex, Mode=TwoWay}" />
+                            </controls:SettingsRow>
+                            <controls:SettingsRow>
+                                <ComboBox
+                                    x:Uid="Integrations_ApiKeyExpires"
+                                    MinWidth="260"
+                                    ItemsSource="{x:Bind ViewModel.ApiKeys.ExpiryChoices}"
+                                    SelectedIndex="{x:Bind ViewModel.ApiKeys.ExpiryIndex, Mode=TwoWay}" />
+                            </controls:SettingsRow>
                             <Button
                                 Content="{x:Bind ViewModel.ApiKeys.CreateLabel, Mode=OneWay}"
                                 Command="{x:Bind ViewModel.ApiKeys.CreateCommand}"
                                 IsEnabled="{x:Bind ViewModel.ApiKeys.CanCreate, Mode=OneWay}"
                                 Style="{StaticResource AccentButtonStyle}" />
                         </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            </StackPanel>
+
+            <!--
+              Coming from Seerr? (0.51+): components/seerr-import-card.tsx.
+              The import itself (connect, preview, run) is the website's
+              page, opened in the browser on the server's own address.
+            -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsGeneralPart, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock x:Uid="Integrations_SeerrHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Uid="Integrations_SeerrTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Integrations_SeerrBlurb"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button x:Uid="Integrations_SeerrOpen" Command="{x:Bind ViewModel.OpenSeerrImportCommand}" />
                     </StackPanel>
                 </Border>
             </StackPanel>

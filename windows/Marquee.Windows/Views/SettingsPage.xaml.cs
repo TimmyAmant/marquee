@@ -2,6 +2,7 @@ using Marquee.Windows.Services;
 using Marquee.Windows.ViewModels;
 using Marquee.Windows.Views.Settings;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
@@ -10,14 +11,16 @@ namespace Marquee.Windows.Views;
 /// <summary>
 /// The Settings section, reached from the avatar on the rail (and its update
 /// button, while a newer Marquee is out, which opens About). A host for the
-/// tabs: each tab's view is made the first time it's picked and kept while
-/// the page lives, and only the one on screen is active.
+/// tabs: the row of pills is made here for the tabs the viewer gets, each
+/// tab's view is made the first time it's picked and kept while the page
+/// lives, and only the one on screen is active.
 /// </summary>
 public sealed partial class SettingsPage : Page
 {
     public SettingsViewModel ViewModel { get; }
 
     private readonly Dictionary<SettingsTab, UIElement> views = [];
+    private readonly Dictionary<SettingsTab, Button> tabButtons = [];
     private readonly Style tabStyle;
     private readonly Style currentTabStyle;
     private ISettingsTabView? shown;
@@ -49,12 +52,41 @@ public sealed partial class SettingsPage : Page
         shown?.Deactivate();
     }
 
-    /// <summary>A tab button; its <c>Tag</c> names the tab.</summary>
+    /// <summary>A tab button; its <c>Tag</c> is the tab.</summary>
     private void OnTabClick(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<SettingsTab>(tag, out var tab))
+        if (sender is FrameworkElement { Tag: SettingsTab tab })
         {
             ViewModel.Select(tab);
+        }
+    }
+
+    /// <summary>One pill per tab the viewer gets, in order; the current one solid.</summary>
+    private void ShowTabs(SettingsTab current)
+    {
+        var visible = ViewModel.VisibleTabs;
+        if (!visible.SequenceEqual(tabButtons.Keys))
+        {
+            TabBar.Children.Clear();
+            tabButtons.Clear();
+            foreach (var tab in visible)
+            {
+                var title = tab.Title();
+                var button = new Button { Tag = tab, Content = new TextBlock { Text = title } };
+                AutomationProperties.SetName(button, title);
+                button.Click += OnTabClick;
+                TabBar.Children.Add(button);
+                tabButtons[tab] = button;
+            }
+        }
+        foreach (var (tab, button) in tabButtons)
+        {
+            button.Style = tab == current ? currentTabStyle : tabStyle;
+        }
+        if (tabButtons.TryGetValue(current, out var currentButton))
+        {
+            // On a narrow window the row scrolls: keep the current tab in view.
+            currentButton.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false });
         }
     }
 
@@ -62,24 +94,11 @@ public sealed partial class SettingsPage : Page
     private void ShowCurrentTab()
     {
         var tab = ViewModel.CurrentTab;
-        AccountTabButton.Style = tab == SettingsTab.Account ? currentTabStyle : tabStyle;
-        IntegrationsTabButton.Style = tab == SettingsTab.Integrations ? currentTabStyle : tabStyle;
-        DiscoverTabButton.Style = tab == SettingsTab.Discover ? currentTabStyle : tabStyle;
-        ActivityTabButton.Style = tab == SettingsTab.Activity ? currentTabStyle : tabStyle;
-        JobsTabButton.Style = tab == SettingsTab.Jobs ? currentTabStyle : tabStyle;
-        AboutTabButton.Style = tab == SettingsTab.About ? currentTabStyle : tabStyle;
+        ShowTabs(tab);
 
         if (!views.TryGetValue(tab, out var view))
         {
-            view = tab switch
-            {
-                SettingsTab.Integrations => new IntegrationsSettingsView(),
-                SettingsTab.Discover => new DiscoverSettingsView(),
-                SettingsTab.Activity => new ActivitySettingsView(),
-                SettingsTab.Jobs => new JobsSettingsView(),
-                SettingsTab.About => new AboutSettingsView(),
-                _ => new AccountSettingsView(),
-            };
+            view = MakeView(tab);
             views[tab] = view;
         }
         if (ReferenceEquals(TabContent.Content, view))
@@ -97,4 +116,21 @@ public sealed partial class SettingsPage : Page
             shown?.Activate();
         }
     }
+
+    private static UIElement MakeView(SettingsTab tab) => tab switch
+    {
+        SettingsTab.General => new IntegrationsSettingsView(SettingsPart.General),
+        SettingsTab.Members => new CompositeSettingsView(
+            new AccountSettingsView(SettingsPart.Members),
+            new IntegrationsSettingsView(SettingsPart.SignIn)),
+        SettingsTab.MediaServers => new IntegrationsSettingsView(SettingsPart.MediaServers),
+        SettingsTab.Services => new IntegrationsSettingsView(SettingsPart.Services),
+        SettingsTab.Notifications => new NotificationsSettingsView(),
+        SettingsTab.Discover => new DiscoverSettingsView(),
+        SettingsTab.Blocklist => new AccountSettingsView(SettingsPart.Blocklist),
+        SettingsTab.Activity => new ActivitySettingsView(),
+        SettingsTab.Jobs => new JobsSettingsView(),
+        SettingsTab.About => new AboutSettingsView(),
+        _ => new AccountSettingsView(SettingsPart.Account),
+    };
 }

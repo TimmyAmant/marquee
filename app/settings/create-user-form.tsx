@@ -4,63 +4,52 @@ import { useActionState } from "react";
 import { createUserAction } from "./users-actions";
 import { useT } from "@/lib/i18n/client";
 import { rich } from "@/lib/i18n/rich";
+import { useResultToast } from "@/components/settings/use-result-toast";
+import { SETTINGS_INPUT, SaveBar, SettingRow, SettingsGroup } from "@/components/settings/settings-ui";
 
+/** Settings › Members › Add a household member: a row per field, one Save. */
 export function CreateUserForm() {
   const t = useT();
   const [state, formAction, isPending] = useActionState(createUserAction, undefined);
-
-  if (state?.success) {
-    return (
-      <p className="text-sm text-owned">
-        {rich(t("settings.accountCreated", { path: "/login" }), {
-          path: (chunks) => <span className="text-text-primary">{chunks}</span>,
-        })}
-      </p>
-    );
-  }
+  useResultToast(state, t("common.saved"));
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        {t("settings.nameLabel")}
-        <input
-          type="text"
-          name="displayName"
-          autoComplete="name"
-          className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
+    <form action={formAction}>
+      <SettingsGroup>
+        <SettingRow label={t("settings.nameLabel")} htmlFor="new-member-name" wideControl>
+          <input id="new-member-name" type="text" name="displayName" autoComplete="name" className={SETTINGS_INPUT} />
+        </SettingRow>
+        <SettingRow label={t("settings.usernameLabel")} htmlFor="new-member-username" wideControl>
+          <input id="new-member-username" type="text" name="username" required autoComplete="username" className={SETTINGS_INPUT} />
+        </SettingRow>
+        <SettingRow label={t("settings.passwordLabel")} htmlFor="new-member-password" wideControl>
+          <input
+            id="new-member-password"
+            type="password"
+            name="password"
+            required
+            autoComplete="new-password"
+            minLength={8}
+            className={SETTINGS_INPUT}
+          />
+        </SettingRow>
+        <SaveBar
+          label={t("settings.createAccount")}
+          pendingLabel={t("settings.creatingAccount")}
+          pending={isPending}
+          status={
+            state?.error ? (
+              <span className="text-red-400">{state.error}</span>
+            ) : state?.success ? (
+              <span className="text-owned">
+                {rich(t("settings.accountCreated", { path: "/login" }), {
+                  path: (chunks) => <span className="text-text-primary">{chunks}</span>,
+                })}
+              </span>
+            ) : null
+          }
         />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        {t("settings.usernameLabel")}
-        <input
-          type="text"
-          name="username"
-          required
-          autoComplete="username"
-          className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
-        />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-        {t("settings.passwordLabel")}
-        <input
-          type="password"
-          name="password"
-          required
-          autoComplete="new-password"
-          minLength={8}
-          className="rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent"
-        />
-      </label>
-
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
-
-      <button
-        type="submit"
-        disabled={isPending}
-        className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-      >
-        {isPending ? t("settings.creatingAccount") : t("settings.createAccount")}
-      </button>
+      </SettingsGroup>
     </form>
   );
 }

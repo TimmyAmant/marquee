@@ -44,7 +44,7 @@ export async function createUserAction(
   });
   if (!result.ok) return { error: result.error };
 
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
 
@@ -94,7 +94,7 @@ export async function updateHouseholdMemberAction(
   );
   if (!result.ok) return { error: result.error };
 
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
 
@@ -112,6 +112,6 @@ export async function deleteUserAction(
   const result = await deleteHouseholdMember(admin.userId, String(formData.get("userId") || ""));
   if (!result.ok) return { error: result.error };
 
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { success: true };
 }
